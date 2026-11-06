@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: omx-clap-core/fuzz_preset/asan_halts
+fingerprint: 938bd785e2d5a989a1ecb291539c3fb304dcf8f0a6e32991478554d1e57cc57e

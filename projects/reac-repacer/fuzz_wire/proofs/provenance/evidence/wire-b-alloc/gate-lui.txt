@@ -1,0 +1,2 @@
+luitrace.tsv: 3968 rows, 0 reading DIFFERS
+GATE wire-b-alloc-lui VERDICT: PASS head 75cd74cdfee5b2ed1165fe5fbe48ef157f89a474 inputs luitrace.py 06d2b1005932 (luitrace.tsv)

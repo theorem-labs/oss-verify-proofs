@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wabt
 harness: read_binary_ir_fuzzer
-rocq: OssFuzzTheorems.wabt.read_binary_ir_fuzzer
+rocq: OSSVerify.wabt.read_binary_ir_fuzzer
 origin: upstream
 summary: fuzzer-chosen feature flags, ReadBinaryIr (collect all errors) into a wabt::Module; result discarded.
 entry: LLVMFuzzerTestOneInput

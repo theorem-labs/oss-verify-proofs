@@ -1,0 +1,136 @@
+(** * plugin-hostd / fuzz_reply: theorem statements
+
+    SUBJECT.  Four builds of plugin-hostd's own fuzz target [fuzz_reply], which
+    OSS-Fuzz does not run, for plugin-hostd 0.10.0 (FreeMixer/plugin-hostd at
+    65cd2b02), static riscv64 Linux programs run as [<file> FILE]:
+      plain       no sanitizer
+      ubsan       UndefinedBehaviorSanitizer; a failed check executes a trap
+      asan        AddressSanitizer; a report aborts
+      asan_ubsan  both
+    [Images] names their memory images.  A driver linked into every build reads
+    FILE as [u16 config word][config bytes][u32 allocation mask][payload]
+    (little-endian; the low 15 bits of the config word are the config length,
+    and this harness binary ignores the mask), calls
+    LLVMFuzzerTestOneInput(payload, length) one to four times ((config[0] & 3) +
+    1; once when there is no config), and prints each return value.  With a
+    wrong argument count, a missing or unreadable FILE, a FILE shorter than its
+    header, or one of 64 MiB or more, it exits with status 2 without calling the
+    harness.  Every statement quantifies over all of these cases and over every
+    other process input (see Vocabulary in OSSVerify.Core.Shapes).
+
+    WHAT THE HARNESS CHECKS.  Opens one worker feedback source in plugin-hostd's
+    relay, src/relay.c, then reads the input as up to 512 operations: add a
+    source (at most four), have a source write bytes, read a source, close or
+    remove a source, remove an instance, interrupt a receive, send an event of
+    the daemon's own, limit or interrupt the controller's sends, or make the
+    controller go away. Its own recv and send stand in for the sockets, so no
+    socket or thread is used. A reference splitter follows what each source
+    wrote. At the end the relay is shut down.  The harness checks:
+    (a) After every operation each source's buffer holds at most 6000 bytes of
+    an unfinished line, never more than its capacity, and its capacity stays
+    under 20192 bytes. [abort(); not confirmed in the binary]
+    (b) After each read, and when a source or an instance is removed, the
+    controller reads every complete line the source wrote that is 6000 bytes or
+    shorter, once each, unchanged and in order; while the controller is gone
+    nothing reaches it. [abort(); not confirmed in the binary]
+    (c) After a read, and when a source or an instance is removed, the relay has
+    taken every byte the worker wrote to each source it still reads. [abort();
+    not confirmed in the binary]
+    (d) When a source goes, or an instance, or the relay shuts down, the relay
+    writes one ''param_gesture <instance> <symbol> end'' line for each gesture
+    that source's lines began and did not end (for an instance, only its own),
+    and no other line. [abort(); not confirmed in the binary]
+    (e) An event of the daemon's own reaches the controller as one line, exactly
+    as written, and after each operation the controller has read no line the
+    reference does not account for. [abort(); not confirmed in the binary]
+    (f) What the controller reads in each operation ends on a whole line: no
+    line is cut short. [abort(); not confirmed in the binary]
+    (g) The relay sends only on the controller's socket, never on a worker's.
+    [abort(); not confirmed in the binary]
+    (h) The relay follows each new worker socket it is handed. [abort(); not
+    confirmed in the binary]
+    Only the checks marked ''confirmed in the binary'' had their assertion text
+    or message found in the binary's bytes; for the others no usable text was
+    found, which does not mean that they are compiled out, and no statement
+    below relies on them.
+
+    Whether each statement is open, proved or known false is recorded in the
+    harness README, not here: this file changes only when a statement does. *)
+
+From Stdlib Require Import QArith.
+From OSSVerify.Core Require Import Shapes.
+From OSSVerify.plugin_hostd.fuzz_reply Require Images.
+
+(** ** Halting *)
+
+(** On every input on which the plain build is never refused memory for
+    exceeding 16 GiB, and when the environment refuses nothing it is not forced
+    to, every execution of the plain build exits with status 0 or 2.  It never
+    crashes, fails an assertion, hangs, or leaves the model.
+
+    Not claimed: anything about what the program writes; anything about other
+    compilers, architectures or plugin-hostd commits. *)
+Definition plain_halts : Prop :=
+  halts_within_budget Budgets.Standard.lim_source Exits.ok_or_refused Images.plain.
+
+(** As [plain_halts], for the UBSan build.  A failed UBSan check traps, so a
+    proof also shows that no check UBSan makes in this build fails on any such
+    input. *)
+Definition ubsan_halts : Prop :=
+  halts_within_budget Budgets.Standard.lim_source Exits.ok_or_refused Images.ubsan.
+
+(** As [plain_halts], for the ASan build.  An ASan report aborts, so a proof
+    also shows that ASan detects no memory error, in the code it instruments, on
+    any such input (the harness README lists the code this build links
+    uninstrumented).  The runtime's own address-space reservations are not
+    charged to the budget. *)
+Definition asan_halts : Prop :=
+  halts_within_budget Budgets.Standard.lim_source Exits.ok_or_refused Images.asan.
+
+(** As [plain_halts], for the ASan+UBSan build.  An ASan report aborts and a
+    failed UBSan check traps, so a proof also shows that neither sanitizer
+    fires, in the code they instrument, on any such input (the harness README
+    lists the code this build links uninstrumented). *)
+Definition asan_ubsan_halts : Prop :=
+  halts_within_budget Budgets.Standard.lim_source Exits.ok_or_refused Images.asan_ubsan.
+
+(** ** Agreement of each sanitizer build with the plain build *)
+
+(** On every input on which the plain build is never refused memory for
+    exceeding 2 GiB, when a memory request is refused only if the budget is
+    spent or no address range is free (any other request may still be refused,
+    in either build): neither build ever faults, aborts or leaves the model, and
+    the two write the same bytes and exit with the same status.  An ASan report
+    aborts, so a proof shows that ASan reports nothing on any such input: no
+    memory error that this build's ASan detects happens in the code it
+    instruments (the harness, plugin-hostd and the driver, less the code the
+    harness README lists as uninstrumented).
+
+    Not claimed: anything about inputs on which the plain build needs more than
+    2 GiB; memory errors ASan does not detect (for example an access that lands
+    inside another live object, or one made in code it does not instrument). *)
+Definition asan_agrees : Prop :=
+  agrees_in Env.alloc_forced_only Budgets.Asan.lim_source Budgets.Asan.lim_target Images.plain Images.asan.
+
+(** As [asan_agrees], for the UBSan build, with 16 GiB for the plain build.  A
+    failed UBSan check traps, so a proof shows that no UBSan check in this build
+    fails on any such input. *)
+Definition ubsan_agrees : Prop :=
+  agrees_in Env.alloc_forced_only Budgets.Standard.lim_source Budgets.Standard.lim_target Images.plain Images.ubsan.
+
+(** As [asan_agrees], for the ASan+UBSan build, with 2 GiB for the plain build.
+    An ASan report aborts and a failed UBSan check traps, so a proof shows that
+    neither sanitizer fires on any such input in the code they instrument (the
+    harness, plugin-hostd and the driver, less the code the harness README lists
+    as uninstrumented). *)
+Definition asan_ubsan_agrees : Prop :=
+  agrees_in Env.alloc_forced_only Budgets.Asan.lim_source Budgets.Asan.lim_target Images.plain Images.asan_ubsan.
+
+(** ** Proving a statement
+
+    A proof is a directory named after the statement, in this fuzz target's
+    proofs folder (docs/proving.md says where it is), whose Proof.v ends, for
+    example, in
+      Theorem plain_halts_holds : Statements.plain_halts.
+
+    See docs/proving.md. *)

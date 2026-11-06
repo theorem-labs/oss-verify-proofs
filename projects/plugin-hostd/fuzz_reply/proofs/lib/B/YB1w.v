@@ -1,0 +1,591 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YB1w.v, with its module paths changed, and regenerated for fuzz_reply.asan-ubsan: section bounds from its section headers, function starts by the function pairing (resolve.new.tsv sha256 179f773481cb; internal record), ends as map(end - 1) + 1, the 25 rows of functions fuzz_reply does not link (cgif program, __asan_stack_malloc_2, fopen/fclose and the musl fopen family) removed (report YB1w.v.tsv). *)
+From Stdlib Require Import ZArith.
+Unset Lia Cache. Unset Nia Cache.
+Open Scope Z_scope.
+Definition tfib_rodata_lo : Z := 0x102e0.  Definition tfib_rodata_hi : Z := 0x228ac.
+Definition tfib_text_lo : Z := 0x309ec.  Definition tfib_text_hi : Z := 0x9c9b8.
+Definition tfib_init_array_lo : Z := 0x9d9b8.  Definition tfib_init_array_hi : Z := 0x9d9d8.
+Definition tfib_fini_array_lo : Z := 0x9d9d8.  Definition tfib_fini_array_hi : Z := 0x9d9e8.
+Definition tfib_preinit_array_lo : Z := 0x9d9e8.  Definition tfib_preinit_array_hi : Z := 0x9d9f0.
+Definition tfib_data_rel_ro_lo : Z := 0x9d9f0.  Definition tfib_data_rel_ro_hi : Z := 0x9def0.
+Definition tfib_got_lo : Z := 0x9def0.  Definition tfib_got_hi : Z := 0x9ec48.
+Definition tfib_data_lo : Z := 0x9fc60.  Definition tfib_data_hi : Z := 0xa28a0.
+Definition tfib_asan_globals_lo : Z := 0xa28a0.  Definition tfib_asan_globals_hi : Z := 0xa2f60.
+Definition tfib_bss_lo : Z := 0xa2f80.  Definition tfib_bss_hi : Z := 0x5fb2d0.
+Definition tfib_tbss_lo : Z := 0x9c9b8.  Definition tfib_tbss_hi : Z := 0x9c9cc.
+Definition tfib_img_lo : Z := 0x10000.  Definition tfib_img_hi : Z := 0x5fc000.
+Definition tfib_entry : Z := 0x309ec.  Definition tfib_gp : Z := 0x10800.
+Definition tfib_A_start : Z := 0x309ec.  Definition tfib_E_start : Z := 0x30a34.
+Definition tfib_A_do_init : Z := 0x30a34.  Definition tfib_E_do_init : Z := 0x30aa8.
+Definition tfib_A_do_fini : Z := 0x30aa8.  Definition tfib_E_do_fini : Z := 0x30b38.
+Definition tfib_A_AllocatorOptions_SetFrom : Z := 0x30b38.  Definition tfib_E_AllocatorOptions_SetFrom : Z := 0x30b74.
+Definition tfib_A_InitializeAllocator : Z := 0x30ce4.  Definition tfib_E_InitializeAllocator : Z := 0x30cfc.
+Definition tfib_A_Allocator_InitLinkerInitialized : Z := 0x30cfc.  Definition tfib_E_Allocator_InitLinkerInitialized : Z := 0x30e68.
+Definition tfib_A_Allocator_FindHeapChunkByAddress_helper : Z := 0x313c4.  Definition tfib_E_Allocator_FindHeapChunkByAddress_helper : Z := 0x31520.
+Definition tfib_A_asan_free : Z := 0x318f4.  Definition tfib_E_asan_free : Z := 0x3191c.
+Definition tfib_A_Allocator_Deallocate : Z := 0x3191c.  Definition tfib_E_Allocator_Deallocate : Z := 0x31bd4.
+Definition tfib_A_asan_malloc : Z := 0x31bd4.  Definition tfib_E_asan_malloc : Z := 0x31c30.
+Definition tfib_A_Allocator_Allocate : Z := 0x31c30.  Definition tfib_E_Allocator_Allocate : Z := 0x325b8.
+Definition tfib_A_AsanChunkView_GetAsanChunk_ptr_helper : Z := 0x32efc.  Definition tfib_E_AsanChunkView_GetAsanChunk_ptr_helper : Z := 0x33040.
+Definition tfib_A_sanitizer_get_allocated_begin_size_style_query : Z := 0x3312c.  Definition tfib_E_sanitizer_get_allocated_begin_size_style_query : Z := 0x33188.
+Definition tfib_A_SizeClassAllocator64_Init : Z := 0x33188.  Definition tfib_E_SizeClassAllocator64_Init : Z := 0x333d8.
+Definition tfib_A_SizeClassAllocator64_MapWithCallbackOrDie : Z := 0x333d8.  Definition tfib_E_SizeClassAllocator64_MapWithCallbackOrDie : Z := 0x334cc.
+Definition tfib_A_Allocator_SharedInitCode : Z := 0x334cc.  Definition tfib_E_Allocator_SharedInitCode : Z := 0x335b4.
+Definition tfib_A_QuarantineCache_MergeBatches_Transfer : Z := 0x339e8.  Definition tfib_E_QuarantineCache_MergeBatches_Transfer : Z := 0x33bcc.
+Definition tfib_A_QuarantineCache_DequeueBatch : Z := 0x33bcc.  Definition tfib_E_QuarantineCache_DequeueBatch : Z := 0x33d50.
+Definition tfib_A_QuarantineCallback_Recycle : Z := 0x33e88.  Definition tfib_E_QuarantineCallback_Recycle : Z := 0x3410c.
+Definition tfib_A_LargeMmapAllocator_GetBlockBegin : Z := 0x3410c.  Definition tfib_E_LargeMmapAllocator_GetBlockBegin : Z := 0x3428c.
+Definition tfib_A_SizeClassAllocator64LocalCache_Deallocate : Z := 0x3428c.  Definition tfib_E_SizeClassAllocator64LocalCache_Deallocate : Z := 0x34454.
+Definition tfib_A_LargeMmapAllocator_Deallocate : Z := 0x34454.  Definition tfib_E_LargeMmapAllocator_Deallocate : Z := 0x34620.
+Definition tfib_A_SizeClassAllocator64_ReturnToAllocator_helper : Z := 0x34620.  Definition tfib_E_SizeClassAllocator64_ReturnToAllocator_helper : Z := 0x346c0.
+Definition tfib_A_InternalMmapVector_Realloc : Z := 0x346c0.  Definition tfib_E_InternalMmapVector_Realloc : Z := 0x347c4.
+Definition tfib_A_SizeClassAllocator64_EnsureFreeArraySpace : Z := 0x34aec.  Definition tfib_E_SizeClassAllocator64_EnsureFreeArraySpace : Z := 0x34c34.
+Definition tfib_A_DieOnMapFailure_sealed : Z := 0x34c34.  Definition tfib_E_DieOnMapFailure_sealed : Z := 0x34c6c.
+Definition tfib_A_SizeClassAllocator64_ReleaseFreeMemoryToOS_Packe : Z := 0x35404.  Definition tfib_E_SizeClassAllocator64_ReleaseFreeMemoryToOS_Packe : Z := 0x356ec.
+Definition tfib_A_Allocator_QuarantineChunk : Z := 0x35dc4.  Definition tfib_E_Allocator_QuarantineChunk : Z := 0x35f3c.
+Definition tfib_A_Allocator_QuarantineChunk_tail_quarantine_Put : Z := 0x35f3c.  Definition tfib_E_Allocator_QuarantineChunk_tail_quarantine_Put : Z := 0x360ec.
+Definition tfib_A_QuarantineCache_Enqueue : Z := 0x360ec.  Definition tfib_E_QuarantineCache_Enqueue : Z := 0x362d0.
+Definition tfib_A_CombinedAllocator_Allocate : Z := 0x362d0.  Definition tfib_E_CombinedAllocator_Allocate : Z := 0x365a8.
+Definition tfib_A_LargeMmapAllocator_Allocate : Z := 0x365a8.  Definition tfib_E_LargeMmapAllocator_Allocate : Z := 0x36a20.
+Definition tfib_A_SizeClassAllocator64LocalCache_Refill : Z := 0x36a20.  Definition tfib_E_SizeClassAllocator64LocalCache_Refill : Z := 0x36b20.
+Definition tfib_A_SizeClassAllocator64_GetFromAllocator : Z := 0x36b20.  Definition tfib_E_SizeClassAllocator64_GetFromAllocator : Z := 0x36e28.
+Definition tfib_A_SizeClassAllocator64_PopulateFreeArray : Z := 0x36e28.  Definition tfib_E_SizeClassAllocator64_PopulateFreeArray : Z := 0x37198.
+Definition tfib_A_Allocator_ComputeRZLog : Z := 0x37198.  Definition tfib_E_Allocator_ComputeRZLog : Z := 0x372b0.
+Definition tfib_A_LargeMmapAllocator_EnsureSortedChunks : Z := 0x375b8.  Definition tfib_E_LargeMmapAllocator_EnsureSortedChunks : Z := 0x376b4.
+Definition tfib_A_AsanDeactivate_activation_CHECK_helper : Z := 0x376b4.  Definition tfib_E_AsanDeactivate_activation_CHECK_helper : Z := 0x3779c.
+Definition tfib_A_AsanActivate : Z := 0x3779c.  Definition tfib_E_AsanActivate : Z := 0x37878.
+Definition tfib_A_asan_activation_flag_parse_helper_0_no : Z := 0x37d54.  Definition tfib_E_asan_activation_flag_parse_helper_0_no : Z := 0x37e3c.
+Definition tfib_A_FakeStack_AddrIsInFakeStack : Z := 0x3c8f4.  Definition tfib_E_FakeStack_AddrIsInFakeStack : Z := 0x3c9cc.
+Definition tfib_A_FakeStack_Create : Z := 0x3c9cc.  Definition tfib_E_FakeStack_Create : Z := 0x3cab8.
+Definition tfib_A_FakeStack_Allocate : Z := 0x3cd74.  Definition tfib_E_FakeStack_Allocate : Z := 0x3d05c.
+Definition tfib_A_SetTLSFakeStack : Z := 0x3d190.  Definition tfib_E_SetTLSFakeStack : Z := 0x3d1c0.
+Definition tfib_A_asan_stack_malloc_A : Z := 0x3d334.  Definition tfib_E_asan_stack_malloc_A : Z := 0x3d4c4.
+Definition tfib_A_FakeStack_SetShadow : Z := 0x3d4c4.  Definition tfib_E_FakeStack_SetShadow : Z := 0x3d600.
+Definition tfib_A_asan_InitializeFlags : Z := 0x3d600.  Definition tfib_E_asan_InitializeFlags : Z := 0x3e62c.
+Definition tfib_A_asan_register_globals_impl_RegisterGlobal_loop : Z := 0x3ed38.  Definition tfib_E_asan_register_globals_impl_RegisterGlobal_loop : Z := 0x3fb54.
+Definition tfib_A_asan_unregister_globals_impl : Z := 0x3fb54.  Definition tfib_E_asan_unregister_globals_impl : Z := 0x40120.
+Definition tfib_A_asan_register_globals : Z := 0x40120.  Definition tfib_E_asan_register_globals : Z := 0x4018c.
+Definition tfib_A_asan_unregister_globals : Z := 0x4018c.  Definition tfib_E_asan_unregister_globals : Z := 0x401f4.
+Definition tfib_A_asan_UnpoisonBeforeMain_ctor : Z := 0x40874.  Definition tfib_E_asan_UnpoisonBeforeMain_ctor : Z := 0x40ae4.
+Definition tfib_A_asan_before_dynamic_init_asan_after_dynamic_init : Z := 0x40ae4.  Definition tfib_E_asan_before_dynamic_init_asan_after_dynamic_init : Z := 0x40dec.
+Definition tfib_A_RoundUpTo_size_CHECK_helper_sanitizer_common_h_C : Z := 0x41560.  Definition tfib_E_RoundUpTo_size_CHECK_helper_sanitizer_common_h_C : Z := 0x416b0.
+Definition tfib_A_asan_globals_RegisterGlobal_vector_push_back : Z := 0x420cc.  Definition tfib_E_asan_globals_RegisterGlobal_vector_push_back : Z := 0x421e4.
+Definition tfib_A_strlen : Z := 0x421e4.  Definition tfib_E_strlen : Z := 0x421e8.
+Definition tfib_A_strnlen : Z := 0x421e8.  Definition tfib_E_strnlen : Z := 0x421ec.
+Definition tfib_A_strcmp : Z := 0x421f0.  Definition tfib_E_strcmp : Z := 0x421f4.
+Definition tfib_A_strchr : Z := 0x421f8.  Definition tfib_E_strchr : Z := 0x421fc.
+Definition tfib_A_memcmp : Z := 0x42200.  Definition tfib_E_memcmp : Z := 0x42204.
+Definition tfib_A_memcmp_2 : Z := 0x42204.  Definition tfib_E_memcmp_2 : Z := 0x42208.
+Definition tfib_A_memchr : Z := 0x42208.  Definition tfib_E_memchr : Z := 0x4220c.
+Definition tfib_A_frexpl : Z := 0x4220c.  Definition tfib_E_frexpl : Z := 0x42210.
+Definition tfib_A_read : Z := 0x42210.  Definition tfib_E_read : Z := 0x42214.
+Definition tfib_A_fwrite : Z := 0x42218.  Definition tfib_E_fwrite : Z := 0x4221c.
+Definition tfib_A_time : Z := 0x4221c.  Definition tfib_E_time : Z := 0x42220.
+Definition tfib_A_gmtime_r : Z := 0x42220.  Definition tfib_E_gmtime_r : Z := 0x42224.
+Definition tfib_A_vprintf : Z := 0x42224.  Definition tfib_E_vprintf : Z := 0x42228.
+Definition tfib_A_vfprintf : Z := 0x42228.  Definition tfib_E_vfprintf : Z := 0x4222c.
+Definition tfib_A_vsnprintf : Z := 0x4222c.  Definition tfib_E_vsnprintf : Z := 0x42230.
+Definition tfib_A_vfprintf_2 : Z := 0x42230.  Definition tfib_E_vfprintf_2 : Z := 0x42234.
+Definition tfib_A_thunk_417bc : Z := 0x42234.  Definition tfib_E_thunk_417bc : Z := 0x42238.
+Definition tfib_A_clock_gettime : Z := 0x42238.  Definition tfib_E_clock_gettime : Z := 0x4223c.
+Definition tfib_A_wcrtomb : Z := 0x4223c.  Definition tfib_E_wcrtomb : Z := 0x42240.
+Definition tfib_A_wctomb : Z := 0x42240.  Definition tfib_E_wctomb : Z := 0x42244.
+Definition tfib_A_thunk_417cc : Z := 0x42244.  Definition tfib_E_thunk_417cc : Z := 0x4224c.
+Definition tfib_A_pthread_attr_getstack : Z := 0x4224c.  Definition tfib_E_pthread_attr_getstack : Z := 0x42250.
+Definition tfib_A_tls_get_addr_thunk : Z := 0x42250.  Definition tfib_E_tls_get_addr_thunk : Z := 0x42254.
+Definition tfib_A_thunk_417dc : Z := 0x42254.  Definition tfib_E_thunk_417dc : Z := 0x42258.
+Definition tfib_A_thunk_417e4 : Z := 0x42258.  Definition tfib_E_thunk_417e4 : Z := 0x4225c.
+Definition tfib_A_thunk_417e8 : Z := 0x4225c.  Definition tfib_E_thunk_417e8 : Z := 0x42260.
+Definition tfib_A_thunk_417ec : Z := 0x42260.  Definition tfib_E_thunk_417ec : Z := 0x42264.
+Definition tfib_A_thunk_417f0 : Z := 0x42264.  Definition tfib_E_thunk_417f0 : Z := 0x42268.
+Definition tfib_A_sem_timedwait : Z := 0x42268.  Definition tfib_E_sem_timedwait : Z := 0x4226c.
+Definition tfib_A_thunk_417f8 : Z := 0x4226c.  Definition tfib_E_thunk_417f8 : Z := 0x42270.
+Definition tfib_A_pthread_setcancelstate : Z := 0x42270.  Definition tfib_E_pthread_setcancelstate : Z := 0x42274.
+Definition tfib_A_send : Z := 0x42274.  Definition tfib_E_send : Z := 0x42278.
+Definition tfib_A_sendto : Z := 0x42278.  Definition tfib_E_sendto : Z := 0x4227c.
+Definition tfib_A_sigaltstack : Z := 0x4227c.  Definition tfib_E_sigaltstack : Z := 0x42280.
+Definition tfib_A_thunk_4180c : Z := 0x42280.  Definition tfib_E_thunk_4180c : Z := 0x42284.
+Definition tfib_A_icpt_strlen : Z := 0x42288.  Definition tfib_E_icpt_strlen : Z := 0x4251c.
+Definition tfib_A_icpt_strnlen : Z := 0x4251c.  Definition tfib_E_icpt_strnlen : Z := 0x427b0.
+Definition tfib_A_icpt_strcmp : Z := 0x42ac4.  Definition tfib_E_icpt_strcmp : Z := 0x42ff4.
+Definition tfib_A_icpt_strchr : Z := 0x435d0.  Definition tfib_E_icpt_strchr : Z := 0x438b0.
+Definition tfib_A_icpt_memcmp : Z := 0x44428.  Definition tfib_E_icpt_memcmp : Z := 0x444e4.
+Definition tfib_A_icpt_memcmp_MemcmpInterceptorCommon_entry_bcmp_m : Z := 0x444e4.  Definition tfib_E_icpt_memcmp_MemcmpInterceptorCommon_entry_bcmp_m : Z := 0x445a0.
+Definition tfib_A_icpt_memchr : Z := 0x445a0.  Definition tfib_E_icpt_memchr : Z := 0x44870.
+Definition tfib_A_icpt_frexpl : Z := 0x44870.  Definition tfib_E_icpt_frexpl : Z := 0x44ae8.
+Definition tfib_A_icpt_read : Z := 0x44ae8.  Definition tfib_E_icpt_read : Z := 0x44d58.
+Definition tfib_A_icpt_fwrite : Z := 0x44fc8.  Definition tfib_E_icpt_fwrite : Z := 0x4523c.
+Definition tfib_A_icpt_time : Z := 0x4523c.  Definition tfib_E_icpt_time : Z := 0x454d8.
+Definition tfib_A_icpt_gmtime_r : Z := 0x456e0.  Definition tfib_E_icpt_gmtime_r : Z := 0x45920.
+Definition tfib_A_icpt_vprintf : Z := 0x45920.  Definition tfib_E_icpt_vprintf : Z := 0x459bc.
+Definition tfib_A_printf_common_format_interceptor : Z := 0x459bc.  Definition tfib_E_printf_common_format_interceptor : Z := 0x46484.
+Definition tfib_A_icpt_vfprintf : Z := 0x46484.  Definition tfib_E_icpt_vfprintf : Z := 0x46538.
+Definition tfib_A_icpt_vsnprintf : Z := 0x46538.  Definition tfib_E_icpt_vsnprintf : Z := 0x46850.
+Definition tfib_A_icpt_vfprintf_2 : Z := 0x46850.  Definition tfib_E_icpt_vfprintf_2 : Z := 0x46928.
+Definition tfib_A_icpt_clock_gettime : Z := 0x469cc.  Definition tfib_E_icpt_clock_gettime : Z := 0x46c24.
+Definition tfib_A_icpt_wcrtomb : Z := 0x46c24.  Definition tfib_E_icpt_wcrtomb : Z := 0x47194.
+Definition tfib_A_icpt_wctomb : Z := 0x47194.  Definition tfib_E_icpt_wctomb : Z := 0x474f0.
+Definition tfib_A_icpt_pthread_attr_getstack : Z := 0x475bc.  Definition tfib_E_icpt_pthread_attr_getstack : Z := 0x479a4.
+Definition tfib_A_icpt_tls_get_addr_DTLS_on_tls_get_addr_hook : Z := 0x479b0.  Definition tfib_E_icpt_tls_get_addr_DTLS_on_tls_get_addr_hook : Z := 0x47a2c.
+Definition tfib_A_icpt_sem_timedwait : Z := 0x47c38.  Definition tfib_E_icpt_sem_timedwait : Z := 0x47ed0.
+Definition tfib_A_icpt_pthread_setcancelstate : Z := 0x47f00.  Definition tfib_E_icpt_pthread_setcancelstate : Z := 0x48128.
+Definition tfib_A_icpt_send : Z := 0x48128.  Definition tfib_E_icpt_send : Z := 0x483dc.
+Definition tfib_A_icpt_sendto : Z := 0x483dc.  Definition tfib_E_icpt_sendto : Z := 0x486a0.
+Definition tfib_A_icpt_sigaltstack : Z := 0x486a0.  Definition tfib_E_icpt_sigaltstack : Z := 0x488fc.
+Definition tfib_A_InitializeAsanInterceptors : Z := 0x48a50.  Definition tfib_E_InitializeAsanInterceptors : Z := 0x48c00.
+Definition tfib_A_icpt_diouxXn : Z := 0x48c00.  Definition tfib_E_icpt_diouxXn : Z := 0x48d98.
+Definition tfib_A_InitializeCommonInterceptors : Z := 0x49944.  Definition tfib_E_InitializeCommonInterceptors : Z := 0x5261c.
+Definition tfib_A_InitializeSignalInterceptors_or_syscall_hooks : Z := 0x5261c.  Definition tfib_E_InitializeSignalInterceptors_or_syscall_hooks : Z := 0x52778.
+Definition tfib_A_memset : Z := 0x52778.  Definition tfib_E_memset : Z := 0x5277c.
+Definition tfib_A_memcpy : Z := 0x5277c.  Definition tfib_E_memcpy : Z := 0x52780.
+Definition tfib_A_asan_memcpy : Z := 0x52780.  Definition tfib_E_asan_memcpy : Z := 0x52c1c.
+Definition tfib_A_asan_memset : Z := 0x52c1c.  Definition tfib_E_asan_memset : Z := 0x52e5c.
+Definition tfib_A_icpt_memset : Z := 0x531cc.  Definition tfib_E_icpt_memset : Z := 0x534bc.
+Definition tfib_A_icpt_memcpy : Z := 0x534bc.  Definition tfib_E_icpt_memcpy : Z := 0x53aac.
+Definition tfib_A_InitializeMemintrinsicInterceptors_tail_CHECK : Z := 0x53aac.  Definition tfib_E_InitializeMemintrinsicInterceptors_tail_CHECK : Z := 0x53ae4.
+Definition tfib_A_InitializePlatformInterceptors : Z := 0x53ae4.  Definition tfib_E_InitializePlatformInterceptors : Z := 0x53ae8.
+Definition tfib_A_InitializePlatformExceptionHandlers : Z := 0x53ae8.  Definition tfib_E_InitializePlatformExceptionHandlers : Z := 0x53aec.
+Definition tfib_A_asan_linux_PlatformShadowSetup_helper_CheckForEx : Z := 0x53aec.  Definition tfib_E_asan_linux_PlatformShadowSetup_helper_CheckForEx : Z := 0x53b4c.
+Definition tfib_A_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x53b98.  Definition tfib_E_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x53cd4.
+Definition tfib_A_AsanCheckIncompatibleRT : Z := 0x53cd8.  Definition tfib_E_AsanCheckIncompatibleRT : Z := 0x53e40.
+Definition tfib_A_AsanCheckDynamicRTPrereqs : Z := 0x53cd4.  Definition tfib_E_AsanCheckDynamicRTPrereqs : Z := 0x53cd8.
+Definition tfib_A_free : Z := 0x53e40.  Definition tfib_E_free : Z := 0x53e44.
+Definition tfib_A_malloc : Z := 0x53e44.  Definition tfib_E_malloc : Z := 0x53e48.
+Definition tfib_A_icpt_free : Z := 0x53e4c.  Definition tfib_E_icpt_free : Z := 0x5401c.
+Definition tfib_A_icpt_malloc : Z := 0x5401c.  Definition tfib_E_icpt_malloc : Z := 0x54178.
+Definition tfib_A_icpt_cfree_or_DlsymFree : Z := 0x54178.  Definition tfib_E_icpt_cfree_or_DlsymFree : Z := 0x54244.
+Definition tfib_A_ReplaceSystemMalloc : Z := 0x54588.  Definition tfib_E_ReplaceSystemMalloc : Z := 0x5458c.
+Definition tfib_A_DlsymAlloc_PointerIsMine_internal_allocator_From : Z := 0x5458c.  Definition tfib_E_DlsymAlloc_PointerIsMine_internal_allocator_From : Z := 0x5468c.
+Definition tfib_A_HeapProfile_Insert_asan_memory_profile : Z := 0x549b4.  Definition tfib_E_HeapProfile_Insert_asan_memory_profile : Z := 0x54b20.
+Definition tfib_A_SetCanPoisonMemory : Z := 0x55008.  Definition tfib_E_SetCanPoisonMemory : Z := 0x55018.
+Definition tfib_A_CanPoisonMemory : Z := 0x55018.  Definition tfib_E_CanPoisonMemory : Z := 0x5502c.
+Definition tfib_A_PoisonShadow : Z := 0x5502c.  Definition tfib_E_PoisonShadow : Z := 0x55528.
+Definition tfib_A_MemToShadow_checked : Z := 0x55528.  Definition tfib_E_MemToShadow_checked : Z := 0x55664.
+Definition tfib_A_asan_poison_stack_memory_PoisonAlignedStackMemor : Z := 0x55664.  Definition tfib_E_asan_poison_stack_memory_PoisonAlignedStackMemor : Z := 0x55804.
+Definition tfib_A_asan_unpoison_stack_memory : Z := 0x55804.  Definition tfib_E_asan_unpoison_stack_memory : Z := 0x55984.
+Definition tfib_A_asan_region_is_poisoned : Z := 0x559b4.  Definition tfib_E_asan_region_is_poisoned : Z := 0x55cf8.
+Definition tfib_A_AsanTSDInit : Z := 0x56118.  Definition tfib_E_AsanTSDInit : Z := 0x56194.
+Definition tfib_A_AsanTSDGet : Z := 0x56194.  Definition tfib_E_AsanTSDGet : Z := 0x561d4.
+Definition tfib_A_AsanTSDSet : Z := 0x561d4.  Definition tfib_E_AsanTSDSet : Z := 0x56214.
+Definition tfib_A_PlatformTSDDtor : Z := 0x56214.  Definition tfib_E_PlatformTSDDtor : Z := 0x56298.
+Definition tfib_A_InstallAtForkHandler : Z := 0x56298.  Definition tfib_E_InstallAtForkHandler : Z := 0x562b4.
+Definition tfib_A_InstallAtExitCheckLeaks : Z := 0x56314.  Definition tfib_E_InstallAtExitCheckLeaks : Z := 0x56358.
+Definition tfib_A_ScopedInErrorReport_ReportError_helper : Z := 0x56a70.  Definition tfib_E_ScopedInErrorReport_ReportError_helper : Z := 0x56c7c.
+Definition tfib_A_ReportDoubleFree : Z := 0x57384.  Definition tfib_E_ReportDoubleFree : Z := 0x57614.
+Definition tfib_A_ReportGenericError : Z := 0x58ef0.  Definition tfib_E_ReportGenericError : Z := 0x597ac.
+Definition tfib_A_AsanInited : Z := 0x59f38.  Definition tfib_E_AsanInited : Z := 0x59f50.
+Definition tfib_A_asan_report_load1 : Z := 0x59f50.  Definition tfib_E_asan_report_load1 : Z := 0x59fa0.
+Definition tfib_A_asan_report_exp_load1 : Z := 0x59fa0.  Definition tfib_E_asan_report_exp_load1 : Z := 0x59ff0.
+Definition tfib_A_asan_report_load2 : Z := 0x59ff0.  Definition tfib_E_asan_report_load2 : Z := 0x5a040.
+Definition tfib_A_asan_report_exp_load2 : Z := 0x5a040.  Definition tfib_E_asan_report_exp_load2 : Z := 0x5a090.
+Definition tfib_A_asan_report_load4 : Z := 0x5a090.  Definition tfib_E_asan_report_load4 : Z := 0x5a0e0.
+Definition tfib_A_asan_report_exp_load4 : Z := 0x5a0e0.  Definition tfib_E_asan_report_exp_load4 : Z := 0x5a130.
+Definition tfib_A_asan_report_load8 : Z := 0x5a130.  Definition tfib_E_asan_report_load8 : Z := 0x5a180.
+Definition tfib_A_asan_report_exp_load8 : Z := 0x5a180.  Definition tfib_E_asan_report_exp_load8 : Z := 0x5a1d0.
+Definition tfib_A_asan_report_load16 : Z := 0x5a1d0.  Definition tfib_E_asan_report_load16 : Z := 0x5a220.
+Definition tfib_A_asan_report_exp_load16 : Z := 0x5a220.  Definition tfib_E_asan_report_exp_load16 : Z := 0x5a270.
+Definition tfib_A_asan_report_store1 : Z := 0x5a270.  Definition tfib_E_asan_report_store1 : Z := 0x5a2c0.
+Definition tfib_A_asan_report_exp_store1 : Z := 0x5a2c0.  Definition tfib_E_asan_report_exp_store1 : Z := 0x5a310.
+Definition tfib_A_asan_report_store2 : Z := 0x5a310.  Definition tfib_E_asan_report_store2 : Z := 0x5a360.
+Definition tfib_A_asan_report_exp_store2 : Z := 0x5a360.  Definition tfib_E_asan_report_exp_store2 : Z := 0x5a3b0.
+Definition tfib_A_asan_report_store4 : Z := 0x5a3b0.  Definition tfib_E_asan_report_store4 : Z := 0x5a400.
+Definition tfib_A_asan_report_exp_store4 : Z := 0x5a400.  Definition tfib_E_asan_report_exp_store4 : Z := 0x5a450.
+Definition tfib_A_asan_report_store8 : Z := 0x5a450.  Definition tfib_E_asan_report_store8 : Z := 0x5a4a0.
+Definition tfib_A_asan_report_exp_store8 : Z := 0x5a4a0.  Definition tfib_E_asan_report_exp_store8 : Z := 0x5a4f0.
+Definition tfib_A_asan_report_store16 : Z := 0x5a4f0.  Definition tfib_E_asan_report_store16 : Z := 0x5a540.
+Definition tfib_A_asan_report_exp_store16 : Z := 0x5a540.  Definition tfib_E_asan_report_exp_store16 : Z := 0x5a590.
+Definition tfib_A_asan_report_load_n : Z := 0x5a590.  Definition tfib_E_asan_report_load_n : Z := 0x5a5e0.
+Definition tfib_A_asan_report_exp_load_n : Z := 0x5a5e0.  Definition tfib_E_asan_report_exp_load_n : Z := 0x5a630.
+Definition tfib_A_asan_report_store_n : Z := 0x5a630.  Definition tfib_E_asan_report_store_n : Z := 0x5a680.
+Definition tfib_A_asan_report_exp_store_n : Z := 0x5a680.  Definition tfib_E_asan_report_exp_store_n : Z := 0x5a6d0.
+Definition tfib_A_InitializeHighMemEnd : Z := 0x5a6d0.  Definition tfib_E_InitializeHighMemEnd : Z := 0x5a750.
+Definition tfib_A_PrintAddressSpaceLayout : Z := 0x5a750.  Definition tfib_E_PrintAddressSpaceLayout : Z := 0x5ab04.
+Definition tfib_A_AsanInitInternal : Z := 0x5ab94.  Definition tfib_E_AsanInitInternal : Z := 0x5ae48.
+Definition tfib_A_AsanInitFromRtl_ENSURE_ASAN_INITED : Z := 0x5ae48.  Definition tfib_E_AsanInitFromRtl_ENSURE_ASAN_INITED : Z := 0x5aee8.
+Definition tfib_A_thunk_59674 : Z := 0x5b0b0.  Definition tfib_E_thunk_59674 : Z := 0x5b0b4.
+Definition tfib_A_asan_init : Z := 0x5b0b4.  Definition tfib_E_asan_init : Z := 0x5b148.
+Definition tfib_A_asan_version_mismatch_check_v8 : Z := 0x5b148.  Definition tfib_E_asan_version_mismatch_check_v8 : Z := 0x5b14c.
+Definition tfib_A_SealedTopOfMemory_check : Z := 0x5b14c.  Definition tfib_E_SealedTopOfMemory_check : Z := 0x5b1b0.
+Definition tfib_A_asan_handle_no_return_tiny_rtl_stub_2_insns : Z := 0x5b324.  Definition tfib_E_asan_handle_no_return_tiny_rtl_stub_2_insns : Z := 0x5b32c.
+Definition tfib_A_force_interface_symbols_dead_volatile_switch : Z := 0x5b3b0.  Definition tfib_E_force_interface_symbols_dead_volatile_switch : Z := 0x5b6d8.
+Definition tfib_A_ReserveShadowMemoryRanges_sealed_early_shadow_re : Z := 0x5b6d8.  Definition tfib_E_ReserveShadowMemoryRanges_sealed_early_shadow_re : Z := 0x5b8b8.
+Definition tfib_A_InitializeShadowMemory : Z := 0x5b8b8.  Definition tfib_E_InitializeShadowMemory : Z := 0x5bbc0.
+Definition tfib_A_SetMallocContextSize : Z := 0x5bbc0.  Definition tfib_E_SetMallocContextSize : Z := 0x5bbd0.
+Definition tfib_A_GetMallocContextSize : Z := 0x5bbd0.  Definition tfib_E_GetMallocContextSize : Z := 0x5bbe0.
+Definition tfib_A_BufferedStackTrace_UnwindImpl_asan : Z := 0x5bbe0.  Definition tfib_E_BufferedStackTrace_UnwindImpl_asan : Z := 0x5bd30.
+Definition tfib_A_AsanStats_Clear_ctor : Z := 0x5c110.  Definition tfib_E_AsanStats_Clear_ctor : Z := 0x5c3b0.
+Definition tfib_A_GetCurrentThreadStats : Z := 0x5c814.  Definition tfib_E_GetCurrentThreadStats : Z := 0x5c84c.
+Definition tfib_A_asan_suppression_kinds_getter_3_insns : Z := 0x5caf4.  Definition tfib_E_asan_suppression_kinds_getter_3_insns : Z := 0x5cb00.
+Definition tfib_A_asan_InitializeSuppressions : Z := 0x5cb00.  Definition tfib_E_asan_InitializeSuppressions : Z := 0x5cb8c.
+Definition tfib_A_IsInterceptorSuppressed : Z := 0x5cb8c.  Definition tfib_E_IsInterceptorSuppressed : Z := 0x5cbf4.
+Definition tfib_A_HaveStackTraceBasedSuppressions : Z := 0x5cbf4.  Definition tfib_E_HaveStackTraceBasedSuppressions : Z := 0x5cc6c.
+Definition tfib_A_IsODRViolationSuppressed : Z := 0x5cc6c.  Definition tfib_E_IsODRViolationSuppressed : Z := 0x5ccd4.
+Definition tfib_A_IsStackTraceSuppressed : Z := 0x5ccd4.  Definition tfib_E_IsStackTraceSuppressed : Z := 0x5ce20.
+Definition tfib_A_asan_thread_tiny_getter_3_insns : Z := 0x5d0ac.  Definition tfib_E_asan_thread_tiny_getter_3_insns : Z := 0x5d0b8.
+Definition tfib_A_AsanThread_Create : Z := 0x5d2d0.  Definition tfib_E_AsanThread_Create : Z := 0x5d46c.
+Definition tfib_A_AsanThread_Destroy_TSDDtor : Z := 0x5d4c8.  Definition tfib_E_AsanThread_Destroy_TSDDtor : Z := 0x5d6e0.
+Definition tfib_A_GetCurrentThread : Z := 0x5d6e0.  Definition tfib_E_GetCurrentThread : Z := 0x5d700.
+Definition tfib_A_AsanThread_SetThreadStackAndTls : Z := 0x5df78.  Definition tfib_E_AsanThread_SetThreadStackAndTls : Z := 0x5e084.
+Definition tfib_A_AsanThread_stack_top : Z := 0x5d8a4.  Definition tfib_E_AsanThread_stack_top : Z := 0x5d8fc.
+Definition tfib_A_AsanThread_stack_bottom : Z := 0x5d8fc.  Definition tfib_E_AsanThread_stack_bottom : Z := 0x5d954.
+Definition tfib_A_AsanThread_AsyncSignalSafeLazyInitFakeStack : Z := 0x5d954.  Definition tfib_E_AsanThread_AsyncSignalSafeLazyInitFakeStack : Z := 0x5db84.
+Definition tfib_A_AsanThread_Init : Z := 0x5db84.  Definition tfib_E_AsanThread_Init : Z := 0x5df78.
+Definition tfib_A_AsanThread_ClearShadowForThreadStackAndTLS : Z := 0x5d700.  Definition tfib_E_AsanThread_ClearShadowForThreadStackAndTLS : Z := 0x5d8a4.
+Definition tfib_A_CreateMainThread : Z := 0x5e0b8.  Definition tfib_E_CreateMainThread : Z := 0x5e1c8.
+Definition tfib_A_SetCurrentThread : Z := 0x5e1c8.  Definition tfib_E_SetCurrentThread : Z := 0x5e2a8.
+Definition tfib_A_MemToShadow_checked_instance_3 : Z := 0x5e4ac.  Definition tfib_E_MemToShadow_checked_instance_3 : Z := 0x5e5e8.
+Definition tfib_A_weak_default_hook_ret : Z := 0x5f2bc.  Definition tfib_E_weak_default_hook_ret : Z := 0x5f2c0.
+Definition tfib_A_InternalAlloc_RawInternalAlloc : Z := 0x5f2c8.  Definition tfib_E_InternalAlloc_RawInternalAlloc : Z := 0x5f508.
+Definition tfib_A_InternalFree_LowLevelAllocator_free_to_freelist : Z := 0x5f75c.  Definition tfib_E_InternalFree_LowLevelAllocator_free_to_freelist : Z := 0x5f8b4.
+Definition tfib_A_internal_allocator_getter : Z := 0x5faa0.  Definition tfib_E_internal_allocator_getter : Z := 0x5faac.
+Definition tfib_A_LowLevelAllocator_InternalAlloc_bump_allocator : Z := 0x5faac.  Definition tfib_E_LowLevelAllocator_InternalAlloc_bump_allocator : Z := 0x5fbf8.
+Definition tfib_A_SetLowLevelAllocateMinAlignment : Z := 0x5fbf8.  Definition tfib_E_SetLowLevelAllocateMinAlignment : Z := 0x5fc44.
+Definition tfib_A_SetLowLevelAllocateCallback : Z := 0x5fc44.  Definition tfib_E_SetLowLevelAllocateCallback : Z := 0x5fc50.
+Definition tfib_A_SetAllocatorMayReturnNull : Z := 0x5fc80.  Definition tfib_E_SetAllocatorMayReturnNull : Z := 0x5fc8c.
+Definition tfib_A_PrintHintAllocatorCannotReturnNull : Z := 0x5fc8c.  Definition tfib_E_PrintHintAllocatorCannotReturnNull : Z := 0x5fc98.
+Definition tfib_A_AllocatorMayReturnNull : Z := 0x5fc98.  Definition tfib_E_AllocatorMayReturnNull : Z := 0x5fca8.
+Definition tfib_A_InternalAllocator_CombinedAllocator_Allocate_int : Z := 0x5fcb4.  Definition tfib_E_InternalAllocator_CombinedAllocator_Allocate_int : Z := 0x5ff80.
+Definition tfib_A_InternalAllocator_LargeMmapAllocator_Allocate : Z := 0x5ff80.  Definition tfib_E_InternalAllocator_LargeMmapAllocator_Allocate : Z := 0x60340.
+Definition tfib_A_SetSealedStartFrame_sealed_patch : Z := 0x6129c.  Definition tfib_E_SetSealedStartFrame_sealed_patch : Z := 0x612a8.
+Definition tfib_A_ReportMmapFailureAndDie : Z := 0x612a8.  Definition tfib_E_ReportMmapFailureAndDie : Z := 0x61380.
+Definition tfib_A_ReportMunmapFailureAndDie : Z := 0x61380.  Definition tfib_E_ReportMunmapFailureAndDie : Z := 0x6141c.
+Definition tfib_A_IncreaseTotalMmap_CHECK_part_mmap_limit_mb_check : Z := 0x61940.  Definition tfib_E_IncreaseTotalMmap_CHECK_part_mmap_limit_mb_check : Z := 0x61984.
+Definition tfib_A_IncreaseTotalMmap : Z := 0x61984.  Definition tfib_E_IncreaseTotalMmap : Z := 0x619a8.
+Definition tfib_A_ReadBinaryNameCached_CacheBinaryName_body : Z := 0x61bfc.  Definition tfib_E_ReadBinaryNameCached_CacheBinaryName_body : Z := 0x61d10.
+Definition tfib_A_RunMallocHooks : Z := 0x61eb4.  Definition tfib_E_RunMallocHooks : Z := 0x61f6c.
+Definition tfib_A_sanitizer_malloc_hook_weak_default_ret : Z := 0x61f6c.  Definition tfib_E_sanitizer_malloc_hook_weak_default_ret : Z := 0x61f70.
+Definition tfib_A_RunFreeHooks : Z := 0x61f70.  Definition tfib_E_RunFreeHooks : Z := 0x6201c.
+Definition tfib_A_sanitizer_free_hook_weak_default : Z := 0x6201c.  Definition tfib_E_sanitizer_free_hook_weak_default : Z := 0x62024.
+Definition tfib_A_sanitizer_ignore_free_hook_weak_default_ret_0 : Z := 0x62024.  Definition tfib_E_sanitizer_ignore_free_hook_weak_default_ret_0 : Z := 0x62028.
+Definition tfib_A_SleepForSeconds_WaitForDebugger : Z := 0x62050.  Definition tfib_E_SleepForSeconds_WaitForDebugger : Z := 0x6209c.
+Definition tfib_A_ReportFile_SetReportPath_body_stderr_stdout_keyw : Z := 0x62360.  Definition tfib_E_ReportFile_SetReportPath_body_stderr_stdout_keyw : Z := 0x625a0.
+Definition tfib_A_sanitizer_set_report_path : Z := 0x62b9c.  Definition tfib_E_sanitizer_set_report_path : Z := 0x62bb4.
+Definition tfib_A_ReportFile_SetReportPath : Z := 0x62bb4.  Definition tfib_E_ReportFile_SetReportPath : Z := 0x62cf8.
+Definition tfib_A_OverrideCommonFlags_no_op_flag_hook_2_insns : Z := 0x62cf8.  Definition tfib_E_OverrideCommonFlags_no_op_flag_hook_2_insns : Z := 0x62d00.
+Definition tfib_A_FlagParser_ParseString_parse_flags : Z := 0x63048.  Definition tfib_E_FlagParser_ParseString_parse_flags : Z := 0x642ec.
+Definition tfib_A_FlagParser_PrintFlagDescriptions_gate_Verbosity : Z := 0x642ec.  Definition tfib_E_FlagParser_PrintFlagDescriptions_gate_Verbosity : Z := 0x64310.
+Definition tfib_A_FlagParser_parse_flag_ParseString_core : Z := 0x647c4.  Definition tfib_E_FlagParser_parse_flag_ParseString_core : Z := 0x64ad4.
+Definition tfib_A_FlagParser_ParseStringFromEnv : Z := 0x64ad4.  Definition tfib_E_FlagParser_ParseStringFromEnv : Z := 0x64c18.
+Definition tfib_A_FlagParser_ParseString : Z := 0x64c18.  Definition tfib_E_FlagParser_ParseString : Z := 0x64d0c.
+Definition tfib_A_RegisterFlag_T_FlagParser_RegisterHandler : Z := 0x64ea0.  Definition tfib_E_RegisterFlag_T_FlagParser_RegisterHandler : Z := 0x64f00.
+Definition tfib_A_FlagParser_alloc_helper_LowLevelAlloc : Z := 0x64f00.  Definition tfib_E_FlagParser_alloc_helper_LowLevelAlloc : Z := 0x64f40.
+Definition tfib_A_internal_atoll : Z := 0x64f40.  Definition tfib_E_internal_atoll : Z := 0x6502c.
+Definition tfib_A_internal_simple_strtoll : Z := 0x6502c.  Definition tfib_E_internal_simple_strtoll : Z := 0x65188.
+Definition tfib_A_internal_memchr : Z := 0x65188.  Definition tfib_E_internal_memchr : Z := 0x651a8.
+Definition tfib_A_internal_memcmp : Z := 0x651a8.  Definition tfib_E_internal_memcmp : Z := 0x651e0.
+Definition tfib_A_internal_memcpy : Z := 0x651e0.  Definition tfib_E_internal_memcpy : Z := 0x65204.
+Definition tfib_A_internal_memmove : Z := 0x65204.  Definition tfib_E_internal_memmove : Z := 0x6525c.
+Definition tfib_A_internal_memset : Z := 0x6525c.  Definition tfib_E_internal_memset : Z := 0x652bc.
+Definition tfib_A_internal_strcspn : Z := 0x652bc.  Definition tfib_E_internal_strcspn : Z := 0x65310.
+Definition tfib_A_internal_strcmp : Z := 0x65310.  Definition tfib_E_internal_strcmp : Z := 0x65344.
+Definition tfib_A_internal_strdup : Z := 0x65344.  Definition tfib_E_internal_strdup : Z := 0x653b0.
+Definition tfib_A_internal_strlen : Z := 0x653b0.  Definition tfib_E_internal_strlen : Z := 0x653cc.
+Definition tfib_A_internal_strncmp : Z := 0x653cc.  Definition tfib_E_internal_strncmp : Z := 0x65410.
+Definition tfib_A_internal_strchr : Z := 0x65410.  Definition tfib_E_internal_strchr : Z := 0x6545c.
+Definition tfib_A_internal_strchrnul : Z := 0x6545c.  Definition tfib_E_internal_strchrnul : Z := 0x654a4.
+Definition tfib_A_internal_strrchr : Z := 0x654a4.  Definition tfib_E_internal_strrchr : Z := 0x654e4.
+Definition tfib_A_internal_strnlen : Z := 0x65614.  Definition tfib_E_internal_strnlen : Z := 0x65644.
+Definition tfib_A_internal_strncpy : Z := 0x65688.  Definition tfib_E_internal_strncpy : Z := 0x656f8.
+Definition tfib_A_internal_strstr : Z := 0x656f8.  Definition tfib_E_internal_strstr : Z := 0x6578c.
+Definition tfib_A_mem_is_zero : Z := 0x6578c.  Definition tfib_E_mem_is_zero : Z := 0x65840.
+Definition tfib_A_internal_sigprocmask_raw_rt_sigprocmask : Z := 0x65840.  Definition tfib_E_internal_sigprocmask_raw_rt_sigprocmask : Z := 0x65850.
+Definition tfib_A_BlockSignals_ScopedBlockSignals_ctor_CHECK_inter : Z := 0x65850.  Definition tfib_E_BlockSignals_ScopedBlockSignals_ctor_CHECK_inter : Z := 0x65a30.
+Definition tfib_A_internal_iserror : Z := 0x65a3c.  Definition tfib_E_internal_iserror : Z := 0x65a5c.
+Definition tfib_A_internal_mmap : Z := 0x65a5c.  Definition tfib_E_internal_mmap : Z := 0x65a68.
+Definition tfib_A_internal_munmap : Z := 0x65a68.  Definition tfib_E_internal_munmap : Z := 0x65a74.
+Definition tfib_A_internal_mprotect : Z := 0x65a74.  Definition tfib_E_internal_mprotect : Z := 0x65a84.
+Definition tfib_A_internal_madvise : Z := 0x65a84.  Definition tfib_E_internal_madvise : Z := 0x65ab0.
+Definition tfib_A_internal_close : Z := 0x65ab0.  Definition tfib_E_internal_close : Z := 0x65abc.
+Definition tfib_A_internal_open_openat_AT_FDCWD : Z := 0x65abc.  Definition tfib_E_internal_open_openat_AT_FDCWD : Z := 0x65ae0.
+Definition tfib_A_internal_read : Z := 0x65ae0.  Definition tfib_E_internal_read : Z := 0x65b18.
+Definition tfib_A_internal_write : Z := 0x65b18.  Definition tfib_E_internal_write : Z := 0x65b50.
+Definition tfib_A_internal_ftruncate : Z := 0x65b50.  Definition tfib_E_internal_ftruncate : Z := 0x65b88.
+Definition tfib_A_internal_dup : Z := 0x65b88.  Definition tfib_E_internal_dup : Z := 0x65b94.
+Definition tfib_A_internal_dup2_dup3 : Z := 0x65b94.  Definition tfib_E_internal_dup2_dup3 : Z := 0x65ba4.
+Definition tfib_A_internal_unlink_unlinkat : Z := 0x65ba4.  Definition tfib_E_internal_unlink_unlinkat : Z := 0x65bbc.
+Definition tfib_A_internal_sched_yield : Z := 0x65bbc.  Definition tfib_E_internal_sched_yield : Z := 0x65bc8.
+Definition tfib_A_internal_usleep_internal_sleep_nanosleep : Z := 0x65bc8.  Definition tfib_E_internal_usleep_internal_sleep_nanosleep : Z := 0x65c14.
+Definition tfib_A_internal_execve : Z := 0x65c14.  Definition tfib_E_internal_execve : Z := 0x65c20.
+Definition tfib_A_internal_exit_exit_group : Z := 0x65c20.  Definition tfib_E_internal_exit_exit_group : Z := 0x65c34.
+Definition tfib_A_FileExists_newfstatat : Z := 0x65c34.  Definition tfib_E_FileExists_newfstatat : Z := 0x65cb4.
+Definition tfib_A_DirExists_newfstatat : Z := 0x65cb4.  Definition tfib_E_DirExists_newfstatat : Z := 0x65d18.
+Definition tfib_A_GetTid_gettid : Z := 0x65d18.  Definition tfib_E_GetTid_gettid : Z := 0x65d24.
+Definition tfib_A_GetEnv : Z := 0x65d24.  Definition tfib_E_GetEnv : Z := 0x65e54.
+Definition tfib_A_FutexWait : Z := 0x65f58.  Definition tfib_E_FutexWait : Z := 0x65f7c.
+Definition tfib_A_FutexWake : Z := 0x65f7c.  Definition tfib_E_FutexWake : Z := 0x65fa0.
+Definition tfib_A_internal_ptrace : Z := 0x65fa0.  Definition tfib_E_internal_ptrace : Z := 0x65fac.
+Definition tfib_A_internal_waitpid_wait4 : Z := 0x65fac.  Definition tfib_E_internal_waitpid_wait4 : Z := 0x65fbc.
+Definition tfib_A_internal_getpid : Z := 0x65fbc.  Definition tfib_E_internal_getpid : Z := 0x65fc8.
+Definition tfib_A_internal_getppid : Z := 0x65fc8.  Definition tfib_E_internal_getppid : Z := 0x65fd4.
+Definition tfib_A_internal_prctl : Z := 0x65fd4.  Definition tfib_E_internal_prctl : Z := 0x65fe0.
+Definition tfib_A_internal_sigaltstack : Z := 0x65fe0.  Definition tfib_E_internal_sigaltstack : Z := 0x65fec.
+Definition tfib_A_internal_fork_clone : Z := 0x65fec.  Definition tfib_E_internal_fork_clone : Z := 0x66004.
+Definition tfib_A_internal_sigaction_norestorer_rt_sigaction : Z := 0x66004.  Definition tfib_E_internal_sigaction_norestorer_rt_sigaction : Z := 0x66130.
+Definition tfib_A_GetNamedMappingFd_ReadProcess_openat_getdents64 : Z := 0x66308.  Definition tfib_E_GetNamedMappingFd_ReadProcess_openat_getdents64 : Z := 0x66704.
+Definition tfib_A_GetMaxUserVirtualAddress_sealed_from_the_start_f : Z := 0x66870.  Definition tfib_E_GetMaxUserVirtualAddress_sealed_from_the_start_f : Z := 0x66988.
+Definition tfib_A_GetPageSizeCached : Z := 0x66988.  Definition tfib_E_GetPageSizeCached : Z := 0x66990.
+Definition tfib_A_ReadBinaryName_readlinkat_proc_self_exe : Z := 0x66990.  Definition tfib_E_ReadBinaryName_readlinkat_proc_self_exe : Z := 0x66a3c.
+Definition tfib_A_ReadLongProcessName_proc_self_cmdline : Z := 0x66a3c.  Definition tfib_E_ReadLongProcessName_proc_self_cmdline : Z := 0x66b5c.
+Definition tfib_A_internal_clone_CHECK_child_stack_16 : Z := 0x66c24.  Definition tfib_E_internal_clone_CHECK_child_stack_16 : Z := 0x66ca4.
+Definition tfib_A_internal_sigaction_syscall_wrapper_selector : Z := 0x66ca4.  Definition tfib_E_internal_sigaction_syscall_wrapper_selector : Z := 0x66d00.
+Definition tfib_A_internal_start_thread_BlockSignals_variant_rt_si : Z := 0x66d00.  Definition tfib_E_internal_start_thread_BlockSignals_variant_rt_si : Z := 0x66dcc.
+Definition tfib_A_thunk_653ec : Z := 0x66ec8.  Definition tfib_E_thunk_653ec : Z := 0x66ecc.
+Definition tfib_A_CheckASLR : Z := 0x66ecc.  Definition tfib_E_CheckASLR : Z := 0x66ed0.
+Definition tfib_A_GetMmapGranularity_thunk : Z := 0x6711c.  Definition tfib_E_GetMmapGranularity_thunk : Z := 0x67120.
+Definition tfib_A_internal_errno_mapping_helper : Z := 0x67120.  Definition tfib_E_internal_errno_mapping_helper : Z := 0x6712c.
+Definition tfib_A_MmapOrDie : Z := 0x6712c.  Definition tfib_E_MmapOrDie : Z := 0x67238.
+Definition tfib_A_MmapNamed_internal_mmap_name_helper : Z := 0x67238.  Definition tfib_E_MmapNamed_internal_mmap_name_helper : Z := 0x672ac.
+Definition tfib_A_UnmapOrDie : Z := 0x672ac.  Definition tfib_E_UnmapOrDie : Z := 0x67328.
+Definition tfib_A_MmapOrDieOnFatalError : Z := 0x67328.  Definition tfib_E_MmapOrDieOnFatalError : Z := 0x67438.
+Definition tfib_A_MmapNoReserveOrDie : Z := 0x67664.  Definition tfib_E_MmapNoReserveOrDie : Z := 0x67768.
+Definition tfib_A_MmapFixedNoAccess_3_insn_arg_shim_0x65c98 : Z := 0x67768.  Definition tfib_E_MmapFixedNoAccess_3_insn_arg_shim_0x65c98 : Z := 0x67774.
+Definition tfib_A_MmapFixed_named_may_die_core_MmapNamed_IncreaseT : Z := 0x67774.  Definition tfib_E_MmapFixed_named_may_die_core_MmapNamed_IncreaseT : Z := 0x678ec.
+Definition tfib_A_MmapFixedSuperNoReserve_3_insn_shim_MmapFixed_co : Z := 0x678ec.  Definition tfib_E_MmapFixedSuperNoReserve_3_insn_shim_MmapFixed_co : Z := 0x678f8.
+Definition tfib_A_thunk_66008 : Z := 0x67ae4.  Definition tfib_E_thunk_66008 : Z := 0x67ae8.
+Definition tfib_A_GetNamedMappingFd_MmapNamed : Z := 0x67e08.  Definition tfib_E_GetNamedMappingFd_MmapNamed : Z := 0x68014.
+Definition tfib_A_SetPrintfAndReportCallback : Z := 0x685cc.  Definition tfib_E_SetPrintfAndReportCallback : Z := 0x685d8.
+Definition tfib_A_Printf : Z := 0x685dc.  Definition tfib_E_Printf : Z := 0x68628.
+Definition tfib_A_SharedPrintfCode : Z := 0x68628.  Definition tfib_E_SharedPrintfCode : Z := 0x68684.
+Definition tfib_A_Report : Z := 0x68684.  Definition tfib_E_Report : Z := 0x686d0.
+Definition tfib_A_SuppressionContext_ctor : Z := 0x6a1c8.  Definition tfib_E_SuppressionContext_ctor : Z := 0x6a224.
+Definition tfib_A_SuppressionContext_ParseFromFile : Z := 0x6a224.  Definition tfib_E_SuppressionContext_ParseFromFile : Z := 0x6a460.
+Definition tfib_A_SuppressionContext_Parse : Z := 0x6a460.  Definition tfib_E_SuppressionContext_Parse : Z := 0x6a784.
+Definition tfib_A_GetSizeFromHdr_sanitizer_get_dtls_size_DTLS_prob : Z := 0x6ad24.  Definition tfib_E_GetSizeFromHdr_sanitizer_get_dtls_size_DTLS_prob : Z := 0x6adf4.
+Definition tfib_A_sanitizer_GetTls_DTLS_helper_sanitizer_tls_get_a : Z := 0x6adf4.  Definition tfib_E_sanitizer_GetTls_DTLS_helper_sanitizer_tls_get_a : Z := 0x6b144.
+Definition tfib_A_DTLS_Destroy_ForEachDVT_no_op_4_insns : Z := 0x6b144.  Definition tfib_E_DTLS_Destroy_ForEachDVT_no_op_4_insns : Z := 0x6b154.
+Definition tfib_A_InternalAllocatorLock_Unlock_or_stats_add_17_ins : Z := 0x6b950.  Definition tfib_E_InternalAllocatorLock_Unlock_or_stats_add_17_ins : Z := 0x6b994.
+Definition tfib_A_ThreadContextBase_ctor_ThreadRegistry_init_helpe : Z := 0x6b994.  Definition tfib_E_ThreadContextBase_ctor_ThreadRegistry_init_helpe : Z := 0x6b9f4.
+Definition tfib_A_ThreadRegistry_CreateThread : Z := 0x6b9f4.  Definition tfib_E_ThreadRegistry_CreateThread : Z := 0x6be6c.
+Definition tfib_A_ThreadRegistry_StartThread : Z := 0x6c72c.  Definition tfib_E_ThreadRegistry_StartThread : Z := 0x6ca50.
+Definition tfib_A_ThreadRegistry_ThreadArgRetval_vector_growth : Z := 0x6ca58.  Definition tfib_E_ThreadRegistry_ThreadArgRetval_vector_growth : Z := 0x6cb5c.
+Definition tfib_A_AddDieCallback : Z := 0x6d30c.  Definition tfib_E_AddDieCallback : Z := 0x6d394.
+Definition tfib_A_Die : Z := 0x6d458.  Definition tfib_E_Die : Z := 0x6d518.
+Definition tfib_A_SetCheckUnwindCallback : Z := 0x6d518.  Definition tfib_E_SetCheckUnwindCallback : Z := 0x6d524.
+Definition tfib_A_CheckFailed : Z := 0x6d524.  Definition tfib_E_CheckFailed : Z := 0x6d5dc.
+Definition tfib_A_ReservedAddressRange_InitAligned : Z := 0x6dc34.  Definition tfib_E_ReservedAddressRange_InitAligned : Z := 0x6dd2c.
+Definition tfib_A_ReserveShadowMemoryRange : Z := 0x6dd2c.  Definition tfib_E_ReserveShadowMemoryRange : Z := 0x6de58.
+Definition tfib_A_sanitizer_common_libcdep_static_ctor_background : Z := 0x6e080.  Definition tfib_E_sanitizer_common_libcdep_static_ctor_background : Z := 0x6e0fc.
+Definition tfib_A_GetThreadStackTopAndBottom : Z := 0x6e130.  Definition tfib_E_GetThreadStackTopAndBottom : Z := 0x6e418.
+Definition tfib_A_weak_default_hook_ret_2 : Z := 0x6e418.  Definition tfib_E_weak_default_hook_ret_2 : Z := 0x6e41c.
+Definition tfib_A_GetThreadStackAndTls : Z := 0x6e41c.  Definition tfib_E_GetThreadStackAndTls : Z := 0x6e80c.
+Definition tfib_A_GetThreadStackTopAndBottom_caller_ClearShadowFor : Z := 0x6e80c.  Definition tfib_E_GetThreadStackTopAndBottom_caller_ClearShadowFor : Z := 0x6e8dc.
+Definition tfib_A_AndroidLogInit : Z := 0x6ecc0.  Definition tfib_E_AndroidLogInit : Z := 0x6ecc4.
+Definition tfib_A_MonotonicNanoTime_NanoTime : Z := 0x6ecf4.  Definition tfib_E_MonotonicNanoTime_NanoTime : Z := 0x6ed3c.
+Definition tfib_A_MapDynamicShadow_MmapAlignedOrDieOnFatalError : Z := 0x6ed3c.  Definition tfib_E_MapDynamicShadow_MmapAlignedOrDieOnFatalError : Z := 0x6ef88.
+Definition tfib_A_weak_default_hook_ret_3 : Z := 0x6ef88.  Definition tfib_E_weak_default_hook_ret_3 : Z := 0x6ef8c.
+Definition tfib_A_InternalMmapVector_push_back : Z := 0x6ef8c.  Definition tfib_E_InternalMmapVector_push_back : Z := 0x6f098.
+Definition tfib_A_InternalMmapVector_Realloc_2 : Z := 0x6f098.  Definition tfib_E_InternalMmapVector_Realloc_2 : Z := 0x6f19c.
+Definition tfib_A_thunk_6d37c : Z := 0x6f418.  Definition tfib_E_thunk_6d37c : Z := 0x6f41c.
+Definition tfib_A_SetShadowRegionHugePageMode_DontDumpShadow_madvi : Z := 0x6f4c0.  Definition tfib_E_SetShadowRegionHugePageMode_DontDumpShadow_madvi : Z := 0x6f4e0.
+Definition tfib_A_DisableCoreDumperIfNecessary : Z := 0x6f4e0.  Definition tfib_E_DisableCoreDumperIfNecessary : Z := 0x6f580.
+Definition tfib_A_internal_pthread_weak_stub_ret : Z := 0x6f5cc.  Definition tfib_E_internal_pthread_weak_stub_ret : Z := 0x6f5d0.
+Definition tfib_A_SetAlternateSignalStack : Z := 0x6f60c.  Definition tfib_E_SetAlternateSignalStack : Z := 0x6f6d0.
+Definition tfib_A_UnsetAlternateSignalStack : Z := 0x6f6d0.  Definition tfib_E_UnsetAlternateSignalStack : Z := 0x6f758.
+Definition tfib_A_InstallDeadlySignalHandlers : Z := 0x6f758.  Definition tfib_E_InstallDeadlySignalHandlers : Z := 0x6f7d0.
+Definition tfib_A_MaybeInstallSigaction : Z := 0x6f7d0.  Definition tfib_E_MaybeInstallSigaction : Z := 0x6f8b4.
+Definition tfib_A_IsAccessibleMemoryRange : Z := 0x6f970.  Definition tfib_E_IsAccessibleMemoryRange : Z := 0x6faa4.
+Definition tfib_A_MmapFixedImpl_MmapFixedOrDie_MmapFixedNoReserve : Z := 0x6fcdc.  Definition tfib_E_MmapFixedImpl_MmapFixedOrDie_MmapFixedNoReserve : Z := 0x6fe0c.
+Definition tfib_A_MmapFixedNoReserve : Z := 0x6fe0c.  Definition tfib_E_MmapFixedNoReserve : Z := 0x6fe6c.
+Definition tfib_A_MmapNoAccess_ReservedAddressRange_Init : Z := 0x6fe6c.  Definition tfib_E_MmapNoAccess_ReservedAddressRange_Init : Z := 0x6ff38.
+Definition tfib_A_MprotectNoAccess : Z := 0x6ff4c.  Definition tfib_E_MprotectNoAccess : Z := 0x6ff6c.
+Definition tfib_A_MmapFixedOrDieOnFatalError_MmapFixedSuperNoReser : Z := 0x6ff6c.  Definition tfib_E_MmapFixedOrDieOnFatalError_MmapFixedSuperNoReser : Z := 0x700b8.
+Definition tfib_A_MmapFixedOrDie : Z := 0x700b8.  Definition tfib_E_MmapFixedOrDie : Z := 0x700c8.
+Definition tfib_A_MaybeStartBackgroudThread : Z := 0x718c0.  Definition tfib_E_MaybeStartBackgroudThread : Z := 0x71904.
+Definition tfib_A_Atexit_internal_exit_hook_runner_12_insns_execut : Z := 0x71904.  Definition tfib_E_Atexit_internal_exit_hook_runner_12_insns_execut : Z := 0x71934.
+Definition tfib_A_StackStore_Store_BlockInfo_helper : Z := 0x71d68.  Definition tfib_E_StackStore_Store_BlockInfo_helper : Z := 0x71e8c.
+Definition tfib_A_StackStore_Alloc : Z := 0x71e8c.  Definition tfib_E_StackStore_Alloc : Z := 0x71fc0.
+Definition tfib_A_StackStore_BlockInfo_Create_Map : Z := 0x72874.  Definition tfib_E_StackStore_BlockInfo_Create_Map : Z := 0x72928.
+Definition tfib_A_StackDepotNode_store_hash_helper : Z := 0x7407c.  Definition tfib_E_StackDepotNode_store_hash_helper : Z := 0x740d8.
+Definition tfib_A_StackDepotPut : Z := 0x74364.  Definition tfib_E_StackDepotPut : Z := 0x74384.
+Definition tfib_A_StackDepotBase_Put : Z := 0x74384.  Definition tfib_E_StackDepotBase_Put : Z := 0x74608.
+Definition tfib_A_StackDepotBase_Get : Z := 0x74608.  Definition tfib_E_StackDepotBase_Get : Z := 0x74718.
+Definition tfib_A_StackDepotBase_find_bucket_chain_walk : Z := 0x74af8.  Definition tfib_E_StackDepotBase_find_bucket_chain_walk : Z := 0x74b88.
+Definition tfib_A_StackDepotBase_lock_bucket_spin_lock : Z := 0x74b88.  Definition tfib_E_StackDepotBase_lock_bucket_spin_lock : Z := 0x74c88.
+Definition tfib_A_StackTrace_GetCurrentPc : Z := 0x74ce8.  Definition tfib_E_StackTrace_GetCurrentPc : Z := 0x74cf0.
+Definition tfib_A_BufferedStackTrace_Init_UnwindFast_frame_pointer : Z := 0x74cf0.  Definition tfib_E_BufferedStackTrace_Init_UnwindFast_frame_pointer : Z := 0x74e50.
+Definition tfib_A_StackTrace_PopStackFrames : Z := 0x74e50.  Definition tfib_E_StackTrace_PopStackFrames : Z := 0x74ec4.
+Definition tfib_A_BufferedStackTrace_Unwind_FAST_frame_pointer_wal : Z := 0x7534c.  Definition tfib_E_BufferedStackTrace_Unwind_FAST_frame_pointer_wal : Z := 0x75464.
+Definition tfib_A_thunk_762d8 : Z := 0x784b0.  Definition tfib_E_thunk_762d8 : Z := 0x784b4.
+Definition tfib_A_thunk_77ab0 : Z := 0x79c88.  Definition tfib_E_thunk_77ab0 : Z := 0x79c8c.
+Definition tfib_A_BufferedStackTrace_UnwindSlow : Z := 0x7b6b4.  Definition tfib_E_BufferedStackTrace_UnwindSlow : Z := 0x7b770.
+Definition tfib_A_Unwind_Trace_callback : Z := 0x7b770.  Definition tfib_E_Unwind_Trace_callback : Z := 0x7b848.
+Definition tfib_A_Unwind_GetIP_slow_unwind_helper : Z := 0x7b848.  Definition tfib_E_Unwind_GetIP_slow_unwind_helper : Z := 0x7babc.
+Definition tfib_A_lsan_flags_init_helper : Z := 0x7bde8.  Definition tfib_E_lsan_flags_init_helper : Z := 0x7be2c.
+Definition tfib_A_lsan_RegisterLsanFlags_lsan_Flags_SetDefaults_Re : Z := 0x7be2c.  Definition tfib_E_lsan_RegisterLsanFlags_lsan_Flags_SetDefaults_Re : Z := 0x7c1fc.
+Definition tfib_A_lsan_InitCommonLsan : Z := 0x7c4cc.  Definition tfib_E_lsan_InitCommonLsan : Z := 0x7c584.
+Definition tfib_A_thunk_7b6f8 : Z := 0x7d8dc.  Definition tfib_E_thunk_7b6f8 : Z := 0x7d8e0.
+Definition tfib_A_lsan_register_root_region : Z := 0x7e4e8.  Definition tfib_E_lsan_register_root_region : Z := 0x7e818.
+Definition tfib_A_lsan_unregister_root_region : Z := 0x7e818.  Definition tfib_E_lsan_unregister_root_region : Z := 0x7eca0.
+Definition tfib_A_lsan_ubsan_default_options_weak_stub : Z := 0x7eca0.  Definition tfib_E_lsan_ubsan_default_options_weak_stub : Z := 0x7ecac.
+Definition tfib_A_asan_malloc_hook_RunMallocHooks_target_sanitizer : Z := 0x81864.  Definition tfib_E_asan_malloc_hook_RunMallocHooks_target_sanitizer : Z := 0x8187c.
+Definition tfib_A_ubsan_InitializeSuppressions : Z := 0x81c00.  Definition tfib_E_ubsan_InitializeSuppressions : Z := 0x81c7c.
+Definition tfib_A_ubsan_InitAsPlugin : Z := 0x81c7c.  Definition tfib_E_ubsan_InitAsPlugin : Z := 0x81d2c.
+Definition tfib_A_ubsan_MaybeCallUbsanDefaultOptions : Z := 0x81d2c.  Definition tfib_E_ubsan_MaybeCallUbsanDefaultOptions : Z := 0x81d44.
+Definition tfib_A_ubsan_RegisterUbsanFlags_InitializeFlags_part : Z := 0x81d44.  Definition tfib_E_ubsan_RegisterUbsanFlags_InitializeFlags_part : Z := 0x81e8c.
+Definition tfib_A_ubsan_default_options_weak_returns : Z := 0x81e8c.  Definition tfib_E_ubsan_default_options_weak_returns : Z := 0x81e98.
+Definition tfib_A_asan_default_options_cli_c : Z := 0x81e98.  Definition tfib_E_asan_default_options_cli_c : Z := 0x81ea4.
+Definition tfib_A_main : Z := 0x81ea4.  Definition tfib_E_main : Z := 0x82168.
+Definition tfib_A_target_alloc_init : Z := 0x82168.  Definition tfib_E_target_alloc_init : Z := 0x8216c.
+Definition tfib_A_target_alloc_count : Z := 0x8216c.  Definition tfib_E_target_alloc_count : Z := 0x82174.
+Definition tfib_A_target_run : Z := 0x82174.  Definition tfib_E_target_run : Z := 0x822fc.
+Definition tfib_A_emit_printf : Z := 0x822fc.  Definition tfib_E_emit_printf : Z := 0x82344.
+Definition tfib_A_LLVMFuzzerTestOneInput : Z := 0x84408.  Definition tfib_E_LLVMFuzzerTestOneInput : Z := 0x85194.
+Definition tfib_A_asan_module_ctor : Z := 0x86794.  Definition tfib_E_asan_module_ctor : Z := 0x867cc.
+Definition tfib_A_asan_module_dtor : Z := 0x867cc.  Definition tfib_E_asan_module_dtor : Z := 0x867fc.
+Definition tfib_A_extenddftf2 : Z := 0x8680c.  Definition tfib_E_extenddftf2 : Z := 0x8699c.
+Definition tfib_A_sysconf : Z := 0x8c5ec.  Definition tfib_E_sysconf : Z := 0x8c814.
+Definition tfib_A_init : Z := 0x8c814.  Definition tfib_E_init : Z := 0x8c818.
+Definition tfib_A_init_libc : Z := 0x8c818.  Definition tfib_E_init_libc : Z := 0x8ca44.
+Definition tfib_A_libc_start_init : Z := 0x8ca44.  Definition tfib_E_libc_start_init : Z := 0x8ca90.
+Definition tfib_A_libc_start_main : Z := 0x8ca90.  Definition tfib_E_libc_start_main : Z := 0x8caf0.
+Definition tfib_A_libc_start_main_stage2 : Z := 0x8caf0.  Definition tfib_E_libc_start_main_stage2 : Z := 0x8cb38.
+Definition tfib_A_init_tls : Z := 0x8cc10.  Definition tfib_E_init_tls : Z := 0x8cec0.
+Definition tfib_A_init_ssp : Z := 0x8cec0.  Definition tfib_E_init_ssp : Z := 0x8cf20.
+Definition tfib_A_stack_chk_fail : Z := 0x8cf20.  Definition tfib_E_stack_chk_fail : Z := 0x8cf28.
+Definition tfib_A_musl_sigaction_abort_area_fn_rt_sigaction_tkill : Z := 0x8cf70.  Definition tfib_E_musl_sigaction_abort_area_fn_rt_sigaction_tkill : Z := 0x8d004.
+Definition tfib_A_Exit : Z := 0x8d004.  Definition tfib_E_Exit : Z := 0x8d020.
+Definition tfib_A_funcs_on_exit : Z := 0x8d050.  Definition tfib_E_funcs_on_exit : Z := 0x8d118.
+Definition tfib_A_fini_stub_ret : Z := 0x8d118.  Definition tfib_E_fini_stub_ret : Z := 0x8d11c.
+Definition tfib_A_cxa_atexit_atexit : Z := 0x8d11c.  Definition tfib_E_cxa_atexit_atexit : Z := 0x8d1e0.
+Definition tfib_A_libc_exit_fini_array_walker_stub : Z := 0x8d1e0.  Definition tfib_E_libc_exit_fini_array_walker_stub : Z := 0x8d1e4.
+Definition tfib_A_musl_exit_helper_stub : Z := 0x8d1e4.  Definition tfib_E_musl_exit_helper_stub : Z := 0x8d1e8.
+Definition tfib_A_libc_exit_fini : Z := 0x8d1e8.  Definition tfib_E_libc_exit_fini : Z := 0x8d234.
+Definition tfib_A_exit : Z := 0x8d234.  Definition tfib_E_exit : Z := 0x8d2a8.
+Definition tfib_A_open : Z := 0x8d4a8.  Definition tfib_E_open : Z := 0x8d58c.
+Definition tfib_A_syscall_ret : Z := 0x8d58c.  Definition tfib_E_syscall_ret : Z := 0x8d5c4.
+Definition tfib_A_musl_dl_iterate_phdr_static : Z := 0x8d5c4.  Definition tfib_E_musl_dl_iterate_phdr_static : Z := 0x8d76c.
+Definition tfib_A_calloc : Z := 0x8dd30.  Definition tfib_E_calloc : Z := 0x8de68.
+Definition tfib_A_libc_malloc_j_libc_malloc_impl : Z := 0x8de68.  Definition tfib_E_libc_malloc_j_libc_malloc_impl : Z := 0x8de6c.
+Definition tfib_A_libc_free : Z := 0x8de6c.  Definition tfib_E_libc_free : Z := 0x8e038.
+Definition tfib_A_get_meta : Z := 0x8e038.  Definition tfib_E_get_meta : Z := 0x8e148.
+Definition tfib_A_alloc_meta : Z := 0x8e520.  Definition tfib_E_alloc_meta : Z := 0x8e7f8.
+Definition tfib_A_libc_malloc_impl : Z := 0x8e7f8.  Definition tfib_E_libc_malloc_impl : Z := 0x8eb68.
+Definition tfib_A_alloc_slot : Z := 0x8eb68.  Definition tfib_E_alloc_slot : Z := 0x8f40c.
+Definition tfib_A_enframe : Z := 0x8f40c.  Definition tfib_E_enframe : Z := 0x8f55c.
+Definition tfib_A_malloc_allzerop : Z := 0x8f55c.  Definition tfib_E_malloc_allzerop : Z := 0x8f6d4.
+Definition tfib_A_getrlimit : Z := 0x91384.  Definition tfib_E_getrlimit : Z := 0x9147c.
+Definition tfib_A_getrusage : Z := 0x9147c.  Definition tfib_E_getrusage : Z := 0x914a4.
+Definition tfib_A_setrlimit : Z := 0x914a4.  Definition tfib_E_setrlimit : Z := 0x9156c.
+Definition tfib_A_mmap : Z := 0x91994.  Definition tfib_E_mmap : Z := 0x91a80.
+Definition tfib_A_mprotect : Z := 0x91a80.  Definition tfib_E_mprotect : Z := 0x91ac8.
+Definition tfib_A_munmap : Z := 0x91b9c.  Definition tfib_E_munmap : Z := 0x91be4.
+Definition tfib_A_sched_yield : Z := 0x91ea8.  Definition tfib_E_sched_yield : Z := 0x91ecc.
+Definition tfib_A_raise_tkill_path : Z := 0x91f28.  Definition tfib_E_raise_tkill_path : Z := 0x91fa0.
+Definition tfib_A_sigaction_libc_sigaction : Z := 0x91fa0.  Definition tfib_E_sigaction_libc_sigaction : Z := 0x92174.
+Definition tfib_A_musl_sigaltstack : Z := 0x9226c.  Definition tfib_E_musl_sigaltstack : Z := 0x922f8.
+Definition tfib_A_fprintf : Z := 0x928d4.  Definition tfib_E_fprintf : Z := 0x92938.
+Definition tfib_A_lockfile : Z := 0x92938.  Definition tfib_E_lockfile : Z := 0x92a34.
+Definition tfib_A_unlockfile : Z := 0x92a34.  Definition tfib_E_unlockfile : Z := 0x92a94.
+Definition tfib_A_stdio_read : Z := 0x92624.  Definition tfib_E_stdio_read : Z := 0x9273c.
+Definition tfib_A_stdio_write : Z := 0x92744.  Definition tfib_E_stdio_write : Z := 0x928d4.
+Definition tfib_A_aio_close_stub_j_ret_used_by_close_stdio_close : Z := 0x925f4.  Definition tfib_E_aio_close_stub_j_ret_used_by_close_stdio_close : Z := 0x925f8.
+Definition tfib_A_stdio_close : Z := 0x925f8.  Definition tfib_E_stdio_close : Z := 0x92624.
+Definition tfib_A_fwritex : Z := 0x92ec8.  Definition tfib_E_fwritex : Z := 0x93000.
+Definition tfib_A_musl_fwrite : Z := 0x93000.  Definition tfib_E_musl_fwrite : Z := 0x930b8.
+Definition tfib_A_towrite : Z := 0x930b8.  Definition tfib_E_towrite : Z := 0x9310c.
+Definition tfib_A_stdio_exit : Z := 0x92d24.  Definition tfib_E_stdio_exit : Z := 0x92ec8.
+Definition tfib_A_ofl_lock : Z := 0x9310c.  Definition tfib_E_ofl_lock : Z := 0x9313c.
+Definition tfib_A_musl_vfprintf : Z := 0x93288.  Definition tfib_E_musl_vfprintf : Z := 0x93438.
+Definition tfib_A_printf_core : Z := 0x93438.  Definition tfib_E_printf_core : Z := 0x94268.
+Definition tfib_A_pop_arg : Z := 0x94268.  Definition tfib_E_pop_arg : Z := 0x9439c.
+Definition tfib_A_pad : Z := 0x9439c.  Definition tfib_E_pad : Z := 0x94470.
+Definition tfib_A_fmt_fp : Z := 0x94470.  Definition tfib_E_fmt_fp : Z := 0x95b38.
+Definition tfib_A_thunk_931e0 : Z := 0x8d984.  Definition tfib_E_thunk_931e0 : Z := 0x8d988.
+Definition tfib_A_musl_wctomb : Z := 0x91d10.  Definition tfib_E_musl_wctomb : Z := 0x91d34.
+Definition tfib_A_musl_wcrtomb : Z := 0x91be4.  Definition tfib_E_musl_wcrtomb : Z := 0x91d10.
+Definition tfib_A_fpclassifyl : Z := 0x8ff74.  Definition tfib_E_fpclassifyl : Z := 0x8ffb8.
+Definition tfib_A_letf2 : Z := 0x8f7ac.  Definition tfib_E_letf2 : Z := 0x8f874.
+Definition tfib_A_multf3 : Z := 0x8f874.  Definition tfib_E_multf3 : Z := 0x8ff74.
+Definition tfib_A_floatsitf : Z := 0x907d0.  Definition tfib_E_floatsitf : Z := 0x908d8.
+Definition tfib_A_scalbn : Z := 0x911dc.  Definition tfib_E_scalbn : Z := 0x91274.
+Definition tfib_A_subtf3 : Z := 0x907c0.  Definition tfib_E_subtf3 : Z := 0x907d0.
+Definition tfib_A_addtf3 : Z := 0x8ffb8.  Definition tfib_E_addtf3 : Z := 0x90784.
+Definition tfib_A_fe_getround : Z := 0x90784.  Definition tfib_E_fe_getround : Z := 0x907b4.
+Definition tfib_A_fixunstfsi : Z := 0x95b40.  Definition tfib_E_fixunstfsi : Z := 0x95bd4.
+Definition tfib_A_floatunsitf : Z := 0x95bd4.  Definition tfib_E_floatunsitf : Z := 0x95cc0.
+Definition tfib_A_fixtfsi : Z := 0x91274.  Definition tfib_E_fixtfsi : Z := 0x9131c.
+Definition tfib_A_divtf3 : Z := 0x908d8.  Definition tfib_E_divtf3 : Z := 0x911dc.
+Definition tfib_A_musl_vprintf : Z := 0x96398.  Definition tfib_E_musl_vprintf : Z := 0x963b4.
+Definition tfib_A_stdout_write : Z := 0x93148.  Definition tfib_E_stdout_write : Z := 0x931e8.
+Definition tfib_A_thunk_95368 : Z := 0x9694c.  Definition tfib_E_thunk_95368 : Z := 0x96950.
+Definition tfib_A_musl_memcmp : Z := 0x96a1c.  Definition tfib_E_musl_memcmp : Z := 0x96a4c.
+Definition tfib_A_musl_memcpy : Z := 0x96a4c.  Definition tfib_E_musl_memcpy : Z := 0x96e50.
+Definition tfib_A_musl_memset : Z := 0x96e80.  Definition tfib_E_musl_memset : Z := 0x96f78.
+Definition tfib_A_musl_strchr : Z := 0x96f78.  Definition tfib_E_musl_strchr : Z := 0x96fb4.
+Definition tfib_A_strchrnul : Z := 0x96fb4.  Definition tfib_E_strchrnul : Z := 0x97094.
+Definition tfib_A_musl_strlen : Z := 0x970cc.  Definition tfib_E_musl_strlen : Z := 0x9715c.
+Definition tfib_A_musl_strnlen : Z := 0x973c8.  Definition tfib_E_musl_strnlen : Z := 0x9740c.
+Definition tfib_A_musl_memchr : Z := 0x96950.  Definition tfib_E_musl_memchr : Z := 0x96a1c.
+Definition tfib_A_lock : Z := 0x97448.  Definition tfib_E_lock : Z := 0x976d0.
+Definition tfib_A_unlock : Z := 0x976d0.  Definition tfib_E_unlock : Z := 0x97744.
+Definition tfib_A_syscall_cp_c : Z := 0x97744.  Definition tfib_E_syscall_cp_c : Z := 0x97768.
+Definition tfib_A_syscall_cp_sccp : Z := 0x97768.  Definition tfib_E_syscall_cp_sccp : Z := 0x9776c.
+Definition tfib_A_syscall_cp_c_tail_sccp_9_insns : Z := 0x9776c.  Definition tfib_E_syscall_cp_c_tail_sccp_9_insns : Z := 0x97790.
+Definition tfib_A_pthread_atfork : Z := 0x977a8.  Definition tfib_E_pthread_atfork : Z := 0x9784c.
+Definition tfib_A_mremap : Z := 0x91ac8.  Definition tfib_E_mremap : Z := 0x91b9c.
+Definition tfib_A_pthread_getspecific_tss_get : Z := 0x98820.  Definition tfib_E_pthread_getspecific_tss_get : Z := 0x9883c.
+Definition tfib_A_pthread_key_create : Z := 0x98bc8.  Definition tfib_E_pthread_key_create : Z := 0x98c9c.
+Definition tfib_A_lock_unlock_pair_user_futex : Z := 0x99614.  Definition tfib_E_lock_unlock_pair_user_futex : Z := 0x996b8.
+Definition tfib_A_pthread_key_create_body_tsd_init : Z := 0x996b8.  Definition tfib_E_pthread_key_create_body_tsd_init : Z := 0x997d4.
+Definition tfib_A_pthread_key_atfork_tsd_table_init_11_insns : Z := 0x997d4.  Definition tfib_E_pthread_key_atfork_tsd_table_init_11_insns : Z := 0x99800.
+Definition tfib_A_pthread_setspecific : Z := 0x99838.  Definition tfib_E_pthread_setspecific : Z := 0x9986c.
+Definition tfib_A_set_thread_area : Z := 0x99874.  Definition tfib_E_set_thread_area : Z := 0x99880.
+Definition tfib_A_thunk_96f9c : Z := 0x9986c.  Definition tfib_E_thunk_96f9c : Z := 0x99874.
+Definition tfib_A_clock_gettime_113_vdso_fallback_169_gettimeofday : Z := 0x9a1a0.  Definition tfib_E_clock_gettime_113_vdso_fallback_169_gettimeofday : Z := 0x9a258.
+Definition tfib_A_close : Z := 0x9c870.  Definition tfib_E_close : Z := 0x9c8c4.
+Definition tfib_A_musl_read : Z := 0x9c950.  Definition tfib_E_musl_read : Z := 0x9c984.
+Definition tfib_A_vm_wait : Z := 0x99eb0.  Definition tfib_E_vm_wait : Z := 0x99f00.
+Definition tfib_D_str_sealed : Z := 0x11833.
+Definition tfib_D_init_array_0_3 : Z := 0x9d9b8.
+Definition tfib_D_fini_array_0_1 : Z := 0x9d9d8.
+Definition tfib_D_GOT_common_flags : Z := 0x9df40.
+Definition tfib_D_GOT_flags : Z := 0x9df48.
+Definition tfib_D_GOT_asan_shadow_memory_dynamic_address : Z := 0x9df50.
+Definition tfib_D_GOT_kMidMemBeg : Z := 0x9df58.
+Definition tfib_D_GOT_kMidMemEnd : Z := 0x9df60.
+Definition tfib_D_GOT_kHighMemEnd : Z := 0x9df68.
+Definition tfib_D_GOT_replace_intrin_cached : Z := 0x9eab8.
+Definition tfib_D_environ_musl : Z := 0x9ebe0.
+Definition tfib_D_REAL_read : Z := 0x9fcb8.
+Definition tfib_D_REAL_memcpy : Z := 0x9fde8.
+Definition tfib_D_REAL_memset : Z := 0x9fdf0.
+Definition tfib_D_asan_allocator_instance_asan_allocator_cpp_insta : Z := 0xa2fd8.
+Definition tfib_D_asan_flags_Flags_struct_flags : Z := 0xa3e38.
+Definition tfib_D_asan_shadow_memory_dynamic_address : Z := 0xa6638.
+Definition tfib_D_asan_inited : Z := 0xa7318.
+Definition tfib_D_replace_intrin_cached : Z := 0xa7319.
+Definition tfib_D_kHighMemEnd : Z := 0xa7320.
+Definition tfib_D_kMidMemBeg : Z := 0xa7328.
+Definition tfib_D_kMidMemEnd : Z := 0xa7330.
+Definition tfib_D_malloc_context_size : Z := 0xa733c.
+Definition tfib_D_common_flags_dont_use_CommonFlags_struct_common : Z := 0x138168.
+Definition tfib_D_libc_progname_area_musl_bss : Z := 0x5f9c80.
+Definition tfib_at_img_lo : Z := 0x10000.
+Definition tfib_at_img_hi : Z := 0x5fc000.
+Definition tfib_at_n_res : nat := 4%nat.
+Definition tfib_at_shadow_off : Z := 0x7fff8000.
+Definition tfib_at_a_entry : Z := 0x309ec.
+Definition tfib_at_rw_lo : Z := 0x9f000.
+Definition tfib_at_rw_len : Z := 0x55d000.
+Definition tfib_at_ph_addr_z : Z := 0x10040.
+Definition tfib_at_ph_ent_z : Z := 56.
+Definition tfib_at_ph_num_z : Z := 11.
+Definition tfib_at_x_imemset : Z := 0x6525c.
+Definition tfib_at_x_imemcpy : Z := 0x651e0.
+Definition tfib_at_x_memset : Z := 0x96e80.
+Definition tfib_at_x_memcpy : Z := 0x96a4c.
+Definition tfib_at_x_memiszero : Z := 0x6578c.
+Definition tfib_at_x_istrncpy : Z := 0x65688.
+Definition tfib_at_x_sealed : Z := 0x11833.
+Definition tfib_at_x_popfree : Z := 0x36fe4.
+Definition tfib_at_x_sniff : Z := 0.
+Definition tfib_at_sniff_tab : Z := 0.
+Definition tfib_at_sniff_cell : Z := 0.
+Definition tfib_at_x_envscan : Z := 0x8c850.
+Definition tfib_at_x_envscan_k : Z := 0x8c85c.
+Definition tfib_at_x_pnscan : Z := 0x8c914.
+Definition tfib_at_x_pnscan_k : Z := 0x8c920.
+Definition tfib_at_stops_more : list Z := (0x34c58 :: 0x3627c :: 0x554d0 :: 0x5b888 :: 0x5b89c :: 0x5b8b0 :: 0x612d8 :: 0x613a8 :: 0x6ee94 :: 0x6fda0 :: 0x6ff30 :: 0x79c88 :: nil)%list.

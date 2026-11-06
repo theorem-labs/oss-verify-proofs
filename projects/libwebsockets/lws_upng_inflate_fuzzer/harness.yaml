@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libwebsockets
 harness: lws_upng_inflate_fuzzer
-rocq: OssFuzzTheorems.libwebsockets.lws_upng_inflate_fuzzer
+rocq: OSSVerify.libwebsockets.lws_upng_inflate_fuzzer
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

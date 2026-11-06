@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: highwayhash
 harness: highwayhash_fuzzer
-rocq: OssFuzzTheorems.highwayhash.highwayhash_fuzzer
+rocq: OSSVerify.highwayhash.highwayhash_fuzzer
 origin: upstream
 summary: First 32 bytes become a 256-bit HHKey; HighwayHash64 of the rest via InstructionSets::Run<HighwayHash>;
   the result is never read.

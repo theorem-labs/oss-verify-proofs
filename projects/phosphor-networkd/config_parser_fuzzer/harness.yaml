@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: phosphor-networkd
 harness: config_parser_fuzzer
-rocq: OssFuzzTheorems.phosphor_networkd.config_parser_fuzzer
+rocq: OSSVerify.phosphor_networkd.config_parser_fuzzer
 origin: oss-fuzz
 summary: Parse a systemd .network file from the input, query map values and DHCP/IPv6AcceptRA helpers,
   then parseBool/icaseeq/KeyCheck/SectionCheck/ValueCheck/pathForIntfConf on the raw input; all results

@@ -1,0 +1,3 @@
+# baseshapes: pairs 1729, bases 43587, parcel functions 0 (c.lui 0)
+# shapes: {'(a) IMM': 31865, '(none: a plain lo12 pair or a pointer)': 6010, '(b) ADDI': 26824, '(h) NO-LUI': 8009, '(c) LOGICAL': 3669, '(f) INFN-CALL': 2314, '(e) JT-ARM': 386, '(not analysed: no fixpoint)': 2}
+# verdicts: {'RUNTIME': 13828, 'OFFSET-ON-POINTER': 21731, 'UNNAMED': 2551, 'ADDRESS-EQUAL': 3435, 'TERM-EQUAL': 2042}

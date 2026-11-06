@@ -1,11 +1,12 @@
 schema: oss-fuzz-theorems/harness/1
 project: spice-usbredir
 harness: usbredirfilterfuzz
-rocq: OssFuzzTheorems.spice_usbredir.usbredirfilterfuzz
+rocq: OSSVerify.spice_usbredir.usbredirfilterfuzz
 origin: upstream
-summary: usbredirfilter_string_to_rules with fuzzed token/rule separators, then usbredirfilter_verify,
-  usbredirfilter_print to /dev/null, usbredirfilter_rules_to_string and usbredirfilter_check against fuzzed
-  device/interface descriptors; every result discarded.
+summary: usbredirfilter_string_to_rules with fuzzed token/rule separators. A rule string that it refuses, or that
+  gives no rules, returns 1. Otherwise usbredirfilter_verify, usbredirfilter_print to /dev/null,
+  usbredirfilter_rules_to_string and usbredirfilter_check against fuzzed device/interface descriptors, with each
+  result discarded.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -146,6 +147,9 @@ builds:
       sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
 licence: NOASSERTION
 checks: []
+rejects:
+- where: source/usbredirfilterfuzz.cc:59-66
+  what: An input whose rule string usbredirfilter_string_to_rules refuses, or turns into no rules, is returned 1
 distribution:
   file: Distribution.v
   argv0: usbredirfilterfuzz
@@ -171,7 +175,14 @@ statements:
     reading: may-fail
     budgets: asan
     abort: signal
-    status: open
+    status: suspected-false
+    basis: reading
+    reason: The fuzz target calls abort() when fopen("/dev/null", "wb") fails (source/usbredirfilterfuzz.cc:41-44),
+      and musl's fopen calls openat before it allocates (musl f21a9653, src/stdio/fopen.c:21-26). In LPS f1006fe8,
+      openat is a file-system call (Run.v:1363) that may fail at random under both readings, because
+      alloc-forced-only restricts only memory requests (Run.v:1315-1316; Shapes.v:79, :88-90), and the open of
+      /dev/null may fail with ENOMEM, EACCES, EMFILE or ENFILE (Sys/Fs/Open.v:946-959, :268-273). The statement
+      forbids death by SIGABRT (Shapes.v:182-195).
   asan_disagrees_at_most:
     kind: bound
     builds:
@@ -194,7 +205,14 @@ statements:
     reading: may-fail
     budgets: standard
     abort: signal
-    status: open
+    status: suspected-false
+    basis: reading
+    reason: The fuzz target calls abort() when fopen("/dev/null", "wb") fails (source/usbredirfilterfuzz.cc:41-44),
+      and musl's fopen calls openat before it allocates (musl f21a9653, src/stdio/fopen.c:21-26). In LPS f1006fe8,
+      openat is a file-system call (Run.v:1363) that may fail at random under both readings, because
+      alloc-forced-only restricts only memory requests (Run.v:1315-1316; Shapes.v:79, :88-90), and the open of
+      /dev/null may fail with ENOMEM, EACCES, EMFILE or ENFILE (Sys/Fs/Open.v:946-959, :268-273). The statement
+      forbids death by SIGABRT (Shapes.v:182-195).
   ubsan_disagrees_at_most:
     kind: bound
     builds:
@@ -217,7 +235,14 @@ statements:
     reading: may-fail
     budgets: asan
     abort: signal
-    status: open
+    status: suspected-false
+    basis: reading
+    reason: The fuzz target calls abort() when fopen("/dev/null", "wb") fails (source/usbredirfilterfuzz.cc:41-44),
+      and musl's fopen calls openat before it allocates (musl f21a9653, src/stdio/fopen.c:21-26). In LPS f1006fe8,
+      openat is a file-system call (Run.v:1363) that may fail at random under both readings, because
+      alloc-forced-only restricts only memory requests (Run.v:1315-1316; Shapes.v:79, :88-90), and the open of
+      /dev/null may fail with ENOMEM, EACCES, EMFILE or ENFILE (Sys/Fs/Open.v:946-959, :268-273). The statement
+      forbids death by SIGABRT (Shapes.v:182-195).
   asan_ubsan_disagrees_at_most:
     kind: bound
     builds:
@@ -240,8 +265,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -250,8 +277,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -260,8 +289,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -270,5 +301,7 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2

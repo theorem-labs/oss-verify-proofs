@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libidn
 harness: libidn_stringprep_fuzzer
-rocq: OssFuzzTheorems.libidn.libidn_stringprep_fuzzer
+rocq: OSSVerify.libidn.libidn_stringprep_fuzzer
 origin: upstream
 summary: Runs the NUL-terminated input (<=2048 B) through stringprep_profile(Nodeprep), pr29_8z, tld_*
   checks (WITH_TLD), stringprep_utf8_nfkc_normalize, utf8<->unichar, stringprep nameprep (with and without

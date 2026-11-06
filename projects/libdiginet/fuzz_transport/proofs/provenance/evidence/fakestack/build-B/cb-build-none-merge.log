@@ -1,0 +1,15 @@
+cb: cache none (CACHE=none)
+cb: layout old (the unit's proofs are proofs/libdiginet/fuzz_transport; base f6acfcb0c1b8, facts f6acfcb0c1b8, clone HEAD 98fec74a3b5e)
+cb: kit ows.sh <OWS> sha256 2416d327faf156d6db6796544fb539cd7c02e5e31ad9df216b1485a3cc1550a5; ws-cache <WS_CACHE> sha256 b6f58f7d05e5d75e50620a235b20f48647157b9e54e2f5ac1b83ddcf69fa835f; vm-tool <VM_TOOL> sha256 f64397db7c110ba70434a7df16849790df45d75ea01f9eea37c7d3611d9dc155
+ows: old <VM_WS> moved to <VM_OLD>/
+<VM_WS>: cold-libdiginet-fuzz-transport at f6acfcb0c1b8ea5375dac0c4485c6b2d3c946929 from <WS_BUCKET>/cold-libdiginet-fuzz-transport-f6acfcb0c1b8ea5375dac0c4485c6b2d3c946929.tar.zst in 8s; saves its 938s (15 min) base build. A build tool's rsync -c of the same sources leaves every file and mtime as packed, so make rebuilds only changed files.
+ows: base f6acfcb0c1b8ea5375dac0c4485c6b2d3c946929 unit libdiginet fuzz_transport OssFuzzTheorems.libdiginet.fuzz_transport OssFuzzTheorems.Proofs.libdiginet.fuzz_transport
+cb: pins of libdiginet/fuzz_transport: each file of <VM>:<VM_WS>/projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts f6acfcb0c1b8 (facts of base f6acfcb0c1, BASE.tsv)
+cb: pin libdiginet/fuzz_transport fuzz_transport.asan e89be137db17 PINNED (asan pins e89be137db17 at facts f6acfcb0c1b8)
+cb: pin libdiginet/fuzz_transport fuzz_transport.asan-ubsan 41113a03c82f PINNED (asan-ubsan pins 41113a03c82f at facts f6acfcb0c1b8)
+cb: pin libdiginet/fuzz_transport fuzz_transport.plain bb20ce415827 PINNED (plain pins bb20ce415827 at facts f6acfcb0c1b8)
+cb: pin libdiginet/fuzz_transport fuzz_transport.ubsan af7b86991906 PINNED (ubsan pins af7b86991906 at facts f6acfcb0c1b8)
+cb: pins libdiginet/fuzz_transport at facts f6acfcb0c1b8: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts f6acfcb0c1b8
+cb: sync check: <VM>:<VM_WS>/proofs/libdiginet/fuzz_transport holds <WT>/proofs/libdiginet/fuzz_transport by content (rsync -c --dry-run after the sync: no difference, 4327 ms)
+cb: <CLONE> building on <VM> (pid 1640742, <VM_WS>/logs/build-20261031T150032Z.log)
+cb: rc=0 wall=795 log=<CLONE_LOGS>/build-20261031T150032Z.log (100 files compiled, 0 failed, 53 warnings)

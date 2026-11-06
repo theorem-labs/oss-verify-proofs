@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libcue
 harness: fuzz
-rocq: OssFuzzTheorems.libcue.fuzz
+rocq: OSSVerify.libcue.fuzz
 origin: upstream
 summary: NUL-terminates the input, cue_parse_string then cd_delete; the parsed Cd is never inspected.
 entry: LLVMFuzzerTestOneInput

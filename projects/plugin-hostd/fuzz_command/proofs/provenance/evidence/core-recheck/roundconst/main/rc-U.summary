@@ -1,0 +1,24 @@
+# in/RU.full.tsv.gz: selected 66763 kept rows equal to a donor quantity (floor 0x100 on spans only)
+#   MISMATCH	NON-ADDRESS-SAME	178
+#   MISMATCH	ROUND-CONSTANT-SAME	4
+#   MIXED	NON-ADDRESS-SAME	1038
+#   SAME	NON-ADDRESS-SAME	64135
+#   SAME	SAME-GEOMETRY	1408
+#   class	MISMATCH	extent-to-next	8
+#   class	MISMATCH	extent-to-next/2	39
+#   class	MISMATCH	extent-to-next/4	19
+#   class	MISMATCH	section/2; span/2	1
+#   class	MISMATCH	section/4; span/4	3
+#   class	MISMATCH	segment/4096	18
+#   class	MISMATCH	segment; span	34
+#   class	MISMATCH	span	34
+#   class	MISMATCH	span/2	13
+#   class	MISMATCH	span/4	11
+#   class	MISMATCH	span/8	2
+#   class	MIXED	extent-to-next(unnamed run); extent-to-next/4; extent-to-next/8; symbol-size/4; symbol-size/8	850
+#   class	MIXED	extent-to-next/2; segment/4; span/4; symbol-size/2	105
+#   class	MIXED	extent-to-next/2; symbol-size/2	2
+#   class	MIXED	extent-to-next/4; segment/8; span/8; symbol-size/4	75
+#   class	MIXED	extent-to-next/4; symbol-size/4	1
+#   class	MIXED	extent-to-next; extent-to-next(unnamed run); symbol-size	2
+#   class	MIXED	extent-to-next; symbol-size	3

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cups-filters
 harness: fuzz_cupsfilters_image_png_decoder
-rocq: OssFuzzTheorems.cups_filters.fuzz_cupsfilters_image_png_decoder
+rocq: OSSVerify.cups_filters.fuzz_cupsfilters_image_png_decoder
 origin: upstream
 summary: Budget-checks a PNG/JPEG/TIFF header, decodes with cupsImageOpenFP-equivalent _cupsImageRead{PNG,JPEG,TIFF}
   under a hash-selected colour space/LUT, reads 3 rows and 3 columns and folds them into a hash that is

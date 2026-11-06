@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: arrow
 harness: parquet-arrow-fuzz
-rocq: OssFuzzTheorems.arrow.parquet_arrow_fuzz
+rocq: OSSVerify.arrow.parquet_arrow_fuzz
 origin: upstream
 summary: Metadata, statistics, bloom filters (100 random FindHash probes) and page indexes decoded; results
   discarded; the three batch-size reads are not compared with each other.

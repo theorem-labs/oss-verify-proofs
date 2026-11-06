@@ -1,0 +1,4 @@
+# self-test: 94 known answers OK
+# section bounds: proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v: 14 of 14 section cells equal the image's section headers
+# unit identity: proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v: the image's 4 PT_LOADs equal the ubsan pin d63ba804708e (<pinned>/fuzz_boxreg.ubsan, pinned by projects/libreac/fuzz_boxreg/harness.yaml; ELF section-header fields and build-id masked)
+# proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v: {'KEEP-SIZE0': 2, 'KEEP': 124, 'KEEP-SPAN': 3, 'FIX': 29, 'ABSENT': 29, 'NOSYM': 46, 'KEEP-BY-LOAD': 1, 'INTERIOR-OWN': 1, 'UNCHECKED': 3}

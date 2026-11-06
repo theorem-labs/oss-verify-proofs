@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: cmp
-rocq: OssFuzzTheorems.openssl.cmp
+rocq: OSSVerify.openssl.cmp
 origin: upstream
 summary: d2i_OSSL_CMP_MSG_bio, i2d + ASN1_item_print to a null BIO, then client-side ossl_cmp_msg_check_update
   and a CMP server processing the message with stub callbacks; results discarded.

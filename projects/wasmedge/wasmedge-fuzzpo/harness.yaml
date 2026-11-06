@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wasmedge
 harness: wasmedge-fuzzpo
-rocq: OssFuzzTheorems.wasmedge.wasmedge_fuzzpo
+rocq: OSSVerify.wasmedge.wasmedge_fuzzpo
 origin: upstream
 summary: Splits the input on the 4-byte separator DE AD BE EF into an argv vector and runs WasmEdge's
   PO::ArgumentParser over the full wasmedge CLI option table (output to /dev/null). The parse outcome

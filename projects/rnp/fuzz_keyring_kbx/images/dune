@@ -6,22 +6,22 @@
  (deps (:elf %{project_root}/projects/rnp/bin/fuzz_keyring_kbx/fuzz_keyring_kbx.plain))
  (action
   (run elf-snapshot %{elf} Plain.v --prefix Plain --module-name M
-       --namespace OssFuzzTheorems.rnp.fuzz_keyring_kbx.images)))
+       --namespace OSSVerify.rnp.fuzz_keyring_kbx.images)))
 (rule
  (targets Ubsan.v Ubsan_seg_000.hex Ubsan_seg_001.hex Ubsan_seg_002.hex Ubsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/rnp/bin/fuzz_keyring_kbx/fuzz_keyring_kbx.ubsan))
  (action
   (run elf-snapshot %{elf} Ubsan.v --prefix Ubsan --module-name M
-       --namespace OssFuzzTheorems.rnp.fuzz_keyring_kbx.images)))
+       --namespace OSSVerify.rnp.fuzz_keyring_kbx.images)))
 (rule
  (targets Asan.v Asan_seg_000.hex Asan_seg_001.hex Asan_seg_002.hex Asan_seg_003.hex)
  (deps (:elf %{project_root}/projects/rnp/bin/fuzz_keyring_kbx/fuzz_keyring_kbx.asan))
  (action
   (run elf-snapshot %{elf} Asan.v --prefix Asan --module-name M
-       --namespace OssFuzzTheorems.rnp.fuzz_keyring_kbx.images)))
+       --namespace OSSVerify.rnp.fuzz_keyring_kbx.images)))
 (rule
  (targets AsanUbsan.v AsanUbsan_seg_000.hex AsanUbsan_seg_001.hex AsanUbsan_seg_002.hex AsanUbsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/rnp/bin/fuzz_keyring_kbx/fuzz_keyring_kbx.asan-ubsan))
  (action
   (run elf-snapshot %{elf} AsanUbsan.v --prefix AsanUbsan --module-name M
-       --namespace OssFuzzTheorems.rnp.fuzz_keyring_kbx.images)))
+       --namespace OSSVerify.rnp.fuzz_keyring_kbx.images)))

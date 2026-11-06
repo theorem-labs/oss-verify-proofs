@@ -1,0 +1,585 @@
+(* This file states or restates instruction words of the task's compiled program (third-party object code: the upstream library at its pinned commit, the C library, the sanitizer runtime and the task authors' wrapper) for use in the proofs - see NOTICE. No Anthropic licence header is applied to this file. *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+From Stdlib Require Import ZArith.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
+From OSSVerify.cjson.cjson_read_fuzzer.images Require Import Asan.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+Open Scope bv_scope.
+
+(* [comment removed for export] *)
+Local Ltac vm_refl :=
+  lazymatch goal with
+  | |- ?G => apply (@bool_decide_eq_true_1 G _); vm_cast_no_check (@eq_refl bool true)
+  end.
+
+(* [comment removed for export] *)
+Definition W_9b5f4 : bv 32 := 0x0e060a63.
+Lemma F_9b5f4 : fetch_word Asan.M.loaded_segments (0x9b5f4 : word) = Some W_9b5f4.
+Proof. vm_refl. Qed.
+Lemma D_9b5f4 : decode_any W_9b5f4 = Some (Branch BC_EQ 12 0 244, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b5f8 : bv 32 := 0x00b50023.
+Lemma F_9b5f8 : fetch_word Asan.M.loaded_segments (0x9b5f8 : word) = Some W_9b5f8.
+Proof. vm_refl. Qed.
+Lemma D_9b5f8 : decode_any W_9b5f8 = Some (Store SZ1 10 11 0, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b5fc : bv 32 := 0x00c506b3.
+Lemma F_9b5fc : fetch_word Asan.M.loaded_segments (0x9b5fc : word) = Some W_9b5fc.
+Proof. vm_refl. Qed.
+Lemma D_9b5fc : decode_any W_9b5fc = Some (Op ALU_ADD 13 10 12, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b600 : bv 32 := 0x00300713.
+Lemma F_9b600 : fetch_word Asan.M.loaded_segments (0x9b600 : word) = Some W_9b600.
+Proof. vm_refl. Qed.
+Lemma D_9b600 : decode_any W_9b600 = Some (OpImm ALU_ADD 14 0 3, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b604 : bv 32 := 0xfeb68fa3.
+Lemma F_9b604 : fetch_word Asan.M.loaded_segments (0x9b604 : word) = Some W_9b604.
+Proof. vm_refl. Qed.
+Lemma D_9b604 : decode_any W_9b604 = Some (Store SZ1 13 11 4095, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b608 : bv 32 := 0x0ee66063.
+Lemma F_9b608 : fetch_word Asan.M.loaded_segments (0x9b608 : word) = Some W_9b608.
+Proof. vm_refl. Qed.
+Lemma D_9b608 : decode_any W_9b608 = Some (Branch BC_LTU 12 14 224, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b60c : bv 32 := 0x00b500a3.
+Lemma F_9b60c : fetch_word Asan.M.loaded_segments (0x9b60c : word) = Some W_9b60c.
+Proof. vm_refl. Qed.
+Lemma D_9b60c : decode_any W_9b60c = Some (Store SZ1 10 11 1, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b610 : bv 32 := 0x00b50123.
+Lemma F_9b610 : fetch_word Asan.M.loaded_segments (0x9b610 : word) = Some W_9b610.
+Proof. vm_refl. Qed.
+Lemma D_9b610 : decode_any W_9b610 = Some (Store SZ1 10 11 2, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b614 : bv 32 := 0x00700713.
+Lemma F_9b614 : fetch_word Asan.M.loaded_segments (0x9b614 : word) = Some W_9b614.
+Proof. vm_refl. Qed.
+Lemma D_9b614 : decode_any W_9b614 = Some (OpImm ALU_ADD 14 0 7, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b618 : bv 32 := 0xfeb68ea3.
+Lemma F_9b618 : fetch_word Asan.M.loaded_segments (0x9b618 : word) = Some W_9b618.
+Proof. vm_refl. Qed.
+Lemma D_9b618 : decode_any W_9b618 = Some (Store SZ1 13 11 4093, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b61c : bv 32 := 0xfeb68f23.
+Lemma F_9b61c : fetch_word Asan.M.loaded_segments (0x9b61c : word) = Some W_9b61c.
+Proof. vm_refl. Qed.
+Lemma D_9b61c : decode_any W_9b61c = Some (Store SZ1 13 11 4094, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b620 : bv 32 := 0x0ce66463.
+Lemma F_9b620 : fetch_word Asan.M.loaded_segments (0x9b620 : word) = Some W_9b620.
+Proof. vm_refl. Qed.
+Lemma D_9b620 : decode_any W_9b620 = Some (Branch BC_LTU 12 14 200, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b624 : bv 32 := 0x00b501a3.
+Lemma F_9b624 : fetch_word Asan.M.loaded_segments (0x9b624 : word) = Some W_9b624.
+Proof. vm_refl. Qed.
+Lemma D_9b624 : decode_any W_9b624 = Some (Store SZ1 10 11 3, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b628 : bv 32 := 0x00900793.
+Lemma F_9b628 : fetch_word Asan.M.loaded_segments (0x9b628 : word) = Some W_9b628.
+Proof. vm_refl. Qed.
+Lemma D_9b628 : decode_any W_9b628 = Some (OpImm ALU_ADD 15 0 9, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b62c : bv 32 := 0xfeb68e23.
+Lemma F_9b62c : fetch_word Asan.M.loaded_segments (0x9b62c : word) = Some W_9b62c.
+Proof. vm_refl. Qed.
+Lemma D_9b62c : decode_any W_9b62c = Some (Store SZ1 13 11 4092, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b630 : bv 32 := 0x0af66c63.
+Lemma F_9b630 : fetch_word Asan.M.loaded_segments (0x9b630 : word) = Some W_9b630.
+Proof. vm_refl. Qed.
+Lemma D_9b630 : decode_any W_9b630 = Some (Branch BC_LTU 12 15 184, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b634 : bv 32 := 0x40a006bb.
+Lemma F_9b634 : fetch_word Asan.M.loaded_segments (0x9b634 : word) = Some W_9b634.
+Proof. vm_refl. Qed.
+Lemma D_9b634 : decode_any W_9b634 = Some (Op32 ALU_SUB 13 0 10, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b638 : bv 32 := 0x03859813.
+Lemma F_9b638 : fetch_word Asan.M.loaded_segments (0x9b638 : word) = Some W_9b638.
+Proof. vm_refl. Qed.
+Lemma D_9b638 : decode_any W_9b638 = Some (ShiftImm ALU_SLL 16 11 56, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b63c : bv 32 := 0x101015b7.
+Lemma F_9b63c : fetch_word Asan.M.loaded_segments (0x9b63c : word) = Some W_9b63c.
+Proof. vm_refl. Qed.
+Lemma D_9b63c : decode_any W_9b63c = Some (Lui 11 65793, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b640 : bv 32 := 0x0036f693.
+Lemma F_9b640 : fetch_word Asan.M.loaded_segments (0x9b640 : word) = Some W_9b640.
+Proof. vm_refl. Qed.
+Lemma D_9b640 : decode_any W_9b640 = Some (OpImm ALU_AND 13 13 3, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b644 : bv 32 := 0x00459713.
+Lemma F_9b644 : fetch_word Asan.M.loaded_segments (0x9b644 : word) = Some W_9b644.
+Proof. vm_refl. Qed.
+Lemma D_9b644 : decode_any W_9b644 = Some (ShiftImm ALU_SLL 14 11 4, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b648 : bv 32 := 0x40d60633.
+Lemma F_9b648 : fetch_word Asan.M.loaded_segments (0x9b648 : word) = Some W_9b648.
+Proof. vm_refl. Qed.
+Lemma D_9b648 : decode_any W_9b648 = Some (Op ALU_SUB 12 12 13, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b64c : bv 32 := 0x00d505b3.
+Lemma F_9b64c : fetch_word Asan.M.loaded_segments (0x9b64c : word) = Some W_9b64c.
+Proof. vm_refl. Qed.
+Lemma D_9b64c : decode_any W_9b64c = Some (Op ALU_ADD 11 10 13, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b650 : bv 32 := 0x10070693.
+Lemma F_9b650 : fetch_word Asan.M.loaded_segments (0x9b650 : word) = Some W_9b650.
+Proof. vm_refl. Qed.
+Lemma D_9b650 : decode_any W_9b650 = Some (OpImm ALU_ADD 13 14 256, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b654 : bv 32 := 0xffc67713.
+Lemma F_9b654 : fetch_word Asan.M.loaded_segments (0x9b654 : word) = Some W_9b654.
+Proof. vm_refl. Qed.
+Lemma D_9b654 : decode_any W_9b654 = Some (OpImm ALU_AND 14 12 4092, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b658 : bv 32 := 0x02d83633.
+Lemma F_9b658 : fetch_word Asan.M.loaded_segments (0x9b658 : word) = Some W_9b658.
+Proof. vm_refl. Qed.
+Lemma D_9b658 : decode_any W_9b658 = Some (Mul M_MULHU 12 16 13, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b65c : bv 32 := 0x00c5a023.
+Lemma F_9b65c : fetch_word Asan.M.loaded_segments (0x9b65c : word) = Some W_9b65c.
+Proof. vm_refl. Qed.
+Lemma D_9b65c : decode_any W_9b65c = Some (Store SZ4 11 12 0, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b660 : bv 32 := 0x00e586b3.
+Lemma F_9b660 : fetch_word Asan.M.loaded_segments (0x9b660 : word) = Some W_9b660.
+Proof. vm_refl. Qed.
+Lemma D_9b660 : decode_any W_9b660 = Some (Op ALU_ADD 13 11 14, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b664 : bv 32 := 0xfec6ae23.
+Lemma F_9b664 : fetch_word Asan.M.loaded_segments (0x9b664 : word) = Some W_9b664.
+Proof. vm_refl. Qed.
+Lemma D_9b664 : decode_any W_9b664 = Some (Store SZ4 13 12 4092, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b668 : bv 32 := 0x08f76063.
+Lemma F_9b668 : fetch_word Asan.M.loaded_segments (0x9b668 : word) = Some W_9b668.
+Proof. vm_refl. Qed.
+Lemma D_9b668 : decode_any W_9b668 = Some (Branch BC_LTU 14 15 128, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b66c : bv 32 := 0x00c5a223.
+Lemma F_9b66c : fetch_word Asan.M.loaded_segments (0x9b66c : word) = Some W_9b66c.
+Proof. vm_refl. Qed.
+Lemma D_9b66c : decode_any W_9b66c = Some (Store SZ4 11 12 4, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b670 : bv 32 := 0x00c5a423.
+Lemma F_9b670 : fetch_word Asan.M.loaded_segments (0x9b670 : word) = Some W_9b670.
+Proof. vm_refl. Qed.
+Lemma D_9b670 : decode_any W_9b670 = Some (Store SZ4 11 12 8, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b674 : bv 32 := 0x01900793.
+Lemma F_9b674 : fetch_word Asan.M.loaded_segments (0x9b674 : word) = Some W_9b674.
+Proof. vm_refl. Qed.
+Lemma D_9b674 : decode_any W_9b674 = Some (OpImm ALU_ADD 15 0 25, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b678 : bv 32 := 0xfec6aa23.
+Lemma F_9b678 : fetch_word Asan.M.loaded_segments (0x9b678 : word) = Some W_9b678.
+Proof. vm_refl. Qed.
+Lemma D_9b678 : decode_any W_9b678 = Some (Store SZ4 13 12 4084, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b67c : bv 32 := 0xfec6ac23.
+Lemma F_9b67c : fetch_word Asan.M.loaded_segments (0x9b67c : word) = Some W_9b67c.
+Proof. vm_refl. Qed.
+Lemma D_9b67c : decode_any W_9b67c = Some (Store SZ4 13 12 4088, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b680 : bv 32 := 0x06f76463.
+Lemma F_9b680 : fetch_word Asan.M.loaded_segments (0x9b680 : word) = Some W_9b680.
+Proof. vm_refl. Qed.
+Lemma D_9b680 : decode_any W_9b680 = Some (Branch BC_LTU 14 15 104, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b684 : bv 32 := 0x00c5a623.
+Lemma F_9b684 : fetch_word Asan.M.loaded_segments (0x9b684 : word) = Some W_9b684.
+Proof. vm_refl. Qed.
+Lemma D_9b684 : decode_any W_9b684 = Some (Store SZ4 11 12 12, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b688 : bv 32 := 0x00c5a823.
+Lemma F_9b688 : fetch_word Asan.M.loaded_segments (0x9b688 : word) = Some W_9b688.
+Proof. vm_refl. Qed.
+Lemma D_9b688 : decode_any W_9b688 = Some (Store SZ4 11 12 16, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b68c : bv 32 := 0x00c5aa23.
+Lemma F_9b68c : fetch_word Asan.M.loaded_segments (0x9b68c : word) = Some W_9b68c.
+Proof. vm_refl. Qed.
+Lemma D_9b68c : decode_any W_9b68c = Some (Store SZ4 11 12 20, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b690 : bv 32 := 0x00c5ac23.
+Lemma F_9b690 : fetch_word Asan.M.loaded_segments (0x9b690 : word) = Some W_9b690.
+Proof. vm_refl. Qed.
+Lemma D_9b690 : decode_any W_9b690 = Some (Store SZ4 11 12 24, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b694 : bv 32 := 0x0045f793.
+Lemma F_9b694 : fetch_word Asan.M.loaded_segments (0x9b694 : word) = Some W_9b694.
+Proof. vm_refl. Qed.
+Lemma D_9b694 : decode_any W_9b694 = Some (OpImm ALU_AND 15 11 4, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b698 : bv 32 := 0x02000813.
+Lemma F_9b698 : fetch_word Asan.M.loaded_segments (0x9b698 : word) = Some W_9b698.
+Proof. vm_refl. Qed.
+Lemma D_9b698 : decode_any W_9b698 = Some (OpImm ALU_ADD 16 0 32, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b69c : bv 32 := 0x01878793.
+Lemma F_9b69c : fetch_word Asan.M.loaded_segments (0x9b69c : word) = Some W_9b69c.
+Proof. vm_refl. Qed.
+Lemma D_9b69c : decode_any W_9b69c = Some (OpImm ALU_ADD 15 15 24, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6a0 : bv 32 := 0x40f70733.
+Lemma F_9b6a0 : fetch_word Asan.M.loaded_segments (0x9b6a0 : word) = Some W_9b6a0.
+Proof. vm_refl. Qed.
+Lemma D_9b6a0 : decode_any W_9b6a0 = Some (Op ALU_SUB 14 14 15, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6a4 : bv 32 := 0xfec6a223.
+Lemma F_9b6a4 : fetch_word Asan.M.loaded_segments (0x9b6a4 : word) = Some W_9b6a4.
+Proof. vm_refl. Qed.
+Lemma D_9b6a4 : decode_any W_9b6a4 = Some (Store SZ4 13 12 4068, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6a8 : bv 32 := 0xfec6a423.
+Lemma F_9b6a8 : fetch_word Asan.M.loaded_segments (0x9b6a8 : word) = Some W_9b6a8.
+Proof. vm_refl. Qed.
+Lemma D_9b6a8 : decode_any W_9b6a8 = Some (Store SZ4 13 12 4072, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6ac : bv 32 := 0xfec6a623.
+Lemma F_9b6ac : fetch_word Asan.M.loaded_segments (0x9b6ac : word) = Some W_9b6ac.
+Proof. vm_refl. Qed.
+Lemma D_9b6ac : decode_any W_9b6ac = Some (Store SZ4 13 12 4076, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6b0 : bv 32 := 0xfec6a823.
+Lemma F_9b6b0 : fetch_word Asan.M.loaded_segments (0x9b6b0 : word) = Some W_9b6b0.
+Proof. vm_refl. Qed.
+Lemma D_9b6b0 : decode_any W_9b6b0 = Some (Store SZ4 13 12 4080, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6b4 : bv 32 := 0x03076a63.
+Lemma F_9b6b4 : fetch_word Asan.M.loaded_segments (0x9b6b4 : word) = Some W_9b6b4.
+Proof. vm_refl. Qed.
+Lemma D_9b6b4 : decode_any W_9b6b4 = Some (Branch BC_LTU 14 16 52, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6b8 : bv 32 := 0x02061613.
+Lemma F_9b6b8 : fetch_word Asan.M.loaded_segments (0x9b6b8 : word) = Some W_9b6b8.
+Proof. vm_refl. Qed.
+Lemma D_9b6b8 : decode_any W_9b6b8 = Some (ShiftImm ALU_SLL 12 12 32, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6bc : bv 32 := 0x00f585b3.
+Lemma F_9b6bc : fetch_word Asan.M.loaded_segments (0x9b6bc : word) = Some W_9b6bc.
+Proof. vm_refl. Qed.
+Lemma D_9b6bc : decode_any W_9b6bc = Some (Op ALU_ADD 11 11 15, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6c0 : bv 32 := 0x02065693.
+Lemma F_9b6c0 : fetch_word Asan.M.loaded_segments (0x9b6c0 : word) = Some W_9b6c0.
+Proof. vm_refl. Qed.
+Lemma D_9b6c0 : decode_any W_9b6c0 = Some (ShiftImm ALU_SRL 13 12 32, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6c4 : bv 32 := 0x00d66633.
+Lemma F_9b6c4 : fetch_word Asan.M.loaded_segments (0x9b6c4 : word) = Some W_9b6c4.
+Proof. vm_refl. Qed.
+Lemma D_9b6c4 : decode_any W_9b6c4 = Some (Op ALU_OR 12 12 13, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6c8 : bv 32 := 0x01f00693.
+Lemma F_9b6c8 : fetch_word Asan.M.loaded_segments (0x9b6c8 : word) = Some W_9b6c8.
+Proof. vm_refl. Qed.
+Lemma D_9b6c8 : decode_any W_9b6c8 = Some (OpImm ALU_ADD 13 0 31, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6cc : bv 32 := 0x00c5b023.
+Lemma F_9b6cc : fetch_word Asan.M.loaded_segments (0x9b6cc : word) = Some W_9b6cc.
+Proof. vm_refl. Qed.
+Lemma D_9b6cc : decode_any W_9b6cc = Some (Store SZ8 11 12 0, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6d0 : bv 32 := 0x00c5b423.
+Lemma F_9b6d0 : fetch_word Asan.M.loaded_segments (0x9b6d0 : word) = Some W_9b6d0.
+Proof. vm_refl. Qed.
+Lemma D_9b6d0 : decode_any W_9b6d0 = Some (Store SZ8 11 12 8, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6d4 : bv 32 := 0x00c5b823.
+Lemma F_9b6d4 : fetch_word Asan.M.loaded_segments (0x9b6d4 : word) = Some W_9b6d4.
+Proof. vm_refl. Qed.
+Lemma D_9b6d4 : decode_any W_9b6d4 = Some (Store SZ8 11 12 16, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6d8 : bv 32 := 0x00c5bc23.
+Lemma F_9b6d8 : fetch_word Asan.M.loaded_segments (0x9b6d8 : word) = Some W_9b6d8.
+Proof. vm_refl. Qed.
+Lemma D_9b6d8 : decode_any W_9b6d8 = Some (Store SZ8 11 12 24, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6dc : bv 32 := 0xfe070713.
+Lemma F_9b6dc : fetch_word Asan.M.loaded_segments (0x9b6dc : word) = Some W_9b6dc.
+Proof. vm_refl. Qed.
+Lemma D_9b6dc : decode_any W_9b6dc = Some (OpImm ALU_ADD 14 14 4064, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6e0 : bv 32 := 0x02058593.
+Lemma F_9b6e0 : fetch_word Asan.M.loaded_segments (0x9b6e0 : word) = Some W_9b6e0.
+Proof. vm_refl. Qed.
+Lemma D_9b6e0 : decode_any W_9b6e0 = Some (OpImm ALU_ADD 11 11 32, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6e4 : bv 32 := 0xfee6e4e3.
+Lemma F_9b6e4 : fetch_word Asan.M.loaded_segments (0x9b6e4 : word) = Some W_9b6e4.
+Proof. vm_refl. Qed.
+Lemma D_9b6e4 : decode_any W_9b6e4 = Some (Branch BC_LTU 13 14 8168, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Definition W_9b6e8 : bv 32 := 0x00008067.
+Lemma F_9b6e8 : fetch_word Asan.M.loaded_segments (0x9b6e8 : word) = Some W_9b6e8.
+Proof. vm_refl. Qed.
+Lemma D_9b6e8 : decode_any W_9b6e8 = Some (Jalr 0 1 0, 4%Z).
+Proof. vm_refl. Qed.
+
+(* [comment removed for export] *)
+Abbreviation MSEGS := Asan.M.loaded_segments.
+Definition ms_base : Z := 0x9b5f4%Z.
+Definition Fo_000 := F_9b5f4.
+Definition Do_000 := D_9b5f4.
+Definition Fo_004 := F_9b5f8.
+Definition Do_004 := D_9b5f8.
+Definition Fo_008 := F_9b5fc.
+Definition Do_008 := D_9b5fc.
+Definition Fo_00c := F_9b600.
+Definition Do_00c := D_9b600.
+Definition Fo_010 := F_9b604.
+Definition Do_010 := D_9b604.
+Definition Fo_014 := F_9b608.
+Definition Do_014 := D_9b608.
+Definition Fo_018 := F_9b60c.
+Definition Do_018 := D_9b60c.
+Definition Fo_01c := F_9b610.
+Definition Do_01c := D_9b610.
+Definition Fo_020 := F_9b614.
+Definition Do_020 := D_9b614.
+Definition Fo_024 := F_9b618.
+Definition Do_024 := D_9b618.
+Definition Fo_028 := F_9b61c.
+Definition Do_028 := D_9b61c.
+Definition Fo_02c := F_9b620.
+Definition Do_02c := D_9b620.
+Definition Fo_030 := F_9b624.
+Definition Do_030 := D_9b624.
+Definition Fo_034 := F_9b628.
+Definition Do_034 := D_9b628.
+Definition Fo_038 := F_9b62c.
+Definition Do_038 := D_9b62c.
+Definition Fo_03c := F_9b630.
+Definition Do_03c := D_9b630.
+Definition Fo_040 := F_9b634.
+Definition Do_040 := D_9b634.
+Definition Fo_044 := F_9b638.
+Definition Do_044 := D_9b638.
+Definition Fo_048 := F_9b63c.
+Definition Do_048 := D_9b63c.
+Definition Fo_04c := F_9b640.
+Definition Do_04c := D_9b640.
+Definition Fo_050 := F_9b644.
+Definition Do_050 := D_9b644.
+Definition Fo_054 := F_9b648.
+Definition Do_054 := D_9b648.
+Definition Fo_058 := F_9b64c.
+Definition Do_058 := D_9b64c.
+Definition Fo_05c := F_9b650.
+Definition Do_05c := D_9b650.
+Definition Fo_060 := F_9b654.
+Definition Do_060 := D_9b654.
+Definition Fo_064 := F_9b658.
+Definition Do_064 := D_9b658.
+Definition Fo_068 := F_9b65c.
+Definition Do_068 := D_9b65c.
+Definition Fo_06c := F_9b660.
+Definition Do_06c := D_9b660.
+Definition Fo_070 := F_9b664.
+Definition Do_070 := D_9b664.
+Definition Fo_074 := F_9b668.
+Definition Do_074 := D_9b668.
+Definition Fo_078 := F_9b66c.
+Definition Do_078 := D_9b66c.
+Definition Fo_07c := F_9b670.
+Definition Do_07c := D_9b670.
+Definition Fo_080 := F_9b674.
+Definition Do_080 := D_9b674.
+Definition Fo_084 := F_9b678.
+Definition Do_084 := D_9b678.
+Definition Fo_088 := F_9b67c.
+Definition Do_088 := D_9b67c.
+Definition Fo_08c := F_9b680.
+Definition Do_08c := D_9b680.
+Definition Fo_090 := F_9b684.
+Definition Do_090 := D_9b684.
+Definition Fo_094 := F_9b688.
+Definition Do_094 := D_9b688.
+Definition Fo_098 := F_9b68c.
+Definition Do_098 := D_9b68c.
+Definition Fo_09c := F_9b690.
+Definition Do_09c := D_9b690.
+Definition Fo_0a0 := F_9b694.
+Definition Do_0a0 := D_9b694.
+Definition Fo_0a4 := F_9b698.
+Definition Do_0a4 := D_9b698.
+Definition Fo_0a8 := F_9b69c.
+Definition Do_0a8 := D_9b69c.
+Definition Fo_0ac := F_9b6a0.
+Definition Do_0ac := D_9b6a0.
+Definition Fo_0b0 := F_9b6a4.
+Definition Do_0b0 := D_9b6a4.
+Definition Fo_0b4 := F_9b6a8.
+Definition Do_0b4 := D_9b6a8.
+Definition Fo_0b8 := F_9b6ac.
+Definition Do_0b8 := D_9b6ac.
+Definition Fo_0bc := F_9b6b0.
+Definition Do_0bc := D_9b6b0.
+Definition Fo_0c0 := F_9b6b4.
+Definition Do_0c0 := D_9b6b4.
+Definition Fo_0c4 := F_9b6b8.
+Definition Do_0c4 := D_9b6b8.
+Definition Fo_0c8 := F_9b6bc.
+Definition Do_0c8 := D_9b6bc.
+Definition Fo_0cc := F_9b6c0.
+Definition Do_0cc := D_9b6c0.
+Definition Fo_0d0 := F_9b6c4.
+Definition Do_0d0 := D_9b6c4.
+Definition Fo_0d4 := F_9b6c8.
+Definition Do_0d4 := D_9b6c8.
+Definition Fo_0d8 := F_9b6cc.
+Definition Do_0d8 := D_9b6cc.
+Definition Fo_0dc := F_9b6d0.
+Definition Do_0dc := D_9b6d0.
+Definition Fo_0e0 := F_9b6d4.
+Definition Do_0e0 := D_9b6d4.
+Definition Fo_0e4 := F_9b6d8.
+Definition Do_0e4 := D_9b6d8.
+Definition Fo_0e8 := F_9b6dc.
+Definition Do_0e8 := D_9b6dc.
+Definition Fo_0ec := F_9b6e0.
+Definition Do_0ec := D_9b6e0.
+Definition Fo_0f0 := F_9b6e4.
+Definition Do_0f0 := D_9b6e4.
+Definition Fo_0f4 := F_9b6e8.
+Definition Do_0f4 := D_9b6e8.

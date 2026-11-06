@@ -1,0 +1,1251 @@
+file	hunk	kind	build log	break (first error)	lemma	ruling
+AFem.v	6	body	build-20261030T112216Z.log	AFem.v:176 The variable HNS was not found / nD_range 1 <= nD <= 4097 false with an empty depot	nD_range	(B) measured break, the unit owner
+AFex.v	20	body	build-20261030T112216Z.log	AFex.v:464 No applicable tactic at zd (SX 3 4 _ _ eq_refl ...): static_extents NB / SB slots are the sentinel until the first Put	ok_static / zd	(B)
+AFex.v	22	body	build-20261030T112216Z.log	AFex.v:464 No applicable tactic at zd (SX 3 4 _ _ eq_refl ...): static_extents NB / SB slots are the sentinel until the first Put	ok_static / zd	(B)
+AFex.v	24	body	build-20261030T112216Z.log	AFex.v:464 No applicable tactic at zd (SX 3 4 _ _ eq_refl ...): static_extents NB / SB slots are the sentinel until the first Put	ok_static / zd	(B)
+AFex.v	26	body	build-20261030T112216Z.log	AFex.v:464 No applicable tactic at zd (SX 3 4 _ _ eq_refl ...): static_extents NB / SB slots are the sentinel until the first Put	ok_static / zd	(B)
+AFex.v	28	body	build-20261030T112216Z.log	AFex.v:464 No applicable tactic at zd (SX 3 4 _ _ eq_refl ...): static_extents NB / SB slots are the sentinel until the first Put	ok_static / zd	(B)
+AFex.v	31	body	build-20261030T112216Z.log	AFex.v:464 No applicable tactic at zd (SX 3 4 _ _ eq_refl ...): static_extents NB / SB slots are the sentinel until the first Put	ok_static / zd	(B)
+AFex.v	34	body	build-20261030T112216Z.log	AFex.v:464 No applicable tactic at zd (SX 3 4 _ _ eq_refl ...): static_extents NB / SB slots are the sentinel until the first Put	ok_static / zd	(B)
+AFfl.v	19	body	build-20261030T112216Z.log	AFfl.v:407 same as AFex	ok_static / zd	(B)
+AFfl.v	21	body	build-20261030T112216Z.log	AFfl.v:407 same as AFex	ok_static / zd	(B)
+AFfl.v	23	body	build-20261030T112216Z.log	AFfl.v:407 same as AFex	ok_static / zd	(B)
+AFfl.v	25	body	build-20261030T112216Z.log	AFfl.v:407 same as AFex	ok_static / zd	(B)
+AFfl.v	27	body	build-20261030T112216Z.log	AFfl.v:407 same as AFex	ok_static / zd	(B)
+AFfl.v	30	body	build-20261030T112216Z.log	AFfl.v:407 same as AFex	ok_static / zd	(B)
+AFfl.v	33	body	build-20261030T112216Z.log	AFfl.v:407 same as AFex	ok_static / zd	(B)
+AFi5.v	8	body	build-20261030T112216Z.log	AFi5.v:88 unfold owned_extents (now the switch)	-	(B)
+AFib.v	3	body	build-20261030T112216Z.log	AFib.v:178 rewrite E13: no ly_tr0	-	(B)
+AD1g.v	5	body	build-20261030T112216Z.log	AD1g.v:157 hole_chk c1 / c4 (the 3 depot head maps)	hole_chk	(B); hunk 6 split: (YImgTop.IMG_TOP / 4096) -> 1525 x5
+AD1g.v	6	body	build-20261030T112216Z.log	AD1g.v:157 hole_chk c1 / c4 (the 3 depot head maps)	hole_chk	(B); hunk 6 split: (YImgTop.IMG_TOP / 4096) -> 1525 x5
+AD1g.v	17	body	build-20261030T114144Z.log	AD1g.v:486 nth_error TFIB_TAIL12 i vs ALLMAPS index (3 depot head maps absent)	nth_ALLMAPS_*	(B)
+AD1g.v	19	body	build-20261030T114144Z.log	AD1g.v:486 nth_error TFIB_TAIL12 i vs ALLMAPS index (3 depot head maps absent)	nth_ALLMAPS_*	(B)
+AD1g.v	20	body	build-20261030T114144Z.log	AD1g.v:486 nth_error TFIB_TAIL12 i vs ALLMAPS index (3 depot head maps absent)	nth_ALLMAPS_*	(B)
+AD1g.v	21	body	build-20261030T114144Z.log	AD1g.v:486 nth_error TFIB_TAIL12 i vs ALLMAPS index (3 depot head maps absent)	nth_ALLMAPS_*	(B)
+AD1g.v	22	body	build-20261030T114144Z.log	AD1g.v:486 nth_error TFIB_TAIL12 i vs ALLMAPS index (3 depot head maps absent)	nth_ALLMAPS_*	(B)
+AD1g.v	23	body	build-20261030T114144Z.log	AD1g.v:486 nth_error TFIB_TAIL12 i vs ALLMAPS index (3 depot head maps absent)	nth_ALLMAPS_*	(B)
+AD1g.v	24	body	build-20261030T114144Z.log	AD1g.v:486 nth_error TFIB_TAIL12 i vs ALLMAPS index (3 depot head maps absent)	nth_ALLMAPS_*	(B)
+AD1g.v	25	body	build-20261030T114144Z.log	AD1g.v:486 nth_error TFIB_TAIL12 i vs ALLMAPS index (3 depot head maps absent)	nth_ALLMAPS_*	(B)
+AD1g.v	26	body	build-20261030T114144Z.log	AD1g.v:486 nth_error TFIB_TAIL12 i vs ALLMAPS index (3 depot head maps absent)	nth_ALLMAPS_*	(B)
+AD1g.v	27	body	build-20261030T114144Z.log	AD1g.v:486 nth_error TFIB_TAIL12 i vs ALLMAPS index (3 depot head maps absent)	nth_ALLMAPS_*	(B)
+AFem.v	16	body	build-20261030T114144Z.log	AFem.v:238 bounds 1 -> 0, 4097 -> 4096 (ids from 0)	-	(B)
+AFex.v	47	body	build-20261030T114144Z.log	AFex HIGH -> HIGH_m	-	(B)
+AFfl.v	39	body	build-20261030T114144Z.log	AFfl HIGH -> HIGH_m	-	(B)
+AFem.v	8	body	build-20261030T120001Z.log	AFem.v:428 / chain nD / TOT bounds from 0	FACTS_fixed / zone_facts	(B)
+AFem.v	28	body	build-20261030T120001Z.log	AFem.v:428 / chain nD / TOT bounds from 0	FACTS_fixed / zone_facts	(B)
+AFem.v	29	body	build-20261030T120001Z.log	AFem.v:428 / chain nD / TOT bounds from 0	FACTS_fixed / zone_facts	(B)
+AFem.v	42	body	build-20261030T120001Z.log	AFem.v:428 / chain nD / TOT bounds from 0	FACTS_fixed / zone_facts	(B)
+AFem.v	43	body	build-20261030T120001Z.log	AFem.v:428 / chain nD / TOT bounds from 0	FACTS_fixed / zone_facts	(B)
+AFem.v	57	body	build-20261030T120001Z.log	AFem.v:428 / chain nD / TOT bounds from 0	FACTS_fixed / zone_facts	(B)
+AFem.v	72	body	build-20261030T120001Z.log	AFem.v:428 / chain nD / TOT bounds from 0	FACTS_fixed / zone_facts	(B)
+AFek.v	3	body	build-20261030T121350Z.log	AFem.v:428 = AFek DF_fixed aTOT lower bound 2 -> 1 (TOT counts from the first Put)	DF_fixed	(B)
+AFex.v	57	body	build-20261030T121350Z.log	AFex.v:1086 S'_abytes (abudget counts depot_abytes)	abudget_le	(B)
+AFfl.v	49	body	build-20261030T121350Z.log	AFfl.v:979 S'_abytes	abudget_le	(B)
+AD1g.v	39	body	build-20261030T122107Z.log	AD1g.v:768 vm_shape without the depot maps	vm_In'	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFf0.v	22	body	build-20261030T122107Z.log	AFf0.v:447 NB slot	depot'	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFf2.v	25	body	build-20261030T122107Z.log	AFf2.v:735 NB slot (proj2 NBX)	depot'	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfl.v	50	body	build-20261030T122107Z.log	AFfl.v:985 abudget_step S'_abytes	abudget_step	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	43	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	44	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	45	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	46	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	47	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	48	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	49	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	50	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	51	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	52	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	53	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	54	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	55	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	56	body	build-20261030T124016Z.log	AD1g.v:788 The variable sep_head_tail was not found	statics_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFhg.v	11	body	build-20261030T124016Z.log	AFhg.v:487 Unable to unify (layout_le_refl after the first-Put layout growth)	T_Q	(F) + (D) AFhg joins by this break
+AFey.v	19	body	build-20261030T124016Z.log	AFey.v:658 No applicable tactic (NB slot)	depot'	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFez.v	4	body	build-20261030T124016Z.log	AFez.v:195 aareas' incomplete proof	aareas'	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFf1.v	20	body	build-20261030T124016Z.log	AFf1.v:562 No applicable tactic (NB slot)	depot'	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfl.v	51	body	build-20261030T124016Z.log	AFfl.v:992 rroom_S'	rroom_S'	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfy.v	5	STATEMENT	build-20261030T124016Z.log	AFfy.v:58 The variable HCK was not found	depot_mem_ok_agree	approved by the unit owner's ruling, 12:41Z
+AFfy.v	6	body	build-20261030T124016Z.log	AFfy.v:58 The variable HCK was not found	depot_mem_ok_agree	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfy.v	8	body	build-20261030T124016Z.log	AFfy.v:58 The variable HCK was not found	depot_mem_ok_agree	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	58	body	build-20261030T125939Z.log	AD1g.v:865 The variable uGV was not found	unknown_small	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFez.v	19	body	build-20261030T125939Z.log	AFez.v:709 No applicable tactic (NB slot)	depot'	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfy.v	24	body	build-20261030T125939Z.log	AFfy.v:221 The variable HND was not found (FINH: st_depot S <> [] -> fin_hyp)	FINH	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfy.v	31	body	build-20261030T125939Z.log	AFfy.v:221 The variable HND was not found (FINH: st_depot S <> [] -> fin_hyp)	FINH	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfy.v	34	body	build-20261030T125939Z.log	AFfy.v:221 The variable HND was not found (FINH: st_depot S <> [] -> fin_hyp)	FINH	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfy.v	36	body	build-20261030T125939Z.log	AFfy.v:221 The variable HND was not found (FINH: st_depot S <> [] -> fin_hyp)	FINH	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfy.v	39	body	build-20261030T125939Z.log	AFfy.v:221 The variable HND was not found (FINH: st_depot S <> [] -> fin_hyp)	FINH	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	60	body	build-20261030T131305Z.log	AD1g.v:919 Expects a disjunctive pattern with 0 branches (extra list without the depot maps)	extra_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	61	body	build-20261030T131305Z.log	AD1g.v:919 Expects a disjunctive pattern with 0 branches (extra list without the depot maps)	extra_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	62	body	build-20261030T131305Z.log	AD1g.v:919 Expects a disjunctive pattern with 0 branches (extra list without the depot maps)	extra_disj	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFf3.v	24	body	build-20261030T131305Z.log	AFf3.v:537 No applicable tactic (NB slot)	depot'	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfy.v	41	body	build-20261030T131305Z.log	AFfy.v:484 Unable to unify (afree_common_arm)	afree_common_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfy.v	42	body	build-20261030T131305Z.log	AFfy.v:484 Unable to unify (afree_common_arm)	afree_common_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfy.v	43	body	build-20261030T131305Z.log	AFfy.v:484 Unable to unify (afree_common_arm)	afree_common_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfy.v	44	body	build-20261030T131305Z.log	AFfy.v:484 Unable to unify (afree_common_arm)	afree_common_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfy.v	45	body	build-20261030T131305Z.log	AFfy.v:484 Unable to unify (afree_common_arm)	afree_common_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFjm.v	65	body	build-20261030T131305Z.log	AFjm.v:638 No applicable tactic	tail_ext_ok	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFis.v	15	body	build-20261030T131305Z.log	AFis.v:292 high_facts depends on the variable W (off_C, a taken depot hunk, uses Proof using without W; the fix is the Proof using line of high_facts / blocks_facts)	high_facts / blocks_facts (cited by off_C)	(F), CROSS-LEMMA: the break is in off_C, the hunks are the proof-start lines of the lemmas it cites
+AFis.v	17	body	build-20261030T131305Z.log	AFis.v:292 high_facts depends on the variable W (off_C, a taken depot hunk, uses Proof using without W; the fix is the Proof using line of high_facts / blocks_facts)	high_facts / blocks_facts (cited by off_C)	(F), CROSS-LEMMA: the break is in off_C, the hunks are the proof-start lines of the lemmas it cites
+AFis.v	19	body	build-20261030T131305Z.log	AFis.v:292 high_facts depends on the variable W (off_C, a taken depot hunk, uses Proof using without W; the fix is the Proof using line of high_facts / blocks_facts)	high_facts / blocks_facts (cited by off_C)	(F), CROSS-LEMMA: the break is in off_C, the hunks are the proof-start lines of the lemmas it cites
+AFj6.v	15	body	build-20261030T131305Z.log	AFj6.v:293 same as AFis	high_facts / blocks_facts (cited by off_C)	(F), CROSS-LEMMA as AFis
+AFj6.v	17	body	build-20261030T131305Z.log	AFj6.v:293 same as AFis	high_facts / blocks_facts (cited by off_C)	(F), CROSS-LEMMA as AFis
+AFj6.v	19	body	build-20261030T131305Z.log	AFj6.v:293 same as AFis	high_facts / blocks_facts (cited by off_C)	(F), CROSS-LEMMA as AFis
+AD1g.v	67	body	build-20261030T131712Z.log	AD1g.v:992 The variable uNB was not found	tfib_layout_ok	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	68	body	build-20261030T131712Z.log	AD1g.v:992 The variable uNB was not found	tfib_layout_ok	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	78	body	build-20261030T131712Z.log	AD1g.v:992 The variable uNB was not found	tfib_layout_ok	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	79	body	build-20261030T131712Z.log	AD1g.v:992 The variable uNB was not found	tfib_layout_ok	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	81	body	build-20261030T131712Z.log	AD1g.v:992 The variable uNB was not found	tfib_layout_ok	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFf4.v	20	body	build-20261030T131712Z.log	AFf4.v:779 Not an inductive product (am_depot destruct, depot form)	depot'	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFf4.v	24	body	build-20261030T131712Z.log	AFf4.v:779 Not an inductive product (am_depot destruct, depot form)	depot'	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFg1.v	30	body	build-20261030T131712Z.log	AFg1.v:654 The variable HND was not found (ENQ_PRE)	ENQ_PRE	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFg1.v	39	body	build-20261030T131712Z.log	AFg1.v:654 The variable HND was not found (ENQ_PRE)	ENQ_PRE	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFg1.v	40	body	build-20261030T131712Z.log	AFg1.v:654 The variable HND was not found (ENQ_PRE)	ENQ_PRE	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFg1.v	42	body	build-20261030T131712Z.log	AFg1.v:654 The variable HND was not found (ENQ_PRE)	ENQ_PRE	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFg1.v	44	body	build-20261030T131712Z.log	AFg1.v:654 The variable HND was not found (ENQ_PRE)	ENQ_PRE	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFis.v	56	body	build-20261030T131712Z.log	AFis.v:591 No applicable tactic	tail_ext_ok	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFj6.v	53	body	build-20261030T131712Z.log	AFj6.v:580 No applicable tactic	tail_ext_ok	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFis.v	26	STATEMENT	build-20261030T134128Z.log	AFis.v:583 derived_ranges depends on the variable W (tail_ext_ok)	derived_ranges (cited by tail_ext_ok)	CROSS-LEMMA Proof-using start line, pending ruling (same type as 13:17Z)
+AFj6.v	25	STATEMENT	build-20261030T134128Z.log	AFj6.v:572 derived_ranges depends on the variable W	derived_ranges (cited by tail_ext_ok)	CROSS-LEMMA Proof-using start line, pending ruling (same type as 13:17Z)
+AFij.v	4	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFik.v	4	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFil.v	4	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFim.v	22	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFin.v	23	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFiq.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	9	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	12	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	13	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	14	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	17	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	19	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	22	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	23	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	24	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	26	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	27	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	28	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	29	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	30	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	31	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	32	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	33	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	34	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	35	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	36	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	37	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	38	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	39	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	42	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	43	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	46	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	50	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	51	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	52	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	53	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	54	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	56	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	66	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	71	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFis.v	72	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFix.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFix.v	18	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFix.v	19	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFix.v	20	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFix.v	21	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFix.v	39	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFix.v	56	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFix.v	58	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFix.v	62	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	9	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	12	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	13	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	14	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	17	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	19	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	22	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	23	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	25	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	26	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	27	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	28	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	29	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	30	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	31	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	32	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	33	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	34	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	35	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	36	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	39	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	40	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	43	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	47	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	48	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	49	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	50	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	51	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	53	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	63	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	68	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFj6.v	69	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	18	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	19	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	20	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	21	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	39	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	55	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	56	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	57	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	58	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	59	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	60	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	61	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjb.v	62	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjf.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjf.v	17	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjf.v	18	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjf.v	19	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjf.v	21	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjh.v	11	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjh.v	12	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFji.v	11	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjk.v	12	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjk.v	13	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjk.v	14	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjl.v	11	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjl.v	12	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjl.v	14	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjl.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjl.v	18	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjl.v	19	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjl.v	20	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjl.v	30	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	8	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	9	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	10	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	11	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	12	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	14	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	19	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	22	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	23	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	24	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	25	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	26	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	27	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	28	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	29	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	30	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	31	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	32	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	34	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	35	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	36	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	37	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	38	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	39	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	40	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	41	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	42	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	43	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	44	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	48	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	51	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	52	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	56	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	60	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	61	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	62	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	63	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	65	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	67	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	69	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	74	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	75	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	76	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	77	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	79	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	80	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	81	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	82	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	83	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	84	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	85	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	86	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	87	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	88	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	89	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	90	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	91	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	92	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	93	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	95	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	96	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjm.v	97	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	11	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	12	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	13	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	14	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	17	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	18	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	19	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	20	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	25	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	26	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	27	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	29	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	30	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	31	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	32	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjn.v	33	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	11	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	12	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	13	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	17	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	18	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	20	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	22	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	24	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	26	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	27	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	34	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	48	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	49	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	50	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	52	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	53	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	54	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	55	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	56	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	57	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	59	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	62	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	67	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	68	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	69	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	70	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjo.v	71	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjp.v	56	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjp.v	57	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjq.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjq.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjq.v	21	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjq.v	25	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjq.v	27	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjr.v	14	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjr.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjr.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjr.v	17	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjr.v	18	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjr.v	19	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjr.v	21	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjr.v	23	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjr.v	24	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjs.v	11	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjs.v	12	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjs.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjs.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjs.v	18	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjt.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjt.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjt.v	17	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjt.v	20	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjt.v	22	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjt.v	24	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjt.v	32	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjt.v	44	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFju.v	13	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFju.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFju.v	17	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFju.v	18	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFju.v	19	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFju.v	24	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	11	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	12	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	13	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	14	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	17	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	18	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	19	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	20	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	21	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	23	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	24	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	25	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjv.v	26	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjx.v	11	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjx.v	13	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	13	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	14	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	17	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	18	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	19	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	20	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	21	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	23	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	24	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	25	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	28	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	78	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	79	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	100	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	107	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	108	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjy.v	121	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjz.v	30	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjz.v	31	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjz.v	32	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjz.v	35	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjz.v	36	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjz.v	38	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFjz.v	39	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	17	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	18	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	19	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	20	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	21	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	23	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	26	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	30	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	31	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	35	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	37	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	39	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	40	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	41	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	51	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	52	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	53	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	54	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	61	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	62	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	63	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	64	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk1.v	67	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk2.v	14	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk2.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk2.v	17	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk2.v	21	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk2.v	23	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk2.v	28	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk2.v	33	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk2.v	34	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk2.v	38	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AFk2.v	39	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 13:47Z (R1)
+AD1g.v	65	STATEMENT	build-20261030T134128Z.log	AD1g.v:1045 The variable vis0_pos was not found (tfib_layout_ok)	vis0_pos (new lemma)	approved by the unit owner's ruling, 13:47Z (R3): new lemma
+AFfz.v	23	body	build-20261030T135527Z.log	AFfz.v:451 Unable to unify (afree_drn_arm)	afree_drn_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfz.v	24	body	build-20261030T135527Z.log	AFfz.v:451 Unable to unify (afree_drn_arm)	afree_drn_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfz.v	25	body	build-20261030T135527Z.log	AFfz.v:451 Unable to unify (afree_drn_arm)	afree_drn_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfz.v	29	body	build-20261030T135527Z.log	AFfz.v:451 Unable to unify (afree_drn_arm)	afree_drn_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfz.v	30	body	build-20261030T135527Z.log	AFfz.v:451 Unable to unify (afree_drn_arm)	afree_drn_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFfz.v	31	body	build-20261030T135527Z.log	AFfz.v:451 Unable to unify (afree_drn_arm)	afree_drn_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFg2.v	14	body	build-20261030T135527Z.log	AFg2.v:307 Unable to unify (afree_mid_arm)	afree_mid_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFg2.v	15	body	build-20261030T135527Z.log	AFg2.v:307 Unable to unify (afree_mid_arm)	afree_mid_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFg2.v	16	body	build-20261030T135527Z.log	AFg2.v:307 Unable to unify (afree_mid_arm)	afree_mid_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFg2.v	20	body	build-20261030T135527Z.log	AFg2.v:307 Unable to unify (afree_mid_arm)	afree_mid_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFg2.v	21	body	build-20261030T135527Z.log	AFg2.v:307 Unable to unify (afree_mid_arm)	afree_mid_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFg2.v	22	body	build-20261030T135527Z.log	AFg2.v:307 Unable to unify (afree_mid_arm)	afree_mid_arm	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	96	body	build-20261030T142251Z.log	AD1g.v:1357 The variable HH was not found (tfib_init_facts)	tfib_init_facts	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1g.v	98	body	build-20261030T142251Z.log	AD1g.v:1357 The variable HH was not found (tfib_init_facts)	tfib_init_facts	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1d.v	2	STATEMENT	build-20261030T142923Z.log	AD1d.v:44 tfib_holes_chkB vm_compute false (NB / SB block checks, slots 501 / 500)	avis_chk / kz_chk (check-function definition bodies)	approved by the unit owner's ruling, 14:37Z (depot-caused; consumers checked)
+AD1d.v	3	STATEMENT	build-20261030T142923Z.log	AD1d.v:44 tfib_holes_chkB vm_compute false (NB / SB block checks, slots 501 / 500)	avis_chk / kz_chk (check-function definition bodies)	approved by the unit owner's ruling, 14:37Z (depot-caused; consumers checked)
+AD2k.v	6	STATEMENT	build-20261030T142923Z.log	AD2k.v:102 The term "ch" has type "acs" while it is expected to have type "env" (knock AD1g.ly0 lost its ch parameter)	tfib_finv_handoff	(D) join statement: ly0 loses ch (AD1g.ly0 E model); ALLOWED 14:51Z; NOTE to composition owners in AD2k-finv-handoff-note.md
+AD2k.v	8	body	build-20261030T142923Z.log	AD2k.v:102 (same)	tfib_finv_handoff	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD2k.v	9	body	build-20261030T142923Z.log	AD2k.v:102 (same)	tfib_finv_handoff	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1d.v	5	STATEMENT	build-20261030T145028Z.log	AD1d.v:100 The reference AD1g.uNB was not found	#[local] uNB / uSB / uGV copies	approved by the unit owner's ruling, 15:17Z
+AD1d.v	6	body	build-20261030T151910Z.log	AD1d.v:128 Unable to unify (band_facts: list without the depot entries)	band_facts	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFic.v	17	body	build-20261030T151910Z.log	AFic.v:326 Expects a disjunctive pattern with 1 branch (depot_final)	depot_final	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFic.v	19	body	build-20261030T151910Z.log	AFic.v:326 Expects a disjunctive pattern with 1 branch (depot_final)	depot_final	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFjw.v	12	CLASS-PROOF-USING	build-20261030T151910Z.log	AFjw.v:546 The term "res" has type "Z" while it is expected to have type "astate" (SREG0_ok)	SREG0_ok	pending ruling: Proof using start line WITHOUT clear - (variant of R1)
+AFis.v	59	STATEMENT	build-20261030T151910Z.log	AFis.v:618 The term "z" has type "Z" while it is expected to have type "alayout" (at_ST2: the Put post at the grown layout)	at_ST2	pending ruling
+AFj6.v	56	STATEMENT	build-20261030T151910Z.log	AFj6.v:607 same as AFis	at_ST2	pending ruling
+AFix.v	42	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFix.v	48	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjb.v	42	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjb.v	48	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjf.v	75	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjg.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjg.v	18	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjh.v	13	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjk.v	15	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjl.v	21	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjl.v	27	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjl.v	34	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjl.v	35	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjo.v	35	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjo.v	46	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjt.v	36	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjt.v	47	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjw.v	12	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFjx.v	16	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFk2.v	29	CLASS-PROOF-USING	-	-	-	approved by the unit owner's ruling, 15:28Z (R1 widened: Proof using without clear)
+AFiq.v	14	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFir.v	14	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFis.v	59	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFis.v	61	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFis.v	63	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFis.v	64	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFix.v	40	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFix.v	41	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFj2.v	17	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFj4.v	14	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFj5.v	14	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFj6.v	56	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFj6.v	58	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFj6.v	60	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFj6.v	61	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjb.v	40	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjb.v	41	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjp.v	21	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjp.v	22	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjp.v	58	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjp.v	59	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjp.v	63	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjq.v	17	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjq.v	18	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjq.v	22	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjy.v	29	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjz.v	9	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjz.v	16	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFjz.v	24	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFk0.v	9	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFk1.v	25	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFk1.v	42	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFk1.v	55	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AFk1.v	65	STATEMENT	-	grown-layout post-state class	-	pending the unit owner (class of 34)
+AD1d.v	7	body	build-20261030T152313Z.log	AD1d.v:135 The term "ch" has type "acs" while it is expected to have type "env" (tfib_ALedger)	tfib_ALedger	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1d.v	8	body	build-20261030T152313Z.log	AD1d.v:135 The term "ch" has type "acs" while it is expected to have type "env" (tfib_ALedger)	tfib_ALedger	(F) per-lemma, the unit owner's ruling, 12:25Z
+AD1d.v	11	body	build-20261030T152313Z.log	AD1d.v:135 The term "ch" has type "acs" while it is expected to have type "env" (tfib_ALedger)	tfib_ALedger	(F) per-lemma, the unit owner's ruling, 12:25Z
+AFik.v	5	body	-	G2 Theorem malloc_hitg:49	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFik.v	7	body	-	G2 Theorem malloc_hitg:49	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFil.v	5	body	-	G2 Theorem malloc_hitk:49	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFil.v	7	body	-	G2 Theorem malloc_hitk:49	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFim.v	8	body	-	G4 Lemma REFILL_PRE:264	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFim.v	9	STATEMENT	-	G2 Lemma HQT':291	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFim.v	14	body	-	G2 Lemma TAILJ:469	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFim.v	24	body	-	G4 Theorem malloc_missg:638	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFin.v	9	body	-	G4 Lemma REFILL_PRE:254	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFin.v	10	STATEMENT	-	G2 Lemma HQT':281	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFin.v	15	body	-	G2 Lemma TAILJ:459	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFin.v	25	body	-	G4 Theorem malloc_missk:628	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	6	STATEMENT	-	G1 Variable DPOST:140	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFiq.v	9	STATEMENT	-	G3 Abbreviation at_ST2:206	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFiq.v	10	body	-	G2 Abbreviation memset_stretch:217	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	17	body	-	G4 Lemma segD:268	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	18	body	-	G4 Lemma segD:268	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	20	body	-	G2 Ltac stack_pres:318	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	21	body	-	G2 Ltac stack_pres:318	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	22	body	-	G2 Ltac stack_pres:318	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	23	body	-	G2 Ltac stack_pres:318	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	24	body	-	G2 Ltac stack_pres_odd:330	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	25	body	-	G2 Ltac stack_pres_odd:330	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	26	body	-	G2 Ltac stack_pres_odd:330	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	27	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	29	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	30	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	32	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	33	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	34	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	35	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	37	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	38	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	39	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	40	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	41	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	42	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	43	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	45	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	46	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	47	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	48	body	-	G2 Lemma seg2a_even:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	49	body	-	G2 Ltac close2b:554	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	50	body	-	G2 Ltac close2b:554	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	51	body	-	G2 Lemma seg2b_even:564	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	53	body	-	G2 Lemma seg2b_even:564	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	54	body	-	G2 Lemma seg2b_even:564	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	55	body	-	G2 Lemma seg2b_even:564	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	56	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	58	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	59	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	60	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	61	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	62	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	63	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	64	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	65	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	66	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	67	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	68	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	69	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFiq.v	71	body	-	G2 Lemma seg2c_even:607	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	6	STATEMENT	-	G1 Variable DPOST:140	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFir.v	9	STATEMENT	-	G3 Abbreviation at_ST2:206	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFir.v	10	body	-	G2 Abbreviation memset_stretch:217	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	16	body	-	G4 Lemma segD:268	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	18	body	-	G2 Ltac stack_pres:318	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	19	body	-	G2 Ltac stack_pres:318	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	20	body	-	G2 Ltac stack_pres:318	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	21	body	-	G2 Ltac stack_pres:318	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	22	body	-	G2 Ltac stack_pres_odd:330	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	23	body	-	G2 Ltac stack_pres_odd:330	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	24	body	-	G2 Ltac stack_pres_odd:330	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	25	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	27	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	28	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	30	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	31	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	32	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	33	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	35	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	36	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	37	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	38	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	39	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	40	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	41	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	43	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	44	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	45	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	46	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	47	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	48	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	49	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	50	body	-	G2 Lemma seg2a_odd:342	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	51	body	-	G2 Ltac close2b:617	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	52	body	-	G2 Ltac close2b:617	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	53	body	-	G2 Lemma seg2b_odd:627	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	55	body	-	G2 Lemma seg2b_odd:627	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	56	body	-	G2 Lemma seg2b_odd:627	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	57	body	-	G2 Lemma seg2b_odd:627	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	58	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	60	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	61	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	62	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	63	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	64	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	65	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	66	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	67	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	68	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	69	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	70	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	71	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFir.v	73	body	-	G2 Lemma seg2c_odd:680	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFis.v	65	STATEMENT	-	G2 Definition at_RET:652	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFix.v	7	STATEMENT	-	G1 Variable DPOST:142	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFix.v	10	body	-	G2 Abbreviation at_ST2:208	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFix.v	36	body	-	G4 Lemma D1W_ok:429	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFix.v	37	body	-	G4 Lemma D1W_ok:429	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFix.v	51	body	-	G2 Lemma LEAF_ok:563	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFix.v	53	body	-	G2 Lemma LEAF_ok:563	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	6	STATEMENT	-	G1 Variable DPOST:140	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFj4.v	9	STATEMENT	-	G3 Abbreviation at_ST2:203	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFj4.v	10	body	-	G2 Abbreviation memset_stretch:214	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	16	body	-	G4 Lemma segD:267	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	18	body	-	G2 Ltac stack_pres:296	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	19	body	-	G2 Ltac stack_pres:296	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	20	body	-	G2 Ltac stack_pres:296	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	21	body	-	G2 Ltac stack_pres:296	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	22	body	-	G2 Ltac stack_pres_odd:308	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	23	body	-	G2 Ltac stack_pres_odd:308	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	24	body	-	G2 Ltac stack_pres_odd:308	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	25	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	27	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	28	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	30	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	31	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	32	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	33	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	35	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	36	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	37	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	38	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	39	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	40	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	41	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	42	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	43	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	45	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	46	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	47	body	-	G2 Ltac close2b:525	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	48	body	-	G2 Ltac close2b:525	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	49	body	-	G2 Lemma seg2b_even:547	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	51	body	-	G2 Lemma seg2b_even:547	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	52	body	-	G2 Lemma seg2b_even:547	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	53	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	55	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	56	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	57	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	58	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	59	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	60	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	61	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	62	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	63	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	64	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	65	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	66	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj4.v	67	body	-	G2 Lemma seg2c_even:574	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	6	STATEMENT	-	G1 Variable DPOST:140	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFj5.v	9	STATEMENT	-	G3 Abbreviation at_ST2:203	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFj5.v	10	body	-	G2 Abbreviation memset_stretch:214	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	16	body	-	G4 Lemma segD:267	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	18	body	-	G2 Ltac stack_pres:296	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	19	body	-	G2 Ltac stack_pres:296	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	20	body	-	G2 Ltac stack_pres:296	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	21	body	-	G2 Ltac stack_pres:296	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	22	body	-	G2 Ltac stack_pres_odd:308	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	23	body	-	G2 Ltac stack_pres_odd:308	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	24	body	-	G2 Ltac stack_pres_odd:308	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	25	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	27	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	28	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	30	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	31	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	32	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	33	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	35	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	36	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	37	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	38	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	39	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	40	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	41	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	42	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	43	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	45	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	46	body	-	G2 Lemma seg2aK:334	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	47	body	-	G2 Ltac close2b:525	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	48	body	-	G2 Ltac close2b:525	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	49	body	-	G2 Lemma seg2b_odd:547	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	51	body	-	G2 Lemma seg2b_odd:547	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	52	body	-	G2 Lemma seg2b_odd:547	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	53	body	-	G2 Lemma seg2b_odd:547	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	54	body	-	G2 Lemma seg2b_odd:547	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	55	body	-	G2 Lemma seg2b_odd:547	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	56	body	-	G2 Lemma seg2b_odd:547	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	57	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	59	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	60	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	61	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	62	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	63	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	64	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	65	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	66	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	67	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	68	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	69	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	70	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	71	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj5.v	72	body	-	G2 Lemma seg2c_odd:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFj6.v	62	STATEMENT	-	G2 Definition at_RET:640	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjb.v	7	STATEMENT	-	G1 Variable DPOST:142	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjb.v	10	body	-	G2 Abbreviation at_ST2:205	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjb.v	36	body	-	G4 Lemma D1W_ok:427	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjb.v	37	body	-	G4 Lemma D1W_ok:427	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjb.v	51	body	-	G2 Lemma LEAF_ok:561	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjb.v	53	body	-	G2 Lemma LEAF_ok:561	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjf.v	8	STATEMENT	-	G1 Variable DPOST:160	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjf.v	11	STATEMENT	-	G3 Abbreviation at_S2:224	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjf.v	37	body	-	G4 Lemma PRES_MONO:557	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjf.v	39	body	-	G4 Lemma PRES_MONO:557	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjf.v	44	body	-	G4 Lemma BANDKEEP:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjf.v	46	body	-	G4 Lemma BANDKEEP:626	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjf.v	53	body	-	G4 Lemma depot_final:886	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjf.v	55	body	-	G4 Lemma cells_depot:895	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjf.v	56	body	-	G4 Lemma cells_depot:895	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjf.v	59	body	-	G4 Lemma cells_final_nd:920	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjf.v	66	body	-	G4 Lemma AR_transport:1201	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjf.v	67	body	-	G4 Lemma AR_transport:1201	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjf.v	68	body	-	G4 Lemma AR_transport:1201	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjf.v	69	body	-	G4 Lemma AR_transport:1201	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjf.v	73	body	-	G2 Lemma AR_final:1400	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	16	body	-	G2 Lemma segT1:581	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	19	body	-	G2 Lemma PD_rstable:610	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	20	body	-	G2 Lemma PD_rstable:610	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	26	body	-	G4 Lemma skel_apart_DX_at:683	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	29	body	-	G4 Lemma skel_apart_DX_at:683	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	32	body	-	G4 Lemma skel_apart_DX_at:683	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	41	body	-	G2 Lemma at_S_depot:819	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	42	body	-	G2 Lemma at_S_depot:819	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	43	body	-	G2 Lemma at_S_depot:819	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	44	body	-	G2 Lemma at_S_depot:819	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	46	body	-	G2 Lemma at_S_depot:819	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	47	body	-	G2 Lemma at_S_depot:819	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	48	body	-	G2 Lemma at_S_depot:819	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	49	body	-	G2 Lemma at_S_depot:819	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	51	body	-	G2 Lemma at_S_depot:819	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	52	body	-	G2 Lemma at_S_depot:819	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	53	body	-	G2 Lemma at_S_depot:819	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	54	body	-	G2 Lemma at_S_depot:819	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	61	body	-	G2 Lemma segT2b:1002	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjp.v	62	body	-	G2 Lemma segT2b:1002	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjq.v	10	STATEMENT	-	G3 Abbreviation PD:405	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjq.v	11	STATEMENT	-	G3 Abbreviation PD_stableS:409	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjq.v	12	STATEMENT	-	G3 Abbreviation at_S_depot:417	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjq.v	20	body	-	G2 Lemma segU1:636	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjq.v	24	body	-	G2 Lemma segUe:710	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjq.v	30	STATEMENT	-	G2 Lemma segUo:768	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjq.v	31	body	-	G2 Lemma segUo:768	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjq.v	34	body	-	G2 Lemma segUo:768	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjq.v	35	body	-	G2 Lemma segUo:768	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjq.v	38	body	-	G2 Lemma segUo:768	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	9	STATEMENT	-	G1 Variable DPOST:220	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjy.v	12	STATEMENT	-	G3 Definition lyF_at:622 (companion of wz_facts 33)	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjy.v	31	STATEMENT	-	G2 Record wz_facts:760	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjy.v	33	STATEMENT	-	G2 Record wz_facts:760	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjy.v	35	STATEMENT	-	G2 Variables :800	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjy.v	44	body	-	G4 Lemma XC_where:1007	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	46	body	-	G4 Lemma Z_prim:1024	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	49	body	-	G4 Lemma Z_ext:1034	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	53	body	-	G4 Lemma Z_sec:1060	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	64	body	-	G4 Lemma Z_Q:1099	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	70	body	-	G2 Lemma PRES_MONO:1124	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	71	body	-	G2 Lemma PRES_MONO:1124	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	72	body	-	G2 Lemma PRES_MONO:1124	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	82	body	-	G4 Lemma depot_final:1445	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	83	body	-	G4 Lemma depot_final:1445	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	84	body	-	G4 Lemma depot_final:1445	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	86	body	-	G4 Lemma cells_depot:1455	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	87	body	-	G4 Lemma cells_depot:1455	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	112	body	-	G4 Lemma vis_areas:1885	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	117	body	-	G4 Lemma ARm_final:1957	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	118	body	-	G4 Lemma ARm_final:1957	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	119	body	-	G4 Lemma ARm_final:1957	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	120	body	-	G4 Lemma ARm_final:1957	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	123	body	-	G4 Lemma abud_final:2022	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	124	body	-	G4 Lemma abud_final:2022	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjy.v	125	body	-	G4 Lemma abud_final:2022	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjz.v	8	STATEMENT	-	G1 Variable DPOST:219	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjz.v	10	STATEMENT	-	G3 Abbreviation PD_stableS:413	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjz.v	11	STATEMENT	-	G3 Abbreviation lyF_at:497	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjz.v	12	STATEMENT	-	G3 Abbreviation fin_facts:517	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjz.v	13	STATEMENT	-	G3 Abbreviation S_AR_final:519	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjz.v	17	STATEMENT	-	G2 Hypothesis HXsub:693	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjz.v	25	STATEMENT	-	G2 Lemma fin_pack:843	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjz.v	26	body	-	G2 Lemma fin_pack:843	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjz.v	27	body	-	G2 Lemma fin_pack:843	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjz.v	28	STATEMENT	-	G2 Definition fin_post:913	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjz.v	29	STATEMENT	-	G2 Lemma finO:928	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjz.v	43	STATEMENT	-	G2 Hypothesis HWZ:1040	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjz.v	45	STATEMENT	-	G2 Theorem LEAF_S:1045	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFjz.v	47	body	-	G2 Theorem LEAF_S:1045	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjz.v	48	body	-	G2 Theorem LEAF_S:1045	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjz.v	49	body	-	G2 Theorem LEAF_S:1045	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjz.v	50	body	-	G2 Theorem LEAF_S:1045	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjz.v	52	body	-	G2 Theorem LEAF_S:1045	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFjz.v	53	body	-	G2 Theorem LEAF_S:1045	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk0.v	8	STATEMENT	-	G1 Variable DPOST:226	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	10	STATEMENT	-	G3 Abbreviation PD_stableS:425	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	11	STATEMENT	-	G3 Abbreviation at_S_depot:433	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	12	STATEMENT	-	G3 Abbreviation DPOSTS:521	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	13	STATEMENT	-	G3 Abbreviation lyF_at:524	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	14	STATEMENT	-	G3 Abbreviation fin_facts:544	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	15	STATEMENT	-	G3 Abbreviation S_AR_final:546	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	16	STATEMENT	-	G3 Abbreviation fin_pack:564	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	30	STATEMENT	-	G2 Lemma TAILg:1129	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	32	body	-	G2 Lemma TAILg:1129	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk0.v	33	body	-	G2 Lemma TAILg:1129	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk0.v	35	body	-	G2 Lemma TAILg:1129	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk0.v	36	body	-	G2 Lemma TAILg:1129	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk0.v	37	STATEMENT	-	G2 Lemma TAILgB:1190	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	38	STATEMENT	-	G2 Lemma TAILgB:1190	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	40	STATEMENT	-	G2 Lemma TAILgB:1190	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	41	STATEMENT	-	G2 Lemma after_depot:1217	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	42	STATEMENT	-	G2 Lemma after_depot:1217	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	44	STATEMENT	-	G2 Lemma after_depot:1217	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk0.v	45	body	-	G2 Lemma after_depot:1217	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk0.v	46	body	-	G2 Lemma after_depot:1217	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk0.v	47	body	-	G2 Lemma after_depot:1217	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk0.v	53	body	-	G4 Theorem grantS_ne:1513	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk0.v	59	body	-	G4 Theorem grantS_eq:1567	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk0.v	65	body	-	G4 Theorem grantS_eq:1567	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk1.v	10	STATEMENT	-	G3 Abbreviation PD:409	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk1.v	11	STATEMENT	-	G3 Abbreviation PD_stableS:413	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk1.v	12	STATEMENT	-	G3 Abbreviation at_S_depot:421	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk1.v	32	STATEMENT	-	G2 Theorem B_R_ok:814	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk1.v	43	body	-	G2 Lemma segB1a:972	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk1.v	44	body	-	G2 Lemma segB1a:972	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk1.v	56	STATEMENT	-	G2 Lemma segB1:1082	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk1.v	59	STATEMENT	-	G2 Lemma nodeK:1096	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk1.v	60	STATEMENT	-	G2 Lemma nodeK:1096	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk1.v	66	body	-	G2 Lemma segB2:1161	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk2.v	8	STATEMENT	-	G1 Variable DPOST:217	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk2.v	9	STATEMENT	-	G3 Abbreviation PD:405	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk2.v	10	STATEMENT	-	G3 Abbreviation PD_stableS:409	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk2.v	11	STATEMENT	-	G3 Abbreviation at_S_depot:417	-	round 22 companion (class review items 2-4); class: grown-layout (appended)
+AFk2.v	40	body	-	G2 Lemma segD1_6:856	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk2.v	41	body	-	G2 Lemma segD1_7:885	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk2.v	42	body	-	G2 Lemma segD1_8:914	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk2.v	43	body	-	G2 Lemma segD1_12:943	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk2.v	44	body	-	G2 Lemma diamond:967	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk2.v	45	body	-	G2 Lemma digits_6:997	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk2.v	46	body	-	G2 Lemma digits_7:1008	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk2.v	47	body	-	G2 Lemma digits_8:1020	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk2.v	48	body	-	G2 Lemma digits_12:1033	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk2.v	49	body	-	G2 Lemma segEND_6:1050	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk2.v	50	body	-	G2 Lemma segEND_7:1062	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk2.v	51	body	-	G2 Lemma segEND_8:1074	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AFk2.v	52	body	-	G2 Lemma segEND_12:1086	-	round 22 companion (class review items 2-4); class: (F) per-lemma body
+AD1d.v	4	STATEMENT	-	CLOS ly0 arity follow (as AD2k 6)	-	round 23: grown-layout class (appended, round 23)
+AFhn.v	16	body	build-20261030T165025Z.log	(F) body depot_final, build #22 AFhn.v:344	-	round 23: (F) per-lemma body, build #22 (AFhn.v)
+AFio.v	4	STATEMENT	-	CLOS body (5-ary lambda, review2 item 1)	-	round 23: grown-layout class (appended, round 23)
+AFio.v	5	STATEMENT	-	CLOS body (5-ary lambda, review2 item 1)	-	round 23: grown-layout class (appended, round 23)
+AFip.v	5	STATEMENT	-	Variable DPOST:137	-	round 23: grown-layout class (appended, round 23)
+AFip.v	8	STATEMENT	-	Abbreviation at_ST2:203	-	round 23: grown-layout class (appended, round 23)
+AFip.v	15	STATEMENT	-	completeness: PU op at knock AFip.v:576-576	-	round 23: grown-layout class (appended, round 23)
+AFip.v	17	STATEMENT	-	completeness: PU op at knock AFip.v:630-630	-	round 23: grown-layout class (appended, round 23)
+AFis.v	7	STATEMENT	-	completeness: PU op at knock AFis.v:185-185	-	round 23: grown-layout class (appended, round 23)
+AFis.v	8	STATEMENT	-	completeness: PU op at knock AFis.v:190-190	-	round 23: grown-layout class (appended, round 23)
+AFit.v	5	STATEMENT	-	Variable DPOST:137	-	round 23: grown-layout class (appended, round 23)
+AFit.v	8	STATEMENT	-	Abbreviation at_ST2:203	-	round 23: grown-layout class (appended, round 23)
+AFit.v	10	STATEMENT	-	completeness: PU op at knock AFit.v:272-272	-	round 23: grown-layout class (appended, round 23)
+AFiu.v	6	STATEMENT	-	Variable DPOST:140	-	round 23: grown-layout class (appended, round 23)
+AFiu.v	9	STATEMENT	-	Abbreviation at_ST2:206	-	round 23: grown-layout class (appended, round 23)
+AFiv.v	5	STATEMENT	-	Variable DPOST:137	-	round 23: grown-layout class (appended, round 23)
+AFiv.v	8	STATEMENT	-	Abbreviation at_ST2:203	-	round 23: grown-layout class (appended, round 23)
+AFiv.v	10	STATEMENT	-	completeness: PU op at knock AFiv.v:284-284	-	round 23: grown-layout class (appended, round 23)
+AFiw.v	6	STATEMENT	-	Variable DPOST:138	-	round 23: grown-layout class (appended, round 23)
+AFiw.v	9	STATEMENT	-	Abbreviation at_ST2:204	-	round 23: grown-layout class (appended, round 23)
+AFiw.v	11	STATEMENT	-	completeness: PU op at knock AFiw.v:265-265	-	round 23: grown-layout class (appended, round 23)
+AFiw.v	12	STATEMENT	-	completeness: PU op at knock AFiw.v:279-279	-	round 23: grown-layout class (appended, round 23)
+AFiw.v	13	STATEMENT	-	completeness: PU op at knock AFiw.v:289-289	-	round 23: grown-layout class (appended, round 23)
+AFiw.v	18	STATEMENT	-	completeness: PU op at knock AFiw.v:358-358	-	round 23: grown-layout class (appended, round 23)
+AFiw.v	20	STATEMENT	-	completeness: PU op at knock AFiw.v:375-375	-	round 23: grown-layout class (appended, round 23)
+AFiw.v	21	STATEMENT	-	completeness: PU op at knock AFiw.v:380-380	-	round 23: grown-layout class (appended, round 23)
+AFiw.v	24	STATEMENT	-	completeness: PU op at knock AFiw.v:466-466	-	round 23: grown-layout class (appended, round 23)
+AFix.v	46	STATEMENT	-	completeness: LEM op at knock AFix.v:560-562	-	round 23: grown-layout class (appended, round 23)
+AFix.v	55	STATEMENT	-	completeness: PU op at knock AFix.v:626-626	-	round 23: grown-layout class (appended, round 23)
+AFix.v	57	STATEMENT	-	completeness: PU op at knock AFix.v:644-644	-	round 23: grown-layout class (appended, round 23)
+AFix.v	59	STATEMENT	-	completeness: PU op at knock AFix.v:659-659	-	round 23: grown-layout class (appended, round 23)
+AFix.v	60	STATEMENT	-	completeness: PU op at knock AFix.v:663-663	-	round 23: grown-layout class (appended, round 23)
+AFix.v	61	STATEMENT	-	completeness: PU op at knock AFix.v:667-667	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	6	STATEMENT	-	Variable DPOST:139	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	9	STATEMENT	-	Abbreviation at_ST2:205	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	11	STATEMENT	-	completeness: PU op at knock AFiy.v:253-253	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	12	STATEMENT	-	completeness: PU op at knock AFiy.v:260-260	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	13	STATEMENT	-	completeness: PU op at knock AFiy.v:267-267	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	15	STATEMENT	-	completeness: PU op at knock AFiy.v:273-273	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	17	STATEMENT	-	completeness: PU op at knock AFiy.v:296-296	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	19	STATEMENT	-	completeness: PU op at knock AFiy.v:303-303	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	21	STATEMENT	-	completeness: PU op at knock AFiy.v:309-309	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	24	STATEMENT	-	completeness: PU op at knock AFiy.v:344-344	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	25	STATEMENT	-	completeness: PU op at knock AFiy.v:351-351	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	27	STATEMENT	-	completeness: PU op at knock AFiy.v:361-361	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	29	STATEMENT	-	completeness: PU op at knock AFiy.v:378-378	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	32	STATEMENT	-	completeness: PU op at knock AFiy.v:394-394	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	33	STATEMENT	-	completeness: PU op at knock AFiy.v:399-399	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	34	STATEMENT	-	completeness: PU op at knock AFiy.v:411-411	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	35	STATEMENT	-	completeness: PU op at knock AFiy.v:413-413	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	36	STATEMENT	-	completeness: PU op at knock AFiy.v:455-455	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	37	STATEMENT	-	completeness: PU op at knock AFiy.v:466-466	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	38	STATEMENT	-	completeness: PU op at knock AFiy.v:478-478	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	39	STATEMENT	-	completeness: PU op at knock AFiy.v:480-480	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	40	STATEMENT	-	completeness: PU op at knock AFiy.v:482-482	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	41	STATEMENT	-	completeness: PU op at knock AFiy.v:487-487	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	42	STATEMENT	-	completeness: PU op at knock AFiy.v:492-492	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	44	STATEMENT	-	completeness: PU op at knock AFiy.v:515-515	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	45	STATEMENT	-	completeness: PU op at knock AFiy.v:520-520	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	46	STATEMENT	-	completeness: PU op at knock AFiy.v:525-525	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	47	STATEMENT	-	completeness: PU op at knock AFiy.v:531-531	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	48	STATEMENT	-	completeness: PU op at knock AFiy.v:534-534	-	round 23: grown-layout class (appended, round 23)
+AFiy.v	49	STATEMENT	-	completeness: PU op at knock AFiy.v:538-538	-	round 23: grown-layout class (appended, round 23)
+AFiz.v	6	STATEMENT	-	Variable DPOST:139	-	round 23: grown-layout class (appended, round 23)
+AFiz.v	9	STATEMENT	-	Abbreviation at_ST2:205	-	round 23: grown-layout class (appended, round 23)
+AFiz.v	11	STATEMENT	-	completeness: PU op at knock AFiz.v:287-287	-	round 23: grown-layout class (appended, round 23)
+AFj0.v	6	STATEMENT	-	Variable DPOST:139	-	round 23: grown-layout class (appended, round 23)
+AFj0.v	9	STATEMENT	-	Abbreviation at_ST2:205	-	round 23: grown-layout class (appended, round 23)
+AFj0.v	11	STATEMENT	-	completeness: PU op at knock AFj0.v:284-284	-	round 23: grown-layout class (appended, round 23)
+AFj0.v	12	STATEMENT	-	completeness: PU op at knock AFj0.v:289-289	-	round 23: grown-layout class (appended, round 23)
+AFj0.v	14	STATEMENT	-	completeness: PU op at knock AFj0.v:306-306	-	round 23: grown-layout class (appended, round 23)
+AFj0.v	18	STATEMENT	-	completeness: PU op at knock AFj0.v:392-392	-	round 23: grown-layout class (appended, round 23)
+AFj1.v	7	STATEMENT	-	Variable DPOST:139	-	round 23: grown-layout class (appended, round 23)
+AFj1.v	10	STATEMENT	-	Abbreviation at_ST2:205	-	round 23: grown-layout class (appended, round 23)
+AFj2.v	7	STATEMENT	-	Variable DPOST:142	-	round 23: grown-layout class (appended, round 23)
+AFj2.v	10	STATEMENT	-	Abbreviation at_ST2:208	-	round 23: grown-layout class (appended, round 23)
+AFj2.v	19	body	build-20261030T165025Z.log	(F) body: destruct of the grown D1W_ok post (ly2 & md2 & ..)	-	(F) per-lemma body
+AFj3.v	6	STATEMENT	-	Variable DPOST:140	-	round 23: grown-layout class (appended, round 23)
+AFj3.v	9	STATEMENT	-	Abbreviation at_ST2:203	-	round 23: grown-layout class (appended, round 23)
+AFj6.v	7	STATEMENT	-	completeness: PU op at knock AFj6.v:185-185	-	round 23: grown-layout class (appended, round 23)
+AFj6.v	8	STATEMENT	-	completeness: PU op at knock AFj6.v:190-190	-	round 23: grown-layout class (appended, round 23)
+AFj7.v	6	STATEMENT	-	Variable DPOST:140	-	round 23: grown-layout class (appended, round 23)
+AFj7.v	9	STATEMENT	-	Abbreviation at_ST2:203	-	round 23: grown-layout class (appended, round 23)
+AFj8.v	6	STATEMENT	-	Variable DPOST:141	-	round 23: grown-layout class (appended, round 23)
+AFj8.v	9	STATEMENT	-	Abbreviation at_ST2:204	-	round 23: grown-layout class (appended, round 23)
+AFj9.v	6	STATEMENT	-	Variable DPOST:140	-	round 23: grown-layout class (appended, round 23)
+AFj9.v	9	STATEMENT	-	Abbreviation at_ST2:203	-	round 23: grown-layout class (appended, round 23)
+AFja.v	6	STATEMENT	-	Variable DPOST:140	-	round 23: grown-layout class (appended, round 23)
+AFja.v	9	STATEMENT	-	Abbreviation at_ST2:203	-	round 23: grown-layout class (appended, round 23)
+AFjb.v	46	STATEMENT	-	completeness: LEM op at knock AFjb.v:558-560	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	6	STATEMENT	-	Variable DPOST:140	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	9	STATEMENT	-	Abbreviation at_ST2:203	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	11	STATEMENT	-	completeness: PU op at knock AFjc.v:251-251	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	12	STATEMENT	-	completeness: PU op at knock AFjc.v:258-258	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	13	STATEMENT	-	completeness: PU op at knock AFjc.v:265-265	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	15	STATEMENT	-	completeness: PU op at knock AFjc.v:271-271	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	17	STATEMENT	-	completeness: PU op at knock AFjc.v:294-294	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	19	STATEMENT	-	completeness: PU op at knock AFjc.v:301-301	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	20	STATEMENT	-	completeness: PU op at knock AFjc.v:303-303	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	21	STATEMENT	-	completeness: PU op at knock AFjc.v:307-307	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	23	STATEMENT	-	completeness: PU op at knock AFjc.v:312-312	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	26	STATEMENT	-	completeness: PU op at knock AFjc.v:347-347	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	27	STATEMENT	-	completeness: PU op at knock AFjc.v:354-354	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	29	STATEMENT	-	completeness: PU op at knock AFjc.v:364-364	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	31	STATEMENT	-	completeness: PU op at knock AFjc.v:381-381	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	34	STATEMENT	-	completeness: PU op at knock AFjc.v:397-397	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	35	STATEMENT	-	completeness: PU op at knock AFjc.v:402-402	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	36	STATEMENT	-	completeness: PU op at knock AFjc.v:417-417	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	37	STATEMENT	-	completeness: PU op at knock AFjc.v:419-419	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	38	STATEMENT	-	completeness: PU op at knock AFjc.v:461-461	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	39	STATEMENT	-	completeness: PU op at knock AFjc.v:472-472	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	40	STATEMENT	-	completeness: PU op at knock AFjc.v:484-484	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	41	STATEMENT	-	completeness: PU op at knock AFjc.v:486-486	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	42	STATEMENT	-	completeness: PU op at knock AFjc.v:488-488	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	43	STATEMENT	-	completeness: PU op at knock AFjc.v:493-493	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	44	STATEMENT	-	completeness: PU op at knock AFjc.v:498-498	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	46	STATEMENT	-	completeness: PU op at knock AFjc.v:521-521	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	47	STATEMENT	-	completeness: PU op at knock AFjc.v:526-526	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	48	STATEMENT	-	completeness: PU op at knock AFjc.v:531-531	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	49	STATEMENT	-	completeness: PU op at knock AFjc.v:537-537	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	50	STATEMENT	-	completeness: PU op at knock AFjc.v:540-540	-	round 23: grown-layout class (appended, round 23)
+AFjc.v	51	STATEMENT	-	completeness: PU op at knock AFjc.v:544-544	-	round 23: grown-layout class (appended, round 23)
+AFjd.v	6	STATEMENT	-	Variable DPOST:140	-	round 23: grown-layout class (appended, round 23)
+AFjd.v	9	STATEMENT	-	Abbreviation at_ST2:203	-	round 23: grown-layout class (appended, round 23)
+AFjd.v	11	STATEMENT	-	completeness: PU op at knock AFjd.v:286-286	-	round 23: grown-layout class (appended, round 23)
+AFje.v	6	STATEMENT	-	Variable DPOST:140	-	round 23: grown-layout class (appended, round 23)
+AFje.v	9	STATEMENT	-	Abbreviation at_ST2:203	-	round 23: grown-layout class (appended, round 23)
+AFje.v	11	STATEMENT	-	completeness: PU op at knock AFje.v:283-283	-	round 23: grown-layout class (appended, round 23)
+AFje.v	12	STATEMENT	-	completeness: PU op at knock AFje.v:288-288	-	round 23: grown-layout class (appended, round 23)
+AFje.v	14	STATEMENT	-	completeness: PU op at knock AFje.v:305-305	-	round 23: grown-layout class (appended, round 23)
+AFje.v	18	STATEMENT	-	completeness: PU op at knock AFje.v:378-378	-	round 23: grown-layout class (appended, round 23)
+AFjf.v	22	STATEMENT	-	completeness: PU + LEM alloc_row_w0 (no FZ dependence)	-	round 23: grown-layout class (appended, round 23)
+AFjg.v	6	STATEMENT	-	Variable DPOST:140	-	round 23: grown-layout class (appended, round 23)
+AFjg.v	9	STATEMENT	-	Abbreviation at_ST2:203	-	round 23: grown-layout class (appended, round 23)
+AFjg.v	17	body	build-20261030T165025Z.log	(F) body: destruct of the grown D1W_ok post (ly2 & md2 & ..)	-	(F) per-lemma body
+AFjh.v	8	STATEMENT	-	Variable DPOST:215	-	round 23: grown-layout class (appended, round 23)
+AFji.v	8	STATEMENT	-	Variable DPOST:215	-	round 23: grown-layout class (appended, round 23)
+AFjj.v	8	STATEMENT	-	Variable DPOST:215	-	round 23: grown-layout class (appended, round 23)
+AFjj.v	12	STATEMENT	-	completeness: PU op at knock AFjj.v:494-494	-	round 23: grown-layout class (appended, round 23)
+AFjk.v	9	STATEMENT	-	Variable DPOST:216	-	round 23: grown-layout class (appended, round 23)
+AFjl.v	8	STATEMENT	-	Variable DPOST:215	-	round 23: grown-layout class (appended, round 23)
+AFjm.v	6	STATEMENT	-	completeness: PU op at knock AFjm.v:192-192	-	round 23: grown-layout class (appended, round 23)
+AFjm.v	21	STATEMENT	-	completeness: PU op at knock AFjm.v:345-345	-	round 23: grown-layout class (appended, round 23)
+AFjm.v	33	STATEMENT	-	completeness: PU name-list op at knock AFjm.v:429	-	round 23: grown-layout class (appended, round 23)
+AFjm.v	46	STATEMENT	-	completeness: PU op at knock AFjm.v:515-515	-	round 23: grown-layout class (appended, round 23)
+AFjm.v	54	STATEMENT	-	completeness: PU op at knock AFjm.v:560-560	-	round 23: grown-layout class (appended, round 23)
+AFjn.v	8	STATEMENT	-	Variable DPOST:215	-	round 23: grown-layout class (appended, round 23)
+AFjo.v	8	STATEMENT	-	Variable DPOST:215	-	round 23: grown-layout class (appended, round 23)
+AFjo.v	43	STATEMENT	-	completeness: PU op at knock AFjo.v:695-695	-	round 23: grown-layout class (appended, round 23)
+AFjo.v	47	STATEMENT	-	completeness: PU op at knock AFjo.v:734-735	-	round 23: grown-layout class (appended, round 23)
+AFjp.v	12	STATEMENT	-	Variable as_const_g2:551	-	round 23: grown-layout class (appended, round 23)
+AFjp.v	34	STATEMENT	-	completeness: PU op at knock AFjp.v:734-734	-	round 23: grown-layout class (appended, round 23)
+AFjr.v	8	STATEMENT	-	Variable DPOST:219	-	round 23: grown-layout class (appended, round 23)
+AFjr.v	9	STATEMENT	-	Abbreviation PD:388	-	round 23: grown-layout class (appended, round 23)
+AFjr.v	10	STATEMENT	-	Abbreviation PD_stableS:392	-	round 23: grown-layout class (appended, round 23)
+AFjr.v	11	STATEMENT	-	Abbreviation at_S_depot:400	-	round 23: grown-layout class (appended, round 23)
+AFjr.v	27	STATEMENT	-	completeness: PU op at knock AFjr.v:696-696	-	round 23: grown-layout class (appended, round 23)
+AFjs.v	8	STATEMENT	-	Variable DPOST:219	-	round 23: grown-layout class (appended, round 23)
+AFjs.v	19	STATEMENT	-	completeness: PU op at knock AFjs.v:555-555	-	round 23: grown-layout class (appended, round 23)
+AFjt.v	8	STATEMENT	-	Variable DPOST:222	-	round 23: grown-layout class (appended, round 23)
+AFjt.v	9	STATEMENT	-	Abbreviation PD:410	-	round 23: grown-layout class (appended, round 23)
+AFjt.v	10	STATEMENT	-	Abbreviation PD_stableS:414	-	round 23: grown-layout class (appended, round 23)
+AFjt.v	11	STATEMENT	-	Abbreviation at_S_depot:422	-	round 23: grown-layout class (appended, round 23)
+AFjt.v	27	STATEMENT	-	completeness: PU op at knock AFjt.v:665-665	-	round 23: grown-layout class (appended, round 23)
+AFju.v	8	STATEMENT	-	Variable DPOST:216	-	round 23: grown-layout class (appended, round 23)
+AFjv.v	8	STATEMENT	-	Variable DPOST:215	-	round 23: grown-layout class (appended, round 23)
+AFjv.v	22	STATEMENT	-	completeness: PU op at knock AFjv.v:524-525	-	round 23: grown-layout class (appended, round 23)
+AFjw.v	8	STATEMENT	-	Variable DPOST:215	-	round 23: grown-layout class (appended, round 23)
+AFjx.v	8	STATEMENT	-	Variable DPOST:215	-	round 23: grown-layout class (appended, round 23)
+AFjy.v	109	STATEMENT	-	completeness: PU op at knock AFjy.v:1811-1811	-	round 23: grown-layout class (appended, round 23)
+AD1d.v	16	STATEMENT	-	kz_facts: slot 424 only (kz_chk, depot form); its one consumer is unit AD1f.v:189 (knock AD1f.v:193)	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1d.v	17	body	-	(F) body kz_facts, build #23 AD1d.v:280 "Unable to apply lemma"	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1d.v	19	body	-	(B) body musl_extra: no VNB / VSB / VGV, HEAD3 index shift (empty-depot family)	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1d.v	20	body	-	(B) body musl_extra: no VNB / VSB / VGV, HEAD3 index shift (empty-depot family)	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1d.v	21	body	-	(B) body musl_extra: no VNB / VSB / VGV, HEAD3 index shift (empty-depot family)	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1e.v	3	STATEMENT	-	CLOS ch	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1e.v	4	body	-	(B) no uNB / uSB / uGV in the AD1g depot form	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1e.v	5	STATEMENT	-	unknown_at: drops (i <> 1) -> (i <> 2) ->, index 3 + length -> length (TFIB_HEAD3 gone)	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1e.v	6	body	-	(B) body unknown_at	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1e.v	7	body	-	(B) body	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1e.v	8	body	-	(B) body	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1e.v	10	body	-	(B) HEAD3 index shift	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1e.v	11	body	-	(B) HEAD3 index shift	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1e.v	12	body	-	(B) HEAD3 index shift	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1e.v	15	body	-	(B) no VNB / VSB / VGV	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1e.v	16	body	-	(B) no uNB / uSB / uGV facts	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1e.v	20	body	-	(B) HEAD3 index shift	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1f.v	4	STATEMENT	-	CLOS ch (ly0 arity follow, as AD1d 4 / AD2k 6)	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1f.v	5	body	-	(B) AD1g depot form has no uNB / uSB: their local get-definitions go	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1f.v	6	body	-	(B) AD1e depot form has no GV_extra: its local get-definition goes	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1f.v	13	body	-	(B) body: no VNB / VSB / VGV in the depot vis facts	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1f.v	14	body	-	(B) body: no uNB / uSB facts	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1f.v	18	body	-	(B) body: index shift of the removed TFIB_HEAD3 maps	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1f.v	20	body	-	proof-body application `AD1g.ly0 E model` (ly0 arity follow); not a statement	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AD1g.v	84	STATEMENT	-	xcell width-0 guard: knock registered form (ruling 10:20Z), knock AD1g.v:1102	-	round 24-26 (class / completeness)
+AD1g.v	86	body	-	xcell_sound width-0 branch: knock registered form (ruling 10:20Z)	-	round 24-26 (class / completeness)
+AD1p.v	10	body	-	proof-body application `AD1g.ly0 E model` (ly0 arity follow); not a statement	-	empty-depot family: approved (REVIEW3, ruling 22:00Z)
+AFis.v	41	STATEMENT	-	completeness: PU op `Proof using.` at knock AFis.v:479-479	-	round 24-26 (class / completeness)
+AFix.v	14	STATEMENT	-	completeness: PU op `Proof using.` at knock AFix.v:301-301	-	round 24-26 (class / completeness)
+AFj6.v	38	STATEMENT	-	completeness: PU op `Proof using.` at knock AFj6.v:468-468	-	round 24-26 (class / completeness)
+AFjb.v	14	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjb.v:299-299	-	round 24-26 (class / completeness)
+AFjf.v	14	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjf.v:340-340	-	round 24-26 (class / completeness)
+AFjf.v	15	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjf.v:344-344	-	round 24-26 (class / completeness)
+AFjf.v	20	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjf.v:367-367	-	round 24-26 (class / completeness)
+AFjj.v	11	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjj.v:486-486	-	round 24-26 (class / completeness)
+AFjl.v	13	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjl.v:541-541	-	round 24-26 (class / completeness)
+AFjl.v	15	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjl.v:548-548	-	round 24-26 (class / completeness)
+AFjl.v	17	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjl.v:574-574	-	round 24-26 (class / completeness)
+AFjl.v	31	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjl.v:712-712	-	round 24-26 (class / completeness)
+AFjl.v	32	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjl.v:714-714	-	round 24-26 (class / completeness)
+AFjl.v	33	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjl.v:716-716	-	round 24-26 (class / completeness)
+AFjm.v	7	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjm.v:235-235	-	round 24-26 (class / completeness)
+AFjm.v	94	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjm.v:974-974	-	round 24-26 (class / completeness)
+AFjr.v	20	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjr.v:615-615	-	round 24-26 (class / completeness)
+AFjr.v	26	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjr.v:683-683	-	round 24-26 (class / completeness)
+AFjs.v	13	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjs.v:479-479	-	round 24-26 (class / completeness)
+AFjs.v	14	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjs.v:481-481	-	round 24-26 (class / completeness)
+AFjt.v	14	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjt.v:595-595	-	round 24-26 (class / completeness)
+AFjt.v	34	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjt.v:705-705	-	round 24-26 (class / completeness)
+AFjt.v	35	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjt.v:709-709	-	round 24-26 (class / completeness)
+AFjy.v	22	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjy.v:676-676	-	round 24-26 (class / completeness)
+AFjy.v	26	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjy.v:701-701	-	round 24-26 (class / completeness)
+AFjy.v	27	STATEMENT	-	completeness: PU op `Proof using.` at knock AFjy.v:706-706	-	round 24-26 (class / completeness)
+AFk1.v	34	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk1.v:881-881	-	round 24-26 (class / completeness)
+AFk1.v	45	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk1.v:1010-1010	-	round 24-26 (class / completeness)
+AFk1.v	46	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk1.v:1012-1012	-	round 24-26 (class / completeness)
+AFk1.v	47	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk1.v:1014-1014	-	round 24-26 (class / completeness)
+AFk1.v	48	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk1.v:1016-1016	-	round 24-26 (class / completeness)
+AFk1.v	49	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk1.v:1018-1018	-	round 24-26 (class / completeness)
+AFk1.v	50	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk1.v:1020-1020	-	round 24-26 (class / completeness)
+AFk1.v	57	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk1.v:1089-1089	-	round 24-26 (class / completeness)
+AFk1.v	58	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk1.v:1095-1095	-	round 24-26 (class / completeness)
+AFk2.v	16	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk2.v:615-615	-	round 24-26 (class / completeness)
+AFk2.v	31	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk2.v:756-756	-	round 24-26 (class / completeness)
+AFk2.v	32	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk2.v:763-763	-	round 24-26 (class / completeness)
+AFk2.v	35	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk2.v:801-801	-	round 24-26 (class / completeness)
+AFk2.v	36	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk2.v:819-819	-	round 24-26 (class / completeness)
+AFk2.v	37	STATEMENT	-	completeness: PU op `Proof using.` at knock AFk2.v:827-827	-	round 24-26 (class / completeness)
+AFkz.v	18	body	build-20261030T213135Z.log	(F) body, build #26: AFkz.v:797 "The variable Rch was not found" (depot_final)	-	(F) body, build #26: AFkz.v:797 "The variable Rch was not found" (depot_final)
+AFkm.v	16	body	build-20261030T213135Z.log	(F) body, build #26: AFkm.v:1080 "The variable Rch was not found" (depot_final)	-	(F) body, build #26: AFkm.v:1080 "The variable Rch was not found" (depot_final)
+AFju.v	32	body	build-20261030T213135Z.log	(F) body, build #26: AFju.v:813 D1W_ok "Unable to unify world ?segs with st_depot S = []" (HFP premise of the depot hunk 29)	-	(F) body, build #26: AFju.v:813 D1W_ok "Unable to unify world ?segs with st_depot S = []" (HFP premise of the depot hunk 29)
+AFju.v	36	body	build-20261030T213135Z.log	(F) body, build #26: AFju.v:813 D1W_ok (HFP use)	-	(F) body, build #26: AFju.v:813 D1W_ok (HFP use)
+AFix.v	27	body	build-20261030T213135Z.log	(F) body, build #26: AFix.v:401 depot_at0 "No applicable tactic" (aareas after a non-empty depot: aareas_post)	-	(F) body, build #26: AFix.v:401 depot_at0 "No applicable tactic" (aareas after a non-empty depot: aareas_post)
+AFix.v	28	body	build-20261030T213135Z.log	(F) body, build #26: AFix.v:401 depot_at0	-	(F) body, build #26: AFix.v:401 depot_at0
+AFjb.v	27	body	build-20261030T213135Z.log	(F) body, build #26: AFjb.v:399 depot_at0 "No applicable tactic" (aareas_post)	-	(F) body, build #26: AFjb.v:399 depot_at0 "No applicable tactic" (aareas_post)
+AFjb.v	28	body	build-20261030T213135Z.log	(F) body, build #26: AFjb.v:399 depot_at0	-	(F) body, build #26: AFjb.v:399 depot_at0
+AFj1.v	13	STATEMENT	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): statement	-	FZ band Section taken from knock (ruling 22:03Z F5): statement; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFj1.v	15	STATEMENT	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): statement	-	FZ band Section taken from knock (ruling 22:03Z F5): statement; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFj1.v	16	body	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): body	-	FZ band Section taken from knock (ruling 22:03Z F5): body; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFj1.v	17	STATEMENT	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): statement	-	FZ band Section taken from knock (ruling 22:03Z F5): statement; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFj1.v	18	body	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): body	-	FZ band Section taken from knock (ruling 22:03Z F5): body; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFj1.v	26	body	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): body	-	FZ band Section taken from knock (ruling 22:03Z F5): body; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFj1.v	30	body	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): body	-	FZ band Section taken from knock (ruling 22:03Z F5): body; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFj1.v	32	body	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): body	-	FZ band Section taken from knock (ruling 22:03Z F5): body; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFjf.v	23	STATEMENT	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): statement	-	FZ band Section taken from knock (ruling 22:03Z F5): statement; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFjf.v	25	STATEMENT	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): statement	-	FZ band Section taken from knock (ruling 22:03Z F5): statement; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFjf.v	27	STATEMENT	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): statement	-	FZ band Section taken from knock (ruling 22:03Z F5): statement; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFjf.v	28	body	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): body	-	FZ band Section taken from knock (ruling 22:03Z F5): body; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFjf.v	29	body	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): body	-	FZ band Section taken from knock (ruling 22:03Z F5): body; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFjf.v	30	body	build-20261030T215826Z.log	FZ band Section (ruling 22:03Z F5): body	-	FZ band Section taken from knock (ruling 22:03Z F5): body; Hypothesis FZD discharged at every instantiation (lines at 78d6988b23aa, fz-discharge.tsv): AFj1.v Hypothesis FZD :364; AFj1.v discharge proved :1304 :1457; AFj1.v instantiation :1395 :1468; AFj1.v discharge used :1396 :1469; AFjf.v Hypothesis FZD :404; AFjf.v discharge proved :1416 :1447; AFjf.v instantiation :1427 :1496
+AFjy.v	41	body	build-20261030T215826Z.log	(F) body, build #27: AFjy.v:986 AGREE0 "Hw has type WINT a while it is expected to have type XC0 a"	-	(F) body, build #27: AFjy.v:986 AGREE0 "Hw has type WINT a while it is expected to have type XC0 a"
+AFfs.v	3	body	build-20261030T215826Z.log	(F) body, build #27: AFfs.v:54 afree_realizes_of "expected 7 tactics" (afree_mid takes HND)	-	(F) body, build #27: AFfs.v:54 afree_realizes_of "expected 7 tactics" (afree_mid takes HND)
+AFfs.v	4	body	build-20261030T215826Z.log	(F) body, build #27: AFfs.v:54 afree_realizes_of "expected 7 tactics" (afree_mid takes HND)	-	(F) body, build #27: AFfs.v:54 afree_realizes_of "expected 7 tactics" (afree_mid takes HND)
+AFfs.v	5	body	build-20261030T215826Z.log	(F) body, build #27: AFfs.v:54 afree_realizes_of "expected 7 tactics" (afree_mid takes HND)	-	(F) body, build #27: AFfs.v:54 afree_realizes_of "expected 7 tactics" (afree_mid takes HND)
+AFj1.v	40	body	build-20261030T224704Z.log	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFj1.v	42	body	build-20261030T224704Z.log	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFj1.v	43	body	build-20261030T224704Z.log	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFj1.v	47	body	build-20261030T224704Z.log	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFj1.v	49	body	build-20261030T224704Z.log	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFj1.v	56	body	build-20261030T224704Z.log	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFj1.v	58	body	build-20261030T224704Z.log	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFj1.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjf.v	58	STATEMENT	build-20261030T224704Z.log	STATEMENT (scratch, pending ruling): depot-form companion, build #28 AFjf.v	-	STATEMENT, allowed (ruling 22:52Z): new Definition acells_nd + Lemma cells_final_nd. (a) users, word grep over the unit tree: acells_nd 5 lines, all AFjf.v (913 def, 916, 918, 925, 1257); cells_final_nd AFjf.v:916 / :925 / :1256 (AFjy.v:1504 / :2089 is AFjy's own local lemma of that name); qualified AFjf.acells_nd / AFjf.cells_final_nd 0. (b) the depot-form cells_final (AFjf.v:923, auto depot hunk 60) adds `st_depot S <> [] -> depot_mem_ok B ly (depot_after z tr S) rdD ->`; its one user AFjf.v:1213 `exact (cells_final HNE DEPD)` discharges both (HNE, DEPD: the Section premises of the enclosing proof)
+AFjf.v	61	STATEMENT	build-20261030T224704Z.log	STATEMENT (scratch, pending ruling): depot-form companion, build #28 AFjf.v	-	STATEMENT, allowed (ruling 22:52Z): vis_final (AFjf.v:1079) drops `Forall (range_vis B ly rd') (aareas (SF z))`. (c) every user gets that fact elsewhere: AFjf.v:1219 / :1221 use proj1 / proj2 (junk, client), the dropped areas fact comes from AFjf.v:1220 `exact (vis_areas HNE)`; AFjf.v:1262 / :1264 use proj1 / proj2, the areas fact from AFjf.v:1263 `exact vis_areas_nd`; qualified AFjf.vis_final 0
+AFjf.v	62	body	build-20261030T224704Z.log	(F) body, build #28 (AFjf.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjf.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjf.v	63	body	build-20261030T224704Z.log	(F) body, build #28 (AFjf.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjf.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	4	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	42	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	57	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	59	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	61	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	63	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	66	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	68	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	88	STATEMENT	build-20261030T224704Z.log	STATEMENT (scratch, pending ruling): depot-form companion, build #28 AFjy.v	-	STATEMENT, allowed (ruling 22:52Z): cells_final -> cells_parts (AFjy.v:1473: the Forall split per part). (a) users: cells_parts AFjy.v:1473 (def), :1506, :1514 only; qualified AFjy.cells_parts 0. AFjy's new cells_final (AFjy.v:1512, `st_depot S <> [] ->`) user AFjy.v:1968 `exact (cells_final HNE)` discharges the premise
+AFjy.v	89	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	90	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	91	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	92	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	93	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	94	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	102	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	104	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFjy.v	105	body	build-20261030T224704Z.log	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)	-	(F) body, build #28 (AFjy.v: AFj1.v:862 / AFjf.v:915 / AFjy.v:995 family: NE / DEPD / FZ uses of the depot form)
+AFj2.v	12	body	build-20261030T225040Z.log	CLOS abbreviation argument Hpres0 (AFj1 Section b, :220), build #29 AFj2.v:404	-	CLOS abbreviation argument Hpres0 (AFj1 Section b, :220), build #29 AFj2.v:404
+AFjg.v	3	body	build-20261030T225040Z.log	Require AFix (first_put_pre_of_AR), build #29 AFjg.v:358	-	Require AFix (first_put_pre_of_AR), build #29 AFjg.v:358
+AFk0.v	25	STATEMENT	build-20261030T225040Z.log	WZ3 (A/AFk0.v:954): wz_facts gains the layout argument ly (arity follow of the taken AFjy wz_facts)	-	STATEMENT allowed (ruling 23:06Z): WZ3 adds no premise (an extra argument); word grep over the unit tree = 3 lines, all A/AFk0.v (954 def, 1559 use, takes.tsv); qualified AFk0.WZ3 = 0; a2 reviews as a statement
+AFin.v	6	body	build-20261030T225828Z.log	CLOS application argument md0 (AFja Section variable), build #30 AFin.v:166	-	CLOS application argument md0 (AFja Section variable), build #30 AFin.v:166
+AFk5.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkb.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkc.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkd.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFke.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkf.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkg.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkh.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFki.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkj.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkk.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkl.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkm.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFko.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkt.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFku.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkw.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkx.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFky.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFkz.v	0	GLUE E6	-	Zify flag false at fuzz_grant release 4f87de75d67, true in this unit's closure (zify-flag-record.tsv)	-	E6, ruled 18:52Z; zify_flag.py; release value false (zify-flag-grant-release.tsv)
+AFjh.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFji.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFjj.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFjk.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFjl.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFjn.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFjo.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFjp.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFjq.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFju.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFjv.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFjw.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFjx.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFio.v	0	GLUE E7	-	Zify flag true at fuzz_grant release 4f87de75d67, false in this unit's closure	-	E7, ruled 20:23Z (AFjq/AFju 22:00Z, AF0w/AFio on the release re-list); zify_flag.py --e7; release value true
+AFiy.v	18	MERGE	build-20261030T202444Z.log	Hv' / clear- lists need knock's closure; grant's off_facts bound (kFreeArrayOffset) kept	-	merge allowed (ruling 21:32Z (2)): knock's line + grant's `unfold kFreeArrayOffset in O5.`; command in stage-pairing / consumer-apply; a2 reviewed (REVIEW3 check 5)
+AFiy.v	20	MERGE	build-20261030T202444Z.log	Hv' / clear- lists need knock's closure; grant's off_facts bound (kFreeArrayOffset) kept	-	merge allowed (ruling 21:32Z (2)): knock's line + grant's `unfold kFreeArrayOffset in O5.`; command in stage-pairing / consumer-apply; a2 reviewed (REVIEW3 check 5)
+AFiy.v	30	MERGE	build-20261030T202444Z.log	Hv' / clear- lists need knock's closure; grant's off_facts bound (kFreeArrayOffset) kept	-	merge allowed (ruling 21:32Z (2)): knock's line + grant's `unfold kFreeArrayOffset in O5.`; command in stage-pairing / consumer-apply; a2 reviewed (REVIEW3 check 5)
+AFiy.v	43	MERGE	build-20261030T202444Z.log	Hv' / clear- lists need knock's closure; grant's off_facts bound (kFreeArrayOffset) kept	-	merge allowed (ruling 21:32Z (2)): knock's line + grant's `unfold kFreeArrayOffset in O5.`; command in stage-pairing / consumer-apply; a2 reviewed (REVIEW3 check 5)
+AFjc.v	18	MERGE	build-20261030T202444Z.log	Hv' / clear- lists need knock's closure; grant's off_facts bound (kFreeArrayOffset) kept	-	merge allowed (ruling 21:32Z (2)): knock's line + grant's `unfold kFreeArrayOffset in O5.`; command in stage-pairing / consumer-apply; a2 reviewed (REVIEW3 check 5)
+AFjc.v	22	MERGE	build-20261030T202444Z.log	Hv' / clear- lists need knock's closure; grant's off_facts bound (kFreeArrayOffset) kept	-	merge allowed (ruling 21:32Z (2)): knock's line + grant's `unfold kFreeArrayOffset in O5.`; command in stage-pairing / consumer-apply; a2 reviewed (REVIEW3 check 5)
+AFjc.v	32	MERGE	build-20261030T202444Z.log	Hv' / clear- lists need knock's closure; grant's off_facts bound (kFreeArrayOffset) kept	-	merge allowed (ruling 21:32Z (2)): knock's line + grant's `unfold kFreeArrayOffset in O5.`; command in stage-pairing / consumer-apply; a2 reviewed (REVIEW3 check 5)
+AFjc.v	45	MERGE	build-20261030T202444Z.log	Hv' / clear- lists need knock's closure; grant's off_facts bound (kFreeArrayOffset) kept	-	merge allowed (ruling 21:32Z (2)): knock's line + grant's `unfold kFreeArrayOffset in O5.`; command in stage-pairing / consumer-apply; a2 reviewed (REVIEW3 check 5)
+AD1g.v	6	MERGE (inherited MERGES9)	base run (<= round 21)	knock `(YImgTop.IMG_TOP / 4096)` -> grant literal `1525` (x5 occurrences)	-	TFIB_const image-floor lineage (rulings A / E1): keep grant's 1525 (= wire image floor; knock 1523, grant release 1530); recorded from MERGES9 (passed to every depot_apply); source per line in consumer-classes.tsv
+AD1g.v	33	MERGE (inherited MERGES9)	base run (<= round 21)	knock `(YImgTop.IMG_LO, YImgTop.IMG_TOP - YImgTop.IMG_LO)` -> grant `(0x10000, 0x5e5000)`	-	TFIB_IMG lineage (rulings A / E1): keep grant's image pair for wire's image; recorded from MERGES9 (passed to every depot_apply); source per line in consumer-classes.tsv
+AFex.v	38	MERGE (inherited MERGES9)	base run (<= round 21)	knock `zd (SX 0 4 _ _ eq_refl SE4` -> + grant's `unfold kFreeArrayOffset in MU.`	-	kFreeArrayOffset lineage: keep grant's unfold (as AFiy/AFjc, ruling 21:32Z (2)); recorded from MERGES9 (passed to every depot_apply); source per line in consumer-classes.tsv
+AFex.v	39	MERGE (inherited MERGES9)	base run (<= round 21)	knock `zd (SX 0 5 _ _ eq_refl SE5` -> + grant's `unfold kFreeArrayOffset in MU.`	-	kFreeArrayOffset lineage: keep grant's unfold; recorded from MERGES9 (passed to every depot_apply); source per line in consumer-classes.tsv
+(lib rename)	0	GLUE rename	-	18 files: `AWalkFw0` -> `AB1v` on their Require line (the lib rename of record)	-	rename glue in MERGES9 (AD1r AD1u AD29 AFex AFey AFf0 AFf2 AFfl AFgi AFgm AFgn AFhn AFi5 AFis AFiu AFj6 AFj8 AFjm)
+A/Rt/AF0s.v	1	body	build-20261031T171605Z.log (cb build --fresh of 9031801b53fd; the close lane's build-20261031T172926Z.log the same)	AF0s.v:66 at 9031801b53fd No applicable tactic at lia: on the empty-depot kernel (lib/Reusable/YG0f.v:381-383) owned_extents holds `if (ly_NB ly =? 0) ...` and `if (ly_SB ly =? 0) ...` entries, which cbn [snd] does not reduce	the SZ step of tfib_stack_malloc_at (lines 68-70, line 69 changed; lines 64-66 and 65 before the header lines were restored)	consumer route: knock's released lib/A/AF0s.v:74 (recipes 88154566652a), depot class (depot_classify.py --consumer); only this hunk is taken, so every statement stays byte-equal (the unit owner's ruling, 2026-10-31 17:36Z, condition 1)
+A/Rt/StackMalloc0.v	1	glue	build-20261031T171605Z.log (cb build --fresh of 9031801b53fd; the close lane's build-20261031T172926Z.log the same)	StackMalloc0.v:66 at 9031801b53fd No applicable tactic at lia (the same SZ step)	the SZ step of tfib_stack_malloc_at (lines 68-70, line 69 changed; lines 64-66 and 65 before the header lines were restored)	glue, class-0 SZ step, knock AF0s.v:74 byte-equal, ruling of the unit owner 2026-10-31 17:36Z
+B/Rt/YF0s.v	1	body	build log sha256 d52a296e6f36 (stackmalloc-B/records/build.txt section 1; fresh build of the result: section 4)	YF0s.v:67 No applicable tactic at lia: on the empty-depot kernel owned_extents holds `if (ly_NB ly =? 0) ...` and `if (ly_SB ly =? 0) ...` entries, which cbn [snd] does not reduce	the SZ step of tfib_stack_malloc_at (line 66 changed)	glue, class-1 SZ step, knock lib/AU/YF0s.v:75 byte-equal (= lib/A/AF0s.v:74), empty-depot kernel; ruling of the unit owner 2026-10-31 17:36Z / 17:4xZ (the image-A twin route)
+B/Rt/StackMalloc0.v	1	glue	build log sha256 d52a296e6f36 (stackmalloc-B/records/build.txt section 1; fresh build of the result: section 4)	StackMalloc0.v:67 No applicable tactic at lia (the same SZ step)	the SZ step of tfib_stack_malloc_at (line 66 changed)	glue, class-0 SZ step, knock lib/AU/YF0s.v:75 byte-equal (= lib/A/AF0s.v:74), empty-depot kernel; ruling of the unit owner 2026-10-31 17:36Z / 17:4xZ (the image-A twin route)

@@ -1,0 +1,18 @@
+# reac-pw: the FreeREAC daemon that bridges Roland REAC and PipeWire. The fuzz targets drive the readers of the
+# untrusted input it parses itself, beside the REAC frames libreac parses: the operator's config file and `--box` pin,
+# the three control writes a PipeWire client sets on a node, and the link-alias rtnetlink reply it reads (the qdisc
+# dump is libreac-transport's since 1.0.42, fuzzed there). Pinned to v1.0.42 (FreeREAC/reac-pw#71: one home).
+repo: https://github.com/FreeREAC/reac-pw#f86a30a3d06e84e8a7d6ec647cae77c4cbc9137b
+primary_contact: linuxnow@gmail.com
+homepage: https://github.com/FreeREAC/reac-pw
+language: c
+sanitizers: [address, undefined]
+mutants: fuzz/sabotage
+fuzz_targets:
+  - fuzz_segconf
+  - fuzz_pin
+  - fuzz_headamp
+  - fuzz_rate
+  - fuzz_role
+  - fuzz_qdisc
+  - fuzz_link

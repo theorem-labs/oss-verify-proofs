@@ -1,0 +1,364 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From Stdlib Require Import ZArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
+From OSSVerify.jsoncons.fuzz_json_cursor.images Require Import Asan.
+From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import
+  PropExec CatExec CatSim SeqExec StepTac Hoare StoreOk WalkTac MmapSim RefMemcpyLib Pm8RegionPoisoned.
+From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import Pm8MemcpyBase.
+From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import Pm8_code_92000_93000.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Open Scope bv_scope.
+
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+
+Fixpoint wbrev (m : word -> option byte) (a : word) (bs : list byte) : word -> option byte :=
+  match bs with
+  | [] => m
+  | b :: rest => wbytes (wbrev m (a + 1) rest) a [b]
+  end.
+
+Lemma wbrev_out : forall bs m (a x : word),
+  (bv_unsigned a + Z.of_nat (length bs) <= 2 ^ 64)%Z ->
+  (bv_unsigned x < bv_unsigned a \/ bv_unsigned a + Z.of_nat (length bs) <= bv_unsigned x)%Z ->
+  wbrev m a bs x = m x.
+Proof.
+  induction bs as [|b rest IH]; intros m a x Hnw Hx; [reflexivity|].
+  cbn [wbrev] in *. change (length (b :: rest)) with (S (length rest)) in *. rewrite Nat2Z.inj_succ in *.
+  pose proof (u64_range a). pose proof (u64_range x).
+  assert (STEP : wbytes (wbrev m (a + 1) rest) a [b] x = wbrev m (a + 1) rest x).
+  { destruct Hx as [Hx|Hx].
+    - rewrite wbytes_below; [reflexivity | cbn [length Z.of_nat Pos.to_nat]; lia | lia].
+    - rewrite wbytes_above by (cbn [length Z.of_nat Pos.to_nat]; lia). reflexivity. }
+  rewrite STEP. destruct rest as [|b2 rest2]; [reflexivity|].
+  change (length (b2 :: rest2)) with (S (length rest2)) in *. rewrite Nat2Z.inj_succ in *.
+  assert (Ea1 : bv_unsigned (a + 1) = (bv_unsigned a + 1)%Z) by (rewrite word_succ_at; apply at_u; lia).
+  apply IH; try change (length (b2 :: rest2)) with (S (length rest2)); rewrite ?Nat2Z.inj_succ; rewrite ?Ea1; lia.
+Qed.
+
+Lemma wbrev_grows : forall bs m a, mem_grows m (wbrev m a bs).
+Proof.
+  induction bs as [|b rest IH]; intros m a; cbn [wbrev]; [apply mem_grows_refl|].
+  eapply mem_grows_trans; [apply IH | apply wbytes_grows].
+Qed.
+
+Lemma wbrev_pw : forall bs m (a x : word),
+  (bv_unsigned a + Z.of_nat (length bs) <= 2 ^ 64)%Z ->
+  wbrev m a bs x = wbytes m a bs x.
+Proof.
+  induction bs as [|b rest IH]; intros m a x Hnw; [reflexivity|].
+  change (length (b :: rest)) with (S (length rest)) in *. rewrite Nat2Z.inj_succ in *.
+  cbn [wbrev wbytes]. pose proof (u64_range a). pose proof (u64_range x).
+  destruct (bv_eqb x a) eqn:E.
+  -
+    apply (proj1 (Fs.bv_eqb_eq x a)) in E. subst x.
+    destruct rest as [|b2 rest2]; [cbn [wbrev wbytes]; rewrite bv_eqb_refl; reflexivity|].
+    change (length (b2 :: rest2)) with (S (length rest2)) in *. rewrite Nat2Z.inj_succ in *.
+    assert (Ea1 : bv_unsigned (a + 1) = (bv_unsigned a + 1)%Z) by (rewrite word_succ_at; apply at_u; lia).
+    rewrite wbytes_below; [| try change (length (b2 :: rest2)) with (S (length rest2)); rewrite ?Nat2Z.inj_succ; rewrite ?Ea1; lia | rewrite Ea1; lia].
+    rewrite bv_eqb_refl. reflexivity.
+  - assert (IH' : wbrev m (a + 1) rest x = wbytes m (a + 1) rest x).
+    { destruct rest as [|b2 rest2]; [reflexivity|].
+      change (length (b2 :: rest2)) with (S (length rest2)) in *. rewrite Nat2Z.inj_succ in *.
+      assert (Ea1 : bv_unsigned (a + 1) = (bv_unsigned a + 1)%Z) by (rewrite word_succ_at; apply at_u; lia).
+      apply IH. try change (length (b2 :: rest2)) with (S (length rest2)). rewrite ?Nat2Z.inj_succ. rewrite ?Ea1. lia. }
+    rewrite IH'.
+
+    revert E. generalize (a + 1) as a1. intros a1 E.
+    assert (GEN : forall l (m1 m2 : word -> option byte) (c : word), (forall y, y <> a -> m1 y = m2 y) -> forall y, y <> a -> wbytes m1 c l y = wbytes m2 c l y).
+    { induction l as [|b' l' IHl]; intros m1 m2 c Hm y Hy; cbn [wbytes]; [apply Hm; exact Hy|].
+      apply IHl; [|exact Hy]. intros z Hz. destruct (bv_eqb z c); [reflexivity | apply Hm; exact Hz]. }
+    apply GEN.
+    + intros y Hy. rewrite (bv_eqb_neq _ _ Hy). reflexivity.
+    + intros ->. rewrite bv_eqb_refl in E. discriminate.
+Qed.
+
+Section FPX_1. Context {fx : PropExec.FPState}.
+
+#[local] Ltac rwH :=
+  repeat match goal with
+         | H : getr ?rg ?i = _ |- context [getr ?rg ?i] => rewrite !H
+         end.
+#[local] Ltac unorm :=
+  repeat match goal with
+         | |- context [bv_unsigned (Z_to_bv 64 ?z)] =>
+             lazymatch z with context [Z_to_bv 64 _] => fail | _ => rewrite (u_Z2bv z) by lia end
+         end.
+
+Section ALL.
+  Variable mem0 : word -> option byte.
+  Variables dst src : word.
+  Variable n : Z.
+  Variable bs : list byte.
+  Variable rom : word -> option byte.
+  Hypothesis HOK : mcH mem0 dst src n bs.
+  Hypothesis Hn63 : (n < 2 ^ 63)%Z.
+
+  #[local] Notation MK := (memk mem0 dst bs).
+  Let Hn0 : (0 <= n < 2 ^ 64)%Z := Hn _ _ _ _ _ HOK.
+  Let Hlen : length bs = Z.to_nat n := Hlen _ _ _ _ _ HOK.
+  Let Hnws : (bv_unsigned src + n < 2 ^ 64)%Z := Hnws _ _ _ _ _ HOK.
+  Let Hnwd : (bv_unsigned dst + n < 2 ^ 64)%Z := Hnwd _ _ _ _ _ HOK.
+  Let Hdisj : (bv_unsigned dst + n <= bv_unsigned src \/ bv_unsigned src + n <= bv_unsigned dst)%Z := Hdisj _ _ _ _ _ HOK.
+
+  Definition mm_result : word -> option byte :=
+    if (bv_unsigned dst <? bv_unsigned src)%Z then wbytes mem0 dst bs else wbrev mem0 dst bs.
+  Lemma mm_result_pw : forall x, mm_result x = wbytes mem0 dst bs x.
+  Proof.
+    intros x. unfold mm_result. destruct (bv_unsigned dst <? bv_unsigned src)%Z; [reflexivity|].
+    apply wbrev_pw. rewrite Hlen. lia.
+  Qed.
+
+  Definition memb (k : Z) : word -> option byte := wbrev mem0 (at_ dst (n - k)) (skipn (Z.to_nat (n - k)) bs).
+
+  Lemma memb_0 : memb 0 = mem0.
+  Proof. unfold memb. rewrite Z.sub_0_r, skipn_all2 by (rewrite Hlen; lia). reflexivity. Qed.
+  Lemma memb_n : memb n = wbrev mem0 dst bs.
+  Proof. unfold memb. rewrite Z.sub_diag, at_0. reflexivity. Qed.
+
+  Lemma memb_out : forall k (x : word), (0 <= k <= n)%Z ->
+    (bv_unsigned x < bv_unsigned dst \/ bv_unsigned dst + n <= bv_unsigned x)%Z -> memb k x = mem0 x.
+  Proof.
+    intros k x Hk Hx. unfold memb. pose proof (u64_range dst).
+    apply wbrev_out; rewrite length_skipn, Hlen, at_u; lia.
+  Qed.
+
+  Lemma rdb_src1 : forall k j, (0 <= k <= n)%Z -> (0 <= j)%Z -> (j + 1 <= n)%Z ->
+    rdn RSEGS (memb k) (at_ src j) 1%nat = Some [b_ bs j].
+  Proof.
+    intros k j Hk Hj Hj1. pose proof (u64_range src). pose proof (u64_range dst).
+    rewrite (rdn_ext RSEGS 1 (memb k) mem0); [| rewrite at_u; cbn; lia |].
+    - rewrite <- (memk_0 mem0 dst bs). apply (rd_src1 mem0 dst src n bs HOK); lia.
+    - intros x Hx. rewrite at_u in Hx by lia. cbn [Z.of_nat Pos.to_nat] in Hx. apply memb_out; lia.
+  Qed.
+
+  Lemma wrb_dst : forall k j, (0 <= k <= n)%Z -> (0 <= j)%Z -> (j + 1 <= n)%Z ->
+    store_ok RSEGS (memb k) (at_ dst j) 1%nat = true.
+  Proof.
+    intros k j Hk Hj Hj1. apply (store_ok_mono _ _ mem0 (memb k) _ ltac:(unfold memb; apply wbrev_grows)).
+    rewrite <- (memk_0 mem0 dst bs). apply (wr_dst mem0 dst src n bs HOK); lia.
+  Qed.
+
+  Lemma memb_extend1 : forall k (b : byte), (0 <= k)%Z -> (k + 1 <= n)%Z -> b = b_ bs (n - k - 1) ->
+    wbytes (memb k) (at_ dst (n - k - 1)) [b] = memb (k + 1).
+  Proof.
+    intros k b Hk Hk1 ->. unfold memb, b_.
+    replace (n - (k + 1))%Z with (n - k - 1)%Z by lia.
+    rewrite (skipn_nth bs (Z.to_nat (n - k - 1)) (Z_to_bv 8 0)) by (rewrite Hlen; lia).
+    cbn [wbrev]. f_equal. f_equal.
+    - rewrite word_succ_at, at_at. f_equal. lia.
+    - f_equal. lia.
+  Qed.
+
+  Lemma mb_lbu : forall regs pc w rd rs (imm : bv 12) k j0 j,
+    fetch_word RSEGS pc = Some w -> is_ecall w = false ->
+    decode_any w = Some (Load SZ1 false rd rs imm, 4%Z) ->
+    getr regs rs = at_ src j0 -> (j0 + bv_signed imm = j)%Z ->
+    (0 <= k <= n)%Z -> (0 <= j)%Z -> (j + 1 <= n)%Z ->
+    RiscvSemantics.step RSEGS (mkst regs pc (memb k) rom) =
+    MachineOk (mkst (if bv_eqb rd 0 then regs else regupd regs rd (LBv (b_ bs j))) (v_addi pc 4) (memb k) rom).
+  Proof.
+    intros regs pc w rd rs imm k j0 j Hf He Hd Hrs Hj Hk Hj0 Hj1.
+    eapply step_lbu; [exact Hf | exact He | exact Hd |].
+    rewrite Hrs, at_addi, Hj. apply rdb_src1; lia.
+  Qed.
+
+  Lemma mb_sb : forall regs pc w rs1 rs2 (imm : bv 12) k k0 (v : word),
+    fetch_word RSEGS pc = Some w -> is_ecall w = false ->
+    decode_any w = Some (Store SZ1 rs1 rs2 imm, 4%Z) ->
+    getr regs rs1 = at_ dst k0 -> (k0 + bv_signed imm = n - k - 1)%Z ->
+    getr regs rs2 = v -> Z_to_bv 8 (bv_unsigned v) = b_ bs (n - k - 1) ->
+    (0 <= k)%Z -> (k + 1 <= n)%Z ->
+    RiscvSemantics.step RSEGS (mkst regs pc (memb k) rom) =
+    MachineOk (mkst regs (v_addi pc 4) (memb (k + 1)) rom).
+  Proof.
+    intros regs pc w rs1 rs2 imm k k0 v Hf He Hd Hrs1 Hk Hrs2 Hb Hk0 Hk1.
+    rewrite <- (memb_extend1 k (b_ bs (n - k - 1))) by (lia || reflexivity).
+    eapply MmapSim.step_sb_at; [exact Hf | exact He | exact Hd | | exact Hrs2 | exact Hb |].
+    - rewrite Hrs1, at_addi, Hk. reflexivity.
+    - apply wrb_dst; lia.
+  Qed.
+
+  Ltac mlbu F D jj :=
+    chain_step; [reflexivity
+      | eapply (mc_lbu _ _ _ _ _ HOK) with (j := jj);
+        [exact F | reflexivity | exact D | gres; rwH; rewrite ?at_addi; reflexivity | imm_norm; lia | lia | lia | lia]
+      | step_simpl]; vnorm.
+  Ltac mk_at kk := match goal with |- msteps _ (mkst _ _ (MK ?a) _) _ =>
+                     first [constr_eq a kk | replace (MK a) with (MK kk) by (f_equal; lia)] end.
+  Ltac msb F D kk valtac :=
+    mk_at kk;
+    chain_step; [reflexivity
+      | eapply (mc_sb _ _ _ _ _ HOK) with (k := kk);
+        [exact F | reflexivity | exact D | gres; rwH; rewrite ?at_addi; reflexivity | imm_norm; lia
+        | gres; rwH; reflexivity | valtac | lia | lia]
+      | step_simpl].
+
+  Ltac mblbu F D jj :=
+    chain_step; [reflexivity
+      | eapply mb_lbu with (j := jj);
+        [exact F | reflexivity | exact D | gres; rwH; rewrite ?at_addi; first [reflexivity | unfold v_add, at_; unorm; f_equal; lia] | imm_norm; lia | lia | lia | lia]
+      | step_simpl]; vnorm.
+  Ltac mbsb F D kk valtac :=
+    chain_step; [reflexivity
+      | eapply mb_sb with (k := kk);
+        [exact F | reflexivity | exact D | gres; rwH; rewrite ?at_addi; first [reflexivity | unfold v_add, at_; unorm; f_equal; lia] | imm_norm; lia
+        | gres; rwH; reflexivity | valtac | lia | lia]
+      | step_simpl].
+  Ltac cond :=
+    rwH; rewrite ?at_addi; unfold at_, v_addi, v_add, c_eq, c_ltu, c_lts, bv_eqb, bv_ltu, bv_lts; imm_norm; unorm; rewrite ?signed64_small by lia;
+    first [apply Z.eqb_eq | apply Z.eqb_neq | apply Z.ltb_lt | apply Z.ltb_ge]; lia.
+  Ltac post := repeat split; gres; rwH; rewrite ?at_addi; try (f_equal; lia); try reflexivity; try solve_keeps.
+
+  Lemma floop_run : forall (q : nat) regs (ret : word) k,
+    ret_ok ret -> getr regs 1 = ret ->
+    getr regs 11 = at_ src k -> getr regs 13 = at_ dst k -> getr regs 12 = at_ dst n ->
+    (0 <= k)%Z -> (k + Z.of_nat q + 1 = n)%Z ->
+    exists regs',
+      msteps RSEGS (mkst regs (0x925f8 : word) (MK k) rom) (mkst regs' ret (MK n) rom)
+      /\ keeps regs regs'.
+  Proof.
+    induction q as [|q IH]; intros regs ret k Hret H1 H11 H13 H12 Hk Hq;
+      pose proof (u64_range src); pose proof (u64_range dst).
+    - eexists. split.
+      + mlbu F_925a8 D_925a8 k.
+        msb F_925ac D_925ac k ltac:(apply sb_val_plain).
+        stepn F_925b0 D_925b0.
+        stepn F_925b4 D_925b4.
+        stepb_ft F_925b8 D_925b8 ltac:(cond).
+        stepn F_925bc D_925bc.
+        stepret F_925ec D_925ec ret ltac:(rwH; reflexivity).
+        replace (MK (k + 1)) with (MK n) by (f_equal; lia).
+        apply mst_refl.
+      + post.
+    - eapply (runs_trans RSEGS _ (fun r => mkst r (0x925f8 : word) (MK (k + 1)) rom)
+               (fun r => getr r 1 = ret /\ getr r 11 = at_ src (k + 1) /\ getr r 13 = at_ dst (k + 1) /\ getr r 12 = at_ dst n /\ keeps regs r)).
+      + eexists. split.
+        * mlbu F_925a8 D_925a8 k.
+          msb F_925ac D_925ac k ltac:(apply sb_val_plain).
+          stepn F_925b0 D_925b0.
+          stepn F_925b4 D_925b4.
+          stepb_tk F_925b8 D_925b8 ltac:(cond).
+          apply mst_refl.
+        * cbv beta. post.
+      + cbv beta. intros r1 (R1 & R11 & R13 & R12 & K1).
+        destruct (IH r1 ret (k + 1)%Z Hret R1 R11 R13 R12 ltac:(lia) ltac:(lia)) as (r2 & RUN & K2).
+        exists r2. split; [exact RUN | eapply keeps_trans; eassumption].
+  Qed.
+
+  Lemma bloop_run : forall (q : nat) regs (ret : word) k,
+    ret_ok ret -> getr regs 1 = ret ->
+    getr regs 10 = dst -> getr regs 11 = src -> getr regs 12 = Z_to_bv 64 1 -> getr regs 13 = Z_to_bv 64 (n - k - 1) ->
+    (0 <= k)%Z -> (k + Z.of_nat q + 1 = n)%Z ->
+    exists regs',
+      msteps RSEGS (mkst regs (0x92620 : word) (memb k) rom) (mkst regs' ret (memb n) rom)
+      /\ keeps regs regs'.
+  Proof.
+    induction q as [|q IH]; intros regs ret k Hret H1 H10 H11 H12 H13 Hk Hq;
+      pose proof (u64_range src); pose proof (u64_range dst).
+    - eexists. split.
+      + stepiv F_925d0 D_925d0 (at_ src (n - k - 1)) ltac:(gres; rwH; unfold v_add, at_; unorm; f_equal; lia).
+        mblbu F_925d4 D_925d4 (n - k - 1)%Z.
+        stepiv F_925d8 D_925d8 (at_ dst (n - k - 1)) ltac:(gres; rwH; unfold v_add, at_; unorm; f_equal; lia).
+        stepiv F_925dc D_925dc (Z_to_bv 64 (n - k)) ltac:(gres; rwH; unfold v_addi; imm_norm; unorm; f_equal; lia).
+        stepn F_925e0 D_925e0.
+        mbsb F_925e4 D_925e4 k ltac:(apply sb_val_plain).
+        stepb_ft F_925e8 D_925e8 ltac:(cond).
+        stepret F_925ec D_925ec ret ltac:(rwH; reflexivity).
+        replace (memb (k + 1)) with (memb n) by (f_equal; lia).
+        apply mst_refl.
+      + post.
+    - eapply (runs_trans RSEGS _ (fun r => mkst r (0x92620 : word) (memb (k + 1)) rom)
+               (fun r => getr r 1 = ret /\ getr r 10 = dst /\ getr r 11 = src /\ getr r 12 = Z_to_bv 64 1 /\ getr r 13 = Z_to_bv 64 (n - (k + 1) - 1) /\ keeps regs r)).
+      + eexists. split.
+        * stepiv F_925d0 D_925d0 (at_ src (n - k - 1)) ltac:(gres; rwH; unfold v_add, at_; unorm; f_equal; lia).
+          mblbu F_925d4 D_925d4 (n - k - 1)%Z.
+          stepiv F_925d8 D_925d8 (at_ dst (n - k - 1)) ltac:(gres; rwH; unfold v_add, at_; unorm; f_equal; lia).
+          stepiv F_925dc D_925dc (Z_to_bv 64 (n - k)) ltac:(gres; rwH; unfold v_addi; imm_norm; unorm; f_equal; lia).
+          stepiv F_925e0 D_925e0 (Z_to_bv 64 (n - (k + 1) - 1)) ltac:(gres; rwH; unfold v_addi; imm_norm; unorm; f_equal; lia).
+          mbsb F_925e4 D_925e4 k ltac:(apply sb_val_plain).
+          stepb_tk F_925e8 D_925e8 ltac:(cond).
+          apply mst_refl.
+        * cbv beta. post.
+      + cbv beta. intros r1 (R1 & R10 & R11 & R12 & R13 & K1).
+        destruct (IH r1 ret (k + 1)%Z Hret R1 R10 R11 R12 R13 ltac:(lia) ltac:(lia)) as (r2 & RUN & K2).
+        exists r2. split; [exact RUN | eapply keeps_trans; eassumption].
+  Qed.
+
+  Theorem int_memmove_run : forall regs (ret : word),
+    ret_ok ret -> getr regs 1 = ret ->
+    getr regs 10 = dst -> getr regs 11 = src -> getr regs 12 = Z_to_bv 64 n ->
+    exists regs',
+      msteps RSEGS (mkst regs (0x925e8 : word) mem0 rom) (mkst regs' ret mm_result rom)
+      /\ keeps regs regs'.
+  Proof.
+    intros regs ret Hret H1 H10 H11 H12. pose proof (u64_range src) as Us; pose proof (u64_range dst) as Ud.
+    unfold mm_result.
+    destruct (Z.ltb_spec (bv_unsigned dst) (bv_unsigned src)) as [Hlt|Hge].
+    -
+      rewrite <- (memk_n mem0 dst src n bs HOK).
+      replace (mkst regs (0x925e8 : word) mem0 rom) with (mkst regs (0x925e8 : word) (MK 0) rom) by reflexivity.
+      destruct (Z.eq_dec n 0) as [Hz|Hz].
+      + eexists. split.
+        * stepb_ft F_92598 D_92598 ltac:(cond).
+          stepb_tk F_9259c D_9259c ltac:(cond).
+          stepret F_925ec D_925ec ret ltac:(rwH; reflexivity).
+          replace (MK 0) with (MK n) by (f_equal; lia).
+          apply mst_refl.
+        * post.
+      + assert (Hq : exists q : nat, (Z.of_nat q + 1 = n)%Z) by (exists (Z.to_nat (n - 1)); rewrite Z2Nat.id; lia).
+        destruct Hq as (q & Hq).
+        eapply (runs_trans RSEGS _ (fun r => mkst r (0x925f8 : word) (MK 0) rom)
+                 (fun r => getr r 1 = ret /\ getr r 11 = at_ src 0 /\ getr r 13 = at_ dst 0 /\ getr r 12 = at_ dst n /\ keeps regs r)).
+        * eexists. split.
+          -- stepb_ft F_92598 D_92598 ltac:(cond).
+             stepb_ft F_9259c D_9259c ltac:(cond).
+             stepn F_925a0 D_925a0.
+             stepn F_925a4 D_925a4.
+             apply mst_refl.
+          -- cbv beta. post. all: rewrite ?at_0; try reflexivity. all: unfold v_add, at_; f_equal; unorm; lia.
+        * cbv beta. intros r1 (R1 & R11 & R13 & R12 & K1).
+          destruct (floop_run q r1 ret 0 Hret R1 R11 R13 R12 ltac:(lia) ltac:(lia)) as (r2 & RUN & K2).
+          exists r2. split; [exact RUN | eapply keeps_trans; eassumption].
+    -
+      rewrite <- memb_n. rewrite <- memb_0.
+      destruct (Z.eq_dec n 0) as [Hz|Hz].
+      + destruct (Z.eq_dec (bv_unsigned src) (bv_unsigned dst)) as [Heq|Hne].
+        * eexists. split.
+          -- stepb_tk F_92598 D_92598 ltac:(cond).
+             stepb_tk F_925c0 D_925c0 ltac:(cond).
+             stepret F_925ec D_925ec ret ltac:(rwH; reflexivity).
+             replace (memb 0) with (memb n) by (f_equal; lia).
+             apply mst_refl.
+          -- post.
+        * eexists. split.
+          -- stepb_tk F_92598 D_92598 ltac:(cond).
+             stepb_ft F_925c0 D_925c0 ltac:(cond).
+             stepb_tk F_925c4 D_925c4 ltac:(cond).
+             stepret F_925ec D_925ec ret ltac:(rwH; reflexivity).
+             replace (memb 0) with (memb n) by (f_equal; lia).
+             apply mst_refl.
+          -- post.
+      + assert (Hq : exists q : nat, (Z.of_nat q + 1 = n)%Z) by (exists (Z.to_nat (n - 1)); rewrite Z2Nat.id; lia).
+        destruct Hq as (q & Hq).
+        eapply (runs_trans RSEGS _ (fun r => mkst r (0x92620 : word) (memb 0) rom)
+                 (fun r => getr r 1 = ret /\ getr r 10 = dst /\ getr r 11 = src /\ getr r 12 = Z_to_bv 64 1 /\ getr r 13 = Z_to_bv 64 (n - 0 - 1) /\ keeps regs r)).
+        * eexists. split.
+          -- stepb_tk F_92598 D_92598 ltac:(cond).
+             stepb_ft F_925c0 D_925c0 ltac:(cond).
+             stepb_ft F_925c4 D_925c4 ltac:(cond).
+             stepiv F_925c8 D_925c8 (Z_to_bv 64 (n - 0 - 1)) ltac:(gres; rwH; unfold v_addi; imm_norm; unorm; f_equal; lia).
+             stepn F_925cc D_925cc.
+             apply mst_refl.
+          -- cbv beta. post.
+        * cbv beta. intros r1 (R1 & R10 & R11 & R12 & R13 & K1).
+          destruct (bloop_run q r1 ret 0 Hret R1 R10 R11 R12 R13 ltac:(lia) ltac:(lia)) as (r2 & RUN & K2).
+          exists r2. split; [exact RUN | eapply keeps_trans; eassumption].
+  Qed.
+End ALL.
+End FPX_1.
+
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

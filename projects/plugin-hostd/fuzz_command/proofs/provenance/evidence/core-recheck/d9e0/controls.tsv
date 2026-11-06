@@ -1,0 +1,9 @@
+rule	rows_settled	plus4_still_accepted	donor_value_still_accepted	donor_equal_skipped
+GOT-WORD	16	0	0	0
+IMAGE-TOP	119	0	0	0
+QUOTIENT	4	0	0	0
+SAME-STRING	12	0	0	0
+SAME-SYMBOL	1794	3	0	0
+SECTION-EDGE	16	0	0	0
+SEGMENT	65	0	0	0
+ALL	2026	3	0	0

@@ -1,0 +1,5 @@
+file	line	old	why	(an --override row for each, or the run refuses to apply)
+A/ACfn.v	0	-	require-unresolved: neither the stage nor the target lib holds A.W_journalG (line 17) (a module the unit writes itself: write it, or --patch the Require)
+A/AD1q.v	0	-	require-unresolved: neither the stage nor the target lib holds A.TransportDriver (line 22) (a module the unit writes itself: write it, or --patch the Require)
+A/AD1r.v	0	-	require-unresolved: neither the stage nor the target lib holds A.TransportDrvG (line 160) (a module the unit writes itself: write it, or --patch the Require)
+A/AD1w.v	0	-	require-unresolved: neither the stage nor the target lib holds A.W_journalG (line 13) (a module the unit writes itself: write it, or --patch the Require)

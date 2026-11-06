@@ -1,0 +1,18 @@
+# The process model the checker image is built from (lint rule `model`, with --release).  The image takes a cut of
+# the model's repository at release.yaml's semantics.commit: the files toolchain/lps-core.paths lists, when the tree
+# has that file, or else the package/ directory.  toolchain/checker.Dockerfile pins a hash over the cut's files
+# (LPS_TREE_SHA256: the sha256 over `sha256sum` of every file, by path, in C order), and the cut must hash to the one
+# this file requires for the commit.
+#
+# A commit is on a line when the line's commit, or a commit with the line's git tree, is the commit or one of its
+# ancestors: the public repository holds the model as a fresh commit with that tree, and a later model commit
+# descends from it.  A commit on no line takes `other`.
+lines:
+- # the opam package rocq-linux-process-semantics-core, the files toolchain/lps-core.paths lists
+  cut: toolchain/lps-core.paths
+  commit: 2afba80c0da41869607bbdbf2be6a5af3c7fd9e9
+  tree: 4ce9f996ed298321707fed3d5959d7304e3c4749
+  sha256: c69c38f381767a112d0b4d5692548369f65cbf3a73ba198f76f98310894dd4de
+other:
+  cut: package/
+  sha256: 1b59b23d0a3499d17fe80d788cef3ec2d775a41f1702adaadb6de0c61a3c08c5

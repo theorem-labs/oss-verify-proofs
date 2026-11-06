@@ -1,0 +1,56 @@
+Controls of the symbol + offset sweep (sweep.py 2b829e945031, triage.py 305bb2c723d5, hand.tsv fb2bbc5eb9db)
+================================================================================================
+
+Input: the port_addr_check 3d2eee813cce runs of the planted copies and their bases (runs PA-base, PA-plant on the
+asan images, PB-base, PB-plant on the asan-ubsan images; the files AB1v, ACeg, AE6k, AE7d and their Y twins). The
+plants (plants.tsv): a stale donor code pointer, a .got cell moved to the next GOT word (class A), a model constant
+moved by a code delta (class B), a stale donor data pointer. Images: cgif_file_fuzzer.asan 7093581aab04 / twin
+488e39500746 -> fuzz_command.asan c0661b96b5bd / twin 68db792d5fa7; cgif_file_fuzzer.asan-ubsan 1c29845fe605 / twin
+ce511d541cda -> fuzz_command.asan-ubsan bbe55d24d096 / twin 658cefbe806b.
+
+Rows checked: 163 in each of the four runs. Sweep status: PA-base / PB-base 160 SAME, 2 SAME-SYMBOL-OFFSET-DIFFERS,
+1 LANDS-IN-GOT; PA-plant / PB-plant 157 SAME, 2 DIFFERENT-SYMBOL, 2 LANDS-IN-GOT, 2 SAME-SYMBOL-OFFSET-DIFFERS.
+
+Per plant (file:line, values donor -> ours, status, triage):
+
+A  AB1v.v:15  stale donor code pointer
+   base   0x80418 -> 0x8646c   SAME
+   plant  0x80418 -> 0x80418   DIFFERENT-SYMBOL (donor oft_exit_guard+0x0; ours inside
+          LeakSuppressionContext::GetSuppressionForAddr)                          triage: OPEN (no rule explains it)
+A  ACeg.v:21  .got cell moved to the next GOT word
+   base   0x9dff0 -> 0xa6448   SAME (both .got[23], holding __asan_option_detect_stack_use_after_return)
+   plant  0x9dff0 -> 0xa6450   LANDS-IN-GOT (.got[24], holding __lsan::lsan_flags)  triage: OPEN
+A  AE6k.v:1387  model constant moved by a code delta
+   base   0x200000 -> 0x200000 SAME-SYMBOL-OFFSET-DIFFERS (lands in theDepot)       triage: CONST OK (the same numeral,
+          a bound in arithmetic: the numeral was not relocated)
+   plant  0x200000 -> 0x20051c SAME-SYMBOL-OFFSET-DIFFERS                          triage: OPEN (changed, and no rule
+          measures the change: not the symbol delta, not an image quantity)
+A  AE7d.v:35  stale donor data pointer
+   base   0x9fdd0 -> 0xa8258   SAME
+   plant  0x9fdd0 -> 0x9fdd0   DIFFERENT-SYMBOL (donor __interception::real_strnlen+0x0; ours inside
+          _pthread_cleanup_pop)                                                    triage: OPEN
+B  YB1v.v:15  stale donor code pointer
+   base   0x80448 -> 0x864b8   SAME
+   plant  0x80448 -> 0x80448   DIFFERENT-SYMBOL                                    triage: OPEN
+B  YCeg.v:22  .got cell moved to the next GOT word
+   base   0x9e260 -> 0xa5fa8   SAME
+   plant  0x9e260 -> 0xa5fb0   LANDS-IN-GOT                                        triage: OPEN
+B  YE30.v:1394  model constant moved by a code delta
+   base   0x200000 -> 0x200000 SAME-SYMBOL-OFFSET-DIFFERS                          triage: CONST OK
+   plant  0x200000 -> 0x20051c SAME-SYMBOL-OFFSET-DIFFERS                          triage: OPEN
+B  YE7d.v:36  stale donor data pointer
+   base   0xa0040 -> 0xa7db8   SAME
+   plant  0xa0040 -> 0xa0040   DIFFERENT-SYMBOL                                    triage: OPEN
+
+The other non-SAME rows of the four runs are the same base rows in base and plant (ACeg.v:25 / YCeg.v:26
+lib_const_addr, LANDS-IN-GOT; AE7d.v:76 / YE7d.v:77 0x148680, SAME-SYMBOL-OFFSET-DIFFERS): the triage clears them as
+in runs RA / RB (HAND OK), in both base and plant.
+
+Result: PASS.
+- Every plant that is an address (code pointer, GOT cell, data pointer: 3 per side) is a non-SAME row of the sweep,
+  and its row in the base run is SAME.
+- The model-constant plant is not an address. The symbol rule alone marks its base row too (an unchanged constant
+  inside a moved object is never SAME); the triage separates the two: the base row is cleared (CONST: the same
+  numeral), the planted row stays OPEN.
+- No plant row is cleared by any triage rule (8 of 8 OPEN); every base row is cleared (6 of 6 OK).
+Files: work/ctl/rows.tsv (sweep rows), work/ctl/mismatches.tsv (triage), work/ctl/triage.out (tallies).

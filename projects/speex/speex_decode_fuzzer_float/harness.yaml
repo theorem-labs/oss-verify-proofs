@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: speex
 harness: speex_decode_fuzzer_float
-rocq: OssFuzzTheorems.speex.speex_decode_fuzzer_float
+rocq: OSSVerify.speex.speex_decode_fuzzer_float
 origin: upstream
 summary: speexdec-style Ogg demux + Speex header parse + speex_decode(_int)/stereo decode loop over inputs
   <=4096 bytes; decoded PCM, granule arithmetic results and new_frame_size are computed and discarded.

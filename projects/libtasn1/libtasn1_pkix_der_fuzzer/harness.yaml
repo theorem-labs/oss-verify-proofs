@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libtasn1
 harness: libtasn1_pkix_der_fuzzer
-rocq: OssFuzzTheorems.libtasn1.libtasn1_pkix_der_fuzzer
+rocq: OSSVerify.libtasn1.libtasn1_pkix_der_fuzzer
 origin: upstream
 summary: DER-decodes the input as PKIX1.Certificate against GnuTLS's pkix.asn table, then asn1_der_decoding_startEnd
   on tbsCertificate.issuer; results ignored.

@@ -1,0 +1,93 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.Lib Require Import Tac Arr Bytes ImageA StoreFast FP.
+From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.Sj Require Import SjS1Out SjOd.
+From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.A Require Import Shadow Sj_akit Od_defsA Od_tablesA.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Open Scope bv_scope.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+Local Ltac solve_load ::= first [ od_load_hook | solve_load_base | solve_load_image ].
+
+Section ArmLit.
+  Variable E : oaenv.
+  Hypothesis OK : od_oka E.
+  Notation bs := (o_bs E).
+  Notation idxs := (o_idxs E).
+
+  Theorem od_arm_bool : arm_stmt E 0x9781c.
+  Proof using OK.
+    unfold arm_stmt, arm_k. intros Q st HLAST HH HK xt1 xt2 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xs11 xt3 xt4 xF xfc m1 FRM INV.
+    pose proof HH as (HP & HD & HE & HA & HB).
+    od_open_inv INV. od_env OK.
+    pose proof (od_tokI_range E S1 (o_pos st) ltac:(lia)) as TR.
+    pose proof (tokI_read m1 E ws (o_pos st) IDXA (conj IDXL IDXF) ltac:(lia)) as RD1.
+    set (off := tokI bs idxs (o_pos st)) in *.
+    pose proof (od_B_range E BOK off) as R0. pose proof (od_B_range E BOK (off + 1)) as R1.
+    pose proof (od_B_range E BOK (off + 2)) as R2. pose proof (od_B_range E BOK (off + 3)) as R3.
+    pose proof (od_B_range E BOK (off + 4)) as R4. pose proof (od_B_range E BOK (off + 5)) as R5.
+    pose proof (tokB_read m1 E off BUFRO ltac:(lia)) as RB0.
+    pose proof (tokB_read m1 E (off + 1) BUFRO ltac:(lia)) as RB1.
+    pose proof (tokB_read m1 E (off + 2) BUFRO ltac:(lia)) as RB2.
+    pose proof (tokB_read m1 E (off + 3) BUFRO ltac:(lia)) as RB3.
+    pose proof (tokB_read m1 E (off + 4) BUFRO ltac:(lia)) as RB4.
+    pose proof (tokB_read m1 E (off + 5) BUFRO ltac:(lia)) as RB5.
+    set (b0 := B bs off) in *. set (b1 := B bs (off + 1)) in *. set (b2 := B bs (off + 2)) in *.
+    set (b3 := B bs (off + 3)) in *. set (b4 := B bs (off + 4)) in *. set (b5 := B bs (off + 5)) in *.
+
+    zstep. if_true.
+    ostep. ostep. ostep. ostep. ostep. if_true. ostep. ostep. ostep. ostep. if_true. ostep. ostep. ostep. ostep. ostep. ostep. if_true.
+    ostep. odnorm. ostep. ostep. ostep. ostep. ostep. if_true. ostep. ostep. ostep. ostep. ostep. if_true.
+    ostep. odnorm. ostep. odnorm. ostep. odnorm. ostep. odnorm. ostep. ostep. ostep. ostep. ostep. ostep.
+    repeat match goal with |- context [Z_to_bv 64 (Z.lor ?x ?y)] => let w := fresh "w" in set (w := Z_to_bv 64 (Z.lor x y)) in *; clearbody w end.
+    repeat match goal with |- context [Z_to_bv 64 (Z.shiftl ?x ?y)] => let w := fresh "v" in set (w := Z_to_bv 64 (Z.shiftl x y)) in *; clearbody w end.
+    pose proof (bv_unsigned_in_range 64 w) as WR. unfold bv_modulus in WR. cbn in WR.
+    clear RB0 RB1 RB2 RB3.
+    pose proof (asown_read m1 b4 MI ltac:(lia)) as RT4. pose proof (asown_read m1 b5 MI ltac:(lia)) as RT5.
+    pose proof (osown_range b4) as RS4. pose proof (osown_range b5) as RS5.
+    unfold AT_SOWN in RT4, RT5.
+
+    assert (KNONE : forall xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xs2 xs9 xs10 xs11 xt3 xt4,
+      evt asegs Q (ODST E OD_PLUS xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xs2 xs9 xs10 xs11 xt3 xt4 xF xfc m1)).
+    { intros. apply (HK st); [| exact FRM| od_close_inv].
+      apply (acc_arm_out bs idxs st _ S1 HLAST HH). apply acc_none. }
+    unfold OD_PLUS in KNONE.
+    assert (KTAIL : forall k xt0 xt1 xt2 xa3 xa6 xa7 xs11 xt3 xt4, (k = 4 \/ k = 5)%Z ->
+      evt asegs Q (ODST E 0x97efc xt0 xt1 xt2 (Z_to_bv 64 (oa_F E + 200)) (Z_to_bv 64 k) (Z_to_bv 64 (o_BUF E + off)) xa3
+                      (Z_to_bv 64 ((oa_F E + 200) / 8 + 2147450880)) (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) xa6 xa7
+                      (Z_to_bv 64 2) (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) (Z_to_bv 64 (oa_F E + 192)) xs11 xt3 xt4 xF xfc m1)).
+    { intros k yt0 yt1 yt2 ya3 ya6 ya7 ys11 yt3 yt4 Hk.
+      assert (RBk : ov_read_bytes asegs m1 (wa (o_BUF E + (off + k))) 1 = Some [Z_to_bv 8 (B bs (off + k))]) by (destruct Hk as [-> | ->]; assumption).
+      assert (Rk : (0 <= B bs (off + k) < 256)%Z) by (destruct Hk as [-> | ->]; assumption).
+      assert (RTk : ov_read_bytes asegs m1 (wa (145568 + B bs (off + k))) 1 = Some [Z_to_bv 8 (osown (B bs (off + k)))]) by (destruct Hk as [-> | ->]; assumption).
+      pose proof (osown_range (B bs (off + k))) as RSk.
+      assert (Hk2 : (4 <= k <= 5)%Z) by lia. clear Hk RB4 RB5 RT4 RT5.
+      set (bk := B bs (off + k)) in *.
+
+      ostep. ostep. ostep. ostep. ostep. if_true. ostep. odnorm. ostep. ostep. ostep. ostep. ostep. ostep. ostep. if_true.
+      zstep. if_false. ostep. odnorm. zstep.
+      if_cases K3; zify_cond K3; [apply KNONE|].
+
+      ostep. ostep. ostep. ostep. ostep. if_true. ostep. ostep. if_true. ostep. ostep. ostep. ostep. if_true. ostep. ostep. ostep.
+      apply (HK (consume 1 st)); [| exact FRM| od_close_inv].
+      apply (acc_arm_out bs idxs st _ S1 HLAST HH). apply acc_scalar. }
+
+    ostep. zstep.
+    if_cases K; zify_cond K.
+    -
+      ostep. ostep. ostep. ostep. ostep. if_true. ostep. odnorm. ostep. ostep. ostep. ostep. zstep.
+      if_cases K2; zify_cond K2; [apply KNONE|].
+      ostep.
+      eapply evt_eq; [| eapply (KTAIL 5%Z)]; [od_st_eq | right; reflexivity].
+    -
+      ostep. ostep.
+      eapply evt_eq; [| eapply (KTAIL 4%Z)]; [od_st_eq | left; reflexivity].
+  Qed.
+End ArmLit.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_macro_dwarf4
-rocq: OssFuzzTheorems.libdwarf.fuzz_macro_dwarf4
+rocq: OSSVerify.libdwarf.fuzz_macro_dwarf4
 origin: upstream
 summary: Walks DWARF4 .debug_macinfo with dwarf_get_macro_details (limit 500000) until it stops returning
   OK.

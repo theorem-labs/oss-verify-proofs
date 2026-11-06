@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: valijson
 harness: fuzzer
-rocq: OssFuzzTheorems.valijson.fuzzer
+rocq: OSSVerify.valijson.fuzzer
 origin: upstream
 summary: rapidjson-parses the input as a JSON-Schema-Test-Suite style array; for each {schema, tests}
   case populates a Schema (draft4 or draft7 by input-size parity) and validates every test.data against

@@ -1,0 +1,10 @@
+file	donor_range	words	function	offset	paired_by	target_range	donor_fn	target_fn	fn_bytes	verdict	pcrel	real	unmeasured	targets_differ	whole_fn (pcrel, real, unmeasured) differ	note
+B/FCimg	0x3d7f8	107	__asan_stack_malloc_3	+0x0	name	0x3db94	0x3d7f8	0x3db94	428	EQUAL-mod-pcrel	9	0	0	0	EQUAL-mod-pcrel (9, 0, 0) 0	
+B/FCimg	0x625a8	2	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE	+0x358	name	0x628bc	0x62250	0x62564	4772	EQUAL	0	0	0	0	EQUAL-mod-pcrel (229, 0, 0) 1	function: 0x1218 data-differs
+B/FCimg	0x47040	31	__interceptor___tls_get_addr	+0x0	name	0x4769c	0x47040	0x4769c	124	EQUAL-mod-pcrel	5	0	0	0	EQUAL-mod-pcrel (5, 0, 0) 0	
+B/FCimg	0x99b30	9	__tls_get_addr	+0x0	name	0x9da60	0x99b30	0x9da60	36	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/FCimg	0x5c8e8	8	_ZN6__asan16GetCurrentThreadEv	+0x0	name	0x5cbfc	0x5c8e8	0x5cbfc	32	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/FCimg	0x55434	6	_ZN6__asan10AsanTSDGetEv	+0x0	name	0x55748	0x55434	0x55748	64	EQUAL-mod-pcrel	3	0	0	0	EQUAL-mod-pcrel (5, 0, 0) 0	
+B/FCimg	0x9abe4	7	__pthread_getspecific	+0x0	name	0x9eb14	0x9abe4	0x9eb14	28	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/FCimg	0x69ffc	140	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	+0x0	name	0x6a310	0x69ffc	0x6a310	848	EQUAL-mod-pcrel	18	0	0	0	EQUAL-mod-pcrel (27, 0, 0) 0	
+B/FCimg	0x3d9a4	28	_ZN6__asanL11MemToShadowEm	+0x0	call	0x3e000	0x3d9a4	0x3e000	316	EQUAL-mod-pcrel	9	0	0	1	EQUAL-mod-pcrel (13, 0, 0) 0	range: 0x6c unmeasured

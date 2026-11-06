@@ -1,0 +1,1 @@
+ab1w_swaps: 0 cell(s) (A 0, E 0, D 0); tail scores 1 at its own value: 0, below 1: 0, 0: 0, no word: 0; crossed pairs: 0, of which a proof reads a cell: 0

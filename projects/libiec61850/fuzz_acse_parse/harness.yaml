@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libiec61850
 harness: fuzz_acse_parse
-rocq: OssFuzzTheorems.libiec61850.fuzz_acse_parse
+rocq: OSSVerify.libiec61850.fuzz_acse_parse
 origin: upstream
 summary: AcseConnection_parseMessage on a ByteBuffer holding the input; the result code is discarded.
 entry: LLVMFuzzerTestOneInput

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjxl
 harness: icc_codec_fuzzer
-rocq: OssFuzzTheorems.libjxl.icc_codec_fuzzer
+rocq: OSSVerify.libjxl.icc_codec_fuzzer
 origin: upstream
 summary: 'Checks 4 properties (listed below); the first, a round trip: For every input whose first byte
   is non-zero: UnpredictICC(PredictICC(x)) reproduces x exactly (same size and memcmp equal) -- the ICC

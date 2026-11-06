@@ -1,4 +1,4 @@
-(** Proof of OssFuzzTheorems.Tests.toy.exit0.Statements.plain_halts.
+(** Proof of OSSVerify.Tests.toy.exit0.Statements.plain_halts.
 
     Outline.  Fix an entry and an input.  [Exit0Run.exit0_exits_c] says the
     program reaches exit_group(0) after three instructions; lps's
@@ -11,9 +11,9 @@ From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType State Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import SpuriousCfg.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import MustExit Classifier.
-From OssFuzzTheorems.Core Require Import Shapes.
-From OssFuzzTheorems.Tests.toy.exit0 Require Statements Images.
-From OssFuzzTheorems.Tests.proofs.lib Require Exit0Run.
+From OSSVerify.Core Require Import Shapes.
+From OSSVerify.Tests.toy.exit0 Require Statements Images.
+From OSSVerify.Tests.proofs.lib Require Exit0Run.
 Import ListNotations.
 
 Theorem plain_halts_holds : Statements.plain_halts.

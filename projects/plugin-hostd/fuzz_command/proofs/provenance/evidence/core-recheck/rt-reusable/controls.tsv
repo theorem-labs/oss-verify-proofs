@@ -1,0 +1,51 @@
+run	rule	perturbation	outcome	rows
+RU	ABI-HWCAP	donor value	n/a	2
+RU	ABI-HWCAP	value+4	refused	2
+RU	ABI-MMAP-FLAGS	donor value	n/a	8
+RU	ABI-MMAP-FLAGS	value+4	refused	8
+RU	NEW-NONADDR	value+0x10000 (moved into the image range)	refused	75
+RU	NEW-NONADDR	value+4	accepted	75
+RU	PHDR-VADDR	donor value	n/a	5
+RU	PHDR-VADDR	value+4	refused	5
+RU	SIBLING-LINE	donor value	n/a	81
+RU	SIBLING-LINE	value+4	refused	81
+RtCgifA	ASAN-GLOBAL-LAYOUT	donor value	n/a	14
+RtCgifA	ASAN-GLOBAL-LAYOUT	value+4	refused	14
+RtCgifA	IMMEDIATE-DONOR-OK	donor value	n/a	179
+RtCgifA	IMMEDIATE-DONOR-OK	donor value	refused	5
+RtCgifA	IMMEDIATE-DONOR-OK	value+4	refused	184
+RtCgifA	NEW-NONADDR	value+0x10000 (moved into the image range)	refused	53
+RtCgifA	NEW-NONADDR	value+4	accepted	53
+RtCgifA	ODR-INDICATOR-BYTES	donor value	n/a	4
+RtCgifA	ODR-INDICATOR-BYTES	value+4	refused	4
+RtCgifA	SYMBOL-NAMED	donor value	n/a	2
+RtCgifA	SYMBOL-NAMED	value+4	refused	2
+RtCgifB	ASAN-GLOBAL-LAYOUT	donor value	n/a	14
+RtCgifB	ASAN-GLOBAL-LAYOUT	value+4	refused	14
+RtCgifB	IMMEDIATE-DONOR-OK	donor value	n/a	232
+RtCgifB	IMMEDIATE-DONOR-OK	donor value	refused	5
+RtCgifB	IMMEDIATE-DONOR-OK	value+4	refused	237
+RtCgifB	ODR-INDICATOR-BYTES	donor value	n/a	4
+RtCgifB	ODR-INDICATOR-BYTES	value+4	refused	4
+RtCgifB	SYMBOL-NAMED	donor value	n/a	2
+RtCgifB	SYMBOL-NAMED	value+4	refused	2
+RtDisco	NEW-NONADDR	value+0x10000 (moved into the image range)	refused	7
+RtDisco	NEW-NONADDR	value+4	accepted	7
+RtPreset	CODE-POINT-PAIRED	donor value	n/a	5
+RtPreset	CODE-POINT-PAIRED	value+4	refused	5
+RtPreset	DONOR-TUPLE-MATCH	donor value	n/a	52
+RtPreset	DONOR-TUPLE-MATCH	value+4	refused	52
+RtPreset	FILE-DEFINITION-NAMED	donor value	n/a	2
+RtPreset	FILE-DEFINITION-NAMED	value+4	refused	2
+RtPreset	NEW-NONADDR	value+0x10000 (moved into the image range)	refused	5
+RtPreset	NEW-NONADDR	value+4	accepted	5
+RtPreset	ODR-INDICATOR-BYTES	donor value	n/a	4
+RtPreset	ODR-INDICATOR-BYTES	value+4	refused	4
+RtPreset	SHADOW-STORE-COUNT	donor value	refused	1
+RtPreset	SHADOW-STORE-COUNT	value+4	refused	1
+RtPreset	WHOLE-FUNCTION-RANGE	donor value	n/a	2
+RtPreset	WHOLE-FUNCTION-RANGE	value+4	refused	2
+RtRelay	NEW-NONADDR	value+0x10000 (moved into the image range)	refused	3
+RtRelay	NEW-NONADDR	value+4	accepted	3
+RtRelay	SYMBOL-NAMED	donor value	n/a	2
+RtRelay	SYMBOL-NAMED	value+4	refused	2

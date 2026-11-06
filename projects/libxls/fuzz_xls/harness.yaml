@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libxls
 harness: fuzz_xls
-rocq: OssFuzzTheorems.libxls.fuzz_xls
+rocq: OSSVerify.libxls.fuzz_xls
 origin: upstream
 summary: xls_open_buffer, then xls_getWorkSheet + xls_parseWorkSheet + xls_close_WS for every sheet, xls_close_WB;
   parsed cells never inspected.

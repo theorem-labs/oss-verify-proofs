@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: poco
 harness: foundation_misc_fuzzer
-rocq: OssFuzzTheorems.poco.foundation_misc_fuzzer
+rocq: OSSVerify.poco.foundation_misc_fuzzer
 origin: upstream
 summary: First byte selects URI (parse, resolve, normalize, query params, toString), Path (tryParse, absolute,
   expand, toString/assign across styles), UUID (parse, then UUID(uuid1.toString()) -- a re-parse of its

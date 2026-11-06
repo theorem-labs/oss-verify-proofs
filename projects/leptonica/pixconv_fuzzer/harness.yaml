@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: pixconv_fuzzer
-rocq: OssFuzzTheorems.leptonica.pixconv_fuzzer
+rocq: OSSVerify.leptonica.pixconv_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixConvertGrayToFalseColor, pixThreshold8, pixQuantizeIfFewColors; outputs
   discarded.

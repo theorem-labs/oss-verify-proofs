@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: c-blosc
 harness: compress_fuzzer
-rocq: OssFuzzTheorems.c_blosc.compress_fuzzer
+rocq: OSSVerify.c_blosc.compress_fuzzer
 origin: upstream
 summary: blosc_compress with level/filter/compressor/blocksize/splitmode from the first 5 bytes, then
   blosc_decompress of the result into a buffer of cbytes; decompress return value ignored and output never

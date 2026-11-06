@@ -1,0 +1,106 @@
+# codeptr --not-address declarations for the fuzz_wire image-B core stage-out; each value checked at every
+# occurrence codeptr flagged (codeptr-occurrences.tsv lists file, line, context). Two flagged values are ADDRESSES
+# and are not declared: 0x10040 (program headers, ELF header + e_phoff 64 at 0x10000 in both images) and 0x103b8 (an
+# 8-byte .rodata literal, 0x0218a392cd3d5dbf, at the same address in both images); GATES.md triages them.
+0x10101	decode result: Lui immediate field of a fetched word (YB1g D_11d4cc), not an address
+0x186a0	fuel / length bound 100000 (pop_batches / do_recycle fuel, zlen t < 100000; README: a nat fuel)
+0x1f020	count bound TOT <= 127008 (stack-depot total frames)
+0x1ffff	length bound 131071 (Z.of_nat (length p) <= 131071)
+0x20000	size 131072 (kn_zero / KZ region length, mmap length QSv + 131072, 2^17, mkAF bounds)
+0x28693	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x28a63	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x31294	opaque label (mcheck / FCheck tag 201364), never compared with a pc (README opaque labels)
+0x312a0	opaque label (FCheck 201376)
+0x31614	opaque label (mcheck 202260)
+0x33180	opaque label (mcheck 209280)
+0x35830	opaque label (ISpin 219184)
+0x35f78	opaque label (mcheck 221048)
+0x3fff8	offset 262136 = kUserMapSize - 8 (SOff rADR 262136, adr + 262136)
+0x40000	size 262144 = kUserMapSize / kFreeArrayMapSize = 2^18 (mmap length, SLit 262144 argument)
+0x40248	do_stretch length operand 262728 (README item 39: a length, kept)
+0x5f844	opaque label (spin 391236)
+0x609b6	quotient witness 395702 = theDepot / 4 of fuzz_wire B (exists (395702 + bkt)); moved by the tool (donor 400918 = fuzz_grant theDepot / 4)
+0x6dd44	opaque label (spin 449860)
+0x706dc	opaque label (mcheck 460508)
+0x729f0	opaque label (mcheck 469488)
+0x7fff8	witness 524280 (exists (524280 + 2 * q)), arithmetic, not an address
+0x80000	multiplier 524288 = 2^19 (c * 8 + 24 * 524288 + c')
+0xa0593	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0xa0993	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0xa2603	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0xa3703	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0xb2583	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0xe0000	witness 917504 (exists (qs * 16 + c * 2^20 + 917504))
+0xfffff	20-bit immediate 1048575 (bv 20) / mkAF bound 1048575
+0x100000	size 1048576 = 2^20 (mmap length of a map entry, kNodesBlockSize, flit8 value of an allocator option field, NB + 0x100000)
+0x100793	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x100813	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x104022	mmap flags MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE|MAP_FIXED_NOREPLACE (README constants: never relocated)
+0x150513	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x150793	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x158593	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x15859b	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x158713	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x15c783	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x160000	quotient 1441792 = (11571200 - 36864) / 8 of map sizes
+0x161200	region length 1446400 (kn_zero length of map 424)
+0x167613	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x168693	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x168793	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x170713	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x178793	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x1fad34	decode result: Jal offset field (YE3e D_17c20)
+0x1fadbc	decode result: Jal offset field (YE3e D_17b98)
+0x1fff94	decode result: Jal offset field (YE3e D_17c60)
+0x1ffff0	decode result: Jal offset field (YE3a DM_0c8)
+0x200000	size bound 0x200000 (fst e + snd e <= 2 MiB)
+0x200813	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x258593	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x25c803	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x300713	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x36f693	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x38e000	mmap length 3727360 of map 254
+0x3fffc0	witness 4194240 (exists (4194240 + q))
+0x3fffff	bound 4194303 (1 <= value <= 2^22 - 1, mkAF bound)
+0x459713	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x45f793	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x461a13	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x468693	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x4a0a13	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x4b0b13	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x4c8c93	instruction word (W_<pc> : bv 32 / fetch_word ... %bv : bv 32): the target's word at the paired pc, never an address
+0x55c000	segment-4 size 5619712 = IMG_TOP 0x5f6000 - rw base 0x9a000 of fuzz_wire.asan-ubsan (equals fuzz_grant B 0x5fb000 - 0x9f000; measured)
+0x5f6000	IMG_TOP of fuzz_wire.asan-ubsan (page-up of the last PT_LOAD end 0x5f5070): a bound one past the image, not an object address
+0x50693	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x5a703	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x5a783	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x5c583	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x5c703	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x5c883	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x60813	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x70693	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x71863	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x80693	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x267713	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x268693	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x268813	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x300813	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x357793	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x35c883	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x35f693	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x368693	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x36f793	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x377293	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x458593	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x45a783	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x45a803	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x45c283	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x467713	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x468293	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x53e2b3	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x55c303	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x568223	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x568623	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x56a423	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x56a623	instruction word (W_<pc> : bv 32 in YB1u / YE3c, the musl memset / memcpy listing): the target's word at the paired pc, never an address
+0x65c98	hex inside an identifier name (tfib_A_MmapFixedNoAccess_3_insn_arg_shim_0x65c98): a donor-relative LABEL (README Naming), not a value

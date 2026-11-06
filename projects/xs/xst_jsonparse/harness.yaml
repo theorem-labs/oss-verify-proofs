@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: xs
 harness: xst_jsonparse
-rocq: OssFuzzTheorems.xs.xst_jsonparse
+rocq: OSSVerify.xs.xst_jsonparse
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

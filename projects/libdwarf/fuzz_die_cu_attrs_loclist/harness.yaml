@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_die_cu_attrs_loclist
-rocq: OssFuzzTheorems.libdwarf.fuzz_die_cu_attrs_loclist
+rocq: OSSVerify.libdwarf.fuzz_die_cu_attrs_loclist
 origin: upstream
 summary: dwarf_get_loclist_c on the CU DIE's DW_AT_name attribute, then highpc/lowpc on a NULL die and
   every locdesc entry and location op; values unused.

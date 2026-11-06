@@ -1,0 +1,7 @@
+# self-test: 163 known answers OK
+# section bounds: not applicable for proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: the file has no <prefix>_<section>_lo / _hi cell
+# build: proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: plain (the pinned binary's sha256 bb20ce415827 is builds.plain of projects/libdiginet/fuzz_transport/harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 0 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+# unit identity: proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: the image's 4 PT_LOADs equal the plain pin bb20ce415827 (bin/fuzz_transport/fuzz_transport.plain; ELF section-header fields and build-id masked)
+# unit identity: proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v (--elf bin/fuzz_transport/fuzz_transport.plain): the image's 4 PT_LOADs equal the plain pin bb20ce415827 (bin/fuzz_transport/fuzz_transport.plain; ELF section-header fields and build-id masked)
+# not checked by any rule: proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: src0_vmlock
+# proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: {'KEEP': 37, 'NOSYM': 5}

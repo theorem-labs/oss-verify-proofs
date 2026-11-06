@@ -1,0 +1,37 @@
+# record run (--declare FS_FROFF 0x109000)
+relocated files: 3 (lib/B 2, other 1); 128 numerals in [0x10000, 0x5fa1f0)
+target top 0x5f3970 (page-up 0x5f4000, rw_lo 0x98000); donor top 0x5fa1f0 (page-up 0x5fb000, rw_lo 0x9f000)
+fetch/word pairs verified against the target image: 0, mismatches 0
+tfib_A_/tfib_E_ rows: {'tgt': 1034, 'interior': 8} donor rows: []
+tfib interior rows: [(76, 'Definition tfib_A_FakeStack_SetShadow : Z := 0x3c348.'), (76, 'Definition tfib_E_FakeStack_SetShadow : Z := 0x3c484.'), (162, 'Definition tfib_A_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x514dc.'), (162, 'Definition tfib_E_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x51618.'), (176, 'Definition tfib_A_MemToShadow_checked : Z := 0x52b24.'), (176, 'Definition tfib_E_MemToShadow_checked : Z := 0x52c60.'), (249, 'Definition tfib_A_MemToShadow_checked_instance_3 : Z := 0x5ba10.'), (249, 'Definition tfib_E_MemToShadow_checked_instance_3 : Z := 0x5bb4c.')]
+classes: {'OTHER': 104, 'TARGET': 24}
+reasons: {('OTHER', 'comment numeral'): 51, ('OTHER', 'comment numeral, names the donor value by design'): 19, ('TARGET', 'target symbol/section/segment value'): 22, ('OTHER', 'no address role (constant / count / label / instruction word)'): 31, ('OTHER', "declared not an address: kFakeFramesOff + (1 << kStackSizeLog) = 0x9000 + 0x100000, the model's fake-frame offset of class 1 (frame_addr_cid, Qed in this file), not an image address"): 1, ('TARGET', 'fetch/word pair verified against the target image'): 2, ('OTHER', 'decoded field of a verified instruction word'): 2}
+review rows: {'donor-value-not-target': 19, 'donor-interior-unmoved': 10, 'fetch-line-not-verified': 2}
+declared rows: 1
+DECLARED	lib/B/Rt/YF0r.v:39	0x109000	Definition FS_FROFF : Z := 0x109000.
+rc=0
+# the same without the declaration
+relocated files: 3 (lib/B 2, other 1); 128 numerals in [0x10000, 0x5fa1f0)
+target top 0x5f3970 (page-up 0x5f4000, rw_lo 0x98000); donor top 0x5fa1f0 (page-up 0x5fb000, rw_lo 0x9f000)
+fetch/word pairs verified against the target image: 0, mismatches 0
+tfib_A_/tfib_E_ rows: {'tgt': 1034, 'interior': 8} donor rows: []
+tfib interior rows: [(76, 'Definition tfib_A_FakeStack_SetShadow : Z := 0x3c348.'), (76, 'Definition tfib_E_FakeStack_SetShadow : Z := 0x3c484.'), (162, 'Definition tfib_A_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x514dc.'), (162, 'Definition tfib_E_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x51618.'), (176, 'Definition tfib_A_MemToShadow_checked : Z := 0x52b24.'), (176, 'Definition tfib_E_MemToShadow_checked : Z := 0x52c60.'), (249, 'Definition tfib_A_MemToShadow_checked_instance_3 : Z := 0x5ba10.'), (249, 'Definition tfib_E_MemToShadow_checked_instance_3 : Z := 0x5bb4c.')]
+classes: {'OTHER': 103, 'TARGET': 24, 'DONOR-STALE': 1}
+reasons: {('OTHER', 'comment numeral'): 51, ('OTHER', 'comment numeral, names the donor value by design'): 19, ('TARGET', 'target symbol/section/segment value'): 22, ('OTHER', 'no address role (constant / count / label / instruction word)'): 31, ('DONOR-STALE', 'address-role field, unmoved from the donor file, no target value'): 1, ('TARGET', 'fetch/word pair verified against the target image'): 2, ('OTHER', 'decoded field of a verified instruction word'): 2}
+review rows: {'donor-value-not-target': 19, 'fetch-line-not-verified': 2, 'donor-interior-unmoved': 9}
+declared rows: 0
+DONOR-STALE	lib/B/Rt/YF0r.v:39	0x109000	Definition FS_FROFF : Z := 0x109000.
+rc=0
+# control: YF0r.v FS_ENTRY planted as the donor's 0x3d0c0
+relocated files: 3 (lib/B 2, other 1); 128 numerals in [0x10000, 0x5fa1f0)
+target top 0x5f3970 (page-up 0x5f4000, rw_lo 0x98000); donor top 0x5fa1f0 (page-up 0x5fb000, rw_lo 0x9f000)
+fetch/word pairs verified against the target image: 0, mismatches 0
+tfib_A_/tfib_E_ rows: {'tgt': 1034, 'interior': 8} donor rows: []
+tfib interior rows: [(76, 'Definition tfib_A_FakeStack_SetShadow : Z := 0x3c348.'), (76, 'Definition tfib_E_FakeStack_SetShadow : Z := 0x3c484.'), (162, 'Definition tfib_A_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x514dc.'), (162, 'Definition tfib_E_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x51618.'), (176, 'Definition tfib_A_MemToShadow_checked : Z := 0x52b24.'), (176, 'Definition tfib_E_MemToShadow_checked : Z := 0x52c60.'), (249, 'Definition tfib_A_MemToShadow_checked_instance_3 : Z := 0x5ba10.'), (249, 'Definition tfib_E_MemToShadow_checked_instance_3 : Z := 0x5bb4c.')]
+classes: {'OTHER': 104, 'DONOR-STALE': 1, 'TARGET': 23}
+reasons: {('OTHER', 'comment numeral'): 51, ('OTHER', 'comment numeral, names the donor value by design'): 19, ('DONOR-STALE', 'donor image value, unmoved from the donor file'): 1, ('OTHER', 'no address role (constant / count / label / instruction word)'): 31, ('OTHER', "declared not an address: kFakeFramesOff + (1 << kStackSizeLog) = 0x9000 + 0x100000, the model's fake-frame offset of class 1 (frame_addr_cid, Qed in this file), not an image address"): 1, ('TARGET', 'target symbol/section/segment value'): 21, ('TARGET', 'fetch/word pair verified against the target image'): 2, ('OTHER', 'decoded field of a verified instruction word'): 2}
+review rows: {'donor-value-not-target': 19, 'donor-interior-unmoved': 10, 'fetch-line-not-verified': 2}
+declared rows: 1
+DECLARED	lib/B/Rt/YF0r.v:39	0x109000	Definition FS_FROFF : Z := 0x109000.
+DONOR-STALE	lib/B/Rt/YF0r.v:30	0x3d0c0	Definition FS_ENTRY : Z := 0x3d0c0.
+rc=0

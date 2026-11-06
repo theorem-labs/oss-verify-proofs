@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_init_binary
-rocq: OssFuzzTheorems.libdwarf.fuzz_init_binary
+rocq: OSSVerify.libdwarf.fuzz_init_binary
 origin: upstream
 summary: dwarf_init_b then dwarf_finish; nothing else.
 entry: LLVMFuzzerTestOneInput

@@ -1,0 +1,254 @@
+schema: oss-fuzz-theorems/harness/1
+project: plugin-hostd
+harness: fuzz_reply
+rocq: OSSVerify.plugin_hostd.fuzz_reply
+origin: upstream
+summary: 'Opens one worker feedback source in plugin-hostd''s relay, src/relay.c, then reads the input as up to 512 operations:
+  add a source (at most four), have a source write bytes, read a source, close or remove a source, remove an instance, interrupt
+  a receive, send an event of the daemon''s own, limit or interrupt the controller''s sends, or make the controller go away.
+  Its own recv and send stand in for the sockets, so no socket or thread is used. A reference splitter follows what each source
+  wrote. At the end the relay is shut down.'
+entry: LLVMFuzzerTestOneInput
+source:
+  files:
+  - source/fuzz_reply.c
+  - source/fuzz.h
+  from:
+    repository: https://github.com/FreeMixer/plugin-hostd
+    commit: 65cd2b02e8306f7e5f98fa0adfd0b3f8c1df6a5c
+    path: fuzz/fuzz_reply.c
+  modified: false
+  licence: GPL-3.0-or-later
+library:
+  repository: https://github.com/FreeMixer/plugin-hostd
+  commit: 65cd2b02e8306f7e5f98fa0adfd0b3f8c1df6a5c
+  version: 0.10.0
+  licence: GPL-3.0-or-later
+modifications:
+- 'No library is linked: the harness includes src/relay.c of plugin-hostd 0.10.0 at commit 65cd2b02 in its own source, with
+  recv, send, shutdown, close and fcntl renamed to the harness''s own and a line limit of 6000 bytes, as plugin-hostd''s Makefile
+  builds it, but with this toolchain in place of a native clang and libFuzzer.'
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on
+  its input.
+- A small driver reads the input file, calls the fuzz target one to four times and prints each return value.
+builds:
+  plain:
+    file: fuzz_reply.plain
+    bytes: 58480
+    sha256: 3f53043e4f872b0ebf394fb67bd1a5dae5131fa08a7208ebfe67e2552ae9f680
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  ubsan:
+    file: fuzz_reply.ubsan
+    bytes: 60760
+    sha256: c5ef8ec8636eaa18f5181ba119a118e211db05b5053cf7cd88581f5d561b3bc5
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  asan:
+    file: fuzz_reply.asan
+    bytes: 589816
+    sha256: 42c58610e125e0b47770217f7175ffe2f23ed5ee1399b3e81539eff364611d5a
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+  asan-ubsan:
+    file: fuzz_reply.asan-ubsan
+    bytes: 591224
+    sha256: 10ffb5f9202ae2bdb01b7a49df9866843a6a6a0e0c50bc67cdba6ce2f6d3cf2c
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+licence: NOASSERTION
+checks:
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_reply.c:337-355
+  what: After every operation each source's buffer holds at most 6000 bytes of an unfinished line, never more than its capacity,
+    and its capacity stays under 20192 bytes.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_reply.c:403-432
+  what: After each read, and when a source or an instance is removed, the controller reads every complete line the source
+    wrote that is 6000 bytes or shorter, once each, unchanged and in order; while the controller is gone nothing reaches it.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_reply.c:434-445
+  what: After a read, and when a source or an instance is removed, the relay has taken every byte the worker wrote to each
+    source it still reads.
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_reply.c:454-493
+  what: When a source goes, or an instance, or the relay shuts down, the relay writes one "param_gesture <instance> <symbol>
+    end" line for each gesture that source's lines began and did not end (for an instance, only its own), and no other line.
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_reply.c:495-527
+  what: An event of the daemon's own reaches the controller as one line, exactly as written, and after each operation the
+    controller has read no line the reference does not account for.
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_reply.c:357-374
+  what: 'What the controller reads in each operation ends on a whole line: no line is cut short.'
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_reply.c:278-285
+  what: The relay sends only on the controller's socket, never on a worker's.
+- kind: api-contract
+  strength: weak
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_reply.c:587-591
+  what: The relay follows each new worker socket it is handed.
+statements:
+  plain_halts:
+    kind: halts
+    builds:
+    - plain
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  ubsan_halts:
+    kind: halts
+    builds:
+    - ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_halts:
+    kind: halts
+    builds:
+    - asan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_ubsan_halts:
+    kind: halts
+    builds:
+    - asan-ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open
+  ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - ubsan
+    reading: alloc-forced-only
+    budgets: standard
+    status: open
+  asan_ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan-ubsan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open

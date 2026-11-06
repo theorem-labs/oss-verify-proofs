@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_die_cu_attrs
-rocq: OssFuzzTheorems.libdwarf.fuzz_die_cu_attrs
+rocq: OSSVerify.libdwarf.fuzz_die_cu_attrs
 origin: upstream
 summary: 'On the first CU DIE: ~25 attribute/offset/form queries (bytesize, bitsize, die_offsets, offset_list,
   attrlist, whatform, formblock, discr_list, die_text, ...); every res is overwritten unread.'

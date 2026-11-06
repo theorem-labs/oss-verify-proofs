@@ -1,0 +1,18 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+From Corelib Require Import PrimString.
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.jsoncons.fuzz_json_encoder.images Require Import Plain.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import PropExec AxSymExec3 AxSymExec3B AxSymExec3Sound AsanPlanCore LibSym SegRun SegPlan SegPlanAuto Pm6PlanKit.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCert CutOps CutHeap CutAuto CutLib Pm6CutKit.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutHeap2 CutAutoX.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.PmEnc Require Import EncSums.
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Set Printing Width 1000000. Set Printing Depth 1000000.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCodec.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutGen Require Import Cut_begin_scalar_xsrc_T.
+Definition dict_Cut_begin_scalar_xsrc_R0 : CCD.pt := CCD.mk_table 1231%positive "((252124 252264 421620 251692 763484 764892)(0#1)(0 1048576)(5#3 1 4611686018427387904)(3(1 3))(4(1 4))(5(1 5))(6(1 6))(7(1 7))(9(1 9))(13(1 13))(14(1 14))(15(1 15))(16(1 16))(17(1 17))(18(1 18))(19(1 19))(20(1 20))(21(1 21))(22(1 22))(23(1 23))(24(1 24))(25(1 25))(26(1 26))(27(1 27))(28(1 28))(29(1 29))(30(1 30))(31(1 31))(4 0(0 32)(1 33))(2 0#30(1 34))(#31 -26)(2 1(1 36)(0 0))(2 4#33(0 1))((1 2)-16)(0#35 8(1 8))((1 2)-8)(0#37 8(1 1))((1 10)8)(0#39 8(1 32))((1 10)264)(0#41 8(1 34))((1 10)272)(0#43 8#31)((1 10)296)(0#45 8(1 37))((1 10)320)(0 83527)(0#47 8#48)((1 10)328)(0#50 8(0 2))(#31 -32)(0#52 4(1 38))(#31 -28)(0#54 1(0 0))(#31 -27)(0#56 1(1 39))(#31 -8)(0#58 8(1 36))(5(1 40)0 1)(6#32(0 1))(5(1 33)1 1024)(4 0(0 -32)(1 33))(2 0#63(1 35))(5#64 0 32768)(5(1 35)32 32768)(5(1 34)4096 140737488355328)(4(1 34)16)(5(1 36)0 18446744073709551615)(5(1 37)0 18446744073709551615)(6#45(0 8))(5(1 10)1099511627776 140737488355328)(4(1 10)8)(5(1 32)1099511627776 140737488355328)(4(1 32)8)((1 2)-8592)(0 8576)(9#76#77)(0 8592)(6#76#79)(5(1 2)1099511627776 140737488355328)(4(1 2)16)((1 10)0)(7#76#79#83(0 408))((1 32)0)(7#76#79#85(0 24))(7#83(0 408)#85(0 24))((1 34)0)(7#76#79#88(1 35))(7#83(0 408)#88(1 35))(7#85(0 24)#88(1 35)))"%pstring.
+Definition o0 : CA.pout := CCD.dec_pout_t dict_Cut_begin_scalar_xsrc_R0 823%positive "((0#2(3(11 36 0 0(16 0(0#2(4#4(1 0)))))(11 36 1 18446744073709551615(16 1(0#2(4#4(1 1)))))))(((251692((1(1 1))(2(1 2))#5#6#7#8#9(8(1 8))#10(10(1 10))(11(0 1))(12(1 12))#11#12#13#14#15#16#17#18#19#20#21#22#23#24#25#26#27#28#29)()(#4(0#32 1(0 1))(5(2 0(4 0(0 -1)(1 36))(0 1))1 1)(5(1 36)0 0)(5#34 1 1)#36#38#40#42#44#46#49#51#53#55#57#59#60#61#62#65#66#67#68#69#70#71#72#73#74#75#78#80#81#82#84#86#87#89#90#91))(1 251692))((421620((1(0 252176))(2(2 0(1 2)(0 -16)))#5#6#7#8#9(8(1 10))#10(10(1 32))(11#48)(12(0 2))#11#12#13#14#15#16#17#18#19#20#21#22#23#24#25#26#27#28#29)()(#4(5(2 0(1 36)(0 -1))0 18446744073709551614)(5(1 36)1 18446744073709551615)(5#34 0 0)#36#38#40#42#44#46#49#51#53#55#57#59(0#32 1(1 40))#60#61#62#65#66#67#68#69#70#71#72#73#74#75#78#80#81#82#84#86#87#89#90#91))(1 421620)))((1#33(0 1)1)(1(0 1)#33 0))())"%pstring.

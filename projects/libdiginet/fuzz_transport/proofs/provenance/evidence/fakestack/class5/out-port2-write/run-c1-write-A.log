@@ -1,0 +1,21 @@
+donor: pinned sha256 c0661b96b5bd, twin sha256 68db792d5fa7, allocated sections equal (build-id note excepted): True
+target: pinned sha256 e89be137db17, twin sha256 86efc3a80314, allocated sections equal (build-id note excepted): True
+ref 781f46bc05cd image A: 13 ranges paired and compared; 11 resolve lines: 5 move a value (0x40410 -> 0x3dfc4, 0xa63e0 -> 0xa4080, 0xa6440 -> 0xa40e0, 0xa70f0 -> 0xa4d70, 0xa7100 -> 0xa4d80), 0 name the image of a header range, the rest keep the value
+ABSENT in the target (kept by a resolve line, removed from fs_ranges after the write): RtSM1T 0x3fc0c (107 words, __asan_stack_malloc_3)
+ABSENT in the target (kept by a resolve line, removed from fs_ranges after the write): RtSM1T 0x40244 (95 words, __asan_stack_malloc_7)
+PASS
+control self A: PASS, 0 values moved
+control plant A: caught (1 FAIL lines)
+  A/Rt/RtSM1T.v: 0 derived, 0 direct, 0 engine, 0 via-maps, 32 symbol, 0 section, 0 gap, 11 resolved, 0 KEPT-ADDR, 0 UNMAPPED
+alreloc: 1 files written; 0 UNMAPPED or unreviewed CONFLICT, 0 KEPT-ADDR (image-range numerals left unchanged) -- review each
+alreloc: per-numeral report: 49 numerals in 1 files under <OUT>/report/libdiginet/fuzz_transport (one .tsv per file)
+  A/Rt/RtSM1T.v:41 0x5e4598 -> 0x5f3af0 MOVED [symbol] (builtin_tls+0xc8 on both sides): confirm it is an address
+  A/Rt/RtSM1T.v:76 0x142c71 -> 0x13e5b1 MOVED [symbol] (_ZN11__sanitizer21common_flags_dont_useE+0x89 on both sides): confirm it is an address
+  A/Rt/RtSM1T.v:77 0x5e45b8 -> 0x5f3b10 MOVED [symbol] (builtin_tls+0xe8 on both sides): confirm it is an address
+  A/Rt/RtSM1T.v:77 0x5e45c0 -> 0x5f3b18 MOVED [symbol] (builtin_tls+0xf0 on both sides): confirm it is an address
+  A/Rt/RtSM1T.v:77 0x5e4d98 -> 0x5f42f0 MOVED [symbol] (builtin_tls+0x8c8 on both sides): confirm it is an address
+  A/Rt/RtSM1T.v:85 0x5e4cd0 -> 0x5f4228 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  A/Rt/RtSM1T.v:85 0x5e4dac -> 0x5f4304 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+PASS: 0 wrong rows
+A/Rt/RtSM1T.v: header 4 lines restored from the donor, 0 CmdBSyms renamed, notice added; fs_ranges drops __asan_stack_malloc_3 (0x3fc0c), __asan_stack_malloc_7 (0x40244)
+rc=0

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nokogiri
 harness: parse_fuzzer
-rocq: OssFuzzTheorems.nokogiri.parse_fuzzer
+rocq: OSSVerify.nokogiri.parse_fuzzer
 origin: upstream
 summary: gumbo_parse_with_options on 10..25000 input bytes, then destroy; the tree is otherwise unused.
 entry: LLVMFuzzerTestOneInput

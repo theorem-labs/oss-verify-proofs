@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wuffs
 harness: gif_fuzzer
-rocq: OssFuzzTheorems.wuffs.gif_fuzzer
+rocq: OSSVerify.wuffs.gif_fuzzer
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an invariant: fuzz_image_decoder: after every
   decode_frame the decoder''s dirty_rect must lie inside the frame_config bounds, and after a successful

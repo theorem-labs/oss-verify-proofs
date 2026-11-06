@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: enhance_fuzzer
-rocq: OssFuzzTheorems.leptonica.enhance_fuzzer
+rocq: OSSVerify.leptonica.enhance_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then TRC/gamma/equalise/darken/brightness/hue/saturation/colour-shift/constant-colour/matrix-colour
   enhancers and pixTRCMapGeneral on copies; outputs discarded.

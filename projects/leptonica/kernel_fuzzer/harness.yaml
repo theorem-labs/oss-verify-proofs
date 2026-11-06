@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: kernel_fuzzer
-rocq: OssFuzzTheorems.leptonica.kernel_fuzzer
+rocq: OSSVerify.leptonica.kernel_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then kernelCreateFromPix(pix, 2, 2).
 entry: LLVMFuzzerTestOneInput

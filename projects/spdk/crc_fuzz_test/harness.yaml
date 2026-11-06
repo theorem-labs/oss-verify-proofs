@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spdk
 harness: crc_fuzz_test
-rocq: OssFuzzTheorems.spdk.crc_fuzz_test
+rocq: OSSVerify.spdk.crc_fuzz_test
 origin: upstream
 summary: 'First byte selects one of 26 CRC16/32/64 functions (optimised multibinary and _base reference
   variants: t10dif, t10dif_copy, ieee, gzip_refl, iscsi, ecma/iso/jones/rocksoft refl/norm); leading 2/4/8

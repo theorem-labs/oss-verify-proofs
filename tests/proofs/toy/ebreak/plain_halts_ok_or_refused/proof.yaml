@@ -1,0 +1,3 @@
+refutes: toy/ebreak/plain_halts_ok_or_refused
+approach: on lps's demo input and entry the run is never refused memory and errors at its first instruction, so it never exits
+uses: [lps-checks]

@@ -1,0 +1,2 @@
+fuzz_decode.asan 5973b76807d8 | fuzz_decode.asan 4cb0a852e826 | PT_LOAD layout equal: True | differing loadable bytes: 25, outside ELF header [0x10000,0x10040) and .note.gnu.build-id [0x102a8,0x102cc): []
+cgif_file_fuzzer.asan-ubsan 1c29845fe605 | cgif_file_fuzzer.asan-ubsan ce511d541cda | PT_LOAD layout equal: True | differing loadable bytes: 25, outside ELF header [0x10000,0x10040) and .note.gnu.build-id [0x102a8,0x102cc): []

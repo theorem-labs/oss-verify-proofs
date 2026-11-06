@@ -6,22 +6,22 @@
  (deps (:elf %{project_root}/projects/ffmpeg/bin/ffmpeg_AV_CODEC_ID_AVS_fuzzer/ffmpeg_AV_CODEC_ID_AVS_fuzzer.plain))
  (action
   (run elf-snapshot %{elf} Plain.v --prefix Plain --module-name M
-       --namespace OssFuzzTheorems.ffmpeg.ffmpeg_AV_CODEC_ID_AVS_fuzzer.images)))
+       --namespace OSSVerify.ffmpeg.ffmpeg_AV_CODEC_ID_AVS_fuzzer.images)))
 (rule
  (targets Ubsan.v Ubsan_seg_000.hex Ubsan_seg_001.hex Ubsan_seg_002.hex Ubsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/ffmpeg/bin/ffmpeg_AV_CODEC_ID_AVS_fuzzer/ffmpeg_AV_CODEC_ID_AVS_fuzzer.ubsan))
  (action
   (run elf-snapshot %{elf} Ubsan.v --prefix Ubsan --module-name M
-       --namespace OssFuzzTheorems.ffmpeg.ffmpeg_AV_CODEC_ID_AVS_fuzzer.images)))
+       --namespace OSSVerify.ffmpeg.ffmpeg_AV_CODEC_ID_AVS_fuzzer.images)))
 (rule
  (targets Asan.v Asan_seg_000.hex Asan_seg_001.hex Asan_seg_002.hex Asan_seg_003.hex)
  (deps (:elf %{project_root}/projects/ffmpeg/bin/ffmpeg_AV_CODEC_ID_AVS_fuzzer/ffmpeg_AV_CODEC_ID_AVS_fuzzer.asan))
  (action
   (run elf-snapshot %{elf} Asan.v --prefix Asan --module-name M
-       --namespace OssFuzzTheorems.ffmpeg.ffmpeg_AV_CODEC_ID_AVS_fuzzer.images)))
+       --namespace OSSVerify.ffmpeg.ffmpeg_AV_CODEC_ID_AVS_fuzzer.images)))
 (rule
  (targets AsanUbsan.v AsanUbsan_seg_000.hex AsanUbsan_seg_001.hex AsanUbsan_seg_002.hex AsanUbsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/ffmpeg/bin/ffmpeg_AV_CODEC_ID_AVS_fuzzer/ffmpeg_AV_CODEC_ID_AVS_fuzzer.asan-ubsan))
  (action
   (run elf-snapshot %{elf} AsanUbsan.v --prefix AsanUbsan --module-name M
-       --namespace OssFuzzTheorems.ffmpeg.ffmpeg_AV_CODEC_ID_AVS_fuzzer.images)))
+       --namespace OSSVerify.ffmpeg.ffmpeg_AV_CODEC_ID_AVS_fuzzer.images)))

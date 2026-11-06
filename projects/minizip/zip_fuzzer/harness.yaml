@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: minizip
 harness: zip_fuzzer
-rocq: OssFuzzTheorems.minizip.zip_fuzzer
+rocq: OSSVerify.minizip.zip_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

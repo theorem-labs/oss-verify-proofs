@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: asn1
-rocq: OssFuzzTheorems.openssl.asn1
+rocq: OSSVerify.openssl.asn1
 origin: upstream
 summary: 'For 144 ASN.1 item types (111 unconditional, 33 under OPENSSL_NO_CMS/OCSP/RFC3779/DH/EC/DEPRECATED_3_0
   guards that the default Configure leaves enabled) plus TS/ESS/DH/DSA/RSA/EC/EVP_PKEY/SSL_SESSION d2i

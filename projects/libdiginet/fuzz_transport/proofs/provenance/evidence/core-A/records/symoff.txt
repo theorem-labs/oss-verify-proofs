@@ -1,0 +1,41 @@
+# symoff.py (run): rows 8655 (stage-2 TSV OUT/values/decval/A-stage2.tsv); swept 1505
+  SYMBOL                                                         914
+  BYTES                                                          288
+  GOT-CELL                                                       167
+  GEOMETRY                                                       86
+  CODEREF                                                        26
+  OTHER-SYM                                                      21
+  UNALIGNED (no donor token), written value in a data area       2
+  KNOWN                                                          1
+  skip: neither value in a data area                             6418
+  skip: instruction word / decoded field                         246
+  skip: constant by role (stage 2)                               236
+  skip: unaligned, not a data address                            137
+  skip: comment numeral (port_core edits no comment)             84
+  skip: derived quantity (x/8 ... ; item 4)                      29
+  GEOMETRY quantities: img_span x36, load0.pagesize x4, load1.hi x1, load2.hi x2, load2.lo x2, load3.hi x1, load3.lo x4, load3.pagesize x2, sec:.bss.lo x1, sec:.data.hi x4, sec:.data.rel.ro.lo x6, sec:.fini_array.hi x2, sec:.fini_array.lo x3, sec:.got.hi x5, sec:.rodata.lo x1, sec:.tbss.hi x1, sec:.tbss.lo x2, sec:asan_globals.hi x9
+FINDING	KNOWN	A/AB1w.v:11	0x22c0c -> 0x22b4c	donor unnamed .rodata 0x22c0c	target unnamed .eh_frame_hdr 0x22b4c	no symbol, and no content / anchor / code-reference match; KNOWN to the owner: the final run writes 0x22b4c (.rodata's end; an override row added after work2); port_core's rule bound-released-elsewhere kept the donor's -0x40
+FINDING	OTHER-SYM	A/AD1o.v:81	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:81	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:84	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:84	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:87	0xa14a0 -> 0x5f3200	donor __do_init.__object+0x10	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x20	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:91	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:91	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:93	0xa14a0 -> 0x5f3200	donor __do_init.__object+0x10	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x20	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:95	0xa14a0 -> 0x5f3200	donor __do_init.__object+0x10	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x20	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:95	82580 -> 779840	donor -	target _ZN11__sanitizerL26internal_alloc_placeholderE+0x10a40	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:98	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:98	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:99	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:100	660576 -> 6238688	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:100	82572 -> 779836	donor -	target _ZN11__sanitizerL26internal_alloc_placeholderE+0x10a3c	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:100	660576 -> 6238688	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD25.v:529	0x5fa000 -> 0x5df0b8	donor -	target g_cfg+0x38	a different symbol or offset
+FINDING	OTHER-SYM	A/AD25.v:532	0x5fa000 -> 0x5df0b8	donor -	target g_cfg+0x38	a different symbol or offset
+FINDING	OTHER-SYM	A/AD25.v:539	0x5fa000 -> 0x5df0b8	donor -	target g_cfg+0x38	a different symbol or offset
+FINDING	UNALIGNED	A/AD2f.v:149	- -> 0x5df080	donor -	target g_cfg+0x0	no aligned donor token
+FINDING	UNALIGNED	A/AD2f.v:149	- -> 0x5f3060	donor -	target OW+0x0	no aligned donor token
+FINDING	OTHER-SYM	A/AFem.v:129	127070 -> 127008	donor unnamed .rodata 0x1f05e	target unnamed .rodata 0x1f020	no symbol, and no content / anchor / code-reference match
+FINDING	OTHER-SYM	A/AFem.v:207	127070 -> 127008	donor unnamed .rodata 0x1f05e	target unnamed .rodata 0x1f020	no symbol, and no content / anchor / code-reference match
+result: rows that land in .got / .got.plt or on a symbol other than the donor's twin: 24 (1 of them known to the owner and handled, 23 new)

@@ -1,0 +1,40 @@
+== image B (asan-ubsan): target pin 41113a03c82f
+twins fuzz_command: proved (2 pairs)
+rule 24 compare plugin-hostd/fuzz_command at 781f46bc05cd (pin bbe55d24d096): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 36 pc-relative words differ in the walked ranges, 430 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+twins fuzz_boxreg: proved (2 pairs)
+rule 24 compare libreac/fuzz_boxreg at ee71d1fd3fcf (pin 7620eb05e0ad): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 41 pc-relative words differ in the walked ranges, 435 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+twins fuzz_identity: proved (2 pairs)
+rule 24 compare libreac/fuzz_identity at cffeac4df63e (pin baf1a4d065e0): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 41 pc-relative words differ in the walked ranges, 395 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+twins fuzz_disco: proved (2 pairs)
+rule 24 compare libreac/fuzz_disco at b5cf457a8820 (pin cee6f04ad3d4): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 40 pc-relative words differ in the walked ranges, 273 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+twins fuzz_state: proved (2 pairs)
+rule 24 compare omx-clap-core/fuzz_state at d0e2eea9a341 (pin 5ac5ce0954f8): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 44 pc-relative words differ in the walked ranges, 288 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+twins fuzz_preset: proved (2 pairs)
+rule 24 compare omx-clap-core/fuzz_preset at 4cda83dac850 (pin d663f82d7f48): PASS; closeness: 4 of 9 ranges EQUAL byte for byte; 40 pc-relative words differ in the walked ranges, 278 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+== chosen donor plugin-hostd/fuzz_command at 781f46bc05cd
+donor: pinned sha256 bbe55d24d096, twin sha256 658cefbe806b, allocated sections equal (build-id note excepted): True
+target: pinned sha256 41113a03c82f, twin sha256 e217cb0a84f1, allocated sections equal (build-id note excepted): True
+plugin-hostd/fuzz_command at 781f46bc05cd, image B: 9 ranges paired and compared; 54 resolve lines: 7 move a value (0x3fd64 -> 0x3dca0, 0x4045c -> 0x3e000, 0xa5f40 -> 0xa3ce0, 0xa5fa0 -> 0xa3d40, 0xa6c50 -> 0xa49d0, 0xa6c60 -> 0xa49e0, 261476 -> 253088), 0 name the image of a header range, the rest keep the value
+closeness: 4 of 9 ranges EQUAL byte for byte; 36 pc-relative words differ in the walked ranges, 430 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+PASS
+control self B: PASS, 0 values moved
+planted: __asan_stack_malloc_3 + 0x94: 0x00e678b3 -> 0x00e668b3
+planted: __asan_stack_malloc_3 + 0x94: 0x00e678b3 -> 0x00e668b3
+control plant B: caught (1 FAIL lines)
+  B/Rt/RtSM3.v: 0 derived, 0 direct, 0 engine, 0 via-maps, 6 symbol, 0 section, 0 gap, 10 resolved, 0 KEPT-ADDR, 0 UNMAPPED
+alreloc: 2 files checked (dry); 0 UNMAPPED or unreviewed CONFLICT, 0 KEPT-ADDR (image-range numerals left unchanged) -- review each
+alreloc: per-numeral report: 94 numerals in 2 files under <OUT>/report/libdiginet/fuzz_transport (one .tsv per file)
+  B/Rt/RtSM3.v:121 0x5e4850 -> 0x5f3ea8 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  B/Rt/RtSM3.v:122 0x5e4850 -> 0x5f3ea8 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  B/Rt/RtSM3.v:123 0x5e492c -> 0x5f3f84 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  B/Rt/RtSM3.v:124 0x5e492c -> 0x5f3f84 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  B/Rt/RtSM3.v:189 0x5e4850 -> 0x5f3ea8 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  B/Rt/RtSM3.v:190 0x5e492c -> 0x5f3f84 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:40 0x5e4118 -> 0x5f3770 MOVED [symbol] (builtin_tls+0xc8 on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:74 0x1427f1 -> 0x13e231 MOVED [symbol] (_ZN11__sanitizer21common_flags_dont_useE+0x89 on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:75 0x5e4138 -> 0x5f3790 MOVED [symbol] (builtin_tls+0xe8 on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:75 0x5e4140 -> 0x5f3798 MOVED [symbol] (builtin_tls+0xf0 on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:75 0x5e4918 -> 0x5f3f70 MOVED [symbol] (builtin_tls+0x8c8 on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:83 0x5e4850 -> 0x5f3ea8 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:83 0x5e492c -> 0x5f3f84 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+PASS: 0 wrong rows

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: hdf5
 harness: h5_extended_fuzzer
-rocq: OssFuzzTheorems.hdf5.h5_extended_fuzzer
+rocq: OSSVerify.hdf5.h5_extended_fuzzer
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

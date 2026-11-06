@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libxml2
 harness: xinclude
-rocq: OssFuzzTheorems.libxml2.xinclude
+rocq: OSSVerify.libxml2.xinclude
 origin: upstream
 summary: 'Checks one property, an API contract: OOM/IO reporting contract for xmlCtxtReadMemory, xmlXIncludeProcessNode
   (xmlXIncludeGetLastError) and xmlCopyDoc. xmlFuzzCheckFailureReport (fuzz/fuzz.c:167-180) abort()s when

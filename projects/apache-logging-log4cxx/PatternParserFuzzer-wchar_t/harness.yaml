@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: apache-logging-log4cxx
 harness: PatternParserFuzzer-wchar_t
-rocq: OssFuzzTheorems.apache_logging_log4cxx.PatternParserFuzzer_wchar_t
+rocq: OSSVerify.apache_logging_log4cxx.PatternParserFuzzer_wchar_t
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

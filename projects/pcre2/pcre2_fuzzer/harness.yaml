@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: pcre2
 harness: pcre2_fuzzer
-rocq: OssFuzzTheorems.pcre2.pcre2_fuzzer
+rocq: OSSVerify.pcre2.pcre2_fuzzer
 origin: upstream
 summary: pcre2_dfa_match runs twice (fuzzed and zero options) and its result is not compared with pcre2_match;
   match results in general are discarded outside the SUPPORT_DIFF_FUZZ block.

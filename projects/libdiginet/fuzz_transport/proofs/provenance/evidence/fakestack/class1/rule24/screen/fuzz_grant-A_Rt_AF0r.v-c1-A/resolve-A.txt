@@ -1,0 +1,6 @@
+[libreac/fuzz_grant] A/Rt/AF0r.v:4 0x3cf18 0x3cf18
+[libreac/fuzz_grant] A/Rt/AF0r.v:42 0x3d410 0x3dfc4
+[libreac/fuzz_grant] A/Rt/AF0r.v:71 0x9c860 0xa4080
+[libreac/fuzz_grant] A/Rt/AF0r.v:71 0x9d550 0xa4d70
+[libreac/fuzz_grant] A/Rt/AF0r.v:72 0x9c8c0 0xa40e0
+[libreac/fuzz_grant] A/Rt/AF0r.v:72 0x9d560 0xa4d80

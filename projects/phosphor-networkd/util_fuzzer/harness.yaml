@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: phosphor-networkd
 harness: util_fuzzer
-rocq: OssFuzzTheorems.phosphor_networkd.util_fuzzer
+rocq: OSSVerify.phosphor_networkd.util_fuzzer
 origin: oss-fuzz
 summary: FuzzedDataProvider drives addrFromBuf (in try/catch(...)), isIPv6LinkLocal, interfaceToUbootEthAddr,
   parseInterfaces, isValidNtpServer, isHostnameValid; all results (void)-discarded.

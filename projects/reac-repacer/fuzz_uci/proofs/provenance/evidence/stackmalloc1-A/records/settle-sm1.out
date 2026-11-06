@@ -1,0 +1,213 @@
+donor fuzz_grant.asan sha256 57c26f993615
+  place: auipc +0x1210 / addi +0x1218 -> s2 = 0x13f5f (.rodata); C string at it (with its NUL): b'\x00' (1 byte(s))
+  vtable register s1 = 0x9c270 _ZTVN11__sanitizer18FlagHandlerIncludeE+0x10 (FlagHandlerInclude vtable + 0x10: True)
+  RegisterCommonFlags from +0x121c to its end:
+    +0x121c sd s1, 0(a2)
+    +0x1220 sd s0, 8(a2)
+    +0x1224 sb zero, 0x10(a2)
+    +0x1228 sd s2, 0x18(a2)
+      READ of s2: stored to field 0x18 of the object in a2 (its field +0 holds the vtable: True)
+    +0x122c auipc a0, 0xfffba
+    +0x1230 auipc a3, 0xfffba
+    +0x1234 addi a1, a0, -0x5ec
+    +0x1238 addi a3, a3, -0x5e8
+    +0x123c mv a0, s0
+    +0x1240 jal 0xc18 -> _ZN11__sanitizer10FlagParser15RegisterHandlerEPKcPNS_15FlagHandlerBaseES2_+0x0
+    +0x1244 jal -0x47ec -> _ZN11__sanitizer26GetGlobalLowLevelAllocatorEv+0x0
+    +0x1248 addi a1, zero, 0x20
+    +0x124c jal -0x47e8 -> _ZN11__sanitizer17LowLevelAllocator8AllocateEm+0x0
+    +0x1250 mv a2, a0
+    +0x1254 addi a0, zero, 1
+    +0x1258 auipc a1, 0xfffb2
+    +0x125c auipc a3, 0xfffbb
+    +0x1260 addi a1, a1, 0x1bb
+    +0x1264 addi a3, a3, -0xb3
+    +0x1268 sd s1, 0(a2)
+    +0x126c sd s0, 8(a2)
+    +0x1270 sb a0, 0x10(a2)
+    +0x1274 sd s2, 0x18(a2)
+      READ of s2: stored to field 0x18 of the object in a2 (its field +0 holds the vtable: True)
+    +0x1278 mv a0, s0
+    +0x127c ld ra, 0x38(sp)
+    +0x1280 ld s0, 0x30(sp)
+    +0x1284 ld s1, 0x28(sp)
+    +0x1288 ld s2, 0x20(sp)
+      s2 written again here: its value ends
+  vtable entries after the address point: 0x62c3c _ZN11__sanitizer18FlagHandlerInclude5ParseEPKc+0x0, 0x62cf8 _ZN11__sanitizer18FlagHandlerInclude6FormatEPcm+0x0
+  _ZN11__sanitizer18FlagHandlerInclude5ParseEPKc+0x0:
+    (registers holding the object pointer somewhere in the method: ['a0', 'a1', 's0', 's1', 's2'])
+    +0x0 addi sp, sp, -0x20
+    +0x4 sd ra, 0x18(sp)
+    +0x8 sd s0, 0x10(sp)
+    +0xc sd s1, 8(sp)
+    +0x10 sd s2, 0(sp)
+    +0x14 mv s1, a1
+    +0x18 mv s0, a0
+    +0x1c sd a1, 0x18(a0)
+      WRITE of field +0x18 (a1): the place is not read here
+    +0x20 addi a1, zero, 0x25
+    +0x24 mv a0, s1
+    +0x28 jal 0xfd8 -> _ZN11__sanitizer15internal_strchrEPKci+0x0
+    +0x2c beqz a0, 0x6c
+    +0x30 auipc a0, 0xfffbc
+    +0x34 addi a1, a0, -0x650
+    +0x38 lui a0, 1
+    +0x3c mv a2, zero
+    +0x40 jal 0x2ddc -> _ZN11__sanitizer9MmapOrDieEmPKcb+0x0
+    +0x44 mv s2, a0
+    +0x48 lui a2, 1
+    +0x4c mv a0, s1
+    +0x50 mv a1, s2
+    +0x54 jal -0x1664 -> _ZN11__sanitizer22SubstituteForFlagValueEPKcPcm+0x0
+    +0x58 ld a0, 8(s0)
+    +0x5c lbu a2, 0x10(s0)
+    +0x60 mv a1, s2
+    +0x64 jal 0x998 -> _ZN11__sanitizer10FlagParser9ParseFileEPKcb+0x0
+    +0x68 mv s0, a0
+    +0x6c lui a1, 1
+    +0x70 mv a0, s2
+    +0x74 mv a2, zero
+    +0x78 jal 0x2f24 -> _ZN11__sanitizer10UnmapOrDieEPvmb+0x0
+    +0x7c mv a0, s0
+    +0x80 ld ra, 0x18(sp)
+    +0x84 ld s0, 0x10(sp)
+    +0x88 ld s1, 8(sp)
+    +0x8c ld s2, 0(sp)
+    +0x90 addi sp, sp, 0x20
+    +0x94 ret 
+    +0x98 ld a0, 8(s0)
+    +0x9c lbu a2, 0x10(s0)
+    +0xa0 mv a1, s1
+    +0xa4 ld ra, 0x18(sp)
+    +0xa8 ld s0, 0x10(sp)
+    +0xac ld s1, 8(sp)
+    +0xb0 ld s2, 0(sp)
+    +0xb4 addi sp, sp, 0x20
+    +0xb8 j 0x944 -> _ZN11__sanitizer10FlagParser9ParseFileEPKcb+0x0
+  _ZN11__sanitizer18FlagHandlerInclude6FormatEPcm+0x0:
+    (registers holding the object pointer somewhere in the method: ['a0'])
+    +0x0 addi sp, sp, -0x10
+    +0x4 sd ra, 8(sp)
+    +0x8 sd s0, 0(sp)
+    +0xc mv s0, a2
+    +0x10 ld a3, 0x18(a0)
+      READ of field +0x18 into a3
+    +0x14 mv a0, a1
+    +0x18 auipc a1, 0xfffb4
+    +0x1c addi a2, a1, 0x391
+    +0x20 mv a1, s0
+    +0x24 jal 0x42e0 -> _ZN11__sanitizer17internal_snprintfEPcmPKcz+0x0
+      the field is argument ['a3'] of _ZN11__sanitizer17internal_snprintfEPcmPKcz+0x0; format string a2 = b'%s\x00'
+    +0x28 sltu a0, a0, s0
+    +0x2c ld ra, 8(sp)
+    +0x30 ld s0, 0(sp)
+    +0x34 addi sp, sp, 0x10
+    +0x38 ret 
+target fuzz_uci.asan sha256 56822e263d76
+  place: auipc +0x1210 / addi +0x1218 -> s2 = 0x13e5f (.rodata); C string at it (with its NUL): b'\x00' (1 byte(s))
+  vtable register s1 = 0x96b90 _ZTVN11__sanitizer18FlagHandlerIncludeE+0x10 (FlagHandlerInclude vtable + 0x10: True)
+  RegisterCommonFlags from +0x121c to its end:
+    +0x121c sd s1, 0(a2)
+    +0x1220 sd s0, 8(a2)
+    +0x1224 sb zero, 0x10(a2)
+    +0x1228 sd s2, 0x18(a2)
+      READ of s2: stored to field 0x18 of the object in a2 (its field +0 holds the vtable: True)
+    +0x122c auipc a0, 0xfffbb
+    +0x1230 auipc a3, 0xfffbb
+    +0x1234 addi a1, a0, -0x3d7
+    +0x1238 addi a3, a3, -0x3d3
+    +0x123c mv a0, s0
+    +0x1240 jal 0xc18 -> _ZN11__sanitizer10FlagParser15RegisterHandlerEPKcPNS_15FlagHandlerBaseES2_+0x0
+    +0x1244 jal -0x47ec -> _ZN11__sanitizer26GetGlobalLowLevelAllocatorEv+0x0
+    +0x1248 addi a1, zero, 0x20
+    +0x124c jal -0x47e8 -> _ZN11__sanitizer17LowLevelAllocator8AllocateEm+0x0
+    +0x1250 mv a2, a0
+    +0x1254 addi a0, zero, 1
+    +0x1258 auipc a1, 0xfffb3
+    +0x125c auipc a3, 0xfffbc
+    +0x1260 addi a1, a1, 0x483
+    +0x1264 addi a3, a3, 0x13e
+    +0x1268 sd s1, 0(a2)
+    +0x126c sd s0, 8(a2)
+    +0x1270 sb a0, 0x10(a2)
+    +0x1274 sd s2, 0x18(a2)
+      READ of s2: stored to field 0x18 of the object in a2 (its field +0 holds the vtable: True)
+    +0x1278 mv a0, s0
+    +0x127c ld ra, 0x38(sp)
+    +0x1280 ld s0, 0x30(sp)
+    +0x1284 ld s1, 0x28(sp)
+    +0x1288 ld s2, 0x20(sp)
+      s2 written again here: its value ends
+  vtable entries after the address point: 0x61874 _ZN11__sanitizer18FlagHandlerInclude5ParseEPKc+0x0, 0x61930 _ZN11__sanitizer18FlagHandlerInclude6FormatEPcm+0x0
+  _ZN11__sanitizer18FlagHandlerInclude5ParseEPKc+0x0:
+    (registers holding the object pointer somewhere in the method: ['a0', 'a1', 's0', 's1', 's2'])
+    +0x0 addi sp, sp, -0x20
+    +0x4 sd ra, 0x18(sp)
+    +0x8 sd s0, 0x10(sp)
+    +0xc sd s1, 8(sp)
+    +0x10 sd s2, 0(sp)
+    +0x14 mv s1, a1
+    +0x18 mv s0, a0
+    +0x1c sd a1, 0x18(a0)
+      WRITE of field +0x18 (a1): the place is not read here
+    +0x20 addi a1, zero, 0x25
+    +0x24 mv a0, s1
+    +0x28 jal 0xfd8 -> _ZN11__sanitizer15internal_strchrEPKci+0x0
+    +0x2c beqz a0, 0x6c
+    +0x30 auipc a0, 0xfffbd
+    +0x34 addi a1, a0, -0x45f
+    +0x38 lui a0, 1
+    +0x3c mv a2, zero
+    +0x40 jal 0x2ddc -> _ZN11__sanitizer9MmapOrDieEmPKcb+0x0
+    +0x44 mv s2, a0
+    +0x48 lui a2, 1
+    +0x4c mv a0, s1
+    +0x50 mv a1, s2
+    +0x54 jal -0x1664 -> _ZN11__sanitizer22SubstituteForFlagValueEPKcPcm+0x0
+    +0x58 ld a0, 8(s0)
+    +0x5c lbu a2, 0x10(s0)
+    +0x60 mv a1, s2
+    +0x64 jal 0x998 -> _ZN11__sanitizer10FlagParser9ParseFileEPKcb+0x0
+    +0x68 mv s0, a0
+    +0x6c lui a1, 1
+    +0x70 mv a0, s2
+    +0x74 mv a2, zero
+    +0x78 jal 0x2f24 -> _ZN11__sanitizer10UnmapOrDieEPvmb+0x0
+    +0x7c mv a0, s0
+    +0x80 ld ra, 0x18(sp)
+    +0x84 ld s0, 0x10(sp)
+    +0x88 ld s1, 8(sp)
+    +0x8c ld s2, 0(sp)
+    +0x90 addi sp, sp, 0x20
+    +0x94 ret 
+    +0x98 ld a0, 8(s0)
+    +0x9c lbu a2, 0x10(s0)
+    +0xa0 mv a1, s1
+    +0xa4 ld ra, 0x18(sp)
+    +0xa8 ld s0, 0x10(sp)
+    +0xac ld s1, 8(sp)
+    +0xb0 ld s2, 0(sp)
+    +0xb4 addi sp, sp, 0x20
+    +0xb8 j 0x944 -> _ZN11__sanitizer10FlagParser9ParseFileEPKcb+0x0
+  _ZN11__sanitizer18FlagHandlerInclude6FormatEPcm+0x0:
+    (registers holding the object pointer somewhere in the method: ['a0'])
+    +0x0 addi sp, sp, -0x10
+    +0x4 sd ra, 8(sp)
+    +0x8 sd s0, 0(sp)
+    +0xc mv s0, a2
+    +0x10 ld a3, 0x18(a0)
+      READ of field +0x18 into a3
+    +0x14 mv a0, a1
+    +0x18 auipc a1, 0xfffb5
+    +0x1c addi a2, a1, 0x618
+    +0x20 mv a1, s0
+    +0x24 jal 0x42e0 -> _ZN11__sanitizer17internal_snprintfEPcmPKcz+0x0
+      the field is argument ['a3'] of _ZN11__sanitizer17internal_snprintfEPcmPKcz+0x0; format string a2 = b'%s\x00'
+    +0x28 sltu a0, a0, s0
+    +0x2c ld ra, 8(sp)
+    +0x30 ld s0, 0(sp)
+    +0x34 addi sp, sp, 0x10
+    +0x38 ret 
+C strings: donor b'\x00', target b'\x00': the same C string
+VERDICT: SETTLED EQUAL AS A C STRING (RegisterCommonFlags +0x1218: both places the C string b'\x00'; the one consumer reads it only as the "%s" argument of internal_snprintf)
+rc=0

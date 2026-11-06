@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ninja
 harness: fuzzer
-rocq: OssFuzzTheorems.ninja.fuzzer
+rocq: OSSVerify.ninja.fuzzer
 origin: upstream
 summary: Writes the input to /tmp/build.ninja and runs ManifestParser::Load on it; the return value and
   err string are discarded.

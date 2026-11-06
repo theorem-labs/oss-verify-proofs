@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libavc
 harness: svc_enc_fuzzer
-rocq: OssFuzzTheorems.libavc.svc_enc_fuzzer
+rocq: OSSVerify.libavc.svc_enc_fuzzer
 origin: upstream
 summary: 'SVC encoder: initEncoder configures the encoder from the leading bytes (including dynamic bitrate/framerate/IDR
   changes), encodeFrames feeds the remaining input as frames to isvce_api_function; output never decoded

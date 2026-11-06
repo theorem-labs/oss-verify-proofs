@@ -1,0 +1,22 @@
+# images/fuzz_transport.asan sha256 86efc3a80314981197619c115e313dbde50e8b86a6c5fefad4e5cc420250c792
+== __asan_set_shadow_00 at 0x55270 size 24 (6 words) section .text
+  55270: 00058613  mv	a2, a1
+  55274: 0004f597  auipc	a1, 0x4f
+  55278: e3c5b583  ld	a1, -0x1c4(a1)  ; -> 0xa40b0 [.got ] holds 0xa5ef8 [.data _ZN14__interception11real_memsetE] which holds 0x9d614 [.text memset]
+  5527c: 0005b303  ld	t1, 0(a1)
+  55280: 00000593  mv	a1, zero
+  55284: 00030067  jr	t1
+== __asan_set_shadow_f5 at 0x55378 size 24 (6 words) section .text
+  55378: 0004f617  auipc	a2, 0x4f
+  5537c: d3863603  ld	a2, -0x2c8(a2)  ; -> 0xa40b0 [.got ] holds 0xa5ef8 [.data _ZN14__interception11real_memsetE] which holds 0x9d614 [.text memset]
+  55380: 00063303  ld	t1, 0(a2)
+  55384: 00058613  mv	a2, a1
+  55388: 0f500593  addi	a1, zero, 0xf5
+  5538c: 00030067  jr	t1
+== __asan_set_shadow_f8 at 0x55390 size 24 (6 words) section .text
+  55390: 0004f617  auipc	a2, 0x4f
+  55394: d2063603  ld	a2, -0x2e0(a2)  ; -> 0xa40b0 [.got ] holds 0xa5ef8 [.data _ZN14__interception11real_memsetE] which holds 0x9d614 [.text memset]
+  55398: 00063303  ld	t1, 0(a2)
+  5539c: 00058613  mv	a2, a1
+  553a0: 0f800593  addi	a1, zero, 0xf8
+  553a4: 00030067  jr	t1

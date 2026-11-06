@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wireshark
 harness: fuzzshark_ip_proto-ospf
-rocq: OssFuzzTheorems.wireshark.fuzzshark_ip_proto_ospf
+rocq: OSSVerify.wireshark.fuzzshark_ip_proto_ospf
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

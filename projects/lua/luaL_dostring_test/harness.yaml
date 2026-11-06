@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lua
 harness: luaL_dostring_test
-rocq: OssFuzzTheorems.lua.luaL_dostring_test
+rocq: OSSVerify.lua.luaL_dostring_test
 origin: upstream
 summary: runs the input as Lua source with all standard libraries open; the status is ignored.
 entry: LLVMFuzzerTestOneInput

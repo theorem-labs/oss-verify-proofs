@@ -1,0 +1,13 @@
+--- the image-A core's evidence-out/patches-knock/ad3d-env.patch (its image-A knock run)
++++ depot-B/run/yd3d-env.patch (mk_yd3d_patch.py)
+@@ -1,5 +1,5 @@
+---- A/AD3d.v
+-+++ A/AD3d.v
+-@@ -213 +213 @@
+--From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.A Require Import AB1h AB1q AFek AFel AFl3 AF0r.
+-+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.A Require Import AB1h AB1q AFek AFel AFl3 AD3dEnv.
++--- B/YD3d.v
+++++ B/YD3d.v
++@@ -226 +226 @@
++-From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB1h YB1q YFek YFel YFl3 YF0r.
+++From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB1h YB1q YFek YFel YFl3 YD3dEnv.

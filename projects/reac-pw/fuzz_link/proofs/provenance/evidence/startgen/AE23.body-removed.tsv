@@ -1,0 +1,6 @@
+file	line	text
+lib/A/AE23.v	38	(* the shadow __asan_unregister_globals writes, from fuzz_pcap's four descriptors at 0xa62a0:
+lib/A/AE23.v	39	   g0 0x20d00+0xd rz to 0x20d20 -> 0x7fffc1a0..0x7fffc1a4; g1 0x20d40+3 rz to 0x20d60 -> 0x7fffc1a8..0x7fffc1ac;
+lib/A/AE23.v	40	   g2 0x5d3f40+8 rz to 0x5d3f60 -> 0x800b27e8..0x800b27ec; g3 (g_file) 0x5d3f60+8 rz to 0x631300 ->
+lib/A/AE23.v	41	   0x800b27ec..0x800b27f0; and the descriptor array itself 0xa62a0..0x9e200 -> 0x8000bc20..0x8000bc40 (0x20
+lib/A/AE23.v	42	   shadow bytes; cgif's array is 0xc0 long = 0x18 shadow bytes). *)

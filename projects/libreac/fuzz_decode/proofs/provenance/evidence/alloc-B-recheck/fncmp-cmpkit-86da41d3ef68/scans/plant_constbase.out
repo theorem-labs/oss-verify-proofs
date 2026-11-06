@@ -1,0 +1,9 @@
+original sha256 ce511d541cdabbe3
+plant e: 0x5e6bc +0x24c  lui a3, 0x40  ->  lui a3, 0x41  (sha256 895f84e544e9edab)
+plant e: constbase verdict on the planted function: DIFFERS
+    JECT base (ENTRY a0 | s1) + 0x40040 + index slli(xori(srli(mul(and(add(add(and(sub((linear: OP not a2, a2), and((linear: OP srli t2, a2, 1), 0x5555555555555555)), 0x3333333333333333), and(srli(sub((linear: OP not a2, a2), and((linear: OP srli t2, a2, 1), 0x5555555555555555)), 0x2), 0x3333333333333']
+    JECT base (ENTRY a0 | s1) + 0x40040 + index slli(xori(srli(mul(and(add(add(and(sub((linear: OP not a2, a2), and((linear: OP srli t2, a2, 1), 0x5555555555555555)), 0x3333333333333333), and(srli(sub((linear: OP not a2, a2), and((linear: OP srli t2, a2, 1), 0x5555555555555555)), 0x2), 0x3333333333333']
+plant f: 0x36134 +0x60  addi a3, zero, 0x20  ->  addi a3, zero, 0x21  (sha256 7724f94c8dc30841)
+plant f: constbase verdict on the planted function: DIFFERS
+    | 0x61 | 0x81 | addi((loop-varying value; at the loop entry: 0x21 | 0x41 | 0x61 | 0x81), 0x20)) + 0x0'] | ['the value stored: OBJECT base (loop-varying value; at the loop entry: 0x20 | 0x40 | 0x40 | 0x60 | 0x80 | addi((loop-varying value; at the loop entry: 0x20 | 0x40 | 0x60 | 0x80), 0x20)) + 0x0']
+plant_constbase: both controls REFUSED (DIFFERS)

@@ -1,0 +1,85 @@
+--- A/AB1w.v
++++ A/AB1w.v
+@@ -18,7 +18,7 @@
+ Definition tfib_asan_globals_lo : Z := 0xa8940.  Definition tfib_asan_globals_hi : Z := 0xa9340.
+ Definition tfib_bss_lo : Z := 0xa9340.  Definition tfib_bss_hi : Z := 0x6153d0.
+ Definition tfib_tbss_lo : Z := 0xa2948.  Definition tfib_tbss_hi : Z := 0xa295c.
+-Definition tfib_img_lo : Z := IMG_LO.  Definition tfib_img_hi : Z := IMG_TOP.
++Definition tfib_img_lo : Z := ltac:(let v := eval vm_compute in IMG_LO in exact v).  Definition tfib_img_hi : Z := ltac:(let v := eval vm_compute in IMG_TOP in exact v).
+ Definition tfib_entry : Z := 0x310d0.  Definition tfib_gp : Z := 0x10800.
+ Definition tfib_A_start : Z := 0x310d0.  Definition tfib_E_start : Z := 0x31118.
+ Definition tfib_A_do_init : Z := 0x31118.  Definition tfib_E_do_init : Z := 0x3118c.
+--- A/ACeg.v
++++ A/ACeg.v
+@@ -86,8 +86,12 @@
+ vm_compute in H.
+ destruct H as [H|[H|[H|[H|[]]]]]; injection H as <- <-; lia.
+ Qed.
+-Definition TFIB_IMG_LO : Z := IMG_LO.
+-Definition TFIB_IMG_END : Z := IMG_TOP.
++Definition TFIB_IMG_LO : Z := ltac:(let v := eval vm_compute in IMG_LO in exact v).
++Definition TFIB_IMG_END : Z := ltac:(let v := eval vm_compute in IMG_TOP in exact v).
++Lemma TFIB_IMG_LO_eq_g : TFIB_IMG_LO = IMG_LO.
++Proof. vm_compute. reflexivity. Qed.
++Lemma TFIB_IMG_END_eq_g : TFIB_IMG_END = IMG_TOP.
++Proof. vm_compute. reflexivity. Qed.
+ Lemma tfib_img_cover : forall ly S md, ALedger tfibsegs ly S md ->
+ fst (ly_img ly) <= TFIB_IMG_LO /\ TFIB_IMG_END <= fst (ly_img ly) + snd (ly_img ly).
+ Proof.
+--- A/AF0x.v
++++ A/AF0x.v
+@@ -23,7 +23,9 @@
+ Open Scope Z_scope.
+ Lemma Hwx_tfa : wx_segs_nowrap tfibsegs.
+ Proof. apply wx_segs_nowrap_of_b. vm_compute. reflexivity. Qed.
+-Definition TFIB_IMG_END : Z := IMG_TOP.
++Definition TFIB_IMG_END : Z := ltac:(let v := eval vm_compute in IMG_TOP in exact v).
++Lemma TFIB_IMG_END_eq : TFIB_IMG_END = IMG_TOP.
++Proof. vm_compute. reflexivity. Qed.
+ Lemma seg_rom_none_high : forall a, TFIB_IMG_END <= a < 2 ^ 64 -> seg_rom tfibsegs (Z_to_bv 64 a) = None.
+ Proof.
+ intros a Ha. unfold TFIB_IMG_END in Ha. unfold seg_rom, memory_read, tfibsegs, Asan.M.loaded_segments.
+@@ -35,7 +37,9 @@
+ by (symmetry; apply Bool.andb_false_iff; destruct (Z.leb_spec x a); [right; apply Z.leb_gt; lia | left; reflexivity])
+ end. reflexivity.
+ Qed.
+-Definition TFIB_IMG_LO : Z := IMG_LO.
++Definition TFIB_IMG_LO : Z := ltac:(let v := eval vm_compute in IMG_LO in exact v).
++Lemma TFIB_IMG_LO_eq : TFIB_IMG_LO = IMG_LO.
++Proof. vm_compute. reflexivity. Qed.
+ Definition off_img (a : Z) : Prop := (0 <= a < TFIB_IMG_LO) \/ (TFIB_IMG_END <= a < 2 ^ 64).
+ Lemma off_img_high : forall a, TFIB_IMG_END <= a < 2 ^ 64 -> off_img a.
+ Proof. intros a Ha. right. exact Ha. Qed.
+--- Reusable/YCbq.v
++++ Reusable/YCbq.v
+@@ -3,7 +3,7 @@
+ (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+ (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed and off_img's image bounds taken from the unit's own Reusable/YImgTop.v. *)
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+-From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YImgTop.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YImgTop.
+ From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+ From Stdlib Require Import FunctionalExtensionality.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import
+@@ -791,7 +791,8 @@
+ apply G5; [rewrite Eextra; exact HXa | exact He]. }
+ Qed.
+ End a0.
+-Definition off_img (a n : Z) : Prop := a + n <= IMG_LO \/ IMG_TOP <= a.
++Definition off_img (a n : Z) : Prop :=
++  a + n <= ltac:(let v := eval vm_compute in YImgTop.IMG_LO in exact v) \/ ltac:(let v := eval vm_compute in YImgTop.IMG_TOP in exact v) <= a.
+ Definition zone2 (a n : Z) : Prop := off_img a n /\ (a + n <= 2147446784 \/ 17594333495296 <= a).
+ Lemma zone2_band : forall a n, zone2 a n -> a + n <= 2147446784 \/ 17594333495296 <= a. Proof. intros a n [_ H]; exact H. Qed.
+ Lemma zone2_img : forall a n, zone2 a n -> off_img a n. Proof. intros a n [H _]; exact H. Qed.
+--- Reusable/YCe5.v
++++ Reusable/YCe5.v
+@@ -670,7 +670,8 @@
+ split; [exact Hstatic | exact HQT2].
+ Qed.
+ End t.
+-Definition off_img (a n : Z) : Prop := a + n <= IMG_LO \/ IMG_TOP <= a.
++Definition off_img (a n : Z) : Prop :=
++  a + n <= ltac:(let v := eval vm_compute in IMG_LO in exact v) \/ ltac:(let v := eval vm_compute in IMG_TOP in exact v) <= a.
+ Definition zone2 (a n : Z) : Prop := off_img a n /\ (a + n <= 2147446784 \/ 17594333495296 <= a).
+ Lemma zone2_band : forall a n, zone2 a n -> a + n <= 2147446784 \/ 17594333495296 <= a. Proof. intros a n [_ H]; exact H. Qed.
+ Lemma zone2_img : forall a n, zone2 a n -> off_img a n. Proof. intros a n [H _]; exact H. Qed.

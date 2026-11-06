@@ -1,0 +1,4 @@
+donor: pinned sha256 bbe55d24d096, twin sha256 658cefbe806b, allocated sections equal (build-id note excepted): True
+target: pinned sha256 41113a03c82f, twin sha256 e217cb0a84f1, allocated sections equal (build-id note excepted): True
+ref 781f46bc05cd image B: 11 ranges paired and compared; 73 resolve lines: 12 move a value (0x10340 -> 0x10348, 0x4045c -> 0x3e000, 0xa5f40 -> 0xa3ce0, 0xa5f48 -> 0xa3ce8, 0xa5f50 -> 0xa3cf0, 0xa5fa0 -> 0xa3d40, 0xa6c50 -> 0xa49d0, 0xa6c60 -> 0xa49e0), 1 name the image of a header range, the rest keep the value
+PASS

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openvswitch
 harness: odp_target
-rocq: OssFuzzTheorems.openvswitch.odp_target
+rocq: OSSVerify.openvswitch.odp_target
 origin: upstream
 summary: odp_flow_from_string / odp_flow_key_to_flow / odp_flow_key_from_flow / odp_flow_key_format and
   odp_actions_from_string / format_odp_actions; the reformatted strings are puts()'d, never compared to

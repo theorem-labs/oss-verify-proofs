@@ -1,0 +1,14 @@
+# MANIFEST of provenance/evidence/startup-gen/ (libdiginet/fuzz_transport: how the start-up layers lib/A and lib/B
+# were made and how to remake them).
+# One line per file of this directory: <path relative to this directory> <kind> <sha256 of the file as committed> <role>.
+# It names every file of the slice but itself.
+# This directory was provenance/startup-gen/ until the release (the release's lint allows provenance/evidence/, not
+# provenance/startup-gen/); records written before cite the old place. Each KIT-MANIFEST was named MANIFEST then.
+A/README.md doc 350c3c3bab0c79c0645b92e0d95ece198202f08839a7396a4fa4361aa6afcec6 image A's start-up layer (the 19 lib/A files): how it was made and how to remake it
+A/regen.sh script bbb9907d6b3826c5314ddabc49f279c834529ec74e32e6fded74c1bd2be6a0fc one command that remakes image A's start-up layer from the pinned images and twins, with the kit A/KIT-MANIFEST names
+A/site.env.example input d507df33d072d4da10a2a2528054ef665c23b918af2301c4de3ed06f0bc5b7da the form of the SITE file A/regen.sh requires: every host location and workspace name of a run
+A/KIT-MANIFEST record 94f65a77a0cea34d01b701777ef9da6a2fe6a5eb759cabfecc4f7094cf71c318 image A's start-up kit: each kit file's records path, sha256, mode and kit path on the internal records ref
+B/README.md doc 5ddab50e93ef2da2e8e8459af2f54d48bb1c403ca62e79a48e7198f9ef3f9cbc image B's start-up layer (the 19 lib/B files): how it was made and how to remake it
+B/regen.sh script 38a1f8792639bc8e5d24ade8ee6bba6524ccb0b6c34cba0e8d32b6692c45ffed one command that remakes image B's start-up layer from the pinned images and twins, with the kit B/KIT-MANIFEST names
+B/site.env.example input ed44c872b0474c405c98619fe49b9970ba2541c182b88548737b2e1f1ccc49ed the form of the SITE file B/regen.sh requires: every host location and workspace name of a run
+B/KIT-MANIFEST record 0174d8cdc726e298d595eebf4e9a4c61ab7a04aa7a15abb0cc5db6dcd8613c2a image B's start-up kit: each kit file's records path, sha256, mode and kit path on the internal records ref

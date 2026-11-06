@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zlib
 harness: example_small_fuzzer
-rocq: OssFuzzTheorems.zlib.example_small_fuzzer
+rocq: OSSVerify.zlib.example_small_fuzzer
 origin: oss-fuzz
 summary: 'Checks one property, a round trip: deflate then inflate with 1-byte in/out buffers; output memcmp-compared
   with the input; a mismatch prints "bad inflate" and returns 0.'

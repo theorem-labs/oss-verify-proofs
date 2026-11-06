@@ -1,0 +1,12 @@
+# extract_dumps.py of a collector log (sha256 f09b971f8a5d0af394a76e8581d20f7a4e4726d46f31b6b80d70744c19433753, 1131 bytes): its ROCQ compile lines and the dumps TAILDUMP
+ROCQ compile proofs/cgif/cgif_file_fuzzer/lib/ZDiscoA/AB01.v
+ROCQ compile proofs/cgif/cgif_file_fuzzer/lib/ZStartColD/Probe.v
+TAILDUMP = 0
+     : Z
+     = [[629620; 629620; 629620; 629620; 629620; 629620; 629620; 629620;
+         629620; 629620; 629620; 629620; 629620; 629620; 629620; 629620;
+         629620; 629620; 629620; 629620; 629620; 629620; 629620; 629620;
+         629620; 629620; 629620; 629620; 629620; 629620; 629620; 629620;
+         629620; 629620; 629620; 629620; 629620; 629620; 629620; 629620;
+         629620; 629620; 629620; 629620; 629620; 629620; 527012]]
+     : list (list Z)

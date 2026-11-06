@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libsodium
 harness: crypto_kdf_fuzzer
-rocq: OssFuzzTheorems.libsodium.crypto_kdf_fuzzer
+rocq: OSSVerify.libsodium.crypto_kdf_fuzzer
 origin: oss-fuzz
 summary: crypto_kdf_derive_from_key with input key, subkey id, context and length; the subkey and return
   code are ignored.

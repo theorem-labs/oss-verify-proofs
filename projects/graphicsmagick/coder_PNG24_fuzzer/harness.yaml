@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: graphicsmagick
 harness: coder_PNG24_fuzzer
-rocq: OssFuzzTheorems.graphicsmagick.coder_PNG24_fuzzer
+rocq: OSSVerify.graphicsmagick.coder_PNG24_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

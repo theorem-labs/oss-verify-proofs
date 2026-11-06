@@ -1,0 +1,2 @@
+unit	file	line	old	new	finding_kind	evidence
+plugin-hostd/fuzz_command	lib/B/YE6k.v	1388	0x1ffb80	0x200000	code	lib/B/YE6k.v:1388 the A twin AE6k.v:1387 writes 0x200000 = 2^21, a round bound; the relay moved it as if it were the address _ZN11__sanitizerL8theDepotE+0x6d068 (4456464 bytes) (image A) to _ZN11__sanitizerL8theDepotE+0x6d068 (4456464 bytes) (image B); the numeral is a bound of a proof-local assert (inside Proof .. Qed); the largest end fst + snd of lib/B/YE2y.v icpt_rodata is 0xb1938, below both values, so the proof still holds

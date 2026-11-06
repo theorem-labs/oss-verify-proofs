@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: skia
 harness: skjson
-rocq: OssFuzzTheorems.skia.skjson
+rocq: OSSVerify.skia.skjson
 origin: upstream
 summary: skjson::DOM parse of the bytes, then dom.write() into a memory stream; the written text is never
   reparsed or compared.

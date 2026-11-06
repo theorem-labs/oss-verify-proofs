@@ -1,0 +1,7 @@
+# self-test: 163 known answers OK
+# section bounds: proofs/libreac/fuzz_disco/lib/U/Reusable/YH03.v: 18 of 18 section cells equal the image's section headers
+# build: proofs/libreac/fuzz_disco/lib/U/Reusable/YH03.v: ubsan (the pinned binary's sha256 56121de6ba4c is builds.ubsan of projects/libreac/fuzz_disco/harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 31 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+# unit identity: proofs/libreac/fuzz_disco/lib/U/Reusable/YH03.v: the image's 4 PT_LOADs equal the ubsan pin 56121de6ba4c (pin/fuzz_disco.ubsan; ELF section-header fields and build-id masked)
+# unit identity: proofs/libreac/fuzz_disco/lib/U/Reusable/YH03.v (--elf twin/fuzz_disco.ubsan): the image's 4 PT_LOADs equal the ubsan pin 56121de6ba4c (pin/fuzz_disco.ubsan; ELF section-header fields and build-id masked)
+# not checked by any rule: proofs/libreac/fuzz_disco/lib/U/Reusable/YH03.v: src0_debruijn_len, src0_vmlock
+# proofs/libreac/fuzz_disco/lib/U/Reusable/YH03.v: {'KEEP-SIZE0': 2, 'KEEP': 150, 'KEEP-SPAN': 3, 'NOSYM': 33, 'KEEP-BY-LOAD': 1}

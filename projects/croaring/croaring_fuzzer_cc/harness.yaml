@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: croaring
 harness: croaring_fuzzer_cc
-rocq: OssFuzzTheorems.croaring.croaring_fuzzer_cc
+rocq: OSSVerify.croaring.croaring_fuzzer_cc
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an API contract: Roaring::write() must write
   exactly getSizeInBytes() bytes.'

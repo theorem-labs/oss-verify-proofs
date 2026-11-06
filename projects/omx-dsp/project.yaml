@@ -1,0 +1,63 @@
+schema: oss-fuzz-theorems/project/1
+project: omx-dsp
+description: omx-dsp is the DSP library of the FreeMixer/OpenMixer console, in plain C11. It holds the filters, one-pole smoothers,
+  delay lines, sample-rate converter, MIDI note map and effect kernels, with the instance faces through which the mixing engine
+  and the omx plugins drive them.
+homepage: https://github.com/FreeMixer/omx-dsp
+language: c
+status: available
+enrolled: true
+library:
+  name: omx-dsp
+  repository: https://github.com/FreeMixer/omx-dsp
+  commit: a0ee1dfeefff63c25bf37e95d31683ec12c0f690
+  version: 0.27.0
+  licence: GPL-3.0-or-later
+harnesses:
+- name: fuzz_fx
+  status: included
+  origin: upstream
+- name: fuzz_laws
+  status: included
+  origin: upstream
+- name: fuzz_eq
+  status: included
+  origin: upstream
+- name: fuzz_src
+  status: included
+  origin: upstream
+- name: fuzz_delay
+  status: included
+  origin: upstream
+- name: fuzz_note_map
+  status: included
+  origin: upstream
+build:
+  system: custom
+  clang: 20.1.8
+  builder: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  oss_verify:
+    repository: theorem-labs/oss-verify
+    commit: e50b6f9cb4bf28b71ec22ad478d23f15406164f5
+    path: projects/omx-dsp
+assets:
+  bin:
+    release: v2026.11.1
+    file: omx-dsp-bin.tar.zst
+    bytes: 1579099
+    sha256: 227a515945c8b61fdf043ba948b15dd68079c63d3b63120fb53c2457b48a9018
+  src:
+    release: v2026.11.1-src
+    file: omx-dsp-src.tar.zst
+    bytes: 1750361
+    sha256: 2756fc6017a87c64a117f4be05c0609db3e74b6d2fbac2412cc91a762122a2a1
+  src_manifest:
+    release: v2026.11.1-src
+    file: omx-dsp-src.MANIFEST.tsv
+    bytes: 1677
+    sha256: 563b19c940526481dbd1b4fe2a4495a956bfe63d2f975335a793d8da68bf6651
+  port:
+    release: v2026.11.1-src
+    file: omx-dsp-port.tar.zst
+    bytes: 297190
+    sha256: 123b5f6071ee37e1a5d80ecff8d7617d7ea699a026d4466178a86404524ad266

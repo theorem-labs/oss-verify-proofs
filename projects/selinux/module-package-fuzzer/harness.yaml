@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: selinux
 harness: module-package-fuzzer
-rocq: OssFuzzTheorems.selinux.module_package_fuzzer
+rocq: OSSVerify.selinux.module_package_fuzzer
 origin: upstream
 summary: sepol_module_package_read then sepol_module_package_to_cil to /dev/null; the to_cil result is
   deliberately ignored.

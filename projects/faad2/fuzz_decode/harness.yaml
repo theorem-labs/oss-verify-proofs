@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: faad2
 harness: fuzz_decode
-rocq: OssFuzzTheorems.faad2.fuzz_decode
+rocq: OSSVerify.faad2.fuzz_decode
 origin: upstream
 summary: Splits the input into a fuzzed NeAACDecConfiguration, flags and three parts; NeAACDecInit or
   Init2 on part1, optional DRM init and post-seek resets, NeAACDecDecode on part2 and Decode or Decode2

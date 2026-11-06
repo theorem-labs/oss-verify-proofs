@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: llhttp
 harness: fuzz_parser
-rocq: OssFuzzTheorems.llhttp.fuzz_parser
+rocq: OSSVerify.llhttp.fuzz_parser
 origin: upstream
 summary: llhttp_execute() over the input with lenient flags taken from the first bytes; the parse result
   and error code are ignored; the only callback (on_message_complete) returns 0.

@@ -1,0 +1,6 @@
+donor: pinned sha256 bbe55d24d096, twin sha256 658cefbe806b, allocated sections equal (build-id note excepted): True
+target: pinned sha256 41113a03c82f, twin sha256 e217cb0a84f1, allocated sections equal (build-id note excepted): True
+ref 781f46bc05cd image B: 13 ranges paired and compared; 50 resolve lines: 7 move a value (0x3fbd4 -> 0x3d974, 0x4045c -> 0x3e000, 0xa5f40 -> 0xa3ce0, 0xa5fa0 -> 0xa3d40, 0xa6c50 -> 0xa49d0, 0xa6c60 -> 0xa49e0, 261076 -> 252276), 0 name the image of a header range, the rest keep the value
+ABSENT in the target (kept by a resolve line, removed from fs_ranges after the write): RtSM1T 0x3fe04 (115 words, __asan_stack_malloc_4)
+ABSENT in the target (kept by a resolve line, removed from fs_ranges after the write): RtSM1T 0x40290 (95 words, __asan_stack_malloc_7)
+PASS

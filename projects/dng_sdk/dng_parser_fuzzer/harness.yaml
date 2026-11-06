@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: dng_sdk
 harness: dng_parser_fuzzer
-rocq: OssFuzzTheorems.dng_sdk.dng_parser_fuzzer
+rocq: OSSVerify.dng_sdk.dng_parser_fuzzer
 origin: upstream
 summary: dng_info Parse/PostParse; if IsValidDNG, negative Parse/PostParse/ReadStage1Image; dng_exception
   swallowed.

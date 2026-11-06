@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: poppler
 harness: structured_text_fuzzer
-rocq: OssFuzzTheorems.poppler.structured_text_fuzzer
+rocq: OSSVerify.poppler.structured_text_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

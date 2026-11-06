@@ -1,0 +1,21 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List.
+From LinuxProcessSemantics.Riscv Require Import Instr.
+From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Import AxSymExec3.
+From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Import AsanPlan ArgFragsBoth.
+From Corelib Require Import PrimString.
+From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Import AsanStateCodec AsanPlanCodec.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations. Import AX2. Import AP.
+Open Scope Z_scope.
+
+Definition r4spintail49_tospin1 : plan := dec_plan (PE [] [] [] [] [] []) "#0,$40,#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,$40,#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,$="%pstring.
+
+Definition r4spintail49_tospin2 : plan := dec_plan (PE [] [] [] [] [] []) "#0,$40,#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,$40,#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,$="%pstring.
+
+Definition r4spintail49_tospin3 : plan := dec_plan (PE [] [] [] [] [] []) "#0,$40,#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,$40,#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,$="%pstring.
+
+Definition r4spintail49_tospin4 : plan := dec_plan (PE [] [] [] [] [] []) "#0,$40,#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,$="%pstring.
+
+Definition r4spintail49 : plan := PBump 38 (PZones (eaddz (escale 4096 (EVar 14)) 131072) (PCase2 (EVar 14) 4095 r4spintail49_tospin1 (PCase2 (EVar 14) 65535 r4spintail49_tospin2 (PCase2 (EVar 14) 522231 r4spintail49_tospin3 r4spintail49_tospin4)))).

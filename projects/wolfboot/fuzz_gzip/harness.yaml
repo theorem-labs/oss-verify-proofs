@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wolfboot
 harness: fuzz_gzip
-rocq: OssFuzzTheorems.wolfboot.fuzz_gzip
+rocq: OSSVerify.wolfboot.fuzz_gzip
 origin: upstream
 summary: wolfBoot_gunzip (clean-room RFC1951/1952 inflater, src/gzip.c) on the input into a 1 MiB buffer;
   the return code and out_len are discarded.

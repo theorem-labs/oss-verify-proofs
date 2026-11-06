@@ -1,0 +1,5 @@
+donor: pinned sha256 bbe55d24d096, twin sha256 658cefbe806b, allocated sections equal (build-id note excepted): True
+target: pinned sha256 472d0223616f, twin sha256 a3ec59098bb4, allocated sections equal (build-id note excepted): True
+plugin-hostd/fuzz_command at 781f46bc05cd, image B: 9 ranges paired and compared; 52 resolve lines: 5 move a value (0x4045c -> 0x3e000, 0xa5f40 -> 0xa3ce0, 0xa5fa0 -> 0xa3d40, 0xa6c50 -> 0xa49d0, 0xa6c60 -> 0xa49e0), 0 name the image of a header range, the rest keep the value
+closeness: 4 of 9 ranges EQUAL byte for byte; 36 pc-relative words differ in the walked ranges, 430 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+FAIL: B/Rt/RtSM3T range 0x3fc58 (__asan_stack_malloc_3): range DIFFERENT (7, 1, 0) 0 differ; function DIFFERENT (7, 1, 0) 0 differ

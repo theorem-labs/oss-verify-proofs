@@ -1,0 +1,5 @@
+(* Probe, not a proof file of the unit (outside lib/): Print Assumptions of the strcmp and strlen wrapper texts of
+   lib/A/TransportClose.v (H_RT_STRCMP, H_RT_STRLEN), proved by lib/A/Rt/RtStrcmpCg.v and lib/A/Rt/RtStrlenCg.v. *)
+From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Rt Require RtStrcmpCg RtStrlenCg.
+Redirect "pa-transport_strcmp_realizes" Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Rt.RtStrcmpCg.transport_strcmp_realizes.
+Redirect "pa-transport_strlen_realizes" Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Rt.RtStrlenCg.transport_strlen_realizes.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: pkcs12
-rocq: OssFuzzTheorems.openssl.pkcs12
+rocq: OSSVerify.openssl.pkcs12
 origin: upstream
 summary: d2i_PKCS12_bio, PKCS12_verify_mac with NULL and "" passwords, PKCS12_parse with NULL and "";
   results ignored.

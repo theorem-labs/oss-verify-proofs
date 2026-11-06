@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: speex
 harness: speex_encode_fuzzer_float
-rocq: OssFuzzTheorems.speex.speex_encode_fuzzer_float
+rocq: OSSVerify.speex.speex_encode_fuzzer_float
 origin: upstream
 summary: Encoder configured from fuzzed mode/rate/channels/quality/complexity/VBR/ABR/VAD/DTX/highpass,
   then fuzzed PCM encoded frame by frame with speex_encode_int (+ stereo); bitstream bytes written to

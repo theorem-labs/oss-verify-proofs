@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: boxfunc4_fuzzer
-rocq: OssFuzzTheorems.leptonica.boxfunc4_fuzzer
+rocq: OSSVerify.leptonica.boxfunc4_fuzzer
 origin: upstream
 summary: boxaReadMem, then boxaDisplayTiled, boxaGetCoverage, boxaLocationRange, boxaPermutePseudorandom,
   boxaPermuteRandom, boxaSelectByWHRatio, boxaSelectRange; results discarded.

@@ -1,0 +1,3 @@
+cell	value	what the value is	whole-tree reader grep	class	note
+tfib_rodata_hi	0x2254c	0x40 below the end of .rodata (0x2258c)	0	FALSE by section (not .rodata's end), unread	inherited: grant 0x22c0c vs grant .rodata end 0x22c4c
+tfib_text_hi	0x97250	the start of .tbss (.text ends at 0x9724c)	0	FALSE by section (the next section's start), unread	inherited: grant 0x9b168 = grant .tbss start, .text end 0x9b164

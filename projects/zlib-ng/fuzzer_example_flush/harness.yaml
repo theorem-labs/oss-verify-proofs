@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zlib-ng
 harness: fuzzer_example_flush
-rocq: OssFuzzTheorems.zlib_ng.fuzzer_example_flush
+rocq: OSSVerify.zlib_ng.fuzzer_example_flush
 origin: upstream
 summary: 'Checks one property, an API contract: deflate 3 bytes with Z_FULL_FLUSH, corrupt compressed
   byte 3, finish; inflateSync must succeed and the final inflate(Z_FINISH) must return exactly Z_STREAM_END

@@ -1,0 +1,176 @@
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Lib Require Import Tac Arr Bytes MState.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib Require Import Img0.
+From LinuxProcessSemantics.LinuxProcessSem Require Import StackLayout Fs Monad Specs.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require Import YK11 YK0o YK0s YK15 YM06 YP09.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require Import YO0i YO0f YO0d YO05
+YO0p YO0j YO0m YO0l YO0n YO0k YO0o YO09.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require Import YM05 YL0i YL0g YL01 YL00 YI14 YI16 YI04.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Lib Require Regs6ss RegisterBridge.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib Require Import Contract FrameAPI MemNorm.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib Require KindBGlue BlocksNodup.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib Require Import AllocSI AllocGS.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Prog Require Import KindB RecFacts RecModel RecInv RecInvP
+  SlotSpec SlotGlue SlotRuns HarnessProps SlotCallees SlotIter SlotEnd SlotItBase SlotItSt verbs_receive_c
+  send_message_c CommandB VerbsB CommandModel SlotItA SlotItC0 SlotItD0 SlotItE check_refusal_c.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Prog Require Slot SlotInv SlotRec RecTail RecAns CrtKeep.
+Import ListNotations.
+Local Open Scope Z_scope.
+
+(* check_refusal's call (pc 0x142dc .. 0x142e4): a0 := s2, jal check_refusal; its stack window [FB - 48, FB)
+   is the only memory it changes, so every fact of stC holds again at the return (stCR). *)
+
+(* A byte outside the one window [lo, hi) of a munch keeps its value and writability. *)
+Lemma d1_keep : forall mem mem' lo hi a, munch [(lo, hi)] mem mem' -> 0 <= a < 2 ^ 64 -> (a < lo \/ hi <= a) ->
+  mbyte rsegs mem' a = mbyte rsegs mem a /\ (writable_at rsegs mem a <-> writable_at rsegs mem' a).
+Proof.
+  intros mem mem' lo hi a MU Ha Hx.
+  assert (Ho : Frame.outside [(lo, hi)] a) by (cbn; split; [lia | exact Logic.I]).
+  split; [exact (KindB.munch_mbyte rsegs _ _ _ a MU Ha Ho) | exact (KindB.munch_writable rsegs _ _ _ a MU Ha Ho)].
+Qed.
+
+Section D1.
+Context {rc : RunCeil}.
+Variables (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI B) (LS : lib_shape) (SH : sink_head)
+  (SK : sink_syms) (ra empty : Z) (S : Z) (rg : bvmap 5 word) (mem0 : word -> option byte) (md0 : Model)
+  (L0 : layout) (A0 : astate) (p0 n0 : Z) (pl : list byte) (b : sbound).
+Hypothesis FG : Slot.frame_given B API LS SH SK ra empty.
+Hypothesis PRE : lib_pre_x (LS := LS) (SH := SH) (SK := SK) B (API rc) SLOT_STACK empty L0 A0 rg mem0 md0 ra p0 n0 pl b.
+Hypothesis RG2 : spZ rg = S.
+
+Notation CF := (SlotInv.CF B (API rc) S rg mem0 md0 L0 A0).
+Notation FB := (SlotInv.FB S).
+
+Lemma seg_d1 : check_refusal_contract -> forall m p n R0 c,
+  stC B API S rg mem0 md0 L0 A0 p0 n0 pl m p n R0 c ->
+  SR rsegs c (stCR B API S rg mem0 md0 L0 A0 p0 n0 pl m p n R0).
+Proof.
+  intros CRC m p n R0 c
+    (fx & L & A & regs & mem & md & O & R1 & x & quit & text & copy & arr & kt & kc & ka & wp & -> & HCF & HRC & EVR &
+     DCL & HSR & HHR & HRX & D1 & D2 & D3 & K1 & K2 & K3 & HLR & G18 & G19 & G20 & G21 & G26 & G23 &
+     (jsv & jw & LC0 & LC1) & WV & WP & ILA & ILW & JN & MP).
+  pose proof HCF as (M & Wf & Bd & HI0 & (vm & Hmd) & R2 & R3 & R4 & SV & SW & SF & RO & GIm & EB & FZ).
+  pose proof HRX as (REP & SPILL & QB & Hq & ENO & BLK & XC & HOL).
+  assert (SEGS : ms_segs B = rsegs) by exact (it_SEGS B API LS SH SK ra empty FG).
+  pose proof (it_HS B API LS SH SK ra empty S rg mem0 md0 L0 A0 p0 n0 pl b PRE RG2) as HS.
+  pose proof alloc_ceiling_val as AC.
+  destruct (it_model B API S rg mem0 md0 L0 A0 fx L A regs mem md HCF) as [Hh Hl].
+  assert (SPV : bv_unsigned (reg_get regs 2) = FB).
+  { change (reg_get regs 2) with (getr regs 2). rewrite R2. apply unsigned_lit.
+    unfold SlotInv.FB, SLOT_STACK in *. lia. }
+  pose proof (it_cmd B API LS SH SK ra empty S rg mem0 md0 L0 A0 FG fx L A regs mem md HCF) as CMD.
+  destruct (CrtKeep.crt_got_bytes B SEGS mem CMD) as [GQB GRB].
+  (* the harness facts of the message: the reply x and the refusal's state and quit *)
+  pose proof MP as MP'. unfold msg_props in MP'. rewrite EVR in MP'. cbv beta iota zeta in MP'.
+  destruct MP' as (_ & RR & N0 & _ & _ & _ & _ & _ & RCX & _).
+  (* the recorder's reply block and state word *)
+  pose proof REP as (Q & (_ & _ & _ & RP & SC & _) & _).
+  unfold reply_at in RP. rewrite RR in RP.
+  destruct (l_reply Q) as [[pr pk]|]; [|cbn in RP; contradiction].
+  destruct RP as (RW & _ & Hpr0 & _ & Hpb & Hpk & RXB & _). cbn [fst snd] in RW, Hpr0, Hpb, Hpk, RXB.
+  rewrite length_app in Hpk. cbn [length] in Hpk.
+  destruct (it_blk_out B API LS SH SK ra empty FG fx L A mem md pr pk 0 M Hpb ltac:(lia)) as (_ & Hp4 & Hpa).
+  destruct SC as (_ & _ & _ & SST & _).
+  unfold check_refusal_contract, CHECK_REFUSAL, CHECK_REFUSAL_K in CRC. cbv zeta in CRC.
+  eapply (@sr_run fx regs (Z_to_bv 64 0x142dc) mem md _ _ Hh Hl RO).
+  { unfold Regs6ss.mkR_of.
+    eapply evt_cut; [apply run_g_cr_ok|].
+    intros ms' ->.
+    eapply CRC with (lo := FB - 48) (reply := Z_to_bv 64 pr) (state := Z_to_bv 64 (r_state R1)) (quit := qv quit)
+      (x := x).
+    - apply mem_inv_normalize.
+    - rewrite SPV. apply RecAns.stk_normalize; [unfold SlotInv.FB, SLOT_STACK in *; lia | unfold SlotInv.FB in *; lia |].
+      intros a Ha. apply SW. unfold lib_scratch. left. rewrite RG2. unfold SlotInv.FB, SLOT_STACK in *. lia.
+    - rewrite SPV. lia.
+    - unfold IMG_END, SlotInv.FB, SLOT_STACK in *. lia.
+    - apply bytes_at_normalize; [exact RO | exact GRB].
+    - apply bytes_at_normalize; [exact RO | exact RW].
+    - apply bytes_at_normalize; [exact RO | exact SST].
+    - apply bytes_at_normalize; [exact RO | exact GQB].
+    - exact Hq.
+    - apply bytes_at_normalize; [exact RO | exact QB].
+    - intros _. rewrite unsigned_lit by lia. split.
+      + unfold cstr_at. split; [apply bytes_at_normalize; [exact RO | exact RXB] | exact N0].
+      + unfold outside_stack. cbn [disjoint_from]. rewrite SPV.
+        split; [left; unfold SlotInv.FB, SLOT_STACK in *; lia | exact Logic.I].
+    - intros _ HX. destruct (RCX HX) as [E1 E2]. split.
+      + rewrite E1. symmetry. exact G18.
+      + rewrite E2. reflexivity. }
+  { intros s0 (t0' & t1' & t2' & a0' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & m' & -> & _).
+    do 5 eexists. reflexivity. }
+  intros R' F' pc' fc' m0' regs2 mem2
+    (t0' & t1' & t2' & a0' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & m' & E & MU & WM & MI & ST)
+    REL ROS GR.
+  injection E as ER EF Epc Efc Em. subst R' F' pc' fc' m0'.
+  rewrite (ret_pc_even 0x142e4) by first [lia | reflexivity].
+  apply SR_ret.
+  rewrite SPV in MU.
+  pose proof (mem_rel_normalize rsegs mem RO) as REL0.
+  assert (MU2 : munch [(FB - 48, FB)] mem mem2) by exact (munch_rel rsegs _ _ _ _ _ REL0 REL ROS MU).
+  assert (WM2 : wmono rsegs mem mem2) by exact (wmono_rel rsegs _ _ _ _ REL0 REL ROS WM).
+  assert (RO2 : ro_agree rsegs mem2) by exact (ro_agree_same rsegs _ _ RO ROS).
+  assert (KP : forall a, 0 <= a < 2 ^ 64 -> (a < FB - 48 \/ FB <= a) ->
+     mbyte rsegs mem2 a = mbyte rsegs mem a /\ (writable_at rsegs mem a <-> writable_at rsegs mem2 a))
+    by (intros a Ha Hx; exact (d1_keep mem mem2 (FB - 48) FB a MU2 Ha Hx)).
+  assert (KM : forall a, 0 <= a < 2 ^ 64 -> (a < FB - 48 \/ FB <= a) -> mbyte rsegs mem2 a = mbyte rsegs mem a)
+    by (intros a Ha Hx; exact (proj1 (KP a Ha Hx))).
+  assert (KB : forall a k i, In (a, k) (blocks L A) -> 0 <= i < k -> mbyte rsegs mem2 (a + i) = mbyte rsegs mem (a + i)).
+  { intros a k i Hin Hi. destruct (it_blk_out B API LS SH SK ra empty FG fx L A mem md a k i M Hin Hi) as (_ & H1 & H2).
+    apply KM; unfold SlotInv.FB, SLOT_STACK in *; lia. }
+  assert (CF2 : CF (mkFP fp_regs fp_csr) L A regs2 mem2 md).
+  { apply (it_cf_run B API LS SH SK ra empty S rg mem0 md0 L0 A0 p0 n0 pl b FG PRE RG2 fx _ L A regs mem md
+             [(FB - 48, FB)] mem2 regs2 HCF MU2 WM2 RO2).
+    - intros a Ha Hx. left. apply it_not_out1 in Hx. unfold SlotInv.FB, SLOT_STACK in *. lia.
+    - intros p1 n1 i Hin Hi Hx. exfalso. apply it_not_out1 in Hx.
+      pose proof (RecTail.user_in_blocks L A p1 n1 Hin) as Hb.
+      destruct (it_blk_out B API LS SH SK ra empty FG fx L A mem md _ _ i M Hb Hi) as (_ & H1 & H2).
+      unfold SlotInv.FB, SLOT_STACK in *. lia.
+    - exact FZ.
+    - rewrite GR. reflexivity.
+    - rewrite GR. reflexivity.
+    - rewrite GR. reflexivity. }
+  assert (RX2 : RFX L0 A0 L A mem2 R1 O (qv quit) [(text, kt); (copy, kc); (arr, ka)]).
+  { apply (it_rfx_move L0 A0 L A mem R1 O (qv quit) _ L A mem2 _ HRX).
+    - intros a Ha. destruct (KP a) as [E1 W1]; [lia | unfold SlotInv.FB, SLOT_STACK in *; lia |].
+      split; [exact E1 | tauto].
+    - intros p1 k1 i Hin Hi. destruct (it_rec_blk rsegs L A mem R1 O (p1, k1) REP Hin) as [Hb _].
+      exact (KB p1 k1 i Hb Hi).
+    - intros pn Hin. exact (proj1 (it_rec_blk rsegs L A mem R1 O pn REP Hin)).
+    - exact BLK.
+    - exact XC. }
+  exists (mkFP fp_regs fp_csr), L, A, regs2, mem2, md, O, R1, x, quit, text, copy, arr, kt, kc, ka, wp.
+  split; [reflexivity|].
+  split; [exact CF2|]. split; [exact HRC|]. split; [exact EVR|]. split; [exact DCL|].
+  split; [exact HSR|]. split; [exact HHR|].
+  split; [exact RX2|].
+  split; [exact D1|]. split; [exact D2|]. split; [exact D3|].
+  split; [exact K1|]. split; [exact K2|]. split; [exact K3|].
+  split.
+  { destruct HLR as (L8 & L9 & L22 & L24 & L25 & L27 & Hrest).
+    unfold LR. split; [rewrite GR; exact L8|]. split; [rewrite GR; exact L9|]. split; [rewrite GR; exact L22|].
+    split; [rewrite GR; exact L24|]. split; [rewrite GR; exact L25|]. split; [rewrite GR; exact L27|].
+    exact Hrest. }
+  split; [rewrite GR; exact G18|]. split; [rewrite GR; exact G19|].
+  split; [rewrite GR; exact G20|]. split; [rewrite GR; exact G21|]. split; [rewrite GR; exact G26|].
+  split; [rewrite GR; exact G23|].
+  split.
+  { exists jsv, jw. split.
+    - apply (KindB.rw_cells_transfer rsegs mem mem2 _ _ LC0). intros i Hi. unfold LOC0 in Hi. cbn in Hi.
+      destruct (KP (FB + i)) as [E1 W1]; [unfold SlotInv.FB, SLOT_STACK in *; lia | lia |].
+      split; [exact E1 | tauto].
+    - apply (KindB.rw_cells_transfer rsegs mem mem2 _ _ LC1). intros i Hi. cbn in Hi.
+      destruct (KP (FB + 40 + i)) as [E1 W1]; [unfold SlotInv.FB, SLOT_STACK in *; lia | lia |].
+      split; [exact E1 | tauto]. }
+  split.
+  { apply (CrtKeep.crt_words_view_keep B SEGS mem mem2 _ _ _ _ WV).
+    - intros a Ha. apply KM; unfold SlotInv.FB, SLOT_STACK in *; lia.
+    - intros i Hi. destruct ILA as (pa & ka' & Hb & _ & H1 & H2).
+      replace (arr + i) with (pa + (arr + i - pa)) by ring. apply (KB pa ka'); [exact Hb | lia].
+    - intros k i Hk Hi. destruct (ILW k Hk) as (pw & kw & Hb & _ & H1 & H2).
+      replace (nth k wp 0 + i) with (pw + (nth k wp 0 + i - pw)) by ring. apply (KB pw kw); [exact Hb | lia]. }
+  split; [exact WP|]. split; [exact ILA|]. split; [exact ILW|]. split; [exact JN | exact MP].
+Qed.
+
+End D1.

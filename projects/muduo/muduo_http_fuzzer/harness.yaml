@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: muduo
 harness: muduo_http_fuzzer
-rocq: OssFuzzTheorems.muduo.muduo_http_fuzzer
+rocq: OSSVerify.muduo.muduo_http_fuzzer
 origin: oss-fuzz
 summary: Appends the NUL-terminated input (so bytes after an embedded NUL are dropped) to a muduo Buffer
   and runs HttpContext::parseRequest; the bool result and the parsed HttpRequest are ignored.

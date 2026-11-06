@@ -1,0 +1,118 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import ITree Nodes Decode Arr.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Spec Require Import STree AsanCtrl.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.BothW Require Import BImg AProto ABase.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.LibA Require Import StepF.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.BothW Require Import AKit AModelFacts APrimFacts F_aunwind F_aalloc_s F_acache F_aalloc1.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Common Require Import RunDraw.
+Import ListNotations.
+(* [comment removed for export] *)
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.LiaTuning.lia_orc_old ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.LiaTuning.lia_k12.   (* [comment removed for export] *)
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Step.slia ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.slia_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.flia ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.flia_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.zrange ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.zrange_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.zrange_nonneg ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.zrange_nonneg_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Step.solve_load ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.solve_load_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.word_eq_tac ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.word_eq_tac_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.simpl_arr_sizes ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.simpl_arr_sizes_k12.
+(* [comment removed for export] *)
+
+Open Scope Z_scope.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+Local Ltac band_lin :=
+repeat match goal with H : iclr ?a ?n |- _ => unfold iclr, AIMG_LO, AIMG_HI in H end.
+Section CANSEC1. Context {rc : runConstT}.
+Definition allocA_pre_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+(n S t lo : Z) (m : amem) : machine_state -> Prop :=
+fun ms' => exists t0 t1 t2 a4 a5 a6 a7 t3 t4 t5 t6 m',
+ms' = MS (mkR (Z_to_bv 64 0x32628) (Z_to_bv 64 (bv_unsigned sp + -128)) gp tp t0 t1 t2
+(Z_to_bv 64 1) (Z_to_bv 64 n)
+(Z_to_bv 64 AINSTANCE) (Z_to_bv 64 (t + 208)) (Z_to_bv 64 (needed_size n)) (Z_to_bv 64 8) a4 a5 a6 a7
+(Z_to_bv 64 8) (Z_to_bv 64 (needed_size n)) (Z_to_bv 64 (rz_size n)) (Z_to_bv 64 n)
+(Z_to_bv 64 AINSTANCE) (Z_to_bv 64 S) (Z_to_bv 64 (-8)) (Z_to_bv 64 7) (Z_to_bv 64 t) (Z_to_bv 64 1)
+t3 t4 t5 t6)
+F (Z_to_bv 64 0x3681c) fc None m' (seg_rom bsegs)
+/\ munch [(bv_unsigned sp - 176, bv_unsigned sp)]%Z m m'
+/\ wmono bsegs m m' /\ mem_inv bsegs m'
+/\ stk bsegs m' lo (bv_unsigned sp - 128)
+/\ (exists j0, rw_cells bsegs m' (bv_unsigned sp - 128)
+[CB 8 j0 ; C8 (Z_to_bv 64 1) ; C8 (Z_to_bv 64 16) ;
+C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
+#[using="Type"] Lemma allocA_pre_spec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+(F : bvmap 5 word) fc (m : amem) (n S ctx t lo : Z),
+stk bsegs m lo (bv_unsigned sp) -> ATOP <= lo -> lo <= bv_unsigned sp - 176 ->
+mem_inv bsegs m ->
+tp = Z_to_bv 64 ATP ->
+a0 = Z_to_bv 64 AINSTANCE -> a1 = Z_to_bv 64 n -> a2 = Z_to_bv 64 8 -> a3 = Z_to_bv 64 S -> a4 = Z_to_bv 64 1 -> a5 = Z_to_bv 64 1 ->
+1 <= n -> is_primary n = true -> 0 < S < 2^64 ->
+allocA_cells m ctx t ->
+AIMG_HI <= ctx -> ctx + 4096 <= ATOP -> iclr t 4096 -> t + 4096 <= ATOP -> t mod 4096 = 0 ->
+(ctx + 4096 <= t \/ t + 4096 <= ctx) ->
+rng_aimg RNG -> rng RNG lo (bv_unsigned sp - lo) -> rng RNG ctx 4096 -> rng RNG t 4096 ->
+evtF bsegs RNG (allocA_pre_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc n S t lo m)
+(MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 allocate_entry) fc None m (seg_rom bsegs)).
+Proof.
+intros until lo. intros ST CEIL LO MI TP -> -> -> -> -> -> N PRIM0 HS AC C0 C1 T0 T1 TAL CT2 RIMG RSTK RCTX RT. band_lin.
+destruct AC as (INI & RSS & IMAX & TI & TK & T88 & TSD & CT).
+unfold AIMG_HI, AINSTANCE, AINITED, ATSDI, ATSDK, ATP88, ATSD, ARSSLIM, allocate_entry in *.
+pose proof (prim_facts n N PRIM0) as (NS & RZR & RZE & RZM & RLR0 & RSR & RSM & NSR).
+pose proof (munch_refl [(bv_unsigned sp - 176, bv_unsigned sp)]%Z m) as MU.
+pose proof (wmono_refl bsegs m) as WM.
+word_range sp SPR.
+Local Ltac2 Set LiaHints.tbl := fun () => "04E0?10444057070.84 1046777916.84  10631675007.81 10894115438.82 11077664131.83 11118462589.89 11118462589.93 11118462589.98 11277016046.84 1162083375.82  11801586693.89 11801586693.93 11801586693.98 11805467289.81 11805467289.82 11805467289.83 11805467289.84 11805467289.87 11805467289.88 12279346798.83 12279985372.82 12546622119.84 13078997820.81 13201050402.87 13340275967.83 13464694894.82 1351984962.86  14453557927.83 14855983342.81 14884341230.84 15125481454.84 15258029550.81 1533820803.83  15348102510.83 15582139502.83 1579170362.81  15813913888.86 1586831214.83  16518423935.84 16598865212.84 16716288878.82 16872280319.83 17110785646.83 17242938350.83 17316385814.88 17506121710.83 17776320431.82 1845947246.83  18500769902.88 18691469806.84 18736735982.84 19106585020.83 19491992743.84 19596407918.88 19693800558.83 20805333024.78 20805333024.82 20805333024.90 20921468142.83 21064248558.83 21155567546.83 21834689774.84 21875103086.83 22163107130.84 22257987310.84 22284289799.89 22284289799.93 22284289799.98 22375190282.76 22439364775.82 22548340206.84 22607575996.88 22675801219.84 22700267513.90 22700267513.94 22700267513.99 22749971310.83 24118290798.88 24266362535.87 24559885231.82 2458073255.83  24630998586.83 24649134574.83 24794926247.84 24972240369.85 24982576641.86 25029166211.83 25117511228.84 25348482085.78 25348482085.82 25348482085.90 25787632170.77 25787632170.86 2582348142.83  25878270254.83 25898482559.84 26278908583.83 26868428163.82 27408782894.83 27948459987.82 28091621742.83 28344324846.84 28355653425.87 28487105262.84 29076633087.83 29124869358.84 29717588462.87 29782367974.87 29950340078.87 29965292900.87 30196181434.83 3042055150.84  30518562691.83 31143001276.83 31225663726.83 32651489978.82 33227529838.82 33532905180.78 33680001082.84 33693509870.81 33890036527.82 33951461782.84 34775537831.88 3517109230.83  35270809255.83 35289778563.88 36115622446.83 36367760551.83 36526869230.81 36635094629.91 3676042350.83  36814730237.89 36814730237.93 36814730237.98 37153923388.84 37317216127.87 37364793838.83 37833896558.83 38644313838.83 3875130862.87  38915808562.98 38915808567.10138943022446.83 38996969702.74 3903501038.84  39482238446.83 39932040893.88 399383918.84   39938772488.98 39938772490.99 39940869632.96 40091925676.81 40655079551.83 41099708142.84 41509391145.91 43061431595.72 43102492671.83 43183609788.83 433314286.83   43941322990.84 43987951406.83 44158664835.84 44484923210.89 44484923210.93 44484923210.98 44524995199.84 44833359747.83 45221239098.87 45519551598.83 4560351804.87  45999555182.83 46058767598.88 46082213742.83 46232973498.83 46432969966.81 46556098215.84 47747814717.89 47747814717.93 47747814717.98 47916200342.93 48057003647.84 48330303854.83 49194402876.83 49425192486.90 49724318719.82 50487304575.83 50584888647.78 51359989486.83 51394908602.86 51458250794.95 51469190682.86 51633495293.89 51633495293.93 51633495293.98 51678667183.82 51905078894.82 52076332701.96 52076332702.96 52658742894.83 53405636718.83 53460783854.82 53767577775.82 54247907805.89 54247907805.93 54247907805.98 5424914542.83  54261855034.84 54277570414.83 55222119100.83 55489964910.84 55786576878.84 56172400559.89 56172529599.81 56175235539.77 563227834.88   5684463747.87  5702686574.83  57293592682.85 57411727342.84 57522549927.81 57745675194.83 58655119491.84 58995781614.83 59311160430.88 59314873579.77 59314873579.88 59314873579.89 59314873579.90 59314873579.92 59576986246.89 59907387523.84 60468873383.83 6062692974.88  60634079619.83 60997568167.83 61230833468.83 61257697518.83 61889459015.82 61917199023.82 61929802144.87 61929802406.89 61939782290.98 62013585390.84 62066494062.84 62363106030.84 62891835758.87 63045513727.88 63163424110.83 63235321900.80 64302930659.76 65805175866.84 65983638659.83 66028155702.81 66028155702.85 66028155702.93 66330498723.87 66410366446.87 66729806446.83 67003513198.83 67215858474.87 67258535356.82 68034022143.83 68048062218.76 68205640558.83 68590114542.87 7009843438.83  7057573564.83  748888174.81   7987546237.89  7987546237.93  7987546237.98  8163491438.84  8179223683.81  8583720762.83  8595948976.99  8595948983.101 9610135226.83  00000900=00I00R00S00`00m01:01C01G01W01g02702802902:02;02<02=02F02G02H02L02Q02]02f02g02h03103:03C03L03M03V03_03d03h04104=04A04J04V04_04h04i05205605?05H05Q05Z05^05_05h06106206306406=06F06K06T06]06b06k06l06m06n06o07007907=07>07Z08608R08[08d08e08i08j08o09809909:09;09<09@09D09H09L09^0:00:90:=0:I0:J0:K0:O0:P0:Y0:b0:c0:l0;80;A0;J0;K0;T0;W0;\0;e0;f0;j0<30<80<A0<B0<G0<P0<T0<U0<V0<_0<`0<a0<e0<f0<o0=E0=N0=[0=h0>50>90>E0>N0>W0>`0>i0>j0>k0?40?50?>0?G0?L0?U0?_0?o0@40@80@D0@M0@N0@R0@^0@b0@k0A40A80A90A:0A;0A<0AH0AI0AN0AW0A[0Ad0Am0B60B;0BD0BE0BR0B_0Bl0Bm0C90CB0CF0CJ0CV0Cb0Cc0Cl0Cm0D=0DM0DZ0Dg0E40E80EA0EB0EC0EL0EU0E^0Eb0Eo0F<0FI0FR0FW0F`0Fd0Fm0G60G70G80G90G>0G?0GH0GI0GR0GS0GX0GY0Gb0Gk0H20HJ0HR0HY0Hf0Hg0Hh0Hi0I20I30I40I80IA0IB0IF0IX0I^0J00J90JB0JK0JT0J`0Ji0Jm0K10K60K70KF0KU0Kd0Kh0L10L:0LC0LD0LH0LT0LU0L^0Lg0M00M40M=0MJ0MW0Md0Mm0Mn0N30N40N50N:S4CEIL2LOS2HBS4CEIL2LO2C1S4CEIL2LOSS4CEIL2LO3HspS4CEIL2LO3HspS4CEIL2LO3HspS4CEIL2LOS2LOS3Hsp4CEIL2LO2C1S3Hsp4CEIL2LO2C1S3Hsp4CEIL2LO2C1SSSSSSS4CEIL2LOSSS2HBS3NSRS4CEIL2LO2C1S4CEIL2LOSSS4CEIL2LOS4CEIL2LOS4CEIL2LOS4CEIL2LOSS4CEIL2LOS4CEIL2LOS3SPRS2LOS4CEIL2LOS4CEIL2LO2C1S2HBS4CEIL2LOS4CEIL2LO2C1S4CEIL2LOS4CEIL2LOSS4CEIL2LOS2LOS4CEIL2LOS4CEIL2LOS4CEIL2LOS4CEIL2LOS2HBSS4CEIL2LOS4CEIL2LOFFFS4CEIL2LOS4CEIL2LOS3SPRS4CEIL2LOS4CEIL2LOS3SPRS4CEIL2LOFFFSSS4CEIL2LOS2HBSS2HS2C02T03RZR4RLR02KS3Hsp1HS2HS2C02T03RZR4RLR02KS3Hsp1HS2HS2C02T03RZR4RLR02KS3Hsp1HS4CEIL2LOS4CEIL2LOSS2LOSS3SPRS4CEIL2LOSSSSS2HBS2LOS2LOS2LOS1N2NS3RZR3RSR3NSRS1N2NS3RZR3RSR3NSRS4CEIL2LOS2LOS4CEIL2LO2C1SSS2LOFS4CEIL2LOS4CEIL2LOSS4CEIL2LOS4CEIL2LO2C1S4CEIL2LOS4CEIL2LOSS4CEIL2LOS1NS3SPRS4CEIL2LOSS2HBS4CEIL2LOS3SPRS4CEIL2LOSS3SPRS4CEIL2LOS2LOSSS4CEIL2LOSSS2LOSS4CEIL2LOS2HS2T02T13RZR4RLR02KSS4CEIL2LOS4CEIL2LO3HspS4CEIL2LO3HspS4CEIL2LO3HspS2HBS4CEIL2LO2C1S4CEIL2LOS4CEIL2LOS4CEIL2LOS4CEIL2LOSSS4CEIL2LOSS4CEIL2LOS4CEIL2LOS3NSRS4CEIL2LOS4RLR03NSRS2NS3RZR3RSR3NSRS3RZRS2LOS4CEIL2LO2C1S4CEIL2LOFS2LOS4CEIL2LO2C1S2HBS4CEIL2LOS4CEIL2LOS2LOSFFFS4CEIL2LO2C1SS3SPRS4CEIL2LOS2HBS4CEIL2LOS4CEIL2LOS4CEIL2LOS3SPRS4CEIL2LOSS4CEIL2LO3HspS4CEIL2LO3HspS4CEIL2LO3HspSS4CEIL2LO2C1S4CEIL2LOS2HBS2C0S4CEIL2LO2C1S4CEIL2LO2C1FS4CEIL2LOFS2NS3RZR3RSR3NSRS2NS3RZR3RSR3NSRS4CEIL2LO3HspS4CEIL2LO3HspS4CEIL2LO3HspS2LOS4CEIL2LOFFS4CEIL2LOS4CEIL2LOS4CEIL2LOS2LOS4CEIL2LO3HspS4CEIL2LO3HspS4CEIL2LO3HspS4CEIL2LOS3SPRS4CEIL2LOS2HBS4CEIL2LOS4CEIL2LOSSSS3SPRSS4CEIL2LOSS4CEIL2LOSS3SPRSS4CEIL2LOS4CEIL2LOS2HS2KSS2NS3RZR4RLR03RSR3NSR2KBS3NSR2KCS2KB2KDS2HS2T02KS2KESSSS4CEIL2LOSSS2HBS4CEIL2LOFS2LOS1N2NS3RZR3RSR3NSRS1N2KBS1N2NS3RZR3RSR3NSRS4CEIL2LOS4CEIL2LOS4CEIL2LOS4CEIL2LOS4CEIL2LO2C1S4CEIL2LOS2LOS2HSS3SPRSS4CEIL2LO3SPR1HS4CEIL2LO3SPR1HS4CEIL2LO3SPR1HS2LOS4CEIL2LOS4CEIL2LOS4CEIL2LOSS2HBS4CEIL2LO2C1SS4CEIL2LOS4CEIL2LOS4CEIL2LOS2HBS4CEIL2LOS4CEIL2LO3HspS4CEIL2LO3HspS4CEIL2LO3HspS4CEIL2LOSS3SPRSSS3SPR".
+carve_frame 128%nat ST.
+do 14 step.
+do 6 step.
+step. callp asan_inited_spec; [exact INI|]. step. if_lit.
+step. callp rss_spec; [exact RSS|]. step. if_lit.
+step. if_cases KS; zify_cond KS. { exfalso. lia. }
+step. step. if_lit.
+step. step. step. if_lit.
+zstep. zstep. step. if_lit.
+step. step. zstep. zstep. zstep. step. zstep. zstep. zstep.
+lstep. zstep. zstep. zstep.
+step. step. if_lit.
+step. zstep. zstep. step. if_lit.
+step. zstep. step. step.
+callp rz_ladder_spec; [lia|].
+lstep. step. step. zstep. zstep.
+step. call_sp rz2log16_spec; try eassumption; try lia; try reflexivity; try solve_rng.
+rename POST into ST.
+step. lstep. step. zstep.
+step. call_sp rz2log2048_spec; try eassumption; try lia; try reflexivity; try solve_rng.
+rename POST into ST.
+callp rz_clamp_spec; [lia| exact RLR0 |].
+zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep.
+change ((Z.b2z (8 <? 9) + -1) mod 18446744073709551616) with 0. rewrite Z.land_0_l, Z.add_0_r.
+rewrite land_align8 by lia.
+setreg 10 (Z_to_bv 64 (rounded_size n)) ltac:(f_equal; rewrite rounded_size_align; lia).
+zstep. step. if_cases KA; zify_cond KA. { exfalso. apply KA. change 7 with (2^3 - 1). rewrite zb_land_mask by lia. change (2^3) with 8. exact RSM. }
+step. zstep.
+replace (n <? 1) with false by (symmetry; apply Z.ltb_ge; lia). cbn [Z.b2z].
+zstep. zstep.
+first [rewrite (sllw_rz_gen2 n) | rewrite (sllw_rz_gen n)].
+step. zstep.
+zstep. replace (8 <? 65537) with true by reflexivity. cbn [Z.b2z].
+zstep.
+rewrite <- NS.
+zstep. zstep. zstep. zstep. step. zstep.
+replace (needed_size n <? 65537) with true by (symmetry; apply Z.ltb_lt; lia). cbn [Z.b2z].
+change ((Z.land 1 1 + -1) mod 18446744073709551616) with 0. change (Z.land 1 1) with 1. rewrite Z.land_0_l, Z.add_0_l.
+step. if_cases KB; zify_cond KB. { exfalso. lia. }
+step. if_cases KC; zify_cond KC. { exfalso. lia. }
+step. step. if_cases KD; zify_cond KD. 2: { exfalso. lia. }
+box RT.
+step. call_sp get_current_thread_spec; try eassumption; try lia; try reflexivity; try solve_rng.
+unbox RT. rename POST into ST.
+step. step. if_cases KE; zify_cond KE. { exfalso. lia. }
+zstep. step. step. step.
+step.
+apply evtF_done. unfold allocA_pre_post. do 12 eexists. split; [reflexivity|].
+repeat lazymatch goal with |- _ /\ _ => split end.
+all: try assumption. all: eexists; eassumption.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+End CANSEC1.

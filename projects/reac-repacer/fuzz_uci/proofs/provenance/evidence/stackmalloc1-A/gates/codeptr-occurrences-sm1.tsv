@@ -1,0 +1,11 @@
+file	line	value	token	source
+A/Rt/AF0r.v	37	0x109000	0x109000	Definition FS_FROFF : Z := 0x109000.
+A/Rt/AF0r.v	214	0x160613	0x00160613	Lemma F_L14 : fetch_word tfibsegs (Z_to_bv 64 (FS_LOOP + 0x14)) = Some (0x00160613%bv : bv 32). Proof. ftac. Qed.
+A/Rt/AF0r.v	215	0x160613	0x00160613	Lemma D_L14 : decode_any (0x00160613%bv : bv 32) = Some (OpImm ALU_ADD 12 12 1, 4%Z). Proof. vm_refl_bv. Qed.
+A/Rt/AF0r.v	356	0x109000	1085440	Lemma s1C1_eq : s1C1 = SAlu ALU_ADD (SOff aF 1085440) (SAlu ALU_SLL (SOff aPOS 0) (SLit 7)). Proof. vm_compute. reflexivity. Qed.
+A/Rt/AF0r.v	365	0x109000	1085440	rewrite (zcanon_small pos) by lia. rewrite (zcanon_small (pos * 128)) by lia. rewrite (zcanon_small (F + 1085440)) by lia. apply zcanon_small. lia.
+A/Rt/AF0r.v	443	0x100000	1048576	Proof. intros ly pos. unfold frame_addr, fs_frame_off, FS_FROFF, kFakeFramesOff, CID. change (Z.shiftl 1 kStackSizeLog) with 1048576. change (fs_frame_bytes 1) 
+A/Rt/AF0s.v	240	0x109000	1085440	assert (HFF : FF = F + 1085440 + pos * 128) by (subst FF; rewrite frame_addr_cid; reflexivity).
+A/Rt/AF0s.v	245	0x109000	1085440	replace (F + 1085440 + pos * 128) with ((F / 4096 * 64 + 16960 + pos * 2) * 64); [apply Z_mod_mult|].
+A/Rt/AF0s.v	278	0x160000	1441792	assert (PRS : forall a, shadow_addr (F + kFakeFramesOff) <= a < shadow_addr (F + kFakeFramesOff) + 1441792 -> apresent H mem a).
+A/Rt/AF0s.v	280	0x160000	1441792	change ((kFakeStackSize - kFakeFramesOff) / 8) with 1441792 in V.

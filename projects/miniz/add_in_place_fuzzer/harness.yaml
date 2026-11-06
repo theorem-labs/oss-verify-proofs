@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: miniz
 harness: add_in_place_fuzzer
-rocq: OssFuzzTheorems.miniz.add_in_place_fuzzer
+rocq: OSSVerify.miniz.add_in_place_fuzzer
 origin: upstream
 summary: 'Up to 5 times: reads a filename, a buffer and flags from the input, mz_zip_add_mem_to_archive_file_in_place
   into /tmp/miniz-fuzzer-test.zip, then mz_zip_extract_archive_file_to_heap of the same name; the extracted

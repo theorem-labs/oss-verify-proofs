@@ -1,0 +1,3 @@
+# AD1k.v (sha256 f24051a4cc7ed77a39fcc7bc8dc754bd9899b4589b1fe55b4c3de1e831f5913d) vs shipped AD1k.v (sha256 0ed10808a29cbc71d610a4d37593259e3e4d10c520914f24e16ace3ef7115113): 1 differing hunk(s)
+hunk	out_lines	shipped_lines	out_sha256	shipped_sha256	numerals_only_in_out	numerals_only_in_shipped
+1	-	16-16	-	b7a893b6b4f574aa	-	-

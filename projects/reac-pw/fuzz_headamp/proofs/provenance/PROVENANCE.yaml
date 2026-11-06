@@ -1,0 +1,180 @@
+schema: oss-verify-proofs build record v1
+entry_point:
+  project: reac-pw
+  harness: fuzz_headamp
+  function: LLVMFuzzerTestOneInput
+  records:
+  - projects/reac-pw/project.yaml
+  - projects/reac-pw/fuzz_headamp/harness.yaml
+upstream:
+  name: reac-pw
+  repository: https://github.com/FreeREAC/reac-pw
+  commit: f86a30a3d06e84e8a7d6ec647cae77c4cbc9137b
+  licence: GPL-3.0-or-later
+  patch_count: 0
+  licence_evidence: LICENSE (the GPL version 3 text), NOTICE, the license field of meson.build, and the SPDX-License-Identifier
+    line of each src/, facts/ and fuzz/ file at f86a30a3
+oss_fuzz: null
+harness:
+  origin: upstream
+  source:
+    files:
+    - source/fuzz_headamp.c
+    - source/fuzz.h
+    - source/pod.h
+    from:
+      repository: https://github.com/FreeREAC/reac-pw
+      commit: f86a30a3d06e84e8a7d6ec647cae77c4cbc9137b
+      path: fuzz/fuzz_headamp.c
+    modified: false
+    licence: GPL-3.0-or-later
+port:
+  repository: theorem-labs/oss-verify
+  commit: ba46d3675f547098bca08b6353af0f1f8d61549f
+  path: projects/reac-pw
+  tools:
+    commit: ba46d3675f547098bca08b6353af0f1f8d61549f
+    paths:
+    - infra/
+    - tools/
+    built: 014aad0c9d3a5a4cfd7812bd1db62c1153eda766
+    how: 'the build ran oss-verify''s main''s tools/ and infra/ at this commit on projects/reac-pw/ at the port''s commit:
+      tools/enroll/port-commit makes the commit built (oss_verifier.commit in port/manifest.yaml) of the two'
+  asset:
+    file: reac-pw-port.tar.zst
+    bytes: 201450
+    sha256: e7802e0c1ee5e46c92827cc0b545c7c4c91636ddec3f71b1da86cc01e0f0d2b6
+  files: port/projects/reac-pw/ (the port's files for the project at the commit, less its seed corpora and other binary or
+    derived files, which the port archive carries) and port/manifest.yaml (the manifest of tools/check --twice, less its host
+    keys)
+  patches: []
+  build_system: build.sh (clang, ar; reac-pw's meson build and fuzz/build.sh are not used)
+  how_to_rebuild: 'as docs/reproducing.md: unpack reac-pw-port.tar.zst and, from it, run tools/check --no-shell --lock <projects/reac-pw/fuzz_headamp/harness.yaml
+    of this repository> reac-pw; it builds reac-pw at the commit the lock names, on the builder image project.yaml names,
+    and compares each binary'
+toolchain:
+  clang: 20.1.8
+  builder_image: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  images:
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  static_asan:
+    repository: https://github.com/theorem-labs/static-asan
+    commit: b05061352064fa2be1813ac5429149f3de5f057d
+    note: the builder image's static AddressSanitizer, as in the rc.2 records
+binaries:
+- build: plain
+  file: fuzz_headamp.plain
+  bytes: 54784
+  sha256: 61497eebc35c52a0b5decd81ae453deeea1a18220ebf8f6436da6718b13c78b5
+- build: ubsan
+  file: fuzz_headamp.ubsan
+  bytes: 56128
+  sha256: 0516fd55d25d0dc25addf9f7563673fa7a309e1f0c2e8c6a4bff0d6c9c8ef9e8
+- build: asan
+  file: fuzz_headamp.asan
+  bytes: 584952
+  sha256: f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47
+- build: asan-ubsan
+  file: fuzz_headamp.asan-ubsan
+  bytes: 586104
+  sha256: 53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94
+binary_asset:
+  file: reac-pw-bin.tar.zst
+  bytes: 893993
+  sha256: 271945f4e432f1b85c752b7973ff5c8d7944f5c612974c84caade2d068bcc21e
+source_asset:
+  src:
+    file: reac-pw-src.tar.zst
+    bytes: 3207917
+    sha256: aa53b6310c64474c185ea061a4053780027991439d768b54dbda2fc2f21388b9
+  src_manifest:
+    file: reac-pw-src.MANIFEST.tsv
+    bytes: 2224
+    sha256: a5647bc462dd18dcd0c99e95b63ddb4bda89cd5a5e66c1ec9b868170eb44db89
+rebuild:
+- 'the port''s projects/reac-pw/ at ba46d367 with tools/ and infra/ of oss-verify''s main at ba46d367 (the commit 014aad0c
+  port-commit makes of them; oss_verifier.modified: false), tools/check --twice reac-pw on the builder image: all 28 binaries
+  of the 7 harnesses identical in the second build (port/manifest.yaml, rebuild.result identical), with these SHA-256s'
+- reac-pw-bin.tar.zst and the source assets packed by tools/enroll/assets.py from those files; every member of reac-pw-src.tar.zst
+  is a git blob of an upstream tree its MANIFEST names
+proofs:
+  origin: written in this repository by Theorem Labs with AI coding agents. 2204 of its 2783 Rocq files carry Anthropic's licence
+    header; they were made from the proof files of libreac/fuzz_knock, libreac/fuzz_ctrl, libreac/fuzz_identity, omx-clap-core/fuzz_state
+    and jsoncons/fuzz_json_cursor in this repository, with their addresses moved to this fuzz target's binaries and their module
+    paths renamed. The libreac files were made, directly or through another fuzz target's copy, from the proof files of cgif/cgif_file_fuzzer,
+    zlib/checksum_fuzzer and varnish/esi_parse_fuzzer in this repository; those files and the Anthropic-licensed files of omx-clap-core/fuzz_state
+    and jsoncons/fuzz_json_cursor came from final-anthropic-opensource-formal-verification-proofs-package-2026-10-21 (sha256
+    4c6c152f61ce538e439b9d2adef439f4dbe1a2d446767d84ac7c3946d7c6687a)
+  licence: Apache-2.0 OR MIT for the 2204 Rocq files of this folder that carry that tag, each with Anthropic's copyright line;
+    MIT, the repository's licence (LICENSE), for the 4 tagged MIT; the other 575 carry no licence line
+  texts:
+  - LICENSES/anthropic-proofs-LICENSE
+  - LICENSES/anthropic-proofs-LICENSE-MIT
+  - LICENSES/anthropic-proofs-NOTICE
+  texts_location: the repository's top directory
+  modified: 'each file carries the licence lines of its source, including its source''s lines saying how it was changed; the
+    files that took their licence lines in this repository carry a line for each source saying how they were made from it. The
+    licence lines of 820 of its files were written in this repository in 2026-11, by the licence change of the release series:
+    an SPDX tag, and Anthropic''s copyright line above the tag where the file carries Anthropic''s text. In 2026-11, 409 more
+    of its files took the licence lines of the Anthropic-licensed file each was made from, in this fuzz target or another (docs/adding-a-proof.md,
+    requirement 7), and one line `Modified by Theorem Labs, 2026-11` that names that file and says how the file was changed
+    from it'
+licence:
+  components:
+  - component: reac-pw
+    files: src/reac_segconf.c, src/reac_declared_vlan.c, src/reac_box_pin.c, src/reac_headamp_prop.c, src/reac_rate_cfg.c,
+      src/reac_role_cfg.c, src/reac_qdisc.c, src/reac_link_alias.c, src/reac_served_mark.c and fuzz/catalogue.c (into one
+      static library), the headers of src/ and facts/, fuzz/fuzz.h, fuzz/pod.h and fuzz/netlink.h, and the fuzz target
+    licence: GPL-3.0-or-later
+    evidence: LICENSE (the GPL version 3 text), NOTICE, the license field of meson.build, and the SPDX-License-Identifier
+      line of each src/, facts/ and fuzz/ file at f86a30a3
+    texts:
+    - LICENSES/reac-pw-LICENSE
+  - component: libreac 1.10.0
+    files: headers of include/reac/ and include/reac/transport/ (no libreac code is linked)
+    licence: GPL-3.0-or-later
+    evidence: LICENSE (the GPL version 3 text) and the SPDX-License-Identifier line of each include/ header at d58dea4a
+    texts:
+    - LICENSES/libreac-LICENSE
+  - component: SPA of PipeWire 1.6.10
+    files: headers of spa/include (header-only, inline functions for reading PipeWire objects)
+    licence: MIT
+    evidence: COPYING (the MIT text), LICENSE, and the SPDX-License-Identifier line of each spa/include header at f9d6cbc9
+    texts:
+    - LICENSES/pipewire-COPYING
+  - component: musl libc (static)
+    files: '-'
+    licence: MIT
+    evidence: musl COPYRIGHT; linked in every build
+    texts:
+    - LICENSES/musl-COPYRIGHT
+  - component: 'LLVM runtimes: compiler-rt builtins; in ASan builds the sanitizer runtime and libunwind'
+    files: '-'
+    licence: Apache-2.0 WITH LLVM-exception
+    evidence: LICENSE.TXT of compiler-rt and libunwind at llvmorg-20.1.8 (87f0227c), as in the rc.2 records
+    texts:
+    - LICENSES/llvm-compiler-rt-LICENSE.TXT
+    - LICENSES/llvm-libunwind-LICENSE.TXT
+  - component: static-asan patches compiled into the ASan runtime and musl
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of theorem-labs/static-asan at b0506135 (MIT for Theorem Labs work; the LLVM and musl code it patches
+      keeps its own licence)
+    texts:
+    - LICENSES/static-asan-LICENSE
+  - component: 'the OSS Verify port''s driver (infra/base-builder/driver/: cli.c, adapter.c and the headers they include,
+      and the seals wrap_getenv.c, wrap_mkstemp.c and wrap_getpid.c), linked into every build'
+    files: '-'
+    licence: MIT OR Apache-2.0
+    evidence: the SPDX-License-Identifier line of each of those files at theorem-labs/oss-verify ba46d36
+    texts:
+    - LICENSES/oss-verify-MIT.txt
+    - LICENSES/oss-verify-LICENSE
+  not_in_binaries: []
+  source_bundle:
+  - file: reac-pw-src.tar.zst
+    sha256: aa53b6310c64474c185ea061a4053780027991439d768b54dbda2fc2f21388b9
+  - file: reac-pw-src.MANIFEST.tsv
+    sha256: a5647bc462dd18dcd0c99e95b63ddb4bda89cd5a5e66c1ec9b868170eb44db89
+  - file: reac-pw-port.tar.zst
+    sha256: e7802e0c1ee5e46c92827cc0b545c7c4c91636ddec3f71b1da86cc01e0f0d2b6

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: httrack
 harness: fuzz-unescape
-rocq: OssFuzzTheorems.httrack.fuzz_unescape
+rocq: OSSVerify.httrack.fuzz_unescape
 origin: upstream
 summary: unescape_http / unescape_http_unharm(0,1) into a 1..8192-byte buffer, then unescape_amp in place;
   results discarded.

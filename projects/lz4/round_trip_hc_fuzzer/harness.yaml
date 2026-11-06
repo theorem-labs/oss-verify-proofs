@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lz4
 harness: round_trip_hc_fuzzer
-rocq: OssFuzzTheorems.lz4.round_trip_hc_fuzzer
+rocq: OSSVerify.lz4.round_trip_hc_fuzzer
 origin: upstream
 summary: 'Checks one property, a round trip: LZ4_compress_HC at a fuzzed level into a bound-sized buffer
   must succeed and LZ4_decompress_safe must regenerate exactly the input.'

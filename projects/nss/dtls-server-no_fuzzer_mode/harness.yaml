@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nss
 harness: dtls-server-no_fuzzer_mode
-rocq: OssFuzzTheorems.nss.dtls_server_no_fuzzer_mode
+rocq: OSSVerify.nss.dtls_server_no_fuzzer_mode
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

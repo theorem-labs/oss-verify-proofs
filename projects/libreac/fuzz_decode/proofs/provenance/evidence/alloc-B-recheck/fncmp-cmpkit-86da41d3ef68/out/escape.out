@@ -1,0 +1,6 @@
+C-string rows 67: {('CSTR-EMPTY', 'ARG-ONLY'): 52, ('CSTR-EMPTY', 'ESCAPES'): 15}
+  ARG-ONLY: 52 rows, equal bytes past the NUL: min 533, max 533
+  ESCAPES: 15 rows, equal bytes past the NUL: min 533, max 533
+rows whose uses differ between the images: 0
+rows whose primary settlement differs between the images: 0
+rows with an UNRESOLVED or NOT SCANNED part: 0

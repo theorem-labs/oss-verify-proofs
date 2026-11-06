@@ -1,0 +1,14 @@
+hypderive.py OUT/hyp/plant LIB OUT/hyp --tag plant
+images: T e89be137db17 TIMG/stripped/fuzz_transport.asan, TT 86efc3a80314 TIMG/unstripped/fuzz_transport.asan, D c2c7559b29bd PG/bin/fuzz_grant/fuzz_grant.asan, DT 57c26f993615 PG/unstripped/fuzz_grant/fuzz_grant.asan
+listed 40573; differs-from-donor 1541 (DIFFERS 1531, DIFFERS-FORM 0, NEW 10)
+DIFFERS rows derived: OK 1534, WRONG 3, NEEDS-STARTUP 0, KNOWN 3, RUNTIME 0, OPEN 1
+DIFFERS rules: BYTES 56, CONTENT 147, COUNT 3, GOT 113, GPATCH 8, IMAGE-QTY 63, JTABLE 9, KNOWN 3, NEW 2, NOT-ADDRESS 1, SHADOW-BOUND 1, SHSPAN 1, SHWIN 10, SYMBOL 1117, SYMBOL-ALIGNED 2, SYMBOL-RANK 5
+SAME rows that name a donor image value: 307: SAME-IN-BOTH 157, CONST (by hand / the bv-32 rule) 148, KNOWN 1, KEPT-IMAGE 1
+CONTENT (memory facts of listed rows with literal address and value): 373: OK 161, WRONG 1, RUNTIME 172, RELATIVE 39
+information only, DIFFERS outside hypothesis positions (unlisted-derived-plant.tsv): 5407: NEW 137, OK 5184, OPEN 52, WRONG 34
+WRONG	A/AD1o.v:87	written 0x5f3200	right 0xa9360	donor 0xa14a0	SYMBOL	donor 0xa14a0 = __do_init.__object+0x10 (size 0x40, .bss); target __do_init.__object at 0xa9350 (size 0x40) + 0x10 = 0xa9360
+OPEN	A/AFek.v:35	written 4000	right -	donor 4097	NOT-ADDRESS	donor value 0x1001 is not an address of the donor image
+WRONG	A/AFii.v:25	written 0x71804	right 0x71800	donor 0x69f18	CONTENT	CONTENT: lit fact at 0x217c4, 4 byte(s) (.rodata, read-only): the target image holds 0x71800 there; as a relative jump-table entry: target base 0x217b8 + 0x71800 = 0x92fb8 = sysconf+0x208; donor: entry 0x69f18 at 0x218c8, base 0x218bc + 0x69f18 = 0x8b7d4 = sysconf+0x208
+WRONG	A/AFk6.v:34	written 0x5cf058	right 0x5cf050	donor 0x5c7190	SYMBOL	donor 0x5c7190 = read_stage+0x0 (size 0x10000, .bss); target read_stage at 0x5cf050 (size 0x10000) + 0x0 = 0x5cf050
+KEPT-IMAGE	A/AD1o.v:22	value 0x30000	target 0x31000	BOUND	donor load0.hi_page = 0x30000; target load0.hi_page = 0x31000
+CONTENT-WRONG	A/AFii.v:25	lit at 0x217c4 (4 bytes)	written 0x71804	image 0x71800

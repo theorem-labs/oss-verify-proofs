@@ -11,6 +11,7 @@ import tempfile
 import unittest
 
 from oft import yamlio
+from oft.tests import helpers
 from oft.tests.helpers import REPO
 
 GATE = os.path.join(REPO, "tools", "oft", "ci", "facts-review-gate")
@@ -50,11 +51,15 @@ done
 # Paths of each kind gather counts, and of kinds it does not.
 FACTS_PATHS = ["projects/zlib/project.yaml", "projects/zlib/checksum_fuzzer/harness.yaml",
                "projects/zlib/checksum_fuzzer/source/fuzz.c", "projects/zlib/checksum_fuzzer/source/sub/x.h",
-               "projects/zlib/checksum_fuzzer/Distribution.v"]
+               "projects/zlib/checksum_fuzzer/Distribution.v", "patches/zlib/0001-fix.patch",
+               "projects/zlib/patches/0001-fix.patch"]
 OTHER_PATHS = ["README.md", "tools/oft/ci/facts-review-gate", "projects/zlib/README.md",
                "projects/zlib/checksum_fuzzer/Images.v", "projects/zlib/checksum_fuzzer/sub/harness.yaml",
                "proofs/zlib/checksum_fuzzer/provenance/source/fuzz.c", "projects/project.yaml",
-               "projects/zlib/checksum_fuzzer/source", "docs/projects/zlib/project.yaml"]
+               "projects/zlib/checksum_fuzzer/source", "docs/projects/zlib/project.yaml",
+               "patches/zlib/sub/0001-fix.patch", "patches/zlib/0001-fix.diff", "patches/0001-fix.patch",
+               "projects/zlib/patches/sub/0001-fix.patch", "projects/zlib/patches/0001-fix.diff",
+               "projects/patches/0001-fix.patch"]
 
 
 class StandIn(unittest.TestCase):
@@ -70,8 +75,8 @@ class StandIn(unittest.TestCase):
         os.chmod(os.path.join(bin_dir, "gh"), 0o755)
         self.api = os.path.join(self.dir, "api")
         os.mkdir(self.api)
-        self.env = dict(os.environ, PATH=bin_dir + os.pathsep + os.environ["PATH"], FAKE_GH=self.api,
-                        PR="7", REPO="acme/proofs")
+        self.env = helpers.child_environment(helpers.NO_HOME, PATH=bin_dir + os.pathsep + os.environ["PATH"],
+                                             FAKE_GH=self.api, PR="7", REPO="acme/proofs")
 
     def tearDown(self):
         self._tmp.cleanup()
@@ -196,18 +201,20 @@ class GateTest(StandIn):
         self.assertIsNotNone(m, "facts-review-gather has no FACTS=(...) line")
         pathspecs = re.findall(r"'([^']+)'", m.group(1))
         # A new kind of facts file in gather must reach the gate's FACTS too; then this list and FACTS_PATHS change.
-        self.assertEqual(pathspecs, [":(glob)projects/*/project.yaml", ":(glob)projects/*/*/harness.yaml",
+        self.assertEqual(pathspecs, [":(glob)projects/*/project.yaml", ":(glob)patches/*/*.patch",
+                                     ":(glob)projects/*/patches/*.patch", ":(glob)projects/*/*/harness.yaml",
                                      ":(glob)projects/*/*/source/**", ":(glob)projects/*/*/Distribution.v"],
                          "gather's FACTS changed: change the gate's FACTS to match")
         repo = os.path.join(self.dir, "repo")
         paths = FACTS_PATHS + [p for p in OTHER_PATHS if p != "projects/zlib/checksum_fuzzer/source"]
-        subprocess.run(["git", "init", "-q", repo], check=True)
+        git_env = helpers.child_environment(helpers.NO_HOME)
+        subprocess.run(["git", "init", "-q", repo], check=True, env=git_env)
         for p in paths:
             os.makedirs(os.path.dirname(os.path.join(repo, p)), exist_ok=True)
             open(os.path.join(repo, p), "w").close()
-        subprocess.run(["git", "-C", repo, "add", "--", *paths], check=True)
+        subprocess.run(["git", "-C", repo, "add", "--", *paths], check=True, env=git_env)
         by_git = set(subprocess.run(["git", "-C", repo, "-c", "core.quotePath=false", "ls-files", "--", *pathspecs],
-                                    check=True, capture_output=True, text=True).stdout.split())
+                                    check=True, capture_output=True, text=True, env=git_env).stdout.split())
         self.assertEqual(by_git, set(FACTS_PATHS))
         for p in paths:
             with self.subTest(path=p):
@@ -221,10 +228,11 @@ class StepTest(StandIn):
     """The gate job's step, run as GitHub runs it."""
 
     def step(self, serve_gate=True, gate_text=None):
-        """Runs the step, and gives back what it wrote to GITHUB_OUTPUT."""
+        """Runs the step, and gives back what it wrote to GITHUB_OUTPUT.  Each run has a script file of its own: a guard
+        on a developer's machine holds a running script read-only until some time after its run ends."""
         jobs = yamlio.load_file(WORKFLOW)["jobs"]
-        script = os.path.join(self.dir, "step.sh")
-        with open(script, "w") as f:
+        fd, script = tempfile.mkstemp(prefix="step-", suffix=".sh", dir=self.dir)
+        with os.fdopen(fd, "w") as f:
             f.write(jobs["gate"]["steps"][-1]["run"])
         served = os.path.join(self.api, API + "contents_tools_oft_ci_facts-review-gate.json")
         if gate_text is not None:
@@ -304,10 +312,10 @@ class ServedTest(unittest.TestCase):
                             "echo 'The facts hold.' > .review/comment.md\n"
                             f"exit {code}\n")
                 os.chmod(run, 0o755)
-                token, output = os.path.join(directory, "jwt"), os.path.join(directory, "output")
-                with open(token, "w") as f:
-                    f.write("jwt\n")
-                env = dict(os.environ, ANTHROPIC_IDENTITY_TOKEN_FILE=token, GITHUB_OUTPUT=output)
+                output = os.path.join(directory, "output")
+                # the workflow sets REVIEW_SESSION to a folder of the runner's; here, a folder of the test's own
+                env = helpers.child_environment(helpers.NO_HOME, GITHUB_OUTPUT=output,
+                                                REVIEW_SESSION=os.path.join(directory, "review-session"))
                 r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", step["run"]],
                                    cwd=directory, env=env, capture_output=True, text=True)
                 self.assertEqual(r.returncode, code, r.stdout + r.stderr)
@@ -316,83 +324,27 @@ class ServedTest(unittest.TestCase):
                 self.assertRegex(written, r"(?m)^served<<(served-[0-9a-f]{32})\n" + re.escape(self.RECORD)
                                  + r"\n\1$")
                 self.assertEqual("comment<<" in written, code == 0)
-                self.assertFalse(os.path.exists(token), "the identity token file is removed")
 
 
-def evaluate(expression, needs, cancelled=False):
-    """GitHub's value of a job's `if:` (the subset this workflow uses: !, &&, ||, ==, !=, parentheses, '...' strings,
-    needs.<job>.result, needs.<job>.outputs.<name>, success(), failure(), cancelled(), always()). As GitHub does, an
-    expression that calls no status function is evaluated as `success() && (<expression>)`; strings compare without
-    regard to case, and an output a job did not set is ''."""
+def evaluate(expression, needs, cancelled=False, github=None):
+    """GitHub's value of a job's `if:`, read by helpers.gh_value (the package's one reading of GitHub's expressions)
+    with the status functions this context has: success(), failure(), cancelled() and always() over `needs`, and,
+    when `github` is given, github.<property>... read from that dict.  As GitHub does, an expression that calls no
+    status function is evaluated as `success() && (<expression>)`.  A needs.<job>.outputs.<name> a job did not set,
+    and a github property the event does not have, read as null, which equals '' and is false, as GitHub's is."""
     text = expression.strip()
     if text.startswith("${{") and text.endswith("}}"):
         text = text[3:-2]
-    tokens = re.findall(r"\s*(&&|\|\||==|!=|!|\(|\)|'(?:[^']|'')*'|[A-Za-z_][\w.-]*\(\)|[A-Za-z_][\w.-]*)", text)
-    if "".join(tokens).replace(" ", "") != text.replace(" ", ""):
-        raise ValueError(f"evaluate() cannot read {expression!r}")
-    if not any(t in ("success()", "failure()", "cancelled()", "always()") for t in tokens):
-        tokens = ["success()", "&&", "("] + tokens + [")"]
+    if not re.search(r"\b(?:success|failure|cancelled|always)\s*\(\)", text):
+        text = "success() && (%s)" % text
     results = [j["result"] for j in needs.values()]
-
-    def value(t):
-        if t.startswith("'"):
-            return t[1:-1].replace("''", "'")
-        if t.endswith("()"):
-            return {"success()": not cancelled and all(r == "success" for r in results),
-                    "failure()": not cancelled and any(r == "failure" for r in results),
-                    "cancelled()": cancelled, "always()": True}[t]
-        parts = t.split(".")
-        if parts[0] != "needs" or len(parts) not in (3, 4):
-            raise ValueError(f"evaluate() has no value for {t}")
-        job = needs[parts[1]]
-        return job["result"] if parts[2] == "result" else job.get("outputs", {}).get(parts[3], "")
-
-    def same(a, b):
-        return a.lower() == b.lower() if isinstance(a, str) and isinstance(b, str) else a == b
-
-    pos = 0
-
-    def take():
-        nonlocal pos
-        pos += 1
-        return tokens[pos - 1]
-
-    def peek():
-        return tokens[pos] if pos < len(tokens) else None
-
-    def unary():
-        t = take()
-        if t == "!":
-            return not unary()
-        if t == "(":
-            v = either()
-            assert take() == ")"
-            return v
-        return value(t)
-
-    def compare():
-        v = unary()
-        while peek() in ("==", "!="):
-            v = same(v, unary()) if take() == "==" else not same(v, unary())
-        return v
-
-    def both():
-        v = compare()
-        while peek() == "&&":
-            take()
-            v = compare() and v
-        return v
-
-    def either():
-        v = both()
-        while peek() == "||":
-            take()
-            v = both() or v
-        return v
-
-    v = either()
-    assert peek() is None, tokens[pos:]
-    return bool(v)
+    functions = {"success": lambda: not cancelled and all(r == "success" for r in results),
+                 "failure": lambda: not cancelled and any(r == "failure" for r in results),
+                 "cancelled": lambda: cancelled,
+                 "always": lambda: True}
+    scope = {"needs": needs} if github is None else {"needs": needs, "github": github}
+    # as one whole ${{ }}, so that gh_value gives the value and not the text it would interpolate into
+    return bool(helpers.gh_value("${{ %s }}" % text, scope, functions))
 
 
 @unittest.skipUnless(HAVE_WORKFLOW, NO_WORKFLOW)
@@ -434,7 +386,7 @@ class WorkflowTest(unittest.TestCase):
         self.assertFalse(evaluate("needs.gate.outputs.review != 'false'", failed))
         self.assertTrue(evaluate("${{ !cancelled() && needs.gate.outputs.review != 'false' }}", failed))
 
-    def verdict(self, edit, gate, review_ends="success", comment_ends="success", session="", keep_ends="success"):
+    def verdict(self, gate, review_ends="success", comment_ends="success", session="", keep_ends="success"):
         """The facts-review job's step over a run: the gate job ended as `gate` (result and outputs); the review job,
         the keep job (after a review whose `session` output is as given) and the comment job run when their `if:`
         says so (skipped otherwise) and end as given.  Its exit status."""
@@ -442,9 +394,10 @@ class WorkflowTest(unittest.TestCase):
         reviewed = {"review": {"result": review, "outputs": {"session": session} if review != "skipped" else {}}}
         keep = keep_ends if evaluate(self.jobs["keep"]["if"], reviewed) else "skipped"
         comment = comment_ends if evaluate(self.jobs["comment"]["if"], reviewed) else "skipped"
-        env = dict(os.environ, EDIT="true" if edit else "false", GATE=gate["result"],
-                   ROUTE=gate.get("outputs", {}).get("review", ""), REVIEW=review, COMMENT=comment,
-                   SESSION=reviewed["review"]["outputs"].get("session", ""), KEEP=keep)
+        env = helpers.child_environment(helpers.NO_HOME, GATE=gate["result"],
+                                        ROUTE=gate.get("outputs", {}).get("review", ""), REVIEW=review,
+                                        COMMENT=comment, SESSION=reviewed["review"]["outputs"].get("session", ""),
+                                        KEEP=keep)
         with tempfile.NamedTemporaryFile("w", suffix=".sh") as f:
             f.write(self.jobs["facts-review"]["steps"][0]["run"])
             f.flush()
@@ -453,44 +406,58 @@ class WorkflowTest(unittest.TestCase):
         return r.returncode, r.stdout + r.stderr
 
     def test_the_facts_review_job_is_the_run_s_one_verdict(self):
-        """It always runs and needs every other job; it passes when every job the gate sent the run to passed and every
-        job it stopped was skipped, and fails on any job that failed or was cancelled, the gate's own included.  An
-        edit of the title or body restates the last review's verdict (test_workflow_verdicts.FactsReviewRestateTest);
-        here only an edit whose jobs ran fails before it asks.  EDIT and the session case are the gate's and keep's
-        own conditions."""
+        """It runs on every run but an edit of the title or body and needs every other job; it passes when every job
+        the gate sent the run to passed and every job it stopped was skipped, and fails on any job that failed or was
+        cancelled, the gate's own included.  The session case is keep's own condition."""
         job = self.jobs["facts-review"]
-        self.assertEqual(job["if"], "always()")
         self.assertEqual(sorted(job["needs"]), sorted(n for n in self.jobs if n != "facts-review"))
-        self.assertEqual(job["permissions"], {"actions": "write"})
-        self.assertEqual(self.jobs["gate"]["if"],
-                         "github.event.action != 'edited' || github.event.changes.base != null")
-        self.assertEqual(job["steps"][0]["env"]["EDIT"],
-                         "${{ github.event.action == 'edited' && github.event.changes.base == null }}")
+        self.assertEqual(job["permissions"], {})
         self.assertEqual(self.jobs["keep"]["if"], "${{ !cancelled() && needs.review.outputs.session == 'kept' }}")
         self.assertRegex(job["steps"][0]["run"], r"\n *kept\) ")
         review, stop = {"result": "success", "outputs": {"review": "true"}}, {"result": "success",
                                                                              "outputs": {"review": "false"}}
         cases = [
-            (False, review, "success", "success", "", "success", 0),     # no session to keep: keep skipped
-            (False, review, "success", "success", "kept", "success", 0),
-            (False, review, "success", "success", "dropped", "success", 0),     # a value the review never writes: keep skipped
-            (False, stop, "success", "success", "", "success", 0),       # review, keep and comment skipped
-            (False, review, "failure", "success", "", "success", 1),     # the comment says why; the verdict fails
-            (False, review, "failure", "success", "kept", "success", 1),        # the session kept, the review failed
-            (False, review, "cancelled", "success", "", "success", 1),
-            (False, review, "success", "failure", "", "success", 1),
-            (False, review, "success", "success", "kept", "failure", 1),
-            (False, review, "success", "success", "kept", "cancelled", 1),
-            (False, {"result": "failure"}, "success", "success", "", "success", 1),  # the review ran; the gate failed
-            (False, {"result": "cancelled"}, "success", "success", "", "success", 1),
-            (False, {"result": "skipped"}, "success", "success", "", "success", 1),  # not an edit, yet no gate
-            (True, review, "success", "success", "", "success", 1),     # an edit, yet the gate ran
+            (review, "success", "success", "", "success", 0),     # no session to keep: keep skipped
+            (review, "success", "success", "kept", "success", 0),
+            (review, "success", "success", "dropped", "success", 0),     # a value the review never writes: keep skipped
+            (stop, "success", "success", "", "success", 0),       # review, keep and comment skipped
+            (review, "failure", "success", "", "success", 1),     # the comment says why; the verdict fails
+            (review, "failure", "success", "kept", "success", 1),        # the session kept, the review failed
+            (review, "cancelled", "success", "", "success", 1),
+            (review, "success", "failure", "", "success", 1),
+            (review, "success", "success", "kept", "failure", 1),
+            (review, "success", "success", "kept", "cancelled", 1),
+            ({"result": "failure"}, "success", "success", "", "success", 1),  # the review ran; the gate failed
+            ({"result": "cancelled"}, "success", "success", "", "success", 1),
+            ({"result": "skipped"}, "success", "success", "", "success", 1),  # it ran, yet no gate
         ]
-        for edit, gate, review_ends, comment_ends, session, keep_ends, want in cases:
-            with self.subTest(edit=edit, gate=gate, review=review_ends, comment=comment_ends, session=session,
-                              keep=keep_ends):
-                rc, out = self.verdict(edit, gate, review_ends, comment_ends, session, keep_ends)
+        for gate, review_ends, comment_ends, session, keep_ends, want in cases:
+            with self.subTest(gate=gate, review=review_ends, comment=comment_ends, session=session, keep=keep_ends):
+                rc, out = self.verdict(gate, review_ends, comment_ends, session, keep_ends)
                 self.assertEqual(rc, want, out)
+
+    def test_an_edit_of_the_title_or_body_runs_no_job_and_leaves_no_facts_review_check(self):
+        """Every job is skipped on such an edit, so the run takes no runner; the verdict job is named facts-review
+        whenever it runs, and its skipped check takes the name as written (GitHub does not evaluate the name of a
+        skipped job), so it is not a facts-review check that passes and hides the head's last review.  A new base, a
+        push and a run by hand each run the gate and the verdict job."""
+        job = self.jobs["facts-review"]
+        events = {
+            "a new title": ("edited", {"title": {"from": "an older title"}}, False),
+            "a new body": ("edited", {"body": {"from": "an older body"}}, False),
+            "a new base": ("edited", {"base": {"ref": {"from": "main"}}}, True),
+            "a push": ("synchronize", {}, True),
+            "a run by hand": ("", {}, True),
+        }
+        for name, (action, changes, runs) in events.items():
+            github = {"event": {"action": action, "changes": changes}}
+            with self.subTest(event=name):
+                self.assertEqual(evaluate(self.jobs["gate"]["if"], {}, github=github), runs)
+                needs = {n: {"result": "success" if runs else "skipped", "outputs": {}} for n in job["needs"]}
+                self.assertEqual(evaluate(job["if"], needs, github=github), runs)
+                if runs:
+                    self.assertEqual(helpers.gh_value(job["name"], {"github": github}), "facts-review")
+        self.assertNotEqual(job["name"].strip(), "facts-review", "a skipped job's check takes the name as written")
 
 
 if __name__ == "__main__":

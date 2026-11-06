@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libavc
 harness: avc_dec_fuzzer
-rocq: OssFuzzTheorems.libavc.avc_dec_fuzzer
+rocq: OSSVerify.libavc.avc_dec_fuzzer
 origin: upstream
 summary: 'H.264 decoder: picks arch/color format/cores from input bytes 6-8, decodes the header, allocates
   output buffers, then up to 100 decode calls advancing by bytes consumed (min 4); resolution changes

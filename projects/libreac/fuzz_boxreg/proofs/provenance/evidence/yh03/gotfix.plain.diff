@@ -1,0 +1,11 @@
+--- proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v (b5dd72116a44)
++++ proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v (got cell set to the refusal value)
+@@ -193,7 +193,7 @@
+ Definition src0_D_fini_array_start : Z := 0x1d248.
+ Definition src0_D_stderr : Z := 0x1d250.
+ Definition src0_D_stdout : Z := 0x1d258.
+-Definition src0_D_got_DYNAMIC_reserved : Z := 0x1ed90.
++Definition src0_D_got_DYNAMIC_reserved : Z := 0x1d260.
+ Definition src0_D_got_DYNAMIC : Z := 0x1d268.
+ Definition src0_D_got_main : Z := 0x1d270.
+ Definition src0_D_got_init : Z := 0x1d278.

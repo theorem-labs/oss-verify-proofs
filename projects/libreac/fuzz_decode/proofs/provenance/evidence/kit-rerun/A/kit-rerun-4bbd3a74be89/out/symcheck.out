@@ -1,0 +1,10 @@
+# C DONOR_TWIN ce511d541cda
+# A DECODE_A_TWIN 4cb0a852e826
+_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb                  C: 0x31550/2440/STT_FUNC  A: 0x3124c/2440/STT_FUNC  fsym C 0x31550 A 0x3124c
+_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceVi C: 0x359e4/728/STT_FUNC  A: 0x357c0/728/STT_FUNC  fsym C 0x359e4 A 0x357c0
+_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalA C: 0x36134/256/STT_FUNC  A: 0x35f10/256/STT_FUNC  fsym C 0x36134 A 0x35f10
+_ZN6__asan12PoisonShadowEmmh                                                                         C: 0x53800/1276/STT_FUNC  A: 0x53040/1276/STT_FUNC  fsym C 0x53800 A 0x53040
+_ZN11__sanitizer13internal_mmapEPvmiiiy                                                              C: 0x64198/12/STT_FUNC  A: 0x63d3c/12/STT_FUNC  fsym C 0x64198 A 0x63d3c
+_ZN11__sanitizer13StackDepotPutENS_10StackTraceE                                                     C: 0x724e0/32/STT_FUNC  A: 0x72084/32/STT_FUNC  fsym C 0x724e0 A 0x72084
+memset                                                                                               C: 0x9790c/248/STT_FUNC  A: 0x92474/248/STT_FUNC  fsym C 0x9790c A 0x92474
+every name exactly one symbol in both images: True

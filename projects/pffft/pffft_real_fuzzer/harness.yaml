@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: pffft
 harness: pffft_real_fuzzer
-rocq: OssFuzzTheorems.pffft.pffft_real_fuzzer
+rocq: OSSVerify.pffft.pffft_real_fuzzer
 origin: oss-fuzz
 summary: Forward pffft_transform, pffft_zconvolve_accumulate(out,out,out) and backward pffft_transform_ordered
   are run on the fuzzed floats; the outputs are never compared to the input (no inverse/round-trip check,

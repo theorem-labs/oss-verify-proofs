@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libiec61850
 harness: fuzz_mms_decode
-rocq: OssFuzzTheorems.libiec61850.fuzz_mms_decode
+rocq: OSSVerify.libiec61850.fuzz_mms_decode
 origin: upstream
 summary: MmsValue_decodeMmsData over the whole input; the value is deleted unchecked.
 entry: LLVMFuzzerTestOneInput

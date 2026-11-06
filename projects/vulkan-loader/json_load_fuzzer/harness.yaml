@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: vulkan-loader
 harness: json_load_fuzzer
-rocq: OssFuzzTheorems.vulkan_loader.json_load_fuzzer
+rocq: OSSVerify.vulkan_loader.json_load_fuzzer
 origin: oss-fuzz
 summary: writes the input to /tmp, loader_get_json parses it with the loader's vendored cJSON, then loader_cJSON_Print
   re-serializes; the printed text is freed without being re-parsed or compared (parse->print executed,

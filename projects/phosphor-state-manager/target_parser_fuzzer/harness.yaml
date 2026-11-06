@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: phosphor-state-manager
 harness: target_parser_fuzzer
-rocq: OssFuzzTheorems.phosphor_state_manager.target_parser_fuzzer
+rocq: OSSVerify.phosphor_state_manager.target_parser_fuzzer
 origin: oss-fuzz
 summary: Writes the input to a mkstemp file and calls parseFiles({path}) (nlohmann JSON target-monitor
   config); the returned map is discarded and std::exception (invalid JSON / validation errors) is caught.

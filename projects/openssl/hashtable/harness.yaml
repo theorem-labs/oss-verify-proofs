@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: hashtable
-rocq: OssFuzzTheorems.openssl.hashtable
+rocq: OSSVerify.openssl.hashtable
 origin: upstream
 summary: 'Checks 3 properties (listed below); the first, a reference oracle: OP_FOREACH: ossl_ht_foreach_until
   finds the key''s value iff the prediction table marks it allocated; OP_FILTER: ossl_ht_filter returns

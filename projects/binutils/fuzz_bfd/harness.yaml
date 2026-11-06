@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: binutils
 harness: fuzz_bfd
-rocq: OssFuzzTheorems.binutils.fuzz_bfd
+rocq: OSSVerify.binutils.fuzz_bfd
 origin: oss-fuzz
 summary: Writes the input to a temp file, bfd_openr with the default target, bfd_check_format(bfd_archive);
   nothing is checked.

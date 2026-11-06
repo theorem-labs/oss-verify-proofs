@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: yyjson
 harness: yyjson_patch_fuzzer
-rocq: OssFuzzTheorems.yyjson.yyjson_patch_fuzzer
+rocq: OSSVerify.yyjson.yyjson_patch_fuzzer
 origin: upstream
 summary: Splits the input by a u16 prefix into base JSON and RFC 6902 JSON Patch, applies the patch with
   yyjson_patch (immutable inputs) and yyjson_mut_patch (mutable copies), writes each result and discards

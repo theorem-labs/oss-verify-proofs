@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: pkcs7_verify
-rocq: OssFuzzTheorems.openssl.pkcs7_verify
+rocq: OSSVerify.openssl.pkcs7_verify
 origin: upstream
 summary: d2i_PKCS7 then PKCS7_verify(PKCS7_NOVERIFY) with the trailing bytes as detached content; result
   ignored.

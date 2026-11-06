@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: punycode
-rocq: OssFuzzTheorems.openssl.punycode
+rocq: OSSVerify.openssl.punycode
 origin: upstream
 summary: ossl_punycode_decode into a 16-slot buffer and ossl_a2ulabel into 16 bytes; results ignored.
 entry: FuzzerTestOneInput

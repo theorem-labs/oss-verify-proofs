@@ -1,0 +1,11 @@
+# kit KIT_PARENT/cmpkit-4bbd3a74be89 strictcmp2 sha256 16982e3ef42b
+# C DONOR_TWIN ce511d541cda
+# A DECODE_A_TWIN 4cb0a852e826
+C locator8AllocateEmmPN11__sa +0xdc kind lo12 target 0x10428 sec .rodata qres (.rodata) region 66360 bytes
+   64B at target: 00010207030d081304190e1c0922142805111a260f2e1d300a1f2336153229393f060c12181b212710252d2f1e3531383e0b1720242c34373d162b333c2a3b3a
+   words +0xcc..+0xf4: 0xcc:00d5f5b3 0xd0:02c585b3 0xd4:fffdf617 0xd8:03a5d593 0xdc:e0460613 0xe0:00b605b3 0xe4:0005c583 0xe8:00459593 0xec:06058593 0xf0:0705f593 0xf4:00090413
+A locator8AllocateEmmPN11__sa +0xdc kind lo12 target 0x10438 sec .rodata qres (.rodata) region 66236 bytes
+   64B at target: 00010207030d081304190e1c0922142805111a260f2e1d300a1f2336153229393f060c12181b212710252d2f1e3531383e0b1720242c34373d162b333c2a3b3a
+   words +0xcc..+0xf4: 0xcc:00d5f5b3 0xd0:02c585b3 0xd4:fffdf617 0xd8:03a5d593 0xdc:11860613 0xe0:00b605b3 0xe4:0005c583 0xe8:00459593 0xec:06058593 0xf0:0705f593 0xf4:00090413
+C vs A, the 64 bytes at the target are equal: True
+C vs A, the 65th byte (outside the table): 00 00

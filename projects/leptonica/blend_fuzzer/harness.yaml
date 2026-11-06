@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: blend_fuzzer
-rocq: OssFuzzTheorems.leptonica.blend_fuzzer
+rocq: OSSVerify.leptonica.blend_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixBlend (10 fractions, incl. blending a pix with itself), pixAddAlphaToBlend,
   pixBlendBackgroundToColor, pixBlendCmap, pixBlendColorByChannel, GrayAdapt, GrayInverse, HardLight,

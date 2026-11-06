@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: sudoers
 harness: fuzz_iolog_timing
-rocq: OssFuzzTheorems.sudoers.fuzz_iolog_timing
+rocq: OSSVerify.sudoers.fuzz_iolog_timing
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

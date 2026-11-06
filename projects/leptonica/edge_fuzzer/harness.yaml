@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: edge_fuzzer
-rocq: OssFuzzTheorems.leptonica.edge_fuzzer
+rocq: OSSVerify.leptonica.edge_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixMeasureEdgeSmoothness; the three measures are discarded.
 entry: LLVMFuzzerTestOneInput

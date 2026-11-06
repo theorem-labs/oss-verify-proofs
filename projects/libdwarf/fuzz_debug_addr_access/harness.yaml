@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_debug_addr_access
-rocq: OssFuzzTheorems.libdwarf.fuzz_debug_addr_access
+rocq: OSSVerify.libdwarf.fuzz_debug_addr_access
 origin: upstream
 summary: dwarf_debug_addr_table at offset 0 and dwarf_debug_addr_by_index over every entry; values unused.
 entry: LLVMFuzzerTestOneInput

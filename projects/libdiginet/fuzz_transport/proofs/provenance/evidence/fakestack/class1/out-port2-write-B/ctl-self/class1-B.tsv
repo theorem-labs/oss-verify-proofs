@@ -1,0 +1,9 @@
+file	donor_range	words	function	offset	paired_by	target_range	donor_fn	target_fn	fn_bytes	verdict	pcrel	real	unmeasured	targets_differ	whole_fn (pcrel, real, unmeasured) differ	note
+B/Rt/StackMalloc1Tbl.v	0x3d868	100	__asan_stack_malloc_1	+0x0	name	0x3d868	0x3d868	0x3d868	400	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/StackMalloc1Tbl.v	0x47414	31	__interceptor___tls_get_addr	+0x0	name	0x47414	0x47414	0x47414	124	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/StackMalloc1Tbl.v	0x99624	9	__tls_get_addr	+0x0	name	0x99624	0x99624	0x99624	36	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/StackMalloc1Tbl.v	0x5c974	8	_ZN6__asan16GetCurrentThreadEv	+0x0	name	0x5c974	0x5c974	0x5c974	32	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/StackMalloc1Tbl.v	0x554c0	6	_ZN6__asan10AsanTSDGetEv	+0x0	name	0x554c0	0x554c0	0x554c0	64	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/StackMalloc1Tbl.v	0x9a6d8	7	__pthread_getspecific	+0x0	name	0x9a6d8	0x9a6d8	0x9a6d8	28	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/StackMalloc1Tbl.v	0x6a088	140	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	+0x0	name	0x6a088	0x6a088	0x6a088	848	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/StackMalloc1Tbl.v	0x3dd78	28	_ZN6__asanL11MemToShadowEm	+0x0	call	0x3dd78	0x3dd78	0x3dd78	316	EQUAL	0	0	0	1	EQUAL (0, 0, 0) 0	range: 0x6c unmeasured

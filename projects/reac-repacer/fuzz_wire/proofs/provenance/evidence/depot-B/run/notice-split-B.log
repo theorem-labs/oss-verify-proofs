@@ -1,0 +1,3 @@
+notice_split: B/YD3i.v: notice = line 3 up to the attribution; the rest of line 3 opens the second comment
+notice_split: B/YD3j.v: notice = line 3 (its attribution runs on into line 4); the second comment opens before line 4
+notice_split: B/YD3k.v: notice = line 3 up to the attribution; the rest of line 3 opens the second comment

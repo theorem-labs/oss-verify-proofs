@@ -1,0 +1,44 @@
+Axioms:
+Corelib.Numbers.Cyclic.Int63.PrimInt63.sub :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Strings.PrimString.string : Set
+Corelib.Numbers.Cyclic.Int63.PrimInt63.ltb :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int -> Corelib.Init.Datatypes.bool
+Corelib.Numbers.Cyclic.Int63.PrimInt63.lsr :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.lsl :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.lor :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Strings.PrimString.length :
+  Corelib.Strings.PrimString.string ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.leb :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int -> Corelib.Init.Datatypes.bool
+Corelib.Numbers.Cyclic.Int63.PrimInt63.land :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+Corelib.Strings.PrimString.get :
+  Corelib.Strings.PrimString.string ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Strings.PrimString.char63
+Stdlib.Logic.FunctionalExtensionality.functional_extensionality_dep :
+  forall (A : Type) (B : A -> Type) (f g : forall x : A, B x),
+  (forall x : A, f x = g x) -> f = g
+Corelib.Numbers.Cyclic.Int63.PrimInt63.eqb :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int -> Corelib.Init.Datatypes.bool
+Stdlib.Logic.Classical_Prop.classic : forall P : Prop, P \/ ~ P
+Corelib.Array.PrimArray.array : Type -> Type

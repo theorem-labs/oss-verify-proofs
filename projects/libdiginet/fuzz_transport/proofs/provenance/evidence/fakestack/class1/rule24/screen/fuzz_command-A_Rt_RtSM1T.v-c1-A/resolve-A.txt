@@ -1,0 +1,6 @@
+[plugin-hostd/fuzz_command] A/Rt/RtSM1T.v:4 0x3fa7c 0x3fa7c
+[plugin-hostd/fuzz_command] A/Rt/RtSM1T.v:46 0x40410 0x3dfc4
+[plugin-hostd/fuzz_command] A/Rt/RtSM1T.v:75 0xa63e0 0xa4080
+[plugin-hostd/fuzz_command] A/Rt/RtSM1T.v:75 0xa70f0 0xa4d70
+[plugin-hostd/fuzz_command] A/Rt/RtSM1T.v:76 0xa6440 0xa40e0
+[plugin-hostd/fuzz_command] A/Rt/RtSM1T.v:76 0xa7100 0xa4d80

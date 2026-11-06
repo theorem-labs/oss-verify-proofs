@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libprotobuf-mutator
 harness: libxml2_example
-rocq: OssFuzzTheorems.libprotobuf_mutator.libxml2_example
+rocq: OSSVerify.libprotobuf_mutator.libxml2_example
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

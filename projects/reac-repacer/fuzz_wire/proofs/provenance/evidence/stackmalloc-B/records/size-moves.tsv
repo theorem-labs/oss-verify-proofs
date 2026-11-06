@@ -1,0 +1,11 @@
+run	file	stage-out line	donor	wire	run row (status symbol)	final-tree line(s)	line text
+smB	B/Rt/StackMalloc0.v	82	6270976	6250496	-	76	assert (ZONE : exists hi : bool, if hi then 17594333495296 <= ly_F ly /\ ly_F ly + 11571200 <= alloc_ceiling else 6250496 <= ly_F ly /\ ly_F ly + 11571200 <= 2147446784).
+smB	B/Rt/StackMalloc0.v	85	6270976	6250496	-	79	clear HF1 HF2. assert (HF1 : 6250496 <= ly_F ly) by (clear - HZ; destruct hi; lia).
+smB	B/Rt/StackMalloc0.v	245	6270976	6250496	-	239	assert (HFFr : 6250496 <= FF /\ FF + 64 <= F + kFakeStackSize /\ FF mod 64 = 0).
+smB	B/Rt/StackMalloc0.v	255	6270976	6250496	-	249	clear - HZ HFF HFFr HFF8 HFF8' Hposr HN. ceil. unfold kFakeStackSize in *. change (64 / 8) with 8. change (6250496 / 8) with 781312. destruct hi; cbn -[Z.div Z.add Z.sub Z.mul]; lia. }
+smB	B/Rt/StackMalloc0.v	257	6270976	6250496	-	251	{ clear - HSHr. unfold StackMalloc0Tbl.shLO, StackMalloc0Tbl.shHI, StackMalloc0Tbl.FS_B, kHighShadowBeg, kHighShadowEnd, kLowShadowBeg, kLowShadowEnd, TFIB_IMG_END in HSHr. change (64 / 8) with 8 in HSHr. change (6250496
+smB	B/Rt/YF0s.v	82	6270976	6250496	-	76	assert (ZONE : exists hi : bool, if hi then 17594333495296 <= ly_F ly /\ ly_F ly + 11571200 <= alloc_ceiling else 6250496 <= ly_F ly /\ ly_F ly + 11571200 <= 2147446784).
+smB	B/Rt/YF0s.v	85	6270976	6250496	-	79	clear HF1 HF2. assert (HF1 : 6250496 <= ly_F ly) by (clear - HZ; destruct hi; lia).
+smB	B/Rt/YF0s.v	245	6270976	6250496	-	239	assert (HFFr : 6250496 <= FF /\ FF + 128 <= F + kFakeStackSize /\ FF mod 64 = 0).
+smB	B/Rt/YF0s.v	255	6270976	6250496	-	249	clear - HZ HFF HFFr HFF8 HFF8' Hposr HN. ceil. unfold kFakeStackSize in *. change (128 / 8) with 16. change (6250496 / 8) with 781312. destruct hi; cbn -[Z.div Z.add Z.sub Z.mul]; lia. }
+smB	B/Rt/YF0s.v	257	6270976	6250496	-	251	{ clear - HSHr. unfold YF0r.shLO, YF0r.shHI, YF0r.FS_B, kHighShadowBeg, kHighShadowEnd, kLowShadowBeg, kLowShadowEnd, TFIB_IMG_END in HSHr. change (128 / 8) with 16 in HSHr. change (6250496 / 8) with 781312 in HSHr. dest

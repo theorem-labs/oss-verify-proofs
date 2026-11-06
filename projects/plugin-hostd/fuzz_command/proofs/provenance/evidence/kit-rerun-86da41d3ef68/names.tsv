@@ -1,0 +1,132 @@
+# every function item compared, per image: the sized FUNC copies of the bare name, and the copies the item names (strictcmp3 cmp refuses an item that names more than one)
+item	image	sized FUNC copies of the bare name	copies the item names	the copy compared (addr/size)
+___interceptor_strcmp	A	1	1	0x45a24/1328
+___interceptor_strcmp	B	1	1	0x45a70/1328
+__interceptor_trampoline_strcmp	A	1	1	0x4513c/4
+__interceptor_trampoline_strcmp	B	1	1	0x45188/4
+__sanitizer_weak_hook_strcmp	A	1	1	0x45a20/4
+__sanitizer_weak_hook_strcmp	B	1	1	0x45a6c/4
+_ZN6__asan18TryAsanInitFromRtlEv	A	1	1	0x5f640/160
+_ZN6__asan18TryAsanInitFromRtlEv	B	1	1	0x5f68c/160
+__asan_region_is_poisoned	A	1	1	0x5a1ac/836
+__asan_region_is_poisoned	B	1	1	0x5a1f8/836
+___interceptor_malloc	A	1	1	0x58b58/348
+___interceptor_malloc	B	1	1	0x58ba4/348
+_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj	A	1	1	0x603d8/336
+_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj	B	1	1	0x60424/336
+_ZN11__sanitizer18BufferedStackTrace10UnwindFastEmmmmj	A	1	1	0x78e90/352
+_ZN11__sanitizer18BufferedStackTrace10UnwindFastEmmmmj	B	1	1	0x78edc/352
+___interceptor_strdup	A	1	1	0x4ccb0/920
+___interceptor_strdup	B	1	1	0x4ccfc/920
+memcpy	A	1	1	0x9eb3c/1028
+memcpy	B	1	1	0x9e698/1028
+___interceptor_strndup	A	1	1	0x45710/784
+___interceptor_strndup	B	1	1	0x4575c/784
+__interceptor_trampoline_strndup	A	1	1	0x45138/4
+__interceptor_trampoline_strndup	B	1	1	0x45184/4
+__asan_memcpy	A	1	1	0x57630/1180
+__asan_memcpy	B	1	1	0x5767c/1180
+__asan_memset	A	1	1	0x57acc/576
+__asan_memset	B	1	1	0x57b18/576
+memset	A	1	1	0x9ef40/248
+memset	B	1	1	0x9ea9c/248
+___interceptor_strcspn	A	1	1	0x46c98/1160
+___interceptor_strcspn	B	1	1	0x46ce4/1160
+__interceptor_trampoline_strcspn	A	1	1	0x4514c/4
+__interceptor_trampoline_strcspn	B	1	1	0x45198/4
+strcspn	A	1	1	0x9f2b4/280
+strcspn	B	1	1	0x9ee10/280
+strtok_r	A	1	1	0x9f804/144
+strtok_r	B	1	1	0x9f360/144
+___interceptor_strcmp	G	1	1	0x426ec/1328
+___interceptor_strcmp	A	1	1	0x45a24/1328
+___interceptor_strcmp	B	1	1	0x45a70/1328
+__interceptor_trampoline_strcmp	G	1	1	0x42138/4
+__interceptor_trampoline_strcmp	A	1	1	0x4513c/4
+__interceptor_trampoline_strcmp	B	1	1	0x45188/4
+__sanitizer_weak_hook_strcmp	G	1	1	0x426e8/4
+__sanitizer_weak_hook_strcmp	A	1	1	0x45a20/4
+__sanitizer_weak_hook_strcmp	B	1	1	0x45a6c/4
+_ZN6__asan18TryAsanInitFromRtlEv	G	1	1	0x5980c/160
+_ZN6__asan18TryAsanInitFromRtlEv	A	1	1	0x5f640/160
+_ZN6__asan18TryAsanInitFromRtlEv	B	1	1	0x5f68c/160
+__asan_region_is_poisoned	G	1	1	0x54378/836
+__asan_region_is_poisoned	A	1	1	0x5a1ac/836
+__asan_region_is_poisoned	B	1	1	0x5a1f8/836
+_ZN11__sanitizer11mem_is_zeroEPKcm	G	1	1	0x640b8/180
+_ZN11__sanitizer11mem_is_zeroEPKcm	A	1	1	0x69eec/180
+_ZN11__sanitizer11mem_is_zeroEPKcm	B	1	1	0x69f38/180
+__asan_stack_malloc_3	D	1	1	0x3d914/428
+__asan_stack_malloc_3	A	1	1	0x3fc0c/428
+_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE	D	1	1	0x62208/4772
+_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE	A	1	1	0x677a8/4772
+___interceptor___tls_get_addr	D	1	1	0x47340/124
+___interceptor___tls_get_addr	A	1	1	0x4b040/124
+__tls_get_addr	D	1	1	0x9a364/36
+__tls_get_addr	A	1	1	0x9fbb8/36
+_ZN6__asan16GetCurrentThreadEv	D	1	1	0x5c8a0/32
+_ZN6__asan16GetCurrentThreadEv	A	1	1	0x61e40/32
+_ZN6__asan10AsanTSDGetEv	D	1	1	0x553ec/64
+_ZN6__asan10AsanTSDGetEv	A	1	1	0x5a98c/64
+__pthread_getspecific	D	1	1	0x9b418/28
+__pthread_getspecific	A	1	1	0xa0c6c/28
+_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	D	1	1	0x69fb4/848
+_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	A	1	1	0x6f554/848
+_ZN6__asanL11MemToShadowEm{asan_fake_stack.cpp}	D	5	1	0x3dca4/316
+_ZN6__asanL11MemToShadowEm{asan_fake_stack.cpp}	A	5	1	0x40410/316
+__asan_memcpy	C	1	1	0x515dc/1180
+__asan_memcpy	CB	1	1	0x5160c/1180
+__asan_memcpy	A	1	1	0x57630/1180
+__asan_memcpy	B	1	1	0x5767c/1180
+__asan_region_is_poisoned	C	1	1	0x54158/836
+__asan_region_is_poisoned	CB	1	1	0x54188/836
+__asan_region_is_poisoned	A	1	1	0x5a1ac/836
+__asan_region_is_poisoned	B	1	1	0x5a1f8/836
+memcpy	C	1	1	0x97294/1028
+memcpy	CB	1	1	0x97508/1028
+memcpy	A	1	1	0x9eb3c/1028
+memcpy	B	1	1	0x9e698/1028
+__asan_memset	C	1	1	0x51a78/576
+__asan_memset	CB	1	1	0x51aa8/576
+__asan_memset	A	1	1	0x57acc/576
+__asan_memset	B	1	1	0x57b18/576
+memset	C	1	1	0x97698/248
+memset	CB	1	1	0x9790c/248
+memset	A	1	1	0x9ef40/248
+memset	B	1	1	0x9ea9c/248
+_ZL13printf_commonPvPKcS_	R	1	1	0x45964/2760
+_ZL13printf_commonPvPKcS_	RB	1	1	0x459bc/2760
+_ZL13printf_commonPvPKcS_	A	1	1	0x48cdc/2760
+_ZL13printf_commonPvPKcS_	B	1	1	0x48d28/2760
+reply	A	1	1	0x8df14/72
+reply	B	1	1	0x8d9c4/72
+verb_is	A	1	1	0x8df5c/120
+verb_is	B	1	1	0x8da0c/120
+rec_clear	A	1	1	0x894d4/104
+rec_clear	B	1	1	0x899e4/104
+rec_code_declared	A	1	1	0x89170/124
+rec_code_declared	B	1	1	0x89658/124
+rec_shape_of	A	1	1	0x891ec/276
+rec_shape_of	B	1	1	0x896d4/276
+is_instance_verb	A	1	1	0x8e7e4/244
+is_instance_verb	B	1	1	0x8e340/244
+number	A	1	1	0x8e430/572
+number	B	1	1	0x8df2c/592
+answer	A	1	1	0x8a4c0/792
+answer	B	1	1	0x8aa10/836
+check_refusal	A	1	1	0x87f08/208
+check_refusal	B	1	1	0x88204/212
+send_message	A	1	1	0x86b10/616
+send_message	B	1	1	0x86bf8/620
+memchr	A	1	1	0x9ea40/204
+memchr	B	1	1	0x9e59c/204
+verbs_receive (kitrange, by address)	A	1	1	0x8d480/2708
+sup_reset (kitrange, by address)	A	1	1	0x8b6d8/364
+sup_quarantine_clear (kitrange, by address)	A	1	1	0x8b844/364
+sup_policy_set (kitrange, by address)	A	1	1	0x8b9b0/480
+sup_lv2_worker_set (kitrange, by address)	A	1	1	0x8be80/480
+verbs_receive (kitrange, by address)	B	1	1	0x8ce4c/2936
+sup_reset (kitrange, by address)	B	1	1	0x8bd58/88
+sup_quarantine_clear (kitrange, by address)	B	1	1	0x8bdb0/88
+sup_policy_set (kitrange, by address)	B	1	1	0x8be08/112
+sup_lv2_worker_set (kitrange, by address)	B	1	1	0x8c0cc/112

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libmicrohttpd2
 harness: fuzz_mhd2
-rocq: OssFuzzTheorems.libmicrohttpd2.fuzz_mhd2
+rocq: OSSVerify.libmicrohttpd2.fuzz_mhd2
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

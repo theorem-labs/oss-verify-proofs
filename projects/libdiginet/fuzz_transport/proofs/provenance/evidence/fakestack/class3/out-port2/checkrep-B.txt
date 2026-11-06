@@ -1,0 +1,21 @@
+image B: rows by rule {'resolve': 54, 'SIZES_KEEP': 4, 'symbol': 13, 'FUNC entry': 9, 'same-code function': 4, 'OBJECT start': 6, 'not an address': 4}
+kept values that lie in a donor symbol (each a model constant or an instruction word, see BYTECMP-port2.md):
+  B/Rt/RtSM3.v:121 0x5e4850 -> 0x5f3ea8 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  B/Rt/RtSM3.v:122 0x5e4850 -> 0x5f3ea8 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  B/Rt/RtSM3.v:123 0x5e492c -> 0x5f3f84 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  B/Rt/RtSM3.v:124 0x5e492c -> 0x5f3f84 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  B/Rt/RtSM3.v:189 0x5e4850 -> 0x5f3ea8 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  B/Rt/RtSM3.v:190 0x5e492c -> 0x5f3f84 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:40 0x5e4118 -> 0x5f3770 MOVED [symbol] (builtin_tls+0xc8 on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:74 0x1427f1 -> 0x13e231 MOVED [symbol] (_ZN11__sanitizer21common_flags_dont_useE+0x89 on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:75 0x5e4138 -> 0x5f3790 MOVED [symbol] (builtin_tls+0xe8 on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:75 0x5e4140 -> 0x5f3798 MOVED [symbol] (builtin_tls+0xf0 on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:75 0x5e4918 -> 0x5f3f70 MOVED [symbol] (builtin_tls+0x8c8 on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:83 0x5e4850 -> 0x5f3ea8 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:83 0x5e492c -> 0x5f3f84 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  B/Rt/RtSM3T.v:209 0x0007c283 kept [not an address] (lies in _ZN11__sanitizer17SymbolizerProcess11SendCommandEPKc+0x1f of the donor)
+  B/Rt/RtSM3T.v:210 0x0007c283 kept [not an address] (lies in _ZN11__sanitizer17SymbolizerProcess11SendCommandEPKc+0x1f of the donor)
+  B/Rt/RtSM3T.v:215 0x00160613 kept [not an address] (lies in _ZN11__sanitizerL9useCountsE+0x1db13 of the donor)
+  B/Rt/RtSM3T.v:216 0x00160613 kept [not an address] (lies in _ZN11__sanitizerL9useCountsE+0x1db13 of the donor)
+  B/Rt/RtSM3T.v:442 1048576 kept [SIZES_KEEP] (lies in _ZN11__sanitizerL26internal_alloc_placeholderE+0x4e1c0 of the donor)
+PASS: 0 wrong rows

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: qubes-os
 harness: input-proxy-receiver_fuzzer
-rocq: OssFuzzTheorems.qubes_os.input_proxy_receiver_fuzzer
+rocq: OSSVerify.qubes_os.input_proxy_receiver_fuzzer
 origin: upstream
 summary: Writes the input (<=64 KiB) into a pipe dup2'd onto stdin and runs input_proxy_receiver_main(--mouse
   --keyboard --tablet --quiet), the uinput event receiver; nothing checked beyond crashes (the receiver's

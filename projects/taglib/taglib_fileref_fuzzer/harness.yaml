@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: taglib
 harness: taglib_fileref_fuzzer
-rocq: OssFuzzTheorems.taglib.taglib_fileref_fuzzer
+rocq: OSSVerify.taglib.taglib_fileref_fuzzer
 origin: upstream
 summary: FileRef over a ByteVectorStream, then touches every standard tag field, PICTURE complex property
   and audio properties; values discarded.

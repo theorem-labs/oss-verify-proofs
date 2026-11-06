@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: open62541
 harness: fuzz_server_services
-rocq: OssFuzzTheorems.open62541.fuzz_server_services
+rocq: OSSVerify.open62541.fuzz_server_services
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

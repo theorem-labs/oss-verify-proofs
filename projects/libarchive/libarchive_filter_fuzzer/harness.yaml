@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_filter_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_filter_fuzzer
+rocq: OSSVerify.libarchive.libarchive_filter_fuzzer
 origin: upstream
 summary: 'Raw format + all decompression filters: reads one entry, queries filter_count/name/code/bytes
   for each filter, then decompresses up to 10 MiB (break, not a failure, beyond that). Nothing is compared.'

@@ -1,0 +1,48 @@
+== PA-base: 0d24592683b6 -> 205a90fd19b8 on the same inputs
+old PA-base-0d24: 4981 rows (+ column line, + 24 header lines); sha256 of the rows without the # header block 3fa30f18fd6e
+new PA-base-205a: 4981 rows (+ column line, + 26 header lines); sha256 of the rows without the # header block 94ffdc9ead8c
+matched by numeral identity: 4981; old rows unmatched: 0; new rows unmatched: 0
+flagged rows: old 6, new 5
+same verdict: 4979
+changed verdict: 2
+  changed: ACeg.v:74  SAME-SYMBOL -> NON-ADDRESS-SAME  value 0x10000  tool note: a size in a bound slot (the bound of a comparison or an assertion), unchanged: 0x10000 (65536) is a granule / length of the model, not an address of either image
+  changed: AE6k.v:1387  SAME-VALUE-DIFFERENT-OBJECT -> NON-ADDRESS-SAME  value 0x200000  tool note: a size in a bound slot (the bound of a comparison or an assertion), unchanged: 0x200000 (2097152) is a granule / length of the model, not an address of either image
+== PA-plant: 0d24592683b6 -> 205a90fd19b8 on the same inputs
+old PA-plant-0d24: 4981 rows (+ column line, + 25 header lines); sha256 of the rows without the # header block 300217d64754
+new PA-plant-205a: 4981 rows (+ column line, + 27 header lines); sha256 of the rows without the # header block b7c36558e5cd
+matched by numeral identity: 4981; old rows unmatched: 0; new rows unmatched: 0
+flagged rows: old 9, new 9
+same verdict: 4979
+changed verdict: 2
+  changed: ACeg.v:74  SAME-SYMBOL -> NON-ADDRESS-SAME  value 0x10000  tool note: a size in a bound slot (the bound of a comparison or an assertion), unchanged: 0x10000 (65536) is a granule / length of the model, not an address of either image
+  changed: AE6k.v:1387  DIFFERENT-SYMBOL -> NON-ADDRESS-CHANGED  value 0x20051c  tool note: a size in a bound slot (the bound of a comparison or an assertion) that CHANGED: the donor states 0x200000 (2097152) and the port 0x20051c (2098460). A size is not relocated, so a change here changes the quantity; expected 0x200000
+== PB-base: 0d24592683b6 -> 205a90fd19b8 on the same inputs
+old PB-base-0d24: 4994 rows (+ column line, + 24 header lines); sha256 of the rows without the # header block 4b5de3d05022
+new PB-base-205a: 4994 rows (+ column line, + 26 header lines); sha256 of the rows without the # header block 63a0c20e7dae
+matched by numeral identity: 4994; old rows unmatched: 0; new rows unmatched: 0
+flagged rows: old 6, new 5
+same verdict: 4992
+changed verdict: 2
+  changed: YCeg.v:75  SAME-SYMBOL -> NON-ADDRESS-SAME  value 0x10000  tool note: a size in a bound slot (the bound of a comparison or an assertion), unchanged: 0x10000 (65536) is a granule / length of the model, not an address of either image
+  changed: YE30.v:1394  SAME-VALUE-DIFFERENT-OBJECT -> NON-ADDRESS-SAME  value 0x200000  tool note: a size in a bound slot (the bound of a comparison or an assertion), unchanged: 0x200000 (2097152) is a granule / length of the model, not an address of either image
+== PB-plant: 0d24592683b6 -> 205a90fd19b8 on the same inputs
+old PB-plant-0d24: 4994 rows (+ column line, + 25 header lines); sha256 of the rows without the # header block d8d989781ce9
+new PB-plant-205a: 4994 rows (+ column line, + 27 header lines); sha256 of the rows without the # header block c64c138f97f7
+matched by numeral identity: 4994; old rows unmatched: 0; new rows unmatched: 0
+flagged rows: old 9, new 9
+same verdict: 4992
+changed verdict: 2
+  changed: YCeg.v:75  SAME-SYMBOL -> NON-ADDRESS-SAME  value 0x10000  tool note: a size in a bound slot (the bound of a comparison or an assertion), unchanged: 0x10000 (65536) is a granule / length of the model, not an address of either image
+  changed: YE30.v:1394  DIFFERENT-SYMBOL -> NON-ADDRESS-CHANGED  value 0x20051c  tool note: a size in a bound slot (the bound of a comparison or an assertion) that CHANGED: the donor states 0x200000 (2097152) and the port 0x20051c (2098460). A size is not relocated, so a change here changes the quantity; expected 0x200000
+== each plant under 205a90fd19b8 (scripts/plants_205a.py)
+PA AB1v.v:15 0x8646c -> 0x80418 (stale donor code pointer (cgif tfibguard_start)): plant STALE-DONOR-CODE-POINTER [FIRES]; base SAME-SYMBOL; tool note (plant): donor function start oft_exit_guard; the port value is __lsan::LeakSuppressionContext::GetSuppressionForAddr+0x7c; the target has it at oft_exit_guard@0x8646c; value unchanged; expected 0x8646c
+PA ACeg.v:21 0xa6448 -> 0xa6450 (.got cell moved to the next GOT word (class A)): plant SLID-TO-NEIGHBOUR [FIRES]; base SAME-SYMBOL; tool note (plant): the port value is the adjacent .got slot; expected 0xa6448
+PA AE6k.v:1387 0x200000 -> 0x20051c (model constant moved by a code delta (class B)): plant NON-ADDRESS-CHANGED [FIRES]; base NON-ADDRESS-SAME; tool note (plant): a size in a bound slot (the bound of a comparison or an assertion) that CHANGED: the donor states 0x200000 (2097152) and the port 0x20051c (2098460). A size is not relocated, so a change here changes the quantity; expected 0x200000
+PA AE7d.v:35 0xa8258 -> 0x9fdd0 (stale donor data pointer (cgif real_strnlen slot)): plant STALE-DONOR-DATA-POINTER [FIRES]; base SAME-SYMBOL; tool note (plant): value unchanged (a copied literal?); the donor's address of __interception::real_strnlen (8 bytes), which this image has at 0xa8258 (keyed on the symbol name __interception::real_strnlen in both tables); here the value lands in _pthread_cleanup_pop+0x28; the fix is the file owner's, because only the sentence says whether it wanted that object or its neighbour; expected 0xa8258
+PA: rows outside the plant lines whose verdict differs between base and plant: 0
+PB YB1v.v:15 0x864b8 -> 0x80448 (stale donor code pointer (cgif YB1v tfibguard_start)): plant STALE-DONOR-CODE-POINTER [FIRES]; base SAME-SYMBOL; tool note (plant): donor function start oft_exit_guard; the port value is __lsan::LeakSuppressionContext::GetSuppressionForAddr+0x60; the target has it at oft_exit_guard@0x864b8; value unchanged; expected 0x864b8
+PB YCeg.v:22 0xa5fa8 -> 0xa5fb0 (.got cell moved to the next GOT word (class A)): plant SLID-TO-NEIGHBOUR [FIRES]; base SAME-SYMBOL; tool note (plant): the port value is the adjacent .got slot; expected 0xa5fa8
+PB YE30.v:1394 0x200000 -> 0x20051c (model constant moved by a code delta (class B)): plant NON-ADDRESS-CHANGED [FIRES]; base NON-ADDRESS-SAME; tool note (plant): a size in a bound slot (the bound of a comparison or an assertion) that CHANGED: the donor states 0x200000 (2097152) and the port 0x20051c (2098460). A size is not relocated, so a change here changes the quantity; expected 0x200000
+PB YE7d.v:36 0xa7db8 -> 0xa0040 (stale donor data pointer (cgif YE7d real_strnlen slot)): plant STALE-DONOR-DATA-POINTER [FIRES]; base SAME-SYMBOL; tool note (plant): value unchanged (a copied literal?); the donor's address of __interception::real_strnlen (8 bytes), which this image has at 0xa7db8 (keyed on the symbol name __interception::real_strnlen in both tables); here the value lands in __pthread_create+0x228; the fix is the file owner's, because only the sentence says whether it wanted that object or its neighbour; expected 0xa7db8
+PB: rows outside the plant lines whose verdict differs between base and plant: 0
+plants firing: 8 of 8

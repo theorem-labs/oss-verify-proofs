@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libxml2
 harness: xml
-rocq: OssFuzzTheorems.libxml2.xml
+rocq: OSSVerify.libxml2.xml
 origin: upstream
 summary: 'Checks 3 properties (listed below); the first, an API contract: Error-reporting contract under
   malloc/IO failure injection: xmlCtxtReadMemory, xmlSaveDoc/xmlSaveFinish and the push parser (xmlParseChunk)

@@ -1,0 +1,14 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List.
+From OSSVerify.Proofs.simdjson.fuzz_parser.lib.AS Require Import AxSymExec3.
+From OSSVerify.Proofs.simdjson.fuzz_parser.lib.Seg Require Import SegTmpl SegProg.
+From OSSVerify.Proofs.simdjson.fuzz_parser.lib.SegN Require P5BN_defs.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations. Import AX2.
+Open Scope Z_scope.
+Definition P5SBN : SP.summ :=
+  SP.SUMY (SP.p_G P5BN_defs.P5BN) P5BN_defs.T0 (SP.p_ex P5BN_defs.P5BN) (SP.p_W P5BN_defs.P5BN) (SP.p_A P5BN_defs.P5BN)
+    (SP.p_PS P5BN_defs.P5BN) false (SP.p_CR P5BN_defs.P5BN).

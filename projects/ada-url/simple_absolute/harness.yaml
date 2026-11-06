@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ada-url
 harness: simple_absolute
-rocq: OssFuzzTheorems.ada_url.simple_absolute
+rocq: OSSVerify.ada_url.simple_absolute
 origin: upstream
 summary: 'Checks 3 properties (listed below); the first, an idempotence law: Re-parsing href succeeds
   and yields the identical href, for both representations.'

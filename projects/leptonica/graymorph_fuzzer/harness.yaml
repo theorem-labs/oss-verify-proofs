@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: graymorph_fuzzer
-rocq: OssFuzzTheorems.leptonica.graymorph_fuzzer
+rocq: OSSVerify.leptonica.graymorph_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixCloseGray3, pixDilateGray3, pixErodeGray3, pixOpenGray3 (3x1); outputs
   discarded.

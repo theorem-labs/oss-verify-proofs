@@ -1,0 +1,8 @@
+scrub.py record: proofs/libreac/fuzz_boxreg/provenance/evidence/startup-A/inputs/fuzz_boxreg.asan.compose.json, a cleaned copy of an input outside git
+original sha256 d6e2a5d74f39a33e1eedfab696767b1002169c20d7d5a71087f93b4dd55fc5a3 (26571 bytes)
+copy     sha256 0d1a8adfde147f127bd65c7ee9e1d36646f7aa4bb158fecf4617ce40d7a30c45 (26493 bytes)
+rules: json-str:img
+Every byte outside the spans below is copied unchanged; removed text is shown only as <redacted>.
+@@ line 1: original bytes [8, 98) -> copy bytes [8, 20)
+-<redacted>
++"<redacted>"

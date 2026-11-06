@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: strongswan
 harness: fuzz_pa_tnc
-rocq: OssFuzzTheorems.strongswan.fuzz_pa_tnc
+rocq: OSSVerify.strongswan.fuzz_pa_tnc
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

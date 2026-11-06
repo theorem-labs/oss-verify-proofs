@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: reac-pw/fuzz_headamp/ubsan_agrees
+fingerprint: 8bfd45e01356fb28dd71e4cd32801a83852e795cc5aecd90dd7c1247ddeebc1c

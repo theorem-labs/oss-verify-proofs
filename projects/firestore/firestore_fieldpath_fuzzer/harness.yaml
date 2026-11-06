@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: firestore
 harness: firestore_fieldpath_fuzzer
-rocq: OssFuzzTheorems.firestore.firestore_fieldpath_fuzzer
+rocq: OSSVerify.firestore.firestore_fieldpath_fuzzer
 origin: upstream
 summary: FieldPath::FromServerFormat(input); the StatusOr is discarded; all C++ exceptions swallowed.
 entry: LLVMFuzzerTestOneInput

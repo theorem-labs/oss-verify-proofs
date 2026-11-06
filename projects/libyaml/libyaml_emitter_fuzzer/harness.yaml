@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libyaml
 harness: libyaml_emitter_fuzzer
-rocq: OssFuzzTheorems.libyaml.libyaml_emitter_fuzzer
+rocq: OSSVerify.libyaml.libyaml_emitter_fuzzer
 origin: oss-fuzz
 summary: crashes/sanitizers in parse, copy, emit, re-parse and compare.
 entry: LLVMFuzzerTestOneInput

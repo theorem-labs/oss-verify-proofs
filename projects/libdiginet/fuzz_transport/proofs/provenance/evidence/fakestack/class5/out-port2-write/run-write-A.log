@@ -1,0 +1,19 @@
+== image A (asan): donor pin c0661b96b5bd, target pin e89be137db17
+twins A: proved (2 pairs)
+donor: pinned sha256 c0661b96b5bd, twin sha256 68db792d5fa7, allocated sections equal (build-id note excepted): True
+target: pinned sha256 e89be137db17, twin sha256 86efc3a80314, allocated sections equal (build-id note excepted): True
+ref 781f46bc05cd image A: 11 ranges paired and compared; 42 resolve lines: 12 move a value (0x10340 -> 0x10338, 0x40410 -> 0x3dfc4, 0xa63e0 -> 0xa4080, 0xa63e8 -> 0xa4088, 0xa63f0 -> 0xa4090, 0xa6440 -> 0xa40e0, 0xa70f0 -> 0xa4d70, 0xa7100 -> 0xa4d80), 0 name the image of a header range, the rest keep the value
+PASS
+control self A: PASS, 0 values moved
+control plant A: caught (1 FAIL lines)
+  A/Rt/RtStack.v: 0 derived, 0 direct, 0 engine, 0 via-maps, 0 symbol, 0 section, 0 gap, 9 resolved, 0 KEPT-ADDR, 0 UNMAPPED
+alreloc: 5 files written; 0 UNMAPPED or unreviewed CONFLICT, 0 KEPT-ADDR (image-range numerals left unchanged) -- review each
+alreloc: per-numeral report: 92 numerals in 5 files under <OUT>/report/libdiginet/fuzz_transport (one .tsv per file)
+  A/Rt/RtSM5T.v:102 0x142c71 -> 0x13e5b1 MOVED [symbol] (_ZN11__sanitizer21common_flags_dont_useE+0x89 on both sides): confirm it is an address
+PASS: 0 wrong rows
+A/Rt/RtSM5T.v: header 15 lines restored from the donor, 0 CmdBSyms renamed, notice added
+A/Rt/RtSM5.v: header 15 lines restored from the donor, 3 CmdBSyms renamed, notice added
+A/Rt/RtSF5.v: header 4 lines restored from the donor, 2 CmdBSyms renamed, notice added
+A/Rt/RtSMxA.v: header 10 lines restored from the donor, 1 CmdBSyms renamed, notice added
+A/Rt/RtStack.v: header 4 lines restored from the donor, 0 CmdBSyms renamed, notice added
+rc=0

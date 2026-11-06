@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cppitertools
 harness: fuzz_cppitertools
-rocq: OssFuzzTheorems.cppitertools.fuzz_cppitertools
+rocq: OSSVerify.cppitertools.fuzz_cppitertools
 origin: oss-fuzz
 summary: chain/groupby/cycle/combinations/compress are iterated into vectors; nothing is compared (e.g.
   chain(v,v,v) length is never checked against 3*|v|); `(void)(begin==end)` is discarded.

@@ -7,5 +7,5 @@
 (data_only_dirs negative)
 
 (rocq.theory
- (name OssFuzzTheorems.Tests)
- (theories Stdlib stdpp Flocq ReadFile LinuxProcessSemantics OssFuzzTheorems.Core))
+ (name OSSVerify.Tests)
+ (theories Stdlib stdpp Flocq ReadFile LinuxProcessSemantics OSSVerify.Core))

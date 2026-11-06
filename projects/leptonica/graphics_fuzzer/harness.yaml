@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: graphics_fuzzer
-rocq: OssFuzzTheorems.leptonica.graphics_fuzzer
+rocq: OSSVerify.leptonica.graphics_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then rendering primitives drawn onto the payload (pixFillPolygon, pixGeneratePtaBoundary,
   pixRenderBox/Boxa/BoxaBlend/Contours/GridArb/HashBox*/HashMaskArb/LineBlend/PlotFromNuma[Gen]/Polyline*);

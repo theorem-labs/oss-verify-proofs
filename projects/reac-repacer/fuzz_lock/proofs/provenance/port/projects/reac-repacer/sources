@@ -1,0 +1,5 @@
+# reac-repacer's one dependency, libreac (the REAC wire-format core of FreeREAC) at its v1.8.0 tag, the release
+# reac-repacer's Makefile pins for its fuzz targets: the readers call reac_frame_clean_len and reac_frame_is_reac of
+# its src/reac.c, and include <reac/reac.h> and <reac/reac_braid.h>.
+# kind	path	arguments: see lay-out-sources
+git	libreac	https://github.com/FreeREAC/libreac	9277a1fb3c550e9fcc3a8dda0a9cd2573b4054e5

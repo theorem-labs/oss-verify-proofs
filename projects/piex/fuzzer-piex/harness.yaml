@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: piex
 harness: fuzzer-piex
-rocq: OssFuzzTheorems.piex.fuzzer_piex
+rocq: OSSVerify.piex.fuzzer_piex
 origin: oss-fuzz
 summary: Wraps the input in a bounds-checked MemoryStream and calls piex::GetPreviewImageData; the returned
   Error and the PreviewImageData (offsets/lengths of the preview JPEG) are discarded.

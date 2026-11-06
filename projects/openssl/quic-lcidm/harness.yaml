@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: quic-lcidm
-rocq: OssFuzzTheorems.openssl.quic_lcidm
+rocq: OSSVerify.openssl.quic_lcidm
 origin: upstream
 summary: Command interpreter over ossl_quic_lcidm_* (enrol/retire ODCID, generate, retire, cull, lookup);
   results ignored.

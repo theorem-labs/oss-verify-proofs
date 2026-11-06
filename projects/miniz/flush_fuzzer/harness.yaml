@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: miniz
 harness: flush_fuzzer
-rocq: OssFuzzTheorems.miniz.flush_fuzzer
+rocq: OSSVerify.miniz.flush_fuzzer
 origin: upstream
 summary: 'Checks one property, an API contract: deflateInit, deflate(Z_FULL_FLUSH) on the first 3 bytes,
   deflate(Z_FINISH) on the rest (after corrupting compr[3] of the already-emitted output), and deflateEnd

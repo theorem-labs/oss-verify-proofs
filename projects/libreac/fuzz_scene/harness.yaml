@@ -1,0 +1,232 @@
+schema: oss-fuzz-theorems/harness/1
+project: libreac
+harness: fuzz_scene
+rocq: OSSVerify.libreac.fuzz_scene
+origin: upstream
+summary: 'Builds a scene body of an input-chosen length (its own allocation) from libreac''s placeholder scene XORed with
+  the payload, then calls the scene-push framing on it: reac_ctrl_build_scene_step at an input-chosen step, optionally the
+  whole 343-step transfer, reac_ctrl_scene_set_mac and reac_ctrl_scene_build. A refused body or step is an ordinary result.'
+entry: LLVMFuzzerTestOneInput
+source:
+  files:
+  - source/fuzz_scene.c
+  from:
+    repository: https://github.com/FreeREAC/libreac
+    commit: d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+    path: fuzz/fuzz_scene.c
+  modified: false
+  licence: GPL-3.0-or-later
+library:
+  repository: https://github.com/FreeREAC/libreac
+  commit: d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+  version: 1.9.0
+  licence: GPL-3.0-or-later
+modifications:
+- Linked against a static libreac.a of every src/*.c of libreac 1.9.0 at commit d16f3f4e, compiled with each build's flags,
+  as libreac's Makefile builds its fuzz targets but with this toolchain in place of a native clang and libFuzzer.
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on
+  its input.
+- A small driver reads the input file, calls the fuzz target one to four times and prints each return value.
+builds:
+  plain:
+    file: fuzz_scene.plain
+    bytes: 55016
+    sha256: afedb7a7edf00e0ccf3141f3498196bd12feac51cefb72b412c761b9341b1a3f
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  ubsan:
+    file: fuzz_scene.ubsan
+    bytes: 55992
+    sha256: e9e61c239736db98523e664ee0ebf644b2c1588601a8ef2176633e0aa76f8399
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  asan:
+    file: fuzz_scene.asan
+    bytes: 579368
+    sha256: 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+  asan-ubsan:
+    file: fuzz_scene.asan-ubsan
+    bytes: 580184
+    sha256: e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+licence: NOASSERTION
+checks:
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_scene.c:236-254
+  what: The step builder accepts exactly a body of REAC_SCENE_BYTES and a step in [0, REAC_SCENE_STEPS), refuses everything
+    else, and a refused step writes nothing into the block.
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_scene.c:83-137
+  what: A built step is a cd ea link-1 bulk block whose bytes sum to zero, carries its FIRST, MIDDLE or LAST segment, declares
+    its share of the body and carries the body's bytes at that offset; the LAST step ends with the fixed 12-byte trailer.
+- kind: roundtrip
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_scene.c:140-163
+  what: reac_ctrl_parse reads every built step back as SCENE_TRANSFER with the link, segment, opcode and length it was built
+    with, and its block checksum check accepts it.
+- kind: roundtrip
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_scene.c:175-202
+  what: A whole body is accepted at every step, the step payloads concatenated in order are the body byte for byte, and their
+    lengths sum to the total the first step declares.
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_scene.c:266-329
+  what: set_mac and scene_build each accept exactly a REAC_SCENE_BYTES body, and a refused call writes nothing; set_mac writes
+    the MAC at REAC_SCENE_MAC_OFF and nothing else, and scene_build makes the body zeros, the three tags and the MAC.
+statements:
+  plain_halts:
+    kind: halts
+    builds:
+    - plain
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  ubsan_halts:
+    kind: halts
+    builds:
+    - ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_halts:
+    kind: halts
+    builds:
+    - asan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_ubsan_halts:
+    kind: halts
+    builds:
+    - asan-ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open
+  ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - ubsan
+    reading: alloc-forced-only
+    budgets: standard
+    status: open
+  asan_ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan-ubsan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open

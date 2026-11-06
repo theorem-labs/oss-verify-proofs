@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: librawspeed
 harness: RawSpeedFuzzer
-rocq: OssFuzzTheorems.librawspeed.RawSpeedFuzzer
+rocq: OSSVerify.librawspeed.RawSpeedFuzzer
 origin: upstream
 summary: 'Full pipeline: RawParser(buffer).getDecoder(), decodeRaw, decodeMetaData with empty CameraMetaData;
   output never checked.'

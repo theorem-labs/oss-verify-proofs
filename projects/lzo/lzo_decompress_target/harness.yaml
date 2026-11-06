@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lzo
 harness: lzo_decompress_target
-rocq: OssFuzzTheorems.lzo.lzo_decompress_target
+rocq: OSSVerify.lzo.lzo_decompress_target
 origin: oss-fuzz
 summary: Decodes the input with one of seven *_decompress_safe variants (lzo1b/1c/1f/1x/1y/1z/2a, chosen
   by size % 7) into a 256 KiB buffer; the return code is only printed under __DEBUG__.

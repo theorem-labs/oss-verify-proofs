@@ -1,0 +1,32 @@
+# pins: bin/fuzz_grant.asan c2c7559b29bd; unstripped/fuzz_grant.asan 57c26f993615; bin/fuzz_transport.asan e89be137db17; unstripped/fuzz_transport.asan 86efc3a80314; 2026-10-30d/atable.py.frozen-e88affcf0526 e88affcf0526; atable/atable.py 1ce98fbad397; atable e88affcf0526 through the 2026-10-30d set's frozen-run.sh (and 1ce98fbad397 for the cross-run); donor pair fuzz_grant.asan + its released A/AB12.v
+# donor (bundle atable.py atable.py e88affcf0526)
+past-end: this image's end 0x9b164 (TFIB_TEXT_N 109154), text end 0x9b164 (0 words past); the donor's released end 0x9b164, its text end 0x9b164; 0 function start(s) / cell value(s) past the end
+atable: stops_more = the 13 self-loops of fuzz_grant.asan: 12 in STOP_SPEC order; APPENDED 0x6e40c _ZN11__sanitizerL23SealedRepairReservationEmm+0xc0
+rc=0
+# twin (bundle atable.py atable.py e88affcf0526)
+past-end: this image's end 0xa2948 (TFIB_TEXT_N 116254), text end 0xa2948 (0 words past); the donor's released end 0x9b164, its text end 0x9b164; 0 function start(s) / cell value(s) past the end
+atable: stops_more = the 13 self-loops of fuzz_transport.asan: 12 in STOP_SPEC order; APPENDED 0x6efc0 _ZN11__sanitizerL23SealedRepairReservationEmm+0xc0
+rc=0
+# ab1w (bundle atable.py atable.py e88affcf0526)
+past-end: this image's end 0xa2948 (TFIB_TEXT_N 116254), text end 0xa2948 (0 words past); the donor's released end 0x9b164, its text end 0x9b164; 0 function start(s) / cell value(s) past the end
+atable: stops_more = the 13 self-loops of fuzz_transport.asan: 12 in STOP_SPEC order; APPENDED 0x6efc0 MmapFixedOrDieOnFatalError_MmapFixedSuperNoReser+0x134
+rc=0
+# plant-tab (bundle atable.py atable.py e88affcf0526)
+past-end: this image's end 0xa2948 (TFIB_TEXT_N 116254), text end 0xa2948 (0 words past); the donor's released end 0x9b164, its text end 0x9b164; 0 function start(s) / cell value(s) past the end
+atable: stops_more = the 13 self-loops of fuzz_transport.asan: 12 in STOP_SPEC order; APPENDED 0x6efc0 MmapFixedOrDieOnFatalError_MmapFixedSuperNoReser+0x134
+rc=0
+# twin-1ce9 (bundle atable.py atable.py 1ce98fbad397)
+past-end: this image's end 0xa2948 (TFIB_TEXT_N 116254), text end 0xa2948 (0 words past); the donor's released end 0x9b164, its text end 0x9b164; 0 function start(s) / cell value(s) past the end
+atable: stops_more = the 13 self-loops of fuzz_transport.asan: 12 in STOP_SPEC order; APPENDED 0x6efc0 _ZN11__sanitizerL23SealedRepairReservationEmm+0xc0
+rc=0
+# compare
+donor: fuzz_grant fields vs its released A/AB12.v record: 0 of 28 differ; vs its released A/AB1w.v tfib_at_* rows: 0 differ: PASS
+ab1w: fuzz_transport fields from stage-out/A/AB1w.v vs from the twin: equal (28 fields): PASS
+rows: stage-out/A/AB1w.v tfib_at_* (26 rows) vs the twin fields: 0 differ; stops_more: the 12 listed = the image's first 12 self-loops, atable appends [0x6efc0] (not in the core row): PASS
+1ce9: the twin run with atable.py 1ce98fbad397 vs e88affcf0526: equal (28 fields): PASS
+not in the core: TFIB_TEXT_LO 0x310d0, TFIB_TEXT_N 116254 (A/AB12.v, start-up; no stage-out file states them)
+lib (not a gate of the core): LIB/A/AB12.v record vs the twin fields: 0 of 28 differ
+# controls
+plant-row: tfib_at_x_memset -> 0x95e30 (the donor's): 1 row(s) differ (x_memset 0x9d614/0x95e30): PASS
+plant-tab: tfib_A_ / tfib_E_musl_memset -> the donor's: fields differ from the twin run in x_memset (x_memset 0x95e30): PASS
+rc=0

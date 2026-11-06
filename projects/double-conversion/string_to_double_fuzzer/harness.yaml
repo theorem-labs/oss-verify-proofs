@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: double-conversion
 harness: string_to_double_fuzzer
-rocq: OssFuzzTheorems.double_conversion.string_to_double_fuzzer
+rocq: OSSVerify.double_conversion.string_to_double_fuzzer
 origin: oss-fuzz
 summary: StringToDoubleConverter (hex, octal, junk, spaces, case-insensitive, hex floats) .StringToDouble
   on the input; the double and processed-digit count are discarded (no DoubleToString round trip).

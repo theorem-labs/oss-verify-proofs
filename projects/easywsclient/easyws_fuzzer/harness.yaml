@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: easywsclient
 harness: easyws_fuzzer
-rocq: OssFuzzTheorems.easywsclient.easyws_fuzzer
+rocq: OSSVerify.easywsclient.easyws_fuzzer
 origin: oss-fuzz
 summary: easywsclient::WebSocket::from_url on the fuzz string; the returned pointer is discarded (not
   even deleted).

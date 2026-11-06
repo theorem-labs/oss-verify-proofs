@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libvips
 harness: pngsave_buffer_fuzzer
-rocq: OssFuzzTheorems.libvips.pngsave_buffer_fuzzer
+rocq: OSSVerify.libvips.pngsave_buffer_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

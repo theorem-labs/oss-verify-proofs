@@ -1,0 +1,45 @@
+file	line	cell	value	section	class	expected	found	verdict	readers
+lib/U/Reusable/YH03.v	137	D_const_double_0x1p28	0x10390	.rodata	const	41b0000000000000 (double 0x1p28)	000000000000b041 (double 268435456.0)	TRUE	0
+lib/U/Reusable/YH03.v	138	D_const_double_1_0	0x103a8	.rodata	const	3ff0000000000000 (double 1.0)	000000000000f03f (double 1.0)	TRUE	0
+lib/U/Reusable/YH03.v	139	D_const_HIGHS_0x8080808080808080	0x103b8	.rodata	const	8080808080808080	8080808080808080 (double -2.937446524422997e-306)	TRUE	34
+lib/U/Reusable/YH03.v	140	D_const_double_0_5	0x103c0	.rodata	const	3fe0000000000000 (double 0.5)	000000000000e03f (double 0.5)	TRUE	0
+lib/U/Reusable/YH03.v	141	D_const_ONES_0x0101010101010100	0x103c8	.rodata	const	0101010101010100	0001010101010101 (double 7.748604185489346e-304)	TRUE	34
+lib/U/Reusable/YH03.v	142	D_const_double_0x1p1023	0x103d0	.rodata	const	7fe0000000000000 (double 0x1p1023)	000000000000e07f (double 8.98846567431158e+307)	TRUE	0
+lib/U/Reusable/YH03.v	143	D_const_double_1_5	0x103d8	.rodata	const	3ff8000000000000 (double 1.5)	000000000000f83f (double 1.5)	TRUE	0
+lib/U/Reusable/YH03.v	144	D_const_u64_fmt_fp_1e9_recip_misc	0x103e0	.rodata	const	0044b82fa09b5a53 (ceil(2^84 / 1e9), the unsigned-division magic for /1e9: mulhu by it, then shift right 84 - 64 = 20)	535a9ba02fb84400 (double 2.305118302361086e-307)	TRUE	0
+lib/U/Reusable/YH03.v	145	D_const_double_0x1p_969_0x1p_1022_0x1p	0x103e8	.rodata	const	0360000000000000 (double 0x1p-969)	0000000000006003 (double 2.004168360008973e-292)	TRUE	0
+lib/U/Reusable/YH03.v	146	D_const_double_0x1p120	0x103f8	.rodata	const	4770000000000000 (double 0x1p120)	0000000000007047 (double 1.329227995784916e+36)	TRUE	0
+lib/U/Reusable/YH03.v	147	D_debruijn32	0x10488	.rodata	table	32 bytes that are a permutation of 0..31, formed by code	00011c021d0e18031e16140f191104081f1b0d17151310071a0c12060b050a09	TRUE	132
+lib/U/Reusable/YH03.v	148	D_size_classes	0x104a8	.rodata	object	a sized OBJECT starting here whose name or file says size / classes	__malloc_size_classes{malloc.c} (size 96, STT_OBJECT)	TRUE	312
+lib/U/Reusable/YH03.v	151	D_jt_printf_core_1	0x10538	.rodata	table	formed only inside printf_core, as a jump table (slli / add / lw / add / jr)	printf_core+0x534 add/lw/add/jr	TRUE	0
+lib/U/Reusable/YH03.v	152	D_jt_printf_core_2	0x10618	.rodata	table	formed only inside printf_core, as a jump table (slli / add / lw / add / jr)	printf_core+0x6ac add/lw/add/jr	TRUE	0
+lib/U/Reusable/YH03.v	153	D_jt_pop_arg	0x10638	.rodata	table	formed only inside pop_arg, as a jump table (slli / add / lw / add / jr)	pop_arg+0x14 add/lw/add/jr	TRUE	0
+lib/U/Reusable/YH03.v	166	D_got_DYNAMIC	0x1d668	.got	got	0000000000000000 (no symbol DYNAMIC / _DYNAMIC / __DYNAMIC in the twin: a weak undefined reference, slot 0)	0000000000000000 (no symbol)	TRUE	0
+lib/U/Reusable/YH03.v	167	D_got_main	0x1d670	.got	got	0000000000012828 (main at 0x12828)	2828010000000000 (main)	TRUE	0
+lib/U/Reusable/YH03.v	168	D_got_init	0x1d678	.got	got	0000000000014110 (_init at 0x14110)	1041010000000000 (_init, dummy{__libc_start_main.c})	TRUE	0
+lib/U/Reusable/YH03.v	169	D_got_fini	0x1d680	.got	got	0000000000014928 (_fini at 0x14928)	2849010000000000 (_fini, dummy{exit.c})	TRUE	0
+lib/U/Reusable/YH03.v	170	D_got_register_frame_info	0x1d688	.got	got	0000000000000000 (no symbol register_frame_info / _register_frame_info / __register_frame_info in the twin: a weak undefined reference, slot 0)	0000000000000000 (no symbol)	TRUE	0
+lib/U/Reusable/YH03.v	171	D_got_cxa_finalize	0x1d690	.got	got	000000000001485c (__cxa_finalize at 0x1485c)	5c48010000000000 (__cxa_finalize)	TRUE	0
+lib/U/Reusable/YH03.v	172	D_got_deregister_frame_info	0x1d698	.got	got	0000000000000000 (no symbol deregister_frame_info / _deregister_frame_info / __deregister_frame_info in the twin: a weak undefined reference, slot 0)	0000000000000000 (no symbol)	TRUE	0
+lib/U/Reusable/YH03.v	173	D_got_stderr	0x1d6a0	.got	got	000000000001d650 (stderr at 0x1d650)	50d6010000000000 (__fini_array_end{crtn.c}, stderr)	TRUE	0
+lib/U/Reusable/YH03.v	174	D_got_LLVMFuzzerInitialize	0x1d6a8	.got	got	0000000000000000 (no symbol LLVMFuzzerInitialize / _LLVMFuzzerInitialize / __LLVMFuzzerInitialize in the twin: a weak undefined reference, slot 0)	0000000000000000 (no symbol)	TRUE	0
+lib/U/Reusable/YH03.v	175	D_got_stdout	0x1d6b0	.got	got	000000000001d658 (stdout at 0x1d658)	58d6010000000000 (stdout)	TRUE	0
+lib/U/Reusable/YH03.v	176	D_got_environ	0x1d6d0	.got	got	000000000002e9a0 (environ at 0x2e9a0)	a0e9020000000000 (___environ, __environ, _environ, environ)	TRUE	0
+lib/U/Reusable/YH03.v	177	D_got_progname_full	0x1d6d8	.got	got	000000000004ecf8 (__progname_full at 0x4ecf8)	f8ec040000000000 (__progname_full, program_invocation_name)	TRUE	0
+lib/U/Reusable/YH03.v	178	D_got_progname	0x1d6e0	.got	got	000000000004ecf0 (__progname at 0x4ecf0)	f0ec040000000000 (__progname, program_invocation_short_name)	TRUE	0
+lib/U/Reusable/YH03.v	179	D_got_init_array_end	0x1d6e8	.got	got	000000000001d648 (__init_array_end at 0x1d648)	48d6010000000000 (__fini_array_start{crtn.c}, __init_array_end{crtn.c}, __fini{crtbegin.c})	TRUE	0
+lib/U/Reusable/YH03.v	180	D_got_init_array_start	0x1d6f0	.got	got	000000000001d640 (__init_array_start at 0x1d640)	40d6010000000000 (__init_array_start{crtn.c}, __init{crtbegin.c})	TRUE	0
+lib/U/Reusable/YH03.v	181	D_got_stack_chk_guard	0x1d6f8	.got	got	000000000004ece0 (__stack_chk_guard at 0x4ece0)	e0ec040000000000 (__stack_chk_guard)	TRUE	156
+lib/U/Reusable/YH03.v	182	D_got_fini_array_end	0x1d700	.got	got	000000000001d650 (__fini_array_end at 0x1d650)	50d6010000000000 (__fini_array_end{crtn.c}, stderr)	TRUE	0
+lib/U/Reusable/YH03.v	183	D_got_fini_array_start	0x1d708	.got	got	000000000001d648 (__fini_array_start at 0x1d648)	48d6010000000000 (__fini_array_start{crtn.c}, __init_array_end{crtn.c}, __fini{crtbegin.c})	TRUE	0
+lib/U/Reusable/YH03.v	185	D_CODENAME_arg0	0x1e718	.data	object	a sized OBJECT starting here whose name or file says CODENAME / arg0	oft_arg0{adapter.c} (size 5, STT_OBJECT)	TRUE	0
+lib/U/Reusable/YH03.v	186	D_CODENAME_argc	0x1e720	.data	object	a sized OBJECT starting here whose name or file says CODENAME / argc	oft_argc{adapter.c} (size 4, STT_OBJECT)	TRUE	0
+lib/U/Reusable/YH03.v	187	D_CODENAME_argv	0x1e728	.data	object	a sized OBJECT starting here whose name or file says CODENAME / argv	oft_argv{adapter.c} (size 16, STT_OBJECT)	TRUE	0
+lib/U/Reusable/YH03.v	198	D_CODENAME_in_callback	0x2e974	.bss	object	a sized OBJECT starting here whose name or file says CODENAME / callback	oft_in_callback{adapter.c} (size 1, STT_OBJECT)	TRUE	0
+lib/U/Reusable/YH03.v	199	D_CODENAME_aligned_copy_empty	0x2e980	.bss	object	a sized OBJECT starting here whose name or file says CODENAME / empty	oft_aligned_copy.empty{adapter.c} (size 32, STT_OBJECT)	TRUE	2
+lib/U/Reusable/YH03.v	205	D_atexit_lock	0x4eabc	.bss	object	a sized OBJECT starting here whose name or file says atexit / lock	lock{atexit.c} (size 4, STT_OBJECT)	TRUE	0
+lib/U/Reusable/YH03.v	206	D_atexit_slot	0x4eac0	.bss	object	a sized OBJECT starting here whose name or file says atexit / slot	slot{atexit.c} (size 4, STT_OBJECT)	TRUE	0
+lib/U/Reusable/YH03.v	207	D_atexit_head	0x4eac8	.bss	object	a sized OBJECT starting here whose name or file says atexit / head	head{atexit.c} (size 8, STT_OBJECT)	TRUE	0
+lib/U/Reusable/YH03.v	208	D_atexit_builtin	0x4ead0	.bss	object	a sized OBJECT starting here whose name or file says atexit / builtin	builtin{atexit.c} (size 520, STT_OBJECT)	TRUE	0
+lib/U/Reusable/YH03.v	222	D_stderr_buf	0x4f138	.bss	object	a sized OBJECT starting here whose name or file says stderr / buf	buf{stderr.c} (size 8, STT_OBJECT)	TRUE	0
+lib/U/Reusable/YH03.v	223	D_stdout_buf	0x4f140	.bss	object	a sized OBJECT starting here whose name or file says stdout / buf	buf{stdout.c} (size 1032, STT_OBJECT)	TRUE	0

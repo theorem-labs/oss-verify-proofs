@@ -1,0 +1,5 @@
+[libreac/fuzz_knock] AU/YF0r.v:46 0x3c1f4 0x3e000
+[libreac/fuzz_knock] AU/YF0r.v:75 0x96608 0xa3ce0
+[libreac/fuzz_knock] AU/YF0r.v:75 0x972f8 0xa49d0
+[libreac/fuzz_knock] AU/YF0r.v:76 0x96668 0xa3d40
+[libreac/fuzz_knock] AU/YF0r.v:76 0x97308 0xa49e0

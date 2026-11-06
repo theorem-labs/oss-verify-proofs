@@ -1,0 +1,17 @@
+old RB-3d2e: 212121 rows (+ column line, + 29 header lines); sha256 of the rows without the # header block 7bdcf729e496
+new RB-0d24: 212121 rows (+ column line, + 29 header lines); sha256 of the rows without the # header block 3eaa28b5e816
+matched by numeral identity: 212121; old rows unmatched: 0; new rows unmatched: 0
+flagged rows: old 25107, new 25169
+same verdict: 212048
+changed verdict: 73
+  new flag (non-finding -> finding class): 62
+  flag cleared (finding class -> non-finding): 0
+  flag class changed (finding -> other finding class): 0
+  non-finding class changed: 11
+
+transitions (old verdict -> new verdict: rows)
+  SAME-SYMBOL -> DIFFERENT-SYMBOL: 51  [new flag (non-finding -> finding class)]
+  ROUND-CONSTANT-SAME -> STALE-DONOR-CODE-POINTER: 10  [new flag (non-finding -> finding class)]
+  SAME-SYMBOL -> UNMEASURED-NAME: 7  [non-finding class changed]
+  ROUND-CONSTANT-SAME -> SAME-SYMBOL: 4  [non-finding class changed]
+  ROUND-CONSTANT-SAME -> SAME-VALUE-DIFFERENT-OBJECT: 1  [new flag (non-finding -> finding class)]

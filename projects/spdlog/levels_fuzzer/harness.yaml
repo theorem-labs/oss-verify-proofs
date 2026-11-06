@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spdlog
 harness: levels_fuzzer
-rocq: OssFuzzTheorems.spdlog.levels_fuzzer
+rocq: OSSVerify.spdlog.levels_fuzzer
 origin: oss-fuzz
 summary: cfg::load_env_levels + cfg::load_argv_levels over up to 255 fuzzed argv strings, then spdlog::info;
   output goes to a basic_file_sink on /dev/null and is never read; fmt format errors are caught by spdlog's

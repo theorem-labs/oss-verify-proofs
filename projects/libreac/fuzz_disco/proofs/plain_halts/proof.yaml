@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: libreac/fuzz_disco/plain_halts
+fingerprint: 9dcf9048965061076dd0babf09c37fc09964859b4aab8c37f2a251d3c13733a4

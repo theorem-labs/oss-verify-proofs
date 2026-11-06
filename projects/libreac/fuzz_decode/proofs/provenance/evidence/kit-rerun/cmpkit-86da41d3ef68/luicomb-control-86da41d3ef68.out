@@ -1,0 +1,11 @@
+# positive control: the shape planted in a copy, and the same function in the image of record
+# cmpkit 86da41d3ef68; python 3.12.3, pyelftools 0.33, capstone 5.0.7; luicomb.py 69fe2b13fadd, plantlui.py 1352999653f1, luicomb-run.sh 2826820888ff
+$ python3 plantlui.py kit img/unstripped/fuzz_decode.asan memset control.elf
+plantlui: fuzz_decode.asan (sha256 4cb0a852e826) -> control.elf (sha256 36ccc9b797a8): the first 4 words of memset at 0x92474 are now lui a0, 0x11 ; lui a1, 0x2 ; add a0, a0, a1 ; ld a0, 0(a0); the load base is 0x11000 + 0x2000 = 0x13000
+$ python3 luicomb.py kit memset control.elf        (the planted copy: the site must be reported, with its address)
+# image control.elf sha256 36ccc9b797a8
+SITE	memset	+0xc	ld a0, 0(a0)	base a0	luis 2 [+0x0 +0x4]	value 0x13000	ea 0x13000 (.rodata)	load
+TOTAL	control.elf	memset	bases with >=2 lui 1	bases with 1 lui 0	base sites 26
+$ python3 luicomb.py kit memset img/unstripped/fuzz_decode.asan   (the image of record: no such site)
+# image img/unstripped/fuzz_decode.asan sha256 4cb0a852e826
+TOTAL	fuzz_decode.asan	memset	bases with >=2 lui 0	bases with 1 lui 0	base sites 26

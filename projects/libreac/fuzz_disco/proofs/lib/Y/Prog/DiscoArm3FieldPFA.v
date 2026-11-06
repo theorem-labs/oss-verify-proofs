@@ -1,0 +1,79 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-10: the walk of reac_ctrl_build_grant_sweep on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8c.v, proofs/cgif/cgif_file_fuzzer/lib/A/AC8k.v, proofs/cgif/cgif_file_fuzzer/lib/A/AE2d.v, proofs/cgif/cgif_file_fuzzer/lib/UI2d.v. *)
+(* Modified by Theorem Labs, 2026-10: the walk of reac_ctrl_build_grant_sweep on image B (fuzz_grant.asan-ubsan, bin fde52226dc48, 0x8363c = BASE + 0x2c00, 367 slots), ported from lib/A/Prog/CtrlBuildGrantSweep.v at a working branch 5aae1e8a0ce (its Require closure: 196 files, 0 Admitted / admit / Axiom / Parameter), with the steps of the class-6 side-stack frame adapted from lib/A/Prog/CtrlStampHeadamp.v at the same commit (whose own cgif sources are proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, ACam.v, ACbf.v, ACf6.v, AChd.v); every address, constant and byte is image B's. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/B/Prog/CtrlBuildGrantSweep.v, with its module paths and module names changed; 458 of its 493 lines of code are new or changed and 3975 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/Y/Prog/DiscoArm3FieldMDA.v, with its module names changed; 20 of its 69 lines of code are new or changed and 444 lines of the source are left out. *)
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YP09 YI04 YI09 YI08 YI00 YN3v YG0v.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YK04 YA0i YA0n.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import
+YG00 YG0a YG01 YG0f YG0n YG0d YCbq YC5d YCbp YE00 YE01 YO09.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YI16 YM05 YImgTop.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import
+YP0b YP0a YP0c YP0d YP07 YC80 YI0w YI0z YI12 YC4a YC1f YC8g YC1g YC44 YXcalls.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Y.Prog Require Import
+DiscoYEntryInv DiscoYEntryShapes DiscoYEntSeatStmt DiscoYEntBodyStmt.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YRo.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Y.Prog Require Import DiscoArm3 DiscoArm3FieldCut DiscoArm3JtokSpec.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Y.Prog Require Import
+DiscoArm3FieldPFXA0 DiscoArm3FieldPFXA1 DiscoArm3FieldPFXA2 DiscoArm3FieldPFXA3
+DiscoArm3FieldPFXA4 DiscoArm3FieldPFXA5 DiscoArm3FieldPFXA6 DiscoArm3FieldPFXA7.
+#[local] Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope bv_scope.
+Open Scope Z_scope.
+
+Section d. Context {rc : YM05.RunCeil} {SK : YI16.sink_head} {LS : lib_shape}.
+Section f.
+Context {PI : PAImg lib_both3_0_listing} {PX : PAXcalls lib_both3_0_listing}.
+#[local] Notation SEGS := (@pa_segs _ lib_both3_0_listing PI).
+Section h.
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable XM_LIB : Z -> Z.
+Variables RLO RHI : Z.
+Variable tfib_K : asink_syms.
+Hypothesis DSEAT : d_seat_stmt B MT XM_LIB RLO RHI tfib_K.
+Hypothesis DFACTS : d_facts_stmt B MT XM_LIB RLO RHI tfib_K.
+Hypothesis DLAND : d_land_stmt B MT XM_LIB RLO RHI tfib_K.
+Hypothesis LAWS : AR_laws SEGS B.
+Hypothesis PAL : PALib B.
+Hypothesis FFL : frame_flag_lawP SEGS B.
+Hypothesis MT_TRIV : MT = ameter_triv.
+Hypothesis DBRT : d_body_rt_stmt B.
+Hypothesis DBCK : d_body_call_keep_stmt B MT XM_LIB RLO RHI tfib_K.
+Hypothesis TJTOK : tjtok_is_spec B.
+Hypothesis DROH : d_ro_hyps B.
+Hypothesis DCRO : dimg_consts_of_ro_stmt B.
+Hypothesis MCRO : forall a, MC_CONSTS_LO <= a < MC_CONSTS_HI -> in_roP SEGS pa_relro_lo pa_relro_hi a.
+Hypothesis MCUN : forall a, MC_CONSTS_LO <= a < MC_CONSTS_HI ->
+  ~ Exists (in_zr a) (as_owned_static B) /\ ~ (as_errno B <= a < as_errno B + 4).
+
+Theorem a3f_pfa : forall p, 0 <= p < 8 -> seg_pfa_p_spec B MT XM_LIB RLO RHI tfib_K p.
+Proof.
+intros p Hp.
+assert (E : p = 0 \/ p = 1 \/ p = 2 \/ p = 3 \/ p = 4 \/ p = 5 \/ p = 6 \/ p = 7) by lia.
+destruct E as [-> | [-> | [-> | [-> | [-> | [-> | [-> | ->]]]]]]].
+- exact (a3f_pfxa_0 B MT XM_LIB RLO RHI tfib_K DSEAT DFACTS DLAND LAWS PAL FFL MT_TRIV DBRT DBCK TJTOK DROH DCRO MCRO MCUN).
+- exact (a3f_pfxa_1 B MT XM_LIB RLO RHI tfib_K DSEAT DFACTS DLAND LAWS PAL FFL MT_TRIV DBRT DBCK TJTOK DROH DCRO MCRO MCUN).
+- exact (a3f_pfxa_2 B MT XM_LIB RLO RHI tfib_K DSEAT DFACTS DLAND LAWS PAL FFL MT_TRIV DBRT DBCK TJTOK DROH DCRO MCRO MCUN).
+- exact (a3f_pfxa_3 B MT XM_LIB RLO RHI tfib_K DSEAT DFACTS DLAND LAWS PAL FFL MT_TRIV DBRT DBCK TJTOK DROH DCRO MCRO MCUN).
+- exact (a3f_pfxa_4 B MT XM_LIB RLO RHI tfib_K DSEAT DFACTS DLAND LAWS PAL FFL MT_TRIV DBRT DBCK TJTOK DROH DCRO MCRO MCUN).
+- exact (a3f_pfxa_5 B MT XM_LIB RLO RHI tfib_K DSEAT DFACTS DLAND LAWS PAL FFL MT_TRIV DBRT DBCK TJTOK DROH DCRO MCRO MCUN).
+- exact (a3f_pfxa_6 B MT XM_LIB RLO RHI tfib_K DSEAT DFACTS DLAND LAWS PAL FFL MT_TRIV DBRT DBCK TJTOK DROH DCRO MCRO MCUN).
+- exact (a3f_pfxa_7 B MT XM_LIB RLO RHI tfib_K DSEAT DFACTS DLAND LAWS PAL FFL MT_TRIV DBRT DBCK TJTOK DROH DCRO MCRO MCUN).
+Qed.
+
+End h.
+End f.
+End d.

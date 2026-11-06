@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: radvd
 harness: fuzz_process
-rocq: OssFuzzTheorems.radvd.fuzz_process
+rocq: OSSVerify.radvd.fuzz_process
 origin: oss-fuzz
 summary: Builds a fake 'lo' interface and link-local source address and passes the input as an ICMPv6
   packet to process() (RS/RA handling); nothing is inspected afterwards.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: hwloc
 harness: hwloc_fuzzer
-rocq: OssFuzzTheorems.hwloc.hwloc_fuzzer
+rocq: OSSVerify.hwloc.hwloc_fuzzer
 origin: oss-fuzz
 summary: hwloc_encode_to_base64(input -> 100-byte target), then hwloc_decode_from_base64 of the RAW INPUT
   (not the encoded text) into the same buffer; nothing compared.

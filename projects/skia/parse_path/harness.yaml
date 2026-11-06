@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: skia
 harness: parse_path
-rocq: OssFuzzTheorems.skia.parse_path
+rocq: OSSVerify.skia.parse_path
 origin: upstream
 summary: 'Checks one property, an invariant: SkParsePath::FromSVGString, then ToSVGString in Absolute
   and Relative encodings; abort if either output starts with "Impossible". The comment says the test exists

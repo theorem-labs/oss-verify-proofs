@@ -1,0 +1,301 @@
+schema: oss-verify-proofs build record v1
+entry_point:
+  project: zstd
+  harness: fse_read_ncount
+  function: LLVMFuzzerTestOneInput
+  records:
+  - projects/zstd/project.yaml
+  - projects/zstd/fse_read_ncount/harness.yaml
+release:
+  repository: https://github.com/theorem-labs/oss-verify-proofs
+  binaries_release: v2026.10.0
+  sources_release: v2026.10.0-src
+upstream:
+  name: zstd
+  repository: https://github.com/facebook/zstd
+  commit: 82d322c4973d9e2968d94047a40892bc6d9a9bdf
+  licence: BSD-3-Clause OR GPL-2.0-only
+  licence_evidence: 'Every file whose objects the link record of this build shows carries the zstd header ''This
+    source code is licensed under both the BSD-style license (found in the LICENSE file ...) and the GPLv2 (found
+    in the COPYING file ...). You may select, at your option, one of the above-listed licenses'': lib/common/entropy_common.c:3,9-12,
+    lib/common/error_private.c:2,5-8, lib/compress/fse_compress.c:3,9-12, lib/common/zstd_common.c:2,5-8; the harness
+    siblings tests/fuzz/fuzz_data_producer.c:2,5-8 and tests/fuzz/fuzz_helpers.c:2,5-8 (recipes.sh oft_build_harness:2068-2095
+    compiles each .c beside the harness that defines neither LLVMFuzzerTestOneInput nor main into lib/liboft.a as
+    oftsib-<name>.o; the link record takes these two); harness tests/fuzz/fse_read_ncount.c:2,5-8. Every repository
+    file these sources include (closure of quoted #includes, ignoring #if: 28 files) carries the same header. LICENSE:1-30
+    is the BSD licence for Zstandard (Copyright Meta Platforms, Inc. and affiliates, line 5; the three conditions
+    at lines 10-19 are BSD-3-Clause); COPYING:1-2 is the GNU General Public License version 2; the headers offer
+    ''the GPLv2'' with no later-version option, so GPL-2.0-only [inferred]; README.md:238 ''Zstandard is dual-licensed
+    under BSD OR GPLv2'''
+  licence_in_release_records: NOASSERTION
+oss_fuzz:
+  repository: https://github.com/google/oss-fuzz
+  commit: bd2ce21991a94a362b92fb1bf25f86d5a1a60842
+  path: projects/zstd
+harness:
+  origin: upstream
+  source:
+    files:
+    - source/fse_read_ncount.c
+    from:
+      repository: https://github.com/facebook/zstd
+      commit: 82d322c4973d9e2968d94047a40892bc6d9a9bdf
+      path: tests/fuzz/fse_read_ncount.c
+    modified: false
+    licence: BSD-3-Clause OR GPL-2.0-only
+    licence_evidence: 'header of tests/fuzz/fse_read_ncount.c:1-9: copyright at line 2; lines 5-8 license it under
+      both the BSD-style licence (LICENSE) and the GPLv2 (COPYING), at the user''s option (GPL version 2 only [inferred])'
+    licence_in_release_records: NOASSERTION
+  modifications:
+  - Linked against zstd at commit 82d322c4.
+  - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends
+    only on its input.
+  - A small driver reads the input file, calls the harness one to four times and prints each return value.
+recipe:
+  asset:
+    release: v2026.10.0-src
+    file: recipe.tar.zst
+    bytes: 938459
+    sha256: 0339bf3221b15cd39513d46abe99062bac9cce874ed7ba5947753f75b6219ae5
+  target: zstd-fse_read_ncount
+  overlay: null
+  files: 'recipe/ (recipe/MANIFEST.tsv: every file with its sha256 in recipe.tar.zst; rows of kind upstream are
+    laid down from the -src asset; recipe/UPSTREAM-CARRIED.tsv gives the origin and licence of upstream text in
+    files of kind ours+upstream)'
+  patches: []
+  build_system: cmake
+  how_to_rebuild: 'as docs/reproducing.md: with recipe/ as /work, unpack the project''s -src asset where its MANIFEST
+    says, apply recipe/series.tsv in order, and run recipe/tools/build-body.sh in the builder image, with the environment
+    of recipe/tools/build-env.tsv and the network off'
+toolchain:
+  clang: 20.1.8
+  builder_image: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  images:
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:c7c5abdc2676e121ca7532b553a83148b384001a553b6ffea63b1911848fd711
+  static_asan:
+    repository: https://github.com/theorem-labs/static-asan
+    commit: b05061352064fa2be1813ac5429149f3de5f057d
+    note: 'the published source of the compiler image''s static AddressSanitizer: its toolchain/ and patches/ are
+      those the image was built from, with comments and patch descriptions edited for publication (toolchain-src.tar.zst
+      holds this commit). Building it gives the image''s libclang_rt.builtins.a and musl libc.a byte for byte; its
+      libclang_rt.asan.a and asan_cxx.a differ from the image''s only in DWARF line tables, which --strip-all removes
+      from the binaries'
+    image_runtime_md5:
+      libclang_rt.asan.a: 91ba024da5ddacd96dc1c7588e5763b3
+      libclang_rt.asan_cxx.a: 2c6e776abd494934481b3f47ff030052
+      libclang_rt.builtins.a: 1f3d379aa7d4de2dcf11254b8f493a29
+      libc.a: 485eb64c0b7397bfea554a9cdf8e352c
+binaries:
+- build: plain
+  file: fse_read_ncount.plain
+  bytes: 49184
+  sha256: 422deab3981d9dac9868e7c5907b0c00e98079faa9a639039ff2ba190619929a
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+- build: asan
+  file: fse_read_ncount.asan
+  bytes: 574408
+  sha256: b8433ed96f1e527e177a48747651e7fd563be2df6a38d28a310090bba8cc5da9
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.asan.a
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+  - libunwind.a
+- build: ubsan
+  file: fse_read_ncount.ubsan
+  bytes: 49928
+  sha256: 742b934b3e63519f5aabdf3ede07f4ec48571f0149f2a7867d536f507f2bd4b2
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+- build: asan-ubsan
+  file: fse_read_ncount.asan-ubsan
+  bytes: 574616
+  sha256: f8a6b7970ff6402b708d3a2bcd89b151476aaa0cc2e3c88de67ac1d6a82b7a92
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.asan.a
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+  - libunwind.a
+binary_asset:
+  release: v2026.10.0
+  file: zstd-bin.tar.zst
+  bytes: 5073479
+  sha256: 299880f21e50d6ade9953d1d41f4ac2414bd6900cd0494f1fb4c66a4472568a8
+source_asset:
+  src:
+    release: v2026.10.0-src
+    file: zstd-src.tar.zst
+    bytes: 1889020
+    sha256: 24167e2564425040cae6a73aefd72b96c7aff9f6b2fa96fd61bf1e61e8be7f93
+  src_manifest:
+    release: v2026.10.0-src
+    file: zstd-src.MANIFEST.tsv
+    bytes: 4068
+    sha256: 36fb2fc5c0b0226e96baca14cf145e8a5a32ce0be5c09aacb11108be098e920d
+rebuild:
+- 'rebuilt from this recipe and the source assets on a separate machine: plain identical, asan identical, ubsan
+  identical, asan-ubsan identical'
+link_inputs:
+  asan:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.asan.a: 66
+      libclang_rt.builtins.a: 11
+      crt1.o: object
+      libc.a: 159
+      libunwind.a: 5
+      liboft.a: 7
+      wrap_getenv.o: object
+      wrap_getpid.o: object
+      cli.o: object
+      plugin.o: object
+  asan-ubsan:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.asan.a: 66
+      libclang_rt.builtins.a: 11
+      crt1.o: object
+      libc.a: 159
+      libunwind.a: 5
+      liboft.a: 7
+      wrap_getenv.o: object
+      wrap_getpid.o: object
+      cli.o: object
+      plugin.o: object
+  plain:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.builtins.a: 11
+      crt1.o: object
+      libc.a: 59
+      liboft.a: 7
+      cli.o: object
+      plugin.o: object
+  ubsan:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.builtins.a: 11
+      crt1.o: object
+      libc.a: 59
+      liboft.a: 7
+      cli.o: object
+      plugin.o: object
+proofs:
+  origin: final-anthropic-opensource-formal-verification-proofs-package-2026-10-21 (sha256 4c6c152f61ce538e439b9d2adef439f4dbe1a2d446767d84ac7c3946d7c6687a),
+    libraries/zstd/proofs/submission-2, libraries/openssl-a/proofs/submission-1, libraries/openssl-b/proofs/submission-1,
+    libraries/zstd/proofs/submission-1, libraries/simdjson/proofs/submission-2, libraries/libpcap/proofs/submission-1,
+    libraries/zstd/proofs/submission-3, libraries/json-c/proofs/submission-1, libraries/zstd/proofs/submission-4,
+    libraries/zstd/proofs/submission-5, libraries/simdjson/proofs/submission-5 and libraries/pupnp/proofs/submission-1
+  licence: Apache-2.0 OR MIT
+  texts:
+  - LICENSES/anthropic-proofs-LICENSE
+  - LICENSES/anthropic-proofs-LICENSE-MIT
+  - LICENSES/anthropic-proofs-NOTICE
+  texts_location: the repository's top directory
+  modified: each changed file carries one line under its licence header saying so
+  sources:
+  - 'lib/UbsanMain.v: copied from lib/UbsanMain.v of the zstd/zstd_frame_info proof of this repository
+    (projects/zstd/zstd_frame_info/proofs/lib/UbsanMain.v), with its module paths and module names changed'
+  written_here:
+  - ubsan_agrees
+flags:
+  note: as written in the recipe; a library's own build system adds its flags after these (e.g. CMake Release appends
+    -O3 -DNDEBUG), see the pin and recipes.sh
+  lines:
+  - 'recipe/tools/build-body.sh:58: OFT_NO_BUILTIN_ALLOC="-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc
+    -fno-builtin-reallocarray -fno-builtin-free -fno-builtin-aligned_alloc -fno-builtin-posix_memalign -fno-builtin-memalign
+    -fno-builtin-valloc -fno-builtin-strdup -fno-builtin-strndup"'
+  - 'recipe/tools/build-body.sh:59: BASE_CFLAGS="-march=rv64g -mabi=lp64d -Os -g -ffunction-sections -fdata-sections
+    -fno-stack-protector -fno-plt -Wdate-time $OFT_NO_BUILTIN_ALLOC"'
+  - 'recipe/tools/build-body.sh:65: SAN=""'
+  - 'recipe/tools/build-body.sh:560: SAN="-fsanitize=address"'
+  - 'recipe/tools/build-body.sh:577: SAN="-fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize-trap=all
+    -fno-sanitize=function"'
+  - 'recipe/tools/build-body.sh:586: SAN="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-trap=all -fno-sanitize=function"'
+  - 'recipe/tools/build-body.sh:590: SAN=""'
+  - 'recipe/tools/build-body.sh:618: CFLAGS="$BASE_CFLAGS $SAN -fmacro-prefix-map=$LIBROOT/=/work/build/lib/FLAVOUR/"'
+  - 'recipe/tools/build-body.sh:431: ''clang --config=/opt/asan-static/musl.cfg'''
+  - 'recipe/tools/build-body.sh:441: ''clang++ --config=/opt/asan-static/musl.cfg -stdlib=libc++'''
+  - 'recipe/tools/build-body.sh:478: SEALED_CFG=/opt/asan-static/asan-musl-sealed.cfg'
+  - 'recipe/tools/build-body.sh:1019: SILENT_LD=""'
+  - 'recipe/tools/build-body.sh:1021: SILENT_LD="-Wl,--defsym=__sanitizer_silent_reports=1"'
+  - 'recipe/tools/build-body.sh:1027: SILENT_LD=""'
+  - 'recipe/tools/build-body.sh:1049: "$CC" $BASE_CFLAGS -static -no-pie -Wl,--gc-sections ${OFT_STRIP--Wl,--strip-all}
+    \'
+  - 'recipe/tools/build-body.sh:1054: "$CC" $BASE_CFLAGS -static -no-pie -Wl,--gc-sections ${OFT_STRIP--Wl,--strip-all}
+    \'
+  - 'recipe/targets/zstd-fse_read_ncount/pin:40: LIB_CFLAGS=""'
+licence:
+  components:
+  - component: Zstandard
+    files: lib/common/entropy_common.c, lib/common/error_private.c, lib/common/zstd_common.c, lib/compress/fse_compress.c,
+      tests/fuzz/fuzz_data_producer.c, tests/fuzz/fuzz_helpers.c; harness tests/fuzz/fse_read_ncount.c
+    licence: BSD-3-Clause OR GPL-2.0-only
+    evidence: 'Every file whose objects the link record of this build shows carries the zstd header ''This source
+      code is licensed under both the BSD-style license (found in the LICENSE file ...) and the GPLv2 (found in
+      the COPYING file ...). You may select, at your option, one of the above-listed licenses'': lib/common/entropy_common.c:3,9-12,
+      lib/common/error_private.c:2,5-8, lib/compress/fse_compress.c:3,9-12, lib/common/zstd_common.c:2,5-8; the
+      harness siblings tests/fuzz/fuzz_data_producer.c:2,5-8 and tests/fuzz/fuzz_helpers.c:2,5-8 (recipes.sh oft_build_harness:2068-2095
+      compiles each .c beside the harness that defines neither LLVMFuzzerTestOneInput nor main into lib/liboft.a
+      as oftsib-<name>.o; the link record takes these two); harness tests/fuzz/fse_read_ncount.c:2,5-8. Every repository
+      file these sources include (closure of quoted #includes, ignoring #if: 28 files) carries the same header.
+      LICENSE:1-30 is the BSD licence for Zstandard (Copyright Meta Platforms, Inc. and affiliates, line 5; the
+      three conditions at lines 10-19 are BSD-3-Clause); COPYING:1-2 is the GNU General Public License version 2;
+      the headers offer ''the GPLv2'' with no later-version option, so GPL-2.0-only [inferred]; README.md:238 ''Zstandard
+      is dual-licensed under BSD OR GPLv2'''
+    texts:
+    - LICENSES/zstd-LICENSE
+    - LICENSES/zstd-COPYING
+  - component: musl libc (static)
+    files: '-'
+    licence: MIT
+    evidence: musl COPYRIGHT; linked in every build
+    texts:
+    - LICENSES/musl-COPYRIGHT
+  - component: 'LLVM runtimes: compiler-rt builtins; in ASan builds the sanitizer runtime and libunwind; libc++/libc++abi
+      in C++ programs'
+    files: '-'
+    licence: Apache-2.0 WITH LLVM-exception
+    evidence: LICENSE.TXT of compiler-rt, libunwind, libc++ and libc++abi at llvmorg-20.1.8 (87f0227c)
+    texts:
+    - LICENSES/llvm-compiler-rt-LICENSE.TXT
+    - LICENSES/llvm-libunwind-LICENSE.TXT
+    - LICENSES/llvm-libcxx-LICENSE.TXT
+    - LICENSES/llvm-libcxxabi-LICENSE.TXT
+  - component: static-asan patches compiled into the ASan runtime and musl
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of theorem-labs/static-asan at b0506135 (MIT for Theorem Labs work; the LLVM and musl code
+      it patches keeps its own licence)
+    texts:
+    - LICENSES/static-asan-LICENSE
+  - component: Theorem Labs file-input driver and build recipe (recipe/src/, recipe/targets/*/plugin.c)
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of this repository (MIT, Theorem Labs, PBC)
+    texts:
+    - LICENSES/oss-fuzz-theorems-LICENSE
+  source_bundle:
+  - file: zstd-src.tar.zst
+    sha256: 24167e2564425040cae6a73aefd72b96c7aff9f6b2fa96fd61bf1e61e8be7f93
+  - file: zstd-src.MANIFEST.tsv
+    sha256: 36fb2fc5c0b0226e96baca14cf145e8a5a32ce0be5c09aacb11108be098e920d
+  - file: recipe.tar.zst
+    sha256: 0339bf3221b15cd39513d46abe99062bac9cce874ed7ba5947753f75b6219ae5
+  - file: toolchain-src.tar.zst
+    sha256: fc550b7b1a49c82e52d4fa8d042a275900e8871b283575571fc0331cfed028d5

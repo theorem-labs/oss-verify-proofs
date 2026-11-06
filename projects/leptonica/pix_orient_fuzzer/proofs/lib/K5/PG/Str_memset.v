@@ -1,0 +1,76 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.K5.Lib Require Import Tac Arr Bytes.
+From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.K5.Spec Require Import StrFun.
+From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib Require KReplay.
+Ltac2 kr_t_Str_memset () := "I47Corelib4Init9Datatypes4list00K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00I47Corelib4Init9Datatypes6option00C69OSSVerify5KrLib2K53Lib3Arr5u8arrC1?~~~~~~~~~~~~~~~C47Corelib4Init9Datatypes6lengthC56Stdlib6ZArith6BinInt1Z6to_natI47Corelib4Init5Logic2eq00c69OSSVerify5KrLib2K52PG:Str_memset8ms_factsC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z6of_natK47Corelib7Numbers7BinNums1Z02C56Stdlib6ZArith6BinInt1Z3powI47Corelib4Init5Logic3and00C56Stdlib6ZArith6BinInt1Z3addC69OSSVerify5KrLib2K53Lib3Mem2waC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics8store_okC56Stdlib6ZArith6BinInt1Z3maxC56Stdlib6ZArith4Znat5Nat2Z7inj_iffC47Corelib4Init5Logic7iff_symK47Corelib4Init5Logic2eq01C46Stdlib9micromega;ZifyClasses5mkrelC46Stdlib9micromega;ZifyClasses7rew_iffC56Stdlib6ZArith4Znat5Nat2Z9is_nonnegC56Stdlib6ZArith6BinInt1Z8max_specC56Stdlib6ZArith6BinInt1Z2ltC56Stdlib6ZArith6BinInt1Z2leI47Corelib4Init5Logic2or00K47Corelib4Init9Datatypes4list01K46Stdlib9micromega6VarMap1t02I46Stdlib9micromega6VarMap1t00I46Stdlib9micromega=RingMicromega7Formula00K46Stdlib9micromega7EnvRing5PExpr01K46Stdlib9micromega7EnvRing5PExpr02K47Corelib4Init9Datatypes6option02C46Stdlib9micromega5Tauto8BFormulaC46Stdlib9micromega:ZMicromega=ZTautoCheckerC46Stdlib9micromega6VarMap4findC46Stdlib9micromega:ZMicromegaCZTautoChecker_soundC47Corelib4Init5Logic8iff_reflK47Corelib4Init9Datatypes3nat02K46Stdlib9micromega=RingMicromega5Psatz02K47Corelib7Numbers7BinNums1Z03K46Stdlib9micromega7EnvRing3Pol01K46Stdlib9micromega=RingMicromega5Psatz04K46Stdlib9micromega=RingMicromega5Psatz06K46Stdlib9micromega:ZMicromega;ZArithProof02K47Corelib4Init9Datatypes4list02K46Stdlib9micromega6VarMap1t01K46Stdlib9micromega6VarMap1t03K46Stdlib9micromega5Tauto8GFormula03K47Corelib7Numbers7BinNums8positive01K46Stdlib9micromega=RingMicromega7Formula01K46Stdlib9micromega5Tauto8GFormula06K46Stdlib9micromega7EnvRing5PExpr03C46Stdlib9micromega;ZifyClasses;rew_iff_revC47Corelib4Init5Logic8eq_ind_rC69OSSVerify5KrLib2K54Spec6StrFun@u8arr_store_ok_nC1?~~~~~~~~~~~~~~~C46Stdlib9micromega;ZifyClasses5mkappK46Stdlib9micromega5Tauto8GFormula04K46Stdlib9micromega5Tauto8GFormula08K46Stdlib9micromega5Tauto8GFormula05K47Corelib7Numbers7BinNums1Z01I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool01I47Corelib7Numbers7BinNums1Z00I47Corelib4Init9Datatypes3nat00C46Stdlib9micromega8ZifyInst@of_nat_to_nat_eqK46Stdlib9micromega=RingMicromega3Op203C46Stdlib9micromega5Tauto5eKindI47Corelib4Init9Datatypes4unit00K46Stdlib9micromega5Tauto4kind01K47Corelib4Init9Datatypes4unit01I4ELinuxProcessSemantics?LinuxProcessSem<MemImageType7Segment00K47Corelib7Numbers7BinNums8positive03I46Stdlib9micromega:ZMicromega;ZArithProof00K47Corelib4Init9Datatypes3nat01K46Stdlib9micromega:ZMicromega;ZArithProof01K46Stdlib9micromega=RingMicromega3Op201C69OSSVerify5KrLib2K54Spec6StrFun6filledC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib3Mem7mem_invC1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes4prod00C69OSSVerify5KrLib2K53Lib5Frame5munchC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Frame5wmonoC1?~~~~~~~~~~~~~~~c69OSSVerify5KrLib2K52PG:Str_memset;ms_store_okC1?~~~~~~~~~~~~~~~C47Corelib5Lists7ListDef6repeatC46Stdlib5Lists4List=repeat_lengthC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics<write_to_memC69OSSVerify5KrLib2K53Lib3Mem9upd_bytesC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z>pow_pos_nonnegC56Stdlib6ZArith6BinInt1Z:pow_nonnegC56Stdlib6ZArith6BinInt1Z7compareC47Corelib4Init3Nat3addI47Corelib4Init5Peano2le00C69OSSVerify5KrLib2K54Spec6StrFunAu8arr_write_bytesC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K54Spec6StrFun;filled_updZC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib3Mem@upd_bytes_lengthC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib3Mem=mem_inv_storeC1?~~~~~~~~~~~~~~~K46Stdlib9micromega7EnvRing5PExpr07K47Corelib4Init5Logic2or01C69OSSVerify5KrLib2K53Lib5Frame6insideC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Frame;munch_writeC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Frame;wmono_writeC1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic3and01K47Corelib4Init9Datatypes4prod01C46Stdlib9micromega;ZifyClasses6mkapp2C56Stdlib5Arith8PeanoNat3Nat3addC56Stdlib6ZArith4Znat5Nat2Z7inj_addC56Stdlib6ZArith4Znat5Nat2Z6inj_leI47Corelib4Init5Logic4True00I47Corelib4Init9Datatypes:comparison00I47Corelib4Init5Logic5False00".
+Import ListNotations.
+Open Scope bv_scope.
+
+(* [comment removed for export] *)
+Definition ms_facts (A n i : Z) (k : nat) : Prop :=
+  (0 <= i /\ i + Z.of_nat k <= n /\ 0 <= A /\ A + n <= 2^64)%Z.
+
+Lemma ms_store_ok : forall segs m A n bs i k a,
+  u8arr segs m A bs -> length bs = Z.to_nat n -> ms_facts A n i k -> a = wa (A + i) ->
+  store_ok segs m a k = true.
+Proof.
+ltac2:(KReplay.run1 (kr_t_Str_memset ()) [] "h01xh14__x1h21Hh32H1h44LEN0h57__arithh64__ffh74__p1h88__varmaph95__with:4__x2h;4__x3h<4__x4h=4cstrh>5cstr0h?1nh@1yhA2z1hB1AhC3ARRhD2HahE2HihF2HkhG3LENhH2_HhI1ahJ2bshK1ihL1khM1mhN4segsp;1p;4p;2p;3p;<p;6p;7p;;p;8g0000j1?Tg000Pj16Tg0015j1TTg001Sj1HTg0026j1wTg002Xj4jTg003Mj2@Tg003mR0j1STg004Mj30j1RTg004gj4[Tg005eR1j11Tg006Ej1UTg006cj2uTg007@R2j24Tg007[j29Tg0088j1CTg008jj4NTg009jj2=Tg00:Gj2aTg00:jj3^Tg00;Gj28Tg00;al<MTg00<Fj4\Tg00<mj1ITg00=Rj2ZTg00>4j2KTg00>PR3j25Tg00>lj2GTg00?Fj1YTg00?fj2>Tg00@Dj1XTg00@bj1WTg00AMj2VTg00B0j2:Tg00BSj1vTg00C5j2tTg00CWj2sTg00DCj3pTg00Dbj4oTg00ETj1nTg00F2j1DTg00FQj2;Tg00G:j1iTg00GXj2hTg00H9j3gTg00Hbj3BTg00IKj2OTg00J7j3PTg00JWj1fTg00K5j4QTg00KSj6eTg00L7j1dTg00L\j4ETg00MGj7cTg00Mkj3bTg00NNj4lTg00O9j6mTg00OWl;`Tg00P[l<JTg00Q@j7_Tg00Qdj8qTg00RHj7rTg00RlR4f0R5'5p=3f2R6f1R7'9/55p=2g00SJR8g00SjR9705p=Ag00TJR:g00ThR;P:P:P0f4R0P1f3R<g00UGP6P7P5M<Jp=]P:P7g00V4P5CEp=<P7g00V[R=g00W:R>P>g00WZR?P5g00X:F_p=7P<P=P>P>P?P6P7P5Gqp=FP;P:P:P:P1P1f5R@P0P<P6P7P5M<Jp=kP6P=P>P>P?P7P5Frp=Lg00XZ#?g00YYRA#6RB#6RC#6RD#6#6#6RE#T#HRF%TD#HRD#w[%?Df7RGf6RHP@P<Cj1@D0%S@50;PGPHP0P<C[P2%3@%10=2@Gf8RI#3%UB%UE'uRE92IG'4'4f9RJ/9H#C90F0f<RKf;RLP@PHCN#A[P5%3G%1Gf:RG52I%3LA2LGE'4'4P2%1I=2JL%3KA2KLE'4f=R2/9G#C90FIf@R@f?RMPJPGCN#A[P5%1G=2L2%3Mf>RJ=2ME'419@2#C90FLfCREfBfARNPMPJP2PKPL1@DMRL%S@RO50;%1LRP1=4@RQ50:RRP;P:%R;P1%R:%17%15R150:A0;751a753^X@;X0;PLPP18:PPO1=45X0:RPP@O1P5X0:RSPPP@P@18:@D]R@M<MPGC\RPPR%IJRT%1JRU#3RV1@DNRN#IRD%1N#3RN1Z4ERW1K4E1=4ERX=0:E'415E4A0:X4'4'GRXfDRY,=4RZP:g00Z>R[#YR\%?[R]1>:7%X:R^%W:R_1V:4R`1::ARa'<,7_Rb%v>RcPbCF1t_?RbP5P618891s56#AdAp:47CoR9b6b8b9X1:%35%37[^1:P5PYPKO2b5bAb3b>b=b4P;POA2MU1X?;%12,9JRJ%1OR2'515JQP:P:P3PSP31575#nX@:X0:PJPJ18:JP2PQPSPS18:1X0;POPQP@EkM<MPPPRPTPVPDPNPWPXPZP:p-0RZg00ZjRX#DRW#DRN#D,;:%iA,h:1;:N5g:1;:W1;:X5B:5B:RX5B:g00[IRW'O1OXW=P[\5P[P]P:P:1>:0P6%f:CQP71>:<CQP^P_P_P=P>P>P?P_P=P>P>P?PHEeP:%dA,::RAg00\5RH1::CRCCE,7_5L_1<C`,7_P:PAPHP`CE,7_5L_FcPcP_1::B9b:aRa/<C,7_Pc1<aA,7_CFCFPbP9b6b8b9X1:X::X;:X<:W7A0:6<,4015<4A0:64'4'GA2760A26<0[[^1:^::^;:^<:^7ZP5fFRZ,K4PZP7%1EPYP6PIO7b5bAb3b>b=b4ClPLPGEmP5M;`WDWHWFP7P5O2n2001000000121000000W2WEP7P5O2n2001000000121000000W2WGWCXIFXL;XK:WJX?:XB:WMWNo"). Qed.
+
+Lemma ms_store : forall segs m0 m A n bs cb (Q : Z -> Prop) i k a,
+  u8arr segs m A bs -> filled cb bs Q -> length bs = Z.to_nat n ->
+  mem_inv segs m -> munch [(A, A + n)]%Z m0 m -> wmono segs m0 m ->
+  ms_facts A n i k -> a = wa (A + i) ->
+  u8arr segs (write_to_mem m a (repeat cb k)) A (upd_bytes bs (Z.to_nat i) (repeat cb k)) /\
+  filled cb (upd_bytes bs (Z.to_nat i) (repeat cb k)) (fun j => Q j \/ (i <= j < i + Z.of_nat k)%Z) /\
+  length (upd_bytes bs (Z.to_nat i) (repeat cb k)) = Z.to_nat n /\
+  mem_inv segs (write_to_mem m a (repeat cb k)) /\ munch [(A, A + n)]%Z m0 (write_to_mem m a (repeat cb k)) /\
+  wmono segs m0 (write_to_mem m a (repeat cb k)).
+Proof.
+ltac2:(KReplay.run1 (kr_t_Str_memset ()) [] "h04__x1h16__sat3h24__x2h31nh44__x3h54__x4h62H1h74LEN0h87__arithh94__ffh:8__varmaph;5__with<4cstrh=5cstr0h>1jh?2z1h@6__sat2hA2HahB3SOKhC1xhD1HhE4__p1hF4__p2hG4__p3hH6__sat4hI4__x5hJ1ahK1AhL2A0hM3ARRhN2AnhO3FILhP2H2hQ2HihR2HkhS3LENhT2MFhU2MIhV2MUhW1QhX2WMhY2bshZ2cbh[1ih\1kh]1mh^2m0h_4segsh`1yha2z2p%0p&0p;1p;4p;3p;2p;<p;9p;8p;6p;7p;Bg0000j1cTg000Pj1DTg0015j1hTg001Sj1jTg0026k10RTg002Xj4BTg00\\j3ITg003Mj24Tg003mR0j1=Tg00]Vj2KTg00^Mj2yTg007[R1j20Tg00?Fj1rTg00J7j38Tg00^mj3CTg00_dj3FTg004gk40JTg0088j1bTg004Mj3Vj1sTg008jj4]Tg00`[m<0=Tg00a\j3?Tg00b;j3eTg005eR2j13Tg006Ej1fTg006ck200Tg007@R3j21Tg00b]j3XTg00caj3UTg00>4j2HTg00>PR4j25Tg00:Gk20QTg00:jk30PTg00;Gj2JTg00;al<pTg00<Fk40OTg00<mj1oTg00=Rj2nTg00dZk20NTg00eBk30MTg00efk20ITg00?fj2STg00@Dk10HTg00@bk10FTg00AMj2kTg00B0j2TTg00BSk10ETg00C5k20DTg00CWk20CTg00DCk30@Tg00Dbk40>Tg00fGj2aTg00f^R5j2_Tg00F2j1RTg00FQj2ETg00G:k106Tg00GXk205Tg00H9k304Tg00IKj2QTg00JWk103Tg00K5j4PTg00L7j1gTg00Mkj3NTg00NNk401Tg00g8m907Tg00h=k808Tg00i<k409Tg00j<k60:Tg00k9j3~Tg00k\j3}Tg00l6j3|Tg00lnl9{Tg00mkk60?Tg00nhj4ZTg00O9j7zk60BTg00oCk40ATg00>lj2iTg009jj2xTg00P[m<0GTg00L\j4lTg00Q@j7mTg00Qdj8wTg00oclBvTg00Hbk30KTg00KSk60LTg00RHj7uTg00MGj7tTg00ThR6f1R7f0R83Vp=:g00TJR9P9P7P8H0Ap=Lg00SJR:g00SjR;7V8p=YP6f4R<f3R=f2R>P7P8J0Bp=Ag00RlR?/58p=210>7/58p=715>7/18p=W15>7/18,i=p=>1178,1>p=<1x?8p=@AV978p=MP9P6P9P9P0P<P2P=g00UGP>P7P8N<0Gp=q1H?8p=GAV98?p=^P>g00V[R0g00W:R@P@g00WZRAP9P7g00V4P8Clg00X:RBFmp=6P=P0P@P@PAP>P7P8Gwp=9P6P6P6P9P9P9g010IP2P2P2P1g010if5R1P<P=P>P7P8MBvp>0<P6P9P5P2P4g011LP1P<P=P>P7P8M<pp>0;B0K978p=;P7P0P@P@PAP8J0Lp=`P9P7g00\5P8Clp=\P7P0P@P@PAP8PBFmp=[P>P0P@P@PAP7P8Fup=OP>P0P@P@PAP7P8Ftp=d1178,i>p>02g00XZ#cg00YYR0#DRB#DS00#DR4#D#D#DR5#hS01#jRC%h4#jR4$0R[S02Q02%c4p-0RD\9f:REf8RFf7RGP1CBf6RH=I1<144G%=F':f=RIf;RJ'K1y99RK10JE,LJ%rKRL38f<RM7CIf?RNf>RO;FIPIPMPFPGH0Jf9RP,0O#b9VCGPPfCRQfARRPPP8C]#YX36fBRSf@RTPNPOPIPEPPPFPGP1P7P8N<0=A?4MP,44RUAe4MPDAPSPTPFPUC]#YP3%2J%3E,0J%2T%fBRU%f5R5+00RV97TN'17WNfDRWA?4OJRX9XSERYPR%=M=UNXRXCBPOP8O1PIP8%3M,0I,H8C>X>99IOX144X%=TRX':1KWY10RT,LR=8KL?CQYAFWQY'13<3<P>%2I%3I,0O%2QA7QSV'17WSP3%3O=7NQ%2WA7WQV'1fHRYfFRZA?4SNR[7XOROfER\AUQX[R[CBPSP8O1PRP8%3T,0RRX,H8C>X>99IS[144[%=WR[':1KYO10\W,L\=8KLfGR];COAFY]O'13<3<P815X\%2]A7]ZV'1P3%2YA7Y]VfLR3fJRXA?4ZQRO7XSR^fIR_AU][OROCBPZP8O1P\P8%3W,0\,H8C>X>99IZO144O%=YRO':1K3^10_Y,L_=8KLfKR[;C^AF3[^'13<3<P8%2XA7[XVPC103]#bR^fPR`fNRaP8A?4X]Rb,44RcC]#YfQRdfOReA?4[YRf7X7RgPa%=_Rh=U3fRfCBP[P8O1PXP8%3_,0X,H8C>X>99I[f144ffMRf#=S03':1Kdg10afS04,La=8KL?C`gAFd`g'13<3<]BXJCPePfP^A?4_Z,44C]#YP`10fYRZ#bS05=XabR^PfAU[ObRgCBPXP8O1P_P8%3YRi,0_,H8C>X>99IXgS06144gS07%=3Rg':S081K`^S0910f3S0:,Lf=8KLRL?Ce^S0;AF`e^S0<'1S0='1S0>'1S0?'1P`PaPfP[PYPbP\144[R^/:g%3^RK%@3Rj'MRkP6P9%s6P2%s9%37%38S0@'M1:7820Q7840PX`6XC6P^PK1J9KPg%@8XC9RKP3O1P8XC9S0APKP3P31J93DqS0BM<pPQH0OR2Pk%oYRl%2iRi144fRm#oRn%3m#2Rm1n?eRo%Ge%@eRp/Me'1PeP?%^pC>Rp%@`RqP920NU5Rr%GURs%25%GV[Rt[Ru%2URvg011nRwB0MU57UWAR5%2V\w^AvRvP7g012J20I?U'JPseO1RsPtg00Z>Rw#rRx%cwRy1S97&0H9Rz&0F9R{1k9?R|1T90R}56{S0C&0E@R@Q0CC920D{ARAP8P>1J:;20C8>#YdB0@9?7H0>R;b9b:b;X09%28S0D%27[^09P8PdPQO2b8b1b@b1b?b6b=b<b7S0EP]1ah81443'_X36Pg1ahY/_8X361aO]Rh/_g%@YR3%3]R:'0R~/5jPhP~POP3Q0APKPYPY1J9YDqP]P:1J9:J0<PgPjQ0BJ0;P2PkPlPiPnPmPoPpPqP91n?f%Gf%@fRj/Mf'1PfP?%^jC>%@aP9PrPuP5PvPsPtg00ZjRj#RRg#RR:#RRK#RR3#R,E9R~1E93R3&060-0591E9K6049RK1E9:R:1E9g1E9jRj';';S0B';';Rg';g00[IRh'Q1Qgh1;:j,;K,;3R3/Qh1;~3/Qh=8wx58w58w58wPyP9P91S9<P>&039R3CPR~P7P91S91P=P3CPCPPzP{1`{GQ00,T9RK,\},[{5O{1`{F1\}|,[{5O{5d{P@P{1`{P%g0,T9R0%gB,T9RP'\,[{5O{A6{P|1\0|,[{5O{5d{P@P{1T9BRB9N9K=6{PP@P{A6{|KP@AN9}BRP=6{0C9C9C9C9PAP;b9b:b;X09X29X49X59XI9XEDXFDXGD1M8=,11%^8802H1M=1,1FP1P?%^=C>A71=H%2HA7<1H[[[[^09^29^49^59^I9^ED^FD^GDP8fWRD#GfSRF/5?%GFPDPFPHfR#3P<P1PGPRP\O<b8bHb1bHbabPb?b6b=b<b7H01P^PQDARGPcAe4X]RHDARFN907Q06Q0?PXP[P_PYP]PWQ0EPGL08Q08Q0>P^Q03,:8X36PQQ07P[POPbPFH09DAQ09Q0=P`PaQ05PbPSP8J0:Q0;Q0<PLPePaPZPbPRP2PkPlPiPnPmPoPpPqP9PrPuP5PvPsPtQ0B/Qh=8wxRwPyP91S9>P7P3CPPzP{Q0CP@P{A6{|BR3P@A6{|PC9C9PAP;b9b:b;X09X29Q0D%2>R|10>=Rh#2[[^09^29P8PdfVRRPJPQO4b8b1b@b1b?b6b=b<b7P]10a_R_Q0@'0RJ/5VX36P2PkPlPiPnPmPoPpPqP9PrPuP5PvPsPtPwPyP9P~P71S9=CPR~PzP{AN9}KRw1k9UQ015~9RU56{P@P{AN9B0=6{KRKP@AN9P0R0=6{UC9C9PAP;b9b:b;X09X29X49X59A78=V15h<10h<R</5V[[^09^29^49^59P8fURV%3`RUPdPRPEPNO6b8b1b@b1b?b6b=b<b7PcPHDA%3cREQ0:57Z9WfZg0130P]Q04,5J9Wa_X36P2PkPlPiPnPmPoPpPqP9PrPuP5PvPsPtPxPyP~PzP{PKP@P{P3P@A6{}PA6{0w5O{C9C9PAP;b9b:b;X09X29X49X59A77>=10>1,5<9W>h\|[^09^29^49^59P8PVPUPdPRPNPQO6b8b1b@b1b?b6b=b<b7PcPHDA3}A|LZEeM9{P`PePaQ05PbPTJ0?CZCZCZCZCZWBP\PIPMFzWNWLP7P8O2n2001000000121000000WDWRP7P8O2n2001000000121000000WDWQP7P8O2n2001000000121000000bBWAWTWXWVWUWSWOWMXJCX\6X[9WWXZ4WYX39XK9W]W^W_o"). Qed.
+
+(* [comment removed for export] *)
+Ltac ms_arr_store MF bytes_tac :=
+  lazymatch goal with
+  | ARR : u8arr ?segs ?m ?A ?bs, FIL : filled ?cb ?bs ?Q, LEN : length ?bs = Z.to_nat ?n,
+    MI : mem_inv ?segs ?m, MU : munch _ ?m0 ?m, WM : wmono ?segs ?m0 ?m
+    |- evt _ _ (MS _ _ _ _ _ (write_to_mem ?m ?a ?bs0) _) =>
+    lazymatch type of MF with ms_facts _ _ ?i ?k =>
+     let xs := eval cbv beta iota delta [repeat] in (repeat cb k) in
+     let kz := eval vm_compute in (Z.of_nat k) in
+     replace (write_to_mem m a bs0) with (write_to_mem m (wa (A + i)%Z) xs)
+       by (apply (f_equal2 (write_to_mem m)); [ unfold wa; first [ reflexivity | f_equal; lia | rewrite ?Z.add_0_r; apply Z_to_bv_bv_unsigned ] | bytes_tac ]);
+     let ARR' := fresh "ARR" in let FIL' := fresh "FIL" in let LEN' := fresh "LEN" in
+     let MI' := fresh "MI" in let MU' := fresh "MU" in let WM' := fresh "WM" in
+     destruct (ms_store segs m0 m A n bs cb Q i k _ ARR FIL LEN MI MU WM MF eq_refl)
+       as (ARR' & FIL' & LEN' & MI' & MU' & WM');
+     change (repeat cb k) with xs in ARR', FIL', LEN', MI', MU', WM';
+     change (repeat cb k) with xs;
+     cbv beta in FIL'; change (Z.of_nat k) with kz in FIL';
+     clear ARR FIL LEN MI MU WM MF;
+     repeat match goal with
+     | H : store_ok segs m _ _ = true |- _ => clear H
+     | H : ov_read_bytes segs m _ _ = Some _ |- _ => clear H
+     end;
+     let m' := fresh "m" in remember (write_to_mem m (wa (A + i)%Z) xs) as m' eqn:Heqm; clear Heqm; try clear m;
+     let bs' := fresh "bs" in remember (upd_bytes bs (Z.to_nat i) xs) as bs' eqn:Heqbs; clear Heqbs; try clear bs;
+     rename ARR' into ARR; rename FIL' into FIL; rename LEN' into LEN;
+     rename MI' into MI; rename MU' into MU; rename WM' into WM
+    end
+  end.
+
+Ltac mst i k bytes_tac :=
+  lazymatch goal with
+  | ARR : u8arr ?segs ?m ?A ?bs, LEN : length ?bs = Z.to_nat ?n |- _ =>
+    let MF := fresh "MF" in let SOK := fresh "SOK" in
+    assert (MF : ms_facts A n i k) by (unfold ms_facts; lia);
+    pose proof (ms_store_ok segs m A n bs i k (wa (A + i)) ARR LEN MF eq_refl) as SOK; unfold wa in SOK;
+    zstep; [ ms_arr_store MF bytes_tac | .. ]
+  end.
+

@@ -1,0 +1,1236 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: the ASan fake-stack vocabulary of the cgif walks at fuzz_reply's symbol type wsym:
+   proofs/cgif/cgif_file_fuzzer/lib/YC44.v (fake-frame and shadow regions, the plain pi runs over the journal and the
+   flag store that ends a fake frame), lib/YC1h.v (atoms above A_LIM, after-call with high atoms), lib/YC45.v (the
+   plain pi run that stops at a call) and the generic lemmas of lib/A/AC8j.v.  Only the symbol type, the module paths
+   and PALibF's two stack_malloc fields (fuzz_reply calls classes 0 and 1) change. *)
+(* A fuzz_reply function with a fake frame (relay_add, relay_finish, relay_remove, relay_instance_gone,
+   LLVMFuzzerTestOneInput) reads the stack-use-after-return word through the GOT slot A_OBJ 1 (0x9da28), calls
+   __asan_stack_malloc_<cid>, poisons the frame's shadow, and at its exit stores 0 at the frame's flag
+   (`ld a0,(frame bytes - 8)(s2); sb zero,0(a0)`).  The call is `aj_stack_malloc_at` (Reusable/YCbq.v:1750) under the
+   site rule `astack_malloc_realizes SEGS B cid`; the exit is `aj_flag_store_pi` below. *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+From Stdlib Require Import FunctionalExtensionality.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0j YK0s.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP01 YP00 YP0i YP0j YCbn YP0b YP0a.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YN3v YI04 YI08 YP07.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK04 YA0i YA0n YA0o YCbm YA0q.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG0s.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YP0d YP0c YC80 YC81.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_syms W_kit.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Local Open Scope Z_scope.
+(* Generic lemmas of lib/A/AC8j.v and lib/YC1g.v, at any placement of any wsym listing. *)
+Section fa. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {L : ptable wsym} {PI : PAImg L}.
+#[local] Notation SEGS := (pa_segs).
+#[local] Notation VAL := (pa_val).
+Lemma st_ok_region_nth : forall E ss ms i r,
+st_ok SEGS E ss ms -> nth_error (ss_mem ss) i = Some r -> region_ok SEGS E (ms_mem ms) r.
+Proof.
+intros E ss ms i r HS Hi. destruct (st_ok_mem_ok SEGS E ss ms HS) as (_ & Hrs & _).
+exact (proj1 (Forall_forall _ _) Hrs r (nth_error_In _ _ Hi)).
+Qed.
+Lemma st_ok_pi_region_nth : forall E ss ms i r,
+st_ok_pi SEGS VAL E ss ms -> nth_error (ss_mem ss) i = Some r -> region_ok SEGS E (ms_mem ms) r.
+Proof. intros E ss ms i r HS Hi. exact (st_ok_region_nth E (abs_ss VAL ss) ms i r HS ltac:(destruct ss; exact Hi)). Qed.
+Lemma slot_of_region : forall E m spe cs lo hi wlo whi od e v,
+region_ok SEGS E m (YP09.mkRegion (Some 2%nat) lo hi wlo whi cs) ->
+bv_unsigned (ew E 2) = spe -> In (YP09.mkChunk od (CVal 8 e)) cs -> sv_denot E e = Z_to_bv 64 v -> 0 <= v < 2 ^ 64 ->
+val_mem SEGS m (spe + od) 8 v.
+Proof.
+intros E m spe cs lo hi wlo whi od e v (_ & _ & _ & Hcs) H2 Hc He Hv.
+pose proof (proj1 (Forall_forall _ _) Hcs _ Hc) as Hck. cbn [YP09.r_base base_val] in Hck. rewrite H2 in Hck.
+change 8%nat with (N.to_nat 8). exact (val_of_chunk_ok SEGS E m spe od 8%N e v Hck He ltac:(cbn; lia) ltac:(cbn; lia)).
+Qed.
+Lemma field_of_region : forall E m n b cs lo hi wlo whi od (w : N) e v,
+region_ok SEGS E m (YP09.mkRegion (Some n) lo hi wlo whi cs) ->
+bv_unsigned (ew E n) = b -> In (YP09.mkChunk od (CVal w e)) cs -> sv_denot E e = Z_to_bv 64 v ->
+0 <= v < 2 ^ (8 * Z.of_N w) -> (Z.of_N w <= 8) ->
+val_mem SEGS m (b + od) (N.to_nat w) v.
+Proof.
+intros E m n b cs lo hi wlo whi od w e v (_ & _ & _ & Hcs) Hn Hc He Hv Hw.
+pose proof (proj1 (Forall_forall _ _) Hcs _ Hc) as Hck. cbn [YP09.r_base base_val] in Hck. rewrite Hn in Hck.
+exact (val_of_chunk_ok SEGS E m b od w e v Hck He Hv Hw).
+Qed.
+Lemma aview_kept_frame : forall E rs H (m m' : word -> option byte) lo,
+frame_of E rs (mrestrict H m) (mrestrict H m') -> 0 <= lo ->
+(forall a, lo <= a < 2 ^ 64 -> ~ in_wrange E rs a) ->
+forall a, lo <= a < 2 ^ 64 -> aview SEGS H m' a = aview SEGS H m a.
+Proof.
+intros E rs H m m' lo HF Hlo Hno a Ha. apply aview_eq_of. apply HF. rewrite unsigned_lit_small by lia. apply Hno. exact Ha.
+Qed.
+Lemma writable_kept : forall H (m m2 : word -> option byte) a,
+(apresent H m a -> apresent H m2 a) -> writable_at SEGS (mrestrict H m) a -> writable_at SEGS (mrestrict H m2) a.
+Proof.
+intros H m m2 a Hp Hw. unfold writable_at, wview, mrestrict in *. revert Hw.
+destruct (H (Z_to_bv 64 a)) eqn:EH; intros Hw; [exact Hw|].
+destruct (m (Z_to_bv 64 a)) as [b|] eqn:Em.
+- destruct (Hp (conj EH (ex_intro _ b Em))) as [_ [b2 Hb2]]. rewrite Hb2. discriminate.
+- destruct (m2 (Z_to_bv 64 a)); [discriminate | exact Hw].
+Qed.
+Lemma region_kept_aview : forall E H (m m2 : word -> option byte) n b lo hi wlo whi cs,
+bv_unsigned (ew E n) = b ->
+(forall a, b + lo <= a < b + hi -> aview SEGS H m2 a = aview SEGS H m a) ->
+(forall a, apresent H m a -> apresent H m2 a) ->
+region_kept SEGS E (mrestrict H m) (mrestrict H m2) (YP09.mkRegion (Some n) lo hi wlo whi cs).
+Proof.
+intros E H m m2 n b lo hi wlo whi cs Hn Hav Hp.
+split; cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi base_val]; rewrite Hn; intros a Ha.
+- apply (mbyte_of_aview SEGS). apply Hav. exact Ha.
+- apply writable_kept. apply Hp.
+Qed.
+Lemma val_mem_zero8 : forall H (m : word -> option byte) a,
+(forall i, 0 <= i < 8 -> aview SEGS H m (a + i) = Some 0) -> val_mem SEGS (mrestrict H m) a 8 0.
+Proof.
+intros H m a Hz j Hj. destruct (aview_byte SEGS H m (a + Z.of_nat j) 0 (Hz (Z.of_nat j) ltac:(lia))) as (b & Hb & Hv & _).
+rewrite Hb. f_equal. apply bv_eq. rewrite Z_to_bv_unsigned. unfold YO0f.le_byte, bv_wrap.
+repeat (rewrite Z.shiftr_0_l || rewrite Z.mod_0_l by ((first [lazymatch goal with |- _ <> @nil _ => discriminate end | vm_compute; discriminate]))). lia.
+Qed.
+End fa.
+Definition set_window (r : YP09.region) (wlo whi : Z) : YP09.region :=
+YP09.mkRegion (YP09.r_base r) (YP09.r_lo r) (YP09.r_hi r) wlo whi (YP09.r_chunks r).
+Fixpoint list_upd {A} (l : list A) (i : nat) (x : A) : list A :=
+match l, i with
+| [], _ => []
+| _ :: t, O => x :: t
+| h :: t, S i' => h :: list_upd t i' x
+end.
+Lemma zall_disjoint_of_all : forall E r rs,
+all_disjoint E r rs -> zall_disjoint (extent_of_region E r) (map (extent_of_region E) rs).
+Proof.
+intros E r rs. induction rs as [|r' rs IH]; cbn; intros H; [exact I|].
+destruct H as [H1 H2]. split; [|exact (IH H2)]. unfold zdisj, extent_of_region, extent_disjoint in *. cbn [fst snd]. exact H1.
+Qed.
+Lemma zpairwise_of_pairwise : forall E rs,
+pairwise_disjoint E rs -> zpairwise_disjoint (map (extent_of_region E) rs).
+Proof.
+intros E rs. induction rs as [|r rs IH]; cbn; intros H; [exact I|].
+destruct H as [H1 H2]. split; [exact (zall_disjoint_of_all E r rs H1) | exact (IH H2)].
+Qed.
+Lemma map_extent_list_upd : forall E rs i r r',
+nth_error rs i = Some r -> extent_of_region E r' = extent_of_region E r ->
+map (extent_of_region E) (list_upd rs i r') = map (extent_of_region E) rs.
+Proof.
+intros E rs. induction rs as [|h t IH]; intros [|i] r r' Hn He; cbn in *; try discriminate.
+- injection Hn as ->. rewrite He. reflexivity.
+- rewrite (IH i r r' Hn He). reflexivity.
+Qed.
+Lemma Forall_list_upd : forall {A} (P : A -> Prop) (l : list A) i x,
+Forall P l -> P x -> Forall P (list_upd l i x).
+Proof.
+intros A P l. induction l as [|h t IH]; intros [|i] x Hl Hx; cbn; [exact Hl | exact Hl | |]; inversion Hl; subst; constructor; auto.
+Qed.
+Definition uar_got_regionP (u : nat) : YP09.region :=
+YP09.mkRegion (Some (A_OBJ 1)) 0 8 0 0 [YP09.mkChunk 0 (CVal 8 (SOff u 0))].
+Definition uar_cell_regionP (u : nat) : YP09.region :=
+YP09.mkRegion (Some u) 0 4 0 0 [YP09.mkChunk 0 (CVal 4 (SLit 1))].
+Definition obj8_region (i : nat) (v : sv) : YP09.region := YP09.mkRegion (Some (A_OBJ i)) 0 8 0 0 [YP09.mkChunk 0 (CVal 8 v)].
+Definition const8_region (a v : Z) : YP09.region := YP09.mkRegion None a (a + 8) 0 0 [YP09.mkChunk a (CVal 8 (SLit v))].
+Definition fframe_region (f fl : nat) (cid : Z) (cs : list YP09.chunk) : YP09.region :=
+YP09.mkRegion (Some f) 0 (fs_frame_bytes cid) 0 (fs_frame_bytes cid) (cs ++ [YP09.mkChunk (fs_frame_bytes cid - 8) (CVal 8 (SOff fl 0))]).
+Definition fshadow_region (s : nat) (cid wlo whi : Z) (cs : list YP09.chunk) : YP09.region :=
+YP09.mkRegion (Some s) 0 (fs_frame_bytes cid / 8) wlo whi cs.
+Definition HPTR (al : Z) : afact := mkAF 4096 140737479966720 al.
+Lemma aregs_preserved_eqs : forall regs0 regs2 : bvmap 5 word,
+getr regs2 2 = getr regs0 2 -> getr regs2 3 = getr regs0 3 -> getr regs2 4 = getr regs0 4 ->
+getr regs2 8 = getr regs0 8 -> getr regs2 9 = getr regs0 9 ->
+getr regs2 18 = getr regs0 18 -> getr regs2 19 = getr regs0 19 -> getr regs2 20 = getr regs0 20 ->
+getr regs2 21 = getr regs0 21 -> getr regs2 22 = getr regs0 22 -> getr regs2 23 = getr regs0 23 ->
+getr regs2 24 = getr regs0 24 -> getr regs2 25 = getr regs0 25 -> getr regs2 26 = getr regs0 26 ->
+getr regs2 27 = getr regs0 27 -> aregs_preserved regs0 regs2.
+Proof.
+intros regs0 regs2 H2 H3 H4 H8 H9 H18 H19 H20 H21 H22 H23 H24 H25 H26 H27 r Hr.
+assert (Hr0 : r = 2 \/ r = 3 \/ r = 4 \/ r = 8 \/ r = 9 \/ r = 18 \/ r = 19 \/ r = 20 \/ r = 21 \/ r = 22 \/
+r = 23 \/ r = 24 \/ r = 25 \/ r = 26 \/ r = 27) by (unfold acallee_saved in Hr; lia).
+clear Hr. repeat (destruct Hr0 as [-> | Hr0]; [assumption|]). subst r. assumption.
+Qed.
+Lemma count_cid_le_length : forall cid l, count_cid cid l <= Z.of_nat (length l).
+Proof. intros cid l. induction l as [|[c p] l IH]; cbn; [lia|]. destruct (c =? cid); lia. Qed.
+Section g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Fixpoint zseps_from (b : Z * Z) (l : list (Z * Z)) : Prop :=
+match l with [] => True | c :: r => (fst b + snd b <= fst c \/ fst c + snd c <= fst b) /\ zseps_from b r end.
+Fixpoint zseps (l : list (Z * Z)) : Prop := match l with [] => True | b :: r => zseps_from b r /\ zseps r end.
+Section j.
+Context {L : ptable wsym} {PI : PAImg L}.
+Variable B : asyms.
+#[local] Notation SEGS := (pa_segs).
+#[local] Notation VAL := (pa_val).
+(* fuzz_reply's form of the donor's PALibF: the GOT slot of the stack-use-after-return word is A_OBJ 1 (0x9da28), the
+   shadow cell is A_OBJ 32 (0xa60b8), and the program calls __asan_stack_malloc_0 and _1. *)
+Record PALibF : Prop := {
+palf_got_uar : as_got_uar B = VAL (A_OBJ 1);
+palf_uar_img : 0x10000 <= as_uar_cell B /\ as_uar_cell B + 8 <= 0x5fb000;
+palf_uar_al : as_uar_cell B mod 4 = 0;
+palf_sm0 : pa_sigma WS_asan_stack_malloc_0 = pc_stack_malloc (as_code B) 0;
+palf_sm1 : pa_sigma WS_asan_stack_malloc_1 = pc_stack_malloc (as_code B) 1;
+palf_sep : zseps [(VAL (A_OBJ 0), 8); (VAL (A_OBJ 1), 8); (VAL (A_OBJ 32), 8); (as_uar_cell B, 4)]
+}.
+End j.
+Lemma val_mem_of_rd32 : forall segs H mem a v,
+rd32 (aview segs H mem) a v -> val_mem segs (mrestrict H mem) a 4 v.
+Proof.
+intros segs H mem a v Hr k Hk. pose proof (Hr k Hk) as Hb.
+destruct (aview_byte segs H mem _ _ Hb) as (b & Hm & Hbv & Hrange). rewrite Hm. f_equal. apply bv_eq.
+rewrite Z_to_bv_unsigned. unfold bv_wrap. rewrite <- Hbv. rewrite Z.mod_small; [reflexivity|].
+change (bv_modulus 8) with 256. exact Hrange.
+Qed.
+Lemma rdword_of_val_mem : forall segs H mem a v,
+val_mem segs (mrestrict H mem) a 8 v -> 0 <= v < 2 ^ 64 -> rdword (aview segs H mem) a = Some v.
+Proof.
+intros segs H mem a v Hv Hr.
+assert (B : forall k, (k < 8)%nat -> aview segs H mem (a + Z.of_nat k) = Some (le_byte v 8 k)).
+{ intros k Hk. unfold aview. rewrite (Hv k Hk). cbn [option_map]. f_equal.
+rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 8) with 256. unfold le_byte. apply Z.mod_mod. lia. }
+unfold rdword.
+rewrite <- (Z.add_0_r a) at 1. change 0 with (Z.of_nat 0) at 1. rewrite (B 0%nat) by lia.
+change 1 with (Z.of_nat 1). rewrite (B 1%nat) by lia. change 2 with (Z.of_nat 2) at 1. rewrite (B 2%nat) by lia.
+change 3 with (Z.of_nat 3). rewrite (B 3%nat) by lia. change 4 with (Z.of_nat 4). rewrite (B 4%nat) by lia.
+change 5 with (Z.of_nat 5). rewrite (B 5%nat) by lia. change 6 with (Z.of_nat 6). rewrite (B 6%nat) by lia.
+change 7 with (Z.of_nat 7). rewrite (B 7%nat) by lia.
+f_equal. apply le_bytes8. exact Hr.
+Qed.
+Lemma region_ok_rewindow : forall segs E m r wlo whi,
+region_ok segs E m r ->
+(forall o, wlo <= o < whi -> writable_at segs m (base_val E (YP09.r_base r) + o)) ->
+region_ok segs E m (set_window r wlo whi).
+Proof.
+intros segs E m r wlo whi (H1 & H2 & H3 & H4) Hw. unfold region_ok, set_window.
+cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks].
+split; [exact H1|]. split; [exact H2|]. split; [exact Hw | exact H4].
+Qed.
+Lemma ast_ok_set_region : forall segs E ss ms i r r',
+st_ok segs E ss ms -> nth_error (ss_mem ss) i = Some r ->
+extent_of_region E r' = extent_of_region E r ->
+regions_wf (list_upd (ss_mem ss) i r') = true ->
+region_ok segs E (ms_mem ms) r' ->
+st_ok segs E (mkSS (ss_pc ss) (ss_regs ss) (list_upd (ss_mem ss) i r') (ss_resv ss) (ss_facts ss)) ms.
+Proof.
+intros segs E ss ms i r r' (H1 & H2 & H3 & H4 & H5 & H6 & H7 & (Hwf & Hok & Hpd) & H9) Hn He Hwf' Hr'.
+unfold st_ok; cbn. repeat (split; [assumption|]). split; [|exact H9].
+split; [exact Hwf'|]. split; [exact (Forall_list_upd _ _ i r' Hok Hr')|].
+apply pairwise_disjoint_of_extents. rewrite (map_extent_list_upd E _ i r r' Hn He). apply zpairwise_of_pairwise. exact Hpd.
+Qed.
+Lemma atoms_ok_pick : forall E l idx, atoms_ok E l -> atoms_ok E (pick l idx).
+Proof.
+intros E l idx H. induction idx as [|i idx IH]; cbn; [exact I|].
+destruct (nth_error l i) as [[n f]|] eqn:Hn; [|exact IH].
+cbn. split; [|exact IH].
+apply nth_error_In in Hn. revert Hn. clear - H. induction l as [|[n' f'] l IHl]; cbn; intros Hin; [destruct Hin|].
+destruct H as [H1 H2]. destruct Hin as [E1 | Hin]; [injection E1 as -> ->; exact H1 | exact (IHl H2 Hin)].
+Qed.
+Lemma st_ok_pick_facts : forall segs E ss ms ai ci li,
+st_ok segs E ss ms ->
+st_ok segs E (set_facts ss (mkFacts (pick (f_atoms (ss_facts ss)) ai) (pick (f_conds (ss_facts ss)) ci) (pick (f_alias (ss_facts ss)) li))) ms.
+Proof.
+intros segs E ss ms ai ci li HS. apply st_ok_set_facts; [exact HS|].
+destruct HS as (_ & _ & _ & _ & _ & _ & _ & _ & (Ha & Hc & Hl)).
+pose proof (facts_ok_prune E (ss_facts ss) ci li (conj Ha (conj Hc Hl))) as (_ & Hc' & Hl').
+split; [apply atoms_ok_pick; exact Ha | split; [exact Hc' | exact Hl']].
+Qed.
+Lemma val_mem_moved : forall segs H H' (m m' : word -> option byte) a b n v,
+(forall k, 0 <= k < Z.of_nat n -> aview segs H' m' (b + k) = aview segs H m (a + k)) ->
+val_mem segs (mrestrict H m) a n v -> val_mem segs (mrestrict H' m') b n v.
+Proof.
+intros segs H H' m m' a b n v Hk Hv k Hkn. specialize (Hk (Z.of_nat k) ltac:(lia)). unfold aview in Hk.
+rewrite (Hv k Hkn) in Hk. destruct (mbyte segs (mrestrict H' m') (b + Z.of_nat k)) as [b'|]; cbn in Hk; [|discriminate].
+injection Hk as Hk. f_equal. apply bv_eq. exact Hk.
+Qed.
+Lemma atoms_ok_incl : forall E l l', (forall x, In x l' -> In x l) -> atoms_ok E l -> atoms_ok E l'.
+Proof.
+intros E l l' Hi H. induction l' as [|[n f] l' IH]; cbn; [exact I|].
+split; [|apply IH; intros x Hx; apply Hi; right; exact Hx].
+assert (Hin : In (n, f) l) by (apply Hi; left; reflexivity). clear - H Hin.
+induction l as [|[n' f'] l IHl]; cbn in *; [destruct Hin|].
+destruct H as [H1 H2]. destruct Hin as [E1 | Hin]; [injection E1 as -> ->; exact H1 | exact (IHl H2 Hin)].
+Qed.
+Lemma alias_ok_incl : forall E l l', (forall x, In x l' -> In x l) -> alias_ok E l -> alias_ok E l'.
+Proof.
+intros E l l' Hi H. induction l' as [|[a b] l' IH]; cbn; [exact I|].
+split; [|apply IH; intros x Hx; apply Hi; right; exact Hx].
+assert (Hin : In (a, b) l) by (apply Hi; left; reflexivity). clear - H Hin.
+induction l as [|[a' b'] l IHl]; cbn in *; [destruct Hin|].
+destruct H as [H1 H2]. destruct Hin as [E1 | Hin]; [injection E1 as -> ->; exact H1 | exact (IHl H2 Hin)].
+Qed.
+Lemma st_ok_facts_incl : forall segs E ss ms fa al,
+st_ok segs E ss ms ->
+(forall x, In x fa -> In x (f_atoms (ss_facts ss))) -> (forall x, In x al -> In x (f_alias (ss_facts ss))) ->
+st_ok segs E (set_facts ss (mkFacts fa [] al)) ms.
+Proof.
+intros segs E ss ms fa al HS Hfa Hal. apply st_ok_set_facts; [exact HS|].
+destruct HS as (_ & _ & _ & _ & _ & _ & _ & _ & (Ha & Hc & Hl)).
+split; [exact (atoms_ok_incl E _ _ Hfa Ha)|]. split; [exact I | exact (alias_ok_incl E _ _ Hal Hl)].
+Qed.
+Lemma st_ok_facts_incl3 : forall segs E ss ms fa cs al,
+st_ok segs E ss ms ->
+(forall x, In x fa -> In x (f_atoms (ss_facts ss))) -> (forall x, In x cs -> In x (f_conds (ss_facts ss))) ->
+(forall x, In x al -> In x (f_alias (ss_facts ss))) ->
+st_ok segs E (set_facts ss (mkFacts fa cs al)) ms.
+Proof.
+intros segs E ss ms fa cs al HS Hfa Hcs Hal. apply st_ok_set_facts; [exact HS|].
+destruct HS as (_ & _ & _ & _ & _ & _ & _ & _ & (Ha & Hc & Hl)).
+split; [exact (atoms_ok_incl E _ _ Hfa Ha)|]. split; [| exact (alias_ok_incl E _ _ Hal Hl)].
+apply (proj2 (conds_ok_forall E cs)). intros c Hin. exact (proj1 (conds_ok_forall E _) Hc c (Hcs c Hin)).
+Qed.
+Lemma st_ok_cond_In : forall segs E ss ms c,
+st_ok segs E ss ms -> In c (f_conds (ss_facts ss)) -> acond_ok E c.
+Proof.
+intros segs E ss ms c HS Hin. destruct HS as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & Hc & _)).
+exact (proj1 (conds_ok_forall E _) Hc c Hin).
+Qed.
+Lemma ast_ok_set_reg_fp : forall segs E ss ms (r : bv 5) e,
+st_ok segs E ss ms -> bv_eqb r 0 = false -> sv_denot E e = getr (ms_regs ms) r ->
+st_ok segs E (mkSS (ss_pc ss) (sr_set (ss_regs ss) r e) (ss_mem ss) (ss_resv ss) (ss_facts ss)) ms.
+Proof.
+intros segs E ss ms r e HS Hr0 He. apply st_ok_regs; [exact HS|].
+intros rr. destruct (decide (rr = r)) as [->|Hne].
+- rewrite sr_get_set_same by exact Hr0. rewrite He. apply (st_ok_reg segs E ss ms r HS).
+- rewrite sr_get_set_other by exact Hne. reflexivity.
+Qed.
+Lemma st_ok_havoc : forall segs k E ss ms ws,
+st_ok segs E ss ms -> ss_atoms_lt k ss = true -> st_ok segs (havoc E k ws) ss ms.
+Proof.
+intros segs k E ss ms ws HS Hk. eapply st_ok_agree; [exact HS | | exact Hk].
+apply (env_agree_havoc_ge k k E E ws ltac:(lia) (env_agree_refl k E)).
+Qed.
+Lemma aview_of_val_mem1 : forall segs H mem a v,
+val_mem segs (mrestrict H mem) a 1 v -> 0 <= v < 256 -> aview segs H mem a = Some v.
+Proof.
+intros segs H mem a v Hv Hr. unfold aview. specialize (Hv 0%nat ltac:(lia)). rewrite Z.add_0_r in Hv. rewrite Hv. cbn [option_map].
+f_equal. rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 8) with 256. unfold YO0f.le_byte.
+change (8 * Z.of_nat 0) with 0. change (2 ^ (8 * Z.of_nat 1)) with 256. rewrite Z.shiftr_0_r. rewrite !Z.mod_mod by lia. apply Z.mod_small. exact Hr.
+Qed.
+Lemma range_addressable_partial : forall (rd : Z -> option Z) Bs p k,
+rd (shadow_of_addr Bs p) = Some k -> p mod 8 = 0 -> 0 <= k < 8 -> range_addressable rd Bs p k.
+Proof.
+intros rd Bs p k Hk Hp Hr x Hx. exists k.
+pose proof (Z.div_mod p 8 ltac:(lia)) as D. rewrite Hp, Z.add_0_r in D.
+assert (Hq : x / 8 = p / 8) by (symmetry; apply (Z.div_unique x 8 (p / 8) (x - p)); lia).
+assert (Hg : shadow_of_addr Bs x = shadow_of_addr Bs p) by (unfold shadow_of_addr; rewrite Hq; reflexivity).
+rewrite Hg, Hk. split; [reflexivity|]. destruct (Z.eq_dec k 0) as [-> | Hnz]; [left; reflexivity | right].
+assert (Hxm : x mod 8 = x - p) by (rewrite (Z.mod_eq x 8), Hq by lia; lia).
+lia.
+Qed.
+Section q.
+Variable segs : list Segment.
+Variable B : asyms.
+Hypothesis LAWS : AR_laws segs B.
+Lemma frame_al64 : forall ly S W mem md cid pos,
+AR segs B ly S W mem md -> In (cid, pos) (frames S) ->
+frame_addr ly cid pos mod 64 = 0 /\ fs_frame_bytes cid mod 64 = 0 /\ 64 <= fs_frame_bytes cid.
+Proof.
+intros ly S W mem md cid pos [M _] Hin.
+destruct (frame_facts B ly S _ cid pos M Hin) as (_ & _ & _ & _ & Hpg & _ & _ & Hoff & H64 & Hb & _).
+unfold frame_addr, page_aligned in *. split; [|split; [exact Hb | exact H64]].
+rewrite Z.add_mod, Hoff, Z.add_0_r, Z.mod_mod by lia.
+replace (ly_F ly) with (64 * (ly_F ly / 4096 * 64)) by (pose proof (Z.div_mod (ly_F ly) 4096 ltac:(lia)); lia).
+rewrite Z.mul_comm. apply Z_mod_mult.
+Qed.
+Lemma shadow_hull_vis_of_frame : forall ly S W mem md cid pos d n,
+AR segs B ly S W mem md -> In (cid, pos) (frames S) ->
+frame_addr ly cid pos <= d -> d + n <= frame_addr ly cid pos + fs_frame_bytes cid -> 0 < n ->
+shadow_hull_vis (aview segs (w_H W) mem) d n.
+Proof.
+intros ly S W mem md cid pos d n HAR Hin Hfd Hdn Hn s Hs.
+destruct (frame_al64 ly S W mem md cid pos HAR Hin) as (Hal & Hbal & Hb64).
+destruct (al_frames _ _ LAWS ly S W mem md cid pos HAR Hin) as (_ & _ & _ & Hsh).
+set (f := frame_addr ly cid pos) in *. set (bs := fs_frame_bytes cid) in *.
+pose proof (Z.div_mod f 64 ltac:(lia)) as Df. pose proof (Z.div_mod bs 64 ltac:(lia)) as Db.
+assert (E8f : f / 8 = 8 * (f / 64)) by (rewrite Hal, Z.add_0_r in Df; rewrite Df at 1; replace (64 * (f / 64)) with (8 * (f / 64) * 8) by lia; rewrite Z.div_mul by lia; reflexivity).
+assert (E8b : bs / 8 = 8 * (bs / 64)) by (rewrite Hbal, Z.add_0_r in Db; rewrite Db at 1; replace (64 * (bs / 64)) with (8 * (bs / 64) * 8) by lia; rewrite Z.div_mul by lia; reflexivity).
+assert (Hsf : shadow_addr f = 8 * (268431360 + f / 64)) by (unfold shadow_addr, SHADOW_OFF; lia).
+assert (L1 : shadow_addr f <= shadow_addr d / 8 * 8).
+{ pose proof (shadow_mono f d Hfd) as M1. rewrite Hsf. rewrite Hsf in M1.
+assert (268431360 + f / 64 <= shadow_addr d / 8) by (apply Z.div_le_lower_bound; lia). lia. }
+assert (L2 : shadow_addr (d + n - 1) / 8 * 8 + 8 <= shadow_addr f + bs / 8).
+{ assert (M2 : shadow_addr (d + n - 1) < shadow_addr f + bs / 8).
+{ unfold shadow_addr in *. assert ((d + n - 1) / 8 < f / 8 + bs / 8) by (apply Z.div_lt_upper_bound; lia). lia. }
+rewrite Hsf, E8b in M2. rewrite Hsf, E8b.
+assert (shadow_addr (d + n - 1) / 8 < 268431360 + f / 64 + bs / 64) by (apply Z.div_lt_upper_bound; lia). lia. }
+specialize (Hsh (s - shadow_addr f) ltac:(lia)). replace (shadow_addr f + (s - shadow_addr f)) with s in Hsh by lia.
+apply (aview_some_of_apresent segs). exact (proj1 Hsh).
+Qed.
+Lemma region_kept_block_ajw2 : forall E lyc Sc W memc W2 mem2 slo shi (Er : Z -> Prop) n lo hi wlo whi cs b m ly2 S2 md2,
+acall_kept segs B lyc Sc W memc W2 mem2 slo shi Er -> AR segs B ly2 S2 W2 mem2 md2 -> In (b, m) (ablocks B ly2 S2) ->
+bv_unsigned (ew E n) = b -> In (b, m) (ablocks B lyc Sc) -> 0 <= lo -> hi <= req_size m -> lo <= wlo -> whi <= hi ->
+(forall a, b + lo <= a < b + hi -> ~ Er a) ->
+region_kept segs E (mrestrict (w_H W) memc) (mrestrict (w_H W2) mem2) (YP09.mkRegion (Some n) lo hi wlo whi cs).
+Proof.
+intros E lyc Sc W memc W2 mem2 slo shi Er n lo hi wlo whi cs b m ly2 S2 md2 (_ & K2 & _) HAR2 Hin2 Hn Hin Hlo Hhi Hwlo Hwhi HnE.
+destruct (al_blocks _ _ LAWS _ _ _ _ _ b m HAR2 Hin2) as (_ & _ & _ & _ & Hpres2 & _).
+split; cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi base_val]; rewrite Hn; intros a Ha.
+- apply (mbyte_of_aview segs). replace a with (b + (a - b)) by lia. apply (K2 b m (a - b) Hin); [lia|].
+replace (b + (a - b)) with a by lia. apply HnE. exact Ha.
+- intros _. apply (apresent_writable segs). apply (proj1 (Hpres2 a ltac:(lia))).
+Qed.
+Lemma awr_new_block_any : forall STK sp0 FP ly S W0 mem md own lyc Sc W memc mdc k ly2 S2 W2 mem2 md2 res n blc i lyq ownq,
+ajournal segs B STK sp0 FP ly S W0 mem md own lyc Sc W memc mdc k ->
+AR segs B ly2 S2 W2 mem2 md2 -> ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n)] -> 0 <= n ->
+In (res, n) blc -> 0 <= i < req_size n ->
+awr_byte STK sp0 FP (ablocks B ly S) blc lyq ownq (res + i).
+Proof.
+intros STK sp0 FP ly S W0 mem md own lyc Sc W memc mdc k ly2 S2 W2 mem2 md2 res n blc i lyq ownq HJ HAR2 Ebl Hn Hin Hi.
+pose proof HJ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hgone & _).
+destruct (in_dec (fun x y : Z * Z => ltac:(decide equality; apply Z.eq_dec)) (res, n) (ablocks B ly S)) as [H0 | H0].
+- destruct (in_dec (fun x y : Z * Z => ltac:(decide equality; apply Z.eq_dec)) (res, n) (ablocks B lyc Sc)) as [Hc | Hc].
++ exfalso. apply in_split in Hc as (l1 & l2 & E1).
+pose proof (sep_blocks_pos segs B LAWS ly2 S2 W2 mem2 md2 (res, n) (res, n) l1 l2 [] HAR2) as Hd.
+rewrite Ebl, E1, <- app_assoc in Hd. cbn [app] in Hd. specialize (Hd eq_refl).
+unfold zdisjoint, block_rng in Hd. cbn [fst snd] in Hd.
+assert (0 < req_size n) by (unfold req_size; destruct (Z.eqb_spec n 0); cbn; lia). lia.
++ right. left. split; [exact (Hgone res n i H0 Hc Hi)|]. exists res, n. split; [exact Hin | lia].
+- right. right. left. exists res, n. split; [exact Hin|]. split; [exact H0 | lia].
+Qed.
+End q.
+Section w.
+Variable segs : list Segment.
+Variable B : asyms.
+Hypothesis LAWS : AR_laws segs B.
+Lemma region_kept_frame_aj : forall E lyc Sc W memc W2 mem2 slo shi (Er : Z -> Prop) n lo hi wlo whi cs b cid pos,
+acall_kept segs B lyc Sc W memc W2 mem2 slo shi Er ->
+bv_unsigned (ew E n) = b -> In (cid, pos) (frames Sc) ->
+frame_addr lyc cid pos <= b + lo -> b + hi <= frame_addr lyc cid pos + fs_frame_bytes cid -> whi <= wlo ->
+(forall a, b + lo <= a < b + hi -> ~ Er a) ->
+region_kept segs E (mrestrict (w_H W) memc) (mrestrict (w_H W2) mem2) (YP09.mkRegion (Some n) lo hi wlo whi cs).
+Proof.
+intros E lyc Sc W memc W2 mem2 slo shi Er n lo hi wlo whi cs b cid pos (_ & _ & _ & K4 & _) Hn Hin Hlo Hhi Hro HnE.
+split; cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi base_val]; rewrite Hn; intros a Ha; [|lia].
+apply (mbyte_of_aview segs). apply (K4 cid pos a Hin); [|apply HnE; exact Ha].
+left. unfold in_zr, frame_rng. cbn [fst snd]. lia.
+Qed.
+Lemma region_kept_ownframe_aj : forall E lyc Sc W memc W2 mem2 slo shi (Er : Z -> Prop) n lo hi wlo whi cs b cid pos,
+acall_kept segs B lyc Sc W memc W2 mem2 slo shi Er ->
+bv_unsigned (ew E n) = b -> In (cid, pos) (frames Sc) ->
+((frame_addr lyc cid pos <= b + lo /\ b + hi <= frame_addr lyc cid pos + fs_frame_bytes cid) \/
+(shadow_addr (frame_addr lyc cid pos) <= b + lo /\ b + hi <= shadow_addr (frame_addr lyc cid pos) + fs_frame_bytes cid / 8)) ->
+(forall a, b + lo <= a < b + hi -> ~ Er a) ->
+(forall a, b + wlo <= a < b + whi -> apresent (w_H W2) mem2 a) ->
+region_kept segs E (mrestrict (w_H W) memc) (mrestrict (w_H W2) mem2) (YP09.mkRegion (Some n) lo hi wlo whi cs).
+Proof.
+intros E lyc Sc W memc W2 mem2 slo shi Er n lo hi wlo whi cs b cid pos (_ & _ & _ & K4 & _) Hn Hin Hrng HnE Hpres.
+split; cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi base_val]; rewrite Hn; intros a Ha.
+- apply (mbyte_of_aview segs). apply (K4 cid pos a Hin); [|apply HnE; exact Ha].
+destruct Hrng as [[H1 H2] | [H1 H2]]; [left | right]; unfold in_zr, frame_rng; cbn [fst snd]; lia.
+- intros _. apply (apresent_writable segs). apply Hpres. exact Ha.
+Qed.
+End w.
+Section z.
+Context {L : ptable wsym} {PI : PAImg L}.
+#[local] Notation SEGS := (pa_segs).
+#[local] Notation VAL := (pa_val).
+Lemma ast_ok_pi_set_region : forall E ss ms i r r',
+st_ok_pi SEGS VAL E ss ms -> nth_error (ss_mem ss) i = Some r ->
+extent_of_region E r' = extent_of_region E r ->
+regions_wf (list_upd (ss_mem ss) i r') = true ->
+region_ok SEGS E (ms_mem ms) r' ->
+st_ok_pi SEGS VAL E (mkSS (ss_pc ss) (ss_regs ss) (list_upd (ss_mem ss) i r') (ss_resv ss) (ss_facts ss)) ms.
+Proof. intros E ss ms i r r' HS Hn He Hw Hr. destruct ss as [p0 r0 f0 m0 v0 g0]. exact (ast_ok_set_region SEGS E _ ms i r r' HS Hn He Hw Hr). Qed.
+Lemma st_ok_pi_pick_facts : forall E ss ms ai ci li,
+st_ok_pi SEGS VAL E ss ms ->
+st_ok_pi SEGS VAL E (set_facts ss (mkFacts (pick (f_atoms (ss_facts ss)) ai) (pick (f_conds (ss_facts ss)) ci) (pick (f_alias (ss_facts ss)) li))) ms.
+Proof. intros E ss ms ai ci li HS. destruct ss as [p0 r0 f0 m0 v0 g0]. exact (st_ok_pick_facts SEGS E _ ms ai ci li HS). Qed.
+Lemma st_ok_pi_facts_incl : forall E ss ms fa al,
+st_ok_pi SEGS VAL E ss ms ->
+(forall x, In x fa -> In x (f_atoms (ss_facts ss))) -> (forall x, In x al -> In x (f_alias (ss_facts ss))) ->
+st_ok_pi SEGS VAL E (set_facts ss (mkFacts fa [] al)) ms.
+Proof. intros E ss ms fa al HS H1 H2. destruct ss as [p0 r0 f0 m0 v0 g0]. exact (st_ok_facts_incl SEGS E _ ms fa al HS H1 H2). Qed.
+Lemma st_ok_pi_facts_incl3 : forall E ss ms fa cs al,
+st_ok_pi SEGS VAL E ss ms ->
+(forall x, In x fa -> In x (f_atoms (ss_facts ss))) -> (forall x, In x cs -> In x (f_conds (ss_facts ss))) ->
+(forall x, In x al -> In x (f_alias (ss_facts ss))) ->
+st_ok_pi SEGS VAL E (set_facts ss (mkFacts fa cs al)) ms.
+Proof. intros E ss ms fa cs al HS H1 H2 H3. destruct ss as [p0 r0 f0 m0 v0 g0]. exact (st_ok_facts_incl3 SEGS E _ ms fa cs al HS H1 H2 H3). Qed.
+Lemma st_ok_pi_cond_In : forall E ss ms c,
+st_ok_pi SEGS VAL E ss ms -> In c (f_conds (ss_facts ss)) -> acond_ok E c.
+Proof. intros E ss ms c HS Hin. destruct ss as [p0 r0 f0 m0 v0 g0]. exact (st_ok_cond_In SEGS E _ ms c HS Hin). Qed.
+Lemma ast_ok_pi_set_reg_fp : forall E ss ms (r : bv 5) e,
+st_ok_pi SEGS VAL E ss ms -> bv_eqb r 0 = false -> sv_denot E e = getr (ms_regs ms) r ->
+st_ok_pi SEGS VAL E (mkSS (ss_pc ss) (sr_set (ss_regs ss) r e) (ss_mem ss) (ss_resv ss) (ss_facts ss)) ms.
+Proof. intros E ss ms r e HS Hr He. destruct ss as [p0 r0 f0 m0 v0 g0]. exact (ast_ok_set_reg_fp SEGS E _ ms r e HS Hr He). Qed.
+Lemma st_ok_pi_havoc : forall k E ss ms ws,
+st_ok_pi SEGS VAL E ss ms -> ss_atoms_p (pband k A_TEXT) ss = true -> (k + length ws <= A_TEXT)%nat ->
+st_ok_pi SEGS VAL (havoc E k ws) ss ms.
+Proof.
+intros k E ss ms ws HS Hat Hk. unfold st_ok_pi in *.
+eapply (st_ok_agree_p (pband k A_TEXT) SEGS); [exact HS | | destruct ss; exact Hat].
+split; [| reflexivity]. intros n Hn. unfold pband in Hn.
+apply Bool.orb_true_iff in Hn. destruct Hn as [Hn|Hn];
+[apply Nat.ltb_lt in Hn; apply ew_havoc_old; exact Hn | apply Nat.leb_le in Hn; apply ew_havoc_above; lia].
+Qed.
+Lemma st_ok_pi_add_alias : forall E ss ms e1 e2,
+st_ok_pi SEGS VAL E ss ms -> sv_denot E e1 = sv_denot E e2 ->
+st_ok_pi SEGS VAL E (set_facts ss (mkFacts (f_atoms (ss_facts ss)) (f_conds (ss_facts ss)) ((e1, e2) :: f_alias (ss_facts ss)))) ms.
+Proof. intros E ss ms e1 e2 HS He. destruct ss as [p0 r0 f0 m0 v0 g0]. exact (st_ok_add_alias SEGS E _ ms e1 e2 HS He). Qed.
+End z.
+Section a0.
+Context {L : ptable wsym} {PL : PAListing L} {PI : PAImg L}.
+Variable B : asyms.
+Hypothesis LAWS : AR_laws pa_segs B.
+#[local] Notation SEGS := (pa_segs).
+#[local] Notation VAL := (pa_val).
+#[local] Notation BASE := (pa_val A_TEXT).
+Definition run_post_pi_AJ (W : world SEGS) (E : env) (ss ss' : sstate)
+(ms : machine_state) (STK sp0 : Z) (FP : list (Z * Z)) ly S W0 mem md own lyc Sc (mdc : Model) (k : Z)
+(Q : world SEGS -> config -> Prop) : Prop :=
+forall ms' mat',
+st_ok_pi SEGS VAL E ss' (restrict (w_H W) ms') ->
+ajournal SEGS B STK sp0 FP ly S W0 mem md own lyc Sc W (ms_mem ms') (with_vm_backing (m_vm_lazy mdc) mat' mdc) k ->
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+SRr SEGS W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q.
+Definition pi_plain_stop (st : prun_status wsym) : Prop :=
+match st with PRS_running | PRS_stopped _ => True | _ => False end.
+Lemma SRr_run_pi_AJ : forall W n E ss ss' st ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q,
+img_env VAL A_LIM E ->
+st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
+sym_runN_pi pl_tpi n ss = (ss', st) -> pi_plain_stop st ->
+ajournal SEGS B STK sp0 FP ly S W0 mem md own lyc Sc W (ms_mem ms) mdc k ->
+awr_ok E (ss_mem ss) STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+run_post_pi_AJ W E ss ss' ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q ->
+SRr SEGS W (mkCfg ms mdc) Q.
+Proof.
+intros W n E ss ss' st ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q HE HS Hrun Hst HJ Hwr Hk.
+unfold sym_runN_pi in Hrun. rewrite <- pl_tpi_eq in Hrun.
+destruct (YP0d.sym_run_pi_sound wsym SEGS (clookup pa_tbl) VAL pa_sigma L pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim
+_ E ss ss' st _ HE HS Hrun) as (msr' & Hms & HP & _ & Hfr).
+eapply (SRr_chain_AJ SEGS B LAWS pa_segs_low pa_wx W E (abs_ss VAL ss) (abs_ss VAL ss') ms msr');
+[ exact Hms | destruct st; cbn [prun_post] in HP; first [exact HP | destruct Hst] | destruct ss; exact Hfr | exact HJ | destruct ss; exact Hwr | ].
+intros ms' mat' HS' HJ' HF HF' HG. apply (Hk ms' mat' HS' HJ'); destruct ss; first [exact HF | exact HF' | exact HG].
+Qed.
+Lemma SRr_run_to_pi_AJ : forall W n stop E ss ss' st ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q,
+img_env VAL A_LIM E ->
+st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
+sym_run_toN_pi pl_tpi n stop ss = (ss', st) -> pi_plain_stop st ->
+ajournal SEGS B STK sp0 FP ly S W0 mem md own lyc Sc W (ms_mem ms) mdc k ->
+awr_ok E (ss_mem ss) STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+run_post_pi_AJ W E ss ss' ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q ->
+SRr SEGS W (mkCfg ms mdc) Q.
+Proof.
+intros W n stop E ss ss' st ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q HE HS Hrun Hst HJ Hwr Hk.
+unfold sym_run_toN_pi in Hrun. rewrite <- pl_tpi_eq in Hrun.
+destruct (YP0d.sym_run_to_pi_sound wsym SEGS (clookup pa_tbl) VAL pa_sigma L pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim
+_ _ E ss ss' st _ HE HS Hrun) as (msr' & Hms & HP & _ & Hfr).
+eapply (SRr_chain_AJ SEGS B LAWS pa_segs_low pa_wx W E (abs_ss VAL ss) (abs_ss VAL ss') ms msr');
+[ exact Hms | destruct st; cbn [prun_post] in HP; first [exact HP | destruct Hst] | destruct ss; exact Hfr | exact HJ | destruct ss; exact Hwr | ].
+intros ms' mat' HS' HJ' HF HF' HG. apply (Hk ms' mat' HS' HJ'); destruct ss; first [exact HF | exact HF' | exact HG].
+Qed.
+Hypothesis ML : model_laws (as_universe B).
+Hypothesis ASF : astack_free_law SEGS B.
+Hypothesis frame_flag_law : frame_flag_lawP SEGS B.
+Lemma aj_flag_store_pi : forall W n E ss ss' st ms STK sp0 FP ly S W0 mem md own' lyc Sc mdc k cid pos Q,
+img_env VAL A_LIM E ->
+st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
+sym_runN_pi pl_tpi n ss = (ss', st) -> pi_plain_stop st ->
+ajournal SEGS B STK sp0 FP ly S W0 mem md ((cid, pos) :: own') lyc Sc W (ms_mem ms) mdc k ->
+0 <= cid ->
+(forall a, in_wrange E (ss_mem ss) a ->
+awr_byte STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc ((cid, pos) :: own') a \/ a = flag_addr lyc cid pos) ->
+(forall msr, st_ok_pi SEGS VAL E ss' msr -> mbyte SEGS (ms_mem msr) (flag_addr lyc cid pos) = Some (Z_to_bv 8 0)) ->
+(forall ms' mat',
+st_ok_pi SEGS VAL E ss' (restrict (w_H W) ms') ->
+ajournal SEGS B STK sp0 FP ly S W0 mem md own' lyc (stack_free_state cid pos Sc) W (ms_mem ms') (with_vm_backing (m_vm_lazy mdc) mat' mdc) k ->
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+SRr SEGS W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q) ->
+SRr SEGS W (mkCfg ms mdc) Q.
+Proof.
+intros W n E ss ss' st ms STK sp0 FP ly S W0 mem md own' lyc Sc mdc k cid pos Q HE HS Hrun Hst HJ Hcid Hwr Hflag0 Hk.
+unfold sym_runN_pi in Hrun. rewrite <- pl_tpi_eq in Hrun.
+destruct (YP0d.sym_run_pi_sound wsym SEGS (clookup pa_tbl) VAL pa_sigma L pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim
+_ E ss ss' st _ HE HS Hrun) as (msr' & Hms & HS'0 & _ & Hfr0).
+assert (HS' : st_ok_pi SEGS VAL E ss' msr') by (destruct st; cbn [prun_post] in HS'0; first [exact HS'0 | destruct Hst]). clear HS'0.
+assert (Hfr : frame_of E (ss_mem ss) (ms_mem (restrict (w_H W) ms)) (ms_mem msr')) by (destruct ss; exact Hfr0). clear Hfr0.
+pose proof pa_wx as Hwx. pose proof pa_segs_low as segs_low.
+pose proof HJ as (HAR & Hly & Hsecs & Hwle & Hio & Hfrs & Hnev & Hkk & _).
+pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
+assert (Hin : In (cid, pos) (frames Sc)) by (rewrite Hfrs; left; reflexivity).
+destruct (frame_flag_law lyc Sc W (ms_mem ms) mdc cid pos HAR Hin) as (Hfp & Hfo & Hfr_rng & Hfr_num).
+apply (SRr_msteps SEGS Hwx W ms msr' mdc Q Hms).
+intros model' Hsame Hcl.
+rewrite (same_but_materialized_wvb mdc model' Hsame).
+pose proof (restrict_unrestrict_clean (w_H W) (ms_mem ms) msr' Hcl) as Hrr.
+pose proof (mrestrict_unrestrict_mem (w_H W) (ms_mem ms) msr' Hcl) as Hmm.
+pose proof (msteps_mem_grows SEGS _ _ Hms) as Hgr. cbn [ms_mem restrict] in Hgr.
+set (memc' := ms_mem (unrestrict (w_H W) (ms_mem ms) msr')) in *.
+assert (Hfr' : forall x : word, ~ in_wrange E (ss_mem ss) (bv_unsigned x) -> mrestrict (w_H W) memc' x = mrestrict (w_H W) (ms_mem ms) x).
+{ subst memc'. rewrite Hmm. exact Hfr. }
+assert (Hgr' : mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) memc')) by (subst memc'; rewrite Hmm; exact Hgr).
+assert (Heqw : forall a, 0 <= a < 2 ^ 64 -> ~ in_wrange E (ss_mem ss) a -> aview SEGS (w_H W) memc' a = aview SEGS (w_H W) (ms_mem ms) a).
+{ intros a Ha HWa. apply aview_eq_of. apply Hfr'. rewrite Z_to_bv_unsigned. unfold bv_wrap, bv_modulus.
+change (2 ^ Z.of_N 64) with (2 ^ 64). rewrite Z.mod_small by lia. exact HWa. }
+assert (Hsame' : same_but_materialized mdc (with_vm_backing (m_vm_lazy mdc) (m_vm_materialized model') mdc)).
+{ rewrite <- (same_but_materialized_wvb mdc model' Hsame). exact Hsame. }
+pose proof (same_but_materialized_wvb mdc _ Hsame') as Emd.
+pose proof (am_wf _ _ _ _ (proj1 HAR)) as HWF.
+destruct (ml_stack_free _ ML Sc cid pos HWF Hin) as (HWF2 & l1 & l2 & E1 & E2).
+assert (El1 : l1 = []).
+{ destruct l1 as [|f l1']; [reflexivity|]. exfalso.
+rewrite Hfrs in E1. cbn in E1. injection E1 as <- E1'.
+pose proof (sep_frames_pos SEGS B LAWS lyc Sc W (ms_mem ms) mdc (cid, pos) (cid, pos) [] l1' l2 HAR
+ltac:(rewrite Hfrs; cbn; rewrite E1'; reflexivity)) as Hd.
+unfold zdisjoint, frame_rng in Hd. cbn [fst snd] in Hd. pose proof (fs_frame_bytes_pos cid Hcid). lia. }
+subst l1. cbn in E1, E2. rewrite Hfrs in E1. cbn in E1. injection E1 as E1.
+assert (HAR' : AR SEGS B lyc (stack_free_state cid pos Sc) W memc' (with_vm_backing (m_vm_lazy mdc) (m_vm_materialized model') mdc)).
+{ eapply (ASF lyc Sc W (ms_mem ms) mdc memc' _ cid pos HAR Hin).
+- unfold aview. subst memc'. rewrite Hmm. rewrite (Hflag0 msr' HS'). reflexivity.
+- intros a Ha Ho Hne. apply Heqw; [exact Ha|]. intros HWa.
+destruct (Hwr a HWa) as [Hw | Hw]; [|exact (Hne Hw)].
+exact (proj1 (awr_byte_cases SEGS B LAWS _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ a HJ Hw) Ho).
+- intros a Hv. eapply aview_keeps_vis; [exact Hgr' | exact Hv].
+- rewrite Emd. destruct mdc as [f [mp lz mt] io fs pr li ti sg sc]; reflexivity.
+- rewrite Emd. destruct mdc as [f [mp lz mt] io fs pr li ti sg sc]; reflexivity.
+- rewrite Emd. destruct mdc as [f [mp lz mt] io fs pr li ti sg sc]; reflexivity.
+- intros a _ Hh. subst memc'. cbn [unrestrict ms_mem]. unfold munrestrict. rewrite Hh. reflexivity. }
+apply (Hk (unrestrict (w_H W) (ms_mem ms) msr') (m_vm_materialized model')).
+- rewrite Hrr. exact HS'.
+- eapply (ajournal_after_write SEGS B LAWS segs_low STK sp0 FP ly S W0 mem md ((cid, pos) :: own') lyc Sc W (ms_mem ms) mdc k
+memc' _ (in_wrange E (ss_mem ss)) (stack_free_state cid pos Sc) own' HJ Heqw
+ltac:(intros a Ha; eapply apresent_grows; [exact Hgr' | exact Ha]) Hsame').
++ intros a Ha. destruct (Hwr a Ha) as [Hw | ->]; [left; exact Hw | right; split; [exact Hfo | exact Hfr_rng]].
++ exact HAR'.
++ unfold ablocks. rewrite blocks_stack_free_state. reflexivity.
++ reflexivity.
++ cbn. lia.
++ etransitivity; [exact E2 | symmetry; exact E1].
++ pose proof HJ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & HQT).
+apply (qtight_ext Sc); [reflexivity | reflexivity | reflexivity | exact HQT].
+- cbn [unrestrict ms_mem]. apply frame_of_unrestrict. exact Hfr.
+- exact Hfr'.
+- exact Hgr'.
+Qed.
+End a0.
+End g.
+Ltac paj_after_run_plain HS HJ :=
+let ms' := fresh "ms" in let mat := fresh "mat" in
+let HF := fresh "HF" in let HFr := fresh "HFr" in let HG := fresh "HG" in
+intros ms' mat HS HJ HF HFr HG.
+Ltac paj_run_sh RUNP HS HJ :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of RUNP with
+| forall W n E ss ss' st ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q, _ -> _ -> sym_runN_pi ?tpi n ss = _ -> _ =>
+let r := eval vm_compute in (sym_runN_pi tpi FUEL ss) in
+lazymatch r with
+| (?ss', ?st) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_runN_pi tpi FUEL ss = (ss', st)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_sh: no hypothesis  img_env _ _ E" end in
+eapply (RUNP W FUEL E ss ss' st ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ HEI HS Hrun I HJ);
+[ clear Hrun | clear Hrun HS HJ; paj_after_run_plain HS HJ ]
+end
+end
+| _ => fail "paj_run_sh: HS must be  st_ok_pi segs val E ss (restrict (w_H W) ms)"
+end.
+Ltac paj_run_to_sh RUNTOP HS HJ stop :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of RUNTOP with
+| forall W n stop E ss ss' st ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q, _ -> _ -> sym_run_toN_pi ?tpi n stop ss = _ -> _ =>
+let r := eval vm_compute in (sym_run_toN_pi tpi FUEL stop ss) in
+lazymatch r with
+| (?ss', ?st) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_run_toN_pi tpi FUEL stop ss = (ss', st)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_to_sh: no hypothesis  img_env _ _ E" end in
+eapply (RUNTOP W FUEL stop E ss ss' st ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ HEI HS Hrun I HJ);
+[ clear Hrun | clear Hrun HS HJ; paj_after_run_plain HS HJ ]
+end
+end
+| _ => fail "paj_run_to_sh: HS must be  st_ok_pi segs val E ss (restrict (w_H W) ms)"
+end.
+Ltac paj_run_flag_sh RUNF HS HJ :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of RUNF with
+| forall W n E ss ss' st ms STK sp0 FP ly S W0 mem md own' lyc Sc mdc k cid pos Q, _ -> _ -> sym_runN_pi ?tpi n ss = _ -> _ =>
+let r := eval vm_compute in (sym_runN_pi tpi FUEL ss) in
+lazymatch r with
+| (?ss', ?st) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_runN_pi tpi FUEL ss = (ss', st)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_flag_sh: no hypothesis  img_env _ _ E" end in
+eapply (RUNF W FUEL E ss ss' st ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HEI HS Hrun I HJ);
+[ clear Hrun | clear Hrun | clear Hrun | clear Hrun HS HJ; paj_after_run_plain HS HJ ]
+end
+end
+| _ => fail "paj_run_flag_sh: HS must be  st_ok_pi segs val E ss (restrict (w_H W) ms)"
+end.
+
+Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Section c.
+Context {L : ptable wsym} {PL : PAListing L} {PI : PAImg L}.
+#[local] Notation SEGS := (pa_segs).
+#[local] Notation VAL := (pa_val).
+#[local] Notation BASE := (pa_val A_TEXT).
+Lemma img_env_havoc_hi : forall E k ws, img_env VAL A_LIM E -> (A_LIM <= k)%nat -> img_env VAL A_LIM (havoc E k ws).
+Proof. intros E k ws HE Hk a Ha. rewrite ew_havoc_old by lia. exact (HE a Ha). Qed.
+Lemma img_env_ewset_hi : forall E n w, img_env VAL A_LIM E -> (A_LIM <= n)%nat -> img_env VAL A_LIM (ewset E n w).
+Proof. intros E n w HE Hn a Ha. rewrite ew_ewset_other by lia. exact (HE a Ha). Qed.
+Lemma aview_above_of_journal : forall B STK sp0 FP ly S W0 mem md own ly' S' W' mem' md' k,
+ajournal SEGS B STK sp0 FP ly S W0 mem md own ly' S' W' mem' md' k ->
+forall a, sp0 <= a < 2 ^ 64 -> aview SEGS (w_H W') mem' a = aview SEGS (w_H W0) mem a.
+Proof.
+intros B STK sp0 FP ly S W0 mem md own ly' S' W' mem' md' k HJ a Ha.
+pose proof HJ as (_ & _ & _ & _ & _ & _ & _ & _ & F1 & _ & _ & _ & _ & _ & (_ & Hstk0 & Hceil & Hslo & _) & _).
+apply F1; lia.
+Qed.
+Lemma st_ok_pi_havoc_hi : forall k E ss ms ws,
+st_ok_pi SEGS VAL E ss ms -> ss_atoms_p (pband k (k + length ws)) ss = true ->
+st_ok_pi SEGS VAL (havoc E k ws) ss ms.
+Proof.
+intros k E ss ms ws HS Hat. unfold st_ok_pi in *.
+eapply (st_ok_agree_p (pband k (k + length ws)) SEGS); [exact HS | | destruct ss; exact Hat].
+apply env_agree_p_havoc. apply le_n.
+Qed.
+Theorem st_ok_pi_after_call_hi : forall k E ss ms regs' mem' rs retk,
+img_env VAL A_LIM E -> 0 <= retk < 2 ^ 40 ->
+st_ok SEGS E ss ms ->
+ss_resv ss = None ->
+ss_atoms_p (pband k (k + 16)) ss = true ->
+regions_wf rs = true -> no_cdata rs = true -> mem_atoms_p (pband k (k + 16)) rs = true ->
+submem rs (ss_mem ss) ->
+sr_get (ss_regs ss) 1 = SOff A_TEXT retk ->
+aregs_preserved (ms_regs ms) regs' ->
+Forall (region_kept SEGS E (ms_mem ms) mem') rs ->
+st_ok_pi SEGS VAL (havoc E k (map (getr regs') CLOB)) (ss_after_call ss rs k retk)
+(mkst regs' (Z_to_bv 64 (BASE + retk)) mem' (seg_rom SEGS)).
+Proof.
+intros k E ss ms regs' mem' rs retk HE Hrk HS Hrv Hat Hwf Hnc Hmat Hsub Hra HP Hkept.
+unfold st_ok_pi, abs_ss, ss_after_call, setpc. cbn [ss_pc ss_regs ss_fregs ss_mem ss_resv ss_facts].
+pose proof (st_ok_mkst SEGS E ss ms HS Hrv) as Hshape. rewrite Hshape in HS.
+pose proof (st_ok_splice_havoc_p SEGS k (k + 16) E ss (ms_regs ms) regs' (Z_to_bv 64 (ss_pc ss)) (BASE + retk)
+(ms_mem ms) mem' rs [] CLOB HS (le_n _) Hat) as H.
+cbn [map app] in H. apply H.
+- vm_compute. reflexivity.
+- vm_compute. reflexivity.
+- reflexivity.
+- exact Hmat.
+- apply regs_preserved_frame. exact HP.
+- constructor.
+- apply (mem_ok_kept SEGS E (ms_mem ms) mem' rs); [| exact Hnc | exact Hkept].
+eapply mem_ok_sub; [exact Hsub | exact Hwf | exact (st_ok_mem_ok SEGS E ss _ HS)].
+Qed.
+Theorem st_ok_pi_after_stretch_hi : forall k E ss ms regs' mem' rs retk (clob : list (bv 5)),
+st_ok SEGS E ss ms ->
+ss_resv ss = None ->
+ss_atoms_p (pband k (k + length clob)) ss = true ->
+regions_wf rs = true -> no_cdata rs = true -> mem_atoms_p (pband k (k + length clob)) rs = true ->
+submem rs (ss_mem ss) ->
+reg_nodup clob = true -> forallb (fun r : bv 5 => negb (bv_eqb r 0)) clob = true ->
+(forall r, reg_in r clob = false -> getr regs' r = getr (ms_regs ms) r) ->
+Forall (region_kept SEGS E (ms_mem ms) mem') rs ->
+st_ok_pi SEGS VAL (havoc E k (map (getr regs') clob)) (ss_after_stretch ss rs k clob retk)
+(mkst regs' (Z_to_bv 64 (BASE + retk)) mem' (seg_rom SEGS)).
+Proof.
+intros k E ss ms regs' mem' rs retk clob HS Hrv Hat Hwf Hnc Hmat Hsub Hnd Hnz Hsame Hkept.
+unfold st_ok_pi, abs_ss, ss_after_stretch, setpc. cbn [ss_pc ss_regs ss_fregs ss_mem ss_resv ss_facts].
+pose proof (st_ok_mkst SEGS E ss ms HS Hrv) as Hshape. rewrite Hshape in HS.
+pose proof (st_ok_splice_havoc_p SEGS k (k + length clob) E ss (ms_regs ms) regs' (Z_to_bv 64 (ss_pc ss)) (BASE + retk)
+(ms_mem ms) mem' rs [] clob HS (le_n _) Hat) as H.
+cbn [map app] in H. apply H.
+- exact Hnd.
+- exact Hnz.
+- reflexivity.
+- exact Hmat.
+- exact Hsame.
+- constructor.
+- apply (mem_ok_kept SEGS E (ms_mem ms) mem' rs); [| exact Hnc | exact Hkept].
+eapply mem_ok_sub; [exact Hsub | exact Hwf | exact (st_ok_mem_ok SEGS E ss _ HS)].
+Qed.
+Lemma st_ok_pi_submem : forall E ss ms rs,
+st_ok_pi SEGS VAL E ss ms -> submem rs (ss_mem ss) -> regions_wf rs = true ->
+st_ok_pi SEGS VAL E (mkSS (ss_pc ss) (ss_regs ss) rs (ss_resv ss) (ss_facts ss)) ms.
+Proof. intros E ss ms rs HS Hs Hwf. destruct ss as [pc0 sr0 fr0 sm0 rv0 fs0]. exact (st_ok_submem SEGS E _ ms rs HS Hs Hwf). Qed.
+Lemma img_env_atomP : forall E a, img_env VAL A_LIM E -> (A_TEXT <= a < A_LIM)%nat -> ew E a = Z_to_bv 64 (VAL a).
+Proof. intros E a HE Ha. rewrite <- (HE a Ha). symmetry. apply Z_to_bv_bv_unsigned. Qed.
+Lemma fshadow_not_app : forall F k p n a, 4096 <= F -> F + 8 * k <= 2 ^ 47 -> in_app p n ->
+2147450880 + F / 8 <= a < 2147450880 + F / 8 + k -> p <= a < p + n -> False.
+Proof.
+intros F k p n a HF Hk Hin Ha Hp. unfold in_app, kLowShadowBeg, kHighMemBeg, ASAN_CEIL in Hin.
+pose proof (Z.div_mod F 8 ltac:(lia)) as D. pose proof (Z.mod_pos_bound F 8 ltac:(lia)) as M. lia.
+Qed.
+Lemma amem_range_sub_app : forall p n lo k, in_app p n -> p + n <= alloc_ceiling -> p <= lo -> lo + k <= p + n -> 0 <= k -> amem_range lo k.
+Proof.
+intros p n lo k Hin Hce Hlo Hhi Hk. apply amem_range_high; [exact Hk | | lia].
+unfold in_app, kLowShadowBeg, kHighMemBeg, ASAN_CEIL in Hin. lia.
+Qed.
+Lemma frm_off_imgP : forall B ly S (W : world SEGS) mem md cid pos,
+AR SEGS B ly S W mem md -> In (cid, pos) (frames S) -> off_img (frame_addr ly cid pos) (fs_frame_bytes cid).
+Proof.
+intros B ly S W mem md cid pos (M & LG & _) Hin. unfold off_img. pose proof (pa_img_cover ly S md LG) as [C1 C2].
+pose proof (frame_facts B ly S _ cid pos M Hin) as (Fc & Fp & _ & _ & _ & _ & _ & _ & F64 & _).
+destruct (Z.le_gt_cases (frame_addr ly cid pos + fs_frame_bytes cid) 0x10000) as [|H1]; [left; lia|].
+destruct (Z.le_gt_cases 0x5fb000 (frame_addr ly cid pos)) as [|H2]; [right; lia|]. exfalso.
+apply (client_byte_not_img B ly S _ (Z.max (frame_addr ly cid pos) 0x10000) M).
+- right. exists (cid, pos). split; [exact Hin|]. left. unfold in_zr. cbn [fst snd]. lia.
+- unfold in_zr. lia.
+Qed.
+End c.
+End b.
+Ltac jafter_call_keep_hi HS k regs2 mem2 HP idxs HS2 :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss ?ms =>
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "jafter_call_keep_hi: no img_env hypothesis for" E end in
+let rs := eval vm_compute in (pick (ss_mem ss) idxs) in
+let retk := eval vm_compute in (match sr_get (ss_regs ss) 1 with SOff _ z => z | _ => 0 end) in
+pose proof (st_ok_pi_after_call_hi k E (abs_ss val ss) ms regs2 mem2 rs retk HEI ltac:(lia) HS eq_refl
+ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+ltac:(vm_compute; reflexivity) ltac:(submem_tac) ltac:(vm_compute; reflexivity) HP) as HS2;
+let ss2 := eval vm_compute in (ss_after_call ss rs k retk) in
+change (ss_after_call (abs_ss val ss) rs k retk) with ss2 in HS2
+| st_ok ?segs ?E ?ss ?ms =>
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "jafter_call_keep_hi: no img_env hypothesis for" E end in
+let rs := eval vm_compute in (pick (ss_mem ss) idxs) in
+let retk := eval vm_compute in (match sr_get (ss_regs ss) 1 with SOff _ z => z | _ => 0 end) in
+pose proof (st_ok_pi_after_call_hi k E ss ms regs2 mem2 rs retk HEI ltac:(lia) HS eq_refl
+ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+ltac:(vm_compute; reflexivity) ltac:(submem_tac) ltac:(vm_compute; reflexivity) HP) as HS2;
+let ss2 := eval vm_compute in (ss_after_call ss rs k retk) in
+change (ss_after_call ss rs k retk) with ss2 in HS2
+end.
+Ltac jafter_stretch_hi HS k regs2 mem2 clob retk HS2 :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss ?ms =>
+let rs := eval vm_compute in (ss_mem ss) in
+pose proof (st_ok_pi_after_stretch_hi k E (abs_ss val ss) ms regs2 mem2 rs retk clob HS eq_refl
+ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+ltac:(vm_compute; reflexivity) (submem_refl rs) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)) as HS2;
+let ss2 := eval vm_compute in (ss_after_stretch ss rs k clob retk) in
+change (ss_after_stretch (abs_ss val ss) rs k clob retk) with ss2 in HS2
+| st_ok ?segs ?E ?ss ?ms =>
+let rs := eval vm_compute in (ss_mem ss) in
+pose proof (st_ok_pi_after_stretch_hi k E ss ms regs2 mem2 rs retk clob HS eq_refl
+ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+ltac:(vm_compute; reflexivity) (submem_refl rs) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)) as HS2;
+let ss2 := eval vm_compute in (ss_after_stretch ss rs k clob retk) in
+change (ss_after_stretch ss rs k clob retk) with ss2 in HS2
+end.
+Ltac jafter_stretch_keep_hi HS k regs2 mem2 clob retk idxs HS2 :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss ?ms =>
+let rs := eval vm_compute in (pick (ss_mem ss) idxs) in
+pose proof (st_ok_pi_after_stretch_hi k E (abs_ss val ss) ms regs2 mem2 rs retk clob HS eq_refl
+ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+ltac:(vm_compute; reflexivity) ltac:(submem_tac) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)) as HS2;
+let ss2 := eval vm_compute in (ss_after_stretch ss rs k clob retk) in
+change (ss_after_stretch (abs_ss val ss) rs k clob retk) with ss2 in HS2
+| st_ok ?segs ?E ?ss ?ms =>
+let rs := eval vm_compute in (pick (ss_mem ss) idxs) in
+pose proof (st_ok_pi_after_stretch_hi k E ss ms regs2 mem2 rs retk clob HS eq_refl
+ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+ltac:(vm_compute; reflexivity) ltac:(submem_tac) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)) as HS2;
+let ss2 := eval vm_compute in (ss_after_stretch ss rs k clob retk) in
+change (ss_after_stretch ss rs k clob retk) with ss2 in HS2
+end.
+Ltac run_K_hi HS :=
+lazymatch type of HS with
+| st_ok_pi _ _ _ ?ss _ => eval vm_compute in (run_K A_LIM (SOff 32 0) [] ss)
+| st_ok _ _ ?ss _ => eval vm_compute in (run_K A_LIM (SOff 32 0) [] ss)
+end.
+
+Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Section e.
+Context {L : ptable wsym} {PL : PAListing L} {PI : PAImg L}.
+Variable B : asyms.
+Hypothesis LAWS : AR_laws pa_segs B.
+#[local] Notation SEGS := (pa_segs).
+#[local] Notation VAL := (pa_val).
+Definition run_post_pi_AJ_call (W : world SEGS) (E : env) (ss ssc : sstate)
+(ms : machine_state) (STK sp0 : Z) (FP : list (Z * Z)) ly S W0 mem md own lyc Sc (mdc : Model) (k : Z)
+(Q : world SEGS -> config -> Prop) : Prop :=
+forall ms' mat',
+st_ok SEGS E ssc (restrict (w_H W) ms') ->
+ajournal SEGS B STK sp0 FP ly S W0 mem md own lyc Sc W (ms_mem ms') (with_vm_backing (m_vm_lazy mdc) mat' mdc) k ->
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+SRr SEGS W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q.
+Lemma SRr_run_pi_AJ_call : forall W n E ss ss' s ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q,
+img_env VAL A_LIM E ->
+st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
+sym_runN_pi pl_tpi n ss = (ss', PRS_call s) ->
+ajournal SEGS B STK sp0 FP ly S W0 mem md own lyc Sc W (ms_mem ms) mdc k ->
+awr_ok E (ss_mem ss) STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+run_post_pi_AJ_call W E ss (setpc ss' (pa_sigma s)) ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q ->
+SRr SEGS W (mkCfg ms mdc) Q.
+Proof.
+intros W n E ss ss' s ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q HE HS Hrun HJ Hwr Hk.
+unfold sym_runN_pi in Hrun. rewrite <- pl_tpi_eq in Hrun.
+destruct (YP0d.sym_run_pi_sound wsym SEGS (clookup pa_tbl) VAL pa_sigma L pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim
+_ E ss ss' (PRS_call s) _ HE HS Hrun) as (msr' & Hms & HP & _ & Hfr).
+cbn [YP0d.prun_post] in HP.
+eapply (SRr_chain_AJ SEGS B LAWS pa_segs_low pa_wx W E (abs_ss VAL ss) (setpc ss' (pa_sigma s)) ms msr');
+[ exact Hms | exact HP | destruct ss; exact Hfr | exact HJ | destruct ss; exact Hwr | ].
+intros ms' mat' HS' HJ' HF HF' HG. apply (Hk ms' mat' HS' HJ'); destruct ss; first [exact HF | exact HF' | exact HG].
+Qed.
+End e.
+End d.
+Lemma zone2_of_app {rc : YM05.RunCeil} : forall a n, in_app a n -> off_img a n -> zone2 a n.
+Proof. intros a n [_ H] Hi. split; [exact Hi|]. unfold kLowShadowBeg, kHighMemBeg in H. lia. Qed.
+Ltac paj_run_shc RUNP RUNC HS HJ :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of RUNP with
+| forall W n E ss ss' st ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q, _ -> _ -> sym_runN_pi ?tpi n ss = _ -> _ =>
+let r := eval vm_compute in (sym_runN_pi tpi FUEL ss) in
+lazymatch r with
+| (?ss', PRS_call ?s) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_runN_pi tpi FUEL ss = (ss', PRS_call s)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_shc: no hypothesis  img_env _ _ E" end in
+eapply (RUNC W FUEL E ss ss' s ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ HEI HS Hrun HJ);
+[ clear Hrun | clear Hrun HS HJ; cbn [setpc];
+let ms' := fresh "ms" in let mat := fresh "mat" in let HF := fresh "HF" in let HFr := fresh "HFr" in let HG := fresh "HG" in
+intros ms' mat HS HJ HF HFr HG; cbn [ms_mem mkst] in HF, HFr, HG, HJ ]
+| (?ss', ?st) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_runN_pi tpi FUEL ss = (ss', st)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_shc: no hypothesis  img_env _ _ E" end in
+eapply (RUNP W FUEL E ss ss' st ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ HEI HS Hrun I HJ);
+[ clear Hrun | clear Hrun HS HJ;
+let ms' := fresh "ms" in let mat := fresh "mat" in let HF := fresh "HF" in let HFr := fresh "HFr" in let HG := fresh "HG" in
+intros ms' mat HS HJ HF HFr HG; cbn [ms_mem mkst] in HF, HFr, HG, HJ ]
+end
+end
+| _ => fail "paj_run_shc: HS must be  st_ok_pi segs val E ss (restrict (w_H W) ms)"
+end.
+Ltac paj_run_to_shc RUNTOP HS HJ stop :=
+paj_run_to_sh RUNTOP HS HJ stop;
+[ | try (lazymatch goal with HFx : frame_of _ _ _ _ |- _ =>
+repeat match goal with H : context [ms_mem (mkst _ _ _ _)] |- _ => progress cbn [ms_mem mkst] in H end end) ].
+Ltac psrr_branch_pi RUNP BR HS :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of RUNP with
+| forall W n E ss ss' st ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q, _ -> _ -> sym_runN_pi ?tpi n ss = _ -> _ =>
+let r := eval vm_compute in (sym_step_pi tpi ss) in
+lazymatch r with
+| PStop (SR_branch ?c ?a ?b) => apply (BR W E ss ms _ _ c a b HS); clear HS; let Hc := fresh "Hc" in intros Hc HS
+| _ => fail "psrr_branch_pi: state is not stuck at a branch:" r
+end end
+end.
+(* Normalise the symbolic state of HS by vm_compute (donor lib/A/AC8j.v:257). *)
+Ltac norm_ss HS := lazymatch type of HS with st_ok_pi _ _ _ ?ss3 _ => let v := eval vm_compute in ss3 in change ss3 with v in HS | st_ok _ _ ?ss3 _ => let v := eval vm_compute in ss3 in change ss3 with v in HS  end.
+
+(* ---- The fake-frame seat (donor lib/A/ACk1.v:172-278), as one lemma.  After `aj_stack_malloc_at` and the
+   GUIDE's `jafter_call_keep_pi`, the frame F is in the atom n (a0's new atom), SB in bx.  The seat puts the frame's
+   flag FL and its shadow SB + F / 8 in two fresh atoms k and k + 1 above every atom of the state, gives the three
+   their facts and the shadow alias, and adds the frame region (writable, the flag word at its last 8 bytes) and the
+   shadow region (writable, all zero).  The two disjointness premises are the caller's: they compare the new regions
+   with the caller's own regions (stack, globals, blocks), by its own atom facts. *)
+Definition zero8_chunks (j : nat) : list YP09.chunk :=
+map (fun i => YP09.mkChunk (8 * Z.of_nat i) (CVal 8 (SLit 0))) (seq 0 j).
+Definition ff_fregion (n fl : nat) (cid : Z) : YP09.region := fframe_region n fl cid [].
+Definition ff_sregion (s : nat) (cid : Z) : YP09.region :=
+fshadow_region s cid 0 (fs_frame_bytes cid / 8) (zero8_chunks (Z.to_nat (fs_frame_bytes cid / 64))).
+Definition ff_facts_ss (ss : sstate) (n k bx : nat) : sstate :=
+let s1 := add_atom (add_atom (add_atom ss n (HPTR 5)) k (HPTR 0)) (S k) (mkAF (SB + 512) (SB + 17592186044416) 2) in
+set_facts s1 (mkFacts (f_atoms (ss_facts s1)) (f_conds (ss_facts s1))
+((SAlu ALU_ADD (SAlu ALU_SRL (SOff n 0) (SLit 3)) (SOff bx 0), SOff (S k) 0) :: f_alias (ss_facts s1))).
+Definition ff_seated (ss : sstate) (n k bx : nat) (cid : Z) : sstate :=
+let s2 := ff_facts_ss ss n k bx in
+mkSS (ss_pc s2) (ss_regs s2) (ff_sregion (S k) cid :: ff_fregion n k cid :: ss_mem s2) (ss_resv s2) (ss_facts s2).
+Lemma fs_frame_bytes_64 : forall cid, 0 <= cid -> fs_frame_bytes cid = 64 * 2 ^ cid.
+Proof. intros cid Hc. unfold fs_frame_bytes. rewrite Z.shiftl_mul_pow2 by lia. reflexivity. Qed.
+(* fuzz_reply's fake frames are classes 0 (64 bytes) and 1 (128 bytes) *)
+Lemma ff_regions_wf : forall n k cid, cid = 0 \/ cid = 1 ->
+region_wf (ff_fregion n k cid) = true /\ region_wf (ff_sregion (S k) cid) = true.
+Proof. intros n k cid [-> | ->]; split; vm_compute; reflexivity. Qed.
+Section ffs. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {L : ptable wsym} {PI : PAImg L}.
+#[local] Notation SEGS := (pa_segs).
+#[local] Notation VAL := (pa_val).
+Lemma ff_seat_ok : forall E ss (ms : machine_state) H mem (n bx k : nat) (cid F FL : Z),
+st_ok_pi SEGS VAL E ss ms -> ms_mem ms = mrestrict H mem ->
+ss_atoms_p (pband k (k + 2)) ss = true ->
+ew E n = Z_to_bv 64 F -> ew E bx = Z_to_bv 64 SB -> (n < k)%nat -> (bx < k)%nat ->
+(cid = 0 \/ cid = 1) -> F mod 32 = 0 -> 4096 <= F -> F + fs_frame_bytes cid <= 140737479966720 ->
+4096 <= FL <= 140737479966720 ->
+(forall a, F <= a < F + fs_frame_bytes cid -> apresent H mem a) ->
+(forall i, 0 <= i < fs_frame_bytes cid / 8 -> apresent H mem (shadow_addr F + i)) ->
+rdword (aview SEGS H mem) (F + fs_frame_bytes cid - 8) = Some FL ->
+zero_shadow (aview SEGS H mem) SHADOW_OFF F (fs_frame_bytes cid) ->
+all_disjoint (havoc E k [Z_to_bv 64 FL; Z_to_bv 64 (SB + F / 8)]) (ff_fregion n k cid) (ss_mem ss) ->
+all_disjoint (havoc E k [Z_to_bv 64 FL; Z_to_bv 64 (SB + F / 8)]) (ff_sregion (S k) cid) (ff_fregion n k cid :: ss_mem ss) ->
+st_ok_pi SEGS VAL (havoc E k [Z_to_bv 64 FL; Z_to_bv 64 (SB + F / 8)]) (ff_seated ss n k bx cid) ms.
+Proof.
+intros E ss ms H mem n bx k cid F FL HS Hmem Hat En Ebx Hnk Hbk Hc01 HFal HF4 HFhi HFL HFp HFSp Hflag Hz Hd1 Hd2.
+assert (Hcid : 0 <= cid <= 10) by lia.
+set (Eb := havoc E k [Z_to_bv 64 FL; Z_to_bv 64 (SB + F / 8)]) in *.
+pose proof (fs_frame_bytes_64 cid ltac:(lia)) as HB. pose proof (Z.pow_pos_nonneg 2 cid ltac:(lia)) as H2c.
+set (nb := fs_frame_bytes cid) in *.
+assert (Hnb8 : nb / 8 = 8 * (nb / 64)) by (rewrite HB; rewrite (Z.mul_comm 64), Z.div_mul by lia; replace (2 ^ cid * 64) with (2 ^ cid * 8 * 8) by lia; rewrite Z.div_mul by lia; lia).
+assert (Hnb64 : nb / 64 = 2 ^ cid) by (rewrite HB, Z.mul_comm, Z.div_mul by lia; reflexivity).
+assert (Eb_n : ew Eb n = Z_to_bv 64 F) by (subst Eb; rewrite ew_havoc_old by lia; exact En).
+assert (Eb_bx : ew Eb bx = Z_to_bv 64 SB) by (subst Eb; rewrite ew_havoc_old by lia; exact Ebx).
+assert (Eb_k : ew Eb k = Z_to_bv 64 FL).
+{ subst Eb. pose proof (ew_havoc_new E k [Z_to_bv 64 FL; Z_to_bv 64 (SB + F / 8)] 0 (Z_to_bv 64 0) ltac:(cbn; lia)) as X.
+rewrite Nat.add_0_r in X. exact X. }
+assert (Eb_s : ew Eb (S k) = Z_to_bv 64 (SB + F / 8)).
+{ subst Eb. replace (S k) with (k + 1)%nat by lia. exact (ew_havoc_new _ k [Z_to_bv 64 FL; Z_to_bv 64 (SB + F / 8)] 1 (Z_to_bv 64 0) ltac:(cbn; lia)). }
+assert (HF8 : F / 8 = 4 * (F / 32)).
+{ pose proof (Z.div_mod F 32 ltac:(lia)) as D. rewrite HFal, Z.add_0_r in D. rewrite D at 1.
+replace (32 * (F / 32)) with (4 * (F / 32) * 8) by lia. rewrite Z.div_mul by lia. reflexivity. }
+assert (HF8lo : 512 <= F / 8) by (apply Z.div_le_lower_bound; lia).
+assert (HF8hi : F / 8 < 17592186044416) by (apply Z.div_lt_upper_bound; lia).
+assert (UF : bv_unsigned (ew Eb n) = F) by (rewrite Eb_n; apply unsigned_lit_small; lia).
+assert (UFL : bv_unsigned (ew Eb k) = FL) by (rewrite Eb_k; apply unsigned_lit_small; lia).
+assert (US : bv_unsigned (ew Eb (S k)) = SB + F / 8) by (rewrite Eb_s; apply unsigned_lit_small; unfold SB; lia).
+pose proof (st_ok_pi_havoc_hi k E ss ms [Z_to_bv 64 FL; Z_to_bv 64 (SB + F / 8)] HS Hat) as HS1. fold Eb in HS1.
+pose proof (st_ok_pi_add_fact Eb _ _ n (HPTR 5) HS1
+ltac:(unfold afact_ok, HPTR; cbn [af_lo af_hi af_al2]; rewrite UF; change (2 ^ 5) with 32; lia)) as HS2.
+pose proof (st_ok_pi_add_fact Eb _ _ k (HPTR 0) HS2
+ltac:(unfold afact_ok, HPTR; cbn [af_lo af_hi af_al2]; rewrite UFL; rewrite Z.pow_0_r, Z.mod_1_r; lia)) as HS3.
+pose proof (st_ok_pi_add_fact Eb _ _ (S k) (mkAF (SB + 512) (SB + 17592186044416) 2) HS3
+ltac:(unfold afact_ok; cbn [af_lo af_hi af_al2]; rewrite US; change (2 ^ 2) with 4; unfold SB;
+split; [lia|]; split; [rewrite HF8; replace (2147450880 + 4 * (F / 32)) with ((536862720 + F / 32) * 4) by lia; apply Z_mod_mult | lia])) as HS4.
+pose proof (st_ok_pi_add_alias Eb _ _ _ _ HS4 (shadow_decl_ok Eb n bx (S k) F SB Eb_n ltac:(lia) Eb_bx Eb_s)) as HS5.
+clear HS1 HS2 HS3 HS4.
+assert (Hd1' : all_disjoint Eb (ff_fregion n k cid) (ss_mem (ff_facts_ss ss n k bx))) by exact Hd1.
+pose proof (ff_regions_wf n k cid Hc01) as [HW1 HW2].
+pose proof (st_ok_pi_add_region Eb _ _ (ff_fregion n k cid) HS5 HW1
+ltac:(unfold region_ok, ff_fregion, fframe_region; cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks base_val app];
+fold nb; rewrite Hmem, UF; split; [lia|]; split; [lia|]; split;
+[ intros o Ho; apply (apresent_writable SEGS); apply HFp; lia
+| apply Forall_cons; [|apply Forall_nil]; apply (chunk_ok_val SEGS Eb _ F (nb - 8) 8 _ FL);
+[cbn [sv_denot]; rewrite UFL, Z.add_0_r; reflexivity | zside | zside | replace (F + (nb - 8)) with (F + nb - 8) by lia; exact (val_mem_of_rdword SEGS _ _ _ _ Hflag)] ])
+Hd1') as HS6.
+clear HS5.
+pose proof (st_ok_pi_add_region Eb _ _ (ff_sregion (S k) cid) HS6 HW2
+ltac:(unfold region_ok, ff_sregion, fshadow_region; cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks base_val];
+fold nb; rewrite Hmem, US; split; [unfold SB; lia|]; split; [unfold SB; lia|]; split;
+[ intros o Ho; apply (apresent_writable SEGS); unfold shadow_addr in HFSp; rewrite <- SB_SHADOW_OFF in HFSp; apply HFSp; lia
+| unfold zero8_chunks; apply Forall_forall; intros c Hc; apply in_map_iff in Hc as (i & <- & Hi); apply in_seq in Hi;
+apply (chunk_ok_val SEGS Eb _ (SB + F / 8) (8 * Z.of_nat i) 8 _ 0); [reflexivity | zside | zside |];
+apply val_mem_zero8; intros t Ht; unfold zero_shadow, shadow_of_addr in Hz; rewrite <- SB_SHADOW_OFF in Hz;
+replace (SB + F / 8 + 8 * Z.of_nat i + t) with (SB + F / 8 + (8 * Z.of_nat i + t)) by lia; apply Hz;
+rewrite Hnb8; lia ])
+Hd2) as HS7.
+exact HS7.
+Qed.
+(* ---- The fake-frame exit (donor lib/A/ACk5.v:273-355): before the plain run that stores 0 at the flag
+   (`ld a0,(nb-8)(s2); sb zero,0(a0)`), add the flag's one writable byte as a region on its atom k, then run it
+   with paj_run_flag_sh RUNF HS HJ, whose obligations are: 0 <= cid; every written byte an awr_byte or the flag
+   (the caller's tactic); and the flag byte 0 after the run (ff_flag0). *)
+Definition ff_flregion (k : nat) : YP09.region := YP09.mkRegion (Some k) 0 1 0 1 [].
+Lemma ff_flag_region_ok : forall E ss ms H mem (k : nat) FL,
+st_ok_pi SEGS VAL E ss ms -> ms_mem ms = mrestrict H mem -> bv_unsigned (ew E k) = FL -> 0 <= FL -> FL + 1 <= 2 ^ 64 ->
+apresent H mem FL ->
+all_disjoint E (ff_flregion k) (ss_mem ss) ->
+st_ok_pi SEGS VAL E (mkSS (ss_pc ss) (ss_regs ss) (ff_flregion k :: ss_mem ss) (ss_resv ss) (ss_facts ss)) ms.
+Proof.
+intros E ss ms H mem k FL HS Hmem Uk H0 H1 Hp Hd.
+apply (st_ok_pi_add_region E ss ms (ff_flregion k) HS eq_refl); [|exact Hd].
+unfold region_ok, ff_flregion; cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks base_val].
+rewrite Hmem, Uk. split; [lia|]. split; [lia|]. split; [|apply Forall_nil].
+intros o Ho. apply (apresent_writable SEGS). replace (FL + o) with FL by lia. exact Hp.
+Qed.
+(* The flag lies apart from every range of non-owned bytes (the frame, its shadow, the caller's blocks): the
+   all_disjoint goal's form for one region. *)
+Lemma owned_apart : forall (P : Z -> Prop) fl x l h, P fl -> (forall a, x + l <= a < x + h -> ~ P a) ->
+fl + 1 <= x + l \/ x + h <= fl + 0.
+Proof.
+intros P fl x l h Hfl Hno. destruct (Z_lt_ge_dec fl (x + l)) as [Hlt | Hge]; [left; lia|].
+destruct (Z_lt_ge_dec fl (x + h)) as [Hlt2 | Hge2]; [exfalso; exact (Hno fl ltac:(lia) Hfl) | right; lia].
+Qed.
+(* After the flag run: its region (at the head of the state, the run's store chunk first) holds 0. *)
+Lemma ff_flag0 : forall E ss ms (k : nat) FL lo hi wlo whi cs rest,
+st_ok_pi SEGS VAL E ss ms -> ss_mem ss = YP09.mkRegion (Some k) lo hi wlo whi cs :: rest ->
+In (YP09.mkChunk 0 (CVal 1 (SLit 0))) cs -> bv_unsigned (ew E k) = FL ->
+mbyte SEGS (ms_mem ms) FL = Some (Z_to_bv 8 0).
+Proof.
+intros E ss ms k FL lo hi wlo whi cs rest HS Hm Hc Uk.
+pose proof (st_ok_pi_region_nth E ss ms 0 _ HS ltac:(rewrite Hm; reflexivity)) as HR.
+pose proof (field_of_region E (ms_mem ms) k FL cs lo hi wlo whi 0 1%N (SLit 0) 0 HR Uk Hc eq_refl ltac:(cbn; lia) ltac:(cbn; lia)) as V.
+rewrite Z.add_0_r in V. pose proof (V 0%nat ltac:(lia)) as V0. cbn [Z.of_nat] in V0. rewrite Z.add_0_r in V0. exact V0.
+Qed.
+End ffs.
+(* ff_flag0 at the flag run's obligation: `intros msr HSr; ff_flag0_tac HSr Uk` *)
+Ltac ff_flag0_tac HSr Uk :=
+lazymatch type of HSr with st_ok_pi _ _ ?Ex ?ssx _ =>
+let rs := eval vm_compute in (ss_mem ssx) in
+lazymatch rs with YP09.mkRegion (Some ?k) ?lo ?hi ?wlo ?whi ?cs :: ?rest =>
+exact (ff_flag0 Ex ssx _ k _ lo hi wlo whi cs rest HSr ltac:(vm_compute; reflexivity) ltac:(cbn; left; reflexivity) Uk) end end.
+
+(* ---- Presence across __asan_stack_malloc_<cid> (a Theorem Labs lane's ruling of 2026-10-29 on W6's finding).
+   astack_malloc_realizes (Reusable/YG0d.v:297) keeps every image byte's VIEW (:298) but PRESENCE only for the new
+   frame and the scratch (:297, :300), and aj_stack_malloc_at (Reusable/YCbq.v:1750) exports acall_kept, whose presence
+   clause covers only a >= alloc_ceiling; so a byte present before the call could come back absent with the same view,
+   and no fake-frame function could state W2's apres_kept.  On every path the walks take, the runtime's stack_malloc
+   only stores, so an IMAGE byte's presence only grows; the conjunct is for image bytes only, because the call's static
+   closure keeps FakeStack::GC's mappings of non-image ranges (dead on our paths, needs_gc_ = 0, but not shown so), and
+   apres_kept asks no more.  astack_malloc_pres is astack_malloc_realizes with that one more conjunct, stated here so the donor files
+   stay donor-identical; the runtime lanes prove it from their walks (class 0: R5's RT_asan_stack_malloc_0.v, class 1:
+   RelocA's AF0s.v stack_malloc1_contract), and astack_malloc_pres_realizes gives the donor's form back.
+   aj_stack_malloc_pres_at is aj_stack_malloc_at (Reusable/YCbq.v:1750-1810, the same proof) over it, with the
+   presence conjunct in its post.  The exit's flag store needs no companion: aj_flag_store_pi's continuation already
+   receives mem_grows over the restricted memory, which is presence. *)
+Section fsp. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Variable segs : list Segment.
+Variable B : asyms.
+Hypothesis LAWS : AR_laws segs B.
+Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
+Hypothesis errno_low : api_env segs B.
+Hypothesis ML : model_laws (as_universe B).
+Hypothesis stack_malloc_progress : stack_malloc_progressP B.
+Local Notation code := (as_code B).
+Local Notation ajournal := (ajournal segs B).
+Definition astack_malloc_pres (cid : Z) : Prop :=
+forall ly S W regs mem md pos S',
+ecall_pre segs B ly S W regs mem md ->
+count_cid cid (frames S) < fs_frames cid ->
+apath (stack_malloc cid S) [] (PFake cid pos, S') ->
+SRr segs W (cfg_at segs (pc_stack_malloc code cid) regs mem md)
+(fun W' c' => W' = W /\ exists regs' mem' md',
+c' = cfg_at segs (raZ regs) regs' mem' md' /\
+AR segs B ly S' W mem' md' /\ aregs_preserved regs regs' /\ same_but_materialized md md' /\
+getr regs' 10 = w64 (frame_addr ly cid pos) /\
+zero_shadow (aview segs (w_H W) mem') SHADOW_OFF (frame_addr ly cid pos) (fs_frame_bytes cid) /\
+rdword (aview segs (w_H W) mem') (frame_addr ly cid pos + fs_frame_bytes cid - 8) = Some (flag_addr ly cid pos) /\
+(forall a, frame_addr ly cid pos <= a < frame_addr ly cid pos + fs_frame_bytes cid -> apresent (w_H W) mem' a) /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ aowned B ly S a -> ~ aowned B ly S' a -> ~ (spZ regs - ESTACK <= a < spZ regs) ->
+aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
+(forall a, spZ regs - ESTACK <= a < spZ regs -> apresent (w_H W) mem' a) /\
+(forall a, in_img segs a -> apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
+Lemma astack_malloc_pres_realizes : forall cid, astack_malloc_pres cid -> astack_malloc_realizes segs B cid.
+Proof.
+intros cid H ly S W regs mem md pos S' HPRE Hcnt Hpath.
+eapply SRr_mono; [exact (H ly S W regs mem md pos S' HPRE Hcnt Hpath)|].
+cbv beta. intros W' c' _ (-> & regs' & mem' & md' & Hc & HAR & HP & Hs & Ha0 & Hz & Hfl & Hfp & Hfr & Hsc & _).
+split; [reflexivity|]. exists regs', mem', md'. repeat (split; [eassumption|]). exact Hsc.
+Qed.
+(* The fake-frame seat, with the RAW frame clause astack_malloc_pres already gives (:1110): every byte that is
+   owned in neither state and lies outside the callee's window is kept.  aj_stack_malloc_pres_at below is the same
+   lemma without it (acall_kept's image clause, Reusable/YCbq.v:830, excepts errno), kept so that no caller
+   changes.  A walk that must carry errno across the seat uses this one with errno_not_aowned below.  The last
+   conjunct is the seat's state as a set_fs of the call's (stack_malloc_post, Reusable/YG01.v:571), the form the
+   walks' meter hypothesis MO_FR takes (W_frame_x.v:810 states the same for the _x seat). *)
+Lemma aj_stack_malloc_pres_at_raw : forall cid, astack_malloc_pres cid -> 0 <= cid <= 10 ->
+forall W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k (o : Z) raw,
+ajournal STK sp0 FP ly S W0 mem md own lyc Sc W memT mdc k ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ESTACK - o <= STK ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+count_cid cid (frames Sc) < fs_frames cid ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 (pc_stack_malloc code cid)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => W2 = W /\ exists S2 regs2 mem2 md2 pos,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+ajournal STK sp0 FP ly S W0 mem md ((cid, pos) :: own) lyc S2 W mem2 md2 k /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 (frame_addr lyc cid pos) /\
+ablocks B lyc S2 = ablocks B lyc Sc /\ frames S2 = (cid, pos) :: frames Sc /\ ~ In (cid, pos) (frames Sc) /\
+st_nev S2 = st_nev Sc /\ blocks_bytes S2 = blocks_bytes Sc /\
+zero_shadow (aview segs (w_H W) mem2) SHADOW_OFF (frame_addr lyc cid pos) (fs_frame_bytes cid) /\
+rdword (aview segs (w_H W) mem2) (frame_addr lyc cid pos + fs_frame_bytes cid - 8) = Some (flag_addr lyc cid pos) /\
+acall_kept segs B lyc Sc W memT W mem2 (sp0 + o - ESTACK) (sp0 + o) (fun _ => False) /\
+(forall a, in_img segs a -> apresent (w_H W) memT a -> apresent (w_H W) mem2 a) /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ aowned B lyc Sc a -> ~ aowned B lyc S2 a -> ~ (sp0 + o - ESTACK <= a < sp0 + o) ->
+ aview segs (w_H W) mem2 a = aview segs (w_H W) memT a) /\
+(exists f, S2 = set_fs f Sc)).
+Proof.
+intros cid ASM Hcid W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k o raw
+HJ Hsp' Hal Hneg Hbud Hgp Htp Hra Hraw Hcnt.
+pose proof HJ as (HAR & Hly & Hsecs & Hwle & Hio & Hfrs & Hnev & Hk & F1 & F2 & F3 & F4 & Hgone & Hpres & Hstatic & F5 & HQT).
+pose proof Hstatic as (Hal16 & Hstk0 & Hceil & Hslo & Hshi & H47 & Hbot & Htop2 & Htop).
+pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). pose proof (proj1 errno_low) as [He0 He1].
+assert (ASTACK = 16384) as Has by reflexivity. assert (ESTACK = 4096) as Hes by reflexivity.
+pose proof Hly as (_ & _ & _ & _ & _ & _ & _ & _ & Etop & Eslo & Eshi & _).
+assert (HstkC : astk_ok ESTACK lyc (spZ regsT)).
+{ unfold astk_ok, ly_bot in *. rewrite Hsp', Eslo, Eshi, Etop. repeat split; try zlia.
+all: rewrite Z.add_mod, Hal16, Hal by zlia; reflexivity. }
+assert (HPRE : ecall_pre segs B lyc Sc W regsT memT mdc).
+{ split; [exact HAR|]. split; [rewrite Hra; exact Hraw|]. split; [destruct HstkC as (Q1 & _); exact Q1|].
+split; [rewrite Eslo, Hsp'; zlia|]. split; [rewrite Eshi, Hsp'; zlia|].
+split; [intros a Ha; apply Hpres; rewrite Hsp' in Ha; zlia|]. split; [exact Hgp | exact Htp]. }
+pose proof (am_wf _ _ _ _ (proj1 HAR)) as HWF.
+destruct (stack_malloc_progress Sc cid HWF Hcid Hcnt) as (pos & S2 & Hpath).
+pose proof (ml_stack_malloc _ ML Sc cid HWF Hcid) as HTOK.
+destruct (atok_apath _ _ _ [] (PFake cid pos, S2) HTOK Hpath) as (ns' & HQ). unfold stack_malloc_post in HQ.
+destruct HQ as (HWF2 & (f & ES2) & _ & Hpos & Hfrs2 & Hfresh).
+eapply SRr_mono; [exact (ASM lyc Sc W regsT memT mdc pos S2 HPRE Hcnt Hpath)|].
+cbv beta. intros W2 c2 HwleW (-> & regs2 & mem2 & md2 & -> & HAR2 & HP & Hsame & Hres & Hz & Hflag & Hfpres & Hfr & Hpres2 & Hgrow).
+assert (Hblk : blocks S2 = blocks Sc) by (rewrite ES2; reflexivity).
+assert (Eab2 : ablocks B lyc S2 = ablocks B lyc Sc) by (unfold ablocks; rewrite Hblk; reflexivity).
+assert (Hnev2 : st_nev S2 = st_nev Sc) by (rewrite ES2; reflexivity).
+assert (Hbb : blocks_bytes S2 = blocks_bytes Sc) by (rewrite ES2; reflexivity).
+assert (Hsecs2 : st_secs S2 = st_secs Sc) by (rewrite ES2; reflexivity).
+assert (HJ1 : ajournal ESTACK (spZ regsT) [] lyc Sc W memT mdc [(cid, pos)] lyc S2 W mem2 md2 0).
+{ eapply (call_effect_journal segs B LAWS segs_low errno_low ESTACK lyc Sc W regsT memT mdc lyc S2 W mem2 md2 (fun _ => False) [] [(cid, pos)] 0);
+[exact HAR2 | apply layout_le_refl | apply wle_refl | apply same_io_materialized; exact Hsame | | exact Hpres2 | exact HAR | exact HstkC
+| cbn; exact Hfrs2 | zlia | zlia | rewrite Hsecs2; zlia | intros a [] | | ].
+- intros a H0 H1 H2 H3 _. apply (Hfr a H0 H1 H2). intros H. apply H3. left. exact H.
+- intros p n i Hp Hnp. exfalso. apply Hnp. rewrite Eab2. exact Hp.
+- rewrite ES2. apply (qtight_ext Sc); [reflexivity | reflexivity | reflexivity | exact HQT]. }
+split; [reflexivity|]. exists S2, regs2, mem2, md2, pos.
+split; [unfold cfg_at, raZ; rewrite Hra; unfold w64; rewrite Z_to_bv_bv_unsigned; reflexivity|].
+split.
+{ rewrite Hsp' in HJ1. replace k with (k + 0) by zlia. change ((cid, pos) :: own) with ([(cid, pos)] ++ own).
+eapply (ajournal_sub segs B LAWS segs_low); [exact HJ | exact HJ1 | zlia | zlia | intros a (rg & [] & _)]. }
+split; [exact HP|]. split; [exact Hres|]. split; [exact Eab2|]. split; [exact Hfrs2|]. split; [exact Hfresh|].
+split; [exact Hnev2|]. split; [exact Hbb|]. split; [exact Hz|]. split; [exact Hflag|].
+split; [| split; [exact Hgrow | split; [intros a H0 H1 H2 H3; apply (Hfr a H0 H1 H2); rewrite Hsp'; exact H3 | exists f; exact ES2]]].
+rewrite Hsp' in HJ1. eapply (acall_kept_of_journal segs B segs_low); [exact HJ1 | exact HAR | intros a (rg & [] & _) | | exact sink_closed_nil].
+intros b m i Hb Hi _. rewrite Eab2. exact Hb.
+Qed.
+(* The seat as every caller has used it: aj_stack_malloc_pres_at_raw without its last two clauses.  Statement
+   unchanged. *)
+Lemma aj_stack_malloc_pres_at : forall cid, astack_malloc_pres cid -> 0 <= cid <= 10 ->
+forall W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k (o : Z) raw,
+ajournal STK sp0 FP ly S W0 mem md own lyc Sc W memT mdc k ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ESTACK - o <= STK ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+count_cid cid (frames Sc) < fs_frames cid ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 (pc_stack_malloc code cid)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => W2 = W /\ exists S2 regs2 mem2 md2 pos,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+ajournal STK sp0 FP ly S W0 mem md ((cid, pos) :: own) lyc S2 W mem2 md2 k /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 (frame_addr lyc cid pos) /\
+ablocks B lyc S2 = ablocks B lyc Sc /\ frames S2 = (cid, pos) :: frames Sc /\ ~ In (cid, pos) (frames Sc) /\
+st_nev S2 = st_nev Sc /\ blocks_bytes S2 = blocks_bytes Sc /\
+zero_shadow (aview segs (w_H W) mem2) SHADOW_OFF (frame_addr lyc cid pos) (fs_frame_bytes cid) /\
+rdword (aview segs (w_H W) mem2) (frame_addr lyc cid pos + fs_frame_bytes cid - 8) = Some (flag_addr lyc cid pos) /\
+acall_kept segs B lyc Sc W memT W mem2 (sp0 + o - ESTACK) (sp0 + o) (fun _ => False) /\
+(forall a, in_img segs a -> apresent (w_H W) memT a -> apresent (w_H W) mem2 a)).
+Proof.
+intros cid ASM Hcid W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k o raw
+HJ Hsp' Hal Hneg Hbud Hgp Htp Hra Hraw Hcnt.
+eapply SRr_mono; [exact (aj_stack_malloc_pres_at_raw cid ASM Hcid W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k o raw
+  HJ Hsp' Hal Hneg Hbud Hgp Htp Hra Hraw Hcnt)|].
+cbv beta. intros W2 c2 _ (HW & S2 & regs2 & mem2 & md2 & pos & P1 & P2 & P3 & P4 & P5 & P6 & P7 & P8 & P9 & P10 & P11 & P12 & P13 & _).
+split; [exact HW|]. exists S2, regs2, mem2, md2, pos.
+repeat (split; [assumption|]). exact P13.
+Qed.
+(* errno's four bytes are not aowned in an AR state, given the INSTANCE fact that they lie outside
+   as_owned_static (a concrete list: decided once, by vm_compute, at the instance).  With the raw clause above it
+   carries errno's view across the fake-frame seat. *)
+Lemma errno_not_aowned : forall ly S W mem md,
+AR segs B ly S W mem md ->
+(forall i, 0 <= i < 4 -> ~ Exists (in_zr (as_errno B + i)) (as_owned_static B)) ->
+forall i, 0 <= i < 4 -> ~ aowned B ly S (as_errno B + i).
+Proof.
+intros ly S W mem md HAR HEO i Hi Ho.
+apply (HEO i Hi).
+exact (proj1 (al_owned_image _ _ LAWS ly S W mem md (as_errno B + i) HAR
+  (proj1 (proj2 errno_low) (as_errno B + i) ltac:(lia))) Ho).
+Qed.
+
+End fsp.

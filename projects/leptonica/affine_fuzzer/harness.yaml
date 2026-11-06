@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: affine_fuzzer
-rocq: OssFuzzTheorems.leptonica.affine_fuzzer
+rocq: OSSVerify.leptonica.affine_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixAffinePta / pixAffinePtaWithAlpha / pixAffineSequential with EMPTY point
   arrays (so the calls mostly error out early); outputs destroyed unchecked.

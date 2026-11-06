@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jansson
 harness: json_pack_unpack_fuzzer
-rocq: OssFuzzTheorems.jansson.json_pack_unpack_fuzzer
+rocq: OSSVerify.jansson.json_pack_unpack_fuzzer
 origin: upstream
 summary: json_loadb (DECODE_ANY|ALLOW_NUL), json_deep_copy (freed unread), json_dumps under one of 5 flag
   sets, then json_loads of the dump; the comment calls this a 'round-trip check' but the reparsed value

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: qpid-proton
 harness: fuzz-sniff-header
-rocq: OssFuzzTheorems.qpid_proton.fuzz_sniff_header
+rocq: OSSVerify.qpid_proton.fuzz_sniff_header
 origin: upstream
 summary: Calls pni_sniff_header(input) (protocol autodetection) and discards the returned protocol type.
 entry: LLVMFuzzerTestOneInput

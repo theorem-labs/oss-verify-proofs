@@ -1,0 +1,299 @@
+(* ColA.v -- start-up state collector for the DONOR checker APG.check (cgif_file_fuzzer lib/YA0c.v).
+   Lineage: asan-runtime-040620-port-kit-0916 startup/H9/Collect.v (collect, HS_of, JS_of, the meets) and
+   asan-relink-rederive-kit-040620-0917 reference/asangen/ColX.v (loop/join context, failure leaves), driven by the
+   tails of startup/tools/itin/plangen_r18.py (VIA1_DUMP_TAIL / VIA2_DUMP_TAIL).  Changes against the kit:
+   - the node set and every node call are YA0c's [check], line by line (PForget, PDropRange, PGcKeep, PBrk2 via node_brk2g,
+     PMmap/PMmapIn/PMmapInH/PMmapIn2/PMprotect follow ONLY the granted child, PCaseDisj via node_casedisj_g, PUnvis via
+     node_unvis_g, PDiamond, PVia/PMerge with YA0c's join context: the arms run under JC j js _ (nxt cs) lo, so the GC bound
+     of run_block_gc inside the arms is the one [check] uses);
+   - the mmap family (PMmap / PMmapIn / PMmapInH / PMmapIn2 / PMprotect) collects BOTH arms, while YA0c's check follows
+     only the granted one: the refusal arms carry 40 of the plan's 50 PHandoff leaves, and HS_tfib must hold a state for
+     every hole its consumer quantifies over (A/AB1n.v tfib_startup_T1), not only for the ten the shape uses. PSpin is a
+     leaf (label 30000), not a failure.
+   - pass 1 (follow = false) skips via_ok and the continuation from the join state (the join state is not known yet);
+     pass 2 (follow = true) tests via_ok as [check] does and runs the continuation from js;
+   - leaves: (h, cs) at PHandoff h; (20000 + j, cs) at PMerge j; failures (10000 + 100 * code + constructor number, cs).
+   Nothing here is trusted: the collected states are only inputs of APG.check, which the certificate runs. *)
+From @NS@ Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From @NS@ Require Import YK11 YK0c YK09 YA01 YA0c.
+Import ListNotations.
+Import AX2. Import APC. Import APG.
+Open Scope Z_scope.
+Module COLA.
+Definition pkind (p : plan) : Z :=
+match p with
+| PRun _ _ => 1 | PSplit _ _ _ _ => 2 | PCase2 _ _ _ _ => 3 | PCaseDisj _ _ _ _ => 4 | PShDisj _ _ _ _ _ => 5
+| PContra => 6 | PFact _ _ => 7 | PJoin _ _ _ _ => 8 | PForget _ _ => 9 | PDropRange _ _ _ => 10 | PGcKeep _ _ => 11
+| PBump _ _ => 12 | PHavoc _ _ => 13 | PHavocBig _ _ => 14 | PFresh _ _ _ _ => 15 | PSys _ _ => 16 | PMmap _ _ => 17
+| PMmapIn _ _ _ => 18 | PMprotect _ _ => 19 | PBrk2 _ _ => 20 | PX _ _ _ => 21 | PExt _ _ _ => 22 | PEmit _ _ _ => 23
+| PExt2 _ _ _ _ => 24 | PLoop _ _ _ _ _ => 25 | PNext => 26 | PHandoff _ => 27 | PExit => 28 | PSpin => 29
+| PFog _ _ _ => 30 | PFogNew _ _ _ => 31 | PGhost _ _ _ => 32 | PUnvis _ _ _ => 33 | PHavocBrk _ _ _ => 34 | PIntro _ _ _ => 35
+| PDiamond _ _ _ => 36 | PRename _ _ => 37 | PCompact _ => 38 | PVia _ _ _ _ _ => 39 | PMerge _ => 40
+| PAbstractCell _ _ _ => 41 | PHavocWords _ _ => 42 | PRespell _ _ _ => 43 | PMmapInH _ _ _ => 44 | PMmapIn2 _ _ => 45
+end.
+Section Collect.
+Variable segs : list Segment.
+Variable IT : itab.
+Variable A : atable.
+Variable nx0 : nat.
+Variable LIMIT : Z.
+Variable XN : nat -> list expr -> acs -> option acs.
+Variable XE : nat -> list expr -> acs -> option (Z * list spiece * acs).
+Variable XB : nat -> list expr -> acs -> option (acs * acs).
+Variable KC : nat.
+Variable bfuel : nat.
+Variable follow : bool.
+Definition leaf := (nat * acs)%type.
+Definition failz (code : Z) (p : plan) : nat := Z.to_nat (10000 + 100 * code + pkind p).
+Fixpoint collect (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) (acc : list leaf) {struct fuel} : list leaf :=
+match fuel with
+| O => (failz 0 p, cs) :: acc
+| S f =>
+let coll_in := collect in
+let coll (f : nat) := coll_in f lc in
+let gcb := match lc with Some c => lc_bnd c | None => nx0 end in
+let fail (code : Z) (c : acs) := (failz code p, c) :: acc in
+if negb match lc with Some c => Nat.leb (lc_bnd c) (nxt cs) | None => true end then fail 9 cs else
+match p with
+| PRun stops k =>
+match run_block_gc segs IT gcb KC bfuel (stops ++ STOPS A) cs with
+| Some cs' => coll f cs' k acc
+| None => fail 1 cs
+end
+| PSplit e mid k1 k2 =>
+if expr_vars_lt nx0 e then
+match erange (kn cs) e with
+| Some (lo, hi) =>
+if (Z.leb lo mid && Z.ltb mid hi)%bool then
+coll f (set_kn cs (KRange e (mid + 1) hi :: kn cs)) k2 (coll f (set_kn cs (KRange e lo mid :: kn cs)) k1 acc)
+else if Z.leb hi mid then coll f cs k1 acc else coll f cs k2 acc
+| None => fail 3 cs
+end
+else fail 3 cs
+| PCase2 e mid k1 k2 =>
+match erange (kn cs) e with
+| Some (lo, hi) =>
+if negb (Z.leb lo mid && Z.ltb mid hi)%bool then (if Z.leb hi mid then coll f cs k1 acc else coll f cs k2 acc) else
+let cs1 := set_kn cs (KRange e lo mid :: kn cs) in
+let cs2 := set_kn cs (KRange e (mid + 1) hi :: kn cs) in
+if kn_contra (kn cs1) then coll f cs2 k2 acc
+else if kn_contra (kn cs2) then coll f cs1 k1 acc
+else coll f cs2 k2 (coll f cs1 k1 acc)
+| None => fail 3 cs
+end
+| PCaseDisj b1 b2 k1 k2 =>
+match node_casedisj_g cs b1 b2 with
+| Some (csa, csb) => coll f csb k2 (coll f csa k1 acc)
+| None => fail 3 cs
+end
+| PShDisj b1 n1 b2 n2 k => match node_shdisj A cs b1 n1 b2 n2 with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PContra => if kn_contra (kn cs) then acc else fail 3 cs
+| PFact K k => if fact_ok (kn cs) K then coll f (add_kn cs [K]) k acc else fail 3 cs
+| PJoin b off n k => match node_join segs cs b off n with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PForget ixs k => coll f (set_kn cs (drop_ixs ixs 0 (kn cs))) k acc
+| PDropRange b n k => coll f (node_droprange cs b n) k acc
+| PGcKeep ws k => coll f (set_kn cs (kn_keep (kn cs) ws)) k acc
+| PBump m k => match node_bump cs m with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PHavoc rs k => match node_havoc nx0 cs rs with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PHavocBig K k => match node_havocbig nx0 cs K with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PFresh r logc base k => match node_fresh nx0 cs r logc base with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PSys y k =>
+if is_ecall_at segs cs then
+match node_sys A nx0 y cs with Some cs' => coll f cs' k acc | None => fail 3 cs end
+else fail 2 cs
+| PBrk2 ka kb =>
+if is_ecall_at segs cs then
+match node_brk2g A LIMIT cs with
+| Some (csa, csb) => coll f csb kb (coll f csa ka acc)
+| None => fail 3 cs
+end
+else fail 2 cs
+| PMmap ka kb =>
+if is_ecall_at segs cs then
+match node_mmap2g A nx0 LIMIT cs with
+| Some (csa, csb) => coll f csb kb (coll f csa ka acc)
+| None => fail 3 cs
+end
+else fail 2 cs
+| PMmapIn ka kb kc =>
+if is_ecall_at segs cs then
+match node_mmapin_g A LIMIT false cs with
+| Some (csa, csb, cscs) => fold_left (fun ac c => coll f c kc ac) cscs (coll f csb kb (coll f csa ka acc))
+| None => fail 3 cs
+end
+else fail 2 cs
+| PMmapInH ka kb kc =>
+if is_ecall_at segs cs then
+match node_mmapin_g A LIMIT true cs with
+| Some (csa, csb, cscs) => fold_left (fun ac c => coll f c kc ac) cscs (coll f csb kb (coll f csa ka acc))
+| None => fail 3 cs
+end
+else fail 2 cs
+| PMmapIn2 ka kb =>
+if is_ecall_at segs cs then
+match node_mmapin2_g A LIMIT cs with
+| Some (csa, csb) => coll f csb kb (coll f csa ka acc)
+| None => fail 3 cs
+end
+else fail 2 cs
+| PMprotect ka kb =>
+if is_ecall_at segs cs then
+match node_mprotect2g A LIMIT cs with
+| Some (csa, csb) => coll f csb kb (coll f csa ka acc)
+| None => fail 3 cs
+end
+else fail 2 cs
+| PX x args k => match node_x segs A nx0 x args cs with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PExt id args k => match XN id args cs with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PEmit id args k =>
+match XE id args cs with
+| Some (_, _, cs') => coll f cs' k acc
+| None => fail 3 cs
+end
+| PExt2 id args k1 k2 =>
+match XB id args cs with
+| Some (csa, csb) => coll f csb k2 (coll f csa k1 acc)
+| None => fail 3 cs
+end
+| PLoop J N inv body k =>
+match loop_ok nx0 cs J N inv with
+| Some nhi =>
+let lo := S J in let hi := nxt inv in
+if (Z.eqb (pc inv) (pc cs) && entails_h A lo hi cs (inst inv J (ELit 0)))%bool then
+coll f (inst inv J N) k (coll_in f (Some (LC (pc cs) (inst inv J (eaddz (EVar J) 1)) lo hi)) (loop_body_state J N nhi inv) body acc)
+else fail 3 cs
+| None => fail 3 cs
+end
+| PNext =>
+match lc with
+| Some (LC h nx lo hi) =>
+if (Z.eqb (pc cs) h && entails_h A lo hi cs nx)%bool then acc else fail 3 cs
+| _ => fail 8 cs
+end
+| PHandoff h => (h, cs) :: acc
+| PExit =>
+if is_ecall_at segs cs then
+match node_exit cs with Some _ => acc | None => fail 3 cs end
+else fail 2 cs
+| PSpin => (30000%nat, cs) :: acc   (* a spin leaf: the checker errors here, the collector records and goes on *)
+| PFog i sz k => match node_fog cs i sz with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PFogNew i sz k => match node_fognew cs i sz with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PGhost b n k => match node_ghost LIMIT cs b n with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PUnvis b n k => match node_unvis_g A cs b n with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PHavocBrk lo hi k => match node_havocbrk nx0 cs lo hi with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PIntro lo hi k => match node_intro nx0 cs lo hi with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PRename m k => match node_rename gcb cs m with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PCompact k => match node_compact gcb cs with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PVia j js lo karms k =>
+if follow then
+if via_ok nx0 cs js lo then
+coll_in f (Some (JC j js SNil (nxt cs) lo)) cs karms (coll f js k acc)
+else fail 3 cs
+else coll_in f (Some (JC j js SNil (nxt cs) lo)) cs karms acc
+| PMerge j =>
+match lc with
+| Some (JC j' js sk b lo) => if Nat.eqb j j' then (Z.to_nat (20000 + Z.of_nat j), cs) :: acc else fail 3 cs
+| _ => fail 8 cs
+end
+| PAbstractCell b n k => match node_abstractcell A cs b n with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PHavocWords bs k => match node_havocwords nx0 cs bs with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PRespell r e k => match node_respell cs r e with Some cs' => coll f cs' k acc | None => fail 3 cs end
+| PDiamond joinpc rs k =>
+match branch_probe IT cs with
+| Some e =>
+match erange (kn cs) e with
+| Some (lo, hi) =>
+if (Z.ltb hi 1 || Z.ltb 0 lo)%bool then
+match run_block_gc segs IT gcb KC bfuel (joinpc :: STOPS A) cs with
+| Some cs' => if Z.eqb (pc cs') joinpc then coll f cs' k acc else fail 3 cs'
+| None => fail 1 cs
+end
+else
+let cs1 := set_kn cs (KRange e lo 0 :: kn cs) in
+let cs2 := set_kn cs (KRange e 1 hi :: kn cs) in
+match run_block_gc segs IT gcb KC bfuel (joinpc :: STOPS A) cs1 with
+| Some ca =>
+match run_block_gc segs IT gcb KC bfuel (joinpc :: STOPS A) cs2 with
+| Some cb =>
+match node_diamond_join A nx0 (nxt cs) joinpc rs ca cb with
+| Some csj => coll f csj k acc
+| None => fail 3 ca
+end
+| None => fail 1 cs2
+end
+| None => fail 1 cs1
+end
+| None => fail 3 cs
+end
+| None => fail 2 cs
+end
+end
+end.
+End Collect.
+(** syntactic meet of two hand-off states (kit Collect.v): None if a syntactically compared component differs *)
+Definition kn_meet (k1 k2 : list kentry) : list kentry := List.filter (fun K => existsb (kentry_eqb K) k2) k1.
+Definition acs_meet (a b : acs) : option acs :=
+if (Z.eqb (pc a) (pc b)
+&& list_eqb expr_eqb (s_regs (a_ss a)) (s_regs (a_ss b))
+&& list_eqb amap_eqb (a_maps a) (a_maps b)
+&& list_eqb pair_eqb (a_vis a) (a_vis b)
+&& list_eqb pair_eqb (a_ghost a) (a_ghost b)
+&& expr_eqb (a_brk a) (a_brk b)
+&& afd_eqb (a_fd a) (a_fd b)
+&& Bool.eqb (a_tidset a) (a_tidset b))%bool
+then Some (ACS (mk_ss (pc a) (s_regs (a_ss a)) (kn_meet (kn a) (kn b)) (Nat.max (nxt a) (nxt b)))
+(a_maps a) (Z.max (a_totsz a) (a_totsz b)) (Z.min (a_ylo a) (a_ylo b)) (Z.max (a_eager a) (a_eager b))
+(a_vis a) (a_ghost a) (Z.max (a_abytes a) (a_abytes b)) (a_brk a) (a_fd a) (a_tidset a))
+else None.
+Fixpoint meet_all (l : list acs) : option acs :=
+match l with
+| [] => None
+| [a] => Some a
+| a :: r => match meet_all r with Some m => acs_meet a m | None => None end
+end.
+Definition leaves_of (h : nat) (l : list (nat * acs)) : list acs :=
+List.map snd (List.filter (fun p => Nat.eqb (fst p) h) l).
+Definition HS_of (l : list (nat * acs)) (h : nat) : option acs := meet_all (leaves_of h l).
+(** join-state meet (kit Collect.v): registers that differ between the arms become slots EVar lo, lo+1, ...; knowledge is the
+    syntactic intersection restricted to facts over variables < lo *)
+Fixpoint regs_meet_h (lo : nat) (x y : list expr) : list expr * nat :=
+match x, y with
+| a :: x', b :: y' => let '(r, n) := regs_meet_h lo x' y' in
+if expr_eqb a b then (a :: r, n) else (EVar (lo + n) :: r, S n)
+| _, _ => ([], 0%nat)
+end.
+Definition acs_meet_h (lo : nat) (a b : acs) : option acs :=
+if (Z.eqb (pc a) (pc b)
+&& list_eqb amap_eqb (a_maps a) (a_maps b)
+&& list_eqb pair_eqb (a_vis a) (a_vis b)
+&& list_eqb pair_eqb (a_ghost a) (a_ghost b)
+&& expr_eqb (a_brk a) (a_brk b)
+&& afd_eqb (a_fd a) (a_fd b)
+&& Bool.eqb (a_tidset a) (a_tidset b))%bool
+then let '(rs, n) := regs_meet_h lo (s_regs (a_ss a)) (s_regs (a_ss b)) in
+Some (ACS (mk_ss (pc a) rs (List.filter (fun K => kn_vars_lt lo [K]) (kn_meet (kn a) (kn b))) (Nat.max (Nat.max (nxt a) (nxt b)) (lo + n))%nat)
+(a_maps a) (Z.max (a_totsz a) (a_totsz b)) (Z.min (a_ylo a) (a_ylo b)) (Z.max (a_eager a) (a_eager b))
+(a_vis a) (a_ghost a) (Z.max (a_abytes a) (a_abytes b)) (a_brk a) (a_fd a) (a_tidset a))
+else None.
+Fixpoint meet_all_h (lo : nat) (l : list acs) : option acs :=
+match l with
+| [] => None
+| [a] => Some a
+| a :: r => match meet_all_h lo r with Some m => acs_meet_h lo a m | None => None end
+end.
+Definition JS_of (lo : nat) (l : list (nat * acs)) (j : nat) : option acs := meet_all_h lo (leaves_of (20000 + j) l).
+(** diagnostics *)
+Fixpoint regs_diff (i : nat) (x y : list expr) : list nat :=
+match x, y with
+| a :: x', b :: y' => if expr_eqb a b then regs_diff (S i) x' y' else i :: regs_diff (S i) x' y'
+| [], [] => []
+| _, _ => [99%nat]
+end.
+Definition leaf_sum (l : nat * acs) := (fst l, pc (snd l), nxt (snd l), length (kn (snd l)), length (a_maps (snd l)),
+length (a_vis (snd l)), length (a_ghost (snd l))).
+Definition fail_leaves (l : list (nat * acs)) := List.filter (fun p => (Nat.leb 10000 (fst p) && Nat.ltb (fst p) 20000)%bool) l.
+End COLA.

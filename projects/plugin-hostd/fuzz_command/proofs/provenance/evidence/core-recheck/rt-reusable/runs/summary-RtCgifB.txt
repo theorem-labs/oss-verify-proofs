@@ -1,0 +1,37 @@
+INPUTS USED by port_addr_check.py --git $HUB --src $W/rt-reusable/work/rt/RtCgifB/src --dst $W/rt-reusable/work/rt/RtCgifB/dst --src-image B=$IMG/cgif.B.pin:$IMG/cgif.B.twin --dst-image B=$IMG/cmd.B.pin:$IMG/cmd.B.twin --donors-from $BIN --cache cache --paired-only --summary --fail-on-flags --out full.tsv
+  image src B  $IMG/cgif.B.pin  sha256 1c29845fe605  590264 bytes  symbols: symtab of cgif.B.twin ce511d541cda
+  image dst B  $IMG/cmd.B.pin  sha256 bbe55d24d096  633720 bytes  symbols: symtab of cmd.B.twin 658cefbe806b
+  ref src  $W/rt-reusable/work/rt/RtCgifB/src  -> local path
+  ref dst  $W/rt-reusable/work/rt/RtCgifB/dst  -> local path
+  count symbols of src B: 1998
+  count symbols of dst B: 2257
+  count src files read: 9
+  count dst files read: 9
+  count files paired: 9
+  count numerals: 12535
+  count files recognised or declared generated (GENERATED-SKIPPED): 0
+  count constructors whose declared field roles were read from the ported tree: 0
+  count constructors whose declared field roles were read from the source tree: 0
+  count stale-donor candidates dropped instead of judged: 0
+  count file pairs whose build came from no rule places the file's build (nor its own symbol-table agreement): 18
+  count named-symbol cells UNMEASURED (the run reads the file against another build): 0
+  control fill_pass known answer (selftest_fill, run before anything is read): RAN  pass
+  control donor-vs-donor: NOT RUN  a separate run of this tool with one image on both sides; see the tool's documentation file
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-PORTED  count 709  reported as its own row, never silently
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-SOURCE  count 1892  reported as its own row, never silently
+  note file pairing: normalised RELATIVE PATH after --map / --rename, then the identity of the first hex in the file name; never the basename alone. There is no donor-text carry filter, so no candidate is dropped for being absent from a same-named donor file (the tool author's note)
+# files paired 9; numerals 12535; "kernel" = of those, inside a fail-loud vm_compute / fetch_word fact
+INSN-SAME	14	kernel 7
+NAMED-CONSTANT	5	kernel 5
+NON-ADDRESS-SAME	9592	kernel 8900
+SAME-GEOMETRY	5	kernel 5
+SAME-SYMBOL	176	kernel 169
+KIND-CHANGED	2	kernel 2	FLAG
+NON-ADDRESS-CHANGED	139	kernel 134	FLAG
+SAME-VALUE-DIFFERENT-OBJECT	1	kernel 1	FLAG
+UNPAIRED-PORTED	709	FLAG
+UNPAIRED-SOURCE	1892	kernel 389	FLAG
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+UNMEASURED named-symbol 0 / 0 cells	UNMEASURED-NAME 0 rows	UNPAIRED-FILE-UNMEASURED 0 rows
+# image B $IMG/cgif.B.pin 1c29845fe605 symbols: symtab
+# image B $IMG/cmd.B.pin bbe55d24d096 symbols: symtab

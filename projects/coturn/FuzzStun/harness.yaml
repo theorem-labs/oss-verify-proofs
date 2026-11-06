@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: coturn
 harness: FuzzStun
-rocq: OssFuzzTheorems.coturn.FuzzStun
+rocq: OSSVerify.coturn.FuzzStun
 origin: upstream
 summary: 8 sub-harnesses (message-integrity check under all SHA types, attribute iteration, attribute
   append, legacy STUN, challenge-response builder, address-string parser, MESSAGE-INTEGRITY append); every

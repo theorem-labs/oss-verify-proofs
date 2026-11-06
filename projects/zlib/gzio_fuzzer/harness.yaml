@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zlib
 harness: gzio_fuzzer
-rocq: OssFuzzTheorems.zlib.gzio_fuzzer
+rocq: OSSVerify.zlib.gzio_fuzzer
 origin: oss-fuzz
 summary: gzopen on a mkstemp file with a fuzzer-chosen mode string, then two fuzzer-chosen gz* operations
   (put/get/read/write/seek/printf/flush/params/...); an error return jumps to exit and returns -1. Nothing

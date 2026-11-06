@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: opencensus-cpp
 harness: grpc_trace_bin_fuzzer
-rocq: OssFuzzTheorems.opencensus_cpp.grpc_trace_bin_fuzzer
+rocq: OSSVerify.opencensus_cpp.grpc_trace_bin_fuzzer
 origin: upstream
 summary: FromGrpcTraceBinHeader; if valid, ToGrpcTraceBinHeader into a 29-byte buffer that is never compared
   to the input (the natural round trip is unchecked).

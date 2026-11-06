@@ -1,0 +1,512 @@
+# every occurrence, in every checked stage-out/A file, of each value codeptr-notaddr.tsv declares (and each DEFECT
+# row of the defect check); class = the measured role of that occurrence; measured = what was read from the image or
+# the text; written by codeptr-A.sh
+value	file	line	class	context	measured
+0x10101	A/AB1g.v	108	decode-result	Lemma D_11d4cc : decode_any W_11d4cc = Some (Lui 11 65793, 4%Z).	imm[31:12] of the word 0x101015b7 at 0x9d65c (0x9d65c, memset+0x48)
+0x10101	A/AE3d.v	106	decode-result	Lemma D_048 : decode_any (0x101015b7%bv : bv 32) = Some (Lui 11 65793, 4%Z).	imm[31:12] of the word 0x101015b7 at 0x9d65c (tfib_A_musl_memset + 0x48, memset+0x48)
+0x12000	A/AFi9.v	59	mkAF-bound	(aMS, mkAF 73728 (MALLOC_MAX + 2 * 4096) 12);	= 18 * 4096
+0x12000	A/AFi9.v	69	arith	[ (aMAP, mkAF TFIB_IMG_END (CEIL_MAX - 73728) 12)    ;	= 18 * 4096
+0x12000	A/AFjm.v	234	bound	NDv = R8v + 4096 /\ 73728 <= MSv <= MALLOC_MAX + 8192 /\ MSv mod 4096 = 0 /\ NDv + 4096 <=	= 18 * 4096
+0x186a0	A/AFet.v	711	fuel	destruct (pop_batches 100000 (transfer_g X) []) as [g' P] eqn:EP.	= 100000
+0x186a0	A/AFet.v	713	bound	assert (LEN : (length (qc_list (transfer_g X)) < 100000)%nat).	= 100000
+0x186a0	A/AFeu.v	225	bound	Z.of_nat (length P) < 100000 /\ st_cache_inited X = true.	= 100000
+0x186a0	A/AFhd.v	56	bound	o_len : zlen rest < 100000;	= 100000
+0x186a0	A/AFhd.v	73	bound	rc_len : zlen t < 100000;	= 100000
+0x186a0	A/AFhd.v	93	bound	r_len : zlen t < 100000;	= 100000
+0x186a0	A/AFhd.v	107	bound	cd_len : zlen t < 100000;	= 100000
+0x186a0	A/AFhd.v	123	bound	q_len : zlen t < 100000;	= 100000
+0x1ffff	A/AD1v.v	322	bound	(length p) + 1 < kHighMemEnd -> ~ In NUL p -> Z.of_nat (length p) <= 131071 ->	= 2^17 - 1
+0x1ffff	A/AD1x.v	75	bound	Z.of_nat (length str) <= 131071 -> ~ In NUL str ->	= 2^17 - 1
+0x1ffff	A/AD27.v	359	bound	(length p) + 1 < kHighMemEnd -> ~ In NUL p -> Z.of_nat (length p) <= 131071 ->	= 2^17 - 1
+0x20000	A/AD1d.v	40	length-arg	&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AD1d.v	282	length-arg	/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072 = true	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AD1f.v	192	length-arg	eapply (KZ _ 500%nat 1048576 131072 B12 eq_refl HNB ltac:(lia) (proj1 (proj2 kz_facts))). reflexivi	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFek.v	35	mkAF-bound	(aTOT, mkAF 2 131072 0); (aN, mkAF 1 4097 0); (aHASH, u64f); (aS2, mkAF TFIB_DEPOT (	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFel.v	267	identity	{ change (2 ^ 16) with 65536. change (2 ^ 17) with 131072 in Ht. destruct (Z_lt_le_dec t 65536); [left; apply Z.div_small	(2 ^ 17) evaluates to 131072
+0x20000	A/AFif.v	100	register	SLit 131072; SLit 3; SLit 50; SLit 18446744073709551615; SLit 0; SLit 222]	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	590	register	sr_get (ss_regs S_V) 10%bv = TQ /\ sr_get (ss_regs S_V) 11%bv = SLit 131072 /\	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	598	arith	Lemma QR_facts : idx = res -> QSv = Qb + 8 * res /\ QSv mod 131072 = Qb mod 131072 /\ QSv mod 4096 = 0 /\ (4096 <= Qb <= QSv /\ zo	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	598	arith	QR_facts : idx = res -> QSv = Qb + 8 * res /\ QSv mod 131072 = Qb mod 131072 /\ QSv mod 4096 = 0 /\ (4096 <= Qb <= QSv /\ zone3cases Qb kPtr	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	598	bound	96 = 0 /\ (4096 <= Qb <= QSv /\ zone3cases Qb kPtrArrayResv) /\ QSv + 131072 <= Qb + kPtrArrayResv /\	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	599	arith	+ kPtrArrayResv <= ASAN_CEIL /\ (forall a, QR a <-> QSv <= a < QSv + 131072).	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	605	arith	plit. { rewrite E1, Hq. replace (Qb + 8 * (q * 16384)) with (Qb + q * 131072) by zlia. rewrite Z.add_mod, Z_mod_mult, Z.add_0_r, Z.mod_mod b	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	695	identity	Lemma pru17 : page_round_up_Z 131072 = 131072. Proof. clear. reflexivity. Qed.	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	695	length-arg	Lemma pru17 : page_round_up_Z 131072 = 131072. Proof. clear. reflexivity. Qed.	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	715	length-arg	' : config), let md5 := grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) (cfg_model c1) in	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	717	arith	w_A W5 = (QSv, QSv + 131072) :: w_A Wy ->	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	718	arith	(forall x : word, QSv <= bv_unsigned x < QSv + 131072 -> w_H W5 x = false) ->	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	719	arith	(forall x : word, ~ (QSv <= bv_unsigned x < QSv + 131072) -> w_H W5 x = w_H Wy x) ->	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	720	arith	5 -> same_io md0 md5 -> eager_used md5 <= eager_used (cfg_model c1) + 131072 ->	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	744	identity	assert (Un : bv_unsigned (w64 131072) = 131072) by (unfold w64; apply unsigned_lit_small; clear; zlia).	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	744	length-arg	assert (Un : bv_unsigned (w64 131072) = 131072) by (unfold w64; apply unsigned_lit_small; clear; zli	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	749	register	assert (R11 : getr regs 11 = Z_to_bv 64 131072) by (rewrite (Hregs 11%bv), H11; reflexivity).	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	754	length-arg	assert (CEIL : bv_unsigned (w64 QSv) + page_round_up_Z 131072 <= alloc_ceiling).	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	756	length-arg	assert (CEILT : bv_unsigned (w64 QSv) + page_round_up_Z 131072 <= alloc_top (m_vmmaps mdN)).	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	758	length-arg	e (vm_reserved (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true /\	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	759	length-arg	tains (vm_maps (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true).	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	762	length-arg	apply (tfib_region_free_reserved QSv 131072); [clear; zlia | clear - F9 F10 Q5 E1; ceil; unfold ASAN_CEIL,	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	764	length-arg	- apply (YA09.map_contains_intro _ (w64 QSv) (w64 131072) (w64 Qb) (w64 kPtrArrayResv) INQ);	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	767	length-arg	assert (SL1 : eager_used mdN + A_bytes (w_A Wy) + page_round_up_Z 131072 <= vm_limit (m_vmmaps mdN)) by (rewrite pru17; clear - SL0; zli	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	769	length-arg	mit_AI tfibsegs (w_H Wy) (w_A Wy) mdN false (Z_to_bv 64 50) (w64 QSv) 131072 HAI MWF0 nores50 ALQ ltac:(clear; zlia) CEILT PLACE SL1) as [CG	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	770	length-arg	_eager tfibsegs (w_H Wy) (w_A Wy) mdN false (Z_to_bv 64 50) (w64 QSv) 131072 HAI MWF0 nores50 ALQ ltac:(clear; zlia) CEILT PLACE SL1) as EG.	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	771	length-arg	nonempty false (Z_to_bv 64 50) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) mdN ltac:(rewrite pru17; unfold w64 in Un; rewrite Un; clear;	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	772	length-arg	rewrite pru17 in CG, BUD, EG, NZg. fold (w64 131072) in CG, BUD, EG, NZg.	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	773	length-arg	pose proof (destroyed_AI tfibsegs (w_H Wy) (w_A Wy) mdN (w64 QSv) 131072 HAI MWF0 ALQ ltac:(clear; zlia) CEILT) as [CD _].	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	774	length-arg	rewrite pru17 in CD. fold (w64 131072) in CD.	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	775	length-arg	o_bv 64 0x64f40) mem (seg_rom tfibsegs) mdN (Z_to_bv 64 50) (w64 QSv) 131072	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	778	length-arg	rewrite pru17 in OUT. fold (w64 131072) in OUT.	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	797	length-arg	set (md5 := grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) mdN) in *.	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	798	length-arg	pose proof (grant_piece_shape (w64 QSv) (w64 131072) mdN) as (SH1 & SH2' & SH3 & SH4). cbv zeta in SH1, SH2', SH3,	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	799	arith	assert (AL1 : QSv <= QSv + 131072) by (clear; zlia).	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	801	arith	assert (AL3 : (QSv + 131072) mod page_size = 0).	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	803	arith	destruct (allow_expose tfibsegs Wy md5 QSv (QSv + 131072) AL1 AL2 AL3 (proj1 CG) ltac:(rewrite SH3; clear - EG SL0; zlia	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	804	arith	set (W5 := wallow tfibsegs Wy QSv (QSv + 131072) AL1 AL2 AL3) in *.	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	812	length-arg	(FRz : forall x : word, ~ QR (bv_unsigned x) -> zfill (w64 QSv) (w64 131072) mem x = mem x).	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	814	arith	); [left; zlia|]. right. destruct (Z_lt_le_dec (bv_unsigned x) (QSv + 131072)); [exfalso; apply Hx; apply EQx; zlia | zlia]. }	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjt.v	822	length-arg	(fun m => R m /\ ZQF W5 m)) S_V TQ (w64 QSv) QR (zfill (w64 QSv) (w64 131072) mem) ms E'	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjy.v	745	length-arg	w_A Wz) = A_bytes (w_A W) + MSv + (SHHI mb - SHLO mb) + (if grow then 131072 else 0);	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjz.v	1015	arith	~ (grow = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H Wz x = w_H W x.	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFjz.v	1079	arith	* destruct (zr_dec QSv (QSv + 131072) a) as [D3|D3].	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFk0.v	981	length-arg	(vm_noaccess (m_vmmaps (grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) mdV)) ++ m_vm_lazy (grant_md false (Z_to_bv 64 50) (w64 QSv) (	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFk0.v	981	length-arg	72) mdV)) ++ m_vm_lazy (grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) mdV)) x	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFk0.v	986	identity	assert (UQb : bv_unsigned (w64 131072) = 131072) by (unfold w64; apply unsigned_lit_small; zlia).	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFk0.v	986	length-arg	assert (UQb : bv_unsigned (w64 131072) = 131072) by (unfold w64; apply unsigned_lit_small; zlia).	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFk0.v	987	length-arg	apply (YG0j.cov_grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) mdV x).	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFk0.v	1003	arith	eager_used md5 <= eager_used mdV + 131072 ->	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFk0.v	1064	arith	~ (grow = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H Wz x = w_H W x) ->	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFk0.v	1123	arith	~ (grow = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H Wz x = w_H W x) ->	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFk0.v	1147	arith	~ (grow = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H Wz x = w_H W x) ->	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFk0.v	1231	arith	igned x < SHHI mb) -> ~ (false = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H W3 x = w_H W x)	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFk0.v	1239	arith	(forall x : word, ~ (QSv <= bv_unsigned x < QSv + 131072) -> w_H W5 x = w_H W3 x) ->	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFk0.v	1318	arith	assert (OUT5' : forall x : word, ~ (QSv <= bv_unsigned x < QSv + 131072) -> w_H W5 x = w_H W3 x) by exact OUT5.	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFk0.v	1336	arith	signed x < SHHI mb) -> ~ (true = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H W5 x = w_H W x).	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x20000	A/AFkp.v	42	mkAF-bound	(rCSZ, mkAF 16 131072 4);	0x20000 = kPtrArrayCommit = 2^17 with kPtrArrayCommit := 131072 (Reusable/YG00.v)
+0x28693	A/AB1u.v	1210	insn-word	Definition W_11d43c : bv 32 := 0x00028693.	the word at 0x9d5cc (0x9d5cc, memcpy+0x3bc) is 0x00028693
+0x28693	A/AE3c.v	987	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3bc)) = Some (0x00028693%bv : bv 32).	the word at 0x9d5cc (tfib_A_musl_memcpy + 0x3bc, memcpy+0x3bc) is 0x00028693
+0x28693	A/AE3c.v	989	insn-word	Lemma D_3bc : decode_any (0x00028693%bv : bv 32) = Some (OpImm ALU_ADD 13 5 0, 4%Z).	the word at 0x9d5cc (tfib_A_musl_memcpy + 0x3bc, memcpy+0x3bc) is 0x00028693
+0x28a63	A/AB1u.v	80	insn-word	Definition W_11d0b4 : bv 32 := 0x00028a63.	the word at 0x9d244 (0x9d244, memcpy+0x34) is 0x00028a63
+0x28a63	A/AE3c.v	83	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x34)) = Some (0x00028a63%bv : bv 32).	the word at 0x9d244 (tfib_A_musl_memcpy + 0x34, memcpy+0x34) is 0x00028a63
+0x28a63	A/AE3c.v	85	insn-word	Lemma D_034 : decode_any (0x00028a63%bv : bv 32) = Some (Branch BC_EQ 5 0 20, 4%Z).	the word at 0x9d244 (tfib_A_musl_memcpy + 0x34, memcpy+0x34) is 0x00028a63
+0x31294	A/AFfy.v	456	opaque-label	match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x31294	A/AFfy.v	474	opaque-label	match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x31294	A/AFfz.v	438	opaque-label	match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x31294	A/AFg2.v	294	opaque-label	match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x312a0	A/AFfy.v	460	opaque-label	| None => fail (FCheck 201376)	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x312a0	A/AFfy.v	478	opaque-label	| None => fail (FCheck 201376)	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x312a0	A/AFfz.v	442	opaque-label	| None => fail (FCheck 201376)	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x312a0	A/AFg2.v	298	opaque-label	| None => fail (FCheck 201376)	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x31614	A/AFi3.v	76	opaque-label	malloc n trace s = (tick ;; mcheck (n <? kMaxAllowedMalloc - kPage) 202260   ;; refill_tree (chunk_class n) ;; malloc_join n trace (chunk_	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x31614	A/AFk0.v	771	opaque-label	malloc n tr s = (tick ;; mcheck (n <? kMaxAllowedMalloc - kPage) 202260 ;; ob <- sec_alloc n ;; malloc_K n tr ob) s.	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x33180	A/AFeu.v	161	opaque-label	ck (2 * (kBatchBytes * Z.of_nat (length (qc_list g))) <=? qc_bytes g) 209280 ;;	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x35830	A/AFft.v	27	opaque-label	| [] => ISpin 219184	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x35f78	A/AFk0.v	761	opaque-label	mcheck (Z.of_nat (length (st_sec_arr s)) <? kMaxNumChunks) 221048 ;;	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x3fff8	A/AFk8.v	113	offset	v = SAlu ALU_ADD (SAlu ALU_SUB (SAlu ALU_ADD (SAlu ALU_SRL (SOff rADR 262136) (SLit 3)) (SLit 1)) (SAlu ALU_SRL (SOff rADR 0) (SLit 3))) (SL	0x3fff8 = kUserMapSize - 8 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x3fff8	A/AFkc.v	463	arith	rewrite !Z.add_0_r. rewrite (zcanon_id (adr + 262136)), (zcanon_id adr) by (unfold M64; zlia).	0x3fff8 = kUserMapSize - 8 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x3fff8	A/AFkc.v	465	arith	replace ((adr + 262136) / 8) with (adr / 8 + 32767).	0x3fff8 = kUserMapSize - 8 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x3fff8	A/AFkc.v	466	arith	Hq]; [|zlia]. rewrite Hq. rewrite Z.div_mul by zlia. replace (q * 8 + 262136) with ((q + 32767) * 8) by zlia. rewrite Z.div_mul by zlia. zli	0x3fff8 = kUserMapSize - 8 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x3fff8	A/AFkd.v	583	arith	rewrite !Z.add_0_r. rewrite (zcanon_id (fadr + 262136)), (zcanon_id fadr) by (unfold M64; zlia).	0x3fff8 = kUserMapSize - 8 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x3fff8	A/AFkd.v	585	arith	replace ((fadr + 262136) / 8) with (fadr / 8 + 32767).	0x3fff8 = kUserMapSize - 8 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x3fff8	A/AFkd.v	586	arith	Hq]; [|zlia]. rewrite Hq. rewrite Z.div_mul by zlia. replace (q * 8 + 262136) with ((q + 32767) * 8) by zlia. rewrite Z.div_mul by zlia. zli	0x3fff8 = kUserMapSize - 8 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x3fff8	A/AFke.v	587	arith	rewrite !Z.add_0_r. rewrite (zcanon_id (fadr + 262136)), (zcanon_id fadr) by (unfold M64; zlia).	0x3fff8 = kUserMapSize - 8 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x3fff8	A/AFke.v	589	arith	replace ((fadr + 262136) / 8) with (fadr / 8 + 32767).	0x3fff8 = kUserMapSize - 8 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x3fff8	A/AFke.v	590	arith	Hq]; [|zlia]. rewrite Hq. rewrite Z.div_mul by zlia. replace (q * 8 + 262136) with ((q + 32767) * 8) by zlia. rewrite Z.div_mul by zlia. zli	0x3fff8 = kUserMapSize - 8 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFfg.v	217	length-arg	do_stretch HS 36%nat 0xadc08 262144 0x5ecf0 BV2_1 Hsp Hsp64.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk6.v	35	mkAF-bound	(rMU2, mkAF 262144 3758358528 18);	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk6.v	39	arith	(rMF2, mkAF 262144 (2 ^ 29 + 262144) 18);	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk6.v	39	mkAF-bound	(rMF2, mkAF 262144 (2 ^ 29 + 262144) 18);	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk8.v	57	register	: sstate := Eval vm_compute in pin (runto 0x373c0 R3_M2) 19%bv (SLit 262144).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk8.v	59	offset	state := Eval vm_compute in runto 0x6ee8c (arm BC_GEU false (SOff rMU 262144) (SLit 3758096385) R3_M4).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk8.v	95	offset	l_rtA FUEL 0x7ffffff0 R3_M3) = RS_stopped (SR_branch BC_GEU (SOff rMU 262144) (SLit 3758096385)) /\	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk8.v	96	offset	N_sh tfibsegs tfibtbl_rtA FUEL 0x7ffffff0 (arm BC_GEU false (SOff rMU 262144) (SLit 3758096385) R3_M4)) = RS_stopped SR_fetch /\	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk8.v	98	register	egs R3_NU) 10%bv = SOff rADR 0 /\ sr_get (ss_regs R3_NU) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NU) 12%bv = SLit 3 /\	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk8.v	102	register	egs R3_NR) 10%bv = SOff rADR 0 /\ sr_get (ss_regs R3_NR) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NR) 12%bv = SLit 0 /\	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk9.v	29	register	: sstate := Eval vm_compute in pin (runto 0x35050 R3_Fe2) 18%bv (SLit 262144).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk9.v	52	arith	SAlu ALU_ADD (SAlu ALU_ADD (SMd M_MUL (SOff rAU 0) (SLit (-1))) (SLit 262144)) (SOff rMU 0)) (SOff rCSZ 0) (runto 0x3749c (arm BC_GEU true (	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk9.v	55	register	: sstate := Eval vm_compute in pin (runto 0x35050 R3_Fg2) 18%bv (SLit 262144).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk9.v	73	arith	SAlu ALU_ADD (SAlu ALU_ADD (SMd M_MUL (SOff rAU 0) (SLit (-1))) (SLit 262144)) (SOff rMU 0)) (SOff rCSZ 0) (runto 0x3749c R3_FGg3)).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk9.v	94	offset	state := Eval vm_compute in runto 0x372c0 (arm BC_LTU false (SOff rMU 262144) (SOff rAUg 0) R3_Tge3).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk9.v	102	offset	state := Eval vm_compute in runto 0x372c0 (arm BC_LTU false (SOff rMU 262144) (SOff rAUg 0) R3_Tgg3).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk9.v	116	register	22, SLit 18446744073709551615, SLit 0, SLit 222); (SOff rFADR 0, SLit 262144, SLit 0, SLit 0x104022, SLit 18446744073709551615, SLit 0, SLit	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFk9.v	116	register	= [(SOff rFADR 0, SLit 262144, SLit 0, SLit 0x104022, SLit 18446744073709551615, SLit 0, SLit	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkb.v	597	register	r3_pin HR (19%bv : bv 5) (SLit 262144).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkb.v	600	identity	M64; zlia). change (zcanon (-1)) with (2 ^ 64 - 1). change (zcanon (-262144)) with (2 ^ 64 - 2 ^ 18).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkb.v	606	offset	r3_arm HR BC_GEU false (SOff rMU 262144) (SLit 3758096385).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkb.v	607	offset	{ rewrite branch_geu_U. unfold rMU. rewrite (U_atom_off E0 47 mu 262144 EaMU) by (clear - U0 U1 U2 Hroom; unfold kFreeArrayOffset, kUse	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkc.v	481	arith	F4 F5 F6 F7 F8 S4 S5 HcR. numconst. unfold kUserMapSize in *. change (262144 / 8) with 32768 in *. try unfold T in *. try unfold SB in *. zl	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkd.v	491	arith	assert (M2' : exists q, mf = q * 262144) by (apply Z.mod_divide in M2 as [q Hq]; [exists q; exact Hq |	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkd.v	503	identity	(2 ^ 2) with 4. change (zcanon 262143) with 262143. change (zcanon (-262144)) with (2 ^ 64 - 2 ^ 18).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkd.v	506	arith	e ((nfe * 4 + 262143) mod 2 ^ 18) with (nfe * 4 + 262143 - (qm + 1) * 262144).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkd.v	521	register	r3_pin HR (18%bv : bv 5) (SLit 262144).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkd.v	524	identity	. change (zcanon (-1)) with (2 ^ 64 - 1). change (zcanon 262144) with 262144.	(zcanon 262144) evaluates to 262144
+0x40000	A/AFkd.v	524	identity	ld M64; zlia). change (zcanon (-1)) with (2 ^ 64 - 1). change (zcanon 262144) with 262144.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkd.v	525	arith	4. rewrite Zplus_mod_idemp_l. replace (mf * (2 ^ 64 - 1) + mf2) with (262144 + mf * 2 ^ 64) by zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkd.v	600	arith	F6 F7 F8 S4 S5 HcR. numconst. unfold kFreeArrayMapSize in *. change (262144 / 8) with 32768 in *. try unfold T in *. try unfold SB in *. zl	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	446	identity	change (zcanon 262144) with 262144.	(zcanon 262144) evaluates to 262144
+0x40000	A/AFke.v	446	identity	change (zcanon 262144) with 262144.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	447	arith	canon (zcanon (zcanon (au * (2 ^ 64 - 1)) + 262144) + mu)) with (mu + 262144 - au).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	447	arith	replace (zcanon (zcanon (zcanon (au * (2 ^ 64 - 1)) + 262144) + mu)) with (mu + 262144 - au).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	449	arith	replace (au * (2 ^ 64 - 1) + 262144 + mu) with ((mu + 262144 - au) + au * 2 ^ 64) by zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	449	arith	replace (au * (2 ^ 64 - 1) + 262144 + mu) with ((mu + 262144 - au) + au * 2 ^ 64) by zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	477	arith	SAlu ALU_ADD (SAlu ALU_ADD (SMd M_MUL (SOff rAU 0) (SLit (-1))) (SLit 262144)) (SOff rMU 0)) (SOff rCSZ 0).     { arm_zev3. unfold rAU, rMU,	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	480	identity	change (zcanon 262144) with 262144.	(zcanon 262144) evaluates to 262144
+0x40000	A/AFke.v	480	identity	change (zcanon 262144) with 262144.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	481	arith	canon (zcanon (zcanon (au * (2 ^ 64 - 1)) + 262144) + mu)) with (mu + 262144 - au).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	481	arith	replace (zcanon (zcanon (zcanon (au * (2 ^ 64 - 1)) + 262144) + mu)) with (mu + 262144 - au).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	483	arith	replace (au * (2 ^ 64 - 1) + 262144 + mu) with ((mu + 262144 - au) + au * 2 ^ 64) by zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	483	arith	replace (au * (2 ^ 64 - 1) + 262144 + mu) with ((mu + 262144 - au) + au * 2 ^ 64) by zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	495	arith	assert (M2' : exists q, mf = q * 262144) by (apply Z.mod_divide in M2 as [q Hq]; [exists q; exact Hq |	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	507	identity	(2 ^ 2) with 4. change (zcanon 262143) with 262143. change (zcanon (-262144)) with (2 ^ 64 - 2 ^ 18).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	510	arith	e ((nfg * 4 + 262143) mod 2 ^ 18) with (nfg * 4 + 262143 - (qm + 1) * 262144).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	525	register	r3_pin HR (18%bv : bv 5) (SLit 262144).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	528	identity	. change (zcanon (-1)) with (2 ^ 64 - 1). change (zcanon 262144) with 262144.	(zcanon 262144) evaluates to 262144
+0x40000	A/AFke.v	528	identity	ld M64; zlia). change (zcanon (-1)) with (2 ^ 64 - 1). change (zcanon 262144) with 262144.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	529	arith	4. rewrite Zplus_mod_idemp_l. replace (mf * (2 ^ 64 - 1) + mf2) with (262144 + mf * 2 ^ 64) by zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	604	arith	F6 F7 F8 S4 S5 HcR. numconst. unfold kFreeArrayMapSize in *. change (262144 / 8) with 32768 in *. try unfold T in *. try unfold SB in *. zl	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	647	arith	SAlu ALU_ADD (SAlu ALU_ADD (SMd M_MUL (SOff rAU 0) (SLit (-1))) (SLit 262144)) (SOff rMU 0)) (SOff rCSZ 0).     { arm_zev3. unfold rAU, rMU,	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	650	identity	change (zcanon 262144) with 262144.	(zcanon 262144) evaluates to 262144
+0x40000	A/AFke.v	650	identity	change (zcanon 262144) with 262144.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	651	arith	canon (zcanon (zcanon (au * (2 ^ 64 - 1)) + 262144) + mu)) with (mu + 262144 - au).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	651	arith	replace (zcanon (zcanon (zcanon (au * (2 ^ 64 - 1)) + 262144) + mu)) with (mu + 262144 - au).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	653	arith	replace (au * (2 ^ 64 - 1) + 262144 + mu) with ((mu + 262144 - au) + au * 2 ^ 64) by zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFke.v	653	arith	replace (au * (2 ^ 64 - 1) + 262144 + mu) with ((mu + 262144 - au) + au * 2 ^ 64) by zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkh.v	520	offset	r3_arm HR BC_LTU false (SOff rMU 262144) (SOff rAUg 0).     { arm_zev3. unfold rMU, rAUg. rewrite EaMU,	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkh.v	523	offset	rtA tfibtbl_rtA_ok 0x372c0 (runto 0x372c0 (arm BC_LTU false (SOff rMU 262144) (SOff rAUg 0) R3_Tge3)) HX HP.     r3_arm HR BC_LTU false (SOf	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFki.v	520	offset	r3_arm HR BC_LTU false (SOff rMU 262144) (SOff rAUg 0).     { arm_zev3. unfold rMU, rAUg. rewrite EaMU,	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFki.v	523	offset	rtA tfibtbl_rtA_ok 0x372c0 (runto 0x372c0 (arm BC_LTU false (SOff rMU 262144) (SOff rAUg 0) R3_Tgg3)) HX HP.     r3_arm HR BC_LTU false (SOf	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkk.v	742	identity	F| | | |]. all: clear - M0 M1 M2; first [zlia | replace (2 ^ 18) with 262144 by reflexivity; exact M2]. }	(2 ^ 18) evaluates to 262144
+0x40000	A/AFkk.v	744	identity	| | |]. all: clear - U0 U1 U2 U3; first [zlia | replace (2 ^ 18) with 262144 by reflexivity; exact U3]. }	(2 ^ 18) evaluates to 262144
+0x40000	A/AFkk.v	763	identity	replace (2 ^ 18) with 262144 by reflexivity. rewrite G15. apply Z.mod_divide in U3 as [q Hq]	(2 ^ 18) evaluates to 262144
+0x40000	A/AFkk.v	771	identity	replace (2 ^ 18) with 262144 by reflexivity. rewrite G29. apply Z.mod_divide in M2 as [q Hq]	(2 ^ 18) evaluates to 262144
+0x40000	A/AFkm.v	610	arith	change (262144 / 8) with 32768 in *.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkm.v	641	arith	yMapSize, kFreeArrayMax, kHighShadowBeg, kHighShadowEnd in *; change (262144 / 8) with 32768 in *; try unfold T in *; zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkm.v	1090	arith	unfold kUserMapSize in *. change (262144 / 8) with 32768 in *. clear - Hs D1. zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkm.v	1098	arith	unfold kFreeArrayMapSize in *. change (262144 / 8) with 32768 in *. clear - Hs D1. zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkm.v	1216	arith	assert (SHx : forall base, base mod 65536 = 0 -> base <= g < base + 262144 -> SHBv + base / 8 <= shadow_addr g < SHBv + base / 8 + 32768).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkm.v	1409	arith	(p * 8192 + q * 32768 + 32768) * 8) by zlia. replace (p * 65536 + q * 262144) with ((p * 8192 + q * 32768) * 8) by zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkm.v	1409	arith	replace (p * 65536 + q * 262144 + 262144) with ((p * 8192 + q * 32768 + 32768) * 8) by zlia. re	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkm.v	1409	arith	replace (p * 65536 + q * 262144 + 262144) with ((p * 8192 + q * 32768 + 32768) * 8) by zlia. replace (p	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkm.v	1420	arith	replace (p * 65536 + 3758096384 + q * 262144 + 262144) with ((p * 8192 + 469762048 + q * 32768 + 32768) * 8)	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkm.v	1420	arith	replace (p * 65536 + 3758096384 + q * 262144 + 262144) with ((p * 8192 + 469762048 + q * 32768 + 32768) * 8) by zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkm.v	1421	arith	replace (p * 65536 + 3758096384 + q * 262144) with ((p * 8192 + 469762048 + q * 32768) * 8) by zlia.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkm.v	1460	arith	ize, kFreeArrayOffset, kFreeArrayMapSize, kFreeArrayMax in *. change (262144 / 8) with 32768 in *.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	775	register	sr_get (ss_regs ss) 11%bv = SLit 262144 -> sr_get (ss_regs ss) 12%bv = SLit 3 -> sr_get (ss_regs ss) 13	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	825	register	assert (R11 : getr regs 11 = Z_to_bv 64 262144) by (rewrite (Hregs 11%bv), H11; reflexivity).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	832	length-arg	assert (CEIL : bv_unsigned (w64 addr) + page_round_up_Z 262144 <= alloc_ceiling).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	833	identity	{ rewrite Uaddr. change (page_round_up_Z 262144) with 262144. clear - HaHI DR. numconst. unfold kUserMapSize in *. zlia. }	(page_round_up_Z 262144) evaluates to 262144
+0x40000	A/AFkn.v	833	length-arg	{ rewrite Uaddr. change (page_round_up_Z 262144) with 262144. clear - HaHI DR. numconst. unfold kUserMapSize in	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	834	length-arg	assert (CEILT : bv_unsigned (w64 addr) + page_round_up_Z 262144 <= alloc_top (m_vmmaps mdN)).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	836	length-arg	N) ++ vm_maps (m_vmmaps mdN)) (w64 addr) (Z_to_bv 64 (page_round_up_Z 262144)) = true	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	837	length-arg	(vm_reserved (m_vmmaps mdN)) (w64 addr) (Z_to_bv 64 (page_round_up_Z 262144)) = true /\	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	838	length-arg	ains (vm_maps (m_vmmaps mdN)) (w64 addr) (Z_to_bv 64 (page_round_up_Z 262144)) = true).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	839	length-arg	{ change (Z_to_bv 64 (page_round_up_Z 262144)) with (w64 kUserMapSize). exact PLACE. }	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	840	length-arg	assert (SL1 : eager_used mdN + A_bytes (w_A Wx) + page_round_up_Z 262144 <= vm_limit (m_vmmaps mdN)).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	841	identity	{ change (page_round_up_Z 262144) with 262144. clear - SLACK. unfold kUserMapSize in SLACK. zlia. }	(page_round_up_Z 262144) evaluates to 262144
+0x40000	A/AFkn.v	841	length-arg	{ change (page_round_up_Z 262144) with 262144. clear - SLACK. unfold kUserMapSize in SLACK. zlia	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	842	length-arg	proof (commit_AI tfibsegs (w_H Wx) (w_A Wx) mdN hole FL50 (w64 addr) 262144 HAI MWF0 nores50	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	844	length-arg	oof (commit_eager tfibsegs (w_H Wx) (w_A Wx) mdN hole FL50 (w64 addr) 262144 HAI MWF0 nores50	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	846	length-arg	change (Z_to_bv 64 (page_round_up_Z 262144)) with (w64 kUserMapSize) in CG, BUD, EG.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	847	identity	change (page_round_up_Z 262144) with 262144 in EG.	(page_round_up_Z 262144) evaluates to 262144
+0x40000	A/AFkn.v	847	length-arg	change (page_round_up_Z 262144) with 262144 in EG.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	848	length-arg	pose proof (destroyed_AI tfibsegs (w_H Wx) (w_A Wx) mdN (w64 addr) 262144 HAI MWF0	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	850	length-arg	change (Z_to_bv 64 (page_round_up_Z 262144)) with (w64 kUserMapSize) in CD, EGD.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	851	length-arg	regs (Z_to_bv 64 0x64f40) mem (seg_rom tfibsegs) mdN FL50 (w64 addr) 262144	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	854	length-arg	change (Z_to_bv 64 (page_round_up_Z 262144)) with (w64 kUserMapSize) in OUT.	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	1064	register	sr_get (ss_regs R3_NU) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NU) 12%bv = SLit 3 /\ sr_get (ss_regs R3_	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	1072	register	sr_get (ss_regs R3_NFe) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NFe) 12%bv = SLit 3 /\ sr_get (ss_regs R3	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	1080	register	sr_get (ss_regs R3_NFg) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NFg) 12%bv = SLit 3 /\ sr_get (ss_regs R3	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	1096	bound	0sh_of : forall sh x0, x0 mod 8 = 0 -> region_base ly c <= x0 -> x0 + 262144 <= region_base ly c + 2 ^ 32 -> sh = SHBv + x0 / 8 ->	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	1215	register	sr_get (ss_regs R3_NR) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NR) 12%bv = SLit 0 /\ sr_get (ss_regs R3_	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	1224	register	sr_get (ss_regs R3_NRFe) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NRFe) 12%bv = SLit 0 /\ sr_get (ss_regs R	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	1233	register	sr_get (ss_regs R3_NRFg) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NRFg) 12%bv = SLit 0 /\ sr_get (ss_regs R	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	1268	identity	dN ltac:(zlia) ltac:(rewrite Ua; change (page_round_up_Z 262144) with 262144; unfold kUserMapSize in Hceil; zlia) RF).	(page_round_up_Z 262144) evaluates to 262144
+0x40000	A/AFkn.v	1268	length-arg	4 a) 262144 mdN ltac:(zlia) ltac:(rewrite Ua; change (page_round_up_Z 262144) with 262144; unfold kUserMapSize in Hceil; zlia) RF).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	1268	length-arg	exact (destroyed_free (w64 a) 262144 mdN ltac:(zlia) ltac:(rewrite Ua; change (page_round_up_Z 26214	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	1887	bound	assert (X : q * 8192 * 8 + 262144 <= fadr) by (unfold kUserMapSize, kFreeArrayOffset in *; zlia).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	1888	arith	assert (Y : (q * 8192 * 8 + 262144) / 8 <= fadr / 8) by (apply Z.div_le_mono; [zlia | exact X]).	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkn.v	1889	arith	replace (q * 8192 * 8 + 262144) with ((q * 8192 + 32768) * 8) in Y by zlia. rewrite Z.div_mul	0x40000 = kUserMapSize = 2^18 with kUserMapSize := 262144 (Reusable/YG00.v)
+0x40000	A/AFkx.v	581	identity	F| | | |]. all: clear - M0 M1 M2; first [zlia | replace (2 ^ 18) with 262144 by reflexivity; exact M2]. }	(2 ^ 18) evaluates to 262144
+0x40000	A/AFkx.v	583	identity	| | |]. all: clear - U0 U1 U2 U3; first [zlia | replace (2 ^ 18) with 262144 by reflexivity; exact U3]. }	(2 ^ 18) evaluates to 262144
+0x40248	A/AFfg.v	245	length-arg	do_stretch HS 42%nat 0xee9c0 262728 0x5ed20 BV2_3 Hsp Hsp64.	the len argument of Ltac do_stretch HS k d len retpc
+0x5f844	A/AFk0.v	765	opaque-label	served (st_sec_reserved s0 + kPtrArrayEntriesPerCommit) s0) else spin 391236	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x63a36	A/AFem.v	413	witness	change (2 ^ 2) with 4. apply Z.mod_divide; [lia|]. exists (408118 + bkt). numconst. lia. }	theDepot of the image = 0x18e8d8, / 4 = 0x63a36; A/AF0m.v TFIB_DEPOT = 0x18e8d8
+0x65c98	A/AB1w.v	350	in-identifier	: Z := 0x66c48.  Definition tfib_E_MmapFixedNoAccess_3_insn_arg_shim_0x65c98 : Z := 0x66c54.	part of a name
+0x65c98	A/AB1w.v	350	in-identifier	Definition tfib_A_MmapFixedNoAccess_3_insn_arg_shim_0x65c98 : Z := 0x66c48.  Definition tfib_E_MmapFixedNoAccess_3_insn_ar	part of a name
+0x6dd44	A/AFi3.v	42	opaque-label	if aGranted z then ret tt else spin 449860	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x6dd44	A/AFk0.v	1037	opaque-label	er k) (8 * (ck_n k / 8))) ;; if aGranted z then YG00.ret tt else spin 449860 else YG00.ret tt) ;;	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x6dd44	A/AFk0.v	1134	opaque-label	(if aGranted z' then YG00.ret tt else spin 449860)) ;;	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x706dc	A/AFk0.v	1034	opaque-label	+ depot_frames s' + Z.of_nat (length tr) + 1 <? kStoreFramesPerBlock) 460508 ;;	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x729f0	A/AFk0.v	1033	opaque-label	mcheck (depot_ids s' + 1 <? kDepotIdsPerBlock) 469488 ;;	the pc argument of YG00 mcheck / spin / FCheck / ISpin; no consumer compares it (roles.out)
+0x7fff8	A/AFk5.v	573	witness	apply Z.mod_divide; [lia|]. exists (524280 + 2 * q). unfold SHBv. lia. }	0x7fff8 = SHADOW_OFF / 4096 with SHADOW_OFF := 2147450880 (Reusable/YG0f.v)
+0x80000	A/AFfu.v	611	witness	apply Z.mod_divide; [lia|]. exists (c * 8 + 24 * 524288 + c'). lia. }	0x80000 = 2^32 / kBatchBytes with kBatchBytes := 8192 (Reusable/YG00.v)
+0x80000	A/AFfu.v	697	witness	apply Z.mod_divide; [lia|]. exists (c * 8 + 24 * 524288 + c'). lia.	0x80000 = 2^32 / kBatchBytes with kBatchBytes := 8192 (Reusable/YG00.v)
+0xa0593	A/AE3e.v	300	insn-word	Lemma F_17bf4 : fetch_word tfibsegs (0x98ff0%bv : word) = Some (0x000a0593%bv : bv 32).	the word at 0x98ff0 (0x98ff0, __stdio_write+0xe8) is 0x000a0593
+0xa0593	A/AE3e.v	302	insn-word	Lemma D_17bf4 : decode_any (0x000a0593%bv : bv 32) = Some (OpImm ALU_ADD 11 20 0, 4%Z).	the word at 0x98ff0 (0x98ff0, __stdio_write+0xe8) is 0x000a0593
+0xa0993	A/AE3e.v	348	insn-word	Lemma F_17c24 : fetch_word tfibsegs (0x99020%bv : word) = Some (0x000a0993%bv : bv 32).	the word at 0x99020 (0x99020, __stdio_write+0x118) is 0x000a0993
+0xa0993	A/AE3e.v	350	insn-word	Lemma D_17c24 : decode_any (0x000a0993%bv : bv 32) = Some (OpImm ALU_ADD 19 20 0, 4%Z).	the word at 0x99020 (0x99020, __stdio_write+0x118) is 0x000a0993
+0xa2603	A/AB1r.v	14	insn-word	Definition W_52d28 : bv 32 := 0x000a2603.	the word at 0x3716c (0x3716c, _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE16GetFromAllocatorEPNS_14AllocatorStatsEmPjm+0x174) is 0x000a2603
+0xa3703	A/AE3e.v	376	insn-word	Lemma F_17c40 : fetch_word tfibsegs (0x9903c%bv : word) = Some (0x000a3703%bv : bv 32).	the word at 0x9903c (0x9903c, __stdio_write+0x134) is 0x000a3703
+0xa3703	A/AE3e.v	378	insn-word	Lemma D_17c40 : decode_any (0x000a3703%bv : bv 32) = Some (Load SZ8 true 14 20 0, 4%Z).	the word at 0x9903c (0x9903c, __stdio_write+0x134) is 0x000a3703
+0xb2583	A/AB1s.v	14	insn-word	Definition W_509d4 : bv 32 := 0x000b2583.	the word at 0x34e18 (0x34e18, _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE17ReturnToAllocatorEPNS_12MemoryMapperIS5_EEPNS_14AllocatorStatsEmPKjm+0x17c) is 0x000b2583
+0xe0000	A/AFk5.v	223	witness	write Hqs; apply Z.mod_divide; [lia|]; exists (qs * 16 + c * 2 ^ 20 + 917504); lia).	0xe0000 = kFreeArrayOffset / 4096 with kFreeArrayOffset := 3758096384 (Reusable/YG00.v)
+0xe0000	A/AFko.v	187	witness	write Hqs; apply Z.mod_divide; [lia|]; exists (qs * 16 + c * 2 ^ 20 + 917504); lia).	0xe0000 = kFreeArrayOffset / 4096 with kFreeArrayOffset := 3758096384 (Reusable/YG00.v)
+0xfffff	A/AE3e.v	244	imm20	c_ltu (Z_to_bv 64 n) (v_addiw (v_lui (Z.shiftl (bv_signed (1048575%bv : bv 20)) 12)) (bv_signed (1%bv : bv 12))) = true.	= 2^20 - 1
+0xfffff	A/AE3e.v	266	decode-result	Lemma D_15a34 : decode_any (0xfffff5b7%bv : bv 32) = Some (Lui 11 1048575, 4%Z).	imm[31:12] of the word 0xfffff5b7 at 0x93d50 (0x93d50, __syscall_ret+0x0)
+0xfffff	A/AFi9.v	58	mkAF-bound	(aNCH, mkAF 0 1048575 0);	= 2^20 - 1
+0x100000	A/AD1d.v	34	length-arg	[ (epg 518, ELit 4096); (epg 501, ELit 8388608); (epg 500, ELit 1048576); (epg 424, ELit 11571200); (epg 357, ELit 4096);	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AD1d.v	39	length-arg	(kn_zero ch (EMd M_MUL (ELit 512) (EVar 501)) 2147450880 1048576	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AD1d.v	208	identity	* change kNodesBlockSize with 1048576. rewrite <- VNB, wiv_wzp. vin.	kNodesBlockSize is defined (Reusable/YG0f.v) as 1048576
+0x100000	A/AD1d.v	281	length-arg	ma kz_facts : kn_zero ch (EMd M_MUL (ELit 512) (EVar 501)) 2147450880 1048576 = true	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AD1e.v	224	length-arg	*   eapply (PG 500%nat 1048576 (wzp (dNB E)) eq_refl HNB ltac:(lia)); [apply STATIC; cbn; tau	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AD1f.v	190	length-arg	eapply (KZ _ 501%nat 8388608 1048576 B12 eq_refl HSBv ltac:(lia) (proj1 kz_facts)). reflexivity.	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AD1f.v	192	length-arg	eapply (KZ _ 500%nat 1048576 131072 B12 eq_refl HNB ltac:(lia) (proj1 (proj2 kz_facts))). r	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AD1g.v	34	length-arg	EAD3 : list amap := [ mk eGV 4096 KRW; mk eSB 8388608 KRWLAZY; mk eNB 1048576 KRW ].	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AD1g.v	724	length-arg	finition dF := dm eF 11571200 KRW.           Definition dNB := dm eNB 1048576 KRW.       Definition dSB := dm eSB 8388608 KRWLAZY.	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AD1g.v	765	length-arg	/\ wzp dNB = (u eNB, 1048576) /\ wzp dSB = (u eSB, 8388608) /\ wzp dLow = (2147446784, 2684	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AD1g.v	1036	length-arg	change (dmm (mk eNB 1048576 KRW)) with dNB in ANB. change (dmm (mk eSB 8388608 KRWLAZY)) w	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AD1g.v	1334	arith	lace (32768 * V 0 + 16 * V 6 - 8388608) with ((4096 * V 0 + 2 * V 6 - 1048576) * 8) by lia.	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AFel.v	153	identity	change (2 ^ 64) with 18446744073709551616 in *. change (2 ^ 20) with 1048576.	(2 ^ 20) evaluates to 1048576
+0x100000	A/AFel.v	154	arith	(Z.mod_pos_bound v 1048576 ltac:(lia)) as R. pose proof (Z.div_mod v 1048576 ltac:(lia)) as D.	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AFel.v	154	arith	pose proof (Z.mod_pos_bound v 1048576 ltac:(lia)) as R. pose proof (Z.div_mod v 1048576 ltac:(lia))	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AFel.v	155	arith	set (q := v / 1048576) in *. set (r := v mod 1048576) in *. clearbody q r.	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AFel.v	155	arith	set (q := v / 1048576) in *. set (r := v mod 1048576) in *. clearbody q r.	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AFem.v	204	bound	4096 <= NB /\ NB + 0x100000 <= 140737479966720 /\ 4096 <= SB /\ SB + 0x800000 <= 14073747	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AFem.v	205	bound	(NB + 0x100000 <= SB \/ SB + 0x800000 <= NB) /\	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AFem.v	206	bound	(NB + 0x100000 <= ly_stk_lo ly \/ ly_stk_hi ly <= NB) /\ (SB + 0x800000 <= l	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AFem.v	207	bound	= nD <= 4097 /\ 2 <= TOT <= 127008 /\ 0 <= HSH < 2 ^ 64 /\ 0 <= bkt < 1048576 /\ 0 <= HDv <= nD /\ 0 <= STD < 2 ^ 32 /\	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100000	A/AFgi.v	109	flit8-value	flit8 0xa96b0 0x10000000; flit8 0xa96c0 0x100000;	the 8-byte value of the cell 0xa96c0 (_ZN6__asanL8instanceE+0x328)
+0x100000	A/AFgm.v	97	flit8-value	flit8 0xa96b0 0x10000000; flit8 0xa96c0 0x100000;	the 8-byte value of the cell 0xa96c0 (_ZN6__asanL8instanceE+0x328)
+0x100000	A/AFgn.v	72	flit8-value	flit8 0xa96b0 0x10000000; flit8 0xa96c0 0x100000;	the 8-byte value of the cell 0xa96c0 (_ZN6__asanL8instanceE+0x328)
+0x100000	A/AFi9.v	57	mkAF-bound	(aRES, mkAF 0 1048576 14);	0x100000 = kNodesBlockSize = 2^20 with kNodesBlockSize := 1048576 (Reusable/YG0f.v)
+0x100793	A/AB1u.v	35	insn-word	Definition W_11d090 : bv 32 := 0x00100793.	the word at 0x9d220 (0x9d220, memcpy+0x10) is 0x00100793
+0x100793	A/AE3c.v	47	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x10)) = Some (0x00100793%bv : bv 32).	the word at 0x9d220 (tfib_A_musl_memcpy + 0x10, memcpy+0x10) is 0x00100793
+0x100793	A/AE3c.v	49	insn-word	Lemma D_010 : decode_any (0x00100793%bv : bv 32) = Some (OpImm ALU_ADD 15 0 1, 4%Z).	the word at 0x9d220 (tfib_A_musl_memcpy + 0x10, memcpy+0x10) is 0x00100793
+0x100813	A/AE3a.v	73	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x18)) = Some (0x00100813%bv : bv 32).	the word at 0x9d12c (tfib_A_musl_memchr + 0x18, memchr+0x18) is 0x00100813
+0x100813	A/AE3a.v	75	insn-word	Lemma DM_018 : decode_any (0x00100813%bv : bv 32) = Some (OpImm ALU_ADD 16 0 1, 4%Z).	the word at 0x9d12c (tfib_A_musl_memchr + 0x18, memchr+0x18) is 0x00100813
+0x104022	A/AFk8.v	103	register	sr_get (ss_regs R3_NR) 13%bv = SLit 0x104022 /\ sr_get (ss_regs R3_NR) 14%bv = SLit 18446744073709551615 /	= MAP_PRIVATE 0x2 | MAP_ANONYMOUS 0x20 | MAP_NORESERVE 0x4000 | MAP_FIXED_NOREPLACE 0x100000
+0x104022	A/AFk9.v	116	register	09551615, SLit 0, SLit 222); (SOff rFADR 0, SLit 262144, SLit 0, SLit 0x104022, SLit 18446744073709551615, SLit 0, SLit 222)] /\	= MAP_PRIVATE 0x2 | MAP_ANONYMOUS 0x20 | MAP_NORESERVE 0x4000 | MAP_FIXED_NOREPLACE 0x100000
+0x104022	A/AFk9.v	116	register	= [(SOff rFADR 0, SLit 262144, SLit 0, SLit 0x104022, SLit 18446744073709551615, SLit 0, SLit 222); (SOff rFADR 0,	= MAP_PRIVATE 0x2 | MAP_ANONYMOUS 0x20 | MAP_NORESERVE 0x4000 | MAP_FIXED_NOREPLACE 0x100000
+0x104022	A/AFkn.v	924	register	Definition FLR : word := Z_to_bv 64 0x104022.	= MAP_PRIVATE 0x2 | MAP_ANONYMOUS 0x20 | MAP_NORESERVE 0x4000 | MAP_FIXED_NOREPLACE 0x100000
+0x104022	A/AFkn.v	1215	register	(ss_regs R3_NR) 12%bv = SLit 0 /\ sr_get (ss_regs R3_NR) 13%bv = SLit 0x104022 /\	= MAP_PRIVATE 0x2 | MAP_ANONYMOUS 0x20 | MAP_NORESERVE 0x4000 | MAP_FIXED_NOREPLACE 0x100000
+0x104022	A/AFkn.v	1224	register	regs R3_NRFe) 12%bv = SLit 0 /\ sr_get (ss_regs R3_NRFe) 13%bv = SLit 0x104022 /\	= MAP_PRIVATE 0x2 | MAP_ANONYMOUS 0x20 | MAP_NORESERVE 0x4000 | MAP_FIXED_NOREPLACE 0x100000
+0x104022	A/AFkn.v	1233	register	regs R3_NRFg) 12%bv = SLit 0 /\ sr_get (ss_regs R3_NRFg) 13%bv = SLit 0x104022 /\	= MAP_PRIVATE 0x2 | MAP_ANONYMOUS 0x20 | MAP_NORESERVE 0x4000 | MAP_FIXED_NOREPLACE 0x100000
+0x150513	A/AE3a.v	89	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x28)) = Some (0x00150513%bv : bv 32).	the word at 0x9d13c (tfib_A_musl_memchr + 0x28, memchr+0x28) is 0x00150513
+0x150513	A/AE3a.v	91	insn-word	Lemma DM_028 : decode_any (0x00150513%bv : bv 32) = Some (OpImm ALU_ADD 10 10 1, 4%Z).	the word at 0x9d13c (tfib_A_musl_memchr + 0x28, memchr+0x28) is 0x00150513
+0x150513	A/AE3a.v	205	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0xac)) = Some (0x00150513%bv : bv 32).	the word at 0x9d1c0 (tfib_A_musl_memchr + 0xac, memchr+0xac) is 0x00150513
+0x150513	A/AE3a.v	207	insn-word	Lemma DM_0ac : decode_any (0x00150513%bv : bv 32) = Some (OpImm ALU_ADD 10 10 1, 4%Z).	the word at 0x9d1c0 (tfib_A_musl_memchr + 0xac, memchr+0xac) is 0x00150513
+0x150513	A/AE3b.v	51	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcmp + 0x14)) = Some (0x00150513%bv : bv 32).	the word at 0x9d1f4 (tfib_A_musl_memcmp + 0x14, memcmp+0x14) is 0x00150513
+0x150513	A/AE3b.v	53	insn-word	Lemma D_014 : decode_any (0x00150513%bv : bv 32) = Some (OpImm ALU_ADD 10 10 1, 4%Z).	the word at 0x9d1f4 (tfib_A_musl_memcmp + 0x14, memcmp+0x14) is 0x00150513
+0x150793	A/AE3a.v	69	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x14)) = Some (0x00150793%bv : bv 32).	the word at 0x9d128 (tfib_A_musl_memchr + 0x14, memchr+0x14) is 0x00150793
+0x150793	A/AE3a.v	71	insn-word	Lemma DM_014 : decode_any (0x00150793%bv : bv 32) = Some (OpImm ALU_ADD 15 10 1, 4%Z).	the word at 0x9d128 (tfib_A_musl_memchr + 0x14, memchr+0x14) is 0x00150793
+0x158593	A/AB1u.v	55	insn-word	Definition W_11d0a0 : bv 32 := 0x00158593.	the word at 0x9d230 (0x9d230, memcpy+0x20) is 0x00158593
+0x158593	A/AE38.v	35	insn-word	Lemma F_00c : fetch_word tfibsegs (Z_to_bv 64 (A_ISL + 0xc)) = Some (0x00158593%bv : bv 32). Proof. ftac. Qed.	the word at 0x6489c (A_ISL + 0xc, _ZN11__sanitizer15internal_strlenEPKc+0xc) is 0x00158593
+0x158593	A/AE38.v	36	insn-word	Lemma D_00c : decode_any (0x00158593%bv : bv 32) = Some (OpImm ALU_ADD 11 11 1, 4%Z). Proof. vm_	the word at 0x6489c (A_ISL + 0xc, _ZN11__sanitizer15internal_strlenEPKc+0xc) is 0x00158593
+0x158593	A/AE3b.v	55	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcmp + 0x18)) = Some (0x00158593%bv : bv 32).	the word at 0x9d1f8 (tfib_A_musl_memcmp + 0x18, memcmp+0x18) is 0x00158593
+0x158593	A/AE3b.v	57	insn-word	Lemma D_018 : decode_any (0x00158593%bv : bv 32) = Some (OpImm ALU_ADD 11 11 1, 4%Z).	the word at 0x9d1f8 (tfib_A_musl_memcmp + 0x18, memcmp+0x18) is 0x00158593
+0x158593	A/AE3c.v	63	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x20)) = Some (0x00158593%bv : bv 32).	the word at 0x9d230 (tfib_A_musl_memcpy + 0x20, memcpy+0x20) is 0x00158593
+0x158593	A/AE3c.v	65	insn-word	Lemma D_020 : decode_any (0x00158593%bv : bv 32) = Some (OpImm ALU_ADD 11 11 1, 4%Z).	the word at 0x9d230 (tfib_A_musl_memcpy + 0x20, memcpy+0x20) is 0x00158593
+0x15859b	A/AE3e.v	268	insn-word	Lemma F_15a38 : fetch_word tfibsegs (0x93d54%bv : word) = Some (0x0015859b%bv : bv 32).	the word at 0x93d54 (0x93d54, __syscall_ret+0x4) is 0x0015859b
+0x15859b	A/AE3e.v	270	insn-word	Lemma D_15a38 : decode_any (0x0015859b%bv : bv 32) = Some (OpImm32 11 11 1, 4%Z).	the word at 0x93d54 (0x93d54, __syscall_ret+0x4) is 0x0015859b
+0x158713	A/AB1u.v	30	insn-word	Definition W_11d08c : bv 32 := 0x00158713.	the word at 0x9d21c (0x9d21c, memcpy+0xc) is 0x00158713
+0x158713	A/AE3c.v	43	insn-word	: fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0xc)) = Some (0x00158713%bv : bv 32).	the word at 0x9d21c (tfib_A_musl_memcpy + 0xc, memcpy+0xc) is 0x00158713
+0x158713	A/AE3c.v	45	insn-word	Lemma D_00c : decode_any (0x00158713%bv : bv 32) = Some (OpImm ALU_ADD 14 11 1, 4%Z).	the word at 0x9d21c (tfib_A_musl_memcpy + 0xc, memcpy+0xc) is 0x00158713
+0x15c783	A/AB1u.v	875	insn-word	Definition W_11d330 : bv 32 := 0x0015c783.	the word at 0x9d4c0 (0x9d4c0, memcpy+0x2b0) is 0x0015c783
+0x15c783	A/AB1u.v	1060	insn-word	Definition W_11d3c4 : bv 32 := 0x0015c783.	the word at 0x9d554 (0x9d554, memcpy+0x344) is 0x0015c783
+0x15c783	A/AB1u.v	1165	insn-word	Definition W_11d418 : bv 32 := 0x0015c783.	the word at 0x9d5a8 (0x9d5a8, memcpy+0x398) is 0x0015c783
+0x15c783	A/AB1u.v	1245	insn-word	Definition W_11d458 : bv 32 := 0x0015c783.	the word at 0x9d5e8 (0x9d5e8, memcpy+0x3d8) is 0x0015c783
+0x15c783	A/AE3c.v	719	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2b0)) = Some (0x0015c783%bv : bv 32).	the word at 0x9d4c0 (tfib_A_musl_memcpy + 0x2b0, memcpy+0x2b0) is 0x0015c783
+0x15c783	A/AE3c.v	721	insn-word	Lemma D_2b0 : decode_any (0x0015c783%bv : bv 32) = Some (Load SZ1 false 15 11 1, 4%Z).	the word at 0x9d4c0 (tfib_A_musl_memcpy + 0x2b0, memcpy+0x2b0) is 0x0015c783
+0x15c783	A/AE3c.v	867	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x344)) = Some (0x0015c783%bv : bv 32).	the word at 0x9d554 (tfib_A_musl_memcpy + 0x344, memcpy+0x344) is 0x0015c783
+0x15c783	A/AE3c.v	869	insn-word	Lemma D_344 : decode_any (0x0015c783%bv : bv 32) = Some (Load SZ1 false 15 11 1, 4%Z).	the word at 0x9d554 (tfib_A_musl_memcpy + 0x344, memcpy+0x344) is 0x0015c783
+0x15c783	A/AE3c.v	951	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x398)) = Some (0x0015c783%bv : bv 32).	the word at 0x9d5a8 (tfib_A_musl_memcpy + 0x398, memcpy+0x398) is 0x0015c783
+0x15c783	A/AE3c.v	953	insn-word	Lemma D_398 : decode_any (0x0015c783%bv : bv 32) = Some (Load SZ1 false 15 11 1, 4%Z).	the word at 0x9d5a8 (tfib_A_musl_memcpy + 0x398, memcpy+0x398) is 0x0015c783
+0x15c783	A/AE3c.v	1015	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3d8)) = Some (0x0015c783%bv : bv 32).	the word at 0x9d5e8 (tfib_A_musl_memcpy + 0x3d8, memcpy+0x3d8) is 0x0015c783
+0x15c783	A/AE3c.v	1017	insn-word	Lemma D_3d8 : decode_any (0x0015c783%bv : bv 32) = Some (Load SZ1 false 15 11 1, 4%Z).	the word at 0x9d5e8 (tfib_A_musl_memcpy + 0x3d8, memcpy+0x3d8) is 0x0015c783
+0x160000	A/AFf4.v	1045	identity	change ((11571200 - (4096 + 32768)) / 8) with 1441792. lia. }	((11571200 - (4096 + 32768)) / 8) evaluates to 1441792
+0x161200	A/AD1d.v	41	length-arg	&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 424)) 2147450880 1446400)%bool.	= 11571200 / 8 (the shadow length of map 424)
+0x161200	A/AD1d.v	283	length-arg	/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 424)) 2147450880 1446400 = true.	= 11571200 / 8 (the shadow length of map 424)
+0x161200	A/AD1f.v	194	length-arg	eapply (KZ _ 424%nat 11571200 1446400 B12 eq_refl HFv ltac:(lia) (proj2 (proj2 kz_facts))). reflexiv	= 11571200 / 8 (the shadow length of map 424)
+0x167613	A/AB1u.v	1225	insn-word	Definition W_11d448 : bv 32 := 0x00167613.	the word at 0x9d5d8 (0x9d5d8, memcpy+0x3c8) is 0x00167613
+0x167613	A/AB1u.v	1275	insn-word	Definition W_11d470 : bv 32 := 0x00167613.	the word at 0x9d600 (0x9d600, memcpy+0x3f0) is 0x00167613
+0x167613	A/AE3c.v	999	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3c8)) = Some (0x00167613%bv : bv 32).	the word at 0x9d5d8 (tfib_A_musl_memcpy + 0x3c8, memcpy+0x3c8) is 0x00167613
+0x167613	A/AE3c.v	1001	insn-word	Lemma D_3c8 : decode_any (0x00167613%bv : bv 32) = Some (OpImm ALU_AND 12 12 1, 4%Z).	the word at 0x9d5d8 (tfib_A_musl_memcpy + 0x3c8, memcpy+0x3c8) is 0x00167613
+0x167613	A/AE3c.v	1039	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3f0)) = Some (0x00167613%bv : bv 32).	the word at 0x9d600 (tfib_A_musl_memcpy + 0x3f0, memcpy+0x3f0) is 0x00167613
+0x167613	A/AE3c.v	1041	insn-word	Lemma D_3f0 : decode_any (0x00167613%bv : bv 32) = Some (OpImm ALU_AND 12 12 1, 4%Z).	the word at 0x9d600 (tfib_A_musl_memcpy + 0x3f0, memcpy+0x3f0) is 0x00167613
+0x168693	A/AB1u.v	70	insn-word	Definition W_11d0ac : bv 32 := 0x00168693.	the word at 0x9d23c (0x9d23c, memcpy+0x2c) is 0x00168693
+0x168693	A/AB1u.v	530	insn-word	Definition W_11d21c : bv 32 := 0x00168693.	the word at 0x9d3ac (0x9d3ac, memcpy+0x19c) is 0x00168693
+0x168693	A/AE3c.v	75	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2c)) = Some (0x00168693%bv : bv 32).	the word at 0x9d23c (tfib_A_musl_memcpy + 0x2c, memcpy+0x2c) is 0x00168693
+0x168693	A/AE3c.v	77	insn-word	Lemma D_02c : decode_any (0x00168693%bv : bv 32) = Some (OpImm ALU_ADD 13 13 1, 4%Z).	the word at 0x9d23c (tfib_A_musl_memcpy + 0x2c, memcpy+0x2c) is 0x00168693
+0x168693	A/AE3c.v	443	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x19c)) = Some (0x00168693%bv : bv 32).	the word at 0x9d3ac (tfib_A_musl_memcpy + 0x19c, memcpy+0x19c) is 0x00168693
+0x168693	A/AE3c.v	445	insn-word	Lemma D_19c : decode_any (0x00168693%bv : bv 32) = Some (OpImm ALU_ADD 13 13 1, 4%Z).	the word at 0x9d3ac (tfib_A_musl_memcpy + 0x19c, memcpy+0x19c) is 0x00168693
+0x168793	A/AE3a.v	137	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x68)) = Some (0x00168793%bv : bv 32).	the word at 0x9d17c (tfib_A_musl_memchr + 0x68, memchr+0x68) is 0x00168793
+0x168793	A/AE3a.v	139	insn-word	Lemma DM_068 : decode_any (0x00168793%bv : bv 32) = Some (OpImm ALU_ADD 15 13 1, 4%Z).	the word at 0x9d17c (tfib_A_musl_memchr + 0x68, memchr+0x68) is 0x00168793
+0x170713	A/AB1u.v	85	insn-word	Definition W_11d0b8 : bv 32 := 0x00170713.	the word at 0x9d248 (0x9d248, memcpy+0x38) is 0x00170713
+0x170713	A/AE3c.v	87	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x38)) = Some (0x00170713%bv : bv 32).	the word at 0x9d248 (tfib_A_musl_memcpy + 0x38, memcpy+0x38) is 0x00170713
+0x170713	A/AE3c.v	89	insn-word	Lemma D_038 : decode_any (0x00170713%bv : bv 32) = Some (OpImm ALU_ADD 14 14 1, 4%Z).	the word at 0x9d248 (tfib_A_musl_memcpy + 0x38, memcpy+0x38) is 0x00170713
+0x178793	A/AE3a.v	109	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x3c)) = Some (0x00178793%bv : bv 32).	the word at 0x9d150 (tfib_A_musl_memchr + 0x3c, memchr+0x3c) is 0x00178793
+0x178793	A/AE3a.v	111	insn-word	Lemma DM_03c : decode_any (0x00178793%bv : bv 32) = Some (OpImm ALU_ADD 15 15 1, 4%Z).	the word at 0x9d150 (tfib_A_musl_memchr + 0x3c, memchr+0x3c) is 0x00178793
+0x1fad34	A/AE3e.v	346	decode-result	Lemma D_17c20 : decode_any (0xd35fa0ef%bv : bv 32) = Some (Jal 1 2075956, 4%Z).	the 21-bit J offset of the word 0xd35fa0ef at 0x9901c (0x9901c, __stdio_write+0x114)
+0x1fadbc	A/AE3e.v	286	decode-result	Lemma D_17b98 : decode_any (0xdbdfa0ef%bv : bv 32) = Some (Jal 1 2076092, 4%Z).	the 21-bit J offset of the word 0xdbdfa0ef at 0x98f94 (0x98f94, __stdio_write+0x8c)
+0x1fff94	A/AE3e.v	410	decode-result	Lemma D_17c60 : decode_any (0xf95ff06f%bv : bv 32) = Some (Jal 0 2097044, 4%Z).	the 21-bit J offset of the word 0xf95ff06f at 0x9905c (0x9905c, __stdio_write+0x154)
+0x1ffff0	A/AE3a.v	235	decode-result	Lemma DM_0c8 : decode_any (0xff1ff06f%bv : bv 32) = Some (Jal 0 2097136, 4%Z).	the 21-bit J offset of the word 0xff1ff06f at 0x9d1dc (tfib_A_musl_memchr + 0xc8, memchr+0xc8)
+0x200000	A/AE30.v	1394	bound	assert (Hrange : 0 <= fst (fst e) /\ fst (fst e) + snd (fst e) <= 0x200000).	= 2^21
+0x200000	A/AE6k.v	1388	bound	assert (Hrange : 0 <= fst (fst e) /\ fst (fst e) + snd (fst e) <= 0x200000).	= 2^21
+0x200813	A/AB1u.v	175	insn-word	Definition W_11d100 : bv 32 := 0x00200813.	the word at 0x9d290 (0x9d290, memcpy+0x80) is 0x00200813
+0x200813	A/AE3c.v	159	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x80)) = Some (0x00200813%bv : bv 32).	the word at 0x9d290 (tfib_A_musl_memcpy + 0x80, memcpy+0x80) is 0x00200813
+0x200813	A/AE3c.v	161	insn-word	Lemma D_080 : decode_any (0x00200813%bv : bv 32) = Some (OpImm ALU_ADD 16 0 2, 4%Z).	the word at 0x9d290 (tfib_A_musl_memcpy + 0x80, memcpy+0x80) is 0x00200813
+0x258593	A/AB1u.v	1250	insn-word	Definition W_11d45c : bv 32 := 0x00258593.	the word at 0x9d5ec (0x9d5ec, memcpy+0x3dc) is 0x00258593
+0x258593	A/AE3c.v	1019	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3dc)) = Some (0x00258593%bv : bv 32).	the word at 0x9d5ec (tfib_A_musl_memcpy + 0x3dc, memcpy+0x3dc) is 0x00258593
+0x258593	A/AE3c.v	1021	insn-word	Lemma D_3dc : decode_any (0x00258593%bv : bv 32) = Some (OpImm ALU_ADD 11 11 2, 4%Z).	the word at 0x9d5ec (tfib_A_musl_memcpy + 0x3dc, memcpy+0x3dc) is 0x00258593
+0x25c803	A/AB1u.v	880	insn-word	Definition W_11d334 : bv 32 := 0x0025c803.	the word at 0x9d4c4 (0x9d4c4, memcpy+0x2b4) is 0x0025c803
+0x25c803	A/AB1u.v	1065	insn-word	Definition W_11d3c8 : bv 32 := 0x0025c803.	the word at 0x9d558 (0x9d558, memcpy+0x348) is 0x0025c803
+0x25c803	A/AB1u.v	1170	insn-word	Definition W_11d41c : bv 32 := 0x0025c803.	the word at 0x9d5ac (0x9d5ac, memcpy+0x39c) is 0x0025c803
+0x25c803	A/AE3c.v	723	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2b4)) = Some (0x0025c803%bv : bv 32).	the word at 0x9d4c4 (tfib_A_musl_memcpy + 0x2b4, memcpy+0x2b4) is 0x0025c803
+0x25c803	A/AE3c.v	725	insn-word	Lemma D_2b4 : decode_any (0x0025c803%bv : bv 32) = Some (Load SZ1 false 16 11 2, 4%Z).	the word at 0x9d4c4 (tfib_A_musl_memcpy + 0x2b4, memcpy+0x2b4) is 0x0025c803
+0x25c803	A/AE3c.v	871	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x348)) = Some (0x0025c803%bv : bv 32).	the word at 0x9d558 (tfib_A_musl_memcpy + 0x348, memcpy+0x348) is 0x0025c803
+0x25c803	A/AE3c.v	873	insn-word	Lemma D_348 : decode_any (0x0025c803%bv : bv 32) = Some (Load SZ1 false 16 11 2, 4%Z).	the word at 0x9d558 (tfib_A_musl_memcpy + 0x348, memcpy+0x348) is 0x0025c803
+0x25c803	A/AE3c.v	955	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x39c)) = Some (0x0025c803%bv : bv 32).	the word at 0x9d5ac (tfib_A_musl_memcpy + 0x39c, memcpy+0x39c) is 0x0025c803
+0x25c803	A/AE3c.v	957	insn-word	Lemma D_39c : decode_any (0x0025c803%bv : bv 32) = Some (Load SZ1 false 16 11 2, 4%Z).	the word at 0x9d5ac (tfib_A_musl_memcpy + 0x39c, memcpy+0x39c) is 0x0025c803
+0x267713	A/AB1u.v	1215	insn-word	Definition W_11d440 : bv 32 := 0x00267713.	the word at 0x9d5d0 (0x9d5d0, memcpy+0x3c0) is 0x00267713
+0x267713	A/AE3c.v	991	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3c0)) = Some (0x00267713%bv : bv 32).	the word at 0x9d5d0 (tfib_A_musl_memcpy + 0x3c0, memcpy+0x3c0) is 0x00267713
+0x267713	A/AE3c.v	993	insn-word	Lemma D_3c0 : decode_any (0x00267713%bv : bv 32) = Some (OpImm ALU_AND 14 12 2, 4%Z).	the word at 0x9d5d0 (tfib_A_musl_memcpy + 0x3c0, memcpy+0x3c0) is 0x00267713
+0x268693	A/AB1u.v	205	insn-word	Definition W_11d118 : bv 32 := 0x00268693.	the word at 0x9d2a8 (0x9d2a8, memcpy+0x98) is 0x00268693
+0x268693	A/AE3c.v	183	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x98)) = Some (0x00268693%bv : bv 32).	the word at 0x9d2a8 (tfib_A_musl_memcpy + 0x98, memcpy+0x98) is 0x00268693
+0x268693	A/AE3c.v	185	insn-word	Lemma D_098 : decode_any (0x00268693%bv : bv 32) = Some (OpImm ALU_ADD 13 13 2, 4%Z).	the word at 0x9d2a8 (tfib_A_musl_memcpy + 0x98, memcpy+0x98) is 0x00268693
+0x268813	A/AB1u.v	1255	insn-word	Definition W_11d460 : bv 32 := 0x00268813.	the word at 0x9d5f0 (0x9d5f0, memcpy+0x3e0) is 0x00268813
+0x268813	A/AE3c.v	1023	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3e0)) = Some (0x00268813%bv : bv 32).	the word at 0x9d5f0 (tfib_A_musl_memcpy + 0x3e0, memcpy+0x3e0) is 0x00268813
+0x268813	A/AE3c.v	1025	insn-word	Lemma D_3e0 : decode_any (0x00268813%bv : bv 32) = Some (OpImm ALU_ADD 16 13 2, 4%Z).	the word at 0x9d5f0 (tfib_A_musl_memcpy + 0x3e0, memcpy+0x3e0) is 0x00268813
+0x300713	A/AB1g.v	30	insn-word	Definition W_11d490 : bv 32 := 0x00300713.	the word at 0x9d620 (0x9d620, memset+0xc) is 0x00300713
+0x300713	A/AE3d.v	44	insn-word	: fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memset + 0xc)) = Some (0x00300713%bv : bv 32).	the word at 0x9d620 (tfib_A_musl_memset + 0xc, memset+0xc) is 0x00300713
+0x300713	A/AE3d.v	46	insn-word	Lemma D_00c : decode_any (0x00300713%bv : bv 32) = Some (OpImm ALU_ADD 14 0 3, 4%Z).	the word at 0x9d620 (tfib_A_musl_memset + 0xc, memset+0xc) is 0x00300713
+0x300813	A/AB1u.v	165	insn-word	Definition W_11d0f8 : bv 32 := 0x00300813.	the word at 0x9d288 (0x9d288, memcpy+0x78) is 0x00300813
+0x300813	A/AE3c.v	151	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x78)) = Some (0x00300813%bv : bv 32).	the word at 0x9d288 (tfib_A_musl_memcpy + 0x78, memcpy+0x78) is 0x00300813
+0x300813	A/AE3c.v	153	insn-word	Lemma D_078 : decode_any (0x00300813%bv : bv 32) = Some (OpImm ALU_ADD 16 0 3, 4%Z).	the word at 0x9d288 (tfib_A_musl_memcpy + 0x78, memcpy+0x78) is 0x00300813
+0x357793	A/AB1u.v	365	insn-word	Definition W_11d198 : bv 32 := 0x00357793.	the word at 0x9d328 (0x9d328, memcpy+0x118) is 0x00357793
+0x357793	A/AE3c.v	311	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x118)) = Some (0x00357793%bv : bv 32).	the word at 0x9d328 (tfib_A_musl_memcpy + 0x118, memcpy+0x118) is 0x00357793
+0x357793	A/AE3c.v	313	insn-word	Lemma D_118 : decode_any (0x00357793%bv : bv 32) = Some (OpImm ALU_AND 15 10 3, 4%Z).	the word at 0x9d328 (tfib_A_musl_memcpy + 0x118, memcpy+0x118) is 0x00357793
+0x35c883	A/AB1u.v	885	insn-word	Definition W_11d338 : bv 32 := 0x0035c883.	the word at 0x9d4c8 (0x9d4c8, memcpy+0x2b8) is 0x0035c883
+0x35c883	A/AB1u.v	1070	insn-word	Definition W_11d3cc : bv 32 := 0x0035c883.	the word at 0x9d55c (0x9d55c, memcpy+0x34c) is 0x0035c883
+0x35c883	A/AB1u.v	1175	insn-word	Definition W_11d420 : bv 32 := 0x0035c883.	the word at 0x9d5b0 (0x9d5b0, memcpy+0x3a0) is 0x0035c883
+0x35c883	A/AE3c.v	727	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2b8)) = Some (0x0035c883%bv : bv 32).	the word at 0x9d4c8 (tfib_A_musl_memcpy + 0x2b8, memcpy+0x2b8) is 0x0035c883
+0x35c883	A/AE3c.v	729	insn-word	Lemma D_2b8 : decode_any (0x0035c883%bv : bv 32) = Some (Load SZ1 false 17 11 3, 4%Z).	the word at 0x9d4c8 (tfib_A_musl_memcpy + 0x2b8, memcpy+0x2b8) is 0x0035c883
+0x35c883	A/AE3c.v	875	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x34c)) = Some (0x0035c883%bv : bv 32).	the word at 0x9d55c (tfib_A_musl_memcpy + 0x34c, memcpy+0x34c) is 0x0035c883
+0x35c883	A/AE3c.v	877	insn-word	Lemma D_34c : decode_any (0x0035c883%bv : bv 32) = Some (Load SZ1 false 17 11 3, 4%Z).	the word at 0x9d55c (tfib_A_musl_memcpy + 0x34c, memcpy+0x34c) is 0x0035c883
+0x35c883	A/AE3c.v	959	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3a0)) = Some (0x0035c883%bv : bv 32).	the word at 0x9d5b0 (tfib_A_musl_memcpy + 0x3a0, memcpy+0x3a0) is 0x0035c883
+0x35c883	A/AE3c.v	961	insn-word	Lemma D_3a0 : decode_any (0x0035c883%bv : bv 32) = Some (Load SZ1 false 17 11 3, 4%Z).	the word at 0x9d5b0 (tfib_A_musl_memcpy + 0x3a0, memcpy+0x3a0) is 0x0035c883
+0x35f693	A/AB1u.v	15	insn-word	Definition W_11d080 : bv 32 := 0x0035f693.	the word at 0x9d210 (0x9d210, memcpy+0x0) is 0x0035f693
+0x35f693	A/AE3c.v	31	insn-word	: fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x0)) = Some (0x0035f693%bv : bv 32).	the word at 0x9d210 (tfib_A_musl_memcpy + 0x0, memcpy+0x0) is 0x0035f693
+0x35f693	A/AE3c.v	33	insn-word	Lemma D_000 : decode_any (0x0035f693%bv : bv 32) = Some (OpImm ALU_AND 13 11 3, 4%Z).	the word at 0x9d210 (tfib_A_musl_memcpy + 0x0, memcpy+0x0) is 0x0035f693
+0x368693	A/AB1u.v	720	insn-word	Definition W_11d2b4 : bv 32 := 0x00368693.	the word at 0x9d444 (0x9d444, memcpy+0x234) is 0x00368693
+0x368693	A/AE3c.v	595	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x234)) = Some (0x00368693%bv : bv 32).	the word at 0x9d444 (tfib_A_musl_memcpy + 0x234, memcpy+0x234) is 0x00368693
+0x368693	A/AE3c.v	597	insn-word	Lemma D_234 : decode_any (0x00368693%bv : bv 32) = Some (OpImm ALU_ADD 13 13 3, 4%Z).	the word at 0x9d444 (tfib_A_musl_memcpy + 0x234, memcpy+0x234) is 0x00368693
+0x36f693	A/AB1g.v	110	insn-word	Definition W_11d4d0 : bv 32 := 0x0036f693.	the word at 0x9d660 (0x9d660, memset+0x4c) is 0x0036f693
+0x36f693	A/AE3d.v	108	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memset + 0x4c)) = Some (0x0036f693%bv : bv 32).	the word at 0x9d660 (tfib_A_musl_memset + 0x4c, memset+0x4c) is 0x0036f693
+0x36f693	A/AE3d.v	110	insn-word	Lemma D_04c : decode_any (0x0036f693%bv : bv 32) = Some (OpImm ALU_AND 13 13 3, 4%Z).	the word at 0x9d660 (tfib_A_musl_memset + 0x4c, memset+0x4c) is 0x0036f693
+0x36f793	A/AB1u.v	105	insn-word	Definition W_11d0c8 : bv 32 := 0x0036f793.	the word at 0x9d258 (0x9d258, memcpy+0x48) is 0x0036f793
+0x36f793	A/AE3c.v	103	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x48)) = Some (0x0036f793%bv : bv 32).	the word at 0x9d258 (tfib_A_musl_memcpy + 0x48, memcpy+0x48) is 0x0036f793
+0x36f793	A/AE3c.v	105	insn-word	Lemma D_048 : decode_any (0x0036f793%bv : bv 32) = Some (OpImm ALU_AND 15 13 3, 4%Z).	the word at 0x9d258 (tfib_A_musl_memcpy + 0x48, memcpy+0x48) is 0x0036f793
+0x377293	A/AB1u.v	60	insn-word	Definition W_11d0a4 : bv 32 := 0x00377293.	the word at 0x9d234 (0x9d234, memcpy+0x24) is 0x00377293
+0x377293	A/AE3c.v	67	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x24)) = Some (0x00377293%bv : bv 32).	the word at 0x9d234 (tfib_A_musl_memcpy + 0x24, memcpy+0x24) is 0x00377293
+0x377293	A/AE3c.v	69	insn-word	Lemma D_024 : decode_any (0x00377293%bv : bv 32) = Some (OpImm ALU_AND 5 14 3, 4%Z).	the word at 0x9d234 (tfib_A_musl_memcpy + 0x24, memcpy+0x24) is 0x00377293
+0x38e000	A/AD1d.v	35	length-arg	(epg 275, ELit 65536); (epg 274, ELit 4096); RINFO_P; (epg 254, ELit 3727360); (epg 109, ELit 65536); IMG_P; STK_P ].	0x38e000 = AMETA_SIZE with AMETA_SIZE := 3727360 (Reusable/YE00.v)
+0x38e000	A/AD1e.v	133	length-arg	change (d254 E) with (dmm E (mk e254 3727360 KRW)). apply (extra_of (3 + length (musl_maps ch) + 7)%nat); [	0x38e000 = AMETA_SIZE with AMETA_SIZE := 3727360 (Reusable/YE00.v)
+0x38e000	A/AD1e.v	233	length-arg	*   eapply (PG 254%nat 3727360 (wzp (d254 E)) eq_refl H254 ltac:(lia) (EXTRA _ e254_extra));	0x38e000 = AMETA_SIZE with AMETA_SIZE := 3727360 (Reusable/YE00.v)
+0x38e000	A/AD1f.v	203	length-arg	eapply (PG 254%nat 3727360 (wzp (d254 E)) eq_refl ltac:(lia)); [unfold VZ; apply in_app_i	0x38e000 = AMETA_SIZE with AMETA_SIZE := 3727360 (Reusable/YE00.v)
+0x38e000	A/AD1g.v	37	length-arg	mk eP 137439023104 KRW; mk e254 3727360 KRW; mk e109 65536 KRW;	0x38e000 = AMETA_SIZE with AMETA_SIZE := 3727360 (Reusable/YE00.v)
+0x38e000	A/AD1g.v	726	length-arg	Definition dC := dm eC 65536 KRW.    Definition d254 := dm e254 3727360 KRW. Definition d109 := dm e109 65536 KRW.	0x38e000 = AMETA_SIZE with AMETA_SIZE := 3727360 (Reusable/YE00.v)
+0x38e000	A/AD1g.v	768	length-arg	/\ wzp d254 = (u e254, 3727360) /\ wzp d109 = (u e109, 65536).	0x38e000 = AMETA_SIZE with AMETA_SIZE := 3727360 (Reusable/YE00.v)
+0x38e000	A/AD1g.v	913	length-arg	| change (dmm (mk e254 3727360 KRW)) with d254; unfold d254; rewrite u_snd_dm, u_fst_dm by li	0x38e000 = AMETA_SIZE with AMETA_SIZE := 3727360 (Reusable/YE00.v)
+0x38e000	A/AD2k.v	31	length-arg	&& kn_mem (KZero (SA e254 0) (ELit 3727360)) ch	0x38e000 = AMETA_SIZE with AMETA_SIZE := 3727360 (Reusable/YE00.v)
+0x3fffc0	A/AFf9.v	380	witness	[lia|]); first [exists (4194240 + q); lia | exists q'; lia | exists (4194240 + q + q'); lia]).	0x3fffc0 = SHADOW_OFF / 512 with SHADOW_OFF := 2147450880 (Reusable/YG0f.v)
+0x3fffc0	A/AFf9.v	380	witness	try ((apply Z.mod_divide; [lia|]); first [exists (4194240 + q); lia | exists q'; lia | exists (4194240 + q + q'); lia]).	0x3fffc0 = SHADOW_OFF / 512 with SHADOW_OFF := 2147450880 (Reusable/YG0f.v)
+0x3fffff	A/AD1v.v	319	bound	sp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E' 8) <= 4194303 ->	= 2^22 - 1
+0x3fffff	A/AD1v.v	333	bound	sp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E' 8) <= 4194303 ->	= 2^22 - 1
+0x3fffff	A/AD1w.v	166	bound	sp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E' 8) <= 4194303 ->	= 2^22 - 1
+0x3fffff	A/AD1x.v	100	bound	1 <= bv_unsigned (ew E 8) <= 4194303 ->	= 2^22 - 1
+0x3fffff	A/AD27.v	63	mkAF-bound	/\ atom_lookup (f_atoms (ss_facts S_COf)) 8%nat = Some (mkAF 1 4194303 0) /\ forallb drv_win_ok (ss_mem S_CO) = true /\ ss_mem S_CO1	= 2^22 - 1
+0x3fffff	A/AD27.v	78	mkAF-bound	S_checks : atom_lookup (f_atoms (ss_facts S_US)) 8%nat = Some (mkAF 1 4194303 0) /\ ss_mem S_US <> [] /\ regions_wf (ss_mem (ss_main false))	= 2^22 - 1
+0x3fffff	A/AD27.v	79	mkAF-bound	atom_lookup (f_atoms (ss_facts (ss_main false))) 8%nat = Some (mkAF 1 4194303 0).	= 2^22 - 1
+0x3fffff	A/AD27.v	86	mkAF-bound	atom_lookup (f_atoms (ss_facts ss)) 8%nat = Some (mkAF 1 4194303 0) /\	= 2^22 - 1
+0x3fffff	A/AD27.v	264	bound	usp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E 8) <= 4194303 ->	= 2^22 - 1
+0x3fffff	A/AD27.v	312	bound	usp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E 8) <= 4194303 ->	= 2^22 - 1
+0x3fffff	A/AD27.v	356	bound	usp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E 8) <= 4194303 ->	= 2^22 - 1
+0x458593	A/AB1u.v	505	insn-word	Definition W_11d208 : bv 32 := 0x00458593.	the word at 0x9d398 (0x9d398, memcpy+0x188) is 0x00458593
+0x458593	A/AB1u.v	1180	insn-word	Definition W_11d424 : bv 32 := 0x00458593.	the word at 0x9d5b4 (0x9d5b4, memcpy+0x3a4) is 0x00458593
+0x458593	A/AE3c.v	423	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x188)) = Some (0x00458593%bv : bv 32).	the word at 0x9d398 (tfib_A_musl_memcpy + 0x188, memcpy+0x188) is 0x00458593
+0x458593	A/AE3c.v	425	insn-word	Lemma D_188 : decode_any (0x00458593%bv : bv 32) = Some (OpImm ALU_ADD 11 11 4, 4%Z).	the word at 0x9d398 (tfib_A_musl_memcpy + 0x188, memcpy+0x188) is 0x00458593
+0x458593	A/AE3c.v	963	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3a4)) = Some (0x00458593%bv : bv 32).	the word at 0x9d5b4 (tfib_A_musl_memcpy + 0x3a4, memcpy+0x3a4) is 0x00458593
+0x458593	A/AE3c.v	965	insn-word	Lemma D_3a4 : decode_any (0x00458593%bv : bv 32) = Some (OpImm ALU_ADD 11 11 4, 4%Z).	the word at 0x9d5b4 (tfib_A_musl_memcpy + 0x3a4, memcpy+0x3a4) is 0x00458593
+0x459713	A/AB1g.v	115	insn-word	Definition W_11d4d4 : bv 32 := 0x00459713.	the word at 0x9d664 (0x9d664, memset+0x50) is 0x00459713
+0x459713	A/AE3d.v	112	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memset + 0x50)) = Some (0x00459713%bv : bv 32).	the word at 0x9d664 (tfib_A_musl_memset + 0x50, memset+0x50) is 0x00459713
+0x459713	A/AE3d.v	114	insn-word	Lemma D_050 : decode_any (0x00459713%bv : bv 32) = Some (ShiftImm ALU_SLL 14 11 4, 4%Z).	the word at 0x9d664 (tfib_A_musl_memset + 0x50, memset+0x50) is 0x00459713
+0x45a783	A/AB1u.v	465	insn-word	Definition W_11d1e8 : bv 32 := 0x0045a783.	the word at 0x9d378 (0x9d378, memcpy+0x168) is 0x0045a783
+0x45a783	A/AE3c.v	391	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x168)) = Some (0x0045a783%bv : bv 32).	the word at 0x9d378 (tfib_A_musl_memcpy + 0x168, memcpy+0x168) is 0x0045a783
+0x45a783	A/AE3c.v	393	insn-word	Lemma D_168 : decode_any (0x0045a783%bv : bv 32) = Some (Load SZ4 true 15 11 4, 4%Z).	the word at 0x9d378 (tfib_A_musl_memcpy + 0x168, memcpy+0x168) is 0x0045a783
+0x45a803	A/AB1u.v	395	insn-word	Definition W_11d1b0 : bv 32 := 0x0045a803.	the word at 0x9d340 (0x9d340, memcpy+0x130) is 0x0045a803
+0x45a803	A/AE3c.v	335	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x130)) = Some (0x0045a803%bv : bv 32).	the word at 0x9d340 (tfib_A_musl_memcpy + 0x130, memcpy+0x130) is 0x0045a803
+0x45a803	A/AE3c.v	337	insn-word	Lemma D_130 : decode_any (0x0045a803%bv : bv 32) = Some (Load SZ4 true 16 11 4, 4%Z).	the word at 0x9d340 (tfib_A_musl_memcpy + 0x130, memcpy+0x130) is 0x0045a803
+0x45c283	A/AB1u.v	890	insn-word	Definition W_11d33c : bv 32 := 0x0045c283.	the word at 0x9d4cc (0x9d4cc, memcpy+0x2bc) is 0x0045c283
+0x45c283	A/AB1u.v	1075	insn-word	Definition W_11d3d0 : bv 32 := 0x0045c283.	the word at 0x9d560 (0x9d560, memcpy+0x350) is 0x0045c283
+0x45c283	A/AE3c.v	731	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2bc)) = Some (0x0045c283%bv : bv 32).	the word at 0x9d4cc (tfib_A_musl_memcpy + 0x2bc, memcpy+0x2bc) is 0x0045c283
+0x45c283	A/AE3c.v	733	insn-word	Lemma D_2bc : decode_any (0x0045c283%bv : bv 32) = Some (Load SZ1 false 5 11 4, 4%Z).	the word at 0x9d4cc (tfib_A_musl_memcpy + 0x2bc, memcpy+0x2bc) is 0x0045c283
+0x45c283	A/AE3c.v	879	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x350)) = Some (0x0045c283%bv : bv 32).	the word at 0x9d560 (tfib_A_musl_memcpy + 0x350, memcpy+0x350) is 0x0045c283
+0x45c283	A/AE3c.v	881	insn-word	Lemma D_350 : decode_any (0x0045c283%bv : bv 32) = Some (Load SZ1 false 5 11 4, 4%Z).	the word at 0x9d560 (tfib_A_musl_memcpy + 0x350, memcpy+0x350) is 0x0045c283
+0x45f793	A/AB1g.v	215	insn-word	Definition W_11d524 : bv 32 := 0x0045f793.	the word at 0x9d6b4 (0x9d6b4, memset+0xa0) is 0x0045f793
+0x45f793	A/AE3d.v	192	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memset + 0xa0)) = Some (0x0045f793%bv : bv 32).	the word at 0x9d6b4 (tfib_A_musl_memset + 0xa0, memset+0xa0) is 0x0045f793
+0x45f793	A/AE3d.v	194	insn-word	Lemma D_0a0 : decode_any (0x0045f793%bv : bv 32) = Some (OpImm ALU_AND 15 11 4, 4%Z).	the word at 0x9d6b4 (tfib_A_musl_memset + 0xa0, memset+0xa0) is 0x0045f793
+0x461a13	A/AE3e.v	368	insn-word	Lemma F_17c38 : fetch_word tfibsegs (0x99034%bv : word) = Some (0x00461a13%bv : bv 32).	the word at 0x99034 (0x99034, __stdio_write+0x12c) is 0x00461a13
+0x461a13	A/AE3e.v	370	insn-word	Lemma D_17c38 : decode_any (0x00461a13%bv : bv 32) = Some (ShiftImm ALU_SLL 20 12 4, 4%Z).	the word at 0x99034 (0x99034, __stdio_write+0x12c) is 0x00461a13
+0x467713	A/AB1u.v	145	insn-word	Definition W_11d0e8 : bv 32 := 0x00467713.	the word at 0x9d278 (0x9d278, memcpy+0x68) is 0x00467713
+0x467713	A/AB1u.v	490	insn-word	Definition W_11d1fc : bv 32 := 0x00467713.	the word at 0x9d38c (0x9d38c, memcpy+0x17c) is 0x00467713
+0x467713	A/AB1u.v	1150	insn-word	Definition W_11d40c : bv 32 := 0x00467713.	the word at 0x9d59c (0x9d59c, memcpy+0x38c) is 0x00467713
+0x467713	A/AE3c.v	135	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x68)) = Some (0x00467713%bv : bv 32).	the word at 0x9d278 (tfib_A_musl_memcpy + 0x68, memcpy+0x68) is 0x00467713
+0x467713	A/AE3c.v	137	insn-word	Lemma D_068 : decode_any (0x00467713%bv : bv 32) = Some (OpImm ALU_AND 14 12 4, 4%Z).	the word at 0x9d278 (tfib_A_musl_memcpy + 0x68, memcpy+0x68) is 0x00467713
+0x467713	A/AE3c.v	411	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x17c)) = Some (0x00467713%bv : bv 32).	the word at 0x9d38c (tfib_A_musl_memcpy + 0x17c, memcpy+0x17c) is 0x00467713
+0x467713	A/AE3c.v	413	insn-word	Lemma D_17c : decode_any (0x00467713%bv : bv 32) = Some (OpImm ALU_AND 14 12 4, 4%Z).	the word at 0x9d38c (tfib_A_musl_memcpy + 0x17c, memcpy+0x17c) is 0x00467713
+0x467713	A/AE3c.v	939	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x38c)) = Some (0x00467713%bv : bv 32).	the word at 0x9d59c (tfib_A_musl_memcpy + 0x38c, memcpy+0x38c) is 0x00467713
+0x467713	A/AE3c.v	941	insn-word	Lemma D_38c : decode_any (0x00467713%bv : bv 32) = Some (OpImm ALU_AND 14 12 4, 4%Z).	the word at 0x9d59c (tfib_A_musl_memcpy + 0x38c, memcpy+0x38c) is 0x00467713
+0x468293	A/AB1u.v	1185	insn-word	Definition W_11d428 : bv 32 := 0x00468293.	the word at 0x9d5b8 (0x9d5b8, memcpy+0x3a8) is 0x00468293
+0x468293	A/AE3c.v	967	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3a8)) = Some (0x00468293%bv : bv 32).	the word at 0x9d5b8 (tfib_A_musl_memcpy + 0x3a8, memcpy+0x3a8) is 0x00468293
+0x468293	A/AE3c.v	969	insn-word	Lemma D_3a8 : decode_any (0x00468293%bv : bv 32) = Some (OpImm ALU_ADD 5 13 4, 4%Z).	the word at 0x9d5b8 (tfib_A_musl_memcpy + 0x3a8, memcpy+0x3a8) is 0x00468293
+0x468693	A/AB1r.v	24	insn-word	Definition W_52d30 : bv 32 := 0x00468693.	the word at 0x37174 (0x37174, _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE16GetFromAllocatorEPNS_14AllocatorStatsEmPjm+0x17c) is 0x00468693
+0x468693	A/AB1u.v	515	insn-word	Definition W_11d210 : bv 32 := 0x00468693.	the word at 0x9d3a0 (0x9d3a0, memcpy+0x190) is 0x00468693
+0x468693	A/AE3c.v	431	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x190)) = Some (0x00468693%bv : bv 32).	the word at 0x9d3a0 (tfib_A_musl_memcpy + 0x190, memcpy+0x190) is 0x00468693
+0x468693	A/AE3c.v	433	insn-word	Lemma D_190 : decode_any (0x00468693%bv : bv 32) = Some (OpImm ALU_ADD 13 13 4, 4%Z).	the word at 0x9d3a0 (tfib_A_musl_memcpy + 0x190, memcpy+0x190) is 0x00468693
+0x4a0a13	A/AB1r.v	29	insn-word	Definition W_52d34 : bv 32 := 0x004a0a13.	the word at 0x37178 (0x37178, _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE16GetFromAllocatorEPNS_14AllocatorStatsEmPjm+0x180) is 0x004a0a13
+0x4b0b13	A/AB1s.v	19	insn-word	Definition W_509d8 : bv 32 := 0x004b0b13.	the word at 0x34e1c (0x34e1c, _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE17ReturnToAllocatorEPNS_12MemoryMapperIS5_EEPNS_14AllocatorStatsEmPKjm+0x180) is 0x004b0b13
+0x4c8c93	A/AB1s.v	29	insn-word	Definition W_509e0 : bv 32 := 0x004c8c93.	the word at 0x34e24 (0x34e24, _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE17ReturnToAllocatorEPNS_12MemoryMapperIS5_EEPNS_14AllocatorStatsEmPKjm+0x188) is 0x004c8c93
+0x53e2b3	A/AB1u.v	285	insn-word	Definition W_11d158 : bv 32 := 0x0053e2b3.	the word at 0x9d2e8 (0x9d2e8, memcpy+0xd8) is 0x0053e2b3
+0x53e2b3	A/AB1u.v	615	insn-word	Definition W_11d260 : bv 32 := 0x0053e2b3.	the word at 0x9d3f0 (0x9d3f0, memcpy+0x1e0) is 0x0053e2b3
+0x53e2b3	A/AB1u.v	800	insn-word	Definition W_11d2f4 : bv 32 := 0x0053e2b3.	the word at 0x9d484 (0x9d484, memcpy+0x274) is 0x0053e2b3
+0x53e2b3	A/AE3c.v	247	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0xd8)) = Some (0x0053e2b3%bv : bv 32).	the word at 0x9d2e8 (tfib_A_musl_memcpy + 0xd8, memcpy+0xd8) is 0x0053e2b3
+0x53e2b3	A/AE3c.v	249	insn-word	Lemma D_0d8 : decode_any (0x0053e2b3%bv : bv 32) = Some (Op ALU_OR 5 7 5, 4%Z).	the word at 0x9d2e8 (tfib_A_musl_memcpy + 0xd8, memcpy+0xd8) is 0x0053e2b3
+0x53e2b3	A/AE3c.v	511	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x1e0)) = Some (0x0053e2b3%bv : bv 32).	the word at 0x9d3f0 (tfib_A_musl_memcpy + 0x1e0, memcpy+0x1e0) is 0x0053e2b3
+0x53e2b3	A/AE3c.v	513	insn-word	Lemma D_1e0 : decode_any (0x0053e2b3%bv : bv 32) = Some (Op ALU_OR 5 7 5, 4%Z).	the word at 0x9d3f0 (tfib_A_musl_memcpy + 0x1e0, memcpy+0x1e0) is 0x0053e2b3
+0x53e2b3	A/AE3c.v	659	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x274)) = Some (0x0053e2b3%bv : bv 32).	the word at 0x9d484 (tfib_A_musl_memcpy + 0x274, memcpy+0x274) is 0x0053e2b3
+0x53e2b3	A/AE3c.v	661	insn-word	Lemma D_274 : decode_any (0x0053e2b3%bv : bv 32) = Some (Op ALU_OR 5 7 5, 4%Z).	the word at 0x9d484 (tfib_A_musl_memcpy + 0x274, memcpy+0x274) is 0x0053e2b3
+0x55c303	A/AB1u.v	895	insn-word	Definition W_11d340 : bv 32 := 0x0055c303.	the word at 0x9d4d0 (0x9d4d0, memcpy+0x2c0) is 0x0055c303
+0x55c303	A/AB1u.v	1080	insn-word	Definition W_11d3d4 : bv 32 := 0x0055c303.	the word at 0x9d564 (0x9d564, memcpy+0x354) is 0x0055c303
+0x55c303	A/AE3c.v	735	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2c0)) = Some (0x0055c303%bv : bv 32).	the word at 0x9d4d0 (tfib_A_musl_memcpy + 0x2c0, memcpy+0x2c0) is 0x0055c303
+0x55c303	A/AE3c.v	737	insn-word	Lemma D_2c0 : decode_any (0x0055c303%bv : bv 32) = Some (Load SZ1 false 6 11 5, 4%Z).	the word at 0x9d4d0 (tfib_A_musl_memcpy + 0x2c0, memcpy+0x2c0) is 0x0055c303
+0x55c303	A/AE3c.v	883	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x354)) = Some (0x0055c303%bv : bv 32).	the word at 0x9d564 (tfib_A_musl_memcpy + 0x354, memcpy+0x354) is 0x0055c303
+0x55c303	A/AE3c.v	885	insn-word	Lemma D_354 : decode_any (0x0055c303%bv : bv 32) = Some (Load SZ1 false 6 11 5, 4%Z).	the word at 0x9d564 (tfib_A_musl_memcpy + 0x354, memcpy+0x354) is 0x0055c303
+0x568223	A/AB1u.v	950	insn-word	Definition W_11d36c : bv 32 := 0x00568223.	the word at 0x9d4fc (0x9d4fc, memcpy+0x2ec) is 0x00568223
+0x568223	A/AB1u.v	1125	insn-word	Definition W_11d3f8 : bv 32 := 0x00568223.	the word at 0x9d588 (0x9d588, memcpy+0x378) is 0x00568223
+0x568223	A/AE3c.v	779	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2ec)) = Some (0x00568223%bv : bv 32).	the word at 0x9d4fc (tfib_A_musl_memcpy + 0x2ec, memcpy+0x2ec) is 0x00568223
+0x568223	A/AE3c.v	781	insn-word	Lemma D_2ec : decode_any (0x00568223%bv : bv 32) = Some (Store SZ1 13 5 4, 4%Z).	the word at 0x9d4fc (tfib_A_musl_memcpy + 0x2ec, memcpy+0x2ec) is 0x00568223
+0x568223	A/AE3c.v	919	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x378)) = Some (0x00568223%bv : bv 32).	the word at 0x9d588 (tfib_A_musl_memcpy + 0x378, memcpy+0x378) is 0x00568223
+0x568223	A/AE3c.v	921	insn-word	Lemma D_378 : decode_any (0x00568223%bv : bv 32) = Some (Store SZ1 13 5 4, 4%Z).	the word at 0x9d588 (tfib_A_musl_memcpy + 0x378, memcpy+0x378) is 0x00568223
+0x568623	A/AB1u.v	1020	insn-word	Definition W_11d3a4 : bv 32 := 0x00568623.	the word at 0x9d534 (0x9d534, memcpy+0x324) is 0x00568623
+0x568623	A/AE3c.v	835	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x324)) = Some (0x00568623%bv : bv 32).	the word at 0x9d534 (tfib_A_musl_memcpy + 0x324, memcpy+0x324) is 0x00568623
+0x568623	A/AE3c.v	837	insn-word	Lemma D_324 : decode_any (0x00568623%bv : bv 32) = Some (Store SZ1 13 5 12, 4%Z).	the word at 0x9d534 (tfib_A_musl_memcpy + 0x324, memcpy+0x324) is 0x00568623
+0x56a423	A/AB1u.v	315	insn-word	Definition W_11d170 : bv 32 := 0x0056a423.	the word at 0x9d300 (0x9d300, memcpy+0xf0) is 0x0056a423
+0x56a423	A/AB1u.v	645	insn-word	Definition W_11d278 : bv 32 := 0x0056a423.	the word at 0x9d408 (0x9d408, memcpy+0x1f8) is 0x0056a423
+0x56a423	A/AB1u.v	830	insn-word	Definition W_11d30c : bv 32 := 0x0056a423.	the word at 0x9d49c (0x9d49c, memcpy+0x28c) is 0x0056a423
+0x56a423	A/AE3c.v	271	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0xf0)) = Some (0x0056a423%bv : bv 32).	the word at 0x9d300 (tfib_A_musl_memcpy + 0xf0, memcpy+0xf0) is 0x0056a423
+0x56a423	A/AE3c.v	273	insn-word	Lemma D_0f0 : decode_any (0x0056a423%bv : bv 32) = Some (Store SZ4 13 5 8, 4%Z).	the word at 0x9d300 (tfib_A_musl_memcpy + 0xf0, memcpy+0xf0) is 0x0056a423
+0x56a423	A/AE3c.v	535	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x1f8)) = Some (0x0056a423%bv : bv 32).	the word at 0x9d408 (tfib_A_musl_memcpy + 0x1f8, memcpy+0x1f8) is 0x0056a423
+0x56a423	A/AE3c.v	537	insn-word	Lemma D_1f8 : decode_any (0x0056a423%bv : bv 32) = Some (Store SZ4 13 5 8, 4%Z).	the word at 0x9d408 (tfib_A_musl_memcpy + 0x1f8, memcpy+0x1f8) is 0x0056a423
+0x56a423	A/AE3c.v	683	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x28c)) = Some (0x0056a423%bv : bv 32).	the word at 0x9d49c (tfib_A_musl_memcpy + 0x28c, memcpy+0x28c) is 0x0056a423
+0x56a423	A/AE3c.v	685	insn-word	Lemma D_28c : decode_any (0x0056a423%bv : bv 32) = Some (Store SZ4 13 5 8, 4%Z).	the word at 0x9d49c (tfib_A_musl_memcpy + 0x28c, memcpy+0x28c) is 0x0056a423
+0x56a623	A/AB1u.v	435	insn-word	Definition W_11d1d0 : bv 32 := 0x0056a623.	the word at 0x9d360 (0x9d360, memcpy+0x150) is 0x0056a623
+0x56a623	A/AE3c.v	367	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x150)) = Some (0x0056a623%bv : bv 32).	the word at 0x9d360 (tfib_A_musl_memcpy + 0x150, memcpy+0x150) is 0x0056a623
+0x56a623	A/AE3c.v	369	insn-word	Lemma D_150 : decode_any (0x0056a623%bv : bv 32) = Some (Store SZ4 13 5 12, 4%Z).	the word at 0x9d360 (tfib_A_musl_memcpy + 0x150, memcpy+0x150) is 0x0056a623

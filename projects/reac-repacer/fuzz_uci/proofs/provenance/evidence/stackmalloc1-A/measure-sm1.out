@@ -1,0 +1,2 @@
+donor fuzz_grant.asan: last PT_LOAD end 0x5f93b0, IMG_TOP 0x5fa000 = 6266880, IMG_TOP / 8 = 783360, kLowShadowBeg + IMG_TOP / 8 = 2148230144 (0x800b6400); the donor bound 2148213760 (0x800b2400) <= it: holds
+target fuzz_uci.asan: last PT_LOAD end 0x5f3870, IMG_TOP 0x5f4000 = 6242304, IMG_TOP / 8 = 780288, kLowShadowBeg + IMG_TOP / 8 = 2148227072 (0x800b5800); the donor bound 2148213760 (0x800b2400) <= it: holds

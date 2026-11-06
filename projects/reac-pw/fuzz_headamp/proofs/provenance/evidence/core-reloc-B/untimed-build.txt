@@ -1,0 +1,18 @@
+# untimed build of image B's core (20:14Z): a scratch clone at the pushed sha 635d3958aeb0 with ONLY the
+# `timeout 30` token deleted at both shok_auto_with sites (lib/AU/YCeg.v:302, lib/AU/YCeh.v:317; the arms T and F kept); nothing pushed from it
+build: own copy of cb3-27c990b77310.sh with MEM=200g -> MEM=440g (sha256 5a733674d15b27db210e14caaca478a8b232c1c5d3d4b5dd2ca5764c43e0510e;
+  `diff cb3-27c990b77310.sh <copy>` shows one line only, 249: MEM=200g -> MEM=440g), the lane's build VM,
+  fresh workspace from base 25e3d17bdb5 (ows.sh prep; it held 0 .vo / .vok / .vos / .glob under proofs, so every target compiled: CACHE=none in effect), 32 jobs,
+  targets = the 386 lib/AU files of the core + B0's ten (YF0m YB1m YD2i YD1k YE3i waiting files included)
+result: rc=0, wall 1982 s, 396 of 396 targets compiled, 0 errors; pins 4 PINNED; sync check clean
+  log build-20261030T202228Z.log (sha256 b67d3fd1c668)
+  files compiled (tools registry rule 5f66c855348, 23:14Z): 643 of 643 - the log has 643 distinct `ROCQ compile` lines, all under the unit;
+  the workspace held 0 .vo / .vok / .vos / .glob under proofs at the start, so 643 is the 396 targets' whole Require closure.
+memory: per-file peak (coqc maxrss in the log) 8.72 GiB (YFet), YCeg 0.58 / YCeh 0.58 GiB;
+  VM used memory sampled every 20 s (free -g, 91 samples 20:22:15 .. 20:55:40, whole VM incl. other lanes): 128 .. 204 GiB, peak 204 GiB at 20:27:29Z
+  (the docker-stats column found no container named for the clone, so the per-file maxrss is the build's own measure)
+  as measured (21:23Z): per-file maxrss max 8.72 GiB (YFet); the container peak was NOT recorded, and the host samples
+  above mix A's untimed build, B and other lanes, so they are not B's own figure
+failing calls: none. `shok_auto: FALLBACK` markers: 0 in this build and 0 in the build of record: no proof of the core runs shok_auto / reshok_bx / reshok
+  (they are Ltac definitions in YCeg, YCeh, YCep, AWalkFw1 only; their callers are the image-B walk files outside this core)
+per-file times against the build of record (build-20261030T193402Z.log, same VM, shared): largest increase YFet 1104 -> 1240 s

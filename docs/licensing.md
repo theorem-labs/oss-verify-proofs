@@ -40,8 +40,8 @@ Apache-2.0 OR MIT:
   These three files are copies, byte for byte, of the ones that came with the
   proofs.
 - The build record of each such proof,
-  `proofs/<project>/<harness>/provenance/PROVENANCE.md`, names these three files
-  as the licence texts of its Anthropic-licensed files.
+  `projects/<project>/<harness>/proofs/provenance/PROVENANCE.md`, names these
+  three files as the licence texts of its Anthropic-licensed files.
 
 ## Harness copies and binaries
 

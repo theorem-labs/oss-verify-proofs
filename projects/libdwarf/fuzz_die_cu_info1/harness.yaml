@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_die_cu_info1
-rocq: OssFuzzTheorems.libdwarf.fuzz_die_cu_info1
+rocq: OSSVerify.libdwarf.fuzz_die_cu_info1
 origin: upstream
 summary: 'fuzz_die_cu with is_info=1: dwarf_next_cu_header_d then dwarf_siblingof_b.'
 entry: LLVMFuzzerTestOneInput

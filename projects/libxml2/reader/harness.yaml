@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libxml2
 harness: reader
-rocq: OssFuzzTheorems.libxml2.reader
+rocq: OSSVerify.libxml2.reader
 origin: upstream
 summary: 'Checks one property, an API contract: After a fuzzed program of up to 1000 xmlTextReader API
   calls (57 opcodes), the reader''s last error is XML_ERR_NO_MEMORY iff an injected allocation failed

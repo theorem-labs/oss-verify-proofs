@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: simdutf
 harness: base64
-rocq: OssFuzzTheorems.simdutf.base64
+rocq: OSSVerify.simdutf.base64
 origin: upstream
 summary: 'Checks 7 properties (listed below); the first, an API contract: base64_length_from_binary(n,
   option) must equal the number of characters binary_to_base64 actually writes.'

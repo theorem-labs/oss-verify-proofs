@@ -1,0 +1,8 @@
+# A = images/fuzz_transport.asan sha256 86efc3a80314
+# G = images/fuzz_grant.asan sha256 57c26f993615
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes/NAME-ONLY acceptances	C-string acceptances (also one CSTR row each)	differing targets printed (in target-differ, this row)	words-only
+__asan_set_shadow_00	A:G	0x55270	0x546bc	24	24	EQUAL-mod-pcrel	2	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+__asan_set_shadow_f5	A:G	0x55378	0x547c4	24	24	EQUAL-mod-pcrel	2	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+__asan_set_shadow_f8	A:G	0x55390	0x547dc	24	24	EQUAL-mod-pcrel	2	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+memset	A:G	0x9d614	0x95e30	248	248	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL

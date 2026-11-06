@@ -1,0 +1,56 @@
+# cb builds of the image-A walk of diginet_frame_build in the G form (S11 step 3). Written in the clone
+# a second S11 clone (at 82e4b765810: base a4816a31e86d merged) by the S11 lane's subagent, then copied byte for byte
+# into this branch and built again here (the eight targets restored from the dune cache, the audit compiled).
+# Per log: its sha256, then its count, pin, target and timing lines.
+
+## build-20261031T070904Z.log sha256 56b428d2dbda1f701810c0c43dc35c0bfc8d52187054f54bc60d86ff3bb86bcc: first seg files (subagent clone)
+cb-cache: mode=dune source=default dir=<the VM's dune cache> targets=3 compiled=3 from_cache=0 missing=0 failed=0 inconsistent=0
+cb: pins of libdiginet/fuzz_transport: each file of the workspace's projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts f6acfcb0c1b8 (facts of base f6acfcb0c1, BASE.tsv)
+cb: pins libdiginet/fuzz_transport at facts f6acfcb0c1b8: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts f6acfcb0c1b8
+cb-dune: vo check: 43 .vo read, 177 Require digests compared with this build's .vo, 243 with the checker image's .vo (22 of its libraries read under the checker image's COQLIB), 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable), 0.0 s
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_h1.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_h2a.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_h2b.vo compiled
+cb: dune: 3 targets: 3 compiled, 0 restored from the cache, 0 missing; 0 failed compiles; 0 more compiled (dependencies outside the targets); 0 inconsistent .vo (vo check)
+rc=0 wall=29
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_h1.vo (real: 8.97, user: 8.66, sys: 0.31, mem: 677552 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_h2a.vo (real: 10.85, user: 10.54, sys: 0.31, mem: 702756 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_h2b.vo (real: 25.04, user: 24.64, sys: 0.39, mem: 873140 ko)
+
+## build-20261031T072056Z.log sha256 2fc9002d49d966f0547289380d86175ad73263b5b64be4853cca4d92a8ae9e6e: seg files (subagent clone)
+cb-cache: mode=dune source=default dir=<the VM's dune cache> targets=2 compiled=1 from_cache=1 missing=0 failed=0 inconsistent=0
+cb: pins of libdiginet/fuzz_transport: each file of the workspace's projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts f6acfcb0c1b8 (facts of base f6acfcb0c1, BASE.tsv)
+cb: pins libdiginet/fuzz_transport at facts f6acfcb0c1b8: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts f6acfcb0c1b8
+cb-dune: vo check: 43 .vo read, 159 Require digests compared with this build's .vo, 244 with the checker image's .vo (22 of its libraries read under the checker image's COQLIB), 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable), 0.0 s
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_a.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_loop.vo restored from the cache
+cb: dune: 2 targets: 1 compiled, 1 restored from the cache, 0 missing; 0 failed compiles; 0 more compiled (dependencies outside the targets); 0 inconsistent .vo (vo check)
+rc=0 wall=37
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_a.vo (real: 32.87, user: 32.38, sys: 0.50, mem: 1040992 ko)
+
+## build-20261031T075959Z.log sha256 2ea775b0bdf7fbfe8cdd591951eb09e58a6fdcf0c3f42610bb3390cf6b579ced: diginet_frame_build_walk (subagent clone)
+cb-cache: mode=dune source=default dir=<the VM's dune cache> targets=1 compiled=1 from_cache=0 missing=0 failed=0 inconsistent=0
+cb: pins of libdiginet/fuzz_transport: each file of the workspace's projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts f6acfcb0c1b8 (facts of base f6acfcb0c1, BASE.tsv)
+cb: pins libdiginet/fuzz_transport at facts f6acfcb0c1b8: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts f6acfcb0c1b8
+cb-dune: vo check: 214 .vo read, 1777 Require digests compared with this build's .vo, 1151 with the checker image's .vo (36 of its libraries read under the checker image's COQLIB), 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable), 0.0 s
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_walk.vo compiled
+cb: dune: 1 targets: 1 compiled, 0 restored from the cache, 0 missing; 0 failed compiles; 0 more compiled (dependencies outside the targets); 0 inconsistent .vo (vo check)
+rc=0 wall=36
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_walk.vo (real: 31.82, user: 31.39, sys: 0.42, mem: 1010260 ko)
+
+## build-20261031T080231Z.log sha256 258c56dc71f5d02b317804d2736ff8cd73336c45ef007ac2ecb25540d6104bfd: the eight frame_build targets and the Print Assumptions audit, this clone at 6e40b252666 + the eight files
+cb-cache: mode=dune source=default dir=<the VM's dune cache> targets=9 compiled=1 from_cache=8 missing=0 failed=0 inconsistent=0
+cb: pins of libdiginet/fuzz_transport: each file of the workspace's projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts f6acfcb0c1b8 (facts of base f6acfcb0c1, BASE.tsv)
+cb: pins libdiginet/fuzz_transport at facts f6acfcb0c1b8: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts f6acfcb0c1b8
+cb-dune: vo check: 215 .vo read, 1778 Require digests compared with this build's .vo, 1152 with the checker image's .vo (36 of its libraries read under the checker image's COQLIB), 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable), 0.0 s
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_walk.vo restored from the cache
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_iface.vo restored from the cache
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_kit.vo restored from the cache
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_a.vo restored from the cache
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_h1.vo restored from the cache
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_h2a.vo restored from the cache
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_h2b.vo restored from the cache
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_build_seg_loop.vo restored from the cache
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/ZzS11AuditC.vo compiled
+cb: dune: 9 targets: 1 compiled, 8 restored from the cache, 0 missing; 0 failed compiles; 0 more compiled (dependencies outside the targets); 0 inconsistent .vo (vo check)
+rc=0 wall=12

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: haproxy
 harness: fuzz_cfg_parser
-rocq: OssFuzzTheorems.haproxy.fuzz_cfg_parser
+rocq: OSSVerify.haproxy.fuzz_cfg_parser
 origin: oss-fuzz
 summary: One-time trash-buffer init, then parse_cfg() on the fuzzed bytes as a whole configuration file
   (inputs < 50 bytes skipped); the parse result and resulting global state are not inspected.

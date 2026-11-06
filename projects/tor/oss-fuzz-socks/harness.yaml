@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tor
 harness: oss-fuzz-socks
-rocq: OssFuzzTheorems.tor.oss_fuzz_socks
+rocq: OSSVerify.tor.oss_fuzz_socks
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: fuzz_main

@@ -1,0 +1,36 @@
+Controls of the adapted scripts: each one run in image-A mode on the image-A core's own inputs reproduces the image-A core's output.
+Inputs by role: A-GRANT / A-KNOCK = the image-A pair the image-A core's classification compares (its relocated grant text and its relocated knock text of image A, from its working copies
+as of 23:1xZ, 110 consumer files; the hunk count of every file equals that of 4483a8de6e6f consumer-classes.tsv), the
+image-A tree of record = 4483a8de6e6f lib/A, the grant text before the rules = 655d9c3e47c lib/A.
+
+1. depot_classify.py --consumer proofs/reac-repacer/fuzz_wire/lib/A/ knock-relocated:A/ A-GRANT A-KNOCK <empty dir> FILE...
+   (the adapted copy, no --sub), on the 92 files of cc592f53d4ff's table and its pair (the image-A core's review-src): its rows are
+   byte-identical to cc592f53d4ff evidence/depot/consumer-classes.tsv (3162 of 3162 lines).
+2. depot_apply.py --consumer A-GRANT A-KNOCK 4483a8de6e6f:consumer-classes.tsv OUT --imgtop-unfold with the 1193 --take
+   rows of 4483a8de6e6f:takes.tsv (hunk > 0), its 8 MERGE rows, the 4 rows of a-merges.tsv and the 18 merges
+   AWalkFw0=AB1v of the image-A core's rule; then, as the image-A core lays them, ad1g_guard.py on A/AD1g.v, tail_generalize.py, d1w_close.py,
+   zify_flag.py on the 18 E6 files and zify_flag.py --e7 on the 13 E7 files (zify_flag_sets.py over its flag-before-r26.tsv and
+   flag-baseline-655d9c-unstubbed.tsv; the E6 / E7 files outside the consumers start from 655d9c3e47c lib/A): 125 of the
+   126 files are byte-identical to 4483a8de6e6f lib/A; A/AB1w.v differs by design (the image-A core keeps its committed AB1w and
+   adds its three rows by ab1w_rows.py). On cc592f53d4ff the same run (888 takes, 22 merges) reproduced the image-A core's round-22
+   depot_apply output, log and depot.patch byte for byte.
+3. closure_awalk.py (adapted: code only) on the 10 closure files of the image-A core's knock run k12: 11 Require lines changed, the
+   files are byte-identical to the output of the image-A core's closure_awalk.py on the same files. On image B the code-only
+   reading matters: YD3a.v:13 and YD3b.v:16 are comment lines that name AWalkFw0 next to `Require-Exports`; the image-A core's script
+   rewrote them, the adapted one leaves them.
+4. mk_glue_ad3d.py (adapted) on knock's lib/A/AF0r.v (no --image): byte-identical to cc592f53d4ff lib/A/AD3dEnv.v; with
+   --image B on knock's lib/AU/YF0r.v the lemma lines 313-319 equal lines 312-318 of lib/A/AF0r.v, and lib/B/YD3dEnv.v is
+   byte-identical to lib/A/AD3dEnv.v (its Requires name the unit's lib.Reusable, as on A).
+5. leak_gate.py on the image-A core's round-22 A output (91 files, AB1w.v left out): LINEAGE hits 2, both AFk0.v (lines 1529, 1617:
+   8192); on image B (round 22 inputs) the same two pieces in YFk0.v.
+6. derive_overrides_knockB.py --czone 0x80050000 (by symbol) writes the same 14 rows for the 102 files of the round-22
+   run from step 1's stage/ and, with --files, from the normalised donor lib (same line numbers); step 2's relocation
+   with them (run/reloc-summary.txt): 14 hand values applied, required.tsv empty, files with refused markers 0. (13 rows
+   before the YD3j window end became page_up(common_flags_dont_use + 0x105): its rule now covers the statement's copy,
+   donor line 435, as well.)
+7. mk_yd3d_patch.py on step 1's stage-out B/YD3d.v: one line, no context (as the image-A core's ad3d-env.patch); port_core applies it
+   (patches applied 1, failed 0); in step 2's relocation the stage-out of the 88 step-1 files is byte-identical to step 1's
+   but for B/YD3d.v line 226 (YF0r -> YD3dEnv) and the 13 lines of the 14 override rows (YD3b's two rows share a line).
+Not measured on image B: the E6 / E7 flag values (the image-A core's flag_probe.py compiles probes against a built tree). The B files
+take the twins of the A sets; loadorder.py, the image-A core's static illustration, does not reproduce the measured A values
+(e.g. AFk5: last loaded redefiner YFk4 false, measured true), so it is no substitute.

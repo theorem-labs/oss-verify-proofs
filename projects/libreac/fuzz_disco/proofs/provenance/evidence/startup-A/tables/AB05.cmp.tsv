@@ -1,0 +1,4 @@
+# AB05.v (sha256 dce04c0a83dacf1ef3efc33dffeef782a2144578aa865a52d76445fd1385ad6b) vs shipped AB05.v (sha256 57d415032ab59460f5b9c40af68918000d5be1f2110996df3306008a659f2e5d): 2 differing hunk(s)
+hunk	out_lines	shipped_lines	out_sha256	shipped_sha256	numerals_only_in_out	numerals_only_in_shipped
+1	4-4	4-5	4dffec9a83945a06	14209070f11c5b8a	-	2026
+2	7-9	8-10	229322714d1d3f66	ab85d2220da3c324	-	-

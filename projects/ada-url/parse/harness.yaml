@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ada-url
 harness: parse
-rocq: OssFuzzTheorems.ada_url.parse
+rocq: OSSVerify.ada_url.parse
 origin: upstream
 summary: 'Checks 8 properties (listed below); the first, a differential check: For valid-UTF-8 input,
   parse<url> and parse<url_aggregator> agree on success (also for base-relative parses, where hrefs must

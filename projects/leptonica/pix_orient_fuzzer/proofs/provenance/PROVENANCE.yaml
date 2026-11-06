@@ -1,0 +1,413 @@
+schema: oss-verify-proofs build record v1
+entry_point:
+  project: leptonica
+  harness: pix_orient_fuzzer
+  function: LLVMFuzzerTestOneInput
+  records:
+  - projects/leptonica/project.yaml
+  - projects/leptonica/pix_orient_fuzzer/harness.yaml
+release:
+  repository: https://github.com/theorem-labs/oss-verify-proofs
+  binaries_release: v2026.10.0
+  sources_release: v2026.10.0-src
+upstream:
+  name: leptonica
+  repository: https://github.com/DanBloomberg/leptonica
+  commit: 10bdea2f19240ffe8c931701b0b7340f41c6b256
+  licence: BSD-2-Clause AND Leptonica AND Graphics-Gems
+  licence_evidence: the licence components below
+  licence_in_release_records: NOASSERTION
+oss_fuzz:
+  repository: https://github.com/google/oss-fuzz
+  commit: bd2ce21991a94a362b92fb1bf25f86d5a1a60842
+  path: projects/leptonica
+harness:
+  origin: upstream
+  source:
+    files:
+    - source/pix_orient_fuzzer.cc
+    from:
+      repository: https://github.com/DanBloomberg/leptonica
+      commit: 10bdea2f19240ffe8c931701b0b7340f41c6b256
+      path: prog/fuzzing/pix_orient_fuzzer.cc
+    modified: false
+    licence: BSD-2-Clause
+    licence_evidence: prog/fuzzing/pix_orient_fuzzer.cc has no licence header, nor has prog/fuzzing/leptfuzz.h:1-16,
+      which it includes; the repository's leptonica-license.txt:1-25 (BSD 2-clause) [inferred]
+    licence_in_release_records: NOASSERTION
+  modifications:
+  - Linked against leptonica at commit 10bdea2f.
+  - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends
+    only on its input.
+  - A small driver reads the input file, calls the harness one to four times and prints each return value.
+recipe:
+  asset:
+    release: v2026.10.0-src
+    file: recipe.tar.zst
+    bytes: 938459
+    sha256: 0339bf3221b15cd39513d46abe99062bac9cce874ed7ba5947753f75b6219ae5
+  target: leptonica-pix_orient_fuzzer
+  overlay: null
+  files: 'recipe/ (recipe/MANIFEST.tsv: every file with its sha256 in recipe.tar.zst; rows of kind upstream are
+    laid down from the -src asset; recipe/UPSTREAM-CARRIED.tsv gives the origin and licence of upstream text in
+    files of kind ours+upstream)'
+  patches: []
+  build_system: cmake
+  how_to_rebuild: 'as docs/reproducing.md: with recipe/ as /work, unpack the project''s -src asset where its MANIFEST
+    says, apply recipe/series.tsv in order, and run recipe/tools/build-body.sh in the builder image, with the environment
+    of recipe/tools/build-env.tsv and the network off'
+toolchain:
+  clang: 20.1.8
+  builder_image: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  images:
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:c7c5abdc2676e121ca7532b553a83148b384001a553b6ffea63b1911848fd711
+  static_asan:
+    repository: https://github.com/theorem-labs/static-asan
+    commit: b05061352064fa2be1813ac5429149f3de5f057d
+    note: 'the published source of the compiler image''s static AddressSanitizer: its toolchain/ and patches/ are
+      those the image was built from, with comments and patch descriptions edited for publication (toolchain-src.tar.zst
+      holds this commit). Building it gives the image''s libclang_rt.builtins.a and musl libc.a byte for byte; its
+      libclang_rt.asan.a and asan_cxx.a differ from the image''s only in DWARF line tables, which --strip-all removes
+      from the binaries'
+    image_runtime_md5:
+      libclang_rt.asan.a: 91ba024da5ddacd96dc1c7588e5763b3
+      libclang_rt.asan_cxx.a: 2c6e776abd494934481b3f47ff030052
+      libclang_rt.builtins.a: 1f3d379aa7d4de2dcf11254b8f493a29
+      libc.a: 485eb64c0b7397bfea554a9cdf8e352c
+binaries:
+- build: plain
+  file: pix_orient_fuzzer.plain
+  bytes: 1052480
+  sha256: 239201d11211e77a1c1c4a7324c0121efb4b2e49501e5fb7c21bdd6bc2387a4d
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+  - libpng16.a
+  - libtiff.a
+  - libturbojpeg.a
+  - libz.a
+- build: asan
+  file: pix_orient_fuzzer.asan
+  bytes: 2204424
+  sha256: 18309fc49abe24b466feddca7b0725843c31a728f4fd09be474777fb67dd6e7b
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.asan.a
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc++.a
+  - libc.a
+  - libpng16.a
+  - libtiff.a
+  - libturbojpeg.a
+  - libunwind.a
+  - libz.a
+- build: ubsan
+  file: pix_orient_fuzzer.ubsan
+  bytes: 1135608
+  sha256: 6528f6046ffc1b6458d79415605ae13fb5dd6f9578d836c9a3d30a2bea549687
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+  - libpng16.a
+  - libtiff.a
+  - libturbojpeg.a
+  - libz.a
+- build: asan-ubsan
+  file: pix_orient_fuzzer.asan-ubsan
+  bytes: 2288264
+  sha256: a83a50870929be1b351cce0fa658e12c1442d0c9513c27fc6fee611260ca25c7
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.asan.a
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc++.a
+  - libc.a
+  - libpng16.a
+  - libtiff.a
+  - libturbojpeg.a
+  - libunwind.a
+  - libz.a
+binary_asset:
+  release: v2026.10.0
+  file: leptonica-bin.tar.zst
+  bytes: 22479985
+  sha256: 88581d85fd70b6cad2fbff6826b5dba493994f880b0307187d12b0c86e3a8780
+source_asset:
+  src:
+    release: v2026.10.0-src
+    file: leptonica-src.tar.zst
+    bytes: 12727231
+    sha256: 742f75abd3da4dc6d54df1d8ef47793f031729115e1d9d3112681a828b4c53aa
+  src_manifest:
+    release: v2026.10.0-src
+    file: leptonica-src.MANIFEST.tsv
+    bytes: 5756
+    sha256: 97a0bbc8bd060276cba2a89ec8ddefed9daff5ba14143f274b8fa2b32fc85d13
+rebuild:
+- 'rebuilt from this recipe and the source assets on a separate machine: plain identical, asan identical, ubsan
+  identical, asan-ubsan identical'
+link_inputs:
+  asan:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.asan.a: 66
+      libclang_rt.builtins.a: 14
+      crt1.o: object
+      libc++.a: 12
+      libc.a: 237
+      libpng16.a: 9
+      libtiff.a: 28
+      libturbojpeg.a: 34
+      libunwind.a: 5
+      libz.a: 5
+      liboft.a: 63
+      wrap_getenv.o: object
+      wrap_getpid.o: object
+      wrap_mkstemp.o: object
+      cli.o: object
+      plugin.o: object
+  asan-ubsan:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.asan.a: 66
+      libclang_rt.builtins.a: 14
+      crt1.o: object
+      libc++.a: 12
+      libc.a: 237
+      libpng16.a: 9
+      libtiff.a: 28
+      libturbojpeg.a: 34
+      libunwind.a: 5
+      libz.a: 5
+      liboft.a: 63
+      wrap_getenv.o: object
+      wrap_getpid.o: object
+      wrap_mkstemp.o: object
+      cli.o: object
+      plugin.o: object
+  plain:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.builtins.a: 14
+      crt1.o: object
+      libc.a: 183
+      libpng16.a: 9
+      libtiff.a: 28
+      libturbojpeg.a: 34
+      libz.a: 5
+      liboft.a: 63
+      wrap_getenv.o: object
+      wrap_mkstemp.o: object
+      cli.o: object
+      plugin.o: object
+  ubsan:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.builtins.a: 14
+      crt1.o: object
+      libc.a: 183
+      libpng16.a: 9
+      libtiff.a: 28
+      libturbojpeg.a: 34
+      libz.a: 5
+      liboft.a: 63
+      wrap_getenv.o: object
+      wrap_mkstemp.o: object
+      cli.o: object
+      plugin.o: object
+proofs:
+  origin: final-anthropic-opensource-formal-verification-proofs-package-2026-10-21 (sha256 4c6c152f61ce538e439b9d2adef439f4dbe1a2d446767d84ac7c3946d7c6687a),
+    libraries/leptonica/proofs/submission-10, libraries/openssl-b/proofs/submission-2, libraries/leptonica/proofs/submission-1,
+    libraries/openssl-b/proofs/submission-1 and libraries/leptonica/proofs/submission-9
+  licence: Apache-2.0 OR MIT
+  texts:
+  - LICENSES/anthropic-proofs-LICENSE
+  - LICENSES/anthropic-proofs-LICENSE-MIT
+  - LICENSES/anthropic-proofs-NOTICE
+  texts_location: the repository's top directory
+  modified: each changed file carries one line under its licence header saying so. In 2026-11, 2 more of its files took the
+    licence lines of the Anthropic-licensed file each was made from, in this fuzz target or another (docs/adding-a-proof.md,
+    requirement 7), and one line `Modified by Theorem Labs, 2026-11` that names that file and says how the file was changed
+    from it
+  written_here:
+  - ubsan_agrees
+flags:
+  note: as written in the recipe; a library's own build system adds its flags after these (e.g. CMake Release appends
+    -O3 -DNDEBUG), see the pin and recipes.sh
+  lines:
+  - 'recipe/tools/build-body.sh:58: OFT_NO_BUILTIN_ALLOC="-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc
+    -fno-builtin-reallocarray -fno-builtin-free -fno-builtin-aligned_alloc -fno-builtin-posix_memalign -fno-builtin-memalign
+    -fno-builtin-valloc -fno-builtin-strdup -fno-builtin-strndup"'
+  - 'recipe/tools/build-body.sh:59: BASE_CFLAGS="-march=rv64g -mabi=lp64d -Os -g -ffunction-sections -fdata-sections
+    -fno-stack-protector -fno-plt -Wdate-time $OFT_NO_BUILTIN_ALLOC"'
+  - 'recipe/tools/build-body.sh:65: SAN=""'
+  - 'recipe/tools/build-body.sh:560: SAN="-fsanitize=address"'
+  - 'recipe/tools/build-body.sh:577: SAN="-fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize-trap=all
+    -fno-sanitize=function"'
+  - 'recipe/tools/build-body.sh:586: SAN="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-trap=all -fno-sanitize=function"'
+  - 'recipe/tools/build-body.sh:590: SAN=""'
+  - 'recipe/tools/build-body.sh:618: CFLAGS="$BASE_CFLAGS $SAN -fmacro-prefix-map=$LIBROOT/=/work/build/lib/FLAVOUR/"'
+  - 'recipe/tools/build-body.sh:431: ''clang --config=/opt/asan-static/musl.cfg'''
+  - 'recipe/tools/build-body.sh:441: ''clang++ --config=/opt/asan-static/musl.cfg -stdlib=libc++'''
+  - 'recipe/tools/build-body.sh:478: SEALED_CFG=/opt/asan-static/asan-musl-sealed.cfg'
+  - 'recipe/tools/build-body.sh:1019: SILENT_LD=""'
+  - 'recipe/tools/build-body.sh:1021: SILENT_LD="-Wl,--defsym=__sanitizer_silent_reports=1"'
+  - 'recipe/tools/build-body.sh:1027: SILENT_LD=""'
+  - 'recipe/tools/build-body.sh:1049: "$CC" $BASE_CFLAGS -static -no-pie -Wl,--gc-sections ${OFT_STRIP--Wl,--strip-all}
+    \'
+  - 'recipe/tools/build-body.sh:1054: "$CC" $BASE_CFLAGS -static -no-pie -Wl,--gc-sections ${OFT_STRIP--Wl,--strip-all}
+    \'
+  - 'recipe/targets/leptonica-pix_orient_fuzzer/pin:41: LIB_CFLAGS=""'
+licence:
+  components:
+  - component: Leptonica
+    files: src/bbuffer.c, src/binexpand.c, src/binreduce.c, src/blend.c, src/bmpio.c, src/boxbasic.c, src/boxfunc1.c,
+      src/bytearray.c, src/colorcontent.c, src/colormap.c, src/conncomp.c, src/convolve.c, src/dnabasic.c, src/dnafunc1.c,
+      src/encoding.c, src/enhance.c, src/flipdetect.c, src/fpix1.c, src/gifiostub.c, src/grayquant.c, src/hashmap.c,
+      src/jp2kheader.c, src/jp2kiostub.c, src/jpegio.c, src/morph.c, src/morphseq.c, src/numabasic.c, src/numafunc1.c,
+      src/paintcmap.c, src/pdfio1.c, src/pdfio2.c, src/pix1.c, src/pix2.c, src/pix3.c, src/pix4.c, src/pix5.c, src/pixabasic.c,
+      src/pixacc.c, src/pixafunc2.c, src/pixarith.c, src/pixconv.c, src/pngio.c, src/pnmio.c, src/psio2.c, src/ptabasic.c,
+      src/ptra.c, src/readfile.c, src/rop.c, src/roplow.c, src/rotateorth.c, src/sarray1.c, src/scale1.c, src/scale2.c,
+      src/sel1.c, src/spixio.c, src/stack.c, src/tiffio.c, src/utils1.c, src/utils2.c, src/webpiostub.c, src/writefile.c,
+      src/zlibmem.c; harness prog/fuzzing/pix_orient_fuzzer.cc
+    licence: BSD-2-Clause AND Leptonica
+    evidence: 'leptonica-license.txt:1-25 of the repository at the pinned commit (Copyright (C) 2001-2020 Leptonica,
+      BSD 2-clause); the same BSD 2-clause block, Copyright (C) 2001 Leptonica, heads the linked library files (lines
+      1-25, e.g. src/pix1.c:1-25, src/spixio.c:1-25), except two: src/encoding.c:1-14 carries the older Leptonica
+      licence (SPDX Leptonica; LICENSES/leptonica-encoding-Leptonica-notice.txt), and its encodeAscii85() (encoding.c:342,
+      with convertChunkToAscii85() and the power85 table at encoding.c:78-82) is in all four binaries; src/pngio.c:1-26
+      is the BSD 2-clause block with a second holder, Copyright (C) 2017 Milner Technologies, Inc. (also pngio.c:1339-1341;
+      LICENSES/leptonica-pngio-Milner-notice.txt), and its pixWriteStreamPng() (pngio.c:1052) is in all four binaries;
+      of the 62 linked library files the other 60 carry the standard block (src/writefile.c:2 reads 2001-2016);
+      the project headers the harness includes through prog/fuzzing/leptfuzz.h:6 (src/allheaders.h:1-25 and the
+      26 headers it pulls in; src/endianness.h is generated from endianness.h.in, macros only) carry it too; prog/fuzzing/pix_orient_fuzzer.cc
+      and prog/fuzzing/leptfuzz.h have no licence header, so the repository licence covers them [inferred]'
+    texts:
+    - LICENSES/leptonica-license.txt
+    - LICENSES/leptonica-encoding-Leptonica-notice.txt
+    - LICENSES/leptonica-pngio-Milner-notice.txt
+  - component: Paul Heckbert's seed fill (Graphics Gems, 1990), in Leptonica src/conncomp.c
+    files: 'src/conncomp.c: pixSeedfill4BB() (lines 619-705), pixSeedfill8BB() (lines 732-818) and their stack helpers
+      pushFillsegBB() (lines 1071-1113) and popFillseg() (lines 1187-1216)'
+    licence: Graphics-Gems
+    evidence: 'src/conncomp.c:598-616: "This is Paul Heckbert''s stack-based 4-cc seedfill algorithm ... working
+      C code is on pp. 721-722. The code here follows Heckbert''s exactly, except we use function calls instead
+      of macros for pushing data on and popping data off the stack", and conncomp.c:718-729 for the 8-cc variant
+      ("follows Heckbert''s closely"); the loop at conncomp.c:659-698 has the structure of gems/SeedFill.c:63-83
+      in erich666/GraphicsGems at ca489851 (leak-on-left and leak-on-right pushes, the skip label, the comment of
+      SeedFill.c:66-68 reworded at conncomp.c:664-665); the Graphics Gems code''s licence is LICENSE.md:5 of that
+      repository (SPDX Graphics-Gems; LICENSES/leptonica-conncomp-Graphics-Gems-notice.txt quotes conncomp.c:598-616,
+      SeedFill.c:1-14 and the licence); in the binaries: the __func__ names of pixSeedfill4BB, pixSeedfill8BB, pushFillsegBB
+      and popFillseg occur in all four pix_orient_fuzzer binaries and in none of the 40 binaries of the other ten
+      harnesses (whose link records have no conncomp.c.o); the non-BB variants pixSeedfill4/pixSeedfill8 (conncomp.c:879,
+      971) occur in no binary'
+    texts:
+    - LICENSES/leptonica-conncomp-Graphics-Gems-notice.txt
+  - component: libpng 1.6.44 (builder image sysroot, libpng16.a)
+    files: '9 objects of libpng16.a: png.o, pngerror.o, pngmem.o, pngset.o, pngtrans.o, pngwio.o, pngwrite.o, pngwtran.o,
+      pngwutil.o'
+    licence: libpng-2.0 AND libpng-1.6.35
+    evidence: 'release.yaml:217-221 (libpng16.a: libpng 1.6.44, libpng-2.0 AND libpng-1.6.35, in_sysroot_src: true);
+      LICENSE:4-36 (PNG Reference Library License version 2) and LICENSE:39-134 (version 1, for libpng 0.5 through
+      1.6.35) of libpng-1.6.44.tar.xz in sources-v1 sysroot-src.tar.zst (MANIFEST.tsv:17, sha256 checked; equal
+      to pnggroup/libpng LICENSE at v1.6.44); the sources of the 9 linked members (png.c, pngerror.c, pngmem.c,
+      pngset.c, pngtrans.c, pngwio.c, pngwrite.c, pngwtran.c, pngwutil.c) say at lines 9-11 "This code is released
+      under the libpng license. For conditions of distribution and use, see the disclaimer and license in png.h"
+      (png.h:23 onwards holds that text); libpng''s version string "1.6.44" (png.c) and "libpng error: " (pngerror.c)
+      occur in all four binaries, and in none of the 36 binaries whose link records have no image library'
+    texts:
+    - LICENSES/libpng-LICENSE
+  - component: LibTIFF 4.7.2 (builder image sysroot, libtiff.a)
+    files: '28 objects of libtiff.a: tif_aux.o, tif_close.o, tif_codec.o, tif_compress.o, tif_dir.o, tif_dirinfo.o,
+      tif_dirread.o, tif_dirwrite.o, tif_dumpmode.o, tif_error.o, tif_fax3.o, tif_fax3sm.o, tif_flush.o, tif_hash_set.o,
+      tif_luv.o, tif_lzw.o, tif_next.o, tif_open.o, tif_packbits.o, tif_predict.o, tif_read.o, tif_strip.o, tif_swab.o,
+      tif_thunder.o, tif_tile.o, tif_unix.o, tif_warning.o, tif_write.o'
+    licence: libtiff AND BSD-4.3TAHOE AND MIT
+    evidence: 'release.yaml:252-256 (libtiff.a: LibTIFF 4.7.2, libtiff AND BSD-4.3TAHOE AND MIT, in_sysroot_src:
+      false); LICENSE.md:1-23 (LibTIFF licence) and LICENSE.md:25-49 (tif_lzw.c''s Berkeley notice) of LibTIFF at
+      tag v4.7.2 (gitlab.com/libtiff/libtiff, byte-equal to the libsdl-org/libtiff mirror''s tag); the 28 linked
+      members, read at that tag: 26 carry the LibTIFF licence header (lines 1-23), tif_lzw.c adding a 2022 Even
+      Rouault copyright line (tif_lzw.c:4) and the Berkeley notice (tif_lzw.c:32-36, 1462-1481: BSD-4.3TAHOE), tif_luv.c
+      naming Greg Ward Larson (tif_luv.c:2-23, LibTIFF terms) and tif_fax3.c''s decoder being "derived, with permission"
+      from Frank Cringle''s viewfax (tif_fax3.c:35-37); tif_hash_set.c is MIT (Even Rouault, tif_hash_set.c:8-26);
+      tif_fax3sm.c is the output of tools/mkg3states.c (LibTIFF header, mkg3states.c:1-29) (LICENSES/libtiff-file-headers-notice.txt
+      quotes the headers LICENSE.md lacks); tif_lzw.c''s module names LZWSetupDecode, LZWDecode, LZWDecodeCompat,
+      LZWSetupEncode and its "Old-style LZW codes, convert file" message (tif_lzw.c:184, 404, 801, 1032, 267), tif_hash_set.c''s
+      anPrimes table (tif_hash_set.c:72-73), tif_luv.c''s LogLuvSetupDecode and tif_fax3.c''s Fax3SetupState occur
+      in all four binaries, and in none of the 36 binaries whose link records have no image library'
+    texts:
+    - LICENSES/libtiff-LICENSE.md
+    - LICENSES/libtiff-file-headers-notice.txt
+  - component: libjpeg-turbo 3.0.4 (builder image sysroot, libturbojpeg.a)
+    files: '34 objects of libturbojpeg.a: jaricom.c.o, jcapimin.c.o, jcapistd.c.o, jcarith.c.o, jccoefct.c.o, jccolor.c.o,
+      jcdctmgr.c.o, jcdiffct.c.o, jchuff.c.o, jcinit.c.o, jclhuff.c.o, jclossls.c.o, jcmainct.c.o, jcmarker.c.o,
+      jcmaster.c.o, jcomapi.c.o, jcparam.c.o, jcphuff.c.o, jcprepct.c.o, jcsample.c.o, jdapimin.c.o, jdatadst.c.o,
+      jdatasrc.c.o, jdinput.c.o, jdmarker.c.o, jdmaster.c.o, jerror.c.o, jfdctflt.c.o, jfdctfst.c.o, jfdctint.c.o,
+      jmemmgr.c.o, jmemnobs.c.o, jpeg_nbits.c.o, jutils.c.o'
+    licence: IJG
+    evidence: 'release.yaml:257-261 (libturbojpeg.a: libjpeg-turbo 3.0.4, IJG AND BSD-3-Clause for the library,
+      in_sysroot_src: true); LICENSE.md:6-22 of libjpeg-turbo-3.0.4.tar.gz in sources-v1 sysroot-src.tar.zst (MANIFEST.tsv:14,
+      sha256 checked; equal to the 3.0.4 tag): the IJG License (README.ijg:112-159) covers the libjpeg API library,
+      the Modified BSD License (LICENSE.md:94-122) only the TurboJPEG API library and the build system; all 34 linked
+      members are libjpeg API files whose headers say "For conditions of distribution and use, see the accompanying
+      README.ijg file" (e.g. jcapimin.c:9, jdmarker.c:10, jpeg_nbits.c:4), as do the headers they include (jpeglib.h:13,
+      jerror.h:11, jpegint.h:13, jversion.h.in:8; jsimd.h:11 and jsimddct.h:8 point to the zlib licence of jsimdext.inc
+      and only declare functions); no TurboJPEG member (turbojpeg.c, transupp.c, jdatadst-tj.c, jdatasrc-tj.c, rd*/wr*)
+      is in the link record; libjpeg''s message table (jerror.h "Bogus message code %d", "Improper call to JPEG
+      library in state %d") occurs in all four binaries, and in none of the 36 binaries whose link records have
+      no image library, the TurboJPEG API names tjInitCompress and tj3Init in no binary; IJG clause (2) (README.ijg:141-143)
+      asks binary distributions to state "this software is based in part on the work of the Independent JPEG Group"'
+    texts:
+    - LICENSES/libjpeg-turbo-README.ijg
+    - LICENSES/libjpeg-turbo-LICENSE.md
+  - component: zlib 1.3.1 (builder image sysroot, libz.a)
+    files: '5 objects of libz.a: adler32.o, crc32.o, deflate.o, trees.o, zutil.o'
+    licence: Zlib
+    evidence: 'release.yaml:277-281 (libz.a: zlib 1.3.1, Zlib, in_sysroot_src: true); LICENSE:1-22 of zlib-1.3.1.tar.gz
+      in sources-v1 sysroot-src.tar.zst (MANIFEST.tsv:5, sha256 checked; equal to madler/zlib LICENSE at v1.3.1);
+      the 5 linked members (adler32.c, crc32.c, deflate.c, trees.c, zutil.c) say "For conditions of distribution
+      and use, see copyright notice in zlib.h" (lines 3-4); zutil.c''s error strings "incompatible version" and
+      "insufficient memory" occur in all four binaries, and in none of the 36 binaries whose link records have no
+      image library'
+    texts:
+    - LICENSES/zlib-LICENSE
+  - component: musl libc (static)
+    files: '-'
+    licence: MIT
+    evidence: musl COPYRIGHT; linked in every build
+    texts:
+    - LICENSES/musl-COPYRIGHT
+  - component: 'LLVM runtimes: compiler-rt builtins; in ASan builds the sanitizer runtime and libunwind; libc++/libc++abi
+      in C++ programs'
+    files: '-'
+    licence: Apache-2.0 WITH LLVM-exception
+    evidence: LICENSE.TXT of compiler-rt, libunwind, libc++ and libc++abi at llvmorg-20.1.8 (87f0227c)
+    texts:
+    - LICENSES/llvm-compiler-rt-LICENSE.TXT
+    - LICENSES/llvm-libunwind-LICENSE.TXT
+    - LICENSES/llvm-libcxx-LICENSE.TXT
+    - LICENSES/llvm-libcxxabi-LICENSE.TXT
+  - component: static-asan patches compiled into the ASan runtime and musl
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of theorem-labs/static-asan at b0506135 (MIT for Theorem Labs work; the LLVM and musl code
+      it patches keeps its own licence)
+    texts:
+    - LICENSES/static-asan-LICENSE
+  - component: Theorem Labs file-input driver and build recipe (recipe/src/, recipe/targets/*/plugin.c)
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of this repository (MIT, Theorem Labs, PBC)
+    texts:
+    - LICENSES/oss-fuzz-theorems-LICENSE

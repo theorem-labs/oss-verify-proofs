@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: janus-gateway
 harness: sdp_fuzzer
-rocq: OssFuzzTheorems.janus_gateway.sdp_fuzzer
+rocq: OSSVerify.janus_gateway.sdp_fuzzer
 origin: upstream
 summary: Copies the input into a VLA, forces the last byte to NUL, janus_sdp_parse, then janus_sdp_write
   regenerates the SDP text; the regenerated text is freed unread (not reparsed, not compared with the

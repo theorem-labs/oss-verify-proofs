@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: quic-client
-rocq: OssFuzzTheorems.openssl.quic_client
+rocq: OSSVerify.openssl.quic_client
 origin: upstream
 summary: QUIC client state machine (handshake, read/echo, accept/create/swap streams) over a datagram
   memory BIO with fake time; return codes otherwise only steer the loop.

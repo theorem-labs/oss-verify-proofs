@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: pix_rotate_shear_fuzzer
-rocq: OssFuzzTheorems.leptonica.pix_rotate_shear_fuzzer
+rocq: OSSVerify.leptonica.pix_rotate_shear_fuzzer
 origin: upstream
 summary: Three int16 (angle, x_center, y_center) then pixReadMem of the rest (PNM/JPEG/TIFF/PNG refused
   up front) and pixRotateShear by angle degrees about the centre; the rotated image is discarded.

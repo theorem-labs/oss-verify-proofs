@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nettle
 harness: fuzz_rsa_public_key_from_der
-rocq: OssFuzzTheorems.nettle.fuzz_rsa_public_key_from_der
+rocq: OSSVerify.nettle.fuzz_rsa_public_key_from_der
 origin: oss-fuzz
 summary: asn1_der_iterator_first; if the first element is CONSTRUCTED, rsa_public_key_from_der_iterator(&pub,
   0, &iter); result discarded.

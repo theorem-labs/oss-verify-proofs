@@ -1,0 +1,15 @@
+# AFek.v DF_fixed atom ranges (lib/A/AFek.v:32-36) against this unit's own stated ranges (staged AFem.v, kit files); both ends and the alignment per atom. AFem.v (commit 8) also proves atoms_ok E0 DF_fixed (its :390-407 AFo chain), so for E0 each fact is a goal there.
+# atom	lo	hi	al2 (2^al2)	stated range of the quantity	file:line	verdict
+2 (sp)	kHighMemBeg + DEP_STK = 0x10007fff8200	kHighMemEnd = 0x800000000000	4 (16)	0x10007fff8000 <= ly_stk_lo <= sp - 512, sp <= ly_stk_hi <= 0x800000000000, sp mod 16 = 0	AFem.v:193-196 (zone_facts), DEP_STK := 512 AFl0.v:60, kHighMemBeg / kHighMemEnd lib/Reusable/YG0f.v:13-14	OK
+10 (buf)	kHighMemBeg = 0x10007fff8000	kHighMemEnd - 240	3 (8)	ly_stk_lo <= buf, buf + 240 <= ly_stk_hi <= 0x800000000000, buf mod 8 = 0	AFem.v:193-196	OK
+11 (length tr)	1	30	0	1 <= length tr (entry_phase premise), length tr <= 30 (tr_len)	AFem.v:1157, :111	OK
+aNB 32	4096	CEIL_MAX - kNodesBlockSize = 0x7fffff700000	12 (4096)	4096 <= NB, NB + kNodesBlockSize <= 140737479966720 (= CEIL_MAX), NB mod 4096 = 0	AFem.v blocks_facts; CEIL_MAX lib/CJ/Lib/Ceil.v:11; kNodesBlockSize YG0f.v:33	OK
+aSB 33	4096	CEIL_MAX - kStoreBlockSize = 0x7fffff000000	12 (4096)	4096 <= SB, SB + kStoreBlockSize <= CEIL_MAX, SB mod 4096 = 0	AFem.v blocks_facts; YG0f.v:34	OK
+aTOT 34	2	634974	0	2 <= TOT <= 634912 (tight; commit 8), the cell at TFIB_STORE <= 634943	AFem.v:117 TOT_range, :1235, :111; YG01.v:151	OK (hi true but weaker, kept: see commit 7)
+aN 35	1	20481	0	1 <= nD <= 20481 (nD = depot_ids = 1 + length d, length d <= DEPOT_CAP = 20480)	AFem.v nD_range; YG00.v:398; YG01.v:151 / :176	OK (both ends exact)
+aHASH 36	0	2^64 - 1	0	0 <= HSH < 2^64	AFem.v HSH_range	OK
+aS2 37	TFIB_DEPOT = 0x18ded8	TFIB_DEPOT + 4 * 2^20 - 4 = 0x58ded4	2 (4)	S2 := TFIB_DEPOT + 4 * bkt, 0 <= bkt < d_tab_words = 2^20; TFIB_DEPOT mod 4 = 0	AFem.v:89 / bkt_range; AF0m.v:17; YG0f.v:228	OK
+aHD 38	0	20481	0	0 <= HDv <= nD <= 20481	AFem.v HDv_range, nD_range	OK
+aSTD 39	0	2^32 - 1	0	0 <= STD < 2^32	AFem.v STD_range	OK
+aNDN 40	4096	CEIL_MAX	4 (16)	NDN := NB + 16 * (nD + 1) <= NB + 327712 <= CEIL_MAX - 0x100000 + 327712; NB mod 4096 = 0	AFem.v:92; blocks_facts	OK
+aSLOT 41	4096	CEIL_MAX	3 (8)	SLOT := SB + 8 * TOT <= SB + 5079296 <= CEIL_MAX - 0x800000 + 5079296; SB mod 4096 = 0	AFem.v:93; blocks_facts	OK

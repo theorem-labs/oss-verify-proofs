@@ -1,0 +1,61 @@
+how a run reaches the functions that hold allocator calls:
+  direct callers of 0x81d2c main: none
+  direct callers of 0x81ffc target_run: main 0x81e9c
+  direct callers of 0x827d4 LLVMFuzzerTestOneInput: target_run 0x820c4
+  direct callers of 0x863d0 text_buf: LLVMFuzzerTestOneInput 0x835f4, LLVMFuzzerTestOneInput 0x83600
+  direct callers of 0x87dc0 text_of: LLVMFuzzerTestOneInput 0x82e24, LLVMFuzzerTestOneInput 0x82e34, LLVMFuzzerTestOneInput 0x837d8
+  direct callers of 0x883d4 mark_quietly: LLVMFuzzerTestOneInput 0x831f8, LLVMFuzzerTestOneInput 0x8347c
+  direct callers of 0x430a8 __interceptor_trampoline_fmemopen: mark_quietly 0x88410
+  direct callers of 0x48024 ___interceptor_fmemopen: __interceptor_trampoline_fmemopen 0x430a8
+  direct callers of 0x96a1c fmemopen: none
+  address of 0x430a8 __interceptor_trampoline_fmemopen materialized at: nowhere
+  address of 0x48024 ___interceptor_fmemopen materialized at: nowhere
+  address of 0x540c8 __interceptor_trampoline_free materialized at: nowhere
+  address of 0x540cc __interceptor_trampoline_malloc materialized at: nowhere
+  address of 0x540d0 __interceptor_trampoline_calloc materialized at: nowhere
+  address of 0x540d4 ___interceptor_free materialized at: nowhere
+  address of 0x542a4 ___interceptor_malloc materialized at: nowhere
+  address of 0x544cc ___interceptor_calloc materialized at: nowhere
+  address of 0x81d2c main materialized at: data 0xa1980
+  address of 0x81ffc target_run materialized at: nowhere
+  address of 0x827d4 LLVMFuzzerTestOneInput materialized at: code 0x828a0
+  address of 0x863d0 text_buf materialized at: nowhere
+  address of 0x87dc0 text_of materialized at: nowhere
+  address of 0x883d4 mark_quietly materialized at: nowhere
+  address of 0x8acd8 _ZN9libunwind13DwarfFDECacheINS_17LocalA materialized at: nowhere
+  address of 0x96a1c fmemopen materialized at: data 0xa3780
+  address of 0xa3780 REAL slot materialized at: code 0x4804c
+allocator entries -> wrapper, pc0 (from the wrapper instructions):
+  0x540c8 free (trampoline)    -> 0x540d4 pc0 0x5420c
+  0x540cc malloc (trampoline)  -> 0x542a4 pc0 0x5436c
+  0x540d0 calloc (trampoline)  -> 0x544cc pc0 0x545a0
+  0x540d4 free (wrapper)       -> 0x540d4 pc0 0x5420c
+  0x542a4 malloc (wrapper)     -> 0x542a4 pc0 0x5436c
+  0x544cc calloc (wrapper)     -> 0x544cc pc0 0x545a0
+24 jal / j instructions to the six entries
+EXCLUDED  0x540c8 j     __interceptor_trampoline_free+0x0 -> free (wrapper): the trampoline instruction itself (j 0x540d4); its callers are the sites
+EXCLUDED  0x540cc j     __interceptor_trampoline_malloc+0x0 -> malloc (wrapper): the trampoline instruction itself (j 0x542a4); its callers are the sites
+EXCLUDED  0x540d0 j     __interceptor_trampoline_calloc+0x0 -> calloc (wrapper): the trampoline instruction itself (j 0x544cc); its callers are the sites
+COVERED   0x81d7c jal   main+0x50 -> malloc (trampoline): [0x5436c; 0x81d80]
+COVERED   0x81dd0 jal   main+0xa4 -> malloc (trampoline): [0x5436c; 0x81dd4]
+COVERED   0x81df4 jal   main+0xc8 -> free (trampoline): [0x5420c; 0x81df8]
+COVERED   0x81f24 jal   main+0x1f8 -> free (trampoline): [0x5420c; 0x81f28]
+COVERED   0x8205c jal   target_run+0x60 -> malloc (trampoline): [0x5436c; 0x82060]
+COVERED   0x820f0 jal   target_run+0xf4 -> free (trampoline): [0x5420c; 0x820f4]
+COVERED   0x82c74 jal   LLVMFuzzerTestOneInput+0x4a0 -> calloc (trampoline): [0x545a0; 0x82c78], [0x545a0; 0x82c78; 0x820c8]
+COVERED   0x82c84 jal   LLVMFuzzerTestOneInput+0x4b0 -> calloc (trampoline): [0x545a0; 0x82c88], [0x545a0; 0x82c88; 0x820c8]
+COVERED   0x82e6c jal   LLVMFuzzerTestOneInput+0x698 -> free (trampoline): [0x5420c; 0x82e70], [0x5420c; 0x82e70; 0x820c8]
+COVERED   0x82e74 jal   LLVMFuzzerTestOneInput+0x6a0 -> free (trampoline): [0x5420c; 0x82e78], [0x5420c; 0x82e78; 0x820c8]
+COVERED   0x83754 jal   LLVMFuzzerTestOneInput+0xf80 -> free (trampoline): [0x5420c; 0x83758], [0x5420c; 0x83758; 0x820c8]
+COVERED   0x8375c jal   LLVMFuzzerTestOneInput+0xf88 -> free (trampoline): [0x5420c; 0x83760], [0x5420c; 0x83760; 0x820c8]
+COVERED   0x838d8 jal   LLVMFuzzerTestOneInput+0x1104 -> free (trampoline): [0x5420c; 0x838dc], [0x5420c; 0x838dc; 0x820c8]
+COVERED   0x83b88 jal   LLVMFuzzerTestOneInput+0x13b4 -> free (trampoline): [0x5420c; 0x83b8c], [0x5420c; 0x83b8c; 0x820c8]
+COVERED   0x83b90 jal   LLVMFuzzerTestOneInput+0x13bc -> free (trampoline): [0x5420c; 0x83b94], [0x5420c; 0x83b94; 0x820c8]
+COVERED   0x863ec jal   text_buf+0x1c -> malloc (trampoline): [0x5436c; 0x863f0], [0x5436c; 0x863f0; 0x820c8]
+COVERED   0x87fec jal   text_of+0x22c -> malloc (trampoline): [0x5436c; 0x87ff0] NOTE undetermined tail: text_of sets s0 = a1 (0x87e04), a slot address in LLVMFuzzerTestOneInput; the word at s0-8 (0x128(s1): an earlier text_of result or an unwritten word; 0x120(s1): the remaining input length) is not fixed by the image, so [pc0; ra; w] for w >= 4096 cannot be listed; the trace whose walk ends at the first record is [0x5436c; 0x87ff0]
+EXCLUDED  0x8ad54 jal   _ZN9libunwind13DwarfFDECacheINS_17LocalA+0x7c -> malloc (trampoline): libunwind DwarfFDECache::add +0x7c (malloc): reached only UnwindSlow -> _Unwind_Backtrace -> __unw_init_local -> setInfoBasedOnIPRegister -> getInfoFromDwarfSection -> add; __asan_default_options (0x81d20) returns "allocator_may_return_null=1" only, so fast_unwind_on_malloc keeps its default and the malloc and free wrappers never take UnwindSlow (the donor excludes its copy for this reason)
+EXCLUDED  0x8ad78 jal   _ZN9libunwind13DwarfFDECacheINS_17LocalA+0xa0 -> free (trampoline): libunwind DwarfFDECache::add +0xa0 (free): as +0x7c
+COVERED   0x96ab4 jal   fmemopen+0x98 -> malloc (trampoline): [0x5436c; 0x96ab8]
+COVERED   0x96ac4 jal   fmemopen+0xa8 -> malloc (trampoline): [0x5436c; 0x96ac8]
+sites 24: COVERED 19, EXCLUDED 5, MISSING 0; rules failed 0; Tfib_universe 32 traces
+RESULT: PASS

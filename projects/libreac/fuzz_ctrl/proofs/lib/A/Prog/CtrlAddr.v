@@ -1,0 +1,174 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* The addresses fuzz_ctrl.asan gives the listing's names, objects and
+   auipc values. CtrlImg.v checks them against the image. The objects past the
+   ones the slots build are the cells the walks read through a GOT word:
+   __asan_shadow_memory_dynamic_address (the shadow base) and
+   __asan_option_detect_stack_use_after_return. *)
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import PaTable CtrlSyms.
+From Stdlib Require Import ZArith List.
+Import ListNotations.
+Open Scope Z_scope.
+Definition ctrl_text : Z := 0x80edc.
+Definition ctrl_sigma (s : gsym) : Z :=
+match s with
+| GS___asan_stack_malloc_6 => 0x3da58
+| GS___asan_set_shadow_f8 => 0x55008
+| GS___asan_report_store1 => 0x59460
+| GS_reac_box_catalogue => 0x84450
+| GS___asan_set_shadow_00 => 0x54ee8
+| GS_reac_identity_init => 0x87100
+| GS___asan_memset => 0x524c4
+| GS_reac_ctrl_build_as => 0x848ac
+| GS___interceptor_trampoline_malloc => 0x5337c
+| GS___asan_memcpy => 0x52028
+| GS_reac_ctrl_parse => 0x83578
+| GS_reac_ctrl_identity_reply => 0x83f8c
+| GS_reac_ctrl_identity_fragment => 0x84f68
+| GS_reac_identity_ingest => 0x87124
+| GS_reac_box_catalogue_match => 0x84498
+| GS_reac_ports_parse => 0x8765c
+| GS_declaration_of => 0x82d58
+| GS___interceptor_trampoline_bcmp => 0x42970
+| GS___interceptor_trampoline_free => 0x53378
+| GS___asan_report_load4 => 0x59280
+| GS___interceptor_trampoline_strcmp => 0x42964
+| GS_reac_ports_unknown => 0x87848
+| GS_reac_ctrl_kind_name => 0x8351c
+| GS_reac_ctrl_checksum_verify => 0x834a8
+| GS_reac_ctrl_headamp_record_verify => 0x84e8c
+| GS_reac_ctrl_classify_box_frame => 0x831b8
+| GS___asan_report_load1 => 0x59140
+| GS___interceptor_trampoline_memchr => 0x42974
+| GS___asan_stack_free_6 => 0x3dbf4
+| GS___asan_handle_no_return => 0x5a13c
+| GS_abort => 0x8e130
+| GS___asan_report_load2 => 0x591e0
+| GS___asan_report_load8 => 0x59320
+| GS___asan_report_store_n => 0x59820
+| GS___asan_init => 0x5a2a4
+| GS___asan_version_mismatch_check_v8 => 0x5a338
+| GS___asan_register_elf_globals => 0x40898
+| GS___asan_unregister_elf_globals => 0x40904
+| GS___asan_report_store4 => 0x595a0
+| GS___asan_stack_malloc_1 => 0x3d72c
+| GS_kind_of_link1 => 0x83f18
+| GS___asan_report_store2 => 0x59500
+| GS___asan_report_store8 => 0x59640
+| GS___asan_stack_malloc_2 => 0x3d8bc
+| GS_reac_box_model_block => 0x85b44
+| GS_reac_box_model_upstream_width => 0x869c4
+| GS_ctrl_emit_as => 0x849d8
+| GS_ctrl_lay_block => 0x855f4
+| GS_reac_braid_encode => 0x86f04
+| GS_ctrl_finish => 0x85994
+| GS___asan_stack_malloc_0 => 0x3d5b8
+| GS_build_dt1_single => 0x86a94
+| GS___asan_report_load_n => 0x59780
+end.
+Definition ctrl_obj (i : nat) : Z :=
+match i with
+| 0%nat => 0x9fb28
+| 1%nat => 0x9fad0
+| 2%nat => 0x11b66
+| 3%nat => 0x80edc
+| 4%nat => 0x21140
+| 5%nat => 0x21160
+| 6%nat => 0x21180
+| 7%nat => 0xa0748
+| 8%nat => 0xa0750
+| 9%nat => 0xa51c0
+| 10%nat => 0x211e0
+| 11%nat => 0x9e760
+| 12%nat => 0x17892
+| 13%nat => 0x83578
+| 14%nat => 0x21200
+| 15%nat => 0x14a72
+| 16%nat => 0x83f8c
+| 17%nat => 0x9e800
+| 18%nat => 0x178a9
+| 19%nat => 0x84498
+| 20%nat => 0x21980
+| 21%nat => 0x9f7e0
+| 22%nat => 0x1a156
+| 23%nat => 0x855f4
+| 24%nat => 0x211b4
+| 25%nat => 0x13032
+| 26%nat => 0x85b44
+| 27%nat => 0x219f4
+| 28%nat => 0x21a20
+| 29%nat => 0x21a60
+| 30%nat => 0xa8878
+| 31%nat => 0xa8880
+| _ => 0
+end.
+Definition ctrl_hi (j : nat) : Z :=
+match j with
+| 0%nat => 0x9ff28
+| 1%nat => 0x9ff2c
+| 2%nat => 0x11f90
+| 3%nat => 0x80f94
+| 4%nat => 0x215a0
+| 5%nat => 0x20ab4
+| 6%nat => 0x215b0
+| 7%nat => 0x9fd80
+| 8%nat => 0xa0160
+| 9%nat => 0xa0164
+| 10%nat => 0xa5170
+| 11%nat => 0xa0190
+| 12%nat => 0xa0194
+| 13%nat => 0xa51a0
+| 14%nat => 0xa01e8
+| 15%nat => 0x9f4b4
+| 16%nat => 0x2152c
+| 17%nat => 0x9f538
+| 18%nat => 0x9e548
+| 19%nat => 0x9f5c4
+| 20%nat => 0x9f5c8
+| 21%nat => 0x17628
+| 22%nat => 0x8362c
+| 23%nat => 0x2172c
+| 24%nat => 0x9ffe4
+| 25%nat => 0x9ffe8
+| 26%nat => 0x15044
+| 27%nat => 0x84048
+| 28%nat => 0x9f45c
+| 29%nat => 0x9e480
+| 30%nat => 0x9f4e0
+| 31%nat => 0x9f4e4
+| 32%nat => 0x17540
+| 33%nat => 0x84544
+| 34%nat => 0x9e69c
+| 35%nat => 0x9f8ec
+| 36%nat => 0x218fc
+| 37%nat => 0x9f93c
+| 38%nat => 0x9fa20
+| 39%nat => 0x9eaa4
+| 40%nat => 0x9eb24
+| 41%nat => 0x9eb38
+| 42%nat => 0x9ee78
+| 43%nat => 0x9fe94
+| 44%nat => 0x9ffd0
+| 45%nat => 0x9f644
+| 46%nat => 0x9f648
+| 47%nat => 0x1a6a4
+| 48%nat => 0x856a8
+| 49%nat => 0x2173c
+| 50%nat => 0x9f99c
+| 51%nat => 0x9fb94
+| 52%nat => 0x9fb98
+| 53%nat => 0x12bf4
+| 54%nat => 0x85bf8
+| 55%nat => 0x21c70
+| 56%nat => 0x21eac
+| 57%nat => 0x21eec
+| 58%nat => 0x9f9d0
+| 59%nat => 0x9fab0
+| 60%nat => 0x9ff24
+| 61%nat => 0x21f50
+| 62%nat => 0xa013c
+| 63%nat => 0x9f670
+| 64%nat => 0x9f850
+| _ => 0
+end.
+Definition ctrl_nobj : nat := 32%nat.
+Definition ctrl_nhi : nat := 65%nat.

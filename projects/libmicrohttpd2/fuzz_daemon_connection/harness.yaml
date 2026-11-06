@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libmicrohttpd2
 harness: fuzz_daemon_connection
-rocq: OssFuzzTheorems.libmicrohttpd2.fuzz_daemon_connection
+rocq: OSSVerify.libmicrohttpd2.fuzz_daemon_connection
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

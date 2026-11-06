@@ -1,0 +1,39 @@
+# A = img/fuzz_command.asan.debug sha256 68db792d5fa7
+# B = img/fuzz_command.asan-ubsan.debug sha256 658cefbe806b
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes/NAME-ONLY acceptances	C-string acceptances (also one CSTR row each)	differing targets printed (in target-differ, this row)	words-only
+___interceptor_strcmp	B:A	0x45a70	0x45a24	1328	1328	EQUAL-mod-pcrel	11	0	0	(2, 0, 2)	0	full+0x4bc[0x103d8|0x103d8]=8 full+0x500[0x103d8|0x103d8]=8	0x354@0x1cdb0|0x1cdb0=b'strcmp\x00' 0x434@0x1cdb0|0x1cdb0=b'strcmp\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	___interceptor_strcmp	B:A	0x354	0x1cdb0	0x1cdb0	7	737472636d7000	b'strcmp\x00'
+CSTR	___interceptor_strcmp	B:A	0x434	0x1cdb0	0x1cdb0	7	737472636d7000	b'strcmp\x00'
+__interceptor_trampoline_strcmp	B:A	0x45188	0x4513c	4	4	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+__sanitizer_weak_hook_strcmp	B:A	0x45a6c	0x45a20	4	4	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+_ZN6__asan18TryAsanInitFromRtlEv	B:A	0x5f68c	0x5f640	160	160	EQUAL-mod-pcrel	1	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+__asan_region_is_poisoned	B:A	0x5a1f8	0x5a1ac	836	836	EQUAL-mod-pcrel	13	0	0	(0, 0, 4)	0		0x30c@0x1f5f3|0x1f5ad=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x310@0x2057c|0x20536=b'((beg)) < ((end))\x00' 0x32c@0x1f5f3|0x1f5ad=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x330@0x15475|0x1546d=b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	__asan_region_is_poisoned	B:A	0x30c	0x1f5f3	0x1f5ad	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	B:A	0x310	0x2057c	0x20536	18	28286265672929203c202828656e64292900	b'((beg)) < ((end))\x00'
+CSTR	__asan_region_is_poisoned	B:A	0x32c	0x1f5f3	0x1f5ad	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	B:A	0x330	0x15475	0x1546d	78	28283020262620226d656d5f69735f7a65726f2072657475726e65642066616c73652c2062757420706f69736f6e6564206279746520776173206e6f7420666f756e6422292920213d2028302900	b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'
+___interceptor_malloc	B:A	0x58ba4	0x58b58	348	348	EQUAL-mod-pcrel	1	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj	B:A	0x60424	0x603d8	336	336	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+_ZN11__sanitizer18BufferedStackTrace10UnwindFastEmmmmj	B:A	0x78edc	0x78e90	352	352	EQUAL-mod-pcrel	5	0	0	(0, 0, 4)	0		0x130@0x1d848|0x1d848=b'/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_stacktrace.cpp\x00' 0x134@0x1b013|0x1b013=b'((max_depth)) >= ((2))\x00' 0x14c@0x1d848|0x1d848=b'/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_stacktrace.cpp\x00' 0x150@0x13ca0|0x13c98=b'((stack_top)) > ((stack_bottom))\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	_ZN11__sanitizer18BufferedStackTrace10UnwindFastEmmmmj	B:A	0x130	0x1d848	0x1d848	72	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f73616e6974697a65725f636f6d6d6f6e2f73616e6974697a65725f737461636b74726163652e63707000	b'/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_stacktrace.cpp\x00'
+CSTR	_ZN11__sanitizer18BufferedStackTrace10UnwindFastEmmmmj	B:A	0x134	0x1b013	0x1b013	23	28286d61785f64657074682929203e3d20282832292900	b'((max_depth)) >= ((2))\x00'
+CSTR	_ZN11__sanitizer18BufferedStackTrace10UnwindFastEmmmmj	B:A	0x14c	0x1d848	0x1d848	72	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f73616e6974697a65725f636f6d6d6f6e2f73616e6974697a65725f737461636b74726163652e63707000	b'/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_stacktrace.cpp\x00'
+CSTR	_ZN11__sanitizer18BufferedStackTrace10UnwindFastEmmmmj	B:A	0x150	0x13ca0	0x13c98	33	2828737461636b5f746f702929203e202828737461636b5f626f74746f6d292900	b'((stack_top)) > ((stack_bottom))\x00'
+___interceptor_strdup	B:A	0x4ccfc	0x4ccb0	920	920	EQUAL-mod-pcrel	8	0	0	(1, 0, 1)	0	full+0x368[0x103d8|0x103d8]=8	0x2e8@0x1bd8f|0x1bd8f=b'strdup\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	___interceptor_strdup	B:A	0x2e8	0x1bd8f	0x1bd8f	7	73747264757000	b'strdup\x00'
+memcpy	B:A	0x9e698	0x9eb3c	1028	1028	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+___interceptor_strndup	B:A	0x4575c	0x45710	784	784	EQUAL-mod-pcrel	8	0	0	(1, 0, 1)	0	full+0x2e0[0x103d8|0x103d8]=8	0x260@0x1c543|0x1c543=b'strndup\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	___interceptor_strndup	B:A	0x260	0x1c543	0x1c543	8	7374726e64757000	b'strndup\x00'
+__interceptor_trampoline_strndup	B:A	0x45184	0x45138	4	4	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+__asan_memcpy	B:A	0x5767c	0x57630	1180	1180	EQUAL-mod-pcrel	16	0	0	(2, 0, 2)	0	full+0x3c0[0x103d8|0x103d8]=8 full+0x460[0x103d8|0x103d8]=8	0x26c@0x14b6c|0x14b64=b'memcpy\x00' 0x294@0x14b6c|0x14b64=b'memcpy\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	__asan_memcpy	B:A	0x26c	0x14b6c	0x14b64	7	6d656d63707900	b'memcpy\x00'
+CSTR	__asan_memcpy	B:A	0x294	0x14b6c	0x14b64	7	6d656d63707900	b'memcpy\x00'
+__asan_memset	B:A	0x57b18	0x57acc	576	576	EQUAL-mod-pcrel	6	0	0	(1, 0, 0)	0	full+0x204[0x103d8|0x103d8]=8		printed 0 of 0 targets	EQUAL-mod-pcrel
+memset	B:A	0x9ea9c	0x9ef40	248	248	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+___interceptor_strcspn	B:A	0x46ce4	0x46c98	1160	1160	EQUAL-mod-pcrel	8	0	0	(2, 0, 2)	0	full+0x414[0x103d8|0x103d8]=8 full+0x454[0x103d8|0x103d8]=8	0x2b0@0x162d7|0x162bd=b'strcspn\x00' 0x384@0x162d7|0x162bd=b'strcspn\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	___interceptor_strcspn	B:A	0x2b0	0x162d7	0x162bd	8	7374726373706e00	b'strcspn\x00'
+CSTR	___interceptor_strcspn	B:A	0x384	0x162d7	0x162bd	8	7374726373706e00	b'strcspn\x00'
+__interceptor_trampoline_strcspn	B:A	0x45198	0x4514c	4	4	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+strcspn	B:A	0x9ee10	0x9f2b4	280	280	EQUAL-mod-pcrel	2	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+strtok_r	B:A	0x9f360	0x9f804	144	144	EQUAL-mod-pcrel	2	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel

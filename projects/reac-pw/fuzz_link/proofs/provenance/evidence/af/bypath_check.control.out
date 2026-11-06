@@ -1,0 +1,12 @@
+DIFFERS  Reusable/AsStackSz.v           vs proofs/libreac/fuzz_scene/lib/Reusable/AsStackSz.v blob 1d4df3ac4529: first difference at line 16
+DIFFERS  Reusable/StackFreeDef.v        vs proofs/libreac/fuzz_disco/lib/Reusable/StackFreeDef.v blob c561caf74874: first difference at line 6
+DIFFERS  Reusable/StackFreeJournal.v    vs proofs/libreac/fuzz_disco/lib/Reusable/StackFreeJournal.v blob 1b482b7df168: first difference at line 6
+DIFFERS  Reusable/StackFreeRaw.v        vs proofs/libreac/fuzz_disco/lib/Reusable/StackFreeRaw.v blob 279ed8e84bed: first difference at line 1
+OK       Reusable/YA0n.v                = proofs/libreac/fuzz_boxreg/lib/Reusable/YA0n.v blob 2fdeafb05202, prefix OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib -> OssFuzzTheorems.Proofs.reac_pw.fuzz_link.lib
+OK       Reusable/YFfn.v                = proofs/libreac/fuzz_boxreg/lib/Reusable/YFfn.v blob 7227dd34d77b, prefix OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib -> OssFuzzTheorems.Proofs.reac_pw.fuzz_link.lib
+OK       Reusable/YG0b.v                = proofs/libreac/fuzz_boxreg/lib/Reusable/YG0b.v blob 9fc3e8d49f78, prefix OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib -> OssFuzzTheorems.Proofs.reac_pw.fuzz_link.lib
+OK       Reusable/YA0j.v                = proofs/libreac/fuzz_boxreg/lib/Reusable/YA0j.v blob 044f6a262411, prefix OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib -> OssFuzzTheorems.Proofs.reac_pw.fuzz_link.lib
+OK       Reusable/YWH8.v                = proofs/libreac/fuzz_boxreg/lib/Reusable/YWH8.v blob dc2018d14746, prefix OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib -> OssFuzzTheorems.Proofs.reac_pw.fuzz_link.lib
+RESULT FAIL
+rc=1
+(control: the same check on the tree of d726505293e, which carries 2cf45110572's hand notice lines in AsStackSz.v, StackFreeDef.v, StackFreeJournal.v and StackFreeRaw.v: those four DIFFER, RESULT FAIL, as expected)

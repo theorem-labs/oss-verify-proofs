@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: open62541
 harness: fuzz_attributeoperand
-rocq: OssFuzzTheorems.open62541.fuzz_attributeoperand
+rocq: OSSVerify.open62541.fuzz_attributeoperand
 origin: upstream
 summary: 'Checks 3 properties (listed below); the first, a round trip: parse(print(parse(s))) is structurally
   equal to parse(s): UA_AttributeOperand_parse of the printed operand gives an operand UA_equal to the

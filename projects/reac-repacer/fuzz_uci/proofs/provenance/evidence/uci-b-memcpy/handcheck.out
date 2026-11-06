@@ -1,0 +1,50 @@
+2	_ZN11__sanitizer6GetTidEv+0x4 syscall a3 PURE at ecall
+2	_ZN11__sanitizer6GetTidEv+0x4 syscall a4 PURE at ecall
+17	_ZN11__sanitizer6GetTidEv+0x4 syscall a5 PURE at ecall
+1	_ZN11__sanitizer11CheckFailedEPKciS1_yy+0x38 deep PURE [15] into _ZN11__sanitizer6GetTidEv
+2	_ZN11__sanitizer11CheckFailedEPKciS1_yy+0x38 deep PURE [17] into _ZN11__sanitizer6GetTidEv
+2	_ZN11__sanitizer6PrintfEPKcz+0xc data store8 PURE
+2	_ZN11__sanitizer6PrintfEPKcz+0x10 data store8 PURE
+4	_ZN11__sanitizer6PrintfEPKcz+0x28 data stack address sp+24 taken while a spilled copy is tracked
+4	_ZN11__sanitizer6PrintfEPKcz+0x30 data stack address sp+24 taken while a spilled copy is tracked
+1	_ZN11__sanitizer6ReportEPKcz+0xc data store8 PURE
+1	_ZN11__sanitizer6ReportEPKcz+0x1c data store8 PURE
+5	_ZN11__sanitizer6ReportEPKcz+0x20 data store8 PURE
+5	_ZN11__sanitizer6ReportEPKcz+0x24 data store8 PURE
+7	_ZN11__sanitizer6ReportEPKcz+0x28 data stack address sp+24 taken while a spilled copy is tracked
+7	_ZN11__sanitizer6ReportEPKcz+0x34 data stack address sp+24 taken while a spilled copy is tracked
+1	_ZN6__asan14AsanDeactivateEv+0x90 data store4 PURE
+4	_ZN11__sanitizer13internal_mmapEPvmiiiy+0x4 syscall a3 PURE at ecall
+1	___interceptor_memset+0x9c indirect a5 PURE at jalr
+2	___interceptor_memset+0x9c indirect a7 PURE at jalr
+1	__lsysinfo+0xc syscall a2 PURE at ecall
+3	__lsysinfo+0xc syscall a4 PURE at ecall
+1	__lsysinfo+0xc syscall a5 PURE at ecall
+3	getrlimit+0x44 syscall a4 PURE at ecall
+1	getrlimit+0x44 syscall a5 PURE at ecall
+1	_ZN11__sanitizer20SizeClassAllocator32INS_4AP32EE16PopulateF+0x70 data amo PURE
+1	_ZN11__sanitizer15internal_usleepEy+0x3c data stack address sp+0 taken while a spilled copy is tracked
+1	_ZN11__sanitizer15internal_usleepEy+0x40 syscall a2 PURE at ecall
+2	_ZN11__sanitizer13internal_readEiPvm+0x20 syscall a2 PURE at ecall
+2	_ZN11__sanitizer15internal_munmapEPvm+0x4 syscall a4 PURE at ecall
+2	_ZN11__sanitizer16ReadFileToBufferEPKcPPcPmS4_mPi+0xb4 data store8 PURE
+1	_ZN11__sanitizer13internal_openEPKcij+0x1c syscall a2 PURE at ecall
+1	_ZN11__sanitizer13internal_openEPKcij+0x1c syscall a4 PURE at ecall
+1	_ZN11__sanitizer20internal_sched_yieldEv+0x4 syscall a3 PURE at ecall
+3	sysconf+0xc0 ret a0 PURE
+1	socket+0x18 syscall a1 PURE at ecall
+1	socket+0x18 syscall a6 PURE at ecall
+1	socket+0x68 syscall a1 PURE at ecall
+1	socket+0x68 syscall a6 PURE at ecall
+1	socket+0x98 syscall a6 PURE at ecall
+1	socket+0xc0 syscall a6 PURE at ecall
+1	__syscall_cp_c+0x1c syscall a2 PURE at ecall
+1	__map_file+0x40 syscall a2 PURE at ecall
+1	__strftime_fmt_1+0x614 ret a1 PURE
+1	__strftime_l+0x84 data store8 PURE
+1	__strftime_l+0x12c data stack address sp+40 taken while a spilled copy is tracked
+1	__strftime_l+0x1a8 data stack address sp+60 taken while a spilled copy is tracked
+1	__strftime_l+0x1ac data stack address sp+48 taken while a spilled copy is tracked
+4	_ZN11__sanitizer6GetTidEv+0x4 syscall a6 PURE at ecall
+4	_ZN11__sanitizer9FutexWakeEPNS_15atomic_uint32_tEj+0x1c syscall a6 PURE at ecall
+hand keys 49, uses 115, failures 0

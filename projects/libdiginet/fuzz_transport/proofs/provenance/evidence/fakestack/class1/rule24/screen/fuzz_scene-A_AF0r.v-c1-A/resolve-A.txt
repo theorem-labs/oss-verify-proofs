@@ -1,0 +1,5 @@
+[libreac/fuzz_scene] A/AF0r.v:45 0x3f5d8 0x3dfc4
+[libreac/fuzz_scene] A/AF0r.v:74 0x9b700 0xa4080
+[libreac/fuzz_scene] A/AF0r.v:74 0x9c3f8 0xa4d70
+[libreac/fuzz_scene] A/AF0r.v:75 0x9b760 0xa40e0
+[libreac/fuzz_scene] A/AF0r.v:75 0x9c408 0xa4d80

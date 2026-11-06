@@ -1,0 +1,24 @@
+pin_sha256 cee6f04ad3d4928e242405689ae058bb9e8b6533000c90bde984a2f0d5ff5146
+load 1 10000 1ff24 1ff24
+load 2 30f24 6e324 6e324
+load 3 a0248 1360 1db8
+load 4 a25a8 37f8 55b748
+nseg 4
+section .note.gnu.build-id 102a8 24 102cc
+section .rodata 102e0 12ccc 22fac
+section .eh_frame_hdr 22fac 215c 25108
+section .eh_frame 25108 ae1c 2ff24
+section .text 30f24 6e324 9f248
+section .tbss 9f248 14 9f25c
+section .init_array a0248 20 a0268
+section .fini_array a0268 10 a0278
+section .preinit_array a0278 8 a0280
+section .data.rel.ro a0280 5d0 a0850
+section .got a0850 d58 a15a8
+section .relro_padding a15a8 a58 a2000
+section .data a25a8 2bb8 a5160
+section asan_globals a5160 c40 a5da0
+section .bss a5dc0 557f30 5fdcf0
+relro a0280 a15a8
+got a08b0 a9478
+got a0908 a9480

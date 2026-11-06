@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zstd
 harness: zstd_frame_info
-rocq: OssFuzzTheorems.zstd.zstd_frame_info
+rocq: OSSVerify.zstd.zstd_frame_info
 origin: upstream
 summary: Calls ten frame-inspection helpers (getFrameContentSize, findFrameCompressedSize, decompressBound,
   getFrameHeader, ...) on the input; results discarded.

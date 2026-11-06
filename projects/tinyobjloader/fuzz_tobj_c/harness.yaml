@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tinyobjloader
 harness: fuzz_tobj_c
-rocq: OssFuzzTheorems.tinyobjloader.fuzz_tobj_c
+rocq: OSSVerify.tinyobjloader.fuzz_tobj_c
 origin: upstream
 summary: 'return tobj_fuzz_one(data, size): tobj_load_obj_from_memory_f and free on TOBJ_OK (tiny_obj_c.c:1016-1023);
   nothing is checked.'

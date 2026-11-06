@@ -1,0 +1,10 @@
+stack_malloc symbols: __asan_stack_malloc_0 0x3cda4, __asan_stack_malloc_1 0x3cf18, __asan_stack_malloc_2 0x3d0a8, __asan_stack_malloc_4 0x3d244
+call 0x80720 in LLVMFuzzerTestOneInput (0x806b0, 5312 bytes) -> __asan_stack_malloc_4; last a0 write: 0x8071c addi a0, zero, 0x340
+call 0x81bec in check_groupa (0x81b70, 948 bytes) -> __asan_stack_malloc_2; last a0 write: 0x81be8 addi a0, zero, 0xe0
+call 0x82070 in reac_ctrl_parse (0x82000, 2464 bytes) -> __asan_stack_malloc_1; last a0 write: 0x8206c addi a0, zero, 0x80
+call 0x82a84 in reac_ctrl_stamp_headamp (0x82a14, 588 bytes) -> __asan_stack_malloc_0; last a0 write: 0x82a80 addi a0, zero, 0x40
+call 0x83070 in ctrl_lay_block (0x82ffc, 928 bytes) -> __asan_stack_malloc_1; last a0 write: 0x8306c addi a0, zero, 0x60
+call 0x835c0 in reac_box_model_block (0x8354c, 3712 bytes) -> __asan_stack_malloc_0; last a0 write: 0x835bc addi a0, zero, 0x40
+call 0x84968 in reac_grant_build_sweep (0x848f0, 1068 bytes) -> __asan_stack_malloc_2; last a0 write: 0x84964 addi a0, zero, 0xc0
+jal scanned: 6896
+rc=0

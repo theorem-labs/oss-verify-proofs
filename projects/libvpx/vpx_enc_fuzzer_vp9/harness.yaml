@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libvpx
 harness: vpx_enc_fuzzer_vp9
-rocq: OssFuzzTheorems.libvpx.vpx_enc_fuzzer_vp9
+rocq: OSSVerify.libvpx.vpx_enc_fuzzer_vp9
 origin: upstream
 summary: Byte 0 picks keyframe interval, deadline and one of 6 tiny frame sizes; the rest is copied into
   I420 planes frame by frame (up to 150/300 frames) and encoded with vpx_codec_encode; compressed packets

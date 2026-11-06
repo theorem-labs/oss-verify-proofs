@@ -1,0 +1,154 @@
+schema: oss-verify-proofs build record v1
+entry_point:
+  project: libreac
+  harness: fuzz_scene
+  function: LLVMFuzzerTestOneInput
+  records:
+  - projects/libreac/project.yaml
+  - projects/libreac/fuzz_scene/harness.yaml
+upstream:
+  name: libreac
+  repository: https://github.com/FreeREAC/libreac
+  commit: d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+  licence: GPL-3.0-or-later
+  patch_count: 0
+  licence_evidence: LICENSE (the GPL version 3 text) and the SPDX-License-Identifier line of each src/ and fuzz/ file at d16f3f4e
+oss_fuzz: null
+harness:
+  origin: upstream
+  source:
+    files:
+    - source/fuzz_scene.c
+    from:
+      repository: https://github.com/FreeREAC/libreac
+      commit: d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+      path: fuzz/fuzz_scene.c
+    modified: false
+    licence: GPL-3.0-or-later
+port:
+  repository: theorem-labs/oss-verify
+  commit: 6a4a32ac65b497b2f5d9d8990bb6f9aefbe54d16
+  path: projects/libreac
+  tools:
+    commit: 6a4a32ac65b497b2f5d9d8990bb6f9aefbe54d16
+    paths:
+    - infra/
+    - tools/
+    built: 207fe9595413b6e0b51b975d700b51265a80aff5
+    how: 'the build ran oss-verify''s main''s tools/ and infra/ at this commit on projects/libreac/ at the port''s commit:
+      tools/enroll/port-commit makes the commit built (oss_verifier.commit in port/manifest.yaml) of the two'
+  asset:
+    file: libreac-port.tar.zst
+    bytes: 216174
+    sha256: fc7075728374dee1d84d8ab20b04fe6ba27ab539b83f39ef8fe6533180c075d8
+  files: port/projects/libreac/ (the port's files for the project at the commit, less its seed corpora and other binary or
+    derived files, which the port archive carries) and port/manifest.yaml (the manifest of tools/check --twice, less its host
+    keys)
+  patches: []
+  build_system: build.sh (clang, ar; libreac's Makefile is not used)
+  how_to_rebuild: 'as docs/reproducing.md: unpack libreac-port.tar.zst and, from it, run tools/check --no-shell --lock <projects/libreac/fuzz_scene/harness.yaml
+    of this repository> libreac; it builds libreac at the commit the lock names, on the builder image project.yaml names,
+    and compares each binary'
+toolchain:
+  clang: 20.1.8
+  builder_image: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  images:
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  static_asan:
+    repository: https://github.com/theorem-labs/static-asan
+    commit: b05061352064fa2be1813ac5429149f3de5f057d
+    note: the builder image's static AddressSanitizer, as in the rc.2 records
+binaries:
+- build: plain
+  file: fuzz_scene.plain
+  bytes: 55016
+  sha256: afedb7a7edf00e0ccf3141f3498196bd12feac51cefb72b412c761b9341b1a3f
+- build: ubsan
+  file: fuzz_scene.ubsan
+  bytes: 55992
+  sha256: e9e61c239736db98523e664ee0ebf644b2c1588601a8ef2176633e0aa76f8399
+- build: asan
+  file: fuzz_scene.asan
+  bytes: 579368
+  sha256: 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026
+- build: asan-ubsan
+  file: fuzz_scene.asan-ubsan
+  bytes: 580184
+  sha256: e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f
+binary_asset:
+  file: libreac-bin.tar.zst
+  bytes: 1035913
+  sha256: 594035117541b17608787f42207352ccb0c9216e7bd1fdfd79943d50d8712907
+source_asset:
+  src:
+    file: libreac-src.tar.zst
+    bytes: 607561
+    sha256: ce3c753a03098a88fdc81b17784c0c4b53ef84648101eac8ba7c6b0f769b8eab
+  src_manifest:
+    file: libreac-src.MANIFEST.tsv
+    bytes: 1374
+    sha256: 50d8080f1512640a852a9bad5f5f70c561a2ede49b2ebbea06ebce780a4362fb
+rebuild:
+- 'the port''s projects/libreac/ at 6a4a32ac with tools/ and infra/ of oss-verify''s main at 6a4a32ac (the commit 207fe959
+  port-commit makes of them; oss_verifier.modified: false), tools/check --twice libreac on the builder image: all 36 binaries
+  of the 9 harnesses identical in the second build (port/manifest.yaml, rebuild.result identical), with these SHA-256s'
+- libreac-bin.tar.zst and the source assets packed by tools/enroll/assets.py from those files; every member of libreac-src.tar.zst
+  is a git blob of an upstream tree its MANIFEST names
+licence:
+  components:
+  - component: libreac
+    files: every src/*.c (into libreac.a), the fuzz target and its header fuzz/fuzz.h; for fuzz_pcap also a second compilation
+      of src/pcap_source.c
+    licence: GPL-3.0-or-later
+    evidence: LICENSE (the GPL version 3 text) and the SPDX-License-Identifier line of each src/ and fuzz/ file at d16f3f4e
+    texts:
+    - LICENSES/libreac-LICENSE
+  - component: musl libc (static)
+    files: '-'
+    licence: MIT
+    evidence: musl COPYRIGHT; linked in every build
+    texts:
+    - LICENSES/musl-COPYRIGHT
+  - component: 'LLVM runtimes: compiler-rt builtins; in ASan builds the sanitizer runtime and libunwind'
+    files: '-'
+    licence: Apache-2.0 WITH LLVM-exception
+    evidence: LICENSE.TXT of compiler-rt and libunwind at llvmorg-20.1.8 (87f0227c), as in the rc.2 records
+    texts:
+    - LICENSES/llvm-compiler-rt-LICENSE.TXT
+    - LICENSES/llvm-libunwind-LICENSE.TXT
+  - component: static-asan patches compiled into the ASan runtime and musl
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of theorem-labs/static-asan at b0506135 (MIT for Theorem Labs work; the LLVM and musl code it patches
+      keeps its own licence)
+    texts:
+    - LICENSES/static-asan-LICENSE
+  - component: 'the OSS Verify port''s driver (infra/base-builder/driver/: cli.c, adapter.c and the headers they include,
+      and the seals wrap_getenv.c, wrap_mkstemp.c and wrap_getpid.c), linked into every build'
+    files: '-'
+    licence: MIT OR Apache-2.0
+    evidence: the SPDX-License-Identifier line of each of those files at theorem-labs/oss-verify 6a4a32a
+    texts:
+    - LICENSES/oss-verify-MIT.txt
+    - LICENSES/oss-verify-LICENSE
+  not_in_binaries: []
+  source_bundle:
+  - file: libreac-src.tar.zst
+    sha256: ce3c753a03098a88fdc81b17784c0c4b53ef84648101eac8ba7c6b0f769b8eab
+  - file: libreac-src.MANIFEST.tsv
+    sha256: 50d8080f1512640a852a9bad5f5f70c561a2ede49b2ebbea06ebce780a4362fb
+  - file: libreac-port.tar.zst
+    sha256: fc7075728374dee1d84d8ab20b04fe6ba27ab539b83f39ef8fe6533180c075d8
+proofs:
+  texts:
+  - LICENSES/anthropic-proofs-LICENSE
+  - LICENSES/anthropic-proofs-LICENSE-MIT
+  - LICENSES/anthropic-proofs-NOTICE
+  texts_location: the repository's top directory
+  licence: Apache-2.0 OR MIT for the 2027 Rocq files of this folder that carry that tag, each with Anthropic's copyright line;
+    MIT, the repository's licence (LICENSE), for the 4 tagged MIT; the other 393 carry no licence line
+  modified: 'The licence lines of 508 of its files were written in this repository in 2026-11, by the licence change of the
+    release series: an SPDX tag, and Anthropic''s copyright line above the tag where the file carries Anthropic''s text. In
+    2026-11, 79 more of its files took the licence lines of the Anthropic-licensed file each was made from, in this fuzz target
+    or another (docs/adding-a-proof.md, requirement 7), and one line `Modified by Theorem Labs, 2026-11` that names that file
+    and says how the file was changed from it'

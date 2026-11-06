@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: binutils
 harness: fuzz_objdump
-rocq: OssFuzzTheorems.binutils.fuzz_objdump
+rocq: OSSVerify.binutils.fuzz_objdump
 origin: oss-fuzz
 summary: Runs objdump display_file with section contents, headers, private headers, DWARF, stabs, disassemble-all
   (plus relocs and disassembly unless OBJDUMP_SAFE); output not checked.

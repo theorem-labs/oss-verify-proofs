@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: gdal
 harness: gtiff_fuzzer
-rocq: OssFuzzTheorems.gdal.gtiff_fuzzer
+rocq: OSSVerify.gdal.gtiff_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

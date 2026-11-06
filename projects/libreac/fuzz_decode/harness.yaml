@@ -1,0 +1,236 @@
+schema: oss-fuzz-theorems/harness/1
+project: libreac
+harness: fuzz_decode
+rocq: OSSVerify.libreac.fuzz_decode
+origin: upstream
+summary: 'Decodes the payload after its three header bytes as one REAC audio frame, in its own allocation of exactly its length,
+  with libreac''s frame decoders: reac_frame_inspect, reac_decode and reac_decode_plain_le downstream, reac_upstream_decode
+  upstream, and the two helpers every ingest path calls first, reac_frame_is_reac and reac_frame_clean_len. The low two bits
+  of byte 0 pick the 44.1, 48 or 96 kHz mode or a geometry built from bytes 1 and 2 read as signed. A rejected frame is an
+  ordinary result.'
+entry: LLVMFuzzerTestOneInput
+source:
+  files:
+  - source/fuzz_decode.c
+  from:
+    repository: https://github.com/FreeREAC/libreac
+    commit: d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+    path: fuzz/fuzz_decode.c
+  modified: false
+  licence: GPL-3.0-or-later
+library:
+  repository: https://github.com/FreeREAC/libreac
+  commit: d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+  version: 1.9.0
+  licence: GPL-3.0-or-later
+modifications:
+- Linked against a static libreac.a of every src/*.c of libreac 1.9.0 at commit d16f3f4e, compiled with each build's flags,
+  as libreac's Makefile builds its fuzz targets but with this toolchain in place of a native clang and libFuzzer.
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on
+  its input.
+- A small driver reads the input file, calls the fuzz target one to four times and prints each return value.
+builds:
+  plain:
+    file: fuzz_decode.plain
+    bytes: 47136
+    sha256: 556b61e63c44907b003aff8b1e8b926863db277b4f2897fdc58967a7beddc9cc
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  ubsan:
+    file: fuzz_decode.ubsan
+    bytes: 48720
+    sha256: ff70f30e22dcdcea42fe294ed23995ec278b6c66ace0ecade26d2a917657c1b9
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  asan:
+    file: fuzz_decode.asan
+    bytes: 568552
+    sha256: 5973b76807d8d2e14b82dc6afde70a2c882923658406aeca43681719cb4e8036
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+  asan-ubsan:
+    file: fuzz_decode.asan-ubsan
+    bytes: 569992
+    sha256: 5d05689fd5b196976890b91e68c113953d385775b9d811ef98c712b2cac7d4a9
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+licence: NOASSERTION
+checks:
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_decode.c:152-233
+  what: 'Downstream: a frame is valid only as a 1492-byte 0x8819 frame ending C2 EA with its counter at bytes 14-15; reac_decode
+    decodes exactly a valid frame of a fitting even-width geometry and reac_decode_plain_le a valid fitting one, each returning
+    the samples per packet, a refused decode leaves its output untouched, and each plain-LE sample is the straight copy.'
+- kind: roundtrip
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_decode.c:118-125
+  what: Decoding a frame's audio and braiding it again with reac_braid_encode gives back the audio region byte for byte, downstream
+    and upstream, for a geometry of 12 samples or fewer.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_decode.c:88-98
+  what: Every decoded sample, downstream and upstream, is the three bytes the documented braid map puts it in, the map written
+    out in the harness rather than taken from the library.
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_decode.c:251-303
+  what: 'Upstream: reac_upstream_channels is the frame''s geometry restricted to box widths, NULL arguments are refused, and
+    reac_upstream_decode succeeds exactly on a 0x8819 frame of a box geometry ending C2 EA, leaving its output untouched when
+    it refuses.'
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_decode.c:334-356
+  what: reac_frame_is_reac is true exactly for a frame of at least 14 bytes with EtherType 0x8819, and reac_frame_clean_len
+    strips a two-byte FCS residue exactly when the length is two more than a legal geometry, and nothing else.
+statements:
+  plain_halts:
+    kind: halts
+    builds:
+    - plain
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  ubsan_halts:
+    kind: halts
+    builds:
+    - ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_halts:
+    kind: halts
+    builds:
+    - asan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_ubsan_halts:
+    kind: halts
+    builds:
+    - asan-ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open
+  ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - ubsan
+    reading: alloc-forced-only
+    budgets: standard
+    status: open
+  asan_ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan-ubsan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open

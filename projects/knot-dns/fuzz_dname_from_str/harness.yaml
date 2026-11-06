@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: knot-dns
 harness: fuzz_dname_from_str
-rocq: OssFuzzTheorems.knot_dns.fuzz_dname_from_str
+rocq: OSSVerify.knot_dns.fuzz_dname_from_str
 origin: upstream
 summary: Copies the input to a NUL-terminated string and calls knot_dname_from_str into a fixed knot_dname_storage_t;
   the result is cast to void and never checked or converted back.

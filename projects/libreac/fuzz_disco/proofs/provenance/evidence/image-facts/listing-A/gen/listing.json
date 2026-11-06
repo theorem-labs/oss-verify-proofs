@@ -1,0 +1,483 @@
+{
+ "lo": 528196,
+ "hi": 562464,
+ "nslots": 8567,
+ "his": [
+  655248,
+  655252,
+  118776,
+  528380,
+  135668,
+  135700,
+  135732,
+  135764,
+  135796,
+  135828,
+  134532,
+  134844,
+  134856,
+  134872,
+  134996,
+  135156,
+  135252,
+  135264,
+  65704,
+  135364,
+  657784,
+  658124,
+  654688,
+  654948,
+  134820,
+  655464,
+  656560,
+  656664,
+  660928,
+  660932,
+  677328,
+  660976,
+  660980,
+  677376,
+  657008,
+  657012,
+  112364,
+  542448,
+  657472,
+  137316,
+  134268,
+  134436,
+  134604,
+  655560,
+  655564,
+  86320,
+  545076,
+  656404,
+  656408,
+  111736,
+  545916,
+  136716,
+  67688,
+  658332,
+  655404,
+  657556,
+  658020,
+  658024,
+  92868,
+  551624,
+  134024,
+  64500,
+  134136,
+  134140,
+  134408,
+  134476,
+  134488,
+  134508,
+  134780,
+  134816,
+  134852,
+  134920,
+  134980,
+  134992,
+  135008,
+  135044,
+  135420,
+  656192,
+  656372,
+  656376,
+  95320,
+  554076,
+  136540,
+  654800,
+  654816,
+  138756,
+  654908,
+  655076,
+  655196,
+  655352,
+  655356,
+  106588,
+  557152,
+  656616,
+  657824,
+  657904,
+  68148,
+  68152,
+  68224,
+  68232,
+  658180,
+  655204,
+  655592,
+  135404,
+  655920,
+  656200
+ ],
+ "objs": [
+  656744,
+  656656,
+  118923,
+  528196,
+  135264,
+  135296,
+  135328,
+  135360,
+  135392,
+  135424,
+  135040,
+  135104,
+  135552,
+  135520,
+  135136,
+  135168,
+  135200,
+  66416,
+  135232,
+  135456,
+  656064,
+  659848,
+  659856,
+  678400,
+  112863,
+  542232,
+  656128,
+  135712,
+  135744,
+  135776,
+  135808,
+  88172,
+  544904,
+  112923,
+  545724,
+  135864,
+  66368,
+  93855,
+  551440,
+  136000,
+  136128,
+  136160,
+  136032,
+  135968,
+  135936,
+  135904,
+  136192,
+  136320,
+  136384,
+  136224,
+  136256,
+  136448,
+  136480,
+  136416,
+  136512,
+  136544,
+  95705,
+  553896,
+  136608,
+  656192,
+  136768,
+  107735,
+  556960,
+  66328,
+  66504,
+  136832
+ ],
+ "syms": [
+  [
+   "__asan_stack_malloc_6",
+   252608
+  ],
+  [
+   "__asan_set_shadow_f8",
+   348272
+  ],
+  [
+   "__asan_report_store1",
+   365768
+  ],
+  [
+   "__interceptor_trampoline_malloc",
+   340964
+  ],
+  [
+   "reac_disco_table_init",
+   548816
+  ],
+  [
+   "reac_disco_gate_init",
+   547652
+  ],
+  [
+   "reac_disco_peer_lock_init",
+   547616
+  ],
+  [
+   "reac_hunt_init",
+   556572
+  ],
+  [
+   "reac_hunt_pin",
+   556764
+  ],
+  [
+   "reac_hunt_silence_proven",
+   556884
+  ],
+  [
+   "reac_disco_table_age",
+   551016
+  ],
+  [
+   "check_table",
+   538948
+  ],
+  [
+   "reac_disco_table_json",
+   551440
+  ],
+  [
+   "__interceptor_trampoline_strlen",
+   272836
+  ],
+  [
+   "__asan_set_shadow_00",
+   347984
+  ],
+  [
+   "__asan_memcpy",
+   336016
+  ],
+  [
+   "reac_disco_classify",
+   545700
+  ],
+  [
+   "reac_disco_classify_on_segment",
+   547648
+  ],
+  [
+   "check_sighting",
+   539280
+  ],
+  [
+   "reac_disco_gate_should_push",
+   547684
+  ],
+  [
+   "__interceptor_trampoline_bcmp",
+   272856
+  ],
+  [
+   "find_entry",
+   541948
+  ],
+  [
+   "__asan_memset",
+   337196
+  ],
+  [
+   "json_scalar",
+   540184
+  ],
+  [
+   "jtok_is",
+   539968
+  ],
+  [
+   "reac_hunt_observe",
+   556960
+  ],
+  [
+   "reac_disco_table_observe",
+   548848
+  ],
+  [
+   "__interceptor_trampoline_free",
+   340960
+  ],
+  [
+   "__interceptor_trampoline_snprintf",
+   272900
+  ],
+  [
+   "reac_box_name",
+   542232
+  ],
+  [
+   "reac_hunt_step",
+   558252
+  ],
+  [
+   "reac_hunt_verdict_name",
+   556476
+  ],
+  [
+   "reac_hunt_role",
+   559512
+  ],
+  [
+   "reac_hunt_heard_anything",
+   559592
+  ],
+  [
+   "__asan_report_load4",
+   365288
+  ],
+  [
+   "__asan_stack_free_6",
+   253020
+  ],
+  [
+   "__asan_handle_no_return",
+   369060
+  ],
+  [
+   "abort",
+   588948
+  ],
+  [
+   "__asan_report_load1",
+   364968
+  ],
+  [
+   "__asan_report_load8",
+   365448
+  ],
+  [
+   "__asan_report_store4",
+   366088
+  ],
+  [
+   "__interceptor_trampoline_memchr",
+   272860
+  ],
+  [
+   "__asan_report_store8",
+   366248
+  ],
+  [
+   "__asan_init",
+   369420
+  ],
+  [
+   "__asan_version_mismatch_check_v8",
+   369568
+  ],
+  [
+   "__asan_register_elf_globals",
+   264448
+  ],
+  [
+   "__asan_unregister_elf_globals",
+   264556
+  ],
+  [
+   "__asan_stack_malloc_3",
+   252180
+  ],
+  [
+   "sb_dec",
+   544904
+  ],
+  [
+   "__asan_set_shadow_f5",
+   348248
+  ],
+  [
+   "__asan_stack_malloc_0",
+   250996
+  ],
+  [
+   "classify_core",
+   545724
+  ],
+  [
+   "__asan_stack_malloc_2",
+   251768
+  ],
+  [
+   "reac_ctrl_parse",
+   553896
+  ],
+  [
+   "reac_ctrl_checksum_verify",
+   553780
+  ],
+  [
+   "reac_ports_parse",
+   561972
+  ],
+  [
+   "__asan_stack_malloc_1",
+   251368
+  ],
+  [
+   "kind_of_link1",
+   556360
+  ],
+  [
+   "__asan_report_store2",
+   365928
+  ],
+  [
+   "reac_frame_clean_len",
+   559736
+  ],
+  [
+   "reac_arbitrate",
+   559800
+  ],
+  [
+   "reac_sender_kind",
+   561696
+  ],
+  [
+   "reac_rival_kind_of",
+   560980
+  ],
+  [
+   "reac_rate_snap",
+   559668
+  ],
+  [
+   "reac_master_only_cadence_ns",
+   561264
+  ]
+ ],
+ "funcs": {
+  "reac_disco_classify_on_segment": 19452,
+  "reac_disco_classify": 17504,
+  "reac_disco_gate_init": 19456,
+  "reac_disco_peer_lock_init": 19420,
+  "reac_disco_table_init": 20620,
+  "asan.module_dtor": 13988,
+  "asan.module_ctor": 13932,
+  "reac_frame_clean_len": 31540,
+  "reac_rate_snap": 31472,
+  "reac_hunt_heard_anything": 31396,
+  "reac_hunt_silence_proven": 28688,
+  "reac_hunt_role": 31316,
+  "reac_hunt_verdict_name": 28280,
+  "kind_of_link1": 28164,
+  "reac_ctrl_checksum_verify": 25584,
+  "reac_hunt_pin": 28568,
+  "find_entry": 13752,
+  "reac_hunt_init": 28376,
+  "jtok_is": 11772,
+  "reac_sender_kind": 33500,
+  "reac_rival_kind_of": 32784,
+  "check_table": 10752,
+  "reac_disco_table_age": 22820,
+  "reac_master_only_cadence_ns": 33068,
+  "reac_ports_parse": 33776,
+  "check_sighting": 11084,
+  "sb_dec": 16708,
+  "reac_disco_gate_should_push": 19488,
+  "reac_arbitrate": 31604,
+  "reac_hunt_step": 30056,
+  "reac_hunt_observe": 28764,
+  "json_scalar": 11988,
+  "classify_core": 17528,
+  "reac_disco_table_observe": 20652,
+  "reac_disco_table_json": 23244,
+  "reac_ctrl_parse": 25700,
+  "reac_box_name": 14036,
+  "LLVMFuzzerTestOneInput": 0
+ }
+}

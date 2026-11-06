@@ -1,0 +1,8 @@
+# cmpkit 4bbd3a74be89: 1480ca2faea0 bytecmp-1480ca2faea0.py, 387ac56b5425 closure_strict2.py, 4d70e90bc1fa drvcmp.py, 824905e26211 jtcheck.py, e6df5ed4dd8b paircl.py, 4c05cadaeba3 repin_check-4c05cadaeba3.py, 16982e3ef42b strictcmp2.py
+# python 3.12.3, pyelftools 0.33, capstone 5.0.7; run.sh c1fcf899f953, kitsum.py d41b4d193eb8, settle.py e5b30fab6fbb, pinback.py 47dee592864a
+# python3 pinback.py img/unstripped/cgif_file_fuzzer.asan-ubsan.symtwin img/bin/cgif_file_fuzzer.asan-ubsan
+pinback: img/unstripped/cgif_file_fuzzer.asan-ubsan.symtwin sha256 3f110c1db582567aa8b745a910f641e51b80b8aa84dbd5bc5478c823ca0783f4 -> img/bin/cgif_file_fuzzer.asan-ubsan (590264 bytes, e_shoff 589048, e_shnum 19) sha256 1c29845fe6058de6e1dbf3f6ec6abd566ea612d76b65ea5435d7ff77c63e08ef
+# python3 $KIT/drvcmp.py twins (KIT=kit/run) PIN TWIN ...: the donor pin rebuilt above with both donor twins, and the decode B pin
+cgif_file_fuzzer.asan-ubsan 1c29845fe605 | cgif_file_fuzzer.asan-ubsan.symtwin 3f110c1db582 | PT_LOAD layout equal: True | differing loadable bytes: 4, outside ELF header [0x10000,0x10040) and .note.gnu.build-id [0x102a8,0x102cc): []
+cgif_file_fuzzer.asan-ubsan 1c29845fe605 | cgif_file_fuzzer.asan-ubsan ce511d541cda | PT_LOAD layout equal: True | differing loadable bytes: 25, outside ELF header [0x10000,0x10040) and .note.gnu.build-id [0x102a8,0x102cc): []
+fuzz_decode.asan-ubsan 5d05689fd5b1 | fuzz_decode.asan-ubsan 6744989bb2e6 | PT_LOAD layout equal: True | differing loadable bytes: 25, outside ELF header [0x10000,0x10040) and .note.gnu.build-id [0x102a8,0x102cc): []

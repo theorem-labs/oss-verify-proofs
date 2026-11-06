@@ -1,0 +1,60 @@
+# alreloc per-numeral report: plugin-hostd/fuzz_command lib/B/Rt/RtSM5T.v at 781f46bc05cd -> libdiginet/fuzz_transport asan-ubsan lib/B/Rt/RtSM5T.v: written
+# source image <AGENTS>/pau-pipeline/plugin-hostd/unstripped/fuzz_command/fuzz_command.asan-ubsan; unit image <WORK>/target/unstripped/fuzz_transport/fuzz_transport.asan-ubsan
+file:line	old	new	rule	old in source image	new in unit image
+B/Rt/RtSM5T.v:6	0x309000	0x309000	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x1764e8	_ZN11__sanitizerL8theDepotE+0x17aaa8
+B/Rt/RtSM5T.v:11	0x3ff84	0x3ff84	resolve (identity)	__asan_stack_malloc_4+0x180	__asan_register_globals+0x710
+B/Rt/RtSM5T.v:12	0x509000	0x509000	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x3764e8	_ZN11__sanitizerL8theDepotE+0x37aaa8
+B/Rt/RtSM5T.v:16	0x3ffd0	0x3ffd0	resolve (identity)	__asan_stack_malloc_5	__asan_register_globals+0x75c
+B/Rt/RtSM5T.v:16	0x40064	0x40064	resolve (identity)	__asan_stack_malloc_5+0x94	__asan_register_globals+0x7f0
+B/Rt/RtSM5T.v:16	0x400dc	0x400dc	resolve (identity)	__asan_stack_malloc_5+0x10c	__asan_register_globals+0x868
+B/Rt/RtSM5T.v:16	0x4010c	0x4010c	resolve (identity)	__asan_stack_malloc_5+0x13c	__asan_register_globals+0x898
+B/Rt/RtSM5T.v:16	0x40128	0x40128	resolve (identity)	__asan_stack_malloc_5+0x158	__asan_register_globals+0x8b4
+B/Rt/RtSM5T.v:16	0x67b4c	0x67b4c	resolve (identity)	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE+0x358	_ZN11__sanitizerL16SharedPrintfCodeEbPKcPv+0x8
+B/Rt/RtSM5T.v:16	0x4b08c	0x4b08c	resolve (identity)	__interceptor___tls_get_addr	_ZL16ioctl_table_fillv+0x1adc
+B/Rt/RtSM5T.v:16	0x9f714	0x9f714	resolve (identity)	__tls_get_addr	sem_timedwait+0x110
+B/Rt/RtSM5T.v:16	0x61e8c	0x61e8c	resolve (identity)	_ZN6__asan16GetCurrentThreadEv	_ZN11__sanitizer16FindPathToBinaryEPKc
+B/Rt/RtSM5T.v:16	0x5a9d8	0x5a9d8	resolve (identity)	_ZN6__asan10AsanTSDGetEv	_ZN6__asanL23force_interface_symbolsEv+0x74
+B/Rt/RtSM5T.v:16	0xa07c8	0xa07c8	resolve (identity)	tss_get	do_tzset+0x174
+B/Rt/RtSM5T.v:16	0x6f5a0	0x6f5a0	resolve (identity)	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	_ZN11__sanitizer15ThreadSuspender17SuspendAllThreadsEv+0xd0
+B/Rt/RtSM5T.v:16	0x4045c	0x4045c	resolve (identity)	_ZN6__asanL11MemToShadowEm	__asan_register_globals+0xbe8
+B/Rt/RtSM5T.v:16	0xa6c50	0xa6c50	resolve (identity)	.got+0xd60	_ZN11__sanitizer11report_fileE+0x10a8
+B/Rt/RtSM5T.v:16	0xa7d38	0xa7d38	resolve (identity)	_ZN14__interception19real___tls_get_addrE	_ZN11__sanitizer15IOCTL_EVIOCGBITE
+B/Rt/RtSM5T.v:16	0xa5f40	0xa5f40	resolve (identity)	.got+0x50	_ZN11__sanitizer11report_fileE+0x398
+B/Rt/RtSM5T.v:16	0x1427f1	0x1427f1	resolve (identity)	_ZN11__sanitizer21common_flags_dont_useE+0x89	_ZN11__sanitizerL9useCountsE+0x42b1
+B/Rt/RtSM5T.v:16	0xa5fa0	0xa5fa0	resolve (identity)	.got+0xb0	_ZN11__sanitizer11report_fileE+0x3f8
+B/Rt/RtSM5T.v:16	0x1406d8	0x1406d8	resolve (identity)	_ZN11__sanitizer17current_verbosityE	_ZN11__sanitizerL9useCountsE+0x2198
+B/Rt/RtSM5T.v:16	0xa6c60	0xa6c60	resolve (identity)	.got+0xd70	_ZN11__sanitizer11report_fileE+0x10b8
+B/Rt/RtSM5T.v:16	0xb04a0	0xb04a0	resolve (identity)	_ZN6__asanL14tsd_key_initedE	_ZN11__sanitizerL26internal_alloc_placeholderE+0x2c20
+B/Rt/RtSM5T.v:16	0x509000	0x509000	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x3764e8	_ZN11__sanitizerL8theDepotE+0x37aaa8
+B/Rt/RtSM5T.v:52	0x3ffd0	0x3dd40	FUNC entry	__asan_stack_malloc_5	__asan_stack_malloc_5
+B/Rt/RtSM5T.v:53	0x40064	0x3ddd4	same-code function	__asan_stack_malloc_5+0x94	__asan_stack_malloc_5+0x94
+B/Rt/RtSM5T.v:54	0x400dc	0x3de4c	same-code function	__asan_stack_malloc_5+0x10c	__asan_stack_malloc_5+0x10c
+B/Rt/RtSM5T.v:55	0x4010c	0x3de7c	same-code function	__asan_stack_malloc_5+0x13c	__asan_stack_malloc_5+0x13c
+B/Rt/RtSM5T.v:56	0x40128	0x3de98	same-code function	__asan_stack_malloc_5+0x158	__asan_stack_malloc_5+0x158
+B/Rt/RtSM5T.v:61	0x509000	0x509000	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x3764e8	_ZN11__sanitizerL8theDepotE+0x37aaa8
+B/Rt/RtSM5T.v:67	0x3ffd0	0x3dd40	FUNC entry	__asan_stack_malloc_5	__asan_stack_malloc_5
+B/Rt/RtSM5T.v:69	0x4045c	0x3e000	resolve	_ZN6__asanL11MemToShadowEm	_ZN6__asanL11MemToShadowEm
+B/Rt/RtSM5T.v:71	0x3ffd0	0x3dd40	FUNC entry	__asan_stack_malloc_5	__asan_stack_malloc_5
+B/Rt/RtSM5T.v:71	0x67b4c	0x628bc	same-code function	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE+0x358	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE+0x358
+B/Rt/RtSM5T.v:71	0x4b08c	0x4769c	FUNC entry	__interceptor___tls_get_addr	__interceptor___tls_get_addr
+B/Rt/RtSM5T.v:71	0x9f714	0x9da60	FUNC entry	__tls_get_addr	__tls_get_addr
+B/Rt/RtSM5T.v:71	0x61e8c	0x5cbfc	FUNC entry	_ZN6__asan16GetCurrentThreadEv	_ZN6__asan16GetCurrentThreadEv
+B/Rt/RtSM5T.v:71	0x5a9d8	0x55748	FUNC entry	_ZN6__asan10AsanTSDGetEv	_ZN6__asan10AsanTSDGetEv
+B/Rt/RtSM5T.v:72	0xa07c8	0x9eb14	FUNC entry	tss_get	tss_get
+B/Rt/RtSM5T.v:72	0x6f5a0	0x6a310	FUNC entry	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm
+B/Rt/RtSM5T.v:72	0x4045c	0x3e000	resolve	_ZN6__asanL11MemToShadowEm	_ZN6__asanL11MemToShadowEm
+B/Rt/RtSM5T.v:103	0xa6c50	0xa49d0	resolve	.got+0xd60	.got+0xd40
+B/Rt/RtSM5T.v:103	0xa7d38	0xa5a90	OBJECT start	_ZN14__interception19real___tls_get_addrE	_ZN14__interception19real___tls_get_addrE
+B/Rt/RtSM5T.v:103	0xa5f40	0xa3ce0	resolve	.got+0x50	.got+0x50
+B/Rt/RtSM5T.v:103	0x1427f1	0x13e231	symbol	_ZN11__sanitizer21common_flags_dont_useE+0x89	_ZN11__sanitizer21common_flags_dont_useE+0x89
+B/Rt/RtSM5T.v:104	0xa5fa0	0xa3d40	resolve	.got+0xb0	.got+0xb0
+B/Rt/RtSM5T.v:104	0x1406d8	0x13c118	OBJECT start	_ZN11__sanitizer17current_verbosityE	_ZN11__sanitizer17current_verbosityE
+B/Rt/RtSM5T.v:104	0xa6c60	0xa49e0	resolve	.got+0xd70	.got+0xd50
+B/Rt/RtSM5T.v:104	0xb04a0	0xabee0	OBJECT start	_ZN6__asanL14tsd_key_initedE	_ZN6__asanL14tsd_key_initedE
+B/Rt/RtSM5T.v:239	0x0007c283	0x0007c283	not an address (instruction word (the word of a fetch_word fact)) (identity)	_ZN11__sanitizer17SymbolizerProcess11SendCommandEPKc+0x1f	_ZN6__lsanL13CheckForLeaksEv+0x467
+B/Rt/RtSM5T.v:240	0x0007c283	0x0007c283	not an address (instruction word (a decode_any argument)) (identity)	_ZN11__sanitizer17SymbolizerProcess11SendCommandEPKc+0x1f	_ZN6__lsanL13CheckForLeaksEv+0x467
+B/Rt/RtSM5T.v:245	0x00160613	0x00160613	not an address (instruction word (the word of a fetch_word fact)) (identity)	_ZN11__sanitizerL9useCountsE+0x1db13	_ZN11__sanitizerL9useCountsE+0x220d3
+B/Rt/RtSM5T.v:246	0x00160613	0x00160613	not an address (instruction word (a decode_any argument)) (identity)	_ZN11__sanitizerL9useCountsE+0x1db13	_ZN11__sanitizerL9useCountsE+0x220d3
+B/Rt/RtSM5T.v:394	0x509000	0x509000	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x3764e8	_ZN11__sanitizerL8theDepotE+0x37aaa8
+B/Rt/RtSM5T.v:403	2147450880	2147450880	SIZES_KEEP	-	-
+B/Rt/RtSM5T.v:473	1048576	1048576	SIZES_KEEP	_ZN11__sanitizerL26internal_alloc_placeholderE+0x4e1c0	_ZN11__sanitizerL26internal_alloc_placeholderE+0x52780

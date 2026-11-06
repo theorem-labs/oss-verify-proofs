@@ -1,0 +1,308 @@
+# per-value extract of the recorded tool-vs-tree delta table, sha256 a3146c76e840d3307ee87883cac2ef4734c4005ee17c17f3e68eff463280265a
+# 305 rows, input order; the class column is dropped
+file	line	current	tool	donor	context	group
+Reusable/YB1h.v	47	0x70000	0x6d000	0x6d000	Lemma tfib_res_eq : segments_reserved TSEGS = [(Z_to_bv 64 0	b tree moved, tool keeps cgif value
+Reusable/YB1h.v	48	0xa0000	0x9d000	0x9d000	(Z_to_bv 64 0xa0000, Z_to_bv 64 0x2000); (Z_to_bv 64 0xa2000	b tree moved, tool keeps cgif value
+Reusable/YB1h.v	48	0xa2000	0x9f000	0x9f000	(Z_to_bv 64 0xa0000, Z_to_bv 64 0x2000); (Z_to_bv 64 0xa2000	b tree moved, tool keeps cgif value
+Reusable/YB1h.v	61	0x5ee000	0x5eb000	0x5eb000	Lemma tfib_res_sizes : APSG.sum_sizes (segments_reserved TSE	b tree moved, tool keeps cgif value
+Reusable/YB1h.v	84	0xa0000	0x9d000	0x9d000	0xa0000 <= bv_unsigned x < 0x5fe000 -> wview TSEGS m x <> No	b tree moved, tool keeps cgif value
+Reusable/YB1h.v	84	0x5fe000	0x5fb000	0x5fb000	0xa0000 <= bv_unsigned x < 0x5fe000 -> wview TSEGS m x <> No	b tree moved, tool keeps cgif value
+Reusable/YB1h.v	98	0xa2000	0x9f000	0x9f000	- exfalso. destruct (Z.lt_ge_cases (bv_unsigned x) 0xa2000) 	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	15	0x65aa8	0x64fac	0x64fac	Definition tfibst_text_start : Z := 0x65aa8.	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	34	0x65adc	0x64fe0	0x64fe0	Lemma F_000 : fetch_word tfibsegs (Z_to_bv 64 0x65adc) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	38	0x65ae0	0x64fe4	0x64fe4	Lemma F_004 : fetch_word tfibsegs (Z_to_bv 64 0x65ae0) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	42	0x65ae4	0x64fe8	0x64fe8	Lemma F_008 : fetch_word tfibsegs (Z_to_bv 64 0x65ae4) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	46	0x65ae8	0x64fec	0x64fec	Lemma F_00c : fetch_word tfibsegs (Z_to_bv 64 0x65ae8) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	50	0x65aec	0x64ff0	0x64ff0	Lemma F_010 : fetch_word tfibsegs (Z_to_bv 64 0x65aec) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	54	0x65af0	0x64ff4	0x64ff4	Lemma F_014 : fetch_word tfibsegs (Z_to_bv 64 0x65af0) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	58	0x65af4	0x64ff8	0x64ff8	Lemma F_018 : fetch_word tfibsegs (Z_to_bv 64 0x65af4) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	62	0x65af8	0x64ffc	0x64ffc	Lemma F_01c : fetch_word tfibsegs (Z_to_bv 64 0x65af8) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	66	0x65afc	0x65000	0x65000	Lemma F_020 : fetch_word tfibsegs (Z_to_bv 64 0x65afc) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	70	0x65b00	0x65004	0x65004	Lemma F_024 : fetch_word tfibsegs (Z_to_bv 64 0x65b00) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	74	0x65b04	0x65008	0x65008	Lemma F_028 : fetch_word tfibsegs (Z_to_bv 64 0x65b04) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	78	0x65b08	0x6500c	0x6500c	Lemma F_02c : fetch_word tfibsegs (Z_to_bv 64 0x65b08) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	82	0x65b0c	0x65010	0x65010	Lemma F_030 : fetch_word tfibsegs (Z_to_bv 64 0x65b0c) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	86	0x65b10	0x65014	0x65014	Lemma F_034 : fetch_word tfibsegs (Z_to_bv 64 0x65b10) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	90	0x65b14	0x65018	0x65018	Lemma F_038 : fetch_word tfibsegs (Z_to_bv 64 0x65b14) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	94	0x65b18	0x6501c	0x6501c	Lemma F_03c : fetch_word tfibsegs (Z_to_bv 64 0x65b18) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	98	0x65b1c	0x65020	0x65020	Lemma F_040 : fetch_word tfibsegs (Z_to_bv 64 0x65b1c) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	102	0x65b20	0x65024	0x65024	Lemma F_044 : fetch_word tfibsegs (Z_to_bv 64 0x65b20) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	106	0x65b24	0x65028	0x65028	Lemma F_048 : fetch_word tfibsegs (Z_to_bv 64 0x65b24) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	110	0x65b28	0x6502c	0x6502c	Lemma F_04c : fetch_word tfibsegs (Z_to_bv 64 0x65b28) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	114	0x65b2c	0x65030	0x65030	Lemma F_050 : fetch_word tfibsegs (Z_to_bv 64 0x65b2c) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	118	0x65b30	0x65034	0x65034	Lemma F_054 : fetch_word tfibsegs (Z_to_bv 64 0x65b30) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	122	0x65b34	0x65038	0x65038	Lemma F_058 : fetch_word tfibsegs (Z_to_bv 64 0x65b34) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	126	0x65b38	0x6503c	0x6503c	Lemma F_05c : fetch_word tfibsegs (Z_to_bv 64 0x65b38) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	130	0x65b3c	0x65040	0x65040	Lemma F_060 : fetch_word tfibsegs (Z_to_bv 64 0x65b3c) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	134	0x65b40	0x65044	0x65044	Lemma F_064 : fetch_word tfibsegs (Z_to_bv 64 0x65b40) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	138	0x65b44	0x65048	0x65048	Lemma F_068 : fetch_word tfibsegs (Z_to_bv 64 0x65b44) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	142	0x65b48	0x6504c	0x6504c	Lemma F_06c : fetch_word tfibsegs (Z_to_bv 64 0x65b48) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	146	0x65b4c	0x65050	0x65050	Lemma F_070 : fetch_word tfibsegs (Z_to_bv 64 0x65b4c) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	150	0x65b50	0x65054	0x65054	Lemma F_074 : fetch_word tfibsegs (Z_to_bv 64 0x65b50) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	154	0x65b54	0x65058	0x65058	Lemma F_078 : fetch_word tfibsegs (Z_to_bv 64 0x65b54) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	158	0x65b58	0x6505c	0x6505c	Lemma F_07c : fetch_word tfibsegs (Z_to_bv 64 0x65b58) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	162	0x65b5c	0x65060	0x65060	Lemma F_080 : fetch_word tfibsegs (Z_to_bv 64 0x65b5c) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	166	0x65b60	0x65064	0x65064	Lemma F_084 : fetch_word tfibsegs (Z_to_bv 64 0x65b60) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	170	0x65b64	0x65068	0x65068	Lemma F_088 : fetch_word tfibsegs (Z_to_bv 64 0x65b64) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	174	0x65b68	0x6506c	0x6506c	Lemma F_08c : fetch_word tfibsegs (Z_to_bv 64 0x65b68) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	178	0x65b6c	0x65070	0x65070	Lemma F_090 : fetch_word tfibsegs (Z_to_bv 64 0x65b6c) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	182	0x65b70	0x65074	0x65074	Lemma F_094 : fetch_word tfibsegs (Z_to_bv 64 0x65b70) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	186	0x65b74	0x65078	0x65078	Lemma F_098 : fetch_word tfibsegs (Z_to_bv 64 0x65b74) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	190	0x65b78	0x6507c	0x6507c	Lemma F_09c : fetch_word tfibsegs (Z_to_bv 64 0x65b78) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	194	0x65b7c	0x65080	0x65080	Lemma F_0a0 : fetch_word tfibsegs (Z_to_bv 64 0x65b7c) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	198	0x65b80	0x65084	0x65084	Lemma F_0a4 : fetch_word tfibsegs (Z_to_bv 64 0x65b80) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	202	0x65b84	0x65088	0x65088	Lemma F_0a8 : fetch_word tfibsegs (Z_to_bv 64 0x65b84) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	206	0x65b88	0x6508c	0x6508c	Lemma F_0ac : fetch_word tfibsegs (Z_to_bv 64 0x65b88) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	210	0x65b8c	0x65090	0x65090	Lemma F_0b0 : fetch_word tfibsegs (Z_to_bv 64 0x65b8c) = Som	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	312	0x65adc	0x64fe0	0x64fe0	msteps tfibsegs (mkst regs (Z_to_bv 64 0x65adc) mem rom) (mk	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	312	0x65b1c	0x65020	0x65020	msteps tfibsegs (mkst regs (Z_to_bv 64 0x65adc) mem rom) (mk	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	357	0x65b1c	0x65020	0x65020	msteps tfibsegs (mkst regs (Z_to_bv 64 0x65b1c) mem rom) (mk	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	357	0x65b58	0x6505c	0x6505c	msteps tfibsegs (mkst regs (Z_to_bv 64 0x65b1c) mem rom) (mk	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	406	0x65b58	0x6505c	0x6505c	msteps tfibsegs (mkst regs (Z_to_bv 64 0x65b58) mem rom) (mk	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	406	0x65b90	0x65094	0x65094	msteps tfibsegs (mkst regs (Z_to_bv 64 0x65b58) mem rom) (mk	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	436	0x65adc	0x64fe0	0x64fe0	msteps tfibsegs (mkst regs (Z_to_bv 64 0x65adc) mem rom) (mk	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	436	0x65b90	0x65094	0x65094	msteps tfibsegs (mkst regs (Z_to_bv 64 0x65adc) mem rom) (mk	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	452	0x65adc	0x64fe0	0x64fe0	Definition SEALEDTOP_PC : Z := 0x65adc.	b tree moved, tool keeps cgif value
+Reusable/YB1k.v	453	0x65b90	0x65094	0x65094	Definition SEALEDTOP_END : Z := 0x65b90.	b tree moved, tool keeps cgif value
+Reusable/YCej.v	14	0x8fbf8	0x8d178	0x8d178	[[0x8fbf8]].	b tree moved, tool keeps cgif value
+Reusable/YCej.v	16	0x536f8	0x52a9c	0x52a9c	[[0x536f8; 0x80b70];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	16	0x80b70	0x800ec	0x800ec	[[0x536f8; 0x80b70];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	17	0x536f8	0x52a9c	0x52a9c	[0x536f8; 0x80bc4];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	17	0x80bc4	0x8021c	0x8021c	[0x536f8; 0x80bc4];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	18	0x53598	0x52bfc	0x52bfc	[0x53598; 0x80be8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	18	0x80be8	0x80074	0x80074	[0x53598; 0x80be8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	19	0x53598	0x52bfc	0x52bfc	[0x53598; 0x80d18]].	b tree moved, tool keeps cgif value
+Reusable/YCej.v	19	0x80d18	0x800c8	0x800c8	[0x53598; 0x80d18]].	b tree moved, tool keeps cgif value
+Reusable/YCej.v	21	0x80c7c	0x80180	0x80180	[[0x80c7c]].	b tree moved, tool keeps cgif value
+Reusable/YCej.v	23	0x80ca0	0x801a4	0x801a4	[[0x80ca0]].	b tree moved, tool keeps cgif value
+Reusable/YCej.v	25	0x80c90	0x80194	0x80194	[[0x80c90]].	b tree moved, tool keeps cgif value
+Reusable/YCej.v	27	0x536f8	0x52a9c	0x52a9c	[[0x536f8; 0x80e50];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	27	0x80e50	0x803e8	0x803e8	[[0x536f8; 0x80e50];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	28	0x53598	0x52bfc	0x52bfc	[0x53598; 0x80ee4]].	b tree moved, tool keeps cgif value
+Reusable/YCej.v	28	0x80ee4	0x80354	0x80354	[0x53598; 0x80ee4]].	b tree moved, tool keeps cgif value
+Reusable/YCej.v	30	0x80ec8	0x803cc	0x803cc	[[0x80ec8]].	b tree moved, tool keeps cgif value
+Reusable/YCej.v	32	0x80eb8	0x803bc	0x803bc	[[0x80eb8]].	b tree moved, tool keeps cgif value
+Reusable/YCej.v	34	0x536f8	0x52a9c	0x52a9c	[[0x536f8; 0x816b8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	34	0x816b8	0x80724	0x80724	[[0x536f8; 0x816b8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	35	0x536f8	0x52a9c	0x52a9c	[0x536f8; 0x816b8; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	35	0x816b8	0x80724	0x80724	[0x536f8; 0x816b8; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	35	0x80eb8	0x803bc	0x803bc	[0x536f8; 0x816b8; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	36	0x536f8	0x52a9c	0x52a9c	[0x536f8; 0x81aac];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	36	0x81aac	0x808b4	0x808b4	[0x536f8; 0x81aac];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	37	0x536f8	0x52a9c	0x52a9c	[0x536f8; 0x81aac; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	37	0x81aac	0x808b4	0x808b4	[0x536f8; 0x81aac; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	37	0x80eb8	0x803bc	0x803bc	[0x536f8; 0x81aac; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	38	0x536f8	0x52a9c	0x52a9c	[0x536f8; 0x81d30];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	38	0x81d30	0x808e8	0x808e8	[0x536f8; 0x81d30];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	39	0x536f8	0x52a9c	0x52a9c	[0x536f8; 0x81d30; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	39	0x81d30	0x808e8	0x808e8	[0x536f8; 0x81d30; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	39	0x80eb8	0x803bc	0x803bc	[0x536f8; 0x81d30; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	40	0x53598	0x52a9c	0x52a9c	[0x53598; 0x82cf0];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	40	0x82cf0	0x808f0	0x808f0	[0x53598; 0x82cf0];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	41	0x53598	0x52a9c	0x52a9c	[0x53598; 0x82cf0; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	41	0x82cf0	0x808f0	0x808f0	[0x53598; 0x82cf0; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	41	0x80eb8	0x803bc	0x803bc	[0x53598; 0x82cf0; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	42	0x53598	0x52bfc	0x52bfc	[0x53598; 0x83224];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	42	0x83224	0x806dc	0x806dc	[0x53598; 0x83224];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	43	0x53598	0x52bfc	0x52bfc	[0x53598; 0x83224; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	43	0x83224	0x80a44	0x80a44	[0x53598; 0x83224; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	43	0x80eb8	0x803bc	0x803bc	[0x53598; 0x83224; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	44	0x53598	0x52bfc	0x52bfc	[0x53598; 0x83464];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	44	0x83464	0x80a88	0x80a88	[0x53598; 0x83464];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	45	0x53598	0x52bfc	0x52bfc	[0x53598; 0x83464; 0x80eb8]].	b tree moved, tool keeps cgif value
+Reusable/YCej.v	45	0x83464	0x80a88	0x80a88	[0x53598; 0x83464; 0x80eb8]].	b tree moved, tool keeps cgif value
+Reusable/YCej.v	45	0x80eb8	0x803bc	0x803bc	[0x53598; 0x83464; 0x80eb8]].	b tree moved, tool keeps cgif value
+Reusable/YCej.v	47	0x53598	0x52a9c	0x52a9c	[[0x53598];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	48	0x53598	0x52a9c	0x52a9c	[0x53598; 0x80be8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	48	0x80be8	0x800ec	0x800ec	[0x53598; 0x80be8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	49	0x53598	0x52a9c	0x52a9c	[0x53598; 0x80d18];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	49	0x80d18	0x8021c	0x8021c	[0x53598; 0x80d18];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	50	0x53598	0x52a9c	0x52a9c	[0x53598; 0x80ee4];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	50	0x80ee4	0x803e8	0x803e8	[0x53598; 0x80ee4];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	51	0x53598	0x52a9c	0x52a9c	[0x53598; 0x82cf0];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	51	0x82cf0	0x80724	0x80724	[0x53598; 0x82cf0];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	52	0x53598	0x52a9c	0x52a9c	[0x53598; 0x82cf0; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	52	0x82cf0	0x80724	0x80724	[0x53598; 0x82cf0; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	52	0x80eb8	0x803bc	0x803bc	[0x53598; 0x82cf0; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	53	0x53598	0x52a9c	0x52a9c	[0x53598; 0x83224];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	53	0x83224	0x808b4	0x808b4	[0x53598; 0x83224];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	54	0x53598	0x52a9c	0x52a9c	[0x53598; 0x83224; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	54	0x83224	0x808b4	0x808b4	[0x53598; 0x83224; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	54	0x80eb8	0x803bc	0x803bc	[0x53598; 0x83224; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	55	0x53598	0x52a9c	0x52a9c	[0x53598; 0x83464];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	55	0x83464	0x808e8	0x808e8	[0x53598; 0x83464];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	56	0x53598	0x52a9c	0x52a9c	[0x53598; 0x83464; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	56	0x83464	0x808e8	0x808e8	[0x53598; 0x83464; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	56	0x80eb8	0x803bc	0x803bc	[0x53598; 0x83464; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	57	0x536f8	0x52bfc	0x52bfc	[0x536f8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	58	0x536f8	0x52bfc	0x52bfc	[0x536f8; 0x80b70];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	58	0x80b70	0x80074	0x80074	[0x536f8; 0x80b70];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	59	0x536f8	0x52bfc	0x52bfc	[0x536f8; 0x80bc4];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	59	0x80bc4	0x800c8	0x800c8	[0x536f8; 0x80bc4];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	60	0x536f8	0x52bfc	0x52bfc	[0x536f8; 0x80e50];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	60	0x80e50	0x80354	0x80354	[0x536f8; 0x80e50];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	61	0x536f8	0x52bfc	0x52bfc	[0x536f8; 0x816b8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	61	0x816b8	0x806dc	0x806dc	[0x536f8; 0x816b8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	62	0x536f8	0x52bfc	0x52bfc	[0x536f8; 0x816b8; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	62	0x816b8	0x806dc	0x806dc	[0x536f8; 0x816b8; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	62	0x80eb8	0x803bc	0x803bc	[0x536f8; 0x816b8; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	63	0x536f8	0x52bfc	0x52bfc	[0x536f8; 0x81aac];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	63	0x81aac	0x80a44	0x80a44	[0x536f8; 0x81aac];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	64	0x536f8	0x52bfc	0x52bfc	[0x536f8; 0x81aac; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	64	0x81aac	0x80a44	0x80a44	[0x536f8; 0x81aac; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	64	0x80eb8	0x803bc	0x803bc	[0x536f8; 0x81aac; 0x80eb8];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	65	0x536f8	0x52bfc	0x52bfc	[0x536f8; 0x81d30];	b tree moved, tool keeps cgif value
+Reusable/YCej.v	65	0x81d30	0x80a88	0x80a88	[0x536f8; 0x81d30];	b tree moved, tool keeps cgif value
+Reusable/YD1d.v	38	1446400	1459200	0x161200	&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 424)) 2147450880 1	a tool moved, tree kept cgif value
+Reusable/YD1d.v	280	1446400	1459200	0x161200	/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 424)) 2147450880 1	a tool moved, tree kept cgif value
+Reusable/YD1j.v	113	6277920	REFUSEDTOK	0x5f9920	assert (HBF : STDOUT_BUFA = 6277920) by reflexivity. assert 	d refused by the tool
+Reusable/YD1j.v	121	6277920	REFUSEDTOK	0x5f9920	- intros a Ha. rewrite HBF, HBS in Ha. apply (G 6277920 (627	d refused by the tool
+Reusable/YD1j.v	121	6277920	REFUSEDTOK	0x5f9920	- intros a Ha. rewrite HBF, HBS in Ha. apply (G 6277920 (627	d refused by the tool
+Reusable/YD1j.v	134	6277920	REFUSEDTOK	0x5f9920	assert (HBF : STDOUT_BUFA = 6277920) by reflexivity. assert 	d refused by the tool
+Reusable/YD1o.v	199	0x5fcb20	REFUSEDTOK	0x5f9920	assert (HBA : STDOUT_BUFA = 0x5fcb20) by reflexivity. assert	d refused by the tool
+Reusable/YD1o.v	251	0x5fcb20	REFUSEDTOK	0x5f9920	assert (HBA : STDOUT_BUFA = 0x5fcb20) by reflexivity. assert	d refused by the tool
+Reusable/YD1o.v	287	0x5fcb20	REFUSEDTOK	0x5f9920	assert (HBA : STDOUT_BUFA = 0x5fcb20) by reflexivity. assert	d refused by the tool
+Reusable/YD1x.v	23	83	36	0x24	/\ IMG_XL = flat_map (clip_out A_INITFLAGB (A_INITFLAGB + 1)	b tree moved, tool keeps cgif value
+Reusable/YD1x.v	24	83	36	0x24	/\ regions_wf IMG_XL = true /\ mem_atoms_lt K_M1 IMG_XL = tr	b tree moved, tool keeps cgif value
+Reusable/YD22.v	22	83	36	0x24	Lemma skipn3_dir : ss_mem S_DIR = firstn 3 (ss_mem S_DIR) ++	b tree moved, tool keeps cgif value
+Reusable/YD22.v	22	86	39	0x27	Lemma skipn3_dir : ss_mem S_DIR = firstn 3 (ss_mem S_DIR) ++	b tree moved, tool keeps cgif value
+Reusable/YD23.v	307	67584	67616	0x10800	Lemma S_MG_regs2 : sr_get (ss_regs S_MG) 2%bv = SOff 0 (-128	a tool moved, tree kept cgif value
+Reusable/YD23.v	309	67584	67616	0x10800	/\ sr_get (ss_regs S_MC) 2%bv = SOff 0 (-128) /\ sr_get (ss_	a tool moved, tree kept cgif value
+Reusable/YD23.v	310	67584	67616	0x10800	/\ sr_get (ss_regs S_FR) 2%bv = SOff 0 (-128) /\ sr_get (ss_	a tool moved, tree kept cgif value
+Reusable/YD24.v	51	71	72	0x48	pose proof (tfib_const_val ly S W mem md 71 0xa25e8 8 0x9f21	b tree moved, tool keeps cgif value
+Reusable/YD27.v	69	84	37	0x25	change (ss_mem S_COf) with (firstn 4 (ss_mem S_COf) ++ IMG_R	b tree moved, tool keeps cgif value
+Reusable/YD27.v	74	83	36	0x24	change (ss_mem S_US) with (firstn 3 (ss_mem S_US) ++ IMG_REG	b tree moved, tool keeps cgif value
+Reusable/YD27.v	87	83	36	0x24	skipn 3 (firstn 83 (ss_mem ss)) = IMG_REGIONS.	b tree moved, tool keeps cgif value
+Reusable/YD27.v	94	83	36	0x24	- change (ss_mem S_SHORT) with (firstn 3 (ss_mem S_SHORT) ++	b tree moved, tool keeps cgif value
+Reusable/YD27.v	96	83	36	0x24	- change (ss_mem S_OVR) with (firstn 3 (ss_mem S_OVR) ++ IMG	b tree moved, tool keeps cgif value
+Reusable/YD28.v	24	527132	524320	0x80020	mkChunk (-80) (CVal 8 (SLit 527132)); mkChunk (-72) (CVal 8 	b tree moved, tool keeps cgif value
+Reusable/YD28.v	105	84	37	0x25	Lemma S_COf_mem : exists cs, hd R_errno (ss_mem S_COf) = mkR	b tree moved, tool keeps cgif value
+Reusable/YD28.v	106	84	37	0x25	/\ r_base (hd R_errno (skipn 84 (ss_mem S_COf))) = None /\ r	b tree moved, tool keeps cgif value
+Reusable/YD28.v	106	84	37	0x25	/\ r_base (hd R_errno (skipn 84 (ss_mem S_COf))) = None /\ r	b tree moved, tool keeps cgif value
+Reusable/YD28.v	106	84	37	0x25	/\ r_base (hd R_errno (skipn 84 (ss_mem S_COf))) = None /\ r	b tree moved, tool keeps cgif value
+Reusable/YD28.v	107	85	38	0x26	/\ length (ss_mem S_COf) = 85%nat.	b tree moved, tool keeps cgif value
+Reusable/YD28.v	109	83	36	0x24	Lemma S_US_mem : hd R_errno (ss_mem S_US) = mkRegion (Some 0	b tree moved, tool keeps cgif value
+Reusable/YD2d.v	23	83	36	0x24	Definition B0_r5 : smem := Eval vm_compute in (skipn 83 (ss_	b tree moved, tool keeps cgif value
+Reusable/YD2d.v	24	83	36	0x24	Definition B1_r5 : smem := Eval vm_compute in (skipn 83 (ss_	b tree moved, tool keeps cgif value
+Reusable/YD2e.v	60	82	35	0x23	Definition PM_tailL : list smem := Eval vm_compute in firstn	b tree moved, tool keeps cgif value
+Reusable/YD2e.v	65	84	37	0x25	Lemma PM_pieces_eq : concat PM_piecesL = L_mem /\ concat PM_	b tree moved, tool keeps cgif value
+Reusable/YD2e.v	65	84	37	0x25	Lemma PM_pieces_eq : concat PM_piecesL = L_mem /\ concat PM_	b tree moved, tool keeps cgif value
+Reusable/YD2e.v	66	84	37	0x25	/\ length PM_piecesCM = 84%nat /\ length (WIN (-208) :: rsPL	b tree moved, tool keeps cgif value
+Reusable/YD2e.v	66	84	37	0x25	/\ length PM_piecesCM = 84%nat /\ length (WIN (-208) :: rsPL	b tree moved, tool keeps cgif value
+Reusable/YD2e.v	189	82	35	0x23	(lazymatch goal with |- submem (_ :: ?l) (_ :: ?m) => let l2	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	56	80	33	0x21	Definition IMG_E : smem := firstn 80 (skipn 3 (ss_mem sPE0))	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	65	86	39	0x27	Lemma S_Pm_layout : length (ss_mem S_Pm) = 86%nat /\ firstn 	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	65	80	33	0x21	Lemma S_Pm_layout : length (ss_mem S_Pm) = 86%nat /\ firstn 	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	65	83	36	0x24	Lemma S_Pm_layout : length (ss_mem S_Pm) = 86%nat /\ firstn 	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	83	83	36	0x24	/\ ss_resv sPE0 = None /\ ss_mem sPE0 = firstn 3 (ss_mem sB0	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	92	83	36	0x24	/\ ss_resv (sPE1 k) = None /\ ss_mem (sPE1 k) = firstn 3 (ss	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	145	0x5fcb18	REFUSEDTOK	0x5f9918	Definition SOBUF_LO : Z := 0x5fcb18.   Definition SOBUF_HI :	d refused by the tool
+Reusable/YD2f.v	145	0x5fcf28	REFUSEDTOK	0x5f9d28	Definition SOBUF_LO : Z := 0x5fcb18.   Definition SOBUF_HI :	d refused by the tool
+Reusable/YD2f.v	146	80	33	0x21	Definition IMG_B : smem := firstn 80 (skipn 3 (ss_mem sB1)).	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	153	67584	67616	0x10800	[SLit 0; SLit RA_LLVMF; SOff 0 (-208); SLit 67584; SLit 6145	a tool moved, tree kept cgif value
+Reusable/YD2f.v	165	82	35	0x23	Lemma L_mem_wf : regions_wf L_mem = true /\ mem_atoms_lt K_L	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	167	82	35	0x23	Lemma IMG_LC_len : length IMG_LC = 82%nat. Proof. vm_compute	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	182	83	36	0x24	Lemma sPE_mem : ss_mem sPE0 = firstn 3 (ss_mem sB0) ++ IMG_E	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	182	83	36	0x24	Lemma sPE_mem : ss_mem sPE0 = firstn 3 (ss_mem sB0) ++ IMG_E	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	194	71	24	0x18	Lemma IMG_B_eq : firstn 71 IMG_B = firstn 71 IMG_REGIONS /\ 	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	194	71	24	0x18	Lemma IMG_B_eq : firstn 71 IMG_B = firstn 71 IMG_REGIONS /\ 	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	194	72	25	0x19	Lemma IMG_B_eq : firstn 71 IMG_B = firstn 71 IMG_REGIONS /\ 	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	194	72	25	0x19	Lemma IMG_B_eq : firstn 71 IMG_B = firstn 71 IMG_REGIONS /\ 	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	194	76	29	0x1d	Lemma IMG_B_eq : firstn 71 IMG_B = firstn 71 IMG_REGIONS /\ 	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	194	76	29	0x1d	Lemma IMG_B_eq : firstn 71 IMG_B = firstn 71 IMG_REGIONS /\ 	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	194	80	33	0x21	Lemma IMG_B_eq : firstn 71 IMG_B = firstn 71 IMG_REGIONS /\ 	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	195	71	24	0x18	/\ firstn 71 IMG_E = firstn 71 IMG_B /\ skipn 72 IMG_E = ski	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	195	71	24	0x18	/\ firstn 71 IMG_E = firstn 71 IMG_B /\ skipn 72 IMG_E = ski	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	195	72	25	0x19	/\ firstn 71 IMG_E = firstn 71 IMG_B /\ skipn 72 IMG_E = ski	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	195	72	25	0x19	/\ firstn 71 IMG_E = firstn 71 IMG_B /\ skipn 72 IMG_E = ski	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	195	80	33	0x21	/\ firstn 71 IMG_E = firstn 71 IMG_B /\ skipn 72 IMG_E = ski	b tree moved, tool keeps cgif value
+Reusable/YD2f.v	233	67584	67616	0x10800	[SLit 0; SLit A_CM; SOff 0 (-128); SLit 67584; SLit 6145040;	a tool moved, tree kept cgif value
+Reusable/YD2f.v	279	67584	67616	0x10800	Lemma S_XT_regs : sr_get (ss_regs S_XTt) 3%bv = SLit 67584 /	a tool moved, tree kept cgif value
+Reusable/YD2f.v	279	67584	67616	0x10800	Lemma S_XT_regs : sr_get (ss_regs S_XTt) 3%bv = SLit 67584 /	a tool moved, tree kept cgif value
+Reusable/YD2h.v	64	83	36	0x24	change (ss_mem S_SHORT) with (firstn 3 (ss_mem S_SHORT) ++ I	b tree moved, tool keeps cgif value
+Reusable/YD2h.v	69	83	36	0x24	change (ss_mem S_OVR) with (firstn 3 (ss_mem S_OVR) ++ IMG_R	b tree moved, tool keeps cgif value
+Reusable/YE22.v	34	0	193	0xc1	let rec go k := first [ apply (nth_error_In Tfib_const_abs k	b tree moved, tool keeps cgif value
+Reusable/YE23.v	38	0x7fffc2bc	REFUSEDTOK	0x7fffc1b8	(0x7fffc2bc <= a < 0x7fffc2cc) \/ (0x7fffc2d0 <= a < 0x7fffc	d refused by the tool
+Reusable/YE23.v	38	0x7fffc2cc	REFUSEDTOK	0x7fffc1bc	(0x7fffc2bc <= a < 0x7fffc2cc) \/ (0x7fffc2d0 <= a < 0x7fffc	d refused by the tool
+Reusable/YE23.v	38	0x7fffc2d0	REFUSEDTOK	0x7fffc1c4	(0x7fffc2bc <= a < 0x7fffc2cc) \/ (0x7fffc2d0 <= a < 0x7fffc	d refused by the tool
+Reusable/YE23.v	38	0x7fffc2d4	REFUSEDTOK	0x7fffc1c8	(0x7fffc2bc <= a < 0x7fffc2cc) \/ (0x7fffc2d0 <= a < 0x7fffc	d refused by the tool
+Reusable/YE23.v	38	0x8000c0cc	REFUSEDTOK	0x7fffc1cc	(0x7fffc2bc <= a < 0x7fffc2cc) \/ (0x7fffc2d0 <= a < 0x7fffc	d refused by the tool
+Reusable/YE23.v	38	0x8000c0e4	REFUSEDTOK	0x7fffc1d0	(0x7fffc2bc <= a < 0x7fffc2cc) \/ (0x7fffc2d0 <= a < 0x7fffc	d refused by the tool
+Reusable/YE23.v	38	0x8000cbb4	0x8000c574	0x8000c574	(0x7fffc2bc <= a < 0x7fffc2cc) \/ (0x7fffc2d0 <= a < 0x7fffc	b tree moved, tool keeps cgif value
+Reusable/YE23.v	47	0x5fc464	REFUSEDTOK	0x5f9264	(0x5fc460, 1%N, 0); (0x5fc464, 4%N, 0); (0x5fc468, 4%N, 2); 	d refused by the tool
+Reusable/YE23.v	56	0x5fc464	REFUSEDTOK	0x5f9264	(0x5fc460, 1%N, 0); (0x5fc464, 4%N, 0); (0x5fc468, 4%N, 1); 	d refused by the tool
+Reusable/YE23.v	91	0x5fc464	REFUSEDTOK	0x5f9264	[YP09.mkChunk 0x5fc460 (CVal 1 (SLit 0)); YP09.mkChunk 0x5fc	d refused by the tool
+Reusable/YE23.v	120	0x5fc464	REFUSEDTOK	0x5f9264	[YP09.mkChunk 0x5fc460 (CVal 1 (SLit 0)); YP09.mkChunk 0x5fc	d refused by the tool
+Reusable/YE23.v	474	6277920	REFUSEDTOK	0x5f9920	set (E := Ereg regs [Z_to_bv 64 tid; Z_to_bv 64 cval; Z_to_b	d refused by the tool
+Reusable/YE23.v	479	6277920	REFUSEDTOK	0x5f9920	assert (E34 : ew E 34 = Z_to_bv 64 6277920) by (subst E; exa	d refused by the tool
+Reusable/YE23.v	481	6277920	REFUSEDTOK	0x5f9920	apply (entry_st_ok_full tfibsegs); change (Ereg regs [Z_to_b	d refused by the tool
+Reusable/YE23.v	562	6277920	REFUSEDTOK	0x5f9920	set (E := Ereg regs [Z_to_bv 64 tid; Z_to_bv 64 cval; Z_to_b	d refused by the tool
+Reusable/YE23.v	567	6277920	REFUSEDTOK	0x5f9920	assert (E34 : ew E 34 = Z_to_bv 64 6277920) by (subst E; exa	d refused by the tool
+Reusable/YE23.v	569	6277920	REFUSEDTOK	0x5f9920	apply (entry_st_ok_full tfibsegs); change (Ereg regs [Z_to_b	d refused by the tool
+Reusable/YE23.v	650	6277920	REFUSEDTOK	0x5f9920	set (E := Ereg regs [Z_to_bv 64 tid; Z_to_bv 64 cval; Z_to_b	d refused by the tool
+Reusable/YE23.v	655	6277920	REFUSEDTOK	0x5f9920	assert (E34 : ew E 34 = Z_to_bv 64 6277920) by (subst E; exa	d refused by the tool
+Reusable/YE23.v	657	6277920	REFUSEDTOK	0x5f9920	apply (entry_st_ok_full tfibsegs); change (Ereg regs [Z_to_b	d refused by the tool
+Reusable/YE23.v	668	6277920	REFUSEDTOK	0x5f9920	{ eapply (chunk_ok_val tfibsegs E _ 0 _ 8 _ 6277920); [refle	d refused by the tool
+Reusable/YE23.v	830	6277920	REFUSEDTOK	0x5f9920	assert (HBF : STDOUT_BUFA = 6277920) by reflexivity. assert 	d refused by the tool
+Reusable/YE23.v	1028	6277920	REFUSEDTOK	0x5f9920	assert (HBF : STDOUT_BUFA = 6277920) by reflexivity. assert 	d refused by the tool
+Reusable/YE23.v	1226	6277920	REFUSEDTOK	0x5f9920	assert (HBF : STDOUT_BUFA = 6277920) by reflexivity. assert 	d refused by the tool
+Reusable/YE23.v	1426	6277920	REFUSEDTOK	0x5f9920	assert (HBF : STDOUT_BUFA = 6277920) by reflexivity. assert 	d refused by the tool
+Reusable/YE2t.v	62	0x7fffbb08	REFUSEDTOK	0x7fffbad8	Definition SH_LO : Z := 0x7fffbb08.  Definition SH_HI : Z :=	d refused by the tool
+Reusable/YE2t.v	62	0x7fffbb10	REFUSEDTOK	0x7fffbae0	Definition SH_LO : Z := 0x7fffbb08.  Definition SH_HI : Z :=	d refused by the tool
+Reusable/YE2u.v	62	0x7fffbb08	REFUSEDTOK	0x7fffbad8	Definition SH_LO : Z := 0x7fffbb08.  Definition SH_HI : Z :=	d refused by the tool
+Reusable/YE2u.v	62	0x7fffbb18	REFUSEDTOK	0x7fffbae8	Definition SH_LO : Z := 0x7fffbb08.  Definition SH_HI : Z :=	d refused by the tool
+Reusable/YE2v.v	62	0x7fffb2d8	REFUSEDTOK	0x7fffb2d0	Definition SH_LO : Z := 0x7fffb2d8.  Definition SH_HI : Z :=	d refused by the tool
+Reusable/YE2v.v	62	0x7fffb2e0	REFUSEDTOK	0x7fffb2e0	Definition SH_LO : Z := 0x7fffb2d8.  Definition SH_HI : Z :=	d refused by the tool
+Reusable/YE2w.v	62	0x7fffab00	REFUSEDTOK	0x7fffab08	Definition SH_LO : Z := 0x7fffab00.  Definition SH_HI : Z :=	d refused by the tool
+Reusable/YE2w.v	62	0x7fffab10	REFUSEDTOK	0x7fffab10	Definition SH_LO : Z := 0x7fffab00.  Definition SH_HI : Z :=	d refused by the tool
+Reusable/YE35.v	62	0x7fffa8f8	REFUSEDTOK	0x7fffa8f8	Definition SH_LO : Z := 0x7fffa8f8.  Definition SH_HI : Z :=	d refused by the tool
+Reusable/YE35.v	62	0x7fffa900	REFUSEDTOK	0x7fffa900	Definition SH_LO : Z := 0x7fffa8f8.  Definition SH_HI : Z :=	d refused by the tool
+Reusable/YE37.v	33	0xa1528	REFUSEDTOK	0x9ee98	(0xa1528, 16, [(0, 8%N, 0xa5160); (8, 8%N, 0xa5da0)]);	d refused by the tool
+Reusable/YE3e.v	406	2097044	2109844	0x1fff94	Lemma D_17c60 : decode_any (0xf95ff06f%bv : bv 32) = Some (J	a tool moved, tree kept cgif value
+Reusable/YE3h.v	1691	617244	607508	0x94514	replace (v_addi (Z_to_bv 64 617244) 4) with (Z_to_bv 64 0x96	b tree moved, tool keeps cgif value
+Reusable/YE3h.v	1725	12	13	0xd	Definition x13_ranges : list (Z * nat) := [(0x7057c, 12%nat)	b tree moved, tool keeps cgif value
+Reusable/YE3m.v	33	0x5fcb20	REFUSEDTOK	0x5f9920	Definition STDOUT_BUFA : Z := 0x5fcb20.	d refused by the tool
+Reusable/YE3m.v	558	6277920	REFUSEDTOK	0x5f9920	assert (HBF : STDOUT_BUFA = 6277920) by reflexivity. assert 	d refused by the tool
+Reusable/YE3m.v	1068	6277920	REFUSEDTOK	0x5f9920	assert (HBF : STDOUT_BUFA = 6277920) by reflexivity. assert 	d refused by the tool
+Reusable/YE3m.v	1070	6278944	6266144	0x5f9d20	assert (HBE : BUFEND = 6278944) by reflexivity.	b tree moved, tool keeps cgif value
+Reusable/YE7d.v	76	0x148680	0x14b880	0x148680	Lemma snl_rom_low : forall a, in_rom tfibsegs a -> 0 <= a < 	a tool moved, tree kept cgif value
+Reusable/YF0r.v	43	0x3d660	REFUSEDTOK	0x3c8d4	[(0x3d660, 100%nat); (0x3d7f0, 100%nat); (0x625d8, 2%nat); (	d refused by the tool
+Reusable/YF0r.v	44	0x3dd1c	REFUSEDTOK	0x3cc00	(0x55464, 6%nat); (0x9b7b8, 7%nat); (0x6a02c, 140%nat); (0x3	d refused by the tool
+Reusable/YFem.v	129	127008	127434	0x1f020	Lemma TOT_range : 2 <= TOT <= 127008.	a tool moved, tree kept cgif value
+Reusable/YFem.v	207	127008	127434	0x1f020	1 <= nD <= 4097 /\ 2 <= TOT <= 127008 /\ 0 <= HSH < 2 ^ 64 /	a tool moved, tree kept cgif value
+Reusable/YFet.v	707	100000	100018	0x186a0	destruct (pop_batches 100000 (transfer_g X) []) as [g' P] eq	a tool moved, tree kept cgif value
+Reusable/YFet.v	709	100000	100018	0x186a0	assert (LEN : (length (qc_list (transfer_g X)) < 100000)%nat	a tool moved, tree kept cgif value
+Reusable/YFeu.v	159	209280	212376	0x33180	mcheck (2 * (kBatchBytes * Z.of_nat (length (qc_list g))) <=	a tool moved, tree kept cgif value
+Reusable/YFeu.v	223	100000	100018	0x186a0	Z.of_nat (length P) < 100000 /\ st_cache_inited X = true.	a tool moved, tree kept cgif value
+Reusable/YFf8.v	404	412892	410080	0x641e0	change (v_addi (Z_to_bv 64 412892) 4) with (Z_to_bv 64 41289	b tree moved, tool keeps cgif value
+Reusable/YFf8.v	705	412892	410080	0x641e0	change (v_addi (Z_to_bv 64 412892) 4) with (Z_to_bv 64 41289	b tree moved, tool keeps cgif value
+Reusable/YFf8.v	1008	412892	410080	0x641e0	change (v_addi (Z_to_bv 64 412892) 4) with (Z_to_bv 64 41289	b tree moved, tool keeps cgif value
+Reusable/YFf8.v	1307	412892	410080	0x641e0	change (v_addi (Z_to_bv 64 412892) 4) with (Z_to_bv 64 41289	b tree moved, tool keeps cgif value
+Reusable/YFfc.v	196	680129	667329	0xa2ec1	assert (CASES : a = 679448 + 680 \/ a = 680129 + Z.of_nat 0 	b tree moved, tool keeps cgif value
+Reusable/YFff.v	4	0x5fb000	15	-	(* Modified by Theorem Labs, 2026-10: copied from proofs/cgi	e no donor value at this position
+Reusable/YFfg.v	243	262728	267108	0x40248	do_stretch HS 42%nat 0xeb440 262728 0x5ea78 BV2_3 Hsp Hsp64.	a tool moved, tree kept cgif value
+Reusable/YFfy.v	455	201364	204460	0x31294	mcheck match ck_state k0 with CAllocated => true | CQuaranti	a tool moved, tree kept cgif value
+Reusable/YFfy.v	473	201364	204460	0x31294	mcheck match ck_state k0 with CAllocated => true | CQuaranti	a tool moved, tree kept cgif value
+Reusable/YFfz.v	430	201364	204460	0x31294	mcheck match ck_state k0 with CAllocated => true | CQuaranti	a tool moved, tree kept cgif value
+Reusable/YFg2.v	290	201364	204460	0x31294	mcheck match ck_state k0 with CAllocated => true | CQuaranti	a tool moved, tree kept cgif value
+Reusable/YFhd.v	54	100000	100018	0x186a0	o_len : zlen rest < 100000;	a tool moved, tree kept cgif value
+Reusable/YFhd.v	71	100000	100018	0x186a0	rc_len : zlen t < 100000;	a tool moved, tree kept cgif value
+Reusable/YFhd.v	91	100000	100018	0x186a0	r_len : zlen t < 100000;	a tool moved, tree kept cgif value
+Reusable/YFhd.v	105	100000	100018	0x186a0	cd_len : zlen t < 100000;	a tool moved, tree kept cgif value
+Reusable/YFhd.v	121	100000	100018	0x186a0	q_len : zlen t < 100000;	a tool moved, tree kept cgif value
+Reusable/YFi3.v	74	202260	205356	0x31614	malloc n trace s = (tick ;; mcheck (n <? kMaxAllowedMalloc -	a tool moved, tree kept cgif value
+Reusable/YFjm.v	4	0x5fb000	15	-	(* Modified by Theorem Labs, 2026-10: copied from proofs/cgi	e no donor value at this position
+Reusable/YFjr.v	622	84952	83315	0x14598	{ unfold YFjm.BSLv. change (2 ^ 3) with 8. unfold TFIB_INST.	c both moved, different values
+Reusable/YFju.v	575	0x80050000	0x80050640	0x80050000	CZI a \/ (0x7fff8000 <= a < 0x80050000) \/ (T <= a < T + 80)	a tool moved, tree kept cgif value
+Reusable/YFju.v	585	0x80050000	0x80050640	0x80050000	|| ((0x7fff8000 <=? a) && (e <=? 0x80050000))	a tool moved, tree kept cgif value
+Reusable/YFk0.v	752	221048	224144	0x35f78	mcheck (Z.of_nat (length (st_sec_arr s)) <? kMaxNumChunks) 2	a tool moved, tree kept cgif value
+Reusable/YFk0.v	762	202260	205356	0x31614	malloc n tr s = (tick ;; mcheck (n <? kMaxAllowedMalloc - kP	a tool moved, tree kept cgif value
+Reusable/YFk0.v	1024	469488	472300	0x729f0	mcheck (depot_ids s' + 1 <? kDepotIdsPerBlock) 469488 ;;	a tool moved, tree kept cgif value
+Reusable/YFk0.v	1025	460508	463320	0x706dc	mcheck (kStartFramesMax + depot_frames s' + Z.of_nat (length	a tool moved, tree kept cgif value
+Reusable/YFk8.v	101	0x104022	0x107222	0x104022	sr_get (ss_regs R3_NR) 13%bv = SLit 0x104022 /\ sr_get (ss_r	a tool moved, tree kept cgif value
+Reusable/YFk9.v	113	0x104022	0x107222	0x104022	= [(SOff rFADR 0, SLit 262144, SLit 0, SLit 0x104022, SLit 1	a tool moved, tree kept cgif value
+Reusable/YFk9.v	113	0x104022	0x107222	0x104022	= [(SOff rFADR 0, SLit 262144, SLit 0, SLit 0x104022, SLit 1	a tool moved, tree kept cgif value
+Reusable/YFkn.v	914	0x104022	0x107222	0x104022	Definition FLR : word := Z_to_bv 64 0x104022.	a tool moved, tree kept cgif value
+Reusable/YFkn.v	1205	0x104022	0x107222	0x104022	sr_get (ss_regs R3_NR) 11%bv = SLit 262144 /\ sr_get (ss_reg	a tool moved, tree kept cgif value
+Reusable/YFkn.v	1214	0x104022	0x107222	0x104022	sr_get (ss_regs R3_NRFe) 11%bv = SLit 262144 /\ sr_get (ss_r	a tool moved, tree kept cgif value
+Reusable/YFkn.v	1223	0x104022	0x107222	0x104022	sr_get (ss_regs R3_NRFg) 11%bv = SLit 262144 /\ sr_get (ss_r	a tool moved, tree kept cgif value

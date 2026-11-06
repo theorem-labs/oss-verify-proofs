@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: thrift-cpp
 harness: FuzzRoundtripBinary
-rocq: OssFuzzTheorems.thrift_cpp.FuzzRoundtripBinary
+rocq: OSSVerify.thrift_cpp.FuzzRoundtripBinary
 origin: upstream
 summary: 'Checks one property, a round trip: Parse a FuzzTest struct with TBinaryProtocol, serialize it
   back with the same protocol, re-parse the bytes, and require the two structs to be equal (generated

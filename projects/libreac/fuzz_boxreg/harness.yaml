@@ -1,0 +1,239 @@
+schema: oss-fuzz-theorems/harness/1
+project: libreac
+harness: fuzz_boxreg
+rocq: OSSVerify.libreac.fuzz_boxreg
+origin: upstream
+summary: 'Runs up to 64 operations of the multi-box registry, reac_boxreg, from the payload: a fabric size, then declare,
+  add, find and set_name calls with input-chosen widths, bases, MACs and names (each name its own allocation), on a registry
+  in its own allocation. Before each call it works out the answer the header promises from the table as it was, and after
+  every call it checks the whole registry.'
+entry: LLVMFuzzerTestOneInput
+source:
+  files:
+  - source/fuzz_boxreg.c
+  from:
+    repository: https://github.com/FreeREAC/libreac
+    commit: d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+    path: fuzz/fuzz_boxreg.c
+  modified: false
+  licence: GPL-3.0-or-later
+library:
+  repository: https://github.com/FreeREAC/libreac
+  commit: d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+  version: 1.9.0
+  licence: GPL-3.0-or-later
+modifications:
+- Linked against a static libreac.a of every src/*.c of libreac 1.9.0 at commit d16f3f4e, compiled with each build's flags,
+  as libreac's Makefile builds its fuzz targets but with this toolchain in place of a native clang and libFuzzer.
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on
+  its input.
+- A small driver reads the input file, calls the fuzz target one to four times and prints each return value.
+builds:
+  plain:
+    file: fuzz_boxreg.plain
+    bytes: 47672
+    sha256: 76a5b76842fcfa903088d14284b1d3d84d3fa4358e865ab144f74123af312e0c
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  ubsan:
+    file: fuzz_boxreg.ubsan
+    bytes: 48696
+    sha256: d63ba804708e835e57646043730f6bdd8fc3e34ba6e2204407d533a65213a34d
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  asan:
+    file: fuzz_boxreg.asan
+    bytes: 569032
+    sha256: eacfa20547ad7dc0d24164010513fcc8af4ba5e557ff3f391a07559e3e34a6df
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+  asan-ubsan:
+    file: fuzz_boxreg.asan-ubsan
+    bytes: 570088
+    sha256: 7620eb05e0adf5cb5ea350a6fe814d02d6ddb2685ec03477d0d4a85d249b0d85
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+licence: NOASSERTION
+checks:
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_boxreg.c:115-159
+  what: At most REAC_BOXREG_MAX_BOXES boxes, each of an even width of 2 to 40 (a rule the harness writes out itself) with
+    its slice inside the fabric and a NUL-terminated name; no two slices overlap and no MAC is registered twice.
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_boxreg.c:161-185
+  what: No call moves a box, changes its width or its pinned flag, unbinds or rebinds its MAC, or changes any name but the
+    one set_name sets.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_boxreg.c:218-283
+  what: A declaration is refused for a bad width, a full table or no free range, and otherwise lands at the next index with
+    the width asked for, at the pinned base or the lowest free range, pinned exactly when a base was given, unbound, with
+    the name given; a refused one adds no box.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_boxreg.c:291-360
+  what: add refuses a bad width or the all-zero MAC, and otherwise gives the MAC's own box, then the first unbound box of
+    that width, then a new unpinned box at the lowest free range; it is idempotent and find finds what it registered.
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_boxreg.c:366-382
+  what: find answers -1 or the index of a box holding exactly that MAC, and never finds the all-zero MAC.
+- kind: api-contract
+  strength: partial
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_boxreg.c:388-396
+  what: set_name stores the name given, or the empty name for NULL, at a valid index.
+statements:
+  plain_halts:
+    kind: halts
+    builds:
+    - plain
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  ubsan_halts:
+    kind: halts
+    builds:
+    - ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_halts:
+    kind: halts
+    builds:
+    - asan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_ubsan_halts:
+    kind: halts
+    builds:
+    - asan-ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open
+  ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - ubsan
+    reading: alloc-forced-only
+    budgets: standard
+    status: open
+  asan_ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan-ubsan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open

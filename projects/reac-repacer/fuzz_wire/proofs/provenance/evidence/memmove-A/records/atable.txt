@@ -1,0 +1,19 @@
+# atable: N/A for these files. atable.py 6a35bb77e745 only emits the per-image atable file (AB12.v for asan,
+# the `atable` record of YK09); the five files state no atable field, Require no AB12 and carry no keyed table
+# (the name scan and keyset 38b229c6ad08 below).
+# name scan of the five files (YB12, atable*, AB12, stops_more, pc_stack_malloc, pc_asan_*, Tfib_*_shadow, IMG_REGIONS)
+A/Rt/MemmoveDef.v: atable / keyed-table names: 0 []
+A/Rt/MemmoveIm.v: atable / keyed-table names: 0 []
+A/Rt/MemmoveK.v: atable / keyed-table names: 0 []
+A/Rt/MemmovePaths.v: atable / keyed-table names: 0 []
+A/Rt/Memmove.v: atable / keyed-table names: 0 []
+# keyset check over the five files (start-up set bundle 453349f98b04)
+frozen-run:   keyset.py 38b229c6ad08
+keyset: self-test 7 known answers (kind by name and contents; a keyed table under an unkeyed name is UNMEASURED); 14 known answers (stops gate 5, self-loop decode 9); 7 known answers (a field at 0 iff the twin defines no such name)
+NOTE MemmoveDef.v: no keyed table under keyset (by name or by contents)
+NOTE MemmoveIm.v: no keyed table under keyset (by name or by contents)
+NOTE MemmoveK.v: no keyed table under keyset (by name or by contents)
+NOTE MemmovePaths.v: no keyed table under keyset (by name or by contents)
+NOTE Memmove.v: no keyed table under keyset (by name or by contents)
+keyset: NO KEYED TABLE in the 5 given file(s) - nothing measured
+rc=2

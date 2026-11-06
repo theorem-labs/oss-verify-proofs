@@ -1,0 +1,79 @@
+# --override rows for reac-repacer/fuzz_uci image A (asan), DONOR = fuzz_grant released lib (normalised), port_core 0e4e065eab9f.
+# file<TAB>donor-line (grant's)<TAB>old<TAB>new[<TAB>OCCURRENCE]. Each group carries its measured reason.
+# __stdout_FILE.buf in decimal
+A/AD1j.v	113	6259168	6235808
+A/AD1j.v	121	6259168	6235808	1,2
+A/AD1j.v	134	6259168	6235808
+A/AD1o.v	196	0x5f81e0	0x5f26a0
+A/AD1o.v	248	0x5f81e0	0x5f26a0
+A/AD1o.v	284	0x5f81e0	0x5f26a0
+A/AE3m.v	34	0x5f81e0	0x5f26a0
+A/AE3m.v	559	6259168	6235808
+A/AE3m.v	1069	6259168	6235808
+# __stderr_FILE.buf (FILE+88); grant 0x5f81d8
+A/AD2f.v	147	0x5f81d8	0x5f2698
+A/AE2p.v	30	0x5f81d8	0x5f2698
+# __stdin_FILE.buf (FILE+88); grant 0x5f85e8
+A/AD2f.v	147	0x5f85e8	0x5f2aa8
+# format 'cli: cannot open %s\n' 0x1d5e6: floor8(shadow(fmt))
+A/AE2t.v	63	0x7fffbaf0	0x7fffbab8
+# format 'cli: cannot open %s\n': floor8(shadow(fmt+len))+8
+A/AE2t.v	63	0x7fffbb00	0x7fffbac0
+# format 'cli: read error on %s\n' 0x1d5fb: floor8(shadow(fmt))
+A/AE2u.v	63	0x7fffbaf8	0x7fffbab8
+# format 'cli: read error on %s\n': floor8(shadow(fmt+len))+8
+A/AE2u.v	63	0x7fffbb00	0x7fffbac8
+# format 'cli: input >= %u bytes, refused\n' 0x19614: floor8(shadow(fmt))
+A/AE2v.v	63	0x7fffb2e8	0x7fffb2c0
+# format 'cli: input >= %u bytes, refused\n' 0x19614: floor8(shadow(fmt+len))+8
+A/AE2v.v	63	0x7fffb2f8	0x7fffb2c8
+# BUFEND in decimal
+A/AE3m.v	1071	6260192	6236832
+# TFIB_BSS in decimal
+A/AD1o.v	80	0xa1460	0x9b910	1,2
+A/AD1o.v	83	0xa1460	0x9b910	1,2
+A/AD1o.v	90	0xa1460	0x9b910	1,2
+A/AD1o.v	97	0xa1460	0x9b910	1,2
+A/AD1o.v	98	0xa1460	0x9b910
+A/AD1o.v	99	660576	637200	1,2
+A/AD25.v	528	0xa1460	0x9b910	1,2
+A/AD25.v	531	0xa1460	0x9b910	1,2
+A/AD25.v	538	0xa1460	0x9b910	1,2
+A/AD25.v	545	0xa1460	0x9b910	1,2
+# image end in decimal
+A/AD1o.v	80	0x5fa000	0x5f4000
+A/AD1o.v	83	0x5fa000	0x5f4000
+A/AD1o.v	90	0x5fa000	0x5f4000
+A/AD1o.v	99	6266880	6242304
+A/AD25.v	528	0x5fa000	0x5f4000
+A/AD25.v	531	0x5fa000	0x5f4000
+A/AD25.v	538	0x5fa000	0x5f4000
+# .bss+0x20 (= __do_init.__object+16, grant the same)
+A/AD1o.v	86	0xa14a0	0x9b960
+A/AD1o.v	92	0xa14a0	0x9b960
+A/AD1o.v	94	0xa14a0	0x9b960
+# 0x9b960 / 8
+A/AD1o.v	94	82580	79660
+# 0x9b910 / 8
+A/AD1o.v	99	82572	79650
+# (0x5f4000 - 0x9b910) / 8
+A/AD1o.v	99	700788	700638
+# AD1g static_img_chk: image start 0x10000 (first PT_LOAD of fuzz_uci.asan)
+A/AD1g.v	1276	0x10000	0x10000	1,2
+# fuzz_uci.asan links neither __asan_memset nor the bcmp trampoline (no symbol); absent entry = 0 as in knock (commit 4bd6d23a351 A/AF0l.v:4); no code at 0 (image starts at 0x10000)
+A/AF0l.v	13	0x51c98	0
+A/AF0l.v	14	0x42144	0
+# CZONE shadow bound: the page-aligned bound 0x80050000 that cgif, ctrl and grant all keep (grant's released AFhn:419, AFix:285/289, AFjb:284/288, AFju:576/586, AFkm:1305, AFkz:898 hold it). With a grant donor there is no twin image, so KEPT-TWIN-EQUAL cannot keep it and the shadow rule moved it to 0x8004f498, a value with no role (partner-left FAIL x3). Kept: it is >= the end of fuzz_uci's highest constant shadow cell 0x8000b722 (A/AF0m.v Tfib_const_shadow; port_core's own CZONE check).
+A/AFhn.v	419	0x80050000	0x80050000
+A/AFix.v	285	0x80050000	0x80050000
+A/AFix.v	289	0x80050000	0x80050000
+A/AFjb.v	284	0x80050000	0x80050000
+A/AFjb.v	288	0x80050000	0x80050000
+A/AFju.v	576	0x80050000	0x80050000
+A/AFju.v	586	0x80050000	0x80050000
+A/AFkm.v	1305	0x80050000	0x80050000
+A/AFkz.v	898	0x80050000	0x80050000
+# R_A3 length: fuzz_uci's own AD2j (gen_ad2 195f6e6ef088) region R_A3 = [0x9b588, 0x9b8d0) = (__stderr_FILE - 0x48) .. __start_asan_globals, CImg 840 bytes; grant's R_A3 is [0xa0de0, 0xa1120) by the same two roles, 832 bytes. The three proof positions that restate R_A3's length take the unit's 840.
+A/AD28.v	293	832	840
+A/AD28.v	294	832	840
+A/AD2d.v	131	832	840

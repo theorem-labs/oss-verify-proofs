@@ -1,0 +1,42 @@
+9	main	KEEP	main	0x132c0..-	0x132c0..-	A only (no src0_E)
+10	target_run	KEEP	target_run	0x13590..-	0x13590..-	A only (no src0_E)
+11	LLVMFuzzerTestOneInput	KEEP	LLVMFuzzerTestOneInput	0x13760..-	0x13760..-	A only (no src0_E)
+12	stack_chk_fail	KEEP	__stack_chk_fail	0x19444..-	0x19444..-	A only (no src0_E)
+13	syscall_ret	KEEP	__syscall_ret	0x1944c..-	0x1944c..-	A only (no src0_E)
+14	errno_location	KEEP	___errno_location	0x19484..-	0x19484..-	A only (no src0_E)
+15	free	KEEP	free	0x19490..-	0x19490..-	A only (no src0_E)
+16	malloc	KEEP	default_malloc	0x195d0..-	0x195d0..-	A only (no src0_E)
+17	libc_free	KEEP	__libc_free	0x195d4..-	0x195d4..-	A only (no src0_E)
+18	get_meta	KEEP	get_meta	0x197a0..-	0x197a0..-	A only (no src0_E)
+19	nontrivial_free	KEEP	nontrivial_free	0x198b0..-	0x198b0..-	A only (no src0_E)
+20	alloc_meta	KEEP	__malloc_alloc_meta	0x19c88..-	0x19c88..-	A only (no src0_E)
+21	libc_malloc_impl	KEEP	__libc_malloc_impl	0x19f60..-	0x19f60..-	A only (no src0_E)
+22	alloc_slot	KEEP	alloc_slot	0x1a2d0..-	0x1a2d0..-	A only (no src0_E)
+23	enframe	KEEP	enframe	0x1ab74..-	0x1ab74..-	A only (no src0_E)
+24	malloc_allzerop	KEEP	__malloc_allzerop	0x1acc4..-	0x1acc4..-	A only (no src0_E)
+25	vm_wait	KEEP	__vm_wait	0x1ae3c..-	0x1ae3c..-	A only (no src0_E)
+26	mmap	KEEP	__mmap	0x1ae40..-	0x1ae40..-	A only (no src0_E)
+27	mprotect	KEEP	__mprotect	0x1af2c..-	0x1af2c..-	A only (no src0_E)
+28	munmap	KEEP	__munmap	0x1af74..-	0x1af74..-	A only (no src0_E)
+29	memcpy	KEEP	memcpy	0x20440..-	0x20440..-	A only (no src0_E)
+30	memset	KEEP	memset	0x20844..-	0x20844..-	A only (no src0_E)
+31	strnlen	KEEP	strnlen	0x20a04..-	0x20a04..-	A only (no src0_E)
+32	memchr	KEEP	memchr	0x20a48..-	0x20a48..-	A only (no src0_E)
+33	lock	KEEP	__lock	0x20b14..-	0x20b14..-	A only (no src0_E)
+34	unlock	KEEP	__unlock	0x20d9c..-	0x20d9c..-	A only (no src0_E)
+35	syscall_cp_c	KEEP	__syscall_cp_c	0x20e10..-	0x20e10..-	A only (no src0_E)
+36	D_const_HIGHS_0x8080808080808080	NOSYM	-	0x103d0	0x103d0	no symbol of that name: kept as written, not derived
+37	D_const_ONES_0x0101010101010100	NOSYM	-	0x103e0	0x103e0	no symbol of that name: kept as written, not derived
+38	D_debruijn32	NOSYM	-	0x10500	0x10500	no symbol of that name: kept as written, not derived
+39	D_size_classes	NOSYM	-	0x10520	0x10520	no symbol of that name: kept as written, not derived
+40	D_small_cnt_tab	KEEP	small_cnt_tab	0x10580	0x10580	exact
+41	D_med_cnt_tab	KEEP	med_cnt_tab	0x1059b	0x1059b	exact
+42	D_got_stack_chk_guard	NOSYM	-	0x22050	0x22050	no symbol of that name: kept as written, not derived
+43	D_read_stage	KEEP	read_stage	0x232c9	0x232c9	exact
+44	D_oft_aligned_copy_empty	KEEP	oft_aligned_copy.empty	0x332e0	0x332e0	alnum
+45	D_stack_chk_guard	KEEP	__stack_chk_guard	0x63690	0x63690	underscore
+46	D_libc	KEEP	__libc	0x636b0	0x636b0	underscore
+47	D_malloc_lock	KEEP	__malloc_lock	0x63720	0x63720	underscore
+48	D_malloc_context	KEEP	__malloc_context	0x63728	0x63728	underscore
+49	D_ofl_lock	KEEP	ofl_lock	0x63ad8	0x63ad8	exact
+50	D_ofl_head	KEEP	ofl_head	0x63ae0	0x63ae0	exact

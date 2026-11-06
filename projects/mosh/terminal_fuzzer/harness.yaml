@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: mosh
 harness: terminal_fuzzer
-rocq: OssFuzzTheorems.mosh.terminal_fuzzer
+rocq: OSSVerify.mosh.terminal_fuzzer
 origin: upstream
 summary: Feeds every input byte as a UserByte to an 80x24 Terminal::Complete, then renders a frame diff
   (Display::new_frame) against a blank framebuffer; output string discarded.

@@ -1,0 +1,143 @@
+# hub HUB commit 88154566652a
+# headers citing "re-derived by funcpair.py": 47 ; citations of funcpair.py: 47
+file       hdr_moved maps size_reads hdr_cmt | cited covered uncovered | placed_not_in_file
+AGc0           16     16      0      10 |    16      16         0 |    0
+AGc1            1      1      0       8 |     1       0         1 |    0
+AGc2            3      3      0       5 |     3       2         1 |    0
+AGhz           43     43      0       0 |    43      43         0 |    0
+AGi0           36     37      0       3 |    36      36         0 |    0
+AGi2           60     58      2       2 |    60      60         0 |    0
+AGi4           72     72      0       0 |    72      72         0 |    0
+AGif0cgif       6      6      0       0 |     6       1         5 |    0
+AGif1m          6      3      0       0 |     6       0         6 |    0
+AGik            3      3      0       0 |     3       2         1 |    0
+AGil            3      3      0       0 |     3       2         1 |    0
+AGim           19     18      0       0 |    19      16         3 |    0
+AGim0          11     11      0       0 |    11      11         0 |    0
+AGin           22     20      0       0 |    22      17         5 |    0
+AGin0          11     11      0       0 |    11      11         0 |    0
+AGip            9      9      0       0 |     9       8         1 |    0
+AGiq           12     15      0       0 |    12      11         1 |    0
+AGir           12     15      0       1 |    12      11         1 |    0
+AGis           10     19      0       0 |    10       1         9 |    0
+AGit            1      1      0       0 |     1       1         0 |    0
+AGiu            7      7      0       0 |     7       6         1 |    0
+AGiv            1      1      0       0 |     1       1         0 |    0
+AGiw            3      2      0       0 |     3       0         3 |    0
+AGix            5      3      0       0 |     5       0         5 |    0
+AGiz            4      6      0       0 |     4       0         4 |    0
+AGj0            1      1      0       0 |     1       0         1 |    0
+AGj1           16     29      0       0 |    16       0        16 |    0
+AGj2            3      3      0       0 |     3       2         1 |    0
+AGj3            7      7      0       0 |     7       6         1 |    0
+AGj4           10     10      0       1 |    10       9         1 |    0
+AGj5           10     10      0       0 |    10       9         1 |    0
+AGj6           10     14      0       0 |    10       1         9 |    0
+AGj7            1      1      0       0 |     1       1         0 |    0
+AGj8            6      6      0       0 |     6       5         1 |    0
+AGj9            1      1      0       1 |     1       1         0 |    0
+AGja            6      5      0       0 |     6       0         6 |    0
+AGjb            3      2      0       0 |     3       0         3 |    0
+AGjd            4      6      0       0 |     4       0         4 |    0
+AGje            1      1      0       0 |     1       0         1 |    0
+AGjf           16     28      0       0 |    16       0        16 |    0
+AGjg            3      3      0       0 |     3       2         1 |    0
+AGk1            2      1      0       0 |     2       0         2 |    0
+AGtop           2      2      0       2 |     2       2         0 |    0
+AGtopcgif       3      3      0       0 |     3       3         0 |    0
+AllocGcgif      2      2      0       1 |     2       2         0 |    0
+CLrefillB3      8     22      0       0 |     8       8         0 |    0
+CLrefillR       4      4      0       0 |     4       4         0 |    0
+
+TOTAL cited addresses in the 47 headers: 495; covered by this re-run: 383; not covered: 112 (comment numerals, not cited as moved by function pairs: 37)
+header counts that disagree with numdiff.tsv (file, hdr_moved, numdiff_noncomment, hdr_cmt, numdiff_comment): [('AGif0cgif', 6, 6, 0, 3)]
+covered placed values missing from the committed file text: none
+
+WHAT THE UNCOVERED CITED ADDRESSES ARE
+    38  DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+    18  DATA address, relocation resolved it as __sanitizer::useCounts+0x30008[data]
+    12  DATA address, relocation resolved it as read_stage+0x0[data]
+     9  segment extent / non-address: EXTENT(val:image.top, val:seg3.hi)
+     7  segment extent / non-address: EXTENT(val:seg1.hi)
+     4  DATA address, relocation resolved it as END by position: read_stage+0x0[data]
+     4  DATA address, relocation resolved it as builtin_tls+0xd8[data]
+     4  segment extent / non-address: decimal literal
+     4  DATA address, relocation resolved it as __pthread_tsd_main+0x0[data]
+     4  DATA address, relocation resolved it as InitializeCommonInterceptors::metadata_mem+0x8[data]
+     2  DATA address, relocation resolved it as __asan::kSuppressionTypes+0x0[data]
+     2  DATA address, relocation resolved it as shadow(__sanitizer::theDepot+0x137ea8[data])
+     2  DATA address, relocation resolved it as END by position: __sanitizer::stackStore+0x0[data]
+     1  DATA address, relocation resolved it as __asan::asan_flags_dont_use_directly+0x28[data]  [a funcpair call exists for this value: code, -]
+     1  DATA address, relocation resolved it as __asan::asan_flags_dont_use_directly+0x28[data]
+
+every uncovered cited address (file, src -> new, what it is)
+  AGc1       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGc2       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGif0cgif  0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGif0cgif  0x5fb000   -> 0x5f6000   segment extent / non-address: EXTENT(val:image.top, val:seg3.hi)
+  AGif0cgif  0x80050000 -> 0x800b6c00 DATA address, relocation resolved it as shadow(__sanitizer::theDepot+0x137ea8[data])
+  AGif0cgif  0xa00a0    -> 0x9abc8    DATA address, relocation resolved it as __asan::kSuppressionTypes+0x0[data]
+  AGif0cgif  0xa3aa0    -> 0x9e5e0    DATA address, relocation resolved it as __asan::asan_flags_dont_use_directly+0x28[data]  [a funcpair call exists for this value: code, -]
+  AGif1m     0x5fb000   -> 0x5f6000   segment extent / non-address: EXTENT(val:image.top, val:seg3.hi)
+  AGif1m     0x9d000    -> 0x98000    segment extent / non-address: EXTENT(val:seg1.hi)
+  AGik       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGil       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGim       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGim       0x5fb000   -> 0x5f6000   segment extent / non-address: EXTENT(val:image.top, val:seg3.hi)
+  AGim       0x9d000    -> 0x98000    segment extent / non-address: EXTENT(val:seg1.hi)
+  AGin       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGin       0x5fb000   -> 0x5f6000   segment extent / non-address: EXTENT(val:image.top, val:seg3.hi)
+  AGin       0x9d000    -> 0x98000    segment extent / non-address: EXTENT(val:seg1.hi)
+  AGip       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGiq       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGir       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGis       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGis       0x5c88d0   -> 0x5c3410   DATA address, relocation resolved it as END by position: read_stage+0x0[data]
+  AGis       0x5c88d0   -> 0x5c3410   DATA address, relocation resolved it as read_stage+0x0[data]
+  AGiu       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGiw       0x5d9220   -> 0x5d3d68   DATA address, relocation resolved it as builtin_tls+0xd8[data]
+  AGiw       6132240    -> 6110552    segment extent / non-address: decimal literal
+  AGiw       6268344    -> 6246656    DATA address, relocation resolved it as __pthread_tsd_main+0x0[data]
+  AGix       0x5c88d0   -> 0x5c3410   DATA address, relocation resolved it as read_stage+0x0[data]
+  AGix       0x5fb000   -> 0x5f6000   segment extent / non-address: EXTENT(val:image.top, val:seg3.hi)
+  AGix       0x80050000 -> 0x800b6c00 DATA address, relocation resolved it as shadow(__sanitizer::theDepot+0x137ea8[data])
+  AGix       0xa5ad0    -> 0xa0610    DATA address, relocation resolved it as InitializeCommonInterceptors::metadata_mem+0x8[data]
+  AGiz       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGiz       0x5d9220   -> 0x5d3d68   DATA address, relocation resolved it as builtin_tls+0xd8[data]
+  AGiz       6132240    -> 6110552    segment extent / non-address: decimal literal
+  AGiz       6268344    -> 6246656    DATA address, relocation resolved it as __pthread_tsd_main+0x0[data]
+  AGj0       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGj1       0x168148   -> 0x162c88   DATA address, relocation resolved it as __sanitizer::useCounts+0x30008[data]
+  AGj1       0x178148   -> 0x172c88   DATA address, relocation resolved it as END by position: __sanitizer::stackStore+0x0[data]
+  AGj1       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGj1       0x5c88d0   -> 0x5c3410   DATA address, relocation resolved it as END by position: read_stage+0x0[data]
+  AGj1       0x5c88d0   -> 0x5c3410   DATA address, relocation resolved it as read_stage+0x0[data]
+  AGj2       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGj3       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGj4       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGj5       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGj6       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGj6       0x5c88d0   -> 0x5c3410   DATA address, relocation resolved it as END by position: read_stage+0x0[data]
+  AGj6       0x5c88d0   -> 0x5c3410   DATA address, relocation resolved it as read_stage+0x0[data]
+  AGj8       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGja       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGja       0x5d9220   -> 0x5d3d68   DATA address, relocation resolved it as builtin_tls+0xd8[data]
+  AGja       0xa00a0    -> 0x9abc8    DATA address, relocation resolved it as __asan::kSuppressionTypes+0x0[data]
+  AGja       0xa3aa0    -> 0x9e5e0    DATA address, relocation resolved it as __asan::asan_flags_dont_use_directly+0x28[data]
+  AGja       6132240    -> 6110552    segment extent / non-address: decimal literal
+  AGja       6268344    -> 6246656    DATA address, relocation resolved it as __pthread_tsd_main+0x0[data]
+  AGjb       0x5c88d0   -> 0x5c3410   DATA address, relocation resolved it as read_stage+0x0[data]
+  AGjb       0xa5ad0    -> 0xa0610    DATA address, relocation resolved it as InitializeCommonInterceptors::metadata_mem+0x8[data]
+  AGjd       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGjd       0x5d9220   -> 0x5d3d68   DATA address, relocation resolved it as builtin_tls+0xd8[data]
+  AGjd       6132240    -> 6110552    segment extent / non-address: decimal literal
+  AGjd       6268344    -> 6246656    DATA address, relocation resolved it as __pthread_tsd_main+0x0[data]
+  AGje       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGjf       0x168148   -> 0x162c88   DATA address, relocation resolved it as __sanitizer::useCounts+0x30008[data]
+  AGjf       0x178148   -> 0x172c88   DATA address, relocation resolved it as END by position: __sanitizer::stackStore+0x0[data]
+  AGjf       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGjf       0x5c88d0   -> 0x5c3410   DATA address, relocation resolved it as END by position: read_stage+0x0[data]
+  AGjf       0x5c88d0   -> 0x5c3410   DATA address, relocation resolved it as read_stage+0x0[data]
+  AGjg       0x178148   -> 0x172c88   DATA address, relocation resolved it as __sanitizer::stackStore+0x0[data]
+  AGk1       0x5fb000   -> 0x5f6000   segment extent / non-address: EXTENT(val:image.top, val:seg3.hi)
+  AGk1       0x9d000    -> 0x98000    segment extent / non-address: EXTENT(val:seg1.hi)

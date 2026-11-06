@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: fhmtgen_fuzzer
-rocq: OssFuzzTheorems.leptonica.fhmtgen_fuzzer
+rocq: OSSVerify.leptonica.fhmtgen_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixHMTDwa_1 (generated DWA hit-miss transform) for every sel in selaAddHitMiss;
   outputs discarded.

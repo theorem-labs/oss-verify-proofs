@@ -1,0 +1,6 @@
+LLVMFuzzerTestOneInput: unimp at none
+check_no_overread: unimp at none
+check_value: unimp at none
+check_clamp: unimp at none
+rp_hot_clamp: unimp at none
+rp_uci_int: unimp at none

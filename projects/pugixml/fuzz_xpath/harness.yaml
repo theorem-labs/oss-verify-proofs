@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: pugixml
 harness: fuzz_xpath
-rocq: OssFuzzTheorems.pugixml.fuzz_xpath
+rocq: OSSVerify.pugixml.fuzz_xpath
 origin: upstream
 summary: compiles a fuzzed XPath expression with up to 50 fuzzed variables, parses a fuzzed XML buffer
   (parse_full), and evaluates the query as boolean/number/string/node/node_set; results discarded; pugi::xpath_exception

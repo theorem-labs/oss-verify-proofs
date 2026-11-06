@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: miniz
 harness: small_fuzzer
-rocq: OssFuzzTheorems.miniz.small_fuzzer
+rocq: OSSVerify.miniz.small_fuzzer
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, a round trip: Deflate the input with 1-byte in/out
   buffers, inflate it back with 1-byte buffers, and the result must equal the input byte-for-byte (memcmp

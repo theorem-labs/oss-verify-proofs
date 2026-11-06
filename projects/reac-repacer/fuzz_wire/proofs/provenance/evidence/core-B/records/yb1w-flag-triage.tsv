@@ -1,0 +1,904 @@
+verdict	file:line	source	written	reason
+UNPAIRED-SOURCE	B/YB1w.v:19	0xa1f80		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:19	0xa22c0		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:24	0x309cc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): unverifiable by symtab (st_size 0), unread
+UNPAIRED-SOURCE	B/YB1w.v:35	0x32c88		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:35	0x32dcc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:39	0x33258		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:39	0x33340		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:40	0x33774		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:40	0x33958		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:41	0x33958		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:41	0x33adc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:46	0x343ac		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:46	0x3444c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:49	0x349c0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:49	0x349f8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:50	0x35190		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:50	0x35478		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:52	0x35cc8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:52	0x35e78		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:59	0x36f24		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:59	0x3703c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:60	0x37344		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:60	0x37440		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:63	0x37ae0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:63	0x37bc8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:66	0x3cb00		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v4.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:66	0x3cde8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v4.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:70	0x3d250		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:70	0x3d3ec		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:71	0x3d3ec		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:71	0x3d5b8		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:73	0x3d5b8		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:73	0x3d754		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:74	0x3d754		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:74	0x3d79c		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:75	0x3d79c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:75	0x3d8d8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:79	0x403f8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:79	0x40464		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:80	0x40464		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:80	0x404cc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:81	0x40b4c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:81	0x40dbc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:82	0x40dbc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:82	0x410c4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:83	0x41838		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:83	0x41988		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:84	0x423a4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:84	0x424bc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:85	0x424bc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:85	0x424c0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:86	0x424c0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:86	0x424c4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:87	0x424c4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:87	0x424c8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:88	0x424c8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:88	0x424cc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:89	0x424cc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:89	0x424d0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:90	0x424d0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:90	0x424d4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:91	0x424d4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:91	0x424d8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:92	0x424d8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:92	0x424dc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:93	0x424dc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:93	0x424e0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:94	0x424e0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:94	0x424e4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:95	0x424e4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:95	0x424e8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:96	0x424e8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:96	0x424ec		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:97	0x424ec		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:97	0x424f0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:98	0x424f0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:98	0x424f4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:99	0x424f4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:99	0x424f8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:100	0x424f8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:100	0x424fc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:101	0x417bc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:101	0x424fc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:101	0x417bc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:101	0x42500		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:102	0x42500		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:102	0x42504		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:103	0x42504		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:103	0x42508		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:104	0x42508		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:104	0x4250c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:105	0x417cc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:105	0x4250c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:105	0x417cc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:105	0x42514		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:106	0x42514		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:106	0x42518		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:107	0x42518		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v4.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:107	0x4251c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v4.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:108	0x417dc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:108	0x4251c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:108	0x417dc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:108	0x42520		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:109	0x417e4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:109	0x42520		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:109	0x417e4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:109	0x42524		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:110	0x417e8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:110	0x42524		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:110	0x417e8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:110	0x42528		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:111	0x417ec		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:111	0x42528		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:111	0x417ec		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:111	0x4252c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:112	0x417f0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:112	0x4252c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:112	0x417f0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:112	0x42530		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:113	0x42530		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:113	0x42534		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:114	0x417f8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:114	0x42534		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:114	0x417f8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:114	0x42538		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:115	0x42538		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:115	0x4253c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:116	0x4253c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:116	0x42540		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:117	0x42540		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:117	0x42544		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:118	0x42544		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:118	0x42548		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:119	0x4180c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:119	0x42548		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:119	0x4180c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:119	0x4254c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:125	0x43bdc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:125	0x43c98		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:136	0x45cd8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:136	0x45db0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:148	0x48008		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:148	0x481a0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:149	0x48d4c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:149	0x51a24		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:150	0x51a24		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:150	0x51b80		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:151	0x51b80		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:151	0x51b84		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:152	0x51b84		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:152	0x51b88		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE trampoline
+UNPAIRED-SOURCE	B/YB1w.v:154	0x52024		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:154	0x52264		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:160	0x52b84		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:160	0x52be4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:162	0x52d6c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:162	0x52d70		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:163	0x52d70		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:163	0x52ed8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:168	0x5320c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:168	0x532d8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:170	0x532dc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:170	0x533dc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:171	0x53704		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:171	0x53870		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:176	0x543b4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:176	0x54554		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:177	0x54554		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:177	0x546d4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:185	0x557c0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:185	0x559cc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:216	0x59b98		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:216	0x59c38		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:217	0x59674		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:217	0x59e00		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:217	0x59674		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:217	0x59e04		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:220	0x59e9c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:220	0x59f00		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:221	0x5a074		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:221	0x5a07c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:223	0x5a428		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v4.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:223	0x5a608		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v4.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:228	0x5ae60		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:228	0x5b100		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:230	0x5b844		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:230	0x5b850		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:235	0x5ba24		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:235	0x5bb70		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:236	0x5bdfc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:236	0x5be08		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:240	0x5c3b8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:240	0x5c55c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:245	0x5cc30		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:245	0x5cd3c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:249	0x5df74		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:249	0x5df78		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:250	0x5df80		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:250	0x5e1c0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:251	0x5e414		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:251	0x5e56c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:252	0x5e758		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:252	0x5e764		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:253	0x5e764		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:253	0x5e8b0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:258	0x5e950		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:258	0x5e960		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:259	0x5e96c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:259	0x5ec38		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:260	0x5ec38		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:260	0x5eff8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:261	0x5ff54		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:261	0x5ff60		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:265	0x6063c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:265	0x60660		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:266	0x608b4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:266	0x609c8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:270	0x60cd4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:270	0x60cdc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:271	0x60cdc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:271	0x60ce0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:272	0x60d08		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:272	0x60d54		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:275	0x6186c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:275	0x619b0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:276	0x619b0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:276	0x619b8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:277	0x61d00		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:277	0x62fa4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:278	0x62fa4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:278	0x62fc8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:282	0x63b58		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:282	0x63bb8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:283	0x63bb8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v4.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:283	0x63bf8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v4.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:292	0x63fc8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:292	0x63ffc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:295	0x64084		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:295	0x640c8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:296	0x640c8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:296	0x64114		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:336	0x64fc0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:336	0x653bc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:342	0x6595c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:342	0x659b8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:344	0x653ec		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:344	0x65b80		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:344	0x653ec		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:344	0x65b84		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:347	0x65dd8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:347	0x65de4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:353	0x65c98		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:353	0x66420		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:353	0x65c98		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:353	0x6642c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:354	0x6642c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:354	0x665a4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:355	0x665a4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:355	0x665b0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:356	0x66008		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:356	0x6679c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:356	0x66008		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:356	0x667a0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:362	0x68e80		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v4.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:362	0x68edc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v4.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:365	0x699dc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:365	0x69aac		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:366	0x69aac		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:366	0x69dfc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:367	0x69dfc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:367	0x69e0c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:368	0x6a048		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:368	0x6a08c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:369	0x6a08c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v4.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:369	0x6a0ec		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v4.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:372	0x6b150		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:372	0x6b254		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:379	0x6c778		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:379	0x6c7f4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:381	0x6cb10		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:381	0x6cb14		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:382	0x6cb14		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:382	0x6cf04		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:383	0x6cf04		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:383	0x6cfd4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:387	0x6d680		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:387	0x6d684		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:388	0x6d684		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:388	0x6d790		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:390	0x6d37c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:390	0x6db10		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:390	0x6d37c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:390	0x6db14		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:391	0x6dbb8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:391	0x6dbd8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:393	0x6dcc4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:393	0x6dcc8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:399	0x6e3d4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:399	0x6e504		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:400	0x6e504		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:400	0x6e564		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:401	0x6e564		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:401	0x6e630		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:402	0x6e644		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:402	0x6e664		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:403	0x6e664		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:403	0x6e7b0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:404	0x6e7b0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:404	0x6e7c0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:405	0x6ffb8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:405	0x6fffc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:406	0x6fffc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:406	0x7002c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:413	0x72d00		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:413	0x72e10		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:414	0x731f0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:414	0x73280		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:415	0x73280		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:415	0x73380		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:417	0x733e8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:417	0x73548		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:420	0x762d8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:420	0x76ba8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:420	0x762d8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:420	0x76bac		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:421	0x77ab0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:421	0x78380		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:421	0x77ab0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:421	0x78384		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:424	0x79f40		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:424	0x7a1b4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:425	0x7a4e0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:425	0x7a524		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:428	0x7b6f8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:428	0x7bfd4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:428	0x7b6f8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:428	0x7bfd8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:431	0x7d398		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:431	0x7d3a4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:432	0x7ff5c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:432	0x7ff74		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:435	0x80424		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:435	0x8043c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:442	0x809f4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE other
+UNPAIRED-SOURCE	B/YB1w.v:445	0x82074		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:445	0x82434		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:448	0x8260c		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:448	0x82694		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:449	0x82774		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:449	0x831f8		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:450	0x831f8		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:450	0x8326c		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:451	0x8326c		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:451	0x834dc		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:452	0x834dc		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:452	0x835dc		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:453	0x835dc		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:453	0x8363c		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:454	0x8363c		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:454	0x83bfc		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:455	0x83bfc		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:455	0x83fdc		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:456	0x83fdc		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:456	0x840d0		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:457	0x840d0		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:457	0x84e4c		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:458	0x84e4c		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:458	0x85004		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:459	0x85518		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:459	0x85554		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:460	0x85554		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:460	0x855fc		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:461	0x855fc		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:461	0x85a70		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:462	0x85a70		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:462	0x85a90		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:463	0x85a90		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:463	0x85bf0		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:464	0x85bf0		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:464	0x85c00		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:465	0x85c00		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:465	0x85ce4		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:466	0x85ce4		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:466	0x85e78		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:467	0x85e78		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:467	0x85efc		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:468	0x85efc		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:468	0x86640		AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YB1w.v:479	0x8cdb4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:479	0x8ce48		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:482	0x8cf5c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:482	0x8cf60		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:483	0x8cf60		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:483	0x8d024		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:484	0x8d024		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:484	0x8d028		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:485	0x8d028		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:485	0x8d02c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:508	0x91de4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:508	0x91fb8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:510	0x92718		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:510	0x9277c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:527	0x931e0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:527	0x8d7c8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:527	0x931e0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:527	0x8d7cc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:544	0x95368		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:544	0x96790		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:544	0x95368		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:544	0x96794		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:557	0x97484		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:557	0x974a8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:562	0x98c58		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:562	0x98cfc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:563	0x98cfc		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:563	0x98e18		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:564	0x98e18		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:564	0x98e44		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:566	0x98ec4		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop.tsv, 0 readers): unverifiable by symtab (st_size 0), unread
+UNPAIRED-SOURCE	B/YB1w.v:567	0x96f9c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:567	0x98eb0		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:567	0x96f9c		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:567	0x98eb8		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:586	0xa2318		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNPAIRED-SOURCE	B/YB1w.v:587	0xa3178		cell removed from the committed YB1w.v by yb1w-drop-unread.py (yb1w-drop-v52.tsv, 0 readers): FALSE named-other
+UNRESOLVED	B/YB1w.v:604	0x10040	0x10040	program headers at ELF header + 0x40 = 0x10040 in both images
+UNPAIRED-PORTED	B/YB1w.v:63		0x7fda4	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x7ff2c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x7ff2c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x7ffe8	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x7ffe8	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x8016c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x8016c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x804c0	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x804c0	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x8057c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x8057c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x805f4	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x805f4	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x80abc	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x80abc	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x80d64	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x80d9c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x80ee0	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x80ee0	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x80f84	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x80f84	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x8103c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x8103c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x81144	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x81144	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x81314	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x81314	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x813a0	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x813a0	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x81414	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x81414	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x8151c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x8151c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x815ec	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x815ec	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x8183c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x8183c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x818e8	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x818e8	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:63		0x81928	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:274		0x6f61c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:274		0x6f740	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:275		0x70128	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:275		0x701dc	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:276		0x71714	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:276		0x7243c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:276		0x71714	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-PORTED	B/YB1w.v:276		0x7253c	AB1w function table emitted for fuzz_wire.asan-ubsan by port_core: 27 donor pairs dropped (functions fuzz_wire does not link), 20 target functions added
+UNPAIRED-SOURCE	B/YCbq.v:793	0x10000		image bounds stated through B/YImgTop.v IMG_LO / IMG_TOP (port_core YImgTop rule), numerals become names
+UNPAIRED-SOURCE	B/YCbq.v:793	0x5fb000		image bounds stated through B/YImgTop.v IMG_LO / IMG_TOP (port_core YImgTop rule), numerals become names
+UNPAIRED-SOURCE	B/YCe5.v:672	0x10000		image bounds stated through B/YImgTop.v IMG_LO / IMG_TOP (port_core YImgTop rule), numerals become names
+UNPAIRED-SOURCE	B/YCe5.v:672	0x5fb000		image bounds stated through B/YImgTop.v IMG_LO / IMG_TOP (port_core YImgTop rule), numerals become names
+GEOMETRY-CHANGED	B/YCeg.v:132	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YCeg.v:132	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1e.v:231	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1f.v:208	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1g.v:44	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1g.v:52	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1g.v:96	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1g.v:681	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1g.v:682	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1g.v:967	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+DIFFERENT-SYMBOL	B/YD1o.v:82	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD1o.v:82	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD1o.v:85	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD1o.v:85	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD1o.v:92	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD1o.v:92	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+NON-ADDRESS-CHANGED	B/YD1o.v:96	0x1445c	0x13a2c	quotient (.bss + 0x20) / 8 = 0x9d160 / 8 = 0x13a2c in fuzz_wire B
+NON-ADDRESS-CHANGED	B/YD1o.v:96	0xbf5ff	0xbebff	quotient (IMG_TOP - 1) / 8 = (0x5f6000 - 1) / 8 = 0xbebff in fuzz_wire B
+DIFFERENT-SYMBOL	B/YD1o.v:99	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD1o.v:99	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD1o.v:100	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD1o.v:101	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+GEOMETRY-CHANGED	B/YD1o.v:101	0x14458	0x2000	TFIB_BSS / 8 = 0x10000 / 8 = 8192 (the quotient of the TFIB_BSS row above; donor 0xa22c0 / 8 = 83032)
+DIFFERENT-SYMBOL	B/YD1o.v:101	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+NON-ADDRESS-CHANGED	B/YD1o.v:101	0xab1a8	0xbcc00	quotient (IMG_TOP - TFIB_BSS) / 8 = (0x5f6000 - 0x10000) / 8 = 0xbcc00 in fuzz_wire B
+GEOMETRY-CHANGED	B/YD1v.v:213	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1v.v:225	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+DIFFERENT-SYMBOL	B/YD25.v:531	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD25.v:531	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD25.v:534	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD25.v:534	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD25.v:541	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD25.v:541	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD25.v:548	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+DIFFERENT-SYMBOL	B/YD25.v:548	0xa22c0	0x10000	TFIB_BSS = the start of the last range of the unit's lib/B/YF0m.v Tfib_zero_shadow, whose membership the lemma states: fuzz_grant B (0xa22c0, ...) of 15 ranges (the donor value); fuzz_wire B has ONE range (0x10000, 0x5f6000 - 0x10000), no ASan global. The checker expects the donor's symbol position (.bss start 0x9d140), which is not a range of the table (measure-B.out; overrides-B.tsv)
+NON-ADDRESS-CHANGED	B/YD27.v:68	0x25	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD27.v:73	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD27.v:93	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD27.v:95	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2h.v:63	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2h.v:68	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YE22.v:35	0x111	0xc1	index of the .got canary cell in lib/B/YF0m.v Tfib_const_abs, 273 -> 193 (overrides-B.tsv, measure-B.py: the donor 273 of 361, image A 273 of 288, image B 193 of 215)
+UNPAIRED-PORTED	B/YE34.v:28		0x129	icpt_ranges: fuzz_grant B's range (0x51b80, 1009 words) = 2 trampolines + __asan_memcpy + __asan_memset + __interceptor_memset + __interceptor_memcpy (4036 bytes); in fuzz_wire B __asan_memmove (not walked) sits where __asan_memset was, so the range splits: (0x50c0c, 297) = trampolines + __asan_memcpy (1188 bytes), (0x51420, 568) = __interceptor_memset + __interceptor_memcpy (2272 bytes)
+UNPAIRED-PORTED	B/YE34.v:28		0x51420	icpt_ranges: fuzz_grant B's range (0x51b80, 1009 words) = 2 trampolines + __asan_memcpy + __asan_memset + __interceptor_memset + __interceptor_memcpy (4036 bytes); in fuzz_wire B __asan_memmove (not walked) sits where __asan_memset was, so the range splits: (0x50c0c, 297) = trampolines + __asan_memcpy (1188 bytes), (0x51420, 568) = __interceptor_memset + __interceptor_memcpy (2272 bytes)
+UNPAIRED-SOURCE	B/YF0l.v:13	0x3d250		AF0l stack-class map emitted from fuzz_wire.asan-ubsan's own __asan_stack_malloc_N symbols: classes 0 = 0x3c524 and 1 = 0x3c698; fuzz_grant B's other classes are not linked
+UNPAIRED-SOURCE	B/YF0l.v:13	0x3d3ec		AF0l stack-class map emitted from fuzz_wire.asan-ubsan's own __asan_stack_malloc_N symbols: classes 0 = 0x3c524 and 1 = 0x3c698; fuzz_grant B's other classes are not linked
+UNPAIRED-SOURCE	B/YF0l.v:13	0x3d5b8		AF0l stack-class map emitted from fuzz_wire.asan-ubsan's own __asan_stack_malloc_N symbols: classes 0 = 0x3c524 and 1 = 0x3c698; fuzz_grant B's other classes are not linked
+KIND-CHANGED	B/YF0l.v:14	0x52024	0x0	absent entry = 0: fuzz_wire.asan-ubsan links no __asan_memset (its bcmp trampoline IS linked and relocated)
+UNPAIRED-SOURCE	B/YF0l.v:13	0x2		AF0l stack-class map emitted from fuzz_wire.asan-ubsan's own __asan_stack_malloc_N symbols: classes 0 = 0x3c524 and 1 = 0x3c698; fuzz_grant B's other classes are not linked
+UNPAIRED-SOURCE	B/YF0l.v:13	0x4		AF0l stack-class map emitted from fuzz_wire.asan-ubsan's own __asan_stack_malloc_N symbols: classes 0 = 0x3c524 and 1 = 0x3c698; fuzz_grant B's other classes are not linked
+UNPAIRED-SOURCE	B/YF0l.v:13	0x6		AF0l stack-class map emitted from fuzz_wire.asan-ubsan's own __asan_stack_malloc_N symbols: classes 0 = 0x3c524 and 1 = 0x3c698; fuzz_grant B's other classes are not linked
+NON-ADDRESS-CHANGED	B/YFem.v:412	0x61e16	0x609b6	quotient theDepot / 4 = 0x609b6 in fuzz_wire B
+GEOMETRY-CHANGED	B/YFer.v:93	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:98	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:203	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:210	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:212	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:313	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:314	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:319	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:322	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:137	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:153	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:153	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:166	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:166	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:180	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:296	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:297	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:300	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:301	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:427	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFex.v:242	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFex.v:276	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNPAIRED-PORTED	B/YFex.v:941		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-PORTED	B/YFex.v:941		0x0	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+GEOMETRY-CHANGED	B/YFey.v:134	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFey.v:173	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFez.v:406	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf0.v:138	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNPAIRED-PORTED	B/YFf0.v:471		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+GEOMETRY-CHANGED	B/YFf1.v:107	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf1.v:141	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf2.v:166	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf2.v:186	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf2.v:220	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf2.v:291	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf3.v:294	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf3.v:308	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf3.v:311	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNPAIRED-PORTED	B/YFf3.v:648		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+GEOMETRY-CHANGED	B/YFf4.v:340	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf4.v:355	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf4.v:531	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNPAIRED-PORTED	B/YFf4.v:898		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-PORTED	B/YFf4.v:898		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-PORTED	B/YFf4.v:898		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+GEOMETRY-CHANGED	B/YFfc.v:378	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfl.v:204	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfl.v:238	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNPAIRED-PORTED	B/YFfl.v:831		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-PORTED	B/YFfl.v:831		0x0	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+GEOMETRY-CHANGED	B/YFfq.v:166	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfq.v:264	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfq.v:284	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+NON-ADDRESS-CHANGED	B/YFfu.v:410	0x14d70	0x14340	quotient internal_alloc_placeholder / 8 = 0x14340 in fuzz_wire B
+GEOMETRY-CHANGED	B/YFfu.v:608	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfu.v:635	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfy.v:115	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfy.v:167	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfy.v:168	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfy.v:172	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg0.v:155	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+NON-ADDRESS-CHANGED	B/YFg1.v:295	0x14d70	0x14340	quotient internal_alloc_placeholder / 8 = 0x14340 in fuzz_wire B
+GEOMETRY-CHANGED	B/YFg1.v:548	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg1.v:601	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg1.v:602	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg1.v:606	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg3.v:284	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg4.v:84	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg4.v:275	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:126	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:211	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:235	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:347	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:364	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:369	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:507	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:190	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:208	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:213	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:528	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:609	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:614	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:717	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg7.v:155	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgi.v:149	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgi.v:298	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgj.v:115	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgj.v:116	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgj.v:116	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgj.v:118	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgl.v:104	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgl.v:105	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgl.v:108	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgl.v:110	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgl.v:149	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgp.v:99	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgp.v:144	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgq.v:94	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgq.v:132	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgq.v:136	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgq.v:138	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgq.v:200	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgr.v:108	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgr.v:153	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgr.v:157	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgr.v:159	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgr.v:223	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgv.v:141	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgv.v:183	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgv.v:271	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgv.v:274	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgx.v:91	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFha.v:98	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFha.v:99	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFha.v:141	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhc.v:97	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhc.v:140	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhf.v:71	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhl.v:110	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhn.v:245	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhn.v:246	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFic.v:229	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+NON-ADDRESS-CHANGED	B/YFim.v:496	0x3c	0x1	Tfib_const index 60 of nth_error_In replaced by YF0x.cell_lookup_In (B-cell-lookup.patch); the pairing reads 60 vs the 1 of (ANum (TFIB_OOM + 1)) 1
+NON-ADDRESS-CHANGED	B/YFin.v:486	0x3c	0x1	Tfib_const index 60 of nth_error_In replaced by YF0x.cell_lookup_In (B-cell-lookup.patch); the pairing reads 60 vs the 1 of (ANum (TFIB_OOM + 1)) 1
+GEOMETRY-CHANGED	B/YFiy.v:372	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFj1.v:779	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFjc.v:375	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFjf.v:773	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFjm.v:231	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFjm.v:231	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNRESOLVED	B/YFjm.v:325	0x800b32e0	0x800b28b0	shadow of builtin_tls + 0xeb8: grant 0x5d9700, fuzz_wire B 0x5d36c8 + 0xeb8 = 0x5d4580 -> 0x800b28b0
+GEOMETRY-CHANGED	B/YFjp.v:817	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFjp.v:823	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+NON-ADDRESS-CHANGED	B/YFjr.v:621	0x14478	0x13a48	quotient (__asan::instance + 0xa8) / 8 = (0x9d198 + 0xa8) / 8 = 0x13a48 in fuzz_wire B
+GEOMETRY-CHANGED	B/YFjs.v:445	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFjy.v:1222	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFk0.v:1288	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNRESOLVED	B/YFk1.v:689	0x800b32e0	0x800b28b0	shadow of builtin_tls + 0xeb8: grant 0x5d9700, fuzz_wire B 0x5d36c8 + 0xeb8 = 0x5d4580 -> 0x800b28b0
+GEOMETRY-CHANGED	B/YFk5.v:564	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkc.v:439	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkd.v:559	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFke.v:563	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:937	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1079	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1087	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1208	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1229	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1229	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1230	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1230	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1399	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1399	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1410	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1411	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1449	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1449	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+STALE-DONOR-CODE-POINTER	B/YFkn.v:764	0x40000	0x40000	SLit 262144 = the mmap length argument (with prot 3 and flags 50 in the next registers): kUserMapSize 2^18, a length, not a pc
+GEOMETRY-CHANGED	B/YFkn.v:1588	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1747	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1875	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1876	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1877	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1878	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1878	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1921	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkz.v:665	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkz.v:666	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+NON-ADDRESS-CHANGED	B/YD1x.v:24	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD1x.v:25	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD22.v:22	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD22.v:22	0x27	0x24	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD27.v:86	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD28.v:104	0x25	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD28.v:105	0x25	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD28.v:105	0x25	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD28.v:105	0x25	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD28.v:106	0x26	0x23	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD28.v:108	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2d.v:22	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2d.v:23	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2e.v:60	0x23	0x20	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2e.v:65	0x25	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2e.v:65	0x25	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2e.v:189	0x23	0x20	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:57	0x21	0x1e	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:66	0x27	0x24	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:66	0x21	0x1e	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:66	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:84	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:93	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:147	0x21	0x1e	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:166	0x23	0x20	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:168	0x23	0x20	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:183	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:195	0x18	0x15	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:195	0x18	0x15	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:195	0x19	0x16	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:195	0x1d	0x1a	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:195	0x1d	0x1a	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:195	0x21	0x1e	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:196	0x18	0x15	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:196	0x18	0x15	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:196	0x19	0x16	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:196	0x19	0x16	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:196	0x21	0x1e	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+UNRESOLVED	B/YE2t.v:63	0x7fffbad8	0x7fffbab8	window end / stdin buf end by role (override, measure-B.out)
+KIND-CHANGED	B/YE2t.v:63	0x7fffbae0	0x7fffbac8	driver format shadow window (rule / override, measure-B.out)
+KIND-CHANGED	B/YE2u.v:63	0x7fffbad8	0x7fffbac0	driver format shadow window (rule / override, measure-B.out)
+UNRESOLVED	B/YE2u.v:63	0x7fffbae8	0x7fffbac8	window end / stdin buf end by role (override, measure-B.out)
+NON-ADDRESS-CHANGED	B/YE2v.v:63	0x7fffb2d0	0x7fffb2c0	driver format shadow window [floor8(shadow(FMT)), floor8(shadow(FMT+len))+8) (measure-B.out)
+NON-ADDRESS-CHANGED	B/YE2v.v:63	0x7fffb2e0	0x7fffb2d0	driver format shadow window [floor8(shadow(FMT)), floor8(shadow(FMT+len))+8) (measure-B.out)
+KIND-CHANGED	B/YE2w.v:63	0x7fffab00	0x7fffaaf8	driver format shadow window (rule / override, measure-B.out)
+NON-ADDRESS-CHANGED	B/YE2w.v:63	0x7fffab10	0x7fffab00	driver format shadow window [floor8(shadow(FMT)), floor8(shadow(FMT+len))+8) (measure-B.out)
+SAME-VALUE-DIFFERENT-OBJECT	B/YE30.v:1394	0x200000	0x200000	bound fst e + snd e <= 0x200000 on a table entry's (offset, length): a 2 MiB size bound, not an address
+NON-ADDRESS-CHANGED	B/YE34.v:27	0x3f1	0x238	icpt_ranges word count 1009 -> 568: the donor range splits at __asan_memmove (see the UNPAIRED rows of B/YE34.v)
+KIND-CHANGED	B/YE35.v:63	0x7fffa8f0	0x7fffa8e8	driver format shadow window (rule / override, measure-B.out)
+KIND-CHANGED	B/YE35.v:63	0x7fffa8f8	0x7fffa8f0	driver format shadow window (rule / override, measure-B.out)
+NON-ADDRESS-CHANGED	B/YE3j.v:253	0x1d6f8	0x1d60a	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:254	0x1d6f8	0x1d60a	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:256	0x1d6f8	0x1d60a	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:256	0x1d6f8	0x1d60a	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:506	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:507	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:507	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:509	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:513	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:513	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:525	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:525	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:525	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:826	0x1d6f8	0x1d60a	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:827	0x1d6f8	0x1d60a	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:829	0x1d6f8	0x1d60a	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:829	0x1d6f8	0x1d60a	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:1085	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1087	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1118	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1118	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1119	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1119	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1350	0x1d6f8	0x1d60a	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:1351	0x1d6f8	0x1d60a	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:1353	0x1d6f8	0x1d60a	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:1353	0x1d6f8	0x1d60a	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:1600	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1603	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1603	0x1d6fa	0x1d60c	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:253	0x1d70f	0x1d621	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:254	0x1d70f	0x1d621	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:256	0x1d70f	0x1d621	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:256	0x1d70f	0x1d621	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:506	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:507	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:507	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:509	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:513	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:513	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:525	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:525	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:525	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:826	0x1d70f	0x1d621	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:827	0x1d70f	0x1d621	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:829	0x1d70f	0x1d621	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:829	0x1d70f	0x1d621	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:1085	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1087	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1118	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1118	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1119	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1119	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1350	0x1d70f	0x1d621	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:1351	0x1d70f	0x1d621	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:1353	0x1d70f	0x1d621	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:1353	0x1d70f	0x1d621	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:1600	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1603	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1603	0x1d711	0x1d623	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3l.v:178	0x196b2	0x19640	same string + offset in both images ("cli: input >= %u bytes, refuse"+14)
+NON-ADDRESS-CHANGED	B/YE3l.v:181	0x196b2	0x19640	same string + offset in both images ("cli: input >= %u bytes, refuse"+14)
+NON-ADDRESS-CHANGED	B/YE3l.v:181	0x196b2	0x19640	same string + offset in both images ("cli: input >= %u bytes, refuse"+14)
+NON-ADDRESS-CHANGED	B/YE3l.v:310	0x196b4	0x19642	same string + offset in both images ("cli: input >= %u bytes, refuse"+16)
+NON-ADDRESS-CHANGED	B/YE3l.v:313	0x196b4	0x19642	same string + offset in both images ("cli: input >= %u bytes, refuse"+16)
+NON-ADDRESS-CHANGED	B/YE3l.v:313	0x196b4	0x19642	same string + offset in both images ("cli: input >= %u bytes, refuse"+16)
+NON-ADDRESS-CHANGED	B/YE3m.v:885	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:888	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:913	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:913	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:914	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:914	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:951	0x1479d	0x1476e	same string + offset in both images ("%d\n"+3)
+NON-ADDRESS-CHANGED	B/YE3m.v:952	0x1479d	0x1476e	same string + offset in both images ("%d\n"+3)
+NON-ADDRESS-CHANGED	B/YE3m.v:955	0x1479d	0x1476e	same string + offset in both images ("%d\n"+3)
+NON-ADDRESS-CHANGED	B/YE3m.v:1434	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1435	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1435	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1436	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1436	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1438	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1444	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1459	0x1479c	0x1476d	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3n.v:256	0x15843	0x157e1	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:257	0x15843	0x157e1	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:259	0x15843	0x157e1	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:259	0x15843	0x157e1	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:509	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:510	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:510	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:512	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:516	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:516	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:528	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:528	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:528	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:829	0x15843	0x157e1	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:830	0x15843	0x157e1	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:832	0x15843	0x157e1	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:832	0x15843	0x157e1	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:1106	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1108	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1139	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1139	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1140	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1140	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1371	0x15843	0x157e1	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:1372	0x15843	0x157e1	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:1374	0x15843	0x157e1	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:1374	0x15843	0x157e1	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:1621	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1624	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1624	0x15845	0x157e3	same string + offset in both images ("usage: %s INPUT\n"+9)
+SAME-VALUE-DIFFERENT-OBJECT	B/YE6k.v:1388	0x200000	0x200000	bound fst e + snd e <= 0x200000 on a table entry's (offset, length): a 2 MiB size bound, not an address
+GEOMETRY-CHANGED	B/YE7d.v:141	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNPAIRED-SOURCE	B/YFf0.v:472	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf0.v:472	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf0.v:472	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf0.v:473	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf0.v:473	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf0.v:473	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf3.v:649	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf3.v:649	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf3.v:649	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf3.v:650	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf3.v:650	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf3.v:650	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf4.v:899	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf4.v:899	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf4.v:899	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf4.v:900	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf4.v:900	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf4.v:900	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+KIND-CHANGED	B/YFfg.v:241	0x40248	0x40248	do_stretch length operand 262728, unchanged (a length, not an address; the checker classes the same number as a code offset in one image and a return site in the other)
+GEOMETRY-CHANGED	B/YFg4.v:222	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFh4.v:192	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFh6.v:199	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhl.v:144	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhl.v:218	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhl.v:219	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhl.v:319	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+STALE-DONOR-CODE-POINTER	B/YFk8.v:55	0x40000	0x40000	SLit 262144 = the mmap length argument (with prot 3 and flags 50 in the next registers): kUserMapSize 2^18, a length, not a pc
+STALE-DONOR-CODE-POINTER	B/YFk8.v:96	0x40000	0x40000	SLit 262144 = the mmap length argument (with prot 3 and flags 50 in the next registers): kUserMapSize 2^18, a length, not a pc
+STALE-DONOR-CODE-POINTER	B/YFk8.v:100	0x40000	0x40000	SLit 262144 = the mmap length argument (with prot 3 and flags 50 in the next registers): kUserMapSize 2^18, a length, not a pc
+STALE-DONOR-CODE-POINTER	B/YFk9.v:27	0x40000	0x40000	SLit 262144 = the mmap length argument (with prot 3 and flags 50 in the next registers): kUserMapSize 2^18, a length, not a pc
+STALE-DONOR-CODE-POINTER	B/YFk9.v:53	0x40000	0x40000	SLit 262144 = the mmap length argument (with prot 3 and flags 50 in the next registers): kUserMapSize 2^18, a length, not a pc
+STALE-DONOR-CODE-POINTER	B/YFkn.v:1053	0x40000	0x40000	SLit 262144 = the mmap length argument (with prot 3 and flags 50 in the next registers): kUserMapSize 2^18, a length, not a pc
+STALE-DONOR-CODE-POINTER	B/YFkn.v:1061	0x40000	0x40000	SLit 262144 = the mmap length argument (with prot 3 and flags 50 in the next registers): kUserMapSize 2^18, a length, not a pc
+STALE-DONOR-CODE-POINTER	B/YFkn.v:1069	0x40000	0x40000	SLit 262144 = the mmap length argument (with prot 3 and flags 50 in the next registers): kUserMapSize 2^18, a length, not a pc
+STALE-DONOR-CODE-POINTER	B/YFkn.v:1204	0x40000	0x40000	SLit 262144 = the mmap length argument (with prot 3 and flags 50 in the next registers): kUserMapSize 2^18, a length, not a pc
+GENERATOR-FILL	B/YD2e.v:66	0x25	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+GENERATOR-FILL	B/YD2e.v:66	0x25	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+GENERATOR-FILL	B/YD2f.v:183	0x24	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+GENERATOR-FILL	B/YD2f.v:195	0x19	0x16	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_wire B lib/B/YD2j.v 30 (21, 25; no R_A1d / R_A1l / R_A1m / R_A1n, R_A1p added): N + c -> N - 3 + c
+GENERATOR-FILL	B/YE3m.v:955	0x1479d	0x1476e	GENERATOR-FILL (reported): same string + offset in both images ("%d\n"+3)
+GENERATOR-FILL	B/YE3m.v:1444	0x1479c	0x1476d	GENERATOR-FILL (reported): same string + offset in both images ("%d\n"+2)

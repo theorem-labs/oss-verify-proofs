@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: open62541
 harness: fuzz_config_json
-rocq: OssFuzzTheorems.open62541.fuzz_config_json
+rocq: OSSVerify.open62541.fuzz_config_json
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

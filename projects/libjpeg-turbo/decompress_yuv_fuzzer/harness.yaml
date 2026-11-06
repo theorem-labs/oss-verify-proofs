@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjpeg-turbo
 harness: decompress_yuv_fuzzer
-rocq: OssFuzzTheorems.libjpeg_turbo.decompress_yuv_fuzzer
+rocq: OSSVerify.libjpeg_turbo.decompress_yuv_fuzzer
 origin: upstream
 summary: tj3DecompressToYUV8 then tj3DecodeYUV8 into 4 pixel formats with scaling; output only summed
   (the YUV path is not compared with the direct RGB decode). The "sum > bound" test after touching output

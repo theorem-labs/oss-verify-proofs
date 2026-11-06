@@ -1,0 +1,14 @@
+# donor
+YFem.v        1 code (0 function starts, 0 return pcs, 0 other instruction starts),   12 data, 8 at or above the image top 0x5fa1f0, 1 FINDINGS: 0x61e16
+codeptr: UNMEASURED: 41 of 370 file(s) hold no address literal in range
+rc=1
+# plant
+YE3m.v        5 code (4 function starts, 1 return pcs, 0 other instruction starts),    7 data, 2 at or above the image top 0x5f3970, 1 FINDINGS: 0x5f9020 [stale against fuzz_grant.asan-ubsan, donor file <file>: 1 STALE (0x5f9020), 0 donor-file literals with the same meaning in both images]
+rc=1
+# declared
+codeptr: UNMEASURED: 43 of 370 file(s) hold no address literal in range
+rc=2
+# plant-declared
+YE3m.v        5 code (4 function starts, 1 return pcs, 0 other instruction starts),    7 data, 2 at or above the image top 0x5f3970, 1 FINDINGS: 0x5f9020 [stale against fuzz_grant.asan-ubsan, donor file <file>: 1 STALE (0x5f9020), 0 donor-file literals with the same meaning in both images]
+codeptr: UNMEASURED: 43 of 370 file(s) hold no address literal in range
+rc=1

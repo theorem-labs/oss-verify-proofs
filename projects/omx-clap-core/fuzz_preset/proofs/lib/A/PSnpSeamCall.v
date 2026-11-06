@@ -1,0 +1,60 @@
+(* The GXA side of the seam, packaged: the three ASan interceptor call contracts the released
+   theorem leaves open, the readiness predicates its guard asks for, and musl vfprintf's walk at
+   fm.asan instantiated on them.
+
+   RT_gxa_inst.v leaves exactly three hypotheses (its header): memcpy_stack_contract at
+   fm.asan __wrap_memcpy 0x51a64, memset_stack_contract at __wrap_memset 0x51a60, strnlen_stack_contract at
+   __wrap_strnlen 0x412cc.  h-rw-ide-4 supplies the first two (lib/A/FMgxa_mem.v, relocating
+   c-asan-rt-stateio-n's I_memcpyw*.v / I_memsetw.v) and RtPrintf.GxStrn the third.  Each is stated
+   over a `*_ready` predicate that says when the interceptor may be called; the released design
+   pushes that readiness to the caller (G_vsnprintf.v's vsnprintf_ready does the same one layer up),
+   so it is a hypothesis here too, in the shape vf_ready_a asks for.
+
+   Nothing in this file depends on the harness: it is GXA's own vocabulary. *)
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (L3-V2, the GXA seam over ARx; parent c-libc-stdio 14:3xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamCall.v at origin/cold/port-fm-rtprintf-param 3e35620c52e: module paths fuzz_manifest -> fuzz_preset; the image record RT_IImgA.A_img -> preset's rebuilt-pin lib/CJ/RL/I/IImgA.v N_img_asan (taken by path by c-libc-str, f697dea427f); GXA's closed theorem at the image is c-libc-str's lib/A/PSnpL3/RT_gxa_inst.v fm_vfprintf_snf_a_closed at N_img_asan (3244f5c71f6), as fm's. seam_vfprintf_a's statement is unchanged. The sentences above name fm's addresses. *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.Lib Require Import
+SFModel Arr ITree Nodes PropExec MState Mem Exec Frame Cells Step.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.Reloc Require Import RStep.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.Spec Require Import Prelim Monad FmtFp StrFun.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.G Require Import
+G_memset G_memcpy G_fwritex G_pad G_fmt_fp_lib G_pop_arg GRoTab.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.GX Require Import Printf_model Printf_zfacts G_pop_arg_x.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.GXA Require Import
+AsanFacts SetCall StrnlenCall CopyCall VfprintfCall.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.GXA Require Import
+G_sn_write G_printf_snfsink G_vfprintf_snf G_vfprintf_snf_closed.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.I Require Import IImgA.
+Require OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.PSnpL3.RT_gxa_inst.
+Import ListNotations.
+Open Scope Z_scope.
+
+Module RGI := OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.PSnpL3.RT_gxa_inst.
+
+#[local] Existing Instance N_img_asan.
+
+Section C.
+(* the three interceptor call contracts, with their readiness predicates *)
+Variable copy_ready : (word -> option byte) -> Z -> Z -> Z -> Z -> Prop.
+Variable set_ready : (word -> option byte) -> Z -> Z -> Z -> Prop.
+Variable strn_ready : (word -> option byte) -> Z -> Z -> Z -> list byte -> Prop.
+Hypothesis SPEC_memcpy : @memcpy_stack_contract N_img_asan copy_ready.
+Hypothesis SPEC_memset : @memset_stack_contract N_img_asan set_ready.
+Hypothesis SPEC_strnlen : @strnlen_stack_contract N_img_asan strn_ready.
+
+(* the invariant the walk threads; the seam needs none, so it is True *)
+Definition SEAM_INV : (word -> option byte) -> Prop := fun _ => True.
+
+(* musl vfprintf at fm.asan 0x8ede0, in CJ's evt form, under those three contracts, through the
+   UNGUARDED released statement (G_vfprintf_snf.v:194): the guard's pieces are separate premises and
+   the stack window is VFA_DEPTH = 368 + PC_DEPTH = 5552 below musl vfprintf's entry sp, 48 bytes
+   less than the guarded statement's 48 + VF_DEPTH (VfprintfCall.v:36), so the seam's window is
+   exactly the VF_DEPTH = 5552 that RtPrintf.Param's vfprintf-interceptor walk calls it at. *)
+Definition seam_vfprintf_a :
+  @vfprintf_snf_a_stmt N_img_asan (snf_out_ready copy_ready) set_ready strn_ready copy_ready SEAM_INV
+  := RGI.fm_vfprintf_snf_a_closed copy_ready set_ready strn_ready SEAM_INV
+       SPEC_memcpy SPEC_memset SPEC_strnlen.
+
+End C.

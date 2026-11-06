@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tmux
 harness: format-fuzzer
-rocq: OssFuzzTheorems.tmux.format_fuzzer
+rocq: OSSVerify.tmux.format_fuzzer
 origin: upstream
 summary: format_expand on the NUL-terminated input with eight fixed format variables; the expansion is
   freed unread.

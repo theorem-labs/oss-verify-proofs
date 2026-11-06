@@ -1,7 +1,7 @@
 """From a statement's typed fields to its Rocq text.
 
 Each statement in a harness.yaml names one definition of
-theories/Shapes.v (OssFuzzTheorems.Core.Shapes) and its arguments.  This
+theories/Shapes.v (<namespace>.Core.Shapes) and its arguments.  This
 module is the only place that choice is made; a combination it does not
 list is an error, never a guess.
 """

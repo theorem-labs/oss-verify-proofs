@@ -1,0 +1,12 @@
+ad1g_guard: dead arm removed: 6184960 is not 1507 * 4096 (= 6172672)
+--- a/B/YD1g.v
++++ b/B/YD1g.v
+@@ -1044,7 +1044,7 @@
+ - reflexivity.
+ -   exact LH.
+ -   exact IA.
+--   unfold kImgLo, kImgEnd. cbn [fst snd]. clear. repeat split; try lia; try reflexivity; apply Z_mod_mult || (change 6184960 with (1507 * 4096); apply Z_mod_mult).
++-   unfold kImgLo, kImgEnd. cbn [fst snd]. clear. repeat split; try lia; try reflexivity; apply Z_mod_mult.
+ - exact statics_disj.
+ - unfold ly_bot. cbn [ly0 ly_top ly_stk_lo ly_stk_hi]. unfold kStackSpan, kHighMemBeg, kHighMemEnd. clear - TR1 TR2 T3 T4 CT CG CA UR. repeat split; try lia; try exact CA.
+ -   exact I.

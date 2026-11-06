@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: p11-kit
 harness: conf_fuzzer
-rocq: OssFuzzTheorems.p11_kit.conf_fuzzer
+rocq: OSSVerify.p11_kit.conf_fuzzer
 origin: upstream
 summary: Drives the config-file lexer (p11_lexer_init / p11_lexer_next until false) over the input; tokens
   and the failed flag are ignored.

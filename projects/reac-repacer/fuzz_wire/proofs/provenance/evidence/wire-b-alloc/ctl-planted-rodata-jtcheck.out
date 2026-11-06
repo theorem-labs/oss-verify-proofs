@@ -1,0 +1,4 @@
+__intscan	X 0x90f1c Y 0x95c04 size 1496	lo12 pairs 7 (in differing words 7)	jal 37 (differing 0)	target differs 1	target unmeasured 0	unpaired 0	C-string acceptances 0	[]
+   DIFF +0x4c8 names: table+0x0 | all_mask+0x0
+   ACCEPT __intscan full +0x218 [0x10318|0x10328] 8
+   ACCEPT __intscan full +0x2e4 [0x22261|0x22961] 9

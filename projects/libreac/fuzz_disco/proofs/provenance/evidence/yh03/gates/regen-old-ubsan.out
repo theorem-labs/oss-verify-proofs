@@ -1,0 +1,16 @@
+# self-test: 163 known answers OK
+# section bounds: proofs/libreac/fuzz_disco/lib/U/Reusable/YH03.v: 18 of 18 section cells equal the image's section headers
+# build: proofs/libreac/fuzz_disco/lib/U/Reusable/YH03.v: ubsan (the pinned binary's sha256 56121de6ba4c is builds.ubsan of projects/libreac/fuzz_disco/harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 31 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+# unit identity: proofs/libreac/fuzz_disco/lib/U/Reusable/YH03.v: the image's 4 PT_LOADs equal the ubsan pin 56121de6ba4c (pin/fuzz_disco.ubsan; ELF section-header fields and build-id masked)
+# unit identity: proofs/libreac/fuzz_disco/lib/U/Reusable/YH03.v (--elf twin/fuzz_disco.ubsan): the image's 4 PT_LOADs equal the ubsan pin 56121de6ba4c (pin/fuzz_disco.ubsan; ELF section-header fields and build-id masked)
+# not checked by any rule: proofs/libreac/fuzz_disco/lib/U/Reusable/YH03.v: src0_debruijn_len, src0_vmlock
+# string cells the image holds no string for, value not 0: 3, kept as written: str_rwa (known-wrong-unused); str_tmp_out_gif (known-wrong-unused); str_wb (known-wrong-unused)
+# UNCHECKED string cells (no slug), value not 0: 3, kept as written: str (no reader); str_2 (no reader); str_3 (no reader)
+# OMITTED: 25 of the 25 ABSENT cell(s) (the image links no function of the name): LZW_GenerateStream, cgif_addframe, cgif_close, cgif_newgif, cgif_raw_addframe, cgif_raw_close, cgif_raw_newgif, cgif_writecb, cmpPixel, create_byte_list, create_byte_list_block, fclose, fdopen, flushFrame, fmodeflags, fopen, freeCGIF, freeFrame, ofl_add, read_frameconfig, stdio_read, strchr, strchrnul, unlink, unlist_locked_file
+# proofs/libreac/fuzz_disco/lib/U/Reusable/YH03.v: {'KEEP-SIZE0': 2, 'KEEP': 121, 'KEEP-SPAN': 3, 'FIX': 33, 'OMITTED': 25, 'NOSYM': 45, 'KEEP-BY-LOAD': 1, 'REFUSED': 2, 'ABSENT': 3, 'UNCHECKED': 3}
+REFUSED (nothing written):
+194: D_stderr: 0x205e0 is a section boundary (end of .fini_array, start of .data.rel.ro), not the symbol: stderr (exact) is at 0x20610
+196: src0_D_got_DYNAMIC_reserved = 0x1ed90 is not OK-GOT0: the value is not .got's start (the cell is GOT[0], the word at .got's start); the pinned binary 56121de6ba4c: .got sh_addr 0x20620, the 8 bytes there 00 00 00 00 00 00 00 00 = 0x0, OK-GOT0 wants 0 (the pinned binary has no .dynamic)
+150: str UNCHECKED (no slug to match): give a hand verdict, then rerun with --unchecked-ok
+151: str_2 UNCHECKED (no slug to match): give a hand verdict, then rerun with --unchecked-ok
+155: str_3 UNCHECKED (no slug to match): give a hand verdict, then rerun with --unchecked-ok

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openjph
 harness: ojph_compress_fuzz_target
-rocq: OssFuzzTheorems.openjph.ojph_compress_fuzz_target
+rocq: OSSVerify.openjph.ojph_compress_fuzz_target
 origin: upstream
 summary: Four control bytes pick width/height (1..128), 1-4 components, bit depth, signedness, reversible,
   colour transform, decompositions, planar; pixels wrap over the remaining bytes; encodes to a mem_outfile

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: shaderc
 harness: shaderc_fdp_fuzzer
-rocq: OssFuzzTheorems.shaderc.shaderc_fdp_fuzzer
+rocq: OSSVerify.shaderc.shaderc_fdp_fuzzer
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

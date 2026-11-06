@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: botan
 harness: uri
-rocq: OssFuzzTheorems.botan.uri
+rocq: OSSVerify.botan.uri
 origin: upstream
 summary: 'URI::from_string and URI::Authority::from_string on the input. Results discarded. Nothing catches:
   any exception escaping fuzz() reaches the driver''s catch-all abort.'

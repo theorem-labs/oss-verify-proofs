@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zstd
 harness: huf_decompress
-rocq: OssFuzzTheorems.zstd.huf_decompress
+rocq: OSSVerify.zstd.huf_decompress
 origin: upstream
 summary: HUF_readDTableX1/X2 of the input (errors skip), then HUF_decompress1X/4X_usingDTable with random
   flags and buffer size; result ignored.

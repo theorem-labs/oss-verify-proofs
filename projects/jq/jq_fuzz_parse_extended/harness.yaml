@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jq
 harness: jq_fuzz_parse_extended
-rocq: OssFuzzTheorems.jq.jq_fuzz_parse_extended
+rocq: OSSVerify.jq.jq_fuzz_parse_extended
 origin: upstream
 summary: First 8 bytes select parse flags and dump flags; jv_parse_custom_flags, then jv_dump of a valid
   result to stdout. Nothing compared.

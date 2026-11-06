@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lzma
 harness: lzma2dec_fuzzer
-rocq: OssFuzzTheorems.lzma.lzma2dec_fuzzer
+rocq: OSSVerify.lzma.lzma2dec_fuzzer
 origin: upstream
 summary: First byte = LZMA2 dictionary property (dictionaries > 32 MiB skipped), rest decoded with Lzma2Dec_DecodeToBuf
   into an 8 KiB stack buffer until error / end mark / needs-more-input; output discarded.

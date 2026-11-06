@@ -1,0 +1,8 @@
+LLVMFuzzerTestOneInput +0x34 0x7f31c addi s0, a1, 0
+LLVMFuzzerTestOneInput +0x228 0x7f510 ld s0, 128(sp)
+check_no_overread +0x20 0x7f58c addi s0, a2, 0
+check_no_overread +0x100 0x7f66c ld s0, 48(sp)
+check_value +0x20 0x7f6d0 addi s0, a2, 0
+check_value +0x258 0x7f908 addi s0, a2, 0
+check_value +0x25c 0x7f90c addiw s0, s0, 0
+check_value +0x274 0x7f924 ld s0, 48(sp)

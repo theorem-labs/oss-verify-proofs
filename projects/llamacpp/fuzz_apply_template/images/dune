@@ -6,22 +6,22 @@
  (deps (:elf %{project_root}/projects/llamacpp/bin/fuzz_apply_template/fuzz_apply_template.plain))
  (action
   (run elf-snapshot %{elf} Plain.v --prefix Plain --module-name M
-       --namespace OssFuzzTheorems.llamacpp.fuzz_apply_template.images)))
+       --namespace OSSVerify.llamacpp.fuzz_apply_template.images)))
 (rule
  (targets Ubsan.v Ubsan_seg_000.hex Ubsan_seg_001.hex Ubsan_seg_002.hex Ubsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/llamacpp/bin/fuzz_apply_template/fuzz_apply_template.ubsan))
  (action
   (run elf-snapshot %{elf} Ubsan.v --prefix Ubsan --module-name M
-       --namespace OssFuzzTheorems.llamacpp.fuzz_apply_template.images)))
+       --namespace OSSVerify.llamacpp.fuzz_apply_template.images)))
 (rule
  (targets Asan.v Asan_seg_000.hex Asan_seg_001_chunk_000.hex Asan_seg_001_chunk_001.hex Asan_seg_002.hex Asan_seg_003.hex)
  (deps (:elf %{project_root}/projects/llamacpp/bin/fuzz_apply_template/fuzz_apply_template.asan))
  (action
   (run elf-snapshot %{elf} Asan.v --prefix Asan --module-name M
-       --namespace OssFuzzTheorems.llamacpp.fuzz_apply_template.images)))
+       --namespace OSSVerify.llamacpp.fuzz_apply_template.images)))
 (rule
  (targets AsanUbsan.v AsanUbsan_seg_000.hex AsanUbsan_seg_001_chunk_000.hex AsanUbsan_seg_001_chunk_001.hex AsanUbsan_seg_002.hex AsanUbsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/llamacpp/bin/fuzz_apply_template/fuzz_apply_template.asan-ubsan))
  (action
   (run elf-snapshot %{elf} AsanUbsan.v --prefix AsanUbsan --module-name M
-       --namespace OssFuzzTheorems.llamacpp.fuzz_apply_template.images)))
+       --namespace OSSVerify.llamacpp.fuzz_apply_template.images)))

@@ -1,0 +1,428 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib Require Import PropExec.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib Require Import Tac WalkLib SegsA0.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz Require Import BzTables BzTac BzTac2 BzArr BzCMem BzCStream BzCState BzCBlock BzCDriver BzArrD CmpMem CmpCut CmpArith CmpArith2 CmpSess CmpSessB CmpCarve CmpSdTac GlueTac BzInv BzCLemmas1 CmpFsKit0 AsanKit AsanCut.
+From Stdlib Require Lia. Unset Lia Cache.
+Import ListNotations. Open Scope bv_scope.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib Require Import ACeil.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz Require Import BzParams.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz Require Import CmpCut6.   (* [comment removed for export] *)
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz Require Import CmpLiaP.   (* [comment removed for export] *)
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib Require StepFast.
+Local Ltac Lib.Step.step_core segs R F pc fc rv m ro ::= StepFast.sf_step_core.
+Local Ltac Lib.Step.zstep ::= StepFast.sf_zstep.
+#[local] Ltac2 Set StepFast.sf_foldgoal := Ltac2.Init.true.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib Require StoreFast StoreFastZ StoreFastC.
+Local Ltac Lib.Step.transport_chunks segs m a bs ::= StoreFast.transport_chunks_fast segs m a bs.
+Local Ltac Lib.Tac.footprint_after_store segs m a bs ::= StoreFast.footprint_after_store_fast segs m a bs.
+Local Ltac Lib.Step.mem_after_store ::= first [ StoreFastC.mem_after_store_fastzc | StoreFastZ.mem_after_store_fastz | StoreFast.mem_after_store_fast ].
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz Require CmpFast.
+Local Ltac BzTac.mlia ::= CmpFast.mlia_fast.
+Local Ltac Lib.ZBridge.mlia ::= CmpFast.mlia_fast.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib Require RangeFast RangeFastEnv.
+#[local] Ltac2 Set RangeFast.RF.rc_atom_facts := RangeFastEnv.env_atom_facts.
+Local Ltac Lib.ZBridge.flia ::= RangeFast.rc_decide ltac:(first [ assumption | Lib.ZBridge.slim; lia | lia ]).
+Local Ltac Lib.ZBridge.mlia ::= RangeFast.rc_decide ltac:(CmpFast.mlia_fast).
+Local Ltac Bz.BzTac.mlia ::= RangeFast.rc_decide ltac:(CmpFast.mlia_fast).
+#[local] Ltac2 Set RangeFast.RF.rc_or_boxes := fun () => [constr:(@id); constr:(Lib.StoreFast.sf_hide)].
+Local Ltac Lib.StoreFast.tlia ::= first [ Zify.zify; xlia zchecker | RangeFast.rc_prune_lia | Lib.StoreFast.sf_unhide; first [ Lib.StoreFast.zify_prune_neg; Zify.zify; xlia zchecker | Lib.StoreFast.zify_prune_plain; Zify.zify; xlia zchecker | lia ] ].
+Local Ltac Bz.BzSepTac.tlia2 ::= first [ RangeFast.rc_prune_lia | Lib.StoreFast.sf_unhide; Bz.BzSepTac.unhide_disj; first [ Lib.StoreFast.zify_prune_neg; Zify.zify; xlia zchecker | Lib.StoreFast.zify_prune_plain; Zify.zify; xlia zchecker | Zify.zify; xlia zchecker ] ].
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz Require CmpLiaC.
+Local Ltac lia ::= CmpLiaC.lia_c.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz Require CmpSepV.
+Local Ltac Lib.Step.slia ::= CmpSepV.slia_v.
+Local Ltac Lib.StoreFast.tslia ::= CmpSepV.tslia_v.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz Require CmpStEq.
+Local Ltac BzTac.st_eq ::= CmpStEq.st_eq_fast.
+Local Ltac simpl_arr_sizes ::= CmpFast.sas10_all.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib Require Import CpsOpen.
+(* [comment removed for export] *)
+Local Ltac Lib.Step.solve_load ::= AsanKit.asan_solve_load.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.A Require Import Shadow.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz Require Import A0_cmp_fsV A0_cmp_msV A0_cmp_cbV A0_cmp_smV A0_b2c_hcV A0_b2c_wrV AsanKit2.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz Require CmpHmKit.
+Import OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz.CmpHmKit.
+Local Ltac AsanKit.a_norm ::= AsanKit.sh_fold.
+Section ACeilS1. Context {BZP : BzParams} {ACEIL__ : ACeil}.
+
+Ltac dead := let KD := fresh "KD" in if_cases KD; zify_cond_z KD; [exfalso; lia|]; clear KD.
+Ltac live := let KD := fresh "KD" in if_cases KD; zify_cond_z KD; [|exfalso; lia]; clear KD.
+Ltac lit_store :=
+  lazymatch goal with
+  | |- evt _ _ (MS _ _ _ _ _ (write_to_mem _ _ (Z_to_le_bytes 8 ?v)) _) => change (Z_to_le_bytes 8 v) with (le8 (Z_to_bv 64 v)); mem_after_store
+  | _ => idtac
+  end.
+(* [comment removed for export] *)
+Ltac sbl := wstep; lazymatch goal with |- evt _ _ (MS _ _ _ _ _ (write_to_mem _ _ (le1 ?w)) _) => rewrite (CmpMem.le1_lit w); mem_after_store end.
+Ltac sbz := wstep; lazymatch goal with
+  | |- evt _ _ (MS _ _ _ _ _ (write_to_mem _ _ (le1 (Z_to_bv 64 0))) _) => change (le1 (Z_to_bv 64 0)) with [z8]; mem_after_store
+  | |- evt _ _ (MS _ _ _ _ _ (write_to_mem _ _ (Z_to_le_bytes 1 0)) _) => change (Z_to_le_bytes 1 0) with [z8]; mem_after_store
+  | _ => idtac end.
+Ltac split_at_cb8 cs :=
+  lazymatch cs with
+  | CB 8 ?bs :: ?post => constr:((@nil cell, bs, post))
+  | ?c :: ?rest => let r := split_at_cb8 rest in lazymatch r with (?pre, ?bs, ?post) => constr:((c :: pre, bs, post)) end
+  end.
+Ltac cb8_all H :=
+  repeat (lazymatch type of H with rw_cells ?segs ?m ?A ?cs =>
+            let r := split_at_cb8 cs in
+            lazymatch r with (?pre, ?bs, ?post) => apply (rw_cells_CB8_C8 segs m A pre bs post) in H; cbn [app] in H end end).
+(* [comment removed for export] *)
+
+Lemma land_m32 : forall x, (0 <= x < 2^64)%Z -> Z.land x 18446744073709551584 = (32 * (x / 32))%Z.
+Proof.
+  intros x Hx. change 18446744073709551584%Z with (Z.ldiff (Z.ones 64) (Z.ones 5)).
+  rewrite Z.ldiff_land, Z.land_assoc, Z.land_ones by lia. rewrite Z.mod_small by lia.
+  rewrite <- Z.ldiff_land, Z.ldiff_ones_r by lia. rewrite Z.shiftr_div_pow2, Z.shiftl_mul_pow2 by lia.
+  change (2^5)%Z with 32%Z. lia.
+Qed.
+
+Section A0WRW.
+  Variable Q : machine_state -> Prop.
+  Variables (P FB SHF STRM lo : Z) (dst dl src len wf0 : Z).
+  Variables (sp gp tp : word) (F : bvmap 5 word) (fc : bv 32).
+  Notation usp := (bv_unsigned sp).
+  Notation cSB := (Z_to_bv 64 2147450880). Notation cP := (Z_to_bv 64 P).
+  (* [comment removed for export] *)
+  Hypothesis LLO : (CEILv <= lo)%Z. Hypothesis PLO : (lo <= P)%Z. Hypothesis PCASE : (P = usp - 160 \/ P = usp - 176)%Z.
+  Hypothesis USPQ : exists q, usp = (16 * q)%Z. Hypothesis PQ : exists q, P = (32 * q)%Z.
+  (* [comment removed for export] *)
+  Hypothesis WF0 : (0 <= wf0 <= 250)%Z. Hypothesis WFE : WORKFACTOR = (if (wf0 =? 0)%Z then 30 else wf0)%Z.
+  Hypothesis DST : (0 < dst < 18446744073709551616)%Z. Hypothesis DLR : (0 < dl)%Z. Hypothesis DLH : (dl + 4 <= CEILv)%Z.
+  Hypothesis SRC : (0 < src < 18446744073709551616)%Z. Hypothesis LEN : (0 <= len < 4294967296)%Z.
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Lemma A0_b2c_W1 : forall (m : amem) (ra t0 t1 t2 s0 s1 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word),
+    stk a0segs m lo usp -> mem_inv a0segs m -> aconsts A0C m -> aconsts_uar A0C m ->
+    (forall m' (v0 v8 v32 v40 v48 a1' a2' : word),
+        rw_cells a0segs m' P (WSLOTS v0 v8 (Z_to_bv 64 len) (Z_to_bv 64 src) v32 v40 v48) ->
+        stk a0segs m' (P + 56) (usp + -104) -> rw_cells a0segs m' (usp + -104) (HSAVED s11 s10 s9 s8 s7 s6 s5 s4 s3 s2 s1 s0 ra) ->
+        stk a0segs m' lo P -> mem_inv a0segs m' -> munch [(P, usp)]%Z m m' -> wmono a0segs m m' ->
+        evt a0segs Q (MS (mkR (Z_to_bv 64 0x87e20) cP gp tp t0 t1 t2 sp cP (Z_to_bv 64 160) a1' a2' (Z_to_bv 64 len) (Z_to_bv 64 BLOCKSIZE100K) (Z_to_bv 64 0) (Z_to_bv 64 wf0) a7
+                              s2 s3 s4 s5 cSB (Z_to_bv 64 wf0) (Z_to_bv 64 dst) (Z_to_bv 64 0) (Z_to_bv 64 BLOCKSIZE100K) (Z_to_bv 64 dl) t3 t4 t5 t6)
+                         F (Z_to_bv 64 0x3df20) fc None m' (seg_rom a0segs))) ->
+    evt a0segs Q (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 dst) (Z_to_bv 64 dl) (Z_to_bv 64 src) (Z_to_bv 64 len) (Z_to_bv 64 BLOCKSIZE100K) (Z_to_bv 64 0) (Z_to_bv 64 wf0) a7
+                          s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                     F (Z_to_bv 64 0x87d98) fc None m (seg_rom a0segs)).
+  Proof.
+    intros m ra t0 t1 t2 s0 s1 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 ST MI AC AU K.
+    unfold CEILv in *. bz_ceil. bz_params.
+    destruct AC as [GOT SBV]. destruct AU as [GOTU UARV].
+    cbn [aci_segs aci_c aci_got_sh aci_shvar aci_got_uar aci_uarvar A0C ci_segs] in GOT, SBV, GOTU, UARV.
+    pose proof (munch_refl [(P, usp)]%Z m) as MU. pose proof (wmono_refl a0segs m) as WM.
+    pose proof (stk_lo_nonneg _ _ _ _ ST) as LONN.
+    pose proof (bv_unsigned_in_range _ sp) as RSP. unfold bv_modulus in RSP. change (2 ^ Z.of_N 64)%Z with 18446744073709551616%Z in RSP.
+    destruct USPQ as [qu EQU]. destruct PQ as [qP EqP].
+    assert (ELAND : Z.land (usp + -160) 18446744073709551584 = P).
+    { rewrite land_m32 by lia. clear - PCASE EqP EQU. Z.div_mod_to_equations. lia. }
+    destruct PCASE as [EP|EP].
+    - (* [comment removed for export] *)
+      carve_frame 160%nat ST.
+      apply (rw_cells_split_CB a0segs _ _ [] 160 _ [] [8;8;8;8;8;8;8; 8;8;8;8;8;8;8;8;8;8;8;8;8]%nat) in FR; [| reflexivity].
+      cbn [mk_CB_cells app] in FR.
+      (* [comment removed for export] *)
+      wstep. wstep. lit_store. do 13 wstep. wstep. wstep.
+      rewrite ELAND. replace (usp + -160)%Z with P in FR, ST by lia.
+      replace (Z_to_bv 64 (P + 160)) with sp by (rewrite <- (Z_to_bv_bv_unsigned sp) at 1; f_equal; lia).
+      (* [comment removed for export] *)
+      arun_to 0x3df20%Z.
+      cb8_all FR.
+      destruct (rw_cells_cutZ a0segs _ P _ 7%nat FR) as [SLa SVc]. cbn [firstn skipn cells_size csize Nat.add] in SLa, SVc. change (Z.of_nat 56) with 56%Z in SVc.
+      replace (P + 56)%Z with (usp + -104)%Z in SVc by lia.
+      lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) => enter_with (K mm _ _ _ _ _ _ _) end;
+        [ st_eq | unfold WSLOTS; exact SLa | | unfold HSAVED; exact SVc | exact ST | assumption | exact MU | exact WM ].
+      split; [lia|]. split; [lia|]. intros a Ha. lia.
+    - (* [comment removed for export] *)
+      carve_frame 176%nat ST.
+      apply (rw_cells_split_CB a0segs _ _ [] 176 _ [] [8;8;8;8;8;8;8; 8;8; 8;8;8;8;8;8;8;8;8;8;8;8;8]%nat) in FR; [| reflexivity].
+      cbn [mk_CB_cells app] in FR.
+      wstep. wstep. lit_store. do 13 wstep. wstep. wstep.
+      rewrite ELAND. replace (usp + -176)%Z with P in FR, ST by lia.
+      replace (Z_to_bv 64 (usp + -160 + 160)) with sp by (rewrite <- (Z_to_bv_bv_unsigned sp) at 1; f_equal; lia).
+      arun_to 0x3df20%Z.
+      cb8_all FR.
+      destruct (rw_cells_cutZ a0segs _ P _ 7%nat FR) as [SLa R1]. cbn [firstn skipn cells_size csize Nat.add] in SLa, R1. change (Z.of_nat 56) with 56%Z in R1.
+      destruct (rw_cells_cutZ a0segs _ _ _ 2%nat R1) as [GAPc SVc]. cbn [firstn skipn cells_size csize Nat.add] in GAPc, SVc. change (Z.of_nat 16) with 16%Z in SVc.
+      replace (P + 56 + 16)%Z with (usp + -104)%Z in SVc by lia.
+      pose proof (stk_of_rw_cells a0segs _ _ _ GAPc) as GAPs. cbn [cells_size csize Nat.add] in GAPs. change (Z.of_nat 16) with 16%Z in GAPs.
+      replace (P + 56 + 16)%Z with (usp + -104)%Z in GAPs by lia.
+      lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) => enter_with (K mm _ _ _ _ _ _ _) end;
+        [ st_eq | unfold WSLOTS; exact SLa | exact GAPs | unfold HSAVED; exact SVc | exact ST | assumption | exact MU | exact WM ].
+  Qed.
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Hypothesis AX : sanchor FB SHF. Hypothesis ESTR : STRM = (FB + 32)%Z.
+  Hypothesis FBL : (0x61e000 <= FB)%Z. Hypothesis FBH : (FB + 256 <= CEILv)%Z.
+  Hypothesis SHL : (SH_LO <= SHF)%Z. Hypothesis SHH : (SHF + 32 <= SH_HI)%Z.
+  (* [comment removed for export] *)
+  Hypothesis SFSH : apartv FB 256 SHF 32.
+
+  Definition b2c_W2 : list (Z * Z) := [(P + 8, P + 16); (P + 48, P + 56); (FB, FB + 24); (SHF, SHF + 20)]%Z.
+
+  (* [comment removed for export] *)
+  Lemma A0_b2c_W2 : forall (m : amem) (v0 v8 v32 v40 v48 h0 h1 h2 : word) (bs : list byte)
+      (ra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 t3 t4 t5 t6 : word),
+    rw_cells a0segs m P (WSLOTS v0 v8 (Z_to_bv 64 len) (Z_to_bv 64 src) v32 v40 v48) ->
+    rw_cells a0segs m FB [C8 h0; C8 h1; C8 h2] -> rw_cells a0segs m SHF [CB 20 bs] -> mem_inv a0segs m ->
+    (forall m' (a3' : word),
+        rw_cells a0segs m' P (WSLOTS v0 (Z_to_bv 64 dl) (Z_to_bv 64 len) (Z_to_bv 64 src) v32 v40 (Z_to_bv 64 FB)) ->
+        rw_cells a0segs m' FB [C8 (Z_to_bv 64 0x41b58ab3); C8 (Z_to_bv 64 0x1ba1b); C8 (Z_to_bv 64 0x87d98)] -> rw_cells a0segs m' SHF b2c_shadow ->
+        mem_inv a0segs m' -> munch b2c_W2 m m' -> wmono a0segs m m' ->
+        evt a0segs Q (MS (mkR (Z_to_bv 64 0x87f28) cP gp tp t0 t1 t2 sp cP (Z_to_bv 64 (FB + 88)) (Z_to_bv 64 0) (Z_to_bv 64 24) a3' a4 a5 a6 a7
+                              (Z_to_bv 64 FB) (Z_to_bv 64 FB) (Z_to_bv 64 (-2)) (Z_to_bv 64 SHF) cSB (Z_to_bv 64 WORKFACTOR) (Z_to_bv 64 dst) (Z_to_bv 64 0) (Z_to_bv 64 BLOCKSIZE100K)
+                              (Z_to_bv 64 STRM) t3 t4 t5 t6)
+                         F (Z_to_bv 64 0x52ea0) fc None m' (seg_rom a0segs))) ->
+    evt a0segs Q (MS (mkR ra cP gp tp t0 t1 t2 sp cP (Z_to_bv 64 FB) a1 a2 a3 a4 a5 a6 a7
+                          s2 s3 s4 s5 cSB (Z_to_bv 64 wf0) (Z_to_bv 64 dst) (Z_to_bv 64 0) (Z_to_bv 64 BLOCKSIZE100K) (Z_to_bv 64 dl) t3 t4 t5 t6)
+                     F (Z_to_bv 64 0x87e20) fc None m (seg_rom a0segs)).
+  Proof.
+    intros m v0 v8 v32 v40 v48 h0 h1 h2 bs ra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 t3 t4 t5 t6 SL HD SH20 MI K.
+    unfold CEILv, SH_LO, SH_HI, apartv in *. bz_ceil. bz_params. box_ors.
+    pose proof (munch_refl b2c_W2 m) as MU. pose proof (wmono_refl a0segs m) as WM. unfold b2c_W2 in MU.
+    unfold WSLOTS in SL.
+    apply (rw_cells_split_CB a0segs _ _ [] 20 _ [] [1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1]%nat) in SH20; [| reflexivity]. cbn [mk_CB_cells app] in SH20.
+    (* [comment removed for export] *)
+    arun. live.
+    (* [comment removed for export] *)
+    arun_to 0x87e74%Z. wstep. lit_store. wstep. lit_store. wstep. lit_store.
+    (* [comment removed for export] *)
+    wstep. wstep. sh_norm.
+    (* [comment removed for export] *)
+    do 4 sbl. wstep. sbz. sbz. do 6 sbl. do 8 sbz.
+    (* [comment removed for export] *)
+    arun. dead. arun. dead. arun. dead. arun. dead.
+    (* [comment removed for export] *)
+    arun. if_cases KD; zify_cond_z KD; [exfalso; clear - KD BZbsL__ BZbsH__; change 18446744073709551615%Z with (Z.ones 64) in KD; rewrite Z.land_ones in KD by lia; mlia|]. clear KD.
+    (* [comment removed for export] *)
+    arun. replace (FB + 32)%Z with STRM by lia. if_cases K7; zify_cond_z K7.
+    - assert (EW : WORKFACTOR = wf0) by (rewrite WFE; replace (wf0 =? 0)%Z with false by (symmetry; apply Z.eqb_neq; lia); reflexivity).
+      (* [comment removed for export] *)
+      arun_to 0x52ea0%Z.
+      lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) => enter_with (K mm _) end;
+        [ st_eq | unfold WSLOTS; exact SL | exact HD | unfold b2c_shadow, A0_cmp_smV.sf1b, A0_cmp_smV.sf3b; exact SH20 | assumption | unfold b2c_W2; exact MU | exact WM ].
+    - assert (EW : WORKFACTOR = 30%Z) by (rewrite WFE; replace (wf0 =? 0)%Z with true by (symmetry; apply Z.eqb_eq; lia); reflexivity).
+      arun_to 0x52ea0%Z.
+      lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) => enter_with (K mm _) end;
+        [ st_eq | unfold WSLOTS; exact SL | exact HD | unfold b2c_shadow, A0_cmp_smV.sf1b, A0_cmp_smV.sf3b; exact SH20 | assumption | unfold b2c_W2; exact MU | exact WM ].
+  Qed.
+
+  (* [comment removed for export] *)
+  Lemma A0_b2c_W3 : forall (m : amem) (ra spw t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word),
+    evt a0segs Q (MS (mkR (Z_to_bv 64 0x87f3c) spw gp tp t0 t1 t2 s0 s1 s11 s10 s9 s7 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                     F (Z_to_bv 64 0x81cb4) fc None m (seg_rom a0segs)) ->
+    evt a0segs Q (MS (mkR ra spw gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                     F (Z_to_bv 64 0x87f28) fc None m (seg_rom a0segs)).
+  Proof.
+    intros m ra spw t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 K.
+    (* [comment removed for export] *)
+    do 5 wstep. exact K.
+  Qed.
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Variable SHD : Z.
+  Hypothesis AD : sanchor dl SHD. Hypothesis DLLO : (0x61e000 <= dl)%Z.
+  Hypothesis DLF : apartv dl 4 FB 256.
+
+  Definition b2c_W4 : list (Z * Z) := [(STRM, STRM + 36)]%Z.
+
+  (* [comment removed for export] *)
+  Lemma A0_b2c_W4 : forall (m : amem) (nZ : Z) (w0 w8 w12 w16 w20 w24 w32 w36 w40 w44 w48 w56 w64 w72 v0 v32 v40 : word)
+      (ra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s4 t3 t4 t5 t6 : word),
+    (0 <= nZ < 2147483648)%Z ->
+    rw_cells a0segs m STRM (STRMC w0 w8 w12 w16 w20 w24 w32 w36 w40 w44 w48 w56 w64 w72) ->
+    rw_cells a0segs m P (WSLOTS v0 (Z_to_bv 64 dl) (Z_to_bv 64 len) (Z_to_bv 64 src) v32 v40 (Z_to_bv 64 FB)) ->
+    rw_cells a0segs m dl [C4 (Z_to_bv 64 nZ)] -> mem_inv a0segs m -> shpW a0segs b2c_W4 m dl (dl + 4) ->
+    (forall m' (a2' a3' : word),
+        rw_cells a0segs m' STRM (STRMC (Z_to_bv 64 src) (Z_to_bv 64 len) w12 w16 w20 (Z_to_bv 64 dst) (Z_to_bv 64 nZ) w36 w40 w44 w48 w56 w64 w72) ->
+        rw_cells a0segs m' P (WSLOTS v0 (Z_to_bv 64 dl) (Z_to_bv 64 len) (Z_to_bv 64 src) v32 v40 (Z_to_bv 64 FB)) ->
+        rw_cells a0segs m' dl [C4 (Z_to_bv 64 nZ)] -> mem_inv a0segs m' -> munch b2c_W4 m m' -> wmono a0segs m m' ->
+        evt a0segs Q (MS (mkR (Z_to_bv 64 0x87f80) cP gp tp t0 t1 t2 sp cP (Z_to_bv 64 STRM) (Z_to_bv 64 2) a2' a3' a4 a5 a6 a7
+                              (Z_to_bv 64 FB) (Z_to_bv 64 FB) (Z_to_bv 64 0) (Z_to_bv 64 SHF) (Z_to_bv 64 SHD) (Z_to_bv 64 WORKFACTOR) (Z_to_bv 64 dst) (Z_to_bv 64 0)
+                              (Z_to_bv 64 BLOCKSIZE100K) (Z_to_bv 64 STRM) t3 t4 t5 t6)
+                         F (Z_to_bv 64 0x82468) fc None m' (seg_rom a0segs))) ->
+    evt a0segs Q (MS (mkR ra cP gp tp t0 t1 t2 sp cP (Z_to_bv 64 0) a1 a2 a3 a4 a5 a6 a7
+                          (Z_to_bv 64 FB) (Z_to_bv 64 FB) s4 (Z_to_bv 64 SHF) cSB (Z_to_bv 64 WORKFACTOR) (Z_to_bv 64 dst) (Z_to_bv 64 0) (Z_to_bv 64 BLOCKSIZE100K)
+                          (Z_to_bv 64 STRM) t3 t4 t5 t6)
+                     F (Z_to_bv 64 0x87f3c) fc None m (seg_rom a0segs)).
+  Proof.
+    intros m nZ w0 w8 w12 w16 w20 w24 w32 w36 w40 w44 w48 w56 w64 w72 v0 v32 v40 ra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s4 t3 t4 t5 t6 NZR SM SL DLC MI SHd K.
+    unfold CEILv, SH_LO, SH_HI, apartv in *. bz_ceil. bz_params. box_ors.
+    pose proof (munch_refl b2c_W4 m) as MU. pose proof (wmono_refl a0segs m) as WM. unfold b2c_W4 in MU, SHd.
+    unfold STRMC in SM. unfold WSLOTS in SL.
+    (* [comment removed for export] *)
+    arun_to 0x87f64%Z.
+    (* [comment removed for export] *)
+    ack_rd dl 4%Z.
+    ack_merge.
+    sh_norm.
+    (* [comment removed for export] *)
+    arun_to 0x87f74%Z.
+    try rewrite (sx32_of_Z nZ) in SM by lia.
+    arun_to 0x82468%Z.
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) => enter_with (K mm _ _) end;
+      [ st_eq | unfold STRMC; first [exact SM | cells_eq_by SM] | unfold WSLOTS; exact SL | exact DLC | assumption | unfold b2c_W4; exact MU | exact WM ].
+  Qed.
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Definition b2c_rc (ret : Z) : Z := if (ret =? 3)%Z then (-8)%Z else if (ret =? 4)%Z then 0%Z else ret.
+  Definition b2c_dlv (ret nZ avo : Z) : Z := if (ret =? 4)%Z then (nZ - avo)%Z else nZ.
+  Definition b2c_W5 : list (Z * Z) := [(dl, dl + 4)]%Z.
+
+  Lemma A0_b2c_W5 : forall (m : amem) (ret nZ avo : Z) (w0 w8 w12 w16 w20 w24 w36 w40 w44 w48 w56 w64 w72 v0 v32 v40 : word)
+      (ra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s4 t3 t4 t5 t6 : word),
+    (ret = -1 \/ ret = 3 \/ ret = 4)%Z -> (0 <= avo <= nZ)%Z -> (nZ < 2147483648)%Z ->
+    rw_cells a0segs m STRM (STRMC w0 w8 w12 w16 w20 w24 (Z_to_bv 64 avo) w36 w40 w44 w48 w56 w64 w72) ->
+    rw_cells a0segs m P (WSLOTS v0 (Z_to_bv 64 dl) (Z_to_bv 64 len) (Z_to_bv 64 src) v32 v40 (Z_to_bv 64 FB)) ->
+    rw_cells a0segs m dl [C4 (Z_to_bv 64 nZ)] -> mem_inv a0segs m -> shpW a0segs b2c_W5 m dl (dl + 4) ->
+    (forall m' (a1' a2' : word),
+        rw_cells a0segs m' STRM (STRMC w0 w8 w12 w16 w20 w24 (Z_to_bv 64 avo) w36 w40 w44 w48 w56 w64 w72) ->
+        rw_cells a0segs m' P (WSLOTS v0 (Z_to_bv 64 dl) (Z_to_bv 64 len) (Z_to_bv 64 src) v32 v40 (Z_to_bv 64 FB)) ->
+        rw_cells a0segs m' dl [C4 (Z_to_bv 64 (b2c_dlv ret nZ avo))] -> mem_inv a0segs m' -> munch b2c_W5 m m' -> wmono a0segs m m' ->
+        evt a0segs Q (MS (mkR (Z_to_bv 64 0x87fc4) cP gp tp t0 t1 t2 sp cP (Z_to_bv 64 STRM) a1' a2' a3 a4 a5 a6 a7
+                              (Z_to_bv 64 FB) (Z_to_bv 64 FB) (Z_to_bv 64 (b2c_rc ret)) (Z_to_bv 64 SHF) (Z_to_bv 64 SHD) (Z_to_bv 64 WORKFACTOR) (Z_to_bv 64 dst) (Z_to_bv 64 0)
+                              (Z_to_bv 64 BLOCKSIZE100K) (Z_to_bv 64 STRM) t3 t4 t5 t6)
+                         F (Z_to_bv 64 0x83c8c) fc None m' (seg_rom a0segs))) ->
+    evt a0segs Q (MS (mkR ra cP gp tp t0 t1 t2 sp cP (Z_to_bv 64 ret) a1 a2 a3 a4 a5 a6 a7
+                          (Z_to_bv 64 FB) (Z_to_bv 64 FB) s4 (Z_to_bv 64 SHF) (Z_to_bv 64 SHD) (Z_to_bv 64 WORKFACTOR) (Z_to_bv 64 dst) (Z_to_bv 64 0) (Z_to_bv 64 BLOCKSIZE100K)
+                          (Z_to_bv 64 STRM) t3 t4 t5 t6)
+                     F (Z_to_bv 64 0x87f80) fc None m (seg_rom a0segs)).
+  Proof.
+    intros m ret nZ avo w0 w8 w12 w16 w20 w24 w36 w40 w44 w48 w56 w64 w72 v0 v32 v40 ra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s4 t3 t4 t5 t6 RET AVO NZR SM SL DLC MI SHd K.
+    unfold CEILv, SH_LO, SH_HI, apartv in *. bz_ceil. bz_params. box_ors.
+    pose proof (munch_refl b2c_W5 m) as MU. pose proof (wmono_refl a0segs m) as WM. unfold b2c_W5 in MU, SHd.
+    pose proof (proj2 AD : saddr dl SHD) as ADs.
+    unfold STRMC in SM. unfold WSLOTS in SL.
+    destruct RET as [-> | [-> | ->]].
+    - (* [comment removed for export] *)
+      arun_to 0x83c8c%Z.
+      enter_with (K m _ _); [ st_eq | unfold STRMC; exact SM | unfold WSLOTS; exact SL | exact DLC | exact MI | unfold b2c_W5; exact MU | exact WM ].
+    - (* [comment removed for export] *)
+      arun_to 0x83c8c%Z.
+      enter_with (K m _ _); [ st_eq | unfold STRMC; exact SM | unfold WSLOTS; exact SL | exact DLC | exact MI | unfold b2c_W5; exact MU | exact WM ].
+    - (* [comment removed for export] *)
+      arun_to 0x87f94%Z.
+      ack_rd_saddr dl 4%Z ADs.
+      (* [comment removed for export] *)
+      wstep.
+      ack_merge.
+      (* [comment removed for export] *)
+      arun_to 0x87fb4%Z.
+      reword_C4 DLC 0%nat (nZ - avo)%Z. { try rewrite (sx32_of_Z nZ) by lia. try rewrite (sx32_of_Z avo) by lia. now low32. }
+      (* [comment removed for export] *)
+      arun_to 0x83c8c%Z.
+      lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) => enter_with (K mm _ _) end;
+        [ st_eq | unfold STRMC; exact SM | unfold WSLOTS; exact SL | exact DLC | assumption | unfold b2c_W5; exact MU | exact WM ].
+  Qed.
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Variable FL : Z.
+  Hypothesis FLL : (0 < FL)%Z. Hypothesis FLH : (FL + 1 <= 18446744073709551616)%Z.
+  Definition b2c_WE1 : list (Z * Z) := [(SHF, SHF + 32); (FB, FB + 8)]%Z.
+
+  (* [comment removed for export] *)
+  Lemma A0_b2c_E1 : forall (m : amem) (sh : list byte) (h0 : word)
+      (ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s4 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word),
+    Z.of_nat (length sh) = 32%Z ->
+    u8arr a0segs m SHF sh -> rw_cells a0segs m FB [C8 h0] -> mem_inv a0segs m ->
+    (forall m' (a0' : word),
+        rw_cells a0segs m' SHF b2c_sh_f5 -> rw_cells a0segs m' FB [C8 (Z_to_bv 64 0x45e0360e)] ->
+        mem_inv a0segs m' -> munch b2c_WE1 m m' -> wmono a0segs m m' ->
+        evt a0segs Q (MS (mkR ra cP gp tp t0 t1 t2 sp cP a0' a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 FB) (Z_to_bv 64 FB) s4 (Z_to_bv 64 SHF) s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                         F (Z_to_bv 64 0x88084) fc None m' (seg_rom a0segs))) ->
+    evt a0segs Q (MS (mkR ra cP gp tp t0 t1 t2 sp cP a0 a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 FB) (Z_to_bv 64 FB) s4 (Z_to_bv 64 SHF) s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                     F (Z_to_bv 64 0x87fc4) fc None m (seg_rom a0segs)).
+  Proof.
+    intros m sh h0 ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s4 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 L32 SHU HD MI K.
+    unfold CEILv, SH_LO, SH_HI, apartv in *. bz_ceil. box_ors.
+    pose proof (munch_refl b2c_WE1 m) as MU. pose proof (wmono_refl a0segs m) as WM. unfold b2c_WE1 in MU.
+    pose proof (rw_cells_of_u8arr a0segs m SHF sh SHU) as SHC. replace (length sh) with 32%nat in SHC by lia. clear SHU.
+    apply (rw_cells_split_CB a0segs _ _ [] 32 _ [] (repeat 1%nat 32)) in SHC; [| reflexivity].
+    cbn [repeat mk_CB_cells app] in SHC.
+    repeat (match type of SHC with context [CB 1 (firstn ?a ?b)] => let v := fresh "shb" in set (v := firstn a b) in SHC; clearbody v end).
+    (* [comment removed for export] *)
+    wstep. do 10 sbl.
+    (* [comment removed for export] *)
+    wstep. wstep. wstep. lit_store.
+    (* [comment removed for export] *)
+    wstep. dead.
+    (* [comment removed for export] *)
+    wstep. do 32 sbl.
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) => eapply (K mm) end; [unfold b2c_sh_f5, sf5b; exact SHC| exact HD| assumption| unfold b2c_WE1; exact MU| exact WM].
+  Qed.
+
+  (* [comment removed for export] *)
+  Lemma A0_b2c_E1b : forall (m : amem) (ra spw t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word),
+    ro_cells a0segs m (FB + 248) [C8 (Z_to_bv 64 FL)] ->
+    evt a0segs Q (MS (mkR ra spw gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 FL) a1 a2 a3 a4 a5 a6 a7 s2 (Z_to_bv 64 FB) s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                     F (Z_to_bv 64 0x88088) fc None m (seg_rom a0segs)) ->
+    evt a0segs Q (MS (mkR ra spw gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 (Z_to_bv 64 FB) s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                     F (Z_to_bv 64 0x88084) fc None m (seg_rom a0segs)).
+  Proof.
+    intros m ra spw t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 FLP K.
+    unfold CEILv in *. bz_ceil.
+    wstep. exact K.
+  Qed.
+
+  (* [comment removed for export] *)
+  Lemma A0_b2c_E2 : forall (m : amem) (b1 : byte) (ra spw t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word),
+    rw_cells a0segs m FL [C1 b1] -> mem_inv a0segs m ->
+    (forall m', rw_cells a0segs m' FL [C1 z8] -> mem_inv a0segs m' -> munch [(FL, FL + 1)]%Z m m' -> wmono a0segs m m' ->
+       evt a0segs Q (MS (mkR ra spw gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 FL) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                        F (Z_to_bv 64 0x8808c) fc None m' (seg_rom a0segs))) ->
+    evt a0segs Q (MS (mkR ra spw gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 FL) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                     F (Z_to_bv 64 0x88088) fc None m (seg_rom a0segs)).
+  Proof.
+    intros m b1 ra spw t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 FLG MI K.
+    pose proof (munch_refl [(FL, FL + 1)]%Z m) as MU. pose proof (wmono_refl a0segs m) as WM.
+    sbz.
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) => eapply (K mm) end; [exact FLG| assumption| exact MU| exact WM].
+  Qed.
+
+  (* [comment removed for export] *)
+  Lemma A0_b2c_E3 : forall (m : amem) (v0 v8 v16 v24 v32 v40 v48 : word) (c11 c10 c9 c8 c7 c6 c5 c4 c3 c2 c1 c0 cra : word)
+      (ra spw t0 t1 t2 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word),
+    rw_cells a0segs m P (WSLOTS v0 v8 v16 v24 v32 v40 v48) -> stk a0segs m (P + 56) (usp + -104) ->
+    rw_cells a0segs m (usp + -104) (HSAVED c11 c10 c9 c8 c7 c6 c5 c4 c3 c2 c1 c0 cra) -> stk a0segs m lo P ->
+    (stk a0segs m lo usp ->
+       evt a0segs Q (MS (mkR cra sp gp tp t0 t1 t2 c0 c1 s4 a1 a2 a3 a4 a5 a6 a7 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 t3 t4 t5 t6)
+                        F (ret_pc cra) fc None m (seg_rom a0segs))) ->
+    evt a0segs Q (MS (mkR ra spw gp tp t0 t1 t2 sp s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                     F (Z_to_bv 64 0x8808c) fc None m (seg_rom a0segs)).
+  Proof.
+    intros m v0 v8 v16 v24 v32 v40 v48 c11 c10 c9 c8 c7 c6 c5 c4 c3 c2 c1 c0 cra ra spw t0 t1 t2 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 SL GAP SAV ST K.
+    unfold CEILv in *. bz_ceil.
+    pose proof (stk_lo_nonneg _ _ _ _ ST) as LONN.
+    pose proof (bv_unsigned_in_range _ sp) as RSP. unfold bv_modulus in RSP. change (2 ^ Z.of_N 64)%Z with 18446744073709551616%Z in RSP.
+    unfold WSLOTS in SL. unfold HSAVED in SAV.
+    (* [comment removed for export] *)
+    wstep. wstep. wstep. do 13 wstep. wstep.
+    pose proof (stk_of_rw_cells a0segs _ _ _ SL) as K0. cbn [cells_size csize Nat.add] in K0. change (Z.of_nat 56) with 56%Z in K0.
+    pose proof (stk_of_rw_cells a0segs _ _ _ SAV) as K5. cbn [cells_size csize Nat.add] in K5. change (Z.of_nat 104) with 104%Z in K5.
+    pose proof (stk_join a0segs m lo P P (P + 56) ST K0 eq_refl ltac:(lia)) as ST1.
+    pose proof (stk_join a0segs m lo (P + 56) (P + 56) (usp + -104) ST1 GAP eq_refl ltac:(lia)) as ST2.
+    pose proof (stk_join a0segs m lo (usp + -104) (usp + -104) (usp + -104 + 104) ST2 K5 eq_refl ltac:(lia)) as ST3.
+    replace (usp + -104 + 104)%Z with usp in ST3 by lia.
+    replace (Z_to_bv 64 (usp + -160 + 160)) with sp by (rewrite <- (Z_to_bv_bv_unsigned sp) at 1; f_equal; lia).
+    (* [comment removed for export] *)
+    wstep. exact (K ST3).
+  Qed.
+
+End A0WRW.
+
+End ACeilS1.

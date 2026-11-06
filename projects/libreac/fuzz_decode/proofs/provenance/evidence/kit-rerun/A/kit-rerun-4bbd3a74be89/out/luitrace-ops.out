@@ -1,0 +1,57 @@
+# mnemonics of 7 function(s) in 2 image(s), and the trace's handling of each
+OP	mnemonic	count	handling
+OP	add	164	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	addi	428	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	addiw	30	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	amoadd.d	2	memory op: tainted address reported MEMBASE, rd untainted unknown
+OP	and	78	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	andi	38	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	auipc	138	seed / known constant
+OP	beq	14	branch: tainted operand reported BRANCH, no rd
+OP	beqz	88	branch: tainted operand reported BRANCH, no rd
+OP	bgeu	96	branch: tainted operand reported BRANCH, no rd
+OP	bltu	102	branch: tainted operand reported BRANCH, no rd
+OP	bnez	54	branch: tainted operand reported BRANCH, no rd
+OP	divuw	4	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	ecall	2	no rd
+OP	fence	12	no rd
+OP	j	84	no rd
+OP	jal	110	call: tainted a0-a7 reported CALLARG, caller-saved cleared (ABI)
+OP	jalr	6	call: tainted a0-a7 reported CALLARG, caller-saved cleared (ABI)
+OP	jr	2	indirect jump: a tainted base is reported JUMPBASE
+OP	lb	2	load: rd untainted unknown; a tainted base is reported MEMBASE
+OP	lbu	18	load: rd untainted unknown; a tainted base is reported MEMBASE
+OP	ld	218	load: rd untainted unknown; a tainted base is reported MEMBASE
+OP	lh	4	load: rd untainted unknown; a tainted base is reported MEMBASE
+OP	lr.w.aq	2	memory op: tainted address reported MEMBASE, rd untainted unknown
+OP	lui	36	seed / known constant
+OP	lw	16	load: rd untainted unknown; a tainted base is reported MEMBASE
+OP	lwu	2	load: rd untainted unknown; a tainted base is reported MEMBASE
+OP	mul	8	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	mulhu	2	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	mv	226	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	neg	10	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	negw	6	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	not	10	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	or	38	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	ret	12	no rd
+OP	sb	28	store: tainted base MEMBASE, tainted data STOREDATA, no rd
+OP	sc.w	2	memory op: tainted address reported MEMBASE, rd untainted unknown
+OP	sd	90	store: tainted base MEMBASE, tainted data STOREDATA, no rd
+OP	seqz	6	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	sh	2	store: tainted base MEMBASE, tainted data STOREDATA, no rd
+OP	sll	4	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	slli	54	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	sllw	6	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	sltiu	2	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	sltu	10	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	snez	4	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	srai	4	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	srl	4	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	srli	142	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	srliw	2	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	sub	24	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	subw	4	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	sw	36	store: tainted base MEMBASE, tainted data STOREDATA, no rd
+OP	xor	4	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted
+OP	xori	6	FOLLOWED (known roles: rd first): rd tainted if any source register is tainted

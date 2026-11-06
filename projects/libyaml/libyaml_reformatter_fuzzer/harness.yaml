@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libyaml
 harness: libyaml_reformatter_fuzzer
-rocq: OssFuzzTheorems.libyaml.libyaml_reformatter_fuzzer
+rocq: OSSVerify.libyaml.libyaml_reformatter_fuzzer
 origin: oss-fuzz
 summary: parse events and re-emit each through a yaml_emitter into a growable buffer (canonical/unicode
   flags from the first 2 bytes); the emitted bytes are freed unread.

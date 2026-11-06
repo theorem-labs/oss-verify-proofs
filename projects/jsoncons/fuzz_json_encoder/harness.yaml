@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_json_encoder
-rocq: OssFuzzTheorems.jsoncons.fuzz_json_encoder
+rocq: OSSVerify.jsoncons.fuzz_json_encoder
 origin: upstream
 summary: json_stream_reader drives a json_string_encoder (parse -> re-serialize to a string); output discarded;
   ec ignored.

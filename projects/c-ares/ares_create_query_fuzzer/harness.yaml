@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: c-ares
 harness: ares_create_query_fuzzer
-rocq: OssFuzzTheorems.c_ares.ares_create_query_fuzzer
+rocq: OSSVerify.c_ares.ares_create_query_fuzzer
 origin: upstream
 summary: ares_init a channel and feed the NUL-terminated input to ares_set_servers_csv; return code ignored.
 entry: LLVMFuzzerTestOneInput

@@ -1,0 +1,95 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+  BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.boost_beast.http_request.images Require Import AsanUbsan.
+From OSSVerify.Proofs.boost_beast.http_request.lib Require Import
+  PropExec ShapeAlg SpinAlg Scfg AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanInit BothImages BothPlanImages AsHSTab BoStartup BoStartupPlan BoStartupRanges BoStartupHS1 BoStartupHSC BoStartupHSA BoStartupHSF BoStartupCerts BoMainState.
+Import ListNotations. Import AX2. Import AP. Import APS.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+(* [comment removed for export] *)
+Lemma HSF_both_pc_main : forall h ch, HSF_both h = Some ch -> pc ch = A_MAIN.
+Proof. exact HSF_both_pc. Qed.
+
+Section Top.
+  Variables sp0 brk0 mbase : word.
+  Variable rdraw : EntryDraw.
+  Variable inp : ProcInput.
+  Hypothesis Hsp : valid_sp sp0.
+  Hypothesis Hbrk : valid_brk BSEGS2 brk0.
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
+  Hypothesis Huid : valid_id (in_uid inp).
+  Hypothesis Hhw : valid_hwcap (in_hwcap inp).
+
+  Variable T : TSet.
+  Hypothesis T_nil : T [].
+  Hypothesis MAIN : forall c, P_main sp0 brk0 mbase rdraw inp c -> srealizes BSEGS2 c T.
+
+  Lemma holes_ok :
+    holes_stmt BSEGS2 BOTH_H AsanInit.LIMIT HSF_both
+               (SINV0 BPH2 sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
+               (argH0 BPH2 sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
+               (BoStartup.HOLES T) (in_fs inp).
+  Proof.
+    intros h ch Hh E R FULL model HC. unfold BoStartup.HOLES.
+    rewrite (HSF_both_pc_main h ch Hh). apply MAIN.
+    split; [exact (conj Hsp (conj Hbrk (conj Hmb (conj Hva (conj Hve (conj Hfit (conj Huid Hhw)))))))|].
+    exists h, ch, E, R, FULL, model. split; [exact Hh|]. split; [exact (HSF_both_pc_main h ch Hh)|]. split; [reflexivity | exact HC].
+  Qed.
+End Top.
+
+Theorem bo_startup_srealizes :
+  forall (sp0 brk0 mbase : word) (rdraw : EntryDraw) (inp : ProcInput) (T : TSet),
+    valid_sp sp0 -> valid_brk BSEGS2 brk0 -> valid_mmap_base mbase ->
+    valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> entry_stack_fits sp0 (in_argv inp) (in_envp inp) ->
+    valid_id (in_uid inp) -> valid_hwcap (in_hwcap inp) ->
+    T [] ->
+    (forall c, P_main sp0 brk0 mbase rdraw inp c -> srealizes BSEGS2 c T) ->
+    srealizes BSEGS2 (init_config BSEGS2 AsanUbsan.M.init_pc BPH2 sp0 brk0 mbase rdraw AsanInit.LIMIT inp) T.
+Proof.
+  intros sp0 brk0 mbase rdraw [argv envp fs stdin uid gid groups net nofile sigmask hw abterm vasz urandom tmp] T
+         Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw T_nil MAIN.
+  exact (as_startup_T sp0 rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urandom tmp
+           Hsp Hbrk Hva Hve Hfit Huid Hhw
+           startup_plan_xranges HS1_both HSC_both HSA_both HSF_both startup_plan BoStartupCert1.startup_shape
+           CERT_KC0 CERT_BFUEL CERT_FUEL BoStartupCert1.startup_cert BoStartupCert1.startup_shape_holes cert2 cert3 cert4
+           T T_nil
+           (holes_ok sp0 brk0 mbase rdraw (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw abterm vasz urandom tmp)
+                     Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw T MAIN)).
+Qed.
+
+(* [comment removed for export] *)
+Theorem bo_startup_realizes :
+  forall (sp0 brk0 mbase : word) (rdraw : EntryDraw) (inp : ProcInput) (T : TSet),
+    valid_sp sp0 -> valid_brk BSEGS2 brk0 -> valid_mmap_base mbase ->
+    valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> entry_stack_fits sp0 (in_argv inp) (in_envp inp) ->
+    valid_id (in_uid inp) -> valid_hwcap (in_hwcap inp) ->
+    T [] ->
+    (forall c, P_main sp0 brk0 mbase rdraw inp c -> realizes BSEGS2 c T) ->
+    realizes BSEGS2 (init_config BSEGS2 AsanUbsan.M.init_pc BPH2 sp0 brk0 mbase rdraw AsanInit.LIMIT inp) T.
+Proof.
+  intros sp0 brk0 mbase rdraw inp T Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw T_nil MAIN.
+  apply realizes_of_srealizes.
+  apply (bo_startup_srealizes sp0 brk0 mbase rdraw inp T Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw T_nil).
+  intros c Hc. apply srealizes_of_realizes. exact (MAIN c Hc).
+Qed.
+
+(* [comment removed for export] *)
+Lemma LIMIT_eq : AsanInit.LIMIT = target_alloc_limit.
+Proof. reflexivity. Qed.
+
+(* [comment removed for export] *)
+Lemma ASEGS_eq : BSEGS2 = AsanUbsan.M.loaded_segments.
+Proof. reflexivity. Qed.
+Lemma APH_eq : BPH2 = AsanUbsan.M.phdrs.
+Proof. reflexivity. Qed.

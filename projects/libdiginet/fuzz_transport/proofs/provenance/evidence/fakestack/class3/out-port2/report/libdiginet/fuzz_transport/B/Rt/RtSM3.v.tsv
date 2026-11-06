@@ -1,0 +1,21 @@
+# alreloc per-numeral report: plugin-hostd/fuzz_command lib/B/Rt/RtSM3.v at 781f46bc05cd -> libdiginet/fuzz_transport asan-ubsan lib/B/Rt/RtSM3.v: dry run
+# source image <AGENTS>/pau-pipeline/plugin-hostd/unstripped/fuzz_command/fuzz_command.asan-ubsan; unit image <WORK>/target/unstripped/fuzz_transport/fuzz_transport.asan-ubsan
+file:line	old	new	rule	old in source image	new in unit image
+B/Rt/RtSM3.v:4	0x3d914	0x3d914	resolve (identity)	_ZN6__asan17ErrorODRViolation5PrintEv+0x18	__asan_stack_malloc_1+0xac
+B/Rt/RtSM3.v:4	0x309000	0x309000	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x1764e8	_ZN11__sanitizerL8theDepotE+0x17aaa8
+B/Rt/RtSM3.v:5	0x3fc0c	0x3fc0c	resolve (identity)	__asan_stack_malloc_1+0x144	__asan_register_globals+0x398
+B/Rt/RtSM3.v:5	0x606000	0x606000	resolve (identity)	-	builtin_tls+0x12958
+B/Rt/RtSM3.v:6	0x5e4850	0x5e4850	resolve (identity)	builtin_tls+0x800	g_s+0x5210
+B/Rt/RtSM3.v:6	0x5e492c	0x5e492c	resolve (identity)	builtin_tls+0x8dc	g_s+0x52ec
+B/Rt/RtSM3.v:84	17594333495296	17594333495296	SIZES_KEEP	-	-
+B/Rt/RtSM3.v:121	0x5e4850	0x5f3ea8	symbol	builtin_tls+0x800	builtin_tls+0x800
+B/Rt/RtSM3.v:122	0x5e4850	0x5f3ea8	symbol	builtin_tls+0x800	builtin_tls+0x800
+B/Rt/RtSM3.v:123	0x5e492c	0x5f3f84	symbol	builtin_tls+0x8dc	builtin_tls+0x8dc
+B/Rt/RtSM3.v:124	0x5e492c	0x5f3f84	symbol	builtin_tls+0x8dc	builtin_tls+0x8dc
+B/Rt/RtSM3.v:189	0x5e4850	0x5f3ea8	symbol	builtin_tls+0x800	builtin_tls+0x800
+B/Rt/RtSM3.v:190	0x5e492c	0x5f3f84	symbol	builtin_tls+0x8dc	builtin_tls+0x8dc
+B/Rt/RtSM3.v:243	3182592	3182592	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x1764e8	_ZN11__sanitizerL8theDepotE+0x17aaa8
+B/Rt/RtSM3.v:248	3182592	3182592	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x1764e8	_ZN11__sanitizerL8theDepotE+0x17aaa8
+B/Rt/RtSM3.v:257	17594333495296	17594333495296	SIZES_KEEP	-	-
+B/Rt/RtSM3.v:280	1441792	1441792	resolve (identity)	_ZN11__sanitizerL9useCountsE+0x1d500	_ZN11__sanitizerL9useCountsE+0x21ac0
+B/Rt/RtSM3.v:282	1441792	1441792	resolve (identity)	_ZN11__sanitizerL9useCountsE+0x1d500	_ZN11__sanitizerL9useCountsE+0x21ac0

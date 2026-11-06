@@ -6,10 +6,10 @@
  (deps (:elf %{project_root}/projects/avahi/bin/fuzz-packet/fuzz-packet.plain))
  (action
   (run elf-snapshot %{elf} Plain.v --prefix Plain --module-name M
-       --namespace OssFuzzTheorems.avahi.fuzz_packet.images)))
+       --namespace OSSVerify.avahi.fuzz_packet.images)))
 (rule
  (targets Ubsan.v Ubsan_seg_000.hex Ubsan_seg_001.hex Ubsan_seg_002.hex Ubsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/avahi/bin/fuzz-packet/fuzz-packet.ubsan))
  (action
   (run elf-snapshot %{elf} Ubsan.v --prefix Ubsan --module-name M
-       --namespace OssFuzzTheorems.avahi.fuzz_packet.images)))
+       --namespace OSSVerify.avahi.fuzz_packet.images)))

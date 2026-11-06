@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: pix1_fuzzer
-rocq: OssFuzzTheorems.leptonica.pix1_fuzzer
+rocq: OSSVerify.leptonica.pix1_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixExtractData and free.
 entry: LLVMFuzzerTestOneInput

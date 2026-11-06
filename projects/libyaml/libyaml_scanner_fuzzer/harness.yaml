@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libyaml
 harness: libyaml_scanner_fuzzer
-rocq: OssFuzzTheorems.libyaml.libyaml_scanner_fuzzer
+rocq: OSSVerify.libyaml.libyaml_scanner_fuzzer
 origin: oss-fuzz
 summary: yaml_parser_scan token loop until STREAM-END or error; nothing checked.
 entry: LLVMFuzzerTestOneInput

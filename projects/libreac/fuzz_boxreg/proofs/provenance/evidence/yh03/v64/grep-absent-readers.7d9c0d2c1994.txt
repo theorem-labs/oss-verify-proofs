@@ -1,0 +1,56 @@
+# ref 7d9c0d2c199462513e621298a67cb694a7963a48
+# readers outside the two YH03.v (git grep -w, proofs/libreac/fuzz_boxreg/*.v)
+src0_A_LZW_GenerateStream 0
+src0_E_LZW_GenerateStream 0
+src0_A_cgif_addframe 0
+src0_E_cgif_addframe 0
+src0_A_cgif_close 0
+src0_E_cgif_close 0
+src0_A_cgif_newgif 0
+src0_E_cgif_newgif 0
+src0_A_cgif_raw_addframe 0
+src0_E_cgif_raw_addframe 0
+src0_A_cgif_raw_close 0
+src0_E_cgif_raw_close 0
+src0_A_cgif_raw_newgif 0
+src0_E_cgif_raw_newgif 0
+src0_A_cgif_writecb 0
+src0_E_cgif_writecb 0
+src0_A_cmpPixel 0
+src0_E_cmpPixel 0
+src0_A_create_byte_list 0
+src0_E_create_byte_list 0
+src0_A_create_byte_list_block 0
+src0_E_create_byte_list_block 0
+src0_A_fclose 0
+src0_E_fclose 0
+src0_A_fdopen 0
+src0_E_fdopen 0
+src0_A_flushFrame 0
+src0_E_flushFrame 0
+src0_A_fmodeflags 0
+src0_E_fmodeflags 0
+src0_A_fopen 0
+src0_E_fopen 0
+src0_A_freeCGIF 0
+src0_E_freeCGIF 0
+src0_A_freeFrame 0
+src0_E_freeFrame 0
+src0_A_ofl_add 0
+src0_E_ofl_add 0
+src0_A_read_frameconfig 0
+src0_E_read_frameconfig 0
+src0_A_strchr 0
+src0_E_strchr 0
+src0_A_strchrnul 0
+src0_E_strchrnul 0
+src0_A_strlen 0
+src0_E_strlen 0
+src0_A_unlink 0
+src0_E_unlink 0
+src0_A_unlist_locked_file 0
+src0_E_unlist_locked_file 0
+# positive control 1: src0_D_ofl_lock by the same command
+src0_D_ofl_lock 6
+# positive control 2: src0_A_LZW_GenerateStream by git grep -w over the two YH03.v only
+src0_A_LZW_GenerateStream 2

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_debuglink
-rocq: OssFuzzTheorems.libdwarf.fuzz_debuglink
+rocq: OSSVerify.libdwarf.fuzz_debuglink
 origin: upstream
 summary: dwarf_init_b (unchecked), dwarf_add_debuglink_global_path and dwarf_gnu_debuglink; outputs freed
   unread.

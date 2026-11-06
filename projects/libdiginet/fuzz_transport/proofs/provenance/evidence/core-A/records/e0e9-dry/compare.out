@@ -1,0 +1,11 @@
+check.tsv FAIL rows: rec 16, new 15; new FAIL rows 0 {}; gone FAIL rows 1 {'value-role-conflict': 1}
+check/review rows in one run only: 8
+  class interval-delta: rec FAIL 0, new FAIL 0, new rows of any status 0
+  class tot-bound: rec FAIL 0, new FAIL 0, new rows of any status 2
+  class hypothesis-decimal-moved: rec FAIL 0, new FAIL 0, new rows of any status 0
+  class bound-name-mismatch: rec FAIL 0, new FAIL 0, new rows of any status 0
+  class shadow-offset: rec FAIL 0, new FAIL 0, new rows of any status 0
+  class value-role-conflict: rec FAIL 1, new FAIL 0, new rows of any status 0
+overrides.tsv (new): 59 rows {'applied': 37, 'removed by --patch': 22}; NO-FILE 0; rec rows equal: True
+required.tsv equal: True
+stage-out: files rec 492, new 492, differing files 492; provenance-sha-only lines 492; other differing cells 0

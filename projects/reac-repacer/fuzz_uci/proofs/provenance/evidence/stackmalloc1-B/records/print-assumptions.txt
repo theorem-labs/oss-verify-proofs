@@ -1,0 +1,27 @@
+# Check + Print Assumptions YF0s.stack_malloc1_contract, from an uncommitted scratch file lib/B/Rt/ZPaSm1.v built by cb
+# (CB_COMPILE) and deleted; every axiom is in toolchain/allowed-axioms.txt
+stack_malloc1_contract
+     : forall B : YG0f.asyms,
+       YG0d.AR_laws YB1v.tfibsegs B ->
+       YF0m.UciSyms B ->
+       YG0d.astack_malloc_realizes YB1v.tfibsegs B (BinInt.Z.pos BinNums.xH)
+where
+?fx : [ |- YK11.FPState]
+?rc : [ |- YM05.RunCeil]
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  forall (A : Type) (B : A -> Type) (f g : forall x : A, B x),
+  (forall x : A, f x = g x) -> f = g
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type

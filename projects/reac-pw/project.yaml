@@ -1,0 +1,65 @@
+schema: oss-fuzz-theorems/project/1
+project: reac-pw
+description: 'reac-pw is a PipeWire-native endpoint for Roland''s REAC audio-over-Ethernet protocol: a daemon that puts a
+  REAC network into the PipeWire graph as audio nodes.'
+homepage: https://github.com/FreeREAC/reac-pw
+language: c
+status: available
+enrolled: true
+library:
+  name: reac-pw
+  repository: https://github.com/FreeREAC/reac-pw
+  commit: f86a30a3d06e84e8a7d6ec647cae77c4cbc9137b
+  version: 1.0.42
+  licence: GPL-3.0-or-later
+harnesses:
+- name: fuzz_segconf
+  status: included
+  origin: upstream
+- name: fuzz_pin
+  status: included
+  origin: upstream
+- name: fuzz_headamp
+  status: included
+  origin: upstream
+- name: fuzz_rate
+  status: included
+  origin: upstream
+- name: fuzz_role
+  status: included
+  origin: upstream
+- name: fuzz_qdisc
+  status: included
+  origin: upstream
+- name: fuzz_link
+  status: included
+  origin: upstream
+build:
+  system: custom
+  clang: 20.1.8
+  builder: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  oss_verify:
+    repository: theorem-labs/oss-verify
+    commit: ba46d3675f547098bca08b6353af0f1f8d61549f
+    path: projects/reac-pw
+assets:
+  bin:
+    release: v2026.11.1
+    file: reac-pw-bin.tar.zst
+    bytes: 893993
+    sha256: 271945f4e432f1b85c752b7973ff5c8d7944f5c612974c84caade2d068bcc21e
+  src:
+    release: v2026.11.1-src
+    file: reac-pw-src.tar.zst
+    bytes: 3207917
+    sha256: aa53b6310c64474c185ea061a4053780027991439d768b54dbda2fc2f21388b9
+  src_manifest:
+    release: v2026.11.1-src
+    file: reac-pw-src.MANIFEST.tsv
+    bytes: 2224
+    sha256: a5647bc462dd18dcd0c99e95b63ddb4bda89cd5a5e66c1ec9b868170eb44db89
+  port:
+    release: v2026.11.1-src
+    file: reac-pw-port.tar.zst
+    bytes: 201450
+    sha256: e7802e0c1ee5e46c92827cc0b545c7c4c91636ddec3f71b1da86cc01e0f0d2b6

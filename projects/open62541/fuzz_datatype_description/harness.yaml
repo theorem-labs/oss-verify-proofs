@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: open62541
 harness: fuzz_datatype_description
-rocq: OssFuzzTheorems.open62541.fuzz_datatype_description
+rocq: OSSVerify.open62541.fuzz_datatype_description
 origin: upstream
 summary: Decode a Structure/Enum/SimpleTypeDescription, UA_DataType_fromDescription, then UA_DataType_toDescription
   as a 'round trip' whose output is cleared without any comparison (the declared inverse is never checked).

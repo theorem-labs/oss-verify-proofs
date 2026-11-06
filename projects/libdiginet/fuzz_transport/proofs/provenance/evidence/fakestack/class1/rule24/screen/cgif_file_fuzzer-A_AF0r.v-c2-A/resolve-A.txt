@@ -1,0 +1,5 @@
+[cgif/cgif_file_fuzzer] A/AF0r.v:44 0x3cbd0 0x3dfc4
+[cgif/cgif_file_fuzzer] A/AF0r.v:73 0x9df88 0xa4080
+[cgif/cgif_file_fuzzer] A/AF0r.v:73 0x9ec90 0xa4d70
+[cgif/cgif_file_fuzzer] A/AF0r.v:74 0x9dfe8 0xa40e0
+[cgif/cgif_file_fuzzer] A/AF0r.v:74 0x9eca0 0xa4d80

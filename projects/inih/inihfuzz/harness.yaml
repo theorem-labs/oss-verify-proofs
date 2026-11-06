@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: inih
 harness: inihfuzz
-rocq: OssFuzzTheorems.inih.inihfuzz
+rocq: OSSVerify.inih.inihfuzz
 origin: oss-fuzz
 summary: ini_parse_string on an 8..512-byte NUL-terminated copy; the handler only records the section
   name; return code ignored.

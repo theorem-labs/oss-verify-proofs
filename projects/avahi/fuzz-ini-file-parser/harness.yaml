@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: avahi
 harness: fuzz-ini-file-parser
-rocq: OssFuzzTheorems.avahi.fuzz_ini_file_parser
+rocq: OSSVerify.avahi.fuzz_ini_file_parser
 origin: upstream
 summary: avahi_ini_file_load on the temp file, then avahi_split_csv on every value; all output goes to
   a no-op log function.

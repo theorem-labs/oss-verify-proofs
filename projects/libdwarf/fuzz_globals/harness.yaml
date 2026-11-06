@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_globals
-rocq: OssFuzzTheorems.libdwarf.fuzz_globals
+rocq: OSSVerify.libdwarf.fuzz_globals
 origin: upstream
 summary: dwarf_get_globals and per-global name/die/cu offset/header queries, plus dwarf_globals_by_type
   for 6 categories; results unused.

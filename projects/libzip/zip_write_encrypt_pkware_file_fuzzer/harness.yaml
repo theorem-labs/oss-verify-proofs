@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libzip
 harness: zip_write_encrypt_pkware_file_fuzzer
-rocq: OssFuzzTheorems.libzip.zip_write_encrypt_pkware_file_fuzzer
+rocq: OSSVerify.libzip.zip_write_encrypt_pkware_file_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

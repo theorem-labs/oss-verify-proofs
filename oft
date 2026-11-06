@@ -2,5 +2,72 @@
 # ./oft <command> [...]: the tools of this repository (tools/oft/README.md).
 # Needs Python 3 and the packages tools/oft/requirements.txt pins.  Writes no
 # bytecode, so running it leaves nothing behind in the tree.
+#
+# Where those packages come from, in order:
+#   1. the interpreter itself, when it already imports them: a CI runner that ran
+#      `pip install --require-hashes -r tools/oft/requirements.txt`, and the checker
+#      image, which is run with PYTHONPATH=/pydeps (README.md).  Nothing is built and
+#      nothing is read outside the tree, so a check in that image runs as it always has.
+#   2. else a virtual environment of this requirements file's own, under
+#      $OFT_VENV_ROOT (default ${XDG_CACHE_HOME:-$HOME/.cache}/oft-venv) in a directory
+#      named by the file's SHA-256.  uv builds it once, honouring the pinned hashes; every
+#      later run finds it and installs nothing, so it needs no network.  A box that does
+#      not ship these packages (an agent box) therefore runs `./oft lint` with no hand
+#      install, and a change to requirements.txt builds a new directory beside the old one.
+#   3. else python3 as before, which names the requirement it cannot import and every
+#      directory it looked in (tools/oft/__main__.py), instead of a bare ModuleNotFoundError.
 here=$(cd -- "$(dirname -- "$0")" && pwd)
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$here/tools${PYTHONPATH:+:$PYTHONPATH}" exec python3 -m oft --root "$here" "$@"
+req="$here/tools/oft/requirements.txt"
+PYTHONDONTWRITEBYTECODE=1
+PYTHONPATH="$here/tools${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONDONTWRITEBYTECODE PYTHONPATH
+
+# The import names of the distributions requirements.txt pins (PyYAML imports as yaml).
+# tools/oft/tests/test_wrapper.py holds this line to that file, so the two cannot drift.
+oft_imports="idna, yaml"
+
+if python3 -c "import $oft_imports" 2> /dev/null; then
+  exec python3 -m oft --root "$here" "$@"
+fi
+
+# The environment belongs to this requirements file AND to this interpreter.  uv picks an interpreter of its
+# own when it is not given one -- a CPython it downloads, or whatever a .python-version in the working
+# directory names -- and a directory named after the requirements alone would keep that first choice for
+# good; so the name holds the path and the version of the python3 this box has, and an upgrade or a move
+# builds a new directory beside the old one.
+venv_root="${OFT_VENV_ROOT:-${XDG_CACHE_HOME:-$HOME/.cache}/oft-venv}"
+key= py=
+if command -v sha256sum > /dev/null 2>&1; then
+  py=$(command -v python3) || py=
+  pyv=$(python3 -c 'import sys; print(sys.version)' 2> /dev/null) || pyv=
+  [ -z "$py" ] || key=$( { cat -- "$req"; printf '%s\n%s\n' "$py" "$pyv"; } | sha256sum | cut -c1-16)
+fi
+if [ -n "$key" ] && [ -x "$venv_root/$key/bin/python" ]; then
+  exec "$venv_root/$key/bin/python" -m oft --root "$here" "$@"
+fi
+if [ -n "$key" ] && command -v uv > /dev/null 2>&1; then
+  # Built beside its name and renamed in, so a second run never finds a half-built environment, and two runs
+  # at once leave one good directory between them.  An interrupted build leaves its own `.part.<pid>`, which
+  # nothing here removes.
+  part="$venv_root/$key.part.$$"
+  if mkdir -p -- "$venv_root" &&
+     uv venv --quiet --python "$py" "$part" &&
+     uv pip install --quiet --python "$part/bin/python" --require-hashes -r "$req"; then
+    # Another run may have put a good environment there while this one built: use it, and keep the build for
+    # nothing rather than take a directory something is running from.  Else the one here is unusable -- its
+    # interpreter is gone (test -x follows the link), or an older build left it half-written -- and it is
+    # removed, since the rename cannot replace a directory that is not empty and the run would otherwise fall
+    # back for good.
+    if [ ! -x "$venv_root/$key/bin/python" ]; then
+      rm -rf -- "$venv_root/$key"
+      mv -T -- "$part" "$venv_root/$key" 2> /dev/null || :
+    fi
+    if [ -x "$venv_root/$key/bin/python" ]; then
+      rm -rf -- "$part"
+      exec "$venv_root/$key/bin/python" -m oft --root "$here" "$@"
+    fi
+  fi
+  rm -rf -- "$part"
+fi
+
+exec python3 -m oft --root "$here" "$@"

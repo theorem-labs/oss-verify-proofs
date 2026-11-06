@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: hunspell
 harness: parserfuzzer
-rocq: OssFuzzTheorems.hunspell.parserfuzzer
+rocq: OSSVerify.hunspell.parserfuzzer
 origin: upstream
 summary: TextParser tokenises a fuzzed line (utf8/url flags from byte 0) and change_token()s tokens with
   fuzzed replacements; results discarded.

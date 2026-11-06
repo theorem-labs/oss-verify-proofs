@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjxl
 harness: fields_fuzzer
-rocq: OssFuzzTheorems.libjxl.fields_fuzzer
+rocq: OSSVerify.libjxl.fields_fuzzer
 origin: upstream
 summary: Bundle::Read / ReadSizeHeader / ReadImageMetadata of one of 24 header types selected by byte
   0; results ignored; nothing re-serialised.

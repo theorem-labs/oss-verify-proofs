@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: faad2
 harness: fuzz_config
-rocq: OssFuzzTheorems.faad2.fuzz_config
+rocq: OSSVerify.faad2.fuzz_config
 origin: upstream
 summary: NeAACDecGetErrorMessage on the first byte, NeAACDecGetVersion/GetCapabilities, then NeAACDecAudioSpecificConfig
   on the rest; the return code and the parsed mp4AudioSpecificConfig are discarded.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tcpreplay
 harness: fuzz_pcap
-rocq: OssFuzzTheorems.tcpreplay.fuzz_pcap
+rocq: OSSVerify.tcpreplay.fuzz_pcap
 origin: upstream
 summary: Opens the input as a pcap via fmemopen/pcap_fopen_offline and runs get_l2len_protocol and get_layer4_v4/v6
   / get_ipv6_l4proto on up to 512 packets; results ignored.

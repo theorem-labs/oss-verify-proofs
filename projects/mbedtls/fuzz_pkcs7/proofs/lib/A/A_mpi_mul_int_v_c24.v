@@ -1,0 +1,1132 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import Arr CellsX HeapIface MpiCoreAux MpiWalkAux Asn1Aux ZBridge.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Spec Require Import Rep RepFacts MpiVal MpiFacts.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.P Require Import P_mpi_cmp P_mpi_addsub P_mpi_copy P_mpi_mul_int_W P_mpi_mul_int.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.A Require Import AImg AImgGlobals AImgRT A_rt_facts A_alloc_lib A_mpi_stmtA A_mpi_opnd A_mpi_journey A_mpi_journey2
+     A_mpi_zeroize_and_free A_mpi_copy A_mpi_core_mla A_mpi_core_mla_v A_mpi_add_abs_W A_mpi_mul_int A_mpi_mul_int_stmtV.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.A Require Import A_mpi_stmtA_c24 A_mpi_journey_c24 A_mpi_copy_c24.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import ACnt24.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.A Require Import A_mpi_mul_int_v.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import ACnt24 TacA.   (* [comment removed for export] *)
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import DietDestruct.   (* [comment removed for export] *)
+Import ListNotations.
+Open Scope Z_scope.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+Unset Lia Cache.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require CDefT.
+From Ltac2 Require Ltac2.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import FF5. (* [comment removed for export] *)
+Local Ltac pqlia ::= ff5_pqlia.
+Local Ltac transport_after_call segs m m' MU WM ::= ff5_transport_after_call segs m m' MU WM.
+Local Ltac solve_apart ::= ff5_solve_apart.
+Local Ltac solve_apart0 ::= ff5_solve_apart0.
+Local Ltac solve_disjoint ::= ff5_solve_disjoint.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import LiaOrc. (* [comment removed for export] *)
+Local Ltac Stdlib.micromega.Lia.lia ::= orc_lia. (* [comment removed for export] *)
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import LiaOrcFF5. (* [comment removed for export] *)
+Local Ltac lia_t12 ::= orc_lia_t12. (* [comment removed for export] *)
+Local Ltac ff5_rlia ::= orc_ff5_rlia. (* [comment removed for export] *)
+Local Ltac ff5_overlap_ctx A2 n2 a len ::= orc_ff5_overlap_ctx A2 n2 a len. (* [comment removed for export] *)
+Local Ltac ff5_overlap A2 n2 a len ::= orc_ff5_overlap A2 n2 a len. (* [comment removed for export] *)
+Local Ltac qlia ::= orc_qlia. (* [comment removed for export] *)
+Local Ltac pqlia ::= orc_ff5_pqlia. (* [comment removed for export] *)
+Local Ltac lia1 D ::= orc_lia1 D. (* [comment removed for export] *)
+Local Ltac dlia ::= orc_dlia. (* [comment removed for export] *)
+Local Ltac plia ::= orc_plia. (* [comment removed for export] *)
+Local Ltac clear_disj ::= fc_clear_disj. (* [comment removed for export] *)
+Local Ltac prune_disj ::= fc_prune_disj. (* [comment removed for export] *)
+Local Ltac clear_mods ::= fc_clear_mods. (* [comment removed for export] *)
+Local Ltac keep_disj1 D ::= fc_keep_disj1 D. (* [comment removed for export] *)
+(* [comment removed for export] *)
+Local Ltac2 e25kn_keep_near (t : Init.constr) : Init.unit :=
+  let seed := FF5.ffn_vars (FSet.empty FSet.Tags.ident_tag) t in
+  let e := LiaTuning.zf_mkenv () in
+  let (ids, _) := List.fold_left (fun acc h =>
+      let (ids, cache) := acc in
+      let (id, body, ty) := h in
+      match body with
+      | Init.Some _ => acc
+      | Init.None =>
+          let (isp, cache) := LiaTuning.zf_is_prop cache ty in
+          if isp then
+            (if LiaTuning.zf_plain_arith e ty then
+               (if FSet.is_empty (FSet.inter seed (FF5.ffn_vars (FSet.empty FSet.Tags.ident_tag) ty))
+                then (id :: ids, cache) else (ids, cache))
+             else (id :: ids, cache))
+          else (ids, cache)
+      end) ([], { LiaTuning.zc_c := FMap.empty FSet.Tags.constant_tag; LiaTuning.zc_i := FMap.empty FSet.Tags.inductive_tag })
+      (Control.hyps ()) in
+  match ids with
+  | [] => ()
+  | _ :: _ => match Control.case (fun () => Std.clear ids) with
+              | Init.Val _ => ()
+              | Init.Err _ => List.iter (fun id => match Control.case (fun () => Std.clear [id]) with Init.Val _ => () | Init.Err _ => () end) ids
+              end
+  end.
+Ltac ff_keep_near t ::= let f := ltac2:(t |- e25kn_keep_near (Option.get (Ltac1.to_constr t))) in f t.
+Ltac2 gd_tbl_A_mpi_mul_int_v_c24 () : Init.string Init.list := ["OSSVerify.KrLib.A.A_mpi_stmtA.mpi_binop_postA"; "OSSVerify.KrLib.A.AImg.asegs"; "OSSVerify.KrLib.Spec.MpiVal.mkMPD"; "OSSVerify.KrLib.P.P_mpi_mul_int_W.mul_int_R"; "OSSVerify.KrLib.A.A_mpi_mul_int.mul_int_PHI"; "OSSVerify.KrLib.A.A_mpi_mul_int.mul_int_FR"; "Corelib.Numbers.BinNums.Z"; "OSSVerify.KrLib.LibA.ARt.HST"; "Corelib.Init.Datatypes.list"; "OSSVerify.KrLib.Lib.HeapIface.blk"; "stdpp.bitvector.definitions.bv"; "Corelib.Init.Datatypes.option"; "OSSVerify.KrLib.Spec.MpiVal.mpd"; "OSSVerify.KrLib.A.A_mpi_journey.XJA"; "OSSVerify.KrLib.A.A_mpi_mul_int.MI_FRAME_A"; "Corelib.Init.Datatypes.nil"; "Corelib.Init.Logic.or"; "Corelib.Init.Logic.and"; "Corelib.Init.Logic.eq"; "OSSVerify.KrLib.Spec.MpiVal.mpd_val"; "Stdlib.ZArith.BinInt.Z.mul"; "Stdlib.ZArith.BinInt.Z.le"; "OSSVerify.KrLib.Spec.MpiVal.md_n"; "Stdlib.ZArith.BinInt.Z.max"; "Stdlib.ZArith.BinInt.Z.add"; "OSSVerify.KrLib.P.P_mpi_addsub.MBEDTLS_ERR_MPI_ALLOC_FAILED"; "OSSVerify.KrLib.LibA.AEvtA.aevtA"; "OSSVerify.KrLib.LibA.ARt.KF"; "WMV.MI_POST_A"; "OSSVerify.KrLib.Lib.MState.MS"; "OSSVerify.KrLib.Lib.Frame.mkR"; "stdpp.bitvector.definitions.Z_to_bv"; "stdpp.bitvector.definitions.bv_unsigned"; "Corelib.Init.Datatypes.None"; "OSSVerify.KrLib.Lib.PropExec.seg_rom"; "OSSVerify.KrLib.A.A_mpi_journey2.rideA"; "OSSVerify.KrLib.Spec.Rep.limb_own"; "OSSVerify.KrLib.Spec.MpiVal.md_own"; "OSSVerify.KrLib.Spec.Rep.LHeap"; "OSSVerify.KrLib.Spec.MpiVal.md_sg"; "OSSVerify.KrLib.Spec.Rep.limbs_val"; "OSSVerify.KrLib.Spec.MpiVal.md_limbs"; "OSSVerify.KrLib.Spec.MpiVal.md_addr"; "OSSVerify.KrLib.Lib.MpiCoreAux.lval"; "WMV.miV1"; "WMV.miF1"; "OSSVerify.KrLib.LibA.ALazy.al_sb"; "OSSVerify.KrLib.LibA.ARt.arl_AL"; "Stdlib.ZArith.BinInt.Z.shiftr"; "WMV.KC_stmt"; "Stdlib.ZArith.BinInt.Z.lt"; "Corelib.Init.Logic.not"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.machine_state"; "Corelib.Init.Logic.ex"; "OSSVerify.KrLib.Lib.MState.ret_pc"; "OSSVerify.KrLib.Lib.Frame.munch"; "Corelib.Init.Datatypes.cons"; "Corelib.Init.Datatypes.prod"; "Corelib.Init.Datatypes.pair"; "Stdlib.ZArith.BinInt.Z.sub"; "OSSVerify.KrLib.Lib.Frame.wmono"; "OSSVerify.KrLib.Lib.Mem.mem_inv"; "OSSVerify.KrLib.Lib.Frame.stk"; "Stdlib.ZArith.BinInt.Z.modulo"; "OSSVerify.KrLib.LibA.AShadow.cs_ok"; "OSSVerify.KrLib.LibA.ALazy.crange"; "OSSVerify.KrLib.LibA.AEvtA.evtA"; "WMV.copy_self_postA"; "OSSVerify.KrLib.A.A_mpi_stmtA.A_MPI_COPY"; "Corelib.Init.Datatypes.nat"; "Stdlib.ZArith.BinInt.Z.of_nat"; "OSSVerify.KrLib.Lib.Mem.bytes_at"; "OSSVerify.KrLib.Spec.MpiVal.md_p"; "OSSVerify.KrLib.Lib.Arr.u32s"; "Corelib.Init.Datatypes.length"; "OSSVerify.KrLib.LibA.AShadow.aobj"; "OSSVerify.KrLib.LibA.ARt.hcs"; "OSSVerify.KrLib.A.A_mpi_opnd.opnd_atA"; "OSSVerify.KrLib.P.P_mpi_addsub.opnd_sep"; "OSSVerify.KrLib.Lib.HeapIface.client_range"; "OSSVerify.KrLib.LibA.ARt.arl_L"; "Corelib.Init.Datatypes.app"; "OSSVerify.KrLib.LibA.ARt.fdata"; "OSSVerify.KrLib.Spec.Rep.LStatic"; "Corelib.Init.Datatypes.bool"; "OSSVerify.KrLib.Lib.Mem.ro_addr"; "OSSVerify.KrLib.Lib.Mem.wa"; "Corelib.Init.Datatypes.true"; "OSSVerify.KrLib.A.AImgGlobals.img_norz"; "OSSVerify.KrLib.LibA.ARt.HM"; "OSSVerify.KrLib.A.A_mpi_journey.JBA"; "OSSVerify.KrLib.A.A_mpi_journey.BJA"; "OSSVerify.KrLib.LibA.ARt.HK"; "OSSVerify.KrLib.Spec.MpiVal.mpd_sep"; "OSSVerify.KrLib.A.A_mpi_stmtA.mpd_aobjA"; "OSSVerify.KrLib.LibA.AEvtS.aevtS"; "LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg"; "OSSVerify.KrLib.A.A_mpi_stmtA.A_MPI_MUL_INT"; "OSSVerify.KrLib.LibA.ARt.art_layout"; "OSSVerify.KrLib.LibA.ARt.artA"; "OSSVerify.KrLib.A.AImg.asan_img_ok"; "OSSVerify.KrLib.A.A_mpi_zeroize_and_free.zeroize_and_free_stmtA"; "OSSVerify.KrLib.A.A_mpi_stmtA.A_ZEROIZE_AND_FREE"; "OSSVerify.KrLib.A.A_mpi_copy_c24.mpi_copy_stmtA_c"; "OSSVerify.KrLib.LibA.ARt.arl_calloc"; "OSSVerify.KrLib.A.A_mpi_mul_int.A_WRAP_CALLOC_MI"; "OSSVerify.KrLib.LibA.ARt.arl_amemcpy"; "OSSVerify.KrLib.A.A_mpi_mul_int.A_ASAN_MEMCPY_MI"; "OSSVerify.KrLib.LibA.ARt.arl_amemset"; "OSSVerify.KrLib.A.A_mpi_mul_int.A_ASAN_MEMSET_MI"; "OSSVerify.KrLib.A.A_mpi_read_binary_stmt.arl_need_rt"; "Stdlib.Lists.List.NoDup"; "Corelib.Lists.ListDef.map"; "Corelib.Init.Datatypes.fst"; "OSSVerify.KrLib.Lib.HeapIface.hl_img_lo"; "OSSVerify.KrLib.Lib.HeapIface.hl_data_lo"; "OSSVerify.KrLib.Lib.HeapIface.hl_data_hi"; "OSSVerify.KrLib.Lib.HeapIface.hl_img_hi"; "Stdlib.ZArith.BinInt.Z.pow"; "OSSVerify.KrLib.A.A_mpi_mul_int_stmtV.mpi_mul_int_stmtA_v"].
+
+
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+Section WMV.
+  Variable R : art_layout.
+  #[local] Hint Extern 0 heap_layout => exact (arl_L R) : typeclass_instances.
+  Variable HIA : artA asegs R.
+  Local Notation AL := (arl_AL R).
+  Local Notation L := (arl_L R).
+  Hypothesis IMG : asan_img_ok AL.
+  Hypothesis ZF : zeroize_and_free_stmtA asegs R HIA A_ZEROIZE_AND_FREE.
+  Hypothesis COPY : mpi_copy_stmtA_c asegs R HIA A_MPI_COPY.
+  Hypothesis CALLOC : arl_calloc R = A_WRAP_CALLOC_MI.
+  Hypothesis AMC : arl_amemcpy R = A_ASAN_MEMCPY_MI.
+  Hypothesis AMS : arl_amemset R = A_ASAN_MEMSET_MI.
+  Variables (h : HST asegs R HIA) (LB LF : list blk) (m : mem) (mo : Model).
+  Hypothesis C24H : cnt24 LB + C24_MUL_INT <= C24MAX.     (* [comment removed for export] *)
+  Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
+  Variables (X sX nX pX : Z) (xs0 : list word) (padX : word) (ownX : limb_own) (dA : mpd) (lo d b : Z) (wb : word).
+  Local Notation dX := (mkMPD X sX nX pX xs0 padX ownX).
+  Local Notation MI_FRAME_A := (A_mpi_mul_int.MI_FRAME_A ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10).
+  Hypothesis JC : JCA asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A.
+  Hypothesis TPV : tp = Z_to_bv 64 (arl_tp R).
+  Hypothesis RAE : bv_unsigned ra mod 2 = 0.
+  Hypothesis UWX : uw_obj R X 16 d.
+  Hypothesis D0 : 0 <= d.
+  Hypothesis BB : 0 <= b < 2^32.
+  Hypothesis WB1 : bv_unsigned wb mod 2^32 = b.
+  Hypothesis WB0 : bv_unsigned wb = 0 <-> b = 0.
+  Hypothesis NRA : 0 <= md_n dA <= 10000.
+
+  Definition MI_POST_A := ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "(0.$1.VR,VHIA,Vra,Vsp,Vgp,Vtp,Vs0,Vs1,Vs2,Vs3,Vs4,Vs5,Vs6,Vs7,Vs8,Vs9,Vs10,Vs11,VF,Vfc,Vh,VLB,VLF,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)(3.Vb,VLB,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)VdA,)(4.(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)VdA,)(5.Vd,)Vlo,Vm,Vmo,)")
+(* [comment removed for export] *).
+
+  Local Ltac jc_open := pose proof JC as [NEEDR HND DIMG ROIMG HH MX NST XW XLS LOS FS16 SLO TOP SPA FSZ].
+  Local Notation SP' := (Z_to_bv 64 (bv_unsigned sp + -96)).
+  Local Notation XJ0 := (XJA asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A []).
+
+  Ltac basic_factsA hc :=
+    pose proof (hcs_ok asegs R HIA hc) as CSOK; pose proof (cs_ok_sb _ _ CSOK) as SB64;
+    pose proof (art_alwf asegs R HIA) as ALWF'; unfold al_wf in ALWF'; pose proof IMG as IMG'; unfold asan_img_ok in IMG';
+    pose proof (art_lo asegs R HIA) as ALO; pose proof (alloc_ceiling_pos (L := arl_L R)) as ACP;
+    pose proof (hcs_stack asegs R HIA hc) as SCS0;
+    pose proof (arl_need_rt_amem R) as NRAm; pose proof (arl_need_rt_malloc R) as NRM; pose proof (arl_need_rt_free R) as NRF;
+    pose proof (bv_unsigned_in_range 64 sp) as SPR; unfold bv_modulus in SPR; cbn [Z.pow Z.of_N Pos.pow] in SPR.
+
+  (* [comment removed for export] *)
+  Local Ltac2 Set LiaOrc.tbl := fun () => "00Z0@L19687428440.145L25465666776.145L28125529944.145L29025845208.145L29428324939.5  L29762660275.145L31686769240.145L35663928186.7  L36180290948.1  L52253708504.145L60098763854.3  L60511538335.145L60692334296.145L61601561944.145L62505661912.145L64270350808.145L65178513496.145L947156799.144  Q15643598972.145Q18366170748.145Q18378508831.145Q21879891999.145Q24389844383.145Q27585188988.145Q27906956191.145Q30415318815.145Q31271277308.145Q32655747964.145Q33918012703.145Q36425601695.145Q3830178207.145 Q39939305631.145Q41152143740.145Q44648563964.145Q4533800828.145 Q51235551740.145Q52101417212.145Q59257011708.145Q59842863100.145Q60511538335.145Q66521824799.145Q9843086111.145 00000b01T02F03803J04<04n05C05G06906C07K08=08o09a0:S0;E0<70<l0=a0>e0?i0@m0Ab0Bf0Cj0D_0ET0FX0G\0H`0Id0JY0KN0LC0M80Mm0Nb0OW0P[0Q_0RcS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101b2wb3WB0S1R2lo3LOS3ALO3ACPS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101b2wb3WB0S1R3HIA1h2sp2lo3TOP1HS2spS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101b2wb3WB0S1R2lo3LOSS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb2BB3WB05NEEDR3SLO3SPRS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb3WB0S1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb2BB3WB05NEEDR3SLOS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb2BB3WB05NEEDR3SLOS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb2BB3WB05NEEDR3SLOS2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb3WB0S1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb2BB3WB05NEEDR3SLOS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb2BB3WB05NEEDR3SLOS2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb3WB0S1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb2BB3WB05NEEDR3SLOS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb2BB3WB05NEEDR3SLOS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb2BB3WB05NEEDR3SLOS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb2BB3WB05NEEDR3SLOS2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb3WB0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb3WB0S1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb2BB3WB05NEEDR3SLOS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb2BB3WB05NEEDR3SLOS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102lo1b2wb2BB3WB05NEEDR3SLO". (* [comment removed for export] *)
+  #[using="IMG wb JC BB WB0"] Lemma mi_ret : ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "Pv,$6.Pf,$6.Phc,(7.$1.VR,VHIA,)PLBc,(8.$9.)Pmc,P,(:.&40.)(;.(:.&8.))PdXc,$<.Pr,$6.Pxra,(:.&40.)Pxt0,(:.&40.)Pxt1,(:.&40.)Pxt2,(:.&40.)Pxs0',(:.&40.)Pxs1,(:.&40.)Pxa1,(:.&40.)Pxa2,(:.&40.)Pxa3,(:.&40.)Pxa4,(:.&40.)Pxa5,(:.&40.)Pxa6,(:.&40.)Pxa7,(:.&40.)Pxs2,(:.&40.)Pxs3,(:.&40.)Pxs4,(:.&40.)Pxs5,(:.&40.)Pxs6,(:.&40.)Pxs7,(:.&40.)Pxs8,(:.&40.)Pxs9,(:.&40.)Pxs10,(:.&40.)Pxt3,(:.&40.)Pxt4,(:.&40.)Pxt5,(:.&40.)Pxt6,(:.&40.)P,(=.$1.VR,VHIA,Vh,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,+60.(>.Vra,Vs0,Vs1,Vs2,Vs3,Vs4,Vs5,Vs6,Vs7,Vs8,Vs9,Vs10,)(?.$9.)R21.R20.R1?.R1>.R1=.R1<.)P,(10.(11.(12.$6.R1<.=)(11.(12.$6.(13.R1=.)(14.(13.VdA,)Vb,))(15.(16.R1=.)(17.VnX,(18.(16.VdA,)+1.)))))(12.$6.R1<.$19.))P,(15.R23.(4.(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)VdA,))P,(15.R23.(5.Vd,))(1:.$1.(1;.$1.VR,VHIA,R23.Vmo,)$1<.(1=.(1>.R1>.(1?.&40.(18.(20.&40.Vsp,)-60.))Vgp,Vtp,R1=.R1<.R1;.R1:.R19.(1?.&40.R1?.)R18.R17.R16.R15.R14.R13.R12.R11.R10.R?.R>.R=.R<.R;.R:.R9.Vs11,R8.R7.R6.R5.)VF,(1?.&40.+9<:84.)Vfc,(21.(:.&40.))R21.(22.$1.)))")
+(* [comment removed for export] *).
+  Proof.
+    jc_open. intros until xt6. intros J HR HV HF. basic_factsA hc.
+    pose proof J as [MI1 ST1 FR1 HH1 HT1 HS1 HF1 HCS1 HV1 HFR1 MX1 AD1 PD1 NS1 OUT1 FRS1 FRA1 HPX1 OX1 XP1 XLS1 NM1]. cbn [app] in HH1.
+    pose proof (hm_top asegs R HIA hc LBc LF mc HH1) as HTOP.
+    assert (LO0 : 0 <= lo) by (clear - LOS ALO ACP; lia).
+    assert (SCS : crange (hcs asegs R HIA hc) lo (bv_unsigned sp - lo)) by (eapply crange_sub; [exact SCS0| clear - LOS; lia| rewrite HS1; pose proof (hm_top asegs R HIA h LB LF m HH); clear - H TOP; lia]).
+    pose proof (AIh_laws asegs R HIA hc) as LAWS. pose proof (KF_kinv asegs R HIA hc mo) as KINV.
+    unfold MI_FRAME_A, aa_frame96 in FR1. replace (bv_unsigned sp - 96) with (bv_unsigned sp + -96) in FR1, ST1 by (clear; lia).
+    pose proof (munch_refl ([] : list ivl) mc) as MU. pose proof (wmono_refl asegs mc) as WM.
+    (* [comment removed for export] *)
+    do 12 zstep.
+    zstep.
+    release_frame FR1 ST1 (bv_unsigned sp).
+    zstep.
+    apply aevtA_done. intros mo9 [HK9 MF9]. unfold MI_POST_A.
+    eapply (xa_post asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC); [exact J| | exact HK9| exact MF9| exact HV| exact HF].
+    split; [exact HR|]. split; [exact AD1|]. split; [exact PD1|]. split; [exact FRS1| exact NM1].
+  Qed.
+  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
+  Hypothesis BUD : havol asegs R HIA h + mul_int_PHI dX dA <= AVOL_MAX.
+  Hypothesis BUDF : hfr asegs R HIA h + mul_int_FR d <= FR_MAX.
+  Hypothesis SLO2 : lo <= bv_unsigned sp - 224 - arl_need_rt R.
+  Local Notation SB := (Z_to_bv 64 (al_sb AL)).
+  Local Notation SHX := (Z_to_bv 64 (Z.shiftr X 3 + al_sb AL)).
+  Local Notation SH10 := (Z_to_bv 64 (Z.shiftr (X + 10) 3 + al_sb AL)).
+  Local Notation SHA := (Z_to_bv 64 (Z.shiftr (md_addr dA) 3 + al_sb AL)).
+  Local Notation XJ1 An cnt := (XJA asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A [(An, 4 * cnt)]).
+  Local Notation FB0 := (FBA asegs R LB LF dX lo).
+  Local Notation XD0 := (XDA asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A).
+  Local Notation RIDE := (rideA R HIA LB LF m dX sp lo dA).
+  (* [comment removed for export] *)
+  Definition miV1 : Z := grow_PHI (md_n dA + 1).
+  Definition miF1 : Z := calls_FR 2 d.
+  Local Ltac xa_open J := pose proof J as [MI1 ST1 FR1 HH1 HT1 HS1 HF1 HCS1 HV1 HFR1 MX1 AD1 PD1 NS1 OUT1 FRS1 FRA1 HPX1 OX1 XP1 XLS1 NM1]; cbn [app] in HH1.
+
+  (* [comment removed for export] *)
+  Definition KC_stmt (n : Z) : Prop := ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "Pv,$6.Pf,$6.Phc,(7.$1.VR,VHIA,)PLBc,(8.$9.)Pmc,P,(:.&40.)(;.(:.&8.))PdXc,$<.Pxra,(:.&40.)Pxt0,(:.&40.)Pxt1,(:.&40.)Pxt2,(:.&40.)Pxa0,(:.&40.)Pxa2,(:.&40.)Pxa3,(:.&40.)Pxa4,(:.&40.)Pxa5,(:.&40.)Pxa6,(:.&40.)Pxa7,(:.&40.)Pxs3,(:.&40.)Pxs4,(:.&40.)Pxs9,(:.&40.)Pxs10,(:.&40.)Pxt3,(:.&40.)Pxt4,(:.&40.)Pxt5,(:.&40.)Pxt6,(:.&40.)P,(=.$1.VR,VHIA,Vh,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,+60.(>.Vra,Vs0,Vs1,Vs2,Vs3,Vs4,Vs5,Vs6,Vs7,Vs8,Vs9,Vs10,)(?.$9.)R19.R18.R17.R16.R15.R14.)P,(23.VR,VHIA,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,VdA,R18.R17.R16.R15.)P,(12.$24.(25.R16.)$26.)P,(15.(18.O1.+1.)(16.R17.))P,(15.(16.R18.)(17.VnX,(18.O1.+1.)))P,(12.$6.(27.R19.)VsX,)P,(12.$6.(28.(29.R1:.))(28.Vxs0,))P,P,(12.$6.(2:.VdA,)VX,)(12.$6.(2;.(29.R1<.)O1.)(28.Vxs0,))P,(15.R21.$2<.)P,(15.R21.$2=.)(1:.$1.(1;.$1.VR,VHIA,R21.Vmo,)$1<.(1=.(1>.R1=.(1?.&40.(18.(20.&40.Vsp,)-60.))Vgp,Vtp,R1<.R1;.R1:.(1?.&40.VX,)(1?.&40.O1.)R19.(1?.&40.(2:.VdA,))R18.R17.R16.R15.R14.R13.(1?.&40.(18.VX,+:.))R12.R11.(1?.&40.(2>.(2?.VR,)))(1?.&40.(18.(30.(2:.VdA,)+3.)(2>.(2?.VR,))))(1?.&40.(18.(30.(18.VX,+:.)+3.)(2>.(2?.VR,))))Vwb,R10.R?.Vs11,R>.R=.R<.R;.)VF,(1?.&40.+9<938.)Vfc,(21.(:.&40.))R1?.(22.$1.)))")
+(* [comment removed for export] *).
+
+  (* [comment removed for export] *)
+  Local Ltac2 Set LiaOrc.tbl := fun () => "04L0@C17025492443.261C17025492443.262C17025492443.263C53526081063.264C53526081063.265C53526081063.266D17975678776.267D21361708665.201D22466435734.267D24976250634.223D24976250634.296D27965255826.291D34348047352.199D34348047352.201D34352354649.285D34352354649.287D34352354649.292D37969448224.286D37969448224.293D50797141399.223D50797141399.224D50797141399.296D52014138856.223D52014138856.224D52014138856.296D59228252318.296D60109446735.267D62155808737.224D62155808737.296D7340709316.267 D8414535367.291 D939044794.267  K1329197271.264 K1329197271.265 K1329197271.266 K2612272047.263 K2612272047.267 K32761642720.263K32761642720.267K38856059124.297K61206821897.224K61206821897.296K61206821897.297K6379668000.261 K6379668000.262 K6379668000.263 K7412424035.267 L10947173192.14 L12755534717.10 L12755534717.9  L1342025005.3   L14748712526.18 L14751320984.1  L14760987928.8  L1511883768.1   L16473205958.6  L16473494895.4  L17585880332.14 L17979450399.5  L19279770932.10 L20558904555.4  L20803911415.2  L2166243551.4   L21847519070.3  L21848002076.18 L21860433226.8  L21860695708.34 L22479292268.1  L2297886500.5   L23075920487.7  L23100341967.212L23100341967.217L23100341967.249L23100341967.282L23615739305.3  L24313534829.3  L24313585860.4  L24313813357.7  L25044269509.2  L25046775673.248L25047280258.237L25511149886.4  L25560626977.4  L2607826517.4   L26950159893.14 L27214106967.5  L27481632834.8  L27481632834.9  L27557763503.2  L27966909654.1  L28655862141.3  L32756788865.4  L32761511569.8  L34412813842.36 L34424803280.3  L35655538624.7  L35655538630.7  L35663928186.7  L36180290948.1  L37969005188.5  L38235734261.1  L38240354370.4  L38868673902.3  L38868673902.5  L39172636981.0  L39436426759.7  L40294887048.3  L40449602357.4  L41112120439.34 L41112120439.36 L41116237108.1  L41389564045.11 L43289142152.4  L43625157983.1  L43631939593.36 L43878034250.5  L45199987735.201L46160487540.217L46160487540.238L46160487540.283L46380960401.4  L46756382136.212L46948640662.36 L47845385650.3  L47847399772.4  L48003016234.1  L48154966246.212L49578233423.217L49578233423.282L49579218529.36 L49807695752.8  L5098421631.4   L51211863758.10 L5259801613.211 L5261871668.3   L53802008887.5  L542086852.34   L547707976.3    L55376868266.7  L57258774030.15 L59308633593.3  L59308762472.4  L59308972243.3  L59321342699.2  L60098763854.3  L60345419574.293L60858800200.1  L61212928741.14 L61562785068.34 L62018535662.1  L63070224179.4  L63070715826.18 L63074667748.10 L63074930482.36 L63408433385.7  L63442736301.15 L6384586821.2   L64600040930.4  L64811930313.11 L64934269637.2  L65708990832.34 L66661851587.4  L67601363691.1  L7400112281.3   L7419031306.34  L7484103457.0   L8414648675.5   L9951453048.12  O17025492443.261O17025492443.262O17025492443.263O22987107037.263O22987107037.267O32329373691.267O37539299629.261O37539299629.262O37539299629.263O41427663046.266O45218884275.263O45218884275.267O53526081063.264O53526081063.265O53526081063.266P1329197271.264 P1329197271.265 P1329197271.266 P38856059124.224P38856059124.297P40437264079.261P40437264079.262P40437264079.263P57246471156.266P6379668000.261 P6379668000.262 P6379668000.263 P7412424035.267 Q12370813529.216Q12370813529.221Q12370813529.258Q12370813529.293Q17205055869.292Q17205141463.220Q17207432298.215Q17207432298.257Q17975678776.267Q22466435734.267Q24974040330.223Q24974040330.296Q26207421841.220Q26207421841.246Q26207721832.221Q26207721832.247Q26207721832.294Q26207967338.218Q26207967338.257Q26207967338.291Q26209519061.293Q26209835253.244Q31651985788.293Q31653536963.257Q31654082872.220Q31654082872.246Q37623358517.220Q37623376543.292Q37625261960.215Q37625261960.257Q38248387216.267Q39212284437.221Q39212284437.247Q39212284437.294Q42081808994.221Q42081808994.294Q42250421143.188Q42250421143.282Q42250505353.247Q42252699699.264Q42252699701.170Q43879899724.267Q43925228937.221Q43925228937.247Q43925228937.294Q52016320488.223Q52016320488.295Q52016320488.296Q5483308162.292 Q5483358760.220 Q5485126037.215 Q5485126037.257 Q5485174314.216 Q5485174314.221 Q5485174314.258 Q5485174314.293 Q6027349519.223 Q6027349519.224 Q6027349519.295 Q6027349519.296 Q60511567613.221Q60511567613.247Q60511567613.294Q60697995187.221Q60697995187.247Q60697995187.294Q6143569392.216 Q6143569392.221 Q6143569392.258 Q6143569392.293 Q62157788641.223Q62157788641.295Q62965564504.222Q62965564504.294Q62965564504.295Q63442345212.291Q68317669980.288Q68317669980.289Q68317669980.290Q68330333437.200Q7891539809.221 Q7891539809.293 Q8880503606.218 Q8880503606.291 Q8882895785.244 Q9538787269.218 Q9538787269.291 Q9540589402.244 00000100200300400500601a02\03n05=06Y07f07g07h07i07j07k07l07m09^0;M0=N0>]0?j0AF0AG0Be0D20EN0EO0EP0G60G70G80G90HU0J10KY0MA0MB0Nl0Pg0RW0RX0RY0RZ0R[0SG0SH0SI0SJ0SZ0S[0S\0S_0T10T20T30TA0TP0TX0TY0Ti0Tj0UA0UB0UX0U\0Uj0V90W70X50Y90ZF0ZP0Z]0Z^0Z_0Zh0\70]P0]^0]l0]m0]n0^>0^?0^@0^F0^J0^K0^L0^`0^n0^o0_J0_e0`:0`>0`?0`C0`N0`O0`P0`Q0`g0`j0`k0a70aC0aD0aE0aT0aU0an0b50c00d80eT0fk0fl0h]0iF0iG0iW0iZ0i[0jY0kf0lM0lN0ld0le0mm0n70nI0nW0na0o:0o;0oF0oG0oR0oS0o]10j10n10o11X11[11\11n11o12A12P12Q12R12]13213;13H13X13]13^14E14F14G14H14I14J14K14L14M14N14O14P14Q14R14S14T14U14V14W14X14Y14Z14[14\16:17X1961:i1:j1:k1:l1:m1<51==1>K1?b1@e1A]1BU1CO1Dc1El1G51HG1I?1JG1K?1LG1MJ1NB1O<1P?1QB1RJ1SM1TG1U?1VG1W?1XB1Y:1Z41[=1\51]=1^@1_A1`M1aj1cR1eB1fj1hG1iS1jK1kS1lV1mb1o720I21L22D23<24624n25f26`27c28l2:62;H2<]2=S2>Y2?Z2@X2Af2Bo2Cg2D_2EY2F\2Gf2I;2JC2KV2Li2NO2NP2NQ2NR2NS2OT2P`2QX2R[2Sc2TY2UZ2V`FFFFFFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB01n3nXc3pXc2xs2X03SPR2An3An02N12P04Fcnt4SLEN4DLENS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc3pXc2xs2An4SLEN4DLENS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n2xs2An2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc3pXc2xs2An4ZLEN2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc3pXc2xs2An4ZLENFFFFFFFS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02lo1b2wb2BB3WB04SLO21n2xs5NEEDR3LOS2X03SPR2An3An02HB5Ha_st5Hl_stS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02lo1b2wb2BB3WB04SLO22xs5NEEDR3LOS2X03SPR2An3An02HB5Ha_st5Hl_stS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02lo1b2wb2BB3WB04SLO21n3nXc3pXc2xs5NEEDR3LOS2X03SPR2An3An02P04ZLEN2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n2xs2An2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xs2An2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc3pXc2xs2An4ZLEN2HB5Ha_st5Hl_stFS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02lo1b2wb2BB3WB01n3nXc3pXc2xs3LOS2An4SLEN4DLENS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xs2An2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc3pXc2xs2An4ZLEN2HB5Ha_st5Hl_stFFS1R3HIA2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02lo1b2wb2BB3WB01n3nXc3pXc2xs2h22An4TOP24SLEN4DLENFFFS2ra2s02s12s22s32s42s52s62s72s82s93s103xs01b2wb2BB3WB01n3nXc3pXc2xs4LEN12An2N14SLEN4DLEN3SEPS2ra2s02s12s22s32s42s52s62s72s82s93s103xs01b2wb2BB3WB01n3nXc3pXc2xs4LEN12An2N14SLEN4DLEN3SEPS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb2BB3WB01n3nXc3pXc2xs3LOS3ALO4LEN12N12PC4SLEN4DLENS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb2BB3WB01n3nXc3pXc2xs3LOS3ALO4LEN12N12PC4SLEN4DLENFS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02lo1b2wb2BB3WB04SLO21n2xs5NEEDR3FSZ3DSX2HB5Ha_st5Hl_st2AnS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02lo1b2wb2BB3WB04SLO21n3nXc2xs5NEEDR3FSZ3DSX4LEN12An2N14ZLEN2HB5Ha_st5Hl_stS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02lo1b2wb2BB3WB04SLO21n3nXc2xs5NEEDR3FSZ3DSX4ZLEN2HB5Ha_st5Hl_stFFFFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s102loFFFS2sp3nXc3SPR3NR1FFS1nS1n3nXc3CNT2An3A47FFS1n3nXc3CNT2AnS2dA1n1v3N1A2BVS1d1f2BFFS3nXc2xs4LEN12N1FS1R2sp2lo4SLO24NRAm3SPRFS1R2sp2lo4SLO23NRM3SPRS2AnS1n3nXc3CNT2AnS2dA1n1v3N1A2BVS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xs2AnS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xs2AnS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3pXc2xs2AnS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc3pXc2xs2An4ZLENS1R3HIA2hcS3nXc3pXc3P47FFS3nXc3NR1S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB01n3nXc3pXc2xs3NR12AnS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB01n3nXc3pXc2xs3NR12An4SLEN4DLENS1n3nXc3CNT2N1S1n3nXc3CNT2N1FFS1R3HIA1h2sp3TOPFFS2nX1nS2spFFS2sp2lo3nXc3pXc4XLScS1R2sp2lo4SLO2FS1R3HIA2sp2lo2h24TOP25HTOP2S1R3HIA2sp2lo2h44TOP45HTOP4S1R3HIA1h2sp2lo3TOP1HS2spFS2loS1d2D01f2BFFFSS1R3nXc3pXc2N12P02PC1HS1XFS2sp3SPA3SPRS2sp3SPA3SPRFFS1n3nXc3CNT3N10FS2sp1n3nXc3CNT3N103SPR2N1S2sp2loS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB02xs2X03X162AnS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB01n3nXc3pXc2xs2X03X162An4SLEN4DLENS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB01n3nXc3pXc2xs2X03X162An4ZLENFS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA2lo1b2wb2BB3WB04SLO21n2xs3N1A5NEEDR3LOS2X03ALO3SPR2An3An03AnCS1R3HIA1h2sp2dA3BUD1n1v3N1A2BV3SPR2h23HV1FS2LB4C24H3LBc2CIS1nFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xs2AnS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc3pXc2xs2An4ZLENS1R3HIA1h2sp1d2D04BUDF1f2BF3SPR2h24HFR1FS1n3nXc3CNT2N12xs4LEN1FS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB02xs2X03X162AnS1X2X03X16S1n3nXc2xs4LEN12GTS2sp1n3N103SPRS1R3HIA2h2S2dA1n3nXc2xs3N1A4LEN12LEFS2An3An02KZFS3pXc2KP2P0FS1R2lo3LOSS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc3pXc2xs2An4ZLENS2spFS1R3HIA1h2sp2dA3BUD1n1v2hc3N1A2BV3SPR3HV1S1RFS1R3HIA2sp2h24TOP2FS1R3HIA2sp2h24TOP2S2dA1n1v3N1A2BVFFS1d2D01f2BFS2lo1n3nXc3CNT2An3FloS3nXc3NR1S2sp2dA1n3N1AS3nXc3pXc2An3SEPS3nXcFS1R3HIA1h2sp1d2D04BUDF1f2hc2BF3SPR4HFR1SFFFFFFFFFFFFFFFFFFFFFFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb2BB3WB01n3nXc2xs2An2N14Fcnt3Flo4SLEN4DLENS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb2BB3WB01n3nXc2xs2An2N14Fcnt3Flo4SLEN4DLENS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb2BB3WB01n3nXc2xs2An2N14Fcnt3Flo4SLEN4DLENS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb2BB3WB04SLO21n3nXc2xs5NEEDR3LOS3ALO2An3AnC2N14Fcnt4SLEN4DLENFFFFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB02xs2X03XAL2AnS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB02xs2X03XAL2AnS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB01n3pXc2xs2X03XAL2AnS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB01n3nXc3pXc2xs2X03XAL2An4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n2xsS2ra2s02s12s22s32s42s52s62s72s82s93s103xs01b2wb2BB3WB01n3nXc2xs2An2N14Fcnt4SLEN4DLENS2ra2s02s12s22s32s42s52s62s72s82s93s103xs01b2wb3WB01n3nXc2xs2An4SLEN4DLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n2xs2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLEN2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4SLEN4DLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4SLEN4DLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n2xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4SLEN4DLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n2xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4SLEN4DLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n2xsS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb3WB01n3nXc2xs4SLEN4DLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4SLEN4DLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB02xs2X02HBS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB01n3nXc2xs2X04ZLEN2HBS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb2BB3WB04SLO22xs5NEEDR3LOS4SP643ALO3ACPS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb2BB3WB04SLO21n3nXc2xs5NEEDR3LOS4SP643ALO3ACP4ZLENS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb2BB3WB04SLO21n3nXc2xs5NEEDR3LOS4SP643ALO3ACP2N14SLEN4DLENS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb2BB3WB04SLO21n3nXc2xs5NEEDR3LOS4SP643ALO3ACP4ZLENS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb2BB3WB04SLO22xs5NEEDR3LOS4SP643ALO3ACPS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb3WB01n3nXc2xs4SLEN4DLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4SLEN4DLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n2xs2HB5Ha_st5Hl_st2AnS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs2An4ZLEN2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLEN2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n2xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n2xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n2xs2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xs2An2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLEN2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs2An4ZLEN2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s103xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s103xs01b2wb3WB01n3nXc2xs4SLEN4DLENS2ra2s02s12s22s32s42s52s62s72s82s93s103xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB02xs2X0S2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB01n3nXc2xs2X04SLEN4DLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB01n3nXc2xs2X04ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n2xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xs2An2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs2An4ZLEN2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB02xs3X162HB5Ha_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB01n3nXc2xs3X164ZLEN2HB5Ha_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB01n3nXc2xs3X164ZLEN2HB5Ha_stS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02lo1b2wb2BB3WB04SLO21n3nXc3pXc2xs5NEEDR3LOS3ALO2PC4ZLENFFFFS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB02xs2X02HBS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb2BB3WB01n3nXc2xs2X04ZLEN2HBS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s101X3xs01b2wb3WB01n3nXc2xs4SLEN4DLENS2ra2s02s12s22s32s42s52s62s72s82s93s103xs01b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s103xs01b2wb3WB01n3nXc2xs4ZLENS2ra2s02s12s22s32s42s52s62s72s82s93s103xs01b2wb3WB01n3nXc2xs4SLEN4DLEN". (* [comment removed for export] *)
+  #[using="IMG ZF CALLOC AMC C24H JC TPV UWX D0 BB WB0 BUD BUDF SLO2"] Lemma mi_G1 : ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "Pn,$6.Pv,$6.Pf,$6.Phc,(7.$1.VR,VHIA,)PLBc,(8.$9.)Pmc,P,(:.&40.)(;.(:.&8.))PdXc,$<.Pxra,(:.&40.)Pxt0,(:.&40.)Pxt1,(:.&40.)Pxt2,(:.&40.)Pxa0,(:.&40.)Pxa2,(:.&40.)Pxa3,(:.&40.)Pxa4,(:.&40.)Pxa5,(:.&40.)Pxa6,(:.&40.)Pxa7,(:.&40.)Pxs3,(:.&40.)Pxs4,(:.&40.)Pxs9,(:.&40.)Pxs10,(:.&40.)Pxt3,(:.&40.)Pxt4,(:.&40.)Pxt5,(:.&40.)Pxt6,(:.&40.)P,(31.R1:.)P,(=.$1.VR,VHIA,Vh,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,+60.(>.Vra,Vs0,Vs1,Vs2,Vs3,Vs4,Vs5,Vs6,Vs7,Vs8,Vs9,Vs10,)(?.$9.)R1:.R19.R18.R17.R16.R15.)P,(23.VR,VHIA,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,VdA,R19.R18.R17.R16.)P,(11.(15.+1.R1=.)(15.R1=.(16.VdA,)))P,(32.(16.R18.)(18.R1>.+1.))P,(15.(18.R1?.+1.)+2710.)P,(12.$6.(27.R1:.)VsX,)P,(12.(8.(:.&40.))(29.R1;.)Vxs0,)P,P,(12.$6.(2:.VdA,)VX,)(12.$6.(2;.Vxs0,R23.)(28.Vxs0,))P,(15.R22.=)P,(15.R22.=)(1:.$1.(1;.$1.VR,VHIA,R22.Vmo,)$1<.(1=.(1>.R1>.(1?.&40.(18.(20.&40.Vsp,)-60.))Vgp,Vtp,R1=.R1<.R1;.(1?.&40.VX,)(1?.&40.R25.)R1:.(1?.&40.(2:.VdA,))R19.R18.R17.R16.R15.R14.(1?.&40.(18.VX,+:.))R13.R12.(1?.&40.(2>.(2?.VR,)))(1?.&40.(18.(30.(2:.VdA,)+3.)(2>.(2?.VR,))))(1?.&40.(18.(30.(18.VX,+:.)+3.)(2>.(2?.VR,))))Vwb,R11.R10.Vs11,R?.R>.R=.R<.)VF,(1?.&40.+9<8:<.)Vfc,(21.(:.&40.))R20.(22.$1.)))")
+(* [comment removed for export] *).
+  Proof.
+    intros until xt6. intros K1 J RA N1A CNT N10 SGX LMX LVA BV BF. jc_open. unfold KC_stmt in K1.
+    dpose (jca_facts asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC) as (LO0 & LOSP & SP64 & ALO' & ACP' & X0 & X16 & XAL & DSX & LEN & NR).
+    cbn [md_addr md_n md_limbs] in X0, X16, XAL, DSX, LEN, NR.
+    basic_factsA hc.
+    pose proof (xa_facts _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as (ND1 & LEN1 & NR1 & SG1' & CX1 & OWN0 & OWN1).
+    xa_open J.
+    destruct dXc as [X' sg nXc pXc xs pad' own]. cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in *. subst X' pad'.
+    pose proof (hm_top asegs R HIA hc LBc LF mc HH1) as HTOP.
+    assert (SCS : crange (hcs asegs R HIA hc) lo (bv_unsigned sp - lo)) by (eapply crange_sub; [exact SCS0| clear - LOS; lia| rewrite HS1; pose proof (hm_top asegs R HIA h LB LF m HH); clear - H TOP; lia]).
+    pose proof (AIh_laws asegs R HIA hc) as LAWS. pose proof (KF_kinv asegs R HIA hc mo) as KINV.
+    pose proof (munch_refl ([] : list ivl) mc) as MU. pose proof (wmono_refl asegs mc) as WM.
+    (* [comment removed for export] *)
+    zstep. zstep. zstep. zstep. zstep.
+    replace (bv_unsigned sp - 96) with (bv_unsigned sp + -96) in ST1, FR1 by (clear; lia).
+    replace (Z_to_bv 64 429840) with (Z_to_bv 64 (arl_calloc R)) by (rewrite CALLOC; reflexivity).
+    eapply aevtA_call.
+    { intros mo1 [HK1 MF1].
+      eapply (heapA_calloc asegs R HIA) with (h := hc) (LB := LBc) (LF := LF) (cnt := n + 1) (sz := 4) (lo := lo) (d := d);
+        rewrite ?(unsigned_lit (bv_unsigned sp + -96)) by qlia; try eassumption; try reflexivity.
+      all: try ((intros _; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ])).   (* [comment removed for export] *)
+      all: try (eapply (uw_obj_uwc asegs R); [exact UWX| rewrite unsigned_lit by (clear - X0 X16; lia); clear - X0 X16; lia]).
+      all: try (rewrite HT1; clear - TOP; lia).
+      all: unfold mul_int_PHI, mul_int_FR, copy_PHI, grow_PHI, calls_FR, fr_charge in *; unfold AMAX, AVOL_CALL in *;
+           clear - CNT N1A N10 NR1 NR NRA LOS SLO SLO2 NEEDR NRM SPA SPR BUD BUDF BV BF HV1 HFR1 D0 LOSP; try lia.
+      all: first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "CALLOC-PRE-LEFT:" g end ]. }
+    (intros ms' mo' dd_H; ddestruct dd_H as (mo1 & [HK1 MF1] & PO)).
+    ddestruct PO as (ms2 & mo2 & E & PO). injection E as E1 E2. subst ms2 mo2.
+    unfold call_postA in PO. destruct_exs PO. destruct PO as [E PO]. subst ms'.
+    rewrite ?(unsigned_lit (bv_unsigned sp + -96)) in PO by qlia.
+    ddestruct PO as (MI2 & ST2 & MF2 & WM2 & HP2 & h2 & HT2 & HS2 & HF2 & HK2 & HCS2 & HV2 & HFR2 & CASES).
+    lazymatch goal with |- aevtS _ _ (mkCfg (MS _ _ (ret_pc (Z_to_bv 64 ?x)) _ _ _ _) _) =>
+      replace (ret_pc (Z_to_bv 64 x)) with (Z_to_bv 64 x) by (symmetry; apply ret_pc_even; [ lia | reflexivity ]) end.
+    lazymatch goal with |- aevtS _ _ (mkCfg (MS _ _ _ _ _ ?mx _) _) => rename mx into m2 end.
+    presA_transport HP2. clear MU WM.
+    apply (aevtA_enter asegs (KF asegs R HIA h2 mo) _ _ mo' (conj HK2 (mo_frame_trans _ _ _ MF1 MF2))).
+    clear LAWS KINV. pose proof (AIh_laws asegs R HIA h2) as LAWS. pose proof (KF_kinv asegs R HIA h2 mo) as KINV.
+    pose proof ST2 as ST2'.
+    assert (HP2' : presA asegs R LBc LF (bv_unsigned sp - 96) (arl_stklo R) (hstkhi asegs R HIA hc) [] mc m2).
+    { eapply presA_weaken; [exact HP2| intros bq Hb; exact Hb| intros bq Hb; exact Hb| clear; lia| clear; lia| clear; lia| intros y Hy; exact Hy]. }
+    clear CSOK SB64 SCS0 SCS HTOP.
+    pose proof (hcs_ok asegs R HIA h2) as CSOK. pose proof (cs_ok_sb _ _ CSOK) as SB64. pose proof (hcs_stack asegs R HIA h2) as SCS0.
+    assert (TOP2 : bv_unsigned sp <= htop asegs R HIA h2) by (rewrite HT2, HT1; exact TOP).
+    destruct CASES as [[Er HH2] | (An & Er & A16 & HFRA & HAS & HH2 & HNEW)]; match type of Er with ?vv = _ => subst vv end.
+    - (* [comment removed for export] *)
+      pose proof (xa_calloc_fail _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ _ J MI2 ST2' HP2' HT2 HS2 HF2 HCS2 HV2 HFR2 HH2) as J2.
+      pose proof (munch_refl ([] : list ivl) m2) as MU. pose proof (wmono_refl asegs m2) as WM.
+      (* [comment removed for export] *)
+      zstep. zstep. zstep.
+      eapply mi_ret; [exact J2| right; reflexivity| |].
+      + unfold mul_int_PHI, copy_PHI, grow_PHI in *; unfold AVOL_CALL in *. clear - BV CNT N1A N10 NRA NR1. lia.
+      + unfold mul_int_FR, calls_FR, fr_charge in *. clear - BF D0. lia.
+    - (* [comment removed for export] *)
+      replace ((n + 1) * 4) with (4 * (n + 1)) in HFRA, HAS, HH2, HNEW, HV2 by (clear; lia).
+      destruct (xa_calloc_ok _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ _ An (n + 1) J MI2 ST2' HP2' HT2 HS2 HF2 HCS2 HV2 HFR2 HH2 A16 HFRA HNEW
+                  ltac:(cbn [md_n]; clear - CNT N10; lia)) as [J2 F2].
+      pose proof (rideA_transport R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC dA _ _ _ _ _ _ _ _ _ _ J RA HP2' MI2 HCS2 HH2 ltac:(intros b' Hb; right; exact Hb)) as RA2.
+      dpose HFRA as (An0 & AnC & AnD & HAP).
+      clear J RA. try clear MI1; try clear ST1; try clear STc; try clear FR1; try clear HH1; try clear HT1; try clear HS1; try clear HF1; try clear HCS1; try clear HV1; try clear HFR1; try clear MX1; try clear AD1; try clear PD1; try clear NS1; try clear OUT1; try clear FRS1; try clear FRA1; try clear HPX1; try clear OX1; try clear XP1; try clear XLS1; try clear NM1; try clear CX1; try clear OWN0; try clear OWN1;
+      xa_open J2.
+      pose proof (xa_facts _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J2) as (_ & _ & _ & _ & CX2 & OWN0 & OWN1).
+      cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in *. unfold mpi_cells in CX2.
+      pose proof (hm_top asegs R HIA h2 _ LF m2 HH1) as HTOP2.
+      assert (SCS : crange (hcs asegs R HIA h2) lo (bv_unsigned sp - lo)) by (eapply crange_sub; [exact SCS0| clear - LOS; lia| clear - TOP2 HTOP2; lia]).
+      pose proof (munch_refl ([] : list ivl) m2) as MU. pose proof (wmono_refl asegs m2) as WM.
+      (* [comment removed for export] *)
+      zstep. zstep.
+      zstep. if_cases KZ; zify_cond KZ; [exfalso; rewrite ?unsigned_lit in KZ by (pose proof (alloc_ceiling_val R); clear - An0 AnC H; lia); clear - KZ An0; lia|]. clear KZ.
+      (* [comment removed for export] *)
+      zstep. zstep. zstep. zstep. zstep. zstep.
+      (* [comment removed for export] *)
+      zstep. if_cases KP; zify_cond KP.
+      + (* [comment removed for export] *)
+        assert (EO : own = LNull).
+        { destruct own; [reflexivity| | exfalso; exact (NS1 eq_refl)]. exfalso.
+          ddestruct (OWN1 ltac:(discriminate)) as (_ & N1 & _ & _ & _ & P0 & PC & _).
+          rewrite Z.mod_small in KP by (pose proof (alloc_ceiling_val R); clear - P0 PC H N1; lia). clear - KP P0; lia. }
+        subst own. ddestruct (OWN0 eq_refl) as (EP & EN & EL). clear OWN1 KP.
+        pose proof (xga_null _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ J2 F2 eq_refl) as D2.
+        pose proof (xda_cwX _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ D2) as CW5. cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in CW5. rewrite <- HT1 in CW5.
+        clear MU WM. pose proof (munch_refl [(X, X + 16)] m2) as MU. pose proof (wmono_refl asegs m2) as WM.
+        (* [comment removed for export] *)
+        shadow_chk OX1 (X + 10) 2.
+        (* [comment removed for export] *)
+        zstep. zstep. zstep. zstep.
+        lazymatch goal with |- aevtA _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m5 end.
+        pose proof (xda_finish _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ _ D2 MU WM MI1 CX2 HH1 OX1) as J5.
+        cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in J5.
+        pose proof (rideA_finish R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC dA _ _ _ _ _ _ _ _ _ _ D2 RA2 MU WM) as RA5.
+        cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in RA5.
+        eapply K1; [exact J5| exact RA5| reflexivity| cbn [md_n]; clear; lia| cbn [md_n]; clear; lia| cbn [md_sg]; exact SGX| cbn [md_limbs]; rewrite limbs_val_repeat0, <- LMX, EL; reflexivity| cbn [md_limbs]; intros EAX; rewrite lval_zeros, <- LMX, EL; reflexivity| |].
+        * unfold miV1, grow_PHI in *; unfold AVOL_CALL in *. clear - BV CNT N1A. lia.
+        * unfold miF1, calls_FR, fr_charge in *. clear - BF D0. lia.
+      + (* [comment removed for export] *)
+        assert (EO : own = LHeap).
+        { destruct own; [| reflexivity| exfalso; exact (NS1 eq_refl)]. exfalso. apply KP. rewrite (proj1 (OWN0 eq_refl)). reflexivity. }
+        subst own. ddestruct (OWN1 ltac:(discriminate)) as (_ & N1 & XIN & XPAL & XARR & P0 & PC & PI & OP & P47). clear OWN0 OWN1 KP.
+        pose proof (XLS1 ltac:(discriminate)) as XLSc. pose proof (XP1 eq_refl) as XPc.
+        pose proof F2 as [Ffr Ffr0 Fal Fnew Fnewc Fap Farr Flen Fcnt FXS Flo]. cbn [md_n] in Fcnt.
+        destruct (xga_memcpy_pre _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ J2 F2 eq_refl)
+          as (SBY & SLEN & DST & DLEN & SEP & _ & _ & _ & _ & OA & OP' & _ & A47 & INA & INP).
+        cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in SBY, SLEN, DST, DLEN, SEP, OA, OP', A47, INA, INP.
+        rewrite firstn_length in DST, DLEN. rewrite repeat_length in DST, DLEN.
+        replace (Init.Nat.min (Z.to_nat nXc) (Z.to_nat (n + 1))) with (Z.to_nat nXc) in DST, DLEN by (clear - CNT N1; lia).
+        (* [comment removed for export] *)
+        shadow_chk OX1 (X + 10) 2.
+        zstep.
+        replace (zx16 (Z_to_bv 64 nXc)) with (Z_to_bv 64 nXc)
+          by (unfold zx16; rewrite !unsigned_lit by (clear - NR1; lia); rewrite Z.mod_small by (clear - NR1; lia); reflexivity).
+        zstep. rewrite !Z.shiftl_mul_pow2 by (clear; lia). change (2 ^ 2) with 4. zstep. zstep. zstep.
+        pose proof (artA_amemcpy asegs R HIA A_ASAN_MEMCPY_MI) as SPC. unfold A_ASAN_MEMCPY_MI in SPC.
+        apply (u8arr_of_rw_cells asegs) in DST.
+        (* [comment removed for export] *)
+        clear MU WM. pose proof (munch_refl [(An, An + 4 * nXc); (lo, bv_unsigned sp + -96)] m2) as MU. pose proof (wmono_refl asegs m2) as WM.
+        acallxA_sp (bv_unsigned sp + -96)
+          (eapply SPC with (h := h2) (LB := (An, 4 * (n + 1)) :: LBc) (LF := LF) (DST := An) (SRC := pXc) (n := 4 * nXc) (lo := lo)
+                            (ss := u32s xs);
+           rewrite ?(unsigned_lit (bv_unsigned sp + -96)) by qlia;
+           try eassumption; try reflexivity;
+           first [ left; rewrite AMC; reflexivity
+                 | rewrite u32s_length, firstn_length, repeat_length; clear - N1 CNT; lia
+                 | rewrite u32s_length; clear - LEN1 N1; lia
+                 | eapply aobj_sub; [exact OA| clear; lia| clear - CNT N1; lia]
+                 | right; clear - SEP; lia
+                 | left; clear - Flo CNT N1 SLO2 NEEDR; lia
+                 | clear - XLSc SLO2 NEEDR; lia
+                 | right; clear - A47 CNT N1; lia
+                 | right; clear - P47; lia
+                 | eapply crange_sub; [exact SCS| clear; lia| clear - SLO2 NEEDR; lia]
+                 | eapply client_wrange_block; [apply in_or_app; left; left; reflexivity| clear; lia| clear - CNT N1; lia]
+                 | f_equal; clear; lia
+                 | clear - NR1 N1 CNT LOS SLO SLO2 NEEDR NRAm TOP2 SPA SPR; lia
+                 | first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "MEMCPY-PRE-LEFT:" g end ] ]).
+        clear SPC.
+        all: match goal with |- aevtA _ _ _ _ => idtac | |- ?g => idtac "AFTER-MEMCPY-SIDE:" g end.
+        lazymatch goal with |- aevtA _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m3 end.
+        match goal with H : u8arr asegs m3 An (u32s xs) |- _ => rename H into HPA end.
+        match goal with H : stk asegs m3 lo _ |- _ => rename H into ST3 end.
+        match goal with H : HM asegs R HIA h2 _ LF m3 |- _ => rename H into HH3 end.
+        match goal with H : mem_inv asegs m3 |- _ => rename H into MI3 end.
+        match goal with H : aobj asegs AL (hcs asegs R HIA h2) m3 X 16 |- _ => rename H into OX3 end.
+        pose proof ST3 as ST3'.
+        apply (rw_cells_of_u8arr asegs) in HPA. rewrite u32s_length in HPA.
+        replace (4 * length xs)%nat with (Z.to_nat (4 * nXc)) in HPA by (clear - LEN1 N1; lia).
+        destruct (xga_memcpy_post _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ m3 J2 F2 eq_refl MU WM MI3 ST3' HPA HH3 OX3) as [J3 F3].
+        cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in J3, F3.
+        assert (WC3 : w_client (hcs asegs R HIA h2) [(An, An + 4 * nXc); (lo, bv_unsigned sp + -96)]).
+        { unfold w_client; apply Forall_cons; [cbn [fst snd]; eapply crange_sub; [eapply aobj_crange; exact OA| clear; lia| clear - CNT N1; lia]|].
+          apply Forall_cons; [cbn [fst snd]; eapply crange_sub; [exact SCS| clear; lia| clear - SLO2 NEEDR; lia]| apply Forall_nil]. }
+        pose proof (rideA_fresh_munch R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC dA _ _ _ _ _ _ _ _ _ (4 * nXc) m3 (bv_unsigned sp + -96) J2 F2 RA2 ltac:(clear - CNT N1; lia) ltac:(clear; lia) MU WM WC3) as RA3.
+        clear J2 F2 RA2 WC3 OA OP' SBY SLEN DLEN INA INP.
+        try clear MI1; try clear ST1; try clear FR1; try clear HH1; try clear HT1; try clear HS1; try clear HF1; try clear HCS1; try clear HV1; try clear HFR1; try clear MX1; try clear AD1; try clear PD1; try clear NS1; try clear OUT1; try clear FRS1; try clear FRA1; try clear HPX1; try clear OX1; try clear XP1; try clear XLS1; try clear NM1. xa_open J3. cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in *.
+        try clear CX2. pose proof (xa_facts _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J3) as (_ & _ & _ & _ & CX3 & _ & _).
+        cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in CX3. unfold mpi_cells in CX3.
+        (* [comment removed for export] *)
+        clear MU WM. pose proof (munch_refl ([] : list ivl) m3) as MU. pose proof (wmono_refl asegs m3) as WM.
+        zstep. zstep. zstep.
+        replace (zx16 (Z_to_bv 64 nXc)) with (Z_to_bv 64 nXc)
+          by (unfold zx16; rewrite !unsigned_lit by (clear - NR1; lia); rewrite Z.mod_small by (clear - NR1; lia); reflexivity).
+        zstep. zstep. rewrite !Z.shiftl_mul_pow2 by (clear; lia). change (2 ^ 2) with 4. zstep. clear MU WM.
+        destruct (xga_zfree_pre _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ J3 F3 eq_refl) as (ZIN & ZCH & ZLEN & ZB & ZN1).
+        cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in ZIN, ZCH, ZLEN, ZB.
+        pose proof ZF as SPZ. unfold zeroize_and_free_stmtA, A_ZEROIZE_AND_FREE in SPZ.
+        eapply aevtA_call.
+        { intros mo3 [HK3 MF3].
+          eapply SPZ with (h := h2) (LB := (An, 4 * (n + 1)) :: LBc) (LF := LF) (buf := pXc) (len := 4 * nXc) (lo := lo) (d := d) (junk := u32s xs);
+            rewrite ?(unsigned_lit (bv_unsigned sp + -96)) by qlia; try eassumption; try reflexivity.
+          all: try (right; split; [exact ZIN | rewrite <- ZLEN; exact ZCH]).
+          all: try (eapply (uw_obj_uwc asegs R); [exact UWX| rewrite unsigned_lit by (clear - X0 X16; lia); clear - X0 X16; lia]).
+          all: try (f_equal; clear; lia).
+          all: unfold mul_int_PHI, mul_int_FR, copy_PHI, grow_PHI, calls_FR, fr_charge in *; unfold AMAX, AVOL_CALL in *;
+               clear - CNT N1A N10 NR1 NR NRA N1 LOS SLO SLO2 NEEDR NRM SPA SPR BUD BUDF BV BF HV1 HFR1 D0 LOSP TOP2; try lia.
+          all: first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "ZF-PRE-LEFT:" g end ]. }
+        clear SPZ.
+        (intros ms' mo4' dd_H; ddestruct dd_H as (mo3 & [HK3 MF3] & PO)).
+        destruct_exs PO. destruct PO as [E PO]. injection E as E1 E2. subst ms' mo4'.
+        rewrite ?(unsigned_lit (bv_unsigned sp + -96)) in PO by qlia.
+        ddestruct PO as (MI4 & ST4 & MF4 & HP4 & HT4 & HS4 & HF4 & HK4 & HCS4 & HV4 & HFR4 & HH4).
+        lazymatch goal with |- aevtS _ _ (mkCfg (MS _ _ (ret_pc (Z_to_bv 64 ?rr)) _ _ _ _) _) =>
+          replace (ret_pc (Z_to_bv 64 rr)) with (Z_to_bv 64 rr) by (symmetry; apply ret_pc_even; [ lia | reflexivity ]) end.
+        lazymatch goal with |- aevtS _ _ (mkCfg (MS _ _ _ _ _ ?mx _) _) => rename mx into m4 end.
+        match type of HH4 with HM _ _ _ ?hh _ _ _ => rename hh into h4 end.
+        presA_transport HP4.
+        pose proof ST4 as ST4'.
+        assert (HP4' : presA asegs R (lb_remove pXc ((An, 4 * (n + 1)) :: LBc)) LF (bv_unsigned sp - 96) (arl_stklo R) (hstkhi asegs R HIA h2)
+                         [(pXc, pXc + 4 * nXc)] m3 m4).
+        { eapply presA_weaken; [exact HP4| intros bq Hb; exact Hb| intros bq Hb; exact Hb| clear; lia| clear; lia| clear; lia| intros y Hy; exact Hy]. }
+        pose proof (xga_zfree_post _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ _ _ m4 h4 J3 F3 eq_refl MI4 ST4' HP4' HT4 HS4 HF4 HCS4 HV4 HFR4 HH4) as D4.
+        pose proof (rideA_zfree R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC dA _ _ _ _ _ _ _ _ _ m4 h4 J3 F3 RA3 eq_refl HP4' MI4 HCS4 HH4) as RA4.
+        cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in D4, RA4.
+        assert (HT4h : htop asegs R HIA h4 = htop asegs R HIA h) by (rewrite HT4; exact HT1).
+        apply (aevtA_enter asegs (KF asegs R HIA h4 mo) _ _ _ (conj HK4 (mo_frame_trans _ _ _ MF3 MF4))).
+        clear LAWS KINV. pose proof (AIh_laws asegs R HIA h4) as LAWS. pose proof (KF_kinv asegs R HIA h4 mo) as KINV.
+        clear CSOK SB64 SCS0 SCS HTOP2.
+        pose proof (hcs_ok asegs R HIA h4) as CSOK. pose proof (cs_ok_sb _ _ CSOK) as SB64. pose proof (hcs_stack asegs R HIA h4) as SCS0.
+        assert (TOP4 : bv_unsigned sp <= htop asegs R HIA h4) by (rewrite HT4; exact TOP2).
+        try clear MI1; try clear ST1; try clear FR1; try clear HH1; try clear HT1; try clear HS1; try clear HF1; try clear HCS1; try clear HV1; try clear HFR1; try clear MX1; try clear AD1; try clear PD1; try clear NS1; try clear OUT1; try clear FRS1; try clear FRA1; try clear HPX1; try clear OX1; try clear XP1; try clear XLS1; try clear NM1. clear J3 F3 RA3 HP4 HP4'. try clear ZCH; try clear ZB; try clear XARR; try clear OP; try clear HH2.
+        pose proof D4 as [DMI DST4 DFR DHM DHT DHS DHF DHCS DHV DHFR DCX DSG DSUB DKEEP DGONE DNEW DAPART DARR DLEN4 DCNT DXS DPRES DFRESH DAL DOX DLO DNM].
+        cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in DCX, DOX, DHM. unfold mpi_cells in DCX.
+        pose proof (hm_top asegs R HIA h4 _ LF m4 DHM) as HTOP4.
+        assert (SCS : crange (hcs asegs R HIA h4) lo (bv_unsigned sp - lo)) by (eapply crange_sub; [exact SCS0| clear - LOS; lia| clear - TOP4 HTOP4; lia]).
+        pose proof (xda_cwX _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ D4) as CW5. cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in CW5.
+        rewrite <- HT4h in CW5.
+        pose proof (munch_refl [(X, X + 16)] m4) as MU. pose proof (wmono_refl asegs m4) as WM.
+        (* [comment removed for export] *)
+        zstep.
+        shadow_chk DOX (X + 10) 2.
+        (* [comment removed for export] *)
+        zstep. zstep. zstep. zstep.
+        lazymatch goal with |- aevtA _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m5 end.
+        match goal with H : mem_inv asegs m5 |- _ => rename H into MI5 end.
+        pose proof (xda_finish _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ _ D4 MU WM MI5 DCX DHM DOX) as J5.
+        cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in J5.
+        pose proof (rideA_finish R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC dA _ _ _ _ _ _ _ _ _ _ D4 RA4 MU WM) as RA5.
+        cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in RA5.
+        eapply K1; [exact J5| exact RA5| reflexivity| cbn [md_n]; clear; lia| cbn [md_n]; clear; lia| cbn [md_sg]; exact SGX| cbn [md_limbs]; rewrite limbs_val_app_zeros, LMX; reflexivity| cbn [md_limbs]; intros EAX| |].
+        { destruct (Z_le_gt_dec n nXc) as [LE|GT].
+          - rewrite lval_app_lA by (clear - LE N1A LEN1; lia). rewrite LMX. exact (LVA EAX).
+          - rewrite lval_app_zeros_ge by (clear - GT LEN1; lia). rewrite LMX. reflexivity. }
+        * unfold miV1, grow_PHI in *; unfold AVOL_CALL in *. clear - BV CNT N1A. lia.
+        * unfold miF1, calls_FR, fr_charge in *. clear - BF D0. lia.
+    all: first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "MIG1-LEFT:" g end ].
+  Qed.
+  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
+  (* [comment removed for export] *)
+  Local Ltac2 Set LiaOrc.tbl := fun () => "0300@C24112444547.217D19095312002.218D22752211978.221D30202740417.218D30213615715.221D38874475859.221D42633159082.218D42643779336.221D601287770.218  D62012212072.221K11420089551.217K25384422162.218K28284592895.216K41585169438.216K47544724259.220K47544724259.222K52581815936.218L11092957035.11 L11093884473.5  L11093884473.6  L1123023902.1   L11416546478.3  L1286294210.5   L14245130797.3  L14249998533.4  L15167829154.4  L15169948178.7  L15180368418.3  L15620048294.3  L17043453226.3  L17803185913.5  L17809411522.9  L17813258712.7  L17813606089.8  L17815712639.11 L17815810169.6  L20608676305.4  L21273698895.4  L21286247631.5  L21286346697.10 L21288444543.7  L23100341967.195L23560010593.8  L23561906969.8  L23643762344.4  L2427053155.2   L25399627235.15 L25721347477.8  L25735831525.8  L25881510713.2  L2625810293.3   L266194243.2    L27300803429.3  L28270437390.4  L29534616704.4  L2975768925.2   L29763661393.2  L3481485179.12  L3482279739.6   L3482279739.7   L3482279739.8   L35065298922.8  L35069606260.5  L35663928186.7  L36145034931.8  L36147066499.10 L36147132693.8  L36147476882.8  L36149152565.14 L36149250099.8  L36180290948.1  L37229151930.3  L38235734261.1  L38330469153.0  L39363785272.11 L39363785272.9  L39364434794.16 L39550497581.3  L39569505368.7  L41112052343.4  L41114152401.6  L41114214983.6  L41114660182.5  L41116278007.4  L41128898453.2  L41580512891.2  L42633816569.1  L43631404864.4  L43878034250.5  L46160487540.195L4735037479.2   L4735039273.4   L47444575930.2  L47532522306.4  L47534962651.4  L47578582176.8  L47784804765.4  L47795356077.6  L47797436189.4  L49857938563.3  L51284464315.195L52592168972.2  L5259801613.192 L54434634207.8  L54473544495.13 L57702397653.3  L58609956177.2  L58720988025.3  L59310763475.5  L59314923118.9  L60098763854.3  L60283674290.9  L60445729592.5  L60447858056.4  L61263298563.1  L61429820693.1  L62228711352.6  L66151427842.16 L66151427842.17 L67532178618.3  L9285596192.5   L9287758864.7   L9289747104.5   L9289845158.11  O22331808284.219O24112444547.217O24729331311.220O24729331311.222O27573497883.216O31435371494.218O35105909750.218O54539614568.216P11420089551.217P14260335836.219P41585169438.216P47544724259.220P47544724259.222P52581815936.218Q10045260807.201Q12370813529.200Q17207350632.201Q1738401673.226 Q18347242623.223Q21831343660.202Q22752211978.224Q22752211978.225Q22752211978.226Q26207421841.201Q26207721832.202Q26207967338.199Q30213615715.224Q30213615715.225Q30213615715.226Q31222125165.225Q31222125165.226Q31654082872.201Q37625261960.199Q38874475859.224Q38874475859.225Q38874475859.226Q39212284437.202Q40278613695.200Q42252534531.204Q42643779336.224Q42643779336.225Q42643779336.226Q43925228937.202Q45875552310.224Q45875552310.225Q45875552310.226Q47588311916.222Q47588311916.223Q5485126037.199 Q5485174314.200 Q5485600919.201 Q59703481013.200Q60511567613.202Q60697995187.202Q61263535092.201Q61264001456.202Q6143569392.200 Q61465870571.200Q66375044744.202Q67329605699.201Q8222473558.202 Q8880503606.199 Q9285269895.224 Q9285269895.225 Q9285269895.226 Q9538787269.199 Q9827600259.222 Q9827600259.223 00000102:02;03T04a04b06;07F09N0:[0:\0<E0=c0=d0=e0=f0=g0=h0=i0=j0=n0=o0>@0>A0>M0>N0>O0>Z0>e0?00?10?20?30?40?50?60?90?:0?;0?<0?=0@H0@f0@g0A40A;0A<0A[0A\0A]0Af0Al0Ao0B00B>0BE0BL0BM0BN0BO0BP0B^0Bn0CC0CD0CE0CF0CG0CH0CI0CM0CV0CZ0C[0C\0C]0C^0Cg0DA0DB0DC0DD0DP0DQ0DR0DS0DX0De0Dl0FA0FH0FU0F[0F\0F]0Fo0G00G10G20G<0HG0HH0I]0J<0Je0Jn0K50K?0KQ0Kn0L80LW0Li0Lj0Ln0M20MF0Mb0Mc0Mm0Mn0Mo0N00N10N20N30N40N50N60N70N80N90N:0N;0N<0N=0N>0N?0O>0PS0QT0QU0QV0QW0QX0QY0QZ0R[0S\0T]0Ub0Vg0Wl0Wm0Wn0Xo0Z00Z10Z20Z30[40[50\^0]a0^d0_g0`h0`i0`j0`k0`l0`m0an0bo0d00d10e00f70g60h50i60i70j60k50lV0mW0mX0mY0mZ0nY0nZ0n[FS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA2lo1b2wb2BB3WB04SLO21n1N3pXc2xs3HNX5NEEDR3LOS2X03SPR2P02pe2ys3EP03E0'2B14xs6l4LEN6FS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01n1N3pXc2xs2pe2ys4xs6l4LEN6S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N3pXc2xs2pe2ysFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01n1N3pXc2xs2pe2ys4xs6l4LEN6S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB03pXc2xs2pe2ysS1R3HIA1h2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01n2hc1N3pXc2xs3HNX3TOP2X03SPR3HT12P02pe2ys3EP03E0'2B14xs6l4LEN6S1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB03pXc2xs2pe2ysFS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA2lo1b2wb2BB3WB04SLO21N3pXc2xs5NEEDR3LOS3ALO2PC2ys2B1S1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA2lo1b2wb2BB3WB01N3pXc2xs3LOS3ALO2PC2ys2B1FFFFFFFS2wbFS1n1N2xs3HNX4LEN1FS2dA1N3pXc1KFFS1N2xs4LEN1S1N2xs4LEN1S1N2xs4LEN1FFFFFFS1NFFFFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB03pXc2xs2pe2ysS1R2sp2lo4SLO25NEEDR2pe2ys3ESKFS1X1N3pXc3XPcS1n3HN1FS1R2sp2lo4SLO21N3pXc5NEEDR4XLScFFS1n1N3HNXS1N2N1S1bFS2dA1n3HN13HNAS1N3pXcS1N3NR1FFFFS1R1N3pXc2PC1HS1R1N3pXc2PC3ACVS1R3HIA1h2sp2lo3TOP1HFFFFFFS2spS1n1N3HNXS2loSFFFS1b2sg2xsS1R2sp1X2lo4SLO25NEEDR3DSXFFFS2sp3SPA3SPRFFFS3pXcS1n1N3pXc3HNXS2sp2loS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03pXc2xs2X03X162pe2ysS2dA2HIS1R2dA3ACV2HCS1b2xsFFS2dA2xs2VX3NN13NN2FFFS2c62CB2NES2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB03pXc2xs2pe2ysFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03pXc2xs2X03X162pe2ysS1R2sp2lo4SLO21N3pXc5NEEDR4XLScS2ra2sp2s02s12s22s32s42s52s62s72s82s93s10S1b2BB2B1S1N3NR1S2dA1n3HNAS2dA1n3HN13HNA3EZ0S1b1N2xs4xs6l2c63LV23FIT2LR1KS1R2lo3LOSS1R2sp2lo4SLO21N3pXc5NEEDR1a2NOS2dA3NRA1n3HN13HNAFS2dAS2spS1R2sp2lo4SLO25NEEDRS3pXc2r04XPAL1q1r1H2H02q02H4FS1b2BB3BNZFFFFFFFFFFFFFFFFFFS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB02xs2ysS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03pXc2xs2X03XAL2pe2ysS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2ysFFFFFFS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N3pXc2xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N3pXc2xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N3pXc2xs2ysFFS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2ysFFFS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2ysFS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA2lo1b2wb2BB3WB04SLO22xs5NEEDR3LOS4SP643ALO3ACV2ys2B1S2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB03pXc2xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB03pXc2xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB03pXc2xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2ysFFFFFS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2ysFS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB02xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB02xs2X02ysS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB02xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB02xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2ysFS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB02xs2ysS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB02xs2ysS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03pXc2xs2X03SPR2P02pe2ys3E0'4EAL'S2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2ysFFFS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB02xs2ysFF". (* [comment removed for export] *)
+  #[using="IMG JC BB WB1 WB0 NRA SLO2"] Lemma mi_MLA : ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "Pn,$6.Pv,$6.Pf,$6.Phc,(7.$1.VR,VHIA,)PLBc,(8.$9.)Pmc,P,(:.&40.)(;.(:.&8.))PdXc,$<.Pxra,(:.&40.)Pxt0,(:.&40.)Pxt1,(:.&40.)Pxt2,(:.&40.)Pxa0,(:.&40.)Pxa1,(:.&40.)Pxa2,(:.&40.)Pxa3,(:.&40.)Pxa4,(:.&40.)Pxa5,(:.&40.)Pxa6,(:.&40.)Pxa7,(:.&40.)Pxs4,(:.&40.)Pxs9,(:.&40.)Pxs10,(:.&40.)Pxt3,(:.&40.)Pxt4,(:.&40.)Pxt5,(:.&40.)Pxt6,(:.&40.)P,(=.$1.VR,VHIA,Vh,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,+60.(>.Vra,Vs0,Vs1,Vs2,Vs3,Vs4,Vs5,Vs6,Vs7,Vs8,Vs9,Vs10,)(?.$9.)R19.R18.R17.R16.R15.R14.)P,(23.VR,VHIA,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,VdA,R18.R17.R16.R15.)P,(12.$24.(25.R16.)$26.)P,(15.+1.R1=.)P,(15.(18.R1>.+1.)(16.R18.))P,(15.R1?.(16.VdA,))P,(15.(16.R1:.)(17.VnX,(18.(16.VdA,)+1.)))P,(33.(12.$6.Vb,=))P,(12.$6.(13.R1<.)(13.VdA,))P,(12.$6.(2;.(29.VdA,)R23.)(28.(29.VdA,)))P,P,(12.$6.(2:.VdA,)VX,)(12.$6.(2;.(29.R1?.)R25.)(28.(29.R1?.)))P,(15.R24.(4.(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)VdA,))P,(15.R24.(5.Vd,))(1:.$1.(1;.$1.VR,VHIA,R24.Vmo,)$1<.(1=.(1>.R20.(1?.&40.(18.(20.&40.Vsp,)-60.))Vgp,Vtp,R1?.R1>.R1=.(1?.&40.VX,)(1?.&40.R27.)R1<.R1;.R1:.R19.R18.R17.R16.R15.(1?.&40.(18.VX,+:.))(1?.&40.(2:.VdA,))R14.(1?.&40.(2>.(2?.VR,)))(1?.&40.(18.(30.(2:.VdA,)+3.)(2>.(2?.VR,))))(1?.&40.(18.(30.(18.VX,+:.)+3.)(2>.(2?.VR,))))Vwb,R13.R12.Vs11,R11.R10.R?.R>.)VF,(1?.&40.+9<948.)Vfc,(21.(:.&40.))R22.(22.$1.)))")
+(* [comment removed for export] *).
+  Proof.
+    intros until xt6; intros J0 RA EO HN1 HNX HNA NMAX BNZ VX VN VA BV BF.
+    jc_open; dpose (jca_facts asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC) as (LO0 & LOSP & SP64 & ALO' & ACP' & X0 & X16 & XAL & DSX & LEN & NR);
+      cbn [md_addr md_n md_limbs] in X0, X16, XAL, DSX, LEN, NR.
+    basic_factsA hc.
+    pose proof (xa_facts _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J0) as (ND1 & LEN1 & NR1 & SG1' & CX1 & OWN0 & OWN1).
+    destruct dXc as [X' sg N pXc xs pad' own]. pose proof J0 as JX; xa_open JX. cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in *. subst X' pad' own.
+    ddestruct (OWN1 ltac:(discriminate)) as (_ & N1 & XIN & XPAL & XARR & P0 & PC & PI & OP & P47). clear OWN0 OWN1.
+    pose proof (XLS1 ltac:(discriminate)) as XLSc; pose proof (XP1 eq_refl) as XPc. unfold mpi_cells in CX1.
+    pose proof (alloc_ceiling_val R) as ACV.
+    (* [comment removed for export] *)
+    assert (EF : exists pe ys se ne pde, bytes_at asegs mc pe (u32s ys) /\ n <= Z.of_nat (length ys)
+                 /\ ((pe = pXc /\ ys = xs) \/ pe + 4 * Z.of_nat (length ys) <= pXc \/ pXc + 4 * Z.of_nat (length xs) <= pe)
+                 /\ pe mod 4 = 0 /\ 0 < pe /\ (pe + 4 * Z.of_nat (length ys) <= lo \/ bv_unsigned sp <= pe) /\ pe + 4 * Z.of_nat (length ys) < 2^64
+                 /\ rw_cells asegs mc (md_addr dA) [C8 (Z_to_bv 64 pe); C2 (Z_to_bv 64 se); C2 (Z_to_bv 64 ne); C4 pde]
+                 /\ aobj asegs AL (hcs asegs R HIA hc) mc (md_addr dA) 16 /\ aobj asegs AL (hcs asegs R HIA hc) mc pe (4 * n)
+                 /\ 0 < md_addr dA /\ md_addr dA + 16 <= 2^64 /\ md_addr dA mod 8 = 0 /\ lval ys n = limbs_val xs).
+    { destruct RA as [EAX|[DBJ B]].
+      - dexists pXc, xs, sg, N, padX. rewrite EAX.
+        split; [apply u32arr_ro; exact XARR|]. split; [clear - LEN1 HNX; lia|]. split; [left; split; reflexivity|].
+        split; [clear - XPAL; Z.div_mod_to_equations; lia|]. split; [exact P0|]. split; [rewrite LEN1; exact XLSc|].
+        split; [rewrite LEN1; clear - PC ACV; lia|]. split; [exact CX1|]. split; [exact OX1|].
+        split; [eapply aobj_sub; [exact OP| clear; lia| clear - HNX; lia]|]. split; [exact X0|]. split; [exact X16|]. split; [exact XAL| exact (VA EAX)].
+      - pose proof (bja_facts _ _ _ _ _ _ _ _ _ _ _ _ JC _ DBJ _ _ _ _ B) as (E0 & E16 & EAL & LENE & NRE & ES & OWNE0 & OWNE1).
+        assert (EN : md_own dA <> LNull) by (intros C; destruct (OWNE0 C) as [_ EZ0]; clear - HN1 HNA EZ0; lia).
+        ddestruct (OWNE1 EN) as (_ & EP0 & EPAL & EBY & ESK & BHP & BST).
+        pose proof (opnd_viewA _ _ _ _ _ _ _ (bj_at _ _ _ _ _ _ _ _ _ _ B)) as [(CE & _) SGA]. unfold mpi_cells in CE.
+        dexists (md_p dA), (md_limbs dA), (md_sg dA), (md_n dA), (md_pad dA).
+        split; [exact EBY|]. split; [rewrite LENE; exact HNA|].
+        split; [right; rewrite LENE, LEN1; pose proof (bj_sepL _ _ _ _ _ _ _ _ _ _ B eq_refl EN) as K; cbn [md_p md_n] in K; clear - K; lia|].
+        split; [exact EPAL|]. split; [exact EP0|]. split; [rewrite LENE; exact ESK|].
+        split.
+        { rewrite LENE. destruct (md_own dA) eqn:EOA; [exfalso; exact (EN eq_refl)| |].
+          - destruct (BHP eq_refl) as [_ BINc]. destruct (hm_apart asegs R HIA hc LBc LF mc HH1) as [HBR _]. rewrite Forall_forall in HBR.
+            destruct (HBR _ ltac:(apply in_app_iff; left; exact BINc)) as (_ & _ & HC & _). cbn [fst snd] in HC. clear - HC ACV. lia.
+          - destruct (BST eq_refl) as [BRO|[_ BH]]; [| exact BH].
+            destruct (A_mpi_copy.static_limbs_low (Z_to_bv 64 0) mc _ _ _ EBY LENE ltac:(clear - HN1 HNA; lia) BRO) as [_ HI]. clear - HI. lia. }
+        split; [exact CE|]. split; [exact (bj_aobj _ _ _ _ _ _ _ _ _ _ B)|].
+        split; [eapply aobj_sub; [exact (bj_aobjL _ _ _ _ _ _ _ _ _ _ B EN)| clear; lia| clear - HNA; lia]|]. split; [exact E0|]. split; [exact E16|]. split; [exact EAL|].
+        rewrite VN. unfold mpd_val in VX. cbn [md_sg md_limbs] in VX. pose proof (limbs_val_nonneg xs) as NN1. pose proof (limbs_val_nonneg (md_limbs dA)) as NN2.
+        clear - VX SG1' SGA NN1 NN2. cbn [md_sg] in SG1'. destruct SG1' as [E|E]; destruct SGA as [E'|E']; rewrite E, E' in VX; lia. }
+    ddestruct EF as (pe & ys & se & ne & pde & EBY & LENY & SEPZ & EPAL & EP0 & ESK & E64 & CE & OE & OEL & E0' & E16' & EAL' & LVY).
+    pose proof (hm_top asegs R HIA hc LBc LF mc HH1) as HTOP.
+    assert (SCS : crange (hcs asegs R HIA hc) lo (bv_unsigned sp - lo)) by (eapply crange_sub; [exact SCS0| clear - LOS; lia| rewrite HS1; pose proof (hm_top asegs R HIA h LB LF m HH); clear - H TOP; lia]).
+    pose proof (AIh_laws asegs R HIA hc) as LAWS; pose proof (KF_kinv asegs R HIA hc mo) as KINV.
+    pose proof (hm_abase asegs R HIA hc LBc LF mc HH1) as AB.
+    assert (CWP : client_wrange L (LBc ++ fdata LF) (arl_stklo R) (htop asegs R HIA hc) pXc (4 * N))
+      by (eapply client_wrange_block; [apply in_or_app; left; exact XIN| clear; lia| clear; lia]).
+    replace (bv_unsigned sp - 96) with (bv_unsigned sp + -96) in ST1, FR1 by (clear; lia).
+    pose proof (munch_refl [(pXc, pXc + 4 * N); (bv_unsigned sp + -96 - MPI_CORE_MLA_STACK_A, bv_unsigned sp + -96)] mc) as MU; pose proof (wmono_refl asegs mc) as WM.
+    (* [comment removed for export] *)
+    zstep. zstep. zstep. zstep.
+    (* [comment removed for export] *)
+    shadow_chk OX1 (X + 10) 2.
+    (* [comment removed for export] *)
+    zstep. zstep. zstep.
+    replace (zx16 (Z_to_bv 64 N)) with (Z_to_bv 64 N)
+      by (unfold zx16; rewrite !unsigned_lit by (clear - NR1; lia); rewrite Z.mod_small by (clear - NR1; lia); reflexivity).
+    zstep. zstep. zstep. zstep.
+    assert (B1 : 1 <= b) by (clear - BB BNZ; lia).
+    assert (HB4 : b - 1 = bv_unsigned (Z_to_bv 64 (bv_swrap 32 (bv_unsigned wb + -1))) mod 2 ^ 32).
+    { change (b - 1 = w32 (Z_to_bv 64 (bv_swrap 32 (bv_unsigned wb + -1)))). rewrite Z_to_bv64_swrap32_mod32.
+      replace (bv_unsigned wb + -1) with (bv_unsigned wb - 1) by (clear; lia). rewrite <- Zminus_mod_idemp_l. rewrite WB1. rewrite Z.mod_small; clear - BB B1; lia. }
+    pose proof (A_mpi_core_mla_vspec AL IMG) as SPC. unfold mpi_core_mla_vstmtA, A_MPI_CORE_MLA in SPC.
+    acallxA_sp (bv_unsigned sp + -96)
+      (eapply SPC with (D := pXc) (dl := N) (S := pe) (sl := n) (lo := lo) (ds := xs) (ss := ys) (b := b - 1);
+       rewrite ?(unsigned_lit (bv_unsigned sp + -96)) by qlia;
+       try eassumption; try reflexivity;
+       first [ exact HB4 | clear - NR1 N1; lia
+             | clear - HN1 HNA NRA; lia
+             | clear - LEN1; lia
+             | exact SEPZ
+             | clear - XPAL; Z.div_mod_to_equations; lia
+             | right; exact EP0
+             | rewrite LEN1; clear - PC ACP' P0 N1; pose proof (alloc_ceiling_val R); lia
+             | exact E64
+             | eapply aobj_sub; [exact OP| clear; lia| clear; lia]
+             | replace (Z.min N n) with n by (clear - HNX; lia); exact OEL
+             | unfold MPI_CORE_MLA_STACK_A; clear - SLO2 NEEDR LOS; lia
+             | clear - SPA SPR LOSP; lia
+             | eapply crange_sub; [exact SCS| clear; lia| clear - SLO2 NEEDR; lia]
+             | unfold MPI_CORE_MLA_STACK_A; rewrite LEN1; clear - XLSc SLO2 NEEDR; lia
+             | unfold MPI_CORE_MLA_STACK_A; clear - ESK SLO2 NEEDR; lia
+             | first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "MLA-PRE-LEFT:" g end ] ]).
+    clear SPC.
+    all: match goal with |- aevtA _ _ _ _ => idtac | |- ?g => idtac "AFTER-MLA-SIDE:" g end.
+    lazymatch goal with |- aevtA _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m6 end.
+    match goal with H : mem_inv asegs m6 |- _ => rename H into MI6 end.
+    match goal with H : stk asegs m6 lo (bv_unsigned sp + -96) |- _ => rename H into ST6 end.
+    match goal with H : u32arr asegs m6 pXc ?l, H2 : length ?l = length xs |- _ => rename H into XARR6; rename H2 into LEN6; rename l into xs6l end.
+    match goal with H : lval xs6l N + _ * ?cc = _, H2 : 0 <= ?cc < _ |- _ => rename H into LV2; rename H2 into CB; rename cc into c6 end.
+    (* [comment removed for export] *)
+    assert (VAL6 : limbs_val xs6l = limbs_val xs * b).
+    { rewrite Z.min_r in LV2 by (clear - HNX; lia). rewrite LVY in LV2.
+      unfold lval in LV2 at 2. rewrite firstn_all2 in LV2 by (clear - LEN1; lia).
+      replace (limbs_val xs + limbs_val xs * (b - 1)) with (limbs_val xs * b) in LV2 by (clear; lia).
+      assert (VB : limbs_val xs < 2 ^ (32 * n)) by (rewrite <- LVY; apply lval_range; clear - HN1; lia).
+      pose proof (mul_fits (limbs_val xs) b n N (conj (limbs_val_nonneg xs) VB) BB ltac:(clear - HN1; lia) HNX) as FIT.
+      pose proof (lval_range xs6l N ltac:(clear - N1; lia)) as LR.
+      assert (C0 : c6 = 0).
+      { destruct (Z.eq_dec c6 0) as [E|NE]; [exact E| exfalso].
+        assert (K : 2 ^ (32 * N) * 1 <= 2 ^ (32 * N) * c6) by (apply Z.mul_le_mono_nonneg_l; clear - CB NE; lia). clear - K LV2 FIT LR. lia. }
+      subst c6. rewrite Z.mul_0_r, Z.add_0_r in LV2. unfold lval in LV2. rewrite firstn_all2 in LV2 by (apply Nat2Z.inj_le; rewrite LEN6; clear - LEN1; lia). exact LV2. }
+    (* [comment removed for export] *)
+    pose proof (xa_hm _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ J0) as HH6. cbn [app] in HH6.
+    apply (hm_munch asegs R HIA hc LBc LF [(pXc, pXc + 4 * N); (bv_unsigned sp + -96 - MPI_CORE_MLA_STACK_A, bv_unsigned sp + -96)] mc m6) in HH6;
+      [| exact MU| exact WM| unfold MPI_CORE_MLA_STACK_A; solve_w_writable].
+    pose proof ST6 as ST6'.
+    assert (HW6 : forall a, ~ outside [(pXc, pXc + 4 * N); (bv_unsigned sp + -96 - MPI_CORE_MLA_STACK_A, bv_unsigned sp + -96)] a ->
+                  (LHeap = LHeap /\ pXc <= a < pXc + 4 * N) \/ lo <= a < bv_unsigned sp - 96).
+    { intros a NO. cbn [outside] in NO. unfold MPI_CORE_MLA_STACK_A in NO.
+      assert (D : pXc <= a < pXc + 4 * N \/ lo <= a < bv_unsigned sp - 96) by (clear - NO SLO2 NEEDR; lia).
+      destruct D as [D|D]; [left; split; [reflexivity| exact D]| right; exact D]. }
+    pose proof (xa_limbs _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ m6 _ J0 MU WM MI6 ST6' HH6 HW6
+                  ltac:(cbn; unfold MPI_CORE_MLA_STACK_A; split; [clear - XLSc SLO2 NEEDR; lia| split; [clear; lia| exact I]])
+                  ltac:(cbn; unfold MPI_CORE_MLA_STACK_A; split; [clear - XPc; lia| split; [clear - DSX SLO2 NEEDR; lia| exact I]]) XARR6
+                  ltac:(exact LEN6)) as J6.
+    cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in J6.
+    (* [comment removed for export] *)
+    zstep. zstep.
+    eapply mi_ret; [exact J6| left; split; [reflexivity| split; [| cbn [md_n]; exact NMAX]]| exact BV| exact BF].
+    rewrite <- VX. unfold mpd_val. cbn [md_sg md_limbs]. rewrite VAL6. clear; lia.
+    all: first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "MLA-LEFT:" g end ].
+  Qed.
+  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
+  (* [comment removed for export] *)
+  Definition copy_self_postA (xra xsp xs0 xs1 xs2 xs3 xs4 xs5 xs6 xs7 xs8 xs9 xs10 xs11 : word) (lo0 : Z) (m0 : mem) : machine_state -> Prop := ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "Lms',$34.(35.(:.&40.)Lt0,(:.&40.)(35.(:.&40.)Lt1,(:.&40.)(35.(:.&40.)Lt2,(:.&40.)(35.(:.&40.)La1,(:.&40.)(35.(:.&40.)La2,(:.&40.)(35.(:.&40.)La3,(:.&40.)(35.(:.&40.)La4,(:.&40.)(35.(:.&40.)La5,(:.&40.)(35.(:.&40.)La6,(:.&40.)(35.(:.&40.)La7,(:.&40.)(35.(:.&40.)Lt3,(:.&40.)(35.(:.&40.)Lt4,(:.&40.)(35.(:.&40.)Lt5,(:.&40.)(35.(:.&40.)Lt6,(:.&40.)(35.P,(:.&40.)(;.(:.&8.))Lm',P,(:.&40.)(;.(:.&8.))(11.(12.$34.R10.(1=.(1>.O10.O?.Vgp,Vtp,R?.R>.R=.O>.O=.(1?.&40.=)R<.R;.R:.R9.R8.R7.R6.O<.O;.O:.O9.O8.O7.O6.O5.O4.O3.R5.R4.R3.R2.)VF,(36.O10.)Vfc,(21.(:.&40.))R1.(22.$1.)))(11.(37.(38.(39.$6.$6.)(3:.$6.$6.(3;.(20.&40.O?.)+50.)(20.&40.O?.))(?.(39.$6.$6.)))O1.R1.)(11.(3<.$1.O1.R1.)(11.(3=.$1.R1.)(3>.$1.R1.O2.(20.&40.O?.)))))))))))))))))))))")
+(* [comment removed for export] *).
+
+  Local Ltac2 Set LiaOrc.tbl := fun () => "01F0@L10013191668.105L13679629912.105L13679629912.106L16024124020.105L20817808472.105L20817808472.106L22051162356.105L24693561020.104L29502821080.105L29502821080.106L37623267032.105L39788318758.99 L3991920500.105 L41391506051.105L42606771444.104L44235170136.105L44235170136.106L45988853080.104L45988853080.106L46254298584.105L46254298584.106L48636430708.105L53392477144.105L53392477144.106L54646761460.105L60674471028.105L62842592998.101L65656017752.105L65656017752.106L66683159284.105L7522693171.105 L7522693171.106 L8090362072.105 L8090362072.106 Q11040878936.105Q11047091911.104Q11801279589.107Q11801279589.108Q17057885511.104Q17059930840.105Q19565771207.104Q19567916632.105Q21542576304.105Q21548953391.104Q23077295192.105Q23083408327.104Q23580411907.106Q23580411907.107Q25586850776.105Q25593320519.104Q29094213191.104Q29096229336.105Q31988680623.104Q31990990896.105Q32464959152.105Q32471038255.104Q35115543384.105Q35122046151.104Q37623267032.105Q37629604167.104Q40016974384.105Q40019025327.104Q40550671471.106Q40550671471.107Q41141296344.105Q41143309127.104Q45469487279.104Q45471637296.105Q49698585326.105Q49698585326.106Q52876753840.105Q52878668847.104Q5300226131.104 Q5300226131.105 Q54126458602.105Q64997424432.105Q64999568047.104Q66001486466.107Q66245698095.104Q66252074416.105Q6697503024.105 Q6699665458.103 Q67723680344.105Q67725581146.103Q7198696624.105 Q7204776751.104 00000E00Z00o01D01Y01n02C02X02m03B03c04D04Y04n05C05X05m06B06W06l07A07V07k08@08U08j09?09T09i0:>0:S0:h0;=0;R0;l0<F0<g0=h0>B0>\0?60?P0?b0@40@N0@h0AU0B^0C80CR0Cl0DF0DX0Dj0E<0EN0Eh0FB0F\0G60GH0GZ0H?0ID0I^0J80JJ0J\0K:0KX0Kj0L<0LP0Ld0M80MJ0M\0NI0N[0Nm0O?0OQ0Ok0PE0PW0PiS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb2BB3WB03xra3xsp3lo04SLO0S2ra1b2wb2BB3WB03xra3xsp3lo04SLO0S2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS2ra1b2wb3WB03xra3xspS1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb3WB03xra3xsp2HB5Ha_st5Hl_stS1b2wb3WB03xsp3xs12HB5Ha_st5Hl_st3xs23xs33xs43xs53xs63xs73xs83xs9S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb3WB03xsp3lo0S1b2wb3WB03xsp3lo0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xra3xsp3lo04SLO02HB5Ha_st5Hl_stS1b2wb2BB3WB03xsp3xs13lo04SLO02HB5Ha_st5Hl_st3xs23xs33xs43xs53xs63xs73xs8S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb3WB03xsp3lo0S1b2wb3WB03xsp3lo0S1b2wb3WB03xsp3lo0S1b2wb3WB03xsp3lo0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb3WB03xsp3lo0S1b2wb3WB03xsp3lo0S1b2wb3WB03xra3xsp3lo02HB5Ha_st5Hl_stS1b2wb3WB03xsp3xs13lo02HB5Ha_st5Hl_st3xs23xs33xs43xs53xs63xs73xs83xs9S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb3WB03xsp3lo0S1b2wb3WB03xsp3lo0S1b2wb2BB3WB03xsp3SPR2HB5Ha_stS1b2wb2BB3WB03xsp3SPR2HB5Ha_stS1b2wb3WB03xsp3lo0S1b2wb3WB03xsp3lo0S1b2wb2BB3WB03xsp2HBS1b2wb2BB3WB03xsp2HBS1b2wb2BB3WB03xsp2HBS1b2wb3WB03xsp3lo0S1b2wb3WB03xsp3lo0S1b2wb2BB3WB03xsp3xs93lo04SLO02HB5Ha_st5Hl_stS1b2wb3WB03xsp3lo0S1b2wb3WB03xsp3lo0S1b2wb3WB03xsp3lo0S1b2wb3WB03xsp3lo0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb2BB3WB03xsp3lo04SLO0S1b2wb3WB03xsp3lo0S1b2wb3WB03xsp3lo0". (* [comment removed for export] *)
+  #[using="HIA IMG ra b wb BB WB0"] Lemma A_copy_self : ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "PCS,P,$6.SpPxra,(:.&40.)Pxsp,(:.&40.)Pt0,(:.&40.)Pt1,(:.&40.)Pt2,(:.&40.)Pxs0,(:.&40.)Pxs1,(:.&40.)Pa0,(:.&40.)Pa1,(:.&40.)Pa2,(:.&40.)Pa3,(:.&40.)Pa4,(:.&40.)Pa5,(:.&40.)Pa6,(:.&40.)Pa7,(:.&40.)Pxs2,(:.&40.)Pxs3,(:.&40.)Pxs4,(:.&40.)Pxs5,(:.&40.)Pxs6,(:.&40.)Pxs7,(:.&40.)Pxs8,(:.&40.)Pxs9,(:.&40.)Pxs10,(:.&40.)Pxs11,(:.&40.)Pt3,(:.&40.)Pt4,(:.&40.)Pt5,(:.&40.)Pt6,(:.&40.)Pm0,P,(:.&40.)(;.(:.&8.))Plo0,$6.P,(3=.$1.R2.)P,(3>.$1.R3.R2.(20.&40.R1?.))P,(15.R3.(3;.(20.&40.R20.)+50.))P,(15.=R4.)P,(12.$6.(3?.(20.&40.R22.)+10.)=)P,(40.(2?.VR,)R25.)P,(41.R26.R7.(3;.(20.&40.R24.)R7.))P,(12.$6.(3?.(20.&40.R26.)+2.)=)P,(12.(:.&40.)R20.R1?.)(42.$1.(2?.VR,)R29.(43.R28.R27.R23.R22.R19.R18.R17.R16.R15.R14.R13.R12.R11.R10.R:.R;.)(1=.(1>.R28.R27.Vgp,Vtp,R26.R25.R24.R23.R22.R21.R20.R1?.R1>.R1=.R1<.R1;.R1:.R19.R18.R17.R16.R15.R14.R13.R12.R11.R10.R?.R>.R=.R<.)VF,(1?.&40.$44.)Vfc,(21.(:.&40.))R;.(22.$1.)))")
+(* [comment removed for export] *).
+  Proof.
+    intros until lo0. intros MI0 ST0 SLO0 LO00 SPA0 CSOK SCS RA0 ->. unfold A_MPI_COPY.
+    pose proof (cs_ok_sb _ _ CSOK) as SB64.
+    pose proof (art_alwf asegs R HIA) as ALWF'; unfold al_wf in ALWF'; pose proof IMG as IMG'; unfold asan_img_ok in IMG'.
+    pose proof (bv_unsigned_in_range 64 xsp) as SPR; unfold bv_modulus in SPR; cbn [Z.pow Z.of_N Pos.pow] in SPR.
+    (* [comment removed for export] *)
+    zstep. carve_frame 80%nat ST0.
+    lazymatch goal with |- evtA _ _ _ _ (MS _ _ _ _ _ ?mx _) =>
+      pose proof (munch_refl [(bv_unsigned xsp - 80, bv_unsigned xsp)] mx) as MU; pose proof (wmono_refl asegs mx) as WM end.
+    do 10 zstep.
+    (* [comment removed for export] *)
+    zstep. try (if_cases K; zify_cond K; [| exfalso; apply K; reflexivity]).
+    (* [comment removed for export] *)
+    zstep. do 10 zstep. zstep.
+    release_frame FR ST0 (bv_unsigned xsp).
+    zstep.
+    apply evtA_done. unfold copy_self_postA. deexists 14. eexists. split; [reflexivity|].
+    split; [exact MU|]. split; [exact WM|]. split; [assumption| exact ST0].
+  Qed.
+  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
+  Hypothesis MA0 : mpd_at asegs m LB dA.
+  Hypothesis IA1 : md_addr dA <> X -> md_own dA = LStatic -> AImgGlobals.img_norz (md_p dA) (4 * md_n dA) = true.
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Hypothesis IDA : md_addr dA = X -> dA = dX.
+
+  Local Ltac2 Set LiaOrc.tbl := fun () => "00\0@D24502936414.190D31131462022.190L14714961187.3  L16017091139.5  L17767589936.8  L18895178867.6  L19556266785.0  L21193854616.4  L21361983004.4  L23705426692.4  L26983617546.4  L27214106967.5  L27966909654.1  L28036980531.4  L28704391748.3  L29010569984.237L29428551881.9  L29971584610.3  L33150002250.3  L35663928186.7  L36180290948.1  L38005716811.3  L38235734261.1  L40748655917.3  L40750604739.4  L41114660182.9  L42252534548.5  L43675701464.3  L43878034250.5  L44801100179.4  L5541292479.5   L5545796159.9   L55529081155.6  L57263286428.9  L59308546259.8  L59308632561.1  L59310760315.4  L60098763854.3  L60858800200.1  L64491265552.2  L66151427842.16 L68690341806.10 L7693689550.4   L8288358478.2   00001N02m03703K03g04<04=04H04P04^04j05:05>05K05W05X05c05l06506J06N06W06[06\06l07L07`07j08108?08S08k09@09\0:70:;0:I0:S0:W0:]0;70;T0;a0;iS1R3HIA1h2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs01b2wb2BB3WB01n2hc3dXc3TOP2X03SPR3HT1S1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02lo1b2wb2BB3WB04SLO21n3dXc5NEEDR3LOS2X03SPRS1X2dA3SXBS1R2sp2lo4SLO25NEEDRS2nX2dA1n2HN3dXc4NMAX3dX22CNS2nX2dA1n2HN3dXc4NMAXSS1d2D01f2BFS1d1f2BFS2sp2dA2lo3ESKS2dA2E01a2HaS1R3HIA1h2sp3TOPS2spS2dA3NRA1v2BVS2sp2lo4LOSPFS2sp2lo3LO0S2dA1n2HNS2dA1v2BVS1R3HIA1h2sp2lo3TOP1HS2spS2dA1n2HNS2loFS2LB4C24H3LBc2CIS1R2sp2lo4SLO25NEEDR3SPA3LO03SPRS2sp2lo3LO04LOSP3SPRS1X2dA3SXBS2sp2loS1R2sp2lo4SLO2S1R2sp2lo4SLO25NEEDRS1R2sp2lo4SLO25NEEDR3SPRS2dA1n3dXc3HNX3dX22CNS1R3HIA1h2dA3BUD1v2hc2BV3HV1S2dA1n2HN3dXc3HNX3dX22CN2N0S2KRS1X2dA3SXB3EAXS1R2lo3LOSS2spS1d2D0S2sp2r03SPA1q1r1H2H02q02H4S1R3HIA1h1d4BUDF1f2hc2BF4HFR1S2sp2dA2lo2ESS2dA3NRA". (* [comment removed for export] *)
+  #[using="IMG COPY C24H JC TPV UWX D0 BB WB1 WB0 NRA BUD BUDF SLO2 MA0 IA1 IDA"] Lemma mi_COPY : ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "Pn,$6.P,(11.(15.+1.R1.)(15.R1.(16.VdA,)))P,(33.(12.$6.Vb,=))P,(12.$6.(2;.(29.VdA,)R3.)(28.(29.VdA,)))(31.R4.)")
+(* [comment removed for export] *).
+  Proof.
+    intros n HN BNZ SCAN. unfold KC_stmt. intros until xt6. intros J RA EO HNX NMAX SGc LVc LVn BV BF.
+    jc_open; dpose (jca_facts asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC) as (LO0 & LOSP & SP64 & ALO' & ACP' & X0 & X16 & XAL & DSX & LEN & NR);
+      cbn [md_addr md_n md_limbs] in X0, X16, XAL, DSX, LEN, NR.
+    basic_factsA hc.
+    pose proof (xa_facts _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as (ND1 & LEN1 & NR1 & SG1' & CX1 & OWN0 & OWN1).
+    pose proof J as JX. xa_open JX.
+    pose proof (hm_top asegs R HIA hc LBc LF mc HH1) as HTOP.
+    assert (SCS : crange (hcs asegs R HIA hc) lo (bv_unsigned sp - lo)) by (eapply crange_sub; [exact SCS0| clear - LOS; lia| rewrite HS1; pose proof (hm_top asegs R HIA h LB LF m HH); clear - H TOP; lia]).
+    pose proof (AIh_laws asegs R HIA hc) as LAWS. pose proof (KF_kinv asegs R HIA hc mo) as KINV.
+    pose proof (munch_refl ([] : list ivl) mc) as MU. pose proof (wmono_refl asegs mc) as WM.
+    replace (bv_unsigned sp - 96) with (bv_unsigned sp + -96) in ST1, FR1 by (clear; lia).
+    assert (SPR' : 0 <= bv_unsigned sp + -96 < 2^64) by (clear - SPR LOSP LO0; lia).
+    (* [comment removed for export] *)
+    zstep. zstep. zstep.
+    clear MU WM.
+    destruct RA as [EAX|[DBJ B]].
+    - (* [comment removed for export] *)
+      eapply (aevtA_cut_evtA_KF asegs R HIA hc mo).
+      { eapply (A_copy_self (hcs asegs R HIA hc)) with (lo0 := lo);
+          rewrite ?(unsigned_lit (bv_unsigned sp + -96)) by exact SPR';
+          first [ exact MI1 | exact ST1 | exact CSOK | reflexivity | (rewrite EAX; reflexivity)
+                | eapply crange_sub; [exact SCS| clear; lia| clear - SLO2 NEEDR; lia]
+                | clear - SLO2 NEEDR LOS SPA SPR LO0; lia
+                | first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "CSELF-PRE-LEFT:" g end ] ]. }
+      cbv beta. intros ms' PO. unfold copy_self_postA in PO.
+      ddestruct PO as (y0 & y1 & y2 & ya1 & ya2 & ya3 & ya4 & ya5 & ya6 & ya7 & y3 & y4 & y5 & y6 & m2 & -> & MU2 & WM2 & MI2 & ST2).
+      rewrite ?(unsigned_lit (bv_unsigned sp + -96)) in MU2, ST2 by exact SPR'.
+      replace (ret_pc (Z_to_bv 64 0x9c944)) with (Z_to_bv 64 0x9c944 : word) by (symmetry; apply ret_pc_even; [clear; lia| reflexivity]).
+      pose proof HH1 as HH2.
+      apply (hm_munch asegs R HIA hc LBc LF [(bv_unsigned sp + -96 - 80, bv_unsigned sp + -96)] mc m2) in HH2;
+        [| exact MU2| exact WM2| solve_w_writable].
+      pose proof (xa_scratch _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ m2 J MU2 WM2 MI2 ltac:(replace (bv_unsigned sp - 96) with (bv_unsigned sp + -96) by (clear; lia); exact ST2) HH2
+                    ltac:(clear - SLO2 NEEDR; lia) ltac:(clear; lia)) as J2.
+      assert (EDX : mkMPD (md_addr dXc) (md_sg dXc) (md_n dXc) (md_p dXc) (md_limbs dXc) (md_pad dXc) (md_own dXc) = dXc) by (destruct dXc; reflexivity).
+      rewrite EDX in J2.
+      pose proof (munch_refl ([] : list ivl) m2) as MU. pose proof (wmono_refl asegs m2) as WM.
+      (* [comment removed for export] *)
+      zstep.
+      eapply mi_MLA with (n := n); [exact J2| left; exact EAX| exact EO| clear - HN; lia| exact HNX| clear - HN; lia| | exact BNZ| | exact SCAN| intros _; rewrite (LVn EAX), LVc; reflexivity| |].
+      2:{ rewrite (IDA EAX). unfold mpd_val. cbn [md_sg md_limbs]. rewrite SGc, LVc. reflexivity. }
+      + clear - NMAX HN. lia.
+      + unfold miV1, mul_int_PHI, copy_PHI, grow_PHI in *; unfold AVOL_CALL in *. clear - BV NRA. lia.
+      + unfold miF1, mul_int_FR, calls_FR, fr_charge in *. clear - BF D0. lia.
+    - (* [comment removed for export] *)
+      pose proof (bja_facts _ _ _ _ _ _ _ _ _ _ _ _ JC _ DBJ _ _ _ _ B) as (E0 & E16 & EAL & LENE & NRE & ES & OWNE0 & OWNE1).
+      pose proof DBJ as [MB0 OB CRB CRBL SXB BIMG]. dpose OB as (OB1 & OB2 & OB3 & OB4 & OB5).
+      cbn [md_addr md_own md_p md_n] in SXB, OB1, OB2, OB3, OB4, OB5, AD1.
+      pose proof (opnd_atA_mpd_back _ _ _ _ _ _ _ _ _ MA0 (bj_at _ _ _ _ _ _ _ _ _ _ B)) as MA1.
+      destruct (bja_client _ _ _ _ _ _ _ _ _ _ _ _ JC _ DBJ [] v f hc LBc mc dXc LBc lo J B ltac:(intros bq Hb _; exact Hb) ltac:(clear - LOSP; lia)) as [CRA1 CRAL1].
+      pose proof (xa_cwX _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CWX. rewrite <- HT1 in CWX.
+      pose proof COPY as CP. unfold mpi_copy_stmtA_c, mpi_copy_stmtA_gen_c in CP.
+      eapply aevtA_call.
+      { intros mo1 [HK1 MF1].
+        eapply CP with (h := hc) (LB := LBc) (LF := LF) (dX := dXc) (dY := dA) (lo := lo) (d := d);
+          rewrite ?(unsigned_lit (bv_unsigned sp + -96)) by exact SPR'; rewrite ?AD1;
+          first [ exact HH1 | exact HK1 | exact MX1 | exact NS1 | exact MA1 | exact CRA1 | exact CRAL1 | exact ST1 | exact LOS | exact TPV | exact MI1 | exact OX1 | exact UWX | reflexivity
+                | exact (bj_aobj _ _ _ _ _ _ _ _ _ _ B)
+                | lazymatch goal with
+                  | |- mpd_sep dXc dA => right; rewrite AD1; clear - SXB; lia
+                  | |- copy_sep dXc dA _ _ =>
+                      unfold P_mpi_copy.copy_sep; rewrite ?AD1;
+                      split; [exact OB1|]; split; [exact (bj_sepS _ _ _ _ _ _ _ _ _ _ B)|];
+                      split; [right; destruct (md_own dA) eqn:EOA; [right; left; reflexivity| |];
+                              right; right; apply (bj_sepL _ _ _ _ _ _ _ _ _ _ B EO); first [discriminate| rewrite EOA; discriminate]|];
+                      split; [clear - ES; lia|]; split; [intros AN; ddestruct (OWNE1 AN) as (_ & _ & _ & _ & ESK & _); clear - ESK; lia| intros a Ha; clear - Ha E0; lia]
+                  | |- mpd_writableA _ _ _ _ _ dXc => split; [rewrite AD1; eapply client_wrange_sp_mono; [| exact CWX]; clear; lia| rewrite AD1; exact XP1]
+                  | |- _ <= bv_unsigned sp + -96 - 112 - _ => clear - SLO2; lia
+                  | |- bv_unsigned sp + -96 <= htop _ _ _ _ => rewrite HT1; clear - TOP; lia
+                  | |- (bv_unsigned sp + -96) mod 16 = 0 => clear - SPA; Z.div_mod_to_equations; lia
+                  | |- bv_unsigned (Z_to_bv 64 _) mod 2 = 0 => reflexivity
+                  | |- md_own dA = LStatic -> _ => intros EOA; apply IA1; [clear - SXB; lia| exact EOA]
+                  | |- havol _ _ _ _ + _ <= AVOL_MAX => unfold miV1, mul_int_PHI in *; clear - BV BUD HV1; lia
+                  | |- hfr _ _ _ _ + _ <= FR_MAX => unfold miF1, mul_int_FR, copy_FR, calls_FR, fr_charge in *; clear - BF BUDF HFR1 D0; lia
+                  end
+                | first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "COPY-PRE-LEFT:" g end ] ]. }
+      (intros ms' mo' dd_H; ddestruct dd_H as (mo1 & [HK1 MF1] & PO)). unfold mpi_binop_postA in PO.
+      ddestruct PO as (y0 & y1 & y2 & ya1 & ya2 & ya3 & ya4 & ya5 & ya6 & ya7 & y3 & y4 & y5 & y6 & m2 & mo2 & h2 & LB2 & dX2 & r & E & MI2 & ST2 & MF2 & HP2 & HT2 & HS2 & HF2 & HK2 & HCS2 & HV2 & HFR2 & HH2 & MX2 & OUT2 & FRA2 & CR).
+      injection E as E1 E2. subst ms' mo'.
+      rewrite ?(unsigned_lit (bv_unsigned sp + -96)) in ST2, HP2 by exact SPR'. rewrite AD1 in HP2.
+      replace (ret_pc (Z_to_bv 64 0x9c944)) with (Z_to_bv 64 0x9c944 : word) by (symmetry; apply ret_pc_even; [clear; lia| reflexivity]).
+      pose proof ST2 as ST2'.
+      unfold P_mpi_copy.copy_R in CR. ddestruct CR as (CR1 & CAD & CPD & CFR).
+      assert (BK : binop_keep LBc dXc dX2).
+      { split; [exact CAD|]. split; [exact CPD|]. split; [exact CFR|]. destruct CR1 as [(_ & _ & Bn & _)|(_ & En & _)]; [exact Bn| rewrite En; apply Z.le_refl]. }
+      pose proof (xa_call asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC _ _ _ _ _ _ m2 h2 LB2 dX2 (bv_unsigned sp + -96) (copy_PHI dA) (copy_FR d) J ltac:(clear - SLO2 NEEDR; lia)
+                    ltac:(unfold copy_PHI, grow_PHI; unfold AVOL_CALL; clear - NRA; lia) ltac:(unfold copy_FR, calls_FR, fr_charge; clear - D0; lia)
+                    MI2 ltac:(replace (bv_unsigned sp - 96) with (bv_unsigned sp + -96) by (clear; lia); exact ST2') HP2 HT2 HS2 HF2 HCS2 HV2 HFR2 HH2 MX2 OUT2 BK FRA2) as J1.
+      pose proof (bja_call asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC dA DBJ _ _ _ _ _ _ m2 h2 LB2 dX2 (bv_unsigned sp + -96) J B ltac:(clear - SLO2 NEEDR; lia) MI2 HP2 HCS2 HH2 MX2 OUT2 FRA2) as B1.
+      apply (aevtA_enter asegs (KF asegs R HIA h2 mo) _ _ mo2 (conj HK2 (mo_frame_trans _ _ _ MF1 MF2))).
+      clear LAWS KINV. pose proof (AIh_laws asegs R HIA h2) as LAWS. pose proof (KF_kinv asegs R HIA h2 mo) as KINV.
+      pose proof (munch_refl ([] : list ivl) m2) as MU; pose proof (wmono_refl asegs m2) as WM.
+      (* [comment removed for export] *)
+      zstep. if_cases KR; zify_cond KR.
+      + (* [comment removed for export] *)
+        destruct CR1 as [(-> & _)|(-> & _)]; [exfalso; apply KR; reflexivity|].
+        eapply mi_ret; [exact J1| right; reflexivity| |].
+        * unfold miV1, mul_int_PHI in *. clear - BV. lia.
+        * unfold miF1, mul_int_FR, copy_FR, calls_FR, fr_charge in *. clear - BF D0. lia.
+      + destruct CR1 as [(-> & CV & CN)|(-> & _)]; [| exfalso; clear - KR; unfold MBEDTLS_ERR_MPI_ALLOC_FAILED in KR; vm_compute in KR; lia].
+        assert (EO2 : md_own dX2 = LHeap).
+        { pose proof MX2 as [(_ & _ & _ & _ & _ & OW2) _]. pose proof (xa_nst _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ J1) as NS2.
+          destruct (md_own dX2); [exfalso; destruct OW2 as [_ N0]; clear - N0 CN HNX HN; lia| reflexivity| exfalso; exact (NS2 eq_refl)]. }
+        eapply mi_MLA with (n := n); [exact J1| right; split; [exact DBJ| exact B1]| exact EO2| clear - HN; lia| clear - CN HNX; lia| clear - HN; lia| | exact BNZ| exact CV| exact SCAN| intros EAX; exfalso; clear - EAX SXB; lia| |].
+        * clear - CN NMAX HN. lia.
+        * unfold miV1, mul_int_PHI in *. clear - BV. lia.
+        * unfold miF1, mul_int_FR, copy_FR, calls_FR, fr_charge in *. clear - BF D0. lia.
+    all: first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "COPY-LEFT:" g end ].
+  Qed.
+  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
+  (* [comment removed for export] *)
+  Local Ltac2 Set LiaOrc.tbl := fun () => "02=0@C17025492443.198C24112444547.199C26381392939.198C26381392939.199D24976250634.200D36455618899.197D50797141399.200D52014138856.200D64152481649.197D9827600259.200 K11420089551.199K22413380088.199K25384422162.199K25953536645.198K25953536645.199K28284592895.198K6379668000.198 K68655443531.199L10642801822.2  L11416546478.3  L13023482647.2  L1685717371.0   L21847519070.3  L21860433226.15 L22401653661.3  L23100341967.175L23100341967.187L23190362336.5  L23643762344.4  L24313534829.3  L24575809296.195L25399627235.15 L25939631124.2  L27214106967.5  L28270437390.4  L28457445181.2  L29074096193.189L29074168500.192L29476485921.0  L2968662070.7   L2975768925.2   L29763661393.2  L29765106966.174L32754825233.4  L32761511569.15 L34107323466.3  L35663928186.7  L35794219356.1  L36180290948.1  L37969064749.4  L38235734261.1  L39172636981.0  L41128898453.2  L42633816569.1  L43878034250.5  L44084513735.9  L44604979078.2  L45918878996.1  L46160487540.175L48154963340.189L48155162489.186L48288935062.14 L48349305323.4  L5259801613.172 L54434634207.8  L54811923132.1  L54822575959.15 L58609956177.2  L59308664813.3  L60098763854.3  L60283674290.6  L6384586821.2   L68665096410.2  L8265267294.0   L8328083279.5   O17025492443.198O24112444547.199O27573497883.198O31435371494.199O57399310481.199P11420089551.199P25953536645.198P25953536645.199P6379668000.198 Q10235026062.191Q12370813529.178Q17207350632.179Q17207432298.191Q18701365324.200Q22285631880.197Q22285648010.194Q22288293174.196Q22955808635.197Q24974040330.199Q2544291370.197 Q26207421841.179Q26207721832.180Q26207967338.177Q26295627581.194Q30213615715.200Q31654082872.179Q36453634899.198Q37625261960.177Q38248387216.200Q39212284437.180Q39212284437.197Q42081808994.197Q42252534537.180Q42631062289.194Q42631275027.191Q42643779336.200Q42643792741.194Q43879899724.200Q43925228937.180Q45054200725.194Q4926406185.197 Q52016320488.199Q53153893485.194Q54255983967.196Q54627523118.196Q5485126037.177 Q5485126037.191 Q5485174314.178 Q5485600919.179 Q56761401107.197Q59703481013.178Q6027349519.200 Q60498968964.200Q60511567613.180Q60511567613.197Q60697995187.180Q6143569392.178 Q62868926301.194Q62965564504.198Q63231501142.194Q64154756465.198Q68717453381.194Q8880503606.177 Q8943555749.191 Q9538787269.177 Q9538787269.194 00000100200300401M02W04Q05j07D07E07F08Q0:40:50:60;N0;O0<c0<i0<j0<k0<l0<m0=D0=E0>J0?T0?d0@10@<0AF0AG0AH0AX0AY0A_0C30DG0DH0DU0D\0Dc0F10F20FD0FO0Fd0Fi0Fm0Fn0G20G30G40G90G@0Gb0Gi0Gl0I;0JY0L70Lc0M10N@0N_0N`0Nn0O50O>0OH0OZ0O[0O\0O]0Ol0Om0On0Oo0P00P10P20P30P40P50Q@0RO0SM0TP0UX0V[0W^0Xa0Z00[B0\G0]E0^C0_A0`B0aD0bB0cG0dE0eD0fB0gE0hQ0j40k90l>0m>0nC0oE10C11H12K13]14h15k1761841971:51;31<<1<=1=O1>a1?]1@^1Ab1B`1Ck1E>1FA1GL1HW1IU1JV1KR1LSFFFFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N3pXc2xs2LQ2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N3pXc2xs2LQS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA2lo1b2wb2BB3WB04SLO21N3pXc2xs5NEEDR3LOS2X03SPR2P02LQ2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N3pXc2xs2LQ2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01N3pXc2xs2X03SPR2N12P02LQFFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA2lo1b2wb2BB3WB02xs3DSXS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA2lo1b2wb2BB3WB04SLO21N3pXc2xs5NEEDR3LOS3ALO2PCFFS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA2lo1b2wb2BB3WB01N3pXc2xs3LOS3ALO2PCFS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01N3pXc2xs2N12P03XPc2LQS1N2N1FFSFS1R2sp2lo4SLO24NRAm3SPRFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB03pXc2xsS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N3pXc2xs2LQS1X1N3pXc2N13XPcS1X1N3pXc3XPcS1N3pXc3P47S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N3pXc2xs2LQFFS1R3HIA1h2sp3TOPFS1N2N1S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01N3pXc2xs2X03X162LQS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01N3pXc2xs2X03X162LQSS2sp1X2lo3DSXS1N3pXcS1N3NR1S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01N3pXc2xs3NR1FS2sp2lo1N3pXc4XLScS1N2xs4LEN1S1R3HIA1h2sp2lo3TOP1HS3pXcS2spFS2loSFS3pXcS2sp2loS1R2sp2lo4SLO21N3pXc5NEEDR2N14XLScS2sp2loS1NS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03pXc2xs2X03X16S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01N3pXc2xs2X03SPR2N12P03P472LQS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01N3pXc2xs2X03SPR2N12P03P472LQS2ra2sp2s02s12s22s32s42s52s62s72s82s93s102loS1N2xs4LEN12N1S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03pXc2xs2X03X16S1R2sp2lo4SLO21N3pXc5NEEDR4XLScFS2sp1N3SPR3NR1S1N3NR1S1N2N12ENS1R2lo3LOSS2sp2lo1N3pXc1a2NOFFSS1N3pXc2N11a2NOFFFFFFFFFS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01N3pXc2xs2N12LQS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03pXc2xs2X03XALS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01N3pXc2xs2N1S2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01N3pXc2xs2N13P472LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N2xs2LQ2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N3pXc2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N3pXc2xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N3pXc2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA2lo1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01N2xs2X02LQ2HBS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA2lo1b2wb2BB3WB04SLO22xs5NEEDR3LOS4SP643ALO3ACPS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N3pXc2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N3pXc2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB03pXc2xsS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N3pXc2xs2LQS2ra2sp2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA2lo1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N3pXc2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N2xs2LQ2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01N3pXc2xs2P02LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01N3pXc2xs2P02LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01N2xs2X02LQFS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N2xs2LQ2HB5Ha_st5Hl_stS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA2lo1b2wb2BB3WB04SLO22xs5NEEDRS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB02xs2X0S2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01N3pXc2xs2N12LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01N2xs3X162LQ2HB5Ha_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB01N2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01N3pXc2xs2N12LQS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01N3pXc2xs2N12LQS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N2xs2LQS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01N2xs2LQ". (* [comment removed for export] *)
+  #[using="IMG AMS wb JC BB WB0 SLO2"] Lemma mi_LSET2 : ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "Pv,$6.Pf,$6.Phc,(7.$1.VR,VHIA,)PLBc,(8.$9.)Pmc,P,(:.&40.)(;.(:.&8.))PdXc,$<.Pxra,(:.&40.)Pxt0,(:.&40.)Pxt1,(:.&40.)Pxt2,(:.&40.)Pxa0,(:.&40.)Pxa1,(:.&40.)Pxa2,(:.&40.)Pxa3,(:.&40.)Pxa4,(:.&40.)Pxa5,(:.&40.)Pxa6,(:.&40.)Pxa7,(:.&40.)Pxs2,(:.&40.)Pxs4,(:.&40.)Pxs6,(:.&40.)Pxs7,(:.&40.)Pxs8,(:.&40.)Pxs9,(:.&40.)Pxs10,(:.&40.)Pxt3,(:.&40.)Pxt4,(:.&40.)Pxt5,(:.&40.)Pxt6,(:.&40.)P,(=.$1.VR,VHIA,Vh,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,+60.(>.Vra,Vs0,Vs1,Vs2,Vs3,Vs4,Vs5,Vs6,Vs7,Vs8,Vs9,Vs10,)(?.$9.)R1=.R1<.R1;.R1:.R19.R18.)P,(12.$24.(25.R19.)$26.)P,(15.(16.R1:.)(17.VnX,(18.(16.VdA,)+1.)))P,(12.$6.(14.(13.VdA,)Vb,)=)P,(15.R21.(4.(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)VdA,))P,(15.R21.(5.Vd,))(1:.$1.(1;.$1.VR,VHIA,R21.Vmo,)$1<.(1=.(1>.R1=.(1?.&40.(18.(20.&40.Vsp,)-60.))Vgp,Vtp,R1<.R1;.R1:.(1?.&40.VX,)(1?.&40.(18.VX,+:.))R19.R18.R17.R16.R15.R14.R13.R12.R11.(1?.&40.(18.(30.(18.VX,+:.)+3.)(2>.(2?.VR,))))R10.(1?.&40.(2>.(2?.VR,)))R?.R>.R=.R<.R;.Vs11,R:.R9.R8.R7.)VF,(1?.&40.+9<:20.)Vfc,(21.(:.&40.))R1?.(22.$1.)))")
+(* [comment removed for export] *).
+  Proof.
+    intros until xt6; intros J0 EO NMAX VZ BV BF.
+    jc_open; dpose (jca_facts asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC) as (LO0 & LOSP & SP64 & ALO' & ACP' & X0 & X16 & XAL & DSX & LEN & NR);
+      cbn [md_addr md_n md_limbs] in X0, X16, XAL, DSX, LEN, NR.
+    basic_factsA hc.
+    pose proof (xa_facts _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J0) as (ND1 & LEN1 & NR1 & SG1' & CX1 & OWN0 & OWN1).
+    destruct dXc as [X' sg N pXc xs pad' own]. pose proof J0 as JX; xa_open JX. cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in *. subst X' pad' own.
+    ddestruct (OWN1 ltac:(discriminate)) as (_ & N1 & XIN & XPAL & XARR & P0 & PC & PI & OP & P47). clear OWN0 OWN1.
+    pose proof (XLS1 ltac:(discriminate)) as XLSc; pose proof (XP1 eq_refl) as XPc. unfold mpi_cells in CX1.
+    pose proof (hm_top asegs R HIA hc LBc LF mc HH1) as HTOP.
+    assert (SCS : crange (hcs asegs R HIA hc) lo (bv_unsigned sp - lo)) by (eapply crange_sub; [exact SCS0| clear - LOS; lia| rewrite HS1; pose proof (hm_top asegs R HIA h LB LF m HH); clear - H TOP; lia]).
+    pose proof (AIh_laws asegs R HIA hc) as LAWS; pose proof (KF_kinv asegs R HIA hc mo) as KINV.
+    pose proof (hm_abase asegs R HIA hc LBc LF mc HH1) as AB.
+    replace (bv_unsigned sp - 96) with (bv_unsigned sp + -96) in ST1, FR1 by (clear; lia).
+    pose proof (munch_refl [(pXc, pXc + 4 * N); (lo, bv_unsigned sp + -96)] mc) as MU; pose proof (wmono_refl asegs mc) as WM.
+    (* [comment removed for export] *)
+    zstep. zstep. zstep. zstep.
+    (* [comment removed for export] *)
+    shadow_chk OX1 (X + 10) 2.
+    (* [comment removed for export] *)
+    zstep.
+    replace (zx16 (Z_to_bv 64 N)) with (Z_to_bv 64 N)
+      by (unfold zx16; rewrite !unsigned_lit by (clear - NR1; lia); rewrite Z.mod_small by (clear - NR1; lia); reflexivity).
+    zstep. rewrite !Z.shiftl_mul_pow2 by (clear; lia). change (2 ^ 2) with 4. zstep. zstep.
+    pose proof (artA_amemset asegs R HIA A_ASAN_MEMSET_MI) as SPM. unfold A_ASAN_MEMSET_MI in SPM.
+    acallxA_sp (bv_unsigned sp + -96)
+      (eapply SPM with (h := hc) (LB := LBc) (LF := LF) (DST := pXc) (v := 0) (n := 4 * N) (lo := lo) (ds := u32s xs);
+       rewrite ?(unsigned_lit (bv_unsigned sp + -96)) by qlia;
+       try eassumption; try reflexivity;
+       first [ left; rewrite AMS; reflexivity
+             | apply MpiWalkAux.u8arr_of_u32arr; exact XARR
+             | rewrite u32s_length; clear - LEN1; lia
+             | eapply aobj_sub; [exact OP| clear; lia| clear; lia]
+             | eapply crange_sub; [exact SCS| clear; lia| clear - SLO2 NEEDR; lia]
+             | eapply client_wrange_block; [apply in_or_app; left; exact XIN| clear; lia| clear; lia]
+             | rewrite HT1; clear - TOP; lia
+             | f_equal; clear; lia
+             | right; clear - P47; lia
+             | clear - XLSc SLO2 NEEDR N1 NR1 NRAm LOS SPA SPR LOSP; lia
+             | first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "MEMSET-PRE-LEFT:" g end ] ]).
+    clear SPM.
+    all: match goal with |- aevtA _ _ _ _ => idtac | |- ?g => idtac "AFTER-MEMSET-SIDE:" g end.
+    lazymatch goal with |- aevtA _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m6 end.
+    match goal with H : mem_inv asegs m6 |- _ => rename H into MI6 end.
+    match goal with H : stk asegs m6 lo (bv_unsigned sp + -96) |- _ => rename H into ST6 end.
+    match goal with H : u8arr asegs m6 pXc _ |- _ => rename H into HPZ end.
+    match goal with H : HM asegs R HIA hc LBc LF m6 |- _ => rename H into HH6 end.
+    replace (Z.to_nat (4 * N)) with (4 * Z.to_nat N)%nat in HPZ by (clear - N1; lia).
+    apply (rw_cells_of_u8arr asegs) in HPZ.
+    assert (XARR6 : u32arr asegs m6 pXc (repeat (Z_to_bv 64 0) (Z.to_nat N))).
+    { eapply (u32arr_of_cells asegs); [exact HPZ| symmetry; apply u32s_repeat0]. }
+    assert (HW6 : forall a, ~ outside [(pXc, pXc + 4 * N); (lo, bv_unsigned sp + -96)] a ->
+                  (LHeap = LHeap /\ pXc <= a < pXc + 4 * N) \/ lo <= a < bv_unsigned sp - 96).
+    { intros a NO. cbn [outside] in NO.
+      assert (D : pXc <= a < pXc + 4 * N \/ lo <= a < bv_unsigned sp - 96) by (clear - NO; lia).
+      destruct D as [D|D]; [left; split; [reflexivity| exact D]| right; exact D]. }
+    pose proof ST6 as ST6'.
+    assert (LQ : length (repeat (Z_to_bv 64 0) (Z.to_nat N)) = length xs) by (rewrite repeat_length; clear - LEN1 N1; lia).
+    pose proof (xa_limbs _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ m6 _ J0 MU WM MI6 ST6' HH6 HW6
+                  ltac:(cbn; split; [clear - XLSc SLO2 NEEDR; lia| split; [clear; lia| exact I]])
+                  ltac:(cbn; split; [clear - XPc; lia| split; [clear - DSX SLO2 NEEDR; lia| exact I]]) XARR6
+                  LQ) as J6.
+    cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in J6.
+    (* [comment removed for export] *)
+    clear MU WM CX1 OX1 HPZ.
+    try clear MI1; try clear ST1; try clear FR1; try clear HH1; try clear HT1; try clear HS1; try clear HF1; try clear HCS1; try clear HV1; try clear HFR1; try clear MX1; try clear AD1; try clear PD1; try clear NS1; try clear OUT1; try clear FRS1; try clear FRA1; try clear HPX1; try clear XP1; try clear XLS1; try clear NM1.
+    pose proof (xa_facts _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J6) as (_ & LEN6 & _ & _ & CX6 & _ & OWN6).
+    cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in LEN6, CX6, OWN6. unfold mpi_cells in CX6.
+    ddestruct (OWN6 ltac:(discriminate)) as (_ & _ & _ & _ & XARR6' & _ & _ & _ & OP6 & _).
+    pose proof (xa_aobjX _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ J6) as OX6. cbn [md_addr] in OX6.
+    pose proof (xa_hm _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ J6) as HH6'. cbn [app] in HH6'.
+    pose proof (xa_top _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ J6) as HT6.
+    assert (CWP : client_wrange L (LBc ++ fdata LF) (arl_stklo R) (htop asegs R HIA hc) pXc (4 * N))
+      by (eapply client_wrange_block; [apply in_or_app; left; exact XIN| clear; lia| clear; lia]).
+    pose proof (munch_refl [(pXc, pXc + 4)] m6) as MU; pose proof (wmono_refl asegs m6) as WM.
+    (* [comment removed for export] *)
+    zstep. zstep. zstep. shadow_chk OP6 pXc 4.
+    (* [comment removed for export] *)
+    pose proof (u32arr_store_ok asegs m6 pXc (repeat (Z_to_bv 64 0) (Z.to_nat N)) 0 _ XARR6' ltac:(rewrite repeat_length; clear - N1; lia) ltac:(f_equal; clear; lia)) as SOKw.
+    zstep.
+    lazymatch goal with |- context [write_to_mem _ _ (le4 ?vv)] =>
+      pose proof (u32arr_write asegs m6 pXc (repeat (Z_to_bv 64 0) (Z.to_nat N)) 0 vv XARR6' ltac:(rewrite repeat_length; clear - N1; lia)) as XARR7 end.
+    replace (pXc + 4 * 0) with (pXc + 0) in XARR7 by (clear; lia).
+    store_done.
+    lazymatch goal with |- aevtA _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m7 end.
+    match goal with H : mem_inv asegs m7 |- _ => rename H into MI7 end.
+    match goal with H : stk asegs m7 lo _ |- _ => rename H into ST7 end.
+    match goal with H : HM asegs R HIA hc _ LF m7 |- _ => rename H into HH7 end.
+    assert (HW7 : forall a, ~ outside [(pXc, pXc + 4)] a -> (LHeap = LHeap /\ pXc <= a < pXc + 4 * N) \/ lo <= a < bv_unsigned sp - 96).
+    { intros a NO. left. split; [reflexivity|]. cbn [outside] in NO. clear - NO N1. lia. }
+    pose proof (xa_limbs _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ m7 _ J6 MU WM MI7 ST7 HH7 HW7
+                  ltac:(cbn; split; [clear - XLSc SLO2 NEEDR N1; lia| exact I]) ltac:(cbn; split; [clear - XPc N1; lia| exact I]) XARR7
+                  ltac:(rewrite upd_length; reflexivity)) as J7.
+    cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in J7.
+    (* [comment removed for export] *)
+    clear MU WM. try clear CX6; try clear OX6; try clear XARR6'; try clear XARR7; try clear OP6; try clear HH6'.
+    pose proof (xa_facts _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J7) as (_ & _ & _ & _ & CX7 & _ & _).
+    cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in CX7. unfold mpi_cells in CX7.
+    pose proof (xa_aobjX _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ J7) as OX7. cbn [md_addr] in OX7.
+    pose proof (xa_cwX _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J7) as CWX. cbn [md_addr] in CWX. rewrite <- HT6 in CWX.
+    pose proof (munch_refl [(X, X + 16)] m7) as MU; pose proof (wmono_refl asegs m7) as WM.
+    (* [comment removed for export] *)
+    zstep. zstep. zstep. shadow_chk OX7 (X + 8) 2.
+    (* [comment removed for export] *)
+    zstep. zstep. zstep.
+    lazymatch goal with |- aevtA _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m8 end.
+    match goal with H : mem_inv asegs m8 |- _ => rename H into MI8 end.
+    match goal with H : HM asegs R HIA hc LBc LF m8 |- _ => rename H into HH8 end.
+    match goal with H : aobj asegs AL (hcs asegs R HIA hc) m8 X 16 |- _ => rename H into OX8 end.
+    match goal with H : rw_cells asegs m8 X _ |- _ => rename H into CX8 end.
+    pose proof (xa_struct_sign _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ 1 J7 MU WM MI8 CX8 (or_introl eq_refl) HH8 OX8) as J8.
+    cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in J8.
+    eapply mi_ret; [exact J8| left; split; [reflexivity| split; [| cbn [md_n]; exact NMAX]]| exact BV| exact BF].
+    rewrite VZ. unfold mpd_val. cbn [md_sg md_limbs].
+    assert (EUPD : upd (repeat (Z_to_bv 64 0) (Z.to_nat N)) (Z.to_nat 0) (Z_to_bv 64 0) = repeat (Z_to_bv 64 0) (Z.to_nat N)).
+    { destruct (Z.to_nat N) eqn:EN; [exfalso; clear - EN N1; lia| reflexivity]. }
+    rewrite EUPD, limbs_val_repeat0. reflexivity.
+    all: first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "LSET2-LEFT:" g end ].
+  Qed.
+  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
+  (* [comment removed for export] *)
+  Local Ltac2 Set LiaOrc.tbl := fun () => "01U0@D21361708665.206D24976250634.228D34348047352.204D34348047352.206D50797141399.228D50797141399.229D52014138856.228D52014138856.229D62155808737.229K61206821897.229L19279673141.9  L19279770932.6  L21193854616.4  L21845831861.31 L23100341967.217L23100341967.222L23615739305.3  L25044269509.2  L25046317048.171L27214106967.5  L27966909654.1  L28036980531.4  L34910231025.3  L35655538624.7  L35663928186.7  L36180290948.1  L38240354370.4  L38244649590.9  L38868673902.2  L39436426759.7  L40294887048.3  L41114296926.31 L46160487540.171L46160487540.222L46164803833.168L46756382136.217L47845385650.3  L47847399772.4  L48154966246.217L49578233423.222L5259801613.216 L5261871668.3   L53182089005.3  L56247732006.2  L56611076503.206L59308546384.3  L59308633593.3  L59308664813.3  L59308762472.4  L59308972243.3  L59321342699.2  L60098763854.3  L61212928741.14 L61564961541.31 L62018535662.1  L64934269637.2  L7429562659.31  P38856059124.229Q12370813529.221Q12370813529.226Q17205141463.225Q17207432298.220Q24974040330.228Q26207421841.172Q26207721832.173Q26207721832.226Q26207967338.223Q26209519061.225Q26220226066.170Q31651985788.225Q31654082872.172Q37623358517.225Q37625261960.220Q39212284437.173Q39212284437.226Q42081808994.226Q42250421143.193Q42252699701.175Q43925228937.173Q43925228937.226Q52016320488.228Q5483358760.225 Q5485126037.220 Q5485174314.221 Q5485174314.226 Q6027349519.228 Q6027349519.229 Q60511567613.173Q60511567613.226Q60697995187.173Q60697995187.226Q6143569392.221 Q6143569392.226 Q62157788641.228Q62965564504.227Q68330333437.205Q7891539809.226 Q8880503606.223 Q8884880718.170 Q9534400957.170 Q9538787269.223 00001102D02E02F04;06007C08V09i0;W0;d0<10<<0<R0=V0>Z0>d0>m0@90@I0@M0@Z0@e0A@0AU0AY0Ad0Ao0B00BF0BI0BU0C`0Dn0F90Gg0Gh0H80H90I=0JK0JU0Ja0Jj0Kk0L70LB0LM0LN0LY0LZ0Ld0Le0ML0MO0MX0N?0N@0ON0P\0QZ0RX0Se0Tc0Ua0V_0W]0X[0YY0ZW0[U0\S0]Q0^O0_M0`T0b70cZ0dX0eV0ff0gd0hb0i`0j^0kk0m;0n70o310711;12913714G15U15V16]17[18Y19U1:QS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2An2HB5Ha_st5Hl_stFFS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA2lo1b2wb2BB3WB04SLO22xs5NEEDR3LOS2X03SPR2An3An02HB5Ha_st5Hl_stS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA2lo1b2wb2BB3WB04SLO22xs5NEEDR3LOS2X03SPR2An3An02HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2An2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2An2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2An2HB5Ha_st5Hl_stS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA2lo1b2wb2BB3WB04SLO22xs5NEEDR3FSZ3DSX2HB5Ha_st5Hl_st2AnS2dA3NRA1v2BVS2dA3NRA1v2BVS1d2D01f2BFS1R2sp2lo4SLO23NRM3SPRS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2AnS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2AnS1R3HIA2hcS3nXc3NR1S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03nXc2xs3NR1S1R3HIA1h2sp3TOPS2spS2dA3NRA1v2BVS2nX2dA3NRAS1R3HIA2sp2lo2h24TOP25HTOP2S1R3HIA1h2sp2lo3TOP1HS2spS1d2D01f2BFS1d2D01f2BFFS1R3nXc3pXc2N12P02PC1HS1XS2sp3SPA3SPRS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB02xs2X03X16S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB02xs2X03X162AnS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB02xs2X03X16S1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA2lo1b2wb2BB3WB04SLO22xs5NEEDR3LOS2X03ALO3SPR2An3An03AnCFS2LB4C24H3LBc2CIFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2AnS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB02xs2X03X162AnS1X2X03X16S3nXc3NR12KNS3nXc3ENZS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS3nXc3ENZ2N1S2An3An02KZS3nXc2KN2ENFS3pXc2KP2P0FS1R2lo3LOSFS1R3HIA1h2sp2dA3NRA3BUD1v2hc2BV3SPR3HV1S1RS3nXc3NR1S1R3HIA1h2sp1d2D04BUDF1f2hc2BF3SPR4HFR1FS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB02xs2X03XAL2AnS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB02xs2X03XAL2AnS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB02xs2X02HBS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA2lo1b2wb2BB3WB04SLO22xs5NEEDR3LOS4SP643ALO3ACPS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA2lo1b2wb2BB3WB04SLO22xs5NEEDR3LOS4SP643ALO3ACPS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2HB5Ha_st5Hl_st2AnS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2An2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB02xs2X0S2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB02xs2X0S2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xs2An2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB02xs3X162HB5Ha_stFS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB02xs2X02HBS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB02xsS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB02xs". (* [comment removed for export] *)
+  #[using="IMG CALLOC AMS C24H wb JC TPV UWX D0 BB WB0 NRA BUD BUDF SLO2"] Lemma mi_LSET : ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "Pv,$6.Pf,$6.Phc,(7.$1.VR,VHIA,)PLBc,(8.$9.)Pmc,P,(:.&40.)(;.(:.&8.))PdXc,$<.Pxra,(:.&40.)Pxt0,(:.&40.)Pxt1,(:.&40.)Pxt2,(:.&40.)Pxs1',(:.&40.)Pxa0,(:.&40.)Pxa1,(:.&40.)Pxa2,(:.&40.)Pxa3,(:.&40.)Pxa4,(:.&40.)Pxa5,(:.&40.)Pxa6,(:.&40.)Pxa7,(:.&40.)Pxs2,(:.&40.)Pxs3,(:.&40.)Pxs4,(:.&40.)Pxs6,(:.&40.)Pxs7,(:.&40.)Pxs8,(:.&40.)Pxs9,(:.&40.)Pxs10,(:.&40.)Pxt3,(:.&40.)Pxt4,(:.&40.)Pxt5,(:.&40.)Pxt6,(:.&40.)P,(=.$1.VR,VHIA,Vh,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,+60.(>.Vra,Vs0,Vs1,Vs2,Vs3,Vs4,Vs5,Vs6,Vs7,Vs8,Vs9,Vs10,)(?.$9.)R1?.R1>.R1=.R1<.R1;.R1:.)P,(15.(16.R1;.)(17.VnX,(18.(16.VdA,)+1.)))P,(12.$6.(14.(13.VdA,)Vb,)=)P,(15.R22.=)P,(15.R22.=)(1:.$1.(1;.$1.VR,VHIA,R22.Vmo,)$1<.(1=.(1>.R1>.(1?.&40.(18.(20.&40.Vsp,)-60.))Vgp,Vtp,R1=.R1<.R1;.(1?.&40.VX,)R1:.R19.R18.R17.R16.R15.R14.R13.R12.R11.R10.R?.(1?.&40.(2>.(2?.VR,)))R>.R=.R<.R;.R:.Vs11,R9.R8.R7.R6.)VF,(1?.&40.+9<98<.)Vfc,(21.(:.&40.))R20.(22.$1.)))")
+(* [comment removed for export] *).
+  Proof.
+    intros until xt6. intros J NMAX VZ BV BF. jc_open.
+    dpose (jca_facts asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC) as (LO0 & LOSP & SP64 & ALO' & ACP' & X0 & X16 & XAL & DSX & LEN & NR).
+    cbn [md_addr md_n md_limbs] in X0, X16, XAL, DSX, LEN, NR.
+    basic_factsA hc.
+    pose proof (xa_facts _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as (ND1 & LEN1 & NR1 & SG1' & CX1 & OWN0 & OWN1).
+    xa_open J.
+    destruct dXc as [X' sg nXc pXc xs pad' own]. cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in *. subst X' pad'.
+    pose proof (hm_top asegs R HIA hc LBc LF mc HH1) as HTOP.
+    assert (SCS : crange (hcs asegs R HIA hc) lo (bv_unsigned sp - lo)) by (eapply crange_sub; [exact SCS0| clear - LOS; lia| rewrite HS1; pose proof (hm_top asegs R HIA h LB LF m HH); clear - H TOP; lia]).
+    pose proof (AIh_laws asegs R HIA hc) as LAWS. pose proof (KF_kinv asegs R HIA hc mo) as KINV.
+    pose proof (munch_refl ([] : list ivl) mc) as MU. pose proof (wmono_refl asegs mc) as WM.
+    pose proof CX1 as CX1u. unfold mpi_cells in CX1u.
+    (* [comment removed for export] *)
+    zstep. zstep. zstep. shadow_chk OX1 (X + 10) 2.
+    (* [comment removed for export] *)
+    zstep.
+    replace (zx16 (Z_to_bv 64 nXc)) with (Z_to_bv 64 nXc)
+      by (unfold zx16; rewrite !unsigned_lit by (clear - NR1; lia); rewrite Z.mod_small by (clear - NR1; lia); reflexivity).
+    zstep. if_cases KN; zify_cond KN; rewrite ?Z.mod_small in KN by (clear - NR1; lia).
+    { (* [comment removed for export] *)
+      assert (EO : own = LHeap).
+      { destruct own; [exfalso; ddestruct (OWN0 eq_refl) as (_ & EN & _); clear - EN KN; lia| reflexivity| exfalso; exact (NS1 eq_refl)]. }
+      clear CX1u. eapply mi_LSET2; [exact J| exact EO| exact NMAX| exact VZ| |].
+      - unfold mul_int_PHI, copy_PHI, grow_PHI; unfold AVOL_CALL. clear - BV NRA. lia.
+      - unfold mul_int_FR, calls_FR, fr_charge. clear - BF D0. lia. }
+    (* [comment removed for export] *)
+    assert (ENZ : nXc = 0) by (clear - KN NR1; lia). clear KN CX1u.
+    clear MU WM. pose proof (munch_refl ([] : list ivl) mc) as MU. pose proof (wmono_refl asegs mc) as WM.
+    (* [comment removed for export] *)
+    zstep. zstep. zstep.
+    replace (bv_unsigned sp - 96) with (bv_unsigned sp + -96) in ST1, FR1 by (clear; lia).
+    replace (Z_to_bv 64 429840) with (Z_to_bv 64 (arl_calloc R)) by (rewrite CALLOC; reflexivity).
+    eapply aevtA_call.
+    { intros mo1 [HK1 MF1].
+      eapply (heapA_calloc asegs R HIA) with (h := hc) (LB := LBc) (LF := LF) (cnt := 1) (sz := 4) (lo := lo) (d := d);
+        rewrite ?(unsigned_lit (bv_unsigned sp + -96)) by qlia; try eassumption; try reflexivity.
+      all: try ((intros _; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ])).   (* [comment removed for export] *)
+      all: try (eapply (uw_obj_uwc asegs R); [exact UWX| rewrite unsigned_lit by (clear - X0 X16; lia); clear - X0 X16; lia]).
+      all: try (rewrite HT1; clear - TOP; lia).
+      all: unfold mul_int_PHI, mul_int_FR, copy_PHI, grow_PHI, calls_FR, fr_charge in *; unfold AMAX, AVOL_CALL in *;
+           clear - ENZ NR1 NR NRA LOS SLO SLO2 NEEDR NRM SPA SPR BUD BUDF BV BF HV1 HFR1 D0 LOSP; try lia.
+      all: first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "CALLOC-PRE-LEFT:" g end ]. }
+    (intros ms' mo' dd_H; ddestruct dd_H as (mo1 & [HK1 MF1] & PO)).
+    ddestruct PO as (ms2 & mo2 & E & PO). injection E as E1 E2. subst ms2 mo2.
+    unfold call_postA in PO. destruct_exs PO. destruct PO as [E PO]. subst ms'.
+    rewrite ?(unsigned_lit (bv_unsigned sp + -96)) in PO by qlia.
+    ddestruct PO as (MI2 & ST2 & MF2 & WM2 & HP2 & h2 & HT2 & HS2 & HF2 & HK2 & HCS2 & HV2 & HFR2 & CASES).
+    lazymatch goal with |- aevtS _ _ (mkCfg (MS _ _ (ret_pc (Z_to_bv 64 ?x)) _ _ _ _) _) =>
+      replace (ret_pc (Z_to_bv 64 x)) with (Z_to_bv 64 x) by (symmetry; apply ret_pc_even; [ lia | reflexivity ]) end.
+    lazymatch goal with |- aevtS _ _ (mkCfg (MS _ _ _ _ _ ?mx _) _) => rename mx into m2 end.
+    presA_transport HP2. clear MU WM.
+    apply (aevtA_enter asegs (KF asegs R HIA h2 mo) _ _ mo' (conj HK2 (mo_frame_trans _ _ _ MF1 MF2))).
+    clear LAWS KINV. pose proof (AIh_laws asegs R HIA h2) as LAWS. pose proof (KF_kinv asegs R HIA h2 mo) as KINV.
+    pose proof ST2 as ST2'.
+    assert (HP2' : presA asegs R LBc LF (bv_unsigned sp - 96) (arl_stklo R) (hstkhi asegs R HIA hc) [] mc m2).
+    { eapply presA_weaken; [exact HP2| intros bq Hb; exact Hb| intros bq Hb; exact Hb| clear; lia| clear; lia| clear; lia| intros y Hy; exact Hy]. }
+    clear CSOK SB64 SCS0 SCS HTOP.
+    pose proof (hcs_ok asegs R HIA h2) as CSOK. pose proof (cs_ok_sb _ _ CSOK) as SB64. pose proof (hcs_stack asegs R HIA h2) as SCS0.
+    assert (TOP2 : bv_unsigned sp <= htop asegs R HIA h2) by (rewrite HT2, HT1; exact TOP).
+    destruct CASES as [[Er HH2] | (An & Er & A16 & HFRA & HAS & HH2 & HNEW)]; match type of Er with ?vv = _ => subst vv end.
+    - (* [comment removed for export] *)
+      pose proof (xa_calloc_fail _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ _ J MI2 ST2' HP2' HT2 HS2 HF2 HCS2 HV2 HFR2 HH2) as J2.
+      pose proof (munch_refl ([] : list ivl) m2) as MU. pose proof (wmono_refl asegs m2) as WM.
+      (* [comment removed for export] *)
+      zstep. zstep. zstep.
+      eapply mi_ret; [exact J2| right; reflexivity| |].
+      + unfold mul_int_PHI, copy_PHI, grow_PHI in *; unfold AVOL_CALL in *. clear - BV NRA NR1. lia.
+      + unfold mul_int_FR, calls_FR, fr_charge in *. clear - BF D0. lia.
+    - (* [comment removed for export] *)
+      change (1 * 4) with (4 * 1) in HFRA, HAS, HH2, HNEW, HV2.
+      destruct (xa_calloc_ok _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ _ An 1 J MI2 ST2' HP2' HT2 HS2 HF2 HCS2 HV2 HFR2 HH2 A16 HFRA HNEW
+                  ltac:(cbn [md_n]; clear - ENZ; lia)) as [J2 F2].
+      dpose HFRA as (An0 & AnC & AnD & HAP).
+      clear J. try clear MI1; try clear ST1; try clear STc; try clear FR1; try clear HH1; try clear HT1; try clear HS1; try clear HF1; try clear HCS1; try clear HV1; try clear HFR1; try clear MX1; try clear AD1; try clear PD1; try clear NS1; try clear OUT1; try clear FRS1; try clear FRA1; try clear HPX1; try clear OX1; try clear XP1; try clear XLS1; try clear NM1; try clear CX1; try clear OWN0; try clear OWN1;
+      xa_open J2.
+      pose proof (xa_facts _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J2) as (_ & _ & _ & _ & CX2 & OWN0 & OWN1).
+      cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in *. unfold mpi_cells in CX2.
+      pose proof (hm_top asegs R HIA h2 _ LF m2 HH1) as HTOP2.
+      assert (SCS : crange (hcs asegs R HIA h2) lo (bv_unsigned sp - lo)) by (eapply crange_sub; [exact SCS0| clear - LOS; lia| clear - TOP2 HTOP2; lia]).
+      pose proof (munch_refl ([] : list ivl) m2) as MU. pose proof (wmono_refl asegs m2) as WM.
+      (* [comment removed for export] *)
+      zstep. if_cases KZ; zify_cond KZ; [exfalso; rewrite ?unsigned_lit in KZ by (pose proof (alloc_ceiling_val R); clear - An0 AnC H; lia); clear - KZ An0; lia|]. clear KZ.
+      (* [comment removed for export] *)
+      zstep. zstep. zstep. zstep. zstep. zstep.
+      (* [comment removed for export] *)
+      zstep. if_cases KP; zify_cond KP.
+      + (* [comment removed for export] *)
+        assert (EO : own = LNull).
+        { destruct own; [reflexivity| | exfalso; exact (NS1 eq_refl)]. exfalso.
+          ddestruct (OWN1 ltac:(discriminate)) as (_ & N1 & _ & _ & _ & P0 & PC & _).
+          rewrite Z.mod_small in KP by (pose proof (alloc_ceiling_val R); clear - P0 PC H N1; lia). clear - KP P0; lia. }
+        subst own. ddestruct (OWN0 eq_refl) as (EP & EN & EL). clear OWN1 KP.
+        pose proof (xga_null _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ J2 F2 eq_refl) as D2.
+        pose proof (xda_cwX _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ D2) as CW5. cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in CW5. rewrite <- HT1 in CW5.
+        clear MU WM. pose proof (munch_refl [(X, X + 16)] m2) as MU. pose proof (wmono_refl asegs m2) as WM.
+        (* [comment removed for export] *)
+        shadow_chk OX1 (X + 10) 2.
+        (* [comment removed for export] *)
+        zstep. zstep. zstep. zstep. zstep.
+        lazymatch goal with |- aevtA _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m5 end.
+        pose proof (xda_finish _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ _ _ _ D2 MU WM MI1 CX2 HH1 OX1) as J5.
+        cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in J5.
+        eapply mi_LSET2; [exact J5| reflexivity| cbn [md_n]; clear - NRA; lia| exact VZ| |].
+        * unfold mul_int_PHI, copy_PHI, grow_PHI in *; unfold AVOL_CALL in *. clear - BV NRA HV2. lia.
+        * unfold mul_int_FR, calls_FR, fr_charge in *. clear - BF D0 HFR2. lia.
+      + (* [comment removed for export] *)
+        exfalso. destruct own; [apply KP; rewrite (proj1 (OWN0 eq_refl)); reflexivity| | exact (NS1 eq_refl)].
+        ddestruct (OWN1 ltac:(discriminate)) as (_ & N1 & _). clear - N1 ENZ. lia.
+    all: first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "LSET-LEFT:" g end ].
+  Qed.
+  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
+  (* [comment removed for export] *)
+  Local Ltac2 Set LiaOrc.tbl := fun () => "00O0@L12401343277.3  L13520064937.1  L21193854616.4  L22593291094.4  L25694054625.3  L28036980531.4  L29008356616.172L29010568605.173L29010568859.176L35663928186.7  L36618624197.2  L39268637205.0  L40497504664.12 L46158332094.173L46160487540.176L56971279505.4  L59308664813.6  L60098763854.3  L65448092613.2  L65450274431.176L67080090232.4  Q26207421841.177Q26207721832.178Q26209920597.175Q31654082872.177Q39212284437.178Q43925228937.178Q60511567613.178Q60697995187.178Q8882996489.175 Q9540479482.175 00000:00>00I00X00b00o02K03g05905N05W05X05h07408@08M08`08j0930:<0:G0;F0<E0=D0>C0?B0@A0A>0BC0CB0D?S1r3dXc2KGS2dAS1d2D01f2BFS2nX1r3dXc4NXLES1r3dXc2KGS2dA3NRA1v2BVS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03NRA1r3dXc2HR2X02NR3SPR3WBRS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03NRA1r3dXc2HR2X02NR3SPR3WBRS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01r3dXc2HR3WBR3N10S1R3HIA1h2sp2lo3TOP1HS3dXc3NR1SS1r1q2KM2r01H2H0S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03dXc2X03X16S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03dXc2X03X16S2dA3NRA1v2BVS2dA1r3dXc2HR2KG2ENS1R2lo3LOSS3dXc3NR1S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03dXc3NR1S1d2D01f2BFS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB03dXcS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB03dXcS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB03dXcS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB03dXcS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB03dXcS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB03dXcS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB03dXcS2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB03dXc2X0S2ra2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb3WB03dXcS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB03dXc". (* [comment removed for export] *)
+  #[using="IMG ZF COPY CALLOC AMC AMS C24H JC TPV UWX D0 BB WB1 WB0 NRA BUD BUDF SLO2 MA0 IA1 IDA"] Lemma mi_FOUND : ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "Pr,$6.Pv,$6.Pf,$6.Phc,(7.$1.VR,VHIA,)PLBc,(8.$9.)Pmc,P,(:.&40.)(;.(:.&8.))PdXc,$<.Pxra,(:.&40.)Pxt0,(:.&40.)Pxt1,(:.&40.)Pxt2,(:.&40.)Pxa0,(:.&40.)Pxa3,(:.&40.)Pxa4,(:.&40.)Pxa5,(:.&40.)Pxa6,(:.&40.)Pxa7,(:.&40.)Pxs2,(:.&40.)Pxs3,(:.&40.)Pxs4,(:.&40.)Pxs7,(:.&40.)Pxs8,(:.&40.)Pxs9,(:.&40.)Pxs10,(:.&40.)Pxt3,(:.&40.)Pxt4,(:.&40.)Pxt5,(:.&40.)Pxt6,(:.&40.)P,(=.$1.VR,VHIA,Vh,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,+60.(>.Vra,Vs0,Vs1,Vs2,Vs3,Vs4,Vs5,Vs6,Vs7,Vs8,Vs9,Vs10,)(?.$9.)R1;.R1:.R19.R18.R17.R16.)P,(23.VR,VHIA,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,VdA,R1:.R19.R18.R17.)P,(15.(16.R18.)(17.VnX,(18.(16.VdA,)+1.)))P,(15.(16.R19.)VnX,)P,(12.$6.(27.R1:.)VsX,)P,(12.(8.(:.&40.))(29.R1;.)Vxs0,)P,(12.$6.(2;.(29.VdA,)R22.)(28.(29.VdA,)))P,(11.(15.+1.R23.)(15.R23.(16.VdA,)))P,(15.R23.=)P,(15.R23.=)(1:.$1.(1;.$1.VR,VHIA,R23.Vmo,)$1<.(1=.(1>.R1?.(1?.&40.(18.(20.&40.Vsp,)-60.))Vgp,Vtp,R1>.R1=.R1<.(1?.&40.VX,)(1?.&40.R26.)R1;.(1?.&40.(2:.VdA,))Vwb,R1:.R19.R18.R17.R16.R15.R14.R13.(1?.&40.(2>.(2?.VR,)))(1?.&40.(18.(30.(2:.VdA,)+3.)(2>.(2?.VR,))))R12.R11.R10.R?.Vs11,R>.R=.R<.R;.)VF,(1?.&40.+9<878.)Vfc,(21.(:.&40.))R21.(22.$1.)))")
+(* [comment removed for export] *).
+  Proof.
+    intros until xt6. intros J RA NMAX NXLE SGc LMc SCAN HR BV BF. jc_open.
+    assert (LVA : md_addr dA = X -> lval xs0 r = limbs_val xs0) by (intros EAX; pose proof (IDA EAX) as E; rewrite E in SCAN; cbn [md_limbs] in SCAN; exact SCAN).
+    dpose (jca_facts asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC) as (LO0 & LOSP & SP64 & ALO' & ACP' & X0 & X16 & XAL & DSX & LEN & NR).
+    cbn [md_addr md_n md_limbs] in X0, X16, XAL, DSX, LEN, NR.
+    basic_factsA hc.
+    pose proof (xa_facts _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as (ND1 & LEN1 & NR1 & SG1' & CX1 & OWN0 & OWN1).
+    pose proof J as JX. xa_open JX. unfold mpi_cells in CX1. rewrite ?AD1 in CX1. cbn [md_addr] in CX1.
+    pose proof (hm_top asegs R HIA hc LBc LF mc HH1) as HTOP.
+    assert (SCS : crange (hcs asegs R HIA hc) lo (bv_unsigned sp - lo)) by (eapply crange_sub; [exact SCS0| clear - LOS; lia| rewrite HS1; pose proof (hm_top asegs R HIA h LB LF m HH); clear - H TOP; lia]).
+    pose proof (AIh_laws asegs R HIA hc) as LAWS. pose proof (KF_kinv asegs R HIA hc mo) as KINV.
+    pose proof (munch_refl ([] : list ivl) mc) as MU. pose proof (wmono_refl asegs mc) as WM.
+    cbn [md_addr] in OX1.
+    pose proof (bv_unsigned_in_range 64 wb) as WBR. unfold bv_modulus in WBR. cbn [Z.pow Z.of_N Pos.pow] in WBR.
+    (* [comment removed for export] *)
+    zstep. if_cases KB; zify_cond KB.
+    { (* [comment removed for export] *)
+      eapply mi_LSET; [exact J| exact NMAX| | exact BV| exact BF]. rewrite (proj1 WB0 KB). clear; lia. }
+    assert (BNZ : b <> 0) by (intros B0; apply KB; apply (proj2 WB0); exact B0).
+    (* [comment removed for export] *)
+    zstep. zstep. zstep. zstep. if_cases KM; zify_cond KM; rewrite ?unsigned_lit in KM by (clear - HR NRA; rewrite ?Z.shiftr_div_pow2 by lia; Z.div_mod_to_equations; lia).
+    { (* [comment removed for export] *)
+      eapply mi_ret; [exact J| right; reflexivity| |].
+      - unfold mul_int_PHI, copy_PHI, grow_PHI; unfold AVOL_CALL. clear - BV NRA. lia.
+      - unfold mul_int_FR, calls_FR, fr_charge. clear - BF D0. lia. }
+    assert (N10 : r + 1 <= 10000).
+    { rewrite Z.shiftr_div_pow2 in KM by (clear; lia). change (2 ^ 4) with 16 in KM. clear - KM HR NRA. Z.div_mod_to_equations. lia. }
+    clear KM.
+    (* [comment removed for export] *)
+    zstep. zstep. zstep. shadow_chk OX1 (X + 10) 2.
+    zstep. zstep.
+    replace (zx16 (Z_to_bv 64 (md_n dXc))) with (Z_to_bv 64 (md_n dXc))
+      by (unfold zx16; rewrite !unsigned_lit by (clear - NR1; lia); rewrite Z.mod_small by (clear - NR1; lia); reflexivity).
+    (* [comment removed for export] *)
+    zstep. if_cases KG; zify_cond KG; rewrite ?unsigned_lit in KG by (clear - HR NRA NR1; lia).
+    - (* [comment removed for export] *)
+      assert (EO : md_own dXc = LHeap).
+      { destruct (md_own dXc) eqn:EOX; [exfalso; ddestruct (OWN0 eq_refl) as (_ & EN & _); clear - EN KG HR; lia| reflexivity| exfalso; exact (NS1 eq_refl)]. }
+      eapply (mi_COPY r HR BNZ SCAN); [exact J| exact RA| exact EO| clear - KG; lia| clear - NXLE; lia| exact SGc| rewrite LMc; reflexivity| intros EAX; rewrite LMc; exact (LVA EAX)| |].
+      + unfold miV1, grow_PHI; unfold AVOL_CALL. clear - BV NRA. lia.
+      + unfold miF1, calls_FR, fr_charge. clear - BF D0. lia.
+    - (* [comment removed for export] *)
+      eapply mi_G1; [exact (mi_COPY r HR BNZ SCAN)| exact J| exact RA| exact HR| clear - KG; lia| exact N10| exact SGc| exact LMc| exact LVA| exact BV| exact BF].
+    all: first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "FOUND-LEFT:" g end ].
+  Qed.
+  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
+  (* [comment removed for export] *)
+  Local Ltac2 Set LiaOrc.tbl := fun () => "00K0@L11014214210.3  L11433213223.2  L21041645149.3  L21774718167.2  L23120643753.4  L23120701814.4  L23970764156.151L31326834835.4  L36571201320.0  L4054094806.2   L48367540261.4  L48367597562.3  L54425651213.3  L59308583409.4  L59310648043.5  L8929159528.147 L8929620893.144 Q26295627581.148Q34291222827.145Q34291305632.150Q34291402793.148Q42131479398.150Q48338484555.148Q49424719380.145Q50458135125.148Q53360483131.148Q8943555749.145 00000900?00G00M00N00Z02802D02E02K02L02M02V02b03404R06007008609<0:B0;H0<R0=X0>X0?^0@^S2dA1r2HRS1w2K0S1k1r2HkS2dA1rFS2dA1r2HR2K2S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01k1r2Hk4LENZ3EP02HR2X03SPR2EBS2dA1r2HR2K2SS2dA1bFFS2dA1r2HRS2dA1r2Hk2HRS2dA1r4LENZ2HR3NTHS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01k1r2Hk4LENZ3EP02HR2X03SPR2EBS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X2nX3xs02dA1b2wb2BB3WB01k1r2Hk4LENZ3EP02HR2X03SPR2EBS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01k1r2HkS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01k1r2Hk2HRS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01k1r2Hk2HRS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01k1r2Hk2HRS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01k1r2Hk2HRS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01k1r2Hk3EP02HRS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01k1r2Hk2HRS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01k1r2HkS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb2BB3WB01k1r2Hk2HRS2ra2s02s12s22s32s42s52s62s72s82s93s102nX3xs02dA1b2wb3WB01k1r2Hk". (* [comment removed for export] *)
+  #[using="IMG ZF COPY CALLOC AMC AMS C24H JC TPV UWX D0 BB WB1 WB0 NRA BUD BUDF SLO2 MA0 IA1 IDA"] Lemma mi_SCANLOOP : ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "Pk,$45.Pv,$6.Pf,$6.Phc,(7.$1.VR,VHIA,)PLBc,(8.$9.)Pmc,P,(:.&40.)(;.(:.&8.))PdXc,$<.Pr,$6.Pr1,(:.&40.)Pxra,(:.&40.)Pxt0,(:.&40.)Pxt1,(:.&40.)Pxt2,(:.&40.)Pxa4,(:.&40.)Pxa5,(:.&40.)Pxa6,(:.&40.)Pxa7,(:.&40.)Pxs2,(:.&40.)Pxs3,(:.&40.)Pxs4,(:.&40.)Pxs7,(:.&40.)Pxs8,(:.&40.)Pxs9,(:.&40.)Pxs10,(:.&40.)Pxt3,(:.&40.)Pxt4,(:.&40.)Pxt5,(:.&40.)Pxt6,(:.&40.)P,(15.R15.(46.R1<.))P,(=.$1.VR,VHIA,Vh,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,+60.(>.Vra,Vs0,Vs1,Vs2,Vs3,Vs4,Vs5,Vs6,Vs7,Vs8,Vs9,Vs10,)(?.$9.)R1<.R1;.R1:.R19.R18.R17.)P,(23.VR,VHIA,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,VdA,R1;.R1:.R19.R18.)P,(15.(16.R19.)(17.VnX,(18.(16.VdA,)+1.)))P,(15.(16.R1:.)VnX,)P,(47.$1.R1<.(48.VdA,)(49.(29.VdA,)))P,(12.$6.(46.(4:.(:.&40.)(29.VdA,)))(16.VdA,))P,(32.=(48.VdA,))P,(4;.$1.(2?.VR,)(4<.$1.VR,VHIA,R21.)R1?.(48.VdA,)(14.+4.(16.VdA,)))P,(12.$6.(27.R1?.)VsX,)P,(12.(8.(:.&40.))(29.R20.)Vxs0,)P,(12.$6.(2;.(29.VdA,)R20.)(28.(29.VdA,)))P,(11.(15.+1.R21.)(15.R21.(16.VdA,)))P,(15.R28.=)P,(15.R28.=)P,(12.(:.&40.)R23.(1?.&40.R24.))(1:.$1.(1;.$1.VR,VHIA,R29.Vmo,)$1<.(1=.(1>.R23.(1?.&40.(18.(20.&40.Vsp,)-60.))Vgp,Vtp,R22.R21.R20.(1?.&40.VX,)R24.(1?.&40.(18.(48.VdA,)(14.+4.(3;.R25.+1.))))(1?.&40.(2:.VdA,))Vwb,(1?.&40.(18.(48.VdA,)(14.+4.(3;.R25.+1.))))R1?.R1>.R1=.R1<.R1;.R1:.R19.(1?.&40.(2>.(2?.VR,)))(1?.&40.(18.(30.(2:.VdA,)+3.)(2>.(2?.VR,))))R18.R17.R16.R15.Vs11,R14.R13.R12.R11.)VF,(1?.&40.+9<83<.)Vfc,(21.(:.&40.))R27.(22.$1.)))")
+(* [comment removed for export] *).
+  Proof.
+    induction k as [|k IH]; intros until xt6; intros Hk J0 RA NMAX NXLE EBY LENZ EP0 OEL SGc LMc SCAN HR BV BF ->; [exfalso; clear - Hk HR; lia|].
+    jc_open; dpose (jca_facts asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC) as (LO0 & LOSP & SP64 & ALO' & ACP' & X0 & X16 & XAL & DSX & LEN & NR);
+      cbn [md_addr md_n md_limbs] in X0, X16, XAL, DSX, LEN, NR.
+    basic_factsA hc.
+    pose proof (xa_mi _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ J0) as MI1.
+    pose proof (u32ro_bound _ _ _ _ EBY) as EB.
+    pose proof (AIh_laws asegs R HIA hc) as LAWS; pose proof (KF_kinv asegs R HIA hc mo) as KINV.
+    pose proof (munch_refl ([] : list ivl) mc) as MU; pose proof (wmono_refl asegs mc) as WM.
+    (* [comment removed for export] *)
+    zstep. zstep. shadow_chk OEL (md_p dA + 4 * (r - 1)) 4.
+    (* [comment removed for export] *)
+    destruct (nth_error (md_limbs dA) (Z.to_nat (r - 1))) as [w|] eqn:NTH; [| apply nth_error_None in NTH; exfalso; clear - NTH LENZ HR; lia].
+    pose proof (u32ro_read asegs mc (md_p dA) (md_limbs dA) (r - 1) w _ EBY NTH ltac:(clear - HR; lia) eq_refl) as RD.
+    zstep. clear RD.
+    (* [comment removed for export] *)
+    zstep. if_cases K0; zify_cond K0.
+    - (* [comment removed for export] *)
+      eapply mi_FOUND; [exact J0| exact RA| exact NMAX| exact NXLE| exact SGc| exact LMc| exact SCAN| exact HR| exact BV| exact BF].
+    - (* [comment removed for export] *)
+      assert (SCAN' : lval (md_limbs dA) (r - 1) = limbs_val (md_limbs dA)).
+      { rewrite <- SCAN. symmetry. apply lval_drop_zero; [clear - HR; lia|]. rewrite (limb32_of_read _ r w NTH).
+        pose proof (Z.mod_pos_bound (bv_unsigned w) (2^32) ltac:(clear; lia)) as Bw.
+        rewrite ?bv_unsigned_sx32 in K0. apply (proj1 (sxz_zero_iff _ Bw)). clear - K0. lia. }
+      zstep. zstep. zstep. zstep. if_cases K2; zify_cond K2; rewrite ?unsigned_lit in K2 by (clear - HR NRA; lia).
+      + replace (Z_to_bv 64 (md_p dA + 4 * (r - 1) + -4)) with (Z_to_bv 64 (md_p dA + 4 * (r - 1 - 1))) by (f_equal; clear; lia).
+        eapply (IH _ _ _ _ _ _ (r - 1)); try eassumption; first [exact SCAN'| clear - Hk; lia| clear - HR K2; lia| (f_equal; clear; lia)| reflexivity].
+      + (* [comment removed for export] *)
+        zstep.
+        eapply mi_LSET; [exact J0| exact NMAX| | exact BV| exact BF].
+        replace (r - 1) with 0 in SCAN' by (clear - K2 HR; lia). rewrite lval_0 in SCAN'. unfold mpd_val. rewrite <- SCAN'. clear; lia.
+    all: first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "SCANLOOP-LEFT:" g end ].
+  Qed.
+  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
+  Local Notation JBE dE := (JBA asegs R HIA LB LF m dX sp lo dE).
+  Local Notation BJE dE := (BJA asegs R HIA LF sp dE).
+
+  (* [comment removed for export] *)
+  Local Ltac2 Set LiaOrc.tbl := fun () => "0010>L59308579668.400000=S1X2Ea3SXE2H5". (* [comment removed for export] *)
+  #[using="IMG"] Lemma mk_JBd : ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "PdE,$<.Pm1,P,(:.&40.)(;.(:.&8.))P,(4=.$1.VR,VLF,Vm,VLB,(20.&40.Vsp,)R2.)P,(4>.(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)R3.Vlo,(20.&40.Vsp,))P,(4?.(50.VR,)(51.$9.VLB,(52.VLF,))Vlo,(2:.R4.)+10.)P,P,(12.$24.(25.R5.)$26.)(4?.(50.VR,)(51.$9.VLB,(52.VLF,))Vlo,(48.R6.)(14.+4.(16.R6.)))P,(10.(15.(18.VX,+10.)(2:.R6.))(15.(18.(2:.R6.)+10.)VX,))P,P,(12.$24.(25.R7.)$53.)P,Pi,$6.P,(11.(15.=R1.)(32.R1.(14.+4.(16.R9.))))(12.$54.(55.$1.(56.(18.(48.R:.)R2.)))$57.)(12.$54.(58.(48.R9.)(14.+4.(16.R9.)))$57.)P,(4;.$1.(2?.VR,)(4<.$1.VR,VHIA,Vh,)R7.(2:.R8.)+10.)P,P,(12.$24.(25.R9.)$53.)(4;.$1.(2?.VR,)(4<.$1.VR,VHIA,Vh,)R9.(48.R:.)(14.+4.(16.R:.)))P,(59.$1.VR,VHIA,Vh,VLB,VLF,R9.)P,(4=.$1.VR,VLF,R:.VLB,(20.&40.Vsp,)R;.)(11.(5:.$1.VR,VHIA,VLB,VLF,Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)Vsp,Vlo,R<.)(5;.$1.VR,VHIA,VLF,Vsp,R<.Vh,VLB,R;.(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)))")
+(* [comment removed for export] *).
+  Proof.
+    intros dE m1; intros ME OE CRE CREL SXE IE OEs OEl HM1 ME1. dpose OE as (OE1 & OE2 & OE3 & OE4 & OE5).
+    destruct dE as [Ea sE nE pE zs0 padE ownE].
+    cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in *.
+    split.
+    - constructor; cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own]; try assumption.
+      intros EO RO hc LBc mc HMc. eapply (AImgGlobals.aobj_img asegs AL); [apply (hcs_img_cs_cp R HIA IMG)| eapply (hm_img_shadow asegs R HIA); exact HMc| exact (IE EO RO)].
+    - constructor; cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own].
+      + exact ME1.
+      + exact OE2.
+      + intros EOX EN. destruct OE3 as [C|[C|[C|C]]]; [exfalso; injection C; intros; clear - SXE H5; lia| exfalso; exact (C EOX)| exfalso; exact (EN C)| exact C].
+      + exact OEs.
+      + intros EN. pose proof (opnd_viewA _ _ _ _ _ _ _ ME1) as [(_ & _ & _ & _ & _ & OW) _]. cbn [md_addr md_sg md_n md_p md_limbs md_pad md_own] in OW.
+        destruct ownE; [exfalso; exact (EN eq_refl)| |].
+        * ddestruct OW as (_ & EIN & _). eapply hm_aobj_block; [exact HM1| exact EIN].
+        * exact (OEl eq_refl).
+  Qed.
+  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
+  (* [comment removed for export] *)
+  Local Ltac2 Set LiaOrc.tbl := fun () => "01o0@D35881667587.147D35881667587.148D51255084822.148D61949433775.147D61949433775.148K14554379081.147K14554379081.148L11075936116.140L14550820926.2  L17097338356.140L17305700853.4  L19431261630.4  L19687428440.140L19945316590.2  L21772258342.1  L23124392564.140L23459140778.158L23459159589.2  L23461302312.154L25465666776.140L27017364261.2  L28125529944.140L29025845208.140L29135309044.140L29532535949.3  L29762660275.140L31686769240.140L35161367924.140L35653441506.7  L36180999398.143L39172636981.0  L39280637297.0  L4054094806.2   L40834179097.153L41172169716.140L43059266230.141L43110360625.2  L43112818177.4  L43643308143.2  L43671330526.3  L43679985268.139L5065130740.140 L51284464315.159L52253708504.140L55563306247.3  L55720577396.140L58640675965.150L58641002120.153L59308632045.4  L59310645584.3  L60098763854.3  L60692334296.140L61601561944.140L61747685364.140L62042415875.140L62505661912.139L62562505368.3  L64270350808.140L65178513496.140L67758486644.140Q10042269183.163Q10333294960.157Q15643324129.143Q18133842458.158Q18133990681.158Q18135743526.155Q18365925601.144Q18378753154.144Q18696506101.157Q21800401414.157Q21879645826.144Q24389563138.144Q25160350961.157Q25513505925.146Q25513505925.147Q25664719138.157Q27584944865.144Q27907200258.144Q30415036802.144Q31226872993.157Q31271525473.144Q31396957457.157Q32655500769.144Q33918256002.144Q34224482651.155Q34420396856.158Q35016271767.157Q35715139857.157Q36425882626.144Q3830427394.144 Q39212284437.158Q39517585209.147Q39939554818.144Q41152393185.144Q4141071397.157 Q44648843873.144Q4533518817.144 Q49698585326.145Q49698585326.146Q50301287168.157Q51235796833.144Q52101170785.144Q53972118266.157Q55780705378.146Q55780705378.147Q58692335428.158Q59256763233.144Q59843137889.144Q60511257090.144Q60511567613.158Q61264001456.164Q61265740300.163Q61800308129.157Q63856323923.144Q63856323923.145Q6414620453.157 Q64253126389.157Q64333403626.145Q64766008503.158Q66375044744.164Q66522067074.144Q67327367611.163Q67528989526.147Q67528989526.148Q8222473558.164 Q9538787269.155 Q9843367298.143 00001M02j04Y06H08709Z0;=0<<0<=0=<0=H0=V0>U0>\0>`0?_0@h0A00B60C50C=0D<0E;0F:0FE0GD0HC0IB0IZ0JY0JZ0J[0Ja0Kb0La0Mk0N20N90NB0NJ0OI0PH0QG0RF0RN0SM0TR0UW0Uf0V20V<0W;0X:0Y90Z80[70[?0\>0]=0^<0_60_70`70a10ak0be0ce0dm0f10f20g:0hB0iF0jU0kd0ke0le0mm0o510:11:12413414<15616017517618>19F1:@1;W1<_1=_1=`1>`1?`1@n1B<1B=1C=1D=1EB1FY1H01I01J01K01L81M21Ml1Nf1Ng1Oj1Pm1R11R21S51So1Ti1V11Vk1XB1YY1Zi1[c1\kS1R3HIA1h2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb2BB3WB03TOP3ABD2HB5Ha_st5Hl_stS1R3HIA1h2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb2BB3WB03TOP3ABD2HB5Ha_st5Hl_stS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA2lo1b2wb2BB3WB04SLO25NEEDR3LOS2X03SPR2A03ABD2HB5Ha_st5Hl_stS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA2lo1b2wb2BB3WB04SLO25NEEDR3LOS2X03SPR2A03ABD2HB5Ha_st5Hl_stS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA2lo1b2wb2BB3WB04SLO25NEEDR3LOS2X03SPR2A03ABD2HB5Ha_st5Hl_stS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04SLO25NEEDR3ABD3OA42HB5Ha_st5Hl_stS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04SLO25NEEDR3ABD3OA42HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2sp2dA2lo1KS2sp2dA2lo3OA4S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2sp2loS2dAS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb2BB3WB02A03ABD3NRAS2dA3NRAS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb2BB3WB03NRA3ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2dA3NRAS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2dA3NRA2KNS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS1R3HIA1h2sp2lo3TOP4HTOPS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDSSS2dA1bS1R2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA2lo1b2wb2BB3WB04LOSP3ABDS2nX2dAS2nX2dAS2dA4LENAS1X2dA1DS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2dA3NA1S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb2BB3WB02A03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb2BB3WB02A03ABDS2dA2l04LENA2KNS2dA3EZ03NA1S1R2lo3LOSS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2dA3NA1S2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb3WB03ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABDS1R2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb2BB3WB04IMG'3ABDFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABDS1R2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb2BB3WB04IMG'3ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABD2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABD2HB5Ha_st5Hl_stFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABDS1R2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb2BB3WB05ALWF'3ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDS1R2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb2BB3WB05ALWF'3ABDFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABD2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABDFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb2BB3WB04SP643ABD2HB5Ha_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb2BB3WB04SP643ABD2HB5Ha_stFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABDS1R2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb2BB3WB05ALWF'3ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABD2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABD2HB5Ha_st5Hl_stS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb2BB3WB02A03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb2BB3WB03ABD2HBS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb2BB3WB03ABD2HBS1R2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb2BB3WB04IMG'3ABDFS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb2BB3WB03ABD2HBS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABD2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABD2HB5Ha_st5Hl_stS2ra2sp2s02s12s22s32s42s52s62s72s82s93s101X3xs02dA1b2wb2BB3WB02X03SPR3AAL2A03ABDS2ra2s02s12s22s32s42s52s62s72s82s93s103xs02dA1b2wb3WB03ABDS2ra2sp2s02s12s22s32s42s52s62s72s82s93s103xs02dA2lo1b2wb2BB3WB04LOSP3ABD". (* [comment removed for export] *)
+  #[using="IMG ZF COPY CALLOC AMC AMS C24H JC TPV UWX D0 BB WB1 WB0 NRA BUD BUDF SLO2 MA0 IA1 IDA"] Lemma mi_main : ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "Pt0,(:.&40.)Pt1,(:.&40.)Pt2,(:.&40.)Pa3,(:.&40.)Pa4,(:.&40.)Pa5,(:.&40.)Pa6,(:.&40.)Pa7,(:.&40.)Pt3,(:.&40.)Pt4,(:.&40.)Pt5,(:.&40.)Pt6,(:.&40.)P,(5<.$1.VR,VHIA,Vh,Vmo,)P,(5=.(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)VdA,)P,(4>.(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,)VdA,Vlo,(20.&40.Vsp,))P,(4?.(50.VR,)(51.$9.VLB,(52.VLF,))Vlo,(2:.VdA,)+10.)P,P,(12.$24.(25.VdA,)$26.)(4?.(50.VR,)(51.$9.VLB,(52.VLF,))Vlo,(48.VdA,)(14.+4.(16.VdA,)))P,(3>.$1.Vm,Vlo,(20.&40.Vsp,))P,(3=.$1.Vm,)P,(5>.$1.(2?.VR,)(4<.$1.VR,VHIA,Vh,)Vm,(2.VX,VsX,VnX,VpX,Vxs0,VpadX,VownX,))P,(5>.$1.(2?.VR,)(4<.$1.VR,VHIA,Vh,)Vm,VdA,)P,P,(12.$24.(25.VdA,)$53.)P,Pi,$6.P,(11.(15.=R1.)(32.R1.(14.+4.(16.VdA,))))(12.$54.(55.$1.(56.(18.(48.VdA,)R2.)))$57.)(12.$54.(58.(48.VdA,)(14.+4.(16.VdA,)))$57.)(5?.$1.$1<.(60.(1=.(1>.Vra,Vsp,Vgp,Vtp,R16.R15.R14.Vs0,Vs1,(1?.&40.VX,)(1?.&40.(2:.VdA,))Vwb,R13.R12.R11.R10.R?.Vs2,Vs3,Vs4,Vs5,Vs6,Vs7,Vs8,Vs9,Vs10,Vs11,R>.R=.R<.R;.)VF,(1?.&40.$61.)Vfc,(21.(:.&40.))Vm,(22.$1.))Vmo,))")
+(* [comment removed for export] *).
+  Proof.
+    intros until t6; intros HK SXA OA CRA CRAL ST MI OXA OAA IA2. unfold A_MPI_MUL_INT.
+    jc_open; dpose (jca_facts asegs R HIA h LB LF m dX sp lo 96 MI_FRAME_A JC) as (LO0 & LOSP & SP64 & ALO' & ACP' & X0 & X16 & XAL & DSX & LEN & NR);
+      cbn [md_addr md_n md_limbs] in X0, X16, XAL, DSX, LEN, NR.
+    basic_factsA h.
+    pose proof (hm_top asegs R HIA h LB LF m HH) as HTOP.
+    assert (SCS : crange (hcs asegs R HIA h) lo (bv_unsigned sp - lo)) by (eapply crange_sub; [exact SCS0| clear - LOS; lia| clear - TOP HTOP; lia]).
+    pose proof MA0 as [(CA0 & AAL & A0 & LENA & NRA' & OWNA) SGA]. unfold MPI_MAX_LIMBS in NRA'.
+    pose proof (rw_cells_bound _ _ _ _ CA0) as ABD. unfold mpi_cells in ABD. cbn [cells_size csize Nat.add] in ABD.
+    dpose OA as (OA1 & OA2 & OA3 & OA4 & OA5).
+    pose proof OXA as [OX _]. pose proof OAA as [OAs OAl]. cbn [md_addr] in OX.
+    pose proof SXA as SXA0. unfold mpd_sep in SXA. cbn [md_addr] in SXA.
+    pose proof (AIh_laws asegs R HIA h) as LAWS. pose proof (KF_kinv asegs R HIA h mo) as KINV.
+    apply (aevtA_enter asegs (KF asegs R HIA h mo) _ _ mo (conj HK (mo_frame_refl mo))).
+    pose proof (munch_refl [(lo, bv_unsigned sp)] m) as MU. pose proof (wmono_refl asegs m) as WM.
+    carve_frame 96%nat ST.
+    (* [comment removed for export] *)
+    do 13 zstep.
+    lazymatch goal with |- aevtA _ _ _ (MS _ _ _ _ _ ?mx _) => rename mx into m1 end.
+    change (rw_cells asegs m1 (bv_unsigned sp + -96) MI_FRAME_A) in FR.
+    pose proof ST as ST1.
+    pose proof (xa_start _ _ _ _ _ _ _ _ _ _ _ _ JC m1 HH MI ST1 FR OX MU WM) as J0.
+    (* [comment removed for export] *)
+    assert (MA1 : mpd_at asegs m1 LB dA).
+    { eapply mpd_at_munch_any; [exact MA0| exact MU| exact WM| cbn; split; [clear - OA4; lia| exact I]|].
+      intros ON. cbn. split; [destruct (OA5 ON) as [K|K]; clear - K; lia| exact I]. }
+    assert (WC0 : w_client (hcs asegs R HIA h) [(lo, bv_unsigned sp)]).
+    { unfold w_client. apply Forall_cons; [cbn [fst snd]; replace (lo + (bv_unsigned sp - lo)) with (bv_unsigned sp) by (clear; lia); exact SCS| apply Forall_nil]. }
+    pose proof OAs as OAs1.
+    assert (OAl1 : md_own dA = LStatic -> aobj asegs AL (hcs asegs R HIA h) m1 (md_p dA) (4 * md_n dA)) by (intros E; eapply (aobj_munch asegs AL _ CSOK); [exact WC0| exact MU| exact (OAl E)]).
+    pose proof (opnd_atA_mpd asegs R LF m LB (bv_unsigned sp) dA MA0) as MA0o. pose proof (opnd_atA_mpd asegs R LF m1 LB (bv_unsigned sp) dA MA1) as MA1o.
+    pose proof (xa_hm _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ J0) as HH1. cbn [app] in HH1.
+    assert (RA : RIDE h LB m1 dX).
+    { destruct (Z.eq_dec (md_addr dA) X) as [E|NE]; [left; exact E| right].
+      eapply mk_JBd; try eassumption. all: try (intros EO RO; exact (IA2 EO RO)).
+      all: destruct SXA as [E|D]; [exfalso; apply NE; rewrite <- E; reflexivity| clear - D; lia]. }
+    (* [comment removed for export] *)
+    pose proof (hm_abase asegs R HIA h LB LF m1 HH1) as AB.
+    pose proof (abase_got _ _ _ AB) as GOT. pose proof (abase_gsb _ _ _ AB) as GSB. rewrite (proj1 IMG') in GOT.
+    clear MU WM. pose proof (munch_refl ([] : list ivl) m1) as MU; pose proof (wmono_refl asegs m1) as WM.
+    (* [comment removed for export] *)
+    zstep. zstep. zstep. clear GOT GSB.
+    (* [comment removed for export] *)
+    zstep. zstep. zstep. shadow_chk OAs1 (md_addr dA + 10) 2.
+    (* [comment removed for export] *)
+    pose proof MA1 as [(CA1 & _) _]. unfold mpi_cells in CA1.
+    zstep.
+    replace (zx16 (Z_to_bv 64 (md_n dA))) with (Z_to_bv 64 (md_n dA))
+      by (unfold zx16; rewrite !unsigned_lit by (clear - NRA; lia); rewrite Z.mod_small by (clear - NRA; lia); reflexivity).
+    zstep. if_cases KN; zify_cond KN; rewrite ?Z.mod_small in KN by (clear - NRA; lia).
+    { (* [comment removed for export] *)
+      eapply mi_LSET; [exact J0| cbn [md_n]; clear; lia| | clear; lia| clear; lia].
+      unfold mpd_val. destruct (md_limbs dA) as [|w0 l0]; [cbn [limbs_val]; clear; lia| exfalso; cbn [length] in LENA; clear - LENA KN; lia]. }
+    assert (NA1 : 1 <= md_n dA) by (clear - KN NRA; lia). clear KN.
+    assert (AN : md_own dA <> LNull) by (intros C; rewrite C in OWNA; destruct OWNA as [_ EZ0]; clear - EZ0 NA1; lia).
+    (* [comment removed for export] *)
+    assert (EF : bytes_at asegs m1 (md_p dA) (u32s (md_limbs dA)) /\ 0 < md_p dA).
+    { pose proof MA1 as [(_ & _ & _ & _ & _ & OW1) _]. destruct (md_own dA) eqn:EOA; [exfalso; exact (AN eq_refl)| |].
+      - ddestruct OW1 as (_ & AIN & _ & AARR). split; [apply u32arr_ro; exact AARR|].
+        destruct (hm_apart asegs R HIA h LB LF m1 HH1) as [HBR _]. rewrite Forall_forall in HBR.
+        destruct (HBR _ ltac:(apply in_app_iff; left; exact AIN)) as (B0 & _). cbn [fst] in B0. exact B0.
+      - ddestruct OW1 as (_ & _ & AP0 & ABY & _). split; [exact ABY| exact AP0]. }
+    destruct EF as [EBY EP0].
+    assert (OEL : aobj asegs AL (hcs asegs R HIA h) m1 (md_p dA) (4 * md_n dA)).
+    { eapply (mpd_aobjA_limbs asegs R HIA h LB LF m1 dA HH1 MA1); [split; [exact OAs1| exact OAl1]| exact AN]. }
+    (* [comment removed for export] *)
+    zstep. zstep. zstep. zstep. zstep. zstep. rewrite !Z.shiftl_mul_pow2 by (clear; lia). change (2 ^ 2) with 4.
+    zstep. zstep. zstep.
+    replace (Z_to_bv 64 (md_p dA + md_n dA * 4 + -4)) with (Z_to_bv 64 (md_p dA + 4 * (md_n dA - 1))) by (f_equal; clear; lia).
+    eapply (mi_SCANLOOP (Z.to_nat (md_n dA))) with (r := md_n dA);
+      first [ exact J0 | exact RA | exact EBY | exact LENA | exact EP0 | exact OEL | reflexivity | (unfold lval; rewrite firstn_all2 by (clear - LENA; lia); reflexivity)
+            | cbn [md_n]; clear - NA1 NRA; lia | clear - NA1 NRA; lia
+            | first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "MAIN-SIDE-LEFT:" g end ] ].
+    all: first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "MAIN-LEFT:" g end ].
+  Qed.
+  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
+End WMV.
+
+Local Ltac2 Set LiaOrc.tbl := fun () => "0030>L23332287433.0L42243864624.5L59310760315.400000100>00KSS1R2sp2lo3SLOS1X2dA2D'3EAX". (* [comment removed for export] *)
+Theorem A_mpi_mul_int_vspec_c : ltac2:(CDefT.buildp (gd_tbl_A_mpi_mul_int_v_c24 ()) "PR,$62.PHIA,(63.$1.R1.)P,(64.(2?.R2.))P,(65.$1.R3.R2.$66.)P,(67.$1.R4.R3.$44.)P,(12.$6.(68.R5.)$69.)P,(12.$6.(6:.R6.)$6;.)P,(12.$6.(6<.R7.)$6=.)P,(15.=(6>.R8.))P,Ph,(7.$1.R9.R8.)PLB,(8.$9.)PLF,(8.$9.)Pm,P,(:.&40.)(;.(:.&8.))P,(59.$1.R=.R<.R4.R3.R2.R1.)(6?.$6.(70.(39.$6.$6.)$6.(71.$6.$6.)R4.))P,(11.(15.(72.(50.R:.))(73.(50.R:.)))(15.(74.(50.R:.))(75.(50.R:.))))P,Pa,$6.P,(12.$54.(55.$1.(56.R1.))$57.)P,(11.(15.=R2.)(32.R2.(76.+2.+40.)))(11.(15.(72.(50.R>.))R3.)(32.R3.(75.(50.R>.))))(77.$1.R<.R;.$61.)")
+(* [comment removed for export] *).
+Proof.
+  intros R HIA IMG ZF COPY CAL AMC AMS NEEDR HND DIMG ROIMG. unfold mpi_mul_int_stmtA_v.
+  intros until d. intros HH HK MX MA SXA NST OA CRA CRAL XW BB XLS ST LOS SLO TOP SPA TPV MI RAE OXA OAA IA1 IA2 BUD UW UWX UWA BUDF C24H WB1 WB0 -> ->.
+  destruct dX as [X sX nX pX xs0 padX ownX].
+  assert (JC : JCA asegs R HIA h LB LF m (mkMPD X sX nX pX xs0 padX ownX) sp lo 96 (aa_frame96 ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10)).
+  { constructor; try assumption; try reflexivity. clear; lia. clear - SLO NEEDR; lia. }
+  pose proof MA as [(_ & _ & _ & _ & NRA & _) _]. unfold MPI_MAX_LIMBS in NRA.
+  eapply mi_main with (b := b); try eassumption.
+  all: try (intros EAX; destruct SXA as [E|D']; [symmetry; exact E| exfalso; cbn [md_addr] in D', EAX; clear - D' EAX; lia]).
+  all: try exact (uw_obj_nonneg _ _ _ _ UWX).
+  all: first [ exact C24H | (lazymatch goal with |- context [cnt24] => idtac end; first [ clear - C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia | match goal with J : XJA _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |- _ => let CI := fresh "CI" in pose proof (xa_cnt24 _ _ _ _ _ _ _ _ _ _ _ _ JC _ _ _ _ _ _ _ J) as CI; clear - CI C24H; unfold C24_MUL_INT, C24_COPY_c in *; lia end ]) | match goal with |- ?g => idtac "SPEC-LEFT:" g end ].
+Qed.
+Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
+
+

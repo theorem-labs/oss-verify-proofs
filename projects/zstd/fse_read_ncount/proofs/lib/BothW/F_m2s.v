@@ -1,0 +1,70 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.LibA Require Import Shadow.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.LibA Require Import StepF.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.BothW Require Import BImg RtCells.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Common Require Import RunDraw.
+Import ListNotations.
+(* [comment removed for export] *)
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.LiaTuning.lia_orc_old ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.LiaTuning.lia_k12.   (* [comment removed for export] *)
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Step.slia ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.slia_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.flia ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.flia_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.zrange ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.zrange_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.zrange_nonneg ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.zrange_nonneg_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Step.solve_load ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.solve_load_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.word_eq_tac ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.word_eq_tac_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.simpl_arr_sizes ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.simpl_arr_sizes_k12.
+(* [comment removed for export] *)
+
+Open Scope bv_scope.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+Section CANSEC1. Context {rc : runConstT}.
+End CANSEC1.
+Ltac is_Zlit a := lazymatch a with Z0 => idtac | Zpos _ => idtac | Zneg _ => idtac end.
+Ltac fold_lits :=
+repeat match goal with
+| |- context [Z.b2z (?a <? ?b)%Z] => is_Zlit a; is_Zlit b; let v := eval vm_compute in (Z.b2z (a <? b)%Z) in change (Z.b2z (a <? b)%Z) with v
+| |- context [Z.b2z (?a =? ?b)%Z] => is_Zlit a; is_Zlit b; let v := eval vm_compute in (Z.b2z (a =? b)%Z) in change (Z.b2z (a =? b)%Z) with v
+| |- context [Z.add ?a ?b] => is_Zlit a; is_Zlit b; let v := eval vm_compute in (Z.add a b) in change (Z.add a b) with v
+| |- context [Z.lor ?a ?b] => is_Zlit a; is_Zlit b; let v := eval vm_compute in (Z.lor a b) in change (Z.lor a b) with v
+end.
+Section CANSEC2. Context {rc : runConstT}.
+Definition m2s_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+(t1 t2 t3 t4 t5 t6 : word) (a0 : word) (m : word -> option byte) : machine_state -> Prop :=
+fun ms' => exists t0 a1 a2 a3 a4 a5 a6 a7,
+ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 (shad (bv_unsigned a0))) a1 a2 a3 a4 a5 a6 a7
+s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (ret_pc ra) fc None m (seg_rom bsegs)
+/\ munch [] m m /\ wmono bsegs m m /\ mem_inv bsegs m.
+#[using="Type"] Lemma m2s_spec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+(F : bvmap 5 word) fc (m : word -> option byte),
+mem_inv bsegs m ->
+rt_got m -> rt_shbase m -> rt_layout m ->
+((bv_unsigned a0 + 1 <= KLOW) \/ (KHIGH <= bv_unsigned a0 /\ bv_unsigned a0 + 1 <= KEND))%Z ->
+rng_aimg RNG ->
+evtF bsegs RNG (m2s_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc t1 t2 t3 t4 t5 t6 a0 m)
+(MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x5455c) fc None m (seg_rom bsegs)).
+Proof.
+intros until m. intros MI GOT SHB LAY APP RI.
+pose proof (munch_refl [] m) as MU. pose proof (wmono_refl bsegs m) as WM.
+unfold KLOW, KHIGH, KEND in APP.
+Local Ltac2 Set LiaHints.tbl := fun () => "0050>28913119922.5659308628433.4659308628566.4759308628695.4859588178610.5600000100;00E00O00PSS3APP1K2K2S3APP1K2K3S3APP1K2K4S".
+do 5 zstep. fold_lits. zsimp. do 3 zstep.
+if_cases K; zify_cond K.
+-
+do 3 zstep. finish.
+- do 7 zstep. fold_lits. zsimp. zstep.
+if_cases K2; zify_cond K2. 2: { exfalso; lia. }
+do 6 zstep.
+if_cases K3; zify_cond K3. { exfalso; lia. }
+zstep.
+if_cases K4; zify_cond K4. { exfalso; lia. }
+do 3 zstep.
+finish.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+End CANSEC2.

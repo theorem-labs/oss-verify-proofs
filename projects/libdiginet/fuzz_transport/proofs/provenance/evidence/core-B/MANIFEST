@@ -1,0 +1,77 @@
+# MANIFEST of provenance/evidence/core-B (libdiginet/fuzz_transport image-B core relocation).
+# One line per file of this slice: <path relative to this directory> <kind> <sha256 of the file as committed> <role>.
+# This MANIFEST names every file of the slice except itself.
+B-ceg-const.patch input 9587e9c0c95f4b8ac1c63dbe2ea3a13fbae3618f5bba3ec279225d86629b564f run.sh --patch: B/YCeg.v lib_const_addr states the program's four own .rodata constant reads (cutceg-B.py)
+B-g-YCfn.patch input 9a4697881e31e3049866b6f2b6deb7883c8ba9ae7194f2c741ef2e3dcf1596e9 run.sh --patch (G): the slot takes the program-global ranges G, libreac/fuzz_pcap's G form
+B-g-YD1m.patch input e8d23e4e4a90d6ee37f2184cdaf1e392f995596f430448f34f1bd2c4ecb69a32 run.sh --patch (G): B/YD1m.v in libreac/fuzz_pcap's G form
+B-g-YD1p.patch input ee7e35af6406106e7eae9a42780860c37c9642e91c626842bc0a6c3a7ad7ff5c run.sh --patch (G): B/YD1p.v in libreac/fuzz_pcap's G form
+B-g-YD1q.patch input cdf6cb9106e45b2457a4e027ac9e45576b38a70151a31aafae80f3fd9aeb333b run.sh --patch (G): B/YD1q.v in libreac/fuzz_pcap's G form
+B-g-YD1r.patch input c7468066d9f1980a66967beef6c3bd335e335a318c4cad29726290d91ad4d948 run.sh --patch (G): B/YD1r.v in libreac/fuzz_pcap's G form
+B-g-YD1w.patch input b899f4c690fca792d16494efdcb05c1c1b78f3ba8a5c8b6c99800bb48acec669 run.sh --patch (G): B/YD1w.v in libreac/fuzz_pcap's G form
+B-g-YD2f.patch input e2d7f0fd661bfbb942274c77baad0f3a9b0271e964b905b1589d7542d975bda5 run.sh --patch (G): B/YD2f.v in libreac/fuzz_pcap's G form
+B-model-tags.patch input 109e1eae71b6ffc30c50560d86412bf7859fea67f41c0792e97eb6882c7f4d12 run.sh --patch: the 14 allocator-model labels written as the tags 1..14 in the seven image-B twins (cuttags-B.sh)
+B-noodr.patch input 9defbce9fce4b59219a168eb791473db7490b94d83437df85c3f69f491fb942f run.sh --patch: the donor's ODR-page hunks of B/YD1d.v, YD1e.v, YD1f.v, YD1g.v reversed (noodr-B.py)
+B-qcache.patch input c83a5fcd1a0ca570cdf431f6d21264cdb9e5de32bd74307d924edbab4f146c56 run.sh --patch: the donor's 0x32dd0 case split in B/YFgg.v and B/YFgh.v removed (qcsplit-B.py)
+B-sec-cells.patch input cb73a09df2566b242d113dd7db5871ec6096e600b266d7c85d11f08a63c59ba3 run.sh --patch: the comment above tfib_img_lo / tfib_img_hi in B/YB1w.v names the pinned image and its header values (SECHI-B.py)
+B-stops-more.patch input 34a7f5d948608a1cad4a80c5e583c9217cd4b06e93e3743ac50bc99a25269849 run.sh --patch: B/YB1w.v tfib_at_stops_more gains the 13th self-loop site 0x6effc (cutstops-B.py)
+B-tfib-wrong.patch input b39850d4f0d9d9e8c1203940deecd70583c3581b5b20981acc533fb9643c3183 run.sh --patch: the 91 cell pairs of B/YB1w.v that README.md and TFIB-TABLE-B.tsv give, deleted (the 79 of git diff 5ce997ee04cb af222741584e and the 12 that fail rule (f), paths B/YB1w.v)
+B-untime.patch input eee5c97c63d8f6b4b5003dacc3004bb1496be782a7d5165fe2f99b4df0ee2bb0 run.sh --patch: the timeout token and timeout-ok marker of shok_auto_with's first arm out of B/YCeg.v, as 3b8ca450689 in A/ACeg.v (cutuntime-B.sh)
+B-yd1g-arm.patch input 2c5953d03216d67eef1a1c9f528a86f60bb78d3319ac7657864140746976ed54 run.sh --patch: the dead alternation arm of B/YD1g.v tfib_layout_ok removed (cutarm-B.py)
+B-yd1q-shape.patch input b27dbc6177888517766ad72b1f88f8be520d004e8381f464e1e45d2cc9324d34 run.sh --patch: B/YD1q.v Requires A.TransportShape, not A.DecodeShape and YO08 (cutyd1q-B.py)
+B-yfet-cost.patch input 0ac1e361398543a64955f34157f4296779e0b8863e57a7dbc5293d83875249bf run.sh --patch: B/YFet.v's four quadratic membership blocks each replaced by one forallb check decided by vm_compute (cutfet-B.py)
+MANIFEST.md doc 1afb144867296e8970d649a4cd09ea28ed7d96894cab3b5cc260343ee8d2958f the role of each file, in prose
+PAC-B.md record f01c3e0d1048ac85ebe1a37523f33925220a289491c21f660b36e93a9b455192 port_addr_check 45b78aaa48c3 on run r17: run line, checker sha256, flag counts against 205a90fd19b8, the rows decided by hand (CZONE, B/YE7d.v:78)
+PAC-B.r17.flagged.tsv record 0f2478c676217befa873b27ca4351737e18bc02e3e5070959f2b342396723f0f port_addr_check 45b78aaa48c3 on run r17: the 670 flagged rows with the checker's columns
+README.md doc 13ed6f13e8ac78df0357b5a288ebdf821d10bca455202852a9d266cc95ca75ea the 91 cell pairs deleted from lib/B/YB1w.v; the driver files and TransportDriverB.v's Require; the 25 section cells and B-sec-cells.patch; the untimed arm of B/YCeg.v
+SECHI-B.out record d4f61fa12d29c28d7b882ce6e654f17885cd6920a6804cc208c93bf4250d706a SECHI-B.py's output: the twin's section headers, the comments checked, the verdict of each cell
+SECHI-B.py script 502ad44a8e017d4a2212e18c39e53c06a25fc01346501c2b3a59e6789d3d0fed every section _lo / _hi cell of image B against the twin's section headers; writes SECHI-B.tsv and B-sec-cells.patch
+SECHI-B.tsv record c2dddf1c044e00167a356619523d5f78ce4f754cafa6ab86f684d39a7b1d84ef SECHI-B.py's cells: 25 section cells, 0 FALSE, 14 MATCH-ABUTS, 11 MATCH-PADDED, each with readers and writer
+TFIB-TABLE-B.tsv record 1e6094399f360d0c414a905848ef04b42b3689425ace153ec8a649a79978c355 tfibtable-B.py's table at tree 5ce997ee04cb: 1211 function-table cells, each with its class (WRONG 182) and the alias screen
+applied-r17.txt record 43bec4d347a404448c300a206b5360e64a6766ca99d91655078ee634feb73ef5 apply-B.sh's list of the 388 files copied from run r17's stage-out into the lib
+apply-B.sh script 99aafabf3cefd58ee0266986463997c75eac74e30696440272381591b20354c2 copies a run's stage-out into LIB by port_core --apply's own rule and lists the copied paths
+cutarm-B.py script 21fdd10279b99be7e9a0888fa19ea58376dce914cb329c8a3205ea2bde6807ae writes B-yd1g-arm.patch from a stage-out
+cutceg-B.py script c89d3f11fd20a269162048eda5f29b2fc4d0b0003996a082d64f40b43e3ff21c writes B-ceg-const.patch from a stage-out
+cutfet-B.py script cec01192934c5d56ea5b37305a901824a26b10f38641ddc5578580ced4451d6f writes B-yfet-cost.patch from a stage-out
+cutstops-B.py script 4c3b5f4e894921103133da5bbffe001ac74d3976c04282595c9774ff0abc4696 writes B-stops-more.patch from a stage-out and lib/B/YB12.v
+cuttags-B.sh script 73d959694b3a788ac3fed8c177fb822981b6e2a847e5923b339b2d0a39d13719 writes B-model-tags.patch: model_tags.py e1cb9c4fb27f on the pre-tag lib with a run's stage-out applied, the lib/B diff
+cutuntime-B.sh script c3edc4d631c18ed5fcc4228aa18403e6530b2694f7be724779b8b27dc02b855d writes B-untime.patch: untime --commit on the tree the run is applied to, its lib/B change; the --report before and after
+cutyd1q-B.py script dae91a33d8489532d81f417dfa509b1288a4db1b0e2df671bd350fa11bc31478 writes B-yd1q-shape.patch from a stage-out
+files-B-core.txt input 0e9727f4d209f9ddd77d900ab1d12b64c019e438c01dc5f058e62ca48fd8dea5 run.sh --files: fuzz_decode's image-B core list (625 entries) less YI0j.v and YO08.v
+hypaudit-B.py script e7776986b269fd6543392aa1780d1e505f283ea0c43eb0bd20b7c3cd3396b0f0 every numeral in a hypothesis position of a run, paired with its donor line
+libreac-fuzz_decode.asan-ubsan.syms.txt input 80f1a09bec6071c635c16b040327a63e1b441ac5d72f16e4f92c1b0fc83cb7ef run.sh --old-syms: the donor twin's sized FUNC / OBJECT symbols (mksyms.py)
+measure-B.py script c645e70c6dc7b9b70d5956339b9a8d411fe80c553e600a437812be3d6f93364e the values of overrides-B.tsv and B-ceg-const.patch by role, on the donor (control) and the target
+mksyms.py script 04ff136094648364083bec5d9bf04c41ddb9c577cfd0998e6288db70246e0808 writes a symbol list (name addr size) from an unstripped twin
+model-tags-B.check.txt record 16f3b71402e7d98747f0d01e8c81145381e6c823a8a799a4df7be9d7481dd3a8 model_tags.py e1cb9c4fb27f --check in cuttags-B.sh on run r16: 61 code occurrences in 19 files
+model-tags-B.run.txt record 327b6b6adf1139a82d3d3376951b54a44ae02db5d60b20cb17ea5a808d8013c8 model_tags.py e1cb9c4fb27f's run in cuttags-B.sh on run r16: 61 written, 0 left
+no-stage-B.txt input 1a583dc7ce44f5de2bcd7c88bbecb5c4bb48e1990ee539d0c0d6286ab397c529 run.sh --no-stage list: the 19 image-B start-up files, and YI0a.v, YI17.v
+noodr-B.py script 3a64d082b41cbc72c382420b2afc46a2eb10da0e82cf20b29d8af601e48105ea writes B-noodr.patch from a stage-out and the donor's four edit diffs
+overrides-B.tsv input 4b5e1725b6c0d1bfa32925c85f0e344d068cc5c97bc758177d8f3216094a49fa run.sh --override rows (114), each with its measured reason
+pins-B.py script bfb477590da26220fb806c2260ef27740e7a78621087f7d39be8f2ee00837afa the pins and the donor inputs, each with its control
+placement-B.tsv input a1b4807555afbbdc26c133e826a8368b8192f688d192f7f97237b860cffc7869 run.sh --placement table: 12 modules, each with its placement and why
+qcsplit-B.py script c24510fc57fb30fbfaf67773dd03f07dd1b36b93fe11a115cf0e0dc9a1c42d9d computes the case-split rule on both images and writes B-qcache.patch
+run.sh script fe533e4ceebec17119b9521c1d39a18194372bc8ccab2fa0017da5306a248ad5 the relocation run: port_core onto fuzz_transport.asan-ubsan with this directory's inputs, pins checked
+symsweep-B.py script acd91017c55fa423ff6808cf92c3fb86606382af63b85880d81c0ff973653482 the donor-paired symbol + offset sweep of a run's relocated numerals, with its control
+tfibcells-B.py script 81831640acb4cf1e2a920d9e305ae29fffb2f3f52ba14a7f25a3b8878afd4098 the tfib_*_lo / tfib_*_hi section cells against the pin's section headers, with its control
+tfibtable-B.py script 161cb099e0dec1a0a19a75c7a447a1618b1a6d783bb516272b0700a7cedcc065 writes TFIB-TABLE-B.tsv: every tfib_A_ / tfib_D_ / tfib_E_ cell against the twin, by rules (a) to (f), with the alias screen
+untime-B.after.txt record f1a969e7b37421b2eb43b486262ef2f3e9cb490ca67cbf205e9c013bdfc0fd5b untime --report libdiginet/fuzz_transport after the rewrite: 0 sites
+untime-B.before.txt record f23445c9397c6b9ab550675b5c456a924e9887b6fbec6e31096b93c4862281a0 untime --report libdiginet/fuzz_transport before the rewrite: 1 site, B/YCeg.v:307 rule a
+cmpkit/SETTLE5.md record d93b5e88c905f755d20b0c816ace5e6e33c3486367a15d4f2007994a3cda3b41 cmpkit 86da41d3ef68 over the five runtime functions: kit verdict and settled verdict, the fresh review
+cmpkit/cmpkit-86da41d3ef68.SHA256SUMS input 86da41d3ef68abf071a843e599786e5eb0a6ed77c4a6b6eb645e7498bffbee60 the kit's 9 files with their sha256, checked before the run
+cmpkit/luitrace-B.D.out record 711ae8e011ec77ea0ee9f419fc55db185ba126f2e6fde73a9affc6a631023ef3 luitrace-B.py on the donor twin
+cmpkit/luitrace-B.T.out record 10825acc528ed7dabfea2632f3c2b1d9de2a130de767963945c1fb27e3cd24a2 luitrace-B.py on the target twin
+cmpkit/luitrace-B.py script a92f44f230af4dc429f18291fac223bd56245aac3a50713e8a26ce52605253eb the hand dataflow of the lui-built values strictcmp3 reports
+cmpkit/settle5-B.out record 1bea8def2f3a205c0ce7fd7607935621c15d9e80f985bda4e549642efe26dce6 settle5-B.py's output: every refused target with the kit verdict and the settled verdict
+cmpkit/settle5-B.py script 1cf32a06cc972097ef8bfb2aa3669ab72ac3f0b0652c463580b3e5b0851b46eb settles every target the kit's strictcmp3 refuses in the five functions
+rehearsal/eight-rows.r3.tsv record 66ae3b5175de4801be86aae75767de809c7e92738a7fc066bcf85ff2feb214d4 run r3: the 85 positions where the geometry rule wrote the donor's decimal 8 as 1560
+rehearsal/hypaudit.r3.out record 0fd4222c88b4dbc7ca9b6b3a6b8c6b591ea03d9e61d37578c2354101d74a6cfb hypaudit-B.py on run r3: 8455 listed, 117 differ from the donor
+rehearsal/measure-B.r1.out record a979a6f27b6a96b7ee40b4d69e6ef277001ae3e744e309fced2219191e642827 measure-B.py on run r1: the donor control and the target's values
+rehearsal/pins-B.pre.out record c34bd325a4d9452a6681a11bd5de75a52be86b19041c9a6144097addd6f0a8ef pins-B.py before the unit's harness.yaml carried the new pins
+rehearsal/r4-port_core.log record f7e5e10e968976a879466a842fe46136d49c6b28919e19926bc402b91e9ea42d port_core's summary lines of run r4
+rehearsal/symsweep.r1.out record a8331a0f4323b0e2faa9eec4f3e9c1ff961343b7472c29569d0479caa90db5f5 symsweep-B.py on run r1: 11 hits, the three at __asan::instance + 0x328 real
+run-r17/check.tsv record 9ca44d8f9fd8f6a961515bfc6b5963f89911e5c5e6b3fa79adaaa14c8ce51ade run r17: every numeral row (8358) with its status and class
+run-r17/fixed.tsv record c146a6766bfc1caa8c6bb19df18490c43fc88f5f2d93286d00ff42a93d348af1 run r17: the 740 values written over the rewrite step's
+run-r17/overrides.tsv record 0954800e7d3fb085aba8dda90f4700b6432d644a1bf6296eb8d5a638fba218ea run r17: each --override row with its status (112 applied, 2 NOT-FOUND)
+run-r17/patches.log record 698f328bd50cd207bb992712a6e44d886725845e275c9790693b4f300e21c9bc run r17: the output of each --patch
+run-r17/port_core.summary record 9fd3368e25e606623d63dc930f87ab0dd803cdfee25997b9f7f8aad982fb8e7b run r17: port_core's summary lines, status 3
+run-r17/required.tsv record e0e8e7339ba52d2abe726458b96609c292168741c1eacbb7a074eed0026bef8b run r17: the one require-unresolved row (B.TransportDrvGB)
+run-r17/review.tsv record 753bad1725d5bc20110c29b4d2bb2ecb3ec954b82589e626dfc662c7bdb305d6 run r17: the 280 rows for review

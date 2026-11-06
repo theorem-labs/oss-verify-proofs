@@ -1,17 +1,23 @@
 schema: oss-fuzz-theorems/harness/1
 project: curl
 harness: fuzz_bufq
-rocq: OssFuzzTheorems.curl.fuzz_bufq
+rocq: OSSVerify.curl.fuzz_bufq
 origin: upstream
-summary: 'Checks 3 properties (listed below); the first, an invariant: Before every operation Curl_bufq_len(&q)
-  must equal the harness byte count and Curl_bufq_is_empty must agree with it; after writes/slurp/sipn
-  the count must not exceed chunk_size * max_chunks.'
+summary: 'Runs a fuzzer-chosen sequence of operations on one curl byte queue (bufq) and checks it with 12 asserts
+  (listed below): the bytes read, peeked and passed follow the 0..255 pattern written, the queue''s length and
+  emptiness match the harness''s byte count before each operation, and the count stays within the capacity
+  after each write, slurp and sipn.'
 entry: LLVMFuzzerTestOneInput
 source:
-  files: []
+  files:
+  - source/fuzz_bufq.cc
+  - source/fuzz_bufq.h
+  from:
+    repository: https://github.com/curl/curl-fuzzer
+    commit: 4768d8de6f3209bb5dd761cd24ff7ccbfbb6b5b8
+    path: fuzz_bufq.cc
   modified: true
-  licence: NOASSERTION
-  pending: true
+  licence: curl
 library:
   repository: https://github.com/curl/curl
   commit: f190aa8ecea728e6ce7fb7a6250e03df4d4eaca5
@@ -21,12 +27,16 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
-- The harness source was modified for these builds; the modified copy is not in this release yet.
+- The harness source is modified for these builds. source/fuzz_bufq.cc is curl-fuzzer 4768d8de's fuzz_bufq.cc with
+  projects/curl/fuzz_bufq/proofs/provenance/recipe/targets/curl-fuzz_bufq/fuzz_bufq-no-syscalls.patch applied;
+  source/fuzz_bufq.h is unmodified.
+- The patch makes the harness's template buffer a constant table in read-only data, built at compile time, in place
+  of the mmap(MAP_SHARED) and mprotect(PROT_READ) buffer its first call made, and removes its signal(SIGPIPE, SIG_IGN).
 builds:
   plain:
     file: fuzz_bufq.plain
-    bytes: 266160
-    sha256: bc3e9f9332f1ded3d3484940f64bd3bd5a1a2d7badfd260a3b6f27c4bf8493aa
+    bytes: 317888
+    sha256: 042d5bb0014e3f2f3460f1d640e599ece0d8d844681aaf537b8b7db2361385c4
     segments:
     - 1
     - 1
@@ -48,13 +58,10 @@ builds:
     - name: libc.a
       kind: libc
       sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
-    - name: libunwind.a
-      kind: cxx-runtime
-      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
   ubsan:
     file: fuzz_bufq.ubsan
-    bytes: 266272
-    sha256: 6a91e03de37ebd302e3221970ffd94a2fb7992ff4a81d4c22576f683a71467b7
+    bytes: 317928
+    sha256: ab8a9b5886e5e6221c414d5a7eb8fcb974f2acd6bc5f2df937a1fe75c3564899
     segments:
     - 1
     - 1
@@ -76,13 +83,10 @@ builds:
     - name: libc.a
       kind: libc
       sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
-    - name: libunwind.a
-      kind: cxx-runtime
-      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
   asan:
     file: fuzz_bufq.asan
-    bytes: 768984
-    sha256: e189a745f1f8dcc622f034a6cfed7113d5877af2eca0b4e62361d31233cee104
+    bytes: 1093368
+    sha256: 787dbd38da8e23b964a94193cba299461a8eae36c30aa343b9aa7fe32908d625
     segments:
     - 1
     - 1
@@ -112,8 +116,8 @@ builds:
       sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
   asan-ubsan:
     file: fuzz_bufq.asan-ubsan
-    bytes: 766232
-    sha256: d1f567b4661ec92ff2d4a912851b1e61d6fcb94e597b69105bb2918ff71e372f
+    bytes: 1090584
+    sha256: 25ccbd40e13c021e6c9f2d9e343bf8f54ab26f84b9c9258a36b77973d946ff37
     segments:
     - 1
     - 1
@@ -142,7 +146,90 @@ builds:
       kind: cxx-runtime
       sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
 licence: NOASSERTION
-checks: []
+checks:
+- kind: reference-oracle
+  strength: partial
+  stops_with: assert
+  live: true
+  where: source/fuzz_bufq.cc:100
+  what: Each piece Curl_bufq_pass hands its writer callback, up to the bytes the pass still asks for, follows the
+    0..255 pattern from the next byte to read (upstream line 94). The pattern repeats every 256 bytes.
+- kind: invariant
+  strength: full
+  stops_with: assert
+  live: true
+  where: source/fuzz_bufq.cc:175
+  what: Before each operation, Curl_bufq_is_empty is true exactly when the harness's count of queued bytes is 0
+    (upstream line 169).
+- kind: invariant
+  strength: full
+  stops_with: assert
+  live: true
+  where: source/fuzz_bufq.cc:176
+  what: Before each operation, Curl_bufq_len equals the harness's count of queued bytes (upstream line 170).
+- kind: reference-oracle
+  strength: partial
+  stops_with: assert
+  live: true
+  where: source/fuzz_bufq.cc:194
+  what: The bytes Curl_bufq_peek returns follow the pattern from the next byte to read (upstream line 188). The
+    pattern repeats every 256 bytes.
+- kind: reference-oracle
+  strength: partial
+  stops_with: assert
+  live: true
+  where: source/fuzz_bufq.cc:209
+  what: The bytes Curl_bufq_peek_at returns at an offset follow the pattern from that offset (upstream line 203).
+    The pattern repeats every 256 bytes.
+- kind: invariant
+  strength: weak
+  stops_with: assert
+  live: false
+  where: source/fuzz_bufq.cc:225
+  what: 'Always true: buffer_bytes >= 0 after a read, where buffer_bytes is a size_t (upstream line 219). The
+    compiler removes it: its text is in none of the four binaries. No change to curl can make it fail.'
+- kind: reference-oracle
+  strength: partial
+  stops_with: assert
+  live: true
+  where: source/fuzz_bufq.cc:228
+  what: The bytes Curl_bufq_read copies out follow the pattern from the next byte to read (upstream line 222). The
+    pattern repeats every 256 bytes.
+- kind: invariant
+  strength: full
+  stops_with: assert
+  live: true
+  where: source/fuzz_bufq.cc:250
+  what: After Curl_bufq_slurp, the harness's count of queued bytes is at most chunk_size * max_chunks (upstream line
+    244).
+- kind: invariant
+  strength: full
+  stops_with: assert
+  live: true
+  where: source/fuzz_bufq.cc:264
+  what: After a successful Curl_bufq_sipn, the count is at most chunk_size * max_chunks (upstream line 258).
+- kind: invariant
+  strength: weak
+  stops_with: assert
+  live: false
+  where: source/fuzz_bufq.cc:286
+  what: 'Always true: buffer_bytes >= 0 after a pass, where buffer_bytes is a size_t (upstream line 280). The
+    compiler removes it: its text is in none of the four binaries. No change to curl can make it fail.'
+- kind: invariant
+  strength: full
+  stops_with: assert
+  live: true
+  where: source/fuzz_bufq.cc:311
+  what: After a successful Curl_bufq_write, the count is at most chunk_size * max_chunks (upstream line 305).
+- kind: invariant
+  strength: weak
+  stops_with: assert
+  live: unknown
+  where: source/fuzz_bufq.cc:320
+  what: 'Never reached: assert(false) in the switch default (upstream line 314), but op_type is in 0..8 and each
+    value has a case. The plain and ASan builds drop it; the UBSan and ASan+UBSan builds keep it, so it is neither
+    live nor compiled out in all four. No change to curl can make it fail.'
+failure_handlers: none
 distribution:
   file: Distribution.v
   argv0: fuzz_bufq
@@ -237,7 +324,7 @@ statements:
     exits:
     - 0
     - 2
-    binds_checks: false
+    binds_checks: true
     status: open
   asan_halts:
     kind: halts
@@ -247,7 +334,7 @@ statements:
     exits:
     - 0
     - 2
-    binds_checks: false
+    binds_checks: true
     status: open
   ubsan_halts:
     kind: halts
@@ -257,7 +344,7 @@ statements:
     exits:
     - 0
     - 2
-    binds_checks: false
+    binds_checks: true
     status: open
   asan_ubsan_halts:
     kind: halts
@@ -267,5 +354,5 @@ statements:
     exits:
     - 0
     - 2
-    binds_checks: false
+    binds_checks: true
     status: open

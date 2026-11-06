@@ -1,0 +1,4 @@
+# in/RA.full.tsv.gz: selected 188 moved SAME-GEOMETRY rows from a donor quantity (floor 0x100 on spans only)
+#   MIXED	SAME-GEOMETRY	12
+#   SAME	SAME-GEOMETRY	176
+#   class	MIXED	extent-to-next/8; segment; span; symbol-size/8	12

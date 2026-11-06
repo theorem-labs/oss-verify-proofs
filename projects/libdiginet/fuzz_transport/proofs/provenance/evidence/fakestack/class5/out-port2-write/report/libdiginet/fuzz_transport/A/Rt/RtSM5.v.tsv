@@ -1,0 +1,13 @@
+# alreloc per-numeral report: plugin-hostd/fuzz_command lib/A/Rt/RtSM5.v at 781f46bc05cd -> libdiginet/fuzz_transport asan lib/A/Rt/RtSM5.v: written
+# source image <AGENTS>/pau-pipeline/plugin-hostd/unstripped/fuzz_command/fuzz_command.asan; unit image <WORK>/target/unstripped/fuzz_transport/fuzz_transport.asan
+file:line	old	new	rule	old in source image	new in unit image
+A/Rt/RtSM5.v:9	0x309000	0x309000	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x176068	_ZN11__sanitizerL8theDepotE+0x17a728
+A/Rt/RtSM5.v:10	0x600000	0x600000	resolve (identity)	builtin_tls+0x1bb30	builtin_tls+0xc5d8
+A/Rt/RtSM5.v:12	0x3ff84	0x3ff84	resolve (identity)	__asan_stack_malloc_5	__asan_register_globals+0x74c
+A/Rt/RtSM5.v:13	0x509000	0x509000	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x376068	_ZN11__sanitizerL8theDepotE+0x37a728
+A/Rt/RtSM5.v:15	0x606000	0x606000	resolve (identity)	-	builtin_tls+0x125d8
+A/Rt/RtSM5.v:256	5279744	5279744	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x376068	_ZN11__sanitizerL8theDepotE+0x37a728
+A/Rt/RtSM5.v:261	5279744	5279744	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x376068	_ZN11__sanitizerL8theDepotE+0x37a728
+A/Rt/RtSM5.v:261	82496	82496	resolve (identity)	.rodata+0x3f60	.rodata+0x3f60
+A/Rt/RtSM5.v:296	1441792	1441792	resolve (identity)	_ZN11__sanitizerL9useCountsE+0x1d080	_ZN11__sanitizerL9useCountsE+0x21740
+A/Rt/RtSM5.v:298	1441792	1441792	resolve (identity)	_ZN11__sanitizerL9useCountsE+0x1d080	_ZN11__sanitizerL9useCountsE+0x21740

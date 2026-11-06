@@ -1,0 +1,61 @@
+# port_core 83f5203d2a2f run of record (run.sh, WORK = work-rec5, 2026-10-31 07:26Z-07:34Z): its summary lines, then every
+# check.tsv FAIL row with the reason it is expected, then the relocation tool's reviewer's four limits. Paths are run-relative (WORK = the run
+# directory). The two lines port_core prints for its map and remap steps (they name the host's paths) are left out.
+# command: REL=<release 83f5203d2a2f> DON=<fuzz_grant lib 25e3d17bdb50, normalised> PG=<fuzz_grant images> P=<fuzz_transport
+#   images> EV=<this directory> SYMS=<fuzz_grant.asan.syms.txt b46268790c46> LIB=<the unit's lib: T3r's cut start-up
+#   layer> GRANTB=<recipes 4f87de75d67 lib/B> sh run.sh WORK; exit status 3
+
+port_core: versions: port_core.py 83f5203d2a2f, resolve_code.py bf753845a1df, rvelf_strict.py 185b9a41fdb7, vendored asan-kit elfmap.py 4d51ec1c0069, vendored asan-kit remap.py 2d846496640d, vendored asan-kit rvelf.py 23152d9ca11c, gen_traces.py ce55b0dced47, adapted.patch 27bb43cc1436, symbol gate 309d2e5f7e01, gate scan_literals.py f0ec1e108ff8, gate inputs_used.py 3ed6c0c79f05, gate insn_targets.py efdf3951d4bb, gate qscan.py 7baa52331b8c
+port_core: provenance lines: 492
+port_core: staged 492 files (112 kept from the target, not staged: A/AB01.v A/AB03.v A/AB05.v A/AB12.v A/AB13.v A/AB1h.v A/AB1k.v A/AB1l.v A/AB1m.v A/AB1v.v A/ACej.v A/AD1k.v A/AD1y.v A/AD2i.v A/AD2j.v A/AE23.v A/AE37.v A/AE3i.v A/AF0m.v), 303 with moved addresses; 8266 ok, 724 values written over remap's (fixed.tsv), 59 hand values from --override; 234 for review (review.tsv); refused 61 (zero-shadow-range 26, data-no-rule 13, czone-unverified 9, shadow-unmapped 6, zero-shadow-derived 3, quotient-of-refused 3, derived-name 1); decimals in the image (decimals.tsv): derived 3, excluded 3465, kept 8, mapped 378; 0 uses of names the shipped kernel lacks (kernel-name-missing); core adaptations applied to 0 files (); 0 name rows to check (names.tsv); 2 target-changed files named by staged files (differs.tsv)
+port_core: generated set (the default, with the Y twins of its A/ entries): 24 entries: A/AB01.v A/AB03.v A/AB05.v A/AB12.v A/AB1m.v A/AD2i.v A/AD2j.v A/AD1k.v A/AB1v.v A/AB1h.v A/AB1k.v A/ACej.v YD2j.v YB01.v YB03.v YB05.v YB12.v YB1m.v YD2i.v YD1k.v YB1v.v YB1h.v YB1k.v YCej.v
+port_core: generated slots applied (the staged files the relocation pass handled as slots): 0: none
+port_core: FAIL rows: image-end 0, range 1, name-clash 0, kept-file-other-image 0, forbidden-module 1, kit-file-staged 0, dropped-name-used 0, files with refused markers 0; shadow windows recomputed 4; class map 1 (0=0x3d698, 1=0x3d80c, 2=0x3d99c, 4=0x3db38, 5=0x3dd04); function table: dropped 22 donor pairs, added 63 target functions; deleted 0 refused definitions with every use ()
+port_core: non-A files not relocated that state image constants (nonA.tsv): YA01.v (9), YA02.v (1), YA09.v (18), YG0f.v (1), YK0j.v (3), YK1a.v (4), YO0b.v (1)
+port_core: cell gate cellcheck: FAIL: # 1 cells (0 file-backed), 0 mismatch: FAIL (no cell lies in a file-backed range of this image)
+port_core: replace-pair / inverted-bound FAIL rows 0; patches applied 14, failed 0; adapted-hunk 0, as-twin-no-image-core 0, comment-edited 0, czone-bound 0, decode-check 0, kept-donor-address 0, kept-refused-definition 0, kernel-name-missing 0, label-moved 0, override-ambiguous 0, override-flagged 0, override-lost 0, partner-left 3, relation 0, rename 1, row-address 0, shared-image-bounds 0, slot-differs 0
+port_core: hashes recomputed 0; derived names written 1; relation results recomputed 0; region counts recomputed 50; zero-shadow range restatements refused 29; Required modules found nowhere 4 (required.tsv require-unresolved); cgif listings not staged 0; CZONE bound check against 0x800b663c (A/AF0m.v (the target lib's own)); decode check: statements 424 {'ok': 424}
+port_core: 4 values have no rule and no --override row (required.tsv); files: A/ACfn.v, A/AD1q.v, A/AD1r.v, A/AD1w.v
+port_core: symbol gate (gate.tsv): MISMATCH 12, explained 92, info 498, review 155 -- FAIL
+port_core: exit 3: FAIL rows 4, required.tsv 4 open rows (0 generated slots to regenerate, 4 values for --override rows) -- exit 3 takes precedence over 4
+run: hdrcheck: 492 files, 492 in form, 0 refused
+Reusable/YA09.v: 53 global redefinitions made Local (released lib/B/YA09.v needs 49); code equals released lib/B/YA09.v with all Local: True
+Reusable/YA0e.v: 72 global redefinitions made Local (released lib/B/YA0e.v needs 70); code equals released lib/B/YA0e.v with all Local: True
+run.sh rc=3
+
+# check.tsv FAIL rows (file, row) and why each is expected
+A/AFem.v	206	127070	127008	FAIL value-role-conflict (127070 is moved here as an address, but kept at A/AFem.v:128 as no address: an interval bound whose partner 2 is no address)		-	read+0x846f4	WHY: expected: the donor's TOT bound 127070 is a count, not an address (METHOD.md, item 3); the overrides.tsv rows A/AFem.v 128 and 206 write the derived count 127008, applied
+A/AD1q.v	0	-	-	FAIL forbidden-module Reusable/YI5c.v (import path: YI5c <- FrameSlotK <- TransportShape <- AD1q)				WHY: expected: ad1q-shape.patch gives AD1q the plain side's shape transport_shape (lib/A/TransportShape.v), whose kept_shape (lib/FrameSlotK.v) Requires the plain build's sink instances; D9's row with DecodeShape; no staged file Requires AD1q
+A/AFix.v	285	0x7fff8000	0x7fff8000	FAIL partner-left ([0x7fff8000, 0x80050000) -> [0x7fff8000, 0x800b9c00): the end moved, the start was left at the donor's value by no rule)		-	-	WHY: expected: the CZONE window [0x7fff8000, HI) keeps its start, the shadow offset 0x7fff8000; only HI is this unit's value 0x800b9c00 (METHOD.md, item 1)
+A/AFjb.v	284	0x7fff8000	0x7fff8000	FAIL partner-left ([0x7fff8000, 0x80050000) -> [0x7fff8000, 0x800b9c00): the end moved, the start was left at the donor's value by no rule)		-	-	WHY: expected: the CZONE window [0x7fff8000, HI) keeps its start, the shadow offset 0x7fff8000; only HI is this unit's value 0x800b9c00 (METHOD.md, item 1)
+A/AFju.v	576	0x7fff8000	0x7fff8000	FAIL partner-left ([0x7fff8000, 0x80050000) -> [0x7fff8000, 0x800b9c00): the end moved, the start was left at the donor's value by no rule)		-	-	WHY: expected: the CZONE window [0x7fff8000, HI) keeps its start, the shadow offset 0x7fff8000; only HI is this unit's value 0x800b9c00 (METHOD.md, item 1)
+A/AFjk.v	0	GrantSyms	TransportSyms	FAIL rename-new-undeclared (TransportSyms is used in 209 staged files and declared by none, staged or kept)				WHY: expected: TransportSyms is declared by LIB's A/AF0m.v, a start-up file the run does not stage (as D9's DecodeSyms and fuzz_frame's FrameSyms)
+A/AD1w.v	165	0x3fffff	0x3fffff	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x2795e7 is 0x407ebf in the target, written 0x3fffff)		-	read+0x35d6eb	WHY: reported, not blocking: a size kept as the donor's (no address role; records/decval.txt constant rows, records/compcheck.txt)
+A/AE30.v	1393	0x200000	0x200000	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x795e8 is 0x207ec0 in the target, written 0x200000)	bss	-	read+0x15d6ec	WHY: reported, not blocking: a size kept as the donor's (no address role; records/decval.txt constant rows, records/compcheck.txt)
+A/AE6k.v	1387	0x200000	0x200000	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x795e8 is 0x207ec0 in the target, written 0x200000)	bss	-	read+0x15d6ec	WHY: reported, not blocking: a size kept as the donor's (no address role; records/decval.txt constant rows, records/compcheck.txt)
+A/AFem.v	203	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5a2c0 is 0x107ec0 in the target, written 0x100000)	bss	-	read+0x5d6ec	WHY: reported, not blocking: a size kept as the donor's (no address role; records/decval.txt constant rows, records/compcheck.txt)
+A/AFem.v	204	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5a2c0 is 0x107ec0 in the target, written 0x100000)	bss	-	read+0x5d6ec	WHY: reported, not blocking: a size kept as the donor's (no address role; records/decval.txt constant rows, records/compcheck.txt)
+A/AFem.v	205	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5a2c0 is 0x107ec0 in the target, written 0x100000)	bss	-	read+0x5d6ec	WHY: reported, not blocking: a size kept as the donor's (no address role; records/decval.txt constant rows, records/compcheck.txt)
+A/AFf4.v	1044	0x160000	0x160000	FAIL data-symbol (_ZN11__sanitizerL9useCountsE+0x29600 is 0x167ec0 in the target, written 0x160000)		-	read+0xbd6ec	WHY: reported, not blocking: a size kept as the donor's (no address role; records/decval.txt constant rows, records/compcheck.txt)
+A/AFgi.v	108	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5a2c0 is 0x107ec0 in the target, written 0x100000)	bss	-	read+0x5d6ec	WHY: reported, not blocking: a size kept as the donor's (no address role; records/decval.txt constant rows, records/compcheck.txt)
+A/AFgm.v	96	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5a2c0 is 0x107ec0 in the target, written 0x100000)	bss	-	read+0x5d6ec	WHY: reported, not blocking: a size kept as the donor's (no address role; records/decval.txt constant rows, records/compcheck.txt)
+A/AFgn.v	71	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5a2c0 is 0x107ec0 in the target, written 0x100000)	bss	-	read+0x5d6ec	WHY: reported, not blocking: a size kept as the donor's (no address role; records/decval.txt constant rows, records/compcheck.txt)
+
+# required.tsv (4 rows): each a module the G patches Require that the unit writes itself (METHOD.md, Route; this tree's lib holds lib/A/W_journalG.v, TransportDriver.v, TransportDrvG.v)
+A/ACfn.v	0	-	require-unresolved: neither the stage nor the target lib holds A.W_journalG (line 17) (a module the unit writes itself: write it, or --patch the Require)
+A/AD1q.v	0	-	require-unresolved: neither the stage nor the target lib holds A.TransportDriver (line 22) (a module the unit writes itself: write it, or --patch the Require)
+A/AD1r.v	0	-	require-unresolved: neither the stage nor the target lib holds A.TransportDrvG (line 160) (a module the unit writes itself: write it, or --patch the Require)
+A/AD1w.v	0	-	require-unresolved: neither the stage nor the target lib holds A.W_journalG (line 13) (a module the unit writes itself: write it, or --patch the Require)
+
+# the relocation tool's reviewer's limits (relay 02:43Z), measured on WORK
+L1 --override of an interval delta: none; the interval-shaped rows are the two A/AFem.v TOT_range bounds (127070 -> 127008), whose partner 2 is no address (the run's own value-role-conflict row above)
+L2 hypothesis lines with a trailing comment in the 492 staged files: 0 (awk over WORK/stage-out/A/*.v Reusable/*.v: a line with a comment that starts with Hypothesis / Hypotheses / Variable / Variables / Context or holds 'Hypothesis ', 'Variable ', 'Context ')
+L3 check.tsv FAIL tot-bound rows: 0; interval-delta rows: 0
+L4 NO-FILE rows in WORK/overrides.tsv: 0 (59 rows: 37 applied, 22 removed by --patch: the A/AD1o.v / A/AD25.v zero-shadow rows bss-zero-range.patch rewrites)
+
+# the run's outputs
+WORK/stage tree cb94de36d3c6 (492 files); WORK/stage-out tree 3df9dee2b44d (492 files) (sha256 of the sorted `sha256sum` list of ./<path>)
+patches.log: 14 patches, 25 files patched, 0 lines with offset / fuzz / FAILED
+hdrcheck.log: hdrcheck: 492 files, 492 in form, 0 refused
+work-rec5 against work-rec4 (the run before it, 13 patches): stage-out differs in A/AFet.v only (afet-cost.patch); overrides.tsv, required.tsv, versions.txt byte-equal; check.tsv adds the row A/AFet.v 0 patched (--patch)
+this tree's lib: the 492 WORK/stage-out files equal its lib files byte for byte except lib/A/AB1w.v (491 equal, 1 differs: 160 unread function-table cells removed after the run, records/TFIB-WHOLE-TABLE.md); it also holds Reusable/YImgTop.v (e4d179ca9a5a), lib/A/W_journalG.v (afd0c41a8ecd), lib/A/TransportDrvG.v (d94ee4caa8e6), lib/A/TransportDriver.v (c5e7bbb55e4f)

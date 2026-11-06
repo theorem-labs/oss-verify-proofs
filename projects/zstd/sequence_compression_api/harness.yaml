@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zstd
 harness: sequence_compression_api
-rocq: OssFuzzTheorems.zstd.sequence_compression_api
+rocq: OSSVerify.zstd.sequence_compression_api
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, a round trip: Random valid sequence list (offsets
   within the window, optional 1 GiB raw dictionary, explicit or no block delimiters) -> the harness''s

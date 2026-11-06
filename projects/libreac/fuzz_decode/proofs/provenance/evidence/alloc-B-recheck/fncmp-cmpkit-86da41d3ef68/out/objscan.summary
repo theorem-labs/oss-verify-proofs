@@ -1,0 +1,38 @@
+#### cgif B: common_flags_dont_use 0x137da8 (288 B), lsan_flags 0x5c8640 (48 B), asan_flags_dont_use_directly 0xa3a78 (120 B), ubsan_flags 0x5c88b8 (24 B), OverrideFromActivationFlags 0x36f8c
+## round 1: watched ['common_flags_dont_use', 'lsan_flags', 'asan_flags_dont_use_directly', 'ubsan_flags', 'local CommonFlags (OverrideFromActivationFlags sp+0x20)']; return summaries (functions returning a pointer into a watched object): ['_ZN11__sanitizer10FlagParser11ParseStringEPKcS2_', '_ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc', '_ZN6__asan23InstallAtExitCheckLeaksEv']
+## round 2: watched ['common_flags_dont_use', 'lsan_flags', 'asan_flags_dont_use_directly', 'ubsan_flags', 'local CommonFlags (OverrideFromActivationFlags sp+0x20)', 'copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168', 'copy of copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168+0x0 at _ZN11__sanitizer21common_flags_dont_useE+0x0']; return summaries (functions returning a pointer into a watched object): ['_ZN11__sanitizer10FlagParser11ParseStringEPKcS2_', '_ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc', '_ZN6__asan23InstallAtExitCheckLeaksEv']
+cgif B: common_flags_dont_use field +0x18: 2 LOAD, 1 STORE
+cgif B: common_flags_dont_use field +0xc8: 0 LOAD, 1 STORE
+cgif B: common_flags_dont_use field +0xd0: 0 LOAD, 1 STORE
+cgif B: lsan_flags field +0x20: 1 LOAD, 1 STORE
+cgif B: asan_flags_dont_use_directly field +0x68: 1 LOAD, 1 STORE
+cgif B: ubsan_flags field +0x8: 1 LOAD, 1 STORE
+cgif B: local CommonFlags (OverrideFromActivationFlags sp+0x20) field +0x18: 0 LOAD, 5 STORE
+cgif B: local CommonFlags (OverrideFromActivationFlags sp+0x20) field +0xc8: 0 LOAD, 5 STORE
+cgif B: local CommonFlags (OverrideFromActivationFlags sp+0x20) field +0xd0: 0 LOAD, 5 STORE
+cgif B: copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168 field +0x18: 7 LOAD, 18 STORE
+cgif B: copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168 field +0xc8: 0 LOAD, 4 STORE
+cgif B: copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168 field +0xd0: 0 LOAD, 4 STORE
+cgif B: copy of copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168+0x0 at _ZN11__sanitizer21common_flags_dont_useE+0x0 field +0x18: 0 LOAD, 0 STORE
+cgif B: copy of copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168+0x0 at _ZN11__sanitizer21common_flags_dont_useE+0x0 field +0xc8: 0 LOAD, 0 STORE
+cgif B: copy of copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168+0x0 at _ZN11__sanitizer21common_flags_dont_useE+0x0 field +0xd0: 0 LOAD, 0 STORE
+cgif B: pointers into the watched objects leaving the code that forms them: 434
+#### decode B: common_flags_dont_use 0x132e68 (288 B), lsan_flags 0x5c3700 (48 B), asan_flags_dont_use_directly 0x9eb38 (120 B), ubsan_flags 0x5c3978 (24 B), OverrideFromActivationFlags 0x36db4
+## round 1: watched ['common_flags_dont_use', 'lsan_flags', 'asan_flags_dont_use_directly', 'ubsan_flags', 'local CommonFlags (OverrideFromActivationFlags sp+0x20)']; return summaries (functions returning a pointer into a watched object): ['_ZN11__sanitizer10FlagParser11ParseStringEPKcS2_', '_ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc', '_ZN6__asan23InstallAtExitCheckLeaksEv']
+## round 2: watched ['common_flags_dont_use', 'lsan_flags', 'asan_flags_dont_use_directly', 'ubsan_flags', 'local CommonFlags (OverrideFromActivationFlags sp+0x20)', 'copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168', 'copy of copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168+0x0 at _ZN11__sanitizer21common_flags_dont_useE+0x0']; return summaries (functions returning a pointer into a watched object): ['_ZN11__sanitizer10FlagParser11ParseStringEPKcS2_', '_ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc', '_ZN6__asan23InstallAtExitCheckLeaksEv']
+decode B: common_flags_dont_use field +0x18: 2 LOAD, 1 STORE
+decode B: common_flags_dont_use field +0xc8: 0 LOAD, 1 STORE
+decode B: common_flags_dont_use field +0xd0: 0 LOAD, 1 STORE
+decode B: lsan_flags field +0x20: 1 LOAD, 1 STORE
+decode B: asan_flags_dont_use_directly field +0x68: 1 LOAD, 1 STORE
+decode B: ubsan_flags field +0x8: 1 LOAD, 1 STORE
+decode B: local CommonFlags (OverrideFromActivationFlags sp+0x20) field +0x18: 0 LOAD, 5 STORE
+decode B: local CommonFlags (OverrideFromActivationFlags sp+0x20) field +0xc8: 0 LOAD, 5 STORE
+decode B: local CommonFlags (OverrideFromActivationFlags sp+0x20) field +0xd0: 0 LOAD, 5 STORE
+decode B: copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168 field +0x18: 7 LOAD, 18 STORE
+decode B: copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168 field +0xc8: 0 LOAD, 4 STORE
+decode B: copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168 field +0xd0: 0 LOAD, 4 STORE
+decode B: copy of copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168+0x0 at _ZN11__sanitizer21common_flags_dont_useE+0x0 field +0x18: 0 LOAD, 0 STORE
+decode B: copy of copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168+0x0 at _ZN11__sanitizer21common_flags_dont_useE+0x0 field +0xc8: 0 LOAD, 0 STORE
+decode B: copy of copy of common_flags_dont_use+0x0 at stack of _ZN6__asan15InitializeFlagsEv +0x168+0x0 at _ZN11__sanitizer21common_flags_dont_useE+0x0 field +0xd0: 0 LOAD, 0 STORE
+decode B: pointers into the watched objects leaving the code that forms them: 435

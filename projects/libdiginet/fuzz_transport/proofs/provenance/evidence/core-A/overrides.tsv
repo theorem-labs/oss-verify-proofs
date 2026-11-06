@@ -1,0 +1,87 @@
+# --override rows for libdiginet/fuzz_transport image A (asan, pin e89be137db17), DONOR = fuzz_grant released lib (normalised). Every value measured by measure_overrides.py, which reproduces fuzz_frame's rows exactly on fuzz_frame.asan (control).
+# file<TAB>donor-line (grant's)<TAB>old<TAB>new[<TAB>OCCURRENCE]. Each group carries its measured reason.
+# __stdout_FILE.buf in decimal: the 8 bytes at __stdout_FILE + 88 (0xa8738 + 88) of fuzz_transport.asan hold 0x614200; grant's hold 0x5f81e0
+A/AD1j.v	113	6259168	6373888
+A/AD1j.v	121	6259168	6373888	1,2
+A/AD1j.v	134	6259168	6373888
+A/AD1o.v	196	0x5f81e0	0x614200
+A/AD1o.v	248	0x5f81e0	0x614200
+A/AD1o.v	284	0x5f81e0	0x614200
+A/AE3m.v	34	0x5f81e0	0x614200
+A/AE3m.v	559	6259168	6373888
+A/AE3m.v	1069	6259168	6373888
+# __stderr_FILE.buf (FILE+88, __stderr_FILE 0xa8648); grant 0x5f81d8
+A/AD2f.v	147	0x5f81d8	0x6141f8
+A/AE2p.v	30	0x5f81d8	0x6141f8
+# __stdin_FILE.buf (FILE+88, __stdin_FILE 0xa8828); grant 0x5f85e8
+A/AD2f.v	147	0x5f85e8	0x614608
+# format 'cli: cannot open %s\n' 0x1d848: floor8(shadow(fmt))
+A/AE2t.v	63	0x7fffbaf0	0x7fffbb08
+# format 'cli: cannot open %s\n': floor8(shadow(fmt+len))+8
+A/AE2t.v	63	0x7fffbb00	0x7fffbb10
+# format 'cli: read error on %s\n' 0x1d85d: floor8(shadow(fmt))
+A/AE2u.v	63	0x7fffbaf8	0x7fffbb08
+# format 'cli: read error on %s\n': floor8(shadow(fmt+len))+8 (the shadow byte of its NUL at 0x1d873 is 0x7fffbb0e)
+A/AE2u.v	63	0x7fffbb00	0x7fffbb10
+# format 'cli: input >= %u bytes, refused\n' 0x1980a: floor8(shadow(fmt))
+A/AE2v.v	63	0x7fffb2e8	0x7fffb300
+# format 'cli: input >= %u bytes, refused\n' 0x1980a: floor8(shadow(fmt+len))+8
+A/AE2v.v	63	0x7fffb2f8	0x7fffb308
+# format 'usage: %s INPUT\n' 0x15897: floor8(shadow(fmt))
+A/AE2w.v	63	0x7fffab20	0x7fffab10
+# format 'usage: %s INPUT\n' 0x15897: floor8(shadow(fmt+len))+8
+A/AE2w.v	63	0x7fffab28	0x7fffab18
+# format '%d\n' 0x1481c (A/AE35.v's FMT): floor8(shadow(fmt))
+A/AE35.v	64	0x7fffa908	0x7fffa900
+# format '%d\n' 0x1481c: floor8(shadow(fmt+len))+8
+A/AE35.v	64	0x7fffa910	0x7fffa908
+# BUFEND in decimal: __stdout_FILE.buf + 1024 (buf_size at FILE+96)
+A/AE3m.v	1071	6260192	6374912
+# TFIB_BSS in decimal: 0xa9340 = __stop_asan_globals, the end of section asan_globals (grant's 0xa1460 by the same role)
+A/AD1o.v	80	0xa1460	0xa9340	1,2
+A/AD1o.v	83	0xa1460	0xa9340	1,2
+A/AD1o.v	90	0xa1460	0xa9340	1,2
+A/AD1o.v	97	0xa1460	0xa9340	1,2
+A/AD1o.v	98	0xa1460	0xa9340
+A/AD1o.v	99	660576	693056	1,2
+A/AD25.v	528	0xa1460	0xa9340	1,2
+A/AD25.v	531	0xa1460	0xa9340	1,2
+A/AD25.v	538	0xa1460	0xa9340	1,2
+A/AD25.v	545	0xa1460	0xa9340	1,2
+# image end in decimal: the last PT_LOAD of fuzz_transport.asan [0xa5d88, +0x56f648) ends 0x6153d0, page-rounded 0x616000
+A/AD1o.v	80	0x5fa000	0x616000
+A/AD1o.v	83	0x5fa000	0x616000
+A/AD1o.v	90	0x5fa000	0x616000
+A/AD1o.v	99	6266880	6381568
+A/AD25.v	528	0x5fa000	0x616000
+A/AD25.v	531	0x5fa000	0x616000
+A/AD25.v	538	0x5fa000	0x616000
+# .bss+0x20 (= __do_init.__object+16, grant the same)
+A/AD1o.v	86	0xa14a0	0xa9360
+A/AD1o.v	92	0xa14a0	0xa9360
+A/AD1o.v	94	0xa14a0	0xa9360
+# 0xa9360 / 8
+A/AD1o.v	94	82580	86636
+# 0xa9340 / 8
+A/AD1o.v	99	82572	86632
+# (0x616000 - 0xa9340) / 8
+A/AD1o.v	99	700788	711064
+# tfib_at_rw_len: the length of the last PT_LOAD's page range [tfib_at_rw_lo, tfib_at_img_hi): fuzz_transport 0x616000 - 0xa5000 = 0x571000 (grant 0x5fa000 - 0x9e000 = 0x55c000)
+A/AB1w.v	599	0x55c000	0x571000
+# AD1g static_img_chk: image start 0x10000 (first PT_LOAD of fuzz_transport.asan)
+A/AD1g.v	1276	0x10000	0x10000	1,2
+# AF0l: no rows (as fuzz_frame); to re-check on this image: __asan_memset and the bcmp trampoline __wrap_bcmp linked, class map fuzz_transport's own __asan_stack_malloc_* written by the tool
+# CZONE shadow bound: 0x800b9c00 = kLowShadowBeg 0x7fff7000 + IMG_TOP 0x616000 / 8. MEASURED on the build's own goal (A/AFju.v:663, CZ_untouched case 2): CZ's shadow part must stay below the least possible start of the secondary map's shadow SMv, and map_facts SM1 gives kLowShadowBeg + IMG_TOP / 8 <= SMv; the shadow of the image top, 0x800bac00, is 4096 higher and leaves a window where WINM can hold, so ~WIN a fails there. The bound is still above the unit's highest constant shadow cell end 0x800b663c (40 asan_globals descriptors of e89be137db17); the donor's 0x80050000 is below it and fails port_core's czone-bound check.
+A/AFhn.v	419	0x80050000	0x800b9c00	kLowShadowBeg + IMG_TOP / 8 = 0x7fff7000 + 0x616000 / 8: the least value of the secondary map's shadow start SMv (A/AFjm.v SMv := SHADOW_OFF + mb / 8; map_facts SM1 : kLowShadowBeg + IMG_TOP / 8 <= SMv), so CZ stays disjoint from the map window WINM; and above the end of the unit's highest constant shadow cell 0x800b663c (A/AF0m.v Tfib_const_shadow)
+A/AFix.v	285	0x80050000	0x800b9c00	kLowShadowBeg + IMG_TOP / 8 = 0x7fff7000 + 0x616000 / 8: the least value of the secondary map's shadow start SMv (A/AFjm.v SMv := SHADOW_OFF + mb / 8; map_facts SM1 : kLowShadowBeg + IMG_TOP / 8 <= SMv), so CZ stays disjoint from the map window WINM; and above the end of the unit's highest constant shadow cell 0x800b663c (A/AF0m.v Tfib_const_shadow)
+A/AFix.v	289	0x80050000	0x800b9c00	kLowShadowBeg + IMG_TOP / 8 = 0x7fff7000 + 0x616000 / 8: the least value of the secondary map's shadow start SMv (A/AFjm.v SMv := SHADOW_OFF + mb / 8; map_facts SM1 : kLowShadowBeg + IMG_TOP / 8 <= SMv), so CZ stays disjoint from the map window WINM; and above the end of the unit's highest constant shadow cell 0x800b663c (A/AF0m.v Tfib_const_shadow)
+A/AFjb.v	284	0x80050000	0x800b9c00	kLowShadowBeg + IMG_TOP / 8 = 0x7fff7000 + 0x616000 / 8: the least value of the secondary map's shadow start SMv (A/AFjm.v SMv := SHADOW_OFF + mb / 8; map_facts SM1 : kLowShadowBeg + IMG_TOP / 8 <= SMv), so CZ stays disjoint from the map window WINM; and above the end of the unit's highest constant shadow cell 0x800b663c (A/AF0m.v Tfib_const_shadow)
+A/AFjb.v	288	0x80050000	0x800b9c00	kLowShadowBeg + IMG_TOP / 8 = 0x7fff7000 + 0x616000 / 8: the least value of the secondary map's shadow start SMv (A/AFjm.v SMv := SHADOW_OFF + mb / 8; map_facts SM1 : kLowShadowBeg + IMG_TOP / 8 <= SMv), so CZ stays disjoint from the map window WINM; and above the end of the unit's highest constant shadow cell 0x800b663c (A/AF0m.v Tfib_const_shadow)
+A/AFju.v	576	0x80050000	0x800b9c00	kLowShadowBeg + IMG_TOP / 8 = 0x7fff7000 + 0x616000 / 8: the least value of the secondary map's shadow start SMv (A/AFjm.v SMv := SHADOW_OFF + mb / 8; map_facts SM1 : kLowShadowBeg + IMG_TOP / 8 <= SMv), so CZ stays disjoint from the map window WINM; and above the end of the unit's highest constant shadow cell 0x800b663c (A/AF0m.v Tfib_const_shadow)
+A/AFju.v	586	0x80050000	0x800b9c00	kLowShadowBeg + IMG_TOP / 8 = 0x7fff7000 + 0x616000 / 8: the least value of the secondary map's shadow start SMv (A/AFjm.v SMv := SHADOW_OFF + mb / 8; map_facts SM1 : kLowShadowBeg + IMG_TOP / 8 <= SMv), so CZ stays disjoint from the map window WINM; and above the end of the unit's highest constant shadow cell 0x800b663c (A/AF0m.v Tfib_const_shadow)
+A/AFkm.v	1305	0x80050000	0x800b9c00	kLowShadowBeg + IMG_TOP / 8 = 0x7fff7000 + 0x616000 / 8: the least value of the secondary map's shadow start SMv (A/AFjm.v SMv := SHADOW_OFF + mb / 8; map_facts SM1 : kLowShadowBeg + IMG_TOP / 8 <= SMv), so CZ stays disjoint from the map window WINM; and above the end of the unit's highest constant shadow cell 0x800b663c (A/AF0m.v Tfib_const_shadow)
+A/AFkz.v	898	0x80050000	0x800b9c00	kLowShadowBeg + IMG_TOP / 8 = 0x7fff7000 + 0x616000 / 8: the least value of the secondary map's shadow start SMv (A/AFjm.v SMv := SHADOW_OFF + mb / 8; map_facts SM1 : kLowShadowBeg + IMG_TOP / 8 <= SMv), so CZ stays disjoint from the map window WINM; and above the end of the unit's highest constant shadow cell 0x800b663c (A/AF0m.v Tfib_const_shadow)
+# R_A3 length: fuzz_transport's R_A3 = [0xa8600, 0xa8940) = (__stderr_FILE - 0x48) .. __start_asan_globals, 832 bytes = grant's 832 by the same two roles, so no row (fuzz_frame's 840 rows dropped)
+# AFem.v TOT bound (the libreac owner, 21:05Z: class found on fuzz_identity): TOT = length (ly_tr0 ly) + 1 + depot_frames S, with length (ly_tr0 ly) <= 31 (YG0f.v lo_tr0) and depot_frames <= 31 * DEPOT_MAX = 31 * 4096 (A/AFem.v depot_frames_bound, YG01.v DEPOT_MAX); so TOT <= 31 + 1 + 126976 = 127008, a count. The donor's 127070 is that count moved by a code-address shift in an earlier relocation (a weaker bound, still true); the derived count is written.
+A/AFem.v	128	127070	127008	derived count 31 + 1 + 31 * 4096: TOT := length (ly_tr0 ly) + 1 + depot_frames S (A/AFem.v:99 of the core), length (ly_tr0 ly) <= 31 (Reusable/YG0f.v:326 lo_tr0), depot_frames <= 31 * length d (A/AFem.v:39-40 depot_frames_bound), DEPOT_MAX := 4096 (Reusable/YG01.v:142); not an address
+A/AFem.v	206	127070	127008	derived count 31 + 1 + 31 * 4096: TOT := length (ly_tr0 ly) + 1 + depot_frames S (A/AFem.v:99 of the core), length (ly_tr0 ly) <= 31 (Reusable/YG0f.v:326 lo_tr0), depot_frames <= 31 * length d (A/AFem.v:39-40 depot_frames_bound), DEPOT_MAX := 4096 (Reusable/YG01.v:142); not an address

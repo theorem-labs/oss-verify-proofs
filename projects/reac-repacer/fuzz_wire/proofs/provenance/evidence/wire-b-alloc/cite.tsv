@@ -1,0 +1,96 @@
+# kind	name	register	type	name / meaning	citation (llvm-project llvmorg-20.1.8, compiler-rt/lib/<path>, or musl 1.2.5)
+arg	_ZN11__sanitizer10ProtectGapEmmmm	a3	uptr	zero_base_max_shadow_start	sanitizer_common/sanitizer_common.h:160 `uptr zero_base_max_shadow_start` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer10StackTrace12GetCurrentPcEv	a0	this *	this	sanitizer_common/sanitizer_stacktrace.h:78 (the implicit object parameter) (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer10UnmapOrDieEPvmb	a0	void *	addr	sanitizer_common/sanitizer_common.h:95 `void * addr` (4 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer10UnmapOrDieEPvmb	a1	uptr	size	sanitizer_common/sanitizer_common.h:95 `uptr size` (4 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer11CheckFailedEPKciS1_yy	a3	u64	v1	sanitizer_common/sanitizer_common.h:333 `u64 v1` (3 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer11CheckFailedEPKciS1_yy	a4	u64	v2	sanitizer_common/sanitizer_common.h:333 `u64 v2` (3 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer11WriteToFileEiPKvmPmPi	a1	const void *	buff	sanitizer_common/sanitizer_file.h:66 `const void * buff` (3 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer13InternalAllocEmPNS_30SizeClassAllocator32LocalCacheINS_20SizeClassAllocator32INS_4AP32EEEEEm	a0	uptr	size	sanitizer_common/sanitizer_allocator_internal.h:42 `uptr size` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer13internal_mmapEPvmiiiy	a0	void *	addr	sanitizer_common/sanitizer_posix.h:40 `void * addr` (5 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer13internal_mmapEPvmiiiy	a1	uptr	length	sanitizer_common/sanitizer_posix.h:40 `uptr length` (5 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer13internal_mmapEPvmiiiy	a3	int	flags	sanitizer_common/sanitizer_posix.h:40 `int flags` (5 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer13internal_openEPKcij	a1	int	flags	sanitizer_common/sanitizer_posix.h:30 `int flags` (5 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer13internal_readEiPvm	a0	fd_t	fd	sanitizer_common/sanitizer_posix.h:36 `fd_t fd` (4 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer14RunMallocHooksEPvm	a0	void *	ptr	sanitizer_common/sanitizer_common.h:179 `void * ptr` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer14RunMallocHooksEPvm	a1	uptr	size	sanitizer_common/sanitizer_common.h:179 `uptr size` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer14internal_closeEi	a0	fd_t	fd	sanitizer_common/sanitizer_posix.h:34 `fd_t fd` (4 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer14internal_prctlEimmmm	a0	int	option	sanitizer_common/sanitizer_linux.h:72 `int option` (3 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer14internal_writeEiPKvm	a0	fd_t	fd	sanitizer_common/sanitizer_posix.h:37 `fd_t fd` (4 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer15internal_munmapEPvm	a1	uptr	length	sanitizer_common/sanitizer_posix.h:42 `uptr length` (4 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer15internal_ptraceEiiPvS0_	a3	void *	data	sanitizer_common/sanitizer_posix.h:65 `void * data` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer15internal_strlenEPKc	a0	const char *	s	sanitizer_common/sanitizer_libc.h:59 `const char * s` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer15internal_usleepEy	a0	u64	useconds	sanitizer_common/sanitizer_libc.h:93 `u64 useconds` (6 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer16MprotectReadOnlyEmm	a1	uptr	size	sanitizer_common/sanitizer_common.h:118 `uptr size` (4 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer16ReadFileToBufferEPKcPPcPmS4_mPi	a4	uptr	max_len	sanitizer_common/sanitizer_common.h:781 `uptr max_len` (3 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer16ReadFileToVectorEPKcPNS_24InternalMmapVectorNoCtorIcLb0EEEmPi	a2	uptr	max_len	sanitizer_common/sanitizer_common.h:768 `uptr max_len` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer16internal_strlcatEPcPKcm	a0	char *	dst	sanitizer_common/sanitizer_libc.h:60 `char * dst` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer16internal_strlcatEPcPKcm	a2	uptr	maxlen	sanitizer_common/sanitizer_libc.h:60 `uptr maxlen` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer16internal_strncatEPcPKcm	a2	uptr	n	sanitizer_common/sanitizer_libc.h:61 `uptr n` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer16internal_strncpyEPcPKcm	a2	uptr	n	sanitizer_common/sanitizer_libc.h:64 `uptr n` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer16internal_waitpidEiPii	a2	int	options	sanitizer_common/sanitizer_posix.h:67 `int options` (4 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer17DecreaseTotalMmapEm	a0	uptr	size	sanitizer_common/sanitizer_common.h:173 `uptr size` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer17LowLevelAllocator8AllocateEm	a1	uptr	size	sanitizer_common/sanitizer_common.h:219 `uptr size`
+arg	_ZN11__sanitizer17internal_snprintfEPcmPKcz	a0	char *	buffer	sanitizer_common/sanitizer_libc.h:70 `char * buffer` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer17internal_snprintfEPcmPKcz	a1	uptr	length	sanitizer_common/sanitizer_libc.h:70 `uptr length` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj	a0	this *	this	sanitizer_common/sanitizer_stacktrace.h:143 (the implicit object parameter)
+arg	_ZN11__sanitizer18MmapNoReserveOrDieEmPKc	a0	uptr	size	sanitizer_common/sanitizer_common.h:103 `uptr size` (4 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer19MemoryMappingLayout4NextEPNS_19MemoryMappedSegmentE	a0	this *	this	sanitizer_common/sanitizer_procmaps.h:72 (the implicit object parameter) (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer19MemoryMappingLayoutC1Eb/_ZN11__sanitizer19MemoryMappingLayoutC2Eb	a0	this *	this	sanitizer_common/sanitizer_procmaps.h:82 (the implicit object parameter)
+arg	_ZN11__sanitizer20ReservedAddressRange11InitAlignedEmmPKc	a1	uptr	size	sanitizer_common/sanitizer_common.h:185 `uptr size`
+arg	_ZN11__sanitizer20ReservedAddressRange11InitAlignedEmmPKc	a2	uptr	align	sanitizer_common/sanitizer_common.h:185 `uptr align`
+arg	_ZN11__sanitizer20ReservedAddressRange3MapEmmPKc	a2	uptr	size	sanitizer_common/sanitizer_common.h:186 `uptr size`
+arg	_ZN11__sanitizer20ReservedAddressRange4InitEmPKcm	a1	uptr	size	sanitizer_common/sanitizer_common.h:184 `uptr size`
+arg	_ZN11__sanitizer20ReservedAddressRange8MapOrDieEmmPKc	a2	uptr	size	sanitizer_common/sanitizer_common.h:187 `uptr size`
+arg	_ZN11__sanitizer22SubstituteForFlagValueEPKcPcm	a2	uptr	out_size	sanitizer_common/sanitizer_flags.h:54 `uptr out_size` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer23GetModuleAndOffsetForPcEmPcmPm	a2	uptr	module_name_len	sanitizer_common/sanitizer_common.h:785 `uptr module_name_len` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer23ReportMmapFailureAndDieEmPKcS1_ib	a3	error_t	err	sanitizer_common/sanitizer_common.h:334 `error_t err` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer25ReportMunmapFailureAndDieEPvmib	a1	uptr	size	sanitizer_common/sanitizer_common.h:337 `uptr size` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer25ReportMunmapFailureAndDieEPvmib	a2	error_t	err	sanitizer_common/sanitizer_common.h:337 `error_t err` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer28MmapAlignedOrDieOnFatalErrorEmmPKc	a0	uptr	size	sanitizer_common/sanitizer_common.h:113 `uptr size` (4 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer28MmapAlignedOrDieOnFatalErrorEmmPKc	a1	uptr	alignment	sanitizer_common/sanitizer_common.h:113 `uptr alignment` (4 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer8OpenFileEPKcNS_14FileAccessModeEPi	a0	const char *	filename	sanitizer_common/sanitizer_file.h:59 `const char * filename` (3 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer9MmapNamedEPvmiiPKc	a3	int	flags	sanitizer_common/sanitizer_posix.h:117 `int flags` (2 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer9MmapOrDieEmPKcb	a0	uptr	size	sanitizer_common/sanitizer_common.h:90 `uptr size` (4 declarations match; the first by header, then file name)
+arg	_ZN11__sanitizer9Semaphore4PostEj	a0	this *	this	sanitizer_common/sanitizer_mutex.h:73 (the implicit object parameter)
+arg	_ZN11__sanitizer9Semaphore4PostEj	a1	u32	count	sanitizer_common/sanitizer_mutex.h:73 `u32 count`
+arg	_ZN11__sanitizer9Semaphore4WaitEv	a0	this *	this	sanitizer_common/sanitizer_mutex.h:72 (the implicit object parameter)
+arg	_ZN11__sanitizerL11SetNonBlockEi	a0	int	fd	sanitizer_common/sanitizer_posix_libcdep.cpp:291 `int fd`
+arg	_ZN6__asan12PoisonShadowEmmh	a0	uptr	addr	asan/asan_poisoning.h:27 `uptr addr` (2 declarations match; the first by header, then file name)
+arg	_ZN6__asan12PoisonShadowEmmh	a1	uptr	size	asan/asan_poisoning.h:27 `uptr size` (2 declarations match; the first by header, then file name)
+arg	_ZN6__asan17ReportOutOfMemoryEmPN11__sanitizer18BufferedStackTraceE	a0	uptr	requested_size	asan/asan_report.h:77 `uptr requested_size` (2 declarations match; the first by header, then file name)
+arg	_ZN6__asan26ReportAllocationSizeTooBigEmmmPN11__sanitizer18BufferedStackTraceE	a0	uptr	user_size	asan/asan_report.h:74 `uptr user_size` (2 declarations match; the first by header, then file name)
+arg	_ZN6__asan26ReportAllocationSizeTooBigEmmmPN11__sanitizer18BufferedStackTraceE	a1	uptr	total_size	asan/asan_report.h:74 `uptr total_size` (2 declarations match; the first by header, then file name)
+arg	_ZN6__asan29FlushUnneededASanShadowMemoryEmm	a1	uptr	size	asan/asan_poisoning.h:96 `uptr size` (5 declarations match; the first by header, then file name)
+arg	_ZN6__asanL10RZSize2LogEj	a0	u32	rz_size	asan/asan_allocator.cpp:46 `u32 rz_size`
+arg	_ZNK11__sanitizer10StackTrace5PrintEv	a0	this *	this	sanitizer_common/sanitizer_stacktrace.h:58 (the implicit object parameter)
+arg	_ZNK11__sanitizer11TwoLevelMapINS_14StackDepotNodeELy32768ELy65536ENS_21LocalAddressSpaceViewEE6CreateEm	a0	uptr	idx	sanitizer_common/sanitizer_flat_map.h:143 `uptr idx`
+arg	_ZNK11__sanitizer11TwoLevelMapIhLy32768ELy4096ENS_21LocalAddressSpaceViewEE6CreateEm	a0	uptr	idx	sanitizer_common/sanitizer_flat_map.h:143 `uptr idx`
+ret	_ZN11__sanitizer10FileExistsEPKc	-	bool		sanitizer_common/sanitizer_file.h:80 `bool ...(...)` (4 declarations match)
+ret	_ZN11__sanitizer10ReportFile17ReopenIfNecessaryEv	-	void		sanitizer_common/sanitizer_file.h:48 `void ...(...)`
+ret	_ZN11__sanitizer10StackStore9BlockInfo4PackENS0_11CompressionEPS0_	-	uptr		sanitizer_common/sanitizer_stack_store.h:108 `uptr ...(...)`
+ret	_ZN11__sanitizer10StackStore9UnlockAllEv	-	void		sanitizer_common/sanitizer_stack_store.h:50 `void ...(...)`
+ret	_ZN11__sanitizer11AddrHashMapI25CommonInterceptorMetadataLm31051EE7acquireEPNS2_6HandleE	-	void		sanitizer_common/sanitizer_addrhashmap.h:107 `void ...(...)` (2 declarations match)
+ret	_ZN11__sanitizer11AddrHashMapI25CommonInterceptorMetadataLm31051EE7releaseEPNS2_6HandleE	-	void		sanitizer_common/sanitizer_addrhashmap.h:108 `void ...(...)` (2 declarations match)
+ret	_ZN11__sanitizer14StackDepotBaseINS_14StackDepotNodeELi1ELi20EE3PutENS_10StackTraceEPb	-	u32		sanitizer_common/sanitizer_stackdepotbase.h:44 `u32 ...(...)` (2 declarations match)
+ret	_ZN11__sanitizer15QuarantineCacheIN6__asan18QuarantineCallbackEE7EnqueueES2_Pvm	-	void		sanitizer_common/sanitizer_quarantine.h:217 `void ...(...)`
+ret	_ZN11__sanitizer16internal_iserrorEmPi	-	bool		sanitizer_common/sanitizer_libc.h:104 `bool ...(...)`
+ret	_ZN11__sanitizer17LowLevelAllocator8AllocateEm	-	void *		sanitizer_common/sanitizer_common.h:219 `void * ...(...)`
+ret	_ZN11__sanitizer17MonotonicNanoTimeEv	-	u64		sanitizer_common/sanitizer_common.h:325 `u64 ...(...)` (8 declarations match)
+ret	_ZN11__sanitizer18SuppressionContext5ParseEPKc	-	void		sanitizer_common/sanitizer_suppressions.h:36 `void ...(...)`
+ret	_ZN11__sanitizer19RoundUpToPowerOfTwoEm	-	uptr		sanitizer_common/sanitizer_common.h:459 `uptr ...(...)`
+ret	_ZN11__sanitizer24GetMaxUserVirtualAddressEv	-	uptr		sanitizer_common/sanitizer_common.h:79 `uptr ...(...)` (6 declarations match)
+ret	_ZN11__sanitizer25StackDepotUnlockAfterForkEb	-	void		sanitizer_common/sanitizer_stackdepot.h:43 `void ...(...)` (2 declarations match)
+ret	_ZN11__sanitizer26GetThreadStackTopAndBottomEbPmS0_	-	void		sanitizer_common/sanitizer_common.h:84 `void ...(...)` (4 declarations match)
+ret	_ZN11__sanitizer9DirExistsEPKc	-	bool		sanitizer_common/sanitizer_file.h:81 `bool ...(...)` (4 declarations match)
+ret	_ZN6__asan18TryAsanInitFromRtlEv	-	bool		asan/asan_internal.h:63 `bool ...(...)` (7 declarations match)
+ret	_ZN6__asan22FindDynamicShadowStartEv	-	uptr		asan/asan_internal.h:82 `uptr ...(...)` (4 declarations match)
+ret	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	-	void *		asan/asan_allocator.cpp:529 `void * ...(...)`
+ret	_ZN6__asan9FakeStack17AddrIsInFakeStackEmPmS1_	-	uptr		asan/asan_fake_stack.h:132 `uptr ...(...)`
+ret	_ZN6__lsan10LeakReport14ReportTopLeaksEm	-	void		lsan/lsan_common.h:221 `void ...(...)`
+ret	_ZN6__lsan10LeakReport15AddLeakedChunksERKN11__sanitizer18InternalMmapVectorINS_11LeakedChunkEEE	-	void		lsan/lsan_common.h:220 `void ...(...)`
+ret	_ZN6__lsan13UnlockThreadsEv	-	void		lsan/lsan_common.h:96 `void ...(...)` (5 declarations match)
+ret	_ZN6__lsan5Flags11SetDefaultsEv	-	void		lsan/lsan_common.h:182 `void ...(...)`
+ret	_ZNK11__sanitizer10StackStore9AllocatedEv	-	uptr		sanitizer_common/sanitizer_stack_store.h:41 `uptr ...(...)`
+ret	_ZNK11__sanitizer13SignalContext12GetWriteFlagEv	-	WriteFlag		sanitizer_common/sanitizer_common.h:1049 `WriteFlag ...(...)`
+ret	_ZNK11__sanitizer14StackDepotBaseINS_14StackDepotNodeELi1ELi20EE8GetStatsEv	-	StackDepotStats		sanitizer_common/sanitizer_stackdepotbase.h:48 `StackDepotStats ...(...)`

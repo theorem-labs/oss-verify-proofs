@@ -1,0 +1,46 @@
+# 1. MemmoveIm.v W_mm<off> = the word at __sanitizer_internal_memmove + off (wire 0x632d8, pcap 0x63bb8)
+OK   22 words W_mm00 .. W_mm54 in MemmoveIm.v
+OK   W_mm00 = 0x02b57463: wire 0x02b57463 at 0x632d8, pcap 0x02b57463 at 0x63bb8
+OK   W_mm04 = 0x04c05863: wire 0x04c05863 at 0x632dc, pcap 0x04c05863 at 0x63bbc
+OK   W_mm08 = 0x00c50633: wire 0x00c50633 at 0x632e0, pcap 0x00c50633 at 0x63bc0
+OK   W_mm0c = 0x00050693: wire 0x00050693 at 0x632e4, pcap 0x00050693 at 0x63bc4  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm10 = 0x0005c703: wire 0x0005c703 at 0x632e8, pcap 0x0005c703 at 0x63bc8  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm14 = 0x00e68023: wire 0x00e68023 at 0x632ec, pcap 0x00e68023 at 0x63bcc
+OK   W_mm18 = 0x00168693: wire 0x00168693 at 0x632f0, pcap 0x00168693 at 0x63bd0  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm1c = 0x00158593: wire 0x00158593 at 0x632f4, pcap 0x00158593 at 0x63bd4  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm20 = 0xfec698e3: wire 0xfec698e3 at 0x632f8, pcap 0xfec698e3 at 0x63bd8
+OK   W_mm24 = 0x0300006f: wire 0x0300006f at 0x632fc, pcap 0x0300006f at 0x63bdc
+OK   W_mm28 = 0x02a5f663: wire 0x02a5f663 at 0x63300, pcap 0x02a5f663 at 0x63be0
+OK   W_mm2c = 0x02c05463: wire 0x02c05463 at 0x63304, pcap 0x02c05463 at 0x63be4
+OK   W_mm30 = 0xfff60693: wire 0xfff60693 at 0x63308, pcap 0xfff60693 at 0x63be8
+OK   W_mm34 = 0x00100613: wire 0x00100613 at 0x6330c, pcap 0x00100613 at 0x63bec  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm38 = 0x00d58733: wire 0x00d58733 at 0x63310, pcap 0x00d58733 at 0x63bf0
+OK   W_mm3c = 0x00074703: wire 0x00074703 at 0x63314, pcap 0x00074703 at 0x63bf4  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm40 = 0x00d507b3: wire 0x00d507b3 at 0x63318, pcap 0x00d507b3 at 0x63bf8
+OK   W_mm44 = 0x00168813: wire 0x00168813 at 0x6331c, pcap 0x00168813 at 0x63bfc  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm48 = 0xfff68693: wire 0xfff68693 at 0x63320, pcap 0xfff68693 at 0x63c00
+OK   W_mm4c = 0x00e78023: wire 0x00e78023 at 0x63324, pcap 0x00e78023 at 0x63c04
+OK   W_mm50 = 0xff0664e3: wire 0xff0664e3 at 0x63328, pcap 0xff0664e3 at 0x63c08
+OK   W_mm54 = 0x00008067: wire 0x00008067 at 0x6332c, pcap 0x00008067 at 0x63c0c
+# 2. the kept ld words at __asan_memmove + off (wire 0x51310, pcap 0x51bf0)
+OK   538627 = 0x83803: wire 0x83803 at __asan_memmove+0x84, pcap 0x83803 at __asan_memmove+0x84
+OK   538627 = 0x83803: wire 0x83803 at __asan_memmove+0xd0, pcap 0x83803 at __asan_memmove+0xd0
+OK   571523 = 0x8b883: wire 0x8b883 at __asan_memmove+0x88, pcap 0x8b883 at __asan_memmove+0x88
+OK   571523 = 0x8b883: wire 0x8b883 at __asan_memmove+0xd4, pcap 0x8b883 at __asan_memmove+0xd4
+# 3. the return address 345460 -> 343188
+OK   fuzz_pcap.asan: __asan_region_is_poisoned 0x54400 + 0x174 = 0x54574 = 345460 (the file's 345460); word before it 0x3d10f0ef
+OK   fuzz_wire.asan: __asan_region_is_poisoned 0x53b20 + 0x174 = 0x53c94 = 343188 (the file's 343188); word before it 0x3d10f0ef
+OK   the call word at +0x170 is the same in both images: wire 0x3d10f0ef, pcap 0x3d10f0ef
+# 4. MemmoveK.v bound 0x200000 vs the row ends of icpt_rodata
+OK   MemmoveK.v states `fst (fst e) + snd (fst e) <= 0x200000` once (Hrange of entD_ro)
+OK   fuzz_wire lib/A/AE2y.v: 7 rows, largest lo + len = 0xa1478 <= 0x200000
+OK   fuzz_pcap's released lib/A/AE2y.v: 7 rows, largest lo + len = 0xa25b8 <= 0x200000
+# 5. MemmoveK.v clookup tbl_icpt words (the three instruction words the flag gate reads INSN-SAME)
+OK   MemmoveK.v states clookup tbl_icpt 0x51310 = Some 0x81010113
+OK   0x81010113 at __asan_memmove+0x0: wire 0x81010113 at 0x51310, pcap 0x81010113 at 0x51bf0
+OK   MemmoveK.v states clookup tbl_icpt 0x513f0 = Some 0x6e9110ef
+OK   0x6e9110ef at __asan_memmove+0xe0: wire 0x6e9110ef at 0x513f0, pcap 0x6e9110ef at 0x51cd0
+OK   MemmoveK.v states clookup tbl_icpt 0x5167c = Some 0xd75ff06f
+OK   0xd75ff06f at __asan_memmove+0x36c: wire 0xd75ff06f at 0x5167c, pcap 0xd75ff06f at 0x51f5c
+measure-mm: 0 mismatches
+rc=0

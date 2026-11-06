@@ -1,0 +1,3 @@
+refutes: toy/ebreak/asan_disagrees_at_most_rv64gc_alloc_forced_only_below_1
+approach: lps's finite-input witness weighs 1, the whole mass, and the builds disagree on it (the plain run errors), so the disagreements weigh more than b * M for every b < 1
+uses: [lps-checks]

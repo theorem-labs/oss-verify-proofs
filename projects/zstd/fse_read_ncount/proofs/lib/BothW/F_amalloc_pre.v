@@ -1,0 +1,221 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import ITree Nodes Decode Arr InitMem.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Spec Require Import STree AsanCtrl AsanEmbed.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.BothW Require Import BImg AProto ABase ABytes.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.LibA Require Import StepF.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.BothW Require Import AKit AKit2 AModelFacts APrimFacts F_apoison F_aalloc_s F_aalloc1 F_aalloc1b F_aunwind F_aunwind2 F_amalloc_iseg F_amalloc_icpt.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Common Require Import RunDraw.
+Import ListNotations.
+(* [comment removed for export] *)
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.LiaTuning.lia_orc_old ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.LiaTuning.lia_k12.   (* [comment removed for export] *)
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Step.slia ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.slia_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.flia ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.flia_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.zrange ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.zrange_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.zrange_nonneg ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.zrange_nonneg_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Step.solve_load ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.solve_load_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.word_eq_tac ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.word_eq_tac_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.simpl_arr_sizes ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.simpl_arr_sizes_k12.
+(* [comment removed for export] *)
+
+Open Scope Z_scope.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+Local Ltac band_lin :=
+repeat match goal with H : iclr ?a ?n |- _ => unfold iclr, AIMG_LO, AIMG_HI in H end.
+Section CANSEC1. Context {rc : runConstT}.
+Definition malloc_pre_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+(n t lo : Z) (trc : list Z) (m : amem) : machine_state -> Prop :=
+fun ms' => exists (spA : word) t0 t1 t2 a4 a5 a6 a7 t3 t4 t5 t6 (s0A s1A s2A s3A s4A s5A s0i : word) (fr0 junk2 : list byte) (tb : list word) m',
+ms' = MS (mkR (Z_to_bv 64 0x32628) (Z_to_bv 64 (bv_unsigned spA + -128)) gp tp t0 t1 t2
+(Z_to_bv 64 1) (Z_to_bv 64 n)
+(Z_to_bv 64 AINSTANCE) (Z_to_bv 64 (t + 208)) (Z_to_bv 64 (needed_size n)) (Z_to_bv 64 8) a4 a5 a6 a7
+(Z_to_bv 64 8) (Z_to_bv 64 (needed_size n)) (Z_to_bv 64 (rz_size n)) (Z_to_bv 64 n)
+(Z_to_bv 64 AINSTANCE) (Z_to_bv 64 (bv_unsigned sp + -2128)) (Z_to_bv 64 (-8)) (Z_to_bv 64 7) (Z_to_bv 64 t) (Z_to_bv 64 1)
+t3 t4 t5 t6)
+F (Z_to_bv 64 0x3681c) fc None m' (seg_rom bsegs)
+/\ bv_unsigned spA = bv_unsigned sp - 2144
+/\ munch [(bv_unsigned sp - 2320, bv_unsigned sp); (t + 3168, t + 3169)]%Z m m' /\ wmono bsegs m m' /\ mem_inv bsegs m'
+/\ stk bsegs m' lo (bv_unsigned sp - 2272)
+/\ rw_cells bsegs m' (bv_unsigned sp - 2272)
+[CB 8 fr0; C8 (Z_to_bv 64 1); C8 (Z_to_bv 64 16); C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5A;
+C8 s4A; C8 s3A; C8 s2A; C8 s1A; C8 s0A; C8 (Z_to_bv 64 0x32358)]
+/\ rw_cells bsegs m' (bv_unsigned sp + -2144) [C8 s0i; C8 (Z_to_bv 64 0x534c8)]
+/\ rw_cells bsegs m' (bv_unsigned sp + -2128) [C8 (Z_to_bv 64 (bv_unsigned sp + -2128 + 16)); C8 (Z_to_bv 64 (1 + Z.of_nat (length trc)))]
+/\ u64arr bsegs m' (bv_unsigned sp + -2128 + 16) tb /\ length tb = 255%nat
+/\ map bv_unsigned (firstn (Datatypes.S (length trc)) tb) = AMALLOC_PC :: trc
+/\ rw_cells bsegs m' (bv_unsigned sp + -72) [C8 sp; CB 8 junk2; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]
+/\ rw_cells bsegs m' (t + 3168) [C1 (Z_to_bv 8 0)].
+#[using="Type"] Lemma malloc_pre_spec : forall (L : alayout) RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+(F : bvmap 5 word) fc (m : amem) (n t lo top bot : Z) (tr trc : list Z),
+let ctx := al_ctx L in
+stk bsegs m lo (bv_unsigned sp) -> ATOP <= lo -> lo <= bv_unsigned sp - 4096 ->
+mem_inv bsegs m ->
+tp = Z_to_bv 64 ATP ->
+a0 = Z_to_bv 64 n -> 1 <= n -> is_primary n = true ->
+bv_unsigned sp mod 16 = 0 ->
+allocA_cells m ctx t -> poison_cells m ->
+rw_cells bsegs m 0xa323c [C4 (Z_to_bv 64 30)] ->
+rw_cells bsegs m 0x13408a [C1 (Z_to_bv 8 1)] ->
+rw_cells bsegs m GOT_PGSZ [C8 (Z_to_bv 64 APGSZ)] -> rw_cells bsegs m APGSZ [C8 (Z_to_bv 64 4096)] ->
+rw_cells bsegs m (ctx + 8) [C4 (Z_to_bv 64 0)] -> rw_cells bsegs m t [C8 (Z_to_bv 64 ctx)] ->
+rw_cells bsegs m (t + 8) [C8 (Z_to_bv 64 top); C8 (Z_to_bv 64 bot)] ->
+rw_cells bsegs m (t + 40) [C1 (Z_to_bv 8 0)] -> rw_cells bsegs m (t + 3168) [C1 (Z_to_bv 8 0)] ->
+AIMG_HI <= ctx -> ctx + 4096 <= ATOP -> sclr ctx 65536 ->
+iclr t 4096 -> t + 4096 <= ATOP -> t mod 4096 = 0 -> sclr t 4096 ->
+(ctx + 4096 <= t \/ t + 4096 <= ctx) ->
+(bv_unsigned sp + 16 < top /\ uchain m top AMALLOC_PC (bv_unsigned sp) (bv_unsigned s0) 28%nat tr /\ (length tr <= 28)%nat /\ trc = bv_unsigned ra :: tr
+/\ rng RNG lo (top - lo))
+\/ (top <= bv_unsigned sp + 16 /\ bv_unsigned sp < 2^47 /\ trc = []) ->
+bv_unsigned s0 <> bv_unsigned sp + 8 ->
+0 <= bot -> bot < bv_unsigned sp -> bot + 4096 <= top -> top <= 2^47 -> 4096 <= bv_unsigned ra -> bv_unsigned ra <> AMALLOC_PC ->
+rng_aimg RNG -> rng RNG lo (bv_unsigned sp - lo) -> rng RNG ctx 4096 -> rng RNG t 4096 ->
+evtF bsegs RNG (malloc_pre_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc n t lo trc m)
+(MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 AMALLOC_SYM) fc None m (seg_rom bsegs)).
+Proof.
+intros until trc. cbv zeta.
+intros ST CEIL LO MI TP Ha0 N PRIM SP16 AC PC LS1 CT8 GPG PGC CX8 TT0 TT SW UW CX0 CX1 CXS T0 T1 TAL TS CT2
+ARM S0NE B0 BB BTOP TOP RA4 RANE RIMG RSTK RCTX RT. band_lin.
+Local Ltac2 Set LiaHints.tbl := fun () => "01E0?10897959168.3  11107584225.13311767339402.14311807744665.13311807744665.17511807744665.17711807744665.19512217537535.13612881681230.14313748778845.17513993462363.1761535794540.83  15715433354.16715819558015.13516081646106.84 17089804863.11217986879152.16718477764938.16719096790780.19519590291912.13320874523611.17722700267513.17522700267513.17722700267513.19723572817249.13323684088331.2  23890732641.13324127787658.17727165323987.17727176698494.14727393365820.14727527225958.14327809360415.17730229009457.14733591671254.86 33688774939.14733824905934.13334315208549.17436166301066.14336166301066.14536825087329.13337592147547.19538872272461.14338872272461.14540022190818.14340022190818.1454189850559.177 43119154323.17743229261695.14045854950289.14746173415533.14546173415533.14747737199521.13348155618387.17748486878908.14749921929014.14349928213262.17750540877779.17751627594337.13352107990421.15052569147371.17752569147371.17853346742109.14056170256219.17656759370246.15057622410744.19759269488733.14059310676560.18359310676566.18659443584778.14359443584778.14560151354897.14760274602806.17760657043208.14761927656618.11263142600797.14064949347711.13365285823486.14565285823486.14767619948389.177676928981.195  7712643667.177 7998424801.133 8800126135.175 8800126135.177 00000500@00D00T00`00a00m00n01401501601701801901=01A01G01K01L01M01N01d02:02P02[02a02l03403j04<04=04J05@05A05L05P05Q05R05Z05b05m05n05o06006506:07007f07g08Q09809_09j0:`0:a0;10;A0<70<B0<I0<U0=J0=K0=P0=e0>;0><0>j0?X0?Y0?Z0?[0?k0@00@B0@C0@D0@H0@L0@M0@N0AD0AO0Ae0B;S3HspS4CEIL2LO1HS2BTS4CEIL2LO3CX12T1S4CEIL2LO2T1SS4CEIL2LO2T1SS4BTOPSSSSSS2L1S2LOS4CEILS2LOSSSS3ARM4LTRC3LTB4LTB22HqS3ARM4LTRC3LTB4LTB22HqS3ARM4LTRC3LTB4LTB22HqS4CEIL2LO1HS4LTRCS4CEIL2LO1HS2LO3HspS4CEIL2LO4SP163TAL4LTRC3SPR3RZR3RLR3RSR3RSM3LTB4LTB21HS3LTR3RA44LTRC3RARFS2B04BTOP3TOPS4CEIL2LO4SP163TAL4LTRC3SPR3RZR3RLR3RSR3RSM3LTB4LTB21HSS2X13TOP2X2S2BBSSS2LO3HspS2LO3HspS4CEIL2LO1HSSSS3HspS3HspS4CEIL2LO4SP163TAL4LTRC3SPR3RZR3RLR3RSR3RSM3LTB4LTB21HS4CEIL2LO4SP163TAL4LTRC3SPR3RZR3RLR3RSR3RSM3LTB4LTB21HSS2T03LTR4RANE4LTRC3SPR3RZR3RLR3RSR3RSM3LTBS4SP163LTR4LTRC3SPR3RZR3RLR3RSR3RSM3LTBS4SP163LTR4LTRC3SPR3RZR3RLR3RSR3RSM3LTBS4CEIL2LO1HS4CEIL2LO4SP163TAL4LTRC3SPR3RZR3RLR3RSR3RSM3LTB4LTB21HFS4CEIL2LO4SP471HS4CEIL2LO4SP471HS4CEIL2LO4SP163TAL4LTRC3SPR3RZR3RLR3RSR3RSM3LTB4LTB21HS4CEIL2LO1HS2GE2HaS4CEIL2LO2T1S4CEIL2LO3CX12T02T13ARM4LTRC3SPR3RZR3RLR3LTB4LTB21Y1HSS3HspS4CEIL2LO3TOP2GE2Ha1HS3ARM4LTRC3LTB4LTB22HqSS4SP163LTR4S0NE4LTRC3RLR3LTB2LT1H2H12H22H63H26S4SP163LTR4S0NE4LTRC3RLR3LTB2LT1H2H12H22H83H28SSFS4CEIL2LO4SP471HS3S0RS1N2NS3RZR3RSR3NSRSSS2BTS2BTSSS4CEIL2LO4SP163TAL4LTRC3SPR3RZR3RLR3RSR3RSM3LTB4LTB21HS4CEIL2LO1HS3ARM4LTRC3LTB4LTB22HqS3ARM4LTRC3LTB4LTB22Hq".
+assert (LTRC : (length trc <= 29)%nat) by (destruct ARM as [(_ & _ & L1 & -> & _)|(_ & _ & ->)]; cbn [length]; lia).
+assert (SP47 : bv_unsigned sp < 2^47) by (destruct ARM as [(X1 & _)|(_ & X2 & _)]; lia).
+pose proof AC as AC'. destruct AC' as (INI & RSS & IMAX & TI & TK & T88 & TSD & CT).
+unfold AIMG_HI, AINSTANCE, ATP88, ATSD, ATSDI, ATSDK, AINITED, ARSSLIM, GOT_PGSZ, APGSZ, AMALLOC_SYM, AMALLOC_PC in *.
+word_range sp SPR. word_range s0 S0R. word_range ra RAR.
+pose proof (prim_facts n N PRIM) as (NS & RZR & RZE & RZM & RLR & RSR & RSM & NSR).
+box CT2.
+destruct PC as (GOT & GOT80 & REAL & PC4 & PC5 & PC6 & PC7).
+eapply evtF_cut.
+{ eapply (icptA_spec RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m n lo);
+try eassumption; try lia; try solve_rng. }
+cbv beta. intros ms1 PA. unfold icptA_post in PA.
+destruct PA as (t0a & t1a & t2a & a6a & a7a & t3a & t4a & t5a & t6a & m1 & junk1 & junk2 & -> & MUa & WMa & MIa & STa & FRA & FRt & FRs).
+pose proof FRs as FRs0. rw_split FRs0 7%nat FRsx FRsr. clear FRsx.
+destruct FRsr as [[_ BSR] _]. cbn [cells_bytes cbytes app] in BSR. rewrite app_nil_r in BSR.
+apply bytes_at_app in BSR. destruct BSR as [BS0 BRA]. rewrite length_le8 in BRA.
+replace (bv_unsigned sp + -16 + Z.of_nat 8) with (bv_unsigned sp - 8) in BRA by lia.
+replace (bv_unsigned sp + -16) with (bv_unsigned sp - 16) in BS0 by lia.
+xport TI MUa WMa ltac:(lia). xport TK MUa WMa ltac:(lia). xport T88 MUa WMa ltac:(lia). xport TSD MUa WMa ltac:(lia).
+xport CT MUa WMa ltac:(lia). xport GPG MUa WMa ltac:(lia). xport PGC MUa WMa ltac:(lia). xport TT MUa WMa ltac:(lia).
+xport SW MUa WMa ltac:(lia). xport UW MUa WMa ltac:(lia). xport INI MUa WMa ltac:(lia).
+pose proof FRA as FRA0. rw_split FRA0 1%nat FRp FRz. rw_split FRz 1%nat SZC TAG.
+change 2040%nat with (8 * 255)%nat in FRt. destruct (u64arr_of_CB _ _ 255%nat _ FRt) as [TB LTB].
+pose proof FRs as FRs1. rw_split FRs1 1%nat BPJ REST.
+replace (bv_unsigned sp + -2120) with (bv_unsigned sp - 2128 + 8) in SZC by lia.
+replace (bv_unsigned sp + -2112) with (bv_unsigned sp - 2128 + 16) in TB by lia.
+replace (bv_unsigned sp + -72) with (bv_unsigned sp - 2128 + 2056) in BPJ by lia.
+step.
+name_sp sp (-2128).
+eapply evtF_cut with (P := unwind_impl_post (bv_unsigned sp - 2128) 341084 (bv_unsigned sp) t _ _ gp tp _ _ _ _ _ _ s6 s7 s8 s9 s10 s11 F fc lo trc m1).
+{ destruct ARM as [(BT & UC & LTR & Etrc & RTOP)|(BT & BT2 & Etrc)]; rewrite Etrc.
+-
+assert (UC1 : uchain m1 top 341084 bot (bv_unsigned sp) 29%nat ([bv_unsigned ra] ++ tr)).
+{ replace ([bv_unsigned ra] ++ tr) with ((if bv_unsigned ra =? 341084 then [] else [bv_unsigned ra]) ++ tr)
+by (replace (bv_unsigned ra =? 341084) with false by (symmetry; apply Z.eqb_neq; lia); reflexivity).
+eapply (uc_step m1 top 341084 bot (bv_unsigned sp) 29%nat (bv_unsigned s0) (bv_unsigned ra) tr); try lia.
+- rewrite Z_to_bv_bv_unsigned. exact BS0.
+- rewrite Z_to_bv_bv_unsigned. exact BRA.
+- replace (bv_unsigned ra =? 341084) with false by (symmetry; apply Z.eqb_neq; lia). cbn [Nat.pred].
+destruct (Z_le_gt_dec (bv_unsigned sp + 16) (bv_unsigned s0)) as [GE|LT].
++ eapply uchain_frame; [exact UC|]. intros a Ha. apply MUa. cbn [outside]. rewrite unsigned_lit by lia. split; [lia| exact I].
++ inversion UC; subst; [apply uc_stop; assumption | exfalso | exfalso]; Z.div_mod_to_equations; lia. }
+clear BS0 BRA UC.
+change (bv_unsigned ra :: tr) with ([bv_unsigned ra] ++ tr).
+eapply (unwind_impl_spec RNG _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m1 (bv_unsigned sp - 2128) 341084 (bv_unsigned sp) (al_ctx L) t top bot lo (words_of_bytes junk1) ([bv_unsigned ra] ++ tr)).
+all: try lazymatch goal with
+| |- stk _ _ _ _ => rewrite Hsp; exact STa
+| |- mem_inv _ _ => exact MIa
+| |- @eq word _ _ => first [reflexivity | exact TP | rewrite Z_to_bv_bv_unsigned; reflexivity | apply Z_to_bv_eqm; rewrite ?unsigned_lit by lia; lia]
+| |- ex _ => first [eexists; exact SZC | eexists; exact BPJ]
+| |- u64arr _ _ _ _ => exact TB
+| |- uchain _ _ _ _ _ _ _ => exact UC1
+| |- _ \/ _ => unboxed CT2
+| |- rng _ _ _ => solve_rng
+| |- rw_cells _ _ (_ + 152) _ => exact CT
+| |- rw_cells _ _ (_ + 8) [C8 _; C8 _] => exact TT
+| |- rw_cells _ _ (_ + 40) _ => exact SW
+| |- rw_cells _ _ (_ + 3168) _ => exact UW
+end.
+all: try eassumption. all: try (unfold AIMG_HI; lia). all: try (Z.div_mod_to_equations; lia).
+all: match goal with |- ?G => idtac "REMU" G end.
+-
+clear BS0 BRA.
+eapply (unwind_impl_spec0 RNG _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m1 (bv_unsigned sp - 2128) 341084 (bv_unsigned sp) (al_ctx L) t top bot lo (words_of_bytes junk1)).
+all: try lazymatch goal with
+| |- stk _ _ _ _ => rewrite Hsp; exact STa
+| |- mem_inv _ _ => exact MIa
+| |- @eq word _ _ => first [reflexivity | exact TP | rewrite Z_to_bv_bv_unsigned; reflexivity | apply Z_to_bv_eqm; rewrite ?unsigned_lit by lia; lia]
+| |- ex _ => first [eexists; exact SZC | eexists; exact BPJ]
+| |- u64arr _ _ _ _ => exact TB
+| |- uchain _ _ _ _ _ _ _ => exact UC1
+| |- _ \/ _ => unboxed CT2
+| |- rng _ _ _ => solve_rng
+| |- rw_cells _ _ (_ + 152) _ => exact CT
+| |- rw_cells _ _ (_ + 8) [C8 _; C8 _] => exact TT
+| |- rw_cells _ _ (_ + 40) _ => exact SW
+| |- rw_cells _ _ (_ + 3168) _ => exact UW
+end.
+all: try eassumption. all: try (unfold AIMG_HI; lia). all: try (Z.div_mod_to_equations; lia).
+all: match goal with |- ?G => idtac "REMU" G end. }
+cbv beta. intros ms2 PU. unfold unwind_impl_post in PU.
+destruct PU as (t0b & t1b & t2b & a0b & a1b & a2b & a3b & a4b & a5b & a6b & a7b & t3b & t4b & t5b & t6b & m2 & tb2
+& -> & MUu & WMu & MIu & STu & SZ2 & TB2 & LTB2 & TRF2 & BP2 & UW2).
+unname_sp. rewrite ?unsigned_lit in MUu by lia. rewrite ?unsigned_lit in STu by lia.
+replace (ret_pc (Z_to_bv 64 341176)) with (Z_to_bv 64 341176) by (symmetry; apply ret_pc_even; [lia|reflexivity]).
+eapply evtF_cut.
+{ eapply (icptB_spec RNG); [exact STu | atop_facts; lia | lia | exact MIu | reflexivity | exact RIMG | solve_rng]. }
+cbv beta. intros ms3 PB. unfold icptB_post in PB. destruct PB as (m3 & -> & MUb & WMb & MIb & STb & FR16).
+assert (MU3 : munch [(bv_unsigned sp - 2288, bv_unsigned sp); (t + 3168, t + 3169)]%Z m m3).
+{ eapply munch_trans; [| eapply munch_weaken; [| exact MUb]]. eapply munch_trans; [| eapply munch_weaken; [| exact MUu]].
+eapply munch_weaken; [| exact MUa]. all: unfold sub_fp; cbn [outside]; intros q Hq; lia. }
+assert (WM3 : wmono bsegs m m3). { eapply wmono_trans; [| exact WMb]. eapply wmono_trans; [exact WMa | exact WMu]. }
+assert (MU13 : munch [(bv_unsigned sp - 2288, bv_unsigned sp - 2128); (bv_unsigned sp - 2120, bv_unsigned sp - 2116); (bv_unsigned sp - 2112, bv_unsigned sp - 64); (t + 3168, t + 3169)]%Z m1 m3).
+{ eapply munch_trans; [| eapply munch_weaken; [| exact MUb]]. eapply munch_weaken; [| exact MUu].
+all: unfold sub_fp; cbn [outside]; intros q Hq; lia. }
+assert (WM13 : wmono bsegs m1 m3). { eapply wmono_trans; [exact WMu | exact WMb]. }
+xport INI MU13 WM13 ltac:(lia). xport TI MU13 WM13 ltac:(lia). xport TK MU13 WM13 ltac:(lia). xport T88 MU13 WM13 ltac:(lia).
+xport TSD MU13 WM13 ltac:(lia). xport CT MU13 WM13 ltac:(ub CT2; lia). xport FRp MU13 WM13 ltac:(lia). xport TAG MU13 WM13 ltac:(lia).
+xport REST MU13 WM13 ltac:(lia).
+xport RSS MU3 WM3 ltac:(lia). xport IMAX MU3 WM3 ltac:(lia).
+xport SZ2 MUb WMb ltac:(lia). replace (bv_unsigned sp - 2128 + 8) with (bv_unsigned sp + -2120) in SZ2 by lia.
+rw_join SZ2 TAG SZT. apply rw_cells_C4C4_to_C8 in SZT. 2: { cbn [length app]; clear -LTRC; lia. }
+rw_join FRp SZT SS.
+xport TB2 MUb WMb ltac:(rewrite LTB2; lia). xport BP2 MUb WMb ltac:(lia). xport UW2 MUb WMb ltac:(lia).
+rewrite Z_to_bv_bv_unsigned in BP2. rw_join BP2 REST FRS.
+replace (bv_unsigned sp - 2128 + 2056) with (bv_unsigned sp + -72) in FRS by lia.
+name_sp sp (-2144).
+step.
+eapply evtF_mono.
+{ eapply (allocA_pre_spec RNG _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m3 n (bv_unsigned sp + -2128) (al_ctx L) t lo).
+all: try lazymatch goal with
+| |- stk _ _ _ _ => rewrite Hsp; exact STb
+| |- mem_inv _ _ => exact MIb
+| |- allocA_cells _ _ _ => unfold allocA_cells; repeat (lazymatch goal with |- rw_cells _ _ _ _ => assumption | |- _ /\ _ => split end)
+| |- @eq word _ _ => first [reflexivity | exact TP]
+| |- _ \/ _ => unboxed CT2
+end.
+all: try lazymatch goal with |- rng _ _ _ => solve_rng end.
+all: try eassumption. all: try (unfold AIMG_HI; lia).
+all: match goal with |- ?G => idtac "REMAL" G end. }
+cbv beta. intros ms4 PL. unfold allocA_pre_post in PL.
+destruct PL as (t0c & t1c & t2c & a4c & a5c & a6c & a7c & t3c & t4c & t5c & t6c & m4 & -> & MUl & WMl & MIl & STl & [fr0 FRa]).
+rewrite ?Hsp in MUl. rewrite ?Hsp in STl. rewrite ?Hsp in FRa.
+xport FR16 MUl WMl ltac:(lia). xport SS MUl WMl ltac:(lia). xport UW2 MUl WMl ltac:(lia). xport FRS MUl WMl ltac:(lia).
+xport TB2 MUl WMl ltac:(rewrite LTB2; lia).
+unfold malloc_pre_post. lazymatch type of Hsp with bv_unsigned ?spx = _ => exists spx end. do 11 eexists. do 7 eexists. exists fr0, junk2, tb2, m4.
+split; [reflexivity|]. split; [clear -Hsp; lia|].
+split.
+{ eapply munch_trans; [| eapply munch_weaken; [| exact MUl]]. eapply munch_weaken; [| exact MU3].
+all: unfold sub_fp; cbn [outside]; intros q Hq; lia. }
+split; [eapply wmono_trans; [exact WM3 | exact WMl]|]. split; [exact MIl|].
+split; [replace (bv_unsigned sp - 2272) with (bv_unsigned sp + -2144 - 128) by lia; exact STl|].
+split; [replace (bv_unsigned sp - 2272) with (bv_unsigned sp + -2144 - 128) by lia; exact FRa|].
+split; [exact FR16|].
+replace (bv_unsigned sp + -2112) with (bv_unsigned sp + -2128 + 16) in SS by lia.
+replace (bv_unsigned sp - 2128 + 16) with (bv_unsigned sp + -2128 + 16) in TB2 by lia.
+split; [exact SS|]. split; [exact TB2|]. split; [exact LTB2|]. split; [exact TRF2|]. split; [exact FRS|]. exact UW2.
+Unshelve. all: try exact STb; try exact STa; try exact STu.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+End CANSEC1.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: sleuthkit
 harness: fls_ntfs_fuzzer
-rocq: OssFuzzTheorems.sleuthkit.fls_ntfs_fuzzer
+rocq: OSSVerify.sleuthkit.fls_ntfs_fuzzer
 origin: upstream
 summary: mem_open wraps the input as a raw 512-byte-sector image; tsk_fs_open_img(FSTYPE) then tsk_fs_fls(FULL,
   root, RECURSE) with a NULL output path; results unused.

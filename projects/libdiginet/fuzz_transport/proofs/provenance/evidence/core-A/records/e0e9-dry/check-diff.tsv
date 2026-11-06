@@ -1,0 +1,9 @@
+table	side	file	line	old	new	status	class	old_fn	new_sym
+check.tsv	rec-only	A/AB1w.v	11	0x9b168	0xa2948	bound sec:.tbss.lo,tls.lo	tls	-	read+0x34
+check.tsv	rec-only	A/AFem.v	206	127070	127008	FAIL value-role-conflict (127070 is moved here as an address, but kept at A/AFem.v:128 as no address: an interval bound whose partner 2 is no address)		-	read+0x846f4
+check.tsv	new-only	A/AB1w.v	11	0x9b168	0xa2948	bound sec:.text.hi	tls	-	read+0x34
+check.tsv	new-only	A/AFek.v	34	131072	131072	tot-bound (TOT = length tr0 + 1 + depot_frames: 31 + 1 + 31 * DEPOT_MAX 4096 (Reusable/YG01.v); the atom range 131072 kept: it covers the post-store value <= 127039)		-	read+0x8e75e
+check.tsv	new-only	A/AFem.v	128	127070	127008	tot-bound (an --override row gave this value)		-	read+0x846f4
+review.tsv	rec-only	A/AB1w.v	11	0x9b168	0xa2948	bound-name-mismatch (tfib_text_hi names sec:.text.hi, the value is OLD sec:.tbss.lo,tls.lo; wrote NEW sec:.tbss.lo,tls.lo)	tls	-	read+0x34
+review.tsv	rec-only	A/AFem.v	206	127070	127008	FAIL value-role-conflict (127070 is moved here as an address, but kept at A/AFem.v:128 as no address: an interval bound whose partner 2 is no address)		-	read+0x846f4
+review.tsv	new-only	A/AB1w.v	11	0x9b168	0xa2948	bound-by-name (tfib_text_hi names sec:.text.hi; the donor value is OLD sec:.tbss.lo,tls.lo; wrote NEW sec:.text.hi)	tls	-	read+0x34

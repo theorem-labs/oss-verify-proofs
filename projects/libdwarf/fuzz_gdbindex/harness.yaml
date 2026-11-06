@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_gdbindex
-rocq: OssFuzzTheorems.libdwarf.fuzz_gdbindex
+rocq: OSSVerify.libdwarf.fuzz_gdbindex
 origin: upstream
 summary: '.gdb_index: header, CU list, types CU list, address area and symbol table/cuvector walk (examplew/examplewgdbindex/examplex);
   return codes only steer early exits.'

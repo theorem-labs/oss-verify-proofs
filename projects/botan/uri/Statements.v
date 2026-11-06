@@ -16,7 +16,7 @@
     unreadable FILE, a FILE shorter than its header, or one of 64 MiB or more,
     it exits with status 2 without calling the harness.  Every statement
     quantifies over all of these cases and over every other process input (see
-    Vocabulary in OssFuzzTheorems.Core.Shapes).
+    Vocabulary in OSSVerify.Core.Shapes).
 
     WHAT THE HARNESS CHECKS.  URI::from_string and URI::Authority::from_string
     on the input. Results discarded. Nothing catches: any exception escaping
@@ -28,8 +28,8 @@
     harness README, not here: this file changes only when a statement does. *)
 
 From Stdlib Require Import QArith.
-From OssFuzzTheorems.Core Require Import Shapes.
-From OssFuzzTheorems.botan.uri Require Images Distribution.
+From OSSVerify.Core Require Import Shapes.
+From OSSVerify.botan.uri Require Images Distribution.
 
 (** ** Halting *)
 
@@ -155,7 +155,8 @@ Definition asan_ubsan_agreement_decidable : Prop :=
 
 (** ** Proving a statement
 
-    A proof is a directory proofs/botan/uri/<statement>/ whose Proof.v ends, for
+    A proof is a directory named after the statement, in this fuzz target's
+    proofs folder (docs/proving.md says where it is), whose Proof.v ends, for
     example, in
       Theorem plain_halts_holds : Statements.plain_halts.
     A bound proof names its bound:

@@ -1,0 +1,405 @@
+file	donor	reason	image-B twin	knock lib/AU has it
+A/AB01.v	grant	grant release (run of record)	-	-
+A/AB03.v	grant	grant release (run of record)	-	-
+A/AB05.v	grant	grant release (run of record)	-	-
+A/AB12.v	grant	grant release (run of record)	-	-
+A/AB13.v	grant	grant release (run of record)	-	-
+A/AB14.v	grant	grant release (run of record)	-	-
+A/AB15.v	grant	grant release (run of record)	-	-
+A/AB16.v	grant	grant release (run of record)	-	-
+A/AB17.v	grant	grant release (run of record)	-	-
+A/AB18.v	grant	grant release (run of record)	-	-
+A/AB19.v	grant	grant release (run of record)	-	-
+A/AB1a.v	grant	grant release (run of record)	-	-
+A/AB1b.v	grant	grant release (run of record)	-	-
+A/AB1c.v	grant	grant release (run of record)	-	-
+A/AB1d.v	grant	grant release (run of record)	-	-
+A/AB1e.v	grant	grant release (run of record)	-	-
+A/AB1f.v	grant	grant release (run of record)	-	-
+A/AB1g.v	grant	grant release (run of record)	-	-
+A/AB1h.v	grant	grant release (run of record)	-	-
+A/AB1i.v	grant	grant release (run of record)	-	-
+A/AB1k.v	grant	grant release (run of record)	-	-
+A/AB1l.v	grant	grant release (run of record)	-	-
+A/AB1m.v	grant	grant release (run of record)	-	-
+A/AB1n.v	grant	grant release (run of record)	-	-
+A/AB1p.v	grant	grant release (run of record)	-	-
+A/AB1q.v	grant	grant release (run of record)	-	-
+A/AB1r.v	grant	grant release (run of record)	-	-
+A/AB1s.v	grant	grant release (run of record)	-	-
+A/AB1t.v	grant	grant release (run of record)	-	-
+A/AB1u.v	grant	grant release (run of record)	-	-
+A/AB1v.v	grant	grant release (run of record)	-	-
+A/AB1w.v	grant	grant release (run of record)	-	-
+A/ACeg.v	grant	grant release (run of record)	-	-
+A/ACej.v	grant	grant release (run of record)	-	-
+A/ACfl.v	grant	grant release (run of record)	-	-
+A/ACfn.v	grant	grant release (run of record)	-	-
+A/AD1d.v	knock	knock counterpart names the depot form (first: nb_eager, line 197)	AU/YD1d.v	yes
+A/AD1e.v	grant	grant release (run of record)	-	-
+A/AD1f.v	grant	grant release (run of record)	-	-
+A/AD1g.v	knock	knock counterpart names the depot form (first: d_mu, line 1214)	AU/YD1g.v	yes
+A/AD1i.v	grant	grant release (run of record)	-	-
+A/AD1j.v	grant	grant release (run of record)	-	-
+A/AD1k.v	grant	grant release (run of record)	-	-
+A/AD1l.v	grant	grant release (run of record)	-	-
+A/AD1m.v	grant	grant release (run of record)	-	-
+A/AD1n.v	grant	grant release (run of record)	-	-
+A/AD1o.v	grant	grant release (run of record)	-	-
+A/AD1p.v	grant	grant release (run of record)	-	-
+A/AD1q.v	grant	grant release (run of record)	-	-
+A/AD1r.v	knock	knock counterpart names the depot form (first: KnLayoutGle, line 15)	AU/YD1r.v	yes
+A/AD1s.v	grant	grant release (run of record)	-	-
+A/AD1t.v	grant	grant release (run of record)	-	-
+A/AD1u.v	knock	knock counterpart names the depot form (first: KnLayoutGle, line 18)	AU/YD1u.v	yes
+A/AD1v.v	knock	knock counterpart names the depot form (first: KnLayoutGle, line 15)	AU/YD1v.v	yes
+A/AD1w.v	grant	grant release (run of record)	-	-
+A/AD1x.v	grant	grant release (run of record)	-	-
+A/AD1y.v	grant	grant release (run of record)	-	-
+A/AD1z.v	grant	grant release (run of record)	-	-
+A/AD20.v	grant	grant release (run of record)	-	-
+A/AD21.v	grant	grant release (run of record)	-	-
+A/AD22.v	grant	grant release (run of record)	-	-
+A/AD23.v	knock	knock counterpart names the depot form (first: KnLayoutGle, line 18)	AU/YD23.v	yes
+A/AD24.v	grant	grant release (run of record)	-	-
+A/AD25.v	grant	grant release (run of record)	-	-
+A/AD26.v	grant	grant release (run of record)	-	-
+A/AD27.v	grant	grant release (run of record)	-	-
+A/AD28.v	grant	grant release (run of record)	-	-
+A/AD29.v	knock	knock counterpart names the depot form (first: KnLayoutGle, line 15)	AU/YD29.v	yes
+A/AD2a.v	grant	grant release (run of record)	-	-
+A/AD2b.v	grant	grant release (run of record)	-	-
+A/AD2c.v	grant	grant release (run of record)	-	-
+A/AD2d.v	grant	grant release (run of record)	-	-
+A/AD2e.v	knock	knock counterpart names the depot form (first: KnLayoutGle, line 17)	AU/YD2e.v	yes
+A/AD2f.v	grant	grant release (run of record)	-	-
+A/AD2g.v	grant	grant release (run of record)	-	-
+A/AD2h.v	grant	grant release (run of record)	-	-
+A/AD2i.v	grant	grant release (run of record)	-	-
+A/AD2j.v	grant	grant release (run of record)	-	-
+A/AD2k.v	grant	grant release (run of record)	-	-
+A/AD2l.v	knock	measured break with a depot cause: build 2 (log sha256 eec84983d396): AD2l.v:85 "Wrong bullet -: No more goals" (WireB_syms has no ts_hash case: af0m PATH STRIP removed the field)	AU/YD2l.v	yes
+A/AD2m.v	grant	grant release (run of record)	-	-
+A/AE20.v	grant	grant release (run of record)	-	-
+A/AE22.v	grant	grant release (run of record)	-	-
+A/AE23.v	grant	grant release (run of record)	-	-
+A/AE2k.v	grant	grant release (run of record)	-	-
+A/AE2p.v	grant	grant release (run of record)	-	-
+A/AE2q.v	grant	grant release (run of record)	-	-
+A/AE2r.v	grant	grant release (run of record)	-	-
+A/AE2s.v	grant	grant release (run of record)	-	-
+A/AE2t.v	grant	grant release (run of record)	-	-
+A/AE2u.v	grant	grant release (run of record)	-	-
+A/AE2v.v	grant	grant release (run of record)	-	-
+A/AE2w.v	grant	grant release (run of record)	-	-
+A/AE2x.v	grant	grant release (run of record)	-	-
+A/AE2y.v	grant	grant release (run of record)	-	-
+A/AE2z.v	grant	grant release (run of record)	-	-
+A/AE30.v	grant	grant release (run of record)	-	-
+A/AE31.v	grant	grant release (run of record)	-	-
+A/AE32.v	grant	grant release (run of record)	-	-
+A/AE33.v	grant	grant release (run of record)	-	-
+A/AE34.v	grant	grant release (run of record)	-	-
+A/AE35.v	grant	grant release (run of record)	-	-
+A/AE36.v	grant	grant release (run of record)	-	-
+A/AE37.v	grant	grant release (run of record)	-	-
+A/AE38.v	grant	grant release (run of record)	-	-
+A/AE39.v	grant	grant release (run of record)	-	-
+A/AE3a.v	grant	grant release (run of record)	-	-
+A/AE3b.v	grant	grant release (run of record)	-	-
+A/AE3c.v	grant	grant release (run of record)	-	-
+A/AE3d.v	grant	grant release (run of record)	-	-
+A/AE3e.v	grant	grant release (run of record)	-	-
+A/AE3f.v	grant	grant release (run of record)	-	-
+A/AE3g.v	grant	grant release (run of record)	-	-
+A/AE3h.v	grant	grant release (run of record)	-	-
+A/AE3i.v	grant	grant release (run of record)	-	-
+A/AE3j.v	grant	grant release (run of record)	-	-
+A/AE3k.v	grant	grant release (run of record)	-	-
+A/AE3l.v	grant	grant release (run of record)	-	-
+A/AE3m.v	grant	grant release (run of record)	-	-
+A/AE3n.v	grant	grant release (run of record)	-	-
+A/AE6g.v	grant	grant release (run of record)	-	-
+A/AE6k.v	grant	grant release (run of record)	-	-
+A/AE6l.v	grant	grant release (run of record)	-	-
+A/AE6m.v	grant	grant release (run of record)	-	-
+A/AE6n.v	grant	grant release (run of record)	-	-
+A/AE6o.v	grant	grant release (run of record)	-	-
+A/AE6p.v	grant	grant release (run of record)	-	-
+A/AE6q.v	grant	grant release (run of record)	-	-
+A/AE6r.v	grant	grant release (run of record)	-	-
+A/AE6s.v	grant	grant release (run of record)	-	-
+A/AE6t.v	grant	grant release (run of record)	-	-
+A/AE6u.v	grant	grant release (run of record)	-	-
+A/AE6v.v	grant	grant release (run of record)	-	-
+A/AE6w.v	grant	grant release (run of record)	-	-
+A/AE6x.v	grant	grant release (run of record)	-	-
+A/AE6y.v	grant	grant release (run of record)	-	-
+A/AE6z.v	grant	grant release (run of record)	-	-
+A/AE70.v	grant	grant release (run of record)	-	-
+A/AE71.v	grant	grant release (run of record)	-	-
+A/AE72.v	grant	grant release (run of record)	-	-
+A/AE73.v	grant	grant release (run of record)	-	-
+A/AE74.v	grant	grant release (run of record)	-	-
+A/AE75.v	grant	grant release (run of record)	-	-
+A/AE76.v	grant	grant release (run of record)	-	-
+A/AE77.v	grant	grant release (run of record)	-	-
+A/AE78.v	grant	grant release (run of record)	-	-
+A/AE79.v	grant	grant release (run of record)	-	-
+A/AE7a.v	grant	grant release (run of record)	-	-
+A/AE7b.v	grant	grant release (run of record)	-	-
+A/AE7c.v	grant	grant release (run of record)	-	-
+A/AE7d.v	grant	grant release (run of record)	-	-
+A/AE7e.v	grant	grant release (run of record)	-	-
+A/AE7f.v	grant	grant release (run of record)	-	-
+A/AF0l.v	grant	grant release (run of record)	-	-
+A/AF0m.v	grant	grant release (run of record)	-	-
+A/AF0n.v	grant	grant release (run of record)	-	-
+A/AF0o.v	grant	grant release (run of record)	-	-
+A/AF0q.v	grant	grant release (run of record)	-	-
+A/AF0w.v	knock	knock counterpart names the depot form (first: layout_grow, line 30)	AU/YF0w.v	yes
+A/AF0x.v	grant	grant release (run of record)	-	-
+A/AFek.v	knock	measured break with a depot cause: build 2 (log sha256 eec84983d396): AFek.v:15 "The reference TFIB_TR0 was not found" (af0m PATH STRIP removed TFIB_TR0)	AU/YFek.v	yes
+A/AFel.v	grant	grant release (run of record)	-	-
+A/AFem.v	knock	knock counterpart names the depot form (first: owned_extents_set, line 175)	AU/YFem.v	yes
+A/AFeo.v	grant	grant release (run of record)	-	-
+A/AFep.v	grant	grant release (run of record)	-	-
+A/AFeq.v	grant	grant release (run of record)	-	-
+A/AFer.v	grant	grant release (run of record)	-	-
+A/AFes.v	grant	grant release (run of record)	-	-
+A/AFet.v	grant	grant release (run of record)	-	-
+A/AFeu.v	grant	grant release (run of record)	-	-
+A/AFev.v	grant	grant release (run of record)	-	-
+A/AFew.v	grant	grant release (run of record)	-	-
+A/AFex.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 13)	AU/YFex.v	yes
+A/AFey.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 13)	AU/YFey.v	yes
+A/AFez.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 15)	AU/YFez.v	yes
+A/AFf0.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 13)	AU/YFf0.v	yes
+A/AFf1.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 14)	AU/YFf1.v	yes
+A/AFf2.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 13)	AU/YFf2.v	yes
+A/AFf3.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 11)	AU/YFf3.v	yes
+A/AFf4.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 13)	AU/YFf4.v	yes
+A/AFf5.v	grant	grant release (run of record)	-	-
+A/AFf6.v	grant	grant release (run of record)	-	-
+A/AFf7.v	grant	grant release (run of record)	-	-
+A/AFf8.v	grant	grant release (run of record)	-	-
+A/AFf9.v	grant	grant release (run of record)	-	-
+A/AFfa.v	grant	grant release (run of record)	-	-
+A/AFfb.v	grant	grant release (run of record)	-	-
+A/AFfc.v	grant	grant release (run of record)	-	-
+A/AFfd.v	grant	grant release (run of record)	-	-
+A/AFfe.v	grant	grant release (run of record)	-	-
+A/AFff.v	grant	grant release (run of record)	-	-
+A/AFfg.v	grant	grant release (run of record)	-	-
+A/AFfi.v	grant	grant release (run of record)	-	-
+A/AFfl.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 14)	AU/YFfl.v	yes
+A/AFfm.v	grant	grant release (run of record)	-	-
+A/AFfo.v	grant	grant release (run of record)	-	-
+A/AFfq.v	grant	grant release (run of record)	-	-
+A/AFfr.v	grant	grant release (run of record)	-	-
+A/AFfs.v	grant	grant release (run of record)	-	-
+A/AFft.v	grant	grant release (run of record)	-	-
+A/AFfu.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 23)	AU/YFfu.v	yes
+A/AFfv.v	grant	grant release (run of record)	-	-
+A/AFfw.v	grant	grant release (run of record)	-	-
+A/AFfx.v	grant	grant release (run of record)	-	-
+A/AFfy.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 22)	AU/YFfy.v	yes
+A/AFfz.v	grant	grant release (run of record)	-	-
+A/AFg0.v	grant	grant release (run of record)	-	-
+A/AFg1.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 23)	AU/YFg1.v	yes
+A/AFg2.v	grant	grant release (run of record)	-	-
+A/AFg3.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 22)	AU/YFg3.v	yes
+A/AFg4.v	grant	grant release (run of record)	-	-
+A/AFg5.v	grant	grant release (run of record)	-	-
+A/AFg6.v	grant	grant release (run of record)	-	-
+A/AFg7.v	grant	grant release (run of record)	-	-
+A/AFg8.v	grant	grant release (run of record)	-	-
+A/AFg9.v	grant	grant release (run of record)	-	-
+A/AFga.v	grant	grant release (run of record)	-	-
+A/AFgb.v	grant	grant release (run of record)	-	-
+A/AFgc.v	grant	grant release (run of record)	-	-
+A/AFgd.v	grant	grant release (run of record)	-	-
+A/AFge.v	grant	grant release (run of record)	-	-
+A/AFgf.v	grant	grant release (run of record)	-	-
+A/AFgg.v	grant	grant release (run of record)	-	-
+A/AFgh.v	grant	grant release (run of record)	-	-
+A/AFgi.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 19)	AU/YFgi.v	yes
+A/AFgj.v	grant	grant release (run of record)	-	-
+A/AFgk.v	grant	grant release (run of record)	-	-
+A/AFgl.v	grant	grant release (run of record)	-	-
+A/AFgm.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 19)	AU/YFgm.v	yes
+A/AFgn.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 19)	AU/YFgn.v	yes
+A/AFgo.v	grant	grant release (run of record)	-	-
+A/AFgp.v	grant	grant release (run of record)	-	-
+A/AFgq.v	grant	grant release (run of record)	-	-
+A/AFgr.v	grant	grant release (run of record)	-	-
+A/AFgs.v	grant	grant release (run of record)	-	-
+A/AFgt.v	grant	grant release (run of record)	-	-
+A/AFgu.v	grant	grant release (run of record)	-	-
+A/AFgv.v	grant	grant release (run of record)	-	-
+A/AFgw.v	grant	grant release (run of record)	-	-
+A/AFgx.v	grant	grant release (run of record)	-	-
+A/AFgy.v	grant	grant release (run of record)	-	-
+A/AFgz.v	grant	grant release (run of record)	-	-
+A/AFh0.v	grant	grant release (run of record)	-	-
+A/AFh1.v	grant	grant release (run of record)	-	-
+A/AFh2.v	grant	grant release (run of record)	-	-
+A/AFh3.v	grant	grant release (run of record)	-	-
+A/AFh4.v	grant	grant release (run of record)	-	-
+A/AFh5.v	grant	grant release (run of record)	-	-
+A/AFh6.v	grant	grant release (run of record)	-	-
+A/AFh7.v	grant	grant release (run of record)	-	-
+A/AFh8.v	grant	grant release (run of record)	-	-
+A/AFh9.v	grant	grant release (run of record)	-	-
+A/AFha.v	grant	grant release (run of record)	-	-
+A/AFhb.v	grant	grant release (run of record)	-	-
+A/AFhc.v	grant	grant release (run of record)	-	-
+A/AFhd.v	grant	grant release (run of record)	-	-
+A/AFhe.v	grant	grant release (run of record)	-	-
+A/AFhf.v	grant	grant release (run of record)	-	-
+A/AFhg.v	grant	grant release (run of record)	-	-
+A/AFhi.v	grant	grant release (run of record)	-	-
+A/AFhj.v	grant	grant release (run of record)	-	-
+A/AFhk.v	grant	grant release (run of record)	-	-
+A/AFhl.v	grant	grant release (run of record)	-	-
+A/AFhm.v	grant	grant release (run of record)	-	-
+A/AFhn.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 16)	AU/YFhn.v	yes
+A/AFho.v	grant	grant release (run of record)	-	-
+A/AFhp.v	grant	grant release (run of record)	-	-
+A/AFhq.v	grant	grant release (run of record)	-	-
+A/AFhr.v	grant	grant release (run of record)	-	-
+A/AFhs.v	grant	grant release (run of record)	-	-
+A/AFht.v	grant	grant release (run of record)	-	-
+A/AFhu.v	grant	grant release (run of record)	-	-
+A/AFhv.v	grant	grant release (run of record)	-	-
+A/AFhw.v	grant	grant release (run of record)	-	-
+A/AFhx.v	grant	grant release (run of record)	-	-
+A/AFhy.v	grant	grant release (run of record)	-	-
+A/AFhz.v	grant	grant release (run of record)	-	-
+A/AFi0.v	grant	grant release (run of record)	-	-
+A/AFi1.v	grant	grant release (run of record)	-	-
+A/AFi2.v	grant	grant release (run of record)	-	-
+A/AFi3.v	knock	knock counterpart names the depot form (first: depot_same, line 110)	AU/YFi3.v	yes
+A/AFi4.v	grant	grant release (run of record)	-	-
+A/AFi5.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 15)	AU/YFi5.v	yes
+A/AFi6.v	grant	grant release (run of record)	-	-
+A/AFi7.v	grant	grant release (run of record)	-	-
+A/AFi8.v	grant	grant release (run of record)	-	-
+A/AFi9.v	grant	grant release (run of record)	-	-
+A/AFia.v	grant	grant release (run of record)	-	-
+A/AFib.v	knock	measured break with a depot cause: build 2 (log sha256 eec84983d396): AFib.v:118 "Unable to unify Forall ?P []" (depot_cells is the empty-depot cell list)	AU/YFib.v	yes
+A/AFic.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 17)	AU/YFic.v	yes
+A/AFid.v	grant	grant release (run of record)	-	-
+A/AFie.v	grant	grant release (run of record)	-	-
+A/AFif.v	grant	grant release (run of record)	-	-
+A/AFig.v	grant	grant release (run of record)	-	-
+A/AFih.v	grant	grant release (run of record)	-	-
+A/AFii.v	grant	grant release (run of record)	-	-
+A/AFij.v	knock	knock counterpart names the depot form (first: layout_grow, line 31)	AU/YFij.v	yes
+A/AFik.v	knock	knock counterpart names the depot form (first: layout_grow, line 36)	AU/YFik.v	yes
+A/AFil.v	knock	knock counterpart names the depot form (first: layout_grow, line 36)	AU/YFil.v	yes
+A/AFim.v	knock	knock counterpart names the depot form (first: layout_grow, line 107)	AU/YFim.v	yes
+A/AFin.v	knock	knock counterpart names the depot form (first: layout_grow, line 107)	AU/YFin.v	yes
+A/AFio.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 23)	AU/YFio.v	yes
+A/AFip.v	grant	grant release (run of record)	-	-
+A/AFiq.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 248)	AU/YFiq.v	yes
+A/AFir.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 248)	AU/YFir.v	yes
+A/AFis.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 19)	AU/YFis.v	yes
+A/AFit.v	grant	grant release (run of record)	-	-
+A/AFiu.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 19)	AU/YFiu.v	yes
+A/AFiv.v	grant	grant release (run of record)	-	-
+A/AFiw.v	grant	grant release (run of record)	-	-
+A/AFix.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 22)	AU/YFix.v	yes
+A/AFiy.v	grant	grant release (run of record)	-	-
+A/AFiz.v	grant	grant release (run of record)	-	-
+A/AFj0.v	grant	grant release (run of record)	-	-
+A/AFj1.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFj1.v	yes
+A/AFj2.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 22)	AU/YFj2.v	yes
+A/AFj3.v	grant	grant release (run of record)	-	-
+A/AFj4.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 245)	AU/YFj4.v	yes
+A/AFj5.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 245)	AU/YFj5.v	yes
+A/AFj6.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 19)	AU/YFj6.v	yes
+A/AFj7.v	grant	grant release (run of record)	-	-
+A/AFj8.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 19)	AU/YFj8.v	yes
+A/AFj9.v	grant	grant release (run of record)	-	-
+A/AFja.v	grant	grant release (run of record)	-	-
+A/AFjb.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 22)	AU/YFjb.v	yes
+A/AFjc.v	grant	grant release (run of record)	-	-
+A/AFjd.v	grant	grant release (run of record)	-	-
+A/AFje.v	grant	grant release (run of record)	-	-
+A/AFjf.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 22)	AU/YFjf.v	yes
+A/AFjg.v	knock	knock counterpart names the depot form (first: layout_grow, line 331)	AU/YFjg.v	yes
+A/AFjh.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjh.v	yes
+A/AFji.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFji.v	yes
+A/AFjj.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjj.v	yes
+A/AFjk.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjk.v	yes
+A/AFjl.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjl.v	yes
+A/AFjm.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 19)	AU/YFjm.v	yes
+A/AFjn.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjn.v	yes
+A/AFjo.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjo.v	yes
+A/AFjp.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjp.v	yes
+A/AFjq.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjq.v	yes
+A/AFjr.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjr.v	yes
+A/AFjs.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjs.v	yes
+A/AFjt.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjt.v	yes
+A/AFju.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFju.v	yes
+A/AFjv.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjv.v	yes
+A/AFjw.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjw.v	yes
+A/AFjx.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFjx.v	yes
+A/AFjy.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 23)	AU/YFjy.v	yes
+A/AFjz.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 23)	AU/YFjz.v	yes
+A/AFk0.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 25)	AU/YFk0.v	yes
+A/AFk1.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFk1.v	yes
+A/AFk2.v	knock	knock counterpart names the depot form (first: KnBlockExt, line 21)	AU/YFk2.v	yes
+A/AFk3.v	grant	grant release (run of record)	-	-
+A/AFk5.v	grant	grant release (run of record)	-	-
+A/AFk6.v	grant	grant release (run of record)	-	-
+A/AFk7.v	grant	grant release (run of record)	-	-
+A/AFk8.v	grant	grant release (run of record)	-	-
+A/AFk9.v	grant	grant release (run of record)	-	-
+A/AFka.v	grant	grant release (run of record)	-	-
+A/AFkb.v	grant	grant release (run of record)	-	-
+A/AFkc.v	grant	grant release (run of record)	-	-
+A/AFkd.v	grant	grant release (run of record)	-	-
+A/AFke.v	grant	grant release (run of record)	-	-
+A/AFkf.v	grant	grant release (run of record)	-	-
+A/AFkg.v	grant	grant release (run of record)	-	-
+A/AFkh.v	grant	grant release (run of record)	-	-
+A/AFki.v	grant	grant release (run of record)	-	-
+A/AFkj.v	grant	grant release (run of record)	-	-
+A/AFkk.v	grant	grant release (run of record)	-	-
+A/AFkl.v	grant	grant release (run of record)	-	-
+A/AFkm.v	knock	knock counterpart names the depot form (first: d_mu, line 998)	AU/YFkm.v	yes
+A/AFkn.v	grant	grant release (run of record)	-	-
+A/AFko.v	grant	grant release (run of record)	-	-
+A/AFkp.v	grant	grant release (run of record)	-	-
+A/AFkq.v	grant	grant release (run of record)	-	-
+A/AFkr.v	grant	grant release (run of record)	-	-
+A/AFks.v	grant	grant release (run of record)	-	-
+A/AFkt.v	grant	grant release (run of record)	-	-
+A/AFku.v	grant	grant release (run of record)	-	-
+A/AFkv.v	grant	grant release (run of record)	-	-
+A/AFkw.v	grant	grant release (run of record)	-	-
+A/AFkx.v	grant	grant release (run of record)	-	-
+A/AFky.v	grant	grant release (run of record)	-	-
+A/AFkz.v	knock	knock counterpart names the depot form (first: d_mu, line 714)	AU/YFkz.v	yes
+A/AFl0.v	grant	grant release (run of record)	-	-
+A/AFl1.v	grant	grant release (run of record)	-	-
+A/AFl2.v	grant	grant release (run of record)	-	-
+A/AFl3.v	grant	grant release (run of record)	-	-
+A/AFl4.v	grant	grant release (run of record)	-	-
+A/AD3a.v	knock	Required by A/AD3j.v	AU/YD3a.v	yes
+A/AD3b.v	knock	Required by A/AD3j.v	AU/YD3b.v	yes
+A/AD3c.v	knock	Required by A/AFix.v	AU/YD3c.v	yes
+A/AD3d.v	knock	Required by A/AFix.v	AU/YD3d.v	yes
+A/AD3g.v	knock	Required by A/AFix.v	AU/YD3g.v	yes
+A/AD3h.v	knock	Required by A/AD3j.v	AU/YD3h.v	yes
+A/AD3i.v	knock	Required by A/AFix.v	AU/YD3i.v	yes
+A/AD3j.v	knock	Required by A/AF0w.v	AU/YD3j.v	yes
+A/AD3k.v	knock	Required by A/AD3j.v	AU/YD3k.v	yes
+A/AFk0g.v	knock	Required by A/AFk0.v	AU/YFk0g.v	yes
+A/AWalkFw0.v	knock	Required by A/AD1r.v	AU/AWalkFw0.v	yes
+Reusable/KnBlockExt.v	knock	Required by A/AFex.v	Reusable/KnBlockExt.v	shared kernel file
+Reusable/KnLayoutGle.v	knock	Required by A/AD1r.v	Reusable/KnLayoutGle.v	shared kernel file
+A/AF0r.v	out	out by ruling (B): knock's class-1 fake-stack walk; the grant lineage holds lib/A/Rt/AF0r.v; Required by A/AD3d.v	AU/YF0r.v	yes
+# size: knock-donor lib/A files 88 (77 replace a unit file, 11 new) of the unit's 389 lib/A files; knock-donor lib/A lines 66421; the replaced unit files hold 54542 of the unit's 190920 lib/A lines (28.6%); knock kernel files 2

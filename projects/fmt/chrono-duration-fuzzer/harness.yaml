@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: fmt
 harness: chrono-duration-fuzzer
-rocq: OssFuzzTheorems.fmt.chrono_duration_fuzzer
+rocq: OSSVerify.fmt.chrono_duration_fuzzer
 origin: upstream
 summary: format_to(runtime(fuzz format), std::chrono::duration<Rep, Period>(fuzz rep)) for 12 reps x 15
   periods; std::exception swallowed.

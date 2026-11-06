@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libcacard
 harness: fuzz_simpletlv
-rocq: OssFuzzTheorems.libcacard.fuzz_simpletlv
+rocq: OSSVerify.libcacard.fuzz_simpletlv
 origin: upstream
 summary: simpletlv_parse over the input, then simpletlv_free of the result; the parsed members and count
   are never inspected.

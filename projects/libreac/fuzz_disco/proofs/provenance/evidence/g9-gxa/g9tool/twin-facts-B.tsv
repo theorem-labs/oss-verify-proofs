@@ -1,0 +1,176 @@
+# fm image: twin fuzz_manifest.debug sha256 fc92e86bee065b5d115a8368454c15f1f8f06b0f1c8407afc26b17971b770100; pin fuzz_manifest sha256 0ba7e16958864e92e3794ed926f933c02404ad8356fd1388a636ecee440cab32; PT_LOAD 2..4 of twin and pin byte-equal: yes
+# target image: twin fuzz_disco.debug sha256 65947ff283f53a9370b96c3ed62654dd7e44cfd5275e54c2dbb1a72d00d14048; pin fuzz_disco.asan-ubsan sha256 cee6f04ad3d4928e242405689ae058bb9e8b6533000c90bde984a2f0d5ff5146; PT_LOAD 2..4 of twin and pin byte-equal: yes
+fm value	fm twin: symbol + offset	target value	target twin: symbol + offset	same name + offset	shipped files	how
+0x107d6	(.rodata) C string b'cs[\x00'	0x10806	(.rodata) C string b'cs[\x00'	yes	1	applied
+0x10b4c	(.rodata) C string b'-+   0X0x\x00'	0x10b7c	(.rodata) C string b'-+   0X0x\x00'	yes	2	applied
+0x139af	(.rodata) C string b'sS\x00'	0x139e5	(.rodata) C string b'sS\x00'	yes	1	applied
+0x14059	(.rodata) C string b'vprintf\x00'	0x1408f	(.rodata) C string b'vprintf\x00'	yes	1	applied
+0x14061	(.rodata) C string b'cCsS\x00'	0x14097	(.rodata) C string b'cCsS\x00'	yes	1	applied
+0x1478f	(.rodata) C string b'%d\n\x00'	0x147c5	(.rodata) C string b'%d\n\x00'	yes	1	applied
+0x15252	(.rodata) C string b"'-+ #0\x00"	0x15288	(.rodata) C string b"'-+ #0\x00"	yes	1	applied
+86610	(.rodata) C string b"'-+ #0\x00"	86664	(.rodata) C string b"'-+ #0\x00"	yes	6	applied
+0x15805	(.rodata) C string b'usage: %s INPUT\n\x00'	0x1583b	(.rodata) C string b'usage: %s INPUT\n\x00'	yes	1	applied
+0x16295	(.rodata) C string b'aAeEfFgG\x00'	0x162d9	(.rodata) C string b'aAeEfFgG\x00'	yes	1	applied
+0x19657	(.rodata) C string b'cli: input >= %u bytes, refused\n\x00'	0x196d8	(.rodata) C string b'cli: input >= %u bytes, refused\n\x00'	yes	1	applied
+0x1995e	(.rodata) C string b'CS\x00'	0x199e7	(.rodata) C string b'CS\x00'	yes	1	applied
+0x1b202	(.rodata) C string b'jztLq\x00'	0x1b2a2	(.rodata) C string b'jztLq\x00'	yes	1	applied
+0x1c2c2	(.rodata) C string b'diouxXn\x00'	0x1c3d1	(.rodata) C string b'diouxXn\x00'	yes	1	applied
+0x1d638	(.rodata) C string b'cli: cannot open %s\n\x00'	0x1d868	(.rodata) C string b'cli: cannot open %s\n\x00'	yes	1	applied
+0x1d64d	(.rodata) C string b'cli: read error on %s\n\x00'	0x1d87d	(.rodata) C string b'cli: read error on %s\n\x00'	yes	1	applied
+0x20d00	.str+0x0	0x20f98	.str+0x18	no	2	hand
+0x412c8	__interceptor_trampoline_strlen/__wrap_strlen+0x0	0x42a3c	__interceptor_trampoline_strlen/__wrap_strlen+0x0	yes	3	applied
+0x412cc	__interceptor_trampoline_strnlen/__wrap_strnlen+0x0	0x42a40	__interceptor_trampoline_strnlen/__wrap_strnlen+0x0	yes	2	applied
+0x412e0	__interceptor_trampoline_strchr/__wrap_strchr+0x0	0x42a48	__interceptor_trampoline_strchr/__wrap_strchr+0x0	yes	2	applied
+0x412e4	__interceptor_trampoline_memcmp/__wrap_memcmp+0x0	0x42a4c	__interceptor_trampoline_memcmp/__wrap_memcmp+0x0	yes	1	applied
+0x412e8	__interceptor_trampoline_bcmp/__wrap_bcmp+0x0	0x42a50	__interceptor_trampoline_bcmp/__wrap_bcmp+0x0	yes	2	applied
+0x412ec	__interceptor_trampoline_memchr/__wrap_memchr+0x0	0x42a54	__interceptor_trampoline_memchr/__wrap_memchr+0x0	yes	2	applied
+0x41304	__interceptor_trampoline_vprintf/__wrap_vprintf+0x0	0x42a6c	__interceptor_trampoline_vprintf/__wrap_vprintf+0x0	yes	1	applied
+0x41314	__interceptor_trampoline_snprintf/__wrap_snprintf+0x0	0x42a7c	__interceptor_trampoline_snprintf/__wrap_snprintf+0x0	yes	1	applied
+0x41364	___interceptor_strlen/__interceptor_strlen+0x0	0x42acc	___interceptor_strlen/__interceptor_strlen+0x0	yes	1	applied
+0x415f8	___interceptor_strnlen/__interceptor_strnlen+0x0	0x42d60	___interceptor_strnlen/__interceptor_strnlen+0x0	yes	3	applied
+0x41674	___interceptor_strnlen/__interceptor_strnlen+0x7c	0x42ddc	___interceptor_strnlen/__interceptor_strnlen+0x7c	yes	1	applied
+0x416bc	___interceptor_strnlen/__interceptor_strnlen+0xc4	0x42e24	___interceptor_strnlen/__interceptor_strnlen+0xc4	yes	1	applied
+0x41790	___interceptor_strnlen/__interceptor_strnlen+0x198	0x42ef8	___interceptor_strnlen/__interceptor_strnlen+0x198	yes	1	applied
+0x417a0	___interceptor_strnlen/__interceptor_strnlen+0x1a8	0x42f08	___interceptor_strnlen/__interceptor_strnlen+0x1a8	yes	1	applied
+0x417a8	___interceptor_strnlen/__interceptor_strnlen+0x1b0	0x42f10	___interceptor_strnlen/__interceptor_strnlen+0x1b0	yes	1	applied
+0x42e88	___interceptor_index/___interceptor_strchr/__interceptor_index/__interceptor_strchr+0x0	0x43528	___interceptor_index/___interceptor_strchr/__interceptor_index/__interceptor_strchr+0x0	yes	1	applied
+0x42f58	___interceptor_index/___interceptor_strchr/__interceptor_index/__interceptor_strchr+0xd0	0x435f8	___interceptor_index/___interceptor_strchr/__interceptor_index/__interceptor_strchr+0xd0	yes	1	applied
+0x42fac	___interceptor_index/___interceptor_strchr/__interceptor_index/__interceptor_strchr+0x124	0x4364c	___interceptor_index/___interceptor_strchr/__interceptor_index/__interceptor_strchr+0x124	yes	1	applied
+0x4306c	___interceptor_index/___interceptor_strchr/__interceptor_index/__interceptor_strchr+0x1e4	0x4370c	___interceptor_index/___interceptor_strchr/__interceptor_index/__interceptor_strchr+0x1e4	yes	1	applied
+0x4307c	___interceptor_index/___interceptor_strchr/__interceptor_index/__interceptor_strchr+0x1f4	0x4371c	___interceptor_index/___interceptor_strchr/__interceptor_index/__interceptor_strchr+0x1f4	yes	1	applied
+0x43084	___interceptor_index/___interceptor_strchr/__interceptor_index/__interceptor_strchr+0x1fc	0x43724	___interceptor_index/___interceptor_strchr/__interceptor_index/__interceptor_strchr+0x1fc	yes	1	applied
+0x43a00	___interceptor_memcmp/__interceptor_memcmp+0x0	0x440a0	___interceptor_memcmp/__interceptor_memcmp+0x0	yes	1	applied
+0x43abc	___interceptor_bcmp/__interceptor_bcmp+0x0	0x4415c	___interceptor_bcmp/__interceptor_bcmp+0x0	yes	1	applied
+0x43b78	___interceptor_memchr/__interceptor_memchr+0x0	0x44218	___interceptor_memchr/__interceptor_memchr+0x0	yes	2	applied
+0x43bec	___interceptor_memchr/__interceptor_memchr+0x74	0x4428c	___interceptor_memchr/__interceptor_memchr+0x74	yes	1	applied
+0x43c34	___interceptor_memchr/__interceptor_memchr+0xbc	0x442d4	___interceptor_memchr/__interceptor_memchr+0xbc	yes	1	applied
+0x43d44	___interceptor_memchr/__interceptor_memchr+0x1cc	0x443e4	___interceptor_memchr/__interceptor_memchr+0x1cc	yes	1	applied
+0x43d54	___interceptor_memchr/__interceptor_memchr+0x1dc	0x443f4	___interceptor_memchr/__interceptor_memchr+0x1dc	yes	1	applied
+0x43d5c	___interceptor_memchr/__interceptor_memchr+0x1e4	0x443fc	___interceptor_memchr/__interceptor_memchr+0x1e4	yes	1	applied
+0x44cd8	___interceptor_vprintf/__interceptor_vprintf+0x50	0x45378	___interceptor_vprintf/__interceptor_vprintf+0x50	yes	1	applied
+0x44cec	___interceptor_vprintf/__interceptor_vprintf+0x64	0x4538c	___interceptor_vprintf/__interceptor_vprintf+0x64	yes	1	applied
+0x44d24	_ZL13printf_commonPvPKcS_+0x0	0x453c4	_ZL13printf_commonPvPKcS_+0x0	yes	5	applied
+0x44d80	_ZL13printf_commonPvPKcS_+0x5c	0x45420	_ZL13printf_commonPvPKcS_+0x5c	yes	1	applied
+0x44dcc	_ZL13printf_commonPvPKcS_+0xa8	0x4546c	_ZL13printf_commonPvPKcS_+0xa8	yes	1	applied
+0x44e30	_ZL13printf_commonPvPKcS_+0x10c	0x454d0	_ZL13printf_commonPvPKcS_+0x10c	yes	3	applied
+0x44e38	_ZL13printf_commonPvPKcS_+0x114	0x454d8	_ZL13printf_commonPvPKcS_+0x114	yes	4	applied
+0x44e64	_ZL13printf_commonPvPKcS_+0x140	0x45504	_ZL13printf_commonPvPKcS_+0x140	yes	5	applied
+0x44eb0	_ZL13printf_commonPvPKcS_+0x18c	0x45550	_ZL13printf_commonPvPKcS_+0x18c	yes	1	applied
+0x44ec0	_ZL13printf_commonPvPKcS_+0x19c	0x45560	_ZL13printf_commonPvPKcS_+0x19c	yes	1	applied
+0x44ed4	_ZL13printf_commonPvPKcS_+0x1b0	0x45574	_ZL13printf_commonPvPKcS_+0x1b0	yes	1	applied
+0x44ef0	_ZL13printf_commonPvPKcS_+0x1cc	0x45590	_ZL13printf_commonPvPKcS_+0x1cc	yes	1	applied
+0x44f38	_ZL13printf_commonPvPKcS_+0x214	0x455d8	_ZL13printf_commonPvPKcS_+0x214	yes	1	applied
+0x44f4c	_ZL13printf_commonPvPKcS_+0x228	0x455ec	_ZL13printf_commonPvPKcS_+0x228	yes	2	applied
+0x44fac	_ZL13printf_commonPvPKcS_+0x288	0x4564c	_ZL13printf_commonPvPKcS_+0x288	yes	1	applied
+0x44fe0	_ZL13printf_commonPvPKcS_+0x2bc	0x45680	_ZL13printf_commonPvPKcS_+0x2bc	yes	5	applied
+0x450e0	_ZL13printf_commonPvPKcS_+0x3bc	0x45780	_ZL13printf_commonPvPKcS_+0x3bc	yes	1	applied
+0x451b0	_ZL13printf_commonPvPKcS_+0x48c	0x45850	_ZL13printf_commonPvPKcS_+0x48c	yes	1	applied
+0x451dc	_ZL13printf_commonPvPKcS_+0x4b8	0x4587c	_ZL13printf_commonPvPKcS_+0x4b8	yes	1	applied
+283104	_ZL13printf_commonPvPKcS_+0x4bc	284800	_ZL13printf_commonPvPKcS_+0x4bc	yes	1	applied
+283208	_ZL13printf_commonPvPKcS_+0x524	284904	_ZL13printf_commonPvPKcS_+0x524	yes	1	applied
+0x45254	_ZL13printf_commonPvPKcS_+0x530	0x458f4	_ZL13printf_commonPvPKcS_+0x530	yes	4	applied
+0x452c0	_ZL13printf_commonPvPKcS_+0x59c	0x45960	_ZL13printf_commonPvPKcS_+0x59c	yes	1	applied
+0x452d0	_ZL13printf_commonPvPKcS_+0x5ac	0x45970	_ZL13printf_commonPvPKcS_+0x5ac	yes	1	applied
+0x452d8	_ZL13printf_commonPvPKcS_+0x5b4	0x45978	_ZL13printf_commonPvPKcS_+0x5b4	yes	1	applied
+0x456e8	_ZL13printf_commonPvPKcS_+0x9c4	0x45d88	_ZL13printf_commonPvPKcS_+0x9c4	yes	1	applied
+0x456f8	_ZL13printf_commonPvPKcS_+0x9d4	0x45d98	_ZL13printf_commonPvPKcS_+0x9d4	yes	1	applied
+0x45700	_ZL13printf_commonPvPKcS_+0x9dc	0x45da0	_ZL13printf_commonPvPKcS_+0x9dc	yes	1	applied
+0x457ec	___interceptor_vfprintf/__interceptor_vfprintf+0x0	0x45e8c	___interceptor_vfprintf/__interceptor_vfprintf+0x0	yes	1	applied
+0x458a0	___interceptor_vsnprintf/__interceptor_vsnprintf+0x0	0x45f40	___interceptor_vsnprintf/__interceptor_vsnprintf+0x0	yes	2	applied
+0x45944	___interceptor_vsnprintf/__interceptor_vsnprintf+0xa4	0x45fe4	___interceptor_vsnprintf/__interceptor_vsnprintf+0xa4	yes	1	applied
+0x45990	___interceptor_vsnprintf/__interceptor_vsnprintf+0xf0	0x46030	___interceptor_vsnprintf/__interceptor_vsnprintf+0xf0	yes	1	applied
+0x45994	___interceptor_vsnprintf/__interceptor_vsnprintf+0xf4	0x46034	___interceptor_vsnprintf/__interceptor_vsnprintf+0xf4	yes	1	applied
+0x4599c	___interceptor_vsnprintf/__interceptor_vsnprintf+0xfc	0x4603c	___interceptor_vsnprintf/__interceptor_vsnprintf+0xfc	yes	1	applied
+0x45a18	___interceptor_vsnprintf/__interceptor_vsnprintf+0x178	0x460b8	___interceptor_vsnprintf/__interceptor_vsnprintf+0x178	yes	1	applied
+0x45c90	___interceptor_snprintf/__interceptor_snprintf+0x0	0x46330	___interceptor_snprintf/__interceptor_snprintf+0x0	yes	1	applied
+0x47ee8	_ZL21format_get_value_sizecPKcb+0x0	0x48588	_ZL21format_get_value_sizecPKcb+0x0	yes	4	applied
+0x47f40	_ZL21format_get_value_sizecPKcb+0x58	0x485e0	_ZL21format_get_value_sizecPKcb+0x58	yes	1	applied
+0x51a60	__interceptor_trampoline_memset/__wrap_memset+0x0	0x52100	__interceptor_trampoline_memset/__wrap_memset+0x0	yes	2	applied
+0x51a64	__interceptor_trampoline_memcpy/__wrap_memcpy+0x0	0x52104	__interceptor_trampoline_memcpy/__wrap_memcpy+0x0	yes	1	applied
+0x52144	___interceptor_memset/__interceptor_memset+0x0	0x527e4	___interceptor_memset/__interceptor_memset+0x0	yes	1	applied
+0x521cc	___interceptor_memset/__interceptor_memset+0x88	0x5286c	___interceptor_memset/__interceptor_memset+0x88	yes	1	applied
+0x521d0	___interceptor_memset/__interceptor_memset+0x8c	0x52870	___interceptor_memset/__interceptor_memset+0x8c	yes	1	applied
+0x521e4	___interceptor_memset/__interceptor_memset+0xa0	0x52884	___interceptor_memset/__interceptor_memset+0xa0	yes	1	applied
+0x52434	___interceptor_memcpy/__interceptor_memcpy+0x0	0x52ad4	___interceptor_memcpy/__interceptor_memcpy+0x0	yes	1	applied
+0x54294	__asan_poison_memory_region+0x0	0x54934	__asan_poison_memory_region+0x0	yes	1	applied
+0x54434	__asan_unpoison_memory_region+0x0	0x54ad4	__asan_unpoison_memory_region+0x0	yes	1	applied
+0x54758	__asan_region_is_poisoned+0x174	0x54df8	__asan_region_is_poisoned+0x174	yes	2	applied
+345944	__asan_region_is_poisoned+0x174	347640	__asan_region_is_poisoned+0x174	yes	3	applied
+0x59a78	_ZN6__asan18TryAsanInitFromRtlEv+0x0	0x5a118	_ZN6__asan18TryAsanInitFromRtlEv+0x0	yes	3	applied
+0x63ad8	_ZN11__sanitizer14internal_atollEPKc+0x0	0x64178	_ZN11__sanitizer14internal_atollEPKc+0x0	yes	1	applied
+0x63b58	_ZN11__sanitizer14internal_atollEPKc+0x80	0x641f8	_ZN11__sanitizer14internal_atollEPKc+0x80	yes	1	applied
+0x63b90	_ZN11__sanitizer14internal_atollEPKc+0xb8	0x64230	_ZN11__sanitizer14internal_atollEPKc+0xb8	yes	1	applied
+0x63df4	__sanitizer_internal_memset+0x0	0x64494	__sanitizer_internal_memset+0x0	yes	2	applied
+0x63ea8	_ZN11__sanitizer15internal_strchrEPKci+0x0	0x64548	_ZN11__sanitizer15internal_strchrEPKci+0x0	yes	7	applied
+0x63eb8	_ZN11__sanitizer15internal_strchrEPKci+0x10	0x64558	_ZN11__sanitizer15internal_strchrEPKci+0x10	yes	1	applied
+0x63f48	_ZN11__sanitizer15internal_strlenEPKc+0x0	0x645e8	_ZN11__sanitizer15internal_strlenEPKc+0x0	yes	6	applied
+0x63f4c	_ZN11__sanitizer15internal_strlenEPKc+0x4	0x645ec	_ZN11__sanitizer15internal_strlenEPKc+0x4	yes	2	applied
+0x63f5c	_ZN11__sanitizer15internal_strlenEPKc+0x14	0x645fc	_ZN11__sanitizer15internal_strlenEPKc+0x14	yes	1	applied
+0x641ac	_ZN11__sanitizer16internal_strnlenEPKcm+0x0	0x6484c	_ZN11__sanitizer16internal_strnlenEPKcm+0x0	yes	1	applied
+0x641b8	_ZN11__sanitizer16internal_strnlenEPKcm+0xc	0x64858	_ZN11__sanitizer16internal_strnlenEPKcm+0xc	yes	1	applied
+0x641d0	_ZN11__sanitizer16internal_strnlenEPKcm+0x24	0x64870	_ZN11__sanitizer16internal_strnlenEPKcm+0x24	yes	1	applied
+0x80818	target_run+0xcc	0x80eb8	target_run+0xcc	yes	1	applied
+0x8091c	LLVMFuzzerTestOneInput+0x0	0x80fbc	LLVMFuzzerTestOneInput+0x0	yes	1	applied
+0x8ede0	vfprintf+0x0	0x9634c	vfprintf+0x0	yes	2	applied
+0x91ef0	vprintf+0x0	0x9945c	vprintf+0x0	yes	1	applied
+0x91f0c	vsnprintf+0x0	0x99478	vsnprintf+0x0	yes	1	applied
+0x91f98	vsnprintf+0x8c	0x99504	vsnprintf+0x8c	yes	2	applied,propagated
+0x924a4	bcmp+0x0	0x99a10	bcmp+0x0	yes	1	applied
+0x924a8	memchr+0x0	0x99a14	memchr+0x0	yes	4	applied
+0x924c4	memchr+0x1c	0x99a30	memchr+0x1c	yes	1	applied
+0x924ec	memchr+0x44	0x99a58	memchr+0x44	yes	1	applied
+0x9251c	memchr+0x74	0x99a88	memchr+0x74	yes	1	applied
+0x92540	memchr+0x98	0x99aac	memchr+0x98	yes	1	applied
+0x92548	memchr+0xa0	0x99ab4	memchr+0xa0	yes	1	applied
+0x92574	memcmp+0x0	0x99ae0	memcmp+0x0	yes	2	applied
+0x92578	memcmp+0x4	0x99ae4	memcmp+0x4	yes	1	applied
+0x929a8	memset+0x0	0x99f14	memset+0x0	yes	1	applied
+0x92ab4	strchr+0x0	0x9a00c	strchr+0x0	yes	1	applied
+0x92c08	strlen+0x0	0x9a160	strlen+0x0	yes	1	applied
+0x92f68	strnlen+0x0	0x9a39c	strnlen+0x0	yes	1	applied
+0x99000	bound: PT_LOAD 2 end rounded to a page	0xa0000	bound: PT_LOAD 2 end rounded to a page	yes	3	applied,propagated
+0x99450	_ZTVN11__sanitizer11FlagHandlerIiEE+0x0	0xa0280	_ZTVN11__sanitizer11FlagHandlerIiEE+0x0	yes	1	applied
+0x999a0	.got slot 0x999a0 + 0 holds 0x1338a8 (_ZN11__sanitizer21common_flags_dont_useE+0x0)	0xa08a0	.got slot 0xa08a0 + 0 holds 0x13afa8 (_ZN11__sanitizer21common_flags_dont_useE+0x0)	yes	5	applied
+0x999a8	.got slot 0x999a8 + 0 holds 0x9f578 (_ZN6__asan28asan_flags_dont_use_directlyE+0x0)	0xa08a8	.got slot 0xa08a8 + 0 holds 0xa6c78 (_ZN6__asan28asan_flags_dont_use_directlyE+0x0)	yes	1	applied
+0x999b0	.got slot 0x999b0 + 0 holds 0xa1d78 (__asan_shadow_memory_dynamic_address+0x0)	0xa08b0	.got slot 0xa08b0 + 0 holds 0xa9478 (__asan_shadow_memory_dynamic_address+0x0)	yes	6	applied
+0x999d0	.got slot 0x999d0 + 0 holds 0x9b848 (_ZN14__interception11real_memsetE+0x0)	0xa08d0	.got slot 0xa08d0 + 0 holds 0xa2718 (_ZN14__interception11real_memsetE+0x0)	yes	1	applied
+0x9a638	.got slot 0x9a638 + 0 holds 0x5f4db0 (__stack_chk_guard+0x0)	0xa1538	.got slot 0xa1538 + 0 holds 0x5fc450 (__stack_chk_guard+0x0)	yes	6	applied,propagated
+0x9a639	.got slot 0x9a638 + 1 holds 0x5f4db0 (__stack_chk_guard+0x0)	0xa1539	.got slot 0xa1538 + 1 holds 0x5fc450 (__stack_chk_guard+0x0)	yes	1	applied
+0x9a63a	.got slot 0x9a638 + 2 holds 0x5f4db0 (__stack_chk_guard+0x0)	0xa153a	.got slot 0xa1538 + 2 holds 0x5fc450 (__stack_chk_guard+0x0)	yes	1	applied
+0x9a63b	.got slot 0x9a638 + 3 holds 0x5f4db0 (__stack_chk_guard+0x0)	0xa153b	.got slot 0xa1538 + 3 holds 0x5fc450 (__stack_chk_guard+0x0)	yes	1	applied
+0x9a63c	.got slot 0x9a638 + 4 holds 0x5f4db0 (__stack_chk_guard+0x0)	0xa153c	.got slot 0xa1538 + 4 holds 0x5fc450 (__stack_chk_guard+0x0)	yes	1	applied
+0x9a63d	.got slot 0x9a638 + 5 holds 0x5f4db0 (__stack_chk_guard+0x0)	0xa153d	.got slot 0xa1538 + 5 holds 0x5fc450 (__stack_chk_guard+0x0)	yes	1	applied
+0x9a63e	.got slot 0x9a638 + 6 holds 0x5f4db0 (__stack_chk_guard+0x0)	0xa153e	.got slot 0xa1538 + 6 holds 0x5fc450 (__stack_chk_guard+0x0)	yes	1	applied
+0x9a63f	.got slot 0x9a638 + 7 holds 0x5f4db0 (__stack_chk_guard+0x0)	0xa153f	.got slot 0xa1538 + 7 holds 0x5fc450 (__stack_chk_guard+0x0)	yes	1	applied
+0x9a640	.got slot 0x9a640 + 0 holds 0x5d4ca0 (___environ/__environ/_environ/environ+0x0)	0xa1540	.got slot 0xa1540 + 0 holds 0x5dc340 (___environ/__environ/_environ/environ+0x0)	yes	1	applied
+0x9a6a8	bound: end of .got, start of .relro_padding	0xa15a8	bound: end of .got, start of .relro_padding	yes	1	applied
+0x9b6f0	_ZN14__interception11real_strchrE+0x0	0xa25c0	_ZN14__interception11real_strchrE+0x0	yes	1	applied
+0x9b708	_ZN14__interception11real_memchrE+0x0	0xa25d8	_ZN14__interception11real_memchrE+0x0	yes	1	applied
+0x9b738	_ZN14__interception12real_vprintfE+0x0	0xa2608	_ZN14__interception12real_vprintfE+0x0	yes	1	applied
+0x9b740	_ZN14__interception13real_vfprintfE+0x0	0xa2610	_ZN14__interception13real_vfprintfE+0x0	yes	2	applied,propagated
+0x9b748	_ZN14__interception14real_vsnprintfE+0x0	0xa2618	_ZN14__interception14real_vsnprintfE+0x0	yes	2	applied
+0x9b7f0	_ZN14__interception12real_strnlenE+0x0	0xa26c0	_ZN14__interception12real_strnlenE+0x0	yes	1	applied
+0xa1d78	__asan_shadow_memory_dynamic_address+0x0	0xa9478	__asan_shadow_memory_dynamic_address+0x0	yes	6	applied
+0xa1d80	__asan_option_detect_stack_use_after_return+0x0	0xa9480	__asan_option_detect_stack_use_after_return+0x0	yes	1	applied
+0xa2a58	_ZN6__asanL11asan_initedE+0x0	0xaa158	_ZN6__asanL11asan_initedE+0x0	yes	6	applied
+0xa2a59	_ZN6__asan21replace_intrin_cachedE+0x0	0xaa159	_ZN6__asan21replace_intrin_cachedE+0x0	yes	1	applied
+0xa2a60	_ZN6__asan11kHighMemEndE+0x0	0xaa160	_ZN6__asan11kHighMemEndE+0x0	yes	2	applied
+0xa2a78	_ZN6__asanL22sealed_shadow_reservedE+0x0	0xaa178	_ZN6__asanL22sealed_shadow_reservedE+0x0	yes	1	applied
+0x1338a8	_ZN11__sanitizer21common_flags_dont_useE+0x0	0x13afa8	_ZN11__sanitizer21common_flags_dont_useE+0x0	yes	5	applied
+0x1338fc	_ZN11__sanitizer21common_flags_dont_useE+0x54	0x13affc	_ZN11__sanitizer21common_flags_dont_useE+0x54	yes	3	applied
+0x1338fd	_ZN11__sanitizer21common_flags_dont_useE+0x55	0x13affd	_ZN11__sanitizer21common_flags_dont_useE+0x55	yes	1	applied
+0x13399d	_ZN11__sanitizer21common_flags_dont_useE+0xf5	0x13b09d	_ZN11__sanitizer21common_flags_dont_useE+0xf5	yes	1	applied
+0x1339a3	_ZN11__sanitizer21common_flags_dont_useE+0xfb	0x13b0a3	_ZN11__sanitizer21common_flags_dont_useE+0xfb	yes	1	applied
+0x1339a5	_ZN11__sanitizer21common_flags_dont_useE+0xfd	0x13b0a5	_ZN11__sanitizer21common_flags_dont_useE+0xfd	yes	1	applied
+0x5d43e0	oft_aligned_copy.empty+0x0	0x5dbae0	oft_aligned_copy.empty+0x0	yes	1	applied
+0x5f4db0	__stack_chk_guard+0x0	0x5fc450	__stack_chk_guard+0x0	yes	4	applied
+0x5f4db1	__stack_chk_guard+0x1	0x5fc451	__stack_chk_guard+0x1	yes	1	applied
+0x5f4db2	__stack_chk_guard+0x2	0x5fc452	__stack_chk_guard+0x2	yes	1	applied
+0x5f4db3	__stack_chk_guard+0x3	0x5fc453	__stack_chk_guard+0x3	yes	1	applied
+0x5f4db4	__stack_chk_guard+0x4	0x5fc454	__stack_chk_guard+0x4	yes	1	applied
+0x5f4db5	__stack_chk_guard+0x5	0x5fc455	__stack_chk_guard+0x5	yes	1	applied
+0x5f4db6	__stack_chk_guard+0x6	0x5fc456	__stack_chk_guard+0x6	yes	1	applied
+0x5f4db7	__stack_chk_guard+0x7	0x5fc457	__stack_chk_guard+0x7	yes	1	applied
+0x5f4db8	__abort_lock+0x0	0x5fc458	__abort_lock+0x0	yes	1	applied
+0x5f7000	bound: PT_LOAD 4 end rounded to a page	0x5fe000	bound: PT_LOAD 4 end rounded to a page	yes	10	applied
+6254592	bound: PT_LOAD 4 end rounded to a page	6283264	bound: PT_LOAD 4 end rounded to a page	yes	1	applied

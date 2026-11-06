@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjpeg-turbo
 harness: compress12_fuzzer
-rocq: OssFuzzTheorems.libjpeg_turbo.compress12_fuzzer
+rocq: OSSVerify.libjpeg_turbo.compress12_fuzzer
 origin: upstream
 summary: 12-bit tj3Compress12 on a loaded or raw image under 7 option sets; output only summed. The "sum
   > bound" test after touching output bytes only prevents dead-code elimination for MSan; its branch is

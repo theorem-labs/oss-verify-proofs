@@ -1,4 +1,4 @@
-(** Proof of OssFuzzTheorems.Tests.toy.exit0.Statements.padded_agrees.
+(** Proof of OSSVerify.Tests.toy.exit0.Statements.padded_agrees.
 
     Outline.  Fix an entry for each program and an input.  Neither program
     can reach an error, and the trace set of each is exactly the prefixes of
@@ -9,9 +9,9 @@
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType State Run OmniRun.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
-From OssFuzzTheorems.Core Require Import Shapes.
-From OssFuzzTheorems.Tests.toy.exit0 Require Statements Images.
-From OssFuzzTheorems.Tests.proofs.lib Require Exit0Run.
+From OSSVerify.Core Require Import Shapes.
+From OSSVerify.Tests.toy.exit0 Require Statements Images.
+From OSSVerify.Tests.proofs.lib Require Exit0Run.
 
 Theorem padded_agrees_holds : Statements.padded_agrees.
 Proof.

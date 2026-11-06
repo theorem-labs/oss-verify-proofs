@@ -1,0 +1,16 @@
+lib/A/AD2j.v	4	write window is the driver's own statics [0x5e3710, 0x5e3740)	R_A5a write window [0x5e3710, 0x5e3740) of this file	OK
+lib/A/AE3i.v	4	(0x246a4, .rodata end)	.rodata end 0x246a4 (section header)	OK
+lib/A/AE3i.v	4	172 rodata globals	172 descriptors whose beg lies in .rodata	OK
+lib/A/AE3i.v	4	IMG_RO_HI = 0x32340 (.eh_frame end	.eh_frame end 0x32340 (section header)	OK
+lib/A/AE3i.v	4	cgif 0x2f1ac)	the donor file's IMG_RO_HI 0x2f1ac	OK
+lib/A/AF0m.v	4	the 180 registered globals	asan_globals section size / 64 = 180 descriptors	OK
+lib/B/YD2j.v	4	write window is the driver's own statics [0x5e3710, 0x5e3740)	R_A5a write window [0x5e3290, 0x5e32c0) of this file	FINDING
+lib/B/YD2j.v	5	50 hand-off states	50 HS_tfib_<k>_kn hand-off states in B/YB01.v	OK
+lib/B/YE3i.v	4	(0x246a4, .rodata end)	.rodata end 0x246e4 (section header)	FINDING
+lib/B/YE3i.v	4	172 rodata globals	172 descriptors whose beg lies in .rodata	OK
+lib/B/YE3i.v	4	IMG_RO_HI = 0x32340 (.eh_frame end	.eh_frame end 0x3238c (section header)	FINDING
+lib/B/YE3i.v	4	cgif 0x2f1ac)	the donor file's IMG_RO_HI 0x2f1ac	OK
+lib/B/YE3i.v	5	IMG_RO_HI = 0x3238c (.eh_frame end	.eh_frame end 0x3238c (section header)	OK
+lib/B/YE3i.v	5	cut at the .rodata end 0x246e4	.rodata end 0x246e4 (section header)	OK
+lib/B/YF0m.v	4	the 180 registered globals	asan_globals section size / 64 = 180 descriptors	OK
+lib/B/YF0m.v	5	the 180 registered globals	asan_globals section size / 64 = 180 descriptors	OK

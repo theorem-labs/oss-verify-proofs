@@ -1,0 +1,210 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List Lia Bool.
+From stdpp.bitvector Require Import definitions.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.jsoncons.fuzz_bigint.images Require Import Asan.
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require BigLinkZA.   (* [comment removed for export] *)
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import PropExec CatExec CatSim SeqExec StoreOk Hoare ShapeAlg SpinAlg HeapIface
+     AxSymExec3 AxSymExec3B AxSymExec3Sound AxSymRun3 SegRun SegPlan As0PlanKit AsanPlanCore
+     BigLinkBase BigLinkGlue L5Defs L5Kn L5KnA.
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib.seg Require LibSegZ_anewA LibSegZ_anewB.
+Import ListNotations. Import AX2. Import AX2B. Import AX2S.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Require OSSVerify.Proofs.jsoncons.fuzz_bigint.lib.L5FastLia. Local Ltac lia := L5FastLia.plia.   (* [comment removed for export] *)
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).   (* [comment removed for export] *)
+
+Module L5ANEWP.
+Abbreviation RSEGS := Asan.M.loaded_segments.
+Abbreviation reg i := (Z_to_bv 5 (Z.of_nat i)).
+Abbreviation st fx R pc M := (@mkst fx R (Z_to_bv 64 pc) M (seg_rom Asan.M.loaded_segments)).
+
+(* [comment removed for export] *)
+Lemma word_of_zpoly E Vz e z : L5K.zagree E Vz e -> L5KA.zpolyA Vz e = Some z -> edenot E e = Z_to_bv 64 z.
+Proof.
+  intros A Pz. rewrite (BG.word_of_unsigned (edenot E e) (z mod BL.MM) (L5KA.zpolyA_sound E Vz e z A Pz)).
+  apply bv_eq. rewrite !Z_to_bv_unsigned. unfold bv_wrap, BL.MM. change (bv_modulus 64) with (2 ^ 64). apply Z.mod_mod. lia.
+Qed.
+(* [comment removed for export] *)
+Lemma u64_of_KWord8a E M b off e a v a' : kentry_ok RSEGS E M (KWord (SA b off) 8 e) -> bv_unsigned (edenot E b) = a ->
+  bv_unsigned (edenot E e) = v -> a' = a + off -> L5.u64_at RSEGS M a' v.
+Proof. intros K Ha Hv ->. eapply L5K.u64_of_KWord8; eauto. Qed.
+Lemma u32_of_KWord4a E M b off e a v a' : kentry_ok RSEGS E M (KWord (SA b off) 4 e) -> bv_unsigned (edenot E b) = a ->
+  bv_unsigned (edenot E e) = v -> a' = a + off -> L5.u32_at RSEGS M a' v.
+Proof. intros K Ha Hv ->. eapply L5K.u32_of_KWord4; eauto. Qed.
+Lemma u8_of_KWord1a E M b off e a v a' : kentry_ok RSEGS E M (KWord (SA b off) 1 e) -> bv_unsigned (edenot E b) = a ->
+  bv_unsigned (edenot E e) = v -> 0 <= v < 256 -> a' = a + off -> L5.u8_at RSEGS M a' v.
+Proof. intros K Ha Hv Hr ->. eapply L5K.u8_of_KWord1; eauto. Qed.
+Lemma defined_of_KUnka E M b off ne a n a' : kentry_ok RSEGS E M (KUnk (SA b off) ne) -> bv_unsigned (edenot E b) = a ->
+  bv_unsigned (edenot E ne) = n -> a' = a + off -> L5.defined M a' n.
+Proof. intros K Ha Hn ->. eapply L5K.defined_of_KUnk; eauto. Qed.
+Lemma u8_of_KWord1ma E M b off e a v a' v' : kentry_ok RSEGS E M (KWord (SA b off) 1 e) -> bv_unsigned (edenot E b) = a ->
+  bv_unsigned (edenot E e) = v -> a' = a + off -> v' = v mod 256 -> L5.u8_at RSEGS M a' v'.
+Proof. intros K Ha Hv -> ->. eapply L5KA.u8_of_KWord1_mod; eauto. Qed.
+Lemma zeros_of_KZeroa E M b off ne a n a' : kentry_ok RSEGS E M (KZero (SA b off) ne) -> bv_unsigned (edenot E b) = a ->
+  bv_unsigned (edenot E ne) = n -> a' = a + off -> L5KA.zeros_at M a' n.
+Proof. intros K Ha Hn ->. eapply L5KA.zeros_of_KZero; eauto. Qed.
+Lemma land_byte a m : 0 <= a -> 0 <= m <= 255 -> 0 <= Z.land a m < 256.
+Proof. intros Ha Hm. pose proof (L5K.land_le_r a m Ha ltac:(lia)). lia. Qed.
+Lemma lor_byte a b : 0 <= a < 256 -> 0 <= b < 256 -> 0 <= Z.lor a b < 256.
+Proof.
+  intros Ha Hb. split. apply Z.lor_nonneg; lia.
+  destruct (Z.eq_dec a 0) as [->|Na]. rewrite Z.lor_0_l. lia. destruct (Z.eq_dec b 0) as [->|Nb]. rewrite Z.lor_0_r. lia.
+  apply (Z.log2_lt_cancel). rewrite Z.log2_lor by lia.
+  apply Z.max_lub_lt; apply Z.log2_lt_pow2; try lia; change (2 ^ Z.log2 256) with 256; lia.
+Qed.
+(* [comment removed for export] *)
+Local Ltac byte_tac0 k :=
+  lazymatch goal with
+  | |- 0 <= Z.land _ _ < 256 => apply land_byte; k
+  | |- 0 <= Z.lor _ _ < 256 => apply lor_byte; byte_tac0 k
+  | |- 0 <= (_ mod 2 ^ 64) < 256 => rewrite Z.mod_small by k; k
+  | _ => k
+  end.
+Tactic Notation "byte_tac" tactic(k) := byte_tac0 k.
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+Local Ltac solve_modk k :=
+  repeat match goal with |- context [(?x mod 18446744073709551616) / _] => rewrite (Z.mod_small x 18446744073709551616) by (k; lia) end;
+  first [ rewrite Z.mod_small; [ first [reflexivity | k; lia] | k; L5K.zrange_tac ]
+        | symmetry; eapply (Z.mod_unique_pos _ _ (-1)); k; unfold BL.MM; lia
+        | symmetry; eapply (Z.mod_unique_pos _ _ 1); k; unfold BL.MM; lia ].
+Tactic Notation "evalEk" constr(ZA) tactic(k) :=
+  L5K.norm_expr; eapply L5KA.zpolyA_val; [ apply (L5K.zagree_all _ _ _ ZA) | cbn [L5KA.zpolyA]; reflexivity | solve_modk k ].
+Tactic Notation "evalEk'" constr(ZA) constr(AG) tactic(k) :=
+  L5K.norm_expr; eapply L5KA.zpolyA_val;
+  [ eapply (L5K.zagree_lt _ _ _ _ _ AG); [apply (L5K.zagree_all _ _ _ ZA) | vm_compute; reflexivity] | cbn [L5KA.zpolyA]; reflexivity | solve_modk k ].
+(* [comment removed for export] *)
+Definition aligned (a m : Z) : Prop := a mod m = 0.
+Definition srl_range (a c lo hi : Z) : Prop := lo <= a / c <= hi.
+(* [comment removed for export] *)
+Local Ltac exactA H :=
+  first [ exact H
+        | lazymatch goal with
+          | |- L5.u64_at _ _ ?a _ => lazymatch type of H with L5.u64_at _ _ ?b _ => replace a with b by (clear; lia) end
+          | |- L5.u8_at _ _ ?a _ => lazymatch type of H with L5.u8_at _ _ ?b _ => replace a with b by (clear; lia) end
+          | |- L5.u32_at _ _ ?a _ => lazymatch type of H with L5.u32_at _ _ ?b _ => replace a with b by (clear; lia) end
+          | |- L5.writable _ _ ?a _ => lazymatch type of H with L5.writable _ _ ?b _ => replace a with b by (clear; lia) end
+          | |- L5.defined _ ?a _ => lazymatch type of H with L5.defined _ ?b _ => replace a with b by (clear; lia) end
+          | |- L5KA.zeros_at _ ?a _ => lazymatch type of H with L5KA.zeros_at _ ?b _ => replace a with b by (clear; lia) end
+          end; exact H ].
+(* [comment removed for export] *)
+Local Ltac den_tac := first [reflexivity | lia | idtac].
+(* [comment removed for export] *)
+Local Ltac slotP ZA :=
+  first [ assumption | reflexivity
+        | (etransitivity; [eassumption|]; symmetry; eapply word_of_zpoly; [apply (L5K.zagree_all _ _ _ ZA) | cbn [L5KA.zpolyA]; repeat match goal with |- context [(?x mod 18446744073709551616) / _] => rewrite (Z.mod_small x 18446744073709551616) by lia end; f_equal; clear; lia]) ].
+(* [comment removed for export] *)
+Local Ltac wordP' ZA AG :=
+  eapply word_of_zpoly; [ eapply (L5K.zagree_lt _ _ _ _ _ AG); [apply (L5K.zagree_all _ _ _ ZA) | vm_compute; reflexivity]
+                        | cbn [L5KA.zpolyA]; repeat match goal with |- context [(?x mod 18446744073709551616) / _] => rewrite (Z.mod_small x 18446744073709551616) by lia end; f_equal; clear; lia ].
+(* [comment removed for export] *)
+Module PanewA := LibSegZ_anewA.
+Definition KS_anewA : list nat := Eval vm_compute in (BG.kept_list 48 PanewA.regs0 PanewA.regs_out0).
+Lemma KS_anewA_ok : BG.kept_ok 48 PanewA.regs0 PanewA.regs_out0 KS_anewA = true. Proof. vm_compute. reflexivity. Qed.
+Lemma anewA_conc fx R M (V : nat -> Z) :
+  0 <= (V 2%nat) < 2 ^ 64 ->
+  getr R (reg 2) = Z_to_bv 64 (V 2%nat) ->
+  140735332487184 <= (V 2%nat) <= 140737488355328 -> aligned (V 2%nat) 16 -> L5.writable RSEGS M ((V 2%nat) - 16) 16 -> 1 <= (bv_unsigned (getr R (reg 10))) <= 134217728 ->
+  exists fx' R' M', mem_grows M M'
+    /\ (forall a : word, ~ (((V 2%nat) - 16) <= bv_unsigned a < ((V 2%nat) - 16) + 16) -> M' a = M a)
+    /\ (forall i : Z, 0 <= i < 2 ^ 64 -> ~ (((V 2%nat) - 16) <= i < ((V 2%nat) - 16) + 16) -> M' (Z_to_bv 64 i) = M (Z_to_bv 64 i))
+    /\ (msteps RSEGS (st fx R 0xd0fe0 M) (st fx' R' 0x5fc58 M')
+        /\ (forall x, In x KS_anewA -> getr R' (reg x) = getr R (reg x))
+        /\ getr R' (reg 1) = Z_to_bv 64 856060
+        /\ getr R' (reg 2) = Z_to_bv 64 ((V 2%nat) - 16)
+        /\ getr R' (reg 8) = getr R (reg 10)
+        /\ L5.u64_at RSEGS M' ((V 2%nat) - 16) (bv_unsigned (getr R (reg 8)))
+        /\ L5.u64_at RSEGS M' ((V 2%nat) - 8) (bv_unsigned (getr R (reg 1)))).
+Proof.
+  intros [HV2l HV2r] G2 [K0l K0r] K1 K2 [K3l K3r].
+  set (E := Env (fun j : nat => match j with 2%nat => Z_to_bv 64 (V 2%nat) | _ => getr R (reg j) end) (fun _ => [])).
+  assert (ZA : forall j, bv_unsigned (ev E j) = (fun j : nat => match j with 2%nat => (V 2%nat) | _ => bv_unsigned (getr R (reg j)) end) j).
+  { BigLinkZA.za_tac0 3%nat. }
+  assert (HR: regs_ok E PanewA.regs0 R). { apply BG.regs_ok_of_slots. reflexivity. cbn [BG.slots tl PanewA.regs0 nth]. repeat split; slotP ZA. }
+  assert (HK: know_ok RSEGS E M PanewA.kn0).
+  { unfold know_ok, PanewA.kn0.
+    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | exact (conj K0l K0r)]. }
+    apply Forall_cons. { eapply L5K.kentry_KAlign; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | clear; lia | exact K1]. }
+    apply Forall_cons. { eapply L5K.kentry_KWr; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K2]. }
+    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - K3l K3r) | exact (conj K3l K3r)]. }
+    apply Forall_nil. }
+  destruct (PanewA.seg_sound_ax fx E R M HR HK ltac:(constructor)) as (fx' & E' & R' & M' & kk & ps & Hnth & Hag & Hms & Hregs & Hx0 & Hrok & Hfr & Hcells & Hgr).
+  change PanewA.NX0 with 48%nat in Hag.
+  exists fx', R', M'. split. exact Hgr.
+  assert (FRW: forall a : word, ~ (((V 2%nat) - 16) <= bv_unsigned a < ((V 2%nat) - 16) + 16) -> M' a = M a).
+  { intros a Hn0. apply Hfr. unfold PanewA.F0.
+    eapply L5K.outside_cons_e; [evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear) | clear - HV2l HV2r K0l K0r Hn0; lia |].
+    apply L5K.outside_nil_e. }
+  split. exact FRW.
+  split. { intros i Hi Hn0. apply FRW; rewrite ?BG.unsigned_lit by exact Hi; assumption. }
+  apply L5K.nth_error_single in Hnth. subst ps.
+  change (SR.ps_pc PanewA.ps0) with 0x5fc58 in Hms. change (SR.ps_regs PanewA.ps0) with (map (fun i => (i, nth i PanewA.regs_out0 (ELit 0))) (seq 1 31)) in Hregs.
+  change (SR.ps_cells PanewA.ps0) with PanewA.cells0 in Hcells. unfold PanewA.cells0 in Hcells.
+  split. { exact Hms. }
+  split. { intros j Hj. apply (BG.kept_regs E E' R R' PanewA.regs0 PanewA.regs_out0 48 KS_anewA KS_anewA_ok HR Hag Hregs j Hj). }
+  split. { rewrite (BG.out_reg PanewA.regs_out0 E' R' 1 Hregs) by (clear; lia). cbn [nth PanewA.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
+  split. { rewrite (BG.out_reg PanewA.regs_out0 E' R' 2 Hregs) by (clear; lia). cbn [nth PanewA.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
+  split. { rewrite (BG.out_reg PanewA.regs_out0 E' R' 8 Hregs) by (clear; lia). cbn [nth PanewA.regs_out0]. rewrite (BG.edenot_kept 48 E E' _ Hag) by (vm_compute; reflexivity). reflexivity. }
+  split. { eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 0%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear) | clear; lia]. }
+  eapply u64_of_KWord8a; [apply Hcells; apply (nth_error_In _ 1%nat); reflexivity | evalEk' ZA Hag ltac:(clear - HV2l HV2r K0l K0r) | evalEk' ZA Hag ltac:(clear) | clear; lia]. 
+Qed.
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+Module PanewB := LibSegZ_anewB.
+Definition KS_anewB : list nat := Eval vm_compute in (BG.kept_list 48 PanewB.regs0 PanewB.regs_out0).
+Lemma KS_anewB_ok : BG.kept_ok 48 PanewB.regs0 PanewB.regs_out0 KS_anewB = true. Proof. vm_compute. reflexivity. Qed.
+Lemma anewB_conc fx R M (V : nat -> Z) :
+  0 <= (V 2%nat) < 2 ^ 64 -> 0 <= (V 40%nat) < 2 ^ 64 -> 0 <= (V 41%nat) < 2 ^ 64 ->
+  getr R (reg 2) = Z_to_bv 64 ((V 2%nat) - 16) ->
+  140735332487184 <= (V 2%nat) <= 140737488355328 -> aligned (V 2%nat) 16 -> L5.writable RSEGS M ((V 2%nat) - 16) 16 -> 1 <= (bv_unsigned (getr R (reg 10))) <= 18446744073709551615 ->
+  L5.u64_at RSEGS M ((V 2%nat) - 8) (V 40%nat) -> L5.u64_at RSEGS M ((V 2%nat) - 16) (V 41%nat) ->
+  exists fx' R' M', mem_grows M M'
+    /\ (forall a : word, M' a = M a)
+    /\ (forall i : Z, 0 <= i < 2 ^ 64 -> M' (Z_to_bv 64 i) = M (Z_to_bv 64 i))
+    /\ (msteps RSEGS (st fx R 0xd0ffc M) (st fx' R' 0xd1024 M')
+        /\ (forall x, In x KS_anewB -> getr R' (reg x) = getr R (reg x))
+        /\ getr R' (reg 1) = Z_to_bv 64 (V 40%nat)
+        /\ getr R' (reg 2) = Z_to_bv 64 (V 2%nat)
+        /\ getr R' (reg 8) = Z_to_bv 64 (V 41%nat)).
+Proof.
+  intros [HV2l HV2r] [HV40l HV40r] [HV41l HV41r] G2 [K0l K0r] K1 K2 [K3l K3r] K4 K5.
+  set (E := Env (fun j : nat => match j with 2%nat => Z_to_bv 64 (V 2%nat) | 40%nat => Z_to_bv 64 (V 40%nat) | 41%nat => Z_to_bv 64 (V 41%nat) | _ => getr R (reg j) end) (fun _ => [])).
+  assert (ZA : forall j, bv_unsigned (ev E j) = (fun j : nat => match j with 2%nat => (V 2%nat) | 40%nat => (V 40%nat) | 41%nat => (V 41%nat) | _ => bv_unsigned (getr R (reg j)) end) j).
+  { BigLinkZA.za_tac0 42%nat. }
+  assert (HR: regs_ok E PanewB.regs0 R). { apply BG.regs_ok_of_slots. reflexivity. cbn [BG.slots tl PanewB.regs0 nth]. repeat split; slotP ZA. }
+  assert (HK: know_ok RSEGS E M PanewB.kn0).
+  { unfold know_ok, PanewB.kn0.
+    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | exact (conj K0l K0r)]. }
+    apply Forall_cons. { eapply L5K.kentry_KAlign; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | clear; lia | exact K1]. }
+    apply Forall_cons. { eapply L5K.kentry_KWr; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K2]. }
+    apply Forall_cons. { eapply L5K.kentry_KRange; [evalEk ZA ltac:(clear - K3l K3r) | exact (conj K3l K3r)]. }
+    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear - HV40l HV40r) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K4]. }
+    apply Forall_cons. { eapply L5K.kentry_KWord8; [evalEk ZA ltac:(clear - HV2l HV2r K0l K0r) | evalEk ZA ltac:(clear - HV41l HV41r) | clear - HV2l HV2r K0l K0r; lia | clear - HV2l HV2r K0l K0r; lia | exactA K5]. }
+    apply Forall_nil. }
+  destruct (PanewB.seg_sound_ax fx E R M HR HK ltac:(constructor)) as (fx' & E' & R' & M' & kk & ps & Hnth & Hag & Hms & Hregs & Hx0 & Hrok & Hfr & Hcells & Hgr).
+  change PanewB.NX0 with 48%nat in Hag.
+  exists fx', R', M'. split. exact Hgr.
+  assert (FRW: forall a : word, M' a = M a).
+  { intros a. apply Hfr. unfold PanewB.F0.
+    apply L5K.outside_nil_e. }
+  split. exact FRW.
+  split. { intros i Hi. apply FRW; rewrite ?BG.unsigned_lit by exact Hi; assumption. }
+  apply L5K.nth_error_single in Hnth. subst ps.
+  change (SR.ps_pc PanewB.ps0) with 0xd1024 in Hms. change (SR.ps_regs PanewB.ps0) with (map (fun i => (i, nth i PanewB.regs_out0 (ELit 0))) (seq 1 31)) in Hregs.
+  change (SR.ps_cells PanewB.ps0) with PanewB.cells0 in Hcells. unfold PanewB.cells0 in Hcells.
+  split. { exact Hms. }
+  split. { intros j Hj. apply (BG.kept_regs E E' R R' PanewB.regs0 PanewB.regs_out0 48 KS_anewB KS_anewB_ok HR Hag Hregs j Hj). }
+  split. { rewrite (BG.out_reg PanewB.regs_out0 E' R' 1 Hregs) by (clear; lia). cbn [nth PanewB.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
+  split. { rewrite (BG.out_reg PanewB.regs_out0 E' R' 2 Hregs) by (clear; lia). cbn [nth PanewB.regs_out0]. first [reflexivity | wordP' ZA Hag]. }
+  rewrite (BG.out_reg PanewB.regs_out0 E' R' 8 Hregs) by (clear; lia). cbn [nth PanewB.regs_out0]. first [reflexivity | wordP' ZA Hag]. 
+Qed.
+(* [comment removed for export] *)
+
+End L5ANEWP.

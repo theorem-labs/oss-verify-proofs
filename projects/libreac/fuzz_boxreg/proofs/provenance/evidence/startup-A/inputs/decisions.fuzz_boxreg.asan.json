@@ -1,0 +1,6 @@
+{
+ "0x8139c": {
+  "end": "int",
+  "why": "fuzz_boxreg.asan (sha256 eacfa205): read_name 0x812b0 (called from LLVMFuzzerTestOneInput 0x8051c / 0x8057c with a0 = s1+0x88, the input cursor {ptr at +0, len at +8}: 0x8010c `sd s4,0x88(s1)` = data, 0x80110 `sd s5,0x90(s1)` = size). s0 at the `jal malloc` 0x8139c is the name length: 0x81350 `andi s0,a2,0xff` with a2 = byte - 48*((byte*171)>>13) = byte mod 48 (0x81330-0x8134c; exact for every byte 0..255), or 0x81358 `mv s0,zero` when cur->len = 0 (0x812f4 `beqz a2`); then 0x81364 `ld a2,8(a1)` / 0x81368 `bltu s0,a2` / 0x8136c `mv s0,a2` = min(s0, cur->len) - compose's load[S-280+8] is this cursor len word (S-280 = s1+0x88). s0 is an integer in [0, 47] (malloc(s0+1) at 0x81398), never a stack address: the walk ends after the interceptor's frame, [0x52688; 0x813a0], like fuzz_reply's 0x82840 (int)."
+ }
+}

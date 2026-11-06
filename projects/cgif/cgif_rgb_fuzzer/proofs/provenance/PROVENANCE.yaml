@@ -1,0 +1,269 @@
+schema: oss-verify-proofs build record v1
+entry_point:
+  project: cgif
+  harness: cgif_rgb_fuzzer
+  function: LLVMFuzzerTestOneInput
+  records:
+  - projects/cgif/project.yaml
+  - projects/cgif/cgif_rgb_fuzzer/harness.yaml
+release:
+  repository: https://github.com/theorem-labs/oss-verify-proofs
+  binaries_release: v2026.10.0
+  sources_release: v2026.10.0-src
+upstream:
+  name: cgif
+  repository: https://github.com/dloebl/cgif
+  commit: b1facf77a226e971fdd9c0f2fd616ab9b03562d9
+  licence: MIT
+  licence_evidence: LICENSE:1-3 of the repository at the pinned commit (MIT License, Copyright (c) 2021-2026, Daniel
+    Löbl); the linked files and the harness carry no licence header of their own, so the repository licence covers
+    them [inferred]
+  licence_in_release_records: MIT
+oss_fuzz:
+  repository: https://github.com/google/oss-fuzz
+  commit: bd2ce21991a94a362b92fb1bf25f86d5a1a60842
+  path: projects/cgif
+harness:
+  origin: upstream
+  source:
+    files:
+    - source/cgif_rgb_fuzzer.c
+    from:
+      repository: https://github.com/dloebl/cgif
+      commit: b1facf77a226e971fdd9c0f2fd616ab9b03562d9
+      path: fuzz/cgif_rgb_fuzzer.c
+    modified: false
+    licence: MIT
+  modifications:
+  - Linked against cgif at commit b1facf77.
+  - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends
+    only on its input.
+  - A small driver reads the input file, calls the harness one to four times and prints each return value.
+recipe:
+  asset:
+    release: v2026.10.0-src
+    file: recipe.tar.zst
+    bytes: 938459
+    sha256: 0339bf3221b15cd39513d46abe99062bac9cce874ed7ba5947753f75b6219ae5
+  target: cgif-cgif_rgb_fuzzer
+  overlay: null
+  files: 'recipe/ (recipe/MANIFEST.tsv: every file with its sha256 in recipe.tar.zst; rows of kind upstream are
+    laid down from the -src asset; recipe/UPSTREAM-CARRIED.tsv gives the origin and licence of upstream text in
+    files of kind ours+upstream)'
+  patches: []
+  build_system: meson
+  how_to_rebuild: 'as docs/reproducing.md: with recipe/ as /work, unpack the project''s -src asset where its MANIFEST
+    says, apply recipe/series.tsv in order, and run recipe/tools/build-body.sh in the builder image, with the environment
+    of recipe/tools/build-env.tsv and the network off'
+toolchain:
+  clang: 20.1.8
+  builder_image: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  images:
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:c7c5abdc2676e121ca7532b553a83148b384001a553b6ffea63b1911848fd711
+  static_asan:
+    repository: https://github.com/theorem-labs/static-asan
+    commit: b05061352064fa2be1813ac5429149f3de5f057d
+    note: 'the published source of the compiler image''s static AddressSanitizer: its toolchain/ and patches/ are
+      those the image was built from, with comments and patch descriptions edited for publication (toolchain-src.tar.zst
+      holds this commit). Building it gives the image''s libclang_rt.builtins.a and musl libc.a byte for byte; its
+      libclang_rt.asan.a and asan_cxx.a differ from the image''s only in DWARF line tables, which --strip-all removes
+      from the binaries'
+    image_runtime_md5:
+      libclang_rt.asan.a: 91ba024da5ddacd96dc1c7588e5763b3
+      libclang_rt.asan_cxx.a: 2c6e776abd494934481b3f47ff030052
+      libclang_rt.builtins.a: 1f3d379aa7d4de2dcf11254b8f493a29
+      libc.a: 485eb64c0b7397bfea554a9cdf8e352c
+binaries:
+- build: plain
+  file: cgif_rgb_fuzzer.plain
+  bytes: 61696
+  sha256: 3a048d2b01cca72a8053f3e9ef8a75588d844443560591554956512b26144e6d
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+- build: asan
+  file: cgif_rgb_fuzzer.asan
+  bytes: 606440
+  sha256: 0d102754e9d20bfc0e25f3990295334aa9f7a765e9bf3142cd5ac6dd3ab552bf
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.asan.a
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+  - libunwind.a
+- build: ubsan
+  file: cgif_rgb_fuzzer.ubsan
+  bytes: 66640
+  sha256: 4d4cbb985558784b7e16960d523d672f8448ac744c872b4b55dc5279b3e128dd
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+- build: asan-ubsan
+  file: cgif_rgb_fuzzer.asan-ubsan
+  bytes: 610776
+  sha256: ed3b5ad58f4b1a4784b720ed3d12b531398585cc6aff13782bfb5eb8835f61e5
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.asan.a
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+  - libunwind.a
+binary_asset:
+  release: v2026.10.0
+  file: cgif-bin.tar.zst
+  bytes: 491959
+  sha256: cea9d4272510b2ad68765de3399c35920d2a56b7172fba9fd912751eaa3dc602
+source_asset:
+  src:
+    release: v2026.10.0-src
+    file: cgif-src.tar.zst
+    bytes: 46721
+    sha256: 7728cb493f8d14ef32fd2f7be494ba596d2e1c953aac28fc2355318eb654043f
+  src_manifest:
+    release: v2026.10.0-src
+    file: cgif-src.MANIFEST.tsv
+    bytes: 1517
+    sha256: 48f34870e3667f8e14928ade3c4a39540b2ce68122fe9f40473db04e1f9a2bf9
+rebuild:
+- 'rebuilt from this recipe and the source assets on a separate machine: plain identical, asan identical, ubsan
+  identical, asan-ubsan identical'
+link_inputs:
+  asan:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.asan.a: 66
+      libclang_rt.builtins.a: 11
+      crt1.o: object
+      libc.a: 165
+      libunwind.a: 5
+      liboft.a: 4
+      wrap_getenv.o: object
+      wrap_getpid.o: object
+      cli.o: object
+      plugin.o: object
+  asan-ubsan:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.asan.a: 66
+      libclang_rt.builtins.a: 11
+      crt1.o: object
+      libc.a: 166
+      libunwind.a: 5
+      liboft.a: 4
+      wrap_getenv.o: object
+      wrap_getpid.o: object
+      cli.o: object
+      plugin.o: object
+  plain:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.builtins.a: 11
+      crt1.o: object
+      libc.a: 68
+      liboft.a: 4
+      cli.o: object
+      plugin.o: object
+  ubsan:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.builtins.a: 11
+      crt1.o: object
+      libc.a: 69
+      liboft.a: 4
+      cli.o: object
+      plugin.o: object
+proofs:
+  origin: final-anthropic-opensource-formal-verification-proofs-package-2026-10-21 (sha256 4c6c152f61ce538e439b9d2adef439f4dbe1a2d446767d84ac7c3946d7c6687a),
+    libraries/cgif/proofs/submission-1
+  licence: Apache-2.0 OR MIT
+  texts:
+  - LICENSES/anthropic-proofs-LICENSE
+  - LICENSES/anthropic-proofs-LICENSE-MIT
+  - LICENSES/anthropic-proofs-NOTICE
+  texts_location: the repository's top directory
+  modified: each changed file carries one line under its licence header saying so
+  written_here:
+  - asan_agreement_decidable
+  - asan_disagrees_at_most
+  - asan_ubsan_agreement_decidable
+  - asan_ubsan_disagrees_at_most
+  - plain_halts
+  - plain_halts_may_fail
+  - ubsan_agrees
+flags:
+  note: as written in the recipe; a library's own build system adds its flags after these (e.g. CMake Release appends
+    -O3 -DNDEBUG), see the pin and recipes.sh
+  lines:
+  - 'recipe/tools/build-body.sh:58: OFT_NO_BUILTIN_ALLOC="-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc
+    -fno-builtin-reallocarray -fno-builtin-free -fno-builtin-aligned_alloc -fno-builtin-posix_memalign -fno-builtin-memalign
+    -fno-builtin-valloc -fno-builtin-strdup -fno-builtin-strndup"'
+  - 'recipe/tools/build-body.sh:59: BASE_CFLAGS="-march=rv64g -mabi=lp64d -Os -g -ffunction-sections -fdata-sections
+    -fno-stack-protector -fno-plt -Wdate-time $OFT_NO_BUILTIN_ALLOC"'
+  - 'recipe/tools/build-body.sh:65: SAN=""'
+  - 'recipe/tools/build-body.sh:560: SAN="-fsanitize=address"'
+  - 'recipe/tools/build-body.sh:577: SAN="-fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize-trap=all
+    -fno-sanitize=function"'
+  - 'recipe/tools/build-body.sh:586: SAN="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-trap=all -fno-sanitize=function"'
+  - 'recipe/tools/build-body.sh:590: SAN=""'
+  - 'recipe/tools/build-body.sh:618: CFLAGS="$BASE_CFLAGS $SAN -fmacro-prefix-map=$LIBROOT/=/work/build/lib/FLAVOUR/"'
+  - 'recipe/tools/build-body.sh:431: ''clang --config=/opt/asan-static/musl.cfg'''
+  - 'recipe/tools/build-body.sh:441: ''clang++ --config=/opt/asan-static/musl.cfg -stdlib=libc++'''
+  - 'recipe/tools/build-body.sh:478: SEALED_CFG=/opt/asan-static/asan-musl-sealed.cfg'
+  - 'recipe/tools/build-body.sh:1019: SILENT_LD=""'
+  - 'recipe/tools/build-body.sh:1021: SILENT_LD="-Wl,--defsym=__sanitizer_silent_reports=1"'
+  - 'recipe/tools/build-body.sh:1027: SILENT_LD=""'
+  - 'recipe/tools/build-body.sh:1049: "$CC" $BASE_CFLAGS -static -no-pie -Wl,--gc-sections ${OFT_STRIP--Wl,--strip-all}
+    \'
+  - 'recipe/tools/build-body.sh:1054: "$CC" $BASE_CFLAGS -static -no-pie -Wl,--gc-sections ${OFT_STRIP--Wl,--strip-all}
+    \'
+  - 'recipe/targets/cgif-cgif_rgb_fuzzer/pin:40: LIB_CFLAGS=""'
+licence:
+  components:
+  - component: cgif
+    files: src/cgif.c, src/cgif_raw.c, src/cgif_rgb.c; harness fuzz/cgif_rgb_fuzzer.c
+    licence: MIT
+    evidence: LICENSE:1-3 of the repository at the pinned commit (MIT License, Copyright (c) 2021-2026, Daniel Löbl);
+      the linked files and the harness carry no licence header of their own, so the repository licence covers them
+      [inferred]
+    texts:
+    - LICENSES/cgif-LICENSE
+  - component: musl libc (static)
+    files: '-'
+    licence: MIT
+    evidence: musl COPYRIGHT; linked in every build
+    texts:
+    - LICENSES/musl-COPYRIGHT
+  - component: 'LLVM runtimes: compiler-rt builtins; in ASan builds the sanitizer runtime and libunwind; libc++/libc++abi
+      in C++ programs'
+    files: '-'
+    licence: Apache-2.0 WITH LLVM-exception
+    evidence: LICENSE.TXT of compiler-rt, libunwind, libc++ and libc++abi at llvmorg-20.1.8 (87f0227c)
+    texts:
+    - LICENSES/llvm-compiler-rt-LICENSE.TXT
+    - LICENSES/llvm-libunwind-LICENSE.TXT
+    - LICENSES/llvm-libcxx-LICENSE.TXT
+    - LICENSES/llvm-libcxxabi-LICENSE.TXT
+  - component: static-asan patches compiled into the ASan runtime and musl
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of theorem-labs/static-asan at b0506135 (MIT for Theorem Labs work; the LLVM and musl code
+      it patches keeps its own licence)
+    texts:
+    - LICENSES/static-asan-LICENSE
+  - component: Theorem Labs file-input driver and build recipe (recipe/src/, recipe/targets/*/plugin.c)
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of this repository (MIT, Theorem Labs, PBC)
+    texts:
+    - LICENSES/oss-fuzz-theorems-LICENSE

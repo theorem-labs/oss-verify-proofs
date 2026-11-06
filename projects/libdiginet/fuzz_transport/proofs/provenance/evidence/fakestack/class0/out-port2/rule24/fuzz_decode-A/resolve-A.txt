@@ -1,0 +1,7 @@
+[libreac/fuzz_decode] A/Rt/StackMalloc0.v:4 0x3cda4 0x3cda4
+[libreac/fuzz_decode] A/Rt/StackMalloc0Tbl.v:4 0x3cda4 0x3cda4
+[libreac/fuzz_decode] A/Rt/StackMalloc0Tbl.v:43 0x3c824 0x3dfc4
+[libreac/fuzz_decode] A/Rt/StackMalloc0Tbl.v:72 0x98d30 0xa4080
+[libreac/fuzz_decode] A/Rt/StackMalloc0Tbl.v:72 0x99a38 0xa4d70
+[libreac/fuzz_decode] A/Rt/StackMalloc0Tbl.v:73 0x98d90 0xa40e0
+[libreac/fuzz_decode] A/Rt/StackMalloc0Tbl.v:73 0x99a48 0xa4d80

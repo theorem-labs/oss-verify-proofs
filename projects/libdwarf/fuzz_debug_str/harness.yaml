@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_debug_str
-rocq: OssFuzzTheorems.libdwarf.fuzz_debug_str
+rocq: OSSVerify.libdwarf.fuzz_debug_str
 origin: upstream
 summary: Walks .debug_str with dwarf_get_str from offset 11 until it stops returning DW_DLV_OK.
 entry: LLVMFuzzerTestOneInput

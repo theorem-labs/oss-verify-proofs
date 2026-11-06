@@ -1,0 +1,15 @@
+target fuzz_transport.asan: TIMG/stripped/fuzz_transport.asan sha256 e89be137db17 (pin e89be137db17): OK
+  .rodata  sh_addr 0x102e0 sh_size 0x1286c end 0x22b4c
+  .text    sh_addr 0x310d0 sh_size 0x71878 end 0xa2948
+  .tbss    sh_addr 0xa2948 sh_size 0x14 end 0xa295c
+  .bss     sh_addr 0xa9340 sh_size 0x56c090 end 0x6153d0
+  last PT_LOAD end 0x6153d0, page-rounded 0x616000
+target twin: TIMG/unstripped/fuzz_transport.asan sha256 86efc3a80314 (pin 86efc3a80314): OK
+donor fuzz_grant.asan: PG/bin/fuzz_grant/fuzz_grant.asan sha256 c2c7559b29bd (pin c2c7559b29bd): OK
+  .rodata  sh_addr 0x102e0 sh_size 0x1296c end 0x22c4c
+  .text    sh_addr 0x307dc sh_size 0x6a988 end 0x9b164
+  .tbss    sh_addr 0x9b168 sh_size 0x14 end 0x9b17c
+  .bss     sh_addr 0xa1480 sh_size 0x557f30 end 0x5f93b0
+  last PT_LOAD end 0x5f93b0, page-rounded 0x5fa000
+donor twin: PG/unstripped/fuzz_grant/fuzz_grant.asan sha256 57c26f993615 (pin 57c26f993615): OK
+TOT bound: F + 1 + F * CAP = 31 + 1 + 31 * 4096 = 127008; post-store bound N + K + 1 = 127008 + 30 + 1 = 127039 <= 131072: True

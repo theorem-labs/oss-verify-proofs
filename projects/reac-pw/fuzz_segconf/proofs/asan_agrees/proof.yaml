@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: reac-pw/fuzz_segconf/asan_agrees
+fingerprint: c9701ff10c562f76ef230865433c4cd7196af6c2131b5d8e02f0ee1fe7c8a2ac

@@ -1,0 +1,98 @@
+reason	perturbation	result	rows
+AMAP-PREFIX	donor value	no donor value	1
+AMAP-PREFIX	value+4	refused	1
+ASAN-MALLOC-RET	donor value	no donor value	2
+ASAN-MALLOC-RET	value+4	refused	2
+CMDB-CELL	donor value	equals the row value (not a perturbation)	1
+CMDB-CELL	donor value	refused	3
+CMDB-CELL	value+4	refused	4
+DEPOT-BOUND	donor value	refused	18
+DEPOT-BOUND	value+4	refused	18
+DRV-IVS	donor value	no donor value	4
+DRV-IVS	value+4	refused	4
+EV-BUDGET	4 beyond the measured bound	refused	2
+EV-BUDGET	donor value	refused	2
+EV-BUDGET	value+4	ACCEPTED	2
+FCSR-FRM	donor value	no donor value	12
+FCSR-FRM	value+4	refused	12
+FREE-ARRAY	donor value	refused	5
+FREE-ARRAY	value+4	refused	5
+FREG-FA0	donor value	no donor value	4
+FREG-FA0	value+4	refused	4
+GEN-AVIS	donor value	no donor value	22
+GEN-AVIS	value+4	refused	22
+GEN-EAGER	donor value	refused	1
+GEN-EAGER	value+4	refused	1
+GEN-HEAD	donor value	no donor value	7
+GEN-HEAD	value+4	refused	7
+GEN-KRANGE	donor value	no donor value	3
+GEN-KRANGE	value+4	refused	3
+GEN-MAPIDX	donor value	refused	9
+GEN-MAPIDX	value+4	refused	9
+GI-IVS	donor value	no donor value	15
+GI-IVS	donor value	refused	1
+GI-IVS	value+4	refused	16
+GOT-WORD	donor value	no donor value	2
+GOT-WORD	donor value	refused	2
+GOT-WORD	value+4	refused	4
+IMG-SHADOW	donor value	equals the row value (not a perturbation)	1
+IMG-SHADOW	donor value	no donor value	1
+IMG-SHADOW	donor value	refused	1
+IMG-SHADOW	value+4	refused	3
+ITAB-RANGES	4 beyond the measured bound	refused	7
+ITAB-RANGES	donor value	ACCEPTED	7
+ITAB-RANGES	value+4	ACCEPTED	7
+JAL-DECODE	donor value	refused	2
+JAL-DECODE	value+4	refused	2
+MU-CELL	donor value	equals the row value (not a perturbation)	2
+MU-CELL	donor value	refused	2
+MU-CELL	value+4	refused	4
+OWNED-EXTENT	donor value	equals the row value (not a perturbation)	1
+OWNED-EXTENT	donor value	no donor value	13
+OWNED-EXTENT	value+4	refused	14
+PHDR	donor value	equals the row value (not a perturbation)	1
+PHDR	value+4	refused	1
+REG-A1	donor value	no donor value	59
+REG-A1	value+4	refused	59
+REG-SP	donor value	no donor value	127
+REG-SP	value+4	refused	127
+REGION-HEAD	donor value	refused	14
+REGION-HEAD	value+4	refused	14
+RUNTO-SENTINEL	donor value	refused	1
+RUNTO-SENTINEL	value+4	refused	1
+SINK-UNREAD	donor value	refused	4
+SINK-UNREAD	value+4	refused	4
+SMV-LOWER-BOUND	measured new value	accepted	2
+STACK-MALLOC-KEY	donor value	no donor value	4
+STACK-MALLOC-KEY	donor value	refused	1
+STACK-MALLOC-KEY	value+4	refused	5
+STALE-DONOR-TEST	donor value of the slot (CMDB-CELL)	NOT called stale	1
+STALE-DONOR-TEST	donor value of the slot (CMDB-CELL)	called STALE	2
+STALE-DONOR-TEST	donor value of the slot (GI-IVS)	NOT called stale	1
+STALE-DONOR-TEST	donor value of the slot (GOT-WORD)	NOT called stale	2
+STALE-DONOR-TEST	donor value of the slot (IMG-SHADOW)	NOT called stale	1
+STALE-DONOR-TEST	donor value of the slot (MU-CELL)	called STALE	2
+STALE-DONOR-TEST	planted donor address of the named symbol (CMDB-CELL)	called STALE	2
+STALE-DONOR-TEST	planted donor address of the named symbol (GI-IVS)	called STALE	1
+STALE-DONOR-TEST	planted donor address of the named symbol (MU-CELL)	called STALE	2
+STARTUP-STACK	donor value	no donor value	4
+STARTUP-STACK	value+4	refused	4
+TEXT-WORDS	donor value	refused	1
+TEXT-WORDS	value+4	refused	1
+TOPF	4 beyond the measured bound	refused	2
+TOPF	donor value	no donor value	10
+TOPF	value+4	ACCEPTED	2
+TOPF	value+4	refused	8
+TRACE-OBJ	donor value	no donor value	162
+TRACE-OBJ	donor value	refused	106
+TRACE-OBJ	value+4	refused	268
+TRACE-REGION	donor value	no donor value	21
+TRACE-REGION	value+4	refused	21
+WIDTH	donor value	no donor value	33
+WIDTH	value+4	refused	33
+XREG-WIDTH	donor value	no donor value	106
+XREG-WIDTH	value+4	refused	106
+ZSHADOW-RUN	4 beyond the measured bound	refused	1
+ZSHADOW-RUN	donor value	refused	7
+ZSHADOW-RUN	value+4	ACCEPTED	1
+ZSHADOW-RUN	value+4	refused	6

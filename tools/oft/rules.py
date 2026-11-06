@@ -5,7 +5,7 @@ import os
 import re
 from fractions import Fraction
 
-from . import facts, names, schema, shapes
+from . import facts, layout, names, schema, shapes
 
 PB = facts.PHRASEBOOK
 PLACEHOLDER = re.compile(r"\{([a-z_0-9]+)\}")
@@ -19,6 +19,7 @@ UNBUILT_REASONS = {"not-attempted", "build-system", "harness-framework", "depend
 
 def check(tree):
     _release(tree)
+    _own_recipes(tree)
     _records(tree)
     idents = {}
     for proj in tree.projects.values():
@@ -39,15 +40,39 @@ def check(tree):
     for f in sorted(tree.findings.values(), key=lambda f: f.path):
         _finding(tree, f, patches)
     _series(tree)
+    _patches(tree)
     _held(tree)
     return tree.errors
 
 
+def symbol_facts(tree):
+    """Each build's symbol fact (facts.Harness.symbol_facts) loads, and no two of its names give one identifier of
+    Symbols.v in one namespace (names.symbol_idents), which oft generate renders from the facts.  Not in check:
+    symbols.py is not the checker (keys.NOT_THE_CHECKER), and `oft check`, which runs check, must never open it; oft
+    generate runs both."""
+    from . import symbols
+    for h in tree.harnesses():
+        for _b, _rec, rel in h.symbol_facts():
+            try:
+                names.symbol_idents(symbols.load(tree.path(rel))[1])
+            except (ValueError, facts.BoundedFileError) as e:
+                tree.err(rel, str(e))
+    return tree.errors
+
+
 def _approvals(tree):
-    """approvals.yaml: each entry names an included fuzz target, at most once per source (origin and record), of a
-    project no finding holds back and not private (release: private), and statements of it, none of them refuted or
-    held back by an open finding of an enrolled project (facts.hold), and each in one entry of its fuzz target only,
-    once; a submission names the record of its review, and only a submission does."""
+    """approvals.yaml: each entry names a fuzz target at most once per source (origin and record), and statements of it,
+    each in one entry of its fuzz target only, once; a submission names the record of its review, and only a submission
+    does; an enrollment entry names the merge that wrote it (enrollment), and only it does.  A this-repository or
+    submission entry lists only what a release carries: an included fuzz target of a project no finding holds back and
+    not private (release: private), and statements it has, none of them refuted or held back by an open finding of an
+    enrolled project (facts.hold).  An enrollment entry is a ceiling: it lists the statements its project's enrollment
+    facts pull requests wrote, and oft release-tree keeps only the proofs of those that exist, are not held back and do
+    not refute, so a hold set after the merge, a refutation, or a fuzz target or statement a later build removed is no
+    error in it (N3).  No enrollment entry lists a fuzz target whose build record says its proofs came from a package
+    (N4): those proofs keep their submission and this-repository entries.  That error stops every oft command that
+    checks the facts, oft approvals among them, which keeps each enrollment entry as written: such an entry must be
+    removed from approvals.yaml by hand."""
     if not tree.approvals:
         return
     harnesses = {"%s/%s" % (h.project.name, h.name): h for h in tree.harnesses()}
@@ -58,22 +83,29 @@ def _approvals(tree):
         where = "approvals.yaml: approvals.fuzz_targets[%d]" % i
         unit = e["fuzz_target"]
         p = unit.partition("/")[0]
-        if unit not in harnesses:
-            tree.err(where, "%s is not an included fuzz target" % unit)
-        else:
-            for s in sorted(set(e["statements"]) - set(harnesses[unit].statements)):
-                tree.err(where, "%s is not a statement of %s" % (s, unit))
-        if p in held.held:
-            tree.err(where, "%s: a finding holds back project %s, so none of its proofs is published" % (unit, p))
-        if p in held.private:
-            tree.err(where, "%s: project %s is private (release: private in its project.yaml), so no public release "
-                            "carries it" % (unit, p))
-        for s in sorted(set(e["statements"])):
-            if "%s/%s" % (unit, s) in held_ids:
-                tree.err(where, "%s/%s is held back by an open finding, so no release lists it" % (unit, s))
-            pd = tree.proofs.get("%s/%s" % (unit, s))
-            if pd is not None and pd.refutes:
-                tree.err(where, "%s/%s: its proof is a refutation, which is never listed" % (unit, s))
+        ceiling = e["origin"] == "enrollment"
+        # the cut leaves out of a ceiling what is held back, refutes or no longer exists (release_tree.run)
+        if not ceiling:
+            if unit not in harnesses:
+                tree.err(where, "%s is not an included fuzz target" % unit)
+            else:
+                for s in sorted(set(e["statements"]) - set(harnesses[unit].statements)):
+                    tree.err(where, "%s is not a statement of %s" % (s, unit))
+            if p in held.held:
+                tree.err(where, "%s: a finding holds back project %s, so none of its proofs is published" % (unit, p))
+            if p in held.private:
+                tree.err(where, "%s: project %s is private (release: private in its project.yaml), so no public "
+                                "release carries it" % (unit, p))
+            for s in sorted(set(e["statements"])):
+                if "%s/%s" % (unit, s) in held_ids:
+                    tree.err(where, "%s/%s is held back by an open finding, so no release lists it" % (unit, s))
+                pd = tree.proofs.get("%s/%s" % (unit, s))
+                if pd is not None and pd.refutes:
+                    tree.err(where, "%s/%s: its proof is a refutation, which is never listed" % (unit, s))
+        elif PACKAGE_ORIGIN.match((tree.record_proofs.get(tuple(unit.split("/", 1))) or {}).get("origin") or ""):
+            tree.err(where, "%s: its build record says its proofs came from a package (proofs.origin), so no "
+                            "enrollment entry lists it: its proofs keep their submission and this-repository entries"
+                     % unit)
         for s in sorted({s for s in e["statements"] if e["statements"].count(s) > 1}):
             tree.err(where, "%s/%s is listed twice" % (unit, s))
         source = (unit, e["origin"], e.get("record"))
@@ -87,6 +119,9 @@ def _approvals(tree):
                 tree.err(where, "%s/%s is listed twice: approvals.fuzz_targets[%d] and [%d]" % (unit, s, first, i))
         if (e["origin"] == "submission") != ("record" in e):
             tree.err(where, "%s: a submission names the record of its review, and only a submission does" % unit)
+        if ceiling != ("enrollment" in e):
+            tree.err(where, "%s: an enrollment entry names the merge that wrote it (enrollment), and only an "
+                            "enrollment entry does" % unit)
 
 
 PACKAGE_ORIGIN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]* \(sha256 [0-9a-f]{64}\)")
@@ -97,9 +132,11 @@ def _written_here(tree):
     lists in proofs.written_here the statements whose proofs were written in this repository, and only such a record
     has written_here.  approvals.yaml agrees with it: a this-repository entry lists only statements written here, and
     a submission entry lists none of them, so provenance/, which ships whole, never credits the package with a proof
-    this repository wrote, nor this repository with a proof of the package."""
+    this repository wrote, nor this repository with a proof of the package.  An enrollment entry of such a fuzz target
+    is refused whole (_approvals, N4), so it adds no error of its own here."""
     for (p, h), rec in sorted(tree.record_proofs.items()):
-        unit, where = "%s/%s" % (p, h), "proofs/%s/%s/provenance/PROVENANCE.yaml" % (p, h)
+        unit = "%s/%s" % (p, h)
+        where = layout.record_path(p, h, tree.unit_layout(unit))
         here, from_package = rec["written_here"], bool(PACKAGE_ORIGIN.match(rec["origin"] or ""))
         if here is not None and not (isinstance(here, list) and all(isinstance(s, str) for s in here)):
             tree.err(where, "proofs.written_here must be a list of statement names")
@@ -118,7 +155,7 @@ def _written_here(tree):
             continue
         written = set(here or ())
         for i, e in enumerate(tree.approvals["fuzz_targets"] if tree.approvals else []):
-            if e["fuzz_target"] != unit:
+            if e["fuzz_target"] != unit or e["origin"] == "enrollment":
                 continue
             aw = "approvals.yaml: approvals.fuzz_targets[%d]" % i
             mine = e["origin"] == "this-repository"
@@ -196,13 +233,49 @@ def _release(tree):
             tree.err("release.yaml", msg % v)
 
 
+def _own_recipes(tree):
+    """A private project's own recipe (assets.bin.recipe that release.yaml does not list) takes a file name that names
+    no other recipe: none that release.yaml lists, and no other private project's own recipe unless it is that same
+    recipe (release, file, bytes and sha256 alike: one archive two projects were built with).  A download keeps the
+    assets of every release in one directory by file name, and fetch checks one recipe per (release, file).  Each own
+    pin whose file name also names another recipe is refused, against its project.yaml."""
+    if not tree.release:
+        return
+    listed = facts.release_recipes(tree)
+    by_file = {}  # file -> [(recipe, None for release.yaml or the project that pins it as its own)]
+    for r in listed:
+        by_file.setdefault(r["file"], []).append((r, None))
+    for p in sorted(tree.projects):
+        own = facts.bin_recipe(tree, tree.projects[p])
+        if own is not None and own not in listed and tree.projects[p].data.get("release") == "private":
+            by_file.setdefault(own["file"], []).append((own, p))
+    for f in sorted(by_file):
+        pins = by_file[f]
+        for own, p in pins:
+            if p is None:
+                continue
+            where = os.path.join(tree.projects[p].dir, "project.yaml")
+            for theirs, q in pins:
+                if theirs == own:
+                    continue
+                if q is None:
+                    tree.err(where, "assets.bin.recipe, %s in %s, names the file of release.yaml's recipe in %s, but "
+                                    "is not that recipe (its release, bytes or sha256 differ): a private project's own "
+                                    "recipe takes a file name of its own" % (f, own["release"], theirs["release"]))
+                else:
+                    tree.err(where, "assets.bin.recipe, %s in %s, has the file name of projects/%s's own recipe (%s "
+                                    "in %s), but is not that recipe (its release, bytes or sha256 differ): each private "
+                                    "recipe takes a file name of its own, or is the same recipe"
+                             % (f, own["release"], q, f, theirs["release"]))
+
+
 def _records(tree):
     """Every build record of a project cites (recipe.asset) the recipe its binary archive pins (assets.bin.recipe):
     the binaries of one archive were built with one recipe.  A port-built project's records cite none: the OSS Verify
     port built its binaries (facts.load lets them cite none)."""
     for (p, h), asset in sorted(tree.records.items()):
         proj = tree.projects.get(p)
-        where = "proofs/%s/%s/provenance/PROVENANCE.yaml" % (p, h)
+        where = layout.record_path(p, h, tree.unit_layout("%s/%s" % (p, h)))
         if proj and facts.port(proj):
             tree.err(where, "recipe.asset, %s in %s: build.oss_verify says the OSS Verify port built projects/%s's "
                      "binaries, and no recipe did, so its build records cite none" % (asset["file"], asset["release"], p))
@@ -345,8 +418,9 @@ def _project(tree, proj):
     # the corresponding source: the upstream trees (assets.src) and where each goes (assets.src_manifest), in one
     # release, which may be a second one, v<release>-src (a GitHub release holds at most 1,000 files); and what built
     # the binaries: the build recipe the binary archive pins (assets.bin.recipe), one that release.yaml lists, in any
-    # release, or for a port-built project (build.oss_verify) the port archive (assets.port), in the release of
-    # assets.src, and no recipe
+    # release (or, for a `release: private` project, a recipe of its own that no public release carries, pinned by its
+    # sha256 and named apart from every other recipe: _own_recipes), or for a port-built project (build.oss_verify) the
+    # port archive (assets.port), in the release of assets.src, and no recipe
     a = d.get("assets") or {}
     port = facts.port(proj)
     if "port" in a and not port:
@@ -374,7 +448,8 @@ def _project(tree, proj):
     elif "bin" in a and tree.release and not port and pinned is None:
         tree.err(where, "assets.bin.recipe is missing: each binary archive names the recipe it was built with, unless "
                         "release.yaml has the shape before recipes, whose one recipe stands for it")
-    elif "bin" in a and tree.release and not port and pinned not in facts.release_recipes(tree):
+    elif "bin" in a and tree.release and not port and pinned not in facts.release_recipes(tree) \
+            and d.get("release") != "private":
         tree.err(where, "assets.bin.recipe, %s in %s, is not one of release.yaml's recipes"
                  % (pinned["file"], pinned["release"]))
     if "bin" in a and a["bin"]["release"].endswith("-src"):
@@ -398,8 +473,9 @@ def _harness(tree, h):
     d, where = h.data, os.path.join(h.dir, "harness.yaml")
     if d["project"] != h.project.name or d["harness"] != h.name:
         tree.err(where, "project/harness do not match the directory")
-    if d["rocq"] != names.rocq_harness(h.project.name, h.name):
-        tree.err(where, "rocq must be %s" % names.rocq_harness(h.project.name, h.name))
+    rocq_name = names.rocq_harness(tree.namespace, h.project.name, h.name)
+    if d["rocq"] != rocq_name:
+        tree.err(where, "rocq must be %s" % rocq_name)
     if (d["origin"] == "this-repository") != (h.name == names.API_DRIVER):
         tree.err(where, "api-driver, and only api-driver, has origin this-repository")
     entry = [e for e in h.project.entries() if e["name"] == h.name]
@@ -410,15 +486,15 @@ def _harness(tree, h):
     repo = (d["source"].get("from") or {}).get("repository")
     if repo and facts.repo_label(repo.lower()) == "theorem-labs/oss-verify" and d["origin"] != "oss-verify":
         tree.err(where, "only an oss-verify target may name theorem-labs/oss-verify as source.from.repository")
-    # a build record says what built the binaries: recipe/ (proofs/<p>/<h>/provenance/recipe/) a build recipe, port/
-    # the OSS Verify port; build.oss_verify must say the same
-    record = tree.path("proofs", h.project.name, h.name, "provenance")
-    if facts.port(h.project) and os.path.isdir(os.path.join(record, "recipe")):
+    # a build record says what built the binaries: recipe/ (in provenance/ of the fuzz target's proofs folder) a build
+    # recipe, port/ the OSS Verify port; build.oss_verify must say the same
+    record = layout.provenance_dir(h.project.name, h.name, tree.unit_layout("%s/%s" % (h.project.name, h.name)))
+    if facts.port(h.project) and os.path.isdir(tree.path(record, "recipe")):
         tree.err(where, "build.oss_verify says the port built every binary, and %s's build record carries a build "
-                 "recipe (proofs/%s/%s/provenance/recipe/)" % (h.name, h.project.name, h.name))
-    if not facts.port(h.project) and os.path.isdir(os.path.join(record, "port")):
-        tree.err(where, "%s's build record carries a port build (proofs/%s/%s/provenance/port/), and project.yaml's "
-                 "build.oss_verify names no port" % (h.name, h.project.name, h.name))
+                 "recipe (%s/recipe/)" % (h.name, record))
+    if not facts.port(h.project) and os.path.isdir(tree.path(record, "port")):
+        tree.err(where, "%s's build record carries a port build (%s/port/), and project.yaml's "
+                 "build.oss_verify names no port" % (h.name, record))
     # sources: listed files exist, nothing unlisted, pending means none
     src = d["source"]
     held = src.get("pending")
@@ -781,18 +857,25 @@ PATCH_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._+-]*\.patch")
 SERIES_STATES = ("patched", "reported", "public")
 
 
+def series_names(raw):
+    """[(line number, name)] of the patches a series lists, in build order, read as the build reads it (oss-verify's
+    infra/base-builder/lay-out-sources): a blank line, and one whose first character is `#`, is skipped, and any other
+    line, stripped, is a name.  The caller judges each name."""
+    return [(no, line.strip()) for no, line in enumerate(raw.splitlines(), 1)
+            if line.strip() and not line.startswith("#")]
+
+
 def _series(tree):
-    """findings/<p>/<h>/series lists patch file names, one per line, in build order: exactly the patches of that
-    harness's findings that are patched, reported or public."""
+    """A fuzz target's findings series (layout.series_path) lists patch file names in build order, read as the build
+    reads a series (series_names): exactly the patches of that harness's findings that are patched, reported or
+    public."""
     units = {f.unit for f in tree.findings.values()} | set(tree.finding_series)
     for unit in sorted(units):
-        rel = os.path.join("findings", unit, "series")
-        listed = tree.finding_series.get(unit, "").split("\n")
-        if listed and listed[-1] == "":
-            listed.pop()
+        p, h = unit.split("/")
+        rel = layout.series_path(p, h, tree.unit_layout(unit))
         mine = [f for f in tree.findings.values() if f.unit == unit]
         seen = set()
-        for no, name in enumerate(listed, 1):
+        for no, name in series_names(tree.finding_series.get(unit, "")):
             if not PATCH_NAME.fullmatch(name):
                 tree.err(rel, "line %d is not a patch file name" % no)
                 continue
@@ -810,12 +893,204 @@ def _series(tree):
                          % (f.data["state"], f.data["patch"], rel))
 
 
+def _public_patches(tree):
+    """{finding path: bytes} of the patch of each public finding whose patch is a regular file within its cap.  The
+    loader reports a patch that is absent or cannot be read (facts._finding_record), and that error alone refuses a
+    release, so it is not reported again here."""
+    out = {}
+    for f in tree.findings.values():
+        if f.data["state"] != "public" or not f.data.get("patch"):
+            continue
+        rel = os.path.join(f.path, f.data["patch"])
+        try:
+            out[f.path] = facts.read_bounded(tree.path(rel), facts.file_cap(rel))
+        except facts.BoundedFileError:
+            pass
+    return out
+
+
+def _patches(tree):
+    """The patches entries of each project, and the copied port directory of each shipping port build, against the
+    findings: docs/facts.md ("Public patches") says what they must agree on.  Whether a file that ships discloses a
+    finding that holds its project back is the release's search to find (disclosure.search), in these files as in
+    every other file the release keeps."""
+    patches = _public_patches(tree)
+    unpublished = facts.hold(tree).whole
+    by_project = {}
+    for f in sorted(tree.findings.values(), key=lambda f: f.path):
+        by_project.setdefault(f.project, []).append(f)
+    for proj in tree.projects.values():
+        mine = by_project.get(proj.name, [])
+        texts = _entry_files(tree, proj)
+        _public_entries(tree, proj, mine, texts, patches)
+        _entry_order(tree, proj, mine)
+        public = [(f, patches[f.path]) for f in mine if f.path in patches]
+        _port_record(tree, proj, set(texts.values()), public, unpublished)
+
+
+def _entry_files(tree, proj):
+    """{entry index: bytes} of each patches entry whose file, a file name (the schema allows no other), is a regular
+    file in the project's patches folder (facts.Project.patch_path, in either layout), within its cap; a public patch
+    is text, so a NUL byte in it is an error."""
+    where = os.path.join(proj.dir, "project.yaml")
+    texts = {}
+    for i, entry in enumerate(proj.data.get("patches", [])):
+        rel = proj.patch_path(entry["file"])
+        if not os.path.lexists(tree.path(rel)):
+            tree.err(where, "patches[%d].file %s is missing" % (i, rel))
+            continue
+        try:
+            texts[i] = facts.read_bounded(tree.path(rel), facts.file_cap(rel))
+        except facts.BoundedFileError as e:
+            tree.err(where, "patches[%d].file: %s" % (i, e))
+            continue
+        if b"\0" in texts[i]:
+            tree.err(where, "patches[%d].file contains a NUL byte: a public patch must be text" % i)
+    return texts
+
+
+def _public_entries(tree, proj, mine, texts, patches):
+    """A public finding has the entry named by its slug, with its summary, report URL and patch bytes; no other
+    finding of the project has one."""
+    where = os.path.join(proj.dir, "project.yaml")
+    by_id = {}
+    for i, entry in enumerate(proj.data.get("patches", [])):
+        by_id.setdefault(entry["id"], (i, entry))
+    for f in mine:
+        found = by_id.get(f.slug)
+        if f.data["state"] != "public":
+            if found is not None:
+                tree.err(where, "patches[%d] is %s, but its finding is %s, not public"
+                         % (found[0], f.slug, f.data["state"]))
+            continue
+        if found is None:
+            tree.err(where, "public finding %s has no patches entry" % f.slug)
+            continue
+        i, entry = found
+        if entry["summary"] != f.data["summary"]:
+            tree.err(where, "patches[%d].summary differs from public finding %s" % (i, f.slug))
+        if entry.get("url") != f.data.get("upstream"):
+            tree.err(where, "patches[%d].url differs from public finding %s" % (i, f.slug))
+        if i in texts and f.path in patches and texts[i] != patches[f.path]:
+            tree.err(where, "patches[%d].file differs from public finding %s" % (i, f.slug))
+
+
+def _entry_order(tree, proj, mine):
+    """The entries of a harness's public findings come in the order its findings series lists their patches, so the
+    release tree, which has no findings, keeps the build order."""
+    where = os.path.join(proj.dir, "project.yaml")
+    ids = [entry["id"] for entry in proj.data.get("patches", [])]
+    for unit in sorted({f.unit for f in mine} & set(tree.finding_series)):
+        public = {f.data.get("patch"): f.slug for f in mine if f.unit == unit and f.data["state"] == "public"}
+        wanted = [public[name] for _, name in series_names(tree.finding_series[unit]) if name in public]
+        actual = [i for i in ids if i in wanted]
+        if len(actual) == len(wanted) and actual != wanted:
+            p, h = unit.split("/")
+            tree.err(where, "patches entries for %s are not in the order of %s"
+                     % (h, layout.series_path(p, h, tree.unit_layout(unit))))
+
+
+def _port_record(tree, proj, entry_texts, public, unpublished):
+    """The copy of the port's project directory (base) in the build record of each fuzz target of a shipping port
+    build, <its provenance folder>/port/<path>/ (layout.provenance_dir, in the fuzz target's layout), which ships with
+    the proofs.  It has a series exactly when the project has build patches, as the port's own directory does, so a
+    missing series, or a missing base, lists nothing.  That series agrees with the patches entries (_port_series), and
+    each `*.patch` of base is one it lists, beside it: the build applies none deeper.  A project in unpublished may
+    carry undisclosed patches, so it has no such requirement until it can ship.  A symbolic link on the way to base is
+    refused, once, and nothing behind it is read: os.walk follows a link at its top, and a no-follow open guards only
+    the last part of a path.
+    entry_texts: the bytes of the project's entry files; public: [(finding, the bytes of its patch)] of its public
+    findings."""
+    port = facts.port(proj)
+    if proj.name in unpublished or port is None:
+        return
+    linked = set()
+    for h in proj.harnesses.values():
+        record = layout.provenance_dir(proj.name, h.name, tree.unit_layout("%s/%s" % (proj.name, h.name)))
+        base = os.path.join(record, "port", port["path"])
+        parts = base.split(os.sep)
+        link = next((rel for rel in (os.path.join(*parts[:n]) for n in range(1, len(parts) + 1))
+                     if os.path.islink(tree.path(rel))), None)
+        if link is not None:
+            if link not in linked:
+                tree.err(link, "a symbolic link, which the rules do not follow out of the checkout")
+                linked.add(link)
+            continue
+        files = _port_files(tree, base)
+        listed = _port_series(tree, proj, base, files, entry_texts, [(f, p) for f, p in public if f.harness == h.name])
+        if listed is None:
+            continue
+        wanted = {os.path.join(base, name) for name in listed}
+        for rel in files:
+            if rel.endswith(".patch") and rel not in wanted:
+                tree.err(rel, "a patch of the port record that its series does not list")
+
+
+def _port_files(tree, base):
+    """[path] of every file under base, in name order, with each symbolic link to a directory, which os.walk lists and
+    does not enter; [] when base is missing."""
+    out = []
+    for d, dirs, names in os.walk(tree.path(base)):
+        dirs.sort()
+        for name in sorted(names + [x for x in dirs if os.path.islink(os.path.join(d, x))]):
+            out.append(os.path.relpath(os.path.join(d, name), tree.root))
+    return out
+
+
+def _port_series(tree, proj, base, files, entry_texts, public):
+    """The names the series of the port's project directory at base lists, after checking it against the patches
+    entries: each patch it carries has an entry with identical text, and it carries the patch of each of public, the
+    fuzz target's public findings.  files: _port_files of base.  The series and each patch it lists are read within
+    their caps, and one that cannot be read, a symbolic link among them, has one error.  A missing series lists
+    nothing.  None when the series cannot be read (its error is recorded)."""
+    series = os.path.join(base, "series")
+    raw = ""
+    if series in files:
+        try:
+            raw = facts.read_bounded(tree.path(series), facts.file_cap(series)).decode()
+        except (facts.BoundedFileError, UnicodeDecodeError) as e:
+            tree.err(series, str(e))
+            return None
+    elif os.path.lexists(tree.path(series)):
+        tree.err(series, "not a regular file")
+        return None
+    carried, listed = [], set()
+    for no, name in series_names(raw):
+        if not PATCH_NAME.fullmatch(name):
+            tree.err(series, "line %d is not a patch file name" % no)
+            continue
+        listed.add(name)
+        rel = os.path.join(base, name)
+        if rel not in files:
+            tree.err(series, "lists %s, which is missing from the port record" % name)
+            continue
+        try:
+            data = facts.read_bounded(tree.path(rel), facts.file_cap(rel))
+        except facts.BoundedFileError as e:
+            tree.err(rel, str(e))
+            continue
+        carried.append(data)
+        if data not in entry_texts:
+            tree.err(series, "lists %s, and no patches entry of %s has its text" % (name, proj.name))
+    for f, patch in public:
+        if patch not in carried:
+            tree.err(series, "does not list the patch of public finding %s, so the published build does not "
+                     "carry it" % f.slug)
+    return listed
+
+
+# the commit part of an enrollment commit's own draft after its enroll-<project>- (tools/enroll/drafts.py)
+ENROLL_DRAFT = re.compile(r"([0-9a-f]{12})(-src)?")
+
+
 def _held(tree):
     """Only a project a finding holds back whole builds from the port's internal
     copy, and only it attaches assets to a findings-<project>
     release, its own: no shipping release names either.  An enrolled project
     whose findings hold back only some of its statements ships its binaries,
-    so it builds from the public port."""
+    so it builds from the public port.  An asset on an enrollment commit's own
+    drafts is on the project's own, enroll-<project>-<c> for the binaries and
+    enroll-<project>-<c>-src for the rest, with one <c> for all of them."""
     held = facts.hold(tree).held
     for proj in tree.projects.values():
         where = os.path.join(proj.dir, "project.yaml")
@@ -824,9 +1099,18 @@ def _held(tree):
             tree.err(where, "build.oss_verify.repository is %s: only a project a finding holds back whole builds "
                             "from %s" % (schema.INTERNAL_PORT_REPOSITORY, schema.INTERNAL_PORT_REPOSITORY))
         assets = proj.data.get("assets") or {}
+        commit = None
         for k in ("bin", "src", "src_manifest", "port"):
             release = (assets.get(k) or {}).get("release", "")
             if release.startswith("findings-") and (proj.name not in held or release != "findings-" + proj.name):
                 tree.err(where, "assets.%s is attached to %s: only a project a finding holds back whole attaches to "
                                 "findings-<project>, its own" % (k, release))
+            if release.startswith("enroll-"):
+                own = "enroll-%s-" % proj.name
+                m = ENROLL_DRAFT.fullmatch(release[len(own):]) if release.startswith(own) else None
+                commit = commit or (m and m.group(1))
+                if not m or (m.group(2) is None) != (k == "bin") or m.group(1) != commit:
+                    tree.err(where, "assets.%s is attached to %s: an enrollment's own drafts are "
+                                    "enroll-<project>-<12 hex>, its own, the binaries' without -src and the rest with "
+                                    "-src" % (k, release))
 

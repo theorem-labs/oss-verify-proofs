@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: json-c
 harness: json_array_fuzzer
-rocq: OssFuzzTheorems.json_c.json_array_fuzzer
+rocq: OSSVerify.json_c.json_array_fuzzer
 origin: upstream
 summary: Parses up to three short fuzzed strings into an array, then insert_idx/get_idx/put_idx/del_idx/shrink/sort
   with fuzzed indices and a constant comparator; results unchecked.

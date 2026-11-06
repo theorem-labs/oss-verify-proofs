@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: v3name
-rocq: OssFuzzTheorems.openssl.v3name
+rocq: OSSVerify.openssl.v3name
 origin: upstream
 summary: Parses the same GENERAL_NAME twice (distinct pointers) and calls GENERAL_NAME_cmp(a, b) - the
   result, which must be 0, is IGNORED.

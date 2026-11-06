@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: simdjson
 harness: fuzz_minify
-rocq: OssFuzzTheorems.simdjson.fuzz_minify
+rocq: OSSVerify.simdjson.fuzz_minify
 origin: upstream
 summary: parse into a DOM, then simdjson::minify(elem); the minified string is (void)-cast away (no reparse,
   no idempotence check).

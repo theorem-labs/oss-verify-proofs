@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: kea
 harness: fuzz_util
-rocq: OssFuzzTheorems.kea.fuzz_util
+rocq: OSSVerify.kea.fuzz_util
 origin: upstream
 summary: 'One payload string to eleven libkea-util calls in a fixed order: str::tokens, quotedStringToBinary,
   decodeFormattedHexString, decodeColonSeparatedHexString, decodeSeparatedHexString, trim, lowercase+uppercase,

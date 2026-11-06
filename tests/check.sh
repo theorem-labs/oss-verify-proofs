@@ -7,11 +7,12 @@
 # For each control it
 #   1. compiles the candidate proof on its own, against the .vo files that
 #      `dune build` made from this tree (in CI: from the base branch);
-#   2. writes and compiles a wrapper that ascribes the candidate's theorem to
-#      the statement it claims, and prints what the result assumes:
+#   2. writes and compiles, with every warning off, a wrapper that ascribes the
+#      candidate's theorem to the statement it claims, and has Print
+#      Assumptions write what the result assumes into a file of its own:
 #        Definition certified : <Statements>.<statement> := <Proof>.<theorem>.
-#        Print Assumptions certified.
-#   3. requires every entry Print Assumptions lists to be an axiom in
+#        Redirect "assumptions" Print Assumptions certified.
+#   3. requires every entry of that file to be an axiom in
 #      toolchain/allowed-axioms.txt; anything else it lists (an inductive
 #      assumed positive, a fixpoint assumed guarded, an unsafe hierarchy,
 #      definitional UIP, a change to the logic) is refused, as `oft check`
@@ -29,6 +30,8 @@
 # tests/negative/ must be refused, at the step and for the reason its
 # claim.yaml names; a negative control refused for any other reason is a
 # broken control and fails this script.  So does a run that checked nothing.
+# Last, tests/mutate.py makes each statement kind of theories/Shapes.v vacuous
+# in a scratch copy and requires the build of the controls to fail on it.
 set -euo pipefail
 
 FULL=0; ROCQCHK=0
@@ -49,7 +52,7 @@ done
 WORK="$(mktemp -d)"
 ulimit -s unlimited 2> /dev/null || true
 
-BASE_Q=(-Q "$B/theories" OssFuzzTheorems.Core -Q "$B/tests" OssFuzzTheorems.Tests)
+BASE_Q=(-Q "$B/theories" OSSVerify.Core -Q "$B/tests" OSSVerify.Tests)
 ROCQ=(rocq compile -native-compiler no)
 # rocqchk (--rocqchk, --full) checks without its bytecode machine: rocq-core
 # 9.2.0's rocqchk refuses the machine code these libraries store
@@ -67,7 +70,7 @@ check() {
   local label="$1" src="$2" claim="$3" thm="$4" kind="$5" doctored="${6:-}"
   local d="$WORK/$label" project harness stmt stmt_mod root main
   project="${claim%%/*}"; stmt="${claim##*/}"; harness="${claim#*/}"; harness="${harness%/*}"
-  stmt_mod="OssFuzzTheorems.Tests.$project.$harness.Statements"
+  stmt_mod="OSSVerify.Tests.$project.$harness.Statements"
   root="Candidate.$label"
   mkdir -p "$d/cand" "$d/wrap"
   cp -- "$src"/*.v "$d/cand/"
@@ -81,10 +84,10 @@ check() {
     cp -r -- "$B/tests" "$d/base/tests"
     chmod -R u+w -- "$d/base/tests"
     cp -- "$d/doctored.v" "$d/base/tests/$project/$harness/Statements.v"
-    "${ROCQ[@]}" -Q "$B/theories" OssFuzzTheorems.Core -Q "$d/base/tests" OssFuzzTheorems.Tests \
+    "${ROCQ[@]}" -Q "$B/theories" OSSVerify.Core -Q "$d/base/tests" OSSVerify.Tests \
       "$d/base/tests/$project/$harness/Statements.v" > "$d/doctored.log" 2>&1 \
       || { echo "setup"; return; }
-    cand_q=(-Q "$B/theories" OssFuzzTheorems.Core -Q "$d/base/tests" OssFuzzTheorems.Tests)
+    cand_q=(-Q "$B/theories" OSSVerify.Core -Q "$d/base/tests" OSSVerify.Tests)
   fi
   main="Proof"; [ "$kind" = holds ] || main="Refutation"
   [ -e "$d/cand/$main.v" ] || { echo "compile"; return; }
@@ -94,7 +97,16 @@ check() {
       || { echo "compile"; return; }
   done
 
-  # 2. the wrapper, always against the base.
+  # 2. the wrapper, always against the base.  Print Assumptions writes into a
+  #    file of its own (Redirect: assumptions.out in the compile's working
+  #    directory, $d, truncated first), and step 3 reads that file and nothing
+  #    else, so what the candidate makes Rocq print while the wrapper compiles
+  #    (a deprecation note, a message) never reaches it.  Step 3 once read the
+  #    compile's merged output, where such a note could print "Closed under the
+  #    global context" and hide every axiom (the Verified Linux team's report,
+  #    2026-10-29); tests/negative/hidden_axiom_* are those payloads.  -w -all
+  #    only keeps wrapper.log quiet: a candidate's `Global Set Warnings
+  #    "default".` turns the warnings back on, and nothing depends on them.
   {
     echo "Require $stmt_mod."
     echo "Require $root.$main."
@@ -104,25 +116,46 @@ check() {
       echo "Definition certified : ~ $stmt_mod.$stmt := $root.$main.$thm."
     fi
     echo "Set Printing Fully Qualified."
-    echo "Print Assumptions certified."
+    echo 'Redirect "assumptions" Print Assumptions certified.'
   } > "$d/wrap/Wrapper.v"
-  "${ROCQ[@]}" "${BASE_Q[@]}" -Q "$d/cand" "$root" -Q "$d/wrap" "Wrap.$label" "$d/wrap/Wrapper.v" \
-    > "$d/wrapper.log" 2>&1 || { echo "wrapper"; return; }
+  ( cd "$d" && "${ROCQ[@]}" -w -all "${BASE_Q[@]}" -Q "$d/cand" "$root" -Q "$d/wrap" "Wrap.$label" \
+      "$d/wrap/Wrapper.v" ) > "$d/wrapper.log" 2>&1 || { echo "wrapper"; return; }
+  [ -f "$d/assumptions.out" ] || {
+    echo "check.sh: Print Assumptions wrote no assumptions.out" >> "$d/wrapper.log"
+    echo "wrapper"; return; }
 
-  # 3. the assumptions, in the form Rocq 9.2.0 prints them: "Closed under the
-  #    global context", or sections ("Axioms:", "Theory:", ...) whose entries
-  #    start at column 0.  Under "Axioms:" an axiom is "<name> : <type>";
-  #    every other entry is refused.  Nothing parsed is not nothing assumed.
+  # 3. the assumptions, read as tools/oft/check.py (wrapper_assumptions) reads
+  #    the form Rocq 9.2.0 prints: nothing is assumed only when the file is
+  #    exactly the one line "Closed under the global context" (an axiom's
+  #    printed type can hold that line too).  Otherwise it is a list from its
+  #    first line on: sections ("Axioms:", "Theory:", ...) with no empty line
+  #    inside, each entry at column 0 (a long one continues on indented
+  #    lines).  Under "Axioms:" an axiom is "<name> : <type>"; every other
+  #    entry is refused.  Nothing parsed is not nothing assumed.
   : > "$d/assumptions.txt"
   : > "$d/outside.txt"
-  if ! grep -qx 'Closed under the global context' "$d/wrapper.log"; then
-    awk '/^(Transparent constants|Section Variables|Axioms|Opaque constants|Theory):$/ { s = $0; next }
-         s == "" { next }
-         /^$/ { exit }
-         /^[ \t]/ { next }
-         s == "Axioms:" && (/^[^ ]+ :$/ || /^[^ ]+ : /) { print "axiom " $1; next }
-         { print "other " (s == "Axioms:" ? "" : s " ") $0 }' "$d/wrapper.log" > "$d/entries.txt"
-    [ -s "$d/entries.txt" ] || { echo "wrapper"; return; }
+  awk -v closed='Closed under the global context' '
+    { line[NR] = $0 }
+    END {
+      n = NR; while (n > 0 && line[n] ~ /^[ \t]*$/) n--
+      if (n == 1 && line[1] == closed) { print "closed"; exit 0 }
+      head = "^(Transparent constants|Section Variables|Axioms|Opaque constants|Theory):$"
+      if (n == 0 || line[1] !~ head) exit 3
+      for (i = 1; i <= n; i++) {
+        l = line[i]
+        if (l ~ /^[ \t]*$/) exit 3
+        if (l ~ /^[ \t]/) continue
+        if (l ~ head) { s = l; continue }
+        if (s == "Axioms:" && (l ~ /^[^ \t]+ :$/ || l ~ /^[^ \t]+ : /)) { split(l, w, " "); print "axiom " w[1]; continue }
+        print "other " (s == "Axioms:" ? "" : s " ") l
+      }
+    }' "$d/assumptions.out" > "$d/entries.txt" || {
+    echo "check.sh: Print Assumptions printed neither exactly 'Closed under the global context' nor a list of assumptions" >> "$d/wrapper.log"
+    echo "wrapper"; return; }
+  if [ "$(cat "$d/entries.txt")" != closed ]; then
+    [ -s "$d/entries.txt" ] || {
+      echo "check.sh: Print Assumptions printed an empty list of assumptions" >> "$d/wrapper.log"
+      echo "wrapper"; return; }
     { grep '^axiom ' "$d/entries.txt" || true; } | cut -d' ' -f2 | LC_ALL=C sort -u > "$d/assumptions.txt"
     { grep '^other ' "$d/entries.txt" || true; } | cut -d' ' -f2- > "$d/outside.txt"
   fi
@@ -151,8 +184,8 @@ check() {
 
 # This repository's libraries, as built from this tree.
 mapfile -t OWN < <(
-  { (cd "$B/theories" && find . -name '*.vo' -printf 'OssFuzzTheorems.Core.%P\n')
-    (cd "$B/tests" && find . -name '*.vo' -printf 'OssFuzzTheorems.Tests.%P\n'); } \
+  { (cd "$B/theories" && find . -name '*.vo' -printf 'OSSVerify.Core.%P\n')
+    (cd "$B/tests" && find . -name '*.vo' -printf 'OSSVerify.Tests.%P\n'); } \
   | sed 's/\.vo$//; s#/#.#g' | LC_ALL=C sort)
 [ "${#OWN[@]}" -gt 3 ] || { echo "check.sh: found only ${#OWN[@]} compiled libraries"; exit 2; }
 
@@ -200,6 +233,11 @@ for dir in "${NEG[@]}"; do
   fi
 done
 
+# The mutation controls (tests/mutate.py): each statement kind of Shapes.v,
+# made vacuous in a scratch copy, must fail the build of the controls.
+mutations=caught
+python3 "$ROOT/tests/mutate.py" || { fail=1; mutations=FAILED; }
+
 if [ "$FULL" = 1 ]; then
   # Every positive control's wrapper and candidate, and everything they need,
   # checked in one rocqchk run with nothing admitted.
@@ -224,7 +262,7 @@ if [ "$FULL" = 1 ]; then
   fi
 fi
 
-echo "positive controls passed: $passed of ${#POS[@]}; negative controls refused as claimed: $refused of ${#NEG[@]}"
+echo "positive controls passed: $passed of ${#POS[@]}; negative controls refused as claimed: $refused of ${#NEG[@]}; mutation controls: $mutations"
 [ "$passed" -eq "${#POS[@]}" ] && [ "$refused" -eq "${#NEG[@]}" ] || fail=1
 [ "$fail" = 0 ] && echo "check.sh: all controls behave" || echo "check.sh: FAILED (work files kept in $WORK)"
 exit "$fail"

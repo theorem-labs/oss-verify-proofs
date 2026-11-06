@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: hpn-ssh
 harness: authopt_fuzz
-rocq: OssFuzzTheorems.hpn_ssh.authopt_fuzz
+rocq: OSSVerify.hpn_ssh.authopt_fuzz
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

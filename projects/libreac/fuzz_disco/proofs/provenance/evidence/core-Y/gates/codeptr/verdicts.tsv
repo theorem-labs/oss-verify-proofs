@@ -1,0 +1,229 @@
+value	verdict	cited	flagged_in
+0x10101	DECLARED: KWord value 65793 (4-byte asan_flags word) in the GENERATED start-up states, not an address	Reusable/YB03.v:13	YB03.v,YB1g.v,YE08.v,YE3d.v,YF0m.v
+0x102d1	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x10310	DECLARED: fuzz_disco.asan-ubsan .rodata chunk start in img_ro_chunks, GENERATED from the asan-ubsan image (YD1k header); CH lemma checks it	Reusable/YD1k.v:252	YD1k.v,YD2j.v,YE3i.v
+0x10311	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x10313	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x10317	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x103a8	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x103b0	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x103c0	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x103d0	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x103d8	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x103e0	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x103e8	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x103f0	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x103f8	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x10493	DECLARED: RISC-V instruction word: PW entry of a YI0z code listing (ptable); the word occurs in fuzz_disco.asan-ubsan .text	Reusable/YI0z.v:67	YI0z.v
+0x10800	DECLARED: gp = __global_pointer$ 0x10800 in fuzz_disco.asan-ubsan and in fuzz_disco plain (symtabs of both .debug twins; YH03 src0_D_global_pointer is the plain one)	Reusable/YB01.v:16	YB01.v,YB03.v,YB1w.v,YD23.v,YD2f.v,YD2i.v,YF0m.v
+0x12000	DECLARED: size constant 73728 (mkAF bound of aMS), not an address	Reusable/YFi9.v:57	YFi9.v,YFjm.v,YG00.v,YI5c.v,YN0d.v
+0x13023	DECLARED: RISC-V instruction word: PW entry of a YI0z code listing (ptable); the word occurs in fuzz_disco.asan-ubsan .text	Reusable/YI0z.v:51	YI0z.v
+0x130b0	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x13318	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x134d0	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x13544	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x1357c	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x138e8	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x1399c	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x14298	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x142e0	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x143a8	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x1465c	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x14ad8	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x15078	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x150d8	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x15254	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x186a0	DECLARED: the count 100000 (Z length bound `zlen rest < 100000`, pop_batches count), not an address	Reusable/YFet.v:707	YFet.v,YFeu.v,YFhd.v,YG00.v,YG03.v,YO0f.v
+0x1a000	DECLARED: rbound argument 106496 of RB (run-ceiling bound), not an address	Reusable/YO04.v:17	YO04.v
+0x1d6b4	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x1d6f0	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x1d7d0	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x1dd40	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x1dd70	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x1ed90	STALE (TRUE): cgif value left in YH03 (disco PLAIN-image symbol file); disco plain bytes / symbols differ; no other disco file and no YH03 definition uses the name -> no proof depends on it	Reusable/YH03.v	YH03.v
+0x1f020	DECLARED: numeric bound in a lia / range fact, not an address (TOT_range: 2 <= TOT <= 127008)	Reusable/YFem.v:129	YFem.v
+0x1ffdc	DECLARED: numeric bound in a lia / range fact, not an address (0 <= sz <= 131036)	Reusable/YO0a.v:752	YO0a.v
+0x1ffeb	DECLARED: mkAF bound 131051 (size fact), not an address	Reusable/YN1h.v:260	YN1h.v,YN1k.v,YN1r.v,YN20.v,YN21.v,YN22.v,YO0f.v,YO0i.v
+0x1ffec	DECLARED: MMAP_THRESHOLD = 131052 (allocator size threshold), not an address	Reusable/YN0c.v:451	YN0c.v,YN0e.v,YN0g.v,YO0f.v
+0x1fffe	DECLARED: mkAF bound 131070 (size fact), not an address	Reusable/YI08.v:295	YI08.v
+0x1ffff	DECLARED: numeric bound in a lia / range fact, not an address (0 <= L0 <= 131071)	Reusable/YA02.v:171	YA02.v,YB03.v,YD1v.v,YD1x.v,YD27.v,YK09.v,YK0h.v,YK12.v,YK14.v,YL0v.v,YL0w.v,YL0y.v
+0x20000	DECLARED: 131072 = 2^17: region length in the GENERATED start-up states and allocator size bound, not an address	Reusable/YB01.v:15	YB01.v,YB13.v,YB1h.v,YD1d.v,YD1f.v,YE39.v,YE6x.v,YFek.v,YFel.v,YFia.v,YFif.v,YFjt.v,YFjy.v,YFjz.v,YFk0.v,YFkp.v,YG07.v,YK12.v,YK17.v,YK1a.v,YN0c.v,YN0e.v,YN0g.v,YN14.v,YN2f.v,YO01.v,YO0b.v,YO0q.v
+0x20060	DECLARED: allocator request size 131168 in a size list, not an address	Reusable/YO0f.v:1031	YO0f.v,YO0i.v
+0x20074	DECLARED: KMmapRW length 131188 in an allocator trace, not an address	Reusable/YO0i.v:970	YO0i.v
+0x21000	DECLARED: KMunmap length 135168 in an allocator trace, not an address	Reusable/YO0i.v:971	YO0i.v
+0x28693	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99ecc : word	Reusable/YB1u.v:1208	YB1u.v,YE3c.v,YN3b.v
+0x28a63	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99b44 : word	Reusable/YB1u.v:78	YB1u.v,YE3c.v,YN3b.v
+0x2a303	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:142	YB1o.v
+0x2b303	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:148	YB1o.v
+0x30d40	FINDING, FALSE POSITIVE (not an address; codeptr notinsn/nosect check, not clearable by --same): size / fuel 200000 (Malloc 200000, FUEL), not an address	Reusable/YO0f.v:1031	YO0f.v,YO0i.v,YP03.v
+0x30d54	FINDING, FALSE POSITIVE (not an address; codeptr notinsn/nosect check, not clearable by --same): KMmapRW length 200020 in an allocator trace, not an address	Reusable/YO0i.v:1037	YO0i.v
+0x30da4	FINDING, FALSE POSITIVE (not an address; codeptr notinsn/nosect check, not clearable by --same): Realloc size 200100 in an allocator trace, not an address	Reusable/YO0i.v:1054	YO0i.v
+0x31000	DECLARED: LMem length 200704 in an allocator trace, not an address	Reusable/YO0f.v:1102	YO0f.v,YO0i.v
+0x31294	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YFfy.v:455	YFfy.v,YFfz.v,YFg2.v,YG00.v,YG03.v,YG0k.v
+0x312a0	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YFfy.v:459	YFfy.v,YFfz.v,YFg2.v,YG00.v,YG03.v,YG0k.v
+0x31614	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YFi3.v:74	YFi3.v,YFk0.v,YG00.v
+0x32000	DECLARED: end bound of the disco PLAIN image range [0x20000, 0x32000) in covered_sound src0_msyms, checked by vm_compute (src0 = fuzz_disco plain)	Reusable/YI5c.v:33	YI5c.v,YN0c.v,YN0d.v
+0x33180	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YFeu.v:159	YFeu.v,YG00.v
+0x33564	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YG00.v:498	YG00.v
+0x33da4	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YG00.v:267	YG00.v
+0x3420c	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YG00.v:278	YG00.v,YG06.v
+0x35830	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YFft.v:23	YFft.v,YG00.v
+0x35f78	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YFk0.v:752	YFk0.v,YG00.v
+0x36664	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YG00.v:285	YG00.v
+0x3fff8	DECLARED: symbolic offset 262136 (SOff rADR 262136), a length, not an address	Reusable/YFk8.v:111	YFk8.v,YFkc.v,YFkd.v,YFke.v
+0x40000	DECLARED: size / length constant of the ASan runtime or allocator model (a Z quantity, not an image address) (262144 = kUserMapSize)	Reusable/YD2n.v:247	YD2n.v,YF06.v,YFfg.v,YFk6.v,YFk8.v,YFk9.v,YFkb.v,YFkc.v,YFkd.v,YFke.v,YFkh.v,YFki.v,YFkk.v,YFkm.v,YFkn.v,YFkx.v,YG06.v,YG0h.v,YG0i.v,YG0k.v,YO01.v
+0x40248	DECLARED: memset length 262728 = 0x40000 + 0x248 (do_stretch length), not an address	Reusable/YFfg.v:243	YFfg.v
+0x445c0	DECLARED: KRange upper bound 280000 of an EVar (value range), not an address	Reusable/YB03.v:13	YB03.v,YK09.v
+0x493e0	DECLARED: allocator request size 300000 in a size list, not an address	Reusable/YO0f.v:1031	YO0f.v
+0x5193a	FINDING, FALSE POSITIVE (not an address; codeptr notinsn/nosect check, not clearable by --same): memory word value computed by vm_compute of a symbolic run on the disco PLAIN image (src0segs = ZImage zsegs)	Reusable/YN3d.v:160	YN3d.v
+0x5f844	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YFk0.v:756	YFk0.v
+0x60000	DECLARED: top bound of the disco PLAIN image segments (src0_segs_top), checked by vm_compute	Reusable/YL0k.v:151	YL0k.v
+0x61a80	DECLARED: Realloc size 400000 in an allocator trace, not an address	Reusable/YO0i.v:1042	YO0i.v
+0x61a94	DECLARED: KMmapRW length 400020 in an allocator trace, not an address	Reusable/YO0i.v:1050	YO0i.v
+0x62000	DECLARED: KMremap length 401408 in an allocator trace, not an address	Reusable/YO0i.v:1043	YO0i.v
+0x62cd6	FINDING, FALSE POSITIVE (not an address; codeptr notinsn/nosect check, not clearable by --same): divisibility witness (exists (404694 + bkt); lia closes it against fuzz_disco depot base), not an address	Reusable/YFem.v:413	YFem.v
+0x6dd44	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YD2n.v:81	YD2n.v,YFi3.v,YFk0.v
+0x706dc	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YFk0.v:1025	YFk0.v
+0x71c00	DECLARED: byte length of a runtime mmap region / its shadow in the GENERATED start-up states (collector output on fuzz_disco.asan-ubsan)	Reusable/YB01.v:15	YB01.v,YB03.v
+0x729f0	DECLARED: model label (mcheck / FCheck / ISpin / spin), kept at the donor's value (an opaque check-site label; ruling in the internal record)	Reusable/YFk0.v:1024	YFk0.v
+0x7fff8	DECLARED: divisibility witness (exists ...; lia closes it), not an address (524280 + 2 * q)	Reusable/YFk5.v:566	YFk5.v
+0x80000	DECLARED: divisibility witness (exists ...; lia closes it), not an address (24 * 524288)	Reusable/YFfu.v:606	YFfu.v,YO01.v
+0x9ffc0	FINDING, FALSE POSITIVE (not an address; codeptr notinsn/nosect check, not clearable by --same): PHi (auipc) intermediate value of tfib_hi in YI12; tfib_lib_check0 checks it by vm_compute (pi_check over the code table built from tfibsegs = AsanUbsan.M.loaded_segments)	Reusable/YI12.v:244	YI12.v
+0xa003c	FINDING, FALSE POSITIVE (not an address; codeptr notinsn/nosect check, not clearable by --same): PHi (auipc) intermediate value of tfib_hi in YI12; tfib_lib_check0 checks it by vm_compute (pi_check over the code table built from tfibsegs = AsanUbsan.M.loaded_segments)	Reusable/YI12.v:184	YI12.v
+0xa00e0	FINDING, FALSE POSITIVE (not an address; codeptr notinsn/nosect check, not clearable by --same): PHi (auipc) intermediate value of tfib_hi in YI12; tfib_lib_check0 checks it by vm_compute (pi_check over the code table built from tfibsegs = AsanUbsan.M.loaded_segments)	Reusable/YI12.v:247	YI12.v
+0xa0150	FINDING, FALSE POSITIVE (not an address; codeptr notinsn/nosect check, not clearable by --same): PHi (auipc) intermediate value of tfib_hi in YI12; tfib_lib_check0 checks it by vm_compute (pi_check over the code table built from tfibsegs = AsanUbsan.M.loaded_segments)	Reusable/YI12.v:206	YI12.v
+0xa0168	FINDING, FALSE POSITIVE (not an address; codeptr notinsn/nosect check, not clearable by --same): PHi (auipc) intermediate value of tfib_hi in YI12; tfib_lib_check0 checks it by vm_compute (pi_check over the code table built from tfibsegs = AsanUbsan.M.loaded_segments)	Reusable/YI12.v:248	YI12.v
+0xa0208	FINDING, FALSE POSITIVE (not an address; codeptr notinsn/nosect check, not clearable by --same): PHi (auipc) intermediate value of tfib_hi in YI12; tfib_lib_check0 checks it by vm_compute (pi_check over the code table built from tfibsegs = AsanUbsan.M.loaded_segments)	Reusable/YI12.v:249	YI12.v
+0xa020c	FINDING, FALSE POSITIVE (not an address; codeptr notinsn/nosect check, not clearable by --same): PHi (auipc) intermediate value of tfib_hi in YI12; tfib_lib_check0 checks it by vm_compute (pi_check over the code table built from tfibsegs = AsanUbsan.M.loaded_segments)	Reusable/YI12.v:250	YI12.v
+0xa0593	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x958f0	Reusable/YE3e.v:296	YE3e.v,YN3f.v
+0xa0993	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x95920	Reusable/YE3e.v:344	YE3e.v,YN3f.v
+0xa2603	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x36fc0 : word	Reusable/YB1r.v:12	YB1r.v
+0xa3703	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x9593c	Reusable/YE3e.v:372	YE3e.v,YN3f.v
+0xb2583	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x34c6c : word	Reusable/YB1s.v:12	YB1s.v
+0xe0000	DECLARED: divisibility witness (exists ...; lia closes it), not an address (917504)	Reusable/YFk5.v:216	YFk5.v,YFko.v
+0xfffff	DECLARED: 1048575: 20-bit lui immediate (bv 20) and mkAF bound, not an address	Reusable/YE3e.v:240	YE3e.v,YFi9.v,YN05.v,YN3f.v
+0x100000	DECLARED: 1048576 = 2^20 (change (2 ^ 20) with 1048576; region length), not an address	Reusable/YA0f.v:1575	YA0f.v,YB01.v,YB03.v,YD1d.v,YD1e.v,YD1f.v,YD1g.v,YFel.v,YFem.v,YFgi.v,YFgm.v,YFgn.v,YFi9.v,YG0f.v,YG0s.v,YK0j.v,YN1l.v,YO01.v
+0x100018	DECLARED: byte length of a runtime mmap region / its shadow in the GENERATED start-up states (collector output on fuzz_disco.asan-ubsan)	Reusable/YB03.v:13	YB03.v
+0x100022	DECLARED: mmap flags value (MAP_* bits) in the mmap-call model, not an address	Reusable/YA01.v:300	YA01.v,YA09.v
+0x100032	DECLARED: mmap flags value (MAP_* bits) in the mmap-call model, not an address	Reusable/YA01.v:300	YA01.v,YA09.v
+0x100613	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:103	YB1o.v
+0x100693	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:106	YB1o.v
+0x100713	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YE21.v:121	YE21.v
+0x100793	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99b20 : word	Reusable/YB1u.v:33	YB1u.v,YE3c.v,YN3b.v
+0x100813	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at (tfib_A_memchr_libc + 0x18)	Reusable/YE3a.v:68	YE3a.v,YN3i.v
+0x104022	DECLARED: mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_ANON|MAP_PRIVATE, not an address	Reusable/YA01.v:299	YA01.v,YA09.v,YFk8.v,YFk9.v,YFkn.v
+0x104032	DECLARED: mmap flags value (MAP_* bits) in the mmap-call model, not an address	Reusable/YA01.v:299	YA01.v,YA09.v
+0x109000	DECLARED: FS_FROFF: offset inside the model file-system layout, not an image address	Reusable/YF0r.v:38	YF0r.v
+0x113423	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YE21.v:115	YE21.v
+0x113c23	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_strnlen + 0x4)	Reusable/YN3i.v:272	YN3i.v
+0x140593	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at 0x1686c	Reusable/YN3h.v:107	YN3h.v
+0x148680	DECLARED: upper bound in the proved lemma snl_rom_low (in_rom tfibsegs a -> a < 0x148680), not an address	Reusable/YE7d.v:76	YE7d.v
+0x150513	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at (tfib_A_memchr_libc + 0x28)	Reusable/YE3a.v:84	YE3a.v,YE3b.v,YFk4.v,YK0a.v,YN3i.v
+0x15051b	DECLARED: RISC-V instruction word in the fetch_word premise of a test Goal (its address 0x10000 is the Goal's own hypothesis), not an address	Reusable/YK1a.v:766	YK1a.v
+0x150693	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YE21.v:157	YE21.v
+0x150793	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at (tfib_A_memchr_libc + 0x14)	Reusable/YE3a.v:64	YE3a.v,YN3i.v
+0x151513	DECLARED: RISC-V instruction word in the fetch_word premise of a test Goal (its address 0x10000 is the Goal's own hypothesis), not an address	Reusable/YK1a.v:826	YK1a.v
+0x15151b	DECLARED: RISC-V instruction word in the fetch_word premise of a test Goal (its address 0x10000 is the Goal's own hypothesis), not an address	Reusable/YK1a.v:769	YK1a.v
+0x152513	DECLARED: RISC-V instruction word in the fetch_word premise of a test Goal (its address 0x10000 is the Goal's own hypothesis), not an address	Reusable/YK1a.v:724	YK1a.v
+0x15551b	DECLARED: RISC-V instruction word in the fetch_word premise of a test Goal (its address 0x10000 is the Goal's own hypothesis), not an address	Reusable/YK1a.v:772	YK1a.v
+0x155593	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x65adc	Reusable/YB1k.v:34	YB1k.v
+0x155793	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x65b50	Reusable/YB1k.v:150	YB1k.v
+0x157513	DECLARED: RISC-V instruction word in the fetch_word premise of a test Goal (its address 0x10000 is the Goal's own hypothesis), not an address	Reusable/YK1a.v:835	YK1a.v
+0x158593	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at (x_pnscan TFIB - 4)	Reusable/YB1h.v:143	YB1h.v,YB1o.v,YB1u.v,YE21.v,YE38.v,YE3b.v,YE3c.v,YN3b.v,YN3h.v
+0x15859b	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x90654	Reusable/YE3e.v:264	YE3e.v,YN3f.v
+0x158713	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99b1c : word	Reusable/YB1u.v:28	YB1u.v,YE3c.v,YN3b.v
+0x15b513	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YE21.v:217	YE21.v
+0x15c783	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99dc0 : word	Reusable/YB1u.v:873	YB1u.v,YE3c.v,YN3b.v
+0x160000	DECLARED: size / length constant of the ASan runtime or allocator model (a Z quantity, not an image address) (1441792)	Reusable/YG0t.v:833	YG0t.v
+0x160613	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at (FS_LOOP + 0x14)	Reusable/YF0r.v:215	YB1o.v,YE21.v,YF0r.v,YF0t.v
+0x161200	DECLARED: byte length of a runtime mmap region / its shadow in the GENERATED start-up states (collector output on fuzz_disco.asan-ubsan)	Reusable/YB01.v:15	YB01.v,YD1d.v,YD1f.v,YG0t.v
+0x161793	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:226	YB1o.v
+0x167613	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99ed8 : word	Reusable/YB1u.v:1223	YB1u.v,YE3c.v,YN3b.v
+0x168693	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99b3c : word	Reusable/YB1u.v:68	YB1o.v,YB1u.v,YE21.v,YE3c.v,YN05.v,YN1j.v,YN3b.v
+0x168793	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at (tfib_A_memchr_libc + 0x68)	Reusable/YE3a.v:132	YE3a.v,YN3i.v
+0x170593	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YE21.v:127	YE21.v
+0x170713	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99b48 : word	Reusable/YB1u.v:83	YB1u.v,YE3c.v,YN3b.v
+0x17071b	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_alloc_slot + 0x524)	Reusable/YN1j.v:32	YN1j.v
+0x178793	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at (tfib_A_memchr_libc + 0x3c)	Reusable/YE3a.v:104	YE3a.v,YN3i.v
+0x178813	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:229	YB1o.v
+0x17d813	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:133	YB1o.v
+0x180693	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YE21.v:172	YE21.v
+0x1fff94	DECLARED: jal immediate inside decode_any of a word read from fuzz_disco.asan-ubsan	Reusable/YE3e.v:406	YE3e.v,YN3f.v
+0x1fff9c	DECLARED: jal immediate inside decode_any (Jal 0 2097052), not an address	Reusable/YB1o.v:188	YB1o.v
+0x1ffff0	DECLARED: jal immediate inside decode_any of a word read from fuzz_disco.asan-ubsan	Reusable/YE3a.v:230	YE3a.v,YN3i.v
+0x200000	DECLARED: numeric bound in a lia / range fact, not an address (<= 0x200000)	Reusable/YE30.v:1393	YE30.v,YE6k.v,YG0f.v,YK0h.v,YK14.v,YO01.v
+0x200613	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:97	YB1o.v
+0x200813	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99b90 : word	Reusable/YB1u.v:173	YB1u.v,YE3c.v,YN3b.v
+0x20112d	DECLARED: KRange upper bound 0x20112D of an EVar (value range), not an address	Reusable/YA01.v:715	YA01.v,YA02.v
+0x2028b8	DECLARED: numeric bound in a lia / range fact, not an address (<= 2107576 bytes)	Reusable/YK12.v:298	YK12.v,YK14.v
+0x209000	DECLARED: FS_FROFF: offset inside the model file-system layout, not an image address	Reusable/YF0t.v:39	YF0t.v
+0x222e00	DECLARED: numeric bound in a lia / range fact, not an address (length bsb <= 2240000)	Reusable/YK12.v:270	YK12.v,YK1a.v
+0x255513	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x65b60	Reusable/YB1k.v:166	YB1k.v
+0x255793	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x65b04	Reusable/YB1k.v:74	YB1k.v
+0x258593	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99eec : word	Reusable/YB1u.v:1248	YB1u.v,YE3c.v,YN3b.v
+0x25c803	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99dc4 : word	Reusable/YB1u.v:878	YB1u.v,YE3c.v,YN3b.v
+0x267713	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99ed0 : word	Reusable/YB1u.v:1213	YB1u.v,YE3c.v,YN3b.v
+0x268693	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99ba8 : word	Reusable/YB1u.v:203	YB1u.v,YE3c.v,YN3b.v
+0x268813	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99ef0 : word	Reusable/YB1u.v:1253	YB1u.v,YE3c.v,YN3b.v
+0x26d293	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_enframe + 0x88)	Reusable/YN05.v:168	YN05.v
+0x278793	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:238	YB1o.v
+0x279793	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YFk4.v:24	YFk4.v,YK0a.v
+0x300713	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99f20 : word	Reusable/YB1g.v:28	YB1g.v,YE3d.v
+0x300813	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99b88 : word	Reusable/YB1u.v:163	YB1u.v,YE3c.v,YN3b.v
+0x355593	DECLARED: RISC-V instruction word: PW entry of a YI0z code listing (ptable); the word occurs in fuzz_disco.asan-ubsan .text	Reusable/YI0z.v:776	YI0z.v
+0x357793	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99c28 : word	Reusable/YB1u.v:363	YB1u.v,YE3c.v,YN3b.v
+0x35c883	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99dc8 : word	Reusable/YB1u.v:883	YB1u.v,YE3c.v,YN3b.v
+0x35f693	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99b10 : word	Reusable/YB1u.v:13	YB1u.v,YE3c.v,YN3b.v
+0x368693	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99d44 : word	Reusable/YB1u.v:718	YB1u.v,YE3c.v,YN3b.v
+0x36f693	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99f60 : word	Reusable/YB1g.v:108	YB1g.v,YE3d.v
+0x36f793	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99b58 : word	Reusable/YB1u.v:103	YB1u.v,YE3c.v,YN3b.v
+0x377293	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99b34 : word	Reusable/YB1u.v:58	YB1u.v,YE3c.v,YN3b.v
+0x38e000	DECLARED: byte length of a runtime mmap region / its shadow in the GENERATED start-up states (collector output on fuzz_disco.asan-ubsan)	Reusable/YB01.v:15	YB01.v,YB03.v,YD1d.v,YD1e.v,YD1f.v,YD1g.v,YD2k.v
+0x3fffc0	DECLARED: divisibility witness (exists ...; lia closes it), not an address (4194240 + q)	Reusable/YFf9.v:378	YFf9.v
+0x3fffff	DECLARED: KRange upper bound 4194303 of an EVar (value range), not an address	Reusable/YB03.v:13	YB03.v,YD1v.v,YD1w.v,YD1x.v,YD1y.v,YD27.v,YD2i.v,YN3e.v
+0x400000	DECLARED: numeric bound in a lia / range fact, not an address (0 < tid < 4194304)	Reusable/YL0j.v:54	YL0j.v,YL0n.v,YL0p.v,YN0z.v,YN1k.v,YN3e.v,YO01.v,YP0n.v
+0x419ce0	DECLARED: argv_layout_slack = 4300000 (a length), not an address	Reusable/YK14.v:351	YK14.v
+0x42d313	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_enframe + 0x6c)	Reusable/YN05.v:140	YN05.v
+0x455593	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x65b6c	Reusable/YB1k.v:178	YB1k.v
+0x455793	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x65b2c	Reusable/YB1k.v:114	YB1k.v
+0x458593	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99c98 : word	Reusable/YB1u.v:503	YB1u.v,YE3c.v,YN3b.v
+0x459693	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:193	YB1o.v
+0x459713	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99f64 : word	Reusable/YB1g.v:113	YB1g.v,YE3d.v
+0x45a783	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99c78 : word	Reusable/YB1u.v:463	YB1u.v,YE3c.v,YN3b.v
+0x45a803	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99c40 : word	Reusable/YB1u.v:393	YB1u.v,YE3c.v,YN3b.v
+0x45c283	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99dcc : word	Reusable/YB1u.v:888	YB1u.v,YE3c.v,YN3b.v
+0x45f793	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99fb4 : word	Reusable/YB1g.v:213	YB1g.v,YE3d.v
+0x461713	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:118	YB1o.v
+0x461a13	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x95934	Reusable/YE3e.v:364	YE3e.v,YN3f.v
+0x465713	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YFk4.v:21	YFk4.v,YK0a.v
+0x467713	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99b78 : word	Reusable/YB1u.v:143	YB1u.v,YE3c.v,YN3b.v
+0x468293	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99eb8 : word	Reusable/YB1u.v:1183	YB1u.v,YE3c.v,YN3b.v
+0x468693	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x36fc8 : word	Reusable/YB1r.v:22	YB1r.v
+0x469613	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:310	YB1o.v
+0x469813	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:280	YB1o.v
+0x46d293	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_enframe + 0x90)	Reusable/YN05.v:176	YN05.v
+0x471713	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_enframe + 0x3c)	Reusable/YN05.v:92	YN05.v
+0x479893	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:283	YB1o.v
+0x47d793	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_enframe + 0xf0)	Reusable/YN05.v:272	YN05.v
+0x481293	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:136	YB1o.v
+0x481893	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:253	YB1o.v
+0x48969b	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_enframe + 0xc4)	Reusable/YN05.v:228	YN05.v
+0x489893	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:151	YB1o.v
+0x48a383	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:157	YB1o.v
+0x4a0a13	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x36fcc : word	Reusable/YB1r.v:27	YB1r.v
+0x4b0b13	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x34c70 : word	Reusable/YB1s.v:17	YB1s.v
+0x4c8c93	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x34c78 : word	Reusable/YB1s.v:27	YB1s.v
+0x500513	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_enframe + 0x110)	Reusable/YN05.v:304	YN05.v
+0x52d693	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_enframe + 0x80)	Reusable/YN05.v:160	YN05.v
+0x53e2b3	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99be8 : word	Reusable/YB1u.v:283	YB1u.v,YE3c.v,YN3b.v
+0x5502b3	DECLARED: RISC-V instruction word in an image-independent decode_any lemma (vm_refl), not an address	Reusable/YB1o.v:139	YB1o.v
+0x551513	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_enframe + 0x13c)	Reusable/YN05.v:348	YN05.v
+0x55c000	DECLARED: rw_len = fuzz_disco.asan-ubsan PT_LOAD #4 page span [0xa2000, 0x5fe000) = 0x55c000 (equal to cgif by coincidence)	Reusable/YB13.v:27	YB13.v,YB1h.v,YB1w.v,YFia.v
+0x55c303	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99dd0 : word	Reusable/YB1u.v:893	YB1u.v,YE3c.v,YN3b.v
+0x568223	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99dfc : word	Reusable/YB1u.v:948	YB1u.v,YE3c.v,YN3b.v
+0x568623	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99e34 : word	Reusable/YB1u.v:1018	YB1u.v,YE3c.v,YN3b.v
+0x56a423	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99c00 : word	Reusable/YB1u.v:313	YB1u.v,YE3c.v,YN3b.v
+0x56a623	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco asan-ubsan (AsanUbsan.M.loaded_segments) at 0x99c60 : word	Reusable/YB1u.v:433	YB1u.v,YE3c.v,YN3b.v
+0x575713	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_enframe + 0x24)	Reusable/YN05.v:64	YN05.v
+0x584333	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_alloc_slot + 0x51c)	Reusable/YN1j.v:28	YN1j.v
+0x58f8b3	DECLARED: RISC-V instruction word: fetch_word fact checked by vm_compute against fuzz_disco plain (src0segs = ZImage) at (src0_A_enframe + 0xa8)	Reusable/YN05.v:200	YN05.v

@@ -1,0 +1,234 @@
+value	reason	cited
+0x8067	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1g.v:319
+0x10101	size / layout constant of the ASan runtime or a divisibility witness (not an image address), same in both images	A/AB01.v:15
+0x10310	image-region bound GENERATED from fuzz_disco's own owned statics (AD2j genad2; kimg_overlap 0 MISMATCH)	A/AD1k.v:254
+0x103b8	AF0m const cell address in fuzz_disco .rodata; value matches the pin's bytes (cellcheck 0 mismatch)	A/AE2k.v:36
+0x103c0	image-region bound GENERATED from fuzz_disco's own owned statics (AD2j genad2; kimg_overlap 0 MISMATCH)	A/AD1k.v:257
+0x10800	gp = __global_pointer$ 0x10800 in fuzz_disco.asan (symtab)	A/AB01.v:16
+0x12000	size / layout constant of the ASan runtime or a divisibility witness (not an image address), same in both images	A/AFi9.v:60
+0x186a0	the count 100000 (Z length bound `zlen t < 100000` and pop_batches' nat batch count, kQuarantine), not an address; c0ce reads its %nat uses itself	A/AFhd.v:55
+0x1f05e	proof fuel / numeric bound, not an address	A/AFem.v:130
+0x1ffff	proof fuel / numeric bound, not an address	A/AB01.v:15
+0x20000	segment 0 loaded size [0x10000, 0x30000) = 131072, checked by vm_compute against the image module; or 2^17 constant	A/AB01.v:15
+0x28693	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1209
+0x28a63	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:79
+0x31294	model label (mcheck / FCheck / ISpin / spin), kept at cgif value	A/AFfy.v:457
+0x312a0	model label (mcheck / FCheck / ISpin / spin), kept at cgif value	A/AFfy.v:461
+0x31614	model label (mcheck / FCheck / ISpin / spin), kept at cgif value	A/AFi3.v:75
+0x33180	model label (mcheck / FCheck / ISpin / spin), kept at cgif value	A/AFeu.v:162
+0x35830	model label (mcheck / FCheck / ISpin / spin), kept at cgif value	A/AFft.v:26
+0x35f78	model label (mcheck / FCheck / ISpin / spin), kept at cgif value	A/AFk0.v:762
+0x3fff8	size / layout constant of the ASan runtime or a divisibility witness (not an image address), same in both images	A/AFk8.v:112
+0x40000	size / layout constant of the ASan runtime or a divisibility witness (not an image address), same in both images	A/AFfg.v:218
+0x40248	memset length 0x40248 = s3 0x40000 + 0x248 at internal_allocator+0xe0 (pin disasm)	A/AFfg.v:246
+0x445c0	proof fuel / numeric bound, not an address	A/AB01.v:15
+0x50693	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:39
+0x5a703	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:159
+0x5a783	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:389
+0x5c583	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1284
+0x5c703	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:869
+0x5c883	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:44
+0x5f844	model label (mcheck / FCheck / ISpin / spin), kept at cgif value	A/AFk0.v:766
+0x60813	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:49
+0x62be6	divisibility witness (exists (404454 + bkt); lia closes it against fuzz_disco depot base, so it is the pin's), not an address	A/AFem.v:414
+0x6dd44	model label (mcheck / FCheck / ISpin / spin), kept at cgif value	A/AFi3.v:41
+0x70693	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1039
+0x706dc	model label (mcheck / FCheck / ISpin / spin), kept at cgif value	A/AFk0.v:1035
+0x71863	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1219
+0x71c00	byte length of a runtime mmap region / its shadow in the GENERATED start-up states (collector output on fuzz_disco.asan)	A/AB01.v:15
+0x729f0	model label (mcheck / FCheck / ISpin / spin), kept at cgif value	A/AFk0.v:1034
+0x7fff8	size / layout constant of the ASan runtime or a divisibility witness (not an image address), same in both images	A/AFk5.v:574
+0x80000	size / layout constant of the ASan runtime or a divisibility witness (not an image address), same in both images	A/AFfu.v:610
+0x80693	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1269
+0xa0593	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AE3e.v:298
+0xa0993	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AE3e.v:346
+0xa2603	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1r.v:13
+0xa3703	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AE3e.v:374
+0xb2583	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1s.v:13
+0xe0000	size / layout constant of the ASan runtime or a divisibility witness (not an image address), same in both images	A/AFk5.v:224
+0xfffff	proof fuel / numeric bound, not an address	A/AE3e.v:242
+0x100000	size / layout constant of the ASan runtime or a divisibility witness (not an image address), same in both images	A/AB01.v:15
+0x100018	size / layout constant of the ASan runtime or a divisibility witness (not an image address), same in both images	A/AB01.v:15
+0x100793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:34
+0x100813	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AE3a.v:71
+0x104022	mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_ANON|MAP_PRIVATE, built at SealedRepairReservation 0x6ec58	A/AFk8.v:102
+0x109000	size / layout constant of the ASan runtime or a divisibility witness (not an image address), same in both images	A/AF0r.v:41
+0x150513	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AE3a.v:87
+0x150793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AE3a.v:67
+0x155593	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1k.v:36
+0x155793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1k.v:152
+0x158593	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1h.v:146
+0x15859b	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AE3e.v:266
+0x158713	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:29
+0x15c783	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:874
+0x160000	size / layout constant of the ASan runtime or a divisibility witness (not an image address), same in both images	A/AF0s.v:281
+0x160613	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AF0r.v:218
+0x161200	byte length of a runtime mmap region / its shadow in the GENERATED start-up states (collector output on fuzz_disco.asan)	A/AB01.v:15
+0x167613	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1224
+0x168693	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:69
+0x168793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AE3a.v:135
+0x170713	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:84
+0x178793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AE3a.v:107
+0x1fff94	jal immediate inside decode_any of a word read from fuzz_disco.asan	A/AE3e.v:408
+0x1ffff0	jal immediate inside decode_any of a word read from fuzz_disco.asan	A/AE3a.v:233
+0x200000	proof fuel / numeric bound, not an address	A/AE30.v:1395
+0x200813	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:174
+0x209000	size / layout constant of the ASan runtime or a divisibility witness (not an image address), same in both images	A/AF0t.v:42
+0x255513	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1k.v:168
+0x255793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1k.v:76
+0x258593	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1249
+0x25c803	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:879
+0x267713	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1214
+0x268693	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:204
+0x268813	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1254
+0x300713	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1g.v:29
+0x300813	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:164
+0x357793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:364
+0x35c883	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:884
+0x35f693	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:14
+0x368693	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:719
+0x36f693	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1g.v:109
+0x36f793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:104
+0x377293	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:59
+0x38e000	byte length of a runtime mmap region / its shadow in the GENERATED start-up states (collector output on fuzz_disco.asan)	A/AB01.v:15
+0x3fffc0	size / layout constant of the ASan runtime or a divisibility witness (not an image address), same in both images	A/AFf9.v:381
+0x3fffff	proof fuel / numeric bound, not an address	A/AB01.v:15
+0x455593	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1k.v:180
+0x455793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1k.v:116
+0x458593	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:504
+0x459713	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1g.v:114
+0x45a783	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:464
+0x45a803	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:394
+0x45c283	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:889
+0x45f793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1g.v:214
+0x461a13	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AE3e.v:366
+0x467713	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:144
+0x468293	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1184
+0x468693	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1r.v:23
+0x4a0a13	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1r.v:28
+0x4b0b13	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1s.v:18
+0x4c8c93	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1s.v:28
+0x53e2b3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:284
+0x55c000	rw_len = fuzz_disco PT_LOAD #4 page span [0xa2000, 0x5fe000) = 0x55c000 (equal to cgif's by coincidence)	A/AB12.v:12
+0x55c303	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:894
+0x568223	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:949
+0x568623	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1019
+0x56a423	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:314
+0x56a623	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:434
+0x63e333	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:294
+0x65c383	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:899
+0x6682a3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:954
+0x6686a3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1024
+0x66a623	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:319
+0x75ce03	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:904
+0x768323	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:959
+0x768723	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1029
+0x80006f	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:94
+0x800713	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:449
+0x829393	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:774
+0x82d29b	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:594
+0x831393	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:789
+0x83531b	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:609
+0x858593	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:484
+0x85a883	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:399
+0x85c703	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:929
+0x867713	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:134
+0x868693	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:479
+0x868713	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1119
+0x871393	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:804
+0x875793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:184
+0x87581b	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:549
+0x889393	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:759
+0x88d89b	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:579
+0x95c783	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:934
+0xa5c803	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:939
+0xb5c883	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:944
+0xb68023	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1289
+0xc5a283	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:404
+0xc5c283	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:969
+0xd5c303	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:974
+0xe5c383	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:979
+0xe66e63	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:454
+0xe68023	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:194
+0xe68423	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:994
+0xe6a023	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:469
+0xf00713	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:384
+0xf5ce03	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:984
+0xf680a3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:199
+0xf684a3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:999
+0xf6a023	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:419
+0xf6a223	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:474
+0x1000713	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:124
+0x1000793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:729
+0x1029393	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:259
+0x102d29b	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:264
+0x1031393	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:274
+0x103531b	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:279
+0x103e833	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:254
+0x1058593	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:209
+0x1068123	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:714
+0x1068523	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1004
+0x1068693	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:324
+0x1068713	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1014
+0x106a023	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:304
+0x106a223	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:424
+0x1071393	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:289
+0x1075813	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:694
+0x107581b	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:219
+0x1089393	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:244
+0x108d89b	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:249
+0x1100793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:214
+0x113e8b3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:269
+0x1168023	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:64
+0x11681a3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:924
+0x11685a3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1009
+0x116a223	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:309
+0x116a423	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:429
+0x1200793	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:544
+0x1829393	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:589
+0x182d29b	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:779
+0x1831393	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:604
+0x183531b	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:794
+0x1871393	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:619
+0x187581b	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:734
+0x1889393	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:574
+0x188d89b	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:764
+0x1c683a3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:964
+0x1c687a3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1034
+0x2000713	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:114
+0x2060e63	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:24
+0x2061663	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1229
+0x2070863	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1154
+0x2e66c63	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:379
+0x2e67063	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:119
+0x940006f	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:684
+0xc078a63	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:109
+0x10068863	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:19
+0x11078e63	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:169
+0x19079c63	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:179
+0x19c0006f	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:354
+0x22c0006f	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:519
+0x24070063	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:494
+0x24e67863	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:129
+0x2c071e63	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:139
+0x32071463	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:149
+0x3500006f	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:154
+0xd20706e3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1049
+0xdae66ce3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:864
+0xe4e666e3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:679
+0xf2079ae3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:369
+0xf4e66ae3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:349
+0xfac7e2e3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:334
+0xfc060ee3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:1279
+0xfcc76ae3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:444
+0xfcf81ee3	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:89
+0xff060613	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:299
+0xff158593	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:669
+0xff258593	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:339
+0xff358593	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:854
+0xff45a883	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:224
+0xff85a283	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:229
+0xffc5a303	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:234
+0xffd60613	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:699
+0xffe60613	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:189
+0xfff60613	RISC-V instruction word (fetch_word / decode_any fact checked by vm_compute against fuzz_disco.asan; code identical to cgif)	A/AB1u.v:74

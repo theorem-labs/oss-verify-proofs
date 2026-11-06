@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libtasn1
 harness: asn1_decode_simple_der_fuzzer
-rocq: OssFuzzTheorems.libtasn1.asn1_decode_simple_der_fuzzer
+rocq: OSSVerify.libtasn1.asn1_decode_simple_der_fuzzer
 origin: upstream
 summary: 'Checks one property, an invariant: When asn1_decode_simple_ber/der succeeds on the input (for
   both ASN1_ETYPE_BIT_STRING and ASN1_ETYPE_OCTET_STRING), the decoded content length is at most the input

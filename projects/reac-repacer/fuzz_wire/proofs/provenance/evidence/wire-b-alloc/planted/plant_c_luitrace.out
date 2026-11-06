@@ -1,0 +1,8 @@
+#	X plant-c-X.elf sha256 e67ddc7c2107	Y plant-c-Y.elf sha256 7ab84837f461	roots __interceptor_trampoline_malloc,___interceptor_malloc,__interceptor_trampoline_free,___interceptor_free
+#	CITE cite.tsv sha256 8fa55d56d88b	110 cited parameters / return types
+LUI	_ZN6__asan16AllocatorOptions7SetFromEPKNS_5FlagsEPKN11__sanitizer11CommonFlagsE	+0x10	`lui t0,0x700`	value X 0x700000 Y 0x700000
+TRACE	_ZN6__asan16AllocatorOptions7SetFromEPKNS_5FlagsEPKN11__sanitizer11CommonFlagsE	+0x10	+0x18 arith divuw t0,t0,t1 ; +0x1c arith slli t0,t0,1 ; +0x20 base sd zero,0(t0)
+ROW	_ZN6__asan16AllocatorOptions7SetFromEPKNS_5FlagsEPKN11__sanitizer11CommonFlagsE	+0x10	+0x20 base	sd zero,0(t0)	DIFFERS	full address X ['_ZN11__sanitizerL26internal_alloc_placeholderE+0x5e600'] | Y ['_ZN11__sanitizerL26internal_alloc_placeholderE+0x59480']	forms X: number 0x100000 | Y: number 0x100000
+#	SHAPES	a: store base, the immediate added (V+imm): 2	c: OP-IMM other than addi computed exactly on a known number: 2	c: R-type computed exactly on known numbers: 2
+#	NORETURN 11	_Exit,_ZN11__sanitizer11CheckFailedEPKciS1_yy,_ZN11__sanitizer14internal__exitEi,_ZN11__sanitizer23ReportMmapFailureAndDieEmPKcS1_ib,_ZN11__sanitizer25ReportMunmapFailureAndDieEPvmib,_ZN11__sanitizer3DieEv,_ZN11__sanitizer5AbortEv,_ZN11__sanitizerL25TracerThreadSignalHandlerEiPNS_19__sanitizer_siginfoEPv,_ZN11__sanitizerL34ReportInternalAllocatorOutOfMemoryEm,__assert_fail,abort
+TOTAL	functions with a lui 1	lui 1	DIFFERS 1

@@ -1,0 +1,7 @@
+(* written by oft check; never supplied by a pull request *)
+From Stdlib Require Import QArith.
+Require OssFuzzTheorems.libreac.fuzz_boxreg.Statements.
+Require OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.asan_ubsan_halts.Proof.
+Definition certified : OssFuzzTheorems.libreac.fuzz_boxreg.Statements.asan_ubsan_halts := OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.asan_ubsan_halts.Proof.asan_ubsan_halts_holds.
+Set Printing Fully Qualified.
+Print Assumptions certified.

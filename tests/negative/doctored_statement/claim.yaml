@@ -1,4 +1,4 @@
 claims: toy/exit0/plain_halts
 theorem: plain_halts_holds
 refused_at: wrapper
-because: makes inconsistent assumptions over library OssFuzzTheorems.Tests.toy.exit0.Statements
+because: makes inconsistent assumptions over library OSSVerify.Tests.toy.exit0.Statements

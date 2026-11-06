@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: dropbear
 harness: fuzzer-cliconf
-rocq: OssFuzzTheorems.dropbear.fuzzer_cliconf
+rocq: OSSVerify.dropbear.fuzzer_cliconf
 origin: upstream
 summary: Fuzz buffer supplies two booleans (username/port set) and a config-file string that is parsed
   by read_config_file via fmemopen; cli_opts results discarded.

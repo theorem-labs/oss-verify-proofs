@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: rabbitmq-c
 harness: fuzz_method_decode
-rocq: OssFuzzTheorems.rabbitmq_c.fuzz_method_decode
+rocq: OSSVerify.rabbitmq_c.fuzz_method_decode
 origin: upstream
 summary: First 4 bytes are the method id; amqp_decode_method() on the rest into a pool; the status is
   stored in unused_result and ignored.

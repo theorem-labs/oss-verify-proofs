@@ -1,12 +1,17 @@
 """Load the facts of a tree and derive what follows from them.
 
-The facts are release.yaml, projects/*/project.yaml, projects/*/*/harness.yaml,
-the proof directories under proofs/, the counterexamples under
-counterexamples/, and the recipe that each build record (proofs/*/*/provenance/
-PROVENANCE.yaml) cites.  Everything `oft generate` writes is a function of these
-(plus the code of theories/Shapes.v and theories/Images.v, which enters each
-statement's fingerprint).  The findings under findings/, the library bugs found
-while proving, are loaded beside them: no rendered file reads them.
+The facts are release.yaml, projects/*/project.yaml, the public patch text of
+each project (patches/<project>/ or projects/<project>/patches/), projects/*/*/harness.yaml,
+each fuzz target's proof directories, its counterexamples, and the recipe that
+its build record (provenance/PROVENANCE.yaml in its proofs folder) cites.
+Everything `oft generate` writes is a function of these (plus the code of
+theories/Shapes.v and theories/Images.v, which enters each statement's
+fingerprint).  The findings, the library bugs found while proving, are loaded
+beside them: no rendered file reads them.
+
+A fuzz target's proofs, counterexamples and findings are read in either layout
+(tools/oft/layout.py): proofs/<p>/<h>/ and the like, or projects/<p>/<h>/proofs/
+and the like.  A fuzz target that has them in both is refused.
 
 `load(root)` never raises on bad data: it records problems in `tree.errors`
 so that `oft lint` can report all of them at once.
@@ -17,13 +22,17 @@ import os
 import re
 import stat
 
-from . import names, render, rocq, schema, shapes, yamlio
+from . import layout, names, render, rocq, schema, shapes, yamlio
 
 PHRASEBOOK = yamlio.load_file(os.path.join(os.path.dirname(os.path.abspath(__file__)), "phrasebook.yaml"))
 # The version of the fingerprint.  Version 2 hashes the code of theories/Shapes.v and theories/Images.v (rocq.code),
 # not their bytes; `oft revisions` compares two trees under one version (docs/versioning.md).
 FINGERPRINT_TAG = "oss-fuzz-theorems/statement/2"
 THEORIES = ("theories/Shapes.v", "theories/Images.v")
+# Every fingerprint hashes theories/Shapes.v and theories/Images.v with the release's Rocq namespace (release.yaml's
+# `namespace`) read as this name wherever it starts a dotted path, whatever the release names: so a release that renames
+# the namespace states the same statements, and every revision and proof pin holds (docs/versioning.md).
+FINGERPRINT_NAMESPACE = "OssFuzzTheorems"
 
 
 # the origins of the fuzz targets OSS-Fuzz runs, in a project OSS-Fuzz has: its own files, and the project's own
@@ -38,18 +47,45 @@ class Tree:
         self.release = None
         self.projects = {}
         self.proofs = {}           # statement id -> ProofDir
-        self.proof_libs = []       # "<project>/<harness>" of every proofs/<p>/<h>/lib/
+        self.proof_libs = {}       # "<project>/<harness>" -> its proof library folder (lib/ in its proofs folder)
         self.counterexamples = {}  # statement id -> CounterexampleDir
         self.records = {}          # (project, harness) -> the recipe its build record cites, recipe.asset
         self.record_proofs = {}    # (project, harness) -> its build record's proofs.origin and proofs.written_here
+        self.records_at = {}       # (project, harness) -> the path of its build record, PROVENANCE.yaml
         self.approvals = None      # approvals.yaml, if this checkout has one
         self.findings = {}         # "<project>/<harness>/<slug>" -> FindingDir
-        self.unpatched = {}        # project -> its findings/<project>/unpatched.yaml
-        self.finding_series = {}   # "<project>/<harness>" -> bounded text of findings/<p>/<h>/series
+        self.unpatched = {}        # project -> its unpatched.yaml
+        self.unpatched_paths = {}  # project -> the path of its unpatched.yaml
+        self.finding_series = {}   # "<project>/<harness>" -> bounded text of its findings series
+        self.unit_layouts = {}     # "<project>/<harness>" -> the layout of its proofs, counterexamples and findings
+        self.unit_kinds = {}       # "<project>/<harness>" -> the kinds (layout.CHANGE_NAMES) it has a folder of
         self.errors = []
+
+    def unit_layout(self, unit):
+        """The layout a fuzz target's proofs, counterexamples and findings are in: NEW when it has none."""
+        return self.unit_layouts.get(unit, layout.NEW)
+
+    @property
+    def layout(self):
+        """OLD while any fuzz target's proofs, counterexamples or findings, or any project's unpatched.yaml, is in the
+        old layout; else NEW."""
+        old = (layout.OLD in self.unit_layouts.values()
+               or any(layout.of_path(rel) == layout.OLD for rel in self.unpatched_paths.values()))
+        return layout.OLD if old else layout.NEW
 
     def path(self, *parts):
         return os.path.join(self.root, *parts)
+
+    @property
+    def namespace(self):
+        """The Rocq namespace of this release's theories: release.yaml's `namespace`, else names.NAMESPACE_DEFAULT."""
+        return names.release_names(self.release)[0]
+
+    @property
+    def opam_stem(self):
+        """The stem of this release's opam packages, rocq-<stem>-<project>: release.yaml's `opam_stem`, else
+        names.OPAM_STEM_DEFAULT."""
+        return names.release_names(self.release)[1]
 
     def err(self, where, msg):
         self.errors.append("%s: %s" % (where, msg))
@@ -77,15 +113,23 @@ class Tree:
 
 
 class Project:
-    def __init__(self, tree, name, data):
-        self.tree, self.name, self.data = tree, name, data
+    def __init__(self, tree, name, data, notes=None):
+        self.tree, self.name, self.data, self.notes = tree, name, data, notes
         self.harnesses = {}
-        notes = tree.path("notes", name + ".md")
-        self.notes = read(notes).strip() if os.path.isfile(notes) else None
 
     @property
     def dir(self):
         return os.path.join("projects", self.name)
+
+    def patch_path(self, name):
+        """Where the public patch a patches entry names (its `file`, a bare file name) lies: in the project's patches
+        folder, patches/<p>/ in the old layout and projects/<p>/patches/ in the per-project one (layout.patches_dir):
+        the old one when the file is there, else the one of the tree's layout.  So `oft port-layout` moves the file
+        and leaves project.yaml, and every key, as it was."""
+        old = "%s/%s" % (layout.patches_dir(self.name, layout.OLD), name)
+        if os.path.lexists(self.tree.path(old)):
+            return old
+        return "%s/%s" % (layout.patches_dir(self.name, self.tree.layout), name)
 
     def entries(self):
         return self.data.get("harnesses") or []
@@ -126,7 +170,22 @@ class Harness:
     def unpatched_elf_path(self, build):
         """Where `oft fetch --findings` puts the unpatched binary of this build, which the findings run on."""
         rec = self.tree.unpatched[self.project.name]["harnesses"][self.name][build]
-        return os.path.join("findings", self.project.name, "bin", self.name, rec["file"])
+        return os.path.join(layout.unpatched_bin_dir(self.project.name), self.name, rec["file"])
+
+    def symbol_facts(self):
+        """[(build, its harness.yaml record, path)] of each build harness.yaml publishes that has a symbol fact beside
+        harness.yaml (layout.symbol_fact; a symbolic link counts, which symbols.load refuses): the facts that
+        symbols(), rules.symbol_facts and lint's contract-literals and schema rules read, each with its own refusals."""
+        rels = ((b, rec, layout.symbol_fact(self.project.name, self.name, b)) for b, rec in self.builds())
+        return [(b, rec, rel) for b, rec, rel in rels if os.path.lexists(self.tree.path(rel))]
+
+    def symbols(self):
+        """{build: (stripped sha256, [symbols.Sym])} of each of symbol_facts; symbols.load raises ValueError for a fact
+        it cannot read, and BoundedFileError for one that is a symbolic link, a special file or over its cap, which it
+        does not read.  symbols is imported here, not with this module: no check reads a symbol fact, and symbols.py is
+        not the checker (keys.NOT_THE_CHECKER), so `oft check`, which loads the facts, must never open it."""
+        from . import symbols
+        return {b: symbols.load(self.tree.path(rel)) for b, _rec, rel in self.symbol_facts()}
 
     def distribution_body(self):
         """The definitions of Distribution.v, read with no newline translation: a carriage return in a string literal
@@ -176,7 +235,7 @@ class CounterexampleDir:
 class FindingDir:
     def __init__(self, path, data):
         self.path, self.data = path, data
-        _, self.project, self.harness, self.slug = path.split("/")
+        _, self.project, self.harness, _, self.slug = layout.canonical(path).split("/")
 
     @property
     def unit(self):
@@ -217,10 +276,26 @@ def sha256_file(path):
     return h.hexdigest()
 
 
-def code_sha256(path):
-    """SHA-256 of a Rocq file's code (rocq.code): its comments and layout are not hashed.  Read with no newline
-    translation, so a carriage return in a string literal stays in the code."""
-    return hashlib.sha256(rocq.code(read_raw(path)).encode()).hexdigest()
+def read_release_names(root):
+    """(namespace, opam stem) of the tree at root, read from its release.yaml alone, by Tree.namespace's and
+    Tree.opam_stem's rule: names.release_names, the defaults when the file is absent or names neither."""
+    path = os.path.join(root, "release.yaml")
+    return names.release_names(yamlio.load_file(path) if os.path.isfile(path) else None)
+
+
+def in_fingerprint_namespace(text, namespace):
+    """`text` with the release's Rocq namespace read as FINGERPRINT_NAMESPACE wherever it starts a dotted path
+    (`<namespace>.` after no identifier character or dot), and nowhere else."""
+    if namespace == FINGERPRINT_NAMESPACE:
+        return text
+    return re.sub(r"(?<![A-Za-z0-9_'.])%s(?=\.)" % re.escape(namespace), FINGERPRINT_NAMESPACE, text)
+
+
+def code_sha256(path, namespace):
+    """SHA-256 of a theory's code (rocq.code): its comments and layout are not hashed.  Read with no newline
+    translation, so a carriage return in a string literal stays in the code, and with the release's namespace read as
+    FINGERPRINT_NAMESPACE (in_fingerprint_namespace), so renaming the namespace moves no fingerprint."""
+    return hashlib.sha256(rocq.code(in_fingerprint_namespace(read_raw(path), namespace)).encode()).hexdigest()
 
 
 def _parse(item):
@@ -292,21 +367,22 @@ def load(root, record=False, jobs=None):
     tree = Tree(root)
     tree.record = record
     pdir = tree.path("projects")
-    layout = []   # (project, its harnesses with a harness.yaml), or (project, None) when it has no project.yaml
+    found = []   # (project, its harnesses with a harness.yaml), or (project, None) when it has no project.yaml
     for name in sorted(os.listdir(pdir)) if os.path.isdir(pdir) else []:
         if not os.path.isdir(os.path.join(pdir, name)):
             continue
         if not os.path.isfile(os.path.join(pdir, name, "project.yaml")):
-            layout.append((name, None))
+            found.append((name, None))
             continue
-        layout.append((name, [h for h in sorted(os.listdir(os.path.join(pdir, name)))
-                              if h != "bin" and os.path.isfile(os.path.join(pdir, name, h, "harness.yaml"))]))
+        found.append((name, [h for h in sorted(os.listdir(os.path.join(pdir, name)))
+                             if h != "bin" and os.path.isfile(os.path.join(pdir, name, h, "harness.yaml"))]))
     items = [("release.yaml", "release")] if os.path.isfile(tree.path("release.yaml")) else []
-    for name, hs in layout:
+    for name, hs in found:
         if hs is not None:
             items.append((os.path.join("projects", name, "project.yaml"), "project"))
             items += [(os.path.join("projects", name, h, "harness.yaml"), "harness") for h in hs]
-    records = _record_paths(tree)
+    units = _scan_units(tree)
+    records = _record_paths(tree, units)
     items += [(rel, "record") for rel in records]
     parsed = dict(zip((rel for rel, _ in items), _parse_all([(tree.path(rel), kind) for rel, kind in items], jobs)))
     # assembled in the order the files were always read, so the errors and the objects are those of a serial load
@@ -314,7 +390,7 @@ def load(root, record=False, jobs=None):
         tree.release = _yaml(tree, "release.yaml", "release", parsed["release.yaml"])
     else:
         tree.err("release.yaml", "missing")
-    for name, hs in layout:
+    for name, hs in found:
         if hs is None:
             tree.err(os.path.join("projects", name), "a project directory without project.yaml")
             continue
@@ -322,7 +398,8 @@ def load(root, record=False, jobs=None):
         data = _yaml(tree, rel, "project", parsed[rel])
         if data is None:
             continue
-        proj = Project(tree, name, data)
+        notes = tree.path("notes", name + ".md")
+        proj = Project(tree, name, data, read(notes).strip() if os.path.isfile(notes) else None)
         tree.projects[name] = proj
         for key in ((data.get("budgets") or {}).get("agrees") or {}):
             try:                    # once here; the statements the pair reaches skip it (shapes.PairError)
@@ -339,9 +416,9 @@ def load(root, record=False, jobs=None):
             for sname, sdata in (hdata.get("statements") or {}).items():
                 if isinstance(sdata, dict):
                     har.statements[sname] = Statement(har, sname, sdata)
-    _load_contrib(tree)
+    _load_contrib(tree, units)
     for rel in records:
-        key = tuple(rel.split(os.sep)[1:3])
+        key = tuple(layout.unit_of(rel).split("/"))
         data, problems = parsed[rel]
         if problems is None:
             # it cites no recipe: a port-built project's record need not, and every other one must
@@ -355,35 +432,233 @@ def load(root, record=False, jobs=None):
                 tree.records[key] = rec["asset"]
     if os.path.isfile(tree.path("approvals.yaml")):
         tree.approvals = _yaml(tree, "approvals.yaml", "approvals")
-    _load_findings(tree)
+    _load_findings(tree, units)
     _derive(tree)
     return tree
 
 
-# Directories beside the statement directories of proofs/<p>/<h>/: the harness's proof library and its build record.
+# The version of the file in which `oft check --facts-to` writes one unit's facts and `--facts-from` reads them
+# (unit_facts, load_unit).  Raised when what the file holds changes.  2: the release's names (OSSV-162).
+UNIT_FACTS_VERSION = 2
+# The groups of a unit's files that its facts come from, beside project.yaml and harness.yaml (which every part reads),
+# and the parts of `oft check` that read each: the unit's proofs folder the statements and the proofs (one part of a
+# key, keys.py's build), its counterexamples folder the counterexamples, and its findings folder with its project's
+# unpatched.yaml the findings.  Each in the layout the unit is in (layout.py).
+UNIT_GROUPS = {"proofs": ("statements", "proofs"), "counterexamples": ("counterexamples",), "findings": ("findings",)}
+
+
+class UnitFactsError(ValueError):
+    """A unit's facts that load_unit cannot use for the tree at hand."""
+
+
+def _unit_dirs(tree, p, h):
+    """{group of UNIT_GROUPS: the directories of unit p/h that load reads as its proofs, counterexamples or findings
+    (_walk_units)}, in the layout tree.unit_layout gives the unit: each directory of its proofs folder but lib/ and
+    provenance/, of its counterexamples folder and of its findings folder."""
+    lay = tree.unit_layout("%s/%s" % (p, h))
+    out = {}
+    for group in UNIT_GROUPS:
+        folder = _KIND_DIR[group](p, h, lay)
+        d = tree.path(folder)
+        out[group] = [os.path.join(folder, s) for s in (sorted(os.listdir(d)) if os.path.isdir(d) else [])
+                      if os.path.isdir(os.path.join(d, s)) and not (group == "proofs" and s in PROOF_HARNESS_DIRS)]
+    return out
+
+
+def unit_facts(tree, h):
+    """What `oft check` reads of the facts of harness h, of a tree loaded whole that the rules passed, as data for
+    yamlio: its project's data and its own, each statement's data with its proof and its counterexample (one that
+    another statement's run gives too), the unit's findings and its project's unpatched.yaml, and the release's names
+    (Tree.namespace, Tree.opam_stem), which name the unit's theories and packages.  With them, for each group of the
+    unit's files (UNIT_GROUPS, and "unit" for project.yaml and harness.yaml), the SHA-256 of each file these came from
+    and the list of the unit's directories (_unit_dirs), which load_unit compares.  Nothing of another unit and nothing
+    else of the whole tree: those only decide whether the rules pass, and they did."""
+    proj = h.project
+    unit = "%s/%s" % (proj.name, h.name)
+    sources = {"unit": [os.path.join(proj.dir, "project.yaml"), os.path.join(h.dir, "harness.yaml")],
+               "proofs": [], "counterexamples": [], "findings": []}
+    statements = []
+    for st in h.statements.values():
+        pd, cx = st.proof, st.counterexample
+        statements.append({"name": st.name, "data": st.data,
+                           "proof": None if pd is None else {"path": pd.path, "data": pd.data, "refutes": pd.refutes},
+                           "counterexample": None if cx is None else {"path": cx.path, "data": cx.data}})
+        sources["proofs"] += [os.path.join(pd.path, "proof.yaml")] if pd else []
+        sources["counterexamples"] += [os.path.join(cx.path, "expect.yaml")] if cx else []
+    findings = sorted((f for f in tree.findings.values() if f.unit == unit), key=lambda f: f.path)
+    sources["findings"] += [os.path.join(f.path, "finding.yaml") for f in findings]
+    unpatched = tree.unpatched.get(proj.name)
+    if unpatched is not None:
+        sources["findings"].append(tree.unpatched_paths.get(proj.name)
+                                   or layout.unpatched_path(proj.name, tree.unit_layout(unit)))
+    return {"version": UNIT_FACTS_VERSION, "unit": unit,
+            "names": {"namespace": tree.namespace, "opam_stem": tree.opam_stem},
+            "project": {"name": proj.name, "data": proj.data},
+            "harness": {"name": h.name, "data": h.data},
+            "statements": statements,
+            "findings": [{"path": f.path, "data": f.data} for f in findings],
+            "unpatched": unpatched,
+            "sha256": {g: {rel: sha256_file(tree.path(rel)) for rel in sorted(set(rels))}
+                       for g, rels in sources.items()},
+            "dirs": _unit_dirs(tree, proj.name, h.name)}
+
+
+def _valid(kind, value, where):
+    """value, the data of a file of this kind (schema.py), or UnitFactsError."""
+    problems = schema.validate(kind, value)
+    if problems:
+        raise UnitFactsError("%s does not have the form of %s facts: %s" % (where, kind, "; ".join(problems)))
+    return value
+
+
+def load_unit(root, data, unit, parts):
+    """The Harness of unit (<project>/<harness>) from data, what unit_facts wrote, in a Tree at root that holds this
+    unit alone, for a check of parts (statements, proofs, counterexamples, findings).  Reads no fact from root.  It
+    compares the unit's files at root with the ones the facts came from, project.yaml and harness.yaml and each group
+    of UNIT_GROUPS that parts read: the SHA-256 of each file the facts were read from, and the list of the unit's
+    directories, so that no proof, counterexample or finding the facts do not have passes unexamined.  The unit's
+    layout is root's (layout.of_tree: a view holds this unit's files alone), and the release's names are the facts'
+    (Tree.release holds them alone).  Raises UnitFactsError when data is of another version or of another unit, when
+    its data does not have the form of the facts (schema.py), when harness.yaml's rocq is not the name the facts'
+    namespace gives the unit, or when one of those files or lists differs at root.
+
+    It compares nothing else.  The rules read more, in the unit (source/, Distribution.v, the build record under
+    provenance/) and in the rest of the tree (theories/Shapes.v, which every fingerprint hashes), so it cannot show
+    that the facts and the view come from one tree.  So the facts must be written from the checkout the view is
+    made from, and must be read-only to the check."""
+    version = data.get("version") if isinstance(data, dict) else None
+    if version != UNIT_FACTS_VERSION:
+        raise UnitFactsError("format version %s, not %d (write it again with this oft's --facts-to)"
+                             % (version, UNIT_FACTS_VERSION))
+    if data["unit"] != unit:
+        raise UnitFactsError("the facts of %s, not of %s" % (data["unit"], unit))
+    p, _, hn = unit.partition("/")
+    tree = Tree(root)
+    tree.record = False
+    tree.unit_layouts[unit] = layout.of_tree(root)
+    # its proof library, as load keeps it (Tree.proof_libs), which the check builds and its proofs load
+    lib = layout.proof_lib_dir(p, hn, tree.unit_layouts[unit])
+    if os.path.isdir(tree.path(lib)):
+        tree.proof_libs[unit] = lib
+    groups = ["unit"] + [g for g, readers in UNIT_GROUPS.items() if set(readers) & set(parts)]
+    dirs = _unit_dirs(tree, p, hn)
+    for g in groups:
+        for rel, digest in data["sha256"][g].items():
+            if not os.path.isfile(tree.path(rel)):
+                raise UnitFactsError("%s, which the facts were written from, is missing at %s (write them again with "
+                                     "--facts-to, from the checkout the view is made from)" % (rel, tree.root))
+            if sha256_file(tree.path(rel)) != digest:
+                raise UnitFactsError("%s differs from the file the facts were written from (write them again with "
+                                     "--facts-to, from the checkout the view is made from)" % rel)
+        if g in dirs and set(dirs[g]) != set(data["dirs"][g]):
+            extra, gone = sorted(set(dirs[g]) - set(data["dirs"][g])), sorted(set(data["dirs"][g]) - set(dirs[g]))
+            raise UnitFactsError("the unit's %s directories at %s differ from those the facts were written from: %s "
+                                 "(write them again with --facts-to, from the checkout the view is made from)"
+                                 % (g, tree.root, "; ".join((["here only: " + ", ".join(extra)] if extra else []) +
+                                                            (["there only: " + ", ".join(gone)] if gone else []))))
+    proj = Project(tree, data["project"]["name"], _valid("project", data["project"]["data"], "project"))
+    tree.projects[proj.name] = proj
+    h = Harness(proj, data["harness"]["name"], _valid("harness", data["harness"]["data"], "harness"))
+    proj.harnesses[h.name] = h
+    release_names = data["names"]
+    if not (isinstance(release_names, dict) and set(release_names) == {"namespace", "opam_stem"}
+            and all(isinstance(v, str) and v for v in release_names.values())):
+        raise UnitFactsError("names: not a namespace and an opam stem (write them again with this oft's --facts-to)")
+    tree.release = dict(release_names)
+    if h.data["rocq"] != names.rocq_harness(tree.namespace, p, hn):
+        raise UnitFactsError("harness.yaml's rocq %s is not %s, the name the namespace %s gives %s"
+                             % (h.data["rocq"], names.rocq_harness(tree.namespace, p, hn), tree.namespace, unit))
+    for s in data["statements"]:
+        if s["data"] != (h.data.get("statements") or {}).get(s["name"]):
+            raise UnitFactsError("statement %s: its data is not the one of harness.yaml" % s["name"])
+        st = Statement(h, s["name"], s["data"])
+        if s["proof"] is not None:
+            if not isinstance(s["proof"]["refutes"], bool):
+                raise UnitFactsError("statement %s: refutes is not true or false" % st.name)
+            st.proof = ProofDir(s["proof"]["path"], _valid("proof", s["proof"]["data"], s["proof"]["path"]),
+                                s["proof"]["refutes"])
+        if s["counterexample"] is not None:
+            cx = s["counterexample"]
+            st.counterexample = CounterexampleDir(cx["path"], _valid("counterexample", cx["data"], cx["path"]))
+        h.statements[st.name] = st
+    for f in data["findings"]:
+        fd = FindingDir(f["path"], _valid("finding", f["data"], f["path"]))
+        tree.findings["%s/%s/%s" % (fd.project, fd.harness, fd.slug)] = fd
+    if data["unpatched"] is not None:
+        tree.unpatched[proj.name] = _valid("unpatched", data["unpatched"], "unpatched")
+        tree.unpatched_paths[proj.name] = layout.unpatched_path(proj.name, tree.unit_layout(unit))
+    return h
+
+
+# Directories beside the statement directories of a fuzz target's proofs folder: its proof library and its build record.
 PROOF_HARNESS_DIRS = ("lib", "provenance")
+# The folder of each kind of a fuzz target's change, in a given layout.
+_KIND_DIR = {"proofs": layout.proofs_dir, "counterexamples": layout.counterexamples_dir,
+             "findings": layout.findings_dir}
 
 
-def _walk3(tree, top):
-    base = tree.path(top)
-    if not os.path.isdir(base):
-        return
-    for p in sorted(os.listdir(base)):
-        if top == "proofs" and p == "lib":
-            continue  # proofs/lib/: the library shared by every proof
-        for h in sorted(os.listdir(os.path.join(base, p))) if os.path.isdir(os.path.join(base, p)) else []:
-            if top == "findings" and h == "bin":
-                continue  # findings/<p>/bin/: the unpatched binaries `oft fetch --findings` unpacks
-            hd = os.path.join(base, p, h)
-            for s in sorted(os.listdir(hd)) if os.path.isdir(hd) else []:
-                if top == "proofs" and s in PROOF_HARNESS_DIRS:
+def _entries(tree, rel):
+    """The sorted names in the folder rel, or [] when it is not a folder."""
+    p = tree.path(rel)
+    return sorted(os.listdir(p)) if os.path.isdir(p) else []
+
+
+def _scan_units(tree):
+    """{(project, harness): (layout, {kind})} of every fuzz target with a proofs, counterexamples or findings folder
+    (each kind one of layout.CHANGE_NAMES), and the layout they are in.  An empty folder does not count, nor does a
+    per-project proofs or counterexamples folder that holds only its generated dune file.  A fuzz target with such
+    folders in both layouts is an error and is left out: none of its proofs, counterexamples, findings or build record
+    is loaded."""
+    kinds = {}   # (project, harness) -> {kind: {layout}}
+    for kind in layout.CHANGE_NAMES:
+        for p in _entries(tree, kind):
+            if "%s/%s" % (kind, p) in layout.NO_PLACE:
+                continue   # proofs/lib/, proofs/lib-lean/: no fuzz target's
+            for h in _entries(tree, os.path.join(kind, p)):
+                if h in layout.NOT_A_HARNESS:
+                    # no fuzz target's (lint refuses their files); findings/<p>/bin/ is what `oft fetch --findings`
+                    # unpacked before the per-project layout
                     continue
-                if os.path.isdir(os.path.join(hd, s)):
-                    yield p, h, s, os.path.join(top, p, h, s)
+                if _entries(tree, os.path.join(kind, p, h)):
+                    kinds.setdefault((p, h), {}).setdefault(kind, set()).add(layout.OLD)
+    for p in _entries(tree, "projects"):
+        for h in [h for h in _entries(tree, os.path.join("projects", p)) if h not in layout.NOT_A_HARNESS]:
+            for kind in layout.CHANGE_NAMES:
+                held = _entries(tree, os.path.join("projects", p, h, kind))
+                if [e for e in held if kind == "findings" or e != "dune"]:
+                    kinds.setdefault((p, h), {}).setdefault(kind, set()).add(layout.NEW)
+    units = {}
+    for (p, h), by_kind in sorted(kinds.items()):
+        unit = "%s/%s" % (p, h)
+        layouts = set().union(*by_kind.values())
+        if len(layouts) > 1:
+            old = next(_KIND_DIR[k](p, h, layout.OLD) for k in layout.CHANGE_NAMES if layout.OLD in by_kind.get(k, ()))
+            new = next(_KIND_DIR[k](p, h, layout.NEW) for k in layout.CHANGE_NAMES if layout.NEW in by_kind.get(k, ()))
+            tree.err(new, "%s is in both layouts (%s and %s): run ./oft port-layout" % (unit, old, new))
+            continue
+        (lay,) = layouts
+        units[(p, h)] = (lay, set(by_kind))
+        tree.unit_layouts[unit] = lay
+        tree.unit_kinds[unit] = set(by_kind)
+    return units
 
 
-def _load_contrib(tree):
-    for p, h, s, rel in _walk3(tree, "proofs"):
+def _walk_units(tree, units, kind):
+    """(project, harness, name, rel) of every directory in each fuzz target's `kind` folder, in the layout it is in:
+    its statement proofs (not its proof library or build record), counterexamples or findings."""
+    for (p, h), (lay, kinds) in sorted(units.items()):
+        if kind not in kinds:
+            continue
+        base = _KIND_DIR[kind](p, h, lay)
+        for s in _entries(tree, base):
+            if kind == "proofs" and s in PROOF_HARNESS_DIRS:
+                continue
+            if os.path.isdir(tree.path(base, s)):
+                yield p, h, s, os.path.join(base, s)
+
+
+def _load_contrib(tree, units):
+    for p, h, s, rel in _walk_units(tree, units, "proofs"):
         y = os.path.join(rel, "proof.yaml")
         if not os.path.isfile(tree.path(y)):
             tree.err(rel, "a proof directory without proof.yaml")
@@ -402,7 +677,7 @@ def _load_contrib(tree):
         if not os.path.isfile(tree.path(rel, main)):
             tree.err(rel, "missing %s" % main)
         tree.proofs[sid] = ProofDir(rel, data, refutes)
-    for p, h, s, rel in _walk3(tree, "counterexamples"):
+    for p, h, s, rel in _walk_units(tree, units, "counterexamples"):
         y = os.path.join(rel, "expect.yaml")
         if not os.path.isfile(tree.path(y)):
             tree.err(rel, "a counterexample directory without expect.yaml")
@@ -417,22 +692,21 @@ def _load_contrib(tree):
             if not os.path.isfile(tree.path(rel, f)):
                 tree.err(rel, "missing " + f)
         tree.counterexamples[sid] = CounterexampleDir(rel, data)
-    base = tree.path("proofs")
-    for p in sorted(os.listdir(base)) if os.path.isdir(base) else []:
-        for h in sorted(os.listdir(os.path.join(base, p))) if p != "lib" and os.path.isdir(os.path.join(base, p)) else []:
-            if os.path.isdir(os.path.join(base, p, h, "lib")):
-                tree.proof_libs.append("%s/%s" % (p, h))
+    for (p, h), (lay, kinds) in sorted(units.items()):
+        lib = layout.proof_lib_dir(p, h, lay)
+        if "proofs" in kinds and os.path.isdir(tree.path(lib)):
+            tree.proof_libs["%s/%s" % (p, h)] = lib
 
 
-def _record_paths(tree):
-    """proofs/<p>/<h>/provenance/PROVENANCE.yaml, the build record, of every harness that has one."""
-    base, out = tree.path("proofs"), []
-    for p in sorted(os.listdir(base)) if os.path.isdir(base) else []:
-        pd = os.path.join(base, p)
-        for h in sorted(os.listdir(pd)) if p != "lib" and os.path.isdir(pd) else []:
-            rel = os.path.join("proofs", p, h, "provenance", "PROVENANCE.yaml")
-            if os.path.isfile(tree.path(rel)):
-                out.append(rel)
+def _record_paths(tree, units):
+    """The build record, PROVENANCE.yaml in provenance/ of its proofs folder, of every fuzz target that has one; each
+    is also kept in tree.records_at."""
+    out = []
+    for (p, h), (lay, kinds) in sorted(units.items()):
+        rel = layout.record_path(p, h, lay)
+        if "proofs" in kinds and os.path.isfile(tree.path(rel)):
+            tree.records_at[(p, h)] = rel
+            out.append(rel)
     return out
 
 
@@ -454,6 +728,30 @@ def bin_recipe(tree, proj):
 
 FINDING_FILE_CAP = 64 << 10
 FINDING_INPUT_CAP = 1 << 20
+# The size cap of a file of the tree: the first entry of CAPS whose pattern matches its whole path, else MAX_BYTES.
+# The patterns are regular expressions, not paths.py's globs: the checker runs rules.check, which reads files within
+# these caps, and it never reads paths.py (keys.NOT_THE_CHECKER).  Each is the glob it replaces, part for part: a
+# glob's `*` is `[^/]*`, and its final `/**`, which matches no part as well, is `(?:/.*)?`, so a file named like a cap's
+# directory has that cap (test_lint compares the two tables).
+MAX_BYTES = 5 << 20
+CAPS = [(re.compile(pattern, re.DOTALL), cap) for pattern, cap in (
+    (r"index/[^/]*\.tsv", 64 << 20),
+    (r"projects/[^/]*/[^/]*/source(?:/.*)?", 256 << 10),
+    (r"counterexamples(?:/.*)?", 64 << 10),
+    (r"projects/[^/]*/[^/]*/counterexamples(?:/.*)?", 64 << 10),
+    (r"findings/[^/]*/[^/]*/[^/]*/(?:input|control)\.bin", FINDING_INPUT_CAP),
+    (r"projects/[^/]*/[^/]*/findings/[^/]*/(?:input|control)\.bin", FINDING_INPUT_CAP),
+    (r"findings(?:/.*)?", FINDING_FILE_CAP),
+    (r"projects/[^/]*/[^/]*/findings(?:/.*)?", FINDING_FILE_CAP),
+    (r"projects/[^/]*/unpatched\.yaml", FINDING_FILE_CAP),
+    (r"proofs/[^/]*/[^/]*/[^/]*/classifier(?:/.*)?", 1 << 20),
+    (r"projects/[^/]*/[^/]*/proofs/[^/]*/classifier(?:/.*)?", 1 << 20),
+)]
+
+
+def file_cap(rel):
+    """The size cap of the file at rel."""
+    return next((cap for pattern, cap in CAPS if pattern.fullmatch(rel)), MAX_BYTES)
 
 
 class BoundedFileError(Exception):
@@ -612,10 +910,10 @@ def _held_statements(tree):
     (oft fetch refuses a member the facts do not list) and a project with no build left cannot be available, or would
     leave a harness that publishes a build only withheld statements (rules.py refuses a published build no statement
     of Statements.v covers, unless every statement is withdrawn); when the project has a proof library
-    (proofs/<p>/<h>/lib/, which ships unchecked); when a harness's build record names a held statement in its
-    proofs.written_here (that record ships whole, so the name would stay in the release); and when a build it
-    publishes is not the one its findings run on (findings/<p>/unpatched.yaml), since that build may carry a fix that
-    a reader could compare with the source."""
+    (lib/ in a fuzz target's proofs folder, which ships unchecked); when a harness's build record names a held
+    statement in its proofs.written_here (that record ships whole, so the name would stay in the release); and when a
+    build it publishes is not the one its findings run on (the project's unpatched.yaml), since that build may carry
+    a fix that a reader could compare with the source."""
     out = {}
     for p, fs in holding(tree).items():
         proj = tree.projects.get(p)
@@ -638,7 +936,7 @@ def _held_statements(tree):
                                 if s.kind in ("bound", "decidability") and s.data["builds"] == st.data["builds"])
         if any(_emptied(n, h, held) for n, h in proj.harnesses.items()):
             continue
-        # a proofs/<p>/<h>/lib/ ships unchecked and may hold anything, a held statement's proof or the finding's
+        # a fuzz target's proof library ships unchecked and may hold anything, a held statement's proof or the finding's
         # evidence among them: a project with one is held whole
         if any(lib.split("/")[0] == p for lib in tree.proof_libs):
             continue
@@ -709,7 +1007,7 @@ def cut(tree, shipped, held):
     one OSS-Fuzz does not have is gone, since a held page for a project never released would tell the reader that a
     finding exists.  A held statement leaves its harness with its counterexample.  shipped: the statement ids whose
     proofs the release carries; every other proof goes, and a proof library with no proof left of its fuzz target goes
-    with it.  findings/ and approvals.yaml never ship, so the cut has neither, and each statement's status is derived
+    with it.  Findings and approvals.yaml never ship, so the cut has neither, and each statement's status is derived
     again from what is left."""
     whole, ids, pages = held.whole, held.ids, []
     for n in sorted(whole):
@@ -725,26 +1023,44 @@ def cut(tree, shipped, held):
         del h.statements[name]
         h.data = dict(h.data, statements={k: v for k, v in h.data["statements"].items() if k != name})
     tree.proofs = {k: v for k, v in tree.proofs.items() if k in shipped}
-    tree.proof_libs = [k for k in tree.proof_libs if any(s.startswith(k + "/") for s in shipped)]
+    tree.proof_libs = {k: v for k, v in tree.proof_libs.items() if any(s.startswith(k + "/") for s in shipped)}
     # a build record goes with its fuzz target's proof directory: it ships only beside a proof the release carries
     tree.records = {(p, h): v for (p, h), v in tree.records.items()
                     if p not in whole and any(s.startswith("%s/%s/" % (p, h)) for s in shipped)}
     tree.record_proofs = {(p, h): v for (p, h), v in tree.record_proofs.items()
                           if p not in whole and any(s.startswith("%s/%s/" % (p, h)) for s in shipped)}
+    tree.records_at = {(p, h): v for (p, h), v in tree.records_at.items()
+                       if p not in whole and any(s.startswith("%s/%s/" % (p, h)) for s in shipped)}
     tree.counterexamples = {k: v for k, v in tree.counterexamples.items()
                             if k.split("/")[0] not in whole and k not in ids}
     tree.findings, tree.unpatched, tree.finding_series, tree.approvals = {}, {}, {}, None
+    tree.unpatched_paths = {}
+    # a fuzz target keeps a proofs folder while the cut keeps a proof, its library or its build record in it, and a
+    # counterexamples folder while it keeps a counterexample; findings never ship
+    kept = {"proofs": ({s.rsplit("/", 1)[0] for s in tree.proofs} | set(tree.proof_libs)
+                       | {"%s/%s" % k for k in tree.records_at}),
+            "counterexamples": {s.rsplit("/", 1)[0] for s in tree.counterexamples}}
+    tree.unit_kinds = {u: {k for k in kinds if u in kept.get(k, ())} for u, kinds in tree.unit_kinds.items()}
     _derive(tree)
     return pages
 
 
-def _load_findings(tree):
-    """findings/<p>/unpatched.yaml and each findings/<p>/<h>/<slug>/: the record, its files, and what it runs on."""
-    base = tree.path("findings")
-    for p in sorted(os.listdir(base)) if os.path.isdir(base) else []:
-        rel = os.path.join("findings", p, "unpatched.yaml")
-        if not os.path.lexists(tree.path(rel)):
+def _load_findings(tree, units):
+    """Each project's unpatched.yaml and each fuzz target's findings (its series and each <slug>/ of its findings
+    folder), in either layout: the record, its files, and what it runs on.  A project whose unpatched.yaml is in both
+    layouts is an error, and neither is loaded."""
+    at = {}
+    for top, lay in (("findings", layout.OLD), ("projects", layout.NEW)):
+        for p in _entries(tree, top):
+            if os.path.lexists(tree.path(layout.unpatched_path(p, lay))):
+                at.setdefault(p, []).append(layout.unpatched_path(p, lay))
+    for p in sorted(at):
+        if len(at[p]) > 1:
+            old, new = at[p]
+            tree.err(new, "%s is in both layouts (%s and %s): run ./oft port-layout" % (p, old, new))
             continue
+        (rel,) = at[p]
+        tree.unpatched_paths[p] = rel
         data = _finding_yaml(tree, rel, "unpatched")
         if data is None:
             continue
@@ -764,22 +1080,18 @@ def _load_findings(tree):
             for b, rec in builds.items():
                 if rec["file"] != names.build_file(h, b):
                     tree.err(rel, "harnesses.%s.%s.file must be %s" % (h, b, names.build_file(h, b)))
-    for p in sorted(os.listdir(base)) if os.path.isdir(base) else []:
-        project_dir = os.path.join(base, p)
-        for h in sorted(os.listdir(project_dir)) if os.path.isdir(project_dir) else []:
-            if h == "bin":
-                continue
-            series = os.path.join("findings", p, h, "series")
-            if not os.path.lexists(tree.path(series)):
-                continue
-            raw = _finding_bytes(tree, series)
-            if raw is None:
-                continue
-            try:
-                tree.finding_series["%s/%s" % (p, h)] = raw.decode()
-            except UnicodeDecodeError as e:
-                tree.err(series, str(e))
-    for p, h, s, rel in _walk3(tree, "findings"):
+    for (p, h), (lay, kinds) in sorted(units.items()):
+        series = layout.series_path(p, h, lay)
+        if "findings" not in kinds or not os.path.lexists(tree.path(series)):
+            continue
+        raw = _finding_bytes(tree, series)
+        if raw is None:
+            continue
+        try:
+            tree.finding_series["%s/%s" % (p, h)] = raw.decode()
+        except UnicodeDecodeError as e:
+            tree.err(series, str(e))
+    for p, h, s, rel in _walk_units(tree, units, "findings"):
         y = os.path.join(rel, "finding.yaml")
         if not os.path.lexists(tree.path(y)):
             tree.err(rel, "a finding directory without finding.yaml")
@@ -851,11 +1163,12 @@ def _finding_record(tree, f, y):
                         tree.err(y, "%s has no run of build %s, which %s names" % (which, b, sname))
     unpatched = tree.unpatched.get(f.project)
     if unpatched is None:
-        tree.err(y, "findings/%s/unpatched.yaml is missing: it pins the binaries this finding runs on" % f.project)
+        where = tree.unpatched_paths.get(f.project) or layout.unpatched_path(f.project, tree.unit_layout(f.unit))
+        tree.err(y, "%s is missing: it pins the binaries this finding runs on" % where)
         return
     for b in sorted(builds, key=schema.BUILDS.index):
         if b not in unpatched["harnesses"].get(f.harness, {}):
-            tree.err(y, "findings/%s/unpatched.yaml has no %s build of %s" % (f.project, b, f.harness))
+            tree.err(y, "%s has no %s build of %s" % (tree.unpatched_paths[f.project], b, f.harness))
 
 
 def _asset_names(tree):
@@ -863,7 +1176,7 @@ def _asset_names(tree):
     asset directory and `oft fetch --source` keep assets by file name alone."""
     pins = [(os.path.join(p.dir, "project.yaml"), a["file"]) for p in tree.projects.values()
             for a in (p.data.get("assets") or {}).values()]
-    pins += [(os.path.join("findings", p, "unpatched.yaml"), u["asset"]["file"]) for p, u in tree.unpatched.items()]
+    pins += [(tree.unpatched_paths[p], u["asset"]["file"]) for p, u in tree.unpatched.items()]
     seen = {}
     for where, name in pins:
         if name in seen:
@@ -891,7 +1204,7 @@ def _derive(tree):
         st.counterexample = cx
     digests = {}
     for f in THEORIES:
-        digests[f] = code_sha256(tree.path(f)) if os.path.isfile(tree.path(f)) else None
+        digests[f] = code_sha256(tree.path(f), tree.namespace) if os.path.isfile(tree.path(f)) else None
     lps = ((tree.release or {}).get("semantics") or {}).get("version")
     _refute_agreements(tree)
     for st in by_id.values():

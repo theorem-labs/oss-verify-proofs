@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cgif
 harness: cgif_file_fuzzer
-rocq: OssFuzzTheorems.cgif.cgif_file_fuzzer
+rocq: OSSVerify.cgif.cgif_file_fuzzer
 origin: upstream
 summary: Same config decoding as cgif_fuzzer but writes to /tmp/out.gif via cgif's file path, then unlinks
   it; return codes ignored, file never read back.

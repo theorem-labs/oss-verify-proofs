@@ -1,0 +1,116 @@
+cb-cache: mode=none source=CACHE=none
+cb: kit ows.sh <OWS> sha256 2416d327faf156d6db6796544fb539cd7c02e5e31ad9df216b1485a3cc1550a5; ws-cache <WS_CACHE> sha256 b6f58f7d05e5d75e50620a235b20f48647157b9e54e2f5ac1b83ddcf69fa835f; vm-tool <VM_TOOL> sha256 2ee05685589d592550fde1b928975d160f021e2beecf4ada9b8aca2120fc375c
+cb: pins of libdiginet/fuzz_transport: each file of <VM>:<VM_WS>/projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts f6acfcb0c1b8 (facts of base f6acfcb0c1, BASE.tsv)
+cb: pin libdiginet/fuzz_transport fuzz_transport.asan e89be137db17 PINNED (asan pins e89be137db17 at facts f6acfcb0c1b8)
+cb: pin libdiginet/fuzz_transport fuzz_transport.asan-ubsan 41113a03c82f PINNED (asan-ubsan pins 41113a03c82f at facts f6acfcb0c1b8)
+cb: pin libdiginet/fuzz_transport fuzz_transport.plain bb20ce415827 PINNED (plain pins bb20ce415827 at facts f6acfcb0c1b8)
+cb: pin libdiginet/fuzz_transport fuzz_transport.ubsan af7b86991906 PINNED (ubsan pins af7b86991906 at facts f6acfcb0c1b8)
+cb: pins libdiginet/fuzz_transport at facts f6acfcb0c1b8: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts f6acfcb0c1b8
+cb: sync check: <VM>:<VM_WS>/proofs/libdiginet/fuzz_transport holds <WT>/proofs/libdiginet/fuzz_transport by content (rsync -c --dry-run after the sync: no difference, 1883 ms)
+cb: layout old (the unit's proofs are proofs/libdiginet/fuzz_transport; base f6acfcb0c1b8, facts f6acfcb0c1b8, clone HEAD f9158444652d)
+ows: vo check (before make): 1466 .vo read (base/theories, base/stmts, proofs/libdiginet/fuzz_transport), 32501 Require digests compared with this workspace's .vo, 9693 with the checker image's .vo (45 of its libraries read under <COQLIB>), 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable, 0 more that Require one of them), 0 of them in this build's targets (15 given) and what they Require, 0.5 s
+ows: <CLONE>, 2453 files, jobs 32, targets: proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc0Tbl.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc0.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/StackRawKept.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc1Tbl.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc1.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc2Tbl.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc2.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM3T.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM3.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM5T.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM5.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSF5.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSMxA.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/RtStack.vo proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM1T.vo
+ROCQ DEP VFILES
+Warning: in file proofs/libdiginet/fuzz_transport/lib/B/TransportDriverB.v, library
+         YK09 is required
+         from root OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B and has not been found in the loadpath!
+         [module-not-found,filesystem,default]
+Warning: in file proofs/libdiginet/fuzz_transport/lib/B/TransportDriverB.v, library
+         YA0c is required
+         from root OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B and has not been found in the loadpath!
+         [module-not-found,filesystem,default]
+Warning: in file proofs/libdiginet/fuzz_transport/lib/B/TransportDriverB.v, library
+         YA0e is required
+         from root OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B and has not been found in the loadpath!
+         [module-not-found,filesystem,default]
+Warning: in file proofs/libdiginet/fuzz_transport/lib/B/TransportDriverB.v, library
+         YA01 is required
+         from root OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B and has not been found in the loadpath!
+         [module-not-found,filesystem,default]
+Warning: in file proofs/libdiginet/fuzz_transport/lib/B/TransportDriverB.v, library
+         YA02 is required
+         from root OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B and has not been found in the loadpath!
+         [module-not-found,filesystem,default]
+.Makefile.d (real: 2.43, user: 1.88, sys: 0.55, mem: 82004 ko)
+proofs/libdiginet/fuzz_transport/lib/B/YImgTop.vo (real: 0.42, user: 0.25, sys: 0.16, mem: 284312 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YM04.vo (real: 0.43, user: 0.25, sys: 0.17, mem: 298348 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YImgTop.vo (real: 0.78, user: 0.48, sys: 0.29, mem: 478980 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG0v.vo (real: 0.80, user: 0.54, sys: 0.25, mem: 417820 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG00.vo (real: 0.93, user: 0.67, sys: 0.25, mem: 417056 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YK1h.vo (real: 0.94, user: 0.66, sys: 0.27, mem: 489456 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YK06.vo (real: 1.02, user: 0.75, sys: 0.26, mem: 485880 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YE21.vo (real: 1.39, user: 1.10, sys: 0.28, mem: 488424 ko)
+proofs/libdiginet/fuzz_transport/lib/B/YB1w.vo (real: 1.01, user: 0.75, sys: 0.25, mem: 420284 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YK0j.vo (real: 1.85, user: 1.53, sys: 0.31, mem: 508228 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YK0u.vo (real: 1.95, user: 1.65, sys: 0.30, mem: 505836 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG0f.vo (real: 1.16, user: 0.91, sys: 0.25, mem: 458808 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YE06.vo (real: 2.43, user: 2.09, sys: 0.33, mem: 511468 ko)
+proofs/libdiginet/fuzz_transport/lib/B/YF0l.vo (real: 0.57, user: 0.33, sys: 0.24, mem: 411972 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YK0t.vo (real: 1.21, user: 0.90, sys: 0.30, mem: 492124 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YK08.vo (real: 2.13, user: 1.83, sys: 0.29, mem: 491600 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YP0i.vo (real: 3.34, user: 3.03, sys: 0.31, mem: 535932 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YK19.vo (real: 1.44, user: 1.15, sys: 0.29, mem: 504876 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YE5i.vo (real: 1.51, user: 1.21, sys: 0.29, mem: 504780 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YE07.vo (real: 0.92, user: 0.65, sys: 0.27, mem: 494864 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YK1e.vo (real: 4.66, user: 4.33, sys: 0.32, mem: 536324 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YK1g.vo (real: 1.00, user: 0.73, sys: 0.27, mem: 496628 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YK0g.vo (real: 4.95, user: 4.62, sys: 0.32, mem: 502296 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YE08.vo (real: 1.68, user: 1.37, sys: 0.30, mem: 511084 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YK18.vo (real: 1.26, user: 0.95, sys: 0.31, mem: 518732 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YK04.vo (real: 6.99, user: 6.66, sys: 0.31, mem: 524352 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YK05.vo (real: 0.92, user: 0.64, sys: 0.27, mem: 503672 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YA0i.vo (real: 0.95, user: 0.67, sys: 0.27, mem: 492480 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YA0n.vo (real: 1.08, user: 0.77, sys: 0.30, mem: 531836 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YA0m.vo (real: 2.20, user: 1.87, sys: 0.32, mem: 533176 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YP0j.vo (real: 6.96, user: 6.57, sys: 0.38, mem: 584624 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG0a.vo (real: 9.40, user: 9.11, sys: 0.29, mem: 429872 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YCbn.vo (real: 7.04, user: 6.68, sys: 0.36, mem: 591984 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YA0o.vo (real: 1.46, user: 1.14, sys: 0.31, mem: 540020 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG01.vo (real: 0.91, user: 0.67, sys: 0.23, mem: 420532 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YA0p.vo (real: 1.04, user: 0.74, sys: 0.29, mem: 515436 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YCbm.vo (real: 1.05, user: 0.70, sys: 0.34, mem: 515744 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG04.vo (real: 1.01, user: 0.77, sys: 0.23, mem: 426076 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YA0q.vo (real: 1.48, user: 1.17, sys: 0.31, mem: 552540 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG02.vo (real: 1.08, user: 0.87, sys: 0.21, mem: 429832 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG0n.vo (real: 2.33, user: 1.99, sys: 0.33, mem: 536748 ko)
+proofs/libdiginet/fuzz_transport/lib/B/YF0m.vo (real: 2.53, user: 2.25, sys: 0.27, mem: 509052 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG09.vo (real: 0.50, user: 0.28, sys: 0.22, mem: 387936 ko)
+proofs/libdiginet/fuzz_transport/lib/B/YE20.vo (real: 9.49, user: 9.07, sys: 0.41, mem: 662584 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG0d.vo (real: 2.14, user: 1.83, sys: 0.31, mem: 545872 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG08.vo (real: 1.92, user: 1.62, sys: 0.29, mem: 537308 ko)
+proofs/libdiginet/fuzz_transport/lib/B/YB1v.vo (real: 16.70, user: 16.26, sys: 0.43, mem: 690572 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/StackFreeDef.vo (real: 0.96, user: 0.67, sys: 0.28, mem: 512060 ko)
+proofs/libdiginet/fuzz_transport/lib/Rt/StackMallocRawDef.vo (real: 0.96, user: 0.65, sys: 0.30, mem: 513052 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtStack.vo (real: 0.99, user: 0.67, sys: 0.31, mem: 512136 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/StackFreeRaw.vo (real: 0.94, user: 0.66, sys: 0.27, mem: 512732 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackRawKept.vo (real: 1.04, user: 0.75, sys: 0.28, mem: 513476 ko)
+proofs/libdiginet/fuzz_transport/lib/B/YE34.vo (real: 5.45, user: 5.10, sys: 0.34, mem: 594436 ko)
+proofs/libdiginet/fuzz_transport/lib/B/YB1q.vo (real: 6.31, user: 5.95, sys: 0.35, mem: 605452 ko)
+proofs/libdiginet/fuzz_transport/lib/B/YF0x.vo (real: 3.20, user: 2.83, sys: 0.37, mem: 618260 ko)
+proofs/libdiginet/fuzz_transport/lib/B/YE2y.vo (real: 4.21, user: 3.86, sys: 0.34, mem: 605764 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YCe5.vo (real: 29.36, user: 28.71, sys: 0.54, mem: 815648 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG06.vo (real: 79.51, user: 79.12, sys: 0.39, mem: 681220 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG07.vo (real: 6.79, user: 6.49, sys: 0.30, mem: 468276 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG0u.vo (real: 2.54, user: 2.27, sys: 0.26, mem: 458208 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG03.vo (real: 5.40, user: 5.11, sys: 0.29, mem: 519836 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG05.vo (real: 1.48, user: 1.17, sys: 0.31, mem: 541848 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG0s.vo (real: 19.32, user: 18.91, sys: 0.40, mem: 652932 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG0q.vo (real: 14.70, user: 14.32, sys: 0.37, mem: 613896 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YF0v.vo (real: 2.13, user: 1.81, sys: 0.31, mem: 534928 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YG0t.vo (real: 11.67, user: 11.28, sys: 0.38, mem: 623636 ko)
+proofs/libdiginet/fuzz_transport/lib/Reusable/FCiface.vo (real: 1.40, user: 1.11, sys: 0.28, mem: 548112 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSMxA.vo (real: 1.21, user: 0.87, sys: 0.33, mem: 601288 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM3T.vo (real: 9.88, user: 9.45, sys: 0.42, mem: 696736 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM5T.vo (real: 9.95, user: 9.49, sys: 0.45, mem: 703656 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM1T.vo (real: 10.42, user: 9.93, sys: 0.48, mem: 703208 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc0Tbl.vo (real: 10.65, user: 10.18, sys: 0.46, mem: 727384 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc2Tbl.vo (real: 10.92, user: 10.50, sys: 0.42, mem: 729516 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc1Tbl.vo (real: 11.85, user: 10.89, sys: 0.95, mem: 728368 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSF5.vo (real: 8.83, user: 8.31, sys: 0.51, mem: 691568 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM3.vo (real: 44.87, user: 44.25, sys: 0.61, mem: 961408 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc2.vo (real: 69.01, user: 68.37, sys: 0.63, mem: 1027640 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc0.vo (real: 70.61, user: 69.89, sys: 0.70, mem: 1027908 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc1.vo (real: 70.47, user: 69.73, sys: 0.73, mem: 1079412 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM5.vo (real: 601.99, user: 599.58, sys: 2.37, mem: 1532268 ko)
+ows: vo check (after make): 1546 .vo read (base/theories, base/stmts, proofs/libdiginet/fuzz_transport), 33802 Require digests compared with this workspace's .vo, 10178 with the checker image's .vo (48 of its libraries read under <COQLIB>), 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable, 0 more that Require one of them), 0 of them in this build's targets (15 given) and what they Require, 0.5 s
+rc=0 wall=768

@@ -1,0 +1,800 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require Import X1di X1cs X1dh.
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require Import X1dg.
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.PA Require Import X1e9 X1e5.
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.A Require Import X0bp X0j9 X0j2 X0hi X0j3 X03z X04v X02a X0jg
+X04g.
+
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B Require X12c X19l X183 X19m X0ux X0vt X0t9 X19x X0ve.
+Module B_TWIN.
+
+Import OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X12c OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X19l OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X183 OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X19m OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X0ux OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X0vt OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X0t9 OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X19x OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X0ve.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Open Scope Z_scope.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+
+Local Definition zal (k x r : Z) : Prop := (x mod k = r)%Z.
+Local Lemma zal_ex : forall k x r : Z, (0 < k)%Z -> (x mod k = r)%Z -> exists q, x = (k * q + r)%Z.
+Proof. intros k x r Hk H. exists (x / k)%Z. rewrite <- H. apply Z.div_mod. lia. Qed.
+Local Ltac zlit x := lazymatch x with Zpos _ => idtac | Z0 => idtac | Zneg _ => idtac end.
+Local Ltac zget_mod t :=
+lazymatch type of t with
+| (?x mod ?k = ?r)%Z => let H' := fresh "Hzm" in pose proof t as H'
+| ?A /\ ?B => first [ zget_mod constr:(proj1 t) | zget_mod constr:(proj2 t) ]
+end.
+Local Ltac zhide :=
+repeat match goal with
+| H : context [(?x mod ?k)%Z] |- _ => zlit x; zlit k; let v := eval cbv in (x mod k)%Z in change (x mod k)%Z with v in H
+end;
+repeat match goal with
+| H : (?x mod ?k = ?r)%Z |- _ =>
+let q := fresh "zq" in let Hq := fresh "Hzq" in
+destruct (zal_ex k x r (eq_refl : (0 < k)%Z) H) as [q Hq]; change (zal k x r) in H
+| H : context [(?x mod ?k = ?r)%Z] |- _ =>
+lazymatch type of H with (_ mod _ = _)%Z => fail | _ => idtac end;
+(try zget_mod H); change (x mod k = r)%Z with (zal k x r) in H
+end;
+repeat match goal with
+| H : context [(2 ^ ?k)%Z] |- _ => let T := type of H in zify_arith_prop T;
+let v := eval cbv in (2 ^ k)%Z in lazymatch v with Zpos _ => change (2 ^ k)%Z with v in H end
+end.
+
+Local Definition zidle (P : Prop) : Prop := P.
+Local Ltac zidle1 H := let T := type of H in change (zidle T) in H.
+Local Ltac zidle_nsp H A sp := lazymatch A with context [bv_unsigned sp] => fail | _ => zidle1 H end.
+Local Ltac zidle_begin sp n MUz WMz :=
+lazymatch goal with |- evt ?segs _ (MS _ _ _ _ _ ?m _) =>
+pose proof (munch_refl [(bv_unsigned sp - n, bv_unsigned sp)]%Z m) as MUz; pose proof (wmono_refl segs m) as WMz;
+repeat match goal with
+| H : rw_cells segs m ?A _ |- _ => zidle_nsp H A sp
+| H : ro_cells segs m ?A _ |- _ => zidle_nsp H A sp
+| H : u8arr segs m ?A _ |- _ => zidle_nsp H A sp
+| H : u32arr segs m ?A _ |- _ => zidle_nsp H A sp
+| H : u64arr segs m ?A _ |- _ => zidle_nsp H A sp
+| H : bytes_at segs m ?A _ |- _ => zidle_nsp H A sp
+| H : u8ro segs m ?A _ |- _ => zidle_nsp H A sp
+end
+end.
+Local Ltac zidle_end MUz WMz :=
+lazymatch goal with |- evt ?segs _ (MS _ _ _ _ _ ?mm _) =>
+lazymatch type of MUz with munch _ ?m _ =>
+try unfold zidle in *; transport_after_call segs m mm MUz WMz; clear MUz WMz end end.
+
+Local Ltac zidle_end_m m :=
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+lazymatch goal with MU : munch _ m mm, WM : wmono _ m mm |- _ =>
+unfold zidle in *; transport_after_call bsegs m mm MU WM end end.
+
+Local Ltac zidle_nspz H A SP := lazymatch A with context [SP] => fail | _ => zidle1 H end.
+Local Ltac zidle_beginz SP n MUz WMz :=
+lazymatch goal with |- evt ?segs _ (MS _ _ _ _ _ ?m _) =>
+pose proof (munch_refl [(SP - n, SP)]%Z m) as MUz; pose proof (wmono_refl segs m) as WMz;
+repeat match goal with
+| H : rw_cells segs m ?A _ |- _ => zidle_nspz H A SP
+| H : ro_cells segs m ?A _ |- _ => zidle_nspz H A SP
+| H : u8arr segs m ?A _ |- _ => zidle_nspz H A SP
+| H : u32arr segs m ?A _ |- _ => zidle_nspz H A SP
+| H : u64arr segs m ?A _ |- _ => zidle_nspz H A SP
+| H : bytes_at segs m ?A _ |- _ => zidle_nspz H A SP
+| H : u8ro segs m ?A _ |- _ => zidle_nspz H A SP
+end
+end.
+
+Definition icells_cmp (m : mem) : Prop :=
+ro_cells bsegs m 0xfc108 [C8 (Z_to_bv 64 0x1975e8)]
+/\ ro_cells bsegs m 0xfdee8 [C8 (Z_to_bv 64 0xf16c4); C8 (Z_to_bv 64 0xf15f4)]
+/\ rw_cells bsegs m 0x106798 [C1 (Z_to_bv 8 1)]
+/\ ro_cells bsegs m 0x1976e6 [C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 1)].
+
+Notation MEMCMPC_DEPTH := 2272%Z (only parsing).
+
+Lemma memcmpc_prologue : forall (sp p1 p2 n : Z) (ra gp tp t0 t1 t2 s0 s1 a0 fn a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem) (lo : Z),
+stk bsegs m lo sp -> lo <= sp - MEMCMPC_DEPTH -> kHighShadowEnd + 8 <= lo -> sp < 2^63 ->
+icells_cmp m -> mem_inv bsegs m ->
+evt bsegs (fun ms' => exists (m' : mem) (junk : list byte) (a1' : word),
+ms' = MS (mkR ra (Z_to_bv 64 (sp + -2192)) gp tp t0 t1 t2 (Z_to_bv 64 sp) (Z_to_bv 64 n) a0 a1' (Z_to_bv 64 p1) (Z_to_bv 64 p2) (Z_to_bv 64 n) a5 a6 a7 (Z_to_bv 64 p2) ra (Z_to_bv 64 p1) fn s6 (Z_to_bv 64 (sp + -2176)) (Z_to_bv 64 0x1975e8) s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57b14) fc None m' (seg_rom bsegs)
+/\ munch [(sp - 2192, sp)] m m' /\ wmono bsegs m m' /\ mem_inv bsegs m'
+/\ rw_cells bsegs m' (sp + -104) [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]
+/\ rw_cells bsegs m' (sp + -2192) [CB 2088 junk]
+/\ stk bsegs m' lo (sp + -2192))
+(MS (mkR ra (Z_to_bv 64 sp) gp tp t0 t1 t2 s0 s1 a0 fn (Z_to_bv 64 p1) (Z_to_bv 64 p2) (Z_to_bv 64 n) a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57aa0) fc None m (seg_rom bsegs)).
+Proof.
+intros until lo. intros ST LO LOLO SPH (GCF & GRE & AI & FL) MI.
+unfold kHighShadowEnd in *.
+pose proof (munch_refl [(sp - 2192, sp)] m) as MU. pose proof (wmono_refl bsegs m) as WM.
+assert (EU : bv_unsigned (Z_to_bv 64 sp) = sp) by (apply unsigned_lit; lia).
+carve_frame 104%nat ST. rename FR into FRs. carve_frame 2088%nat ST.
+zidle_beginz sp 2192%Z MUz1 WMz1.
+zhide.
+do 15 lstep.
+zidle_end MUz1 WMz1.
+do 6 lstep.
+do 4 astep.
+do 4 astep.
+apply evt_done. do 3 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI|]. split; [exact FRs|]. split; [exact FR| exact ST].
+Qed.
+
+Lemma memcmpc_r1_loop : forall (k : nat) (c e : Z) (ra sp gp tp t0 t1 t2 s0 s1 a0 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem),
+e - c = Z.of_nat (S k) -> 0 <= c -> e < 2^64 ->
+(forall x, c <= x < e -> exists b, bytes_at bsegs m x [b]) -> mem_inv bsegs m ->
+evt bsegs (fun ms' => exists (a3' a4' : word),
+ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 (Z_to_bv 64 e) (Z_to_bv 64 e) a3' a4' a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57f2c) fc None m (seg_rom bsegs))
+(MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 (Z_to_bv 64 c) (Z_to_bv 64 e) a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57f1c) fc None m (seg_rom bsegs)).
+Proof.
+induction k as [|k IH]; intros c e ra sp gp tp t0 t1 t2 s0 s1 a0 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m
+Hk Hc He HB MI.
+- destruct (HB c ltac:(lia)) as (b & Hb). pose proof (ro_C1_of_bytes m c b Hb) as CB0.
+pose proof (munch_refl [] m) as MU. pose proof (wmono_refl bsegs m) as WM.
+assert (EUc : bv_unsigned (Z_to_bv 64 c) = c) by (apply unsigned_lit; lia).
+assert (EUe : bv_unsigned (Z_to_bv 64 e) = e) by (apply unsigned_lit; lia).
+assert (EUc1 : bv_unsigned (Z_to_bv 64 (c + 1)) = c + 1) by (apply unsigned_lit; lia).
+do 3 lstep. lstep. if_false.
+apply evt_done. do 2 eexists. replace e with (c + 1) by lia. reflexivity.
+- destruct (HB c ltac:(lia)) as (b & Hb). pose proof (ro_C1_of_bytes m c b Hb) as CB0.
+pose proof (munch_refl [] m) as MU. pose proof (wmono_refl bsegs m) as WM.
+assert (EUc : bv_unsigned (Z_to_bv 64 c) = c) by (apply unsigned_lit; lia).
+assert (EUe : bv_unsigned (Z_to_bv 64 e) = e) by (apply unsigned_lit; lia).
+assert (EUc1 : bv_unsigned (Z_to_bv 64 (c + 1)) = c + 1) by (apply unsigned_lit; lia).
+do 3 lstep. lstep. if_true.
+apply (IH (c + 1) e); [lia| lia| lia| intros x Hx; apply HB; lia| assumption].
+Qed.
+
+Section WithRIP_memcmpc_r1.
+Hypothesis RIP : rip_stmt.
+
+Lemma memcmpc_r1_rip : forall (sp p1 p2 n : Z) (ra gp tp t0 t1 t2 s0 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem) (lo : Z),
+stk bsegs m lo (sp + -2192) -> lo <= sp - MEMCMPC_DEPTH -> kHighShadowEnd + 8 <= lo -> sp < 2^63 ->
+0 <= p1 -> 0 <= p2 -> 0 < n -> p1 + n < 2^63 -> p2 + n < 2^63 ->
+acc bsegs m p1 n -> rng_ok p1 n -> m2s_cells m -> mem_inv bsegs m ->
+evt bsegs (fun ms' => exists (m' : mem) (ra' t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' s6' s10' t3' t4' t5' t6' : word),
+ms' = MS (mkR ra' (Z_to_bv 64 (sp + -2192)) gp tp t0' t1' t2' s0 (Z_to_bv 64 n) a0 a1' a2' a3' a4' a5' a6' a7' s2 s3 (Z_to_bv 64 p1) s5 s6' s7 s8 s9 s10' s11 t3' t4' t5' t6')
+F (Z_to_bv 64 0x57b64) fc None m' (seg_rom bsegs)
+/\ munch [(sp - 2192 - 80, sp - 2192)] m m' /\ wmono bsegs m m' /\ mem_inv bsegs m' /\ stk bsegs m' lo (sp + -2192))
+(MS (mkR ra (Z_to_bv 64 (sp + -2192)) gp tp t0 t1 t2 s0 (Z_to_bv 64 n) a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 (Z_to_bv 64 p1) s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57f34) fc None m (seg_rom bsegs)).
+Proof.
+intros until lo. intros ST LO LOLO SPH D0 S0 N0 DN SN AC RO M2S MI.
+pose proof (munch_refl [(sp - 2192 - 80, sp - 2192)] m) as MU. pose proof (wmono_refl bsegs m) as WM.
+assert (EUsp : bv_unsigned (Z_to_bv 64 (sp + -2192)) = sp + -2192) by (apply unsigned_lit; unfold kHighShadowEnd in *; lia).
+destruct (RO N0) as (RIM & N40).
+zhide.
+do 4 lstep.
+pose proof RIP as RIPs. unfold rip_stmt in RIPs.
+call RIPs; [reflexivity| reflexivity| exact AC| lia| exact RIM| exact M2S| rewrite EUsp; exact ST| lia| unfold kHighShadowEnd in *; lia
+| assumption|].
+lazymatch goal with H : stk bsegs _ lo (bv_unsigned (Z_to_bv 64 _)) |- _ => rewrite EUsp in H; rename H into ST1 end.
+do 2 lstep. lstep. if_true.
+apply evt_done. do 18 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [assumption| exact ST1].
+Qed.
+
+Lemma memcmpc_r1 : forall (sp p1 p2 n : Z) (ra gp tp t0 t1 t2 s0 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem) (lo : Z),
+stk bsegs m lo (sp + -2192) -> lo <= sp - MEMCMPC_DEPTH -> kHighShadowEnd + 8 <= lo -> sp < 2^63 ->
+0 <= p1 -> 0 <= p2 -> 0 <= n -> p1 + n < 2^63 -> p2 + n < 2^63 ->
+chk_ok m p1 n -> m2s_cells m -> icells m -> mem_inv bsegs m ->
+evt bsegs (fun ms' => exists (m' : mem) (ra' t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' s6' s10' t3' t4' t5' t6' : word),
+ms' = MS (mkR ra' (Z_to_bv 64 (sp + -2192)) gp tp t0' t1' t2' s0 (Z_to_bv 64 n) a0 a1' a2' a3' a4' a5' a6' a7' s2 s3 (Z_to_bv 64 p1) s5 s6' s7 s8 (Z_to_bv 64 (n + -65)) s10' s11 t3' t4' t5' t6')
+F (Z_to_bv 64 0x57b64) fc None m' (seg_rom bsegs)
+/\ munch [(sp - 2192 - 80, sp - 2192)] m m' /\ wmono bsegs m m' /\ mem_inv bsegs m' /\ stk bsegs m' lo (sp + -2192))
+(MS (mkR ra (Z_to_bv 64 (sp + -2192)) gp tp t0 t1 t2 s0 (Z_to_bv 64 n) a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 (Z_to_bv 64 p1) s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57b14) fc None m (seg_rom bsegs)).
+Proof.
+intros until lo. intros ST LO LOLO SPH D0 S0 N0 DN SN (AC & QW & RO) M2S (G2 & G1 & RM & SHC & RI) MI.
+unfold kHighShadowEnd in *.
+pose proof (munch_refl [(sp - 2192 - 80, sp - 2192)] m) as MU. pose proof (wmono_refl bsegs m) as WM.
+assert (EUd : bv_unsigned (Z_to_bv 64 p1) = p1) by (apply unsigned_lit; lia).
+assert (EUs : bv_unsigned (Z_to_bv 64 p2) = p2) by (apply unsigned_lit; lia).
+assert (EUn : bv_unsigned (Z_to_bv 64 n) = n) by (apply unsigned_lit; lia).
+zhide.
+lstep.  rewrite (lxor_ones64 p1) by lia.
+assert (EUns : bv_unsigned (Z_to_bv 64 (18446744073709551615 - p1)) = 18446744073709551615 - p1) by (apply unsigned_lit; lia).
+lstep.
+if_false.
+lstep. lstep. lstep.
+destruct (Z_lt_le_dec 64 n) as [BIG|SMALL]; [| destruct (Z.eq_dec n 0) as [Z0|NZ]].
+-
+assert (EU65 : bv_unsigned (Z_to_bv 64 (n + -65)) = n - 65) by (apply unsigned_lit; lia).
+if_true. lstep. if_true.
+apply (memcmpc_r1_rip sp p1 p2 n); try assumption; lia.
+-
+subst n. if_true. lstep. if_false. lstep.
+apply evt_done. do 18 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+-
+assert (EU65 : bv_unsigned (Z_to_bv 64 (n + -65)) = n - 65 + 2^64) by (rewrite Z_to_bv_unsigned; unfold bv_wrap, bv_modulus; cbn; rewrite Z.mod_eq by lia; Z.div_mod_to_equations; lia).
+if_false.
+destruct (QW ltac:(lia)) as (w1 & w2 & W1 & W2).
+do 11 lstep.
+unfold al8, shad, SHB in W1, W2.
+assert (E1 : Z.land ((2147450880 + p1 ≫ 3) mod 18446744073709551616) 18446744073709551608 = 8 * ((p1 / 8 + 2147450880) / 8)).
+{ rewrite Z.shiftr_div_pow2 by lia. change (2^3) with 8. rewrite Z.mod_small by (Z.div_mod_to_equations; lia).
+rewrite land_m8' by (Z.div_mod_to_equations; lia). f_equal. f_equal. lia. }
+assert (E2 : Z.land ((2147450880 + (p1 + n + -1) ≫ 3) mod 18446744073709551616) 18446744073709551608
+= 8 * (((p1 + n - 1) / 8 + 2147450880) / 8)).
+{ rewrite Z.shiftr_div_pow2 by lia. change (2^3) with 8. rewrite Z.mod_small by (Z.div_mod_to_equations; lia).
+rewrite land_m8' by (Z.div_mod_to_equations; lia). f_equal. f_equal. replace (p1 + n + -1) with (p1 + n - 1) by lia. lia. }
+rewrite E1, E2. clear E1 E2.
+lstep. lstep. lstep. lstep.
+if_cases K.
++
+rewrite !Z.shiftr_div_pow2 by lia. change (2^3) with 8.
+replace (2147450880 + (p1 + n + -1) / 8) with ((p1 + n + -1) / 8 + 2147450880) by lia.
+replace (2147450880 + p1 / 8) with (p1 / 8 + 2147450880) by lia.
+pose proof (acc_shadow_bytes m p1 n AC ltac:(lia) D0) as SB. unfold shad, SHB in SB.
+destruct (SB ((p1 + n + -1) / 8 + 2147450880)) as (bl & BL); [Z.div_mod_to_equations; lia|].
+pose proof (ro_C1_of_bytes _ _ _ BL) as CL.
+do 6 lstep. lstep.
+if_cases K2.
+*
+lstep. lstep. if_cases K3.
+-- apply evt_done. do 18 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+-- apply (memcmpc_r1_rip sp p1 p2 n); try assumption; lia.
+* zify_cond K2.
+eapply evt_cut.
+{ eapply (memcmpc_r1_loop (Z.to_nat ((p1 + n + -1) / 8 + 2147450880 - (p1 / 8 + 2147450880) - 1))).
+- rewrite Nat2Z.inj_succ, Z2Nat.id by (Z.div_mod_to_equations; lia). lia.
+- Z.div_mod_to_equations; lia.
+- Z.div_mod_to_equations; lia.
+- intros x Hx. apply SB. Z.div_mod_to_equations; lia.
+- assumption. }
+intros ms' (a5' & a6' & ->).
+lstep. lstep. if_cases K3.
+-- apply evt_done. do 18 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+-- apply (memcmpc_r1_rip sp p1 p2 n); try assumption; lia.
++ apply evt_done. do 18 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+Qed.
+
+End WithRIP_memcmpc_r1.
+
+Lemma memcmpc_r2_loop : forall (k : nat) (c e : Z) (ra sp gp tp t0 t1 t2 s0 s1 a0 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem),
+e - c = Z.of_nat (S k) -> 0 <= c -> e < 2^64 ->
+(forall x, c <= x < e -> exists b, bytes_at bsegs m x [b]) -> mem_inv bsegs m ->
+evt bsegs (fun ms' => exists (a3' a4' : word),
+ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 (Z_to_bv 64 e) (Z_to_bv 64 e) a3' a4' a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x58038) fc None m (seg_rom bsegs))
+(MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 (Z_to_bv 64 c) (Z_to_bv 64 e) a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x58028) fc None m (seg_rom bsegs)).
+Proof.
+induction k as [|k IH]; intros c e ra sp gp tp t0 t1 t2 s0 s1 a0 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m
+Hk Hc He HB MI.
+- destruct (HB c ltac:(lia)) as (b & Hb). pose proof (ro_C1_of_bytes m c b Hb) as CB0.
+pose proof (munch_refl [] m) as MU. pose proof (wmono_refl bsegs m) as WM.
+assert (EUc : bv_unsigned (Z_to_bv 64 c) = c) by (apply unsigned_lit; lia).
+assert (EUe : bv_unsigned (Z_to_bv 64 e) = e) by (apply unsigned_lit; lia).
+assert (EUc1 : bv_unsigned (Z_to_bv 64 (c + 1)) = c + 1) by (apply unsigned_lit; lia).
+do 3 lstep. lstep. if_false.
+apply evt_done. do 2 eexists. replace e with (c + 1) by lia. reflexivity.
+- destruct (HB c ltac:(lia)) as (b & Hb). pose proof (ro_C1_of_bytes m c b Hb) as CB0.
+pose proof (munch_refl [] m) as MU. pose proof (wmono_refl bsegs m) as WM.
+assert (EUc : bv_unsigned (Z_to_bv 64 c) = c) by (apply unsigned_lit; lia).
+assert (EUe : bv_unsigned (Z_to_bv 64 e) = e) by (apply unsigned_lit; lia).
+assert (EUc1 : bv_unsigned (Z_to_bv 64 (c + 1)) = c + 1) by (apply unsigned_lit; lia).
+do 3 lstep. lstep. if_true.
+apply (IH (c + 1) e); [lia| lia| lia| intros x Hx; apply HB; lia| assumption].
+Qed.
+
+Section WithRIP_memcmpc_r2.
+Hypothesis RIP : rip_stmt.
+
+Lemma memcmpc_r2_rip : forall (sp p1 p2 n : Z) (ra gp tp t0 t1 t2 s0 a0 a1 a2 a3 a4 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem) (lo : Z),
+stk bsegs m lo (sp + -2192) -> lo <= sp - MEMCMPC_DEPTH -> kHighShadowEnd + 8 <= lo -> sp < 2^63 ->
+0 <= p1 -> 0 <= p2 -> 0 < n -> p1 + n < 2^63 -> p2 + n < 2^63 ->
+acc bsegs m p2 n -> rng_ok p2 n -> m2s_cells m -> mem_inv bsegs m ->
+evt bsegs (fun ms' => exists (m' : mem) (ra' t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' s6' s9' t3' t4' t5' t6' : word),
+ms' = MS (mkR ra' (Z_to_bv 64 (sp + -2192)) gp tp t0' t1' t2' s0 (Z_to_bv 64 n) a0' a1' a2' a3' a4' a5' a6' a7' (Z_to_bv 64 p2) s3 s4 s5 s6' s7 s8 s9' s10 s11 t3' t4' t5' t6')
+F (Z_to_bv 64 0x57bb0) fc None m' (seg_rom bsegs)
+/\ munch [(sp - 2192 - 80, sp - 2192)] m m' /\ wmono bsegs m m' /\ mem_inv bsegs m' /\ stk bsegs m' lo (sp + -2192))
+(MS (mkR ra (Z_to_bv 64 (sp + -2192)) gp tp t0 t1 t2 s0 (Z_to_bv 64 n) a0 a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 p2) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x58040) fc None m (seg_rom bsegs)).
+Proof.
+intros until lo. intros ST LO LOLO SPH D0 S0 N0 DN SN AC RO M2S MI.
+pose proof (munch_refl [(sp - 2192 - 80, sp - 2192)] m) as MU. pose proof (wmono_refl bsegs m) as WM.
+assert (EUsp : bv_unsigned (Z_to_bv 64 (sp + -2192)) = sp + -2192) by (apply unsigned_lit; unfold kHighShadowEnd in *; lia).
+destruct (RO N0) as (RIM & N40).
+zhide.
+do 4 lstep.
+pose proof RIP as RIPs. unfold rip_stmt in RIPs.
+call RIPs; [reflexivity| reflexivity| exact AC| lia| exact RIM| exact M2S| rewrite EUsp; exact ST| lia| unfold kHighShadowEnd in *; lia
+| assumption|].
+lazymatch goal with H : stk bsegs _ lo (bv_unsigned (Z_to_bv 64 _)) |- _ => rewrite EUsp in H; rename H into ST1 end.
+do 1 lstep. lstep. if_true.
+apply evt_done. do 19 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [assumption| exact ST1].
+Qed.
+
+Lemma memcmpc_r2 : forall (sp p1 p2 n : Z) (ra gp tp t0 t1 t2 s0 a0 a1 a2 a3 a4 a5 a6 a7 s3 s4 s5 s6 s7 s8 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem) (lo : Z),
+stk bsegs m lo (sp + -2192) -> lo <= sp - MEMCMPC_DEPTH -> kHighShadowEnd + 8 <= lo -> sp < 2^63 ->
+0 <= p1 -> 0 <= p2 -> 0 <= n -> p1 + n < 2^63 -> p2 + n < 2^63 ->
+chk_ok m p2 n -> m2s_cells m -> icells m -> mem_inv bsegs m ->
+evt bsegs (fun ms' => exists (m' : mem) (ra' t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' s6' s9' t3' t4' t5' t6' : word),
+ms' = MS (mkR ra' (Z_to_bv 64 (sp + -2192)) gp tp t0' t1' t2' s0 (Z_to_bv 64 n) a0' a1' a2' a3' a4' a5' a6' a7' (Z_to_bv 64 p2) s3 s4 s5 s6' s7 s8 s9' s10 s11 t3' t4' t5' t6')
+F (Z_to_bv 64 0x57bb0) fc None m' (seg_rom bsegs)
+/\ munch [(sp - 2192 - 80, sp - 2192)] m m' /\ wmono bsegs m m' /\ mem_inv bsegs m' /\ stk bsegs m' lo (sp + -2192))
+(MS (mkR ra (Z_to_bv 64 (sp + -2192)) gp tp t0 t1 t2 s0 (Z_to_bv 64 n) a0 a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 p2) s3 s4 s5 s6 s7 s8 (Z_to_bv 64 (n + -65)) s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57b64) fc None m (seg_rom bsegs)).
+Proof.
+intros until lo. intros ST LO LOLO SPH D0 S0 N0 DN SN (AC & QW & RO) M2S (G2 & G1 & RM & SHC & RI) MI.
+unfold kHighShadowEnd in *.
+pose proof (munch_refl [(sp - 2192 - 80, sp - 2192)] m) as MU. pose proof (wmono_refl bsegs m) as WM.
+assert (EUd : bv_unsigned (Z_to_bv 64 p1) = p1) by (apply unsigned_lit; lia).
+assert (EUs : bv_unsigned (Z_to_bv 64 p2) = p2) by (apply unsigned_lit; lia).
+assert (EUn : bv_unsigned (Z_to_bv 64 n) = n) by (apply unsigned_lit; lia).
+zhide.
+lstep.  rewrite (lxor_ones64 p2) by lia.
+assert (EUns : bv_unsigned (Z_to_bv 64 (18446744073709551615 - p2)) = 18446744073709551615 - p2) by (apply unsigned_lit; lia).
+lstep.
+if_false.
+lstep. lstep.
+destruct (Z_lt_le_dec 64 n) as [BIG|SMALL]; [| destruct (Z.eq_dec n 0) as [Z0|NZ]].
+-
+assert (EU65 : bv_unsigned (Z_to_bv 64 (n + -65)) = n - 65) by (apply unsigned_lit; lia).
+if_true. lstep. if_true.
+apply (memcmpc_r2_rip sp p1 p2 n); try assumption; lia.
+-
+subst n. if_true. lstep. if_false. lstep.
+apply evt_done. do 19 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+-
+assert (EU65 : bv_unsigned (Z_to_bv 64 (n + -65)) = n - 65 + 2^64) by (rewrite Z_to_bv_unsigned; unfold bv_wrap, bv_modulus; cbn; rewrite Z.mod_eq by lia; Z.div_mod_to_equations; lia).
+if_false.
+destruct (QW ltac:(lia)) as (w1 & w2 & W1 & W2).
+do 11 lstep.
+unfold al8, shad, SHB in W1, W2.
+assert (E1 : Z.land ((2147450880 + p2 ≫ 3) mod 18446744073709551616) 18446744073709551608 = 8 * ((p2 / 8 + 2147450880) / 8)).
+{ rewrite Z.shiftr_div_pow2 by lia. change (2^3) with 8. rewrite Z.mod_small by (Z.div_mod_to_equations; lia).
+rewrite land_m8' by (Z.div_mod_to_equations; lia). f_equal. f_equal. lia. }
+assert (E2 : Z.land ((2147450880 + (p2 + n + -1) ≫ 3) mod 18446744073709551616) 18446744073709551608
+= 8 * (((p2 + n - 1) / 8 + 2147450880) / 8)).
+{ rewrite Z.shiftr_div_pow2 by lia. change (2^3) with 8. rewrite Z.mod_small by (Z.div_mod_to_equations; lia).
+rewrite land_m8' by (Z.div_mod_to_equations; lia). f_equal. f_equal. replace (p2 + n + -1) with (p2 + n - 1) by lia. lia. }
+rewrite E1, E2. clear E1 E2.
+lstep. lstep. lstep. lstep.
+if_cases K.
++
+rewrite !Z.shiftr_div_pow2 by lia. change (2^3) with 8.
+replace (2147450880 + (p2 + n + -1) / 8) with ((p2 + n + -1) / 8 + 2147450880) by lia.
+replace (2147450880 + p2 / 8) with (p2 / 8 + 2147450880) by lia.
+pose proof (acc_shadow_bytes m p2 n AC ltac:(lia) S0) as SB. unfold shad, SHB in SB.
+destruct (SB ((p2 + n + -1) / 8 + 2147450880)) as (bl & BL); [Z.div_mod_to_equations; lia|].
+pose proof (ro_C1_of_bytes _ _ _ BL) as CL.
+do 6 lstep. lstep.
+if_cases K2.
+*
+lstep. lstep. if_cases K3.
+-- apply evt_done. do 19 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+-- apply (memcmpc_r2_rip sp p1 p2 n); try assumption; lia.
+* zify_cond K2.
+eapply evt_cut.
+{ eapply (memcmpc_r2_loop (Z.to_nat ((p2 + n + -1) / 8 + 2147450880 - (p2 / 8 + 2147450880) - 1))).
+- rewrite Nat2Z.inj_succ, Z2Nat.id by (Z.div_mod_to_equations; lia). lia.
+- Z.div_mod_to_equations; lia.
+- Z.div_mod_to_equations; lia.
+- intros x Hx. apply SB. Z.div_mod_to_equations; lia.
+- assumption. }
+intros ms' (a5' & a6' & ->).
+lstep. lstep. if_cases K3.
+-- apply evt_done. do 19 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+-- apply (memcmpc_r2_rip sp p1 p2 n); try assumption; lia.
++ apply evt_done. do 19 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+Qed.
+
+End WithRIP_memcmpc_r2.
+End B_TWIN.
+
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Open Scope Z_scope.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+
+Local Definition zal (k x r : Z) : Prop := (x mod k = r)%Z.
+Local Lemma zal_ex : forall k x r : Z, (0 < k)%Z -> (x mod k = r)%Z -> exists q, x = (k * q + r)%Z.
+Proof. intros k x r Hk H. exists (x / k)%Z. rewrite <- H. apply Z.div_mod. lia. Qed.
+Local Ltac zlit x := lazymatch x with Zpos _ => idtac | Z0 => idtac | Zneg _ => idtac end.
+Local Ltac zget_mod t :=
+lazymatch type of t with
+| (?x mod ?k = ?r)%Z => let H' := fresh "Hzm" in pose proof t as H'
+| ?A /\ ?B => first [ zget_mod constr:(proj1 t) | zget_mod constr:(proj2 t) ]
+end.
+Local Ltac zhide :=
+repeat match goal with
+| H : context [(?x mod ?k)%Z] |- _ => zlit x; zlit k; let v := eval cbv in (x mod k)%Z in change (x mod k)%Z with v in H
+end;
+repeat match goal with
+| H : (?x mod ?k = ?r)%Z |- _ =>
+let q := fresh "zq" in let Hq := fresh "Hzq" in
+destruct (zal_ex k x r (eq_refl : (0 < k)%Z) H) as [q Hq]; change (zal k x r) in H
+| H : context [(?x mod ?k = ?r)%Z] |- _ =>
+lazymatch type of H with (_ mod _ = _)%Z => fail | _ => idtac end;
+(try zget_mod H); change (x mod k = r)%Z with (zal k x r) in H
+end;
+repeat match goal with
+| H : context [(2 ^ ?k)%Z] |- _ => let T := type of H in zify_arith_prop T;
+let v := eval cbv in (2 ^ k)%Z in lazymatch v with Zpos _ => change (2 ^ k)%Z with v in H end
+end.
+
+Local Definition zidle (P : Prop) : Prop := P.
+Local Ltac zidle1 H := let T := type of H in change (zidle T) in H.
+Local Ltac zidle_nsp H A sp := lazymatch A with context [bv_unsigned sp] => fail | _ => zidle1 H end.
+Local Ltac zidle_begin sp n MUz WMz :=
+lazymatch goal with |- evt ?segs _ (MS _ _ _ _ _ ?m _) =>
+pose proof (munch_refl [(bv_unsigned sp - n, bv_unsigned sp)]%Z m) as MUz; pose proof (wmono_refl segs m) as WMz;
+repeat match goal with
+| H : rw_cells segs m ?A _ |- _ => zidle_nsp H A sp
+| H : ro_cells segs m ?A _ |- _ => zidle_nsp H A sp
+| H : u8arr segs m ?A _ |- _ => zidle_nsp H A sp
+| H : u32arr segs m ?A _ |- _ => zidle_nsp H A sp
+| H : u64arr segs m ?A _ |- _ => zidle_nsp H A sp
+| H : bytes_at segs m ?A _ |- _ => zidle_nsp H A sp
+| H : u8ro segs m ?A _ |- _ => zidle_nsp H A sp
+end
+end.
+Local Ltac zidle_end MUz WMz :=
+lazymatch goal with |- evt ?segs _ (MS _ _ _ _ _ ?mm _) =>
+lazymatch type of MUz with munch _ ?m _ =>
+try unfold zidle in *; transport_after_call segs m mm MUz WMz; clear MUz WMz end end.
+
+Local Ltac zidle_end_m m :=
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+lazymatch goal with MU : munch _ m mm, WM : wmono _ m mm |- _ =>
+unfold zidle in *; transport_after_call asegs m mm MU WM end end.
+
+Local Ltac zidle_nspz H A SP := lazymatch A with context [SP] => fail | _ => zidle1 H end.
+Local Ltac zidle_beginz SP n MUz WMz :=
+lazymatch goal with |- evt ?segs _ (MS _ _ _ _ _ ?m _) =>
+pose proof (munch_refl [(SP - n, SP)]%Z m) as MUz; pose proof (wmono_refl segs m) as WMz;
+repeat match goal with
+| H : rw_cells segs m ?A _ |- _ => zidle_nspz H A SP
+| H : ro_cells segs m ?A _ |- _ => zidle_nspz H A SP
+| H : u8arr segs m ?A _ |- _ => zidle_nspz H A SP
+| H : u32arr segs m ?A _ |- _ => zidle_nspz H A SP
+| H : u64arr segs m ?A _ |- _ => zidle_nspz H A SP
+| H : bytes_at segs m ?A _ |- _ => zidle_nspz H A SP
+| H : u8ro segs m ?A _ |- _ => zidle_nspz H A SP
+end
+end.
+
+Definition icells_cmp (m : mem) : Prop :=
+ro_cells asegs m 0xf3888 [C8 (Z_to_bv 64 0x18eda8)]
+/\ ro_cells asegs m 0xf5668 [C8 (Z_to_bv 64 0xe8e50); C8 (Z_to_bv 64 0xe8d80)]
+/\ rw_cells asegs m 0xfdf58 [C1 (Z_to_bv 8 1)]
+/\ ro_cells asegs m 0x18eea6 [C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 1)].
+
+Notation MEMCMPC_DEPTH := 2272%Z (only parsing).
+
+Lemma memcmpc_prologue : forall (sp p1 p2 n : Z) (ra gp tp t0 t1 t2 s0 s1 a0 fn a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem) (lo : Z),
+stk asegs m lo sp -> lo <= sp - MEMCMPC_DEPTH -> kHighShadowEnd + 8 <= lo -> sp < 2^63 ->
+icells_cmp m -> mem_inv asegs m ->
+evt asegs (fun ms' => exists (m' : mem) (junk : list byte) (a1' : word),
+ms' = MS (mkR ra (Z_to_bv 64 (sp + -2192)) gp tp t0 t1 t2 (Z_to_bv 64 sp) (Z_to_bv 64 n) a0 a1' (Z_to_bv 64 p1) (Z_to_bv 64 p2) (Z_to_bv 64 n) a5 a6 a7 (Z_to_bv 64 p2) ra (Z_to_bv 64 p1) fn s6 (Z_to_bv 64 (sp + -2176)) (Z_to_bv 64 0x18eda8) s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57a28) fc None m' (seg_rom asegs)
+/\ munch [(sp - 2192, sp)] m m' /\ wmono asegs m m' /\ mem_inv asegs m'
+/\ rw_cells asegs m' (sp + -104) [C8 s11; C8 s10; C8 s9; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]
+/\ rw_cells asegs m' (sp + -2192) [CB 2088 junk]
+/\ stk asegs m' lo (sp + -2192))
+(MS (mkR ra (Z_to_bv 64 sp) gp tp t0 t1 t2 s0 s1 a0 fn (Z_to_bv 64 p1) (Z_to_bv 64 p2) (Z_to_bv 64 n) a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x579b4) fc None m (seg_rom asegs)).
+Proof.
+intros until lo. intros ST LO LOLO SPH (GCF & GRE & AI & FL) MI.
+unfold kHighShadowEnd in *.
+pose proof (munch_refl [(sp - 2192, sp)] m) as MU. pose proof (wmono_refl asegs m) as WM.
+assert (EU : bv_unsigned (Z_to_bv 64 sp) = sp) by (apply unsigned_lit; lia).
+carve_frame 104%nat ST. rename FR into FRs. carve_frame 2088%nat ST.
+zidle_beginz sp 2192%Z MUz1 WMz1.
+zhide.
+do 15 lstep.
+zidle_end MUz1 WMz1.
+do 6 lstep.
+do 4 astep.
+do 4 astep.
+apply evt_done. do 3 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI|]. split; [exact FRs|]. split; [exact FR| exact ST].
+Qed.
+
+Lemma memcmpc_r1_loop : forall (k : nat) (c e : Z) (ra sp gp tp t0 t1 t2 s0 s1 a0 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem),
+e - c = Z.of_nat (S k) -> 0 <= c -> e < 2^64 ->
+(forall x, c <= x < e -> exists b, bytes_at asegs m x [b]) -> mem_inv asegs m ->
+evt asegs (fun ms' => exists (a3' a4' : word),
+ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 (Z_to_bv 64 e) (Z_to_bv 64 e) a3' a4' a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57e40) fc None m (seg_rom asegs))
+(MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 (Z_to_bv 64 c) (Z_to_bv 64 e) a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57e30) fc None m (seg_rom asegs)).
+Proof.
+induction k as [|k IH]; intros c e ra sp gp tp t0 t1 t2 s0 s1 a0 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m
+Hk Hc He HB MI.
+- destruct (HB c ltac:(lia)) as (b & Hb). pose proof (ro_C1_of_bytes m c b Hb) as CB0.
+pose proof (munch_refl [] m) as MU. pose proof (wmono_refl asegs m) as WM.
+assert (EUc : bv_unsigned (Z_to_bv 64 c) = c) by (apply unsigned_lit; lia).
+assert (EUe : bv_unsigned (Z_to_bv 64 e) = e) by (apply unsigned_lit; lia).
+assert (EUc1 : bv_unsigned (Z_to_bv 64 (c + 1)) = c + 1) by (apply unsigned_lit; lia).
+do 3 lstep. lstep. if_false.
+apply evt_done. do 2 eexists. replace e with (c + 1) by lia. reflexivity.
+- destruct (HB c ltac:(lia)) as (b & Hb). pose proof (ro_C1_of_bytes m c b Hb) as CB0.
+pose proof (munch_refl [] m) as MU. pose proof (wmono_refl asegs m) as WM.
+assert (EUc : bv_unsigned (Z_to_bv 64 c) = c) by (apply unsigned_lit; lia).
+assert (EUe : bv_unsigned (Z_to_bv 64 e) = e) by (apply unsigned_lit; lia).
+assert (EUc1 : bv_unsigned (Z_to_bv 64 (c + 1)) = c + 1) by (apply unsigned_lit; lia).
+do 3 lstep. lstep. if_true.
+apply (IH (c + 1) e); [lia| lia| lia| intros x Hx; apply HB; lia| assumption].
+Qed.
+
+Section WithRIP_memcmpc_r1.
+Hypothesis RIP : rip_stmt.
+
+Lemma memcmpc_r1_rip : forall (sp p1 p2 n : Z) (ra gp tp t0 t1 t2 s0 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem) (lo : Z),
+stk asegs m lo (sp + -2192) -> lo <= sp - MEMCMPC_DEPTH -> kHighShadowEnd + 8 <= lo -> sp < 2^63 ->
+0 <= p1 -> 0 <= p2 -> 0 < n -> p1 + n < 2^63 -> p2 + n < 2^63 ->
+acc asegs m p1 n -> rng_ok p1 n -> m2s_cells m -> mem_inv asegs m ->
+evt asegs (fun ms' => exists (m' : mem) (ra' t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' s6' s10' t3' t4' t5' t6' : word),
+ms' = MS (mkR ra' (Z_to_bv 64 (sp + -2192)) gp tp t0' t1' t2' s0 (Z_to_bv 64 n) a0 a1' a2' a3' a4' a5' a6' a7' s2 s3 (Z_to_bv 64 p1) s5 s6' s7 s8 s9 s10' s11 t3' t4' t5' t6')
+F (Z_to_bv 64 0x57a78) fc None m' (seg_rom asegs)
+/\ munch [(sp - 2192 - 80, sp - 2192)] m m' /\ wmono asegs m m' /\ mem_inv asegs m' /\ stk asegs m' lo (sp + -2192))
+(MS (mkR ra (Z_to_bv 64 (sp + -2192)) gp tp t0 t1 t2 s0 (Z_to_bv 64 n) a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 (Z_to_bv 64 p1) s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57e48) fc None m (seg_rom asegs)).
+Proof.
+intros until lo. intros ST LO LOLO SPH D0 S0 N0 DN SN AC RO M2S MI.
+pose proof (munch_refl [(sp - 2192 - 80, sp - 2192)] m) as MU. pose proof (wmono_refl asegs m) as WM.
+assert (EUsp : bv_unsigned (Z_to_bv 64 (sp + -2192)) = sp + -2192) by (apply unsigned_lit; unfold kHighShadowEnd in *; lia).
+destruct (RO N0) as (RIM & N40).
+zhide.
+do 4 lstep.
+pose proof RIP as RIPs. unfold rip_stmt in RIPs.
+call RIPs; [reflexivity| reflexivity| exact AC| lia| exact RIM| exact M2S| rewrite EUsp; exact ST| lia| unfold kHighShadowEnd in *; lia
+| assumption|].
+lazymatch goal with H : stk asegs _ lo (bv_unsigned (Z_to_bv 64 _)) |- _ => rewrite EUsp in H; rename H into ST1 end.
+do 2 lstep. lstep. if_true.
+apply evt_done. do 18 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [assumption| exact ST1].
+Qed.
+
+Lemma memcmpc_r1 : forall (sp p1 p2 n : Z) (ra gp tp t0 t1 t2 s0 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem) (lo : Z),
+stk asegs m lo (sp + -2192) -> lo <= sp - MEMCMPC_DEPTH -> kHighShadowEnd + 8 <= lo -> sp < 2^63 ->
+0 <= p1 -> 0 <= p2 -> 0 <= n -> p1 + n < 2^63 -> p2 + n < 2^63 ->
+chk_ok m p1 n -> m2s_cells m -> icells m -> mem_inv asegs m ->
+evt asegs (fun ms' => exists (m' : mem) (ra' t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' s6' s10' t3' t4' t5' t6' : word),
+ms' = MS (mkR ra' (Z_to_bv 64 (sp + -2192)) gp tp t0' t1' t2' s0 (Z_to_bv 64 n) a0 a1' a2' a3' a4' a5' a6' a7' s2 s3 (Z_to_bv 64 p1) s5 s6' s7 s8 (Z_to_bv 64 (n + -65)) s10' s11 t3' t4' t5' t6')
+F (Z_to_bv 64 0x57a78) fc None m' (seg_rom asegs)
+/\ munch [(sp - 2192 - 80, sp - 2192)] m m' /\ wmono asegs m m' /\ mem_inv asegs m' /\ stk asegs m' lo (sp + -2192))
+(MS (mkR ra (Z_to_bv 64 (sp + -2192)) gp tp t0 t1 t2 s0 (Z_to_bv 64 n) a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 (Z_to_bv 64 p1) s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57a28) fc None m (seg_rom asegs)).
+Proof.
+intros until lo. intros ST LO LOLO SPH D0 S0 N0 DN SN (AC & QW & RO) M2S (G2 & G1 & RM & SHC & RI) MI.
+unfold kHighShadowEnd in *.
+pose proof (munch_refl [(sp - 2192 - 80, sp - 2192)] m) as MU. pose proof (wmono_refl asegs m) as WM.
+assert (EUd : bv_unsigned (Z_to_bv 64 p1) = p1) by (apply unsigned_lit; lia).
+assert (EUs : bv_unsigned (Z_to_bv 64 p2) = p2) by (apply unsigned_lit; lia).
+assert (EUn : bv_unsigned (Z_to_bv 64 n) = n) by (apply unsigned_lit; lia).
+zhide.
+lstep.  rewrite (lxor_ones64 p1) by lia.
+assert (EUns : bv_unsigned (Z_to_bv 64 (18446744073709551615 - p1)) = 18446744073709551615 - p1) by (apply unsigned_lit; lia).
+lstep.
+if_false.
+lstep. lstep. lstep.
+destruct (Z_lt_le_dec 64 n) as [BIG|SMALL]; [| destruct (Z.eq_dec n 0) as [Z0|NZ]].
+-
+assert (EU65 : bv_unsigned (Z_to_bv 64 (n + -65)) = n - 65) by (apply unsigned_lit; lia).
+if_true. lstep. if_true.
+apply (memcmpc_r1_rip sp p1 p2 n); try assumption; lia.
+-
+subst n. if_true. lstep. if_false. lstep.
+apply evt_done. do 18 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+-
+assert (EU65 : bv_unsigned (Z_to_bv 64 (n + -65)) = n - 65 + 2^64) by (rewrite Z_to_bv_unsigned; unfold bv_wrap, bv_modulus; cbn; rewrite Z.mod_eq by lia; Z.div_mod_to_equations; lia).
+if_false.
+destruct (QW ltac:(lia)) as (w1 & w2 & W1 & W2).
+do 11 lstep.
+unfold al8, shad, SHB in W1, W2.
+assert (E1 : Z.land ((2147450880 + p1 ≫ 3) mod 18446744073709551616) 18446744073709551608 = 8 * ((p1 / 8 + 2147450880) / 8)).
+{ rewrite Z.shiftr_div_pow2 by lia. change (2^3) with 8. rewrite Z.mod_small by (Z.div_mod_to_equations; lia).
+rewrite land_m8' by (Z.div_mod_to_equations; lia). f_equal. f_equal. lia. }
+assert (E2 : Z.land ((2147450880 + (p1 + n + -1) ≫ 3) mod 18446744073709551616) 18446744073709551608
+= 8 * (((p1 + n - 1) / 8 + 2147450880) / 8)).
+{ rewrite Z.shiftr_div_pow2 by lia. change (2^3) with 8. rewrite Z.mod_small by (Z.div_mod_to_equations; lia).
+rewrite land_m8' by (Z.div_mod_to_equations; lia). f_equal. f_equal. replace (p1 + n + -1) with (p1 + n - 1) by lia. lia. }
+rewrite E1, E2. clear E1 E2.
+lstep. lstep. lstep. lstep.
+if_cases K.
++
+rewrite !Z.shiftr_div_pow2 by lia. change (2^3) with 8.
+replace (2147450880 + (p1 + n + -1) / 8) with ((p1 + n + -1) / 8 + 2147450880) by lia.
+replace (2147450880 + p1 / 8) with (p1 / 8 + 2147450880) by lia.
+pose proof (acc_shadow_bytes m p1 n AC ltac:(lia) D0) as SB. unfold shad, SHB in SB.
+destruct (SB ((p1 + n + -1) / 8 + 2147450880)) as (bl & BL); [Z.div_mod_to_equations; lia|].
+pose proof (ro_C1_of_bytes _ _ _ BL) as CL.
+do 6 lstep. lstep.
+if_cases K2.
+*
+lstep. lstep. if_cases K3.
+-- apply evt_done. do 18 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+-- apply (memcmpc_r1_rip sp p1 p2 n); try assumption; lia.
+* zify_cond K2.
+eapply evt_cut.
+{ eapply (memcmpc_r1_loop (Z.to_nat ((p1 + n + -1) / 8 + 2147450880 - (p1 / 8 + 2147450880) - 1))).
+- rewrite Nat2Z.inj_succ, Z2Nat.id by (Z.div_mod_to_equations; lia). lia.
+- Z.div_mod_to_equations; lia.
+- Z.div_mod_to_equations; lia.
+- intros x Hx. apply SB. Z.div_mod_to_equations; lia.
+- assumption. }
+intros ms' (a5' & a6' & ->).
+lstep. lstep. if_cases K3.
+-- apply evt_done. do 18 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+-- apply (memcmpc_r1_rip sp p1 p2 n); try assumption; lia.
++ apply evt_done. do 18 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+Qed.
+
+End WithRIP_memcmpc_r1.
+
+Lemma memcmpc_r2_loop : forall (k : nat) (c e : Z) (ra sp gp tp t0 t1 t2 s0 s1 a0 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem),
+e - c = Z.of_nat (S k) -> 0 <= c -> e < 2^64 ->
+(forall x, c <= x < e -> exists b, bytes_at asegs m x [b]) -> mem_inv asegs m ->
+evt asegs (fun ms' => exists (a3' a4' : word),
+ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 (Z_to_bv 64 e) (Z_to_bv 64 e) a3' a4' a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57f4c) fc None m (seg_rom asegs))
+(MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 (Z_to_bv 64 c) (Z_to_bv 64 e) a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57f3c) fc None m (seg_rom asegs)).
+Proof.
+induction k as [|k IH]; intros c e ra sp gp tp t0 t1 t2 s0 s1 a0 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m
+Hk Hc He HB MI.
+- destruct (HB c ltac:(lia)) as (b & Hb). pose proof (ro_C1_of_bytes m c b Hb) as CB0.
+pose proof (munch_refl [] m) as MU. pose proof (wmono_refl asegs m) as WM.
+assert (EUc : bv_unsigned (Z_to_bv 64 c) = c) by (apply unsigned_lit; lia).
+assert (EUe : bv_unsigned (Z_to_bv 64 e) = e) by (apply unsigned_lit; lia).
+assert (EUc1 : bv_unsigned (Z_to_bv 64 (c + 1)) = c + 1) by (apply unsigned_lit; lia).
+do 3 lstep. lstep. if_false.
+apply evt_done. do 2 eexists. replace e with (c + 1) by lia. reflexivity.
+- destruct (HB c ltac:(lia)) as (b & Hb). pose proof (ro_C1_of_bytes m c b Hb) as CB0.
+pose proof (munch_refl [] m) as MU. pose proof (wmono_refl asegs m) as WM.
+assert (EUc : bv_unsigned (Z_to_bv 64 c) = c) by (apply unsigned_lit; lia).
+assert (EUe : bv_unsigned (Z_to_bv 64 e) = e) by (apply unsigned_lit; lia).
+assert (EUc1 : bv_unsigned (Z_to_bv 64 (c + 1)) = c + 1) by (apply unsigned_lit; lia).
+do 3 lstep. lstep. if_true.
+apply (IH (c + 1) e); [lia| lia| lia| intros x Hx; apply HB; lia| assumption].
+Qed.
+
+Section WithRIP_memcmpc_r2.
+Hypothesis RIP : rip_stmt.
+
+Lemma memcmpc_r2_rip : forall (sp p1 p2 n : Z) (ra gp tp t0 t1 t2 s0 a0 a1 a2 a3 a4 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem) (lo : Z),
+stk asegs m lo (sp + -2192) -> lo <= sp - MEMCMPC_DEPTH -> kHighShadowEnd + 8 <= lo -> sp < 2^63 ->
+0 <= p1 -> 0 <= p2 -> 0 < n -> p1 + n < 2^63 -> p2 + n < 2^63 ->
+acc asegs m p2 n -> rng_ok p2 n -> m2s_cells m -> mem_inv asegs m ->
+evt asegs (fun ms' => exists (m' : mem) (ra' t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' s6' s9' t3' t4' t5' t6' : word),
+ms' = MS (mkR ra' (Z_to_bv 64 (sp + -2192)) gp tp t0' t1' t2' s0 (Z_to_bv 64 n) a0' a1' a2' a3' a4' a5' a6' a7' (Z_to_bv 64 p2) s3 s4 s5 s6' s7 s8 s9' s10 s11 t3' t4' t5' t6')
+F (Z_to_bv 64 0x57ac4) fc None m' (seg_rom asegs)
+/\ munch [(sp - 2192 - 80, sp - 2192)] m m' /\ wmono asegs m m' /\ mem_inv asegs m' /\ stk asegs m' lo (sp + -2192))
+(MS (mkR ra (Z_to_bv 64 (sp + -2192)) gp tp t0 t1 t2 s0 (Z_to_bv 64 n) a0 a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 p2) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57f54) fc None m (seg_rom asegs)).
+Proof.
+intros until lo. intros ST LO LOLO SPH D0 S0 N0 DN SN AC RO M2S MI.
+pose proof (munch_refl [(sp - 2192 - 80, sp - 2192)] m) as MU. pose proof (wmono_refl asegs m) as WM.
+assert (EUsp : bv_unsigned (Z_to_bv 64 (sp + -2192)) = sp + -2192) by (apply unsigned_lit; unfold kHighShadowEnd in *; lia).
+destruct (RO N0) as (RIM & N40).
+zhide.
+do 4 lstep.
+pose proof RIP as RIPs. unfold rip_stmt in RIPs.
+call RIPs; [reflexivity| reflexivity| exact AC| lia| exact RIM| exact M2S| rewrite EUsp; exact ST| lia| unfold kHighShadowEnd in *; lia
+| assumption|].
+lazymatch goal with H : stk asegs _ lo (bv_unsigned (Z_to_bv 64 _)) |- _ => rewrite EUsp in H; rename H into ST1 end.
+do 1 lstep. lstep. if_true.
+apply evt_done. do 19 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [assumption| exact ST1].
+Qed.
+
+Lemma memcmpc_r2 : forall (sp p1 p2 n : Z) (ra gp tp t0 t1 t2 s0 a0 a1 a2 a3 a4 a5 a6 a7 s3 s4 s5 s6 s7 s8 s10 s11 t3 t4 t5 t6 : word)
+F fc (m : mem) (lo : Z),
+stk asegs m lo (sp + -2192) -> lo <= sp - MEMCMPC_DEPTH -> kHighShadowEnd + 8 <= lo -> sp < 2^63 ->
+0 <= p1 -> 0 <= p2 -> 0 <= n -> p1 + n < 2^63 -> p2 + n < 2^63 ->
+chk_ok m p2 n -> m2s_cells m -> icells m -> mem_inv asegs m ->
+evt asegs (fun ms' => exists (m' : mem) (ra' t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' s6' s9' t3' t4' t5' t6' : word),
+ms' = MS (mkR ra' (Z_to_bv 64 (sp + -2192)) gp tp t0' t1' t2' s0 (Z_to_bv 64 n) a0' a1' a2' a3' a4' a5' a6' a7' (Z_to_bv 64 p2) s3 s4 s5 s6' s7 s8 s9' s10 s11 t3' t4' t5' t6')
+F (Z_to_bv 64 0x57ac4) fc None m' (seg_rom asegs)
+/\ munch [(sp - 2192 - 80, sp - 2192)] m m' /\ wmono asegs m m' /\ mem_inv asegs m' /\ stk asegs m' lo (sp + -2192))
+(MS (mkR ra (Z_to_bv 64 (sp + -2192)) gp tp t0 t1 t2 s0 (Z_to_bv 64 n) a0 a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 p2) s3 s4 s5 s6 s7 s8 (Z_to_bv 64 (n + -65)) s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x57a78) fc None m (seg_rom asegs)).
+Proof.
+intros until lo. intros ST LO LOLO SPH D0 S0 N0 DN SN (AC & QW & RO) M2S (G2 & G1 & RM & SHC & RI) MI.
+unfold kHighShadowEnd in *.
+pose proof (munch_refl [(sp - 2192 - 80, sp - 2192)] m) as MU. pose proof (wmono_refl asegs m) as WM.
+assert (EUd : bv_unsigned (Z_to_bv 64 p1) = p1) by (apply unsigned_lit; lia).
+assert (EUs : bv_unsigned (Z_to_bv 64 p2) = p2) by (apply unsigned_lit; lia).
+assert (EUn : bv_unsigned (Z_to_bv 64 n) = n) by (apply unsigned_lit; lia).
+zhide.
+lstep.  rewrite (lxor_ones64 p2) by lia.
+assert (EUns : bv_unsigned (Z_to_bv 64 (18446744073709551615 - p2)) = 18446744073709551615 - p2) by (apply unsigned_lit; lia).
+lstep.
+if_false.
+lstep. lstep.
+destruct (Z_lt_le_dec 64 n) as [BIG|SMALL]; [| destruct (Z.eq_dec n 0) as [Z0|NZ]].
+-
+assert (EU65 : bv_unsigned (Z_to_bv 64 (n + -65)) = n - 65) by (apply unsigned_lit; lia).
+if_true. lstep. if_true.
+apply (memcmpc_r2_rip sp p1 p2 n); try assumption; lia.
+-
+subst n. if_true. lstep. if_false. lstep.
+apply evt_done. do 19 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+-
+assert (EU65 : bv_unsigned (Z_to_bv 64 (n + -65)) = n - 65 + 2^64) by (rewrite Z_to_bv_unsigned; unfold bv_wrap, bv_modulus; cbn; rewrite Z.mod_eq by lia; Z.div_mod_to_equations; lia).
+if_false.
+destruct (QW ltac:(lia)) as (w1 & w2 & W1 & W2).
+do 11 lstep.
+unfold al8, shad, SHB in W1, W2.
+assert (E1 : Z.land ((2147450880 + p2 ≫ 3) mod 18446744073709551616) 18446744073709551608 = 8 * ((p2 / 8 + 2147450880) / 8)).
+{ rewrite Z.shiftr_div_pow2 by lia. change (2^3) with 8. rewrite Z.mod_small by (Z.div_mod_to_equations; lia).
+rewrite land_m8' by (Z.div_mod_to_equations; lia). f_equal. f_equal. lia. }
+assert (E2 : Z.land ((2147450880 + (p2 + n + -1) ≫ 3) mod 18446744073709551616) 18446744073709551608
+= 8 * (((p2 + n - 1) / 8 + 2147450880) / 8)).
+{ rewrite Z.shiftr_div_pow2 by lia. change (2^3) with 8. rewrite Z.mod_small by (Z.div_mod_to_equations; lia).
+rewrite land_m8' by (Z.div_mod_to_equations; lia). f_equal. f_equal. replace (p2 + n + -1) with (p2 + n - 1) by lia. lia. }
+rewrite E1, E2. clear E1 E2.
+lstep. lstep. lstep. lstep.
+if_cases K.
++
+rewrite !Z.shiftr_div_pow2 by lia. change (2^3) with 8.
+replace (2147450880 + (p2 + n + -1) / 8) with ((p2 + n + -1) / 8 + 2147450880) by lia.
+replace (2147450880 + p2 / 8) with (p2 / 8 + 2147450880) by lia.
+pose proof (acc_shadow_bytes m p2 n AC ltac:(lia) S0) as SB. unfold shad, SHB in SB.
+destruct (SB ((p2 + n + -1) / 8 + 2147450880)) as (bl & BL); [Z.div_mod_to_equations; lia|].
+pose proof (ro_C1_of_bytes _ _ _ BL) as CL.
+do 6 lstep. lstep.
+if_cases K2.
+*
+lstep. lstep. if_cases K3.
+-- apply evt_done. do 19 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+-- apply (memcmpc_r2_rip sp p1 p2 n); try assumption; lia.
+* zify_cond K2.
+eapply evt_cut.
+{ eapply (memcmpc_r2_loop (Z.to_nat ((p2 + n + -1) / 8 + 2147450880 - (p2 / 8 + 2147450880) - 1))).
+- rewrite Nat2Z.inj_succ, Z2Nat.id by (Z.div_mod_to_equations; lia). lia.
+- Z.div_mod_to_equations; lia.
+- Z.div_mod_to_equations; lia.
+- intros x Hx. apply SB. Z.div_mod_to_equations; lia.
+- assumption. }
+intros ms' (a5' & a6' & ->).
+lstep. lstep. if_cases K3.
+-- apply evt_done. do 19 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+-- apply (memcmpc_r2_rip sp p1 p2 n); try assumption; lia.
++ apply evt_done. do 19 eexists. split; [reflexivity|].
+split; [exact MU|]. split; [exact WM|]. split; [exact MI| exact ST].
+Qed.
+
+End WithRIP_memcmpc_r2.

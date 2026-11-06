@@ -1,0 +1,60 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AllocGtopM.v (a working branch 30a1993588f, c5 + memnorm; file sha256 90d534c545e6) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/AllocGtopM.v, with its module names changed; 9 of its 47 lines of code are new or changed and 11 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AllocGtopE.v (a working branch 30a1993588f, c5 + memnorm; file sha256 4427ec51925d) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* The errno-kept twin of AllocGtop: ErrnoG.aalloc_realizes_e (every size n < nmax) from its two cases, the
+   primary (ErrnoG.aalloc_prim_realizes_e, n <= 64512) and the secondary ([aalloc_sec_realizes_e], 64513 <= n).
+   Image-free, like AllocGtop: the case split is on n alone.  The secondary case on the cgif_file image is
+   AGioE.alloc_sec_w_e. *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s YO0d.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YN3v YI04.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0q.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AllocG.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require ErrnoG.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
+Import ListNotations.
+Open Scope Z_scope.
+
+Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Section b.
+(* AllocG's section variables, in AllocG's order. *)
+Variable segs : list Segment.
+Variable B : asyms.
+Variable U : list Z -> astate -> Prop.
+Variable mt : Z -> list Z -> M sptr.
+Variable ARX : Z -> alayout -> astate -> world segs -> (word -> option byte) -> Model -> Prop.
+Variable AOX : alayout -> astate -> Z -> Prop.
+Variable rpre : astate -> Z -> Prop.
+Variable nmax : Z.
+Variable lmax : Z.
+Variable lpost : astate -> Prop.
+Variable pcA : Z.
+Variable oomb : Z.
+Variable al : Z.
+Variable atp : Z.
+Variable cf : Z.
+
+Definition aalloc_sec_realizes_e : Prop :=
+forall inst so bp ly S W regs mem md n tr,
+alloc_pre segs B U ARX rpre nmax lmax al atp cf inst so bp ly S W regs mem md n tr -> 64513 <= n ->
+amreal segs (mt n tr S) W (cfg_at segs pcA regs mem md)
+(ErrnoG.alloc_leaf_e segs B mt ARX AOX lpost oomb inst ly S W regs mem md n tr).
+
+Lemma aalloc_realizes_e_of_prim_sec_e :
+ErrnoG.aalloc_prim_realizes_e segs B U mt ARX AOX rpre nmax lmax lpost pcA oomb al atp cf ->
+aalloc_sec_realizes_e ->
+ErrnoG.aalloc_realizes_e segs B U mt ARX AOX rpre nmax lmax lpost pcA oomb al atp cf.
+Proof.
+intros HP HS inst so bp ly S W regs mem md n tr PRE.
+destruct (Z_le_gt_dec n 64512) as [Hn|Hn].
+- exact (HP inst so bp ly S W regs mem md n tr PRE Hn).
+- exact (HS inst so bp ly S W regs mem md n tr PRE ltac:(lia)).
+Qed.
+End b.
+End a.

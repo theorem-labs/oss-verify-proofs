@@ -1,0 +1,66 @@
+INPUTS USED by port_addr_check.py --src <run>/stage --dst <ported tree> --src-image B=fuzz_grant.asan-ubsan(fde52226dc48):fuzz_grant.asan-ubsan.unstripped(5a5ee7c02b4e) --dst-image B=fuzz_wire.asan-ubsan(af4534831a45):fuzz_wire.asan-ubsan.unstripped(51eb4bef2425) --donors-from <donors-from tree> --paired-only --fail-on-flags --out <out>/flag.tsv --summary --cache <out>/flag.cache
+  image src B  fuzz_grant.asan-ubsan(fde52226dc48)  sha256 fde52226dc48  587992 bytes  symbols: symtab of fuzz_grant.asan-ubsan 5a5ee7c02b4e
+  image dst B  fuzz_wire.asan-ubsan(af4534831a45)  sha256 af4534831a45  567032 bytes  symbols: symtab of fuzz_wire.asan-ubsan 51eb4bef2425
+  ref src  <run>/stage  -> local path
+  ref dst  <ported tree>  -> local path
+  count symbols of src B: 2009
+  count symbols of dst B: 1983
+  count src files read: 5
+  count dst files read: 5
+  count files paired: 5
+  count numerals: 2350
+  count files recognised or declared generated (GENERATED-SKIPPED): 0
+  count constructors whose declared field roles were read from the ported tree: 0
+  count constructors whose declared field roles were read from the source tree: 0
+  count stale-donor candidates dropped instead of judged: 0
+  count file pairs whose build came from rule (ii): 10
+  count named-symbol cells UNMEASURED (the run reads the file against another build): 0
+  control fill_pass known answer (selftest_fill, run before anything is read): RAN  pass
+  control donor-vs-donor: NOT RUN  a separate run of this tool with one image on both sides; see the checker's notes
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-PORTED  count 4  reported as its own row, never silently
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-SOURCE  count 4  reported as its own row, never silently
+  note cache <out>/flag.cache  chosen by the --cache flag
+  note file pairing: normalised RELATIVE PATH after --map / --rename, then the identity of the first hex in the file name; never the basename alone. There is no donor-text carry filter, so no candidate is dropped for being absent from a same-named donor file (<lane> REPORT.md A.4)
+  note size-role slots (CLOSED list; a page-aligned value is read as a size ONLY in one of these, and every other slot -- a generic register value with no syscall number in its sentence, an address slot, a record address field, any slot kind not named here -- keeps its address reading and FLAGS if it moved): syscall-arg = the length / prot / flags argument of a syscall whose number the same sentence states (a7 = 222 mmap, 226 mprotect), or that position in a syscall argument tuple; arith-operand = an operand of `/`, `*` or a round mask (`+ 0x3ffff`): the value divides, scales or rounds a quantity, so it is a granule, never an address; declared-field = a constructor argument the tree's own `Inductive` declares as a length or a size (handled by field_role, before this rule); size-name = a definition whose own NAME states a size, length, count or offset (`FS_FROFF`, `*_LEN`), and whose name is not an address name
+# files paired 5; numerals 2350; "kernel" = of those, inside a fail-loud vm_compute / fetch_word fact
+INSN-SAME	28	kernel 14
+NON-ADDRESS-SAME	2174	kernel 1789
+SAME-GEOMETRY	51	kernel 47
+SAME-SYMBOL	84	kernel 77
+GEOMETRY-CHANGED	3	kernel 3	FLAG
+UNPAIRED-PORTED	4	FLAG
+UNPAIRED-SOURCE	4	kernel 4	FLAG
+UNRESOLVED	2	kernel 2	FLAG
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+UNMEASURED named-symbol 0 / 0 cells	UNMEASURED-NAME 0 rows	UNPAIRED-FILE-UNMEASURED 0 rows
+# image B fuzz_grant.asan-ubsan(fde52226dc48) fde52226dc48 symbols: symtab
+# image B fuzz_wire.asan-ubsan(af4534831a45) af4534831a45 symbols: symtab
+FLAGGED 13 rows in 4 classes: GEOMETRY-CHANGED=3 UNPAIRED-PORTED=4 UNPAIRED-SOURCE=4 UNRESOLVED=2
+checker port_addr_check 45b78aaa48c3 rc=4
+ARITH-MISMATCH
+DIFFERENT-SYMBOL
+FLAGS-NOT-DECOMPOSABLE
+GEOMETRY-CHANGED
+GP-NOT-GLOBAL-POINTER
+HASH-UNCHANGED
+IMAGE-EXTENT-CHANGED
+IMAGE-EXTENT-STALE-ABOVE
+IMAGE-EXTENT-STALE-BELOW
+INSN-CHANGED
+KIND-CHANGED
+LABEL-COMPARED-WITH-PC
+LABEL-MIXED
+NO-COUNTERPART
+NON-ADDRESS-CHANGED
+SAME-VALUE-DIFFERENT-OBJECT
+SLID-TO-NEIGHBOUR
+STALE-DERIVED-QUOTIENT
+STALE-DONOR-CODE-POINTER
+STALE-DONOR-DATA-POINTER
+STALE-DONOR-ROUNDED
+TARGET-DIFFERENT-SYMBOL
+TARGET-OUTSIDE
+UNPAIRED-FILE
+UNPAIRED-PORTED
+UNPAIRED-SOURCE
+UNRESOLVED

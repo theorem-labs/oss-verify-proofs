@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: httrack
 harness: fuzz-entities
-rocq: OssFuzzTheorems.httrack.fuzz_entities
+rocq: OSSVerify.httrack.fuzz_entities
 origin: upstream
 summary: hts_unescapeEntities / hts_unescapeEntitiesWithCharset into a 1..4096-byte buffer chosen by byte
   0; return values discarded.

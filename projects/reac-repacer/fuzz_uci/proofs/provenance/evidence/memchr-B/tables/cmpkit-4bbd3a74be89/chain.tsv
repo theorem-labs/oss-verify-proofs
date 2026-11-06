@@ -1,0 +1,9 @@
+# U = fuzz_uci.asan-ubsan(unstripped, sha256 8d07ffcf5948) sha256 8d07ffcf5948
+# R = fuzz_boxreg.asan-ubsan(unstripped, sha256 1d548458eac3) sha256 1d548458eac3
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes acceptances	C-string acceptances (also one CSTR row each)
+__interceptor_trampoline_memchr	U:R	0x4107c	0x41468	4	4	EQUAL-mod-pcrel	1	0	0	(0, 0, 0)	0		
+___interceptor_memchr	U:R	0x42784	0x43208	720	720	EQUAL-mod-pcrel	25	0	0	(1, 0, 1)	0	full+0x29c[0x103d0|0x103d0]=8	0x204@0x19fc9|0x19fee=b'memchr\x00'
+CSTR	___interceptor_memchr	U:R	0x204	0x19fc9	0x19fee	7	6d656d63687200	b'memchr\x00'
+memchr	U:R	0x9035c	0x924ac	204	204	EQUAL-mod-pcrel	4	0	0	(2, 0, 0)	0	full+0x5c[0x10368|0x10368]=8 full+0x64[0x10350|0x10350]=8	
+_ZN11__sanitizer15internal_memchrEPKvim	U:R	0x626ec	0x633b0	32	32	EQUAL	0	0	0	(0, 0, 0)	0		

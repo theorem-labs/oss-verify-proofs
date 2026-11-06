@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: httrack
 harness: fuzz-header
-rocq: OssFuzzTheorems.httrack.fuzz_header
+rocq: OSSVerify.httrack.fuzz_header
 origin: upstream
 summary: Feeds lines to treatfirstline / treathead (status line, headers, cookies) with \r stripped; no
   output inspected.

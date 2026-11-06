@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openjpeg
 harness: opj_decompress_fuzzer_J2K
-rocq: OssFuzzTheorems.openjpeg.opj_decompress_fuzzer_J2K
+rocq: OSSVerify.openjpeg.opj_decompress_fuzzer_J2K
 origin: upstream
 summary: Accepts only a codestream starting with the SOC marker 0xFF4F; opj_read_header, then opj_set_decode_area
   clamped to 1024x1024 and opj_decode from a memory stream; the decoded image is never inspected.

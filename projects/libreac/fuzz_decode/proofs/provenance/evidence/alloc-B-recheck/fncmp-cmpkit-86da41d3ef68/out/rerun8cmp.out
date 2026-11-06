@@ -1,0 +1,65 @@
+# the re-run log fncmp.cmpkit-4bbd3a74be89.log sha256 eff9ccb831d8; its settled.tsv settled.tsv sha256 41d7ccff1f7f
+fn	field	this record (C:D)	re-run T:E	re-run S:E	C:D vs T:E	C:D vs S:E
+_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	combined verdict (this kit)	EQUAL-mod-pcrel
+_ZN11__sanitizer13internal_mmapEPvmiiiy	combined verdict (this kit)	EQUAL
+_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	combined verdict (this kit)	EQUAL-mod-pcrel
+_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeCl	combined verdict (this kit)	EQUAL
+_ZN11__sanitizer9TryMemCpyEPvPKvm	combined verdict (this kit)	EQUAL-mod-pcrel
+_ZN6__asan12PoisonShadowEmmh	combined verdict (this kit)	EQUAL-mod-pcrel
+_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	combined verdict (this kit)	DIFFERENT-target
+memset	combined verdict (this kit)	EQUAL
+_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	verdict	EQUAL-mod-pcrel	EQUAL-mod-pcrel	EQUAL-mod-pcrel	same	same
+_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	pcrel	2	2	2	same	same
+_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	real	0	0	0	same	same
+_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	unmeasured	0	0	0	same	same
+_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	targets	(0, 0, 0)	(0, 0, 0)	(0, 0, 0)	same	same
+_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	target-differ	0	0	0	same	same
+_ZN11__sanitizer13internal_mmapEPvmiiiy	verdict	EQUAL	EQUAL	EQUAL	same	same
+_ZN11__sanitizer13internal_mmapEPvmiiiy	pcrel	0	0	0	same	same
+_ZN11__sanitizer13internal_mmapEPvmiiiy	real	0	0	0	same	same
+_ZN11__sanitizer13internal_mmapEPvmiiiy	unmeasured	0	0	0	same	same
+_ZN11__sanitizer13internal_mmapEPvmiiiy	targets	(0, 0, 0)	(0, 0, 0)	(0, 0, 0)	same	same
+_ZN11__sanitizer13internal_mmapEPvmiiiy	target-differ	0	0	0	same	same
+_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	verdict	EQUAL-mod-pcrel	EQUAL-mod-pcrel	EQUAL-mod-pcrel	same	same
+_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	pcrel	16	16	16	same	same
+_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	real	0	0	0	same	same
+_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	unmeasured	0	0	0	same	same
+_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	targets	(0, 0, 8)	(0, 0, 8)	(0, 0, 8)	same	same
+_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	target-differ	0	0	0	same	same
+_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeCl	verdict	EQUAL	EQUAL	EQUAL	same	same
+_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeCl	pcrel	0	0	0	same	same
+_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeCl	real	0	0	0	same	same
+_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeCl	unmeasured	0	0	0	same	same
+_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeCl	targets	(0, 0, 0)	(0, 0, 0)	(0, 0, 0)	same	same
+_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeCl	target-differ	0	0	0	same	same
+_ZN11__sanitizer9TryMemCpyEPvPKvm	verdict	EQUAL-mod-pcrel	EQUAL-mod-pcrel	EQUAL-mod-pcrel	same	same
+_ZN11__sanitizer9TryMemCpyEPvPKvm	pcrel	12	12	12	same	same
+_ZN11__sanitizer9TryMemCpyEPvPKvm	real	0	0	0	same	same
+_ZN11__sanitizer9TryMemCpyEPvPKvm	unmeasured	0	0	0	same	same
+_ZN11__sanitizer9TryMemCpyEPvPKvm	targets	(0, 0, 6)	(0, 0, 6)	(0, 0, 6)	same	same
+_ZN11__sanitizer9TryMemCpyEPvPKvm	target-differ	0	0	0	same	same
+_ZN6__asan12PoisonShadowEmmh	verdict	EQUAL-mod-pcrel	EQUAL-mod-pcrel	EQUAL-mod-pcrel	same	same
+_ZN6__asan12PoisonShadowEmmh	pcrel	61	61	61	same	same
+_ZN6__asan12PoisonShadowEmmh	real	0	0	0	same	same
+_ZN6__asan12PoisonShadowEmmh	unmeasured	0	0	0	same	same
+_ZN6__asan12PoisonShadowEmmh	targets	(0, 1, 11)	(0, 1, 11)	(0, 0, 11)	same	DIFFER
+_ZN6__asan12PoisonShadowEmmh	target-differ	0	0	0x48c	same	DIFFER
+_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	verdict	EQUAL-mod-pcrel	EQUAL-mod-pcrel	EQUAL-mod-pcrel	same	same
+_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	pcrel	81	81	81	same	same
+_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	real	0	0	0	same	same
+_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	unmeasured	0	0	0	same	same
+_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	targets	(2, 0, 20)	(2, 0, 20)	(2, 0, 20)	same	same
+_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	target-differ	0xdc	0xdc	0xdc	same	same
+memset	verdict	EQUAL	EQUAL	EQUAL	same	same
+memset	pcrel	0	0	0	same	same
+memset	real	0	0	0	same	same
+memset	unmeasured	0	0	0	same	same
+memset	targets	(0, 0, 0)	(0, 0, 0)	(0, 0, 0)	same	same
+memset	target-differ	0	0	0	same	same
+## re-run settlements beside this record (bytes read from the images by this script)
+S:E _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta +0xdc: the re-run measurement bounded-byte-table, settled SAME (64 bytes equal); re-run table 0x10428 / 0x10440, 64 bytes; the images here: IDENTICAL to the re-run
+S:E _ZN6__asan12PoisonShadowEmmh +0x48c: the re-run measurement got-value-zero-test, settled SAME (equal raw value, zero test only); re-run .got cells 0x9e248 / 0x99328 = 0100000000000000 / 0100000000000000; the images here: IDENTICAL to the re-run
+T:E _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta +0xdc: the re-run measurement bounded-byte-table, settled SAME (64 bytes equal); re-run table 0x10428 / 0x10440, 64 bytes; the images here: IDENTICAL to the re-run
+## disagreements (this record C:D against re-run T:E / S:E): 2
+  S:E _ZN6__asan12PoisonShadowEmmh targets: this record (0, 1, 11), re-run (0, 0, 11)
+  S:E _ZN6__asan12PoisonShadowEmmh target-differ: this record 0, re-run 0x48c

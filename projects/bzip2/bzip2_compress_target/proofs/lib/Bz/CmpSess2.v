@@ -1,0 +1,49 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib Require Import PropExec.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib Require Import Tac WalkLib.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz Require Import BzTables BzArr BzCMem BzCStream BzCState BzCBlock BzCDriver BzArrD CmpMem CmpCut CmpSess.
+From Stdlib Require Lia. Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib Require Import ACeilTac.
+Import ListNotations. Open Scope Z_scope.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib Require Import ACeil.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz Require Import BzParams.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Bz Require Import CmpLiaP.   (* [comment removed for export] *)
+(* [comment removed for export] *)
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib Require Import CpsOpen.
+Section ACeilS1. Context {BZP : BzParams} {ACEIL__ : ACeil}.
+
+
+(* [comment removed for export] *)   (* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+Definition bzc_finish_tail (e : est) (z : zstrm) (pr : bool) : Z * est * zstrm :=
+  if negb pr then (BZ_SEQUENCE_ERROR, e, z) else
+  if (0 <? e_avail_in_expect e) || negb (isempty_RL_e e) || (e_state_out_pos e <? bw_numZ (e_bw e)) then (BZ_FINISH_OK, e, z)
+  else (BZ_STREAM_END, est_set_modes e BZ_M_IDLE (e_state e) (e_avail_in_expect e), z).
+
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+End ACeilS1.

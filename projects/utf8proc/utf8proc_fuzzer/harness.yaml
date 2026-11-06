@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: utf8proc
 harness: utf8proc_fuzzer
-rocq: OssFuzzTheorems.utf8proc.utf8proc_fuzzer
+rocq: OSSVerify.utf8proc.utf8proc_fuzzer
 origin: upstream
 summary: Iterates codepoints of the NUL-terminated input calling case/category/width/grapheme-break queries,
   then NFD/NFC/NFKD/NFKC/NFKC_Casefold and five utf8proc_map option sets; every return value is ignored.

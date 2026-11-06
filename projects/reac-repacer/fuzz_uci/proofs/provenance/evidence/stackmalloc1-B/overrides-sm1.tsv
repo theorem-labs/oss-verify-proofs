@@ -1,0 +1,6 @@
+# --override rows for reac-repacer/fuzz_uci image B's class-1 stack_malloc files, DONOR = fuzz_grant's released lib
+# (recipes 4f87de75d67, normalised by core-B/mkdon.sh), port_core 0e4e065eab9f. file<TAB>donor-line<TAB>old<TAB>new[<TAB>OCCURRENCE].
+# Measured by role on the pinned images (measure-sm1.py, measure-sm1.out; the same rule on fuzz_grant.asan-ubsan prints the
+# donor's own value, the control).
+# kLowShadowBeg + IMG_TOP / 8 (YF0r.shLO false): grant B 0x7fff7000 + 0x5fb000 / 8 = 2148230656 (control), uci B 0x7fff7000 + 0x5f4000 / 8
+B/Rt/YF0s.v	255	2148230656	2148227072

@@ -1,0 +1,531 @@
+{
+ "walks": {
+  "A diginet_mac_is_digidesign": {
+   "image": "A",
+   "function": "diginet_mac_is_digidesign",
+   "source": "frame",
+   "files": [
+    "diginet_mac_is_digidesign_c.v",
+    "diginet_mac_is_digidesign_F_c.v",
+    "diginet_mac_is_digidesign_F.v",
+    "diginet_mac_is_digidesign_cg.v",
+    "diginet_mac_is_digidesign.v"
+   ],
+   "numerals": 13,
+   "stopped": null,
+   "comment_image_numerals_kept": 92,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "A diginet_frame_is_keepalive": {
+   "image": "A",
+   "function": "diginet_frame_is_keepalive",
+   "source": "frame",
+   "files": [
+    "diginet_frame_is_keepalive_c.v",
+    "diginet_frame_is_keepalive_F_c.v",
+    "diginet_frame_is_keepalive_F.v",
+    "diginet_frame_is_keepalive_cg.v",
+    "diginet_frame_is_keepalive.v"
+   ],
+   "numerals": 4,
+   "stopped": null,
+   "comment_image_numerals_kept": 74,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "A diginet_frame_parse": {
+   "image": "A",
+   "function": "diginet_frame_parse",
+   "source": "frame",
+   "files": [
+    "diginet_frame_parse_cg.v",
+    "diginet_frame_parse_kit.v",
+    "diginet_frame_parse_seg_hdr1.v",
+    "diginet_frame_parse_seg_hdr2.v",
+    "diginet_frame_parse_seg_head.v",
+    "diginet_frame_parse_seg_tail.v",
+    "diginet_frame_parse_segs.v",
+    "diginet_frame_parse_walk.v"
+   ],
+   "numerals": 31,
+   "stopped": null,
+   "comment_image_numerals_kept": 387,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "A diginet_frame_build": {
+   "image": "A",
+   "function": "diginet_frame_build",
+   "source": "frame",
+   "files": [
+    "diginet_frame_build_cg.v",
+    "diginet_frame_build_iface.v",
+    "diginet_frame_build_kit.v",
+    "diginet_frame_build_seg_a.v",
+    "diginet_frame_build_seg_h1.v",
+    "diginet_frame_build_seg_h2a.v",
+    "diginet_frame_build_seg_h2b.v",
+    "diginet_frame_build_seg_loop.v",
+    "diginet_frame_build_walk.v"
+   ],
+   "numerals": 35,
+   "stopped": null,
+   "comment_image_numerals_kept": 253,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "A diginet_announce_parse": {
+   "image": "A",
+   "function": "diginet_announce_parse",
+   "source": "frame",
+   "files": [
+    "diginet_announce_parse_c.v",
+    "diginet_announce_parse_F_c.v",
+    "diginet_announce_parse_F.v",
+    "diginet_announce_parse_cg.v",
+    "diginet_announce_parse.v"
+   ],
+   "numerals": 21,
+   "stopped": null,
+   "comment_image_numerals_kept": 126,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "A diginet_cursor_init": {
+   "image": "A",
+   "function": "diginet_cursor_init",
+   "source": "decode",
+   "files": [
+    "diginet_cursor_init_c.v",
+    "diginet_cursor_init_F_c.v",
+    "diginet_cursor_init_F.v",
+    "diginet_cursor_init_cg.v"
+   ],
+   "numerals": 10,
+   "stopped": null,
+   "comment_image_numerals_kept": 76,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "A diginet_msg_next": {
+   "image": "A",
+   "function": "diginet_msg_next",
+   "source": "decode",
+   "files": [
+    "diginet_msg_next_cg.v",
+    "diginet_msg_next_walk_lib.v",
+    "diginet_msg_next_seg_body.v",
+    "diginet_msg_next_seg_chan.v",
+    "diginet_msg_next_seg_entry.v",
+    "diginet_msg_next_seg_sys.v",
+    "diginet_msg_next_segs.v",
+    "diginet_msg_next_walk.v"
+   ],
+   "numerals": 28,
+   "stopped": null,
+   "comment_image_numerals_kept": 465,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "A diginet_body_check": {
+   "image": "A",
+   "function": "diginet_body_check",
+   "source": "decode",
+   "files": [
+    "diginet_body_check_cg.v",
+    "diginet_body_check_cgW.v",
+    "DgnBcCut.v",
+    "DgnBcHead.v",
+    "DgnBcLoop.v",
+    "DgnBcLoopCall.v",
+    "DgnBcLoopCut.v",
+    "DgnBcLoopTest.v",
+    "DgnBcRel.v",
+    "DgnBcScan.v"
+   ],
+   "numerals": 64,
+   "stopped": null,
+   "comment_image_numerals_kept": 70,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "B diginet_mac_is_digidesign": {
+   "image": "B",
+   "function": "diginet_mac_is_digidesign",
+   "source": "frame",
+   "files": [
+    "diginet_mac_is_digidesign_c.v",
+    "diginet_mac_is_digidesign_F_c.v",
+    "diginet_mac_is_digidesign_F.v",
+    "diginet_mac_is_digidesign_cg.v",
+    "diginet_mac_is_digidesign.v"
+   ],
+   "numerals": 13,
+   "stopped": null,
+   "comment_image_numerals_kept": 130,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "B diginet_frame_is_keepalive": {
+   "image": "B",
+   "function": "diginet_frame_is_keepalive",
+   "source": "frame",
+   "files": [
+    "diginet_frame_is_keepalive_c.v",
+    "diginet_frame_is_keepalive_F_c.v",
+    "diginet_frame_is_keepalive_F.v",
+    "diginet_frame_is_keepalive_cg.v",
+    "diginet_frame_is_keepalive.v"
+   ],
+   "numerals": 4,
+   "stopped": null,
+   "comment_image_numerals_kept": 133,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "B diginet_frame_parse": {
+   "image": "B",
+   "function": "diginet_frame_parse",
+   "source": "frame",
+   "files": [
+    "diginet_frame_parse_cg.v",
+    "diginet_frame_parse_kit.v",
+    "diginet_frame_parse_seg_hdr1.v",
+    "diginet_frame_parse_seg_hdr2.v",
+    "diginet_frame_parse_seg_hdr3.v",
+    "diginet_frame_parse_seg_head.v",
+    "diginet_frame_parse_seg_tail.v",
+    "diginet_frame_parse_segs.v",
+    "diginet_frame_parse_walk.v"
+   ],
+   "numerals": 22,
+   "stopped": null,
+   "comment_image_numerals_kept": 455,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "B diginet_frame_build": {
+   "image": "B",
+   "function": "diginet_frame_build",
+   "source": "frame",
+   "files": [
+    "diginet_frame_build_cg.v",
+    "diginet_frame_build_cgW.v",
+    "diginet_frame_build_cuts.v",
+    "diginet_frame_build_iface.v",
+    "diginet_frame_build_seg_a.v",
+    "diginet_frame_build_seg_b.v",
+    "diginet_frame_build_seg_h1.v",
+    "diginet_frame_build_seg_h2a.v",
+    "diginet_frame_build_seg_h2b.v",
+    "diginet_frame_build_w_bc.v",
+    "diginet_frame_build_w_entry.v",
+    "diginet_frame_build_w_epi.v",
+    "diginet_frame_build_w_h2.v",
+    "diginet_frame_build_w_hdr.v",
+    "diginet_frame_build_w_tail.v"
+   ],
+   "numerals": 28,
+   "stopped": null,
+   "comment_image_numerals_kept": 428,
+   "modules_pending": [
+    "B.T06_FrameB_env <- core B, TCB (B/T06_FrameB_env.v)"
+   ],
+   "names_pending": [
+    "t06be_api_env <- core B, TCB (B/T06_FrameB_env.v)",
+    "t06be_model_laws <- core B, TCB (B/T06_FrameB_env.v)"
+   ],
+   "names_unmapped": [],
+   "residual_unit_names": [
+    "T06_FrameB_env"
+   ]
+  },
+  "B diginet_announce_parse": {
+   "image": "B",
+   "function": "diginet_announce_parse",
+   "source": "frame",
+   "files": [
+    "diginet_announce_parse_cg.v",
+    "diginet_announce_parse_cgW.v"
+   ],
+   "numerals": 20,
+   "stopped": null,
+   "comment_image_numerals_kept": 84,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "B diginet_cursor_init": {
+   "image": "B",
+   "function": "diginet_cursor_init",
+   "source": "decode",
+   "files": [
+    "diginet_cursor_init_c.v",
+    "diginet_cursor_init_F_c.v",
+    "diginet_cursor_init_F.v",
+    "diginet_cursor_init_cg.v",
+    "diginet_cursor_init.v",
+    "diginet_cursor_init_cgW.v"
+   ],
+   "numerals": 10,
+   "stopped": null,
+   "comment_image_numerals_kept": 98,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "B diginet_msg_next": {
+   "image": "B",
+   "function": "diginet_msg_next",
+   "source": "decode",
+   "files": [
+    "diginet_msg_next_cg.v",
+    "diginet_msg_next_cgW.v",
+    "diginet_msg_next_walk_lib.v",
+    "diginet_msg_next_seg_body.v",
+    "diginet_msg_next_seg_chan.v",
+    "diginet_msg_next_seg_entry.v",
+    "diginet_msg_next_seg_sys.v",
+    "diginet_msg_next_segs.v"
+   ],
+   "numerals": 24,
+   "stopped": null,
+   "comment_image_numerals_kept": 580,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "B diginet_body_check": {
+   "image": "B",
+   "function": "diginet_body_check",
+   "source": "decode",
+   "files": [
+    "diginet_body_check_cg.v",
+    "diginet_body_check_cgW.v",
+    "DgnBcCut.v",
+    "DgnBcHead.v",
+    "DgnBcLoop.v",
+    "DgnBcLoopCall.v",
+    "DgnBcLoopCut.v",
+    "DgnBcLoopTest.v",
+    "DgnBcRel.v",
+    "DgnBcScan.v"
+   ],
+   "numerals": 64,
+   "stopped": null,
+   "comment_image_numerals_kept": 83,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "B diginet_sum16": {
+   "image": "B",
+   "function": "diginet_sum16",
+   "source": "frame",
+   "files": [
+    "diginet_sum16_c.v",
+    "diginet_sum16_F_c.v",
+    "diginet_sum16_F.v",
+    "diginet_sum16_cg.v",
+    "diginet_sum16.v"
+   ],
+   "numerals": 15,
+   "stopped": null,
+   "comment_image_numerals_kept": 135,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "B rd32": {
+   "image": "B",
+   "function": "rd32",
+   "source": "frame",
+   "files": [
+    "rd32_c.v",
+    "rd32_F_c.v",
+    "rd32_F.v",
+    "rd32_cg.v",
+    "rd32.v"
+   ],
+   "numerals": 13,
+   "stopped": null,
+   "comment_image_numerals_kept": 161,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  },
+  "B copy_strz": {
+   "image": "B",
+   "function": "copy_strz",
+   "source": "frame",
+   "files": [
+    "copy_strz_c.v",
+    "copy_strz_F_c.v",
+    "copy_strz_F.v",
+    "copy_strz_cg.v",
+    "copy_strz.v"
+   ],
+   "numerals": 10,
+   "stopped": null,
+   "comment_image_numerals_kept": 173,
+   "modules_pending": [],
+   "names_pending": [],
+   "names_unmapped": [],
+   "residual_unit_names": []
+  }
+ },
+ "twins": {
+  "frame A": [
+   "34f028d3dec4b4236a88b3039fc878008179fb6d0b01d952f6669b418f394e70",
+   "67d7e481d74edac58be0e018835f577491192d461b4a35bd4109dc4ab0494fd5",
+   "4 PT_LOAD(s) equal outside the ELF header section-header fields and the build-id descriptor (25 bytes differ there)"
+  ],
+  "frame B": [
+   "2574b26fc98e110739c61430d72921be4995c34c1a38f8b1ed258898809ae264",
+   "ee3ea72a063b5cbb4537ebffeeb8b997226ecba44ac2e727839e55926b352371",
+   "4 PT_LOAD(s) equal outside the ELF header section-header fields and the build-id descriptor (25 bytes differ there)"
+  ],
+  "decode A": [
+   "47bd808e8cb9d29fe1fbac5254b0cfe93d458f2dcc1dd19817566c94943a13e5",
+   "a7133a6c74e53c5a326c0a451e06329cc6a94185b4e83d1a1f4c86b8c45bd187",
+   "4 PT_LOAD(s) equal outside the ELF header section-header fields and the build-id descriptor (25 bytes differ there)"
+  ],
+  "decode B": [
+   "1c8e7ec206824fd70cb4247dcdc2f122b5d8dba1571da738ab1f3eac35f5a30a",
+   "50d7282d5a4b7c7e67ba8be8d3cf46866073ee6ec207bb5dd664fca33dd691ba",
+   "4 PT_LOAD(s) equal outside the ELF header section-header fields and the build-id descriptor (25 bytes differ there)"
+  ],
+  "transport A": [
+   "e89be137db17b720e0310addc2dcc601998945478a9102e6a9850b0566106350",
+   "86efc3a80314981197619c115e313dbde50e8b86a6c5fefad4e5cc420250c792",
+   "4 PT_LOAD(s) equal outside the ELF header section-header fields and the build-id descriptor (25 bytes differ there)"
+  ],
+  "transport B": [
+   "41113a03c82fde8282db830ab5f4fbe376e392a38d22670b8cb8c9f02969ece4",
+   "e217cb0a84f1e1810805155304b281a259ef83a85f50efcf0c65b40697bfa4dc",
+   "4 PT_LOAD(s) equal outside the ELF header section-header fields and the build-id descriptor (25 bytes differ there)"
+  ]
+ },
+ "bycmp": {
+  "A diginet_mac_is_digidesign": [
+   "bycmp_diginet_mac_is_digidesign_A.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "A diginet_frame_is_keepalive": [
+   "bycmp_diginet_frame_is_keepalive_A.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 6/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "A diginet_frame_parse": [
+   "bycmp_diginet_frame_parse_A.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 36/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "A diginet_frame_build": [
+   "bycmp_diginet_frame_build_A.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 30/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "A diginet_announce_parse": [
+   "bycmp_diginet_announce_parse_A.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 13/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "A diginet_cursor_init": [
+   "bycmp_diginet_cursor_init_A.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 6/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "A diginet_msg_next": [
+   "bycmp_diginet_msg_next_A.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 36/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "A diginet_body_check": [
+   "bycmp_diginet_body_check_A.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 12/0/0 target-differ 0 C-string acceptances 1"
+  ],
+  "B diginet_mac_is_digidesign": [
+   "bycmp_diginet_mac_is_digidesign_B.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "B diginet_frame_is_keepalive": [
+   "bycmp_diginet_frame_is_keepalive_B.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 5/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "B diginet_frame_parse": [
+   "bycmp_diginet_frame_parse_B.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "B diginet_frame_build": [
+   "bycmp_diginet_frame_build_B.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "B diginet_announce_parse": [
+   "bycmp_diginet_announce_parse_B.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 7/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "B diginet_cursor_init": [
+   "bycmp_diginet_cursor_init_B.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 6/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "B diginet_msg_next": [
+   "bycmp_diginet_msg_next_B.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "B diginet_body_check": [
+   "bycmp_diginet_body_check_B.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 12/0/0 target-differ 0 C-string acceptances 1"
+  ],
+  "B diginet_sum16": [
+   "bycmp_diginet_sum16_B.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 2/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "B rd32": [
+   "bycmp_rd32_B.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 5/0/0 target-differ 0 C-string acceptances 0"
+  ],
+  "B copy_strz": [
+   "bycmp_copy_strz_B.txt",
+   "EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0"
+  ]
+ },
+ "consistency": [
+  [
+   "A",
+   "diginet_body_check_cg.v",
+   "EQUAL (code)",
+   []
+  ],
+  [
+   "B",
+   "diginet_body_check_cg.v",
+   "EQUAL (code)",
+   []
+  ]
+ ],
+ "stops": []
+}

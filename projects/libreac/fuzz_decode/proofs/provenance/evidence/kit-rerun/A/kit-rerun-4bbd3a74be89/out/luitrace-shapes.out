@@ -1,0 +1,81 @@
+# evidence for the 86da fail-open shapes (a)-(h) in the 7 compared functions
+SHAPE-g	cgif_file_fuzzer.asan-ubsan	2-byte (compressed) instructions 0	lui/c.lui 18
+SHAPE-d	cgif_file_fuzzer.asan-ubsan	CSR instructions 0
+SHAPE-e	cgif_file_fuzzer.asan-ubsan	indirect `jr` sites [('_ZN6__asan12PoisonShadowEmmh', '0x39c', 't1')]
+SHAPE-g	fuzz_decode.asan	2-byte (compressed) instructions 0	lui/c.lui 18
+SHAPE-d	fuzz_decode.asan	CSR instructions 0
+SHAPE-e	fuzz_decode.asan	indirect `jr` sites [('_ZN6__asan12PoisonShadowEmmh', '0x39c', 't1')]
+
+# SHAPE-a: lui-derived base uses with a NON-ZERO immediate (the kit never forms V+imm; luitrace does)
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x6b4	lw a1, 0x2c(a0)	reg=a0	imm=+44	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x6d4	lw a1, 0x34(a0)	reg=a0	imm=+52	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x530	lbu a1, 0x55(a1)	reg=a1	imm=+85	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x77c	lbu a7, 0x4e(a7)	reg=a7	imm=+78	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x434	ld a2, 0x10(a2)	reg=a2	imm=+16	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x30c	lw s8, 8(a0)	reg=a0	imm=+8	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x2c8	lbu a0, -0xf(s4)	reg=s4	imm=-15	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x2e0	sb a0, -0xf(s4)	reg=s4	imm=-15	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x2e4	sh a1, -0xe(s4)	reg=s4	imm=-14	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x2e8	sw s1, -0xc(s4)	reg=s4	imm=-12	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x300	sb a0, 1(s5)	reg=s5	imm=+1	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x3b8	sd a0, 8(s5)	reg=s5	imm=+8	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x6e4	lbu a1, 1(s5)	reg=s5	imm=+1	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x6fc	sb a0, 1(s5)	reg=s5	imm=+1	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x368	sb zero, 0x3d8(s6)	reg=s6	imm=+984	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x16c	lh a0, 0x629(s10)	reg=s10	imm=+1577	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x188	lh a0, 0x62b(s10)	reg=s10	imm=+1579	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x3dc	ld a0, 0x20(s6)	reg=s6	imm=+32	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x418	ld a0, 0x40(s6)	reg=s6	imm=+64	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x25c	ld a2, 0x621(s10)	reg=s10	imm=+1569	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN	+0x21c	ld a0, 0x621(s10)	reg=s10	imm=+1569	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer17CombinedAllocato	+0x1c8	ld a2, 8(s1)	reg=s1	imm=+8	base=?	ea=-	-
+SHAPE-a	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer17CombinedAllocato	+0x1d4	lwu a4, 0x10(a4)	reg=a4	imm=+16	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x6b4	lw a1, 0x2c(a0)	reg=a0	imm=+44	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x6d4	lw a1, 0x34(a0)	reg=a0	imm=+52	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x530	lbu a1, 0x55(a1)	reg=a1	imm=+85	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x77c	lbu a7, 0x4e(a7)	reg=a7	imm=+78	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x434	ld a2, 0x10(a2)	reg=a2	imm=+16	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x30c	lw s8, 8(a0)	reg=a0	imm=+8	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x2c8	lbu a0, -0xf(s4)	reg=s4	imm=-15	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x2e0	sb a0, -0xf(s4)	reg=s4	imm=-15	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x2e4	sh a1, -0xe(s4)	reg=s4	imm=-14	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x2e8	sw s1, -0xc(s4)	reg=s4	imm=-12	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x300	sb a0, 1(s5)	reg=s5	imm=+1	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x3b8	sd a0, 8(s5)	reg=s5	imm=+8	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x6e4	lbu a1, 1(s5)	reg=s5	imm=+1	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x6fc	sb a0, 1(s5)	reg=s5	imm=+1	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x368	sb zero, 0x3d8(s6)	reg=s6	imm=+984	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x16c	lh a0, 0x629(s10)	reg=s10	imm=+1577	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x188	lh a0, 0x62b(s10)	reg=s10	imm=+1579	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x3dc	ld a0, 0x20(s6)	reg=s6	imm=+32	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x418	ld a0, 0x40(s6)	reg=s6	imm=+64	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x25c	ld a2, 0x621(s10)	reg=s10	imm=+1569	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN	+0x21c	ld a0, 0x621(s10)	reg=s10	imm=+1569	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN11__sanitizer17CombinedAllocato	+0x1c8	ld a2, 8(s1)	reg=s1	imm=+8	base=?	ea=-	-
+SHAPE-a	fuzz_decode.asan	_ZN11__sanitizer17CombinedAllocato	+0x1d4	lwu a4, 0x10(a4)	reg=a4	imm=+16	base=?	ea=-	-
+
+# SHAPE-e: the one indirect jump in the 7 functions, PoisonShadow+0x39c `jr t1`
+## cgif PoisonShadow@0x53800 size 1276
+   +0x380 ld s0, 0x30(sp)
+   +0x384 ld s1, 0x28(sp)
+   +0x388 ld s2, 0x20(sp)
+   +0x38c ld s3, 0x18(sp)
+   +0x390 ld s4, 0x10(sp)
+   +0x394 ld s5, 8(sp)
+   +0x398 addi sp, sp, 0x40
+   +0x39c jr t1
+   +0x3a0 auipc t1, 0x4a
+   instructions 319, reached by the CFG walk 319 (unreached 0)
+   lui words in PoisonShadow: 0
+## decode PoisonShadow@0x53040 size 1276
+   +0x380 ld s0, 0x30(sp)
+   +0x384 ld s1, 0x28(sp)
+   +0x388 ld s2, 0x20(sp)
+   +0x38c ld s3, 0x18(sp)
+   +0x390 ld s4, 0x10(sp)
+   +0x394 ld s5, 8(sp)
+   +0x398 addi sp, sp, 0x40
+   +0x39c jr t1
+   +0x3a0 auipc t1, 0x46
+   instructions 319, reached by the CFG walk 319 (unreached 0)
+   lui words in PoisonShadow: 0

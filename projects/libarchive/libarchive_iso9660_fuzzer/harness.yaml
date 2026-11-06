@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_iso9660_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_iso9660_fuzzer
+rocq: OSSVerify.libarchive.libarchive_iso9660_fuzzer
 origin: upstream
 summary: Reads the input as an ISO9660 image (joliet + rockridge options, all filters, input <= 1 MiB);
   per entry calls pathname(_w), size, mtime, mode, symlink, hardlink and drains archive_read_data. Every

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: skcms
 harness: iccprofile_atf
-rocq: OssFuzzTheorems.skcms.iccprofile_atf
+rocq: OSSVerify.skcms.iccprofile_atf
 origin: upstream
 summary: skcms_Parse, then skcms_ApproximateCurve on the three TRC curves; both the boolean result and
   max_error are (void)-discarded.

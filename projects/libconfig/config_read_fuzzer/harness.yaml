@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libconfig
 harness: config_read_fuzzer
-rocq: OssFuzzTheorems.libconfig.config_read_fuzzer
+rocq: OSSVerify.libconfig.config_read_fuzzer
 origin: upstream
 summary: 'The input is a packed header (lookup type, content size, path size) + NUL-terminated config
   text + NUL-terminated path: config_read_string, recursive search for a setting named by the path, a

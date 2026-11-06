@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: llamacpp
 harness: fuzz_inference
-rocq: OssFuzzTheorems.llamacpp.fuzz_inference
+rocq: OSSVerify.llamacpp.fuzz_inference
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

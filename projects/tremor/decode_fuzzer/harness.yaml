@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tremor
 harness: decode_fuzzer
-rocq: OssFuzzTheorems.tremor.decode_fuzzer
+rocq: OSSVerify.tremor.decode_fuzzer
 origin: oss-fuzz
 summary: ov_open_callbacks on the first 16384 input bytes, then ov_read into a 4096-byte buffer until
   it returns <= 0 (other than OV_HOLE); the decoded PCM is never inspected.

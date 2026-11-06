@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: eigen
 harness: basicstuff_fuzzer
-rocq: OssFuzzTheorems.eigen.basicstuff_fuzzer
+rocq: OSSVerify.eigen.basicstuff_fuzzer
 origin: oss-fuzz
 summary: 'Port of Eigen''s basicstuff test: random-size dense matrices (complex float/double, int, long
   double) built from fuzz values; coefficient writes/reads through every index type, row/col copies, real()/imag()

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: boringssl
 harness: bn_div
-rocq: OssFuzzTheorems.boringssl.bn_div
+rocq: OSSVerify.boringssl.bn_div
 origin: upstream
 summary: 'Checks 3 properties (listed below); the first, an algebraic law: Division law: after BN_div(q,
   r, n, d), checks q*d + r == n exactly (BN_mul, BN_add, BN_cmp).'

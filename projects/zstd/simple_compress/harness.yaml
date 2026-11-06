@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zstd
 harness: simple_compress
-rocq: OssFuzzTheorems.zstd.simple_compress
+rocq: OSSVerify.zstd.simple_compress
 origin: upstream
 summary: 'Checks one property, an API contract: ZSTD_compressCCtx into a random-size buffer in [0, compressBound]:
   any failure must be exactly ZSTD_error_dstSize_tooSmall.'

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: grpc-httpjson-transcoding
 harness: http_template_fuzz_test
-rocq: OssFuzzTheorems.grpc_httpjson_transcoding.http_template_fuzz_test
+rocq: OSSVerify.grpc_httpjson_transcoding.http_template_fuzz_test
 origin: upstream
 summary: Parses the input as an HTTP path template with HttpTemplate::Parse and discards the result (a
   null unique_ptr on failure).

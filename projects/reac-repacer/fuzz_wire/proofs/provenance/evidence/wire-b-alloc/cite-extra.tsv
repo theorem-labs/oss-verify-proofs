@@ -1,0 +1,26 @@
+# HAND citations, read from the pinned source by this record (llvm-project llvmorg-20.1.8, compiler-rt; the tarball
+# compiler-rt-20.1.8.src.tar.xz sha256 15277402f6fd63397c0917a5c7171cda82d16d226094b828c1ed0f58f73b9c69). They are the
+# rows whose CONTRACT, not whose parameter name, says that the value is not an address (the unit owner's ruling (a) and (b)).
+# A `!` on the kind marks the row as settled by the citation itself; luitrace.py then gives it class (i) / (ii).
+# kind	name	register	type	name / meaning	citation
+arg!	_ZN11__sanitizer11CheckFailedEPKciS1_yy	a3	u64	v1, a COMPARED VALUE, never an address: CHECK_IMPL casts the left side to u64 and passes it by value; CheckFailed only prints it	sanitizer_common/sanitizer_internal_defs.h:326-333 `#define CHECK_IMPL(c1, op, c2) { u64 v1 = (u64)(c1); u64 v2 = (u64)(c2); if (!(v1 op v2)) CheckFailed(__FILE__, __LINE__, "(" #c1 ") " #op " (" #c2 ")", v1, v2); }` + sanitizer_common/sanitizer_termination.cpp:67-72 (the whole body that reads v1: `Printf("%s: CHECK failed: %s:%d \"%s\" (0x%zx, 0x%zx) (tid=%u)\n", SanitizerToolName, StripModuleName(file), line, cond, (uptr)v1, (uptr)v2, tid)`; v1 is never dereferenced, stored or passed on)
+arg!	_ZN11__sanitizer11CheckFailedEPKciS1_yy	a4	u64	v2, a COMPARED VALUE, never an address: CHECK_IMPL casts the right side to u64 and passes it by value; CheckFailed only prints it	sanitizer_common/sanitizer_internal_defs.h:326-333 `#define CHECK_IMPL(c1, op, c2) { u64 v1 = (u64)(c1); u64 v2 = (u64)(c2); if (!(v1 op v2)) CheckFailed(__FILE__, __LINE__, "(" #c1 ") " #op " (" #c2 ")", v1, v2); }` + sanitizer_common/sanitizer_termination.cpp:67-72 (the whole body that reads v2: `Printf(... (0x%zx, 0x%zx) ..., (uptr)v1, (uptr)v2, tid)`; v2 is never dereferenced, stored or passed on)
+# Class (iv) STORE (the unit owner's ruling (iv); the record writer's rule after the wire review): the struct a callee receives a frame object
+# as, and that struct's integer fields, read from the pinned source. `param` rows: the callee's parameter at that register
+# is a pointer / reference to the struct. `size` rows: the struct's size (bytes), from its declared members. `field` rows:
+# one per member, keyed by its byte offset (C layout of the declared types; padding is any byte no member covers).
+param	_ZN6__asan21ReInitializeAllocatorERKNS_16AllocatorOptionsE	a0	__asan::AllocatorOptions	options	asan/asan_allocator.h:48 `void ReInitializeAllocator(const AllocatorOptions &options);`
+param	_ZN6__asan19InitializeAllocatorERKNS_16AllocatorOptionsE	a0	__asan::AllocatorOptions	options	asan/asan_allocator.h:47 `void InitializeAllocator(const AllocatorOptions &options);`
+param	_ZN6__asan16AllocatorOptions7SetFromEPKNS_5FlagsEPKN11__sanitizer11CommonFlagsE	a0	__asan::AllocatorOptions	this	asan/asan_allocator.h:43 `void SetFrom(const Flags *f, const CommonFlags *cf);` (a member: a0 is this)
+size	__asan::AllocatorOptions	-	20	align 4	asan/asan_allocator.h:34-45 (members at 0 u32, 4 u32, 8 u16, 10 u16, 12 u8, 13 u8, 2 bytes of padding, 16 s32)
+field	__asan::AllocatorOptions	0	u32	quarantine_size_mb	asan/asan_allocator.h:35 `u32 quarantine_size_mb;`
+field	__asan::AllocatorOptions	4	u32	thread_local_quarantine_size_kb	asan/asan_allocator.h:36 `u32 thread_local_quarantine_size_kb;`
+field	__asan::AllocatorOptions	8	u16	min_redzone	asan/asan_allocator.h:37 `u16 min_redzone;`
+field	__asan::AllocatorOptions	10	u16	max_redzone	asan/asan_allocator.h:38 `u16 max_redzone;`
+field	__asan::AllocatorOptions	12	u8	may_return_null	asan/asan_allocator.h:39 `u8 may_return_null;`
+field	__asan::AllocatorOptions	13	u8	alloc_dealloc_mismatch	asan/asan_allocator.h:40 `u8 alloc_dealloc_mismatch;`
+field	__asan::AllocatorOptions	16	s32	release_to_os_interval_ms	asan/asan_allocator.h:41 `s32 release_to_os_interval_ms;`
+ret	_ZN6__asan14AsanDeactivateEv	-	void		asan/asan_activation.cpp:96 `void AsanDeactivate() {` (lines 115-119 store min_redzone = max_redzone = 16 into the AllocatorOptions `disabled` and call ReInitializeAllocator(disabled))
+ret	_ZN6__asan19InitializeAllocatorERKNS_16AllocatorOptionsE	-	void		asan/asan_allocator.h:47 `void InitializeAllocator(const AllocatorOptions &options);`
+ret	_ZN6__asan21ReInitializeAllocatorERKNS_16AllocatorOptionsE	-	void		asan/asan_allocator.h:48 `void ReInitializeAllocator(const AllocatorOptions &options);`
+ret	_ZN6__asan16AllocatorOptions7SetFromEPKNS_5FlagsEPKN11__sanitizer11CommonFlagsE	-	void		asan/asan_allocator.h:43 `void SetFrom(const Flags *f, const CommonFlags *cf);`

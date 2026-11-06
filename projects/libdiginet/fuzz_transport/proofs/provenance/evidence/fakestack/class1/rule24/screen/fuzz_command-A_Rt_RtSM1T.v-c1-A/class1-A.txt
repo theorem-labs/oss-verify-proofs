@@ -1,0 +1,7 @@
+donor: pinned sha256 c0661b96b5bd, twin sha256 68db792d5fa7, allocated sections equal (build-id note excepted): True
+target: pinned sha256 e89be137db17, twin sha256 86efc3a80314, allocated sections equal (build-id note excepted): True
+plugin-hostd/fuzz_command at 9b0ac6f0e678, class 1, image A: 13 ranges paired and compared (bodies __asan_stack_malloc_0, __asan_stack_malloc_1, __asan_stack_malloc_4, __asan_stack_malloc_5); 6 resolve lines: 5 move a value (0x40410 -> 0x3dfc4, 0xa63e0 -> 0xa4080, 0xa6440 -> 0xa40e0, 0xa70f0 -> 0xa4d70, 0xa7100 -> 0xa4d80), 0 name the image of a header range, the rest keep the value
+FAIL: __asan_stack_malloc_3: donor 1 copies, target 0 copies, or the sizes differ
+FAIL: __asan_stack_malloc_7: donor 1 copies, target 0 copies, or the sizes differ
+FAIL: A/Rt/RtSM1T.v range 0x3fc0c (__asan_stack_malloc_3): 1 / 0 copies and no call pairs it
+FAIL: A/Rt/RtSM1T.v range 0x40244 (__asan_stack_malloc_7): 1 / 0 copies and no call pairs it

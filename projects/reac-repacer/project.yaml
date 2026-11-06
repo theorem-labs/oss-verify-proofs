@@ -1,0 +1,57 @@
+schema: oss-fuzz-theorems/project/1
+project: reac-repacer
+description: 'reac-repacer is the de-jitter relay of FreeREAC: between a Wi-Fi link and the REAC stageboxes of a Roland mixer,
+  it buffers the bursty stream of REAC audio frames and re-emits it at a steady cadence. The fuzz targets drive the code that
+  reads bytes from the network and from its configuration.'
+homepage: https://github.com/FreeREAC/reac-repacer
+language: c
+status: available
+enrolled: true
+library:
+  name: reac-repacer
+  repository: https://github.com/FreeREAC/reac-repacer
+  commit: 3ac1cf1017c847fe2272fce7f2f93306f8a23b42
+  version: 0.2.3
+  licence: GPL-3.0-or-later
+harnesses:
+- name: fuzz_wire
+  status: included
+  origin: upstream
+- name: fuzz_egress
+  status: included
+  origin: upstream
+- name: fuzz_lock
+  status: included
+  origin: upstream
+- name: fuzz_uci
+  status: included
+  origin: upstream
+build:
+  system: custom
+  clang: 20.1.8
+  builder: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  oss_verify:
+    repository: theorem-labs/oss-verify
+    commit: d897ff19667fd95fa86514cc2750b650b9845988
+    path: projects/reac-repacer
+assets:
+  bin:
+    release: v2026.11.1
+    file: reac-repacer-bin.tar.zst
+    bytes: 487885
+    sha256: eddab876633d1205b77a4e486072cebda954decfbe0eca7c114826916c3dd570
+  src:
+    release: v2026.11.1-src
+    file: reac-repacer-src.tar.zst
+    bytes: 694420
+    sha256: abcedc7c5814efc10c82124d401027bb8732d7a8f26f64677292732f39e769b5
+  src_manifest:
+    release: v2026.11.1-src
+    file: reac-repacer-src.MANIFEST.tsv
+    bytes: 1584
+    sha256: 3de8f593ca70bebe3f17e0eb63e2f19f588d8c507ce850fc9438199aaa8e0294
+  port:
+    release: v2026.11.1-src
+    file: reac-repacer-port.tar.zst
+    bytes: 206770
+    sha256: 80ca55c825f6b09c902a3cd08dc8477365c30167f81e112dd481548f6dace6c1

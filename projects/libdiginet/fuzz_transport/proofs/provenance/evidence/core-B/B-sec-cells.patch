@@ -1,0 +1,15 @@
+--- B/YB1w.v
++++ B/YB1w.v
+@@ -20,8 +20,10 @@
+ Definition tfib_asan_globals_lo : Z := 0xa85a0.  Definition tfib_asan_globals_hi : Z := 0xa8fa0.
+ Definition tfib_bss_lo : Z := 0xa8fc0.  Definition tfib_bss_hi : Z := 0x615050.
+ Definition tfib_tbss_lo : Z := 0xa25a8.  Definition tfib_tbss_hi : Z := 0xa25bc.
+-(* decode: YImgTop COMPUTES IMG_LO / IMG_TOP (the donor states numerals); the body here is the numeral vm_compute
+-   gives for YImgTop's term (no numeral written), so the donor's `unfold ...; lia` proofs see a number. *)
++(* B/YImgTop.v (written by port_core) states IMG_LO / IMG_TOP as numerals for the pinned fuzz_transport.asan-ubsan
++   image (sha256 41113a03c82f): 0x10000, its first PT_LOAD p_vaddr, and 0x616000, the .bss end (sh_addr 0xa8fc0 +
++   sh_size 0x56c090 = 0x615050) rounded up to a page; the body here is the numeral vm_compute gives for that notation
++   (no numeral written), so the donor's `unfold ...; lia` proofs see a number. *)
+ Definition tfib_img_lo : Z := ltac:(let v := eval vm_compute in IMG_LO in exact v).  Definition tfib_img_hi : Z := ltac:(let v := eval vm_compute in IMG_TOP in exact v).
+ Definition tfib_entry : Z := 0x3112c.  Definition tfib_gp : Z := 0x10800.
+ Definition tfib_A_start : Z := 0x3112c.  Definition tfib_E_start : Z := 0x31148.

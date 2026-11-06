@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: postgis
 harness: wkt_import_fuzzer
-rocq: OssFuzzTheorems.postgis.wkt_import_fuzzer
+rocq: OSSVerify.postgis.wkt_import_fuzzer
 origin: upstream
 summary: lwgeom_from_wkt(NUL-terminated input, LW_PARSER_CHECK_NONE) then lwgeom_free; lwerror longjmps
   back via the shared liblwgeom_fuzzer.hpp error reporter and tracked allocations are freed.

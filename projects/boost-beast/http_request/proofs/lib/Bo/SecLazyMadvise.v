@@ -1,0 +1,86 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From Stdlib Require Import FunctionalExtensionality.
+From stdpp Require Import gmap.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Madvise.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.boost_beast.http_request.lib.Lib Require Import Tac Image ZBridge SysStep SFModel CellsX Arr TacX.
+From OSSVerify.Proofs.boost_beast.http_request.lib Require Import AllocSim MmapSim SReach LazyRestrict LazyLedger LazySR LazyNodes LazyMadvise.
+From OSSVerify.Proofs.boost_beast.http_request.lib.Bo Require Import BSegs SecLazy.
+Import ListNotations.
+Open Scope bv_scope.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+(* [comment removed for export] *)
+Lemma ecall_86e1c : fetch_word bsegs (Z_to_bv 64 0x086c9c) = Some ECALLW.
+Proof. ltac2:(KReplay.run [|constr:(@Corelib.Init.Logic.eq_refl); constr:(@Corelib.Init.Datatypes.option); constr:(@stdpp.bitvector.definitions.bv); constr:(@Corelib.Numbers.BinNums.Npos); constr:(@Corelib.Numbers.BinNums.xO); constr:(@Corelib.Numbers.BinNums.xH); constr:(@Corelib.Init.Datatypes.Some); constr:(@stdpp.bitvector.definitions.BV); constr:(@Corelib.Numbers.BinNums.Zpos); constr:(@Corelib.Numbers.BinNums.xI); constr:(@stdpp.bitvector.definitions.Z_to_bv_obligation_1); constr:(@Corelib.Init.Logic.eq); constr:(@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.fetch_word); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.BSegs.bsegs); constr:(@stdpp.bitvector.definitions.Z_to_bv); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.SecLazy.ECALLW)|] Array.empty "##a###3#+#)#.#,#(#'#0#-#&#4#2#3#5#1#*#/%#1$#2$#C########UD#UG#UH#$C$#####$#$#UE#VI,#WJ-$#VF-#VK-##1UD#$4$###$#$#$#########$#$#$#####UE##C######$#$###$#$#####$#####$#$#$#####UE#VLs#'#VMN#VFs#7OWPs#7$#m$s#-##"). Qed.
+
+(* [comment removed for export] *)
+Lemma zfill_zero_id : forall (a n : word) (m : word -> option byte) (A : Z) (k : nat),
+  u8arr bsegs m A (repeat (b8 0) k) -> 6832128 <= A ->
+  A <= bv_unsigned a -> bv_unsigned a + bv_unsigned n <= A + Z.of_nat k ->
+  zfill a n m = m.
+Proof.
+  intros a n m A k [BA WR] HI LO UP. apply functional_extensionality. intros x.
+  unfold zfill, AllocSim.zmem.
+  destruct (Z.leb_spec (bv_unsigned a) (bv_unsigned x)); destruct (Z.ltb_spec (bv_unsigned x) (bv_unsigned a + bv_unsigned n)); cbn [andb]; try reflexivity.
+  destruct BA as (_ & BH & BA). destruct WR as (_ & _ & WR). rewrite repeat_length in *.
+  pose proof (bv_unsigned_in_range 64 x) as XR. change (bv_modulus 64) with (2^64) in XR.
+  assert (EX : wa (A + Z.of_nat (Z.to_nat (bv_unsigned x - A))) = x).
+  { unfold wa. replace (A + Z.of_nat (Z.to_nat (bv_unsigned x - A))) with (bv_unsigned x) by lia. apply Z_to_bv_bv_unsigned. }
+  specialize (BA (Z.to_nat (bv_unsigned x - A)) ltac:(lia)). specialize (WR (Z.of_nat (Z.to_nat (bv_unsigned x - A))) ltac:(lia)).
+  rewrite EX in BA, WR. rewrite nth_error_repeat in BA by lia.
+  unfold mrd in BA. unfold wview in WR.
+  destruct (m x) as [b|] eqn:E.
+  - symmetry. exact BA.
+  - exfalso. apply WR. rewrite bsegs_find_segment_none_high by lia. reflexivity.
+Qed.
+
+Section CjMadvise.
+  Variables (L S Zr : list (word * word)).
+  Variables (x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 : word)
+            (F : bvmap 5 word) (pc : Z) (fc : bv 32) (rv : option word) (m : word -> option byte).
+  Let R := mkR x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31.
+  Let Ra (a : word) := mkR x1 x2 x3 x4 x5 x6 x7 x8 x9 a x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31.
+
+  (* [comment removed for export] *)
+  Lemma sr_madvise_MS : forall msF mo (Q : config -> Prop),
+    lzok bsegs L S Zr (mkCfg msF mo) ->
+    restrict L S msF = MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs) ->
+    x17 = Z_to_bv 64 233 ->
+    let addr := x10 in
+    let nZ := page_round_up_Z (bv_unsigned x11) in
+    let n := Z_to_bv 64 nZ in
+    let h := m_vmmaps mo in
+    bv_unsigned addr mod page_size = 0 -> bv_unsigned x12 mod 2 ^ 32 = 4 -> x11 <> Z_to_bv 64 0 -> bv_unsigned addr + nZ < 2 ^ 64 ->
+    region_free (vm_reserved h) addr n = true -> map_contains (vm_maps h) addr n = true -> region_free (vm_noaccess h) addr n = true ->
+    (forall x : word, bv_unsigned addr <= bv_unsigned x < bv_unsigned addr + nZ -> hiddenb L S x = true -> in_rangesb x Zr = true) ->
+    (forall msF' : machine_state,
+       let mo' := madvise_dontneed_next mo addr n in
+       lzok bsegs L S Zr (mkCfg msF' mo') ->
+       restrict L S msF' = MS (Ra (Z_to_bv 64 0)) F (Z_to_bv 64 (pc + 4)) fc rv (mzero L S (addr, n) m) (seg_rom bsegs) ->
+       hid_same L S msF msF' ->
+       same_but_materialized mo mo' ->
+       sreach bsegs Q (mkCfg msF' mo')) ->
+    sreach bsegs Q (mkCfg msF mo).
+  Proof.
+    intros msF mo Q OK VIS H17. cbv zeta. intros AL ADV LEN NW RF MC NA HZ K.
+    eapply (sreach_madvise_dontneed_lazy bsegs L S Zr msF _ mo x17 Q OK VIS eq_refl); [ rewrite H17; reflexivity | ..];
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 0) with x10;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 1) with x11;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 2) with x12;
+      [ exact AL | exact ADV | exact LEN | exact NW | exact RF | exact MC | exact NA | exact HZ | ].
+    intros msF'.
+    change (ms_mem (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs))) with m.
+    cbv zeta. intros OK' VIS' HS' SBM. apply (K msF' OK'); [| exact HS' | exact SBM].
+    rewrite VIS', sysret_MSsvc. unfold R. rewrite mkR_set_a0, lit_add_lit. reflexivity.
+  Qed.
+End CjMadvise.

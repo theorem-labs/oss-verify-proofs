@@ -1,0 +1,25 @@
+# command: EV/checks/v10-gate.py WORK LIB OUT/v10 (GS=OUT/tools/global_settings/439f8e3bd463 DONWT=OUT/v10/work/v10/donwt DON=DON)
+# global_settings v10 (sha256 439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242), checks/v10_table.py 2413f44cfc59; SHA256SUMS e0d40ab468e9: 22 of 22 files OK (its own line excluded)
+# inputs: the 492 staged files (sha256 of their sorted `sha256  path` list) 00c62e8a18a3; LIB/Reusable/YImgTop.v e4d179ca9a5a; donor tree fuzz_grant lib at 25e3d17bdb50 (git archive of the hub), the 493 donor files acd7be36b8de
+# this core: the 492 files of the run's stage-out (A/ 370, Reusable/ 122) + lib/Reusable/YImgTop.v (taken by path); kept by lib (not added): 0
+SUMMARY: 493 files read of 493 given; ESCAPES 234; PLAIN 1240; UNMEASURED 1; KERNEL 0; levels TACTIC 1166, OPTION 309; HINTS 102 (report only, tactic-level) rc 0
+# fuzz_grant's released counterparts of the same 493 (released at 25e3d17bdb50, lib/A/X.v and lib/Reusable/X.v)
+SUMMARY: 493 files read of 493 given; ESCAPES 359; PLAIN 1240; UNMEASURED 1; KERNEL 0; levels TACTIC 1291, OPTION 309; HINTS 102 (report only, tactic-level) rc 0
+# every one of the 1475 target rows is paired with the identical setting of its donor file (v10-donor-lines.tsv); 0 unpaired; the whole source line equals the donor file's line in 1475 of 1475 paired rows
+# the difference is reusable-local.py on the two SHARED files lib/Reusable/YA09.v and YA0e.v:
+#   before (as port_core wrote them): SUMMARY: 2 files read of 2 given; ESCAPES 125; PLAIN 4; UNMEASURED 0; KERNEL 0; levels TACTIC 129, OPTION 0; HINTS 0 (report only, tactic-level)
+#   after (as staged):               SUMMARY: 2 files read of 2 given; ESCAPES 0; PLAIN 4; UNMEASURED 0; KERNEL 0; levels TACTIC 4, OPTION 0; HINTS 0 (report only, tactic-level)
+#   fuzz_grant's released copies:     SUMMARY: 2 files read of 2 given; ESCAPES 125; PLAIN 4; UNMEASURED 0; KERNEL 0; levels TACTIC 129, OPTION 0; HINTS 0 (report only, tactic-level)
+#   ("before" = the staged copies with the `Local` of each of the 53 + 72 = 125 Local Zify redefinitions removed; port_core's input copies (RUN/stage) and the released copies carry 0 Local ones)
+# so the other 491 files carry ESCAPES 234 = 359 - 125, equal to their donors' (234); the donor rows with no target row are exactly those 125 (Reusable/YA09.v 53, Reusable/YA0e.v 72)
+# the one UNMEASURED row is lib/Reusable/YG0f.v:89 `Arguments shadow_addr _ : simpl never.`, the same line as fuzz_grant's released lib/Reusable/YG0f.v:88
+# KERNEL rows: target 0, donor 0
+# files the unit writes itself for this core (no donor file; UNIT_FILES): 2
+#   TransportDrvG.v (sha256 d94ee4caa8e6): SUMMARY: 1 files read of 1 given; ESCAPES 0; PLAIN 2; UNMEASURED 0; KERNEL 0; levels TACTIC 2, OPTION 0; HINTS 0 (report only, tactic-level) rc 0
+#   TransportDriver.v (sha256 c5e7bbb55e4f): SUMMARY: 1 files read of 1 given; ESCAPES 0; PLAIN 0; UNMEASURED 0; KERNEL 0; levels TACTIC 0, OPTION 0; HINTS 0 (report only, tactic-level) rc 0
+# run.sh's normalised DON: 493 of 493 donor files equal their released file with the module text ...fuzz_grant.lib.Reusable written ...fuzz_grant.lib
+# PLANT (control): `Unset Guard Checking.` appended as line 141 of a copy of A/AB14.v, in a copy of RUN/stage-out:
+#   global_settings on that file: 1 KERNEL row(s) (:141 KERNEL: Unset Guard Checking.), rc 5
+#   checks/v10_table.py on the copy: target SUMMARY: 493 files read of 493 given; ESCAPES 234; PLAIN 1240; UNMEASURED 1; KERNEL 1; levels TACTIC 1166, OPTION 309; HINTS 102 (report only, tactic-level) (rc 5); UNPAIRED 1: A/AB14.v:141 KERNEL KERNEL: Unset Guard Checking.; exit 1
+#   control CAUGHT
+# v10-gate: PASS

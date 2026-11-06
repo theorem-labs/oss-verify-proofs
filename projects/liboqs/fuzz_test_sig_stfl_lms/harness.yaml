@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: liboqs
 harness: fuzz_test_sig_stfl_lms
-rocq: OssFuzzTheorems.liboqs.fuzz_test_sig_stfl_lms
+rocq: OSSVerify.liboqs.fuzz_test_sig_stfl_lms
 origin: upstream
 summary: OQS_SIG_STFL_verify on KAT pk/signature/message for LMS_SHA256_H5_W2 or H5_W8_H5_W8 with a prefix
   of each field overwritten by fuzz bytes (field order chosen by byte 1); the verify result is ignored

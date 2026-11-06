@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zstd
 harness: block_round_trip
-rocq: OssFuzzTheorems.zstd.block_round_trip
+rocq: OSSVerify.zstd.block_round_trip
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an API contract: ZSTD_compressBegin_advanced
   and ZSTD_compressBlock must never return an error for any input <= one block.'

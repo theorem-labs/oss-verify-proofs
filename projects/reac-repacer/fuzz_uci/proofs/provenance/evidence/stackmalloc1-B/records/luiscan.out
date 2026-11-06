@@ -1,0 +1,17 @@
+ROW	image	function	addr	size	luis	insec	inload	memfed	memfed_out	luiconst	unmeasured	exposure
+# image fuzz_grant.asan-ubsan sha256 5a5ee7c02b4e
+ROW	fuzz_grant.asan-ubsan	__asan_stack_malloc_1	0x3d0c0	400	1	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan-ubsan	_ZN6__asan18TryAsanInitFromRtlEv	0x59b98	160	2	0	1	0	0	0	0	0
+ROW	fuzz_grant.asan-ubsan	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	0x69aac	848	2	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan-ubsan	_ZN6__asan9FakeStack2GCEm	0x3cb00	744	1	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan-ubsan	_ZN6__asan10AsanThread32AsyncSignalSafeLazyInitFakeStackEv	0x5c60c	560	4	0	0	0	0	0	0	0
+TOTAL	fuzz_grant.asan-ubsan	functions 13	with-lui 5	with-exposure 0	luis 10	insec 0	inload 1	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+# image fuzz_uci.asan-ubsan sha256 8d07ffcf5948
+ROW	fuzz_uci.asan-ubsan	__asan_stack_malloc_1	0x3c1b8	400	1	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan-ubsan	_ZN6__asan18TryAsanInitFromRtlEv	0x58444	160	2	0	1	0	0	0	0	0
+ROW	fuzz_uci.asan-ubsan	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	0x68358	848	2	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan-ubsan	_ZN6__asan9FakeStack2GCEm	0x3bd6c	744	1	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan-ubsan	_ZN6__asan10AsanThread32AsyncSignalSafeLazyInitFakeStackEv	0x5aeb8	560	4	0	0	0	0	0	0	0
+TOTAL	fuzz_uci.asan-ubsan	functions 13	with-lui 5	with-exposure 0	luis 10	insec 0	inload 1	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	all	functions 26	with-lui 10	with-exposure 0	luis 20	insec 0	inload 2	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+rc=0

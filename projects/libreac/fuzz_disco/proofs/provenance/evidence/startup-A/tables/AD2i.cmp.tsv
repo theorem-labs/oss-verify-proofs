@@ -1,0 +1,8 @@
+# AD2i.v (sha256 8e2c8d8aaf2a54358094ae66afbd7c2fbf9e5a57c04c66b7ab4a58bd1b714e34) vs shipped AD2i.v (sha256 27090facfc49e317e84af9af67a80fa75e10904291ce30bdf3231278395dcafc): 6 differing hunk(s)
+hunk	out_lines	shipped_lines	out_sha256	shipped_sha256	numerals_only_in_out	numerals_only_in_shipped
+1	-	6-6	-	9be10d3329561466	-	2026
+2	7-7	-	d522a8a98eef221a	-	-	-
+3	-	17-17	-	b7a893b6b4f574aa	-	-
+4	473-473	474-474	68c9e2853b9ab55d	77a41e87167ed120	-	-
+5	490-490	491-491	e4608ab5e4143b8b	76c4ef883507f05d	-	-
+6	509-512	510-512	4c76ac45ea44c5da	79cf9bc94ad3b02a	-	-

@@ -1,0 +1,100 @@
+# every instruction word of the three lui-carrying functions, X = donor twin ce511d541cda, Y = decode A twin 4cb0a852e826
+WORD	function	+off	X	Y	X text	Y text	same opcode+registers
+WORD	Allocator::Allocate	+0x50	16c270ef	701260ef	jal 0x2716c	jal 0x26f00	yes
+WORD	Allocator::Allocate	+0x58	62d2c0ef	4d52c0ef	jal 0x2ce2c	jal 0x2ccd4	yes
+WORD	Allocator::Allocate	+0xc4	da863603	0bc63603	ld a2, -0x258(a2)	ld a2, 0xbc(a2)	yes
+WORD	Allocator::Allocate	+0xdc	e0460613	11860613	addi a2, a2, -0x1fc	addi a2, a2, 0x118	yes
+WORD	Allocator::Allocate	+0x180	1dc050ef	2bc050ef	jal 0x51dc	jal 0x52bc	yes
+WORD	Allocator::Allocate	+0x194	1c8050ef	2a8050ef	jal 0x51c8	jal 0x52a8	yes
+WORD	Allocator::Allocate	+0x224	4392c0ef	2e12c0ef	jal 0x2cc38	jal 0x2cae0	yes
+WORD	Allocator::Allocate	+0x230	d3050513	04450513	addi a0, a0, -0x2d0	addi a0, a0, 0x44	yes
+WORD	Allocator::Allocate	+0x238	638350ef	4e0350ef	jal 0x35638	jal 0x354e0	yes
+WORD	Allocator::Allocate	+0x27c	7f1240ef	585240ef	jal 0x24ff0	jal 0x24d84	yes
+WORD	Allocator::Allocate	+0x280	64c2a0ef	3e02a0ef	jal 0x2a64c	jal 0x2a3e0	yes
+WORD	Allocator::Allocate	+0x29c	1f8040ef	2d8040ef	jal 0x41f8	jal 0x42d8	yes
+WORD	Allocator::Allocate	+0x35c	138040ef	218040ef	jal 0x4138	jal 0x4218	yes
+WORD	Allocator::Allocate	+0x370	2dd2c0ef	1852c0ef	jal 0x2cadc	jal 0x2c984	yes
+WORD	Allocator::Allocate	+0x374	2e92c0ef	1912c0ef	jal 0x2cae8	jal 0x2c990	yes
+WORD	Allocator::Allocate	+0x384	37c250ef	110250ef	jal 0x2537c	jal 0x25110	yes
+WORD	Allocator::Allocate	+0x3a8	3e9400ef	291400ef	jal 0x40be8	jal 0x40a90	yes
+WORD	Allocator::Allocate	+0x3c0	0006d517	00067517	auipc a0, 0x6d	auipc a0, 0x67	yes
+WORD	Allocator::Allocate	+0x3c4	8f853503	73453503	ld a0, -0x708(a0)	ld a0, 0x734(a0)	yes
+WORD	Allocator::Allocate	+0x480	631210ef	175210ef	jal 0x21e30	jal 0x21974	yes
+WORD	Allocator::Allocate	+0x494	61d210ef	161210ef	jal 0x21e1c	jal 0x21960	yes
+WORD	Allocator::Allocate	+0x4b4	5fd210ef	141210ef	jal 0x21dfc	jal 0x21940	yes
+WORD	Allocator::Allocate	+0x4bc	5e1210ef	125210ef	jal 0x21de0	jal 0x21924	yes
+WORD	Allocator::Allocate	+0x4c4	0006c517	00067517	auipc a0, 0x6c	auipc a0, 0x67	yes
+WORD	Allocator::Allocate	+0x4c8	7f453503	63053503	ld a0, 0x7f4(a0)	ld a0, 0x630(a0)	yes
+WORD	Allocator::Allocate	+0x4e8	0006c617	00067617	auipc a2, 0x6c	auipc a2, 0x67	yes
+WORD	Allocator::Allocate	+0x4ec	7d863603	61463603	ld a2, 0x7d8(a2)	ld a2, 0x614(a2)	yes
+WORD	Allocator::Allocate	+0x4f0	0006c697	00067697	auipc a3, 0x6c	auipc a3, 0x67	yes
+WORD	Allocator::Allocate	+0x4f4	7d86b683	6146b683	ld a3, 0x7d8(a3)	ld a3, 0x614(a3)	yes
+WORD	Allocator::Allocate	+0x50c	0006c697	00067697	auipc a3, 0x6c	auipc a3, 0x67	yes
+WORD	Allocator::Allocate	+0x510	7c46b683	6006b683	ld a3, 0x7c4(a3)	ld a3, 0x600(a3)	yes
+WORD	Allocator::Allocate	+0x528	0006c597	00067597	auipc a1, 0x6c	auipc a1, 0x67	yes
+WORD	Allocator::Allocate	+0x52c	7885b583	5c45b583	ld a1, 0x788(a1)	ld a1, 0x5c4(a1)	yes
+WORD	Allocator::Allocate	+0x54c	54c290ef	2e0290ef	jal 0x2954c	jal 0x292e0	yes
+WORD	Allocator::Allocate	+0x6ac	0006c517	00067517	auipc a0, 0x6c	auipc a0, 0x67	yes
+WORD	Allocator::Allocate	+0x6b0	60453503	44053503	ld a0, 0x604(a0)	ld a0, 0x440(a0)	yes
+WORD	Allocator::Allocate	+0x6c8	0006c597	00067597	auipc a1, 0x6c	auipc a1, 0x67	yes
+WORD	Allocator::Allocate	+0x6cc	6105b583	44c5b583	ld a1, 0x610(a1)	ld a1, 0x44c(a1)	yes
+WORD	Allocator::Allocate	+0x6e0	5b14d0ef	4594d0ef	jal 0x4ddb0	jal 0x4dc58	yes
+WORD	Allocator::Allocate	+0x714	fffde517	fffdf517	auipc a0, 0xfffde	auipc a0, 0xfffdf	yes
+WORD	Allocator::Allocate	+0x718	6c453503	9d053503	ld a0, 0x6c4(a0)	ld a0, -0x630(a0)	yes
+WORD	Allocator::Allocate	+0x730	1712e0ef	0192e0ef	jal 0x2e970	jal 0x2e818	yes
+WORD	Allocator::Allocate	+0x774	0006c897	00067897	auipc a7, 0x6c	auipc a7, 0x67	yes
+WORD	Allocator::Allocate	+0x778	53c8b883	3788b883	ld a7, 0x53c(a7)	ld a7, 0x378(a7)	yes
+WORD	Allocator::Allocate	+0x824	c5050513	eee50513	addi a0, a0, -0x3b0	addi a0, a0, -0x112	yes
+WORD	Allocator::Allocate	+0x828	23458613	54b58613	addi a2, a1, 0x234	addi a2, a1, 0x54b	yes
+WORD	Allocator::Allocate	+0x838	119390ef	7c0390ef	jal 0x39918	jal 0x397c0	yes
+WORD	Allocator::Allocate	+0x83c	54c270ef	2e0270ef	jal 0x2754c	jal 0x272e0	yes
+WORD	Allocator::Allocate	+0x840	6442c0ef	4ec2c0ef	jal 0x2c644	jal 0x2c4ec	yes
+WORD	Allocator::Allocate	+0x848	6142c0ef	4bc2c0ef	jal 0x2c614	jal 0x2c4bc	yes
+WORD	Allocator::Allocate	+0x860	25550513	55e50513	addi a0, a0, 0x255	addi a0, a0, 0x55e	yes
+WORD	Allocator::Allocate	+0x864	88858613	b6658613	addi a2, a1, -0x778	addi a2, a1, -0x49a	yes
+WORD	Allocator::Allocate	+0x874	0dd390ef	784390ef	jal 0x398dc	jal 0x39784	yes
+WORD	Allocator::Allocate	+0x880	23550513	53e50513	addi a0, a0, 0x235	addi a0, a0, 0x53e	yes
+WORD	Allocator::Allocate	+0x884	e6658613	17a58613	addi a2, a1, -0x19a	addi a2, a1, 0x17a	yes
+WORD	Allocator::Allocate	+0x894	0bd390ef	764390ef	jal 0x398bc	jal 0x39764	yes
+WORD	Allocator::Allocate	+0x8a0	21550513	51e50513	addi a0, a0, 0x215	addi a0, a0, 0x51e	yes
+WORD	Allocator::Allocate	+0x8a4	24d58613	4eb58613	addi a2, a1, 0x24d	addi a2, a1, 0x4eb	yes
+WORD	Allocator::Allocate	+0x8b0	0a1390ef	748390ef	jal 0x398a0	jal 0x39748	yes
+WORD	Allocator::Allocate	+0x8cc	1e950513	4f250513	addi a0, a0, 0x1e9	addi a0, a0, 0x4f2	yes
+WORD	Allocator::Allocate	+0x8d0	18d58613	48458613	addi a2, a1, 0x18d	addi a2, a1, 0x484	yes
+WORD	Allocator::Allocate	+0x8dc	075390ef	71c390ef	jal 0x39874	jal 0x3971c	yes
+WORD	Allocator::Allocate	+0x8e4	3e5240ef	179240ef	jal 0x24be4	jal 0x24978	yes
+WORD	Allocator::Allocate	+0x8f4	1c150513	4ca50513	addi a0, a0, 0x1c1	addi a0, a0, 0x4ca	yes
+WORD	Allocator::Allocate	+0x8f8	0be58613	37758613	addi a2, a1, 0xbe	addi a2, a1, 0x377	yes
+WORD	Allocator::Allocate	+0x908	049390ef	6f0390ef	jal 0x39848	jal 0x396f0	yes
+WORD	Allocator::Allocate	+0x914	01850513	2bc50513	addi a0, a0, 0x18	addi a0, a0, 0x2bc	yes
+WORD	Allocator::Allocate	+0x918	01e58613	33d58613	addi a2, a1, 0x1e	addi a2, a1, 0x33d	yes
+WORD	Allocator::Allocate	+0x928	029390ef	6d0390ef	jal 0x39828	jal 0x396d0	yes
+WORD	Allocator::Allocate	+0x934	18150513	48a50513	addi a0, a0, 0x181	addi a0, a0, 0x48a	yes
+WORD	Allocator::Allocate	+0x938	ead58613	15858613	addi a2, a1, -0x153	addi a2, a1, 0x158	yes
+WORD	Allocator::Allocate	+0x944	00d390ef	6b4390ef	jal 0x3980c	jal 0x396b4	yes
+WORD	Allocator::Allocate	+0x948	07d330ef	724330ef	jal 0x3387c	jal 0x33724	yes
+WORD	Allocator::Allocate	+0x954	fffe8597	fffe9597	auipc a1, 0xfffe8	auipc a1, 0xfffe9	yes
+WORD	Allocator::Allocate	+0x958	f8750513	2a650513	addi a0, a0, -0x79	addi a0, a0, 0x2a6	yes
+WORD	Allocator::Allocate	+0x95c	73458613	a1258613	addi a2, a1, 0x734	addi a2, a1, -0x5ee	yes
+WORD	Allocator::Allocate	+0x96c	7e4390ef	68c390ef	jal 0x397e4	jal 0x3968c	yes
+WORD	Allocator::Allocate	+0x978	fffe0517	fffe1517	auipc a0, 0xfffe0	auipc a0, 0xfffe1	yes
+WORD	Allocator::Allocate	+0x97c	5ab50513	85650513	addi a0, a0, 0x5ab	addi a0, a0, -0x7aa	yes
+WORD	Allocator::Allocate	+0x980	17d2e0ef	0252e0ef	jal 0x2e97c	jal 0x2e824	yes
+WORD	Allocator::Allocate	+0x984	700390ef	5a8390ef	jal 0x39700	jal 0x395a8	yes
+WORD	CombinedAllocator::Allocate	+0x2c	00069517	00063517	auipc a0, 0x69	auipc a0, 0x63	yes
+WORD	CombinedAllocator::Allocate	+0x30	83053503	58c53503	ld a0, -0x7d0(a0)	ld a0, 0x58c(a0)	yes
+WORD	CombinedAllocator::Allocate	+0x3c	ef450513	0b250513	addi a0, a0, -0x10c	addi a0, a0, 0xb2	yes
+WORD	CombinedAllocator::Allocate	+0x40	39c310ef	164310ef	jal 0x3139c	jal 0x31164	yes
+WORD	CombinedAllocator::Allocate	+0x228	86b50513	a3650513	addi a0, a0, -0x795	addi a0, a0, -0x5ca	yes
+WORD	CombinedAllocator::Allocate	+0x22c	43d2a0ef	2052a0ef	jal 0x2ac3c	jal 0x2aa04	yes
+WORD	CombinedAllocator::Allocate	+0x230	1c1350ef	788350ef	jal 0x359c0	jal 0x35788	yes
+WORD	CombinedAllocator::Allocate	+0x23c	20350513	3c750513	addi a0, a0, 0x203	addi a0, a0, 0x3c7	yes
+WORD	CombinedAllocator::Allocate	+0x240	4f058613	6e958613	addi a2, a1, 0x4f0	addi a2, a1, 0x6e9	yes
+WORD	CombinedAllocator::Allocate	+0x250	26d350ef	035350ef	jal 0x35a6c	jal 0x35834	yes
+WORD	CombinedAllocator::Allocate	+0x25c	09f50513	26a50513	addi a0, a0, 0x9f	addi a0, a0, 0x26a	yes
+WORD	CombinedAllocator::Allocate	+0x260	a6a58613	c7258613	addi a2, a1, -0x596	addi a2, a1, -0x38e	yes
+WORD	CombinedAllocator::Allocate	+0x26c	251350ef	019350ef	jal 0x35a50	jal 0x35818	yes
+WORD	CombinedAllocator::Allocate	+0x27c	1c750513	38b50513	addi a0, a0, 0x1c7	addi a0, a0, 0x38b	yes
+WORD	CombinedAllocator::Allocate	+0x280	94460613	b7860613	addi a2, a2, -0x6bc	addi a2, a2, -0x488	yes
+WORD	CombinedAllocator::Allocate	+0x28c	231350ef	7f8350ef	jal 0x35a30	jal 0x357f8	yes
+TOTAL	words 854	byte-identical 757	differing 97 (addi 29 auipc 13 jal 43 ld 12)	differing only in the immediate 97	other none

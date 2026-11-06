@@ -1,0 +1,61 @@
+INPUTS USED by port_addr_check.py --src $DONOR/A --dst $OURS/A --src-image A=$IMG/cgif.A.pin:$IMG/cgif.A.twin --dst-image A=$IMG/cmd.A.pin:$IMG/cmd.A.twin --donors-from $BIN --cache cache --paired-only --summary --fail-on-flags --out full.tsv --include A*.v --dst-include A*.v
+  image src A  $IMG/cgif.A.pin  sha256 7093581aab04  589640 bytes  symbols: symtab of cgif.A.twin 488e39500746
+  image dst A  $IMG/cmd.A.pin  sha256 c0661b96b5bd  634904 bytes  symbols: symtab of cmd.A.twin 68db792d5fa7
+  ref src  $DONOR/A  -> local path
+  ref dst  $OURS/A  -> local path
+  count symbols of src A: 1996
+  count symbols of dst A: 2256
+  count src files read: 728
+  count src files after --include: 724
+  count dst files read: 1316
+  count dst files after --dst-include: 391
+  count files paired: 389
+  count numerals: 212053
+  count files recognised or declared generated (GENERATED-SKIPPED): 0
+  count constructors whose declared field roles were read from the ported tree: 32
+  count constructors whose declared field roles were read from the source tree: 7
+  count stale-donor candidates dropped instead of judged: 0
+  count UNMEASURED (no donor twin) in .: 2
+  count file pairs whose build came from rule (i'): 573
+  count file pairs whose build came from rule (i): 120
+  count file pairs whose build came from rule (ii): 85
+  count named-symbol cells UNMEASURED (the run reads the file against another build): 0
+  control fill_pass known answer (selftest_fill, run before anything is read): RAN  pass
+  control donor-vs-donor: NOT RUN  a separate run of this tool with one image on both sides; see the tool's documentation file
+  DECLARED ABSENT / DEFAULT USED  --generated (or a generator header) for AB01.v, AB03.v, ACej.v, AD2j.v, AE3i.v, AF0m.v  count 6  [--generated GLOB]  these files are written from the TARGET image, so their rows are pairing artefacts, not findings; they were PAIRED AS ORDINARY FILES in this run
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-FILE-UNMEASURED  count 2  reported as its own row, never silently
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-PORTED  count 18935  reported as its own row, never silently
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-SOURCE  count 3904  reported as its own row, never silently
+  note file pairing: normalised RELATIVE PATH after --map / --rename, then the identity of the first hex in the file name; never the basename alone. There is no donor-text carry filter, so no candidate is dropped for being absent from a same-named donor file (the tool author's note)
+# files paired 389; numerals 212053; "kernel" = of those, inside a fail-loud vm_compute / fetch_word fact
+GENERATOR-FILL	54	kernel 2	REPORTED
+IDENT-NAME	3223	kernel 1711
+IMAGE-EXTENT-SAME	70	kernel 11
+INSN-SAME	1296	kernel 812
+LABEL-MAPPED	19
+NAMED-CONSTANT	21	kernel 4
+NON-ADDRESS-SAME	168033	kernel 94766
+ROUND-CONSTANT-SAME	54	kernel 12
+SAME-CONTENT	14	kernel 13
+SAME-GEOMETRY	4859	kernel 306
+SAME-SYMBOL	9346	kernel 4198
+TARGET-SYMTAB-MATCH	8
+UNPAIRED-FILE-UNMEASURED	2	REPORTED
+DIFFERENT-SYMBOL	287	kernel 29	FLAG
+GEOMETRY-CHANGED	20	kernel 2	FLAG
+IMAGE-EXTENT-CHANGED	1	FLAG
+KIND-CHANGED	70	kernel 15	FLAG
+NO-COUNTERPART	2	kernel 2	FLAG
+NON-ADDRESS-CHANGED	1728	kernel 208	FLAG
+SAME-VALUE-DIFFERENT-OBJECT	1	kernel 1	FLAG
+SLID-TO-NEIGHBOUR	1	FLAG
+STALE-DONOR-CODE-POINTER	4	kernel 2	FLAG
+STALE-DONOR-DATA-POINTER	1	kernel 1	FLAG
+STALE-DONOR-ROUNDED	4	kernel 1	FLAG
+UNPAIRED-PORTED	18935	FLAG
+UNPAIRED-SOURCE	3904	kernel 1530	FLAG
+UNRESOLVED	96	kernel 83	FLAG
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+UNMEASURED named-symbol 0 / 1053 cells	UNMEASURED-NAME 0 rows	UNPAIRED-FILE-UNMEASURED 2 rows
+# image A $IMG/cgif.A.pin 7093581aab04 symbols: symtab
+# image A $IMG/cmd.A.pin c0661b96b5bd symbols: symtab

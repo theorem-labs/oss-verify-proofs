@@ -1,6 +1,7 @@
-# findings/<project>/<harness>/<slug>/finding.yaml: a library bug found while proving, kept on the proof branch with
-# its input.bin, its control.bin and its patch, and re-run by CI on the unpatched binaries
-# (findings/<project>/unpatched.yaml) until it is public.  findings/ never ships.
+# finding.yaml of a finding directory, <slug>/ in a fuzz target's findings folder (projects/<project>/<harness>/findings/,
+# or findings/<project>/<harness>/ in the old layout): a library bug found while proving, kept on the proof branch with
+# its input.bin, its control.bin and its patch, and re-run by CI on the unpatched binaries (its project's
+# unpatched.yaml) until it is public.  No finding ever ships.
 #
 # Each run is one build on input.bin or control.bin, as `oft check --parts findings` makes it: its exit status as a
 # shell reports it, the signal that ended it, and the SHA-256 of its stdout and of its stderr.  `oft check --parts

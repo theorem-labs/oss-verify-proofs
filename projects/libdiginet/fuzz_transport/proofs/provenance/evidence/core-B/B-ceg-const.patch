@@ -1,0 +1,11 @@
+--- B/YCeg.v
++++ B/YCeg.v
+@@ -24,7 +24,7 @@
+ Definition A_uar_glob : Z := 0xac680.
+ Definition SB : Z := 0x7fff8000.
+ Lemma SB_SHADOW_OFF : SB = SHADOW_OFF. Proof. reflexivity. Qed.
+-Definition lib_const_addr (a : Z) : Prop := (port_core_refused_10310 <= a < port_core_refused_10318) \/ (port_core_refused_10338 <= a < port_core_refused_10340) \/ (port_core_refused_10360 <= a < port_core_refused_10368) \/ (port_core_refused_103c8 <= a < port_core_refused_103d0) \/ (port_core_refused_20dcc <= a < port_core_refused_20dd0).
++Definition lib_const_addr (a : Z) : Prop := (0x10310 <= a < 0x10318) \/ (0x10338 <= a < 0x10340) \/ (0x10360 <= a < 0x10368) \/ (0x103a8 <= a < 0x103b0).
+ Record TfibLib (B : asyms) : Prop := {
+ tl_code : as_code B = Tfib_code;
+ tl_got_shadow : as_got_shadow B = A_GOT_shadow;

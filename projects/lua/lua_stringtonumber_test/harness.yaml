@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lua
 harness: lua_stringtonumber_test
-rocq: OssFuzzTheorems.lua.lua_stringtonumber_test
+rocq: OSSVerify.lua.lua_stringtonumber_test
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an API contract: lua_stringtonumber failure (returns
   0) leaves the stack unchanged.'

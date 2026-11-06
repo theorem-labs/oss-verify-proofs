@@ -1,0 +1,21 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From Stdlib Require Import ZArith List.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Plain Require Import PImg RMalloc_iface Harness_iface RF_malloc_spec RF_free_spec.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Plain Require Import RF_fse_iface RF_fse_iface_m RF_fse_leaf RF_fse_prod RF_fse_write_C.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Plain Require Import RF_fse_h_malloc RF_fse_h.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Plain Require Import RunDraw.
+Section CANSEC1. Context {rc : runConstT}.
+#[using="Type"] Theorem fuzz_one_closed : fse_read_stmt -> fuzz_one_stmt.
+Proof.
+intros READ.
+exact (fuzz_one_proof
+(prod_create_proof (fuzz_malloc_proof rmalloc_spec))
+(fuzz_malloc_proof rmalloc_spec)
+rfree_spec_proof
+(prod_free_proof rfree_spec_proof)
+prod_u32r_proof (prod_i32r_proof prod_u32r_proof)
+fse_wbound_proof fse_write_proof fse_iserror_proof READ).
+Qed.
+End CANSEC1.

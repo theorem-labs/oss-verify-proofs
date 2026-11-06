@@ -1,0 +1,143 @@
+(* The addresses fuzz_identity.asan gives the listing's names, objects and
+   auipc values. IdentImg.v checks them against the image. *)
+(* Object 30 (0xa4fb8) is __asan_shadow_memory_dynamic_address: no slot builds it. *)
+From OSSVerify.Proofs.libreac.fuzz_identity.lib.A.Prog Require Import PaTable IdentSyms.
+From Stdlib Require Import ZArith List.
+Import ListNotations.
+Open Scope Z_scope.
+Definition ident_text : Z := 0x8070c.
+Definition ident_sigma (s : isym) : Z :=
+match s with
+| IS___asan_stack_malloc_4 => 0x3d2a0
+| IS_reac_identity_init => 0x838d8
+| IS_reac_identity_ingest => 0x838fc
+| IS_reac_identity_fw_str => 0x83e34
+| IS_reac_identity_reac_ver_str => 0x84044
+| IS_reac_box_catalogue_defect => 0x837b0
+| IS_reac_box_family_of => 0x828dc
+| IS___asan_memset => 0x51cf4
+| IS___interceptor_trampoline_malloc => 0x52bac
+| IS___asan_memcpy => 0x51858
+| IS___interceptor_trampoline_free => 0x52ba8
+| IS___interceptor_trampoline_bcmp => 0x421a0
+| IS_put_dec => 0x8258c
+| IS___interceptor_trampoline_memchr => 0x421a4
+| IS_check_str => 0x8251c
+| IS___asan_report_load1 => 0x58970
+| IS_reac_box_family_stem => 0x829c4
+| IS_reac_box_name => 0x82a24
+| IS___interceptor_trampoline_strlen => 0x4218c
+| IS___interceptor_trampoline_strcmp => 0x42194
+| IS_reac_box_catalogue => 0x83890
+| IS___asan_set_shadow_f5 => 0x54820
+| IS___asan_set_shadow_00 => 0x54718
+| IS___asan_handle_no_return => 0x5996c
+| IS_abort => 0x8ab38
+| IS___asan_report_store1 => 0x58c90
+| IS___asan_report_load4 => 0x58ab0
+| IS___asan_report_load_n => 0x58fb0
+| IS___asan_report_load8 => 0x58b50
+| IS___asan_stack_malloc_0 => 0x3cf80
+| IS___asan_init => 0x59ad4
+| IS___asan_version_mismatch_check_v8 => 0x59b68
+| IS___asan_register_elf_globals => 0x400c8
+| IS___asan_unregister_elf_globals => 0x40134
+| IS___asan_stack_malloc_3 => 0x3d0f4
+| IS_sb_dec => 0x83494
+| IS___asan_report_store8 => 0x58e70
+| IS___asan_report_store4 => 0x58dd0
+| IS___asan_report_store_n => 0x59050
+| IS___asan_report_store2 => 0x58d30
+| IS_write_uint => 0x84160
+end.
+Definition ident_obj (i : nat) : Z :=
+match i with
+| 0%nat => 0x9c408
+| 1%nat => 0x9c3b0
+| 2%nat => 0x13d25
+| 3%nat => 0x8070c
+| 4%nat => 0x20f80
+| 5%nat => 0x10370
+| 6%nat => 0x20fe0
+| 7%nat => 0x9b180
+| 8%nat => 0x210a0
+| 9%nat => 0x20fa0
+| 10%nat => 0x20fc0
+| 11%nat => 0x176ed
+| 12%nat => 0x8258c
+| 13%nat => 0x9d028
+| 14%nat => 0x9d030
+| 15%nat => 0xa1900
+| 16%nat => 0x210e0
+| 17%nat => 0x9b1c0
+| 18%nat => 0x211a0
+| 19%nat => 0x1ba04
+| 20%nat => 0x82a24
+| 21%nat => 0x9b200
+| 22%nat => 0x211c0
+| 23%nat => 0x211e0
+| 24%nat => 0x21200
+| 25%nat => 0x15975
+| 26%nat => 0x83494
+| 27%nat => 0x9b240
+| 28%nat => 0x16028
+| 29%nat => 0x84160
+| 30%nat => 0xa4fb8
+| _ => 0
+end.
+Definition ident_hi (j : nat) : Z :=
+match j with
+| 0%nat => 0x9c758
+| 1%nat => 0x9c75c
+| 2%nat => 0x137c0
+| 3%nat => 0x807c4
+| 4%nat => 0x20a30
+| 5%nat => 0x10aac
+| 6%nat => 0x21598
+| 7%nat => 0x9aa4c
+| 8%nat => 0x20a70
+| 9%nat => 0x20d04
+| 10%nat => 0x20d98
+| 11%nat => 0x9c534
+| 12%nat => 0x9c5dc
+| 13%nat => 0x9c5e0
+| 14%nat => 0x17644
+| 15%nat => 0x82648
+| 16%nat => 0x9c884
+| 17%nat => 0x9c888
+| 18%nat => 0xa1894
+| 19%nat => 0x9c8b4
+| 20%nat => 0x9c8b8
+| 21%nat => 0xa18c4
+| 22%nat => 0x9c900
+| 23%nat => 0x2092c
+| 24%nat => 0x9c9d8
+| 25%nat => 0x9a9e8
+| 26%nat => 0x20a0c
+| 27%nat => 0x9ca7c
+| 28%nat => 0x9ca80
+| 29%nat => 0x1baf8
+| 30%nat => 0x82afc
+| 31%nat => 0x9ac4c
+| 32%nat => 0x20c70
+| 33%nat => 0x21088
+| 34%nat => 0x21130
+| 35%nat => 0x211d8
+| 36%nat => 0x9c4d4
+| 37%nat => 0x9c4d8
+| 38%nat => 0x1553c
+| 39%nat => 0x83540
+| 40%nat => 0x9c7c0
+| 41%nat => 0x9c89c
+| 42%nat => 0x9b8c0
+| 43%nat => 0x9c914
+| 44%nat => 0x9be4c
+| 45%nat => 0x9c080
+| 46%nat => 0x9c190
+| 47%nat => 0x9c194
+| 48%nat => 0x161f4
+| 49%nat => 0x841f8
+| _ => 0
+end.
+Definition ident_nobj : nat := 31%nat.
+Definition ident_nhi : nat := 50%nat.

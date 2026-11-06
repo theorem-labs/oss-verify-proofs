@@ -1,0 +1,12 @@
+# U = fuzz_uci.asan-ubsan(unstripped, sha256 8d07ffcf5948) sha256 8d07ffcf5948
+# R = fuzz_boxreg.asan-ubsan(unstripped, sha256 1d548458eac3) sha256 1d548458eac3
+# P = PLANT(fuzz_boxreg copy, ___interceptor_memchr+0x10 2338217d -> 2338217c) sha256 a8ecb4786e9d
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(rodata-str-eq,jumptab-eq,const-eq)	target-differ
+__interceptor_trampoline_memchr	U:R	0x4107c	0x41468	4	4	EQUAL-mod-pcrel	1	0	0	(0, 0, 0)	0
+__interceptor_trampoline_memchr	P:R	0x41468	0x41468	4	4	EQUAL	0	0	0	(0, 0, 0)	0
+___interceptor_memchr	U:R	0x42784	0x43208	720	720	EQUAL-mod-pcrel	25	0	0	(2, 0, 0)	0
+___interceptor_memchr	P:R	0x43208	0x43208	720	720	DIFFERENT	0	1	0	(2, 0, 0)	0
+memchr	U:R	0x9035c	0x924ac	204	204	EQUAL-mod-pcrel	4	0	0	(1, 0, 1)	0
+memchr	P:R	0x924ac	0x924ac	204	204	EQUAL	0	0	0	(1, 0, 1)	0
+_ZN11__sanitizer15internal_memchrEPKvim	U:R	0x626ec	0x633b0	32	32	EQUAL	0	0	0	(0, 0, 0)	0
+_ZN11__sanitizer15internal_memchrEPKvim	P:R	0x633b0	0x633b0	32	32	EQUAL	0	0	0	(0, 0, 0)	0

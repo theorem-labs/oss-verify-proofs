@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: picotls
 harness: fuzz-asn1
-rocq: OssFuzzTheorems.picotls.fuzz_asn1
+rocq: OSSVerify.picotls.fuzz_asn1
 origin: upstream
 summary: First two bytes give a buffer length; the buffer is filled from the input and one of ptls_asn1_validation,
   ptls_asn1_get_expected_type_and_length, ptls_load_certificates or ptls_minicrypto_load_private_key runs

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: gdal
 harness: gml_geom_import_fuzzer
-rocq: OssFuzzTheorems.gdal.gml_geom_import_fuzzer
+rocq: OSSVerify.gdal.gml_geom_import_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

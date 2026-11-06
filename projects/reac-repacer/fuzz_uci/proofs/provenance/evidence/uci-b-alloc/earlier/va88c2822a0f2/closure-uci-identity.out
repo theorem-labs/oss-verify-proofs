@@ -1,0 +1,16 @@
+__interceptor_trampoline_malloc	closure 784 functions (register-indirect call sites inside: 97)	EQUAL 172	EQUAL-mod-pcrel(all targets equal) 609	other 3
+   _ZN11__sanitizer19GetHandleSignalModeEi @0x64208: EQUAL-mod-pcrel target-differ [('0x24', '(.data.rel.ro)', '(.data.rel.ro)', b'\x8c\x0c\x13', b'Ln\x13')] 
+   _ZNK11__sanitizer13SignalContext8DescribeEv @0x65330: EQUAL-mod-pcrel target-differ [('0x1c', '(.rodata)', '(.rodata)', b'\xca\xca\xff\xffk\xa2\xff\xffGS\xff\xffc\x8b\xff\xff\x8c\xf8\xff\xffQS\xff\xff', b'\x83\xca\xff\xff\x8d\xa1\xff\xff\xdfQ\xff\xfff\x8a\xff\xff\\\xf8\xff\xff\xe9Q\xff\xff')] 
+   __synccall @0x92dbc: EQUAL-mod-pcrel target-differ [('0x54', '(.data.rel.ro)', '(.data.rel.ro)', b'$0\t', b'\xcct\t')] 
+___interceptor_malloc	closure 784 functions (register-indirect call sites inside: 97)	EQUAL 172	EQUAL-mod-pcrel(all targets equal) 609	other 3
+   _ZN11__sanitizer19GetHandleSignalModeEi @0x64208: EQUAL-mod-pcrel target-differ [('0x24', '(.data.rel.ro)', '(.data.rel.ro)', b'\x8c\x0c\x13', b'Ln\x13')] 
+   _ZNK11__sanitizer13SignalContext8DescribeEv @0x65330: EQUAL-mod-pcrel target-differ [('0x1c', '(.rodata)', '(.rodata)', b'\xca\xca\xff\xffk\xa2\xff\xffGS\xff\xffc\x8b\xff\xff\x8c\xf8\xff\xffQS\xff\xff', b'\x83\xca\xff\xff\x8d\xa1\xff\xff\xdfQ\xff\xfff\x8a\xff\xff\\\xf8\xff\xff\xe9Q\xff\xff')] 
+   __synccall @0x92dbc: EQUAL-mod-pcrel target-differ [('0x54', '(.data.rel.ro)', '(.data.rel.ro)', b'$0\t', b'\xcct\t')] 
+__interceptor_trampoline_free	closure 784 functions (register-indirect call sites inside: 97)	EQUAL 172	EQUAL-mod-pcrel(all targets equal) 609	other 3
+   _ZN11__sanitizer19GetHandleSignalModeEi @0x64208: EQUAL-mod-pcrel target-differ [('0x24', '(.data.rel.ro)', '(.data.rel.ro)', b'\x8c\x0c\x13', b'Ln\x13')] 
+   _ZNK11__sanitizer13SignalContext8DescribeEv @0x65330: EQUAL-mod-pcrel target-differ [('0x1c', '(.rodata)', '(.rodata)', b'\xca\xca\xff\xffk\xa2\xff\xffGS\xff\xffc\x8b\xff\xff\x8c\xf8\xff\xffQS\xff\xff', b'\x83\xca\xff\xff\x8d\xa1\xff\xff\xdfQ\xff\xfff\x8a\xff\xff\\\xf8\xff\xff\xe9Q\xff\xff')] 
+   __synccall @0x92dbc: EQUAL-mod-pcrel target-differ [('0x54', '(.data.rel.ro)', '(.data.rel.ro)', b'$0\t', b'\xcct\t')] 
+___interceptor_free	closure 784 functions (register-indirect call sites inside: 97)	EQUAL 172	EQUAL-mod-pcrel(all targets equal) 609	other 3
+   _ZN11__sanitizer19GetHandleSignalModeEi @0x64208: EQUAL-mod-pcrel target-differ [('0x24', '(.data.rel.ro)', '(.data.rel.ro)', b'\x8c\x0c\x13', b'Ln\x13')] 
+   _ZNK11__sanitizer13SignalContext8DescribeEv @0x65330: EQUAL-mod-pcrel target-differ [('0x1c', '(.rodata)', '(.rodata)', b'\xca\xca\xff\xffk\xa2\xff\xffGS\xff\xffc\x8b\xff\xff\x8c\xf8\xff\xffQS\xff\xff', b'\x83\xca\xff\xff\x8d\xa1\xff\xff\xdfQ\xff\xfff\x8a\xff\xff\\\xf8\xff\xff\xe9Q\xff\xff')] 
+   __synccall @0x92dbc: EQUAL-mod-pcrel target-differ [('0x54', '(.data.rel.ro)', '(.data.rel.ro)', b'$0\t', b'\xcct\t')] 

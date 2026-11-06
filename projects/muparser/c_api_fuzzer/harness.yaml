@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: muparser
 harness: c_api_fuzzer
-rocq: OssFuzzTheorems.muparser.c_api_fuzzer
+rocq: OSSVerify.muparser.c_api_fuzzer
 origin: oss-fuzz
 summary: 'C API (muParserDLL): byte 0 selects int/float base type and optional infix/postfix/binary operators,
   a variable factory, a value identifier, custom name/operator characters; byte 1 picks mupEvalBulk(10)

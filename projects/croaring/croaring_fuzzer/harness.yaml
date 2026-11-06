@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: croaring
 harness: croaring_fuzzer
-rocq: OssFuzzTheorems.croaring.croaring_fuzzer
+rocq: OSSVerify.croaring.croaring_fuzzer
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an invariant: 32-bit: for a deserialised bitmap
   that passes roaring_bitmap_internal_validate, adding each absent value in [100,1000) must raise get_cardinality

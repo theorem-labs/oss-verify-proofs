@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_msgpack_parser_max
-rocq: OssFuzzTheorems.jsoncons.fuzz_msgpack_parser_max
+rocq: OSSVerify.jsoncons.fuzz_msgpack_parser_max
 origin: upstream
 summary: msgpack_stream_reader into a no-op default_json_visitor; ec ignored.
 entry: LLVMFuzzerTestOneInput

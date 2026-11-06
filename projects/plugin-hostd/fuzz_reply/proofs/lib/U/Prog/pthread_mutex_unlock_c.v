@@ -1,0 +1,30 @@
+From Stdlib Require Import ZArith List.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Lib Require Import PropExec MState Mem Cells Exec Step Frame.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U Require Import Img0.
+Import ListNotations.
+Open Scope Z_scope.
+
+Definition PTHREAD_MUTEX_UNLOCK : Z := 0x1ec94.
+
+Definition pthread_mutex_unlock_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word)
+    (fc : bv 32) (A lo : Z) (m : word -> option byte) : machine_state -> Prop :=
+  fun ms' => exists t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 m',
+    ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 0) a1 a2 a3 a4 a5 a6 a7
+                  s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+             F (ret_pc ra) fc None m' (seg_rom rsegs)
+    /\ munch [(bv_unsigned sp - 96, bv_unsigned sp); (A + 4, A + 8)] m m' /\ wmono rsegs m m' /\ mem_inv rsegs m'
+    /\ stk rsegs m' lo (bv_unsigned sp)
+    /\ rw_cells rsegs m' A [C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 0)].
+
+Definition pthread_mutex_unlock_contract : Prop :=
+  forall (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+         (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (A lo : Z),
+    A mod 4 = 0 ->
+    rw_cells rsegs m A [C4 (Z_to_bv 64 0); C4 (Z_to_bv 64 16); C4 (Z_to_bv 64 0)] ->
+    stk rsegs m lo (bv_unsigned sp) -> lo + 96 <= bv_unsigned sp ->
+    (A + 12 <= bv_unsigned sp - 96 \/ bv_unsigned sp <= A) ->
+    mem_inv rsegs m ->
+    evt rsegs (pthread_mutex_unlock_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc A lo m)
+      (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 A) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+          F (Z_to_bv 64 PTHREAD_MUTEX_UNLOCK) fc None m (seg_rom rsegs)).

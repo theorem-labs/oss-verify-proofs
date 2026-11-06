@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_bson_encoder
-rocq: OssFuzzTheorems.jsoncons.fuzz_bson_encoder
+rocq: OSSVerify.jsoncons.fuzz_bson_encoder
 origin: upstream
 summary: bson_stream_reader drives a bson_bytes_encoder (decode -> re-encode to a byte vector) with an
   error_code; the re-encoded bytes are never compared or decoded again.

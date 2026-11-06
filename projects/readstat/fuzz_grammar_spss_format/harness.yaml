@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: readstat
 harness: fuzz_grammar_spss_format
-rocq: OssFuzzTheorems.readstat.fuzz_grammar_spss_format
+rocq: OSSVerify.readstat.fuzz_grammar_spss_format
 origin: upstream
 summary: spss_parse_format() of the input into an spss_format_t; result ignored.
 entry: LLVMFuzzerTestOneInput

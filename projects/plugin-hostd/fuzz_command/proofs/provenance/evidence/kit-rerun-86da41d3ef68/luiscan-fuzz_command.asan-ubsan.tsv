@@ -1,0 +1,39 @@
+ROW	image	function	addr	size	luis	insec	inload	memfed	memfed_out	luiconst	unmeasured	exposure
+# image img/fuzz_command.asan-ubsan.debug sha256 658cefbe806b
+ROW	fuzz_command.asan-ubsan.debug	___interceptor_strcmp	0x45a70	1328	7	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	__interceptor_trampoline_strcmp	0x45188	4	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	__sanitizer_weak_hook_strcmp	0x45a6c	4	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	_ZN6__asan18TryAsanInitFromRtlEv	0x5f68c	160	2	0	1	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	__asan_region_is_poisoned	0x5a1f8	836	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	___interceptor_malloc	0x58ba4	348	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj	0x60424	336	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	_ZN11__sanitizer18BufferedStackTrace10UnwindFastEmmmmj	0x78edc	352	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	___interceptor_strdup	0x4ccfc	920	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	memcpy	0x9e698	1028	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	___interceptor_strndup	0x4575c	784	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	__interceptor_trampoline_strndup	0x45184	4	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	__asan_memcpy	0x5767c	1180	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	__asan_memset	0x57b18	576	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	memset	0x9ea9c	248	1	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	___interceptor_strcspn	0x46ce4	1160	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	__interceptor_trampoline_strcspn	0x45198	4	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	strcspn	0x9ee10	280	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	strtok_r	0x9f360	144	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	_ZN11__sanitizer11mem_is_zeroEPKcm	0x69f38	180	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	_ZL13printf_commonPvPKcS_	0x48d28	2760	9	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	reply	0x8d9c4	72	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	verb_is	0x8da0c	120	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	rec_clear	0x899e4	104	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	rec_code_declared	0x89658	124	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	rec_shape_of	0x896d4	276	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	is_instance_verb	0x8e340	244	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	number	0x8df2c	592	5	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	answer	0x8aa10	836	7	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	check_refusal	0x88204	212	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	send_message	0x86bf8	620	3	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	sup_reset	0x8bd58	88	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	sup_quarantine_clear	0x8bdb0	88	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	memchr	0x9e59c	204	0	0	0	0	0	0	0	0
+ROW	fuzz_command.asan-ubsan.debug	verbs_receive	0x8ce4c	2936	4	0	0	0	0	0	0	0
+TOTAL	fuzz_command.asan-ubsan.debug	functions 35	with-lui 8	with-exposure 0	luis 38	insec 0	inload 1	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	all	functions 35	with-lui 8	with-exposure 0	luis 38	insec 0	inload 1	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0

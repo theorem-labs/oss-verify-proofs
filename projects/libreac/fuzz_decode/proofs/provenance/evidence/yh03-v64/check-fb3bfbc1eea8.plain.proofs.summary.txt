@@ -1,0 +1,8 @@
+# self-test: 223 known answers OK (yh03regen 163 + yh03check 60)
+# section bounds: lib/Reusable/YH03.v: 18 of 18 section cells equal the image's section headers
+# build: lib/Reusable/YH03.v: plain (the pinned binary's sha256 556b61e63c44 is builds.plain of projects/libreac/fuzz_decode/harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 0 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+# unit identity: lib/Reusable/YH03.v: the image's 4 PT_LOADs equal the plain pin 556b61e63c44 (PINNED_DIR/fuzz_decode.plain; ELF section-header fields and build-id masked)
+# not checked by any rule: lib/Reusable/YH03.v: src0_debruijn_len, src0_vmlock
+# COPIED: 0 of the 0 code cells (A_ / E_) equal in both builds' files are read outside the address files (under proofs/libreac/fuzz_decode); D_ cells are never COPIED
+# rows checked: 103; rows not OK: 0
+# D cells by symbol: 41 (OK 41, BAD 0); by the code of the function they name: OK-BY-LOAD 1, UNMEASURED 0; OK-GOT0 1 (GOT[0] of the pinned binary); NOSYM 44 (no symbol of the name, not checked); string cells 18 (checked only by yh03regen --elf, with an unstripped image)

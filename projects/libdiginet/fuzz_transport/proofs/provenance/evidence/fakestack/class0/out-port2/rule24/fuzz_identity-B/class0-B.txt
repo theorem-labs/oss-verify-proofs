@@ -1,0 +1,5 @@
+donor: pinned sha256 baf1a4d065e0, twin sha256 43b44d50be8a, allocated sections equal (build-id note excepted): True
+target: pinned sha256 41113a03c82f, twin sha256 e217cb0a84f1, allocated sections equal (build-id note excepted): True
+libreac/fuzz_identity ref e10f488c53fc image B class 0: 10 of 11 ranges paired and compared; pc-relative words 49 (walked), 403 (whole functions)
+13 resolve lines: 5 move a value (0x3d4d4 -> 0x3e000, 0x9c680 -> 0xa3ce0, 0x9c6e0 -> 0xa3d40, 0x9d370 -> 0xa49d0, 0x9d380 -> 0xa49e0), 0 name the image of a header range, the rest keep the value
+FAIL: B/Rt/StackMallocTbl.v range 0x3d308 (__asan_stack_malloc_4): 1 / 0 copies and no call pairs it (call targets [])

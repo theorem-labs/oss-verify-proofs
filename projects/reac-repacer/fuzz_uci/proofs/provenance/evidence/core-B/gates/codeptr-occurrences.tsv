@@ -1,0 +1,411 @@
+value	file	line	class	context
+0x10101	B/YB1g.v	107	decode-result	Lemma D_11d4cc : decode_any W_11d4cc = Some (Lui 11 65793, 4%Z).
+0x300713	B/YB1g.v	29	insn-word	Definition W_11d490 : bv 32 := 0x00300713.
+0x36f693	B/YB1g.v	109	insn-word	Definition W_11d4d0 : bv 32 := 0x0036f693.
+0x459713	B/YB1g.v	114	insn-word	Definition W_11d4d4 : bv 32 := 0x00459713.
+0x45f793	B/YB1g.v	214	insn-word	Definition W_11d524 : bv 32 := 0x0045f793.
+0xa2603	B/YB1r.v	13	insn-word	Definition W_52d28 : bv 32 := 0x000a2603.
+0x468693	B/YB1r.v	23	insn-word	Definition W_52d30 : bv 32 := 0x00468693.
+0x4a0a13	B/YB1r.v	28	insn-word	Definition W_52d34 : bv 32 := 0x004a0a13.
+0xb2583	B/YB1s.v	13	insn-word	Definition W_509d4 : bv 32 := 0x000b2583.
+0x4b0b13	B/YB1s.v	18	insn-word	Definition W_509d8 : bv 32 := 0x004b0b13.
+0x4c8c93	B/YB1s.v	28	insn-word	Definition W_509e0 : bv 32 := 0x004c8c93.
+0x28693	B/YB1u.v	1209	insn-word	Definition W_11d43c : bv 32 := 0x00028693.
+0x28a63	B/YB1u.v	79	insn-word	Definition W_11d0b4 : bv 32 := 0x00028a63.
+0x100793	B/YB1u.v	34	insn-word	Definition W_11d090 : bv 32 := 0x00100793.
+0x158593	B/YB1u.v	54	insn-word	Definition W_11d0a0 : bv 32 := 0x00158593.
+0x158713	B/YB1u.v	29	insn-word	Definition W_11d08c : bv 32 := 0x00158713.
+0x15c783	B/YB1u.v	874	insn-word	Definition W_11d330 : bv 32 := 0x0015c783.
+0x15c783	B/YB1u.v	1059	insn-word	Definition W_11d3c4 : bv 32 := 0x0015c783.
+0x15c783	B/YB1u.v	1164	insn-word	Definition W_11d418 : bv 32 := 0x0015c783.
+0x15c783	B/YB1u.v	1244	insn-word	Definition W_11d458 : bv 32 := 0x0015c783.
+0x167613	B/YB1u.v	1224	insn-word	Definition W_11d448 : bv 32 := 0x00167613.
+0x167613	B/YB1u.v	1274	insn-word	Definition W_11d470 : bv 32 := 0x00167613.
+0x168693	B/YB1u.v	69	insn-word	Definition W_11d0ac : bv 32 := 0x00168693.
+0x168693	B/YB1u.v	529	insn-word	Definition W_11d21c : bv 32 := 0x00168693.
+0x170713	B/YB1u.v	84	insn-word	Definition W_11d0b8 : bv 32 := 0x00170713.
+0x200813	B/YB1u.v	174	insn-word	Definition W_11d100 : bv 32 := 0x00200813.
+0x258593	B/YB1u.v	1249	insn-word	Definition W_11d45c : bv 32 := 0x00258593.
+0x25c803	B/YB1u.v	879	insn-word	Definition W_11d334 : bv 32 := 0x0025c803.
+0x25c803	B/YB1u.v	1064	insn-word	Definition W_11d3c8 : bv 32 := 0x0025c803.
+0x25c803	B/YB1u.v	1169	insn-word	Definition W_11d41c : bv 32 := 0x0025c803.
+0x55c000	B/YB1w.v	603	?	Definition tfib_at_rw_len : Z := 0x55c000.
+0x20000	B/YD1d.v	38	?	&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072
+0x20000	B/YD1d.v	280	?	/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072 = true
+0x100000	B/YD1d.v	32	?	[ (epg 518, ELit 4096); (epg 501, ELit 8388608); (epg 500, ELit 1048576); (epg 424, ELit 11571200); (epg 357, ELit 4096);
+0x100000	B/YD1d.v	37	?	(kn_zero ch (EMd M_MUL (ELit 512) (EVar 501)) 2147450880 1048576
+0x100000	B/YD1d.v	206	?	* change kNodesBlockSize with 1048576. rewrite <- VNB, wiv_wzp. vin.
+0x100000	B/YD1d.v	279	?	ma kz_facts : kn_zero ch (EMd M_MUL (ELit 512) (EVar 501)) 2147450880 1048576 = true
+0x161200	B/YD1d.v	39	?	&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 424)) 2147450880 1446400)%bool.
+0x161200	B/YD1d.v	281	?	/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 424)) 2147450880 1446400 = true.
+0x38e000	B/YD1d.v	33	?	(epg 275, ELit 65536); (epg 274, ELit 4096); RINFO_P; (epg 254, ELit 3727360); (epg 109, ELit 65536); IMG_P; STK_P ].
+0x100000	B/YD1e.v	223	?	*   eapply (PG 500%nat 1048576 (wzp (dNB E)) eq_refl HNB ltac:(lia)); [apply STA
+0x38e000	B/YD1e.v	132	?	change (d254 E) with (dmm E (mk e254 3727360 KRW)). apply (extra_of (3 + length (musl_maps ch)
+0x38e000	B/YD1e.v	232	?	*   eapply (PG 254%nat 3727360 (wzp (d254 E)) eq_refl H254 ltac:(lia) (EXTRA _ e
+0x20000	B/YD1f.v	191	?	eapply (KZ _ 500%nat 1048576 131072 B12 eq_refl HNB ltac:(lia) (proj1 (proj2 kz_facts
+0x100000	B/YD1f.v	189	?	eapply (KZ _ 501%nat 8388608 1048576 B12 eq_refl HSBv ltac:(lia) (proj1 kz_facts)). re
+0x100000	B/YD1f.v	191	?	eapply (KZ _ 500%nat 1048576 131072 B12 eq_refl HNB ltac:(lia) (proj1 (proj2 k
+0x161200	B/YD1f.v	193	?	eapply (KZ _ 424%nat 11571200 1446400 B12 eq_refl HFv ltac:(lia) (proj2 (proj2 kz_facts
+0x38e000	B/YD1f.v	202	?	eapply (PG 254%nat 3727360 (wzp (d254 E)) eq_refl ltac:(lia)); [unfold VZ; a
+0x100000	B/YD1g.v	33	?	EAD3 : list amap := [ mk eGV 4096 KRW; mk eSB 8388608 KRWLAZY; mk eNB 1048576 KRW ].
+0x100000	B/YD1g.v	723	?	finition dF := dm eF 11571200 KRW.           Definition dNB := dm eNB 1048576 KRW.       Definition dSB := dm eSB 8388608 KRWLA
+0x100000	B/YD1g.v	764	?	/\ wzp dNB = (u eNB, 1048576) /\ wzp dSB = (u eSB, 8388608) /\ wzp dLow = (214
+0x100000	B/YD1g.v	1035	?	change (dmm (mk eNB 1048576 KRW)) with dNB in ANB. change (dmm (mk eSB 838860
+0x100000	B/YD1g.v	1333	?	lace (32768 * V 0 + 16 * V 6 - 8388608) with ((4096 * V 0 + 2 * V 6 - 1048576) * 8) by lia.
+0x38e000	B/YD1g.v	36	?	mk eP 137439023104 KRW; mk e254 3727360 KRW; mk e109 65536 KRW;
+0x38e000	B/YD1g.v	725	?	Definition dC := dm eC 65536 KRW.    Definition d254 := dm e254 3727360 KRW. Definition d109 := dm e109 65536 KRW.
+0x38e000	B/YD1g.v	767	?	/\ wzp d254 = (u e254, 3727360) /\ wzp d109 = (u e109, 65536).
+0x38e000	B/YD1g.v	912	?	| change (dmm (mk e254 3727360 KRW)) with d254; unfold d254; rewrite u_snd_dm, u
+0x1ffff	B/YD1v.v	318	?	(length p) + 1 < kHighMemEnd -> ~ In NUL p -> Z.of_nat (length p) <= 131071 ->
+0x3fffff	B/YD1v.v	315	?	sp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E' 8) <= 4194303 ->
+0x3fffff	B/YD1v.v	329	?	sp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E' 8) <= 4194303 ->
+0x3fffff	B/YD1w.v	173	?	sp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E' 8) <= 4194303 ->
+0x1ffff	B/YD1x.v	73	?	Z.of_nat (length str) <= 131071 -> ~ In NUL str ->
+0x3fffff	B/YD1x.v	98	?	1 <= bv_unsigned (ew E 8) <= 4194303 ->
+0x1ffff	B/YD27.v	357	?	(length p) + 1 < kHighMemEnd -> ~ In NUL p -> Z.of_nat (length p) <= 131071 ->
+0x3fffff	B/YD27.v	61	?	/\ atom_lookup (f_atoms (ss_facts S_COf)) 8%nat = Some (mkAF 1 4194303 0) /\ forallb drv_win_ok (ss_mem S_CO) = true /\
+0x3fffff	B/YD27.v	76	?	S_checks : atom_lookup (f_atoms (ss_facts S_US)) 8%nat = Some (mkAF 1 4194303 0) /\ ss_mem S_US <> [] /\ regions_wf (ss_mem (ss
+0x3fffff	B/YD27.v	77	?	atom_lookup (f_atoms (ss_facts (ss_main false))) 8%nat = Some (mkAF 1 4194303 0).
+0x3fffff	B/YD27.v	84	?	atom_lookup (f_atoms (ss_facts ss)) 8%nat = Some (mkAF 1 4194303 0) /\
+0x3fffff	B/YD27.v	262	?	usp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E 8) <= 4194303 ->
+0x3fffff	B/YD27.v	310	?	usp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E 8) <= 4194303 ->
+0x3fffff	B/YD27.v	354	?	usp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E 8) <= 4194303 ->
+0x38e000	B/YD2k.v	31	?	&& kn_mem (KZero (SA e254 0) (ELit 3727360)) ch
+0x200000	B/YE30.v	1394	?	assert (Hrange : 0 <= fst (fst e) /\ fst (fst e) + snd (fst e) <= 0x200000).
+0x158593	B/YE38.v	32	insn-word	Lemma F_00c : fetch_word tfibsegs (Z_to_bv 64 (A_ISL + 0xc)) = Some (0x00158593%bv : bv 32). Proof. ftac. Qed.
+0x158593	B/YE38.v	33	insn-word	Lemma D_00c : decode_any (0x00158593%bv : bv 32) = Some (OpImm ALU_ADD 11 11 1, 4%Z).
+0x100813	B/YE3a.v	69	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x18)) = Some (0x00100813%bv : bv 32).
+0x100813	B/YE3a.v	71	insn-word	Lemma DM_018 : decode_any (0x00100813%bv : bv 32) = Some (OpImm ALU_ADD 16 0 1, 4%Z).
+0x150513	B/YE3a.v	85	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x28)) = Some (0x00150513%bv : bv 32).
+0x150513	B/YE3a.v	87	insn-word	Lemma DM_028 : decode_any (0x00150513%bv : bv 32) = Some (OpImm ALU_ADD 10 10 1, 4%Z).
+0x150513	B/YE3a.v	201	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0xac)) = Some (0x00150513%bv : bv 32).
+0x150513	B/YE3a.v	203	insn-word	Lemma DM_0ac : decode_any (0x00150513%bv : bv 32) = Some (OpImm ALU_ADD 10 10 1, 4%Z).
+0x150793	B/YE3a.v	65	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x14)) = Some (0x00150793%bv : bv 32).
+0x150793	B/YE3a.v	67	insn-word	Lemma DM_014 : decode_any (0x00150793%bv : bv 32) = Some (OpImm ALU_ADD 15 10 1, 4%Z).
+0x168793	B/YE3a.v	133	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x68)) = Some (0x00168793%bv : bv 32).
+0x168793	B/YE3a.v	135	insn-word	Lemma DM_068 : decode_any (0x00168793%bv : bv 32) = Some (OpImm ALU_ADD 15 13 1, 4%Z).
+0x178793	B/YE3a.v	105	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x3c)) = Some (0x00178793%bv : bv 32).
+0x178793	B/YE3a.v	107	insn-word	Lemma DM_03c : decode_any (0x00178793%bv : bv 32) = Some (OpImm ALU_ADD 15 15 1, 4%Z).
+0x1ffff0	B/YE3a.v	231	decode-result	Lemma DM_0c8 : decode_any (0xff1ff06f%bv : bv 32) = Some (Jal 0 2097136, 4%Z).
+0x150513	B/YE3b.v	48	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcmp + 0x14)) = Some (0x00150513%bv : bv 32).
+0x150513	B/YE3b.v	50	insn-word	Lemma D_014 : decode_any (0x00150513%bv : bv 32) = Some (OpImm ALU_ADD 10 10 1, 4%Z).
+0x158593	B/YE3b.v	52	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcmp + 0x18)) = Some (0x00158593%bv : bv 32).
+0x158593	B/YE3b.v	54	insn-word	Lemma D_018 : decode_any (0x00158593%bv : bv 32) = Some (OpImm ALU_ADD 11 11 1, 4%Z).
+0x28693	B/YE3c.v	984	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3bc)) = Some (0x00028693%bv : bv 32).
+0x28693	B/YE3c.v	986	insn-word	Lemma D_3bc : decode_any (0x00028693%bv : bv 32) = Some (OpImm ALU_ADD 13 5 0, 4%Z).
+0x28a63	B/YE3c.v	80	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x34)) = Some (0x00028a63%bv : bv 32).
+0x28a63	B/YE3c.v	82	insn-word	Lemma D_034 : decode_any (0x00028a63%bv : bv 32) = Some (Branch BC_EQ 5 0 20, 4%Z).
+0x100793	B/YE3c.v	44	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x10)) = Some (0x00100793%bv : bv 32).
+0x100793	B/YE3c.v	46	insn-word	Lemma D_010 : decode_any (0x00100793%bv : bv 32) = Some (OpImm ALU_ADD 15 0 1, 4%Z).
+0x158593	B/YE3c.v	60	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x20)) = Some (0x00158593%bv : bv 32).
+0x158593	B/YE3c.v	62	insn-word	Lemma D_020 : decode_any (0x00158593%bv : bv 32) = Some (OpImm ALU_ADD 11 11 1, 4%Z).
+0x158713	B/YE3c.v	40	insn-word	: fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0xc)) = Some (0x00158713%bv : bv 32).
+0x158713	B/YE3c.v	42	insn-word	Lemma D_00c : decode_any (0x00158713%bv : bv 32) = Some (OpImm ALU_ADD 14 11 1, 4%Z).
+0x15c783	B/YE3c.v	716	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2b0)) = Some (0x0015c783%bv : bv 32).
+0x15c783	B/YE3c.v	718	insn-word	Lemma D_2b0 : decode_any (0x0015c783%bv : bv 32) = Some (Load SZ1 false 15 11 1, 4%Z).
+0x15c783	B/YE3c.v	864	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x344)) = Some (0x0015c783%bv : bv 32).
+0x15c783	B/YE3c.v	866	insn-word	Lemma D_344 : decode_any (0x0015c783%bv : bv 32) = Some (Load SZ1 false 15 11 1, 4%Z).
+0x15c783	B/YE3c.v	948	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x398)) = Some (0x0015c783%bv : bv 32).
+0x15c783	B/YE3c.v	950	insn-word	Lemma D_398 : decode_any (0x0015c783%bv : bv 32) = Some (Load SZ1 false 15 11 1, 4%Z).
+0x15c783	B/YE3c.v	1012	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3d8)) = Some (0x0015c783%bv : bv 32).
+0x15c783	B/YE3c.v	1014	insn-word	Lemma D_3d8 : decode_any (0x0015c783%bv : bv 32) = Some (Load SZ1 false 15 11 1, 4%Z).
+0x167613	B/YE3c.v	996	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3c8)) = Some (0x00167613%bv : bv 32).
+0x167613	B/YE3c.v	998	insn-word	Lemma D_3c8 : decode_any (0x00167613%bv : bv 32) = Some (OpImm ALU_AND 12 12 1, 4%Z).
+0x167613	B/YE3c.v	1036	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3f0)) = Some (0x00167613%bv : bv 32).
+0x167613	B/YE3c.v	1038	insn-word	Lemma D_3f0 : decode_any (0x00167613%bv : bv 32) = Some (OpImm ALU_AND 12 12 1, 4%Z).
+0x168693	B/YE3c.v	72	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2c)) = Some (0x00168693%bv : bv 32).
+0x168693	B/YE3c.v	74	insn-word	Lemma D_02c : decode_any (0x00168693%bv : bv 32) = Some (OpImm ALU_ADD 13 13 1, 4%Z).
+0x168693	B/YE3c.v	440	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x19c)) = Some (0x00168693%bv : bv 32).
+0x168693	B/YE3c.v	442	insn-word	Lemma D_19c : decode_any (0x00168693%bv : bv 32) = Some (OpImm ALU_ADD 13 13 1, 4%Z).
+0x170713	B/YE3c.v	84	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x38)) = Some (0x00170713%bv : bv 32).
+0x170713	B/YE3c.v	86	insn-word	Lemma D_038 : decode_any (0x00170713%bv : bv 32) = Some (OpImm ALU_ADD 14 14 1, 4%Z).
+0x200813	B/YE3c.v	156	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x80)) = Some (0x00200813%bv : bv 32).
+0x200813	B/YE3c.v	158	insn-word	Lemma D_080 : decode_any (0x00200813%bv : bv 32) = Some (OpImm ALU_ADD 16 0 2, 4%Z).
+0x258593	B/YE3c.v	1016	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3dc)) = Some (0x00258593%bv : bv 32).
+0x258593	B/YE3c.v	1018	insn-word	Lemma D_3dc : decode_any (0x00258593%bv : bv 32) = Some (OpImm ALU_ADD 11 11 2, 4%Z).
+0x25c803	B/YE3c.v	720	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2b4)) = Some (0x0025c803%bv : bv 32).
+0x25c803	B/YE3c.v	722	insn-word	Lemma D_2b4 : decode_any (0x0025c803%bv : bv 32) = Some (Load SZ1 false 16 11 2, 4%Z).
+0x25c803	B/YE3c.v	868	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x348)) = Some (0x0025c803%bv : bv 32).
+0x25c803	B/YE3c.v	870	insn-word	Lemma D_348 : decode_any (0x0025c803%bv : bv 32) = Some (Load SZ1 false 16 11 2, 4%Z).
+0x25c803	B/YE3c.v	952	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x39c)) = Some (0x0025c803%bv : bv 32).
+0x25c803	B/YE3c.v	954	insn-word	Lemma D_39c : decode_any (0x0025c803%bv : bv 32) = Some (Load SZ1 false 16 11 2, 4%Z).
+0x10101	B/YE3d.v	103	decode-result	Lemma D_048 : decode_any (0x101015b7%bv : bv 32) = Some (Lui 11 65793, 4%Z).
+0x300713	B/YE3d.v	41	insn-word	: fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memset + 0xc)) = Some (0x00300713%bv : bv 32).
+0x300713	B/YE3d.v	43	insn-word	Lemma D_00c : decode_any (0x00300713%bv : bv 32) = Some (OpImm ALU_ADD 14 0 3, 4%Z).
+0x36f693	B/YE3d.v	105	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memset + 0x4c)) = Some (0x0036f693%bv : bv 32).
+0x36f693	B/YE3d.v	107	insn-word	Lemma D_04c : decode_any (0x0036f693%bv : bv 32) = Some (OpImm ALU_AND 13 13 3, 4%Z).
+0x459713	B/YE3d.v	109	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memset + 0x50)) = Some (0x00459713%bv : bv 32).
+0x459713	B/YE3d.v	111	insn-word	Lemma D_050 : decode_any (0x00459713%bv : bv 32) = Some (ShiftImm ALU_SLL 14 11 4, 4%Z
+0x45f793	B/YE3d.v	189	insn-word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memset + 0xa0)) = Some (0x0045f793%bv : bv 32).
+0x45f793	B/YE3d.v	191	insn-word	Lemma D_0a0 : decode_any (0x0045f793%bv : bv 32) = Some (OpImm ALU_AND 15 11 4, 4%Z).
+0xa0593	B/YE3e.v	300	insn-word	Lemma F_17bf4 : fetch_word tfibsegs (0x8c23c%bv : word) = Some (0x000a0593%bv : bv 32).
+0xa0593	B/YE3e.v	302	insn-word	Lemma D_17bf4 : decode_any (0x000a0593%bv : bv 32) = Some (OpImm ALU_ADD 11 20 0, 4%Z).
+0xa0993	B/YE3e.v	348	insn-word	Lemma F_17c24 : fetch_word tfibsegs (0x8c26c%bv : word) = Some (0x000a0993%bv : bv 32).
+0xa0993	B/YE3e.v	350	insn-word	Lemma D_17c24 : decode_any (0x000a0993%bv : bv 32) = Some (OpImm ALU_ADD 19 20 0, 4%Z).
+0xa3703	B/YE3e.v	376	insn-word	Lemma F_17c40 : fetch_word tfibsegs (0x8c288%bv : word) = Some (0x000a3703%bv : bv 32).
+0xa3703	B/YE3e.v	378	insn-word	Lemma D_17c40 : decode_any (0x000a3703%bv : bv 32) = Some (Load SZ8 true 14 20 0, 4%Z).
+0xfffff	B/YE3e.v	244	?	c_ltu (Z_to_bv 64 n) (v_addiw (v_lui (Z.shiftl (bv_signed (1048575%bv : bv 20)) 12)) (bv_signed (1%bv : bv 12))) = t
+0xfffff	B/YE3e.v	266	decode-result	Lemma D_15a34 : decode_any (0xfffff5b7%bv : bv 32) = Some (Lui 11 1048575, 4%Z).
+0x15859b	B/YE3e.v	268	insn-word	Lemma F_15a38 : fetch_word tfibsegs (0x86fa0%bv : word) = Some (0x0015859b%bv : bv 32).
+0x15859b	B/YE3e.v	270	insn-word	Lemma D_15a38 : decode_any (0x0015859b%bv : bv 32) = Some (OpImm32 11 11 1, 4%Z).
+0x1fad34	B/YE3e.v	346	decode-result	Lemma D_17c20 : decode_any (0xd35fa0ef%bv : bv 32) = Some (Jal 1 2075956, 4%Z).
+0x1fadbc	B/YE3e.v	286	decode-result	Lemma D_17b98 : decode_any (0xdbdfa0ef%bv : bv 32) = Some (Jal 1 2076092, 4%Z).
+0x1fff94	B/YE3e.v	410	decode-result	Lemma D_17c60 : decode_any (0xf95ff06f%bv : bv 32) = Some (Jal 0 2097044, 4%Z).
+0x461a13	B/YE3e.v	368	insn-word	Lemma F_17c38 : fetch_word tfibsegs (0x8c280%bv : word) = Some (0x00461a13%bv : bv 32).
+0x461a13	B/YE3e.v	370	insn-word	Lemma D_17c38 : decode_any (0x00461a13%bv : bv 32) = Some (ShiftImm ALU_SLL 20 12 4, 4%Z
+0x200000	B/YE6k.v	1388	?	assert (Hrange : 0 <= fst (fst e) /\ fst (fst e) + snd (fst e) <= 0x200000).
+0x20000	B/YFek.v	32	?	(aTOT, mkAF 2 131072 0); (aN, mkAF 1 4097 0); (aHASH, u64f); (aS2, mkA
+0x20000	B/YFel.v	265	?	{ change (2 ^ 16) with 65536. change (2 ^ 17) with 131072 in Ht. destruct (Z_lt_le_dec t 65536); [left; app
+0x100000	B/YFel.v	151	?	change (2 ^ 64) with 18446744073709551616 in *. change (2 ^ 20) with 1048576.
+0x100000	B/YFel.v	152	?	pose proof (Z.mod_pos_bound v 1048576 ltac:(lia)) as R. pose proof (Z.div_mod v 1048576
+0x100000	B/YFel.v	152	?	(Z.mod_pos_bound v 1048576 ltac:(lia)) as R. pose proof (Z.div_mod v 1048576 ltac:(lia)) as D.
+0x100000	B/YFel.v	153	?	set (q := v / 1048576) in *. set (r := v mod 1048576) in *. clearbody q
+0x100000	B/YFel.v	153	?	set (q := v / 1048576) in *. set (r := v mod 1048576) in *. clearbody q r.
+0x1f020	B/YFem.v	128	?	Lemma TOT_range : 2 <= TOT <= 127008.
+0x1f020	B/YFem.v	206	?	1 <= nD <= 4097 /\ 2 <= TOT <= 127008 /\ 0 <= HSH < 2 ^ 64 /\ 0 <= bkt < 1048576 /\ 0 <
+0x603f6	B/YFem.v	412	witness	change (2 ^ 2) with 4. apply Z.mod_divide; [lia|]. exists (394230 + bkt). numconst. lia. }
+0x100000	B/YFem.v	203	?	4096 <= NB /\ NB + 0x100000 <= 140737479966720 /\ 4096 <= SB /\ SB + 0x800000
+0x100000	B/YFem.v	204	?	(NB + 0x100000 <= SB \/ SB + 0x800000 <= NB) /\
+0x100000	B/YFem.v	205	?	(NB + 0x100000 <= ly_stk_lo ly \/ ly_stk_hi ly <= NB) /\ (SB + 0
+0x100000	B/YFem.v	206	?	= nD <= 4097 /\ 2 <= TOT <= 127008 /\ 0 <= HSH < 2 ^ 64 /\ 0 <= bkt < 1048576 /\ 0 <= HDv <= nD /\ 0 <= STD < 2 ^ 32 /\
+0x186a0	B/YFet.v	708	fuel	destruct (pop_batches 100000 (transfer_g X) []) as [g' P] eqn:EP.
+0x186a0	B/YFet.v	710	?	assert (LEN : (length (qc_list (transfer_g X)) < 100000)%nat).
+0x186a0	B/YFet.v	723	?	{ apply (YFer.LOOP B TB ly X W regs mem md PRE L [] 100000%nat W1 c1 H2 eq_refl); [rewrite SL; unfold kQuara
+0x186a0	B/YFeu.v	161	fuel	let '(g', popped) := pop_batches 100000%nat g [] in
+0x186a0	B/YFeu.v	163	?	do_recycle 100000%nat popped.
+0x186a0	B/YFeu.v	224	?	Z.of_nat (length P) < 100000 /\ st_cache_inited X = true.
+0x186a0	B/YFeu.v	235	?	amreal tfibsegs (do_recycle 100000%nat P X) W (cfg_at tfibsegs A_DoRecycle regs mem
+0x33180	B/YFeu.v	160	?	ck (2 * (kBatchBytes * Z.of_nat (length (qc_list g))) <=? qc_bytes g) 209280 ;;
+0x160000	B/YFf4.v	1047	?	change ((11571200 - (4096 + 32768)) / 8) with 1441792. lia. }
+0x3fffc0	B/YFf9.v	377	witness	try ((apply Z.mod_divide; [lia|]); first [exists (4194240 + q); lia | exists q'; lia | exists (4194240 + q
+0x3fffc0	B/YFf9.v	377	witness	[lia|]); first [exists (4194240 + q); lia | exists q'; lia | exists (4194240 + q + q'); lia]).
+0x40000	B/YFfg.v	213	stretch-length	do_stretch HS 36%nat 0xa0308 262144 0x5cd74 BV2_1 Hsp Hsp64.
+0x40248	B/YFfg.v	241	stretch-length	do_stretch HS 42%nat 0xe10c0 262728 0x5cda4 BV2_3 Hsp Hsp64.
+0x35830	B/YFft.v	24	opaque-label	| [] => ISpin 219184
+0x80000	B/YFfu.v	611	witness	apply Z.mod_divide; [lia|]. exists (c * 8 + 24 * 524288 + c'). lia. }
+0x80000	B/YFfu.v	697	witness	apply Z.mod_divide; [lia|]. exists (c * 8 + 24 * 524288 + c'). lia.
+0x31294	B/YFfy.v	454	?	match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;
+0x31294	B/YFfy.v	472	?	match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;
+0x312a0	B/YFfy.v	458	opaque-label	| None => fail (FCheck 201376)
+0x312a0	B/YFfy.v	476	opaque-label	| None => fail (FCheck 201376)
+0x31294	B/YFfz.v	431	?	match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;
+0x312a0	B/YFfz.v	435	opaque-label	| None => fail (FCheck 201376)
+0x31294	B/YFg2.v	291	?	match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;
+0x312a0	B/YFg2.v	295	opaque-label	| None => fail (FCheck 201376)
+0x100000	B/YFgi.v	107	?	flit8 0x9bdb0 0x10000000; flit8 0x9bdc0 0x100000;
+0x100000	B/YFgm.v	95	?	flit8 0x9bdb0 0x10000000; flit8 0x9bdc0 0x100000;
+0x100000	B/YFgn.v	70	?	flit8 0x9bdb0 0x10000000; flit8 0x9bdc0 0x100000;
+0x186a0	B/YFhd.v	55	?	o_len : zlen rest < 100000;
+0x186a0	B/YFhd.v	72	?	rc_len : zlen t < 100000;
+0x186a0	B/YFhd.v	92	?	r_len : zlen t < 100000;
+0x186a0	B/YFhd.v	106	?	cd_len : zlen t < 100000;
+0x186a0	B/YFhd.v	122	?	q_len : zlen t < 100000;
+0x31614	B/YFi3.v	75	opaque-label	malloc n trace s = (tick ;; mcheck (n <? kMaxAllowedMalloc - kPage) 202260   ;; refill_tree (chunk_class n) ;; malloc_join n
+0x6dd44	B/YFi3.v	41	opaque-label	if aGranted z then ret tt else spin 449860
+0x12000	B/YFi9.v	58	?	(aMS, mkAF 73728 (MALLOC_MAX + 2 * 4096) 12);
+0x12000	B/YFi9.v	68	?	[ (aMAP, mkAF TFIB_IMG_END (CEIL_MAX - 73728) 12)    ;
+0xfffff	B/YFi9.v	57	?	(aNCH, mkAF 0 1048575 0);
+0x100000	B/YFi9.v	56	?	(aRES, mkAF 0 1048576 14);
+0x55c000	B/YFia.v	130	?	= [(65536, 126976); (192512, 421888); (614400, 8192); (622592, 5619712)]) by (vm_compute; reflexivity).
+0x20000	B/YFif.v	98	?	SLit 131072; SLit 3; SLit 50; SLit 18446744073709551615; SLit
+0x12000	B/YFjm.v	231	?	NDv = R8v + 4096 /\ 73728 <= MSv <= MALLOC_MAX + 8192 /\ MSv mod 4096 = 0 /
+0x20000	B/YFjt.v	582	?	sr_get (ss_regs S_V) 10%bv = TQ /\ sr_get (ss_regs S_V) 11%bv = SLit 131072 /\
+0x20000	B/YFjt.v	590	?	Lemma QR_facts : idx = res -> QSv = Qb + 8 * res /\ QSv mod 131072 = Qb mod 131072 /\ QSv mod 4096 = 0 /\ (4096 <= Q
+0x20000	B/YFjt.v	590	?	QR_facts : idx = res -> QSv = Qb + 8 * res /\ QSv mod 131072 = Qb mod 131072 /\ QSv mod 4096 = 0 /\ (4096 <= Qb <= QSv /\ zone
+0x20000	B/YFjt.v	590	?	96 = 0 /\ (4096 <= Qb <= QSv /\ zone3cases Qb kPtrArrayResv) /\ QSv + 131072 <= Qb + kPtrArrayResv /\
+0x20000	B/YFjt.v	591	?	+ kPtrArrayResv <= ASAN_CEIL /\ (forall a, QR a <-> QSv <= a < QSv + 131072).
+0x20000	B/YFjt.v	597	?	plit. { rewrite E1, Hq. replace (Qb + 8 * (q * 16384)) with (Qb + q * 131072) by zlia. rewrite Z.add_mod, Z_mod_mult, Z.add_0_
+0x20000	B/YFjt.v	687	?	Lemma pru17 : page_round_up_Z 131072 = 131072. Proof. clear. reflexivity. Qed.
+0x20000	B/YFjt.v	687	?	Lemma pru17 : page_round_up_Z 131072 = 131072. Proof. clear. reflexivity. Qed.
+0x20000	B/YFjt.v	707	?	' : config), let md5 := grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) (cfg_model c1) in
+0x20000	B/YFjt.v	709	?	w_A W5 = (QSv, QSv + 131072) :: w_A Wy ->
+0x20000	B/YFjt.v	710	?	(forall x : word, QSv <= bv_unsigned x < QSv + 131072 -> w_H W5 x = false) ->
+0x20000	B/YFjt.v	711	?	(forall x : word, ~ (QSv <= bv_unsigned x < QSv + 131072) -> w_H W5 x = w_H Wy x) ->
+0x20000	B/YFjt.v	712	?	5 -> same_io md0 md5 -> eager_used md5 <= eager_used (cfg_model c1) + 131072 ->
+0x20000	B/YFjt.v	736	?	assert (Un : bv_unsigned (w64 131072) = 131072) by (unfold w64; apply unsigned_lit_sma
+0x20000	B/YFjt.v	736	?	assert (Un : bv_unsigned (w64 131072) = 131072) by (unfold w64; apply unsigned_lit_small; clear;
+0x20000	B/YFjt.v	741	?	assert (R11 : getr regs 11 = Z_to_bv 64 131072) by (rewrite (Hregs 11%bv), H11; reflexivity).
+0x20000	B/YFjt.v	746	?	assert (CEIL : bv_unsigned (w64 QSv) + page_round_up_Z 131072 <= alloc_ceiling).
+0x20000	B/YFjt.v	748	?	assert (CEILT : bv_unsigned (w64 QSv) + page_round_up_Z 131072 <= alloc_top (m_vmmaps mdN)).
+0x20000	B/YFjt.v	750	?	e (vm_reserved (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true /\
+0x20000	B/YFjt.v	751	?	tains (vm_maps (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true).
+0x20000	B/YFjt.v	754	?	apply (tfib_region_free_reserved QSv 131072); [clear; zlia | clear - F9 F10 Q5 E1; ceil; unfo
+0x20000	B/YFjt.v	756	?	- apply (YA09.map_contains_intro _ (w64 QSv) (w64 131072) (w64 Qb) (w64 kPtrArrayResv) INQ);
+0x20000	B/YFjt.v	759	?	assert (SL1 : eager_used mdN + A_bytes (w_A Wy) + page_round_up_Z 131072 <= vm_limit (m_vmmaps mdN)) by (rewrite pru17; cl
+0x20000	B/YFjt.v	761	?	mit_AI tfibsegs (w_H Wy) (w_A Wy) mdN false (Z_to_bv 64 50) (w64 QSv) 131072 HAI MWF0 nores50 ALQ ltac:(clear; zlia) CEILT PLA
+0x20000	B/YFjt.v	762	?	_eager tfibsegs (w_H Wy) (w_A Wy) mdN false (Z_to_bv 64 50) (w64 QSv) 131072 HAI MWF0 nores50 ALQ ltac:(clear; zlia) CEILT PLA
+0x20000	B/YFjt.v	763	?	nonempty false (Z_to_bv 64 50) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) mdN ltac:(rewrite pru17; unfold w64 in Un; rewr
+0x20000	B/YFjt.v	764	?	rewrite pru17 in CG, BUD, EG, NZg. fold (w64 131072) in CG, BUD, EG, NZg.
+0x20000	B/YFjt.v	765	?	pose proof (destroyed_AI tfibsegs (w_H Wy) (w_A Wy) mdN (w64 QSv) 131072 HAI MWF0 ALQ ltac:(clear; zlia) CEILT) as [CD _].
+0x20000	B/YFjt.v	766	?	rewrite pru17 in CD. fold (w64 131072) in CD.
+0x20000	B/YFjt.v	767	?	o_bv 64 0x62fc4) mem (seg_rom tfibsegs) mdN (Z_to_bv 64 50) (w64 QSv) 131072
+0x20000	B/YFjt.v	770	?	rewrite pru17 in OUT. fold (w64 131072) in OUT.
+0x20000	B/YFjt.v	789	?	set (md5 := grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) mdN) in *.
+0x20000	B/YFjt.v	790	?	pose proof (grant_piece_shape (w64 QSv) (w64 131072) mdN) as (SH1 & SH2' & SH3 & SH4). cbv zeta in SH
+0x20000	B/YFjt.v	791	?	assert (AL1 : QSv <= QSv + 131072) by (clear; zlia).
+0x20000	B/YFjt.v	793	?	assert (AL3 : (QSv + 131072) mod page_size = 0).
+0x20000	B/YFjt.v	795	?	destruct (allow_expose tfibsegs Wy md5 QSv (QSv + 131072) AL1 AL2 AL3 (proj1 CG) ltac:(rewrite SH3; clear
+0x20000	B/YFjt.v	796	?	set (W5 := wallow tfibsegs Wy QSv (QSv + 131072) AL1 AL2 AL3) in *.
+0x20000	B/YFjt.v	804	?	(FRz : forall x : word, ~ QR (bv_unsigned x) -> zfill (w64 QSv) (w64 131072) mem x = mem x).
+0x20000	B/YFjt.v	806	?	); [left; zlia|]. right. destruct (Z_lt_le_dec (bv_unsigned x) (QSv + 131072)); [exfalso; apply Hx; apply EQx; zlia | zlia]. }
+0x20000	B/YFjt.v	814	?	(fun m => R m /\ ZQF W5 m)) S_V TQ (w64 QSv) QR (zfill (w64 QSv) (w64 131072) mem) ms E'
+0x20000	B/YFjy.v	745	?	w_A Wz) = A_bytes (w_A W) + MSv + (SHHI mb - SHLO mb) + (if grow then 131072 else 0);
+0x20000	B/YFjz.v	1010	?	~ (grow = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H Wz x = w_H W x.
+0x20000	B/YFjz.v	1074	?	* destruct (zr_dec QSv (QSv + 131072) a) as [D3|D3].
+0x20000	B/YFk0.v	971	?	(vm_noaccess (m_vmmaps (grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) mdV)) ++ m_vm_lazy (grant_md false (Z_to_bv 64 5
+0x20000	B/YFk0.v	971	?	72) mdV)) ++ m_vm_lazy (grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) mdV)) x
+0x20000	B/YFk0.v	976	?	assert (UQb : bv_unsigned (w64 131072) = 131072) by (unfold w64; apply unsigned_lit_sma
+0x20000	B/YFk0.v	976	?	assert (UQb : bv_unsigned (w64 131072) = 131072) by (unfold w64; apply unsigned_lit_small; zlia).
+0x20000	B/YFk0.v	977	?	apply (YG0j.cov_grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) mdV x).
+0x20000	B/YFk0.v	993	?	eager_used md5 <= eager_used mdV + 131072 ->
+0x20000	B/YFk0.v	1054	?	~ (grow = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H Wz x = w_H W x) ->
+0x20000	B/YFk0.v	1113	?	~ (grow = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H Wz x = w_H W x) ->
+0x20000	B/YFk0.v	1137	?	~ (grow = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H Wz x = w_H W x) ->
+0x20000	B/YFk0.v	1221	?	igned x < SHHI mb) -> ~ (false = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H W3 x = w_H W x)
+0x20000	B/YFk0.v	1229	?	(forall x : word, ~ (QSv <= bv_unsigned x < QSv + 131072) -> w_H W5 x = w_H W3 x) ->
+0x20000	B/YFk0.v	1308	?	assert (OUT5' : forall x : word, ~ (QSv <= bv_unsigned x < QSv + 131072) -> w_H W5 x = w_H W3 x) by exact OUT5.
+0x20000	B/YFk0.v	1326	?	signed x < SHHI mb) -> ~ (true = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H W5 x = w_H W x).
+0x31614	B/YFk0.v	761	opaque-label	malloc n tr s = (tick ;; mcheck (n <? kMaxAllowedMalloc - kPage) 202260 ;; ob <- sec_alloc n ;; malloc_K n tr ob) s.
+0x35f78	B/YFk0.v	751	opaque-label	mcheck (Z.of_nat (length (st_sec_arr s)) <? kMaxNumChunks) 221048 ;;
+0x5f844	B/YFk0.v	755	opaque-label	served (st_sec_reserved s0 + kPtrArrayEntriesPerCommit) s0) else spin 391236
+0x6dd44	B/YFk0.v	1027	opaque-label	er k) (8 * (ck_n k / 8))) ;; if aGranted z then YG00.ret tt else spin 449860 else YG00.ret tt) ;;
+0x6dd44	B/YFk0.v	1124	opaque-label	(if aGranted z' then YG00.ret tt else spin 449860)) ;;
+0x706dc	B/YFk0.v	1024	?	+ depot_frames s' + Z.of_nat (length tr) + 1 <? kStoreFramesPerBlock) 460508 ;;
+0x729f0	B/YFk0.v	1023	opaque-label	mcheck (depot_ids s' + 1 <? kDepotIdsPerBlock) 469488 ;;
+0x7fff8	B/YFk5.v	565	witness	apply Z.mod_divide; [lia|]. exists (524280 + 2 * q). unfold SHBv. lia. }
+0xe0000	B/YFk5.v	215	witness	write Hqs; apply Z.mod_divide; [lia|]; exists (qs * 16 + c * 2 ^ 20 + 917504); lia).
+0x40000	B/YFk6.v	34	?	(rMU2, mkAF 262144 3758358528 18);
+0x40000	B/YFk6.v	38	?	(rMF2, mkAF 262144 (2 ^ 29 + 262144) 18);
+0x40000	B/YFk6.v	38	?	(rMF2, mkAF 262144 (2 ^ 29 + 262144) 18);
+0x3fff8	B/YFk8.v	111	?	v = SAlu ALU_ADD (SAlu ALU_SUB (SAlu ALU_ADD (SAlu ALU_SRL (SOff rADR 262136) (SLit 3)) (SLit 1)) (SAlu ALU_SRL (SOff rADR 0)
+0x40000	B/YFk8.v	55	?	: sstate := Eval vm_compute in pin (runto 0x35ee0 R3_M2) 19%bv (SLit 262144).
+0x40000	B/YFk8.v	57	?	state := Eval vm_compute in runto 0x6cf10 (arm BC_GEU false (SOff rMU 262144) (SLit 3758096385) R3_M4).
+0x40000	B/YFk8.v	93	?	l_rtA FUEL 0x7ffffff0 R3_M3) = RS_stopped (SR_branch BC_GEU (SOff rMU 262144) (SLit 3758096385)) /\
+0x40000	B/YFk8.v	94	?	N_sh tfibsegs tfibtbl_rtA FUEL 0x7ffffff0 (arm BC_GEU false (SOff rMU 262144) (SLit 3758096385) R3_M4)) = RS_stopped SR_fetch
+0x40000	B/YFk8.v	96	?	egs R3_NU) 10%bv = SOff rADR 0 /\ sr_get (ss_regs R3_NU) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NU) 12%bv = SLit 3 /\
+0x40000	B/YFk8.v	100	?	egs R3_NR) 10%bv = SOff rADR 0 /\ sr_get (ss_regs R3_NR) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NR) 12%bv = SLit 0 /\
+0x104022	B/YFk8.v	101	?	sr_get (ss_regs R3_NR) 13%bv = SLit 0x104022 /\ sr_get (ss_regs R3_NR) 14%bv = SLit 1844674407
+0x40000	B/YFk9.v	27	?	: sstate := Eval vm_compute in pin (runto 0x33b70 R3_Fe2) 18%bv (SLit 262144).
+0x40000	B/YFk9.v	50	?	SAlu ALU_ADD (SAlu ALU_ADD (SMd M_MUL (SOff rAU 0) (SLit (-1))) (SLit 262144)) (SOff rMU 0)) (SOff rCSZ 0) (runto 0x35fbc (arm
+0x40000	B/YFk9.v	53	?	: sstate := Eval vm_compute in pin (runto 0x33b70 R3_Fg2) 18%bv (SLit 262144).
+0x40000	B/YFk9.v	71	?	SAlu ALU_ADD (SAlu ALU_ADD (SMd M_MUL (SOff rAU 0) (SLit (-1))) (SLit 262144)) (SOff rMU 0)) (SOff rCSZ 0) (runto 0x35fbc R3_F
+0x40000	B/YFk9.v	92	?	state := Eval vm_compute in runto 0x35de0 (arm BC_LTU false (SOff rMU 262144) (SOff rAUg 0) R3_Tge3).
+0x40000	B/YFk9.v	100	?	state := Eval vm_compute in runto 0x35de0 (arm BC_LTU false (SOff rMU 262144) (SOff rAUg 0) R3_Tgg3).
+0x40000	B/YFk9.v	114	?	= [(SOff rFADR 0, SLit 262144, SLit 0, SLit 0x104022, SLit 18446744073709551615
+0x40000	B/YFk9.v	114	?	22, SLit 18446744073709551615, SLit 0, SLit 222); (SOff rFADR 0, SLit 262144, SLit 0, SLit 0x104022, SLit 18446744073709551615
+0x104022	B/YFk9.v	114	?	= [(SOff rFADR 0, SLit 262144, SLit 0, SLit 0x104022, SLit 18446744073709551615, SLit 0, SLit 222); (S
+0x104022	B/YFk9.v	114	?	09551615, SLit 0, SLit 222); (SOff rFADR 0, SLit 262144, SLit 0, SLit 0x104022, SLit 18446744073709551615, SLit 0, SLit 222)] /\
+0x40000	B/YFkb.v	587	?	r3_pin HR (19%bv : bv 5) (SLit 262144).
+0x40000	B/YFkb.v	590	?	M64; zlia). change (zcanon (-1)) with (2 ^ 64 - 1). change (zcanon (-262144)) with (2 ^ 64 - 2 ^ 18).
+0x40000	B/YFkb.v	596	?	r3_arm HR BC_GEU false (SOff rMU 262144) (SLit 3758096385).
+0x40000	B/YFkb.v	597	?	{ rewrite branch_geu_U. unfold rMU. rewrite (U_atom_off E0 47 mu 262144 EaMU) by (clear - U0 U1 U2 Hroom; unfold kFreeArr
+0x3fff8	B/YFkc.v	453	?	rewrite !Z.add_0_r. rewrite (zcanon_id (adr + 262136)), (zcanon_id adr) by (unfold M64; zlia).
+0x3fff8	B/YFkc.v	455	?	replace ((adr + 262136) / 8) with (adr / 8 + 32767).
+0x3fff8	B/YFkc.v	456	?	Hq]; [|zlia]. rewrite Hq. rewrite Z.div_mul by zlia. replace (q * 8 + 262136) with ((q + 32767) * 8) by zlia. rewrite Z.div_mu
+0x40000	B/YFkc.v	471	?	F4 F5 F6 F7 F8 S4 S5 HcR. numconst. unfold kUserMapSize in *. change (262144 / 8) with 32768 in *. try unfold T in *. try unfo
+0x3fff8	B/YFkd.v	573	?	rewrite !Z.add_0_r. rewrite (zcanon_id (fadr + 262136)), (zcanon_id fadr) by (unfold M64; zlia).
+0x3fff8	B/YFkd.v	575	?	replace ((fadr + 262136) / 8) with (fadr / 8 + 32767).
+0x3fff8	B/YFkd.v	576	?	Hq]; [|zlia]. rewrite Hq. rewrite Z.div_mul by zlia. replace (q * 8 + 262136) with ((q + 32767) * 8) by zlia. rewrite Z.div_mu
+0x40000	B/YFkd.v	481	?	assert (M2' : exists q, mf = q * 262144) by (apply Z.mod_divide in M2 as [q Hq]; [exists
+0x40000	B/YFkd.v	493	?	(2 ^ 2) with 4. change (zcanon 262143) with 262143. change (zcanon (-262144)) with (2 ^ 64 - 2 ^ 18).
+0x40000	B/YFkd.v	496	?	e ((nfe * 4 + 262143) mod 2 ^ 18) with (nfe * 4 + 262143 - (qm + 1) * 262144).
+0x40000	B/YFkd.v	511	?	r3_pin HR (18%bv : bv 5) (SLit 262144).
+0x40000	B/YFkd.v	514	?	ld M64; zlia). change (zcanon (-1)) with (2 ^ 64 - 1). change (zcanon 262144) with 262144.
+0x40000	B/YFkd.v	514	?	. change (zcanon (-1)) with (2 ^ 64 - 1). change (zcanon 262144) with 262144.
+0x40000	B/YFkd.v	515	?	4. rewrite Zplus_mod_idemp_l. replace (mf * (2 ^ 64 - 1) + mf2) with (262144 + mf * 2 ^ 64) by zlia.
+0x40000	B/YFkd.v	590	?	F6 F7 F8 S4 S5 HcR. numconst. unfold kFreeArrayMapSize in *. change (262144 / 8) with 32768 in *. try unfold T in *. try unfo
+0x3fff8	B/YFke.v	577	?	rewrite !Z.add_0_r. rewrite (zcanon_id (fadr + 262136)), (zcanon_id fadr) by (unfold M64; zlia).
+0x3fff8	B/YFke.v	579	?	replace ((fadr + 262136) / 8) with (fadr / 8 + 32767).
+0x3fff8	B/YFke.v	580	?	Hq]; [|zlia]. rewrite Hq. rewrite Z.div_mul by zlia. replace (q * 8 + 262136) with ((q + 32767) * 8) by zlia. rewrite Z.div_mu
+0x40000	B/YFke.v	436	?	change (zcanon 262144) with 262144.
+0x40000	B/YFke.v	436	?	change (zcanon 262144) with 262144.
+0x40000	B/YFke.v	437	?	replace (zcanon (zcanon (zcanon (au * (2 ^ 64 - 1)) + 262144) + mu)) with (mu + 262144 - au).
+0x40000	B/YFke.v	437	?	canon (zcanon (zcanon (au * (2 ^ 64 - 1)) + 262144) + mu)) with (mu + 262144 - au).
+0x40000	B/YFke.v	439	?	replace (au * (2 ^ 64 - 1) + 262144 + mu) with ((mu + 262144 - au) + au * 2 ^ 64) by
+0x40000	B/YFke.v	439	?	replace (au * (2 ^ 64 - 1) + 262144 + mu) with ((mu + 262144 - au) + au * 2 ^ 64) by zlia.
+0x40000	B/YFke.v	467	?	SAlu ALU_ADD (SAlu ALU_ADD (SMd M_MUL (SOff rAU 0) (SLit (-1))) (SLit 262144)) (SOff rMU 0)) (SOff rCSZ 0).     { arm_zev3. un
+0x40000	B/YFke.v	470	?	change (zcanon 262144) with 262144.
+0x40000	B/YFke.v	470	?	change (zcanon 262144) with 262144.
+0x40000	B/YFke.v	471	?	replace (zcanon (zcanon (zcanon (au * (2 ^ 64 - 1)) + 262144) + mu)) with (mu + 262144 - au).
+0x40000	B/YFke.v	471	?	canon (zcanon (zcanon (au * (2 ^ 64 - 1)) + 262144) + mu)) with (mu + 262144 - au).
+0x40000	B/YFke.v	473	?	replace (au * (2 ^ 64 - 1) + 262144 + mu) with ((mu + 262144 - au) + au * 2 ^ 64) by
+0x40000	B/YFke.v	473	?	replace (au * (2 ^ 64 - 1) + 262144 + mu) with ((mu + 262144 - au) + au * 2 ^ 64) by zlia.
+0x40000	B/YFke.v	485	?	assert (M2' : exists q, mf = q * 262144) by (apply Z.mod_divide in M2 as [q Hq]; [exists
+0x40000	B/YFke.v	497	?	(2 ^ 2) with 4. change (zcanon 262143) with 262143. change (zcanon (-262144)) with (2 ^ 64 - 2 ^ 18).
+0x40000	B/YFke.v	500	?	e ((nfg * 4 + 262143) mod 2 ^ 18) with (nfg * 4 + 262143 - (qm + 1) * 262144).
+0x40000	B/YFke.v	515	?	r3_pin HR (18%bv : bv 5) (SLit 262144).
+0x40000	B/YFke.v	518	?	ld M64; zlia). change (zcanon (-1)) with (2 ^ 64 - 1). change (zcanon 262144) with 262144.
+0x40000	B/YFke.v	518	?	. change (zcanon (-1)) with (2 ^ 64 - 1). change (zcanon 262144) with 262144.
+0x40000	B/YFke.v	519	?	4. rewrite Zplus_mod_idemp_l. replace (mf * (2 ^ 64 - 1) + mf2) with (262144 + mf * 2 ^ 64) by zlia.
+0x40000	B/YFke.v	594	?	F6 F7 F8 S4 S5 HcR. numconst. unfold kFreeArrayMapSize in *. change (262144 / 8) with 32768 in *. try unfold T in *. try unfo
+0x40000	B/YFke.v	637	?	SAlu ALU_ADD (SAlu ALU_ADD (SMd M_MUL (SOff rAU 0) (SLit (-1))) (SLit 262144)) (SOff rMU 0)) (SOff rCSZ 0).     { arm_zev3. un
+0x40000	B/YFke.v	640	?	change (zcanon 262144) with 262144.
+0x40000	B/YFke.v	640	?	change (zcanon 262144) with 262144.
+0x40000	B/YFke.v	641	?	replace (zcanon (zcanon (zcanon (au * (2 ^ 64 - 1)) + 262144) + mu)) with (mu + 262144 - au).
+0x40000	B/YFke.v	641	?	canon (zcanon (zcanon (au * (2 ^ 64 - 1)) + 262144) + mu)) with (mu + 262144 - au).
+0x40000	B/YFke.v	643	?	replace (au * (2 ^ 64 - 1) + 262144 + mu) with ((mu + 262144 - au) + au * 2 ^ 64) by
+0x40000	B/YFke.v	643	?	replace (au * (2 ^ 64 - 1) + 262144 + mu) with ((mu + 262144 - au) + au * 2 ^ 64) by zlia.
+0x40000	B/YFkh.v	510	?	r3_arm HR BC_LTU false (SOff rMU 262144) (SOff rAUg 0).     { arm_zev3. unfold rMU, rAUg.
+0x40000	B/YFkh.v	513	?	rtA tfibtbl_rtA_ok 0x35de0 (runto 0x35de0 (arm BC_LTU false (SOff rMU 262144) (SOff rAUg 0) R3_Tge3)) HX HP.     r3_arm HR BC_
+0x40000	B/YFki.v	510	?	r3_arm HR BC_LTU false (SOff rMU 262144) (SOff rAUg 0).     { arm_zev3. unfold rMU, rAUg.
+0x40000	B/YFki.v	513	?	rtA tfibtbl_rtA_ok 0x35de0 (runto 0x35de0 (arm BC_LTU false (SOff rMU 262144) (SOff rAUg 0) R3_Tgg3)) HX HP.     r3_arm HR BC_
+0x40000	B/YFkk.v	732	?	F| | | |]. all: clear - M0 M1 M2; first [zlia | replace (2 ^ 18) with 262144 by reflexivity; exact M2]. }
+0x40000	B/YFkk.v	734	?	| | |]. all: clear - U0 U1 U2 U3; first [zlia | replace (2 ^ 18) with 262144 by reflexivity; exact U3]. }
+0x40000	B/YFkk.v	753	?	replace (2 ^ 18) with 262144 by reflexivity. rewrite G15. apply Z.mod_divide i
+0x40000	B/YFkk.v	761	?	replace (2 ^ 18) with 262144 by reflexivity. rewrite G29. apply Z.mod_divide i
+0x40000	B/YFkm.v	600	?	change (262144 / 8) with 32768 in *.
+0x40000	B/YFkm.v	631	?	yMapSize, kFreeArrayMax, kHighShadowBeg, kHighShadowEnd in *; change (262144 / 8) with 32768 in *; try unfold T in *; zlia.
+0x40000	B/YFkm.v	1080	?	unfold kUserMapSize in *. change (262144 / 8) with 32768 in *. clear - Hs D1. zlia.
+0x40000	B/YFkm.v	1088	?	unfold kFreeArrayMapSize in *. change (262144 / 8) with 32768 in *. clear - Hs D1. zlia.
+0x40000	B/YFkm.v	1206	?	assert (SHx : forall base, base mod 65536 = 0 -> base <= g < base + 262144 -> SHBv + base / 8 <= shadow_addr g < SHBv + base
+0x40000	B/YFkm.v	1399	?	replace (p * 65536 + q * 262144 + 262144) with ((p * 8192 + q * 32768 + 32768) *
+0x40000	B/YFkm.v	1399	?	replace (p * 65536 + q * 262144 + 262144) with ((p * 8192 + q * 32768 + 32768) * 8) by zli
+0x40000	B/YFkm.v	1399	?	(p * 8192 + q * 32768 + 32768) * 8) by zlia. replace (p * 65536 + q * 262144) with ((p * 8192 + q * 32768) * 8) by zlia.
+0x40000	B/YFkm.v	1410	?	replace (p * 65536 + 3758096384 + q * 262144 + 262144) with ((p * 8192 + 469762048 + q * 32768
+0x40000	B/YFkm.v	1410	?	replace (p * 65536 + 3758096384 + q * 262144 + 262144) with ((p * 8192 + 469762048 + q * 32768 + 32768)
+0x40000	B/YFkm.v	1411	?	replace (p * 65536 + 3758096384 + q * 262144) with ((p * 8192 + 469762048 + q * 32768) * 8) by
+0x40000	B/YFkm.v	1450	?	ize, kFreeArrayOffset, kFreeArrayMapSize, kFreeArrayMax in *. change (262144 / 8) with 32768 in *.
+0x40000	B/YFkn.v	764	?	sr_get (ss_regs ss) 11%bv = SLit 262144 -> sr_get (ss_regs ss) 12%bv = SLit 3 -> sr_get (
+0x40000	B/YFkn.v	814	?	assert (R11 : getr regs 11 = Z_to_bv 64 262144) by (rewrite (Hregs 11%bv), H11; reflexivity).
+0x40000	B/YFkn.v	821	?	assert (CEIL : bv_unsigned (w64 addr) + page_round_up_Z 262144 <= alloc_ceiling).
+0x40000	B/YFkn.v	822	?	{ rewrite Uaddr. change (page_round_up_Z 262144) with 262144. clear - HaHI DR. numconst. unfold k
+0x40000	B/YFkn.v	822	?	{ rewrite Uaddr. change (page_round_up_Z 262144) with 262144. clear - HaHI DR. numconst. unfold kUserMapSize i
+0x40000	B/YFkn.v	823	?	assert (CEILT : bv_unsigned (w64 addr) + page_round_up_Z 262144 <= alloc_top (m_vmmaps mdN)).
+0x40000	B/YFkn.v	825	?	N) ++ vm_maps (m_vmmaps mdN)) (w64 addr) (Z_to_bv 64 (page_round_up_Z 262144)) = true
+0x40000	B/YFkn.v	826	?	(vm_reserved (m_vmmaps mdN)) (w64 addr) (Z_to_bv 64 (page_round_up_Z 262144)) = true /\
+0x40000	B/YFkn.v	827	?	ains (vm_maps (m_vmmaps mdN)) (w64 addr) (Z_to_bv 64 (page_round_up_Z 262144)) = true).
+0x40000	B/YFkn.v	828	?	{ change (Z_to_bv 64 (page_round_up_Z 262144)) with (w64 kUserMapSize). exact PLACE. }
+0x40000	B/YFkn.v	829	?	assert (SL1 : eager_used mdN + A_bytes (w_A Wx) + page_round_up_Z 262144 <= vm_limit (m_vmmaps mdN)).
+0x40000	B/YFkn.v	830	?	{ change (page_round_up_Z 262144) with 262144. clear - SLACK. unfold kUserMapSize
+0x40000	B/YFkn.v	830	?	{ change (page_round_up_Z 262144) with 262144. clear - SLACK. unfold kUserMapSize in SLACK. zli
+0x40000	B/YFkn.v	831	?	proof (commit_AI tfibsegs (w_H Wx) (w_A Wx) mdN hole FL50 (w64 addr) 262144 HAI MWF0 nores50
+0x40000	B/YFkn.v	833	?	oof (commit_eager tfibsegs (w_H Wx) (w_A Wx) mdN hole FL50 (w64 addr) 262144 HAI MWF0 nores50
+0x40000	B/YFkn.v	835	?	change (Z_to_bv 64 (page_round_up_Z 262144)) with (w64 kUserMapSize) in CG, BUD, EG.
+0x40000	B/YFkn.v	836	?	change (page_round_up_Z 262144) with 262144 in EG.
+0x40000	B/YFkn.v	836	?	change (page_round_up_Z 262144) with 262144 in EG.
+0x40000	B/YFkn.v	837	?	pose proof (destroyed_AI tfibsegs (w_H Wx) (w_A Wx) mdN (w64 addr) 262144 HAI MWF0
+0x40000	B/YFkn.v	839	?	change (Z_to_bv 64 (page_round_up_Z 262144)) with (w64 kUserMapSize) in CD, EGD.
+0x40000	B/YFkn.v	840	?	regs (Z_to_bv 64 0x62fc4) mem (seg_rom tfibsegs) mdN FL50 (w64 addr) 262144
+0x40000	B/YFkn.v	843	?	change (Z_to_bv 64 (page_round_up_Z 262144)) with (w64 kUserMapSize) in OUT.
+0x40000	B/YFkn.v	1053	?	sr_get (ss_regs R3_NU) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NU) 12%bv = SLit 3 /\ sr_ge
+0x40000	B/YFkn.v	1061	?	sr_get (ss_regs R3_NFe) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NFe) 12%bv = SLit 3 /\ sr_g
+0x40000	B/YFkn.v	1069	?	sr_get (ss_regs R3_NFg) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NFg) 12%bv = SLit 3 /\ sr_g
+0x40000	B/YFkn.v	1085	?	0sh_of : forall sh x0, x0 mod 8 = 0 -> region_base ly c <= x0 -> x0 + 262144 <= region_base ly c + 2 ^ 32 -> sh = SHBv + x0 /
+0x40000	B/YFkn.v	1204	?	sr_get (ss_regs R3_NR) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NR) 12%bv = SLit 0 /\ sr_ge
+0x40000	B/YFkn.v	1213	?	sr_get (ss_regs R3_NRFe) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NRFe) 12%bv = SLit 0 /\ sr_
+0x40000	B/YFkn.v	1222	?	sr_get (ss_regs R3_NRFg) 11%bv = SLit 262144 /\ sr_get (ss_regs R3_NRFg) 12%bv = SLit 0 /\ sr_
+0x40000	B/YFkn.v	1257	?	exact (destroyed_free (w64 a) 262144 mdN ltac:(zlia) ltac:(rewrite Ua; change (page_ro
+0x40000	B/YFkn.v	1257	?	4 a) 262144 mdN ltac:(zlia) ltac:(rewrite Ua; change (page_round_up_Z 262144) with 262144; unfold kUserMapSize in Hceil; zlia)
+0x40000	B/YFkn.v	1257	?	dN ltac:(zlia) ltac:(rewrite Ua; change (page_round_up_Z 262144) with 262144; unfold kUserMapSize in Hceil; zlia) RF).
+0x40000	B/YFkn.v	1876	?	assert (X : q * 8192 * 8 + 262144 <= fadr) by (unfold kUserMapSize, kFreeArrayOffse
+0x40000	B/YFkn.v	1877	?	assert (Y : (q * 8192 * 8 + 262144) / 8 <= fadr / 8) by (apply Z.div_le_mono; [zlia
+0x40000	B/YFkn.v	1878	?	replace (q * 8192 * 8 + 262144) with ((q * 8192 + 32768) * 8) in Y by zlia. rewr
+0x104022	B/YFkn.v	913	?	Definition FLR : word := Z_to_bv 64 0x104022.
+0x104022	B/YFkn.v	1204	?	(ss_regs R3_NR) 12%bv = SLit 0 /\ sr_get (ss_regs R3_NR) 13%bv = SLit 0x104022 /\
+0x104022	B/YFkn.v	1213	?	regs R3_NRFe) 12%bv = SLit 0 /\ sr_get (ss_regs R3_NRFe) 13%bv = SLit 0x104022 /\
+0x104022	B/YFkn.v	1222	?	regs R3_NRFg) 12%bv = SLit 0 /\ sr_get (ss_regs R3_NRFg) 13%bv = SLit 0x104022 /\
+0xe0000	B/YFko.v	181	witness	write Hqs; apply Z.mod_divide; [lia|]; exists (qs * 16 + c * 2 ^ 20 + 917504); lia).
+0x20000	B/YFkp.v	41	?	(rCSZ, mkAF 16 131072 4);
+0x40000	B/YFkx.v	575	?	F| | | |]. all: clear - M0 M1 M2; first [zlia | replace (2 ^ 18) with 262144 by reflexivity; exact M2]. }
+0x40000	B/YFkx.v	577	?	| | |]. all: clear - U0 U1 U2 U3; first [zlia | replace (2 ^ 18) with 262144 by reflexivity; exact U3]. }
+0x5f4000	B/YImgTop.v	4	?	Notation IMG_TOP := 0x5f4000%Z (only parsing).

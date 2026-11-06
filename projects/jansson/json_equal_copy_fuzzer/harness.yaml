@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jansson
 harness: json_equal_copy_fuzzer
-rocq: OssFuzzTheorems.jansson.json_equal_copy_fuzzer
+rocq: OSSVerify.jansson.json_equal_copy_fuzzer
 origin: upstream
 summary: 'json_loadb with 5 fuzz-selected load flags, then one of: json_deep_copy + json_equal(root, copy);
   json_copy + json_equal(root, shallow); json_equal(root, root); json_object_update into an empty object;

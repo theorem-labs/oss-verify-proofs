@@ -16,13 +16,13 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase MemImageType RiscvSemantics State Run OmniRun.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Examples Omni.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import MustExit Classifier.
-From OssFuzzTheorems.Tests.toy.exit0.images Require Plain Padded.
-From OssFuzzTheorems.Tests.toy.exit1.images Require Plain.
+From OSSVerify.Tests.toy.exit0.images Require Plain Padded.
+From OSSVerify.Tests.toy.exit1.images Require Plain.
 Import ListNotations.
 
-Module E0 := OssFuzzTheorems.Tests.toy.exit0.images.Plain.M.
-Module E0P := OssFuzzTheorems.Tests.toy.exit0.images.Padded.M.
-Module E1 := OssFuzzTheorems.Tests.toy.exit1.images.Plain.M.
+Module E0 := OSSVerify.Tests.toy.exit0.images.Plain.M.
+Module E0P := OSSVerify.Tests.toy.exit0.images.Padded.M.
+Module E1 := OSSVerify.Tests.toy.exit1.images.Plain.M.
 
 Lemma exit0_exits_c : forall sp rnd argv envp uid hw,
   exits_c E0.loaded_segments verdict_accept 8

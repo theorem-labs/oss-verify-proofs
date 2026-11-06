@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libical
 harness: libical_extended_fuzzer
-rocq: OssFuzzTheorems.libical.libical_extended_fuzzer
+rocq: OSSVerify.libical.libical_extended_fuzzer
 origin: oss-fuzz
 summary: icalcomponent_new_from_string then icalcomponent_normalize on the result; the normalised tree
   is never compared, re-serialised or normalised twice (no idempotence check).

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: plan9port
 harness: fuzz_libsec
-rocq: OssFuzzTheorems.plan9port.fuzz_libsec
+rocq: OSSVerify.plan9port.fuzz_libsec
 origin: oss-fuzz
 summary: NUL-terminated copy of the input handed to libsec asn1dump() (DER dump to stdout); nothing returned,
   nothing checked.

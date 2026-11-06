@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: flac
 harness: fuzzer_encoder_v2
-rocq: OssFuzzTheorems.flac.fuzzer_encoder_v2
+rocq: OSSVerify.flac.fuzzer_encoder_v2
 origin: upstream
 summary: 'Checks 3 properties (listed below); the first, a self-validation: With verify on, a verify-decoder
   failure on the encoder''s own output (FLAC__STREAM_ENCODER_VERIFY_DECODER_ERROR) aborts unless the verify

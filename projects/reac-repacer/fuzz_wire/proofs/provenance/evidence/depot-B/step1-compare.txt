@@ -1,0 +1,51 @@
+stage-out .v: 88 byte-identical, 0 differ; only in the other run: 0
+same ab1w-merged.tsv
+same cellcheck.tsv
+DIFFERS cellgates.txt:
+    1c1
+    < cellcheck	FAIL	# 5 cells (0 file-backed), 0 mismatch: FAIL (no cell lies in a file-backed range of this image)
+    ---
+    > cellcheck	FAIL	# 0 file-backed cells, 0 mismatch
+same cells.tsv
+DIFFERS check.tsv:
+    1301c1301
+    < B/YD1d.v	0	TfibSyms	WireSyms	FAIL rename-new-undeclared (WireSyms is used in 78 staged files and declared by none, staged or kept)			
+    ---
+    > B/YFf2.v	0	TfibSyms	WireSyms	FAIL rename-new-undeclared (WireSyms is used in 78 staged files and declared by none, staged or kept)			
+same decimals.tsv
+same differs.tsv
+same fixed.tsv
+same gate-raw.tsv
+same gate.tsv
+same geometry.tsv
+same got.tsv
+same image-specific.txt
+same kept.txt
+same map.txt
+same names.tsv
+same no-twin.tsv
+same nonA.tsv
+same remap.tsv
+same required.tsv
+DIFFERS review.tsv:
+    23d22
+    < B/YFix.v	0	-	-	kept-refused-definition CZONE (used in another staged file or a use cannot be rewritten: the porter removes it)			
+    25c24
+    < B/YFjb.v	0	-	-	kept-refused-definition CZONE (used in another staged file or a use cannot be rewritten: the porter removes it)			
+    ---
+    > B/YFix.v	0	-	-	kept-refused-definition CZONE (used in another staged file or a use cannot be rewritten: the porter removes it)			
+    27c26
+    < B/YFju.v	0	-	-	kept-refused-definition abs_cell_okS (used in another staged file or a use cannot be rewritten: the porter removes it)			
+    ---
+    > B/YFjb.v	0	-	-	kept-refused-definition CZONE (used in another staged file or a use cannot be rewritten: the porter removes it)			
+    28a28
+    > B/YFju.v	0	-	-	kept-refused-definition abs_cell_okS (used in another staged file or a use cannot be rewritten: the porter removes it)			
+    31c31
+    < B/YD1d.v	0	TfibSyms	WireSyms	FAIL rename-new-undeclared (WireSyms is used in 78 staged files and declared by none, staged or kept)			
+    ---
+    > B/YFf2.v	0	TfibSyms	WireSyms	FAIL rename-new-undeclared (WireSyms is used in 78 staged files and declared by none, staged or kept)			
+same rowaddr.tsv
+same slots.tsv
+same trampolines.tsv
+same versions.txt
+GATE depot-B-step1 RULE: PASS iff every stage-out .v of this run is byte-identical to the other run's (0 differ, 0 only in the other run, at least one file); the .tsv / .txt differences listed above and port_core's exit code (3, from its cellcheck line, which both runs print) are not part of the rule. VERDICT: PASS (88 byte-identical, 0 differ, 0 only in the other run)

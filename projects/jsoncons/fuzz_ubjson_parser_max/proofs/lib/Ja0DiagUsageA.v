@@ -1,0 +1,204 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
+From Stdlib Require Import ZArith List Lia Bool.
+From stdpp.bitvector Require Import definitions.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.jsoncons.fuzz_ubjson_parser_max.images Require Import Asan.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import PropExec CatExec CatSim SeqExec StoreOk Hoare RefMemcpyLib L5Defs L5Kn L5KnA
+Ja0RegionPoisoned Ja0AsanMemcpy Ja0DiagKit Ja0DiagChk Ja0DiagMemcpy Ja0DiagStrnlen Ja0DiagGlue Ja0DiagUP Ja0DiagUsagePre.
+Import ListNotations.
+Open Scope Z_scope.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import L8Kit.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Require OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.L5FastLia.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import SecKit. From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
+Ltac2 tcn__Ja0DiagUsageA () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Init.Nat."; "LinuxProcessSemantics.Riscv.Prelude."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CatSim."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Ja0DiagGlue.DG."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Ja0DiagUsagePre.DUP."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.L5Defs.L5."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.StoreOk."; "OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.Asan.M."; "Stdlib.Lists.List."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["1Some"; "1app"; "1cons"; "1length"; "1list"; "1nat"; "1nil"; "1option"; "2and"; "2eq"; "2ex"; "2not"; "3add"; "4bvmap"; "0M"; "0M5"]; ["0ME"; "0MF"; "0MX"; "0R"; "0R5"; "0RE"; "0RF"; "0RX"; "5msteps"; "6PRE7"; "6SUF7"; "6agree0"; "7usage_mid"; "8u32_at"; "8u64_at"; "9FPState"]; ["9getr"; "9mkst"; "9rdn"; "9seg_rom"; ":mem_grows"; ";loaded_segments"; "0S"; "<In"; "=add"; "=le"; "=lt"; "=of_nat"; "=sub"; "0bs"; "0can"; "0fx"]; ["0fx'"; "0fx5"; "0fxE"; "0fxF"; "0k"; "0m1"; "0m2"; "0m3"; "0m4"; "0m5"; "0m6"; "0m7"; "0m8"; "0p"; ">Z_to_bv"; ">bv"]; [">bv_unsigned"; "0x"]]).
+Local Ltac lia := L5FastLia.plia.
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+Module DUA.
+Import DK. Import DSN. Import DG. Import AS0DIAGUP.
+Section UA.
+Context (fx : FPState).
+Variables (R : bvmap 5 word) (M : word -> option byte) (S p can : Z) (bs t8 : list byte).
+#[local] Notation n := (Z.of_nat (length bs)).
+Hypothesis G1 : getr R (reg 1) = Z_to_bv 64 684896.
+Hypothesis G2 : getr R (reg 2) = Z_to_bv 64 S.
+Hypothesis G10 : getr R (reg 10) = Z_to_bv 64 1273408.
+Hypothesis G11 : getr R (reg 11) = Z_to_bv 64 90549.
+Hypothesis G12 : getr R (reg 12) = Z_to_bv 64 p.
+Hypothesis HS : 140735332552704 + 5440 <= S <= 140737488355328.
+Hypothesis Hal : S mod 16 = 0.
+Hypothesis HW : L5.writable RSEGS M (S - 5440) 5440.
+Hypothesis HD : L5.defined M (S - 5440) 5440.
+Hypothesis HIMG : L5.img_clear M 65536 1261568.
+Hypothesis Hp : S <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+Hypothesis Hn : n <= 66.
+Hypothesis HSTR : cstr M p bs t8.
+Hypothesis HSH : forall x : word, SB + p / 8 - 7 <= bv_unsigned x < Z.min (SB + (p + n) / 8 + 8) (SB + 2 ^ 44) -> M x = Some (Z_to_bv 8 0).
+Hypothesis HSTK : L5KA.zeros_at M (SB + S / 8 - 680) 688.
+Hypothesis HFMT : L5KA.zeros_at M 2147462192 16.
+Hypothesis Hcan : 0 <= can < 2 ^ 64.
+Hypothesis HC : diag_cells M can.
+Hypothesis HSN : sn_cells M.
+Hypothesis HMC : mc_icpt_globs M.
+Variables m1 m2 m3 m4 m5 m6 m7 m8 : Z.
+Hypothesis Hm : (0 <= m1 < 2 ^ 64 /\ 0 <= m2 < 2 ^ 64 /\ 0 <= m3 < 2 ^ 64 /\ 0 <= m4 < 2 ^ 64) /\ (0 <= m5 < 2 ^ 64 /\ 0 <= m6 < 2 ^ 64 /\ 0 <= m7 < 2 ^ 64 /\ 0 <= m8 < 2 ^ 64).
+Hypothesis HMF : L5.u64_at RSEGS M (S + 72) 1126748 /\ L5.u64_at RSEGS M (S + 64) m1 /\ L5.u64_at RSEGS M (S + 56) m2 /\ L5.u64_at RSEGS M (S + 48) m3 /\ L5.u64_at RSEGS M (S + 40) m4
+/\ L5.u64_at RSEGS M (S + 32) m5 /\ L5.u64_at RSEGS M (S + 24) m6 /\ L5.u64_at RSEGS M (S + 16) m7 /\ L5.u64_at RSEGS M (S + 8) m8.
+Section SE.
+Local Abbreviation SEC_T_usage_A_tail := (ltac2:(TCodec.tc2 tcn__Ja0DiagUsageA "Y6'O&=y5'QOyR0%211%5241'7y8%611%311p061&LvCv>vQ6vQMvQ>vQ=vQEvQFvQGvQHvQIvQJvQKvQLr2r1%A@@?>=<;:987654321':'8'H&Q5&Q1r7r6&QN+QScfH%22Q31r5&Q3%119%9587431r3+QS\h4%92Q:1%=53D1C5%@3?51'9&Q0&Q;uA%211%A2QD1%52L1+R2%D2QE1%93QE31u:%911%H2QK1%<2Q31+2%K2QL1%@3QL31u;%@11%O2R21%C2Q:1&Q<+b8%22QI1%Q42R51%I3R551u<%I11%Q82R;1%L2QC1%N3R:1?u9%N11%Q=2R@1%Q12QH1+QVkb0%Q@2RA1%Q53RA31uB%Q511%QD2RG1%Q82QO1%Q:3RF1KuC%Q:11%QI2RL1%Q=2R41%Q?3RK1GuF%Q?11%QN2S11%QB2R91&Q8&3%12RNRE%QE11+>%5221%R62S71%QK3S781&N+^@%Q92S01%34R?RDQ81+b0%Q<2S31%64RBRG19+aH%Q?2S61z%:4RFRK21+a@%QC2S:1%=4RIRN14'4%11SC%SF11&Q2%RJ2SK@&<u7%22K1%3221%64S3S851(0&1&I&J%33T0SG1%43T131%62?1%RK3?81&M+QVkeH%24S>SC1R@&K%13T3SET2&Q4%12T5SGpT4T?T:&;&Q9&R0%12TDSL%32RA1&Q:+a8%RF2T=1%3251%SO251%:11%SD1T5%SM1T6%SA3TH21p041pT4TO1%C2SMT:'5&Q7(2u2u3u4u8uEuGuHuIuJuK(6%11>%=3?31%>3@51%?3A71%@3B91%A3C;1%B3D=1%C3ES;1%D3F@1%E3GB1%F3HD1%G3IF1%I3JU41%T>1U6%TM2V01%TA2TO1r9%TC213%TE3V131p071pS:Q21r8+QS\h@%U62V71%U:5831U9U2+QR^Y4%U92V:1%U=5U3UD1UCU5%U@3U?41%TN1Q5%U=2V@1%U12V61%U33V?TF1%U21Q<%UA2VD1%U52UL1+R@%SD2V:1%UE2VF1%U:3VF41+5%R@4ULV1T91+QVke0%SB4UNV31S9+QVkdH+Vam\H%SE4V1V621+QVkcH%SG4V3V81S>+QVkc8%SI4V5V:1S@+QVkc0%SK4V7V<1SB+QVkb8%SM4V9V>1SD+QVkb@%SO4V;V@1SF%UJ1R2%V92W<1%UM2VD1%UN2W32%V03W<21%VC261%VD291%VE2<1%VF2?1%VG2B1%VH2E1%VI2I1%VJ2L1%VK2S71%VL2S:1%VM2Q11%VN2Q91%VO2Q>1qQ4WD1%W22WE1qQ>WK1%W42WL1qS8X31%W62X41p0QM1p0S11p0S31pQ6SD1pQ@X31pS2X:1%W<2SH1%W=2SK1%W>2SN1%W?2T21%W@2TE1%WA2TI1%WB2TN1%WC2U21%WD2U71%WE2UD1%WF2UJ1%WG2V01%WH2V81%WI2V>1%WJ2VH1%WK2W01%WL2W;1qQ2XA1%WO2XB1qQ<XH1%X12XI1qS6Y01%X32Y11p0X51pQ0XH1pQ:XN1pS4Y51")) (only parsing).
+Variable fx5 : ltac:(sec_ty2 constr:(SEC_T_usage_A_tail) 0%nat 0%nat).
+Variable R5 : ltac:(sec_ty2 constr:(SEC_T_usage_A_tail) 1%nat 0%nat).
+Variable M5 : ltac:(sec_ty2 constr:(SEC_T_usage_A_tail) 2%nat 0%nat).
+Theorem usage_A_tail : ltac:(sec_stmt2 constr:(SEC_T_usage_A_tail) 3%nat 0%nat).
+Proof.
+intros INV.
+destruct Hm as ((Hm1 & Hm2 & Hm3 & Hm4) & (Hm5 & Hm6 & Hm7 & Hm8)).
+pose proof HC as (C1 & C2 & C3 & C4 & C5 & C6 & C7 & F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8 & FW).
+assert (Pr : 140735332552704 <= p <= 140737488355311) by lia.
+assert (Nr : 0 <= n <= 131071) by lia.
+assert (DIV : 0 <= (p + n) / 8 <= 2 ^ 44) by (split; [apply Z.div_pos; lia | apply Z.div_le_upper_bound; lia]).
+assert (S8 : 0 <= S / 8 <= 2 ^ 44) by (split; [apply Z.div_pos; lia | apply Z.div_le_upper_bound; lia]).
+destruct INV as (A05 & MG05 & T). dk_split T.
+assert (W5 : L5.writable RSEGS M5 (S - 5440) 5440) by (eapply writable_grows; [exact MG05 | exact HW]).
+assert (D5 : L5.defined M5 (S - 5440) 5440) by (eapply defined_grows; [exact MG05 | exact HD]).
+assert (IMG5 : L5.img_clear M5 65536 1261568) by (apply (imgc_ext M M5); [intros x Hx; apply A05; flia | lia | lia | exact HIMG]).
+cfeed P (duDs_conc fx5 R5 M5 (fun j => match j with 2%nat => S - 1024 | 33%nat => p | 34%nat => n | _ => 0 end)) ltac:(first [apply UR | apply U_to | scc | shz]).
+dk_open P as fx6 R6 M6 MG6 FR6 FZ6 MS6 KS6.
+assert (AG56 : forall x : word, bv_unsigned x < S - 1088 \/ S - 1024 <= bv_unsigned x -> M6 x = M5 x) by (intros x Hx; apply FR6; lia).
+assert (A06 : forall x : word, ~ (S - 5440 <= bv_unsigned x < S) -> ~ filew (bv_unsigned x) -> M6 x = M x) by (intros x Hx Hf; rewrite AG56 by lia; apply A05; assumption).
+assert (MG06 : mem_grows M M6) by (eapply mem_grows_trans; eassumption).
+assert (W6 : L5.writable RSEGS M6 (S - 5440) 5440) by (eapply writable_grows; eassumption).
+assert (STR6 : cstr M6 p bs t8) by (apply (cstr_ext M M6); [lia | lia | intros x Hx; apply A06; flia | exact HSTR]).
+assert (HSN6 : sn_cells M6) by (apply (sn_cells_agree M M6 S); [lia | exact A06 | exact HSN]).
+assert (HMC6 : mc_icpt_globs M6) by (apply (mc_globs_agree M M6 S); [lia | exact A06 | exact HMC]).
+assert (SK6 : L5KA.zeros_at M6 (SB + S / 8 - 680) 688).
+{ apply (zeros_ext M M6); [intros x Hx; apply A06; unfold SB in Hx; flia | unfold SB; lia | unfold SB; lia | exact HSTK]. }
+assert (RDS6 : rdn RSEGS M6 (Z_to_bv 64 p) (length bs) = Some bs).
+{ destruct STR6 as [A _ _]. rewrite (SeqExec.rdn_firstn RSEGS M6 _ _ _ (length bs) A) by lia. f_equal. rewrite firstn_app, firstn_all2 by lia. rewrite Nat.sub_diag. cbn [firstn]. apply app_nil_r. }
+destruct (memcpy_stage fx6 R6 M6 (S - 1088) (S - 457) p n bs) as (R7 & M7 & MS7 & V7 & KS7 & AG67 & MG7 & RD7);
+[ sc | sc | sc | sc | sc | reflexivity | lia | lia | lia | (right; unfold HIGHBEG, HIGHEND; lia) | (right; unfold HIGHBEG, HIGHEND; lia) | lia | lia | lia | lia | lia
+| dk_gmem | (apply (L5.writable_sub RSEGS M6 (S - 5440) 5440); [exact W6 | lia | lia]) | exact RDS6 | (destruct HSN6 as (_ & _ & _ & G & _); exact G) | exact HMC6
+| (apply (zsh_of_hullm _ p n n); [lia | lia | lia | intros x Hx; assert (0 <= p / 8) by (apply Z.div_pos; lia); rewrite A06 by (unfold SB in Hx; flia); apply HSH; exact Hx])
+| (apply (stk_zsh M6 S); [exact Hal | lia | exact SK6 | lia | lia | lia]) | ].
+assert (A07 : forall x : word, ~ (S - 5440 <= bv_unsigned x < S) -> ~ filew (bv_unsigned x) -> M7 x = M x) by (intros x Hx Hf; rewrite AG67 by lia; apply A06; assumption).
+assert (MG07 : mem_grows M M7) by (eapply mem_grows_trans; eassumption).
+assert (W7 : L5.writable RSEGS M7 (S - 5440) 5440) by (eapply writable_grows; eassumption).
+assert (D7 : L5.defined M7 (S - 5440) 5440) by (eapply defined_grows; eassumption).
+assert (IMG7 : L5.img_clear M7 65536 1261568) by (apply (imgc_ext M M7); [intros x Hx; apply A07; flia | lia | lia | exact HIMG]).
+assert (FW7 : L5.writable RSEGS M7 1273408 152) by (eapply writable_grows; eassumption).
+assert (AG67' : forall x : word, S - 1088 <= bv_unsigned x -> ~ (S - 457 <= bv_unsigned x < S - 457 + n) -> M7 x = M6 x) by (intros x Hx Hd; apply AG67; [lia | exact Hd]).
+assert (AG57 : forall x : word, S - 1024 <= bv_unsigned x -> ~ (S - 457 <= bv_unsigned x < S - 457 + n) -> M7 x = M5 x) by (intros x Hx Hd; rewrite AG67' by (first [exact Hd | lia]); apply AG56; lia).
+assert (AG57s : forall x : word, bv_unsigned x < 2 ^ 32 -> M7 x = M5 x) by (intros x Hx; rewrite AG67 by lia; apply AG56; lia).
+assert (F87 : L5.u8_at RSEGS M7 1273408 5).
+{ apply u8_of_u32_5; [lia | lia|]. scc. }
+cfeed P (duEa_conc fx6 R7 M7 (fun j => match j with 2%nat => S - 1088 | 33%nat => p | 34%nat => n | _ => 0 end)) ltac:(first [apply UR | apply U_to | scc | shz]).
+dk_open P as fx8 R8 M8 MG8 FR8 FZ8 MS8 KS8.
+assert (AG78 : forall x : word, bv_unsigned x < S - 1104 \/ S - 1024 <= bv_unsigned x -> ~ (1273448 <= bv_unsigned x < 1273456) -> M8 x = M7 x) by (intros x Hx Hf; apply FR8; lia).
+assert (A08 : forall x : word, ~ (S - 5440 <= bv_unsigned x < S) -> ~ filew (bv_unsigned x) -> M8 x = M x) by (intros x Hx Hf; rewrite AG78 by (unfold filew in Hf; lia); apply A07; assumption).
+assert (MG08 : mem_grows M M8) by (eapply mem_grows_trans; eassumption).
+assert (W8 : L5.writable RSEGS M8 (S - 5440) 5440) by (eapply writable_grows; eassumption).
+assert (IMG8 : L5.img_clear M8 65536 1261568) by (apply (imgc_ext M M8); [intros x Hx; apply A08; flia | lia | lia | exact HIMG]).
+assert (HSN8 : sn_cells M8) by (apply (sn_cells_agree M M8 S); [lia | exact A08 | exact HSN]).
+assert (HMC8 : mc_icpt_globs M8) by (apply (mc_globs_agree M M8 S); [lia | exact A08 | exact HMC]).
+assert (SK8 : L5KA.zeros_at M8 (SB + S / 8 - 680) 688).
+{ apply (zeros_ext M M8); [intros x Hx; apply A08; unfold SB in Hx; flia | unfold SB; lia | unfold SB; lia | exact HSTK]. }
+assert (FMT8 : L5KA.zeros_at M8 2147462192 16) by (apply (zeros_ext M M8); [intros x Hx; apply A08; flia | lia | lia | exact HFMT]).
+assert (RDF8 : rdn RSEGS M8 (Z_to_bv 64 90558) (length SUF7) = Some SUF7).
+{ rewrite SUF7_len. rewrite (rdn_img M8 65536 1261568) by (first [exact IMG8 | cbn; lia | lia]). exact suf7_img. }
+destruct (memcpy_stage fx8 R8 M8 (S - 1088) (S - 457 + n) 90558 7 SUF7) as (R9 & M9 & MS9 & V9 & KS9 & AG89 & MG9 & RD9);
+[ sc | sc | sc | sc | sc | reflexivity | lia | lia | lia | (left; unfold LOWEND; lia) | (right; unfold HIGHBEG, HIGHEND; lia) | lia | lia | lia | lia | lia
+| dk_gmem | (apply (L5.writable_sub RSEGS M8 (S - 5440) 5440); [exact W8 | lia | lia]) | exact RDF8 | (destruct HSN8 as (_ & _ & _ & G & _); exact G) | exact HMC8
+| | (apply (stk_zsh M8 S); [exact Hal | lia | exact SK8 | lia | lia | lia]) | ].
+{ intros x Hx. unfold SB in Hx. change ((2147450880 + 90558 / 8) - (2147450880 + 90558 / 8) mod 8) with 2147462192 in Hx.
+change ((2147450880 + (90558 + 7 - 1) / 8) - (2147450880 + (90558 + 7 - 1) / 8) mod 8 + 8) with 2147462208 in Hx.
+specialize (FMT8 (bv_unsigned x - 2147462192) ltac:(lia)). replace (2147462192 + (bv_unsigned x - 2147462192)) with (bv_unsigned x) in FMT8 by lia.
+rewrite Z_to_bv_bv_unsigned in FMT8. exact FMT8. }
+assert (A09 : forall x : word, ~ (S - 5440 <= bv_unsigned x < S) -> ~ filew (bv_unsigned x) -> M9 x = M x) by (intros x Hx Hf; rewrite AG89 by lia; apply A08; assumption).
+assert (MG09 : mem_grows M M9) by (eapply mem_grows_trans; eassumption).
+assert (W9 : L5.writable RSEGS M9 (S - 5440) 5440) by (eapply writable_grows; eassumption).
+assert (D9 : L5.defined M9 (S - 5440) 5440) by (eapply defined_grows; eassumption).
+assert (IMG9 : L5.img_clear M9 65536 1261568) by (apply (imgc_ext M M9); [intros x Hx; apply A09; flia | lia | lia | exact HIMG]).
+assert (FW9 : L5.writable RSEGS M9 1273408 152) by (eapply writable_grows; eassumption).
+assert (AG89h : forall x : word, S - 1088 <= bv_unsigned x -> ~ (S - 457 + n <= bv_unsigned x < S - 450 + n) -> M9 x = M8 x) by (intros x Hx Hd; apply AG89; lia).
+assert (AG89s : forall x : word, bv_unsigned x < 2 ^ 32 -> M9 x = M8 x) by (intros x Hx; apply AG89; lia).
+assert (AG79h : forall x : word, S - 1024 <= bv_unsigned x -> ~ (S - 457 + n <= bv_unsigned x < S - 450 + n) -> M9 x = M7 x) by (intros x Hx Hd; rewrite AG89h by (first [exact Hd | lia]); apply AG78; lia).
+assert (AG59h : forall x : word, S - 1024 <= bv_unsigned x -> ~ (S - 457 <= bv_unsigned x < S - 450 + n) -> M9 x = M5 x) by (intros x Hx Hd; rewrite AG79h by lia; apply AG57; lia).
+assert (AG59s : forall x : word, bv_unsigned x < 2 ^ 32 -> ~ (1273448 <= bv_unsigned x < 1273456) -> M9 x = M5 x).
+{ intros x Hx Hf. rewrite AG89s by lia. rewrite AG78 by lia. apply AG57s; lia. }
+cfeed P (duFa_conc fx8 R9 M9 (fun j => match j with 2%nat => S - 1088 | 33%nat => p | 34%nat => n | 40%nat => can
+| 22%nat => U R 22 | 23%nat => U R 23 | 24%nat => U R 24 | 25%nat => U R 25 | 26%nat => U R 26 | 27%nat => U R 27
+| 123%nat => U R9 23 | 124%nat => U R9 24 | 125%nat => U R9 25 | 127%nat => U R9 27 | _ => 0 end)) ltac:(first [apply UR | apply U_to | scc | shz]).
+dk_open P as fxE RE ME MGE FRE FZE MSE KSE.
+assert (AG9E : forall x : word, bv_unsigned x < S - 1104 \/ S - 464 <= bv_unsigned x -> ~ (1273448 <= bv_unsigned x < 1273456) -> ME x = M9 x) by (intros x Hx Hf; apply FRE; lia).
+assert (A0E : forall x : word, ~ (S - 5440 <= bv_unsigned x < S) -> ~ filew (bv_unsigned x) -> ME x = M x) by (intros x Hx Hf; rewrite AG9E by (unfold filew in Hf; lia); apply A09; assumption).
+assert (MG0E : mem_grows M ME) by (eapply mem_grows_trans; eassumption).
+assert (BUF : rdn RSEGS ME (Z_to_bv 64 (S - 464)) (7 + (length bs + 7)) = Some (PRE7 ++ bs ++ SUF7)).
+{ assert (AG5Eb : forall x : word, S - 464 <= bv_unsigned x < S - 457 -> ME x = M5 x) by (intros x Hx; rewrite AG9E by lia; apply AG59h; lia).
+assert (AG7Eb : forall x : word, S - 457 <= bv_unsigned x < S - 457 + n -> ME x = M7 x) by (intros x Hx; rewrite AG9E by lia; apply AG79h; lia).
+assert (AG9Eb : forall x : word, S - 457 + n <= bv_unsigned x < S - 450 + n -> ME x = M9 x) by (intros x Hx; apply AG9E; lia).
+assert (P7 : rdn RSEGS ME (Z_to_bv 64 (S - 464)) 7 = Some PRE7).
+{ rewrite PRE7_eq. apply rdn_7; [lia | lia | ..];
+(eapply (u8_ext M5); [intros x Hx; apply AG5Eb; lia | lia | lia |]); match goal with |- L5.u8_at _ _ ?a _ => ring_simplify a end; assumption. }
+assert (PB : rdn RSEGS ME (Z_to_bv 64 (S - 457)) (length bs) = Some bs) by (apply (rdn_xfer M7 ME); [intros x Hx; apply AG7Eb; lia | lia | lia | exact RD7]).
+assert (PS : rdn RSEGS ME (Z_to_bv 64 (S - 457 + n)) 7 = Some SUF7).
+{ apply (rdn_xfer M9 ME); [intros x Hx; apply AG9Eb; cbn in Hx; lia | lia | cbn; lia | rewrite SUF7_len in RD9; exact RD9]. }
+apply rdn_app_Z; [lia | lia | exact P7|]. replace (S - 464 + Z.of_nat 7) with (S - 457) by lia.
+apply rdn_app_Z; [lia | lia | exact PB | exact PS]. }
+assert (WE : L5.writable RSEGS ME (S - 5440) 5440) by (eapply writable_grows; eassumption).
+assert (AG5Es : forall x : word, bv_unsigned x < 2 ^ 32 -> ~ (1273448 <= bv_unsigned x < 1273456) -> ME x = M5 x) by (intros x Hx Hf; rewrite AG9E by lia; apply AG59s; assumption).
+assert (NE : Z.eqb (S - 450 + n) (S - 464) = false) by (apply Z.eqb_neq; lia).
+destruct (wv_entry_stage fxE RE ME 1273408 (S - 592) 0 0 (S - 450 + n) (S - 464) 2) as (RW & MW & MSW & W17 & W10 & W11 & W12 & W18 & W19 & W22 & KSW & I0 & I1 & I2 & I3 & AGEW & MGW);
+[ sc | sc | sc | sc | lia | lia | lia | lia | lia | lia | lia | lia | lia | lia | scc | scc | scc | dk_gmem | ].
+rewrite NE in W11, W12, W18, W19.
+assert (A0W : forall x : word, ~ (S - 5440 <= bv_unsigned x < S) -> ~ filew (bv_unsigned x) -> MW x = M x) by (intros x Hx Hf; rewrite AGEW by lia; apply A0E; assumption).
+assert (MG0W : mem_grows M MW) by (eapply mem_grows_trans; eassumption).
+assert (BUFW : rdn RSEGS MW (Z_to_bv 64 (S - 464)) (7 + (length bs + 7)) = Some (PRE7 ++ bs ++ SUF7)).
+{ apply (rdn_xfer ME MW); [intros x Hx; apply AGEW; lia | lia | lia | exact BUF]. }
+exists fxE, RW, MW.
+split. { eapply msteps_trans; [exact MS6|]. eapply msteps_trans; [exact MS7|]. eapply msteps_trans; [exact MS8|].
+eapply msteps_trans; [exact MS9|]. eapply msteps_trans; [exact MSE|]. exact MSW. }
+split; [exact W17|]. split; [exact W10|]. split; [rewrite W11; f_equal; lia|]. split; [exact W12|].
+split; [rewrite (KSW 9%nat) by (cbn; tauto); sc|]. split; [exact W18|]. split; [rewrite W19; f_equal; lia|]. split; [rewrite W22; f_equal; lia|].
+split; [replace (S - 584) with (S - 592 + 8) by lia; exact I0|]. split; [replace (S - 576) with (S - 592 + 16) by lia; replace (n + 14) with (S - 450 + n - (S - 464)) by lia; exact I1|].
+split; [replace (S - 568) with (S - 592 + 24) by lia; exact I2|]. split; [replace (S - 560) with (S - 592 + 32) by lia; exact I3|].
+split; [exact BUFW|]. split; [scc|]. split; [exact A0W|]. split; [exact MG0W|].
+intros fx' RX MX AGXW MGXW KXW.
+assert (AGX : forall x : word, ~ (S - 584 <= bv_unsigned x < S - 552) -> MX x = ME x) by (intros x Hx; rewrite AGXW by exact Hx; apply AGEW; lia).
+assert (MGX : mem_grows ME MX) by (eapply mem_grows_trans; eassumption).
+assert (KX : forall k, In k [2; 3; 4; 8; 9; 21; 23; 24; 25; 26; 27]%nat -> getr RX (reg k) = getr RE (reg k)) by (intros k Hk; rewrite (KXW k Hk); apply KSW; cbn in Hk |- *; tauto).
+assert (AGX9 : forall x : word, S - 464 <= bv_unsigned x -> ~ (S - 584 <= bv_unsigned x < S - 552) -> MX x = M9 x) by (intros x Hx Hd; rewrite AGX by exact Hd; apply AG9E; lia).
+assert (AGX5 : forall x : word, S - 384 <= bv_unsigned x -> MX x = M5 x) by (intros x Hx; rewrite AGX9 by lia; apply AG59h; lia).
+assert (AGX0 : forall x : word, ~ (S - 5440 <= bv_unsigned x < S) -> ~ filew (bv_unsigned x) -> MX x = M x) by (intros x Hx Hf; rewrite AGX by lia; apply A0E; assumption).
+assert (AGX5s : forall x : word, bv_unsigned x < 2 ^ 32 -> ~ (1273448 <= bv_unsigned x < 1273456) -> MX x = M5 x).
+{ intros x Hx Hf. rewrite AGX by lia. rewrite AG9E by lia. apply AG59s; assumption. }
+assert (MG0X : mem_grows M MX) by (eapply mem_grows_trans; eassumption).
+assert (WX : L5.writable RSEGS MX (S - 5440) 5440) by (eapply writable_grows; eassumption).
+assert (DX : L5.defined MX (S - 5440) 5440) by (eapply defined_grows; eassumption).
+assert (IMGX : L5.img_clear MX 65536 1261568) by (apply (imgc_ext M MX); [intros x Hx; apply AGX0; flia | lia | lia | exact HIMG]).
+assert (FWX : L5.writable RSEGS MX 1273408 152) by (eapply writable_grows; eassumption).
+cfeed P (duGa_conc fx' RX MX (fun j => match j with 2%nat => S - 592 | 33%nat => p | 34%nat => n | 40%nat => can
+| 8%nat => U R 8 | 9%nat => U R 9 | 18%nat => U R 18 | 19%nat => U R 19 | 20%nat => U R 20 | 21%nat => U R 21 | 22%nat => U R 22
+| 41%nat => m1 | 42%nat => m2 | 43%nat => m3 | 44%nat => m4 | 45%nat => m5 | 46%nat => m6 | 47%nat => m7 | 48%nat => m8
+| 118%nat => U RX 18 | 119%nat => U RX 19 | 120%nat => U RX 20 | 122%nat => U RX 22 | _ => 0 end)) ltac:(first [apply UR | apply U_to | scc]).
+dk_open P as fxF RF MF MGF FRF FZF MSF KSF.
+exists fxF, RF, MF.
+split; [exact MSF|].
+split. { match goal with H : getr RF (reg 10) = Z_to_bv 64 (U R 8) |- _ => rewrite H end. symmetry. apply U_to. }
+split; [sc|].
+split. { intros x Hx Hf. unfold filew in Hf. rewrite FRF by lia. rewrite AGX by lia. apply A0E; [exact Hx | unfold filew; lia]. }
+split; [eapply mem_grows_trans; [exact MG0E|]; eapply mem_grows_trans; [exact MGX | exact MGF]|].
+repeat split; first [sc | (eapply (DK.u64_ext M5); [intros x Hx; rewrite FRF by lia; apply AGX5s; lia | lia | lia | eassumption]) | dk_rk].
+Qed.
+End SE.
+Theorem usage_A : ltac2:(TCodec.tc2 tcn__Ja0DiagUsageA "XG':'O&=y5'QOyR0%211%5241'7y8%611%311p061'8'H&Q5&Q1vQ?vC&QN+\Zc4%22@1v>&Q3%119%9587431r3r2+QS\h4%:2H1r1%?554217%B3A71'9&Q0&Q;uA%211%C2Q31%52<1+R2%F2Q41%93Q431u:%911%J2Q:1%<2C1+2%M2Q;1%@3Q;31u;%@11%Q12QA1%C2J1&Q<vQ6+b8%3221%Q72QE1%J3QE61u<%J11%Q;2QK1%M2Q41%O3QJ1@u9%O11%Q@2R01%Q22Q91+QVkb0%QC2R11%Q63R131uB%Q611%QG2R71%Q92Q@1%Q;3R61LuC%Q;11%QL2R<1%Q>2QE1%Q@3R;1GuF%Q@11%R12RA1%QC2QJ1&Q8&3vQ=%22R?1%QG11+>%6221%R:2RH1%QM3RH91&N+^@%Q;2Q:1%34RCR4Q91+b0%Q>2Q=1%64RFR719+aH%QA2Q@1z%:4RJR;21+a@%QE2QD1%=4RMR>14'4%11S4%S711&Q2%RN2S<@&<u7%22K1%3221%64S7RH51(0&1&I&J%33SAQ31%43SB31%62?1%RM3?81&M+QVkeH%24SBS31RB&K%13S=S5R<&Q4%12S?S7pT4T0SK&;&Q9&R0%12T5S<%32RB1&Q:+a8%RH2RG1%3251%T3251%:11%SH1SGr6%11SI%SD3T:31p051pT4TA1r5%E21SN'5&Q7(2u2u3u4u8uEuGuHuIuJuK(6%11>%=3?31%>3@51%?3A71%@3B91%A3C;1%B3D=1%C3ES>1%D3F@1%E3GB1%F3HD1%G3IF1%I3JTF1%TB1TJ%U32UC1%TE2Q41r9%TG213%TI3UD31p071pS:Q21r8+QS\h@%U<2UJ1r7%UA59421U9+QR^Y4%U@2UN1%UD5U:U91U6U<%UG3UF41%U31Q6%UD2V41%U62UF1%U83V3TK1%U71Q=%UH2V81%U:2UA1+R@%SH2TG1%UL2V:1%U?3V:41+5%RC4V3UDT=1+QVke0%SE4V5UF1S<+QVkdH+Vam\H%SH4V8UI21+QVkcH%SJ4V:UK1SA+QVkc8%SL4V<UM1SC+QVkc0%SN4V>UO1SE+QVkb8%T04V@V11SG+QVkb@%T24VBV31SI%UO1R3%V@2W01%V22V91%V32VC2%V53W021%VJ261%VK291%VL2<1%VM2?1%VN2B1%VO2E1%W02I1%W12L1%W22S:1%W32S=1%W42Q11%W52Q91%W62Q>1qQ4W81%WE2W91qQ>W?1%WG2W@1qS8WG1%WI2WH1p0QN1p0S21p0S51pQ6SG1pQ@WG1pS2WN1%WC2SK1%WD2SN1%WE2T11%WF2T51%WG2TH1%WH2TL1%WI2U11%WJ2U51%WK2U:1%WL2UH1%WM2UN1%WN2V41%WO2V<1%X02VB1%X12VM1%X22W51%X32W@1qQ2X51%XB2X61qQ<X<1%XD2X=1qS6XD1%XF2XE1").
+Proof.
+destruct (DUP.usage_pre fx R M S p can bs t8 G1 G2 G10 G11 G12 HS Hal HW HD HIMG Hp ltac:(lia) HSTR HSH HSTK HFMT Hcan HC HSN m1 m2 m3 m4 m5 m6 m7 m8 Hm HMF) as (fx5 & R5 & M5 & MS5 & INV).
+destruct (usage_A_tail fx5 R5 M5 INV) as (fxE & RE & ME & MSE & REST).
+exists fxE, RE, ME. split; [eapply msteps_trans; [exact MS5 | exact MSE] | exact REST].
+Qed.
+End UA.
+End DUA.

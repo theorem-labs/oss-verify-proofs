@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cmark
 harness: cmark_fuzzer
-rocq: OssFuzzTheorems.cmark.cmark_fuzzer
+rocq: OSSVerify.cmark.cmark_fuzzer
 origin: upstream
 summary: First 8 bytes pick options and render width; parses the rest by one of 4 modes (parse_document,
   parse_file via fmemopen, 20-byte streaming feed, markdown_to_html), then renders commonmark/html/latex/man/xml

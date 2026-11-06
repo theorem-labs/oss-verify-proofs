@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nghttp2
 harness: nghttp2_fuzzer
-rocq: OssFuzzTheorems.nghttp2.nghttp2_fuzzer
+rocq: OSSVerify.nghttp2.nghttp2_fuzzer
 origin: upstream
 summary: Server session with no-op callbacks; submits a SETTINGS frame, drains output with nghttp2_session_mem_send2,
   feeds the whole input to nghttp2_session_mem_recv2 and drains output again; return codes ignored.

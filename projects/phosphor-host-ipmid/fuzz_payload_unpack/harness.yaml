@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: phosphor-host-ipmid
 harness: fuzz_payload_unpack
-rocq: OssFuzzTheorems.phosphor_host_ipmid.fuzz_payload_unpack
+rocq: OSSVerify.phosphor_host_ipmid.fuzz_payload_unpack
 origin: oss-fuzz
 summary: selector%16 picks one of 16 ipmi::message::Payload pack/unpack paths (fundamental ints, fixed-width
   bit types, strings, vectors, optionals, arrays, bitsets, SecureBuffer, span, nested Payload, reset/re-unpack,

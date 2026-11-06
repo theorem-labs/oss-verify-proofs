@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: glog
 harness: fuzz_demangle
-rocq: OssFuzzTheorems.glog.fuzz_demangle
+rocq: OSSVerify.glog.fuzz_demangle
 origin: upstream
 summary: 'Inputs of size >= 4095 are dropped; the rest are copied to a NUL-terminated stack buffer and
   passed to google::Demangle(Buffer, demangled, Size). The return value and the demangled text are ignored.

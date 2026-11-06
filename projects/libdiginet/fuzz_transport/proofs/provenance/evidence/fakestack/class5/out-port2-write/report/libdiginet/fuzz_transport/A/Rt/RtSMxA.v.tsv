@@ -1,0 +1,6 @@
+# alreloc per-numeral report: plugin-hostd/fuzz_command lib/A/Rt/RtSMxA.v at 781f46bc05cd -> libdiginet/fuzz_transport asan lib/A/Rt/RtSMxA.v: written
+# source image <AGENTS>/pau-pipeline/plugin-hostd/unstripped/fuzz_command/fuzz_command.asan; unit image <WORK>/target/unstripped/fuzz_transport/fuzz_transport.asan
+file:line	old	new	rule	old in source image	new in unit image
+A/Rt/RtSMxA.v:8	0x600000	0x600000	resolve (identity)	builtin_tls+0x1bb30	builtin_tls+0xc5d8
+A/Rt/RtSMxA.v:10	0x10000	0x10000	resolve (identity)	-	-
+A/Rt/RtSMxA.v:10	0x606000	0x606000	resolve (identity)	-	builtin_tls+0x125d8

@@ -1,0 +1,29 @@
+plant A/AFeq.v:149 0x13c4a0 -> 0xa4070 (P1: the .got word holding __sanitizer::PageSizeCached)
+plant A/AD2l.v:36 0xa9648 -> 0xa8fa8 (P2: donor 0xa1788 moved by the address delta 0x7820)
+  FINDING	KNOWN	A/AB1w.v:11	0x22c0c -> 0x22b4c	donor unnamed .rodata 0x22c0c	target unnamed .eh_frame_hdr 0x22b4c	no symbol, and no content / anchor / code-reference match; KNOWN to the owner: the final run writes 0x22b4c (.rodata's end; an override row added after work2); port_core's rule bound-released-elsewhere kept the donor's -0x40
+  FINDING	OTHER-SYM	A/AD1o.v:81	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:81	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:84	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:84	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:87	0xa14a0 -> 0x5f3200	donor __do_init.__object+0x10	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x20	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:91	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:91	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:93	0xa14a0 -> 0x5f3200	donor __do_init.__object+0x10	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x20	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:95	0xa14a0 -> 0x5f3200	donor __do_init.__object+0x10	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x20	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:95	82580 -> 779840	donor -	target _ZN11__sanitizerL26internal_alloc_placeholderE+0x10a40	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:98	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:98	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:99	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:100	660576 -> 6238688	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:100	82572 -> 779836	donor -	target _ZN11__sanitizerL26internal_alloc_placeholderE+0x10a3c	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD1o.v:100	660576 -> 6238688	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD25.v:529	0x5fa000 -> 0x5df0b8	donor -	target g_cfg+0x38	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD25.v:532	0x5fa000 -> 0x5df0b8	donor -	target g_cfg+0x38	a different symbol or offset
+  FINDING	OTHER-SYM	A/AD25.v:539	0x5fa000 -> 0x5df0b8	donor -	target g_cfg+0x38	a different symbol or offset
+  FINDING	UNALIGNED	A/AD2f.v:149	- -> 0x5df080	donor -	target g_cfg+0x0	no aligned donor token
+  FINDING	UNALIGNED	A/AD2f.v:149	- -> 0x5f3060	donor -	target OW+0x0	no aligned donor token
+  FINDING	OTHER-SYM	A/AD2l.v:36	0xa1788 -> 0xa8fa8	donor _ZN6__asanL8instanceE+0x2b0	target -	a different symbol or offset
+  FINDING	OTHER-SYM	A/AFem.v:129	127070 -> 127008	donor unnamed .rodata 0x1f05e	target unnamed .rodata 0x1f020	no symbol, and no content / anchor / code-reference match
+  FINDING	OTHER-SYM	A/AFem.v:207	127070 -> 127008	donor unnamed .rodata 0x1f05e	target unnamed .rodata 0x1f020	no symbol, and no content / anchor / code-reference match
+  FINDING	GOT	A/AFeq.v:149	0x1345e0 -> 0xa4070	donor _ZN11__sanitizer14PageSizeCachedE+0x0	target .got 0xa4070	the written value lands in .got
+control: the planted copy adds 2 finding(s) [(('A/AD2l.v:36', '0xa8fa8'), 'OTHER-SYM'), (('A/AFeq.v:149', '0xa4070'), 'GOT')], want [(('A/AD2l.v:36', '0xa8fa8'), 'OTHER-SYM'), (('A/AFeq.v:149', '0xa4070'), 'GOT')]: PASS

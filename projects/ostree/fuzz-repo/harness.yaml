@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ostree
 harness: fuzz-repo
-rocq: OssFuzzTheorems.ostree.fuzz_repo
+rocq: OSSVerify.ostree.fuzz_repo
 origin: oss-fuzz
 summary: Creates an archive-mode repo in a temp dir, sets config key [input] input=input, writes, reloads
   the config and reads min-free-space-bytes; all return values and errors ignored.

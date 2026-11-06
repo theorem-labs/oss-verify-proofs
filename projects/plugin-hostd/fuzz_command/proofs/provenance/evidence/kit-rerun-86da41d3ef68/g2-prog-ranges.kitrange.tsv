@@ -1,0 +1,18 @@
+# kit cmpkit 86da41d3ef68 (strictcmp3.tcmp / strictcmp3.verdict, called by address)
+# A = img/fuzz_command.asan.debug sha256 68db792d5fa7
+# B = img/fuzz_command.asan-ubsan.debug sha256 658cefbe806b
+# C-string rule ON (default)
+label	pair	addr1	addr2	length	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes/NAME-ONLY acceptances	C-string acceptances	differing targets printed	words-only	realwords
+is_instance_verb	B:A	0x8e340	0x8e7e4	0xf4	DIFFERENT	10	3	0	(0, 0, 0)	0			printed 0 of 0 targets	DIFFERENT	+0x88:00050613/00040513 +0x8c:00040513/00098593 +0x90:00098593/00048613
+number[0x8e0ac..0x8e124]	B:A	0x8e0ac	0x8e5a0	0x7c	DIFFERENT-target	0	0	0	(0, 0, 0)	[('0x44', 'number+0x1e8', 'number+0x1d8', 'names', None)]			printed 1 of 1 targets	EQUAL	-
+answer[entry..0x8ab6c]	B:A	0x8aa10	0x8a4c0	0x160	UNMEASURED-target	9	0	0	(0, 0, 1)	[('0x15c', 'auipc result consumed by no compared target', '', 'unmeasured', None)]		0xd0@0x20852|0x2080c=b'1 32 4096 7 buf:254\x00'	printed 1 of 1 targets	EQUAL-mod-pcrel	-
+CSTR	answer[entry..0x8ab6c]	B:A	0xd0	0x20852	0x2080c	20	3120333220343039362037206275663a32353400	b'1 32 4096 7 buf:254\x00'
+answer[0x8aca4..0x8ad2c]	B:A	0x8aca4	0x8a734	0x8c	DIFFERENT-target	4	0	0	(0, 0, 0)	[('0x38', 'answer+0x2dc', 'answer+0x2bc', 'names', None)]			printed 1 of 1 targets	EQUAL-mod-pcrel	-
+check_refusal[+0..+0xac)	B:A	0x88204	0x87f08	0xac	DIFFERENT	6	3	0	(0, 0, 0)	0			printed 0 of 0 targets	DIFFERENT	+0x38:08061863/08061663 +0x60:06059863/06059663 +0x80:02059863/02059663
+check_refusal[B+0xb0..end|A+0xac..end]	B:A	0x882b4	0x87fb4	0x24	DIFFERENT	4	1	0	(0, 0, 0)	0			printed 0 of 0 targets	DIFFERENT	+0x8:fcb646e3/fcb648e3
+send_message[+0..+0x250)	B:A	0x86bf8	0x86b10	0x250	DIFFERENT	14	1	0	(0, 0, 1)	0		0xb8@0x18ebf|0x18ead=b'1 32 24 7 msg:182\x00'	printed 0 of 0 targets	DIFFERENT	+0x154:10059063/0e059e63
+CSTR	send_message[+0..+0x250)	B:A	0xb8	0x18ebf	0x18ead	18	312033322032342037206d73673a31383200	b'1 32 24 7 msg:182\x00'
+send_message[B+0x254..end|A+0x250..end]	B:A	0x86e4c	0x86d60	0x18	DIFFERENT	2	1	0	(0, 0, 0)	0			printed 0 of 0 targets	DIFFERENT	+0x8:eeb64ee3/f0b640e3
+sup_reset:sup_quarantine_clear(A)	A:A	0x8b6d8	0x8b844	0x16c	DIFFERENT	13	1	0	(0, 0, 0)	[('0x54', 'sup_reset+0x74', 'sup_quarantine_clear+0x74', 'names', None), ('0xf0', '.str.8{recorder.c}+0x0', '.str.9{recorder.c}+0x0', 'strlabel-differs', ('TU recorder.c|recorder.c offset 0x0|0x0', b'supervisor_reset\x00', b'quarantine_clear\x00'))]			printed 2 of 2 targets	DIFFERENT	+0x84:00a00513/00b00513
+sup_policy_set:sup_lv2_worker_set(A)	A:A	0x8b9b0	0x8be80	0x1e0	DIFFERENT	20	2	0	(0, 0, 0)	[('0x5c', 'sup_policy_set+0x7c', 'sup_lv2_worker_set+0x7c', 'names', None), ('0x144', '.str.10{recorder.c}+0x0', '.str.13{recorder.c}+0x0', 'strlabel-differs', ('TU recorder.c|recorder.c offset 0x0|0x0', b'policy_set\x00', b'lv2_worker_set\x00'))]			printed 2 of 2 targets	DIFFERENT	+0x8c:00c00513/00f00513 +0x148:00a00593/00e00593
+sup_quarantine_clear:sup_reset(B)	B:B	0x8bdb0	0x8bd58	0x58	DIFFERENT	5	1	0	(0, 0, 0)	[('0x2c', '.str.9{recorder.c}+0x0', '.str.8{recorder.c}+0x0', 'strlabel-differs', ('TU recorder.c|recorder.c offset 0x0|0x0', b'quarantine_clear\x00', b'supervisor_reset\x00'))]			printed 1 of 1 targets	DIFFERENT	+0x14:00b00513/00a00513

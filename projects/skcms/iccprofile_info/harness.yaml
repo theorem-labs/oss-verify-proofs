@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: skcms
 harness: iccprofile_info
-rocq: OssFuzzTheorems.skcms.iccprofile_info
+rocq: OSSVerify.skcms.iccprofile_info
 origin: upstream
 summary: skcms_Parse, then GetTagByIndex on the first/last tag and reads of the first and last entry of
   every TRC/A2B curve table and CLUT grid into a volatile sink (an out-of-bounds read is the only failure).

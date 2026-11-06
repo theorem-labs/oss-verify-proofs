@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: usrsctp
 harness: fuzzer_fragment
-rocq: OssFuzzTheorems.usrsctp.fuzzer_fragment
+rocq: OSSVerify.usrsctp.fuzzer_fragment
 origin: upstream
 summary: Establishes an association with canned INIT-ACK (optionally NR-SACK) and COOKIE-ACK, then splits
   the input into length-prefixed chunks, injecting each as a packet (optionally sending 4 KiB of data

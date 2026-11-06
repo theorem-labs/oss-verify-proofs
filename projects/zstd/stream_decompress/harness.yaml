@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zstd
 harness: stream_decompress
-rocq: OssFuzzTheorems.zstd.stream_decompress
+rocq: OSSVerify.zstd.stream_decompress
 origin: upstream
 summary: Streaming decompression with fuzzer-sized input/output chunks (optionally stableOutBuffer); errors
   break out; nothing compared. The FUZZ_ASSERTs only check the harness's own buffer arithmetic.

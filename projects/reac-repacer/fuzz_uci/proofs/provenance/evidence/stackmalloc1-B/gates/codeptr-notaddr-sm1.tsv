@@ -1,0 +1,6 @@
+# codeptr --not-address declarations for this slice: VALUE<TAB>REASON. Each value is a model constant or an
+# instruction word, never an address; every occurrence is in codeptr-occurrences-sm1.tsv.
+0x100000	1 << kStackSizeLog = 1048576, the fake-stack class size unit (YF0r.v frame_addr_cid: `change (Z.shiftl 1 kStackSizeLog) with 1048576`)
+0x109000	FS_FROFF = kFakeFramesOff + (1 << kStackSizeLog) = 0x9000 + 0x100000, the model's fake-frame offset of class 1 (frame_addr_cid, Qed)
+0x160613	the instruction word 0x00160613 (addi a2, a2, 1) at FS_LOOP + 0x14, fetched by F_L14 (ftac, Qed against the image) and decoded by D_L14
+0x160000	(kFakeStackSize - kFakeFramesOff) / 8 = (11571200 - 36864) / 8 = 1441792, the length of the fake frames' shadow (YF0s.v PRS)

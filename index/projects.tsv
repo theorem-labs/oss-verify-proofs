@@ -629,6 +629,7 @@ libconfig	c	available	-	1	1	no	4	0	13	13	0	0	0	0	0
 libcst	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
 libcue	c	available	-	1	1	no	4	0	15	15	0	0	0	0	0
 libcups	c++	available	-	3	1	no	4	0	15	15	0	0	0	0	0
+libdiginet	c	available	-	0	0	no	16	0	30	8	22	0	0	0	0
 libdwarf	c	available	-	33	33	no	132	0	493	493	0	0	0	0	0
 libecc	c++	available	-	1	1	no	4	0	7	7	0	0	0	0	0
 libevent	c++	available	-	9	1	no	4	0	15	15	0	0	0	0	0
@@ -669,6 +670,7 @@ libra	rust	language-pending	rust	0	0	no	0	0	0	0	0	0	0	0	0
 libraw	c++	available	-	4	3	no	12	0	21	21	0	0	0	0	0
 librawspeed	c++	available	-	77	2	no	8	0	14	14	0	0	0	0	0
 librdkafka	c++	available	-	1	1	no	4	0	13	13	0	0	0	0	0
+libreac	c	available	-	0	0	no	36	0	65	0	65	0	0	0	0
 libredwg	c	not-yet-built	not-attempted	0	0	no	0	0	0	0	0	0	0	0	0
 libreoffice	c++	not-yet-built	not-attempted	0	0	no	0	0	0	0	0	0	0	0	0
 libressl	c++	available	-	10	1	no	4	0	15	15	0	0	0	0	0
@@ -859,6 +861,8 @@ ogre	c++	available	-	6	5	no	20	0	35	35	0	0	0	0	0
 ohc	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 okhttp	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 olefile	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
+omx-clap-core	c	available	-	0	0	no	12	0	21	0	21	0	0	0	0
+omx-dsp	c	available	-	0	0	no	24	0	48	48	0	0	0	0	0
 onednn	c++	not-yet-built	reads-stdin	0	0	no	0	0	0	0	0	0	0	0	0
 onnx	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
 open-json	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
@@ -956,6 +960,7 @@ pjsip	c	available	-	28	1	no	4	0	15	6	0	0	0	9	0
 plan9port	c	available	-	1	1	no	4	0	15	15	0	0	0	0	0
 pldm	c++	not-yet-built	not-attempted	0	0	no	0	0	0	0	0	0	0	0	0
 plexus-utils	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
+plugin-hostd	c	available	-	0	0	no	8	0	14	0	14	0	0	0	0
 ply	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
 pngquant	c	available	-	1	1	no	4	0	15	15	0	0	0	0	0
 poco	c++	available	-	7	7	no	28	0	49	49	0	0	0	0	0
@@ -1064,6 +1069,8 @@ rauc	c	available	-	2	2	no	8	0	14	14	0	0	0	0	0
 rdf4j	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 rdkit	c++	available	-	3	3	no	12	0	21	21	0	0	0	0	0
 re2	c++	available	-	1	1	no	4	0	13	13	0	0	0	0	0
+reac-pw	c	available	-	0	0	no	28	0	51	4	47	0	0	0	0
+reac-repacer	c	available	-	0	0	no	16	0	28	8	20	0	0	0	0
 readstat	c++	available	-	17	7	no	28	0	105	105	0	0	0	0	0
 realm-core	c++	no-harness	none-at-commit	0	0	no	0	0	0	0	0	0	0	0	0
 redis-py	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
@@ -1124,7 +1131,7 @@ sigstore-go	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
 sigstore-java	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 sigstore-python	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
 simd	c++	available	-	1	1	no	4	0	7	7	0	0	0	0	0
-simdjson	c++	available	-	14	13	no	52	0	179	145	30	0	0	4	0
+simdjson	c++	available	-	14	13	no	52	0	179	143	30	2	0	4	0
 simdutf	c++	available	-	8	1	no	4	0	13	13	0	0	0	0	0
 simplejson	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
 six	python	language-pending	python	0	0	no	0	0	0	0	0	0	0	0	0
@@ -1149,7 +1156,7 @@ spdk	c	available	-	3	2	no	8	0	30	30	0	0	0	0	0
 spdlog	c++	available	-	5	5	no	20	0	65	30	0	0	0	35	0
 spdm-rs	rust	language-pending	rust	0	0	no	0	0	0	0	0	0	0	0	0
 speex	c++	available	-	4	2	no	8	0	28	25	3	0	0	0	0
-spice-usbredir	c++	available	-	2	2	no	8	0	26	26	0	0	0	0	0
+spice-usbredir	c++	available	-	2	2	no	8	0	26	23	0	0	3	0	0
 spicy	c++	available	-	10	1	no	4	0	15	15	0	0	0	0	0
 spidermonkey	c++	excluded	duplicate	0	0	no	0	0	0	0	0	0	0	0	0
 spidermonkey-ufi	c++	not-yet-built	not-attempted	0	0	no	0	0	0	0	0	0	0	0	0

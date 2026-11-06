@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libyaml
 harness: libyaml_parser_fuzzer
-rocq: OssFuzzTheorems.libyaml.libyaml_parser_fuzzer
+rocq: OSSVerify.libyaml.libyaml_parser_fuzzer
 origin: oss-fuzz
 summary: yaml_parser_parse event loop until STREAM-END or error; events deleted, nothing checked.
 entry: LLVMFuzzerTestOneInput

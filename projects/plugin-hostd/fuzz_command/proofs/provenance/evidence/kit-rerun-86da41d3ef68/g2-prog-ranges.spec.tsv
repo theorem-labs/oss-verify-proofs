@@ -1,0 +1,11 @@
+is_instance_verb	B=img/fuzz_command.asan-ubsan.debug	0x8e340	A=img/fuzz_command.asan.debug	0x8e7e4	0xf4
+number[0x8e0ac..0x8e124]	B=img/fuzz_command.asan-ubsan.debug	0x8e0ac	A=img/fuzz_command.asan.debug	0x8e5a0	0x7c
+answer[entry..0x8ab6c]	B=img/fuzz_command.asan-ubsan.debug	0x8aa10	A=img/fuzz_command.asan.debug	0x8a4c0	0x160
+answer[0x8aca4..0x8ad2c]	B=img/fuzz_command.asan-ubsan.debug	0x8aca4	A=img/fuzz_command.asan.debug	0x8a734	0x8c
+check_refusal[+0..+0xac)	B=img/fuzz_command.asan-ubsan.debug	0x88204	A=img/fuzz_command.asan.debug	0x87f08	0xac
+check_refusal[B+0xb0..end|A+0xac..end]	B=img/fuzz_command.asan-ubsan.debug	0x882b4	A=img/fuzz_command.asan.debug	0x87fb4	0x24
+send_message[+0..+0x250)	B=img/fuzz_command.asan-ubsan.debug	0x86bf8	A=img/fuzz_command.asan.debug	0x86b10	0x250
+send_message[B+0x254..end|A+0x250..end]	B=img/fuzz_command.asan-ubsan.debug	0x86e4c	A=img/fuzz_command.asan.debug	0x86d60	0x18
+sup_reset:sup_quarantine_clear(A)	A=img/fuzz_command.asan.debug	0x8b6d8	A=img/fuzz_command.asan.debug	0x8b844	0x16c
+sup_policy_set:sup_lv2_worker_set(A)	A=img/fuzz_command.asan.debug	0x8b9b0	A=img/fuzz_command.asan.debug	0x8be80	0x1e0
+sup_quarantine_clear:sup_reset(B)	B=img/fuzz_command.asan-ubsan.debug	0x8bdb0	B=img/fuzz_command.asan-ubsan.debug	0x8bd58	0x58

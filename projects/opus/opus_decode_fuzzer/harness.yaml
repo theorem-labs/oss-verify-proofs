@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: opus
 harness: opus_decode_fuzzer
-rocq: OssFuzzTheorems.opus.opus_decode_fuzzer
+rocq: OSSVerify.opus.opus_decode_fuzzer
 origin: upstream
 summary: parses the input as opus_demo-framed packets and opus_decode()s up to 12 of them (with FEC /
   packet-loss concealment for zero-length packets); decode return values cast to void, the 'encoder final

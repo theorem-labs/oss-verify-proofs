@@ -1,0 +1,5 @@
+file	first_line	lines	sha256
+proofs/libdiginet/fuzz_codec/lib/A/ACeg.v	312	1	90e5b4dc67a19a58c787fd0efb0e83002b1ed50d1d52efbe0c16812492d0adf6
+proofs/libdiginet/fuzz_codec/lib/A/ACeh.v	315	1	90e5b4dc67a19a58c787fd0efb0e83002b1ed50d1d52efbe0c16812492d0adf6
+proofs/libdiginet/fuzz_codec/lib/AU/YCeg.v	313	1	90e5b4dc67a19a58c787fd0efb0e83002b1ed50d1d52efbe0c16812492d0adf6
+proofs/libdiginet/fuzz_codec/lib/AU/YCeh.v	316	1	90e5b4dc67a19a58c787fd0efb0e83002b1ed50d1d52efbe0c16812492d0adf6

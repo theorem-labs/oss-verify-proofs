@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: numactl
 harness: fuzz_parse_str
-rocq: OssFuzzTheorems.numactl.fuzz_parse_str
+rocq: OSSVerify.numactl.fuzz_parse_str
 origin: upstream
 summary: numa_parse_nodestring and numa_parse_cpustring on the NUL-terminated input; the returned bitmasks
   are only freed (and passed to numa_node_to_cpus_v2, whose return value is ignored). No result is checked.

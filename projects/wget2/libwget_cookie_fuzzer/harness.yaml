@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wget2
 harness: libwget_cookie_fuzzer
-rocq: OssFuzzTheorems.wget2.libwget_cookie_fuzzer
+rocq: OSSVerify.wget2.libwget_cookie_fuzzer
 origin: upstream
 summary: wget_cookie_parse_setcookie, check_psl, normalize, store, create_request_header, and a cookie-db
   save to <pid>.tmp followed by a load into a second db; the reloaded db is never compared with the saved

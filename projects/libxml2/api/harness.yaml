@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libxml2
 harness: api
-rocq: OssFuzzTheorems.libxml2.api
+rocq: OSSVerify.libxml2.api
 origin: upstream
 summary: 'Checks one property, an API contract: Register-VM over ~160 tree.h API functions (244 opcodes):
   after every op, the op-specific OOM signal (NULL result / negative return, set per op as oomReport =

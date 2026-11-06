@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ada-url
 harness: serializers
-rocq: OssFuzzTheorems.ada_url.serializers
+rocq: OSSVerify.ada_url.serializers
 origin: upstream
 summary: 'Checks 5 properties (listed below); the first, a round trip: IPv4: if try_parse_ipv4_fast(s)
   = v <= 0xFFFFFFFF then try_parse_ipv4_fast(serializers::ipv4(v)) == v.'

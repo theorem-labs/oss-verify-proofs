@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libphonenumber
 harness: fuzz_matcher
-rocq: OssFuzzTheorems.libphonenumber.fuzz_matcher
+rocq: OSSVerify.libphonenumber.fuzz_matcher
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zip
 harness: fuzz_entry
-rocq: OssFuzzTheorems.zip.fuzz_entry
+rocq: OSSVerify.zip.fuzz_entry
 origin: upstream
 summary: Opens the input (<= 1 MiB) as an in-memory zip archive, opens entry 0 and extracts it with zip_entry_read;
   the entry bytes and all return codes are ignored.

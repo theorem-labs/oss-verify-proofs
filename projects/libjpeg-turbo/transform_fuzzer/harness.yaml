@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjpeg-turbo
 harness: transform_fuzzer
-rocq: OssFuzzTheorems.libjpeg_turbo.transform_fuzzer
+rocq: OSSVerify.libjpeg_turbo.transform_fuzzer
 origin: upstream
 summary: tj3Transform lossless transforms (none/progressive, transpose+gray+crop+optimize, rot90+trim+arithmetic,
   a DCT-negating custom filter plus rot180 into two outputs); outputs only summed, never decoded or compared

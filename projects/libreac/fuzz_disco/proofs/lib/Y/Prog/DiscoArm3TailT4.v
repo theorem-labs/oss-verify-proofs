@@ -1,0 +1,353 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-10: the walk of reac_ctrl_stamp_headamp on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACam.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACbf.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACf6.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlStampHeadamp.v, with its module paths and module names changed; 211 of its 238 lines of code are new or changed and 1251 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/Prog/DiscoArm3AgeShort.v, with its module names changed; 599 of its 645 lines of code are new or changed and 192 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/Prog/DiscoArm3AgeCall1.v, with its module paths and module names changed; 202 of its 337 lines of code are new or changed and 510 lines of the source are left out. *)
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import
+YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP0g YP01 YP00 YP0i YCbn.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YN3v YI04 YI09 YI08 YI0s YI00 YG0v.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YK04 YA0i YA0n YA0o YCbm YA0q.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import
+YG00 YG0a YG01 YG0f YG0n YG0d YCbq YC5d YCbp YE00 YE01 YO09.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YI16 YM05 YImgTop.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import
+YP0b YP0a YP0c YP0d YP07 YC80 YI0w YI0z YI12 YC4a YC1f YC8g YC1g YC44.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YC1h YC1i YC81 YCjr YCj1 YCja YXcalls YRo.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Y.Prog Require Import CheckTable.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Y.Prog Require Import
+DiscoYEntryInv DiscoYEntSeatStmt DiscoArm3TailK DiscoYEntBodyStmt DiscoArm3 DiscoArm3TailDefs.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Prog Require Import disco_table_c hunt_c slot_inv.
+#[local] Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope bv_scope.
+Open Scope Z_scope.
+
+Ltac t4_bvne := let Hq := fresh "Hq" in intro Hq; apply (f_equal bv_unsigned) in Hq; vm_compute in Hq; discriminate Hq.
+
+Section d. Context {rc : YM05.RunCeil} {SK : YI16.sink_head} {LS : lib_shape}.
+Section f.
+Context {PI : PAImg lib_both3_0_listing} {PX : PAXcalls lib_both3_0_listing}.
+#[local] Notation SEGS := (@pa_segs _ lib_both3_0_listing PI).
+#[local] Notation VAL := (@pa_val _ lib_both3_0_listing PI).
+#[local] Notation SIGMA := (@pa_sigma _ lib_both3_0_listing PI).
+#[local] Notation BASE := (@pa_val _ lib_both3_0_listing PI A_TEXT).
+
+Definition t4_rgn : YP09.region :=
+  YP09.mkRegion (Some 9%nat) 0 352 0 0 [YP09.mkChunk 184 (CVal 8 (SOff 33%nat 0))].
+
+Lemma t4_beq : forall E k (v : word), ew E k = v ->
+  (branch_taken BC_EQ (sv_denot E (SOff k 0)) (sv_denot E (SLit 0)) = true <-> v = w64 0).
+Proof.
+intros E k v Hk. rewrite branch_eq_U, U_SOff, U_lit by lia. rewrite Hk, Z.add_0_r.
+pose proof (bv_unsigned_in_range 64 v) as Hv. change (bv_modulus 64) with (2 ^ 64) in Hv.
+rewrite YP0m.zcanon_small by lia. rewrite Z.eqb_eq. unfold w64. rewrite bv_eq, unsigned_lit_small by lia. reflexivity.
+Qed.
+
+Lemma t4_kept : forall (E : env) (H H2 : word -> bool) (m m2 : word -> option byte) n b lo hi wlo whi cs,
+  bv_unsigned (ew E n) = b ->
+  (forall a, b + lo <= a < b + hi -> aview SEGS H2 m2 a = aview SEGS H m a) ->
+  (forall a, b + wlo <= a < b + whi -> apresent H2 m2 a) ->
+  region_kept SEGS E (mrestrict H m) (mrestrict H2 m2) (YP09.mkRegion (Some n) lo hi wlo whi cs).
+Proof.
+intros E H H2 m m2 n b lo hi wlo whi cs Hn Hav Hp.
+split; cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi base_val]; rewrite Hn; intros a Ha.
+- apply (mbyte_of_aview SEGS). apply Hav. exact Ha.
+- intros _. apply (apresent_writable SEGS). apply Hp. exact Ha.
+Qed.
+
+Lemma t4_dE : forall (cx : dcx) E j ws, d_E cx E -> (530 <= j)%nat -> d_E cx (havoc E j ws).
+Proof.
+intros cx E j ws (H1 & H32 & HI & H60 & H516 & H529) Hj.
+split; [|split; [|split; [|split; [|split]]]].
+- intros nn r Hr. pose proof (bv_unsigned_in_range 5 r) as Hb. change (bv_modulus 5) with 32 in Hb.
+  rewrite ew_havoc_old by lia. exact (H1 nn r Hr).
+- rewrite ew_havoc_old by lia. exact H32.
+- apply img_env_havoc_hi; [exact HI | unfold A_LIM; lia].
+- rewrite ew_havoc_old by (unfold AT_A; lia). exact H60.
+- rewrite ew_havoc_old by (unfold AT_F; lia). exact H516.
+- rewrite ew_havoc_old by (unfold AT_SH; lia). exact H529.
+Qed.
+
+Lemma t4_regs_ok : forall (cx : dcx) (E : env) (R : bvmap 5 word),
+  img_env VAL A_LIM E -> getr R 1 = Z_to_bv 64 (BASE + C_OFF) ->
+  regs_ok (d_env cx E (map (getr R) (tl all_regs))) (SLit 0 :: SOff A_TEXT C_OFF :: atom_regs 532 30) R.
+Proof.
+intros cx E R HEI H1.
+assert (HEId : img_env VAL A_LIM (d_env cx E (map (getr R) (tl all_regs))))
+  by (apply img_env_havoc_hi; [exact HEI | unfold AT_FL, A_LIM; lia]).
+regs_ok_cases_pre ltac:(first [ rewrite getr_zero; reflexivity
+                             | rewrite H1; symmetry; exact (codeptr_val _ C_OFF HEId) ]).
+Qed.
+
+Section h.
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable XM_LIB : Z -> Z.
+Variables RLO RHI : Z.
+Variable tfib_K : asink_syms.
+Hypothesis LAWS : AR_laws SEGS B.
+Hypothesis PAL : PALib B.
+Hypothesis FFL : frame_flag_lawP SEGS B.
+Hypothesis MT_TRIV : MT = ameter_triv.
+Hypothesis DSEAT : d_seat_stmt B MT XM_LIB RLO RHI tfib_K.
+Hypothesis DFACTS : d_facts_stmt B MT XM_LIB RLO RHI tfib_K.
+Hypothesis DLAND : d_land_stmt B MT XM_LIB RLO RHI tfib_K.
+Hypothesis DROH : d_ro_hyps B.
+Hypothesis DBPC : d_body_pcall_stmt B MT XM_LIB RLO RHI tfib_K.
+Hypothesis TCHKT : tcheck_table_spec B.
+Hypothesis DCAN : d_can_hyps B tfib_K.
+
+Theorem a3t_T4 : a3t_step_spec (a3t_v B MT XM_LIB RLO RHI tfib_K) (a3t_c B MT XM_LIB RLO RHI tfib_K).
+Proof.
+intros cx h i n now W c Hv.
+unfold a3t_v, a3t_at, d_arm_at, d_at in Hv.
+destruct Hv as (fq & ly3 & S3 & regs & mem3 & md3 & k & acc & -> & HCSR & HBASE & HJ & HFR & Hk & Hnev & HMO & Hacc &
+  Hi & Hn & Hnow & HRL & (R22 & R26 & Ha0) & HSP1 & HSP0 & HBODY).
+pose proof HRL as (Rsp & Rgp & Rtp & Rs0 & Rs1 & Rs3 & Rs2 & Rs4 & Rs11).
+pose proof HBODY as (T & G & Lk & HL & HFRM & HSHD & HOBJ & HBLK & HINP & HROD & HOFFF & HSTKF & HAWRF).
+pose proof HFRM as (E & HE & HREG & HFLAG & H184 & Hsl120 & Hsl136 & Hsl376 & Hsl280 & Hsl232 & Hsl264).
+pose proof (d_hslots_of_frame cx h dsh_loop W mem3 HFRM) as HHS.
+pose proof HOBJ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & HlenH & HgH & HokH & HourH).
+pose proof HBLK as (HPerm0 & _ & _ & HOFFb).
+assert (HCTX3 : d_ctx B MT XM_LIB RLO RHI tfib_K cx ly3 S3 W mem3 md3 k) by exact (conj HBASE (conj HJ HFR)).
+pose proof (d_geom B MT XM_LIB RLO RHI tfib_K LAWS cx ly3 S3 W mem3 md3 k HCTX3)
+  as (GS16 & GSlo & GShi & GF4096 & GFceil & GFapp & GFoff & GF32 & _ & _ & _ & HAR3 & HFin3 & EFA3 & EFL3).
+pose proof alloc_ceiling_value as Hceil0.
+pose proof (d_A_range cx ltac:(unfold MFRAME, LLVMF_STK in *; lia)) as (GA1 & GA32).
+unfold MFRAME in GA1. unfold LLVMF_STK in GSlo.
+assert (Hin : In (h, HUNT_SIZE) (ablocks B ly3 S3)).
+{ apply (Permutation_in _ (Permutation_sym HPerm0)). cbn [app]. left. reflexivity. }
+pose proof (al_blocks _ _ LAWS _ _ _ _ _ _ _ HAR3 Hin) as (Hb16 & Hb4096 & Hbceil & Hbapp & _ & _ & _).
+pose proof (al_shadow _ _ LAWS _ _ _ _ _ _ _ HAR3 Hin) as (HbSh & HbHull).
+change (req_size HUNT_SIZE) with 480 in Hbceil, Hbapp, HbSh, HbHull.
+assert (Hoffh : off_img h 480).
+{ inversion HOFFb as [|x l Hx _]. exact Hx. }
+pose proof (paj_run (fx := fq) (PI := PI) B LAWS) as RUN.
+pose proof (paj_branch (fx := fq) (PI := PI)) as BR.
+remember (Eimg (Ereg regs [Z_to_bv 64 SB; Z_to_bv 64 h])) as E0 eqn:HE0.
+assert (HEI0 : img_env VAL A_LIM E0) by (rewrite HE0; apply Eimg_env).
+assert (EE0 : forall nn (r : bv 5), Z.of_nat nn = bv_unsigned r -> ew E0 nn = getr regs r)
+  by (intros nn r Hr; rewrite HE0; apply ew_Eimg_Ereg_nat; exact Hr).
+assert (E33 : ew E0 33 = Z_to_bv 64 h).
+{ rewrite HE0, Eimg_low by (unfold A_TEXT; lia). change 33%nat with (32 + 1)%nat.
+  rewrite ew_Ereg_extra. reflexivity. }
+assert (EA9 : bv_unsigned (ew E0 9) = d_A cx).
+{ rewrite (EE0 9%nat 9%bv eq_refl), Rs1. unfold w64. apply unsigned_lit_small. lia. }
+assert (HS : st_ok_pi (fx := fq) SEGS VAL E0 (mkSS V_OFF sr_atoms [t4_rgn] None (mkFacts [] [] []))
+  (restrict (w_H W) (YK11.mkst (fx := fq) regs (Z_to_bv 64 (BASE + V_OFF)) mem3 (YK11.seg_rom SEGS)))).
+{ rewrite restrict_mkst_fx. apply pa_entry_st_ok_full.
+  - rewrite HE0. apply regs_ok_Eimg_Ereg.
+  - vm_compute. reflexivity.
+  - apply Forall_cons; [|apply Forall_nil].
+    unfold t4_rgn, region_ok.
+    cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks base_val ms_mem mkst].
+    rewrite EA9. split; [lia|]. split; [lia|]. split; [intros o Ho; exfalso; lia|].
+    apply Forall_cons; [|apply Forall_nil].
+    apply (chunk_ok_val SEGS E0 _ (d_A cx) 184 8 (SOff 33 0) h).
+    + cbn [sv_denot]. rewrite E33, Z_to_bv_unsigned. unfold bv_wrap.
+      change (bv_modulus 64) with (2 ^ 64). rewrite Z.add_0_r, Z.mod_small by lia. reflexivity.
+    + cbn. lia.
+    + cbn. lia.
+    + cbn [N.to_nat Pos.to_nat Pos.iter_op Nat.add]. exact H184.
+  - cbn [pairwise_disjoint all_disjoint]. split; exact I.
+  - split; [exact I | split; exact I]. }
+unfold cfg_at, w64.
+reshok_bx HS 32%nat.
+psrr_branch_tok RUN BR HS SHOK Bspan.
+{ exfalso. apply Ha0. apply (proj1 (t4_beq E0 10 (getr regs 10) (EE0 10%nat 10%bv eq_refl))). exact Hc. }
+paj_run_tok RUN HS HJ SHOK Bspan.
+{ lazymatch goal with |- awr_ok ?Ex ?rs ?a ?b ?cc ?d ?e ?f ?g =>
+    let rs' := eval vm_compute in rs in change (awr_ok Ex rs' a b cc d e f g) end.
+  apply awr_ok_cons_ro; [cbn; lia|]. apply awr_ok_nil. }
+assert (Emem : ms_mem ms = mem3).
+{ apply functional_extensionality. intros x. apply HF. intros (r & Hr & Hw).
+  cbn [In] in Hr. destruct Hr as [<- | []]. unfold t4_rgn in Hw.
+  cbn [YP09.r_base YP09.r_wlo YP09.r_whi base_val] in Hw. lia. }
+pmkst HS.
+rewrite Emem. rewrite Emem in HJ.
+prreg HS (1%bv : bv 5) Q1. prreg HS (2%bv : bv 5) Q2. prreg HS (3%bv : bv 5) Q3. prreg HS (4%bv : bv 5) Q4.
+prreg HS (8%bv : bv 5) Q8. prreg HS (9%bv : bv 5) Q9. prreg HS (10%bv : bv 5) Q10. prreg HS (18%bv : bv 5) Q18.
+prreg HS (19%bv : bv 5) Q19. prreg HS (20%bv : bv 5) Q20. prreg HS (21%bv : bv 5) Q21.
+prreg HS (22%bv : bv 5) Q22. prreg HS (26%bv : bv 5) Q26. prreg HS (27%bv : bv 5) Q27.
+rewrite E33 in Q10, Q21.
+rewrite (EE0 2%nat 2%bv eq_refl) in Q2. rewrite (EE0 3%nat 3%bv eq_refl) in Q3. rewrite (EE0 4%nat 4%bv eq_refl) in Q4.
+rewrite (EE0 8%nat 8%bv eq_refl) in Q8. rewrite (EE0 9%nat 9%bv eq_refl) in Q9.
+rewrite (EE0 18%nat 18%bv eq_refl) in Q18. rewrite (EE0 19%nat 19%bv eq_refl) in Q19.
+rewrite (EE0 20%nat 20%bv eq_refl) in Q20. rewrite (EE0 22%nat 22%bv eq_refl) in Q22.
+rewrite (EE0 26%nat 26%bv eq_refl) in Q26. rewrite (EE0 27%nat 27%bv eq_refl) in Q27.
+clear HS SHOK HF HFr HG Emem RUN BR.
+set (R := ms_regs ms) in *.
+set (md' := with_vm_backing (m_vm_lazy md3) mat md3) in *.
+assert (HCTX : d_ctx B MT XM_LIB RLO RHI tfib_K cx ly3 S3 W mem3 md' k) by exact (conj HBASE (conj HJ HFR)).
+assert (SpR : spZ R = d_A cx) by (unfold spZ in *; rewrite Q2; exact Rsp).
+assert (HEIE : img_env VAL A_LIM E) by exact (proj1 (proj2 (proj2 HE))).
+assert (HEId : img_env VAL A_LIM (d_env cx E (map (getr R) (tl all_regs))))
+  by (apply img_env_havoc_hi; [exact HEIE | unfold AT_FL, A_LIM; lia]).
+pose proof (DSEAT LAWS PAL fq cx dsh_loop ly3 S3 W R mem3 md' k E AF_both3_check_table
+  (SLit 0 :: SOff A_TEXT C_OFF :: atom_regs 532 30) (map (getr R) (tl all_regs)) [] [] [] (d_facts [] [])
+  HCTX HE HREG HFLAG (t4_regs_ok cx E R HEIE Q1)
+  (DFACTS LAWS cx ly3 S3 W mem3 md' k E (map (getr R) (tl all_regs)) [] [] HCTX HE I I)
+  (Forall_nil _) (Forall_nil _) (Forall_nil _) I (Forall_nil _) ltac:(vm_compute; reflexivity)) as HS1.
+assert (HAFN : afn_pre SEGS B TCHECK_TABLE_STK ly3 S3 W (regupd R 8 (Z_to_bv 64 0)) mem3 md' []).
+{ pose proof pa_B_ok as (PB0 & PB1 & _). pose proof (pa_base_lo (PI := PI)) as PBL. unfold IMG_LO in PBL.
+  eapply (afn_pre_at SEGS B LLVMF_STK (d_S cx) [] (c_ly cx) (c_S cx) (c_W cx) (c_mem cx) (c_md cx)
+    [(DFRAME_CLASS, c_fpos cx)] ly3 S3 W mem3 md' k (regupd R 8 (Z_to_bv 64 0)) TCHECK_TABLE_STK
+    (d_A cx - d_S cx) [] HJ).
+  - unfold spZ. rewrite getr_other by t4_bvne. fold (spZ R). rewrite SpR. lia.
+  - pose proof (Z.div_mod (d_A cx) 32 ltac:(lia)) as DA. pose proof (Z.div_mod (d_S cx) 16 ltac:(lia)) as DS.
+    rewrite GA32 in DA. rewrite GS16 in DS.
+    replace (d_A cx - d_S cx) with ((2 * (d_A cx / 32) - d_S cx / 16) * 16) by lia. apply Z_mod_mult.
+  - lia.
+  - unfold TCHECK_TABLE_STK, ESTACK. lia.
+  - unfold TCHECK_TABLE_STK, ESTACK, LLVMF_STK. lia.
+  - rewrite getr_other by t4_bvne. rewrite Q1. apply ret_ok_codeptr_v; [unfold C_OFF; lia | reflexivity].
+  - unfold raZ. rewrite getr_other by t4_bvne. rewrite Q1.
+    rewrite unsigned_lit_small by (unfold C_OFF; lia). unfold C_OFF. lia.
+  - rewrite getr_other by t4_bvne. rewrite Q3. exact Rgp.
+  - rewrite getr_other by t4_bvne. rewrite Q4. exact Rtp.
+  - left. split; [|reflexivity]. left. unfold s0Z. rewrite getr_same by t4_bvne.
+    rewrite unsigned_lit_small by lia. lia. }
+pose proof HAFN as (_ & _ & _ & _ & _ & (_ & _ & Hcl & Hstl & _) & _).
+assert (SpR8 : spZ (regupd R 8 (Z_to_bv 64 0)) = d_A cx)
+  by (unfold spZ; rewrite getr_other by t4_bvne; fold (spZ R); exact SpR).
+rewrite SpR8 in Hstl.
+pose proof HokH as (_ & (HT1 & HT2 & HT3 & _) & _ & _).
+rewrite pa_sigma_check_table.
+eapply SRr_mono.
+{ apply (TCHKT fq ly3 S3 W R mem3 md' [] h (firstn 400 HL) HAFN).
+  - exact HROD.
+  - exact Q10.
+  - lia.
+  - pose proof (Z.div_mod h 16 ltac:(lia)) as Dh. rewrite Hb16 in Dh.
+    replace h with ((2 * (h / 16)) * 8) by lia. apply Z_mod_mult.
+  - unfold in_app, kLowShadowBeg, kHighMemBeg, ASAN_CEIL in Hbapp. lia.
+  - rewrite length_firstn. lia.
+  - rewrite <- (firstn_skipn 400 HL) in HgH. rewrite map_app in HgH. apply garr8_app in HgH. exact (proj1 HgH).
+  - apply (amem_range_sub_app h 480 h 400); [exact Hbapp | lia | lia | lia | lia].
+  - apply (block_shadow_range _ _ h 480 h 400 HbSh); lia.
+  - intros s Hs. apply HbHull.
+    pose proof (YCbq.shadow_mono (h + 400 - 1) (h + 480 - 1) ltac:(lia)) as Sm.
+    pose proof (Z.div_le_mono _ _ 8 ltac:(lia) Sm) as Sd. lia.
+  - left. unfold TCHECK_TABLE_STK, ESTACK in *. rewrite SpR. lia.
+  - unfold off_img in *. lia.
+  - exact HT1.
+  - exact HT2.
+  - exact HT3. }
+cbv beta. intros W2 c2 HW2 Hpost.
+unfold tcheck_table_post, apost_base in Hpost.
+destruct Hpost as (fq4 & ly4 & S4 & regs4 & mem4 & md4 & -> & Hfreg4 & Hfcsr4 & HJc & HP & HPerm & HKeep).
+assert (HCSR4 : lib.Lib.FP.frm0 (@YK11.fp_csr fq4)) by exact (a3t_frm0 _ _ HCSR Hfcsr4).
+pose proof (ajournal_sub SEGS B LAWS pa_segs_low LLVMF_STK (d_S cx) [] (c_ly cx) (c_S cx) (c_W cx) (c_mem cx) (c_md cx)
+  [(DFRAME_CLASS, c_fpos cx)] ly3 S3 W mem3 md' k TCHECK_TABLE_STK (spZ R) [] [] ly4 S4 W2 mem4 md4 0 HJ HJc
+  ltac:(rewrite SpR; unfold LLVMF_STK, TCHECK_TABLE_STK, ESTACK; lia) ltac:(rewrite SpR; lia)
+  ltac:(intros a Ha; exfalso; exact (inFP_nil a Ha))) as HJ4.
+cbn [app] in HJ4. rewrite Z.add_0_r in HJ4.
+pose proof HJc as (_ & _ & _ & _ & _ & HfrC & _).
+assert (HFR4 : frames S4 = [(DFRAME_CLASS, c_fpos cx)]) by (rewrite HfrC; cbn [app]; exact HFR).
+assert (HCTX4 : d_ctx B MT XM_LIB RLO RHI tfib_K cx ly4 S4 W2 mem4 md4 k) by exact (conj HBASE (conj HJ4 HFR4)).
+pose proof (d_geom B MT XM_LIB RLO RHI tfib_K LAWS cx ly4 S4 W2 mem4 md4 k HCTX4)
+  as (_ & _ & _ & _ & _ & _ & _ & _ & GFpres4 & GFsh4 & GSTK4 & _ & _ & _ & _).
+assert (KA : forall a, d_A cx <= a < d_S cx -> aview SEGS (w_H W2) mem4 a = aview SEGS (w_H W) mem3 a).
+{ intros a Ha. apply HKeep; [lia | rewrite SpR; lia]. }
+assert (KB : forall a, 0 <= a < alloc_ceiling -> aview SEGS (w_H W2) mem4 a = aview SEGS (w_H W) mem3 a).
+{ intros a Ha. apply HKeep; [lia | rewrite SpR; unfold TCHECK_TABLE_STK, ESTACK; lia]. }
+assert (HFB8 : 0 <= d_FB cx / 8 < 2 ^ 44).
+{ split; [apply Z.div_pos; lia | apply Z.div_lt_upper_bound; lia]. }
+assert (ES2 : bv_unsigned (ew E 2) = d_S cx) by (rewrite (proj1 HE 2%nat 2%bv eq_refl); reflexivity).
+assert (EA : ew E 60 = w64 (d_A cx)) by exact (proj1 (proj2 (proj2 (proj2 HE)))).
+assert (EF : ew E 516 = w64 (d_FB cx)) by exact (proj1 (proj2 (proj2 (proj2 (proj2 HE))))).
+assert (ESH : ew E 529 = w64 (shadow_addr (d_FB cx))) by exact (proj2 (proj2 (proj2 (proj2 (proj2 HE))))).
+jafter_call_keep_hi HS1 562%nat regs4 (mrestrict (w_H W2) mem4) HP [0;1;2;3]%nat HS2.
+match type of HS2 with ?Q -> _ => assert (HQ : Q) end.
+{ cbn [ms_mem restrict mkst]. repeat apply Forall_cons; try apply Forall_nil.
+  - eapply (t4_kept _ (w_H W) (w_H W2) mem3 mem4 _ (d_S cx)).
+    + rewrite d_env_old by (unfold AT_FL; lia). exact ES2.
+    + intros a Ha. apply KA. lia.
+    + intros a Ha. lia.
+  - eapply (t4_kept _ (w_H W) (w_H W2) mem3 mem4 _ (d_A cx)).
+    + rewrite d_env_old by (unfold AT_FL; lia). rewrite EA. unfold w64. apply unsigned_lit_small. lia.
+    + intros a Ha. apply KA. lia.
+    + intros a Ha. apply GSTK4. unfold LLVMF_STK. lia.
+  - eapply (t4_kept _ (w_H W) (w_H W2) mem3 mem4 _ (d_FB cx)).
+    + rewrite d_env_old by (unfold AT_FL; lia). rewrite EF. unfold w64. apply unsigned_lit_small. lia.
+    + intros a Ha. apply KB. lia.
+    + intros a Ha. apply GFpres4. lia.
+  - eapply (t4_kept _ (w_H W) (w_H W2) mem3 mem4 _ (shadow_addr (d_FB cx))).
+    + rewrite d_env_old by (unfold AT_FL; lia). rewrite ESH. unfold w64. apply unsigned_lit_small.
+      unfold shadow_addr, SHADOW_OFF. lia.
+    + intros a Ha. apply KB. unfold shadow_addr, SHADOW_OFF in *. lia.
+    + intros a Ha. replace a with (shadow_addr (d_FB cx) + (a - shadow_addr (d_FB cx))) by lia.
+      apply GFsh4. lia. }
+specialize (HS2 HQ). clear HQ. rewrite <- restrict_mkst_fx in HS2.
+assert (HE2 : d_E cx (havoc (d_env cx E (map (getr R) (tl all_regs))) 562 (map (getr regs4) CLOB)))
+  by (apply t4_dE; [apply d_E_env; exact HE | lia]).
+assert (HFL2 : ew (havoc (d_env cx E (map (getr R) (tl all_regs))) 562 (map (getr regs4) CLOB)) AT_FL =
+  Z_to_bv 64 (flag_addr (c_ly cx) DFRAME_CLASS (c_fpos cx)))
+  by (rewrite ew_havoc_old by (unfold AT_FL; lia); apply d_env_fl).
+assert (HSL4 : d_hslots cx h W2 mem4).
+{ apply (d_hslots_kept cx h W W2 mem3 mem4); [intros a Ha; apply KA; lia | exact HHS]. }
+pose proof (d_land_hs B MT XM_LIB RLO RHI tfib_K DLAND LAWS FFL fq cx h dsh_loop ly4 S4 W2 md4 k _ _
+  (YK11.mkst (fx := fq) regs4 (Z_to_bv 64 (BASE + 8884)) mem4 (YK11.seg_rom SEGS))
+  HCTX4 HE2 HFL2 HS2 ltac:(vm_compute; reflexivity) HSL4) as (HFRM4 & HSHD4).
+pose proof (DBPC LAWS DROH DCAN cx h n [] dsh_loop dsh_loop ly3 S3 W mem3 md' ly4 S4 W2 mem4 md4 k TCHECK_TABLE_STK
+  (spZ R) [] 0 HBODY (conj HBASE HJ4) HJc
+  ltac:(rewrite SpR; unfold LLVMF_STK, TCHECK_TABLE_STK, ESTACK; lia) ltac:(rewrite SpR; lia)
+  ltac:(intros a Ha; exfalso; exact (inFP_nil a Ha))
+  ltac:(intros (a & Ha & _); exfalso; exact (inFP_nil a Ha))
+  HPerm HFRM4 HSHD4) as HBODY4.
+assert (P2 : getr regs4 2 = getr regs 2) by (transitivity (getr R 2); [exact (HP 2 ltac:(unfold acallee_saved; lia)) | exact Q2]).
+assert (P3 : getr regs4 3 = getr regs 3) by (transitivity (getr R 3); [exact (HP 3 ltac:(unfold acallee_saved; lia)) | exact Q3]).
+assert (P4 : getr regs4 4 = getr regs 4) by (transitivity (getr R 4); [exact (HP 4 ltac:(unfold acallee_saved; lia)) | exact Q4]).
+assert (P8 : getr regs4 8 = getr regs 8) by (transitivity (getr R 8); [exact (HP 8 ltac:(unfold acallee_saved; lia)) | exact Q8]).
+assert (P9 : getr regs4 9 = getr regs 9) by (transitivity (getr R 9); [exact (HP 9 ltac:(unfold acallee_saved; lia)) | exact Q9]).
+assert (P18 : getr regs4 18 = getr regs 18) by (transitivity (getr R 18); [exact (HP 18 ltac:(unfold acallee_saved; lia)) | exact Q18]).
+assert (P19 : getr regs4 19 = getr regs 19) by (transitivity (getr R 19); [exact (HP 19 ltac:(unfold acallee_saved; lia)) | exact Q19]).
+assert (P20 : getr regs4 20 = getr regs 20) by (transitivity (getr R 20); [exact (HP 20 ltac:(unfold acallee_saved; lia)) | exact Q20]).
+assert (P21 : getr regs4 21 = Z_to_bv 64 h) by (transitivity (getr R 21); [exact (HP 21 ltac:(unfold acallee_saved; lia)) | exact Q21]).
+assert (P22 : getr regs4 22 = getr regs 22) by (transitivity (getr R 22); [exact (HP 22 ltac:(unfold acallee_saved; lia)) | exact Q22]).
+assert (P26 : getr regs4 26 = getr regs 26) by (transitivity (getr R 26); [exact (HP 26 ltac:(unfold acallee_saved; lia)) | exact Q26]).
+assert (P27 : getr regs4 27 = getr regs 27) by (transitivity (getr R 27); [exact (HP 27 ltac:(unfold acallee_saved; lia)) | exact Q27]).
+pose proof HSP1 as ((H208 & H320) & H192 & H200).
+unfold a3t_c, a3t_at, d_arm_at, d_at.
+exists fq4, ly4, S4, regs4, mem4, md4, k, acc.
+split; [unfold cfg_at, w64; rewrite Q1; reflexivity|]. split; [exact HCSR4|].
+split; [exact HBASE|]. split; [exact HJ4|]. split; [exact HFR4|].
+split; [exact Hk|].
+split; [pose proof HJ4 as (_ & _ & _ & _ & _ & _ & Hnev4 & _); lia|].
+split; [rewrite MT_TRIV; exact I|]. split; [exact Hacc|].
+split; [exact Hi|]. split; [exact Hn|]. split; [exact Hnow|].
+split.
+{ split; [unfold spZ in *; rewrite P2; exact Rsp|].
+  split; [rewrite P3; exact Rgp|]. split; [rewrite P4; exact Rtp|]. split; [rewrite P8; exact Rs0|].
+  split; [rewrite P9; exact Rs1|]. split; [rewrite P19; exact Rs3|]. split; [rewrite P18; exact Rs2|].
+  split; [rewrite P20; exact Rs4|]. rewrite P27; exact Rs11. }
+split.
+{ split; [exact P21|]. split; [rewrite P22; exact R22|]. rewrite P26; exact R26. }
+assert (KV : forall off v, 0 <= off <= 352 -> val_mem SEGS (mrestrict (w_H W) mem3) (d_A cx + off) 8 v ->
+  val_mem SEGS (mrestrict (w_H W2) mem4) (d_A cx + off) 8 v).
+{ intros off v Hoff Hv. eapply (val_mem_kept SEGS (w_H W) (w_H W2) mem3 mem4); [|exact Hv].
+  intros kk Hkk. change (Z.of_nat 8) with 8 in Hkk. apply KA. lia. }
+split.
+{ split; [split|split].
+  - apply KV; [lia | exact H208].
+  - apply KV; [lia | exact H320].
+  - apply KV; [lia | exact H192].
+  - apply KV; [lia | exact H200]. }
+split.
+{ split; [apply KV; [lia | exact H208] | apply KV; [lia | exact H320]]. }
+exact HBODY4.
+Qed.
+End h.
+End f.
+End d.

@@ -1,0 +1,65 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-10: the part of proofs/cgif/cgif_file_fuzzer/lib/YC20.v that carries no cgif name, copied for plugin-hostd/fuzz_command's program walk: the read-only range, the frame object and the shape of a call's post-condition. The cgif-specific stack and event constants and the cgif function contracts are left out; each function's walk states its own. *)
+(* Modified by Theorem Labs, 2026-10: apost_baseF, the FP-existential post of a function that reaches the printf wrappers (libreac/fuzz_boxreg's BoxBase.v apost_baseF, with omx-clap-core/fuzz_manifest's Sem.reg_get form of the f-register clause). *)
+(* Modified by Theorem Labs, 2026-10: copied by path from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CmdBase.v at origin/ossv/recipes 501c0d516c69 for reac-pw/fuzz_segconf's ASan program contracts (lib/A/Prog/<F>_c.v, both images), with its module paths changed. Taken: in_roP, arodata_okP, ro_below_ofl, afobj, apost_base, apost_baseF (its Section j / l). LEFT OUT: its Section d / e (relro_img, ro_spares, arodata_ok_journalP), whose proof uses fuzz_command's own lib/Reusable/YCbq.v, where fp_spares takes the footprint into account and fp_spares_below has a second argument (fuzz_command YCbq.v:88-107 against fuzz_knock YCbq.v:89-97): this file must compile against either lineage, so the lemma is restated by the lane that needs it, next to the kit it is built on. No function is proved here; this file states shapes only. *)
+(* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Prog/SegPgBase.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith List Bool Lia Permutation.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Sem.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YK11 YK14 YK0s YK15 YP09 YI04 YI09 YN3v.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YK04 YA0i.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YA0n.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YG00 YG0a YG01.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YG0f YG0n YG0d YCbq.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YM05.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Open Scope Z_scope.
+Definition in_roP (segs : list Segment) (rlo rhi : Z) (a : Z) : Prop :=
+(exists s, In s segs /\ seg_writable s = false /\ Z.of_N (seg_base s) <= a < Z.of_N (seg_base s) + Z.of_N (seg_size s))
+\/ (rlo <= a < rhi).
+Definition arodata_okP (segs : list Segment) (rlo rhi : Z) (B : asyms) (rd : reader) : Prop :=
+forall a, in_roP segs rlo rhi a -> ~ Exists (in_zr a) (as_owned_static B) -> ~ (as_errno B <= a < as_errno B + 4) ->
+rd a = option_map (fun b : byte => bv_unsigned b) (seg_rom segs (Z_to_bv 64 a)).
+Class ro_below_ofl (segs : list Segment) (rlo rhi : Z) {SK : YI16.sink_head} : Prop :=
+ro_below_ofl_at : forall a, in_roP segs rlo rhi a -> a < YI16.sk_ofl_head.
+Section j. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Section l.
+Variable segs : list Segment.
+Definition afobj (B : asyms) (ly : alayout) (S : astate) (W : world segs) (mem : word -> option byte) (p n : Z) : Prop :=
+(exists cid pos, In (cid, pos) (frames S) /\ 0 <= cid /\ frame_addr ly cid pos mod 8 = 0 /\
+frame_addr ly cid pos <= p /\ p + n <= frame_addr ly cid pos + fs_frame_bytes cid) /\
+p mod 8 = 0 /\ range_addressable (aview segs (w_H W) mem) SHADOW_OFF p n.
+Definition apost_base (B : asyms) (STK : Z) (FP : list (Z * Z)) (regs : bvmap 5 word) ly S W mem md (k : Z)
+(Q : alayout -> astate -> world segs -> bvmap 5 word -> (word -> option byte) -> Model -> Prop)
+: world segs -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom segs)) md' /\
+ajournal segs B STK (spZ regs) FP ly S W mem md [] ly' S' W' mem' md' k /\
+aregs_preserved regs regs' /\ Q ly' S' W' regs' mem' md'.
+(* apost_base for a function that reaches the printf wrappers (the snprintf wrapper: answer, answer_code, arg_i,
+   check_reply, check_words, check_words_chain, sup_add, sup_resp; the sprintf wrapper: sup_chain; and every
+   function that calls one of them): the return configuration carries SOME fx' whose f registers equal the
+   entry's except f10 and whose fcsr has rounding mode 0, or is the entry's own fcsr (the shared
+   snprintf/sprintf post of omx-clap-core/fuzz_manifest, lib/A/FMsnprintfShared.v:142-148, gives
+   rounding mode 0; a path that never reaches a wrapper takes fx' := fx). The f registers are compared with
+   Sem.reg_get, so f0 is covered too (fuzz_manifest's form; boxreg's BoxBase.v compares getr). The relation is reflexive
+   and transitive, so a function with several calls composes. AR and the journal take no FP state, so the rest is
+   apost_base's. *)
+Definition apost_baseF (B : asyms) (STK : Z) (FP : list (Z * Z)) (regs : bvmap 5 word) ly S W mem md (k : Z)
+(Q : alayout -> astate -> world segs -> bvmap 5 word -> (word -> option byte) -> Model -> Prop)
+: world segs -> config -> Prop :=
+fun W' c' => exists (fx' : YK11.FPState) ly' S' regs' mem' md',
+c' = mkCfg (@mkst fx' regs' (getr regs 1) mem' (seg_rom segs)) md' /\
+(forall k : bv 5, bv_unsigned k <> 10 -> Sem.reg_get (@fp_regs fx') k = Sem.reg_get (@fp_regs fx) k) /\
+(@fp_csr fx' = @fp_csr fx \/ Z.land (Z.shiftr (bv_unsigned (@fp_csr fx')) 5) 7 = 0) /\
+ajournal segs B STK (spZ regs) FP ly S W mem md [] ly' S' W' mem' md' k /\
+aregs_preserved regs regs' /\ Q ly' S' W' regs' mem' md'.
+End l.
+End j.

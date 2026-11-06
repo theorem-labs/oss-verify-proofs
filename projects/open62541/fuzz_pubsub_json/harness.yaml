@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: open62541
 harness: fuzz_pubsub_json
-rocq: OssFuzzTheorems.open62541.fuzz_pubsub_json
+rocq: OSSVerify.open62541.fuzz_pubsub_json
 origin: upstream
 summary: UA_NetworkMessage_decodeJson; cleared on success, nothing checked.
 entry: LLVMFuzzerTestOneInput

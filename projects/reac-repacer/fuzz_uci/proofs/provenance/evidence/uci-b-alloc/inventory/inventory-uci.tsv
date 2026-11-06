@@ -1,0 +1,198 @@
+# unit fuzz_uci; image fuzz_uci.asan-ubsan sha256 8d07ffcf5948; program CUs ['/usr/local/lib/oss-verify/driver/adapter.c', '/usr/local/lib/oss-verify/driver/cli.c', '/usr/local/lib/oss-verify/driver/wrap_getenv.c', '/usr/local/lib/oss-verify/driver/wrap_getpid.c', 'fuzz/fuzz_uci.c', 'src/repace_conf.c']; program functions 15; register-indirect call sites in them 0
+name	addr	size	bind	other names at addr	program calls directly (sites)	via directly called trampoline
+__asan_stack_malloc_1	0x3c1b8	400	GLOBAL	-	1: check_clamp+0x64	-
+__asan_register_globals	0x3dbbc	3612	GLOBAL	-	no	-
+__asan_unregister_globals	0x3e9d8	1484	GLOBAL	-	no	-
+__asan_register_elf_globals	0x3efa4	108	GLOBAL	-	no	-
+__asan_unregister_elf_globals	0x3f010	104	GLOBAL	-	no	-
+__asan_before_dynamic_init	0x3f078	1108	GLOBAL	-	no	-
+__asan_after_dynamic_init	0x3f968	776	GLOBAL	-	no	-
+__interceptor_trampoline_strlen	0x41068	4	GLOBAL	__wrap_strlen	no	-
+__interceptor_trampoline_strnlen	0x4106c	4	GLOBAL	__wrap_strnlen	no	-
+__interceptor_trampoline_strcmp	0x41070	4	GLOBAL	__wrap_strcmp	no	-
+__interceptor_trampoline_strchr	0x41074	4	GLOBAL	__wrap_strchr	no	-
+__interceptor_trampoline_memcmp	0x41078	4	GLOBAL	__wrap_memcmp	no	-
+__interceptor_trampoline_memchr	0x4107c	4	GLOBAL	__wrap_memchr	1: rp_uci_int+0x4c	-
+__interceptor_trampoline_frexpl	0x41080	4	GLOBAL	__wrap_frexpl	no	-
+__interceptor_trampoline_read	0x41084	4	GLOBAL	__wrap_read	1: main+0xe4	-
+__interceptor_trampoline_fwrite	0x41088	4	GLOBAL	__wrap_fwrite	2: main+0x1f0 main+0x284	-
+__interceptor_trampoline_time	0x4108c	4	GLOBAL	__wrap_time	no	-
+__interceptor_trampoline_gmtime_r	0x41090	4	GLOBAL	__wrap_gmtime_r	no	-
+__interceptor_trampoline_vprintf	0x41094	4	GLOBAL	__wrap_vprintf	1: emit_printf+0x38	-
+__interceptor_trampoline_vfprintf	0x41098	4	GLOBAL	__wrap_vfprintf	no	-
+__interceptor_trampoline_vsnprintf	0x4109c	4	GLOBAL	__wrap_vsnprintf	no	-
+__interceptor_trampoline_fprintf	0x410a0	4	GLOBAL	__wrap_fprintf	2: main+0x1b0 main+0x260	-
+__interceptor_trampoline_snprintf	0x410a4	4	GLOBAL	__wrap_snprintf	no	-
+__interceptor_trampoline_clock_gettime	0x410a8	4	GLOBAL	__wrap_clock_gettime	no	-
+__interceptor_trampoline_wcrtomb	0x410ac	4	GLOBAL	__wrap_wcrtomb	no	-
+__interceptor_trampoline_wctomb	0x410b0	4	GLOBAL	__wrap_wctomb	no	-
+__interceptor_trampoline_strerror	0x410b4	4	GLOBAL	__wrap_strerror	no	-
+__interceptor_trampoline__exit	0x410b8	4	GLOBAL	__wrap__exit	1: oft_exit_guard+0x2c	-
+__interceptor_trampoline_pthread_attr_getstack	0x410bc	4	GLOBAL	__wrap_pthread_attr_getstack	no	-
+__interceptor_trampoline___tls_get_addr	0x410c0	4	GLOBAL	__wrap___tls_get_addr	no	-
+__interceptor_trampoline_fflush	0x410c4	4	GLOBAL	__wrap_fflush	1: oft_exit_guard+0x24	-
+__interceptor_trampoline_sem_init	0x410c8	4	GLOBAL	__wrap_sem_init	no	-
+__interceptor_trampoline_sem_destroy	0x410cc	4	GLOBAL	__wrap_sem_destroy	no	-
+__interceptor_trampoline_sem_wait	0x410d0	4	GLOBAL	__wrap_sem_wait	no	-
+__interceptor_trampoline_sem_trywait	0x410d4	4	GLOBAL	__wrap_sem_trywait	no	-
+__interceptor_trampoline_sem_timedwait	0x410d8	4	GLOBAL	__wrap_sem_timedwait	no	-
+__interceptor_trampoline_sem_post	0x410dc	4	GLOBAL	__wrap_sem_post	no	-
+__interceptor_trampoline_pthread_setcancelstate	0x410e0	4	GLOBAL	__wrap_pthread_setcancelstate	no	-
+__interceptor_trampoline_send	0x410e4	4	GLOBAL	__wrap_send	no	-
+__interceptor_trampoline_sendto	0x410e8	4	GLOBAL	__wrap_sendto	no	-
+__interceptor_trampoline_sigaltstack	0x410ec	4	GLOBAL	__wrap_sigaltstack	no	-
+__interceptor_trampoline_sigaction	0x410f0	4	GLOBAL	__wrap_sigaction	no	-
+___interceptor_strlen	0x410f4	660	GLOBAL	__interceptor_strlen	no	-
+__interceptor_strlen	0x410f4	660	WEAK	___interceptor_strlen	no	-
+___interceptor_strnlen	0x41388	660	GLOBAL	__interceptor_strnlen	no	-
+__interceptor_strnlen	0x41388	660	WEAK	___interceptor_strnlen	no	-
+___interceptor_strcmp	0x41620	1328	GLOBAL	__interceptor_strcmp	no	-
+__interceptor_strcmp	0x41620	1328	WEAK	___interceptor_strcmp	no	-
+___interceptor_index	0x41b50	736	GLOBAL	___interceptor_strchr,__interceptor_index,__interceptor_strchr	no	-
+___interceptor_strchr	0x41b50	736	GLOBAL	___interceptor_index,__interceptor_index,__interceptor_strchr	no	-
+__interceptor_index	0x41b50	736	WEAK	___interceptor_index,___interceptor_strchr,__interceptor_strchr	no	-
+__interceptor_strchr	0x41b50	736	WEAK	___interceptor_index,___interceptor_strchr,__interceptor_index	no	-
+___interceptor_memcmp	0x426c8	188	GLOBAL	__interceptor_memcmp	no	-
+__interceptor_memcmp	0x426c8	188	WEAK	___interceptor_memcmp	no	-
+___interceptor_memchr	0x42784	720	GLOBAL	__interceptor_memchr	no	__interceptor_trampoline_memchr
+__interceptor_memchr	0x42784	720	WEAK	___interceptor_memchr	no	__interceptor_trampoline_memchr
+___interceptor_frexpl	0x42a54	632	GLOBAL	__interceptor_frexpl	no	-
+__interceptor_frexpl	0x42a54	632	WEAK	___interceptor_frexpl	no	-
+___interceptor_read	0x42ccc	624	GLOBAL	__interceptor_read	no	__interceptor_trampoline_read
+__interceptor_read	0x42ccc	624	WEAK	___interceptor_read	no	__interceptor_trampoline_read
+___interceptor_fwrite	0x42f3c	628	GLOBAL	__interceptor_fwrite	no	__interceptor_trampoline_fwrite
+__interceptor_fwrite	0x42f3c	628	WEAK	___interceptor_fwrite	no	__interceptor_trampoline_fwrite
+___interceptor_time	0x431b0	668	GLOBAL	__interceptor_time	no	-
+__interceptor_time	0x431b0	668	WEAK	___interceptor_time	no	-
+___interceptor_gmtime_r	0x43654	576	GLOBAL	__interceptor_gmtime_r	no	-
+__interceptor_gmtime_r	0x43654	576	WEAK	___interceptor_gmtime_r	no	-
+___interceptor_vprintf	0x43894	156	GLOBAL	__interceptor_vprintf	no	__interceptor_trampoline_vprintf
+__interceptor_vprintf	0x43894	156	WEAK	___interceptor_vprintf	no	__interceptor_trampoline_vprintf
+___interceptor_vfprintf	0x443f8	180	GLOBAL	__interceptor_vfprintf	no	-
+__interceptor_vfprintf	0x443f8	180	WEAK	___interceptor_vfprintf	no	-
+___interceptor_vsnprintf	0x444ac	792	GLOBAL	__interceptor_vsnprintf	no	-
+__interceptor_vsnprintf	0x444ac	792	WEAK	___interceptor_vsnprintf	no	-
+___interceptor_fprintf	0x447c4	216	GLOBAL	__interceptor_fprintf	no	__interceptor_trampoline_fprintf
+__interceptor_fprintf	0x447c4	216	WEAK	___interceptor_fprintf	no	__interceptor_trampoline_fprintf
+___interceptor_snprintf	0x4489c	164	GLOBAL	__interceptor_snprintf	no	-
+__interceptor_snprintf	0x4489c	164	WEAK	___interceptor_snprintf	no	-
+___interceptor_clock_gettime	0x44940	600	GLOBAL	__interceptor_clock_gettime	no	-
+__interceptor_clock_gettime	0x44940	600	WEAK	___interceptor_clock_gettime	no	-
+___interceptor_wcrtomb	0x44b98	1392	GLOBAL	__interceptor_wcrtomb	no	-
+__interceptor_wcrtomb	0x44b98	1392	WEAK	___interceptor_wcrtomb	no	-
+___interceptor_wctomb	0x45108	860	GLOBAL	__interceptor_wctomb	no	-
+__interceptor_wctomb	0x45108	860	WEAK	___interceptor_wctomb	no	-
+___interceptor_strerror	0x45464	100	GLOBAL	__interceptor_strerror	no	-
+__interceptor_strerror	0x45464	100	WEAK	___interceptor_strerror	no	-
+___interceptor__exit	0x454c8	104	GLOBAL	__interceptor__exit	no	__interceptor_trampoline__exit
+__interceptor__exit	0x454c8	104	WEAK	___interceptor__exit	no	__interceptor_trampoline__exit
+___interceptor_pthread_attr_getstack	0x45530	1000	GLOBAL	__interceptor_pthread_attr_getstack	no	-
+__interceptor_pthread_attr_getstack	0x45530	1000	WEAK	___interceptor_pthread_attr_getstack	no	-
+___interceptor___tls_get_addr	0x45924	124	GLOBAL	__interceptor___tls_get_addr	no	-
+__interceptor___tls_get_addr	0x45924	124	WEAK	___interceptor___tls_get_addr	no	-
+___interceptor_fflush	0x459a0	268	GLOBAL	__interceptor_fflush	no	__interceptor_trampoline_fflush
+__interceptor_fflush	0x459a0	268	WEAK	___interceptor_fflush	no	__interceptor_trampoline_fflush
+___interceptor_sem_init	0x45aac	112	GLOBAL	__interceptor_sem_init	no	-
+__interceptor_sem_init	0x45aac	112	WEAK	___interceptor_sem_init	no	-
+___interceptor_sem_destroy	0x45b1c	48	GLOBAL	__interceptor_sem_destroy	no	-
+__interceptor_sem_destroy	0x45b1c	48	WEAK	___interceptor_sem_destroy	no	-
+___interceptor_sem_wait	0x45b4c	48	GLOBAL	__interceptor_sem_wait	no	-
+__interceptor_sem_wait	0x45b4c	48	WEAK	___interceptor_sem_wait	no	-
+___interceptor_sem_trywait	0x45b7c	48	GLOBAL	__interceptor_sem_trywait	no	-
+__interceptor_sem_trywait	0x45b7c	48	WEAK	___interceptor_sem_trywait	no	-
+___interceptor_sem_timedwait	0x45bac	664	GLOBAL	__interceptor_sem_timedwait	no	-
+__interceptor_sem_timedwait	0x45bac	664	WEAK	___interceptor_sem_timedwait	no	-
+___interceptor_sem_post	0x45e44	48	GLOBAL	__interceptor_sem_post	no	-
+__interceptor_sem_post	0x45e44	48	WEAK	___interceptor_sem_post	no	-
+___interceptor_pthread_setcancelstate	0x45e74	552	GLOBAL	__interceptor_pthread_setcancelstate	no	-
+__interceptor_pthread_setcancelstate	0x45e74	552	WEAK	___interceptor_pthread_setcancelstate	no	-
+___interceptor_send	0x4609c	692	GLOBAL	__interceptor_send	no	-
+__interceptor_send	0x4609c	692	WEAK	___interceptor_send	no	-
+___interceptor_sendto	0x46350	708	GLOBAL	__interceptor_sendto	no	-
+__interceptor_sendto	0x46350	708	WEAK	___interceptor_sendto	no	-
+___interceptor_sigaltstack	0x46614	604	GLOBAL	__interceptor_sigaltstack	no	-
+__interceptor_sigaltstack	0x46614	604	WEAK	___interceptor_sigaltstack	no	-
+___interceptor_sigaction	0x46870	176	GLOBAL	__interceptor_sigaction	no	-
+__interceptor_sigaction	0x46870	176	WEAK	___interceptor_sigaction	no	-
+__interceptor_trampoline_memset	0x5066c	4	GLOBAL	__wrap_memset	no	-
+__interceptor_trampoline_memcpy	0x50670	4	GLOBAL	__wrap_memcpy	3: main+0x7c main+0xc0 target_run+0x74	-
+__asan_memcpy	0x50674	1180	GLOBAL	-	4: check_clamp+0x114 check_no_overread+0x6c check_no_overread+0x7c check_value+0x58	-
+___interceptor_memset	0x50b10	752	GLOBAL	__interceptor_memset	no	-
+__interceptor_memset	0x50b10	752	WEAK	___interceptor_memset	no	-
+___interceptor_memcpy	0x50e00	1520	GLOBAL	__interceptor_memcpy	no	__interceptor_trampoline_memcpy
+__interceptor_memcpy	0x50e00	1520	WEAK	___interceptor_memcpy	no	__interceptor_trampoline_memcpy
+__interceptor_trampoline_free	0x51784	4	GLOBAL	__wrap_free	6: check_no_overread+0x11c check_no_overread+0xf4 check_value+0x268 main+0x1f8 main+0xc8 target_run+0xf4	-
+__interceptor_trampoline_malloc	0x51788	4	GLOBAL	__wrap_malloc	6: check_no_overread+0x40 check_no_overread+0x4c check_value+0x40 main+0x50 main+0xa4 target_run+0x60	-
+___interceptor_free	0x5178c	464	GLOBAL	__interceptor_free	no	__interceptor_trampoline_free
+__interceptor_free	0x5178c	464	WEAK	___interceptor_free	no	__interceptor_trampoline_free
+___interceptor_malloc	0x5195c	348	GLOBAL	__interceptor_malloc	no	__interceptor_trampoline_malloc
+__interceptor_malloc	0x5195c	348	WEAK	___interceptor_malloc	no	__interceptor_trampoline_malloc
+__asan_poison_memory_region	0x52c60	416	GLOBAL	-	no	-
+__asan_unpoison_memory_region	0x52e00	384	GLOBAL	-	no	-
+__asan_address_is_poisoned	0x52f80	48	GLOBAL	-	no	-
+__asan_region_is_poisoned	0x52fb0	836	GLOBAL	-	no	-
+__asan_set_shadow_00	0x532f4	24	GLOBAL	-	no	-
+__asan_set_shadow_01	0x5330c	24	GLOBAL	-	no	-
+__asan_set_shadow_02	0x53324	24	GLOBAL	-	no	-
+__asan_set_shadow_03	0x5333c	24	GLOBAL	-	no	-
+__asan_set_shadow_04	0x53354	24	GLOBAL	-	no	-
+__asan_set_shadow_05	0x5336c	24	GLOBAL	-	no	-
+__asan_set_shadow_06	0x53384	24	GLOBAL	-	no	-
+__asan_set_shadow_07	0x5339c	24	GLOBAL	-	no	-
+__asan_set_shadow_f1	0x533b4	24	GLOBAL	-	no	-
+__asan_set_shadow_f2	0x533cc	24	GLOBAL	-	no	-
+__asan_set_shadow_f3	0x533e4	24	GLOBAL	-	no	-
+__asan_set_shadow_f5	0x533fc	24	GLOBAL	-	no	-
+__asan_set_shadow_f8	0x53414	24	GLOBAL	-	no	-
+__asan_poison_stack_memory	0x5342c	156	GLOBAL	-	no	-
+__asan_unpoison_stack_memory	0x534c8	164	GLOBAL	-	no	-
+__asan_set_error_report_callback	0x56da8	576	GLOBAL	-	no	-
+__asan_describe_address	0x56fe8	604	GLOBAL	-	no	-
+__asan_on_error	0x57244	4	WEAK	-	no	-
+__asan_report_load1	0x5754c	80	GLOBAL	-	11: LLVMFuzzerTestOneInput+0x1c4 LLVMFuzzerTestOneInput+0x27c LLVMFuzzerTestOneInput+0x280 check_value+0x134 check_value+0x1d0 check_value+0x230 check_value+0xd0 rp_uci_int+0x164 rp_uci_int+0x1d8 rp_uci_int+0x234 rp_uci_int+0xac	-
+__asan_report_exp_load1	0x5759c	80	GLOBAL	-	no	-
+__asan_report_load2	0x575ec	80	GLOBAL	-	no	-
+__asan_report_exp_load2	0x5763c	80	GLOBAL	-	no	-
+__asan_report_load4	0x5768c	80	GLOBAL	-	14: LLVMFuzzerTestOneInput+0x26c check_clamp+0x338 check_clamp+0x34c check_clamp+0x35c check_clamp+0x36c check_clamp+0x37c rp_hot_clamp+0x18c rp_hot_clamp+0x1a0 rp_hot_clamp+0x1b4 rp_hot_clamp+0x1c8 rp_hot_clamp+0x1dc rp_hot_clamp+0x1f0 rp_hot_clamp+0x204 rp_hot_clamp+0x214	-
+__asan_report_exp_load4	0x576dc	80	GLOBAL	-	no	-
+__asan_report_load8	0x5772c	80	GLOBAL	-	no	-
+__asan_report_exp_load8	0x5777c	80	GLOBAL	-	no	-
+__asan_report_load16	0x577cc	80	GLOBAL	-	no	-
+__asan_report_exp_load16	0x5781c	80	GLOBAL	-	no	-
+__asan_report_store1	0x5786c	80	GLOBAL	-	2: check_no_overread+0x134 check_no_overread+0x140	-
+__asan_report_exp_store1	0x578bc	80	GLOBAL	-	no	-
+__asan_report_store2	0x5790c	80	GLOBAL	-	no	-
+__asan_report_exp_store2	0x5795c	80	GLOBAL	-	no	-
+__asan_report_store4	0x579ac	80	GLOBAL	-	7: rp_hot_clamp+0x224 rp_hot_clamp+0x238 rp_hot_clamp+0x248 rp_hot_clamp+0x25c rp_hot_clamp+0x270 rp_hot_clamp+0x284 rp_hot_clamp+0x298	-
+__asan_report_exp_store4	0x579fc	80	GLOBAL	-	no	-
+__asan_report_store8	0x57a4c	80	GLOBAL	-	no	-
+__asan_report_exp_store8	0x57a9c	80	GLOBAL	-	no	-
+__asan_report_store16	0x57aec	80	GLOBAL	-	no	-
+__asan_report_exp_store16	0x57b3c	80	GLOBAL	-	no	-
+__asan_report_load_n	0x57b8c	80	GLOBAL	-	no	-
+__asan_report_exp_load_n	0x57bdc	80	GLOBAL	-	no	-
+__asan_report_store_n	0x57c2c	80	GLOBAL	-	no	-
+__asan_report_exp_store_n	0x57c7c	80	GLOBAL	-	no	-
+__asan_handle_no_return	0x58548	356	GLOBAL	-	3: check_clamp+0x320 check_no_overread+0x120 check_value+0x294	-
+__asan_set_death_callback	0x586ac	4	GLOBAL	-	no	-
+__asan_init	0x586b0	148	GLOBAL	-	no	-
+__asan_version_mismatch_check_v8	0x58744	4	GLOBAL	-	no	-
+__asan_print_accumulated_stats	0x59e48	628	GLOBAL	-	no	-
+__asan_default_suppressions	0x5a0f0	12	WEAK	-	no	-
+__asan_default_options	0x7ee3c	12	GLOBAL	-	no	-
+# direct callees of the program code outside the inventory
+target_alloc_init	0x7f10c				1: main+0x15c	-
+target_alloc_count	0x7f110				1: main+0x180	-
+target_run	0x7f118				1: main+0x170	-
+emit_printf	0x7f2a0				1: target_run+0xd8	-
+LLVMFuzzerTestOneInput	0x7f2e8				1: target_run+0xc8	-
+check_no_overread	0x7f56c				1: LLVMFuzzerTestOneInput+0x18c	-
+check_value	0x7f6b0				1: LLVMFuzzerTestOneInput+0x19c	-
+check_clamp	0x7f950				1: LLVMFuzzerTestOneInput+0x21c	-
+rp_hot_clamp	0x7fd38				1: check_clamp+0x120	-
+rp_uci_int	0x7ffd4				4: check_no_overread+0xd4 check_no_overread+0xe8 check_value+0x68 check_value+0xdc	-
+abort	0x86980				3: check_clamp+0x324 check_no_overread+0x124 check_value+0x298	-
+atexit	0x86b2c				1: target_run+0x90	-
+exit	0x86c44				1: main+0x28c	-
+open	0x86eb8				1: main+0x3c	-
+close	0x95a7c				1: main+0xf8	-

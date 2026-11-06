@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: myanmar-tools
 harness: zawgyi_detector_fuzz_target
-rocq: OssFuzzTheorems.myanmar_tools.zawgyi_detector_fuzz_target
+rocq: OSSVerify.myanmar_tools.zawgyi_detector_fuzz_target
 origin: upstream
 summary: ZawgyiDetector().GetZawgyiProbability over the raw bytes; the probability is discarded.
 entry: LLVMFuzzerTestOneInput

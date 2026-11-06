@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jansson
 harness: json_load_dump_fuzzer
-rocq: OssFuzzTheorems.jansson.json_load_dump_fuzzer
+rocq: OSSVerify.jansson.json_load_dump_fuzzer
 origin: upstream
 summary: First 8 bytes are load flags, next 8 are dump flags, next byte picks the dump mode; json_loadb
   then json_dumps (result freed unread) or json_dump_callback into a byte counter that is only printed

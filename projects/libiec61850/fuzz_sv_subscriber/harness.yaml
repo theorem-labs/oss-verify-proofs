@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libiec61850
 harness: fuzz_sv_subscriber
-rocq: OssFuzzTheorems.libiec61850.fuzz_sv_subscriber
+rocq: OSSVerify.libiec61850.fuzz_sv_subscriber
 origin: upstream
 summary: Copies the input to an exact-size heap buffer and feeds it to SVReceiver_handleL2Message (dest-MAC
   check disabled); the listener calls every ASDU numeric getter so short fields become ASan-visible over-reads;

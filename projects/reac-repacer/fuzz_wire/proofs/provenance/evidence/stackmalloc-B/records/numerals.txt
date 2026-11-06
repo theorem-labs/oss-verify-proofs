@@ -1,0 +1,1 @@
+numerals-smB: 116 rows; verdicts {'OK': 114, 'DROPPED': 2}; by role {('PATCH', 'OK'): 4, ('IMG', 'OK'): 16, ('DATA', 'OK'): 26, ('MODEL', 'OK'): 11, ('CODE', 'OK'): 27, ('TLS', 'OK'): 8, ('GOT', 'OK'): 8, ('WORD', 'OK'): 6, ('INSN', 'OK'): 8, ('CODE', 'DROPPED'): 2}; unaligned donor lines 0

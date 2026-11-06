@@ -1,0 +1,26 @@
+== image A (asan): donor pin c0661b96b5bd, target pin 29ec57e03c5d
+twins A: proved (2 pairs)
+donor: pinned sha256 c0661b96b5bd, twin sha256 68db792d5fa7, allocated sections equal (build-id note excepted): True
+target: pinned sha256 29ec57e03c5d, twin sha256 108062932420, allocated sections equal (build-id note excepted): True
+ref 781f46bc05cd image A: 11 ranges paired and compared; 42 resolve lines: 12 move a value (0x10340 -> 0x10338, 0x40410 -> 0x3dfbc, 0xa63e0 -> 0xa4080, 0xa63e8 -> 0xa4088, 0xa63f0 -> 0xa4090, 0xa6440 -> 0xa40e0, 0xa70f0 -> 0xa4d70, 0xa7100 -> 0xa4d80), 0 name the image of a header range, the rest keep the value
+PASS
+control self A: PASS, 0 values moved
+control plant A: caught (1 FAIL lines)
+  A/Rt/RtStack.v: 0 derived, 0 direct, 0 engine, 0 via-maps, 0 symbol, 0 section, 0 gap, 9 resolved, 0 KEPT-ADDR, 0 UNMAPPED
+alreloc: 5 files checked (dry); 0 UNMAPPED or unreviewed CONFLICT, 0 KEPT-ADDR (image-range numerals left unchanged) -- review each
+alreloc: per-numeral report: 92 numerals in 5 files under <OUT>/report/libdiginet/fuzz_transport (one .tsv per file)
+  A/Rt/RtSM5T.v:102 0x142c71 -> 0x13e5b1 MOVED [symbol] (_ZN11__sanitizer21common_flags_dont_useE+0x89 on both sides): confirm it is an address
+PASS: 0 wrong rows
+== image B (asan-ubsan): donor pin bbe55d24d096, target pin 04463dc8ecfe
+twins B: proved (2 pairs)
+donor: pinned sha256 bbe55d24d096, twin sha256 658cefbe806b, allocated sections equal (build-id note excepted): True
+target: pinned sha256 04463dc8ecfe, twin sha256 815ecd35b970, allocated sections equal (build-id note excepted): True
+ref 781f46bc05cd image B: 11 ranges paired and compared; 73 resolve lines: 12 move a value (0x10340 -> 0x10348, 0x4045c -> 0x3e000, 0xa5f40 -> 0xa3d00, 0xa5f48 -> 0xa3d08, 0xa5f50 -> 0xa3d10, 0xa5fa0 -> 0xa3d60, 0xa6c50 -> 0xa49f0, 0xa6c60 -> 0xa4a00), 1 name the image of a header range, the rest keep the value
+PASS
+control self B: PASS, 0 values moved
+control plant B: caught (1 FAIL lines)
+  B/Rt/RtStack.v: 0 derived, 0 direct, 0 engine, 0 via-maps, 0 symbol, 0 section, 0 gap, 9 resolved, 0 KEPT-ADDR, 0 UNMAPPED
+alreloc: 5 files checked (dry); 0 UNMAPPED or unreviewed CONFLICT, 0 KEPT-ADDR (image-range numerals left unchanged) -- review each
+alreloc: per-numeral report: 124 numerals in 5 files under <OUT>/report/libdiginet/fuzz_transport (one .tsv per file)
+  B/Rt/RtSM5T.v:103 0x1427f1 -> 0x13e231 MOVED [symbol] (_ZN11__sanitizer21common_flags_dont_useE+0x89 on both sides): confirm it is an address
+PASS: 0 wrong rows

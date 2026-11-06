@@ -1,0 +1,3 @@
+run.sh	script	Runs every subdirectory's run.sh with the same inputs (TREE, IMG_B, TWIN_B, CGIF_B): re-derives the generated image-B start-up files and compares each with the shipped file byte for byte.
+mk_manifest.py	script	Writes this MANIFEST from the ROWS.tsv files, with each file's sha256; refuses a file without a row.
+ROWS.tsv	input	The rows of the slice's top files that mk_manifest.py reads (path, kind, role).

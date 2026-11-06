@@ -1,0 +1,92 @@
+# Per-cell decisions: plugin-hostd/fuzz_command lib/A/Rt/RtSM4.v + RtSM4T.v (+ the code-table block of RtSM1T.v) at
+# origin/ossv/recipes 2d2ff01bb6f -> reac-pw/fuzz_headamp lib/A/Rt/RtSM4.v + RtSM4T.v (image A).
+# Donor image: fuzz_command.asan pinned c0661b96b5bd (symbols: its unstripped twin 68db792d5fa7). Unit image:
+# fuzz_headamp.asan pinned f3e0669d2819 (symbols: unstripped twin b5f352154c54).
+# Relocation tool: alreloc a5c53bb2bed4 (sha256 a5c53bb2bed4ad039a600ecda538d6d0a1a01ccf4d62f8da9a09031a277fa17b), dry run,
+# --rename CmdBSyms=TfibSyms; every proposal below checked by hand (capstone over both unstripped twins, .symtab, image words).
+# Columns: file:donor-line, class, donor value, alreloc proposal, value written, decision, evidence.
+# The written file has one line more than the donor at every line after 5 (the added Modified-by line).
+file:line	class	donor	alreloc	written	decision	evidence
+RtSM4.v:4	history comment	0x3d244	0x3a5e8	0x3d244	keep: licence/history line names fuzz_grant's address; alreloc WRONG	the line describes the fuzz_grant port
+RtSM4.v:4	history comment	0x409000	0x409000	0x409000	keep	history line
+RtSM4.v:5	history comment	0x3fdb8	0x3ccac	0x3fdb8	keep: history line names fuzz_command's address	headamp's address is in the new Modified-by line 6
+RtSM4.v:5	history comment	0x606000	0x5fa000	0x606000	keep: history line names fuzz_command's image end	headamp's is in the new Modified-by line 6
+RtSM4.v:79	image bound	6316032	6266880	6266880	ok	image end 0x5fa000 = YImgTop.IMG_TOP = page_up(0x5f9630), AF0x.TFIB_IMG_END
+RtSM4.v:82	image bound	6316032	6266880	6266880	ok	same
+RtSM4.v:242	image bound	6316032	6266880	6266880	ok	same
+RtSM4.v:252	image bound	6316032	6266880	6266880	ok	same
+RtSM4.v:252	image bound	789504	783360	783360	ok	0x5fa000 / 8
+RtSM4.v:254	image bound	6316032	6266880	6266880	ok	same
+RtSM4.v:254	image bound	789504	783360	783360	ok	0x5fa000 / 8
+RtSM4.v:116	start-up word	0x5e4cd0	0x5d8488	0x5d8488	ok	builtin_tls+0x800 both; start-up table row z8 (AT 48) 0x5d8488
+RtSM4.v:117	start-up word	0x5e4cd0	0x5d8488	0x5d8488	ok	same
+RtSM4.v:118	start-up word	0x5e4dac	0x5d8564	0x5d8564	ok	builtin_tls+0x8dc both; start-up table row z8 (AT 56) 0x5d8564
+RtSM4.v:119	start-up word	0x5e4dac	0x5d8564	0x5d8564	ok	same
+RtSM4.v:184	start-up word	0x5e4cd0	0x5d8488	0x5d8488	ok	same as 116
+RtSM4.v:185	start-up word	0x5e4dac	0x5d8564	0x5d8564	ok	same as 118
+RtSM4.v:79	class 5	17594333495296	17594333495296	17594333495296	byte-identical	kHighMemBeg 0x10007fff8000
+RtSM4.v:253	class 5	17594333495296	17594333495296	17594333495296	byte-identical	kHighMemBeg
+RtSM4.v:79 (x2)	class 5	11571200	(not moved)	11571200	byte-identical	kFakeStackSize of the fake stack 0xb09000 (both occurrences on the line)
+RtSM4.v:79	class 5	2147446784	(not moved)	2147446784	byte-identical	0x7fff7000, low-memory zone limit
+RtSM4.v:83	class 5	11571200	(not moved)	11571200	byte-identical	kFakeStackSize
+RtSM4.v:83	class 5	140737479966720	(not moved)	140737479966720	byte-identical	ceiling bound 0x7fffff800000
+RtSM4.v:84	class 5	140737479966720	(not moved)	140737479966720	byte-identical	same
+RtSM4.v:239	class 5	4231168	4231168	4231168	byte-identical	class-4 frames offset 0x409000
+RtSM4.v:244	class 5	4231168	4231168	4231168	byte-identical	same
+RtSM4.v:244	class 5	66112	UNMAPPED	66112	byte-identical (hand)	4231168 / 64
+RtSM4.v:253	class 5	2148213760	(not moved)	2148213760	byte-identical	weak shadow lower bound, the same in the fuzz_identity, fuzz_grant and fuzz_role walks; holds for 0x7fff8000 + 0x5fa000/8
+RtSM4.v:255	class 5	11571200	(not moved)	11571200	byte-identical	kFakeStackSize
+RtSM4.v:277	class 5	1441792	1441792	1441792	byte-identical	(kFakeStackSize - kFakeFramesOff) / 8
+RtSM4.v:279	class 5	1441792	UNMAPPED	1441792	byte-identical (hand)	same
+RtSM4.v:513	name	cmd_stack_malloc4_contract	-	stack_malloc4_contract	rename	the kit vocabulary of fuzz_role's stack_malloc3_contract and fuzz_identity's stack_malloc4_contract
+RtSM4.v:27,513	name	CmdBSyms	TfibSyms (--rename)	TfibSyms	rename	headamp's symbol record (A/AF0m.v Record TfibSyms)
+RtSM4T.v:4	history comment	0x3d244	0x3a5e8	0x3d244	keep: history line; alreloc WRONG	the line describes the fuzz_grant port
+RtSM4T.v:4	history comment	0x409000	0x409000	0x409000	keep	history line
+RtSM4T.v:5	history comment	0x3fdb8	0x3ccac	0x3fdb8	keep: history line	headamp's address is in the new Modified-by line 6
+RtSM4T.v:29	code address	0x3fdb8	0x3ccac	0x3ccac	ok	FS_ENTRY = __asan_stack_malloc_4 (.symtab both); A/AF0l.v pc_stack_malloc 4 = 0x3ccac
+RtSM4T.v:30	code address	0x3fe4c	0x3cd40	0x3cd40	ok	FS_LOOP = +0x94; words at +0x94..+0xac identical in both images (and a7,a2,a4 .. bnez a0,-0x18)
+RtSM4T.v:31	code address	0x3fec4	0x3cdb8	0x3cdb8	ok	FS_FOUND = +0x10c
+RtSM4T.v:32	code address	0x3fef4	0x3cde8	0x3cde8	ok	FS_SDFF = +0x13c
+RtSM4T.v:33	code address	0x3ff10	0x3ce04	0x3ce04	ok	FS_SDSH = +0x158
+RtSM4T.v:38	class 5	0x409000	0x3fcd00	0x409000	byte-identical (hand); alreloc WRONG (AMBIGUOUS-MODEL-CONSTANT)	FS_FROFF, class-4 frames offset; decimal twin 4231168 kept at 352, 361
+RtSM4T.v:40	start-up word	0x5e4598	0x5d7d50	0x5d7d50	ok	TP = builtin_tls+0xc8; A/AF0m.v TFIB_TP 0x5d7d50
+RtSM4T.v:41	start-up word	0x605940	0x5f90f8	0x5f90f8	ok	TSD = __pthread_tsd_main; A/AF0m.v TFIB_TSD 0x5f90f8
+RtSM4T.v:42-43	code table	RtSM1T.tbl_fs	-	inline fs_ranges block	structural: RtSM1T.v lines 43-50 (fs_ranges, tbl_fs, tbl_fs_eq, tbl_fs_ok) stated here	headamp has no class 0/1/3/5/7 function, so no RtSM1T.v; fuzz_role's StackMalloc3Tbl.v states its table the same way
+RtSM1T.v:44	code table	(0x3fdb8, 115)	0x3ccac	(0x3ccac, 115)	ok	115 words, 9 differ, all pc-relative (auipc/addi/ld/jal at +0x18 +0x1c +0x20 +0x40 +0xb8 +0xbc +0xc8 +0x148 +0x1bc)
+RtSM1T.v:44	code table	(0x3f908, 93)	UNMAPPED	omitted	donor-only object: __asan_stack_malloc_0 has no twin in headamp's .symtab	the class-4 walk fetches no word of it
+RtSM1T.v:44	code table	(0x3fa7c, 100)	UNMAPPED	omitted	donor-only object: __asan_stack_malloc_1	same
+RtSM1T.v:44	code table	(0x3fc0c, 107)	UNMAPPED	omitted	donor-only object: __asan_stack_malloc_3	same
+RtSM1T.v:44	code table	(0x3ff84, 131)	UNMAPPED	omitted	donor-only object: __asan_stack_malloc_5	same
+RtSM1T.v:44	code table	(0x40244, 95)	UNMAPPED	omitted	donor-only object: __asan_stack_malloc_7	same
+RtSM1T.v:45	code table	(0x67b00, 2)	0x621dc	(0x621dc, 2)	ok	RegisterCommonFlags+0x358 both; words identical
+RtSM1T.v:45	code table	(0x4b040, 31)	0x46a38	(0x46a38, 31)	ok	__interceptor___tls_get_addr; 5 words differ, all pc-relative
+RtSM1T.v:45	code table	(0x9fbb8, 9)	0x96100	(0x96100, 9)	ok	__tls_get_addr; words identical
+RtSM1T.v:45	code table	(0x61e40, 8)	0x5c51c	(0x5c51c, 8)	ok	__asan::GetCurrentThread; words identical
+RtSM1T.v:45	code table	(0x5a98c, 6)	0x55068	(0x55068, 6)	ok	__asan::AsanTSDGet; 3 words differ, all pc-relative
+RtSM1T.v:45	code table	(0xa0c6c, 7)	0x971b4	(0x971b4, 7)	ok	tss_get; words identical
+RtSM1T.v:45	code table	(0x6f554, 140)	0x69c30	(0x69c30, 140)	ok	__sanitizer::DTLS_on_tls_get_addr; 18 words differ, all pc-relative
+RtSM1T.v:46	code table	(0x40410, 28)	0x3ce78	(0x3ce78, 28)	ok	__asan::MemToShadow copy after the class-4 function; 9 words differ, all pc-relative
+RtSM1T.v:46	code table	(0x59824, 233)	0x53f00	(0x53f00, 233)	ok	__asan::PoisonShadow; 31 words differ, all pc-relative
+RtSM4T.v:68	.got	0xa70f0	0x9d070 (gap)	0x9d050	hand; alreloc WRONG (.relro_padding+0x8)	TLS GD pair (1, 0xfffffffffffff800) of the `auipc a0; addi a0,a0` at +0x18/+0x1c: headamp's pair computes 0x9d050, whose words are 1 and 0xfffffffffffff800; start-up table rows 0x9d050 / 0x9d058
+RtSM4T.v:68	data	0xa81d8	0x9e110	0x9e110	ok	__interception::real___tls_get_addr; headamp's word 0x96100 = __tls_get_addr; loaded by __interceptor___tls_get_addr+0x20 in both
+RtSM4T.v:68	code address	0x9fbb8	0x96100	0x96100	ok	__tls_get_addr
+RtSM4T.v:68	.got	0xa63e0	0x9c360	0x9c360	ok	the .got word DTLS_on_tls_get_addr+0x40 loads in each image; holds common_flags_dont_use (0x1368e8)
+RtSM4T.v:68	data	0x142be8	0x1368e8	0x1368e8	ok	__sanitizer::common_flags_dont_use
+RtSM4T.v:69	data	0x142c71	0x136971	0x136971	ok	common_flags_dont_use+0x89; start-up table row z1 0x136971 1
+RtSM4T.v:69	.got	0xa6440	0x9c3c0	0x9c3c0	ok	the .got word DTLS_on_tls_get_addr+0x54 loads in each image; holds current_verbosity (0x134858)
+RtSM4T.v:69	data	0x140b58	0x134858	0x134858	ok	__sanitizer::current_verbosity (2 sites); start-up table row z4 0x134858 0
+RtSM4T.v:69	.got	0xa7100	0x9d080 (gap)	0x9d060	hand; alreloc WRONG (.relro_padding+0x18)	the IE .got word DTLS_on_tls_get_addr+0x64 loads: headamp 0x9d060, holds 8; start-up table row z8 0x9d060 0x8
+RtSM4T.v:70	data	0xb0920	0xa4620	0xa4620	ok	__asan::tsd_key_inited; start-up table rows z1 0xa4620 1, z4 0xa4624 0
+RtSM4T.v:70	start-up word	0x5e45b8	0x5d7d70	0x5d7d70	ok	builtin_tls+0xe8; start-up table row z8 (ATp (-8)) 0x5d7d70
+RtSM4T.v:70	start-up word	0x5e45c0	0x5d7d78	0x5d7d78	ok	builtin_tls+0xf0; start-up table row z8 0x5d7d78 0x5d8550
+RtSM4T.v:70	start-up word	0x5e4d98	0x5d8550	0x5d8550	ok	builtin_tls+0x8c8
+RtSM4T.v:68	class 5	0xfffffffffffff800	(not moved)	0xfffffffffffff800	byte-identical	TLS offset word of the GD pair, read in headamp's image at 0x9d058
+RtSM4T.v:78	start-up word	0x5e4cd0	0x5d8488	0x5d8488	ok	as RtSM4.v:116
+RtSM4T.v:78	start-up word	0x5e4dac	0x5d8564	0x5d8564	ok	as RtSM4.v:118
+RtSM4T.v:204-217	instruction words	0x00e678b3 0x011687b3 0x0007c283 0x06028663 0xfff5051b 0x00160613 0xfe0514e3	identity	same	byte-identical	headamp words at 0x3cd40..0x3cd58 equal the donor's at 0x3fe4c..0x3fe64
+RtSM4T.v:271	code address	261828	249272	249272	ok	FS_FOUND decimal 0x3fec4 -> 0x3cdb8
+RtSM4T.v:352	class 5	4231168	UNMAPPED	4231168	byte-identical (hand)	FS_FROFF decimal twin
+RtSM4T.v:361	class 5	4231168	4231168	4231168	byte-identical	same
+RtSM4T.v:370	class 5	2147450880	2147450880	2147450880	byte-identical	SHADOW_OFF 0x7fff8000
+RtSM4T.v:184-185	class 5	2147483648 (x2) 4294967296	(not moved)	same	byte-identical	2^31, 2^32 in v_addiw_dec
+RtSM4T.v:439	class 5	1048576	1048576	1048576	byte-identical	1 << kStackSizeLog

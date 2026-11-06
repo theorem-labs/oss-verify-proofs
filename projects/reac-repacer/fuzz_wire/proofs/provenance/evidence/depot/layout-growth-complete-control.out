@@ -1,0 +1,7 @@
+# unplanted: the round-23 AFit.v
+missed: file	form	patched file:lines	knock file:lines	operation
+layout_growth_classify --complete: 1 file(s); 0 missed member operation(s)
+# planted: AFit.v with grant's 2-ary Variable DPOST put back
+missed: file	form	patched file:lines	knock file:lines	operation
+missed	AFit.v	DPT	AFit.v:136-136	AFit.v:137-137	insert grant[] -> knock[alayout - > world tfibsegs - > Model - >]
+layout_growth_classify --complete: 1 file(s); 1 missed member operation(s)

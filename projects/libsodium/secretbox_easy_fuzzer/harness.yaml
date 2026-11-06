@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libsodium
 harness: secretbox_easy_fuzzer
-rocq: OssFuzzTheorems.libsodium.secretbox_easy_fuzzer
+rocq: OSSVerify.libsodium.secretbox_easy_fuzzer
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

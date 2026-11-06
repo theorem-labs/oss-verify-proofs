@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wget2
 harness: libwget_hpkp_fuzzer
-rocq: OssFuzzTheorems.wget2.libwget_hpkp_fuzzer
+rocq: OSSVerify.wget2.libwget_hpkp_fuzzer
 origin: upstream
 summary: wget_hpkp_db_load of the input (fopen of "hpkp" redirected to fmemopen), then wget_hpkp_db_check_pubkey;
   result discarded.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: phosphor-host-ipmid
 harness: fuzz_sensor_utils
-rocq: OssFuzzTheorems.phosphor_host_ipmid.fuzz_sensor_utils
+rocq: OSSVerify.phosphor_host_ipmid.fuzz_sensor_utils
 origin: oss-fuzz
 summary: getSensorAttributes(max,min,...) on three fuzzed doubles; if it succeeds with mValue!=0, scaleIPMIValueFromDouble;
   then getScaledIPMIValue. Results discarded; std::out_of_range / std::runtime_error are caught (any other

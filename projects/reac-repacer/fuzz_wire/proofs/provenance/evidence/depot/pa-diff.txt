@@ -1,0 +1,10 @@
+pa diff: 223 in both, 5 only in grant-release, 4 only in wire, 0 differ
+ONLY-A	AD1j.v	mu0	closed
+ONLY-A	AD2l.v	GrantB_ok	closed
+ONLY-A	AD2l.v	GrantB_syms	closed
+ONLY-A	AE37.v	zi8_14ea00	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string
+ONLY-A	AE37.v	zi8_14f970	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string
+ONLY-B	ACej.v	TRACES_check_copy_U	closed
+ONLY-B	AD1v.v	top_ok_gle	closed
+ONLY-B	AD2l.v	WireB_ok	closed
+ONLY-B	AD2l.v	WireB_syms	closed

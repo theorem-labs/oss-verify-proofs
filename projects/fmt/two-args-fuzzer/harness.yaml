@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: fmt
 harness: two-args-fuzzer
-rocq: OssFuzzTheorems.fmt.two_args_fuzzer
+rocq: OSSVerify.fmt.two_args_fuzzer
 origin: upstream
 summary: format_to(fuzz format, item1, item2) over 15x15 type pairs; std::exception swallowed.
 entry: LLVMFuzzerTestOneInput

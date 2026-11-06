@@ -1,0 +1,87 @@
+file	line	cell	value	measured	verdict	evidence
+lib/Reusable/YH03.v	9	src0_A_main	0x131c4	0x131c4	OK	main is 0x131c4..0x13488 (STT_FUNC, size 708)
+lib/Reusable/YH03.v	10	src0_A_target_run	0x13494	0x13494	OK	target_run is 0x13494..0x135ec (STT_FUNC, size 344)
+lib/Reusable/YH03.v	11	src0_A_LLVMFuzzerTestOneInput	0x13664	0x13664	OK	LLVMFuzzerTestOneInput is 0x13664..0x144ec (STT_FUNC, size 3720)
+lib/Reusable/YH03.v	12	src0_A_stack_chk_fail	0x18914	0x18914	OK	__stack_chk_fail is 0x18914..0x1891c (STT_FUNC, size 8)
+lib/Reusable/YH03.v	13	src0_A_syscall_ret	0x1891c	0x1891c	OK	__syscall_ret is 0x1891c..0x18954 (STT_FUNC, size 56)
+lib/Reusable/YH03.v	14	src0_A_errno_location	0x18954	0x18954	OK	___errno_location = __errno_location is 0x18954..0x18960 (STT_FUNC, size 12)
+lib/Reusable/YH03.v	15	src0_A_free	0x18960	0x18960	OK	free is 0x18960..0x18964 (STT_FUNC, size 4)
+lib/Reusable/YH03.v	16	src0_A_malloc	0x18aa0	0x18aa0	OK	malloc is 0x18aa0..0x18aa4 (STT_FUNC, size 4)
+lib/Reusable/YH03.v	17	src0_A_libc_free	0x18aa4	0x18aa4	OK	__libc_free is 0x18aa4..0x18c70 (STT_FUNC, size 460)
+lib/Reusable/YH03.v	18	src0_A_get_meta	0x18c70	0x18c70	OK	get_meta is 0x18c70..0x18d80 (STT_FUNC, size 272)
+lib/Reusable/YH03.v	19	src0_A_nontrivial_free	0x18d80	0x18d80	OK	nontrivial_free is 0x18d80..0x19158 (STT_FUNC, size 984)
+lib/Reusable/YH03.v	20	src0_A_alloc_meta	0x19158	0x19158	OK	__malloc_alloc_meta is 0x19158..0x19430 (STT_FUNC, size 728)
+lib/Reusable/YH03.v	21	src0_A_libc_malloc_impl	0x19430	0x19430	OK	__libc_malloc_impl is 0x19430..0x197a0 (STT_FUNC, size 880)
+lib/Reusable/YH03.v	22	src0_A_alloc_slot	0x197a0	0x197a0	OK	alloc_slot is 0x197a0..0x1a044 (STT_FUNC, size 2212)
+lib/Reusable/YH03.v	23	src0_A_enframe	0x1a044	0x1a044	OK	enframe is 0x1a044..0x1a194 (STT_FUNC, size 336)
+lib/Reusable/YH03.v	24	src0_A_malloc_allzerop	0x1a194	0x1a194	OK	__malloc_allzerop is 0x1a194..0x1a30c (STT_FUNC, size 376)
+lib/Reusable/YH03.v	25	src0_A_vm_wait	0x1a30c	0x1a30c	OK	__vm_wait is 0x1a30c..0x1a310 (STT_FUNC, size 4)
+lib/Reusable/YH03.v	26	src0_A_mmap	0x1a310	0x1a310	OK	__mmap = mmap is 0x1a310..0x1a3fc (STT_FUNC, size 236)
+lib/Reusable/YH03.v	27	src0_A_mprotect	0x1a3fc	0x1a3fc	OK	__mprotect = mprotect is 0x1a3fc..0x1a444 (STT_FUNC, size 72)
+lib/Reusable/YH03.v	28	src0_A_munmap	0x1a444	0x1a444	OK	__munmap = munmap is 0x1a444..0x1a48c (STT_FUNC, size 72)
+lib/Reusable/YH03.v	29	src0_A_memcpy	0x1f910	0x1f910	OK	memcpy is 0x1f910..0x1fd14 (STT_FUNC, size 1028)
+lib/Reusable/YH03.v	30	src0_A_memset	0x1fd14	0x1fd14	OK	memset is 0x1fd14..0x1fe0c (STT_FUNC, size 248)
+lib/Reusable/YH03.v	31	src0_A_strnlen	0x1fed4	0x1fed4	OK	strnlen is 0x1fed4..0x1ff18 (STT_FUNC, size 68)
+lib/Reusable/YH03.v	32	src0_A_memchr	0x1ff18	0x1ff18	OK	memchr is 0x1ff18..0x1ffe4 (STT_FUNC, size 204)
+lib/Reusable/YH03.v	33	src0_A_lock	0x1ffe4	0x1ffe4	OK	__lock is 0x1ffe4..0x2026c (STT_FUNC, size 648)
+lib/Reusable/YH03.v	34	src0_A_unlock	0x2026c	0x2026c	OK	__unlock is 0x2026c..0x202e0 (STT_FUNC, size 116)
+lib/Reusable/YH03.v	35	src0_A_syscall_cp_c	0x202e0	0x202e0	OK	__syscall_cp_c is 0x202e0..0x20304 (STT_FUNC, size 36)
+lib/Reusable/YH03.v	36	src0_D_const_HIGHS_0x8080808080808080	0x103c0	0x103c0	OK	the only 8 bytes LE 0x8080808080808080 in the loaded image is at 0x103c0; xref memchr+0x64, strlen+0x48
+lib/Reusable/YH03.v	37	src0_D_const_ONES_0x0101010101010100	0x103d0	0x103d0	OK	the only 8 bytes LE 0x0101010101010100 in the loaded image is at 0x103d0; xref memchr+0x5c, strlen+0x44
+lib/Reusable/YH03.v	38	src0_D_debruijn32	0x10460	0x10460	OK	the only LLVM cttz table (0x077cb531) in the loaded image is at 0x10460; xref __libc_malloc_impl+0xec, alloc_slot+0x1d0, alloc_slot+0x370
+lib/Reusable/YH03.v	39	src0_D_size_classes	0x10530	0x10530	OK	__malloc_size_classes = 0x10530 (size 96); xref __libc_free+0x5c, __libc_malloc_impl+0x168, __malloc_allzerop+0x134, __malloc_allzerop+0x160, __malloc_allzerop+0xc0, alloc_slot+0x1e8, alloc_slot+0x4e4, enframe+0x30, get_meta+0xc0, nontrivial_free+0x80
+lib/Reusable/YH03.v	40	src0_D_small_cnt_tab	0x10590	0x10590	OK	small_cnt_tab = 0x10590 (size 27); xref alloc_slot+0x224
+lib/Reusable/YH03.v	41	src0_D_med_cnt_tab	0x105ab	0x105ab	OK	med_cnt_tab = 0x105ab (size 4); xref alloc_slot+0x254
+lib/Reusable/YH03.v	42	src0_D_got_stack_chk_guard	0x214e0	0x214e0	OK	.got [0x21460, 0x214f8) slot 0x214e0 holds __stack_chk_guard = 0x62b20; xref __init_ssp+0x14, __init_ssp+0x28, __init_ssp+0x40, __malloc_alloc_meta+0x20, __stdio_write+0x30, __stdout_write+0x10, alloc_slot+0x3c, fmt_fp+0x60, fprintf+0x18, nontrivial_free+0x1c, open+0x24, pad+0x20, printf_core+0x64, raise+0x18, vfprintf+0x2c
+lib/Reusable/YH03.v	43	src0_D_read_stage	0x22759	0x22759	OK	read_stage = 0x22759 (size 65536); xref main+0x64, main+0x74, main+0xe0
+lib/Reusable/YH03.v	44	src0_D_oft_aligned_copy_empty	0x32770	0x32770	OK	oft_aligned_copy.empty = 0x32770 (size 32); xref target_run+0xac, target_run+0xc0
+lib/Reusable/YH03.v	45	src0_D_stack_chk_guard	0x62b20	0x62b20	OK	__stack_chk_guard = 0x62b20 (size 8); xref none
+lib/Reusable/YH03.v	46	src0_D_libc	0x62b40	0x62b40	OK	__libc = 0x62b40 (size 104); xref __init_libc+0x48, __init_tls+0x240, __init_tls+0x30, __malloc_alloc_meta+0x3c, static_init_tls+0x240, static_init_tls+0x30
+lib/Reusable/YH03.v	47	src0_D_malloc_lock	0x62bb0	0x62bb0	OK	__malloc_lock = 0x62bb0 (size 4); xref __libc_free+0x158, __libc_free+0x160, __libc_free+0x180, __libc_malloc_impl+0x204, __libc_malloc_impl+0x250, __libc_malloc_impl+0x328, __libc_malloc_impl+0x364, __libc_malloc_impl+0x6c, __libc_malloc_impl+0xb0, __malloc_alloc_meta+0x30, alloc_slot+0x4c
+lib/Reusable/YH03.v	48	src0_D_malloc_context	0x62bb8	0x62bb8	OK	__malloc_context = 0x62bb8 (size 928); xref __malloc_alloc_meta+0x244, __malloc_alloc_meta+0x9c, __malloc_allzerop+0x9c, get_meta+0x9c, nontrivial_free+0x178, nontrivial_free+0x6c
+lib/Reusable/YH03.v	49	src0_D_ofl_lock	0x62f68	0x62f68	OK	ofl_lock = 0x62f68 (size 4); xref __ofl_lock+0x10, __ofl_lock+0x14, __ofl_unlock+0x4
+lib/Reusable/YH03.v	50	src0_D_ofl_head	0x62f70	0x62f70	OK	ofl_head = 0x62f70 (size 8); xref __ofl_lock+0x1c
+lib/Reusable/YH03.v	51	src0_vmlock	None	None	OK	no vmlock / __vmlock_lockptr object in symtab; __vm_wait 0x1a30c+4
+lib/U/Reusable/YH03.v	9	src0_A_main	0x132c0	0x132c0	OK	main is 0x132c0..0x13584 (STT_FUNC, size 708)
+lib/U/Reusable/YH03.v	10	src0_A_target_run	0x13590	0x13590	OK	target_run is 0x13590..0x136e8 (STT_FUNC, size 344)
+lib/U/Reusable/YH03.v	11	src0_A_LLVMFuzzerTestOneInput	0x13760	0x13760	OK	LLVMFuzzerTestOneInput is 0x13760..0x1482c (STT_FUNC, size 4300)
+lib/U/Reusable/YH03.v	12	src0_A_stack_chk_fail	0x19444	0x19444	OK	__stack_chk_fail is 0x19444..0x1944c (STT_FUNC, size 8)
+lib/U/Reusable/YH03.v	13	src0_A_syscall_ret	0x1944c	0x1944c	OK	__syscall_ret is 0x1944c..0x19484 (STT_FUNC, size 56)
+lib/U/Reusable/YH03.v	14	src0_A_errno_location	0x19484	0x19484	OK	___errno_location = __errno_location is 0x19484..0x19490 (STT_FUNC, size 12)
+lib/U/Reusable/YH03.v	15	src0_A_free	0x19490	0x19490	OK	free is 0x19490..0x19494 (STT_FUNC, size 4)
+lib/U/Reusable/YH03.v	16	src0_A_malloc	0x195d0	0x195d0	OK	malloc is 0x195d0..0x195d4 (STT_FUNC, size 4)
+lib/U/Reusable/YH03.v	17	src0_A_libc_free	0x195d4	0x195d4	OK	__libc_free is 0x195d4..0x197a0 (STT_FUNC, size 460)
+lib/U/Reusable/YH03.v	18	src0_A_get_meta	0x197a0	0x197a0	OK	get_meta is 0x197a0..0x198b0 (STT_FUNC, size 272)
+lib/U/Reusable/YH03.v	19	src0_A_nontrivial_free	0x198b0	0x198b0	OK	nontrivial_free is 0x198b0..0x19c88 (STT_FUNC, size 984)
+lib/U/Reusable/YH03.v	20	src0_A_alloc_meta	0x19c88	0x19c88	OK	__malloc_alloc_meta is 0x19c88..0x19f60 (STT_FUNC, size 728)
+lib/U/Reusable/YH03.v	21	src0_A_libc_malloc_impl	0x19f60	0x19f60	OK	__libc_malloc_impl is 0x19f60..0x1a2d0 (STT_FUNC, size 880)
+lib/U/Reusable/YH03.v	22	src0_A_alloc_slot	0x1a2d0	0x1a2d0	OK	alloc_slot is 0x1a2d0..0x1ab74 (STT_FUNC, size 2212)
+lib/U/Reusable/YH03.v	23	src0_A_enframe	0x1ab74	0x1ab74	OK	enframe is 0x1ab74..0x1acc4 (STT_FUNC, size 336)
+lib/U/Reusable/YH03.v	24	src0_A_malloc_allzerop	0x1acc4	0x1acc4	OK	__malloc_allzerop is 0x1acc4..0x1ae3c (STT_FUNC, size 376)
+lib/U/Reusable/YH03.v	25	src0_A_vm_wait	0x1ae3c	0x1ae3c	OK	__vm_wait is 0x1ae3c..0x1ae40 (STT_FUNC, size 4)
+lib/U/Reusable/YH03.v	26	src0_A_mmap	0x1ae40	0x1ae40	OK	__mmap = mmap is 0x1ae40..0x1af2c (STT_FUNC, size 236)
+lib/U/Reusable/YH03.v	27	src0_A_mprotect	0x1af2c	0x1af2c	OK	__mprotect = mprotect is 0x1af2c..0x1af74 (STT_FUNC, size 72)
+lib/U/Reusable/YH03.v	28	src0_A_munmap	0x1af74	0x1af74	OK	__munmap = munmap is 0x1af74..0x1afbc (STT_FUNC, size 72)
+lib/U/Reusable/YH03.v	29	src0_A_memcpy	0x20440	0x20440	OK	memcpy is 0x20440..0x20844 (STT_FUNC, size 1028)
+lib/U/Reusable/YH03.v	30	src0_A_memset	0x20844	0x20844	OK	memset is 0x20844..0x2093c (STT_FUNC, size 248)
+lib/U/Reusable/YH03.v	31	src0_A_strnlen	0x20a04	0x20a04	OK	strnlen is 0x20a04..0x20a48 (STT_FUNC, size 68)
+lib/U/Reusable/YH03.v	32	src0_A_memchr	0x20a48	0x20a48	OK	memchr is 0x20a48..0x20b14 (STT_FUNC, size 204)
+lib/U/Reusable/YH03.v	33	src0_A_lock	0x20b14	0x20b14	OK	__lock is 0x20b14..0x20d9c (STT_FUNC, size 648)
+lib/U/Reusable/YH03.v	34	src0_A_unlock	0x20d9c	0x20d9c	OK	__unlock is 0x20d9c..0x20e10 (STT_FUNC, size 116)
+lib/U/Reusable/YH03.v	35	src0_A_syscall_cp_c	0x20e10	0x20e10	OK	__syscall_cp_c is 0x20e10..0x20e34 (STT_FUNC, size 36)
+lib/U/Reusable/YH03.v	36	src0_D_const_HIGHS_0x8080808080808080	0x103d0	0x103d0	OK	the only 8 bytes LE 0x8080808080808080 in the loaded image is at 0x103d0; xref memchr+0x64, strlen+0x48
+lib/U/Reusable/YH03.v	37	src0_D_const_ONES_0x0101010101010100	0x103e0	0x103e0	OK	the only 8 bytes LE 0x0101010101010100 in the loaded image is at 0x103e0; xref memchr+0x5c, strlen+0x44
+lib/U/Reusable/YH03.v	38	src0_D_debruijn32	0x10500	0x10500	OK	the only LLVM cttz table (0x077cb531) in the loaded image is at 0x10500; xref __libc_malloc_impl+0xec, alloc_slot+0x1d0, alloc_slot+0x370
+lib/U/Reusable/YH03.v	39	src0_D_size_classes	0x10520	0x10520	OK	__malloc_size_classes = 0x10520 (size 96); xref __libc_free+0x5c, __libc_malloc_impl+0x168, __malloc_allzerop+0x134, __malloc_allzerop+0x160, __malloc_allzerop+0xc0, alloc_slot+0x1e8, alloc_slot+0x4e4, enframe+0x30, get_meta+0xc0, nontrivial_free+0x80
+lib/U/Reusable/YH03.v	40	src0_D_small_cnt_tab	0x10580	0x10580	OK	small_cnt_tab = 0x10580 (size 27); xref alloc_slot+0x224
+lib/U/Reusable/YH03.v	41	src0_D_med_cnt_tab	0x1059b	0x1059b	OK	med_cnt_tab = 0x1059b (size 4); xref alloc_slot+0x254
+lib/U/Reusable/YH03.v	42	src0_D_got_stack_chk_guard	0x22050	0x22050	OK	.got [0x21fd0, 0x22068) slot 0x22050 holds __stack_chk_guard = 0x63690; xref __init_ssp+0x14, __init_ssp+0x28, __init_ssp+0x40, __malloc_alloc_meta+0x20, __stdio_write+0x30, __stdout_write+0x10, alloc_slot+0x3c, fmt_fp+0x60, fprintf+0x18, nontrivial_free+0x1c, open+0x24, pad+0x20, printf_core+0x64, raise+0x18, vfprintf+0x2c
+lib/U/Reusable/YH03.v	43	src0_D_read_stage	0x232c9	0x232c9	OK	read_stage = 0x232c9 (size 65536); xref main+0x64, main+0x74, main+0xe0
+lib/U/Reusable/YH03.v	44	src0_D_oft_aligned_copy_empty	0x332e0	0x332e0	OK	oft_aligned_copy.empty = 0x332e0 (size 32); xref target_run+0xac, target_run+0xc0
+lib/U/Reusable/YH03.v	45	src0_D_stack_chk_guard	0x63690	0x63690	OK	__stack_chk_guard = 0x63690 (size 8); xref none
+lib/U/Reusable/YH03.v	46	src0_D_libc	0x636b0	0x636b0	OK	__libc = 0x636b0 (size 104); xref __init_libc+0x48, __init_tls+0x240, __init_tls+0x30, __malloc_alloc_meta+0x3c, static_init_tls+0x240, static_init_tls+0x30
+lib/U/Reusable/YH03.v	47	src0_D_malloc_lock	0x63720	0x63720	OK	__malloc_lock = 0x63720 (size 4); xref __libc_free+0x158, __libc_free+0x160, __libc_free+0x180, __libc_malloc_impl+0x204, __libc_malloc_impl+0x250, __libc_malloc_impl+0x328, __libc_malloc_impl+0x364, __libc_malloc_impl+0x6c, __libc_malloc_impl+0xb0, __malloc_alloc_meta+0x30, alloc_slot+0x4c
+lib/U/Reusable/YH03.v	48	src0_D_malloc_context	0x63728	0x63728	OK	__malloc_context = 0x63728 (size 928); xref __malloc_alloc_meta+0x244, __malloc_alloc_meta+0x9c, __malloc_allzerop+0x9c, get_meta+0x9c, nontrivial_free+0x178, nontrivial_free+0x6c
+lib/U/Reusable/YH03.v	49	src0_D_ofl_lock	0x63ad8	0x63ad8	OK	ofl_lock = 0x63ad8 (size 4); xref __ofl_lock+0x10, __ofl_lock+0x14, __ofl_unlock+0x4
+lib/U/Reusable/YH03.v	50	src0_D_ofl_head	0x63ae0	0x63ae0	OK	ofl_head = 0x63ae0 (size 8); xref __ofl_lock+0x1c
+lib/U/Reusable/YH03.v	51	src0_vmlock	None	None	OK	no vmlock / __vmlock_lockptr object in symtab; __vm_wait 0x1ae3c+4

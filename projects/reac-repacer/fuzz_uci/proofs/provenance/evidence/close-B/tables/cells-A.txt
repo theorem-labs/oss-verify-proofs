@@ -1,0 +1,20 @@
+PT_LOAD 0x10000 filesz 0x1ebf0 memsz 0x1ebf0 flags 4
+PT_LOAD 0x2fbf0 filesz 0x65e98 memsz 0x65e98 flags 5
+PT_LOAD 0x96a88 filesz 0x1290 memsz 0x1578 flags 6
+PT_LOAD 0x98d18 filesz 0x2bf8 memsz 0x55ab58 flags 6
+CELL_K 0x9eff8 __asan_shadow_memory_dynamic_address .bss GOT 0x97020
+UAR 0x9f000 __asan_option_detect_stack_use_after_return .bss GOT 0x97078
+INITED 0x9fcd8 _ZN6__asanL11asan_initedE .bss GOT -
+REPLACE 0x9fcd9 _ZN6__asan21replace_intrin_cachedE .bss GOT 0x97b88
+CANPOISON 0x9e85c _ZN6__asanL17can_poison_memoryE .bss GOT -
+HIEND 0x9fce0 _ZN6__asan11kHighMemEndE .bss GOT 0x97038
+MIDBEG 0x9fce8 _ZN6__asan10kMidMemBegE .bss GOT 0x97028
+MIDEND 0x9fcf0 _ZN6__asan10kMidMemEndE .bss GOT 0x97030
+REAL_MEMCPY 0x98e78 _ZN14__interception11real_memcpyE .data GOT 0x97048
+REAL_MEMCHR 0x98d40 _ZN14__interception11real_memchrE .data GOT -
+REAL_MEMCPY holds 0x90350
+REAL_MEMCHR holds 0x90254
+memcpy 0x90350
+memchr 0x90254
+__start_asan_globals 0x9b8d0
+__wrap_getenv 0x80104

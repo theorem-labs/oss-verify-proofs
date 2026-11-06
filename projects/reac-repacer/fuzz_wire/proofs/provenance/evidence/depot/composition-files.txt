@@ -1,0 +1,22 @@
+# the 21 core files the unit tops cite (grant release 4f87de75d67: lib/A/GrantTop.v, AGrantT.v, AsanTop.v, GrantTFIB.v Require lists), present in wire lib/A
+A/AB1h.v
+A/AB1v.v
+A/ACeg.v
+A/ACej.v
+A/ACfn.v
+A/AD1i.v
+A/AD1j.v
+A/AD1k.v
+A/AD1l.v
+A/AD1o.v
+A/AD1q.v
+A/AD1u.v
+A/AD1v.v
+A/AD1w.v
+A/AD1x.v
+A/AD2l.v
+A/AD2m.v
+A/AE2k.v
+A/AF0m.v
+A/AF0q.v
+A/AF0w.v

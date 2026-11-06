@@ -14,6 +14,7 @@ library:
 patches:
 - id: example-patch
   summary: A stand-in patch for these tests; it describes no change to zlib.
+  file: example-patch.patch
   upstream: not-a-defect
 withheld: {unpublished: true}
 harnesses:

@@ -1,0 +1,4 @@
+Planted control: one byte appended to close-B/RECORD.md in a scratch copy of the tree of a14c209e0066cff0514840dba723c117d3ff3473
+close-B/RECORD.md: FAILED
+sha256sum: WARNING: 1 computed checksum did NOT match
+rc=1

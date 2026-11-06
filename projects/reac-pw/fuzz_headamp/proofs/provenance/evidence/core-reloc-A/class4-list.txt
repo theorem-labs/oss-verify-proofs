@@ -1,0 +1,42 @@
+# Side stack for frames: every place in reac-pw/fuzz_role's A core (and the kit it uses) that names a stack-malloc class,
+# and what reac-pw/fuzz_headamp's image A needs instead.
+#
+# Measured on fuzz_headamp.asan (pin f3e0669d2819, unstripped b5f352154c54):
+#   __asan_stack_malloc_4 0x3ccac, 460 bytes (role links __asan_stack_malloc_3 0x3cbfc, 428 bytes, and no other class);
+#   LLVMFuzzerTestOneInput asks for a 0x280 = 640-byte frame, which is class 4 (fs_frame_bytes 4 = 64 << 4 = 1024);
+#   option byte __asan_option_detect_stack_use_after_return 0xa4dc0 (role 0xa3400), its .got word 0x9c3c8 (role 0x9a888),
+#   loaded by LLVMFuzzerTestOneInput only (auipc 0x80c1c + ld 0x80c20).
+#
+# A. Core files that name the class (written for headamp in this step)
+#   A/AF0l.v  Tfib_code.pc_stack_malloc: role `fun cid => if cid =? 3 then 0x3cbfc else 0`
+#             -> headamp `fun cid => if cid =? 4 then 0x3ccac else 0` (port_core's class map on headamp: 4=0x3ccac).
+#   A/AB1w.v  tfib_A/E_asan_stack_malloc_3 0x3cbfc / 0x3cda8 -> tfib_A/E_asan_stack_malloc_4 0x3ccac / 0x3ce78
+#             (0x3ccac + 460); no file of the A core uses either name.
+#             tfib_E_SetTLSFakeStack 0x3cbfc -> 0x3ccac (SetTLSFakeStack 0x3cc7c + 48: the end of the function before
+#             the class-4 entry).
+#   A/AD2l.v  `Example TfibB_class8 : pc_stack_malloc (as_code TfibB) 8 = 0` holds for headamp's map too (the else arm).
+#             TfibB.as_uar_cell / as_got_uar name the option byte and its .got word: class-independent, headamp's
+#             0xa4dc0 / 0x9c3c8.
+#   A/ACeg.v, A/ACeh.v  A_uar_glob = the option byte (class-independent): headamp 0xa4dc0.
+#   A/ACeg.v, A/ACeh.v, A/ACem.v, A/ACep.v and the kit (YCbq, YCe5, YG00, YG0f, YG0n, YG0s, YG0t, YF0v, YG0o, YG0p, YG0q)
+#             state frames for any cid (frame_addr ly cid pos, fs_frame_bytes cid): no class is fixed there.
+#
+# B. Kit statements a class-4 file must satisfy (not changed here)
+#   lib/Reusable/YG0d.v:295 astack_malloc_realizes segs B cid - the walk of pc_stack_malloc code cid. Headamp's
+#             frame needs `astack_malloc_realizes tfibsegs TfibB 4` at 0x3ccac: the class-4 walk (ported by its own lane
+#             from plugin-hostd/fuzz_command lib/A/Rt/RtSM4.v / RtSM4T.v, as role's A4StkMal3 ports class 3 from
+#             fuzz_identity's StackMalloc3). It must give: return to raZ regs with AR at S', a0 = frame_addr ly 4 pos,
+#             zero shadow over the 1024-byte frame, the flag pointer in the frame's last word, presence of the frame
+#             bytes and of the ESTACK window, and no other change outside S/S' owned bytes (YG0d.v:296-310).
+#   lib/Reusable/YG0d.v:546 aa_stack_malloc : forall cid, cid = 1 \/ cid = 2 -> astack_malloc_realizes ... (knock's
+#             form). The A core does not use it (no file names aa_stack_malloc); role's A4 states class 3 directly, and
+#             headamp's A4 states class 4 directly in the same way.
+#
+# C. Start-up cells (step A2, generated from headamp's own image: A2 at cb68d3ec501; not this
+#    step's files). A/AF0m.v Tfib_const_abs holds the option byte cell `z4 (ANum 0xa4dc0) 0x1` (row 50; role's row 50 is
+#    `z4 (ANum 0xa3400) 0x1`) and its .got word `z8 (ANum 0x9c3c8) 0xa4dc0` (row 155; role `z8 (ANum 0x9a888) 0xa3400`).
+#    These rows are class-independent; the per-class frame and flag areas lie inside the fake-stack map
+#    (kFakeStackSize, YG0f.v:41), which the start-up table states for every class at once.
+#
+# D. Contracts (A4) that name the class: HPgImgA / HPgCSpec (headamp_himg_A, T_SEG_STK) are the A4 contract step's; role's
+#   RPgImgA role_himg_A says class 3.

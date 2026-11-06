@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spotify-json
 harness: fuzz_decode
-rocq: OssFuzzTheorems.spotify_json.fuzz_decode
+rocq: OSSVerify.spotify_json.fuzz_decode
 origin: upstream
 summary: Decodes the input as JSON into a one-field struct (required string key "x") with spotify::json::try_decode;
   the boolean result and the decoded value are ignored.

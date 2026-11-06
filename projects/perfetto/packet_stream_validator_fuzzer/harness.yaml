@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: perfetto
 harness: packet_stream_validator_fuzzer
-rocq: OssFuzzTheorems.perfetto.packet_stream_validator_fuzzer
+rocq: OSSVerify.perfetto.packet_stream_validator_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

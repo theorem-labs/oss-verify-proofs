@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: phmap
 harness: phashmap_fuzz
-rocq: OssFuzzTheorems.phmap.phashmap_fuzz
+rocq: OSSVerify.phmap.phashmap_fuzz
 origin: oss-fuzz
 summary: 'test_assignments builds value_type pairs from fuzzed strings but never inserts them into `email`
   (the map stays empty) and iterates the empty map: exercises only std::string/pair construction.'

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: fmt
 harness: one-arg-fuzzer
-rocq: OssFuzzTheorems.fmt.one_arg_fuzzer
+rocq: OSSVerify.fmt.one_arg_fuzzer
 origin: upstream
 summary: format_to(fuzz format, one fuzz value) for 14 types incl. std::tm via localtime; std::exception
   swallowed.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zstd
 harness: decompress_dstSize_tooSmall
-rocq: OssFuzzTheorems.zstd.decompress_dstSize_tooSmall
+rocq: OSSVerify.zstd.decompress_dstSize_tooSmall
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an API contract: Compress the input at level
   1, then decompress into a buffer strictly smaller than the input: must fail, and with exactly ZSTD_error_dstSize_tooSmall

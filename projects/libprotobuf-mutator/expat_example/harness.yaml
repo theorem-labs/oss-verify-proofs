@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libprotobuf-mutator
 harness: expat_example
-rocq: OssFuzzTheorems.libprotobuf_mutator.expat_example
+rocq: OSSVerify.libprotobuf_mutator.expat_example
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

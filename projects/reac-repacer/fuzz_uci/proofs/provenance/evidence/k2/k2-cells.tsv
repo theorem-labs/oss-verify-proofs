@@ -1,0 +1,101 @@
+file	line	value	rule	measurement
+Reusable/YH03.v	9	0x126c4	symbol + offset	main+0x0; the start of a function the cell names
+Reusable/YH03.v	10	0x12994	symbol + offset	target_run+0x0; the start of a function the cell names
+Reusable/YH03.v	11	0x12b64	symbol + offset	LLVMFuzzerTestOneInput+0x0; the start of a function the cell names
+Reusable/YH03.v	12	0x13cc4	symbol + offset	__stack_chk_fail+0x0 = __stack_chk_fail_local+0x0; the start of a function the cell names
+Reusable/YH03.v	13	0x13ccc	symbol + offset	__syscall_ret+0x0; the start of a function the cell names
+Reusable/YH03.v	14	0x13d04	symbol + offset	___errno_location+0x0 = __errno_location+0x0; the start of a function the cell names
+Reusable/YH03.v	15	0x13d10	symbol + offset	free+0x0; the start of a function the cell names
+Reusable/YH03.v	16	0x13e50	symbol + offset	default_malloc+0x0 = malloc+0x0; the start of a function the cell names
+Reusable/YH03.v	17	0x13e54	symbol + offset	__libc_free+0x0; the start of a function the cell names
+Reusable/YH03.v	18	0x14020	symbol + offset	get_meta+0x0; the start of a function the cell names
+Reusable/YH03.v	19	0x14130	symbol + offset	nontrivial_free+0x0; the start of a function the cell names
+Reusable/YH03.v	20	0x14508	symbol + offset	__malloc_alloc_meta+0x0; the start of a function the cell names
+Reusable/YH03.v	21	0x147e0	symbol + offset	__libc_malloc_impl+0x0; the start of a function the cell names
+Reusable/YH03.v	22	0x14b50	symbol + offset	alloc_slot+0x0; the start of a function the cell names
+Reusable/YH03.v	23	0x153f4	symbol + offset	enframe+0x0; the start of a function the cell names
+Reusable/YH03.v	24	0x15544	symbol + offset	__malloc_allzerop+0x0; the start of a function the cell names
+Reusable/YH03.v	25	0x156bc	symbol + offset	__vm_wait+0x0; the start of a function the cell names
+Reusable/YH03.v	26	0x156c0	symbol + offset	__mmap+0x0 = mmap+0x0; the start of a function the cell names
+Reusable/YH03.v	27	0x157ac	symbol + offset	__mprotect+0x0 = mprotect+0x0; the start of a function the cell names
+Reusable/YH03.v	28	0x157f4	symbol + offset	__munmap+0x0 = munmap+0x0; the start of a function the cell names
+Reusable/YH03.v	29	0x0	no symbol	no such symbol in this image (no __stdio_read and no fopen are linked, so no sink FILE exists); unused (sink_none): 0 is the read slot of the image's FILE objects, __stdout_FILE + 64, measured
+Reusable/YH03.v	30	0x16094	symbol + offset	__stdio_write+0x0; the start of a function the cell names
+Reusable/YH03.v	31	0x16224	by name	__stdio_seek (the value moved by offset was 0x161f8)
+Reusable/YH03.v	32	0x16068	symbol + offset	__stdio_close+0x0; the start of a function the cell names
+Reusable/YH03.v	33	0x1ad58	symbol + offset	memcpy+0x0; the start of a function the cell names
+Reusable/YH03.v	34	0x1b15c	symbol + offset	memset+0x0; the start of a function the cell names
+Reusable/YH03.v	35	0x1b254	symbol + offset	strnlen+0x0; the start of a function the cell names
+Reusable/YH03.v	36	0x1ac8c	symbol + offset	memchr+0x0; the start of a function the cell names
+Reusable/YH03.v	37	0x1b298	symbol + offset	__lock+0x0; the start of a function the cell names
+Reusable/YH03.v	38	0x1b520	symbol + offset	__unlock+0x0; the start of a function the cell names
+Reusable/YH03.v	39	0x1b594	symbol + offset	__syscall_cp_c+0x0 = sccp+0x0; the start of a function the cell names
+Reusable/YH03.v	40	0x102a2	string content: no such string, value kept	no such string ("wb" (3 bytes: sink_mode_Z ++ [0], stated at sk_mode_addr by YI14 stdio_env)) in this image; decode's value, which is not this string in decode either; read only by YI14 env_addr (YI5c sink laws: an address in the read-only image, here in .rodata [0x10298, 0x110dc)) and, for content, by stdio_env / sink_at (open-FILE path, never reached under sink_none)
+Reusable/YH03.v	41	0x10304	string content: no such string, value kept	no such string ("/tmp/out.gif" (13 bytes: sink_path_Z ++ [0], stated at sk_path_addr by YI14 stdio_env)) in this image; decode's value, which is not this string in decode either; read only by YI14 env_addr (YI5c sink laws: an address in the read-only image, here in .rodata [0x10298, 0x110dc)) and, for content, by stdio_env / sink_at (open-FILE path, never reached under sink_none)
+Reusable/YH03.v	42	0x10311	string content: no such string, value kept	no such string (";" (2 bytes: sink_trailer_Z ++ [0], stated at sk_trailer_addr by YI14 stdio_env)) in this image; decode's value, which is not this string in decode either; read only by YI14 env_addr (YI5c sink laws: an address in the read-only image, here in .rodata [0x10298, 0x110dc)) and, for content, by stdio_env / sink_at (open-FILE path, never reached under sink_none)
+Reusable/YH03.v	43	0x102ed	string content: no such string, value kept	no such string ("rwa\0/dev" (8 bytes: sink_rwa_Z, stated at sk_rwa_addr by YI14 stdio_env)) in this image; decode's value, which is not this string in decode either; read only by YI14 env_addr (YI5c sink laws: an address in the read-only image, here in .rodata [0x10298, 0x110dc)) and, for content, by stdio_env / sink_at (open-FILE path, never reached under sink_none)
+Reusable/YH03.v	44	0x103a8	port_addr_check MAPS	XREF(memchr+0x64)
+Reusable/YH03.v	45	0x103b8	port_addr_check MAPS	XREF(memchr+0x5c)
+Reusable/YH03.v	46	0x10444	port_addr_check MAPS	end of static_init_tls.msg; XREF(__libc_malloc_impl+0xec, alloc_slot+0x1d0, alloc_slot+0x370)
+Reusable/YH03.v	47	0x10464	symbol + offset	__malloc_size_classes+0x0
+Reusable/YH03.v	48	0x104c4	symbol + offset	small_cnt_tab+0x0
+Reusable/YH03.v	49	0x104df	symbol + offset	med_cnt_tab+0x0
+Reusable/YH03.v	50	0x1c708	port_addr_check MAPS	GOT[__stack_chk_guard+0x0]; XREF(__init_ssp+0x14, __init_ssp+0x28, __init_ssp+0x40 +12)
+Reusable/YH03.v	51	0x1d979	symbol + offset	read_stage+0x0
+Reusable/YH03.v	52	0x2d990	symbol + offset	oft_aligned_copy.empty+0x0
+Reusable/YH03.v	53	0x4dcf0	symbol + offset	__stack_chk_guard+0x0
+Reusable/YH03.v	54	0x4dd10	symbol + offset	__libc+0x0
+Reusable/YH03.v	55	0x4dd80	symbol + offset	__malloc_lock+0x0
+Reusable/YH03.v	56	0x4dd88	symbol + offset	__malloc_context+0x0
+Reusable/YH03.v	57	0x4e138	symbol + offset	ofl_lock+0x0
+Reusable/YH03.v	58	0x4e140	symbol + offset	ofl_head+0x0
+U/Reusable/YH03.v	9	0x126c8	symbol + offset	main+0x0; the start of a function the cell names
+U/Reusable/YH03.v	10	0x12998	symbol + offset	target_run+0x0; the start of a function the cell names
+U/Reusable/YH03.v	11	0x12b68	symbol + offset	LLVMFuzzerTestOneInput+0x0; the start of a function the cell names
+U/Reusable/YH03.v	12	0x13de8	symbol + offset	__stack_chk_fail+0x0 = __stack_chk_fail_local+0x0; the start of a function the cell names
+U/Reusable/YH03.v	13	0x13df0	symbol + offset	__syscall_ret+0x0; the start of a function the cell names
+U/Reusable/YH03.v	14	0x13e28	symbol + offset	___errno_location+0x0 = __errno_location+0x0; the start of a function the cell names
+U/Reusable/YH03.v	15	0x13e34	symbol + offset	free+0x0; the start of a function the cell names
+U/Reusable/YH03.v	16	0x13f74	symbol + offset	default_malloc+0x0 = malloc+0x0; the start of a function the cell names
+U/Reusable/YH03.v	17	0x13f78	symbol + offset	__libc_free+0x0; the start of a function the cell names
+U/Reusable/YH03.v	18	0x14144	symbol + offset	get_meta+0x0; the start of a function the cell names
+U/Reusable/YH03.v	19	0x14254	symbol + offset	nontrivial_free+0x0; the start of a function the cell names
+U/Reusable/YH03.v	20	0x1462c	symbol + offset	__malloc_alloc_meta+0x0; the start of a function the cell names
+U/Reusable/YH03.v	21	0x14904	symbol + offset	__libc_malloc_impl+0x0; the start of a function the cell names
+U/Reusable/YH03.v	22	0x14c74	symbol + offset	alloc_slot+0x0; the start of a function the cell names
+U/Reusable/YH03.v	23	0x15518	symbol + offset	enframe+0x0; the start of a function the cell names
+U/Reusable/YH03.v	24	0x15668	symbol + offset	__malloc_allzerop+0x0; the start of a function the cell names
+U/Reusable/YH03.v	25	0x157e0	symbol + offset	__vm_wait+0x0; the start of a function the cell names
+U/Reusable/YH03.v	26	0x157e4	symbol + offset	__mmap+0x0 = mmap+0x0; the start of a function the cell names
+U/Reusable/YH03.v	27	0x158d0	symbol + offset	__mprotect+0x0 = mprotect+0x0; the start of a function the cell names
+U/Reusable/YH03.v	28	0x15918	symbol + offset	__munmap+0x0 = munmap+0x0; the start of a function the cell names
+U/Reusable/YH03.v	29	0x0	no symbol	no such symbol in this image (no __stdio_read and no fopen are linked, so no sink FILE exists); unused (sink_none): 0 is the read slot of the image's FILE objects, __stdout_FILE + 64, measured
+U/Reusable/YH03.v	30	0x161b8	symbol + offset	__stdio_write+0x0; the start of a function the cell names
+U/Reusable/YH03.v	31	0x16348	by name	__stdio_seek (the value moved by offset was 0x1631c)
+U/Reusable/YH03.v	32	0x1618c	symbol + offset	__stdio_close+0x0; the start of a function the cell names
+U/Reusable/YH03.v	33	0x1ae7c	symbol + offset	memcpy+0x0; the start of a function the cell names
+U/Reusable/YH03.v	34	0x1b280	symbol + offset	memset+0x0; the start of a function the cell names
+U/Reusable/YH03.v	35	0x1b378	symbol + offset	strnlen+0x0; the start of a function the cell names
+U/Reusable/YH03.v	36	0x1adb0	symbol + offset	memchr+0x0; the start of a function the cell names
+U/Reusable/YH03.v	37	0x1b3bc	symbol + offset	__lock+0x0; the start of a function the cell names
+U/Reusable/YH03.v	38	0x1b644	symbol + offset	__unlock+0x0; the start of a function the cell names
+U/Reusable/YH03.v	39	0x1b6b8	symbol + offset	__syscall_cp_c+0x0 = sccp+0x0; the start of a function the cell names
+U/Reusable/YH03.v	40	0x102a2	string content: no such string, value kept	no such string ("wb" (3 bytes: sink_mode_Z ++ [0], stated at sk_mode_addr by YI14 stdio_env)) in this image; decode's value, which is not this string in decode either; read only by YI14 env_addr (YI5c sink laws: an address in the read-only image, here in .rodata [0x10298, 0x110dc)) and, for content, by stdio_env / sink_at (open-FILE path, never reached under sink_none)
+U/Reusable/YH03.v	41	0x10304	string content: no such string, value kept	no such string ("/tmp/out.gif" (13 bytes: sink_path_Z ++ [0], stated at sk_path_addr by YI14 stdio_env)) in this image; decode's value, which is not this string in decode either; read only by YI14 env_addr (YI5c sink laws: an address in the read-only image, here in .rodata [0x10298, 0x110dc)) and, for content, by stdio_env / sink_at (open-FILE path, never reached under sink_none)
+U/Reusable/YH03.v	42	0x10311	string content: no such string, value kept	no such string (";" (2 bytes: sink_trailer_Z ++ [0], stated at sk_trailer_addr by YI14 stdio_env)) in this image; decode's value, which is not this string in decode either; read only by YI14 env_addr (YI5c sink laws: an address in the read-only image, here in .rodata [0x10298, 0x110dc)) and, for content, by stdio_env / sink_at (open-FILE path, never reached under sink_none)
+U/Reusable/YH03.v	43	0x102ed	string content: no such string, value kept	no such string ("rwa\0/dev" (8 bytes: sink_rwa_Z, stated at sk_rwa_addr by YI14 stdio_env)) in this image; decode's value, which is not this string in decode either; read only by YI14 env_addr (YI5c sink laws: an address in the read-only image, here in .rodata [0x10298, 0x110dc)) and, for content, by stdio_env / sink_at (open-FILE path, never reached under sink_none)
+U/Reusable/YH03.v	44	0x10600	port_addr_check MAPS	XREF(memchr+0x64)
+U/Reusable/YH03.v	45	0x10610	port_addr_check MAPS	XREF(memchr+0x5c)
+U/Reusable/YH03.v	46	0x103f4	port_addr_check MAPS	end of static_init_tls.msg; XREF(__libc_malloc_impl+0xec, alloc_slot+0x1d0, alloc_slot+0x370)
+U/Reusable/YH03.v	47	0x10414	symbol + offset	__malloc_size_classes+0x0
+U/Reusable/YH03.v	48	0x10474	symbol + offset	small_cnt_tab+0x0
+U/Reusable/YH03.v	49	0x1048f	symbol + offset	med_cnt_tab+0x0
+U/Reusable/YH03.v	50	0x1c830	port_addr_check MAPS	GOT[__stack_chk_guard+0x0]; XREF(__init_ssp+0x14, __init_ssp+0x28, __init_ssp+0x40 +12)
+U/Reusable/YH03.v	51	0x1daa9	symbol + offset	read_stage+0x0
+U/Reusable/YH03.v	52	0x2dac0	symbol + offset	oft_aligned_copy.empty+0x0
+U/Reusable/YH03.v	53	0x4de20	symbol + offset	__stack_chk_guard+0x0
+U/Reusable/YH03.v	54	0x4de40	symbol + offset	__libc+0x0
+U/Reusable/YH03.v	55	0x4deb0	symbol + offset	__malloc_lock+0x0
+U/Reusable/YH03.v	56	0x4deb8	symbol + offset	__malloc_context+0x0
+U/Reusable/YH03.v	57	0x4e268	symbol + offset	ofl_lock+0x0
+U/Reusable/YH03.v	58	0x4e270	symbol + offset	ofl_head+0x0

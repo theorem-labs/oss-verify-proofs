@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: eigen
 harness: sparse_fuzzer
-rocq: OssFuzzTheorems.eigen.sparse_fuzzer
+rocq: OSSVerify.eigen.sparse_fuzzer
 origin: oss-fuzz
 summary: SparseMatrix from fuzz triplets; transpose/adjoint/norm; SparseLU (square) and SparseQR compute,
   solve against Random() vectors when info()==Success; results discarded, residuals never checked.

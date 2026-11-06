@@ -1,0 +1,21 @@
+# gate: kimg_overlap (kimg_overlap.py sha256 5db341e3cd628ad07bde939c902db9ecc0c3e5791fa3947434ad729031239d3a) on proofs/libreac/fuzz_disco/lib/A/AB01.v, AB03.v, AD2j.v against image A (fuzz_disco.asan)
+# command: python3 kimg_overlap.py <repo> <commit> <file> <fuzz_disco.asan> (one triple per file)
+# verdict: exit 0 (PASS: no contradiction, no fill)
+# control: a copy of AB01.v whose 'KImg 1552296 5056480' is widened 8 bytes down to 1552288, over an existing KWord: exit 1 (caught, as it must be)
+#   FILE:ctl_AB01.v  overlapping write bytes 20  contradicting bytes 5
+#       ('HS_tfib_1_kn', 'KWord', '0x17afa0', 4, '0x17afa0', 0, 2, [('0x17afa0', '0x4d27e0')])
+#       ('HS_tfib_3_kn', 'KWord', '0x17afa0', 4, '0x17afa0', 0, 2, [('0x17afa0', '0x4d27e0')])
+#       ('HS_tfib_9_kn', 'KWord', '0x17afa0', 4, '0x17afa0', 0, 2, [('0x17afa0', '0x4d27e0')])
+#       ('HS_tfib_11_kn', 'KWord', '0x17afa0', 4, '0x17afa0', 0, 2, [('0x17afa0', '0x4d27e0')])
+#       ('HS_tfib_41_kn', 'KWord', '0x17afa0', 4, '0x17afa0', 0, 2, [('0x17afa0', '0x4d27e0')])
+#       states: 50, aliases 0, duplicate states 0
+#       KImg ranges: 139, findings 0
+b1afc3e80791ebe54b1034a568112da851f005f0:proofs/libreac/fuzz_disco/lib/A/AB01.v  overlapping write bytes 0  contradicting bytes 0
+    states: 50, aliases 0, duplicate states 0
+    KImg ranges: 139, findings 0
+b1afc3e80791ebe54b1034a568112da851f005f0:proofs/libreac/fuzz_disco/lib/A/AB03.v  overlapping write bytes 0  contradicting bytes 0
+    states: 0, aliases 0, duplicate states 0
+    KImg ranges: 66, findings 0
+b1afc3e80791ebe54b1034a568112da851f005f0:proofs/libreac/fuzz_disco/lib/A/AD2j.v  overlapping write bytes 0  contradicting bytes 0
+    states: 0, aliases 0, duplicate states 0
+    regions: 80, broken 0 (no donor control given)

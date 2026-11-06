@@ -1,0 +1,4 @@
+claims: toy/exit0/plain_halts
+theorem: plain_halts_holds
+refused_at: axioms
+because: Candidate.neg_hidden_axiom_string.Proof.cheat

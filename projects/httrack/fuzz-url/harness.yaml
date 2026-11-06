@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: httrack
 harness: fuzz-url
-rocq: OssFuzzTheorems.httrack.fuzz_url
+rocq: OSSVerify.httrack.fuzz_url
 origin: upstream
 summary: ident_url_absolute splits the URL; fil_simplifie normalises a copy in place; results discarded
   (no idempotence check of fil_simplifie).

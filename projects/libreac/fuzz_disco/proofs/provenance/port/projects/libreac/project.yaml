@@ -1,0 +1,31 @@
+# libreac: the C library for Roland REAC audio over Ethernet (EtherType 0x8819): frame decode and encode, control
+# blocks, stagebox identity and head-amps, discovery, and the pcap reader. The pin moves from f37a23c5 (the head of
+# FreeREAC/libreac#29, issue #28; the merge of #29 adds nothing to it) to v1.9.0 (d16f3f4, tagged 2026-10-27). The
+# changes to built or fuzzed code are:
+#   - #31: fuzz_ctrl reads the address from bytes 9 and 10 of the joined record.
+#   - #33: pcap_source skips a record larger than the buffer without writing to stderr.
+#   - #37: a comment in reac_ctrlblk.h changes, which moves the lines below it down by one.
+#   - #36: reac_cfg.h declares the pace and role vocabulary that the transport headers used from reac-pw, and
+#     LIBREAC_VERSION_MINOR becomes 9.
+#   - #40: the fuzz_grant mutant records cite the current reac_ctrlblk.h lines.
+# The other changes are fuzz tooling, tests, the build system and packaging, CI and documentation: #38 (the coverage
+# floor reads a brace-less body as the check of its nearest if, else, case or default), #30 and #32. #36 also changes
+# the tests, the build system and packaging, and removes the vendored copies of reac-pw's reac_rate_cfg.h and
+# reac_role_cfg.h, which reac_pacer.h and reac_role_swap.h no longer include.
+# Every number except issue #28 is a FreeREAC/libreac pull request.
+repo: https://github.com/FreeREAC/libreac#d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+primary_contact: linuxnow@gmail.com
+homepage: https://github.com/FreeREAC/libreac
+language: c
+sanitizers: [address, undefined]
+fuzz_targets:
+  - fuzz_decode
+  - fuzz_ctrl
+  - fuzz_identity
+  - fuzz_disco
+  - fuzz_scene
+  - fuzz_boxreg
+  - fuzz_knock
+  - fuzz_grant
+  - fuzz_pcap
+mutants: fuzz/sabotage

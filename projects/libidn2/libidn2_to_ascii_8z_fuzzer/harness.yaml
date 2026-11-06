@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libidn2
 harness: libidn2_to_ascii_8z_fuzzer
-rocq: OssFuzzTheorems.libidn2.libidn2_to_ascii_8z_fuzzer
+rocq: OSSVerify.libidn2.libidn2_to_ascii_8z_fuzzer
 origin: upstream
 summary: idn2_to_ascii_8z/_lz over 6 flag combinations, idn2_to_ascii_4i/_4i2/_4z for 4-byte-aligned sizes,
   NULL-argument combinations when size == 0; outputs freed unchecked.

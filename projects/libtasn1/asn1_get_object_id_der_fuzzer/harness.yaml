@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libtasn1
 harness: asn1_get_object_id_der_fuzzer
-rocq: OssFuzzTheorems.libtasn1.asn1_get_object_id_der_fuzzer
+rocq: OSSVerify.libtasn1.asn1_get_object_id_der_fuzzer
 origin: upstream
 summary: asn1_get_object_id_der into a 256-byte buffer; return code and output ignored.
 entry: LLVMFuzzerTestOneInput

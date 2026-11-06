@@ -1,0 +1,12 @@
+(* Probe, not a proof file of the unit (outside lib/, so no build of the unit compiles it): compiled in the checker
+   image against the cb workspace's _CoqProject after the counted build, to print the assumptions of the image-B
+   fake-stack contracts of classes 0, 1, 2, 3 and 5, and of the class-5 release bridge stack_free5_realizes_B
+   (lib/B/Rt/RtSF5CgB.v). Each Redirect writes <name>.out in the output directory. *)
+From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B.Rt Require StackMalloc0 StackMalloc1 StackMalloc2 RtSM3 RtSM5 RtSF5 RtSF5CgB.
+Redirect "pa-ctrl_stack_malloc0" Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B.Rt.StackMalloc0.ctrl_stack_malloc0.
+Redirect "pa-ctrl_stack_malloc1" Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B.Rt.StackMalloc1.ctrl_stack_malloc1.
+Redirect "pa-ctrl_stack_malloc2" Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B.Rt.StackMalloc2.ctrl_stack_malloc2.
+Redirect "pa-cmd_stack_malloc3_contract" Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B.Rt.RtSM3.cmd_stack_malloc3_contract.
+Redirect "pa-cmd_stack_malloc5_contract" Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B.Rt.RtSM5.cmd_stack_malloc5_contract.
+Redirect "pa-cmd_stack_free5_contract" Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B.Rt.RtSF5.cmd_stack_free5_contract.
+Redirect "pa-stack_free5_realizes_B" Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B.Rt.RtSF5CgB.stack_free5_realizes_B.

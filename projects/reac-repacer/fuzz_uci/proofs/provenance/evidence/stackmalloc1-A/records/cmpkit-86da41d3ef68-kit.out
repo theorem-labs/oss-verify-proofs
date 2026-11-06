@@ -1,0 +1,12 @@
+$ (cd kit && sha256sum -c SHA256SUMS && sha256sum SHA256SUMS)
+ambiscan.py: OK
+bytecmp-1480ca2faea0.py: OK
+closure_strict3.py: OK
+drvcmp.py: OK
+jtcheck.py: OK
+luiscan.py: OK
+paircl.py: OK
+repin_check.py: OK
+strictcmp3.py: OK
+86da41d3ef68abf071a843e599786e5eb0a6ed77c4a6b6eb645e7498bffbee60  SHA256SUMS
+python 3.12.3 pyelftools 0.33 capstone 5.0.7

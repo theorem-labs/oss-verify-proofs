@@ -1,0 +1,85 @@
+B/YFgr.v	107	1560	Definition R_CSZ : YP09.region := YP09.mkRegion (Some 32%nat) (t_cache + 1928) (t_cache + 1936) 0 0 [YP09.mkChunk (t_cache + 1928) (CVal 1560 (SLit 81
+B/YFgr.v	156	1560	val_mem tfibsegs m0 (T + t_cache + 1928) 1560 8192 /\ val_mem tfibsegs m0 CSLv 4 CPv /\
+B/YFiy.v	370	1560	change (kMaxSize / 1560) with 8192 in DM. unfold zone3, TFIB_IMG_LO, kLowShadowBeg, TFIB_IMG_END, kHighMemBeg in *. zlia.
+B/YFgi.v	298	1560	sp0 mod 16 = 0 /\ Bv mod 8192 = 0 /\ Bv mod 1560 = 0.
+B/YFjc.v	373	1560	change (kMaxSize / 1560) with 8192 in DM. unfold zone3, TFIB_IMG_LO, kLowShadowBeg, TFIB_IMG_END, kHighMemBeg in *. zlia.
+B/YFev.v	427	1560	change (65536 / 1560) with 8192 in *; change (6381568 / 1560) with 797696 in *; lia. }
+B/YFev.v	427	1560	change (65536 / 1560) with 8192 in *; change (6381568 / 1560) with 797696 in *; lia. }
+B/YFg0.v	150	1560	change (65536 / 1560) with 8192 in *; change (6381568 / 1560) with 797696 in *; lia. }
+B/YFg0.v	150	1560	change (65536 / 1560) with 8192 in *; change (6381568 / 1560) with 797696 in *; lia. }
+B/YFfy.v	115	1560	change (65536 / 1560) with 8192 in R. change (6381568 / 1560) with 797696 in R.
+B/YFfy.v	115	1560	change (65536 / 1560) with 8192 in R. change (6381568 / 1560) with 797696 in R.
+B/YFfy.v	167	1560	clear L K. unfold TFIB_IAL_LO, TFIB_IAL_HI, TFIB_IAL_FLAG, TFIB_IMG_LO, TFIB_IMG_END, SHADOW_OFF in R. change (65536 / 1560) with 8192 in R. change (6
+B/YFfy.v	167	1560	clear L K. unfold TFIB_IAL_LO, TFIB_IAL_HI, TFIB_IAL_FLAG, TFIB_IMG_LO, TFIB_IMG_END, SHADOW_OFF in R. change (65536 / 1560) with 8192 in R. change (6
+B/YFfy.v	172	1560	- assert (Y : (pa + (nn + 7) / 1560 * 1560) / 1560 <= 65536 / 1560) by (apply Z.div_le_mono; lia). rewrite Z.div_add in Y by lia. change (65536 / 1560
+B/YFfy.v	172	1560	- assert (Y : (pa + (nn + 7) / 1560 * 1560) / 1560 <= 65536 / 1560) by (apply Z.div_le_mono; lia). rewrite Z.div_add in Y by lia. change (65536 / 1560
+B/YFfy.v	172	1560	- assert (Y : (pa + (nn + 7) / 1560 * 1560) / 1560 <= 65536 / 1560) by (apply Z.div_le_mono; lia). rewrite Z.div_add in Y by lia. change (65536 / 1560
+B/YFfy.v	172	1560	- assert (Y : (pa + (nn + 7) / 1560 * 1560) / 1560 <= 65536 / 1560) by (apply Z.div_le_mono; lia). rewrite Z.div_add in Y by lia. change (65536 / 1560
+B/YFfy.v	172	1560	- assert (Y : (pa + (nn + 7) / 1560 * 1560) / 1560 <= 65536 / 1560) by (apply Z.div_le_mono; lia). rewrite Z.div_add in Y by lia. change (65536 / 1560
+B/YFg5.v	123	1560	Lemma cache_vals : val_mem tfibsegs m0 (T + t_cache + 1920) 4 cnt /\ val_mem tfibsegs m0 (T + t_cache + 1928) 1560 8192 /\ val_mem tfibsegs m0 CSLv 4 
+B/YFg5.v	504	1560	change (65536 / 1560) with 8192 in *; change (6381568 / 1560) with 797696 in *; lia. }
+B/YFg5.v	504	1560	change (65536 / 1560) with 8192 in *; change (6381568 / 1560) with 797696 in *; lia. }
+B/YFf4.v	338	1560	unfold TFIB_IMG_LO, TFIB_IMG_END, SHADOW_OFF in Ha. change (65536 / 1560) with 8192 in Ha. change (6381568 / 1560) with 797696 in Ha.
+B/YFf4.v	338	1560	unfold TFIB_IMG_LO, TFIB_IMG_END, SHADOW_OFF in Ha. change (65536 / 1560) with 8192 in Ha. change (6381568 / 1560) with 797696 in Ha.
+B/YFf4.v	353	1560	+ assert (Y' : (MAP + LEN) / 1560 <= 65536 / 1560) by (apply Z.div_le_mono; lia). change (65536 / 1560) with 8192 in Y'. lia.
+B/YFf4.v	353	1560	+ assert (Y' : (MAP + LEN) / 1560 <= 65536 / 1560) by (apply Z.div_le_mono; lia). change (65536 / 1560) with 8192 in Y'. lia.
+B/YFf4.v	353	1560	+ assert (Y' : (MAP + LEN) / 1560 <= 65536 / 1560) by (apply Z.div_le_mono; lia). change (65536 / 1560) with 8192 in Y'. lia.
+B/YFf4.v	529	1560	- apply ok_imgsh. clear - La Hj. unfold TFIB_IMG_LO, TFIB_IMG_END, SHADOW_OFF in *. change (65536 / 1560) with 8192 in La. change (6381568 / 1560) wit
+B/YFf4.v	529	1560	- apply ok_imgsh. clear - La Hj. unfold TFIB_IMG_LO, TFIB_IMG_END, SHADOW_OFF in *. change (65536 / 1560) with 8192 in La. change (6381568 / 1560) wit
+B/YFk5.v	564	1560	{ clear. intros x Hx. apply Z.mod_divide in Hx as [q Hq]; [|lia]. rewrite Hq. replace (q * 65536) with (q * 8192 * 1560) by lia. rewrite Z.div_mul by 
+B/YFg7.v	155	1560	change (65536 / 1560) with 8192 in *; change (6381568 / 1560) with 797696 in *; lia. }
+B/YFg7.v	155	1560	change (65536 / 1560) with 8192 in *; change (6381568 / 1560) with 797696 in *; lia. }
+B/YFkn.v	1875	1560	{ rewrite G11, G27. clear - G7 G8 G10 G15 G24 XR3 DR M0. apply Z.mod_divide in G8 as [q Hq]; [|zlia]. rewrite Hq at 1. replace (q * 65536) with (q * 8
+B/YFkn.v	1876	1560	assert (X : q * 8192 * 1560 + 262144 <= fadr) by (unfold kUserMapSize, kFreeArrayOffset in *; zlia).
+B/YFkn.v	1877	1560	assert (Y : (q * 8192 * 1560 + 262144) / 1560 <= fadr / 1560) by (apply Z.div_le_mono; [zlia | exact X]).
+B/YFkn.v	1877	1560	assert (Y : (q * 8192 * 1560 + 262144) / 1560 <= fadr / 1560) by (apply Z.div_le_mono; [zlia | exact X]).
+B/YFkn.v	1877	1560	assert (Y : (q * 8192 * 1560 + 262144) / 1560 <= fadr / 1560) by (apply Z.div_le_mono; [zlia | exact X]).
+B/YFkn.v	1878	1560	replace (q * 8192 * 1560 + 262144) with ((q * 8192 + 32768) * 1560) in Y by zlia. rewrite Z.div_mul in Y by zlia. zlia. }
+B/YFkn.v	1878	1560	replace (q * 8192 * 1560 + 262144) with ((q * 8192 + 32768) * 1560) in Y by zlia. rewrite Z.div_mul in Y by zlia. zlia. }
+B/YFjs.v	445	1560	Lemma SH_hull : forall A, SHLO A <= shadow_addr A /\ shadow_addr A + MSv / 1560 <= SHHI A /\ SHHI A - SHLO A <= MSv / 1560 + 8192 /\
+B/YFjs.v	445	1560	Lemma SH_hull : forall A, SHLO A <= shadow_addr A /\ shadow_addr A + MSv / 1560 <= SHHI A /\ SHHI A - SHLO A <= MSv / 1560 + 8192 /\
+B/YFfq.v	261	1560	Lemma cache_vals : val_mem tfibsegs m0 (T + t_cache + 1920) 4 cnt /\ val_mem tfibsegs m0 (T + t_cache + 1928) 1560 8192 /\ val_mem tfibsegs m0 CSLv 4 
+B/YD1e.v	240	1560	unfold kRegionInfoOff. apply Z.mod_divide in S2 as [q Hq]; [|lia]. rewrite Hq. replace (q * 65536 + 2 ^ 37) with ((8192 * q + 2 ^ 34) * 1560) by lia. 
+B/YFkm.v	1079	1560	rewrite Hq in Hs |- *. replace (q * 65536) with (q * 8192 * 1560) in Hs by lia4. rewrite Z.div_mul in Hs by lia4.
+B/YFkm.v	1087	1560	rewrite Hq in Hs |- *. replace (q * 65536) with (q * 8192 * 1560) in Hs by lia4. rewrite Z.div_mul in Hs by lia4.
+B/YFkm.v	1208	1560	replace (q * 65536) with (q * 8192 * 1560) by lia4. rewrite Z.div_mul by lia4. pose proof (Z.div_mod g 1560 ltac:(lia4)). lia4. }
+B/YFkm.v	1208	1560	replace (q * 65536) with (q * 8192 * 1560) by lia4. rewrite Z.div_mul by lia4. pose proof (Z.div_mod g 1560 ltac:(lia4)). lia4. }
+B/YFkm.v	1229	1560	assert (Esha : sha = SHBv + qa * 8192) by (rewrite G11, Hqa; replace (qa * 65536) with (qa * 8192 * 1560) by (clear; zlia); rewrite Z.div_mul by (clea
+B/YFkm.v	1230	1560	assert (Eshf : shf = SHBv + qf * 8192) by (rewrite G27, Hqf; replace (qf * 65536) with (qf * 8192 * 1560) by (clear; zlia); rewrite Z.div_mul by (clea
+B/YFkm.v	1399	1560	replace (p * 65536 + q * 262144 + 262144) with ((p * 8192 + q * 32768 + 32768) * 1560) by zlia. replace (p * 65536 + q * 262144) with ((p * 8192 + q *
+B/YFkm.v	1399	1560	replace (p * 65536 + q * 262144 + 262144) with ((p * 8192 + q * 32768 + 32768) * 1560) by zlia. replace (p * 65536 + q * 262144) with ((p * 8192 + q *
+B/YFkm.v	1410	1560	replace (p * 65536 + 3758096384 + q * 262144 + 262144) with ((p * 8192 + 469762048 + q * 32768 + 32768) * 1560) by zlia.
+B/YFkm.v	1411	1560	replace (p * 65536 + 3758096384 + q * 262144) with ((p * 8192 + 469762048 + q * 32768) * 1560) by zlia.
+B/YFkm.v	1449	1560	rewrite Hq, Hq' in Hx. replace (q * 65536) with (q * 8192 * 1560) in Hx by (clear; zlia). replace (q' * 65536) with (q' * 8192 * 1560) in Hx by (clear
+B/YFkm.v	1449	1560	rewrite Hq, Hq' in Hx. replace (q * 65536) with (q * 8192 * 1560) in Hx by (clear; zlia). replace (q' * 65536) with (q' * 8192 * 1560) in Hx by (clear
+B/YD1g.v	981	1560	replace (q * 65536 + 2 ^ 37) with ((8192 * q + 2 ^ 34) * 1560) by lia. apply Z_mod_mult.
+B/YFg6.v	208	1560	split. { apply (AF 43%nat NBv); [exact EqNB| | | |]. all: rewrite ?ENB; clear - CR0 hR1 hR2 hR3; first [lia | change (2 ^ 13) with 8192; apply Z.mod_d
+B/YFg6.v	712	1560	change (65536 / 1560) with 8192 in *; change (6381568 / 1560) with 797696 in *; lia. }
+B/YFg6.v	712	1560	change (65536 / 1560) with 8192 in *; change (6381568 / 1560) with 797696 in *; lia. }
+B/YFgq.v	93	1560	Definition R_CSZ : YP09.region := YP09.mkRegion (Some 32%nat) (t_cache + 1928) (t_cache + 1936) 0 0 [YP09.mkChunk (t_cache + 1928) (CVal 1560 (SLit 81
+B/YFgq.v	135	1560	val_mem tfibsegs m0 (T + t_cache + 1928) 1560 8192 /\ val_mem tfibsegs m0 CSLv 4 CPv /\
+B/YFg3.v	284	1560	change (65536 / 1560) with 8192 in R. change (6381568 / 1560) with 797696 in R.
+B/YFg3.v	284	1560	change (65536 / 1560) with 8192 in R. change (6381568 / 1560) with 797696 in R.
+B/YFgv.v	271	1560	assert (UB1 : map / 1560 <= (140737479966720 - 8192) / 1560) by (apply Z.div_le_mono; lia).
+B/YFgv.v	271	1560	assert (UB1 : map / 1560 <= (140737479966720 - 8192) / 1560) by (apply Z.div_le_mono; lia).
+B/YFgv.v	274	1560	assert (LB2 : 8192 / 1560 <= len / 1560) by (apply Z.div_le_mono; lia).
+B/YFgv.v	274	1560	assert (LB2 : 8192 / 1560 <= len / 1560) by (apply Z.div_le_mono; lia).
+B/YFk0.v	1288	1560	rewrite EcM. apply (slackS mdV W3 (MSv + (MSv / 1560 + 8192)) HAR Hev (proj1 (proj2 HAR))).
+B/YFg4.v	271	1560	change (65536 / 1560) with 8192 in *; change (6381568 / 1560) with 797696 in *; lia. }
+B/YFg4.v	271	1560	change (65536 / 1560) with 8192 in *; change (6381568 / 1560) with 797696 in *; lia. }
+B/YD1f.v	212	1560	change (65536 / 1560) with 8192 in B1. change ((65536 + 6316032) / 1560) with 797696 in B2. clear - B1 B2. lia.
+B/YD1f.v	212	1560	change (65536 / 1560) with 8192 in B1. change ((65536 + 6316032) / 1560) with 797696 in B2. clear - B1 B2. lia.
+B/YFem.v	334	1560	val_mem tfibsegs m a 1560 v -> ew E k = Z_to_bv 64 v -> 0 <= v < 2 ^ 64 -> 0xa3000 <= a -> a + 1560 <= 0x616000 -> region_ok tfibsegs E m (cell8 a k).
+B/YFem.v	334	1560	val_mem tfibsegs m a 1560 v -> ew E k = Z_to_bv 64 v -> 0 <= v < 2 ^ 64 -> 0xa3000 <= a -> a + 1560 <= 0x616000 -> region_ok tfibsegs E m (cell8 a k).
+B/YFjp.v	823	1560	replace ((w * 512) * 1560 - q * 1560 - 8192) with ((w * 512 - q - 1024) * 1560) by zlia.
+B/YFjp.v	823	1560	replace ((w * 512) * 1560 - q * 1560 - 8192) with ((w * 512 - q - 1024) * 1560) by zlia.
+B/YFjp.v	823	1560	replace ((w * 512) * 1560 - q * 1560 - 8192) with ((w * 512 - q - 1024) * 1560) by zlia.
+B/YFg1.v	548	1560	change (65536 / 1560) with 8192 in R. change (6381568 / 1560) with 797696 in R.
+B/YFg1.v	548	1560	change (65536 / 1560) with 8192 in R. change (6381568 / 1560) with 797696 in R.
+B/YFg1.v	601	1560	clear L K. unfold TFIB_IAL_LO, TFIB_IAL_HI, TFIB_IAL_FLAG, TFIB_IMG_LO, TFIB_IMG_END, SHADOW_OFF in R. change (65536 / 1560) with 8192 in R. change (6
+B/YFg1.v	601	1560	clear L K. unfold TFIB_IAL_LO, TFIB_IAL_HI, TFIB_IAL_FLAG, TFIB_IMG_LO, TFIB_IMG_END, SHADOW_OFF in R. change (65536 / 1560) with 8192 in R. change (6
+B/YFg1.v	606	1560	- assert (Y : (pa + (nn + 7) / 1560 * 1560) / 1560 <= 65536 / 1560) by (apply Z.div_le_mono; lia). rewrite Z.div_add in Y by lia. change (65536 / 1560
+B/YFg1.v	606	1560	- assert (Y : (pa + (nn + 7) / 1560 * 1560) / 1560 <= 65536 / 1560) by (apply Z.div_le_mono; lia). rewrite Z.div_add in Y by lia. change (65536 / 1560
+B/YFg1.v	606	1560	- assert (Y : (pa + (nn + 7) / 1560 * 1560) / 1560 <= 65536 / 1560) by (apply Z.div_le_mono; lia). rewrite Z.div_add in Y by lia. change (65536 / 1560
+B/YFg1.v	606	1560	- assert (Y : (pa + (nn + 7) / 1560 * 1560) / 1560 <= 65536 / 1560) by (apply Z.div_le_mono; lia). rewrite Z.div_add in Y by lia. change (65536 / 1560
+B/YFg1.v	606	1560	- assert (Y : (pa + (nn + 7) / 1560 * 1560) / 1560 <= 65536 / 1560) by (apply Z.div_le_mono; lia). rewrite Z.div_add in Y by lia. change (65536 / 1560

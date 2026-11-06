@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: geos
 harness: fuzz_geo_ops
-rocq: OssFuzzTheorems.geos.fuzz_geo_ops
+rocq: OSSVerify.geos.fuzz_geo_ops
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

@@ -1,0 +1,495 @@
+# planted controls: one per shape, side 1 a copy of C, side 2 a copy of decode A, planted at memset+0
+# kit of record: cmpkit 86da41d3ef68 (its KNOWN FAIL-OPENS are what this checks; the kit is not run here)
+# hand pass: failopen.py a4a1e11fc4e9, plant.py 21fe1a423b92, run.sh e0d18d3d4764; GNU objdump (GNU Binutils) 2.42; python 3.12.15; listings: riscv64-alpine-linux-musl-objdump -d -M no-aliases --disassemble=FN, and the same bytes as -b binary
+$ python3 plant.py img/cgif_file_fuzzer.asan-ubsan img/fuzz_decode.asan memset ctl
+# side 1 cgif_file_fuzzer.asan-ubsan sha256 ce511d541cdabbe3c8df3f672dc517e8b5a7edd37b280a7483043b438de0adf7; side 2 fuzz_decode.asan sha256 4cb0a852e8262acb5ed0fa075a6bee7b1a25192189b168e777c760a4bfd65ae2; function memset
+PLANT	a	diff	+0x8	shape a	side 1 oft_aligned_copy.empty+0x20 (0x5d8900)	side 2 oft_aligned_copy.empty+0x20 (0x5d3440)	words 1 37955d001305858f83358500	words 2 37355d001305854383358500
+PLANT	a	same	+0x8	shape a	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0x9e5c8)	words 1 37450a00130505a883358500	words 2 37e509001305055c83358500
+PLANT	b	diff	+0xc	shape b	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN11__sanitizer21common_flags_dont_useE+0x10 (0x1328f8)	words 1 37450a001b0585981305051083350500	words 2 372513001b05857f1305051083350500
+PLANT	b	same	+0xc	shape b	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0x9e5c8)	words 1 37450a001b0585981305051083350500	words 2 37e509001b05854c1305051083350500
+PLANT	c.ori	diff	+0xc	shape c	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN11__sanitizer21common_flags_dont_useE+0x10 (0x1328f8)	words 1 37450a00130505a81365850083350500	words 2 37351300130505881365850783350500
+PLANT	c.ori	same	+0xc	shape c	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0x9e5c8)	words 1 37450a00130505a81365850083350500	words 2 37e50900130505581365850483350500
+PLANT	c.xori	diff	+0xc	shape c	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN11__sanitizer21common_flags_dont_useE+0x10 (0x1328f8)	words 1 37450a00130585ac1345050483350500	words 2 373513001305858b1345050483350500
+PLANT	c.xori	same	+0xc	shape c	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0x9e5c8)	words 1 37450a00130585ac1345050483350500	words 2 37e50900130585581345050483350500
+PLANT	c.slli	diff	+0xc	shape c	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN11__sanitizer21common_flags_dont_useE+0x10 (0x1328f8)	words 1 37450100130515751315350083350500	words 2 376502001305f5511315350083350500
+PLANT	c.slli	same	+0xc	shape c	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0x9e5c8)	words 1 37450100130515751315350083350500	words 2 37450100130595cb1315350083350500
+PLANT	d.spill	diff	+0x18	shape d	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN11__sanitizer21common_flags_dont_useE+0x10 (0x1328f8)	words 1 37450a00130585a8130101ff2334a100130500008335810003b60500	words 2 373513001305858f130101ff2334a100130500008335810003b60500
+PLANT	d.spill	same	+0x18	shape d	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0x9e5c8)	words 1 37450a00130585a8130101ff2334a100130500008335810003b60500	words 2 37e509001305855c130101ff2334a100130500008335810003b60500
+PLANT	d.fmv	diff	+0x14	shape d	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN11__sanitizer21common_flags_dont_useE+0x10 (0x1328f8)	words 1 37450a00130585a8530005f213050000d30500e203b60500	words 2 373513001305858f530005f213050000d30500e203b60500
+PLANT	d.fmv	same	+0x14	shape d	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0x9e5c8)	words 1 37450a00130585a8530005f213050000d30500e203b60500	words 2 37e509001305855c530005f213050000d30500e203b60500
+PLANT	d.csr	diff	+0x14	shape d	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN11__sanitizer21common_flags_dont_useE+0x10 (0x1328f8)	words 1 37450a00130585a87310051413050000f325001403b60500	words 2 373513001305858f7310051413050000f325001403b60500
+PLANT	d.csr	same	+0x14	shape d	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0x9e5c8)	words 1 37450a00130585a87310051413050000f325001403b60500	words 2 37e509001305855c7310051413050000f325001403b60500
+PLANT	e	diff	+0xc	shape e	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN11__sanitizer21common_flags_dont_useE+0x10 (0x1328f8)	words 1 6780070037450a00130585a883350500	words 2 67800700373513001305858f83350500
+PLANT	e	same	+0xc	shape e	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0x9e5c8)	words 1 6780070037450a00130585a883350500	words 2 6780070037e509001305855c83350500
+PLANT	f	diff	+0x10	shape f	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN11__sanitizer21common_flags_dont_useE+0x10 (0x1328f8)	words 1 37450a00130585a8ef0080006f00c0008335050067800000	words 2 373513001305858fef0080006f00c0008335050067800000
+PLANT	f	same	+0x10	shape f	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0x9e5c8)	words 1 37450a00130585a8ef0080006f00c0008335050067800000	words 2 37e509001305855cef0080006f00c0008335050067800000
+PLANT	g	diff	+0xc	shape g	side 1 errmsgidx+0x0 (0x21e34)	side 2 __c_locale+0x0 (0x21e60)	words 1 4565010013151500130545e383350500	words 2 4565010013151500130505e683350500
+PLANT	g	same	+0xc	shape g	side 1 errmsgidx+0x0 (0x21e34)	side 2 errmsgidx+0x0 (0x21d54)	words 1 4565010013151500130545e383350500	words 2 4565010013151500130545d583350500
+PLANT	h.auipc	diff	+0x8	shape h	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN11__sanitizer21common_flags_dont_useE+0x10 (0x1328f8)	words 1 17c500001305c51783350500	words 2 17050a001305454883350500
+PLANT	h.auipc	same	+0x8	shape h	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0x9e5c8)	words 1 17c500001305c51783350500	words 2 17c500001305451583350500
+PLANT	h.ldk	diff	+0x8	shape h	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 (0xa3a78)	side 2 _ZN11__sanitizer21common_flags_dont_useE+0x0 (0x1328e8)	words 1 177500000335458f83350500	words 2 177500000335c58b83350500
+PLANT	h.ldk	same	+0x8	shape h	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 (0xa3a78)	side 2 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 (0x9e5b8)	words 1 177500000335458f83350500	words 2 177500000335458c83350500
+PLANT	h.li	diff	+0x8	shape h	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN11__sanitizer21common_flags_dont_useE+0x10 (0x1328f8)	words 1 130570141315b50083358528	words 2 130550261315b5008335850f
+PLANT	h.li	same	+0x8	shape h	side 1 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0xa3a88)	side 2 _ZN6__asan28asan_flags_dont_use_directlyE+0x10 (0x9e5c8)	words 1 130570141315b50083358528	words 2 1305c0131315b5008335855c
+## a_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	005d9537          	lui	a0,0x5d9
+   97910:	8f850513          	addi	a0,a0,-1800 # 5d88f8 <oft_aligned_copy.empty+0x18>
+   97914:	00853583          	ld	a1,8(a0)
+   97918:	00300713          	addi	a4,zero,3
+   92474:	005d3537          	lui	a0,0x5d3
+   92478:	43850513          	addi	a0,a0,1080 # 5d3438 <oft_aligned_copy.empty+0x18>
+   9247c:	00853583          	ld	a1,8(a0)
+   92480:	00300713          	addi	a4,zero,3
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x8	ld a1,8(a0)	load base a0 imm 8	in-scope	shapes ab	tags addi,lui	1: static _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	2: static __odr_asan_gen_REAC_MODE_44K1+0x0	DIFFERENT
+## a_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	a8050513          	addi	a0,a0,-1408 # a3a80 <_ZN6__asan28asan_flags_dont_use_directlyE+0x8>
+   97914:	00853583          	ld	a1,8(a0)
+   97918:	00300713          	addi	a4,zero,3
+   92474:	0009e537          	lui	a0,0x9e
+   92478:	5c050513          	addi	a0,a0,1472 # 9e5c0 <_ZN6__asan28asan_flags_dont_use_directlyE+0x8>
+   9247c:	00853583          	ld	a1,8(a0)
+   92480:	00300713          	addi	a4,zero,3
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x8	ld a1,8(a0)	load base a0 imm 8	in-scope	shapes ab	tags addi,lui	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	SAME
+## b_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	9885051b          	addiw	a0,a0,-1656 # a3988 <_ZN6__asanL8instanceE+0xd70>
+   97914:	10050513          	addi	a0,a0,256
+   97918:	00053583          	ld	a1,0(a0)
+   9791c:	feb68fa3          	sb	a1,-1(a3)
+   92474:	00132537          	lui	a0,0x132
+   92478:	7f85051b          	addiw	a0,a0,2040 # 1327f8 <_ZN11__sanitizerL21binary_name_cache_strE+0xf78>
+   9247c:	10050513          	addi	a0,a0,256
+   92480:	00053583          	ld	a1,0(a0)
+   92484:	feb68fa3          	sb	a1,-1(a3)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0xc	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes b	tags addi,addi*,lui	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN11__sanitizer21common_flags_dont_useE+0x10	DIFFERENT
+## b_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	9885051b          	addiw	a0,a0,-1656 # a3988 <_ZN6__asanL8instanceE+0xd70>
+   97914:	10050513          	addi	a0,a0,256
+   97918:	00053583          	ld	a1,0(a0)
+   9791c:	feb68fa3          	sb	a1,-1(a3)
+   92474:	0009e537          	lui	a0,0x9e
+   92478:	4c85051b          	addiw	a0,a0,1224 # 9e4c8 <_ZN6__asanL8instanceE+0xd70>
+   9247c:	10050513          	addi	a0,a0,256
+   92480:	00053583          	ld	a1,0(a0)
+   92484:	feb68fa3          	sb	a1,-1(a3)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0xc	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes b	tags addi,addi*,lui	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	SAME
+## c.ori_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	a8050513          	addi	a0,a0,-1408 # a3a80 <_ZN6__asan28asan_flags_dont_use_directlyE+0x8>
+   97914:	00856513          	ori	a0,a0,8
+   97918:	00053583          	ld	a1,0(a0)
+   9791c:	feb68fa3          	sb	a1,-1(a3)
+   92474:	00133537          	lui	a0,0x133
+   92478:	88050513          	addi	a0,a0,-1920 # 132880 <_ZN11__sanitizerL7MFHooksE>
+   9247c:	07856513          	ori	a0,a0,120
+   92480:	00053583          	ld	a1,0(a0)
+   92484:	feb68fa3          	sb	a1,-1(a3)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0xc	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes bc	tags addi,lui,ori	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN11__sanitizer21common_flags_dont_useE+0x10	DIFFERENT
+## c.ori_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	a8050513          	addi	a0,a0,-1408 # a3a80 <_ZN6__asan28asan_flags_dont_use_directlyE+0x8>
+   97914:	00856513          	ori	a0,a0,8
+   97918:	00053583          	ld	a1,0(a0)
+   9791c:	feb68fa3          	sb	a1,-1(a3)
+   92474:	0009e537          	lui	a0,0x9e
+   92478:	58050513          	addi	a0,a0,1408 # 9e580 <_ZN6__asanL8instanceE+0xe28>
+   9247c:	04856513          	ori	a0,a0,72
+   92480:	00053583          	ld	a1,0(a0)
+   92484:	feb68fa3          	sb	a1,-1(a3)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0xc	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes bc	tags addi,lui,ori	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	SAME
+## c.xori_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	ac850513          	addi	a0,a0,-1336 # a3ac8 <_ZN6__asan28asan_flags_dont_use_directlyE+0x50>
+   97914:	04054513          	xori	a0,a0,64
+   97918:	00053583          	ld	a1,0(a0)
+   9791c:	feb68fa3          	sb	a1,-1(a3)
+   92474:	00133537          	lui	a0,0x133
+   92478:	8b850513          	addi	a0,a0,-1864 # 1328b8 <_ZN11__sanitizerL7MFHooksE+0x38>
+   9247c:	04054513          	xori	a0,a0,64
+   92480:	00053583          	ld	a1,0(a0)
+   92484:	feb68fa3          	sb	a1,-1(a3)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0xc	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes bc	tags addi,lui,xori	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN11__sanitizer21common_flags_dont_useE+0x10	DIFFERENT
+## c.xori_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	ac850513          	addi	a0,a0,-1336 # a3ac8 <_ZN6__asan28asan_flags_dont_use_directlyE+0x50>
+   97914:	04054513          	xori	a0,a0,64
+   97918:	00053583          	ld	a1,0(a0)
+   9791c:	feb68fa3          	sb	a1,-1(a3)
+   92474:	0009e537          	lui	a0,0x9e
+   92478:	58850513          	addi	a0,a0,1416 # 9e588 <_ZN6__asanL19asan_is_deactivatedE>
+   9247c:	04054513          	xori	a0,a0,64
+   92480:	00053583          	ld	a1,0(a0)
+   92484:	feb68fa3          	sb	a1,-1(a3)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0xc	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes bc	tags addi,lui,xori	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	SAME
+## c.slli_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	00014537          	lui	a0,0x14
+   97910:	75150513          	addi	a0,a0,1873 # 14751 <__global_pointer$+0x3f51>
+   97914:	00351513          	slli	a0,a0,0x3
+   97918:	00053583          	ld	a1,0(a0)
+   9791c:	feb68fa3          	sb	a1,-1(a3)
+   92474:	00026537          	lui	a0,0x26
+   92478:	51f50513          	addi	a0,a0,1311 # 2651f <__EH_FRAME_LIST_END__+0x1ddf>
+   9247c:	00351513          	slli	a0,a0,0x3
+   92480:	00053583          	ld	a1,0(a0)
+   92484:	feb68fa3          	sb	a1,-1(a3)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0xc	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes bc	tags addi,lui,slli	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN11__sanitizer21common_flags_dont_useE+0x10	DIFFERENT
+## c.slli_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	00014537          	lui	a0,0x14
+   97910:	75150513          	addi	a0,a0,1873 # 14751 <__global_pointer$+0x3f51>
+   97914:	00351513          	slli	a0,a0,0x3
+   97918:	00053583          	ld	a1,0(a0)
+   9791c:	feb68fa3          	sb	a1,-1(a3)
+   92474:	00014537          	lui	a0,0x14
+   92478:	cb950513          	addi	a0,a0,-839 # 13cb9 <__global_pointer$+0x34b9>
+   9247c:	00351513          	slli	a0,a0,0x3
+   92480:	00053583          	ld	a1,0(a0)
+   92484:	feb68fa3          	sb	a1,-1(a3)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0xc	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes bc	tags addi,lui,slli	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	SAME
+## d.spill_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	a8850513          	addi	a0,a0,-1400 # a3a88 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   97914:	ff010113          	addi	sp,sp,-16
+   97918:	00a13423          	sd	a0,8(sp)
+   9791c:	00000513          	addi	a0,zero,0
+   97920:	00813583          	ld	a1,8(sp)
+   97924:	0005b603          	ld	a2,0(a1)
+   97928:	00b50123          	sb	a1,2(a0)
+   92474:	00133537          	lui	a0,0x133
+   92478:	8f850513          	addi	a0,a0,-1800 # 1328f8 <_ZN11__sanitizer21common_flags_dont_useE+0x10>
+   9247c:	ff010113          	addi	sp,sp,-16
+   92480:	00a13423          	sd	a0,8(sp)
+   92484:	00000513          	addi	a0,zero,0
+   92488:	00813583          	ld	a1,8(sp)
+   9248c:	0005b603          	ld	a2,0(a1)
+   92490:	00b50123          	sb	a1,2(a0)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x18	ld a2,0(a1)	load base a1 imm 0	in-scope	shapes bd	tags addi,lui,spill	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN11__sanitizer21common_flags_dont_useE+0x10	DIFFERENT
+## d.spill_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	a8850513          	addi	a0,a0,-1400 # a3a88 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   97914:	ff010113          	addi	sp,sp,-16
+   97918:	00a13423          	sd	a0,8(sp)
+   9791c:	00000513          	addi	a0,zero,0
+   97920:	00813583          	ld	a1,8(sp)
+   97924:	0005b603          	ld	a2,0(a1)
+   97928:	00b50123          	sb	a1,2(a0)
+   92474:	0009e537          	lui	a0,0x9e
+   92478:	5c850513          	addi	a0,a0,1480 # 9e5c8 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   9247c:	ff010113          	addi	sp,sp,-16
+   92480:	00a13423          	sd	a0,8(sp)
+   92484:	00000513          	addi	a0,zero,0
+   92488:	00813583          	ld	a1,8(sp)
+   9248c:	0005b603          	ld	a2,0(a1)
+   92490:	00b50123          	sb	a1,2(a0)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x18	ld a2,0(a1)	load base a1 imm 0	in-scope	shapes bd	tags addi,lui,spill	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	SAME
+## d.fmv_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	a8850513          	addi	a0,a0,-1400 # a3a88 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   97914:	f2050053          	fmv.d.x	ft0,a0
+   97918:	00000513          	addi	a0,zero,0
+   9791c:	e20005d3          	fmv.x.d	a1,ft0
+   97920:	0005b603          	ld	a2,0(a1)
+   97924:	00b500a3          	sb	a1,1(a0)
+   92474:	00133537          	lui	a0,0x133
+   92478:	8f850513          	addi	a0,a0,-1800 # 1328f8 <_ZN11__sanitizer21common_flags_dont_useE+0x10>
+   9247c:	f2050053          	fmv.d.x	ft0,a0
+   92480:	00000513          	addi	a0,zero,0
+   92484:	e20005d3          	fmv.x.d	a1,ft0
+   92488:	0005b603          	ld	a2,0(a1)
+   9248c:	00b500a3          	sb	a1,1(a0)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x14	ld a2,0(a1)	load base a1 imm 0	in-scope	shapes bd	tags addi,fmv,lui	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN11__sanitizer21common_flags_dont_useE+0x10	DIFFERENT
+## d.fmv_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	a8850513          	addi	a0,a0,-1400 # a3a88 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   97914:	f2050053          	fmv.d.x	ft0,a0
+   97918:	00000513          	addi	a0,zero,0
+   9791c:	e20005d3          	fmv.x.d	a1,ft0
+   97920:	0005b603          	ld	a2,0(a1)
+   97924:	00b500a3          	sb	a1,1(a0)
+   92474:	0009e537          	lui	a0,0x9e
+   92478:	5c850513          	addi	a0,a0,1480 # 9e5c8 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   9247c:	f2050053          	fmv.d.x	ft0,a0
+   92480:	00000513          	addi	a0,zero,0
+   92484:	e20005d3          	fmv.x.d	a1,ft0
+   92488:	0005b603          	ld	a2,0(a1)
+   9248c:	00b500a3          	sb	a1,1(a0)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x14	ld a2,0(a1)	load base a1 imm 0	in-scope	shapes bd	tags addi,fmv,lui	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	SAME
+## d.csr_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	a8850513          	addi	a0,a0,-1400 # a3a88 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   97914:	14051073          	csrrw	zero,sscratch,a0
+   97918:	00000513          	addi	a0,zero,0
+   9791c:	140025f3          	csrrs	a1,sscratch,zero
+   97920:	0005b603          	ld	a2,0(a1)
+   97924:	00b500a3          	sb	a1,1(a0)
+   92474:	00133537          	lui	a0,0x133
+   92478:	8f850513          	addi	a0,a0,-1800 # 1328f8 <_ZN11__sanitizer21common_flags_dont_useE+0x10>
+   9247c:	14051073          	csrrw	zero,sscratch,a0
+   92480:	00000513          	addi	a0,zero,0
+   92484:	140025f3          	csrrs	a1,sscratch,zero
+   92488:	0005b603          	ld	a2,0(a1)
+   9248c:	00b500a3          	sb	a1,1(a0)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x14	ld a2,0(a1)	load base a1 imm 0	in-scope	shapes bd	tags addi,csr,lui	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN11__sanitizer21common_flags_dont_useE+0x10	DIFFERENT
+## d.csr_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	a8850513          	addi	a0,a0,-1400 # a3a88 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   97914:	14051073          	csrrw	zero,sscratch,a0
+   97918:	00000513          	addi	a0,zero,0
+   9791c:	140025f3          	csrrs	a1,sscratch,zero
+   97920:	0005b603          	ld	a2,0(a1)
+   97924:	00b500a3          	sb	a1,1(a0)
+   92474:	0009e537          	lui	a0,0x9e
+   92478:	5c850513          	addi	a0,a0,1480 # 9e5c8 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   9247c:	14051073          	csrrw	zero,sscratch,a0
+   92480:	00000513          	addi	a0,zero,0
+   92484:	140025f3          	csrrs	a1,sscratch,zero
+   92488:	0005b603          	ld	a2,0(a1)
+   9248c:	00b500a3          	sb	a1,1(a0)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x14	ld a2,0(a1)	load base a1 imm 0	in-scope	shapes bd	tags addi,csr,lui	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	SAME
+## e_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	00078067          	jalr	zero,0(a5)
+   97910:	000a4537          	lui	a0,0xa4
+   97914:	a8850513          	addi	a0,a0,-1400 # a3a88 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   97918:	00053583          	ld	a1,0(a0)
+   9791c:	feb68fa3          	sb	a1,-1(a3)
+   92474:	00078067          	jalr	zero,0(a5)
+   92478:	00133537          	lui	a0,0x133
+   9247c:	8f850513          	addi	a0,a0,-1800 # 1328f8 <_ZN11__sanitizer21common_flags_dont_useE+0x10>
+   92480:	00053583          	ld	a1,0(a0)
+   92484:	feb68fa3          	sb	a1,-1(a3)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 1, seeded runs +0x4(from 1 jumps), unreached-by-entry instructions 61, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 1, seeded runs +0x4(from 1 jumps), unreached-by-entry instructions 61, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0xc	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes be	tags addi,jt,lui	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN11__sanitizer21common_flags_dont_useE+0x10	DIFFERENT
+## e_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	00078067          	jalr	zero,0(a5)
+   97910:	000a4537          	lui	a0,0xa4
+   97914:	a8850513          	addi	a0,a0,-1400 # a3a88 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   97918:	00053583          	ld	a1,0(a0)
+   9791c:	feb68fa3          	sb	a1,-1(a3)
+   92474:	00078067          	jalr	zero,0(a5)
+   92478:	0009e537          	lui	a0,0x9e
+   9247c:	5c850513          	addi	a0,a0,1480 # 9e5c8 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   92480:	00053583          	ld	a1,0(a0)
+   92484:	feb68fa3          	sb	a1,-1(a3)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 1, seeded runs +0x4(from 1 jumps), unreached-by-entry instructions 61, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 1, seeded runs +0x4(from 1 jumps), unreached-by-entry instructions 61, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0xc	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes be	tags addi,jt,lui	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	SAME
+## f_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	a8850513          	addi	a0,a0,-1400 # a3a88 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   97914:	008000ef          	jal	ra,9791c <memset+0x10>
+   97918:	00c0006f          	jal	zero,97924 <memset+0x18>
+   9791c:	00053583          	ld	a1,0(a0)
+   97920:	00008067          	jalr	zero,0(ra)
+   92474:	00133537          	lui	a0,0x133
+   92478:	8f850513          	addi	a0,a0,-1800 # 1328f8 <_ZN11__sanitizer21common_flags_dont_useE+0x10>
+   9247c:	008000ef          	jal	ra,92484 <memset+0x10>
+   92480:	00c0006f          	jal	zero,9248c <memset+0x18>
+   92484:	00053583          	ld	a1,0(a0)
+   92488:	00008067          	jalr	zero,0(ra)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 1, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 1
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 1, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 1
+SITE	memset	+0x10	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes bf	tags addi,callee,lui	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN11__sanitizer21common_flags_dont_useE+0x10	DIFFERENT
+## f_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	000a4537          	lui	a0,0xa4
+   97910:	a8850513          	addi	a0,a0,-1400 # a3a88 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   97914:	008000ef          	jal	ra,9791c <memset+0x10>
+   97918:	00c0006f          	jal	zero,97924 <memset+0x18>
+   9791c:	00053583          	ld	a1,0(a0)
+   97920:	00008067          	jalr	zero,0(ra)
+   92474:	0009e537          	lui	a0,0x9e
+   92478:	5c850513          	addi	a0,a0,1480 # 9e5c8 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   9247c:	008000ef          	jal	ra,92484 <memset+0x10>
+   92480:	00c0006f          	jal	zero,9248c <memset+0x18>
+   92484:	00053583          	ld	a1,0(a0)
+   92488:	00008067          	jalr	zero,0(ra)
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 1, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 1
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 1, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 1
+SITE	memset	+0x10	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes bf	tags addi,callee,lui	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	SAME
+## g_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	6545                	.insn	2, 0x6545
+   9790e:	0001                	.insn	2, 0x0001
+   97910:	00151513          	slli	a0,a0,0x1
+   97914:	e3450513          	addi	a0,a0,-460
+   97918:	00053583          	ld	a1,0(a0)
+  (side 1, the same bytes in the plain-binary listing, which decodes the .insn parcels:)
+   9790c:	6545                	c.lui	a0,0x11
+   9790e:	0001                	c.addi	zero,0
+   97910:	00151513          	slli	a0,a0,0x1
+   97914:	e3450513          	addi	a0,a0,-460 # 0x10e34
+   97918:	00053583          	ld	a1,0(a0)
+   92474:	6545                	.insn	2, 0x6545
+   92476:	0001                	.insn	2, 0x0001
+   92478:	00151513          	slli	a0,a0,0x1
+   9247c:	e6050513          	addi	a0,a0,-416
+   92480:	00053583          	ld	a1,0(a0)
+  (side 2, the same bytes in the plain-binary listing, which decodes the .insn parcels:)
+   92474:	6545                	c.lui	a0,0x11
+   92476:	0001                	c.addi	zero,0
+   92478:	00151513          	slli	a0,a0,0x1
+   9247c:	e6050513          	addi	a0,a0,-416 # 0x10e60
+   92480:	00053583          	ld	a1,0(a0)
+# 1: 63 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 2, calls into its own region 0
+# 2: 63 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 2, calls into its own region 0
+SITE	memset	+0xc	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes bcg	tags addi,c.lui,slli	1: static errmsgidx+0x0	2: static __c_locale+0x0	DIFFERENT
+## g_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	6545                	.insn	2, 0x6545
+   9790e:	0001                	.insn	2, 0x0001
+   97910:	00151513          	slli	a0,a0,0x1
+   97914:	e3450513          	addi	a0,a0,-460
+   97918:	00053583          	ld	a1,0(a0)
+  (side 1, the same bytes in the plain-binary listing, which decodes the .insn parcels:)
+   9790c:	6545                	c.lui	a0,0x11
+   9790e:	0001                	c.addi	zero,0
+   97910:	00151513          	slli	a0,a0,0x1
+   97914:	e3450513          	addi	a0,a0,-460 # 0x10e34
+   97918:	00053583          	ld	a1,0(a0)
+   92474:	6545                	.insn	2, 0x6545
+   92476:	0001                	.insn	2, 0x0001
+   92478:	00151513          	slli	a0,a0,0x1
+   9247c:	d5450513          	addi	a0,a0,-684
+   92480:	00053583          	ld	a1,0(a0)
+  (side 2, the same bytes in the plain-binary listing, which decodes the .insn parcels:)
+   92474:	6545                	c.lui	a0,0x11
+   92476:	0001                	c.addi	zero,0
+   92478:	00151513          	slli	a0,a0,0x1
+   9247c:	d5450513          	addi	a0,a0,-684 # 0x10d54
+   92480:	00053583          	ld	a1,0(a0)
+# 1: 63 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 2, calls into its own region 0
+# 2: 63 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 2, calls into its own region 0
+SITE	memset	+0xc	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes bcg	tags addi,c.lui,slli	1: static errmsgidx+0x0	2: static errmsgidx+0x0	SAME
+## h.auipc_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	0000c517          	auipc	a0,0xc
+   97910:	17c50513          	addi	a0,a0,380 # a3a88 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   97914:	00053583          	ld	a1,0(a0)
+   97918:	00300713          	addi	a4,zero,3
+   92474:	000a0517          	auipc	a0,0xa0
+   92478:	48450513          	addi	a0,a0,1156 # 1328f8 <_ZN11__sanitizer21common_flags_dont_useE+0x10>
+   9247c:	00053583          	ld	a1,0(a0)
+   92480:	00300713          	addi	a4,zero,3
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x8	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes bh	tags addi,auipc	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN11__sanitizer21common_flags_dont_useE+0x10	DIFFERENT
+## h.auipc_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	0000c517          	auipc	a0,0xc
+   97910:	17c50513          	addi	a0,a0,380 # a3a88 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   97914:	00053583          	ld	a1,0(a0)
+   97918:	00300713          	addi	a4,zero,3
+   92474:	0000c517          	auipc	a0,0xc
+   92478:	15450513          	addi	a0,a0,340 # 9e5c8 <_ZN6__asan28asan_flags_dont_use_directlyE+0x10>
+   9247c:	00053583          	ld	a1,0(a0)
+   92480:	00300713          	addi	a4,zero,3
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x8	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes bh	tags addi,auipc	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	SAME
+## h.ldk_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	00007517          	auipc	a0,0x7
+   97910:	8f453503          	ld	a0,-1804(a0) # 9e200 <stdout+0xf8>
+   97914:	00053583          	ld	a1,0(a0)
+   97918:	00300713          	addi	a4,zero,3
+   92474:	00007517          	auipc	a0,0x7
+   92478:	8bc53503          	ld	a0,-1860(a0) # 98d30 <stdout+0xf0>
+   9247c:	00053583          	ld	a1,0(a0)
+   92480:	00300713          	addi	a4,zero,3
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x8	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes h	tags auipc,ldk	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x0	2: static _ZN11__sanitizer21common_flags_dont_useE+0x0	DIFFERENT
+## h.ldk_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	00007517          	auipc	a0,0x7
+   97910:	8f453503          	ld	a0,-1804(a0) # 9e200 <stdout+0xf8>
+   97914:	00053583          	ld	a1,0(a0)
+   97918:	00300713          	addi	a4,zero,3
+   92474:	00007517          	auipc	a0,0x7
+   92478:	8c453503          	ld	a0,-1852(a0) # 98d38 <stdout+0xf8>
+   9247c:	00053583          	ld	a1,0(a0)
+   92480:	00300713          	addi	a4,zero,3
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x8	ld a1,0(a0)	load base a0 imm 0	in-scope	shapes h	tags auipc,ldk	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x0	2: static _ZN6__asan28asan_flags_dont_use_directlyE+0x0	SAME
+## h.li_diff: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	14700513          	addi	a0,zero,327
+   97910:	00b51513          	slli	a0,a0,0xb
+   97914:	28853583          	ld	a1,648(a0)
+   97918:	00300713          	addi	a4,zero,3
+   92474:	26500513          	addi	a0,zero,613
+   92478:	00b51513          	slli	a0,a0,0xb
+   9247c:	0f853583          	ld	a1,248(a0)
+   92480:	00300713          	addi	a4,zero,3
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x8	ld a1,648(a0)	load base a0 imm 648	in-scope	shapes ah	tags li	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN11__sanitizer21common_flags_dont_useE+0x10	DIFFERENT
+## h.li_same: the planted words as objdump lists them in the ELF (side 1, then side 2), then the planted site
+   9790c:	14700513          	addi	a0,zero,327
+   97910:	00b51513          	slli	a0,a0,0xb
+   97914:	28853583          	ld	a1,648(a0)
+   97918:	00300713          	addi	a4,zero,3
+   92474:	13c00513          	addi	a0,zero,316
+   92478:	00b51513          	slli	a0,a0,0xb
+   9247c:	5c853583          	ld	a1,1480(a0)
+   92480:	00300713          	addi	a4,zero,3
+# 1: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+# 2: 62 instructions, cover True, undecoded 0, generic -, unresolved indirect jumps 0, seeded runs -, unreached-by-entry instructions 0, parcels decoded from the raw listing 0, calls into its own region 0
+SITE	memset	+0x8	ld a1,648(a0)	load base a0 imm 648	in-scope	shapes ah	tags li	1: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	2: static _ZN6__asan28asan_flags_dont_use_directlyE+0x10	SAME
+$ python3 plant.py check ctl/PLANTS ctl
+CHECK	a	diff	+0x8	want DIFFERENT, shape a	got DIFFERENT, shapes ab	PASS
+CHECK	a	same	+0x8	want SAME, shape a	got SAME, shapes ab	PASS
+CHECK	b	diff	+0xc	want DIFFERENT, shape b	got DIFFERENT, shapes b	PASS
+CHECK	b	same	+0xc	want SAME, shape b	got SAME, shapes b	PASS
+CHECK	c.ori	diff	+0xc	want DIFFERENT, shape c	got DIFFERENT, shapes bc	PASS
+CHECK	c.ori	same	+0xc	want SAME, shape c	got SAME, shapes bc	PASS
+CHECK	c.xori	diff	+0xc	want DIFFERENT, shape c	got DIFFERENT, shapes bc	PASS
+CHECK	c.xori	same	+0xc	want SAME, shape c	got SAME, shapes bc	PASS
+CHECK	c.slli	diff	+0xc	want DIFFERENT, shape c	got DIFFERENT, shapes bc	PASS
+CHECK	c.slli	same	+0xc	want SAME, shape c	got SAME, shapes bc	PASS
+CHECK	d.spill	diff	+0x18	want DIFFERENT, shape d	got DIFFERENT, shapes bd	PASS
+CHECK	d.spill	same	+0x18	want SAME, shape d	got SAME, shapes bd	PASS
+CHECK	d.fmv	diff	+0x14	want DIFFERENT, shape d	got DIFFERENT, shapes bd	PASS
+CHECK	d.fmv	same	+0x14	want SAME, shape d	got SAME, shapes bd	PASS
+CHECK	d.csr	diff	+0x14	want DIFFERENT, shape d	got DIFFERENT, shapes bd	PASS
+CHECK	d.csr	same	+0x14	want SAME, shape d	got SAME, shapes bd	PASS
+CHECK	e	diff	+0xc	want DIFFERENT, shape e	got DIFFERENT, shapes be	PASS
+CHECK	e	same	+0xc	want SAME, shape e	got SAME, shapes be	PASS
+CHECK	f	diff	+0x10	want DIFFERENT, shape f	got DIFFERENT, shapes bf	PASS
+CHECK	f	same	+0x10	want SAME, shape f	got SAME, shapes bf	PASS
+CHECK	g	diff	+0xc	want DIFFERENT, shape g	got DIFFERENT, shapes bcg	PASS
+CHECK	g	same	+0xc	want SAME, shape g	got SAME, shapes bcg	PASS
+CHECK	h.auipc	diff	+0x8	want DIFFERENT, shape h	got DIFFERENT, shapes bh	PASS
+CHECK	h.auipc	same	+0x8	want SAME, shape h	got SAME, shapes bh	PASS
+CHECK	h.ldk	diff	+0x8	want DIFFERENT, shape h	got DIFFERENT, shapes h	PASS
+CHECK	h.ldk	same	+0x8	want SAME, shape h	got SAME, shapes h	PASS
+CHECK	h.li	diff	+0x8	want DIFFERENT, shape h	got DIFFERENT, shapes ah	PASS
+CHECK	h.li	same	+0x8	want SAME, shape h	got SAME, shapes ah	PASS
+controls PASS 28 of 28

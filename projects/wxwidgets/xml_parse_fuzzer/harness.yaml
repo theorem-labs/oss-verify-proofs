@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wxwidgets
 harness: xml_parse_fuzzer
-rocq: OssFuzzTheorems.wxwidgets.xml_parse_fuzzer
+rocq: OSSVerify.wxwidgets.xml_parse_fuzzer
 origin: upstream
 summary: 'Bundled expat: XML_Parse the input twice (non-final then final) with a parser, a namespace parser,
   an external-entity parser and an external-DTD parser; a character handler may stop/suspend the parser;

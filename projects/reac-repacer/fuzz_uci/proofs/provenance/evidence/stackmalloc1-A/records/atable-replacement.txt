@@ -1,0 +1,78 @@
+# atable: N/A for these files. atable.py 42e18a7eef50 only emits the start-up layer's atable record; AF0r /
+# AF0s / YF0v state no atable field. In its place: keyset (f050b43e480e) and the keyed range-table check of
+# fs_ranges (rangetab-sm1.py).
+# keyset classes, fuzz_uci.asan
+keyset: self-test 7 known answers (kind by name and contents; a keyed table under an unkeyed name is UNMEASURED); 14 known answers (stops gate 5, self-loop decode 9)
+stack classes of fuzz_uci.asan: 1 -> 0x3c1b8 (__asan_stack_malloc_1+0x0)
+  found by: the twin fuzz_uci/fuzz_uci.asan: __asan_stack_malloc_<cid> keyed by the cid in the name; each body compiles that cid; the stripped image's call-target scan finds the same entries
+  __asan_stack_free_<cid>: none
+rc=0
+# keyset classes, fuzz_grant.asan (control: the donor image)
+keyset: self-test 7 known answers (kind by name and contents; a keyed table under an unkeyed name is UNMEASURED); 14 known answers (stops gate 5, self-loop decode 9)
+stack classes of fuzz_grant.asan: 0 -> 0x3cda4 (__asan_stack_malloc_0+0x0), 1 -> 0x3cf18 (__asan_stack_malloc_1+0x0), 2 -> 0x3d0a8 (__asan_stack_malloc_2+0x0), 4 -> 0x3d244 (__asan_stack_malloc_4+0x0)
+  found by: the twin fuzz_grant/fuzz_grant.asan: __asan_stack_malloc_<cid> keyed by the cid in the name; each body compiles that cid; the stripped image's call-target scan finds the same entries
+  __asan_stack_free_<cid>: none
+rc=0
+# keyset check over the three files
+keyset: self-test 7 known answers (kind by name and contents; a keyed table under an unkeyed name is UNMEASURED); 14 known answers (stops gate 5, self-loop decode 9)
+NOTE AF0r.v: no keyed table under keyset (by name or by contents)
+NOTE AF0s.v: no keyed table under keyset (by name or by contents)
+NOTE YF0v.v: no keyed table under keyset (by name or by contents)
+keyset: NO KEYED TABLE in the 3 given file(s) - nothing measured
+rc=2
+# range-table check of fs_ranges, the committed AF0r.v
+donor rows 12, target rows 9
+| target row | key (symbol, copy, offset) | donor row | count | inside the symbol | verdict |
+|---|---|---|---|---|---|
+| (0x3c1b8, 100) | __asan_stack_malloc_1, 0, +0x0 | (0x3cf18, 100) | 100 | True | PASS |
+| (0x60904, 2) | _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_1, 0, +0x358 | (0x61ccc, 2) | 2 | True | PASS |
+| (0x45924, 31) | ___interceptor___tls_get_addr, 0, +0x0 | (0x46aac, 31) | 31 | True | PASS |
+| (0x90f44, 9) | __tls_get_addr, 0, +0x0 | (0x96620, 9) | 9 | True | PASS |
+| (0x5ac44, 8) | _ZN6__asan16GetCurrentThreadEv, 0, +0x0 | (0x5c00c, 8) | 8 | True | PASS |
+| (0x53790, 6) | _ZN6__asan10AsanTSDGetEv, 0, +0x0 | (0x54b58, 6) | 6 | True | PASS |
+| (0x91ff8, 7) | __pthread_getspecific, 0, +0x0 | (0x976d4, 7) | 7 | True | PASS |
+| (0x68358, 140) | _ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm, 0, +0x0 | (0x69720, 140) | 140 | True | PASS |
+| (0x3c348, 28) | _ZN6__asanL11MemToShadowEm, 1, +0x0 | (0x3d410, 28) | 28 | True | PASS |
+| - | __asan_stack_malloc_0, 0, +0x0 | (0x3cda4, 93) | 93 | - | DROPPED (the target defines no __asan_stack_malloc_0) |
+| - | __asan_stack_malloc_2, 0, +0x0 | (0x3d0a8, 103) | 103 | - | DROPPED (the target defines no __asan_stack_malloc_2) |
+| - | __asan_stack_malloc_4, 0, +0x0 | (0x3d244, 115) | 115 | - | DROPPED (the target defines no __asan_stack_malloc_4) |
+rangetab-sm1: PASS (0 refused rows)
+rc=0
+# control: row (0x60904, 2) planted as (0x60908, 2)
+donor rows 12, target rows 9
+| target row | key (symbol, copy, offset) | donor row | count | inside the symbol | verdict |
+|---|---|---|---|---|---|
+| (0x3c1b8, 100) | __asan_stack_malloc_1, 0, +0x0 | (0x3cf18, 100) | 100 | True | PASS |
+| (0x60908, 2) | _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_1, 0, +0x35c | none | 2 | True | REFUSED |
+| (0x45924, 31) | ___interceptor___tls_get_addr, 0, +0x0 | (0x46aac, 31) | 31 | True | PASS |
+| (0x90f44, 9) | __tls_get_addr, 0, +0x0 | (0x96620, 9) | 9 | True | PASS |
+| (0x5ac44, 8) | _ZN6__asan16GetCurrentThreadEv, 0, +0x0 | (0x5c00c, 8) | 8 | True | PASS |
+| (0x53790, 6) | _ZN6__asan10AsanTSDGetEv, 0, +0x0 | (0x54b58, 6) | 6 | True | PASS |
+| (0x91ff8, 7) | __pthread_getspecific, 0, +0x0 | (0x976d4, 7) | 7 | True | PASS |
+| (0x68358, 140) | _ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm, 0, +0x0 | (0x69720, 140) | 140 | True | PASS |
+| (0x3c348, 28) | _ZN6__asanL11MemToShadowEm, 1, +0x0 | (0x3d410, 28) | 28 | True | PASS |
+| - | __asan_stack_malloc_0, 0, +0x0 | (0x3cda4, 93) | 93 | - | DROPPED (the target defines no __asan_stack_malloc_0) |
+| - | __asan_stack_malloc_2, 0, +0x0 | (0x3d0a8, 103) | 103 | - | DROPPED (the target defines no __asan_stack_malloc_2) |
+| - | __asan_stack_malloc_4, 0, +0x0 | (0x3d244, 115) | 115 | - | DROPPED (the target defines no __asan_stack_malloc_4) |
+| - | ('_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE', 0, 856) | (0x61ccc, 2) | 2 | - | REFUSED (the target defines the symbol; its row is missing) |
+rangetab-sm1: REFUSED (2 refused rows)
+rc=1
+# control: row (0x68358, 140) planted as (0x68358, 141)
+donor rows 12, target rows 9
+| target row | key (symbol, copy, offset) | donor row | count | inside the symbol | verdict |
+|---|---|---|---|---|---|
+| (0x3c1b8, 100) | __asan_stack_malloc_1, 0, +0x0 | (0x3cf18, 100) | 100 | True | PASS |
+| (0x60904, 2) | _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_1, 0, +0x358 | (0x61ccc, 2) | 2 | True | PASS |
+| (0x45924, 31) | ___interceptor___tls_get_addr, 0, +0x0 | (0x46aac, 31) | 31 | True | PASS |
+| (0x90f44, 9) | __tls_get_addr, 0, +0x0 | (0x96620, 9) | 9 | True | PASS |
+| (0x5ac44, 8) | _ZN6__asan16GetCurrentThreadEv, 0, +0x0 | (0x5c00c, 8) | 8 | True | PASS |
+| (0x53790, 6) | _ZN6__asan10AsanTSDGetEv, 0, +0x0 | (0x54b58, 6) | 6 | True | PASS |
+| (0x91ff8, 7) | __pthread_getspecific, 0, +0x0 | (0x976d4, 7) | 7 | True | PASS |
+| (0x68358, 141) | _ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm, 0, +0x0 | (0x69720, 140) | 141 | True | REFUSED |
+| (0x3c348, 28) | _ZN6__asanL11MemToShadowEm, 1, +0x0 | (0x3d410, 28) | 28 | True | PASS |
+| - | __asan_stack_malloc_0, 0, +0x0 | (0x3cda4, 93) | 93 | - | DROPPED (the target defines no __asan_stack_malloc_0) |
+| - | __asan_stack_malloc_2, 0, +0x0 | (0x3d0a8, 103) | 103 | - | DROPPED (the target defines no __asan_stack_malloc_2) |
+| - | __asan_stack_malloc_4, 0, +0x0 | (0x3d244, 115) | 115 | - | DROPPED (the target defines no __asan_stack_malloc_4) |
+| - | ('_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm', 0, 0) | (0x69720, 140) | 140 | - | REFUSED (the target defines the symbol; its row is missing) |
+rangetab-sm1: REFUSED (2 refused rows)
+rc=1

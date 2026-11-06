@@ -1,7 +1,6 @@
 """disclosure: the canonical forms a release's files are compared in, and the needles no file it keeps may hold.
 
-The table is the probe list of the reviews of internal #80 (the final review's findings 1-8, the deep review's 1-7 and
-the code-quality review's 4) and #117 (the final review's 1-5, the deep review's 1-2), each form one row."""
+The table is the probe list of this check's reviews, each form one row."""
 import hashlib
 import html
 import json
@@ -113,7 +112,7 @@ class Canonical(unittest.TestCase):
 
     def test_a_control_character_escape_reads_as_the_character(self):
         """`\\f`, `\\v` and `\\b` (C, JSON) and YAML's `\\N`, `\\L` and `\\P` are control and line characters, not the
-        letters (internal #80's deep review at 0ac7eb3f05, non-blocking finding 1)."""
+        letters."""
         text = "alpha\x0cbeta\x0bgamma\x08delta\x85epsilon\u2028zeta\u2029eta"
         plain = disclosure.canonical(text.encode())
         for how, data in (("C escapes", "alpha\\fbeta\\vgamma\\bdelta\\Nepsilon\\Lzeta\\Peta"),
@@ -128,7 +127,7 @@ class Canonical(unittest.TestCase):
         self.assertEqual(disclosure.canonical(b"&#x000000041;"), "a")
 
     def test_nested_escapes_of_a_long_reference_decode_to_a_bounded_fixed_point(self):
-        """internal #80's gates at 0ac7eb3f05: `&#38;#` and 5,000 digits made a reference html.unescape could not read.
+        """`&#38;#` and 5,000 digits made a reference html.unescape could not read.
         Every nesting of the escapes of `&` decodes without an exception, and the digits stay text."""
         digits = "9" * 5000
         escapes = ("&#38;", "&#x26;", "&amp;", "%26", "\\x26", "\\u0026", "&#0038;")
@@ -254,8 +253,7 @@ class WholeHold(Finds, unittest.TestCase):
                          "%s, a digest finding %s records" % (digest, FINDING))
 
     def test_an_input_digest_broken_over_two_lines(self):
-        """An input's SHA-256 is built as a recorded digest is, so it counts in the same forms (internal #80's
-        code-quality review at 0ac7eb3f05, finding 5)."""
+        """An input's SHA-256 is built as a recorded digest is, so it counts in the same forms."""
         with open(self.t.path(FINDING, "input.bin"), "rb") as f:
             sha = hashlib.sha256(f.read()).hexdigest()
         self.assertFound("sha256: %s\n  %s\n" % (sha[:30], sha[30:]),
@@ -273,7 +271,7 @@ class WholeHold(Finds, unittest.TestCase):
                 self.assertFound(text, target)
 
     def test_blank_padding_is_unwrapped_in_linear_time(self):
-        """internal #80's final review at e940441ae6, finding 6: the unwrap pass reads each blank once."""
+        """The unwrap pass reads each blank once."""
         import time
         times = []
         for size in (1 << 14, 1 << 16):
@@ -369,8 +367,8 @@ class WholeHold(Finds, unittest.TestCase):
 
     def test_a_binary_input_has_byte_digest_and_hex_needles(self):
         """A minimised reproducer of a binary format has no printable run of PAYLOAD_MIN characters; its bytes, its
-        digest and the windows of its hex still count (internal #80's bug-finder at e940441ae6, finding 3), and so do
-        its bytes as Python's repr, a C string of `\\x` escapes and `xxd -i` spell them (its gates at 0ac7eb3f05)."""
+        digest and the windows of its hex still count, and so do
+        its bytes as Python's repr, a C string of `\\x` escapes and `xxd -i` spell them."""
         payload = b"".join(bytes([0x80 + i % 64, 0x41 + i % 26, 0x00]) for i in range(100))
         with Tree() as t:
             add_findings(t)
@@ -481,7 +479,7 @@ class WholeHold(Finds, unittest.TestCase):
 
 
 class ShortEvidence(Finds, unittest.TestCase):
-    """Evidence shorter than a window counts whole (internal #80's gates at 0ac7eb3f05): a fix of the size real ones
+    """Evidence shorter than a window counts whole: a fix of the size real ones
     have, a reproducer of 21 canonical characters, and one of 418 bytes whose only letters are five."""
 
     @classmethod
@@ -721,7 +719,7 @@ class ClosedList(Finds, unittest.TestCase):
         self.assertIn(self.INPUT, disclosure.found("docs/notes.yaml", text.encode(), needles))
 
     def test_4_a_string_this_repositorys_yaml_writer_folds_before_a_mark_counts(self):
-        """internal #80's final review at 85988e9f79, finding B2: yamlio.dump folds a string at a blank, and the next
+        """yamlio.dump folds a string at a blank, and the next
         line begins `\\ (*t`, which the punctuation form reads as a Rocq comment's mark; the plain form reads it."""
         added = "  while (stand_in_pointer_ok && (*t != '\\0'))"
         s = added.replace("\\", "\\\\").replace('"', '\\"')
@@ -729,9 +727,9 @@ class ClosedList(Finds, unittest.TestCase):
         self.assertFound('fix: "%s\\\n    \\%s"\n' % (s[:i], s[i:]), self.DEREF, rel="docs/fix.yaml")
 
     def test_4_an_input_whose_bytes_a_decoder_reads_counts(self):
-        """internal #80's final review at 85988e9f79, finding B3: each decoder alone reads a copy, so none reads the
+        """Each decoder alone reads a copy, so none reads the
         bytes another wrote (an input's `\\`, `&lt;`, `%41`, `0x41`, or a quote, a line break and a quote); and a Python
-        string continued after a backslash (its deep review, finding 4).  The input is shorter than a byte window, so
+        string continued after a backslash.  The input is shorter than a byte window, so
         only its exact bytes count."""
         payload = b'a\\b&lt;c%41d"\n"e0x41f'
         with Tree() as t:
@@ -755,7 +753,7 @@ class ClosedList(Finds, unittest.TestCase):
                 self.assertIn(self.INPUT, disclosure.found("docs/notes.md", text.encode(), needles))
 
     def test_4_yamls_nul_before_a_payload_run_that_begins_with_a_digit(self):
-        """internal #80's deep review at 85988e9f79, finding 4: YAML writes a NUL and then `12` as `\\012`, which C
+        """YAML writes a NUL and then `12` as `\\012`, which C
         reads as one octal escape; the payload run after the NUL counts in YAML's reading too.  The copy is shorter
         than a byte window and is not the whole input, so only the run counts."""
         run = b"1234 stand-in run"
@@ -803,7 +801,7 @@ class ClosedList(Finds, unittest.TestCase):
         self.assertEach([("%s: %s" % (how, label), text, label) for how, text, label in cases])
 
     def test_6_a_hex_line_with_a_long_blank_run_is_searched_in_linear_time(self):
-        """internal #80's deep review (6431365684) and bug-finder (6430615819) at 361959911c: two blank runs side by
+        """Two blank runs side by
         side in the `xxd -p` line pattern took time that grew with the square of the blanks (758 s for 262,144).  A
         line of hex, 262,144 blanks and one other character is searched in under a second."""
         import time
@@ -826,7 +824,7 @@ class Search(unittest.TestCase):
 
     @unittest.skipIf(lint.default_jobs() < 2, "one CPU: the search runs in this process")
     def test_a_worker_that_dies_fails_the_search_instead_of_hanging_it(self):
-        """internal #80's code-quality review at 0ac7eb3f05, finding 2: a worker the out-of-memory killer ends."""
+        """A worker the out-of-memory killer ends."""
         tools = os.path.dirname(os.path.dirname(HERE))
         script = "\n".join([
             "import os, signal, sys",
@@ -901,6 +899,9 @@ class StatementHold(unittest.TestCase):
         label = "held statement zlib/checksum_fuzzer/asan_agrees in a file about its fuzz target"
         for rel, text in (("proofs/zlib/checksum_fuzzer/plain_halts/Proof.v", "(* Statements.asan_agrees *)"),
                           ("proofs/zlib/checksum_fuzzer/plain_halts/Proof.v", "(* asan_agrees_holds *)"),
+                          ("projects/zlib/checksum_fuzzer/proofs/plain_halts/Proof.v", "(* asan_agrees_holds *)"),
+                          ("projects/zlib/checksum_fuzzer/counterexamples/asan_halts/expect.yaml",
+                           "note: asan_agrees is false\n"),
                           ("projects/zlib/checksum_fuzzer/notes.md", "asan_agrees is false"),
                           ("notes/zlib.md", "asan_agrees is withheld while the bug is open."),
                           ("proofs/lib/Held.v", "From OssFuzzTheorems.zlib.checksum_fuzzer Require Statements.\n"
@@ -918,7 +919,10 @@ class StatementHold(unittest.TestCase):
                 ("docs/json.md", "json/checksum_fuzzer/asan_agrees and json.checksum_fuzzer.Statements.asan_agrees"),
                 ("notes/zlib.md", "api-driver/asan_agrees is open; so is asan_ubsan_agrees"),
                 ("proofs/zlib/checksum_fuzzer/ubsan_agrees/Proof.v", "(* Statements.ubsan_agrees *)"),
-                # internal #80's final review, finding 7: a fuzz target whose module begins with the held one's
+                # a project's patches are no fuzz target's own files, in either layout
+                ("patches/zlib/checksum_fuzzer/0001-x.patch", "+ asan_agrees is false\n"),
+                ("projects/zlib/patches/0001-x.patch", "+ asan_agrees is false\n"),
+                # a fuzz target whose module begins with the held one's
                 ("projects/zlib/checksum_fuzzer_v2/Statements.v",
                  "From OssFuzzTheorems.zlib.checksum_fuzzer_v2 Require Images.\n"
                  "Definition asan_disagrees_at_most := 0.\nDefinition asan_agrees := 0.\n"),

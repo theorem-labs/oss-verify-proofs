@@ -1,0 +1,7 @@
+# control 3: the donor's own `addi s0, a0, 0` at +0x10 (auipc pair to asan_inited); UA copy with 13040500 written at 0x58454 (file bytes)
+# GA = <P>/unstripped/fuzz_grant/fuzz_grant.asan sha256 57c26f993615
+# UA = <out>/plant-3 sha256 f5de3a120f20
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes acceptances	C-string acceptances (also one CSTR row each)
+_ZN6__asan18TryAsanInitFromRtlEv	GA:UA	0x5980c	0x58444	160	160	EQUAL-mod-pcrel	1	0	0	(0, 0, 0)	[('0x10', '_ZN6__asanL11asan_initedE+0x0', '_ZN11__sanitizerL26internal_alloc_placeholderE+0x250', 'names', None)]		
+rc=0

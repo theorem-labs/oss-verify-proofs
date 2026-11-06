@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: vorbis
 harness: decode_fuzzer
-rocq: OssFuzzTheorems.vorbis.decode_fuzzer
+rocq: OSSVerify.vorbis.decode_fuzzer
 origin: upstream
 summary: ov_open_callbacks over an in-memory read callback, then ov_read (16-bit LE signed) until EOF
   or error; decoded PCM discarded.

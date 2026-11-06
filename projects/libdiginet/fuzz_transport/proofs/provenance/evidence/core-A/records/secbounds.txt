@@ -1,0 +1,25 @@
+# secbounds.py: 22 section-bound cells in stage-out, against fuzz_transport.asan's section headers
+OK	A/AB1w.v:11	tfib_rodata_lo = 0x102e0	section header 0x102e0	
+OK	A/AB1w.v:11	tfib_rodata_hi = 0x22b4c	section header 0x22b4c	
+OK	A/AB1w.v:12	tfib_text_lo = 0x310d0	section header 0x310d0	
+OK	A/AB1w.v:12	tfib_text_hi = 0xa2948	section header 0xa2948	
+OK	A/AB1w.v:13	tfib_init_array_lo = 0xa3948	section header 0xa3948	
+OK	A/AB1w.v:13	tfib_init_array_hi = 0xa3968	section header 0xa3968	
+OK	A/AB1w.v:14	tfib_fini_array_lo = 0xa3968	section header 0xa3968	
+OK	A/AB1w.v:14	tfib_fini_array_hi = 0xa3978	section header 0xa3978	
+OK	A/AB1w.v:15	tfib_preinit_array_lo = 0xa3978	section header 0xa3978	
+OK	A/AB1w.v:15	tfib_preinit_array_hi = 0xa3980	section header 0xa3980	
+OK	A/AB1w.v:16	tfib_data_rel_ro_lo = 0xa3980	section header 0xa3980	
+OK	A/AB1w.v:16	tfib_data_rel_ro_hi = 0xa4030	section header 0xa4030	
+OK	A/AB1w.v:17	tfib_got_lo = 0xa4030	section header 0xa4030	
+OK	A/AB1w.v:17	tfib_got_hi = 0xa4d88	section header 0xa4d88	
+OK	A/AB1w.v:18	tfib_data_lo = 0xa5d88	section header 0xa5d88	
+OK	A/AB1w.v:18	tfib_data_hi = 0xa8940	section header 0xa8940	
+OK	A/AB1w.v:19	tfib_asan_globals_lo = 0xa8940	section header 0xa8940	
+OK	A/AB1w.v:19	tfib_asan_globals_hi = 0xa9340	section header 0xa9340	
+OK	A/AB1w.v:20	tfib_bss_lo = 0xa9340	section header 0xa9340	
+OK	A/AB1w.v:20	tfib_bss_hi = 0x6153d0	section header 0x6153d0	
+OK	A/AB1w.v:21	tfib_tbss_lo = 0xa2948	section header 0xa2948	
+OK	A/AB1w.v:21	tfib_tbss_hi = 0xa295c	section header 0xa295c	
+result: section-bound cells 22: OK 22, KNOWN 0, DIFF 0
+control: tfib_data_hi -> 0xa1120 (the donor's .data end): DIFF rows 0 -> 1 (tfib_data_hi 0xa1120): PASS

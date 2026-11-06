@@ -1,0 +1,91 @@
+# record run (donor = fuzz_pcap released text with module paths renamed, ported = the committed files)
+  image src B  <file>  sha256 9e66f771f22a  571112 bytes  symbols: symtab of fuzz_pcap.asan-ubsan c969d83cdd59
+  image dst B  <file>  sha256 af4534831a45  567032 bytes  symbols: symtab of fuzz_wire.asan-ubsan.unstripped 51eb4bef2425
+  count symbols of src B: 2000
+  count symbols of dst B: 1983
+  count src files read: 5
+  count dst files read: 5
+  count files paired: 5
+  count numerals: 8868
+  count files recognised or declared generated (GENERATED-SKIPPED): 0
+  count constructors whose declared field roles were read from the ported tree: 0
+  count constructors whose declared field roles were read from the source tree: 0
+  count stale-donor candidates dropped instead of judged: 0
+  count named-symbol cells UNMEASURED (the run reads the file against another build): 0
+  control fill_pass known answer (selftest_fill, run before anything is read): RAN  pass
+  control donor-vs-donor: NOT RUN  a separate run of this tool with one image on both sides
+  DECLARED ABSENT / DEFAULT USED: none (every input above was read)
+# files paired 5; numerals 8868; "kernel" = of those, inside a fail-loud vm_compute / fetch_word fact
+INSN-SAME	22
+NON-ADDRESS-SAME	8722	kernel 7687
+ROUND-CONSTANT-SAME	1	kernel 1
+SAME-GEOMETRY	12	kernel 11
+SAME-SYMBOL	111	kernel 110
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 0 rows in 0 classes: (of the 27 classes FLAG-CLASSES 575d398c6022 names)
+checker <file> rc=0 (sha256 efa19b81e92b)
+triage-mm: 0 flagged / GENERATOR-FILL rows, 0 explained, 0 unexplained
+triage-mm: expected classes of the 60 resolved rows: 345540 SAME-SYMBOL x24, 538627 NON-ADDRESS-SAME x18, 571523 NON-ADDRESS-SAME x18; 0 mismatched
+rc=0
+# control: MemmoveK.v MM_ENTRY planted as the donor's __asan_memmove 0x51c40
+  image src B  <file>  sha256 9e66f771f22a  571112 bytes  symbols: symtab of fuzz_pcap.asan-ubsan c969d83cdd59
+  image dst B  <file>  sha256 af4534831a45  567032 bytes  symbols: symtab of fuzz_wire.asan-ubsan.unstripped 51eb4bef2425
+  count symbols of src B: 2000
+  count symbols of dst B: 1983
+  count src files read: 5
+  count dst files read: 5
+  count files paired: 5
+  count numerals: 8868
+  count files recognised or declared generated (GENERATED-SKIPPED): 0
+  count constructors whose declared field roles were read from the ported tree: 0
+  count constructors whose declared field roles were read from the source tree: 0
+  count stale-donor candidates dropped instead of judged: 1
+  count named-symbol cells UNMEASURED (the run reads the file against another build): 0
+  control fill_pass known answer (selftest_fill, run before anything is read): RAN  pass
+  control donor-vs-donor: NOT RUN  a separate run of this tool with one image on both sides
+  DECLARED ABSENT / DEFAULT USED  a decidable stale-donor candidate: the value is in executable code (the code-pointer rule judges it)  count 1  the candidate is not reported
+# files paired 5; numerals 8868; "kernel" = of those, inside a fail-loud vm_compute / fetch_word fact
+INSN-SAME	22
+NON-ADDRESS-SAME	8722	kernel 7687
+ROUND-CONSTANT-SAME	1	kernel 1
+SAME-GEOMETRY	12	kernel 11
+SAME-SYMBOL	110	kernel 109
+STALE-DONOR-CODE-POINTER	1	kernel 1	FLAG
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 1 rows in 1 classes: STALE-DONOR-CODE-POINTER=1
+checker <file> rc=4 (sha256 efa19b81e92b)
+UNEXPLAINED STALE-DONOR-CODE-POINTER B/Rt/MemmoveK.v:39/39 0x51c40 -> 0x51c40 (donor function start __asan_memmove; the port value is ___interceptor_memcpy+0x530; the target has it at __asan_memmove@0x510b0; value unchanged; expected 0x510)
+triage-mm: 1 flagged / GENERATOR-FILL rows, 0 explained, 1 unexplained
+triage-mm: expected classes of the 60 resolved rows: 345540 SAME-SYMBOL x24, 538627 NON-ADDRESS-SAME x18, 571523 NON-ADDRESS-SAME x18; 0 mismatched
+rc=1
+# control: MemmoveK.v MM_REAL planted as fuzz_wire's LLVMFuzzerTestOneInput 0x7fbf8 (a wrong function)
+  image src B  <file>  sha256 9e66f771f22a  571112 bytes  symbols: symtab of fuzz_pcap.asan-ubsan c969d83cdd59
+  image dst B  <file>  sha256 af4534831a45  567032 bytes  symbols: symtab of fuzz_wire.asan-ubsan.unstripped 51eb4bef2425
+  count symbols of src B: 2000
+  count symbols of dst B: 1983
+  count src files read: 5
+  count dst files read: 5
+  count files paired: 5
+  count numerals: 8868
+  count files recognised or declared generated (GENERATED-SKIPPED): 0
+  count constructors whose declared field roles were read from the ported tree: 0
+  count constructors whose declared field roles were read from the source tree: 0
+  count stale-donor candidates dropped instead of judged: 0
+  count named-symbol cells UNMEASURED (the run reads the file against another build): 0
+  control fill_pass known answer (selftest_fill, run before anything is read): RAN  pass
+  control donor-vs-donor: NOT RUN  a separate run of this tool with one image on both sides
+  DECLARED ABSENT / DEFAULT USED: none (every input above was read)
+# files paired 5; numerals 8868; "kernel" = of those, inside a fail-loud vm_compute / fetch_word fact
+INSN-SAME	22
+NON-ADDRESS-SAME	8722	kernel 7687
+ROUND-CONSTANT-SAME	1	kernel 1
+SAME-GEOMETRY	12	kernel 11
+SAME-SYMBOL	110	kernel 109
+STALE-DONOR-CODE-POINTER	1	kernel 1	FLAG
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 1 rows in 1 classes: STALE-DONOR-CODE-POINTER=1
+checker <file> rc=4 (sha256 efa19b81e92b)
+UNEXPLAINED STALE-DONOR-CODE-POINTER B/Rt/MemmoveK.v:42/42 0x63c08 -> 0x7fbf8 (donor function start __sanitizer_internal_memmove; the port value is LLVMFuzzerTestOneInput+0x0; the target has it at __sanitizer_internal_memmove@0x63078; expe)
+triage-mm: 1 flagged / GENERATOR-FILL rows, 0 explained, 1 unexplained
+triage-mm: expected classes of the 60 resolved rows: 345540 SAME-SYMBOL x24, 538627 NON-ADDRESS-SAME x18, 571523 NON-ADDRESS-SAME x18; 0 mismatched
+rc=1

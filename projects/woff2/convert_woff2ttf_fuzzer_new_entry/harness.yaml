@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: woff2
 harness: convert_woff2ttf_fuzzer_new_entry
-rocq: OssFuzzTheorems.woff2.convert_woff2ttf_fuzzer_new_entry
+rocq: OSSVerify.woff2.convert_woff2ttf_fuzzer_new_entry
 origin: upstream
 summary: woff2::ConvertWOFF2ToTTF into a WOFF2StringOut (30 MiB cap / sized from ComputeWOFF2FinalSize);
   the boolean result and the TTF bytes are discarded (no re-encode or checksum comparison by the harness).

@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: reac-pw/fuzz_segconf/plain_halts
+fingerprint: 13d289159ffe486c3ef2db375053dc4c01905dc0834fdb9310bdcb95c4c2b720

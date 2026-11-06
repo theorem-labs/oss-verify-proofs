@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: protobuf-c
 harness: unpack_fuzzer
-rocq: OssFuzzTheorems.protobuf_c.unpack_fuzzer
+rocq: OSSVerify.protobuf_c.unpack_fuzzer
 origin: oss-fuzz
 summary: protobuf_c_message_unpack of the input as foo.TestMess (t/test-full.proto); the unpacked message
   is freed without being inspected or re-packed.

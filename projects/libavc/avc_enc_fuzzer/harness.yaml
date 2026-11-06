@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libavc
 harness: avc_enc_fuzzer
-rocq: OssFuzzTheorems.libavc.avc_enc_fuzzer
+rocq: OSSVerify.libavc.avc_enc_fuzzer
 origin: upstream
 summary: 'H.264 encoder: the first IDX_LAST bytes configure ~40 encoder parameters (size, rate control,
   profile, IDR interval, dynamic bitrate/framerate changes, ...), the rest is fed as raw YUV frames to

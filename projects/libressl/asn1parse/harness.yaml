@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libressl
 harness: asn1parse
-rocq: OssFuzzTheorems.libressl.asn1parse
+rocq: OSSVerify.libressl.asn1parse
 origin: upstream
 summary: ASN1_parse_dump of the input to a /dev/null BIO; return value cast to void.
 entry: FuzzerTestOneInput

@@ -1,0 +1,36 @@
+INPUTS USED by port_addr_check.py --src $W/rt-reusable/work/rt/RtPreset/src --dst $W/rt-reusable/work/rt/RtPreset/dst --src-image A=$W/rt-reusable/work/img/presetR.A.pin:$W/rt-reusable/work/img/presetR.A.twin --dst-image A=$IMG/cmd.A.pin:$IMG/cmd.A.twin --donors-from $BIN --cache cache --paired-only --summary --fail-on-flags --out full.tsv
+  image src A  $W/rt-reusable/work/img/presetR.A.pin  sha256 d83eb25dbf0d  608280 bytes  symbols: symtab of presetR.A.twin f0d2e8d40c7e
+  image dst A  $IMG/cmd.A.pin  sha256 c0661b96b5bd  634904 bytes  symbols: symtab of cmd.A.twin 68db792d5fa7
+  ref src  $W/rt-reusable/work/rt/RtPreset/src  -> local path
+  ref dst  $W/rt-reusable/work/rt/RtPreset/dst  -> local path
+  count symbols of src A: 2087
+  count symbols of dst A: 2256
+  count src files read: 3
+  count dst files read: 3
+  count files paired: 3
+  count numerals: 1285
+  count files recognised or declared generated (GENERATED-SKIPPED): 0
+  count constructors whose declared field roles were read from the ported tree: 0
+  count constructors whose declared field roles were read from the source tree: 0
+  count stale-donor candidates dropped instead of judged: 0
+  count file pairs whose build came from no rule places the file's build (nor its own symbol-table agreement): 6
+  count named-symbol cells UNMEASURED (the run reads the file against another build): 0
+  control fill_pass known answer (selftest_fill, run before anything is read): RAN  pass
+  control donor-vs-donor: NOT RUN  a separate run of this tool with one image on both sides; see the tool's documentation file
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-PORTED  count 90  reported as its own row, never silently
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-SOURCE  count 469  reported as its own row, never silently
+  note file pairing: normalised RELATIVE PATH after --map / --rename, then the identity of the first hex in the file name; never the basename alone. There is no donor-text carry filter, so no candidate is dropped for being absent from a same-named donor file (the tool author's note)
+# files paired 3; numerals 1285; "kernel" = of those, inside a fail-loud vm_compute / fetch_word fact
+GENERATOR-FILL	1	REPORTED
+INSN-SAME	14	kernel 7
+NON-ADDRESS-SAME	651	kernel 496
+SAME-GEOMETRY	8	kernel 7
+SAME-SYMBOL	24	kernel 22
+DIFFERENT-SYMBOL	1	kernel 1	FLAG
+NON-ADDRESS-CHANGED	27	kernel 15	FLAG
+UNPAIRED-PORTED	90	FLAG
+UNPAIRED-SOURCE	469	kernel 12	FLAG
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+UNMEASURED named-symbol 0 / 0 cells	UNMEASURED-NAME 0 rows	UNPAIRED-FILE-UNMEASURED 0 rows
+# image A $W/rt-reusable/work/img/presetR.A.pin d83eb25dbf0d symbols: symtab
+# image A $IMG/cmd.A.pin c0661b96b5bd symbols: symtab

@@ -1,0 +1,7 @@
+# oss-fuzz-theorems/symbols/1 sha256=64e0aab9f6e65f69a654dcebbc0ee2553fcd665b258f6e6d6bebf3e7bc019543
+_start	func	0x11260	0	-	-	-
+LLVMFuzzerTestOneInput	func	0x11270	108	1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f	2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e	-
+crc32_z.llvm.42	func	0x112dc	40	3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d	4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c	-
+crc_table	object	0x13000	1024	5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b	-	-
+.got	section	0x14000	16	6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a	-	-
+.bss	section	0x15000	64	-	-	-

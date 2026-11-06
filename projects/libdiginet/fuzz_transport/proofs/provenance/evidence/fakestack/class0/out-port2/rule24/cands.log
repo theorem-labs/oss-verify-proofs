@@ -1,0 +1,16 @@
+A libreac/fuzz_decode (e10f488c53fc): PASS; ranges 9 of 9; pc-relative words 44 walked / 439 whole; 5 resolve moves; layout move: same
+A libreac/fuzz_disco (e10f488c53fc): PASS; ranges 9 of 9; pc-relative words 38 walked / 281 whole; 5 resolve moves; layout move: same
+A libreac/fuzz_ctrl (e10f488c53fc): PASS; ranges 8 of 8; pc-relative words 38 walked / 55 whole; 6 resolve moves; layout move: same
+A libreac/fuzz_grant (e10f488c53fc): PASS; ranges 12 of 12; pc-relative words 62 walked / 416 whole; 9 resolve moves; layout move: same
+A libreac/fuzz_identity (e10f488c53fc): FAIL(1); ranges 10 of 11; pc-relative words 47 walked / 403 whole; 5 resolve moves; layout move: same
+A libreac/fuzz_pcap (e10f488c53fc): PASS; ranges 10 of 10; pc-relative words 49 walked / 388 whole; 9 resolve moves; layout move: same
+A plugin-hostd/fuzz_command (e10f488c53fc): FAIL(2); ranges 13 of 15; pc-relative words 87 walked / 504 whole; 9 resolve moves; layout move: same
+A reac-pw/fuzz_pin (9b0ac6f0e678): PASS; ranges 9 of 9; pc-relative words 41 walked / 386 whole; 5 resolve moves; layout move: same
+B libreac/fuzz_decode (e10f488c53fc): PASS; ranges 9 of 9; pc-relative words 44 walked / 439 whole; 5 resolve moves; layout move: same
+B libreac/fuzz_ctrl (e10f488c53fc): PASS; ranges 8 of 8; pc-relative words 40 walked / 54 whole; 6 resolve moves; layout move: same
+B libreac/fuzz_grant (e10f488c53fc): FAIL(1); ranges 11 of 12; pc-relative words 56 walked / 364 whole; 9 resolve moves; layout move: same
+B libreac/fuzz_identity (e10f488c53fc): FAIL(1); ranges 10 of 11; pc-relative words 49 walked / 403 whole; 5 resolve moves; layout move: same
+B libreac/fuzz_pcap (e10f488c53fc): PASS; ranges 10 of 10; pc-relative words 51 walked / 387 whole; 9 resolve moves; layout move: same
+B plugin-hostd/fuzz_command (e10f488c53fc): FAIL(2); ranges 13 of 15; pc-relative words 84 walked / 501 whole; 9 resolve moves; layout move: same
+B reac-pw/fuzz_pin (9b0ac6f0e678): PASS; ranges 9 of 9; pc-relative words 43 walked / 390 whole; 5 resolve moves; layout move: same
+rc=0

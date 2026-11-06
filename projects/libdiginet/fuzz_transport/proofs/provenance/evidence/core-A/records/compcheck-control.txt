@@ -1,0 +1,9 @@
+plant A/AFia.v:133 5705728 -> 5619712 (P1 a kept PT_LOAD3 page span): caught by ['a1 A/AFia.v:133 5619712', 'a2 A/AFia.v:133 5619712', 'a3 A/AFia.v:133 5705728']
+plant A/AE34.v:28 (0x44a08, 156%nat) -> (0x44a0c, 156%nat) (P2 a code range start moved by 4): caught by ['a1b A/AE34.v:28 (0x44a0c, 156)']
+plant A/AB1w.v:17 Definition tfib_got_lo : Z := 0xa4030 -> Definition tfib_got_lo : Z := 0xa4038 (P3 GOT[0] -> GOT[1]): caught by ['b A/AB1w.v:17 0xa4030']
+plant A/AE2v.v:64 0x7fffb300 -> 0x7fffb2e8 (P4 a kept donor shadow address): caught by ['c1 A/AE2v.v:64 0x7fffb2e8', 'c1w A/AE2v.v:64 [0x7fffb2e8, 0x7fffb308)']
+plant A/AFev.v:430 change (65536 / 8) -> change (65536 / 16) (P5 a moved divisor): caught by ['c2 A/AFev.v:430 16']
+plant Reusable/YG0f.v:34 Definition kNodesBlockSize : Z := 0x100000 -> Definition kNodesBlockSize : Z := 0x107ec0 (P6 a moved model constant): caught by ['c4 Reusable/YG0f.v:34 0x107ec0']
+plant A/AB1w.v:467 Definition tfib_A_sysconf : Z := 0x92db0.  Definition tfib_E -> Definition tfib_A_sysconf_gone : Z := 0x92db0.  Definition t (P7 the row of a function the target links dropped): caught by ['d A/AB1w.v -']
+plant A/AB15.v:202 16843009 -> 16843010 (P8 a moved arithmetic constant): caught by ['c2 A/AB15.v:202 16843010', 'c3 A/AB15.v:202 0x1010101']
+control: 8 plant(s), each caught: True; new open rows elsewhere: 0: PASS

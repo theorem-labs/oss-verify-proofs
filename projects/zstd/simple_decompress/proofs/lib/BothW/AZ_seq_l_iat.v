@@ -1,0 +1,138 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.Spec Require Import FseNCount FseLemmas ZdFrame ZdFrameThm ZdDCtx ZdSeqTable.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.Spec Require Import STree AsanCtrl AsanEmbed.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.Lib Require Import Tac Arr Bytes ZBridge Walk.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.LibA Require Import ExecF StepF Shadow.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.Common Require Import FseWalkKit MemRange ZdWalkKit ZdDctxRep ZdSeqW ZdTbl.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.BothW Require Import BImg ABase RtCells AMalloc_iface AFake_iface AFakeK_iface AZ_kit AZ_globals AZ_globalsR
+     AZ_libc_iface AZ_seq_iface AZ_seq_kit AZ_seq_gkit AZ_seq_l_base AZ_seq_l_lbase AZ_seq_l_lkit AZ_seq_l_ibase AZ_seq_l_xat AZ_seq_l_la_at.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.Common Require Import RunDraw.
+Import ListNotations.
+Open Scope Z_scope.
+Set Warnings "-notation-for-abbreviation".
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+(* [comment removed for export] *)
+Lemma sql_zbv_eqm : forall a b, a mod 2^64 = b mod 2^64 -> Z_to_bv 64 a = Z_to_bv 64 b.
+Proof. intros a b H. rewrite <- (Z_to_bv_mod64 a), <- (Z_to_bv_mod64 b), H. reflexivity. Qed.
+Ltac sql_cells_eq :=
+  let rec go := lazymatch goal with
+    | |- @nil _ = _ => reflexivity
+    | |- (_ :: _) = _ => apply f_equal2; [ first [reflexivity | do 2 apply f_equal; lia | apply f_equal; apply sql_zbv_eqm; Z.div_mod_to_equations; lia] | go ] end in go.
+
+Section CANSEC1. Context {rc : runConstT}.
+
+(* [comment removed for export] *)
+Definition sql_ifrI (P : slq) (OEND LEND LP : Z) (mid : list cell) (ja jb jc jd je jg jh ji jj jk jr jseq : list byte) : list cell :=
+  let '(mkSLQ ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m SPV lo DCTX DST CAP B0 B1 SEQ nbSeq LLT MLT OFT PFX LITP LBE LITB LOC sq tLL tOF tML huf r0 r1 r2 pde dend expd pcs dsz bt stg le fe ws AI fflag L RNG st LB m0 FRB FF SHF D8 j0 j384 jfh j144 jsh0 jsh1) := P in
+  [CB 8 j0; CB 40 ja; C8 (Z_to_bv 64 (2147450880 + D8 + 3336)); C8 (Z_to_bv 64 (DCTX + 26692)); C8 (Z_to_bv 64 (2147450880 + D8 + 3336)); C8 (Z_to_bv 64 (2147450880 + D8 + 3335));
+   C8 (Z_to_bv 64 (DCTX + 26688)); CB 16 jb; C8 (Z_to_bv 64 (Z.min nbSeq 8)); C8 (Z_to_bv 64 FF); CB 16 jc; C8 (Z_to_bv 64 DST); C8 (Z_to_bv 64 DCTX);
+   C8 (Z_to_bv 64 (DCTX + 26684)); CB 8 jd; C8 dend; C8 (Z_to_bv 64 PFX); C8 (Z_to_bv 64 (2147450880 + D8 + 3795)); C8 (Z_to_bv 64 (DCTX + 30360)); C8 (Z_to_bv 64 FF);
+   CB 8 je; C8 (Z_to_bv 64 OEND)] ++ mid ++
+  [C8 (Z_to_bv 64 SHF); CB 8 jg; C8 (Z_to_bv 64 (FF + 120)); CB 8 jh; C8 (Z_to_bv 64 PFX); C8 (Z_to_bv 64 nbSeq); C8 (Z_to_bv 64 (FF + 32)); C8 (Z_to_bv 64 (DCTX + 30368));
+   C8 (Z_to_bv 64 LEND); CB 32 ji; C8 (Z_to_bv 64 (2147450880 + D8 + 3796)); CB 8 jj; C8 (Z_to_bv 64 2147450880); CB 16 jk; CB 24 j384; CB 192 jr; C8 (Z_to_bv 64 LP); CB 24 jseq].
+(* [comment removed for export] *)
+Definition sql_imidA (jf : list byte) : list cell := [CB 16 jf].
+Definition sql_imidB (jf : list byte) : list cell := [CB 8 jf; C8 (Z_to_bv 64 1152921504606846976)].
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+Definition sql_iffA (P : slq) (jbd j72 : list byte) (p0 p1 p2 : word) : list cell := let '(mkSLQ ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m SPV lo DCTX DST CAP B0 B1 SEQ nbSeq LLT MLT OFT PFX LITP LBE LITB LOC sq tLL tOF tML huf r0 r1 r2 pde dend expd pcs dsz bt stg le fe ws AI fflag L RNG st LB m0 FRB FF SHF D8 j0 j384 jfh j144 jsh0 jsh1) := P in
+  [CB 32 jfh; CB 40 jbd; CB 48 j72; C8 p0; C8 p1; C8 p2; CB 104 j144; C8 (Z_to_bv 64 (fflag L 2 FF))].
+(* [comment removed for export] *)
+Definition sql_iffB (P : slq) (cw : word) (bc : Z) (jpad : list byte) (ptr : Z) (j72 : list byte) (p0 p1 p2 : word) : list cell := let '(mkSLQ ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m SPV lo DCTX DST CAP B0 B1 SEQ nbSeq LLT MLT OFT PFX LITP LBE LITB LOC sq tLL tOF tML huf r0 r1 r2 pde dend expd pcs dsz bt stg le fe ws AI fflag L RNG st LB m0 FRB FF SHF D8 j0 j384 jfh j144 jsh0 jsh1) := P in
+  [CB 32 jfh; C8 cw; C4 (Z_to_bv 64 bc); CB 4 jpad; C8 (Z_to_bv 64 ptr); C8 (Z_to_bv 64 SEQ); C8 (Z_to_bv 64 (SEQ + 8));
+   CB 48 j72; C8 p0; C8 p1; C8 p2; CB 104 j144; C8 (Z_to_bv 64 (fflag L 2 FF))].
+(* [comment removed for export] *)
+Definition sql_iffC (P : slq) (cw : word) (bc : Z) (jpad : list byte) (ptr sLL : Z) (j88 : list byte) (p0 p1 p2 : word) : list cell := let '(mkSLQ ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m SPV lo DCTX DST CAP B0 B1 SEQ nbSeq LLT MLT OFT PFX LITP LBE LITB LOC sq tLL tOF tML huf r0 r1 r2 pde dend expd pcs dsz bt stg le fe ws AI fflag L RNG st LB m0 FRB FF SHF D8 j0 j384 jfh j144 jsh0 jsh1) := P in
+  [CB 32 jfh; C8 cw; C4 (Z_to_bv 64 bc); CB 4 jpad; C8 (Z_to_bv 64 ptr); C8 (Z_to_bv 64 SEQ); C8 (Z_to_bv 64 (SEQ + 8));
+   C8 (Z_to_bv 64 sLL); C8 (Z_to_bv 64 (LLT + 8)); CB 32 j88; C8 p0; C8 p1; C8 p2; CB 104 j144; C8 (Z_to_bv 64 (fflag L 2 FF))].
+(* [comment removed for export] *)
+Definition sql_iffD (P : slq) (cw : word) (bc : Z) (jpad : list byte) (ptr sLL sOF : Z) (j104 : list byte) (p0 p1 p2 : word) : list cell := let '(mkSLQ ra gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m SPV lo DCTX DST CAP B0 B1 SEQ nbSeq LLT MLT OFT PFX LITP LBE LITB LOC sq tLL tOF tML huf r0 r1 r2 pde dend expd pcs dsz bt stg le fe ws AI fflag L RNG st LB m0 FRB FF SHF D8 j0 j384 jfh j144 jsh0 jsh1) := P in
+  [CB 32 jfh; C8 cw; C4 (Z_to_bv 64 bc); CB 4 jpad; C8 (Z_to_bv 64 ptr); C8 (Z_to_bv 64 SEQ); C8 (Z_to_bv 64 (SEQ + 8));
+   C8 (Z_to_bv 64 sLL); C8 (Z_to_bv 64 (LLT + 8)); C8 (Z_to_bv 64 sOF); C8 (Z_to_bv 64 (OFT + 8)); CB 16 j104; C8 p0; C8 p1; C8 p2; CB 104 j144;
+   C8 (Z_to_bv 64 (fflag L 2 FF))].
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+Definition sql_iregs (P : slq) (x1 x5 x6 x7 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s9 s10 s11 t3 t4 t5 t6 : word) : bvmap 5 word :=
+  mkR x1 (Z_to_bv 64 (l_FRB P)) (l_gp P) (l_tp P) x5 x6 x7 (Z_to_bv 64 (l_SPV P)) (Z_to_bv 64 (l_FRB P))
+      a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 (Z_to_bv 64 (l_FF P)) (Z_to_bv 64 (l_nbSeq P)) s9 s10 s11 t3 t4 t5 t6.
+
+(* [comment removed for export] *)
+Definition sql_at_ierr (P : slq) (OEND : Z) : Prop :=
+  forall (m1 : amem) (ja jb jc jf : list byte) (x1 x5 x6 x7 x10 x11 x12 x13 x15 x16 x17 x18 x19 x20 x21 x22 x24 x25 x26 x27 x28 x29 x30 x31 : word),
+  sql_iinv P OEND (l_LITP P) (l_LBE P) (l_LOC P) m1 [CB 112 ja; C8 (Z_to_bv 64 (l_FF P)); CB 120 jb; C8 (Z_to_bv 64 (l_SHF P)); CB 384 jc]
+                                             [CB 248 jf; C8 (Z_to_bv 64 (l_fflag P (l_L P) 2 (l_FF P)))] ->
+  evtF bsegs (l_RNG P) (sql_post P) (MS (mkR x1 (Z_to_bv 64 (l_FRB P)) (l_gp P) (l_tp P) x5 x6 x7 (Z_to_bv 64 (l_SPV P)) (Z_to_bv 64 (l_FRB P)) x10 x11 x12 x13 (Z_to_bv 64 18446744073709551596) x15 x16 x17 x18 x19 x20 x21 x22 (Z_to_bv 64 (l_FF P)) x24 x25 x26 x27 x28 x29 x30 x31) (l_F P) (Z_to_bv 64 0x8fa1c) (l_fc P) None m1 (seg_rom bsegs)).
+
+(* [comment removed for export] *)
+Definition ai_I0 (P : slq) (OEND : Z) : Prop :=
+  forall (m1 : amem) (ja jb jc jd je jf jg jh ji jj jk jr jseq jbd j72 : list byte) (p0 p1 p2 : word)
+         (x5 x6 x7 x13 x14 x15 x16 x17 x22 x25 x26 x27 x28 x29 x30 x31 : word),
+  sql_iinv P OEND (l_LITP P) (l_LBE P) (l_LOC P) m1 (sql_ifrI P OEND (l_LBE P) (l_LITP P) (sql_imidA jf) ja jb jc jd je jg jh ji jj jk jr jseq) (sql_iffA P jbd j72 p0 p1 p2) ->
+  evtF bsegs (l_RNG P) (sql_post P)
+    (MS (sql_iregs P (Z_to_bv 64 0x8a80c) x5 x6 x7 (Z_to_bv 64 (l_FF P + 32)) (Z_to_bv 64 (l_SEQ P)) (Z_to_bv 64 (zlen (l_sq P))) x13 x14 x15 x16 x17
+                   (Z_to_bv 64 (zlen (l_sq P))) (Z_to_bv 64 (l_SEQ P)) (Z_to_bv 64 (l_DST P)) (Z_to_bv 64 (l_DCTX P + 26684)) x22 x25 x26 x27 x28 x29 x30 x31)
+        (l_F P) (Z_to_bv 64 0x95b74) (l_fc P) None m1 (seg_rom bsegs)).
+
+(* [comment removed for export] *)
+Definition ai_I1 (P : slq) (OEND : Z) : Prop :=
+  forall (m1 : amem) (ja jb jc jd je jf jg jh ji jj jk jr jseq jpad j72 : list byte) (p0 p1 p2 cw : word) (A0 : Z) (bc ptr : Z)
+         (x5 x6 x7 x13 x14 x15 x16 x17 x25 x26 x27 x28 x29 x30 x31 : word),
+  sql_iinv P OEND (l_LITP P) (l_LBE P) (l_LOC P) m1 (sql_ifrI P OEND (l_LBE P) (l_LITP P) (sql_imidA jf) ja jb jc jd je jg jh ji jj jk jr jseq) (sql_iffB P cw bc jpad ptr j72 p0 p1 p2) ->
+  A0 = l_FF P + 72 ->
+  1 <= bc <= 64 -> bit_ok (l_SEQ P) (zlen (l_sq P)) bc ptr ->
+  evtF bsegs (l_RNG P) (sql_post P)
+    (MS (sql_iregs P (Z_to_bv 64 0x8a854) x5 x6 x7 (Z_to_bv 64 A0) (Z_to_bv 64 (l_FF P + 32)) (Z_to_bv 64 (l_LLT P)) x13 x14 x15 x16 x17
+                   (Z_to_bv 64 (zlen (l_sq P))) (Z_to_bv 64 (l_nbSeq P)) (Z_to_bv 64 2147450880) (Z_to_bv 64 (l_DCTX P)) (Z_to_bv 64 (l_FF P + 32)) x25 x26 x27 x28 x29 x30 x31)
+        (l_F P) (Z_to_bv 64 0x96148) (l_fc P) None m1 (seg_rom bsegs)).
+
+(* [comment removed for export] *)
+Definition ai_I3 (P : slq) (OEND : Z) : Prop :=
+  forall (m1 : amem) (ja jb jc jd je jf jg jh ji jj jk jr jseq jpad j88 : list byte) (p0 p1 p2 cw : word) (A0 : Z) (bc ptr sLL : Z)
+         (x5 x6 x7 x13 x14 x15 x16 x17 x25 x26 x27 x28 x29 x30 x31 : word),
+  sql_iinv P OEND (l_LITP P) (l_LBE P) (l_LOC P) m1 (sql_ifrI P OEND (l_LBE P) (l_LITP P) (sql_imidA jf) ja jb jc jd je jg jh ji jj jk jr jseq) (sql_iffC P cw bc jpad ptr sLL j88 p0 p1 p2) ->
+  A0 = l_FF P + 88 ->
+  0 <= bc <= 73 -> bit_ok (l_SEQ P) (zlen (l_sq P)) bc ptr -> 0 <= sLL < 2^(st_log (l_tLL P)) ->
+  evtF bsegs (l_RNG P) (sql_post P)
+    (MS (sql_iregs P (Z_to_bv 64 0x8a880) x5 x6 x7 (Z_to_bv 64 A0) (Z_to_bv 64 (l_FF P + 32)) (Z_to_bv 64 (l_OFT P)) x13 x14 x15 x16 x17
+                   (Z_to_bv 64 (l_DST P)) (Z_to_bv 64 (l_nbSeq P)) (Z_to_bv 64 2147450880) (Z_to_bv 64 (l_DCTX P)) (Z_to_bv 64 (l_FF P + 32)) x25 x26 x27 x28 x29 x30 x31)
+        (l_F P) (Z_to_bv 64 0x96148) (l_fc P) None m1 (seg_rom bsegs)).
+
+(* [comment removed for export] *)
+Definition ai_I5 (P : slq) (OEND : Z) : Prop :=
+  forall (m1 : amem) (ja jb jc jd je jf jg jh ji jj jk jr jseq jpad j104 : list byte) (p0 p1 p2 cw : word) (A0 : Z) (bc ptr sLL sOF : Z)
+         (x5 x6 x7 x13 x14 x15 x16 x17 x25 x26 x27 x28 x29 x30 x31 : word),
+  sql_iinv P OEND (l_LITP P) (l_LBE P) (l_LOC P) m1 (sql_ifrI P OEND (l_LBE P) (l_LITP P) (sql_imidB jf) ja jb jc jd je jg jh ji jj jk jr jseq) (sql_iffD P cw bc jpad ptr sLL sOF j104 p0 p1 p2) ->
+  A0 = l_FF P + 104 ->
+  0 <= bc <= 82 -> bit_ok (l_SEQ P) (zlen (l_sq P)) bc ptr -> 0 <= sLL < 2^(st_log (l_tLL P)) -> 0 <= sOF < 2^(st_log (l_tOF P)) ->
+  evtF bsegs (l_RNG P) (sql_post P)
+    (MS (sql_iregs P (Z_to_bv 64 0x8a8bc) x5 x6 x7 (Z_to_bv 64 A0) (Z_to_bv 64 (l_FF P + 32)) (Z_to_bv 64 (l_MLT P)) x13 x14 x15 x16 x17
+                   (Z_to_bv 64 (l_DST P)) (Z_to_bv 64 (l_nbSeq P)) (Z_to_bv 64 2147450880) (Z_to_bv 64 (l_DCTX P)) (Z_to_bv 64 (l_FF P + 32)) x25 x26 x27 x28 x29 x30 x31)
+        (l_F P) (Z_to_bv 64 0x96148) (l_fc P) None m1 (seg_rom bsegs)).
+
+(* [comment removed for export] *)
+Definition ai_I7 (P : slq) (OEND : Z) : Prop :=
+  forall (m1 : amem) (ja jb jc jd je jf jg jh ji jj jk jr jseq jpad : list byte) (p0 p1 p2 cw : word) (bc ptr sLL sOF sML : Z)
+         (x1 x5 x6 x7 x10 x11 x12 x13 x14 x15 x16 x17 x25 x26 x27 x28 x29 x30 x31 : word),
+  sql_iinv P OEND (l_LITP P) (l_LBE P) (l_LOC P) m1 (sql_ifrI P OEND (l_LBE P) (l_LITP P) (sql_imidB jf) ja jb jc jd je jg jh ji jj jk jr jseq) (sql_ffr P cw bc ptr sLL sOF sML p0 p1 p2 jpad) ->
+  0 <= bc <= 91 -> bit_ok (l_SEQ P) (zlen (l_sq P)) bc ptr ->
+  0 <= sLL < 2^(st_log (l_tLL P)) -> 0 <= sOF < 2^(st_log (l_tOF P)) -> 0 <= sML < 2^(st_log (l_tML P)) ->
+  evtF bsegs (l_RNG P) (sql_post P)
+    (MS (sql_iregs P x1 x5 x6 x7 x10 x11 x12 x13 x14 x15 x16 x17
+                   (Z_to_bv 64 (l_DST P)) (Z_to_bv 64 (l_nbSeq P)) (Z_to_bv 64 2147450880) (Z_to_bv 64 (l_DCTX P)) (Z_to_bv 64 (l_FF P + 32)) x25 x26 x27 x28 x29 x30 x31)
+        (l_F P) (Z_to_bv 64 0x8a8bc) (l_fc P) None m1 (seg_rom bsegs)).
+
+(* [comment removed for export] *)
+Lemma sql_iinv_eq2 : forall P OEND LLO LEND LOCV m1 fr ff fr' ff',
+  sql_iinv P OEND LLO LEND LOCV m1 fr ff -> fr = fr' -> ff = ff' -> sql_iinv P OEND LLO LEND LOCV m1 fr' ff'.
+Proof. intros P OEND LLO LEND LOCV m1 fr ff fr' ff' H <- <-. exact H. Qed.
+
+End CANSEC1.

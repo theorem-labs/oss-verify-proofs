@@ -1,0 +1,8 @@
+scrub.py record: proofs/libreac/fuzz_boxreg/provenance/evidence/startup-A/inputs/AF0m.v.prev, a cleaned copy of an input outside git
+original sha256 f2a61027cb7496dfe51f2ba64433b825ed6b4cd08a4abf1276a22ec2b22bcac4 (14978 bytes)
+copy     sha256 def5769ace2c00b9657eeb4247afe4da94d8ccbd3d3faccc47bb0cb96d0b3d7b (14224 bytes)
+rules: line:5
+Every byte outside the spans below is copied unchanged; removed text is shown only as <redacted>.
+@@ line 5: original bytes [445, 1215) -> copy bytes [445, 461)
+-<redacted>
++(* <redacted> *)

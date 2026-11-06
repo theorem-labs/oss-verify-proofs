@@ -1,0 +1,61 @@
+# ghunks-A.sh WORK LIB OUT (2026-10-31T10:44:56Z)
+# tools: ghunks-A.sh b4b78fd02b9a; make_gpatches.py 2724fa1a641a; check_gpatches.py 273729a57008; asan_globals.py 1ae1100fd0f9; measure_gcut.py 03c6c8e51444; 
+# inputs: G patches g-ACfn 541e4c4696b9 g-AD1w ed41960ef097 g-AD1m 58f8cadc9122 g-AD1p 2b55df460405 g-AD1q c353e5cf6157 g-AD1r 258880fd6cad g-AD2f f9d48ede68ec; LIB/A/AD2j.v f32f53f83a52, AD1y.v cd08f8cdb321; WORK/stage-out A/AD2f.v d856a72b7062, A/AD1x.v 3ac5f4d66b0b; twin 86efc3a80314
+## 1. the 7 G patches undone on a copy of WORK/stage-out, in reverse order
+undo g-AD2f.patch rc=0 patching file A/AD2f.v Hunk #1 succeeded at 146 (offset 1 line). Hunk #2 succeeded at 177 (offset 1 line). Hunk #3 succeeded at 284 (offset 1 line).
+undo g-AD1r.patch rc=0 patching file A/AD1r.v Hunk #1 succeeded at 158 (offset 1 line). Hunk #2 succeeded at 224 (offset 1 line). Hunk #3 succeeded at 276 (offset 1 line). Hunk #4 succeeded at 289 (offset 1 line). Hunk #5 succeeded at 322 (offset 1 line). Hunk #6 succeeded at 654 (offset 1 line). Hunk #7 succeeded at 663 (offset 1 line). Hunk #8 succeeded at 677 (offset 1 line).
+undo g-AD1q.patch rc=0 patching file A/AD1q.v Hunk #1 succeeded at 20 (offset 1 line). Hunk #2 succeeded at 38 (offset 1 line). Hunk #3 succeeded at 66 (offset 1 line).
+undo g-AD1p.patch rc=0 patching file A/AD1p.v Hunk #1 succeeded at 48 (offset 1 line).
+undo g-AD1m.patch rc=0 patching file A/AD1m.v Hunk #1 succeeded at 30 (offset 1 line).
+undo g-AD1w.patch rc=0 patching file A/AD1w.v Hunk #1 succeeded at 11 (offset 1 line). Hunk #2 succeeded at 95 (offset 1 line).
+undo g-ACfn.patch rc=0 patching file A/ACfn.v Hunk #1 succeeded at 15 (offset 1 line). Hunk #2 succeeded at 26 (offset 1 line). Hunk #3 succeeded at 49 (offset 1 line). Hunk #4 succeeded at 70 (offset 1 line).
+## 2. check_gpatches.py UNDO-TREE GPD --before <the 6 first patches of run.sh> (stage-g = WORK/stage-out's own text)
+undo bss-zero-range.patch	rc=0	patching file A/AD1o.v | patching file A/AD25.v
+undo dead-arm-ad1g.patch	rc=0	patching file A/AD1g.v
+undo imgtop-alias.patch	rc=0	patching file A/AB1w.v | patching file A/ACeg.v | patching file A/AF0x.v | patching file Reusable/YCbq.v | patching file Reusable/YCe5.v
+undo ad1q-shape.patch	rc=0	patching file A/AD1q.v
+undo cell-lookup.patch	rc=0	patching file A/AFim.v | patching file A/AFin.v
+undo zero-shadow-forallb.patch	rc=0	patching file A/AFex.v | patching file A/AFf0.v | patching file A/AFf3.v | patching file A/AFf4.v | patching file A/AFfl.v | patching file A/AFjy.v
+apply zero-shadow-forallb.patch	rc=0	checking file A/AFex.v | checking file A/AFf0.v | checking file A/AFf3.v | checking file A/AFf4.v | checking file A/AFfl.v | checking file A/AFjy.v
+apply cell-lookup.patch	rc=0	checking file A/AFim.v | checking file A/AFin.v
+apply ad1q-shape.patch	rc=0	checking file A/AD1q.v
+apply imgtop-alias.patch	rc=0	checking file A/AB1w.v | checking file A/ACeg.v | checking file A/AF0x.v | checking file Reusable/YCbq.v | checking file Reusable/YCe5.v
+apply dead-arm-ad1g.patch	rc=0	checking file A/AD1g.v
+apply bss-zero-range.patch	rc=0	checking file A/AD1o.v | checking file A/AD25.v
+round trip	equal	the tree after undo + apply equals the stage-out text
+g-ACfn.patch	rc=0	checking file A/ACfn.v	patched text vs stage-g: equal
+g-AD1w.patch	rc=0	checking file A/AD1w.v	patched text vs stage-g: equal
+g-AD1m.patch	rc=0	checking file A/AD1m.v	patched text vs stage-g: equal
+g-AD1p.patch	rc=0	checking file A/AD1p.v	patched text vs stage-g: equal
+g-AD1q.patch	rc=0	checking file A/AD1q.v	patched text vs stage-g: equal
+g-AD1r.patch	rc=0	checking file A/AD1r.v	patched text vs stage-g: equal
+g-AD2f.patch	rc=0	checking file A/AD2f.v	patched text vs stage-g: equal
+control (g-ACfn.patch, context line 4 altered)	rc=1	checking file A/ACfn.v | Hunk #1 FAILED at 14. | 1 out of 4 hunks FAILED
+check_gpatches.py rc=0
+## 3. asan_globals.py TWIN; measure_gcut.py LIB/A/AD2j.v WORK/stage-out/A/AD2f.v WORK/stage-out/A/AD1x.v OUT/asan_globals.tsv LIB/A/AD1y.v
+asan_globals.tsv: 40 descriptors, sha256 d71845727cab
+globals	18	writable harness globals (beg >= 0x5d0000) in asan_globals: g_cfg 0x5df080/60, g_raw 0x5df0e0/4, g_now 0x5df100/8, g_fail_next 0x5df120/1, g_last_counter 0x5df140/4, M 0x5df160/1648, g_nq 0x5df960/4, g_ncmd 0x5df980/4, g_rx 0x5df9a0/8, g_s 0x5df9c0/18264, GOT 0x5e52e0/224, g_rx_send 0x5e53e0/4, g_cmd 0x5e5400/40960, g_q 0x5f1c00/4096, g_rx_fail 0x5f3000/4, g_rx_times 0x5f3020/4, g_rx_len 0x5f3040/8, OW 0x5f3060/304
+DRV_G_LO	0x5df080	payload start of g_cfg
+DRV_G_HI	0x5f3190	payload end of OW (0x5f3060 + 304)
+IMG_REGIONS	54	regions of the start-up list
+IMG_L_noG	56	IMG_L / IMG_LC without the hull clip (stage-out value)
+IMG_L	56	IMG_L / IMG_LC with the hull clip, outermost (bounds of IMG_B / IMG_E are those of IMG_REGIONS)
+hull_meets	0	regions of IMG_REGIONS that meet the hull: 
+hull_drops	0	regions inside the hull, dropped by the clip: 
+IMG_XL_noG	57	AD1x IMG_XL = clipX IMG_L without the hull clip (stage-out value)
+IMG_XL	57	AD1x IMG_XL = clipX IMG_L with the hull clip
+L_mem_avoids_G	true	every None-based region of the clipped IMG_LC avoids the hull (region_avoids_G)
+STDOUT_off_hull	true	[0xa8738, 0xa8820) vs hull
+SOBUF_off_hull	true	[0x6141f8, 0x614608) vs hull
+F_STDERR_off_hull	true	[0xa8648, 0xa8730) vs hull
+clip_identity	true	the hull clip returns [r] for every piece of IMG_REGIONS after the STDOUT / SOBUF clips
+IMG_L_written	56	stands: stage-out states 56, the hull-clipped count is 56
+IMG_LC_written	56	stands: stage-out states 56, the hull-clipped count is 56
+IMG_XL_written	57	stands: stage-out states 57, the hull-clipped count is 57
+AD1y_DRV_G_LO	0x5df080	equal to the measured 0x5df080
+AD1y_DRV_G_HI	0x5f3190	equal to the measured 0x5f3190
+measure_gcut.py rc=0
+measurement: PASS (no DIFFERS; hull_meets 0; clip_identity, L_mem_avoids_G and the three off-hull rows true)
+## 4. control: R_A5a_1: end 0x5df080 -> 0x5df088 (DRV_G_LO 0x5df080 + 8): hull_meets 1, clip_identity false: CAUGHT
+check_gpatches control: CAUGHT
+ghunks-A: PASS

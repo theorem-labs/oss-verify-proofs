@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libhevc
 harness: hevc_dec_fuzzer
-rocq: OssFuzzTheorems.libhevc.hevc_dec_fuzzer
+rocq: OSSVerify.libhevc.hevc_dec_fuzzer
 origin: upstream
 summary: Creates an ihevcd decoder with a fuzzer-picked output colour format, architecture and core count,
   decodes the header then up to 100 frames into allocated output buffers; return codes and output pixels

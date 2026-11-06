@@ -1,0 +1,27 @@
+alreloc pass A: alreloc: per-numeral report: 8866 numerals in 370 files under OUT/alreloc/report/libdiginet/fuzz_transport (one .tsv per file), rc=1; pass R: alreloc: per-numeral report: 380 numerals in 122 files under OUT/alreloc/report-R/libdiginet/fuzz_transport (one .tsv per file), rc=1
+alreloc_compare.py: 492 files, 189718 numeral positions: agree 6305, both-kept 182141, disagree 191, alreloc-unmapped 828, alreloc-refused 0, not-covered 83, added 170
+alreloc_decide.py: .got tables: 427 / 427 slots, 427 aligned by content
+alreloc_decide.py: 189718 positions; decided: port_core WRONG 22, port_core right 9290; not in scope: 180406
+  WRONG A/AD1o.v:80(out 81) 0xa1460 -> 0x5f31e0: port_core WRONG: right value 0xa9340
+  WRONG A/AD1o.v:80(out 81) 0xa1460 -> 0x5f31e0: port_core WRONG: right value 0xa9340
+  WRONG A/AD1o.v:83(out 84) 0xa1460 -> 0x5f31e0: port_core WRONG: right value 0xa9340
+  WRONG A/AD1o.v:83(out 84) 0xa1460 -> 0x5f31e0: port_core WRONG: right value 0xa9340
+  WRONG A/AD1o.v:86(out 87) 0xa14a0 -> 0x5f3200: port_core WRONG: right value 0xa9360
+  WRONG A/AD1o.v:90(out 91) 0xa1460 -> 0x5f31e0: port_core WRONG: right value 0xa9340
+  WRONG A/AD1o.v:90(out 91) 0xa1460 -> 0x5f31e0: port_core WRONG: right value 0xa9340
+  WRONG A/AD1o.v:92(out 93) 0xa14a0 -> 0x5f3200: port_core WRONG: right value 0xa9360
+  WRONG A/AD1o.v:94(out 95) 0xa14a0 -> 0x5f3200: port_core WRONG: right value 0xa9360
+  WRONG A/AD1o.v:94(out 95) 82580 -> 779840: port_core WRONG: right value 0x1424d
+  WRONG A/AD1o.v:97(out 98) 0xa1460 -> 0x5f31e0: port_core WRONG: right value 0xa9340
+  WRONG A/AD1o.v:97(out 98) 0xa1460 -> 0x5f31e0: port_core WRONG: right value 0xa9340
+  WRONG A/AD1o.v:98(out 99) 0xa1460 -> 0x5f31e0: port_core WRONG: right value 0xa9340
+  WRONG A/AD1o.v:99(out 100) 660576 -> 6238688: port_core WRONG: right value 0xa9340
+  WRONG A/AD1o.v:99(out 100) 82572 -> 779836: port_core WRONG: right value 0x14245
+  WRONG A/AD1o.v:99(out 100) 660576 -> 6238688: port_core WRONG: right value 0xa9340
+  WRONG A/AD1o.v:99(out 100) 700788 -> 17860: port_core WRONG: right value 0xb3034
+  WRONG A/AD25.v:528(out 529) 0x5fa000 -> 0x5df0b8: port_core WRONG: right value 0x616000
+  WRONG A/AD25.v:531(out 532) 0x5fa000 -> 0x5df0b8: port_core WRONG: right value 0x616000
+  WRONG A/AD25.v:538(out 539) 0x5fa000 -> 0x5df0b8: port_core WRONG: right value 0x616000
+  WRONG A/AFem.v:128(out 129) 127070 -> 127008: port_core WRONG: right value 127070 (a constant, unchanged)
+  WRONG A/AFem.v:206(out 207) 127070 -> 127008: port_core WRONG: right value 127070 (a constant, unchanged)
+xcheck rc=1 519s

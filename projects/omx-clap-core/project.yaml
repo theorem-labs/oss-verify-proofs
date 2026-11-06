@@ -1,0 +1,54 @@
+schema: oss-fuzz-theorems/project/1
+project: omx-clap-core
+description: 'The CLAP and LV2 plugin host core of FreeMixer, in C. The fuzz targets drive the readers of bytes from disk
+  that the host parses itself: the preset file (JSON), the base64 plugin state body it carries, and the manifest.ttl of an
+  LV2 bundle.'
+homepage: https://github.com/FreeMixer/omx-clap-core
+language: c
+status: available
+enrolled: true
+library:
+  name: omx-clap-core
+  repository: https://github.com/FreeMixer/omx-clap-core
+  commit: 246923f04ac0ff2adb189bb9280816670c05b36c
+  version: 0.20.1
+  licence: GPL-3.0-or-later
+harnesses:
+- name: fuzz_preset
+  status: included
+  origin: upstream
+- name: fuzz_state
+  status: included
+  origin: upstream
+- name: fuzz_manifest
+  status: included
+  origin: upstream
+build:
+  system: custom
+  clang: 20.1.8
+  builder: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  oss_verify:
+    repository: theorem-labs/oss-verify
+    commit: 5f067f673c4489bfe989de13bf17be68daf2b2df
+    path: projects/omx-clap-core
+assets:
+  bin:
+    release: v2026.11.1
+    file: omx-clap-core-bin.tar.zst
+    bytes: 514280
+    sha256: add8e5d83c1793531ac4bf333c7f1c3e8330164729471056bd133dc9a444b081
+  src:
+    release: v2026.11.1-src
+    file: omx-clap-core-src.tar.zst
+    bytes: 905046
+    sha256: 4fded8a51b856a7ca97e9f4a3a7dc4839fbce881eba024182c59092c90f440fc
+  src_manifest:
+    release: v2026.11.1-src
+    file: omx-clap-core-src.MANIFEST.tsv
+    bytes: 1155
+    sha256: 4b8cd1c043ef1412bfb7764b09f9b07313a4c46b3b67bfa0de8dab0e766aa47e
+  port:
+    release: v2026.11.1-src
+    file: omx-clap-core-port.tar.zst
+    bytes: 292936
+    sha256: 793a877b3204973a0ea4dc4d30ed19a408f1cb03ba166417bb1e8ebb5b5fd1e4

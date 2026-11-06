@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cpp-httplib
 harness: multipart_parser_fuzzer
-rocq: OssFuzzTheorems.cpp_httplib.multipart_parser_fuzzer
+rocq: OSSVerify.cpp_httplib.multipart_parser_fuzzer
 origin: upstream
 summary: FormDataParser fed in fuzz-sized chunks with accept-all callbacks; parse() result only used to
   stop.

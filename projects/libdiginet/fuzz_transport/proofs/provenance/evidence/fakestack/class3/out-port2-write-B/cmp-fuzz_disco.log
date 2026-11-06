@@ -1,0 +1,5 @@
+donor: pinned sha256 cee6f04ad3d4, twin sha256 65947ff283f5, allocated sections equal (build-id note excepted): True
+target: pinned sha256 41113a03c82f, twin sha256 e217cb0a84f1, allocated sections equal (build-id note excepted): True
+libreac/fuzz_disco at b5cf457a8820, image B: 9 ranges paired and compared; 16 resolve lines: 7 move a value (0x3da98 -> 0x3dca0, 0x3dd1c -> 0x3e000, 0xa08a0 -> 0xa3ce0, 0xa0900 -> 0xa3d40, 0xa1590 -> 0xa49d0, 0xa15a0 -> 0xa49e0, 252568 -> 253088), 0 name the image of a header range, the rest keep the value
+closeness: 4 of 9 ranges EQUAL byte for byte; 40 pc-relative words differ in the walked ranges, 273 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+PASS

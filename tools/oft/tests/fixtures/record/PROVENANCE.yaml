@@ -1,0 +1,72 @@
+schema: oss-verify-proofs build record v1
+entry_point:
+  project: zlib
+  harness: checksum_fuzzer
+  function: LLVMFuzzerTestOneInput
+upstream:
+  name: zlib
+  repository: https://github.com/madler/zlib
+  commit: 51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf
+  licence: Zlib
+  licence_evidence: a stand-in for these tests; it describes no real file
+recipe:
+  asset:
+    release: v2026.11.0
+    file: recipe.tar.zst
+    bytes: 2000000
+    sha256: 5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d
+  target: zlib-checksum_fuzzer
+  overlay: null
+  patches:
+  - patch: 0001-build.patch
+    class: Build adaptation.
+toolchain:
+  clang: 20.1.8
+  builder_image: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:3333333333333333333333333333333333333333333333333333333333333333
+  static_asan:
+    repository: https://github.com/theorem-labs/static-asan
+    commit: b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0
+binaries:
+- build: plain
+  file: checksum_fuzzer.plain
+  bytes: 52792
+  sha256: 64e0aab9f6e65f69a654dcebbc0ee2553fcd665b258f6e6d6bebf3e7bc019543
+- build: asan
+  file: checksum_fuzzer.asan
+  bytes: 571576
+  sha256: 26d565ec4b5fd0ba2a56ef912c987a777e2dce220006cd7c309811f94751a573
+- build: ubsan
+  file: checksum_fuzzer.ubsan
+  bytes: 53440
+  sha256: 04a5addf3cdc6e8f6ccd9057022c9b33e811ce13ced12426eda2e73829c433f1
+- build: asan-ubsan
+  file: checksum_fuzzer.asan-ubsan
+  bytes: 571832
+  sha256: 077a62395c30d21a3ee4ef3859ca7b2937d075f67bdacaf9176e5225527b389f
+binary_asset:
+  release: v2026.11.0
+  file: zlib-bin.tar.zst
+  bytes: 18000000
+  sha256: 4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a4a
+source_asset:
+  src:
+    release: v2026.11.0
+    file: zlib-src.tar.zst
+    bytes: 9000000
+    sha256: 5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b
+  src_manifest:
+    release: v2026.11.0
+    file: zlib-src.MANIFEST.tsv
+    bytes: 4000
+    sha256: 5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c
+licence:
+  components:
+  - component: zlib
+    licence: Zlib
+    texts:
+    - LICENSES/zlib-LICENSE
+  - component: musl libc (static)
+    licence: MIT
+    texts:
+    - LICENSES/musl-COPYRIGHT
+  source_bundle: not required by the licences; the upstream source is `zlib-src.tar.zst` of release `v2026.11.0`

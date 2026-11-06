@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libsrtp
 harness: srtp-fuzzer
-rocq: OssFuzzTheorems.libsrtp.srtp_fuzzer
+rocq: OSSVerify.libsrtp.srtp_fuzzer
 origin: upstream
 summary: Builds an SRTP session from input-derived policies (profile, SSRC, keys, MKIs, header-extension
   ids, window), adds/removes streams, sets and gets ROCs, then repeatedly runs an input-chosen protect/unprotect

@@ -1,0 +1,5 @@
+# U = WIRE_B_TWIN sha256 51eb4bef2425
+# P = GRANT_B_TWIN_PLANTED_RODATA sha256 7a86001f9ee0
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes acceptances	C-string acceptances (also one CSTR row each)
+__intscan	U:P	0x90f1c	0x95c04	1496	1496	EQUAL-mod-pcrel	14	0	0	(2, 0, 0)	[('0x4c8', 'table+0x0', 'all_mask+0x0', 'names', None)]	full+0x218[0x10318|0x10328]=8 full+0x2e4[0x22261|0x22961]=9	

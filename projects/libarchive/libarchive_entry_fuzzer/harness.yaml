@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_entry_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_entry_fuzzer
+rocq: OSSVerify.libarchive.libarchive_entry_fuzzer
 origin: upstream
 summary: Builds an archive_entry from fuzz fields (pathname, size, mode, ids, 4 timestamps, uname/gname,
   symlink/hardlink) plus fuzz ACL entries, then archive_entry_acl_to_text (ACCESS) and parses that text

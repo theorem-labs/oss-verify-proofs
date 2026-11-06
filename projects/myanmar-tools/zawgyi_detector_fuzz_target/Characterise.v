@@ -11,8 +11,8 @@
 
 From Stdlib Require Import QArith.
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType.
-From OssFuzzTheorems.Core Require Import Shapes.
-From OssFuzzTheorems.myanmar_tools.zawgyi_detector_fuzz_target Require Images Distribution.
+From OSSVerify.Core Require Import Shapes.
+From OSSVerify.myanmar_tools.zawgyi_detector_fuzz_target Require Images Distribution.
 
 (** [C] exits 0 exactly on the finite inputs where the plain and ASan builds
     agree, and 1 on the others. *)

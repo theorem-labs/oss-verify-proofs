@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: vlc
 harness: vlc-demux-dec-libfuzzer
-rocq: OssFuzzTheorems.vlc.vlc_demux_dec_libfuzzer
+rocq: OSSVerify.vlc.vlc_demux_dec_libfuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: varnish
 harness: esi_parse_fuzzer
-rocq: OssFuzzTheorems.varnish.esi_parse_fuzzer
+rocq: OSSVerify.varnish.esi_parse_fuzzer
 origin: upstream
 summary: sets four ESI parser flags from the first input bytes, then VEP_Init/VEP_Parse/VEP_Finish over
   the whole input with a 1 KiB workspace; the produced ESI vsb is destroyed unread.

@@ -1,0 +1,24 @@
+# atable.py symbol extract: STT_FUNC symbols (name, start, size) of an unstripped twin, the names atable.py looks up
+# twin sha256 ead714913acd1e81835e08e021456cebcb35c09af2f87f4e7e2b6891f1b92489
+# pin sha256 cee6f04ad3d4928e242405689ae058bb9e8b6533000c90bde984a2f0d5ff5146
+# PT_LOAD 2..4 of twin and pin: byte-equal (same vaddr, file size, memory size, flags and file bytes)
+# all PT_LOAD file bytes of twin and pin, ELF header and build-id note masked: equal
+_start	0x30f24	0
+__sanitizer_internal_memset	0x64494	96
+__sanitizer_internal_memcpy	0x64418	36
+memset	0x99f14	248
+memcpy	0x99b10	1028
+_ZN11__sanitizer11mem_is_zeroEPKcm	0x649c4	180
+_ZN11__sanitizer16internal_strncpyEPcPKcm	0x648c0	112
+_ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE17PopulateFreeArrayEPNS_14AllocatorStatsEmPNS5_10RegionInfoEm	0x37154	880
+__init_libc	0x8f8dc	556
+_ZN11__sanitizer29SealedHangOnAllocationFailureEv	0x34f60	56
+_ZN11__sanitizer15QuarantineCacheIN6__asan18QuarantineCallbackEE7EnqueueES2_Pvm	0x36418	484
+_ZN6__asan12PoisonShadowEmmh	0x542fc	1276
+_ZN6__asan19SealedReserveShadowEv	0x5a9a8	480
+_ZN11__sanitizer23ReportMmapFailureAndDieEmPKcS1_ib	0x604e0	216
+_ZN11__sanitizer25ReportMunmapFailureAndDieEPvmib	0x605b8	156
+_ZN11__sanitizer16MapDynamicShadowEmmmRmm	0x6d9b4	588
+_ZN11__sanitizer18MmapFixedNoReserveEmmPKc	0x6e954	304
+_ZN11__sanitizer20ReservedAddressRange4InitEmPKcm	0x6eae4	204
+_ZN11__sanitizer18InternalSymbolizer5FlushEv	0x78900	4

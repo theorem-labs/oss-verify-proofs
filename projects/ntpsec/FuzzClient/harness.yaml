@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ntpsec
 harness: FuzzClient
-rocq: OssFuzzTheorems.ntpsec.FuzzClient
+rocq: OSSVerify.ntpsec.FuzzClient
 origin: oss-fuzz
 summary: For 20..1024 input bytes, runs nts_client_process_response_core (NTS-KE client response parser)
   on a zero-ish peer and returns its bool as the LLVMFuzzerTestOneInput result.

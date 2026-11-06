@@ -1,0 +1,97 @@
+AU/Bz/A/D_kit.v:2	H1	note names lib/A/Bz/A/D_kit.v
+AU/Bz/A/I_consts.v:2	H1	note names lib/A/Bz/A/I_consts.v
+AU/Bz/A/I_ikit.v:2	H1	note names lib/A/Bz/A/I_ikit.v
+AU/Bz/A/I_init.v:2	H1	note names lib/A/Bz/A/I_init.v
+AU/Bz/A/I_qck.v:2	H1	note names lib/A/Bz/A/I_qck.v
+AU/Bz/A/I_strtolfix.v:2	H1	note names lib/A/Bz/A/I_strtolfix.v
+AU/Bz/A/I_strtolw.v:2	H1	note names lib/A/Bz/A/I_strtolw.v
+AU/Bz/A/IcptSpec.v:2	H1	note names lib/A/Bz/A/IcptSpec.v
+AU/Bz/A/R_cache_defs.v:2	H1	note names lib/A/Bz/A/R_cache_defs.v
+AU/Bz/A/R_isPoisoned.v:2	H1	note names lib/A/Bz/A/R_isPoisoned.v
+AU/Bz/A/R_m2s.v:2	H1	note names lib/A/Bz/A/R_m2s.v
+AU/Bz/A/R_memiszero.v:2	H1	note names lib/A/Bz/A/R_memiszero.v
+AU/Bz/A/R_prim_defs.v:2	H1	note names lib/A/Bz/A/R_prim_defs.v
+AU/Bz/A/R_prim_defs.v	H5	0x40080 -> 0x40000 (6)
+AU/Bz/A/R_small.v:2	H1	note names lib/A/Bz/A/R_small.v
+AU/Bz/A/R_thread.v:2	H1	note names lib/A/Bz/A/R_thread.v
+AU/Bz/A/Shadow.v:2	H1	note names lib/A/Bz/A/Shadow.v
+AU/Bz/A/X_atexit.v:2	H1	note names lib/A/Bz/A/X_atexit.v
+AU/Bz/BvWfKernel.v:3	H1	note names lib/A/Bz/BvWfKernel.v
+AU/Bz/BvWfKernel.v:3	H2	note moved to after line 1
+AU/Bz/P/Startup_glue.v:2	H1	note names lib/A/Bz/P/Startup_glue.v
+AU/Bz/P/Str_merge.v:2	H1	note names lib/A/Bz/P/Str_merge.v
+AU/Bz/P/Str_tac.v:2	H1	note names lib/A/Bz/P/Str_tac.v
+AU/Bz/Spec/StrFun.v:2	H1	note names lib/A/Bz/Spec/StrFun.v
+AU/Bz/Common/PlacementSearch.v:2	H1	note names lib/A/Bz/Common/PlacementSearch.v
+AU/Bz/Common/PropExec.v:2	H1	note names lib/A/Bz/Common/PropExec.v
+AU/Bz/Lib/Arr.v:2	H1	note names lib/A/Bz/Lib/Arr.v
+AU/Bz/Lib/Bytes.v:2	H1	note names lib/A/Bz/Lib/Bytes.v
+AU/Bz/Lib/Ceiling.v:2	H1	note names lib/A/Bz/Lib/Ceiling.v
+AU/Bz/Lib/Cells.v:2	H1	note names lib/A/Bz/Lib/Cells.v
+AU/Bz/Lib/Exec.v:2	H1	note names lib/A/Bz/Lib/Exec.v
+AU/Bz/Lib/FP.v:2	H1	note names lib/A/Bz/Lib/FP.v
+AU/Bz/Lib/Frame.v:2	H1	note names lib/A/Bz/Lib/Frame.v
+AU/Bz/Lib/Image.v:2	H1	note names lib/A/Bz/Lib/Image.v
+AU/Bz/Lib/ImageA.v:2	H1	note names lib/A/Bz/Lib/ImageA.v
+AU/Bz/Lib/LiaTuning.v:2	H1	note names lib/A/Bz/Lib/LiaTuning.v
+AU/Bz/Lib/MState.v:2	H1	note names lib/A/Bz/Lib/MState.v
+AU/Bz/Lib/Mem.v:2	H1	note names lib/A/Bz/Lib/Mem.v
+AU/Bz/Lib/PropExec.v:2	H1	note names lib/A/Bz/Lib/PropExec.v
+AU/Bz/Lib/Step.v:2	H1	note names lib/A/Bz/Lib/Step.v
+AU/Bz/Lib/StepFast.v:2	H1	note names lib/A/Bz/Lib/StepFast.v
+AU/Bz/Lib/StoreFast.v:2	H1	note names lib/A/Bz/Lib/StoreFast.v
+AU/Bz/Lib/SysStep.v:2	H1	note names lib/A/Bz/Lib/SysStep.v
+AU/Bz/Lib/Tac.v:2	H1	note names lib/A/Bz/Lib/Tac.v
+AU/Bz/Lib/Walk.v:2	H1	note names lib/A/Bz/Lib/Walk.v
+AU/Bz/Lib/ZBridge.v:2	H1	note names lib/A/Bz/Lib/ZBridge.v
+AU/Prog/__errno_location.v:2	H1	note names lib/A/Prog/__errno_location.v
+AU/Prog/__errno_location_c.v:2	H1	note names lib/A/Prog/__errno_location_c.v
+AU/Prog/__intscan.v:2	H1	note names lib/A/Prog/__intscan.v
+AU/Prog/__intscan_c.v:2	H1	note names lib/A/Prog/__intscan_c.v
+AU/Prog/__shlim.v:2	H1	note names lib/A/Prog/__shlim.v
+AU/Prog/__shlim_c.v:2	H1	note names lib/A/Prog/__shlim_c.v
+AU/Prog/asan_memcpy_bz.v:2	H1	note names lib/A/Prog/asan_memcpy_bz.v
+AU/Prog/strtol.v:2	H1	note names lib/A/Prog/strtol.v
+AU/Prog/strtol_c.v:2	H1	note names lib/A/Prog/strtol_c.v
+AU/Prog/strtol_wrap_sb.v:2	H1	note names lib/A/Prog/strtol_wrap_sb.v
+AU/Rt/RtBzAdapt.v:3	H1	note names lib/A/Rt/RtBzAdapt.v
+AU/Rt/RtBzAdapt.v:3	H2	note moved to after line 1
+AU/Rt/RtBzAdapt.v:27	H3	RtDefs kept at lib.A.Rt
+AU/Rt/RtBzAdaptP.v:3	H1	note names lib/A/Rt/RtBzAdaptP.v
+AU/Rt/RtBzAdaptP.v:3	H2	note moved to after line 1
+AU/Rt/RtBzAdaptP.v:27	H3	RtDefs kept at lib.A.Rt
+AU/Rt/RtBzBridge.v:3	H1	note names lib/A/Rt/RtBzBridge.v
+AU/Rt/RtBzBridge.v:3	H2	note moved to after line 1
+AU/Rt/RtBzClean.v:3	H1	note names lib/A/Rt/RtBzClean.v
+AU/Rt/RtBzClean.v:3	H2	note moved to after line 1
+AU/Rt/RtBzHBase.v:3	H1	note names lib/A/Rt/RtBzHBase.v
+AU/Rt/RtBzHBase.v:3	H2	note moved to after line 1
+AU/Rt/RtBzHBase.v	H6	the strncmp trampoline of this image, fuzz_headamp.asan (`j -> the strncmp trampoline of this image, fuzz_headamp.asan-ubsan (`j (1)
+AU/Rt/RtBzHStr.v:3	H1	note names lib/A/Rt/RtBzHStr.v
+AU/Rt/RtBzHStr.v:3	H2	note moved to after line 1
+AU/Rt/RtBzLift.v:3	H1	note names lib/A/Rt/RtBzLift.v
+AU/Rt/RtBzLift.v:3	H2	note moved to after line 1
+AU/Rt/RtBzPins.v:3	H1	note names lib/A/Rt/RtBzPins.v
+AU/Rt/RtBzPins.v:3	H2	note moved to after line 1
+AU/Rt/RtBzPins.v	H6	every read-only byte of this image (fuzz_headamp.asan) that -> every read-only byte of this image (fuzz_headamp.asan-ubsan) that (1)
+AU/Rt/RtBzPins.v	H6	A/YF0m.v -> AU/YF0m.v (3)
+AU/Rt/RtBzPins.v	H6	(AU/YF0m.v at A2 1e6517d5536) -> (AU/YF0m.v at B0 d2a2313d53c) (1)
+AU/Rt/RtBzPre.v:3	H1	note names lib/A/Rt/RtBzPre.v
+AU/Rt/RtBzPre.v:3	H2	note moved to after line 1
+AU/Rt/RtBzStr.v:3	H1	note names lib/A/Rt/RtBzStr.v
+AU/Rt/RtBzStr.v:3	H2	note moved to after line 1
+AU/Rt/RtLStrtol.v:3	H1	note names lib/A/Rt/RtLStrtol.v
+AU/Rt/RtLStrtol.v:3	H2	note moved to after line 1
+AU/Rt/RtLStrtol.v:33	H3	RtDefs RtNumber kept at lib.A.Rt
+AU/Rt/RtLStrtolH.v:2	H1	note names lib/A/Rt/RtLStrtolH.v
+AU/Rt/RtLStrtolH.v:2	H2	note moved to after line 4
+AU/Rt/RtLStrtolH.v:40	H3	RtDefs RtNumber kept at lib.A.Rt
+AU/Rt/RtLStrtolH.v	H4	OssFuzzTheorems.Proofs.reac_pw.fuzz_headamp.lib.AU.Rt.FMupoison -> OssFuzzTheorems.Proofs.reac_pw.fuzz_headamp.lib.A.Rt.FMupoison (2)
+AU/Rt/RtLStrtolH.v	H4	OssFuzzTheorems.Proofs.reac_pw.fuzz_headamp.lib.AU.HPgHole -> OssFuzzTheorems.Proofs.reac_pw.fuzz_headamp.lib.A.HPgHole (2)
+AU/Rt/RtLStrtolH.v	H6	The parse (image A 0x849ac) calls strtol at 0x84e04 -> The parse (image B 0x849ac) calls strtol at 0x84ddc (1)
+AU/Rt/RtLStrtolH.v	H6	read f1 f1 f1 f1 0 f3 f3 f3. -> read f1 f1 f1 f1 00 f3 f3 f3. (1)
+AU/Rt/RtLStrtolH.v	H6	the hole's byte 4, 0), and -> the hole's byte 4, 00), and (1)
+AU/Rt/RtLStrtolH.v	H6	is the whole hole, f1 f1 f1 f1 0 f3 f3 f3; -> is the whole hole, f1 f1 f1 f1 00 f3 f3 f3; (1)
+AU/Rt/RtLStrtolH.v	H6	(* The strtol interceptor of fuzz_headamp.asan (trampoline -> (* The strtol interceptor of fuzz_headamp.asan-ubsan (trampoline (1)
+AU/Spec/CType.v:2	H1	note names lib/A/Spec/CType.v
+AU/Spec/CTypeFacts.v:2	H1	note names lib/A/Spec/CTypeFacts.v

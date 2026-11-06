@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libpng
 harness: libpng_read_fuzzer
-rocq: OssFuzzTheorems.libpng.libpng_read_fuzzer
+rocq: OSSVerify.libpng.libpng_read_fuzzer
 origin: upstream
 summary: Sequential read with browser-style transforms (gray_to_rgb, expand, packing, scale_16, tRNS_to_alpha),
   all interlace passes, png_read_end; errors longjmp to cleanup. CRC errors are quieted (PNG_CRC_QUIET_USE).

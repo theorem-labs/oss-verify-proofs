@@ -1,0 +1,239 @@
+# cell	value	class	what the value is (the target twin)	symbol(s) the name keys to [start,end)	readers (table, token scan, git grep -w)
+tfib_E_start	0x2ffa4	unverifiable by symtab (st_size 0), unread	_start has st_size 0; the value bounds _start_c	start[0x9355c,0x935fc) _start[0x2ff5c,0x2ff5c)	0, 0, 0
+tfib_A_AsanChunkView_GetAsanChunk_ptr_helper	0x32260	FALSE named-other	bounds _ZN6__asan9Allocator18GetAsanChunkByAddrEm (__asan::Allocator::GetAsanChunkByAddr); label tokens not in order in it	-	0, 0, 0
+tfib_E_AsanChunkView_GetAsanChunk_ptr_helper	0x323a4	FALSE named-other	bounds _ZN6__asan9Allocator18GetAsanChunkByAddrEm (__asan::Allocator::GetAsanChunkByAddr); label tokens not in order in it	-	0, 0, 0
+tfib_A_Allocator_SharedInitCode	0x32830	FALSE named-other	bounds _ZNK6__asan9Allocator12CheckOptionsERKNS_16AllocatorOptionsE (__asan::Allocator::CheckOptions); label tokens not in order in it	-	0, 0, 0
+tfib_E_Allocator_SharedInitCode	0x32918	FALSE named-other	bounds _ZNK6__asan9Allocator12CheckOptionsERKNS_16AllocatorOptionsE (__asan::Allocator::CheckOptions); label tokens not in order in it	-	0, 0, 0
+tfib_A_QuarantineCache_MergeBatches_Transfer	0x32d4c	FALSE named-other	bounds _ZN11__sanitizer10QuarantineIN6__asan18QuarantineCallbackENS1_9AsanChunkEE7RecycleEmS2_ (__sanitizer::Quarantine::Recycle); label tokens not in order in it	-	0, 0, 0
+tfib_E_QuarantineCache_MergeBatches_Transfer	0x32f30	FALSE named-other	bounds _ZN11__sanitizer10QuarantineIN6__asan18QuarantineCallbackENS1_9AsanChunkEE7RecycleEmS2_ (__sanitizer::Quarantine::Recycle); label tokens not in order in it	-	0, 0, 0
+tfib_A_QuarantineCache_DequeueBatch	0x32f30	FALSE named-other	bounds _ZN11__sanitizer15QuarantineCacheIN6__asan18QuarantineCallbackEE12MergeBatchesEPS3_ (__sanitizer::QuarantineCache::MergeBatches); label tokens not in order in it	-	0, 0, 0
+tfib_E_QuarantineCache_DequeueBatch	0x330b4	FALSE named-other	bounds _ZN11__sanitizer15QuarantineCacheIN6__asan18QuarantineCallbackEE12MergeBatchesEPS3_ (__sanitizer::QuarantineCache::MergeBatches); label tokens not in order in it	-	0, 0, 0
+tfib_A_SizeClassAllocator64_ReturnToAllocator_helper	0x33984	FALSE named-other	bounds _ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEEE12DrainHalfMaxEPNS7_8PerClassEPS6_m (__sanitizer::SizeClassAllocator64LocalCache::DrainHalfMax); label tokens not in order in it	-	0, 0, 0
+tfib_E_SizeClassAllocator64_ReturnToAllocator_helper	0x33a24	FALSE named-other	bounds _ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEEE12DrainHalfMaxEPNS7_8PerClassEPS6_m (__sanitizer::SizeClassAllocator64LocalCache::DrainHalfMax); label tokens not in order in it	-	0, 0, 0
+tfib_A_DieOnMapFailure_sealed	0x33f98	FALSE named-other	bounds _ZN11__sanitizer29SealedHangOnAllocationFailureEv (__sanitizer::SealedHangOnAllocationFailure); label tokens not in order in it	-	0, 0, 0
+tfib_E_DieOnMapFailure_sealed	0x33fd0	FALSE named-other	bounds _ZN11__sanitizer29SealedHangOnAllocationFailureEv (__sanitizer::SealedHangOnAllocationFailure); label tokens not in order in it	-	0, 0, 0
+tfib_A_SizeClassAllocator64_ReleaseFreeMemoryToOS_Packe	0x34768	FALSE named-other	bounds _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE18PackedCounterArrayC2INS_12MemoryMapperIS5_EEEEyyPT_ (__sanitizer::SizeClassAllocator64::PackedCounterArray::PackedCounterArray); label tokens not in order in it	-	0, 0, 0
+tfib_E_SizeClassAllocator64_ReleaseFreeMemoryToOS_Packe	0x34a50	FALSE named-other	bounds _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE18PackedCounterArrayC2INS_12MemoryMapperIS5_EEEEyyPT_ (__sanitizer::SizeClassAllocator64::PackedCounterArray::PackedCounterArray); label tokens not in order in it	-	0, 0, 0
+tfib_A_Allocator_ComputeRZLog	0x364fc	FALSE named-other	bounds _ZN6__asanL10RZSize2LogEj (__asan::RZSize2Log); label tokens not in order in it	-	0, 0, 0
+tfib_E_Allocator_ComputeRZLog	0x36614	FALSE named-other	bounds _ZN6__asanL10RZSize2LogEj (__asan::RZSize2Log); label tokens not in order in it	-	0, 0, 0
+tfib_A_LargeMmapAllocator_EnsureSortedChunks	0x3691c	FALSE other	holds _ZN11__sanitizer18LargeMmapAllocatorIN6__asan20AsanMapUnmapCallbackENS_33LargeMmapAllocatorPtrArrayDynamicENS_21LocalAddressSpaceViewEE12ForEachChunkEPFvmPvES6_	_ZN11__sanitizer18LargeMmapAllocatorIN6__asan20AsanMapUnmapCallbackENS_33LargeMmapAllocatorPtrArrayDynamicENS_21LocalAddressSpaceViewEE18EnsureSortedChunksEv[0x367c4,0x3691c)	0, 0, 0
+tfib_E_LargeMmapAllocator_EnsureSortedChunks	0x36a18	FALSE other	holds _ZN11__sanitizer18LargeMmapAllocatorIN6__asan20AsanMapUnmapCallbackENS_33LargeMmapAllocatorPtrArrayDynamicENS_21LocalAddressSpaceViewEE12ForEachChunkEPFvmPvES6_	_ZN11__sanitizer18LargeMmapAllocatorIN6__asan20AsanMapUnmapCallbackENS_33LargeMmapAllocatorPtrArrayDynamicENS_21LocalAddressSpaceViewEE18EnsureSortedChunksEv[0x367c4,0x3691c)	0, 0, 0
+tfib_A_asan_activation_flag_parse_helper_0_no	0x370b8	FALSE named-other	bounds _ZN11__sanitizer11FlagHandlerIbE5ParseEPKc (__sanitizer::FlagHandler::Parse); label tokens not in order in it	-	0, 0, 0
+tfib_E_asan_activation_flag_parse_helper_0_no	0x371a0	FALSE named-other	bounds _ZN11__sanitizer11FlagHandlerIbE5ParseEPKc (__sanitizer::FlagHandler::Parse); label tokens not in order in it	-	0, 0, 0
+tfib_A_FakeStack_SetShadow	0x3c828	FALSE named-other	bounds _ZN6__asanL11MemToShadowEm (__asan::MemToShadow); label tokens not in order in it	-	0, 0, 0
+tfib_E_FakeStack_SetShadow	0x3c964	FALSE named-other	bounds _ZN6__asanL11MemToShadowEm (__asan::MemToShadow); label tokens not in order in it	-	0, 0, 0
+tfib_A_asan_register_globals	0x3f484	FALSE other	holds __asan_register_elf_globals	__asan_register_globals[0x3e09c,0x3eeb8)	0, 0, 0
+tfib_E_asan_register_globals	0x3f4f0	FALSE other	holds __asan_register_elf_globals	__asan_register_globals[0x3e09c,0x3eeb8)	0, 0, 0
+tfib_A_asan_unregister_globals	0x3f4f0	FALSE other	holds __asan_unregister_elf_globals	__asan_unregister_globals[0x3eeb8,0x3f484)	0, 0, 0
+tfib_E_asan_unregister_globals	0x3f558	FALSE other	holds __asan_unregister_elf_globals	__asan_unregister_globals[0x3eeb8,0x3f484)	0, 0, 0
+tfib_A_RoundUpTo_size_CHECK_helper_sanitizer_common_h_C	0x408c4	FALSE named-other	bounds _ZN11__sanitizer19RoundUpToPowerOfTwoEm (__sanitizer::RoundUpToPowerOfTwo); label tokens not in order in it	-	0, 0, 0
+tfib_E_RoundUpTo_size_CHECK_helper_sanitizer_common_h_C	0x40a14	FALSE named-other	bounds _ZN11__sanitizer19RoundUpToPowerOfTwoEm (__sanitizer::RoundUpToPowerOfTwo); label tokens not in order in it	-	0, 0, 0
+tfib_A_asan_globals_RegisterGlobal_vector_push_back	0x41430	FALSE named-other	bounds _ZN11__sanitizer24InternalMmapVectorNoCtorIN6__asan22GlobalRegistrationSiteELb0EE7ReallocEm (__sanitizer::InternalMmapVectorNoCtor::Realloc); label tokens not in order in it	-	0, 0, 0
+tfib_E_asan_globals_RegisterGlobal_vector_push_back	0x41548	FALSE named-other	bounds _ZN11__sanitizer24InternalMmapVectorNoCtorIN6__asan22GlobalRegistrationSiteELb0EE7ReallocEm (__sanitizer::InternalMmapVectorNoCtor::Realloc); label tokens not in order in it	-	0, 0, 0
+tfib_A_strlen	0x41548	FALSE trampoline	holds __interceptor_trampoline_strlen	strlen[0x921f8,0x92288)	0, 0, 0
+tfib_E_strlen	0x4154c	FALSE trampoline	holds __interceptor_trampoline_strlen	strlen[0x921f8,0x92288)	0, 0, 0
+tfib_A_strnlen	0x4154c	FALSE trampoline	holds __interceptor_trampoline_strnlen	strnlen[0x92434,0x92478)	0, 0, 0
+tfib_E_strnlen	0x41550	FALSE trampoline	holds __interceptor_trampoline_strnlen	strnlen[0x92434,0x92478)	0, 0, 0
+tfib_A_strcmp	0x41550	FALSE trampoline	holds __interceptor_trampoline_strcmp	strcmp[0x921c0,0x921f8)	0, 0, 0
+tfib_E_strcmp	0x41554	FALSE trampoline	holds __interceptor_trampoline_strcmp	strcmp[0x921c0,0x921f8)	0, 0, 0
+tfib_A_strchr	0x41554	FALSE trampoline	holds __interceptor_trampoline_strchr	strchr[0x920a4,0x920e0)	0, 0, 0
+tfib_E_strchr	0x41558	FALSE trampoline	holds __interceptor_trampoline_strchr	strchr[0x920a4,0x920e0)	0, 0, 0
+tfib_A_memcmp	0x41558	FALSE trampoline	holds __interceptor_trampoline_memcmp	memcmp[0x91b78,0x91ba8)	0, 0, 0
+tfib_E_memcmp	0x4155c	FALSE trampoline	holds __interceptor_trampoline_memcmp	memcmp[0x91b78,0x91ba8)	0, 0, 0
+tfib_A_memcmp_2	0x4155c	FALSE other	holds __wrap_bcmp __interceptor_trampoline_bcmp	memcmp[0x91b78,0x91ba8)	0, 0, 0
+tfib_E_memcmp_2	0x41560	FALSE other	holds __wrap_bcmp __interceptor_trampoline_bcmp	memcmp[0x91b78,0x91ba8)	0, 0, 0
+tfib_A_memchr	0x41560	FALSE trampoline	holds __interceptor_trampoline_memchr	memchr[0x91aac,0x91b78)	0, 0, 0
+tfib_E_memchr	0x41564	FALSE trampoline	holds __interceptor_trampoline_memchr	memchr[0x91aac,0x91b78)	0, 0, 0
+tfib_A_frexpl	0x41564	FALSE trampoline	holds __interceptor_trampoline_frexpl	frexpl[0x8a830,0x8a908)	0, 0, 0
+tfib_E_frexpl	0x41568	FALSE trampoline	holds __interceptor_trampoline_frexpl	frexpl[0x8a830,0x8a908)	0, 0, 0
+tfib_A_read	0x41568	FALSE trampoline	holds __interceptor_trampoline_read	read[0x972ac,0x972e0)	0, 0, 0
+tfib_E_read	0x4156c	FALSE trampoline	holds __interceptor_trampoline_read	read[0x972ac,0x972e0)	0, 0, 0
+tfib_A_fwrite	0x4156c	FALSE trampoline	holds __interceptor_trampoline_fwrite	fwrite[0x8e15c,0x8e214)	0, 0, 0
+tfib_E_fwrite	0x41570	FALSE trampoline	holds __interceptor_trampoline_fwrite	fwrite[0x8e15c,0x8e214)	0, 0, 0
+tfib_A_time	0x41570	FALSE trampoline	holds __interceptor_trampoline_time	time[0x97160,0x971c0)	0, 0, 0
+tfib_E_time	0x41574	FALSE trampoline	holds __interceptor_trampoline_time	time[0x97160,0x971c0)	0, 0, 0
+tfib_A_gmtime_r	0x41574	FALSE trampoline	holds __interceptor_trampoline_gmtime_r	__gmtime_r[0x94fb8,0x95010) gmtime_r[0x94fb8,0x95010)	0, 0, 0
+tfib_E_gmtime_r	0x41578	FALSE trampoline	holds __interceptor_trampoline_gmtime_r	__gmtime_r[0x94fb8,0x95010) gmtime_r[0x94fb8,0x95010)	0, 0, 0
+tfib_A_vprintf	0x41578	FALSE trampoline	holds __interceptor_trampoline_vprintf	vprintf[0x914f4,0x91510)	0, 0, 0
+tfib_E_vprintf	0x4157c	FALSE trampoline	holds __interceptor_trampoline_vprintf	vprintf[0x914f4,0x91510)	0, 0, 0
+tfib_A_vfprintf	0x4157c	FALSE trampoline	holds __interceptor_trampoline_vfprintf	vfprintf[0x8e3e4,0x8e594)	0, 0, 0
+tfib_E_vfprintf	0x41580	FALSE trampoline	holds __interceptor_trampoline_vfprintf	vfprintf[0x8e3e4,0x8e594)	0, 0, 0
+tfib_A_vsnprintf	0x41580	FALSE trampoline	holds __interceptor_trampoline_vsnprintf	vsnprintf[0x91510,0x915dc)	0, 0, 0
+tfib_E_vsnprintf	0x41584	FALSE trampoline	holds __interceptor_trampoline_vsnprintf	vsnprintf[0x91510,0x915dc)	0, 0, 0
+tfib_A_vfprintf_2	0x41584	FALSE other	holds __wrap_fprintf __interceptor_trampoline_fprintf	vfprintf[0x8e3e4,0x8e594)	0, 0, 0
+tfib_E_vfprintf_2	0x41588	FALSE other	holds __wrap_fprintf __interceptor_trampoline_fprintf	vfprintf[0x8e3e4,0x8e594)	0, 0, 0
+tfib_A_clock_gettime	0x4158c	FALSE trampoline	holds __interceptor_trampoline_clock_gettime	__clock_gettime[0x94afc,0x94bb4) clock_gettime[0x94afc,0x94bb4)	0, 0, 0
+tfib_E_clock_gettime	0x41590	FALSE trampoline	holds __interceptor_trampoline_clock_gettime	__clock_gettime[0x94afc,0x94bb4) clock_gettime[0x94afc,0x94bb4)	0, 0, 0
+tfib_A_wcrtomb	0x41590	FALSE trampoline	holds __interceptor_trampoline_wcrtomb	wcrtomb[0x8cd40,0x8ce6c)	0, 0, 0
+tfib_E_wcrtomb	0x41594	FALSE trampoline	holds __interceptor_trampoline_wcrtomb	wcrtomb[0x8cd40,0x8ce6c)	0, 0, 0
+tfib_A_wctomb	0x41594	FALSE trampoline	holds __interceptor_trampoline_wctomb	wctomb[0x8ce6c,0x8ce90)	0, 0, 0
+tfib_E_wctomb	0x41598	FALSE trampoline	holds __interceptor_trampoline_wctomb	wctomb[0x8ce6c,0x8ce90)	0, 0, 0
+tfib_A_pthread_attr_getstack	0x415a0	FALSE trampoline	holds __interceptor_trampoline_pthread_attr_getstack	pthread_attr_getstack[0x92894,0x928c0)	0, 0, 0
+tfib_E_pthread_attr_getstack	0x415a4	FALSE trampoline	holds __interceptor_trampoline_pthread_attr_getstack	pthread_attr_getstack[0x92894,0x928c0)	0, 0, 0
+tfib_A_sem_timedwait	0x415bc	FALSE trampoline	holds __interceptor_trampoline_sem_timedwait	sem_timedwait[0x94340,0x9448c)	0, 0, 0
+tfib_E_sem_timedwait	0x415c0	FALSE trampoline	holds __interceptor_trampoline_sem_timedwait	sem_timedwait[0x94340,0x9448c)	0, 0, 0
+tfib_A_pthread_setcancelstate	0x415c4	FALSE trampoline	holds __interceptor_trampoline_pthread_setcancelstate	__pthread_setcancelstate[0x94168,0x94194) pthread_setcancelstate[0x94168,0x94194)	0, 0, 0
+tfib_E_pthread_setcancelstate	0x415c8	FALSE trampoline	holds __interceptor_trampoline_pthread_setcancelstate	__pthread_setcancelstate[0x94168,0x94194) pthread_setcancelstate[0x94168,0x94194)	0, 0, 0
+tfib_A_send	0x415c8	FALSE trampoline	holds __interceptor_trampoline_send	send[0x8ced4,0x8cee0)	0, 0, 0
+tfib_E_send	0x415cc	FALSE trampoline	holds __interceptor_trampoline_send	send[0x8ced4,0x8cee0)	0, 0, 0
+tfib_A_sendto	0x415cc	FALSE trampoline	holds __interceptor_trampoline_sendto	sendto[0x8cee0,0x8cf1c)	0, 0, 0
+tfib_E_sendto	0x415d0	FALSE trampoline	holds __interceptor_trampoline_sendto	sendto[0x8cee0,0x8cf1c)	0, 0, 0
+tfib_A_sigaltstack	0x415d0	FALSE trampoline	holds __interceptor_trampoline_sigaltstack	sigaltstack[0x8d3c8,0x8d454)	0, 0, 0
+tfib_E_sigaltstack	0x415d4	FALSE trampoline	holds __interceptor_trampoline_sigaltstack	sigaltstack[0x8d3c8,0x8d454)	0, 0, 0
+tfib_A_icpt_vfprintf_2	0x44d64	FALSE named-other	bounds __interceptor_fprintf ___interceptor_fprintf (__interceptor_fprintf | ___interceptor_fprintf); label tokens not in order in it	-	0, 0, 0
+tfib_E_icpt_vfprintf_2	0x44e3c	FALSE named-other	bounds __interceptor_fprintf ___interceptor_fprintf (__interceptor_fprintf | ___interceptor_fprintf); label tokens not in order in it	-	0, 0, 0
+tfib_A_icpt_diouxXn	0x47094	FALSE named-other	bounds _ZL21format_get_value_sizecPKcb (format_get_value_size); label tokens not in order in it	-	0, 0, 0
+tfib_E_icpt_diouxXn	0x4722c	FALSE named-other	bounds _ZL21format_get_value_sizecPKcb (format_get_value_size); label tokens not in order in it	-	0, 0, 0
+tfib_A_InitializeCommonInterceptors	0x47dd8	FALSE named-other	bounds _ZL16ioctl_table_fillv (ioctl_table_fill); label tokens not in order in it	-	0, 0, 0
+tfib_E_InitializeCommonInterceptors	0x50ab0	FALSE named-other	bounds _ZL16ioctl_table_fillv (ioctl_table_fill); label tokens not in order in it	-	0, 0, 0
+tfib_A_InitializeSignalInterceptors_or_syscall_hooks	0x50ab0	FALSE named-other	bounds _ZN11__sanitizer4SortI10ioctl_desc18ioctl_desc_compareEEvPT_mT0_ (__sanitizer::Sort); label tokens not in order in it	-	0, 0, 0
+tfib_E_InitializeSignalInterceptors_or_syscall_hooks	0x50c0c	FALSE named-other	bounds _ZN11__sanitizer4SortI10ioctl_desc18ioctl_desc_compareEEvPT_mT0_ (__sanitizer::Sort); label tokens not in order in it	-	0, 0, 0
+tfib_A_memset	0x50c0c	FALSE trampoline	holds __interceptor_trampoline_memset	memset[0x91fac,0x920a4)	0, 0, 0
+tfib_E_memset	0x50c10	FALSE trampoline	holds __interceptor_trampoline_memset	memset[0x91fac,0x920a4)	0, 0, 0
+tfib_A_memcpy	0x50c10	FALSE trampoline	holds __interceptor_trampoline_memcpy	memcpy[0x91ba8,0x91fac)	0, 0, 0
+tfib_E_memcpy	0x50c14	FALSE trampoline	holds __interceptor_trampoline_memcpy	memcpy[0x91ba8,0x91fac)	0, 0, 0
+tfib_A_asan_linux_PlatformShadowSetup_helper_CheckForEx	0x51d40	FALSE named-other	bounds _ZN6__asan22FindDynamicShadowStartEv (__asan::FindDynamicShadowStart); label tokens not in order in it	-	0, 0, 0
+tfib_E_asan_linux_PlatformShadowSetup_helper_CheckForEx	0x51da0	FALSE named-other	bounds _ZN6__asan22FindDynamicShadowStartEv (__asan::FindDynamicShadowStart); label tokens not in order in it	-	0, 0, 0
+tfib_A_AsanCheckIncompatibleRT	0x51f28	FALSE other	holds _ZN6__asan25AsanCheckDynamicRTPrereqsEv	_ZN6__asan23AsanCheckIncompatibleRTEv[0x51f2c,0x52094)	0, 0, 0
+tfib_E_AsanCheckIncompatibleRT	0x51f2c	FALSE other	holds _ZN6__asan25AsanCheckDynamicRTPrereqsEv	_ZN6__asan23AsanCheckIncompatibleRTEv[0x51f2c,0x52094)	0, 0, 0
+tfib_A_AsanCheckDynamicRTPrereqs	0x51f2c	FALSE other	holds _ZN6__asan23AsanCheckIncompatibleRTEv	_ZN6__asan25AsanCheckDynamicRTPrereqsEv[0x51f28,0x51f2c)	0, 0, 0
+tfib_E_AsanCheckDynamicRTPrereqs	0x52094	FALSE other	holds _ZN6__asan23AsanCheckIncompatibleRTEv	_ZN6__asan25AsanCheckDynamicRTPrereqsEv[0x51f28,0x51f2c)	0, 0, 0
+tfib_A_icpt_cfree_or_DlsymFree	0x523c8	FALSE named-other	bounds _ZN11__sanitizer14DlSymAllocatorI10DlsymAllocE8AllocateEmm (__sanitizer::DlSymAllocator::Allocate); label tokens not in order in it	-	0, 0, 0
+tfib_E_icpt_cfree_or_DlsymFree	0x52494	FALSE named-other	bounds _ZN11__sanitizer14DlSymAllocatorI10DlsymAllocE8AllocateEmm (__sanitizer::DlSymAllocator::Allocate); label tokens not in order in it	-	0, 0, 0
+tfib_A_DlsymAlloc_PointerIsMine_internal_allocator_From	0x52498	FALSE named-other	bounds _ZNK11__sanitizer11TwoLevelMapIhLy32768ELy4096ENS_21LocalAddressSpaceViewEE6CreateEm (__sanitizer::TwoLevelMap::Create); label tokens not in order in it	-	0, 0, 0
+tfib_E_DlsymAlloc_PointerIsMine_internal_allocator_From	0x52598	FALSE named-other	bounds _ZNK11__sanitizer11TwoLevelMapIhLy32768ELy4096ENS_21LocalAddressSpaceViewEE6CreateEm (__sanitizer::TwoLevelMap::Create); label tokens not in order in it	-	0, 0, 0
+tfib_A_HeapProfile_Insert_asan_memory_profile	0x528c0	FALSE named-other	bounds _ZN6__asan11HeapProfile5PrintEmm (__asan::HeapProfile::Print); label tokens not in order in it	-	0, 0, 0
+tfib_E_HeapProfile_Insert_asan_memory_profile	0x52a2c	FALSE named-other	bounds _ZN6__asan11HeapProfile5PrintEmm (__asan::HeapProfile::Print); label tokens not in order in it	-	0, 0, 0
+tfib_A_asan_poison_stack_memory_PoisonAlignedStackMemor	0x53570	FALSE named-other	bounds __asan_poison_memory_region (__asan_poison_memory_region); label tokens not in order in it	-	0, 0, 0
+tfib_E_asan_poison_stack_memory_PoisonAlignedStackMemor	0x53710	FALSE named-other	bounds __asan_poison_memory_region (__asan_poison_memory_region); label tokens not in order in it	-	0, 0, 0
+tfib_A_asan_unpoison_stack_memory	0x53710	FALSE other	holds __asan_unpoison_memory_region	__asan_unpoison_stack_memory[0x53dd8,0x53e7c)	0, 0, 0
+tfib_E_asan_unpoison_stack_memory	0x53890	FALSE other	holds __asan_unpoison_memory_region	__asan_unpoison_stack_memory[0x53dd8,0x53e7c)	0, 0, 0
+tfib_A_ScopedInErrorReport_ReportError_helper	0x5497c	FALSE named-other	bounds _ZN6__asan18ReportDeadlySignalERKN11__sanitizer13SignalContextE (__asan::ReportDeadlySignal); label tokens not in order in it	-	0, 0, 0
+tfib_E_ScopedInErrorReport_ReportError_helper	0x54b88	FALSE named-other	bounds _ZN6__asan18ReportDeadlySignalERKN11__sanitizer13SignalContextE (__asan::ReportDeadlySignal); label tokens not in order in it	-	0, 0, 0
+tfib_A_AsanInitFromRtl_ENSURE_ASAN_INITED	0x58d54	FALSE named-other	bounds _ZN6__asan18TryAsanInitFromRtlEv (__asan::TryAsanInitFromRtl); label tokens not in order in it	-	0, 0, 0
+tfib_E_AsanInitFromRtl_ENSURE_ASAN_INITED	0x58df4	FALSE named-other	bounds _ZN6__asan18TryAsanInitFromRtlEv (__asan::TryAsanInitFromRtl); label tokens not in order in it	-	0, 0, 0
+tfib_A_SealedTopOfMemory_check	0x59058	FALSE named-other	bounds _ZN6__asanL23CheckSealedAddressSpaceEv (__asan::CheckSealedAddressSpace); label tokens not in order in it	-	0, 0, 0
+tfib_E_SealedTopOfMemory_check	0x590bc	FALSE named-other	bounds _ZN6__asanL23CheckSealedAddressSpaceEv (__asan::CheckSealedAddressSpace); label tokens not in order in it	-	0, 0, 0
+tfib_A_asan_handle_no_return_tiny_rtl_stub_2_insns	0x59230	FALSE named-other	bounds _ZN6__asanL18OnLowLevelAllocateEmm (__asan::OnLowLevelAllocate); label tokens not in order in it	-	0, 0, 0
+tfib_E_asan_handle_no_return_tiny_rtl_stub_2_insns	0x59238	FALSE named-other	bounds _ZN6__asanL18OnLowLevelAllocateEmm (__asan::OnLowLevelAllocate); label tokens not in order in it	-	0, 0, 0
+tfib_A_AsanStats_Clear_ctor	0x5a01c	FALSE named-other	bounds _ZN6__asan22FlushToDeadThreadStatsEPNS_9AsanStatsE (__asan::FlushToDeadThreadStats); label tokens not in order in it	-	0, 0, 0
+tfib_E_AsanStats_Clear_ctor	0x5a2bc	FALSE named-other	bounds _ZN6__asan22FlushToDeadThreadStatsEPNS_9AsanStatsE (__asan::FlushToDeadThreadStats); label tokens not in order in it	-	0, 0, 0
+tfib_A_asan_suppression_kinds_getter_3_insns	0x5aa00	FALSE named-other	bounds __asan_default_suppressions (__asan_default_suppressions); label tokens not in order in it	-	0, 0, 0
+tfib_E_asan_suppression_kinds_getter_3_insns	0x5aa0c	FALSE named-other	bounds __asan_default_suppressions (__asan_default_suppressions); label tokens not in order in it	-	0, 0, 0
+tfib_A_IsStackTraceSuppressed	0x5abe0	FALSE other	holds _ZN6__asan16IsAddrSuppressedEPKcPN11__sanitizer10SymbolizerEm	_ZN6__asan22IsStackTraceSuppressedEPKN11__sanitizer10StackTraceE[0x5ae08,0x5afb8)	0, 0, 0
+tfib_E_IsStackTraceSuppressed	0x5ad2c	FALSE other	holds _ZN6__asan16IsAddrSuppressedEPKcPN11__sanitizer10SymbolizerEm	_ZN6__asan22IsStackTraceSuppressedEPKN11__sanitizer10StackTraceE[0x5ae08,0x5afb8)	0, 0, 0
+tfib_A_asan_thread_tiny_getter_3_insns	0x5afb8	FALSE named-other	bounds _ZN6__asan17AsanThreadContext9OnCreatedEPv (__asan::AsanThreadContext::OnCreated); label tokens not in order in it	-	0, 0, 0
+tfib_E_asan_thread_tiny_getter_3_insns	0x5afc4	FALSE named-other	bounds _ZN6__asan17AsanThreadContext9OnCreatedEPv (__asan::AsanThreadContext::OnCreated); label tokens not in order in it	-	0, 0, 0
+tfib_A_AsanThread_SetThreadStackAndTls	0x5b574	FALSE other	holds _ZN6__asan10AsanThread31ClearShadowForThreadStackAndTLSEv	_ZN6__asan10AsanThread20SetThreadStackAndTlsEPKNS0_11InitOptionsE[0x5bdec,0x5bef8)	0, 0, 0
+tfib_E_AsanThread_SetThreadStackAndTls	0x5b718	FALSE other	holds _ZN6__asan10AsanThread31ClearShadowForThreadStackAndTLSEv	_ZN6__asan10AsanThread20SetThreadStackAndTlsEPKNS0_11InitOptionsE[0x5bdec,0x5bef8)	0, 0, 0
+tfib_A_AsanThread_ClearShadowForThreadStackAndTLS	0x5bdec	FALSE other	holds _ZN6__asan10AsanThread20SetThreadStackAndTlsEPKNS0_11InitOptionsE	_ZN6__asan10AsanThread31ClearShadowForThreadStackAndTLSEv[0x5b574,0x5b718)	0, 0, 0
+tfib_E_AsanThread_ClearShadowForThreadStackAndTLS	0x5bef8	FALSE other	holds _ZN6__asan10AsanThread20SetThreadStackAndTlsEPKNS0_11InitOptionsE	_ZN6__asan10AsanThread31ClearShadowForThreadStackAndTLSEv[0x5b574,0x5b718)	0, 0, 0
+tfib_A_weak_default_hook_ret	0x5d130	FALSE named-other	bounds _ZN11__sanitizer17ThreadContextBase9OnStartedEPv (__sanitizer::ThreadContextBase::OnStarted); label tokens not in order in it	-	0, 0, 0
+tfib_E_weak_default_hook_ret	0x5d134	FALSE named-other	bounds _ZN11__sanitizer17ThreadContextBase9OnStartedEPv (__sanitizer::ThreadContextBase::OnStarted); label tokens not in order in it	-	0, 0, 0
+tfib_A_InternalAlloc_RawInternalAlloc	0x5d13c	FALSE named-other	bounds _ZN6__asanL20GetAsanThreadContextEj (__asan::GetAsanThreadContext); label tokens not in order in it	-	0, 0, 0
+tfib_E_InternalAlloc_RawInternalAlloc	0x5d37c	FALSE named-other	bounds _ZN6__asanL20GetAsanThreadContextEj (__asan::GetAsanThreadContext); label tokens not in order in it	-	0, 0, 0
+tfib_A_internal_allocator_getter	0x5d914	FALSE named-other	bounds _ZN11__sanitizer26GetGlobalLowLevelAllocatorEv (__sanitizer::GetGlobalLowLevelAllocator); label tokens not in order in it	-	0, 0, 0
+tfib_E_internal_allocator_getter	0x5d920	FALSE named-other	bounds _ZN11__sanitizer26GetGlobalLowLevelAllocatorEv (__sanitizer::GetGlobalLowLevelAllocator); label tokens not in order in it	-	0, 0, 0
+tfib_A_LowLevelAllocator_InternalAlloc_bump_allocator	0x5d920	FALSE named-other	bounds _ZN11__sanitizer17LowLevelAllocator8AllocateEm (__sanitizer::LowLevelAllocator::Allocate); label tokens not in order in it	-	0, 0, 0
+tfib_E_LowLevelAllocator_InternalAlloc_bump_allocator	0x5da6c	FALSE named-other	bounds _ZN11__sanitizer17LowLevelAllocator8AllocateEm (__sanitizer::LowLevelAllocator::Allocate); label tokens not in order in it	-	0, 0, 0
+tfib_A_AllocatorMayReturnNull	0x5db0c	FALSE other	holds _ZN11__sanitizer18IsRssLimitExceededEv	_ZN11__sanitizer22AllocatorMayReturnNullEv[0x5dae4,0x5daf4)	0, 0, 0
+tfib_E_AllocatorMayReturnNull	0x5db1c	FALSE other	holds _ZN11__sanitizer18IsRssLimitExceededEv	_ZN11__sanitizer22AllocatorMayReturnNullEv[0x5dae4,0x5daf4)	0, 0, 0
+tfib_A_SetSealedStartFrame_sealed_patch	0x5f110	FALSE named-other	bounds _ZN11__sanitizer18SealedSetInitFrameEm (__sanitizer::SealedSetInitFrame); label tokens not in order in it	-	0, 0, 0
+tfib_E_SetSealedStartFrame_sealed_patch	0x5f11c	FALSE named-other	bounds _ZN11__sanitizer18SealedSetInitFrameEm (__sanitizer::SealedSetInitFrame); label tokens not in order in it	-	0, 0, 0
+tfib_A_IncreaseTotalMmap	0x5f7f8	FALSE other	holds _ZN11__sanitizer17DecreaseTotalMmapEm	_ZN11__sanitizer17IncreaseTotalMmapEm[0x5f7b4,0x5f7f8)	0, 0, 0
+tfib_E_IncreaseTotalMmap	0x5f81c	FALSE other	holds _ZN11__sanitizer17DecreaseTotalMmapEm	_ZN11__sanitizer17IncreaseTotalMmapEm[0x5f7b4,0x5f7f8)	0, 0, 0
+tfib_A_sanitizer_free_hook_weak_default	0x5fe90	FALSE named-other	bounds __sanitizer_ignore_free_hook (__sanitizer_ignore_free_hook); label tokens not in order in it	-	0, 0, 0
+tfib_E_sanitizer_free_hook_weak_default	0x5fe98	FALSE named-other	bounds __sanitizer_ignore_free_hook (__sanitizer_ignore_free_hook); label tokens not in order in it	-	0, 0, 0
+tfib_A_ReportFile_SetReportPath	0x60a28	FALSE other	holds _ZN11__sanitizer11CommonFlags11SetDefaultsEv	_ZN11__sanitizer10ReportFile13SetReportPathEPKc[0x601d4,0x60414)	0, 0, 0
+tfib_E_ReportFile_SetReportPath	0x60b6c	FALSE other	holds _ZN11__sanitizer11CommonFlags11SetDefaultsEv	_ZN11__sanitizer10ReportFile13SetReportPathEPKc[0x601d4,0x60414)	0, 0, 0
+tfib_A_OverrideCommonFlags_no_op_flag_hook_2_insns	0x60b6c	FALSE named-other	bounds _ZN11__sanitizer11CommonFlags8CopyFromERKS0_ (__sanitizer::CommonFlags::CopyFrom); label tokens not in order in it	-	0, 0, 0
+tfib_E_OverrideCommonFlags_no_op_flag_hook_2_insns	0x60b74	FALSE named-other	bounds _ZN11__sanitizer11CommonFlags8CopyFromERKS0_ (__sanitizer::CommonFlags::CopyFrom); label tokens not in order in it	-	0, 0, 0
+tfib_A_FlagParser_ParseString_parse_flags	0x60ebc	FALSE named-other	bounds _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE (__sanitizer::RegisterCommonFlags); label tokens not in order in it	-	0, 0, 0
+tfib_E_FlagParser_ParseString_parse_flags	0x62160	FALSE named-other	bounds _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE (__sanitizer::RegisterCommonFlags); label tokens not in order in it	-	0, 0, 0
+tfib_A_FlagParser_PrintFlagDescriptions_gate_Verbosity	0x62160	FALSE named-other	bounds _ZN11__sanitizer21InitializeCommonFlagsEPNS_11CommonFlagsE (__sanitizer::InitializeCommonFlags); label tokens not in order in it	-	0, 0, 0
+tfib_E_FlagParser_PrintFlagDescriptions_gate_Verbosity	0x62184	FALSE named-other	bounds _ZN11__sanitizer21InitializeCommonFlagsEPNS_11CommonFlagsE (__sanitizer::InitializeCommonFlags); label tokens not in order in it	-	0, 0, 0
+tfib_A_internal_strcmp	0x63184	FALSE other	holds _ZN11__sanitizer15internal_strchrEPKci	_ZN11__sanitizer15internal_strcmpEPKcS1_[0x63240,0x63284)	0, 0, 0
+tfib_E_internal_strcmp	0x631b8	FALSE other	holds _ZN11__sanitizer15internal_strchrEPKci	_ZN11__sanitizer15internal_strcmpEPKcS1_[0x63240,0x63284)	0, 0, 0
+tfib_A_internal_strncmp	0x63240	FALSE other	holds _ZN11__sanitizer15internal_strcmpEPKcS1_	_ZN11__sanitizer16internal_strncmpEPKcS1_m[0x63284,0x632d0)	0, 0, 0
+tfib_E_internal_strncmp	0x63284	FALSE other	holds _ZN11__sanitizer15internal_strcmpEPKcS1_	_ZN11__sanitizer16internal_strncmpEPKcS1_m[0x63284,0x632d0)	0, 0, 0
+tfib_A_internal_strchr	0x63284	FALSE other	holds _ZN11__sanitizer16internal_strncmpEPKcS1_m	_ZN11__sanitizer15internal_strchrEPKci[0x63184,0x631b8)	0, 0, 0
+tfib_E_internal_strchr	0x632d0	FALSE other	holds _ZN11__sanitizer16internal_strncmpEPKcS1_m	_ZN11__sanitizer15internal_strchrEPKci[0x63184,0x631b8)	0, 0, 0
+tfib_A_GetNamedMappingFd_ReadProcess_openat_getdents64	0x6417c	FALSE named-other	bounds _ZN11__sanitizer12ThreadLister11ListThreadsEPNS_18InternalMmapVectorIyEE (__sanitizer::ThreadLister::ListThreads); label tokens not in order in it	-	0, 0, 0
+tfib_E_GetNamedMappingFd_ReadProcess_openat_getdents64	0x64578	FALSE named-other	bounds _ZN11__sanitizer12ThreadLister11ListThreadsEPNS_18InternalMmapVectorIyEE (__sanitizer::ThreadLister::ListThreads); label tokens not in order in it	-	0, 0, 0
+tfib_A_internal_sigaction_syscall_wrapper_selector	0x64b18	FALSE named-other	bounds _ZN11__sanitizer19GetHandleSignalModeEi (__sanitizer::GetHandleSignalMode); label tokens not in order in it	-	0, 0, 0
+tfib_E_internal_sigaction_syscall_wrapper_selector	0x64b74	FALSE named-other	bounds _ZN11__sanitizer19GetHandleSignalModeEi (__sanitizer::GetHandleSignalMode); label tokens not in order in it	-	0, 0, 0
+tfib_A_internal_errno_mapping_helper	0x64f94	FALSE named-other	bounds _ZN11__sanitizer10ErrorIsOOMEi (__sanitizer::ErrorIsOOM); label tokens not in order in it	-	0, 0, 0
+tfib_E_internal_errno_mapping_helper	0x64fa0	FALSE named-other	bounds _ZN11__sanitizer10ErrorIsOOMEi (__sanitizer::ErrorIsOOM); label tokens not in order in it	-	0, 0, 0
+tfib_A_MmapFixedNoAccess_3_insn_arg_shim_0x65c98	0x655dc	FALSE named-other	bounds _ZN11__sanitizer14MmapFixedOrDieEmmPKc (__sanitizer::MmapFixedOrDie); label tokens not in order in it	-	0, 0, 0
+tfib_E_MmapFixedNoAccess_3_insn_arg_shim_0x65c98	0x655e8	FALSE named-other	bounds _ZN11__sanitizer14MmapFixedOrDieEmmPKc (__sanitizer::MmapFixedOrDie); label tokens not in order in it	-	0, 0, 0
+tfib_A_MmapFixed_named_may_die_core_MmapNamed_IncreaseT	0x655e8	FALSE named-other	bounds _ZN11__sanitizerL13MmapFixedImplEmmbPKc (__sanitizer::MmapFixedImpl); label tokens not in order in it	-	0, 0, 0
+tfib_E_MmapFixed_named_may_die_core_MmapNamed_IncreaseT	0x65760	FALSE named-other	bounds _ZN11__sanitizerL13MmapFixedImplEmmbPKc (__sanitizer::MmapFixedImpl); label tokens not in order in it	-	0, 0, 0
+tfib_A_MmapFixedSuperNoReserve_3_insn_shim_MmapFixed_co	0x65760	FALSE named-other	bounds _ZN11__sanitizer26MmapFixedOrDieOnFatalErrorEmmPKc (__sanitizer::MmapFixedOrDieOnFatalError); label tokens not in order in it	-	0, 0, 0
+tfib_E_MmapFixedSuperNoReserve_3_insn_shim_MmapFixed_co	0x6576c	FALSE named-other	bounds _ZN11__sanitizer26MmapFixedOrDieOnFatalErrorEmmPKc (__sanitizer::MmapFixedOrDieOnFatalError); label tokens not in order in it	-	0, 0, 0
+tfib_A_sanitizer_GetTls_DTLS_helper_sanitizer_tls_get_a	0x68c68	FALSE named-other	bounds _ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm (__sanitizer::DTLS_on_tls_get_addr); label tokens not in order in it	-	0, 0, 0
+tfib_E_sanitizer_GetTls_DTLS_helper_sanitizer_tls_get_a	0x68fb8	FALSE named-other	bounds _ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm (__sanitizer::DTLS_on_tls_get_addr); label tokens not in order in it	-	0, 0, 0
+tfib_A_DTLS_Destroy_ForEachDVT_no_op_4_insns	0x68fb8	FALSE named-other	bounds _ZN11__sanitizer8DTLS_GetEv (__sanitizer::DTLS_Get); label tokens not in order in it	-	0, 0, 0
+tfib_E_DTLS_Destroy_ForEachDVT_no_op_4_insns	0x68fc8	FALSE named-other	bounds _ZN11__sanitizer8DTLS_GetEv (__sanitizer::DTLS_Get); label tokens not in order in it	-	0, 0, 0
+tfib_A_InternalAllocatorLock_Unlock_or_stats_add_17_ins	0x69204	FALSE named-other	bounds _ZN11__sanitizer17ThreadContextBaseC2Ej _ZN11__sanitizer17ThreadContextBaseC1Ej (__sanitizer::ThreadContextBase::ThreadContextBase | __sanitizer::ThreadContextBase::ThreadContextBase); label tokens not in order in it	-	0, 0, 0
+tfib_E_InternalAllocatorLock_Unlock_or_stats_add_17_ins	0x69248	FALSE named-other	bounds _ZN11__sanitizer17ThreadContextBaseC2Ej _ZN11__sanitizer17ThreadContextBaseC1Ej (__sanitizer::ThreadContextBase::ThreadContextBase | __sanitizer::ThreadContextBase::ThreadContextBase); label tokens not in order in it	-	0, 0, 0
+tfib_A_ThreadRegistry_ThreadArgRetval_vector_growth	0x6a30c	FALSE named-other	bounds _ZN11__sanitizer24InternalMmapVectorNoCtorIPNS_17ThreadContextBaseELb0EE7ReallocEm (__sanitizer::InternalMmapVectorNoCtor::Realloc); label tokens not in order in it	-	0, 0, 0
+tfib_E_ThreadRegistry_ThreadArgRetval_vector_growth	0x6a410	FALSE named-other	bounds _ZN11__sanitizer24InternalMmapVectorNoCtorIPNS_17ThreadContextBaseELb0EE7ReallocEm (__sanitizer::InternalMmapVectorNoCtor::Realloc); label tokens not in order in it	-	0, 0, 0
+tfib_A_sanitizer_common_libcdep_static_ctor_background	0x6b934	FALSE named-other	bounds _GLOBAL__sub_I_sanitizer_common_libcdep.cpp (_GLOBAL__sub_I_sanitizer_common_libcdep.cpp); label tokens not in order in it	-	0, 0, 0
+tfib_E_sanitizer_common_libcdep_static_ctor_background	0x6b9b0	FALSE named-other	bounds _GLOBAL__sub_I_sanitizer_common_libcdep.cpp (_GLOBAL__sub_I_sanitizer_common_libcdep.cpp); label tokens not in order in it	-	0, 0, 0
+tfib_A_weak_default_hook_ret_2	0x6bccc	FALSE named-other	bounds _ZN11__sanitizer11InitTlsSizeEv (__sanitizer::InitTlsSize); label tokens not in order in it	-	0, 0, 0
+tfib_E_weak_default_hook_ret_2	0x6bcd0	FALSE named-other	bounds _ZN11__sanitizer11InitTlsSizeEv (__sanitizer::InitTlsSize); label tokens not in order in it	-	0, 0, 0
+tfib_A_GetThreadStackAndTls	0x6bcd0	FALSE other	holds _ZN11__sanitizerL6GetTlsEPmS0_	_ZN11__sanitizer20GetThreadStackAndTlsEbPmS0_S0_S0_[0x6c0c0,0x6c190)	0, 0, 0
+tfib_E_GetThreadStackAndTls	0x6c0c0	FALSE other	holds _ZN11__sanitizerL6GetTlsEPmS0_	_ZN11__sanitizer20GetThreadStackAndTlsEbPmS0_S0_S0_[0x6c0c0,0x6c190)	0, 0, 0
+tfib_A_GetThreadStackTopAndBottom_caller_ClearShadowFor	0x6c0c0	FALSE named-other	bounds _ZN11__sanitizer20GetThreadStackAndTlsEbPmS0_S0_S0_ (__sanitizer::GetThreadStackAndTls); label tokens not in order in it	-	0, 0, 0
+tfib_E_GetThreadStackTopAndBottom_caller_ClearShadowFor	0x6c190	FALSE named-other	bounds _ZN11__sanitizer20GetThreadStackAndTlsEbPmS0_S0_S0_ (__sanitizer::GetThreadStackAndTls); label tokens not in order in it	-	0, 0, 0
+tfib_A_weak_default_hook_ret_3	0x6c83c	FALSE named-other	bounds _ZN11__sanitizer29InitializePlatformCommonFlagsEPNS_11CommonFlagsE (__sanitizer::InitializePlatformCommonFlags); label tokens not in order in it	-	0, 0, 0
+tfib_E_weak_default_hook_ret_3	0x6c840	FALSE named-other	bounds _ZN11__sanitizer29InitializePlatformCommonFlagsEPNS_11CommonFlagsE (__sanitizer::InitializePlatformCommonFlags); label tokens not in order in it	-	0, 0, 0
+tfib_A_InternalMmapVector_push_back	0x6c840	FALSE named-other	bounds _ZN11__sanitizerL22CollectStaticTlsBlocksEP12dl_phdr_infomPv (__sanitizer::CollectStaticTlsBlocks); label tokens not in order in it	-	0, 0, 0
+tfib_E_InternalMmapVector_push_back	0x6c94c	FALSE named-other	bounds _ZN11__sanitizerL22CollectStaticTlsBlocksEP12dl_phdr_infomPv (__sanitizer::CollectStaticTlsBlocks); label tokens not in order in it	-	0, 0, 0
+tfib_A_SetShadowRegionHugePageMode_DontDumpShadow_madvi	0x6cd74	FALSE named-other	bounds _ZN11__sanitizer20DontDumpShadowMemoryEmm (__sanitizer::DontDumpShadowMemory); label tokens not in order in it	-	0, 0, 0
+tfib_E_SetShadowRegionHugePageMode_DontDumpShadow_madvi	0x6cd94	FALSE named-other	bounds _ZN11__sanitizer20DontDumpShadowMemoryEmm (__sanitizer::DontDumpShadowMemory); label tokens not in order in it	-	0, 0, 0
+tfib_A_internal_pthread_weak_stub_ret	0x6ce80	FALSE named-other	bounds _ZN11__sanitizer6AtexitEPFvvE (__sanitizer::Atexit); label tokens not in order in it	-	0, 0, 0
+tfib_E_internal_pthread_weak_stub_ret	0x6ce84	FALSE named-other	bounds _ZN11__sanitizer6AtexitEPFvvE (__sanitizer::Atexit); label tokens not in order in it	-	0, 0, 0
+tfib_A_MmapFixedNoReserve	0x6d6c0	FALSE other	holds _ZN11__sanitizer23MmapFixedSuperNoReserveEmmPKc	_ZN11__sanitizer18MmapFixedNoReserveEmmPKc[0x6d590,0x6d6c0)	0, 0, 0
+tfib_E_MmapFixedNoReserve	0x6d720	FALSE other	holds _ZN11__sanitizer23MmapFixedSuperNoReserveEmmPKc	_ZN11__sanitizer18MmapFixedNoReserveEmmPKc[0x6d590,0x6d6c0)	0, 0, 0
+tfib_A_MprotectNoAccess	0x6d800	FALSE other	holds _ZN11__sanitizer12MmapNoAccessEm	_ZN11__sanitizer16MprotectNoAccessEmm[0x6576c,0x6578c)	0, 0, 0
+tfib_E_MprotectNoAccess	0x6d820	FALSE other	holds _ZN11__sanitizer12MmapNoAccessEm	_ZN11__sanitizer16MprotectNoAccessEmm[0x6576c,0x6578c)	0, 0, 0
+tfib_A_MmapFixedOrDieOnFatalError_MmapFixedSuperNoReser	0x6d820	FALSE named-other	bounds _ZN11__sanitizer20ReservedAddressRange3MapEmmPKc (__sanitizer::ReservedAddressRange::Map); label tokens not in order in it	-	0, 0, 0
+tfib_E_MmapFixedOrDieOnFatalError_MmapFixedSuperNoReser	0x6d96c	FALSE named-other	bounds _ZN11__sanitizerL23SealedRepairReservationEmm (__sanitizer::SealedRepairReservation); label tokens not in order in it	-	0, 0, 0
+tfib_A_MmapFixedOrDie	0x6d96c	FALSE other	holds _ZN11__sanitizer20ReservedAddressRange8MapOrDieEmmPKc	_ZN11__sanitizer14MmapFixedOrDieEmmPKc[0x655dc,0x655e8)	0, 0, 0
+tfib_E_MmapFixedOrDie	0x6d97c	FALSE other	holds _ZN11__sanitizer20ReservedAddressRange8MapOrDieEmmPKc	_ZN11__sanitizer14MmapFixedOrDieEmmPKc[0x655dc,0x655e8)	0, 0, 0
+tfib_A_MaybeStartBackgroudThread	0x6f174	FALSE named-other	bounds _ZN11__sanitizer18InitializeCoverageEbPKc (__sanitizer::InitializeCoverage); label tokens not in order in it	-	0, 0, 0
+tfib_E_MaybeStartBackgroudThread	0x6f1b8	FALSE named-other	bounds _ZN11__sanitizer18InitializeCoverageEbPKc (__sanitizer::InitializeCoverage); label tokens not in order in it	-	0, 0, 0
+tfib_A_Atexit_internal_exit_hook_runner_12_insns_execut	0x6f1b8	FALSE named-other	bounds __sanitizer_cov_dump (__sanitizer_cov_dump); label tokens not in order in it	-	0, 0, 0
+tfib_E_Atexit_internal_exit_hook_runner_12_insns_execut	0x6f1e8	FALSE named-other	bounds __sanitizer_cov_dump (__sanitizer_cov_dump); label tokens not in order in it	-	0, 0, 0
+tfib_A_StackDepotBase_find_bucket_chain_walk	0x723ac	FALSE named-other	bounds _ZN11__sanitizer14StackDepotBaseINS_14StackDepotNodeELi1ELi20EE4lockEPNS_15atomic_uint32_tE (__sanitizer::StackDepotBase::lock); label tokens not in order in it	-	0, 0, 0
+tfib_E_StackDepotBase_find_bucket_chain_walk	0x7243c	FALSE named-other	bounds _ZN11__sanitizer14StackDepotBaseINS_14StackDepotNodeELi1ELi20EE4lockEPNS_15atomic_uint32_tE (__sanitizer::StackDepotBase::lock); label tokens not in order in it	-	0, 0, 0
+tfib_A_StackDepotBase_lock_bucket_spin_lock	0x7243c	FALSE named-other	bounds _ZNK11__sanitizer11TwoLevelMapINS_14StackDepotNodeELy32768ELy65536ENS_21LocalAddressSpaceViewEE6CreateEm (__sanitizer::TwoLevelMap::Create); label tokens not in order in it	-	0, 0, 0
+tfib_E_StackDepotBase_lock_bucket_spin_lock	0x7253c	FALSE named-other	bounds _ZNK11__sanitizer11TwoLevelMapINS_14StackDepotNodeELy32768ELy65536ENS_21LocalAddressSpaceViewEE6CreateEm (__sanitizer::TwoLevelMap::Create); label tokens not in order in it	-	0, 0, 0
+tfib_A_Unwind_GetIP_slow_unwind_helper	0x790fc	FALSE named-other	bounds _ZN11__sanitizer18BufferedStackTrace10UnwindSlowEmPvj (__sanitizer::BufferedStackTrace::UnwindSlow); label tokens not in order in it	-	0, 0, 0
+tfib_E_Unwind_GetIP_slow_unwind_helper	0x79370	FALSE named-other	bounds _ZN11__sanitizer18BufferedStackTrace10UnwindSlowEmPvj (__sanitizer::BufferedStackTrace::UnwindSlow); label tokens not in order in it	-	0, 0, 0
+tfib_A_lsan_flags_init_helper	0x7969c	FALSE named-other	bounds _ZN6__lsan5Flags11SetDefaultsEv (__lsan::Flags::SetDefaults); label tokens not in order in it	-	0, 0, 0
+tfib_E_lsan_flags_init_helper	0x796e0	FALSE named-other	bounds _ZN6__lsan5Flags11SetDefaultsEv (__lsan::Flags::SetDefaults); label tokens not in order in it	-	0, 0, 0
+tfib_A_asan_malloc_hook_RunMallocHooks_target_sanitizer	0x7f118	FALSE named-other	bounds _ZN6__lsan20DisabledInThisThreadEv (__lsan::DisabledInThisThread); label tokens not in order in it	-	0, 0, 0
+tfib_E_asan_malloc_hook_RunMallocHooks_target_sanitizer	0x7f130	FALSE named-other	bounds _ZN6__lsan20DisabledInThisThreadEv (__lsan::DisabledInThisThread); label tokens not in order in it	-	0, 0, 0
+tfib_A_ubsan_MaybeCallUbsanDefaultOptions	0x7f5e0	FALSE named-other	bounds _ZN7__ubsan5Flags11SetDefaultsEv (__ubsan::Flags::SetDefaults); label tokens not in order in it	-	0, 0, 0
+tfib_E_ubsan_MaybeCallUbsanDefaultOptions	0x7f5f8	FALSE named-other	bounds _ZN7__ubsan5Flags11SetDefaultsEv (__ubsan::Flags::SetDefaults); label tokens not in order in it	-	0, 0, 0
+tfib_E_target_run	0x7fbb0	FALSE other	holds oft_exit_guard	target_run[0x7fa28,0x7fb80)	0, 0, 0
+tfib_A_fini_stub_ret	0x88274	FALSE named-other	bounds __cxa_finalize (__cxa_finalize); label tokens not in order in it	-	0, 0, 0
+tfib_E_fini_stub_ret	0x88278	FALSE named-other	bounds __cxa_finalize (__cxa_finalize); label tokens not in order in it	-	0, 0, 0
+tfib_A_libc_exit_fini_array_walker_stub	0x8833c	FALSE named-other	bounds call (call); label tokens not in order in it	-	0, 0, 0
+tfib_E_libc_exit_fini_array_walker_stub	0x88340	FALSE named-other	bounds call (call); label tokens not in order in it	-	0, 0, 0
+tfib_A_musl_exit_helper_stub	0x88340	FALSE named-other	bounds dummy _fini (dummy | _fini); label tokens not in order in it	-	0, 0, 0
+tfib_E_musl_exit_helper_stub	0x88344	FALSE named-other	bounds dummy _fini (dummy | _fini); label tokens not in order in it	-	0, 0, 0
+tfib_A_fprintf	0x8da30	FALSE named-other	bounds dprintf (dprintf); label tokens not in order in it	-	0, 0, 0
+tfib_E_fprintf	0x8da94	FALSE named-other	bounds dprintf (dprintf); label tokens not in order in it	-	0, 0, 0
+tfib_A_syscall_cp_c_tail_sccp_9_insns	0x9279c	FALSE named-other	bounds __tls_get_addr (__tls_get_addr); label tokens not in order in it	-	0, 0, 0
+tfib_E_syscall_cp_c_tail_sccp_9_insns	0x927c0	FALSE named-other	bounds __tls_get_addr (__tls_get_addr); label tokens not in order in it	-	0, 0, 0
+tfib_A_lock_unlock_pair_user_futex	0x93f70	FALSE named-other	bounds __pthread_rwlock_unlock pthread_rwlock_unlock (__pthread_rwlock_unlock | pthread_rwlock_unlock); label tokens not in order in it	-	0, 0, 0
+tfib_E_lock_unlock_pair_user_futex	0x94014	FALSE named-other	bounds __pthread_rwlock_unlock pthread_rwlock_unlock (__pthread_rwlock_unlock | pthread_rwlock_unlock); label tokens not in order in it	-	0, 0, 0
+tfib_A_pthread_key_create_body_tsd_init	0x94014	FALSE named-other	bounds __pthread_rwlock_wrlock pthread_rwlock_wrlock (__pthread_rwlock_wrlock | pthread_rwlock_wrlock); label tokens not in order in it	-	0, 0, 0
+tfib_E_pthread_key_create_body_tsd_init	0x94130	FALSE named-other	bounds __pthread_rwlock_timedwrlock pthread_rwlock_timedwrlock (__pthread_rwlock_timedwrlock | pthread_rwlock_timedwrlock); label tokens not in order in it	-	0, 0, 0
+tfib_A_pthread_key_atfork_tsd_table_init_11_insns	0x94130	FALSE named-other	bounds __pthread_rwlock_trywrlock pthread_rwlock_trywrlock (__pthread_rwlock_trywrlock | pthread_rwlock_trywrlock); label tokens not in order in it	-	0, 0, 0
+tfib_E_pthread_key_atfork_tsd_table_init_11_insns	0x9415c	FALSE named-other	bounds __pthread_rwlock_trywrlock pthread_rwlock_trywrlock (__pthread_rwlock_trywrlock | pthread_rwlock_trywrlock); label tokens not in order in it	-	0, 0, 0
+tfib_E_set_thread_area	0x941dc	unverifiable by symtab (st_size 0), unread	__set_thread_area has st_size 0; the value bounds __unmapself	__set_thread_area[0x941d0,0x941d0)	0, 0, 0
+# yb1w-drop-unread: 237 cell(s) removed: FALSE named-other 142, FALSE other 43, FALSE trampoline 50, unverifiable by symtab (st_size 0), unread 2

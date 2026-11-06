@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lighttpd
 harness: fuzz_burl
-rocq: OssFuzzTheorems.lighttpd.fuzz_burl
+rocq: OSSVerify.lighttpd.fuzz_burl
 origin: oss-fuzz
 summary: 'first 4 bytes = burl_normalize flags, rest = URL: burl_normalize (qs result stored and ignored)
   then buffer_urldecode_path.'

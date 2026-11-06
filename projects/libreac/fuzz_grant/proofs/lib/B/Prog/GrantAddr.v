@@ -1,0 +1,184 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* The addresses fuzz_grant.asan-ubsan (image B) gives the listing's names,
+   objects and auipc values. The objects past the ones the slots build are the
+   cells the walks read through a GOT word:
+   __asan_shadow_memory_dynamic_address (the shadow base) and
+   __asan_option_detect_stack_use_after_return. *)
+From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import PaTable.
+From OSSVerify.Proofs.libreac.fuzz_grant.lib.B.Prog Require Import GrantSyms.
+From Stdlib Require Import ZArith List.
+Import ListNotations.
+Open Scope Z_scope.
+Definition grant_text : Z := 0x80a3c.
+Definition grant_sigma (s : gsym) : Z :=
+match s with
+| GS___asan_stack_malloc_4 => 0x3d3ec
+| GS___asan_set_shadow_f5 => 0x54b50
+| GS___asan_set_shadow_00 => 0x54a48
+| GS___interceptor_trampoline_malloc => 0x52edc
+| GS_reac_headamp_tx_init => 0x85a70
+| GS___asan_memset => 0x52024
+| GS_reac_headamp_tx_set => 0x85a90
+| GS_reac_headamp_tx_effective => 0x85c00
+| GS_reac_headamp_default => 0x85bf0
+| GS___asan_report_load1 => 0x58ca0
+| GS_reac_grant_alloc_fits => 0x85518
+| GS_reac_grant_allocate => 0x85554
+| GS_reac_grant_build_sweep => 0x855fc
+| GS___interceptor_trampoline_bcmp => 0x424d0
+| GS_want_of => 0x82434
+| GS_check_groupa => 0x82074
+| GS_reac_ctrl_identity_poll_block => 0x835dc
+| GS___interceptor_trampoline_free => 0x52ed8
+| GS_reac_headamp_tx_arm_scene => 0x85ce4
+| GS_reac_headamp_tx_set_resweep => 0x85e78
+| GS_reac_headamp_tx_next => 0x85efc
+| GS___asan_handle_no_return => 0x59c9c
+| GS_abort => 0x8cdb4
+| GS___asan_report_store1 => 0x58fc0
+| GS___asan_stack_malloc_2 => 0x3d250
+| GS___asan_memcpy => 0x51b88
+| GS_reac_ctrl_parse => 0x82774
+| GS_reac_ctrl_headamp_record_verify => 0x834dc
+| GS_reac_ctrl_checksum_verify => 0x8260c
+| GS___asan_init => 0x59e04
+| GS___asan_version_mismatch_check_v8 => 0x59e98
+| GS___asan_register_elf_globals => 0x403f8
+| GS___asan_unregister_elf_globals => 0x40464
+| GS___asan_stack_malloc_1 => 0x3d0c0
+| GS_kind_of_link1 => 0x831f8
+| GS___asan_report_store4 => 0x59100
+| GS___asan_report_store2 => 0x59060
+| GS___asan_report_load4 => 0x58de0
+| GS___asan_stack_malloc_0 => 0x3cf4c
+| GS_ctrl_lay_block => 0x83bfc
+| GS_ctrl_finish => 0x83fdc
+| GS___asan_stack_malloc_6 => 0x3d5b8
+| GS___asan_set_shadow_f8 => 0x54b68
+| GS_reac_ctrl_stamp_headamp => 0x8326c
+| GS___asan_stack_free_6 => 0x3d754
+| GS_reac_box_model_block => 0x840d0
+| GS___asan_report_load8 => 0x58e80
+| GS_reac_ctrl_record_cksum_stamp => 0x82694
+| GS_reac_ctrl_block_cksum_stamp => 0x82554
+| GS_build_dt1_single => 0x84e4c
+| GS_name_field => 0x85400
+| GS_dt1_head => 0x85004
+| GS___asan_report_load2 => 0x58d40
+| GS_reac_ctrl_build_grant_sweep => 0x8363c
+end.
+Definition grant_obj (i : nat) : Z :=
+match i with
+| 0%nat => 0x9d728
+| 1%nat => 0x9d6d0
+| 2%nat => 0x1f870
+| 3%nat => 0x80a3c
+| 4%nat => 0x20f00
+| 5%nat => 0x20f60
+| 6%nat => 0x20ec0
+| 7%nat => 0x14f27
+| 8%nat => 0x82074
+| 9%nat => 0x20fc0
+| 10%nat => 0x9e348
+| 11%nat => 0x9e350
+| 12%nat => 0xa22c0
+| 13%nat => 0x175a0
+| 14%nat => 0x82774
+| 15%nat => 0x21060
+| 16%nat => 0x1c999
+| 17%nat => 0x8326c
+| 18%nat => 0x9d3e0
+| 19%nat => 0x21080
+| 20%nat => 0x20607
+| 21%nat => 0x8363c
+| 22%nat => 0x21200
+| 23%nat => 0x21260
+| 24%nat => 0x19e03
+| 25%nat => 0x83bfc
+| 26%nat => 0x21034
+| 27%nat => 0x12d7e
+| 28%nat => 0x840d0
+| 29%nat => 0x212d4
+| 30%nat => 0x21300
+| 31%nat => 0x21340
+| 32%nat => 0x1ae86
+| 33%nat => 0x855fc
+| 34%nat => 0x10320
+| 35%nat => 0xa5978
+| 36%nat => 0xa5980
+| _ => 0
+end.
+Definition grant_hi (j : nat) : Z :=
+match j with
+| 0%nat => 0x9da88
+| 1%nat => 0x9da8c
+| 2%nat => 0x1faec
+| 3%nat => 0x80af0
+| 4%nat => 0x215d0
+| 5%nat => 0x215f4
+| 6%nat => 0x20730
+| 7%nat => 0x9d0cc
+| 8%nat => 0x9d0d0
+| 9%nat => 0x15130
+| 10%nat => 0x82134
+| 11%nat => 0x211dc
+| 12%nat => 0x9d460
+| 13%nat => 0x9e4fc
+| 14%nat => 0x9e500
+| 15%nat => 0xa250c
+| 16%nat => 0x9e52c
+| 17%nat => 0x9e530
+| 18%nat => 0xa253c
+| 19%nat => 0x9d560
+| 20%nat => 0x9d61c
+| 21%nat => 0x9d69c
+| 22%nat => 0x9d7c0
+| 23%nat => 0x9d7c4
+| 24%nat => 0x17824
+| 25%nat => 0x82828
+| 26%nat => 0x2095c
+| 27%nat => 0x9d2b8
+| 28%nat => 0x9d2bc
+| 29%nat => 0x1c318
+| 30%nat => 0x8331c
+| 31%nat => 0x9d39c
+| 32%nat => 0x9d4f0
+| 33%nat => 0x215f8
+| 34%nat => 0x9d694
+| 35%nat => 0x9d698
+| 36%nat => 0x20700
+| 37%nat => 0x83704
+| 38%nat => 0x2186c
+| 39%nat => 0x21968
+| 40%nat => 0x2097c
+| 41%nat => 0x9dc4c
+| 42%nat => 0x9dc50
+| 43%nat => 0x19cac
+| 44%nat => 0x83cb0
+| 45%nat => 0x20d6c
+| 46%nat => 0x9cff4
+| 47%nat => 0x9d118
+| 48%nat => 0x9d11c
+| 49%nat => 0x13178
+| 50%nat => 0x8417c
+| 51%nat => 0x211f4
+| 52%nat => 0x214f4
+| 53%nat => 0x2153c
+| 54%nat => 0x9de74
+| 55%nat => 0x9d00c
+| 56%nat => 0x9d418
+| 57%nat => 0x9d594
+| 58%nat => 0x9d650
+| 59%nat => 0x9d654
+| 60%nat => 0x1a6b0
+| 61%nat => 0x856b4
+| 62%nat => 0x9daa4
+| 63%nat => 0x9dc54
+| 64%nat => 0x9dd04
+| 65%nat => 0x9de8c
+| 66%nat => 0x9cf44
+| 67%nat => 0xff9c
+| _ => 0
+end.
+Definition grant_nobj : nat := 37%nat.
+Definition grant_nhi : nat := 68%nat.

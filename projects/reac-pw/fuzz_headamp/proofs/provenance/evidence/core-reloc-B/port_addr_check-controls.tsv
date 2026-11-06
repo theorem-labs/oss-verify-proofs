@@ -1,0 +1,14 @@
+# port_addr_check controls: (1) planted copy of lib/AU (plants.json, 6 plants) -> rows that the plants add over the B3 run; (2) donor-vs-donor (lib/A tree and image A on both sides) -> its flagged rows (the tool's own limits)
+control	verdict	file	line	source value	ported value	note
+plant	STALE-DONOR-CODE-POINTER	YB1w.v	462	0x8b930	0x8b930	donor function start sysconf; the port value is libunwind::Registers_riscv::getRegisterName+0x248; the target has it at sysconf@0x8bda8; value unchanged; expected 0x8bda8
+plant	SLID-TO-NEIGHBOUR	YE22.v	19	0x9cff8	0x9d480	the port value is the adjacent .got slot; expected 0x9d478
+plant	GEOMETRY-CHANGED	YB13.v	120	0x6b000	0x6b000	a quantity of the donor image (hq:seg1.size, segbnd:1:relro.lo.page, segbnd:1:seg1.hi) unchanged in the port; expected 0x6c000 (442368) (442368)
+plant	UNRESOLVED	YFhn.v	421	0x80050000	0x800502b8	both side unnamed; (shadow of 0x2c0000 (seg3:.bss): no object starts there)
+plant	SAME-VALUE-DIFFERENT-OBJECT	YFk1.v	662	0x21a74	0x21a74	value unchanged (a copied literal?); the value denotes JT(table of sysconf+0xdc, entry +0xc) in the donor but JT(table of libunwind::Registers_riscv::getRegisterName+0x14, entry +0xd4) in the target; 
+plant	DIFFERENT-SYMBOL	YFk1.v	662	0x6a0d0	0x6a0d0	value unchanged (a copied literal?); a jump-table entry (label - base): jump-table entry sysconf+0x208 - table base 0x21a68 (sysconf+0xdc); the port value is not the target's expected 0x6a508
+donor-vs-donor	UNRESOLVED	YB1w.v	601	0x10040	0x10040	value unchanged (a copied literal?); both side unnamed; (seg0:gap: unnamed)
+donor-vs-donor	UNRESOLVED	YFjm.v	330	0x800b3168	0x800b3168	value unchanged (a copied literal?); both side unnamed; (shadow of 0x5d8b40 (seg3:.bss): no object starts there)
+donor-vs-donor	UNRESOLVED	YFk1.v	697	0x800b3168	0x800b3168	value unchanged (a copied literal?); both side unnamed; (shadow of 0x5d8b40 (seg3:.bss): no object starts there)
+donor-vs-donor	UNRESOLVED	YE2t.v	66	0x7fffbaf8	0x7fffbaf8	value unchanged (a copied literal?); both side unnamed; (shadow of 0x1d7c0 (seg0:.rodata): no object starts there)
+donor-vs-donor	UNRESOLVED	YE2v.v	66	0x7fffb2e8	0x7fffb2e8	value unchanged (a copied literal?); both side unnamed; (shadow of 0x19740 (seg0:.rodata): no object starts there)
+donor-vs-donor	UNRESOLVED	YE35.v	66	0x7fffa908	0x7fffa908	value unchanged (a copied literal?); both side unnamed; (shadow of 0x14840 (seg0:.rodata): no object starts there)

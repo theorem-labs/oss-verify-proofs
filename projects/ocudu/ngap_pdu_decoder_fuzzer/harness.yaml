@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ocudu
 harness: ngap_pdu_decoder_fuzzer
-rocq: OssFuzzTheorems.ocudu.ngap_pdu_decoder_fuzzer
+rocq: OSSVerify.ocudu.ngap_pdu_decoder_fuzzer
 origin: upstream
 summary: asn1::ngap::ngap_pdu_c::unpack over the input (APER decode); the return code is cast to void
   and the decoded PDU is never re-packed or compared.

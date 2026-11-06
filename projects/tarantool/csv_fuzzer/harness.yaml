@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tarantool
 harness: csv_fuzzer
-rocq: OssFuzzTheorems.tarantool.csv_fuzzer
+rocq: OSSVerify.tarantool.csv_fuzzer
 origin: upstream
 summary: csv_parse_chunk + csv_finish_parsing over a NUL-terminated copy; nothing checked.
 entry: LLVMFuzzerTestOneInput

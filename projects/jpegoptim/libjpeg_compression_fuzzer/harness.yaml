@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jpegoptim
 harness: libjpeg_compression_fuzzer
-rocq: OssFuzzTheorems.jpegoptim.libjpeg_compression_fuzzer
+rocq: OSSVerify.jpegoptim.libjpeg_compression_fuzzer
 origin: upstream
 summary: Writes the input to a /dev/shm mkstemp file and calls jpegoptim's whole CLI pipeline optimize()
   on it (decode, recompress at target size -75%, keep if smaller), logging to /dev/null. optimize()'s

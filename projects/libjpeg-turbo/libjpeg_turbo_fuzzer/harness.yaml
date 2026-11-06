@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjpeg-turbo
 harness: libjpeg_turbo_fuzzer
-rocq: OssFuzzTheorems.libjpeg_turbo.libjpeg_turbo_fuzzer
+rocq: OSSVerify.libjpeg_turbo.libjpeg_turbo_fuzzer
 origin: upstream
 summary: tj3DecompressHeader then tj3Decompress8/12/16 into 5 pixel formats with scaling, cropping, fast
   upsample/DCT and scan limit; decoded pixels only summed. The "sum > bound" test after touching output

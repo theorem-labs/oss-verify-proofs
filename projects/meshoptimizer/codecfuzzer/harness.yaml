@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: meshoptimizer
 harness: codecfuzzer
-rocq: OssFuzzTheorems.meshoptimizer.codecfuzzer
+rocq: OSSVerify.meshoptimizer.codecfuzzer
 origin: upstream
 summary: decodeIndexBuffer/decodeIndexSequence/decodeVertexBuffer on raw input and decodeMeshlet/decodeMeshletRaw
   into buffers placed at the end of fixed arrays (memory safety within documented write limits); return

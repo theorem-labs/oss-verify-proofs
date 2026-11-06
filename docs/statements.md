@@ -1,8 +1,8 @@
 # What the statements say
 
-This page explains the statements under `projects/`. The proofs under
-`proofs/` prove some of them; [index/PROOFS.md](../index/PROOFS.md) lists
-which.
+This page explains the statements under `projects/`. The proofs in each
+harness's `proofs/` folder prove some of them;
+[index/PROOFS.md](../index/PROOFS.md) lists which.
 
 Every statement under `projects/` is a definition in a harness's
 `Statements.v`. Most have the form `Definition <name> : Prop`. A bound
@@ -53,10 +53,11 @@ bound statement and a decidability statement. So a harness has between 5 and
 `plain_halts` (shape `halts_within_budget`) has two premises. The build is
 never refused memory for exceeding 16 GiB, and the environment refuses nothing
 that the process's state does not force. On every input that meets them, every
-execution exits with an allowed status: status 0 or 2 for most harnesses, and
-any status for espeak-ng's `ssml-fuzzer`. So no execution of a covered input
-runs forever, crashes, fails an assertion or a sanitizer check, or leaves LPS.
-Nothing is said about output.
+execution exits with an allowed status: status 0 or 2 for most harnesses,
+status 0, 2 or 78 for a harness that lists `rejects` (below), and any status
+for espeak-ng's `ssml-fuzzer`. So no execution of a covered input runs forever,
+crashes, fails an assertion or a sanitizer check, or leaves LPS. Nothing is
+said about output.
 
 Status 78 means that a call of the fuzz target returned a value other than 0
 or -1. libFuzzer's documentation reserves those values, and a libFuzzer built
@@ -73,10 +74,9 @@ beside the inputs turned away. A fuzz target that returns a value other than 0
 or -1 only to report a failure lists no `rejects`, and its halts statements
 with a finite exit set do not allow 78.
 
-In this release no harness lists `rejects` yet. So a fuzz target that returns
-1 to turn an input away still has halts statements that do not allow 78, and
-those statements are false on such an input. A later release lists their
-`rejects` and restates those statements.
+Not every fuzz target that returns 1 to turn an input away lists its `rejects`
+yet. Where one lists none, its halts statements with a finite exit set do not
+allow 78, and they are false on such an input.
 
 Status 77, a call of `exit()` from the fuzz target, is allowed by no halts
 statement with a finite set. libFuzzer's documentation says that a fuzz target
@@ -205,6 +205,9 @@ its meaning: its identifier, its definition, the SHA-256 of each binary it
 names, the code of `theories/Shapes.v` and `theories/Images.v` (not their
 comments or layout), the LPS version string from release.yaml (`unreleased` in
 this release; the commit is not hashed) and, for a bound, its distribution.
-Cite a statement with its revision, `project/harness/statement@r1`; the
-revision changes whenever its meaning does ([versioning.md](versioning.md)). A
-withheld statement has no fingerprint.
+The two theories are hashed with the release's Rocq namespace (`namespace` in
+release.yaml, `OssFuzzTheorems` while it names none) read as `OssFuzzTheorems`
+wherever it starts a dotted path, so renaming the namespace moves no
+fingerprint. Cite a statement with its revision,
+`project/harness/statement@r1`; the revision changes whenever its meaning does
+([versioning.md](versioning.md)). A withheld statement has no fingerprint.

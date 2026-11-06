@@ -1,0 +1,8 @@
+849 named cells
+clause 2, ab1w_clause2.py key: NO-SYMBOL 356, TRUE 493
+clause 2, demangled key:       NO-SYMBOL 322, TRUE 527
+FALSE named-other / UNREAD                    12
+TRUE                                          527
+descriptive-true                              272
+thunk                                         38
+inherited (same class, same symbol + offset in the donor): FALSE named-other / UNREAD: yes 12, TRUE: no 47, TRUE: yes 480, descriptive-true: yes 272, thunk: yes 38

@@ -11,8 +11,8 @@
 
 From Stdlib Require Import QArith.
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType.
-From OssFuzzTheorems.Core Require Import Shapes.
-From OssFuzzTheorems.avahi.fuzz_strlst Require Images Distribution.
+From OSSVerify.Core Require Import Shapes.
+From OSSVerify.avahi.fuzz_strlst Require Images Distribution.
 
 (** [C] exits 0 exactly on the finite inputs where the plain and UBSan builds
     agree, and 1 on the others. *)

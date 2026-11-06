@@ -1,0 +1,15 @@
+# reac-repacer: the REAC de-jitter relay of FreeREAC, which re-paces a Roland REAC stream carried over Wi-Fi. The fuzz
+# targets drive the readers of bytes the daemon takes from the wire and from its own config: the frame classifiers of
+# its five readers, the rewrite of each frame it emits, the warm-start lock and the uci reply. Pinned to the merge of
+# the pull request FreeREAC/reac-repacer#9 on main.
+repo: https://github.com/FreeREAC/reac-repacer#3ac1cf1017c847fe2272fce7f2f93306f8a23b42
+primary_contact: linuxnow@gmail.com
+homepage: https://github.com/FreeREAC/reac-repacer
+language: c
+sanitizers: [address, undefined]
+mutants: fuzz/sabotage
+fuzz_targets:
+  - fuzz_wire
+  - fuzz_egress
+  - fuzz_lock
+  - fuzz_uci

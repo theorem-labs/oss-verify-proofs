@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: unicorn
 harness: fuzz_emu_x86_32
-rocq: OssFuzzTheorems.unicorn.fuzz_emu_x86_32
+rocq: OSSVerify.unicorn.fuzz_emu_x86_32
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

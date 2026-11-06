@@ -1,0 +1,23 @@
+# record run
+relocated files: 5 (lib/A 5, other 0); 179 numerals in [0x10000, 0x5f6170)
+target top 0x5f4ff0 (page-up 0x5f5000, rw_lo 0x9a000); donor top 0x5f6170 (page-up 0x5f7000, rw_lo 0x9b000)
+fetch/word pairs verified against the target image: 0, mismatches 0
+tfib_A_/tfib_E_ rows: {'tgt': 1072, 'interior': 8} donor rows: []
+tfib interior rows: [(72, 'Definition tfib_A_FakeStack_SetShadow : Z := 0x3c848.'), (72, 'Definition tfib_E_FakeStack_SetShadow : Z := 0x3c984.'), (158, 'Definition tfib_A_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x5204c.'), (158, 'Definition tfib_E_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x52188.'), (172, 'Definition tfib_A_MemToShadow_checked : Z := 0x53694.'), (172, 'Definition tfib_E_MemToShadow_checked : Z := 0x537d0.'), (245, 'Definition tfib_A_MemToShadow_checked_instance_3 : Z := 0x5c580.'), (245, 'Definition tfib_E_MemToShadow_checked_instance_3 : Z := 0x5c6bc.')]
+classes: {'OTHER': 162, 'TARGET': 17}
+reasons: {('OTHER', 'comment numeral'): 6, ('TARGET', 'target symbol/section/segment value'): 10, ('OTHER', 'no address role (constant / count / label / instruction word)'): 156, ('TARGET', 'fetch/word pair verified against the target image'): 7}
+review rows: {'word-without-verified-pair': 7, 'donor-interior-unmoved': 37}
+declared rows: 0
+rc=0
+# control: MemmoveK.v MM_ENTRY planted as the donor's 0x51bf0
+relocated files: 5 (lib/A 5, other 0); 179 numerals in [0x10000, 0x5f6170)
+target top 0x5f4ff0 (page-up 0x5f5000, rw_lo 0x9a000); donor top 0x5f6170 (page-up 0x5f7000, rw_lo 0x9b000)
+fetch/word pairs verified against the target image: 0, mismatches 0
+tfib_A_/tfib_E_ rows: {'tgt': 1072, 'interior': 8} donor rows: []
+tfib interior rows: [(72, 'Definition tfib_A_FakeStack_SetShadow : Z := 0x3c848.'), (72, 'Definition tfib_E_FakeStack_SetShadow : Z := 0x3c984.'), (158, 'Definition tfib_A_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x5204c.'), (158, 'Definition tfib_E_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x52188.'), (172, 'Definition tfib_A_MemToShadow_checked : Z := 0x53694.'), (172, 'Definition tfib_E_MemToShadow_checked : Z := 0x537d0.'), (245, 'Definition tfib_A_MemToShadow_checked_instance_3 : Z := 0x5c580.'), (245, 'Definition tfib_E_MemToShadow_checked_instance_3 : Z := 0x5c6bc.')]
+classes: {'OTHER': 162, 'TARGET': 16, 'DONOR-STALE': 1}
+reasons: {('OTHER', 'comment numeral'): 6, ('TARGET', 'target symbol/section/segment value'): 9, ('OTHER', 'no address role (constant / count / label / instruction word)'): 156, ('TARGET', 'fetch/word pair verified against the target image'): 7, ('DONOR-STALE', 'donor image value, unmoved from the donor file'): 1}
+review rows: {'word-without-verified-pair': 7, 'donor-interior-unmoved': 37}
+declared rows: 0
+DONOR-STALE	lib/A/Rt/MemmoveK.v:39	0x51bf0	Definition MM_ENTRY : Z := 0x51bf0.
+rc=0

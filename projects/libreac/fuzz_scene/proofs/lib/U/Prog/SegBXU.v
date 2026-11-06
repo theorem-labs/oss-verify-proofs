@@ -1,0 +1,221 @@
+From Stdlib Require Import ZArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.Proofs.libreac.fuzz_scene.lib.Lib Require Import PropExec MState Mem Cells Exec Step Frame Tac Bytes Image Arr ZBridge.
+From OSSVerify.Proofs.libreac.fuzz_scene.lib.U Require Import Img0.
+From OSSVerify.Proofs.libreac.fuzz_scene.lib.U.Prog Require Import SceneTacU.
+Import ListNotations.
+Open Scope Z_scope.
+
+Definition TADDR : Z := 0x103e0.
+Definition nbE (n : Z) : Z := if n =? 0 then 1 else n.
+Definition sx16 (v : Z) : Z := if v <? 32768 then v else v - 65536.
+
+Lemma got_rom : option_map (map (fun b : byte => bv_unsigned b)) (rdn rsegs (fun _ => None) (wa 0x1f330) 8)
+              = Some (map (fun b : byte => bv_unsigned b) (le8 (Z_to_bv 64 TADDR))).
+Proof. vm_compute. reflexivity. Qed.
+
+Lemma T_read : forall m i, 0 <= i < 8904 -> exists b, ov_read_bytes rsegs m (wa (TADDR + i)) 1 = Some [b].
+Proof.
+  intros m i Hi.
+  assert (Hall : forallb (fun j => match seg_rom rsegs (wa (TADDR + Z.of_nat j)) with Some _ => true | None => false end)
+                   (seq 0 (Z.to_nat 8904)) = true) by (vm_compute; reflexivity).
+  rewrite forallb_forall in Hall. specialize (Hall (Z.to_nat i) ltac:(apply in_seq; lia)).
+  rewrite Z2Nat.id in Hall by lia.
+  rewrite ov_rdn, rdn_unfold. unfold mrd.
+  destruct (m (wa (TADDR + i))) as [b|]; [exists b; reflexivity|].
+  destruct (seg_rom rsegs (wa (TADDR + i))) as [b|]; [exists b; reflexivity|discriminate].
+Qed.
+
+Lemma u8_store : forall (m0 m : word -> option byte) W A bs (k : Z) (bl : list byte),
+  u8arr rsegs m A bs -> mem_inv rsegs m -> munch W m0 m -> wmono rsegs m0 m ->
+  0 <= k -> k + Z.of_nat (length bl) <= Z.of_nat (length bs) -> inside W (A + k) (Z.of_nat (length bl)) ->
+  u8arr rsegs (write_to_mem m (Z_to_bv 64 (A + k)) bl) A (upd_bytes bs (Z.to_nat k) bl) /\
+  length (upd_bytes bs (Z.to_nat k) bl) = length bs /\
+  mem_inv rsegs (write_to_mem m (Z_to_bv 64 (A + k)) bl) /\
+  munch W m0 (write_to_mem m (Z_to_bv 64 (A + k)) bl) /\ wmono rsegs m0 (write_to_mem m (Z_to_bv 64 (A + k)) bl).
+Proof.
+  intros m0 m W A bs k bl [HB HW] HMI MU WM Hk Hkl Hin.
+  pose proof (bytes_at_bound _ _ _ _ HB) as [HA HAl].
+  change (Z_to_bv 64 (A + k)) with (wa (A + k)).
+  assert (HL : length (upd_bytes bs (Z.to_nat k) bl) = length bs) by (apply upd_bytes_length; lia).
+  split; [split|].
+  - apply bytes_at_write_inside; [exact HB | lia | lia].
+  - rewrite HL. apply wr_at_write. exact HW.
+  - split; [exact HL|].
+    split; [apply mem_inv_store; [exact HMI | apply wr_at_store_ok with (n := Z.of_nat (length bs)); [exact HW | lia | lia]]|].
+    split; [apply munch_write; [exact MU | lia | lia | exact Hin]|].
+    apply wmono_write. exact WM.
+Qed.
+
+Ltac nbd_tac := rewrite ?unsigned_lit_wrap; rewrite ?zb_lxor_ones by lia; rewrite ?Z.mod_small by lia; lia.
+
+Ltac cursor_chk := zstep; zstep; sres_if; zstep; zstep; decide_tests; cbn [Z.b2z]; zstep; zstep; sres_if.
+
+Section S.
+Variables (gp tp : word) (F : bvmap 5 word) (fc : bv 32).
+
+Lemma fill_loop : forall (k : nat) (ra sp t0 t1 t2 s0 bd nbd a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+    (m0 m : word -> option byte) (n i : Z) (bs : list byte),
+  Z.of_nat k = n - i -> 0 <= i < n -> bv_unsigned s0 = n ->
+  bv_unsigned nbd = 18446744073709551615 - bv_unsigned bd ->
+  Z.of_nat (length bs) = n -> u8arr rsegs m (bv_unsigned bd) bs ->
+  mem_inv rsegs m -> munch [(bv_unsigned bd, bv_unsigned bd + n)] m0 m -> wmono rsegs m0 m ->
+  evt rsegs (fun ms' => exists (a1' a4' a5' : word) (m' : word -> option byte) (bs' : list byte),
+      ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 bd nbd a1' (Z_to_bv 64 TADDR) (Z_to_bv 64 1112) a4' a5' a6 a7
+                    s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x1505c) fc None m' (seg_rom rsegs) /\
+      munch [(bv_unsigned bd, bv_unsigned bd + n)] m0 m' /\ wmono rsegs m0 m' /\ mem_inv rsegs m' /\
+      u8arr rsegs m' (bv_unsigned bd) bs' /\ Z.of_nat (length bs') = n)
+    (MS (mkR ra sp gp tp t0 t1 t2 s0 bd nbd (Z_to_bv 64 i) (Z_to_bv 64 TADDR) (Z_to_bv 64 1112) a4 a5 a6 a7
+             s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x15030) fc None m (seg_rom rsegs)).
+Proof.
+  induction k as [|k IH]; intros ra sp t0 t1 t2 s0 bd nbd a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+    m0 m n i bs HK Hi Hs0 Hnbd Hlen HU HMI MU WM; [lia|].
+  pose proof (bv_unsigned_in_range 64 bd) as Rbd. pose proof (bv_unsigned_in_range 64 s0) as Rs0.
+  pose proof (bv_unsigned_in_range 64 nbd) as Rnbd.
+  unfold bv_modulus in Rbd, Rs0, Rnbd.
+  pose proof (bytes_at_bound _ _ _ _ (proj1 HU)) as [_ HBd].
+  unfold TADDR.
+  zstep.
+  zstep.
+  if_cases K; zify_cond K; rewrite Z.shiftr_div_pow2 in K by lia; change (2 ^ 3) with 8 in K.
+  all: [> zstep; zstep; sres_if; zstep; zstep
+       | destruct (T_read m i ltac:(lia)) as [b HR]; unfold TADDR in HR; zstep; zstep; zstep; zstep; sres_if; zstep; zstep ].
+  all: assert (HS : store_ok rsegs m (Z_to_bv 64 (bv_unsigned bd + i)) 1 = true)
+      by (apply (u8arr_store_ok rsegs m (bv_unsigned bd) bs i); [exact HU | lia | reflexivity]).
+  all: zstep.
+  all: match goal with |- evt _ _ (MS _ _ _ _ _ (write_to_mem ?mm (Z_to_bv 64 (?A + ?k)) ?bl) _) =>
+      destruct (u8_store m0 mm _ A bs k bl HU HMI MU WM) as (HU' & HL' & HMI' & MU' & WM');
+      [lia | simpl_sizes; lia | cbn [inside]; simpl_sizes; lia | ]
+    end.
+  all: zstep.
+  all: if_cases K2; zify_cond K2.
+  all: [> eapply IH with (m0 := m0) (n := n) (i := i + 1);
+          [lia | lia | exact Hs0 | exact Hnbd | rewrite HL'; exact Hlen | exact HU' | exact HMI' | exact MU' | exact WM']
+       | finish; first [exact HU' | rewrite ?HL'; lia]
+       | eapply IH with (m0 := m0) (n := n) (i := i + 1);
+          [lia | lia | exact Hs0 | exact Hnbd | rewrite HL'; exact Hlen | exact HU' | exact HMI' | exact MU' | exact WM']
+       | finish; first [exact HU' | rewrite ?HL'; lia] ].
+Qed.
+
+Lemma xor_loop : forall (k : nat) (ra sp t0 t1 t2 s0 bd nbd a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+    (m0 m : word -> option byte) (N K PC i : Z) (bs inb : list byte),
+  Z.of_nat k = K - i -> 0 <= i < K -> K <= N -> K <= Z.of_nat (length inb) -> Z.of_nat (length bs) = N ->
+  u8arr rsegs m (bv_unsigned bd) bs -> bytes_at rsegs m PC inb ->
+  (PC + Z.of_nat (length inb) <= bv_unsigned bd \/ bv_unsigned bd + N <= PC) -> bv_unsigned bd + N < 2 ^ 64 ->
+  0 < PC -> PC + Z.of_nat (length inb) < 2 ^ 64 -> bv_unsigned s5 = PC ->
+  bv_unsigned nbd = 18446744073709551615 - bv_unsigned bd ->
+  mem_inv rsegs m -> munch [(bv_unsigned bd, bv_unsigned bd + N)] m0 m -> wmono rsegs m0 m ->
+  a2 = Z_to_bv 64 i -> a3 = Z_to_bv 64 (PC + i) -> a4 = Z_to_bv 64 (PC + i) ->
+  a5 = Z_to_bv 64 (bv_unsigned bd + i) -> s6 = Z_to_bv 64 (K - i) ->
+  evt rsegs (fun ms' => exists (a0' a1' a2' a3' a4' a5' a6' a7' s6' : word) (m' : word -> option byte) (bs' : list byte),
+      ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 bd a0' a1' a2' a3' a4' a5' a6' a7' s2 s3 s4 s5 s6' s7 s8 s9 s10 s11 t3 t4 t5 t6)
+               F (Z_to_bv 64 0x150d0) fc None m' (seg_rom rsegs) /\
+      munch [(bv_unsigned bd, bv_unsigned bd + N)] m0 m' /\ wmono rsegs m0 m' /\ mem_inv rsegs m' /\
+      u8arr rsegs m' (bv_unsigned bd) bs' /\ Z.of_nat (length bs') = N /\ bytes_at rsegs m' PC inb)
+    (MS (mkR ra sp gp tp t0 t1 t2 s0 bd nbd (Z_to_bv 64 1) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+        F (Z_to_bv 64 0x15090) fc None m (seg_rom rsegs)).
+Proof.
+  induction k as [|k IH]; intros ra sp t0 t1 t2 s0 bd nbd a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+    m0 m N K PC i bs inb HK Hi HKN HKI Hlen HU HIN DJ HBN HP0 HPr Hs5 Hnbd HMI MU WM Ha2 Ha3 Ha4 Ha5 Hs6; [lia|].
+  subst a2 a3 a4 a5 s6.
+  pose proof (bv_unsigned_in_range 64 bd) as Rbd. pose proof (bv_unsigned_in_range 64 s5) as Rs5.
+  pose proof (bv_unsigned_in_range 64 nbd) as Rnbd.
+  unfold bv_modulus in Rbd, Rs5, Rnbd.
+  pose proof (bytes_at_bound _ _ _ _ (proj1 HU)) as [_ HBd].
+  pose proof (bytes_at_bound _ _ _ _ HIN) as [HPa HPd].
+  pose proof (bytes_at_byte1 _ _ _ i HIN ltac:(lia)) as HR1.
+  pose proof (bytes_at_byte1 _ _ _ i (proj1 HU) ltac:(lia)) as HR2.
+  zstep. sres_if.
+  zstep. decide_tests. cbn [Z.b2z].
+  zstep. zstep. sres_if.
+  zstep. sres_if.
+  zstep. sres_if.
+  zstep. zstep. zstep. zstep. zstep. zstep.
+  assert (HS : store_ok rsegs m (Z_to_bv 64 (bv_unsigned bd + i)) 1 = true)
+    by (apply (u8arr_store_ok rsegs m (bv_unsigned bd) bs i); [exact HU | lia | reflexivity]).
+  zstep.
+  match goal with |- evt _ _ (MS _ _ _ _ _ (write_to_mem ?mm (Z_to_bv 64 (?A + ?k)) ?bl) _) =>
+      destruct (u8_store m0 mm _ A bs k bl HU HMI MU WM) as (HU' & HL' & HMI' & MU' & WM');
+      [lia | simpl_sizes; lia | cbn [inside]; simpl_sizes; lia | ];
+      assert (HIN' : bytes_at rsegs (write_to_mem mm (Z_to_bv 64 (A + k)) bl) PC inb)
+        by (apply (bytes_at_write_other rsegs mm (A + k) bl PC inb HIN); simpl_sizes; lia)
+  end.
+  zstep. zstep. zstep.
+  if_cases K2; zify_cond K2; rewrite ?Z.mod_small in K2 by lia.
+  - eapply IH with (m0 := m0) (N := N) (K := K) (PC := PC) (i := i + 1);
+      [lia | lia | lia | lia | rewrite HL'; exact Hlen | exact HU' | exact HIN' | exact DJ | exact HBN | exact HP0 | exact HPr
+      | exact Hs5 | exact Hnbd | exact HMI' | exact MU' | exact WM'
+      | word_eq_tac | word_eq_tac | word_eq_tac | word_eq_tac | word_eq_tac].
+  - finish; first [exact HU' | exact HIN' | rewrite ?HL'; lia].
+Qed.
+
+Lemma pre_B : forall (ra sp t0 t1 t2 s0 s1 bd a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+    (m : word -> option byte) (n r PC : Z) (bs inb : list byte),
+  0 <= n < 65536 -> bv_unsigned s0 = n -> bv_unsigned s6 = r -> bv_unsigned s5 = PC ->
+  bv_unsigned bd <> 0 -> Z.of_nat (length bs) = nbE n -> u8arr rsegs m (bv_unsigned bd) bs ->
+  bv_unsigned bd + nbE n < 2 ^ 64 ->
+  bytes_at rsegs m PC inb -> Z.of_nat (length inb) = r -> 0 < PC -> PC + r < 2 ^ 64 ->
+  (PC + r <= bv_unsigned bd \/ bv_unsigned bd + nbE n <= PC) ->
+  bytes_at rsegs m 0x1f330 (le8 (Z_to_bv 64 TADDR)) -> mem_inv rsegs m ->
+  evt rsegs (fun ms' => exists (a0' a1' a2' a3' a4' a5' a6' a7' s6' : word) (m' : word -> option byte) (bs' : list byte),
+      ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 bd a0' a1' a2' a3' a4' a5' a6' a7' s2 s3 s4 s5 s6' s7 s8 s9 s10 s11 t3 t4 t5 t6)
+               F (Z_to_bv 64 0x150d0) fc None m' (seg_rom rsegs) /\
+      munch [(bv_unsigned bd, bv_unsigned bd + nbE n)] m m' /\ wmono rsegs m m' /\ mem_inv rsegs m' /\
+      u8arr rsegs m' (bv_unsigned bd) bs' /\ Z.of_nat (length bs') = nbE n /\ bytes_at rsegs m' PC inb)
+    (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 bd a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+        F (Z_to_bv 64 0x15010) fc None m (seg_rom rsegs)).
+Proof.
+  intros ra sp t0 t1 t2 s0 s1 bd a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 m n r PC bs inb
+    HN Hs0 Hs6 Hs5 Hbd Hlen HU HBN HIN Hr HP0 HPr DJ HGOT HMI.
+  pose proof (bv_unsigned_in_range 64 bd) as Rbd. pose proof (bv_unsigned_in_range 64 s0) as Rs0.
+  pose proof (bv_unsigned_in_range 64 s6) as Rs6. pose proof (bv_unsigned_in_range 64 s5) as Rs5.
+  unfold bv_modulus in Rbd, Rs0, Rs6, Rs5.
+  pose proof (bytes_at_bound _ _ _ _ HIN) as [HPa HPd].
+  pose proof (munch_refl [(bv_unsigned bd, bv_unsigned bd + nbE n)] m) as MU0.
+  pose proof (wmono_refl rsegs m) as WM0.
+  zstep. sres_if.
+  zstep.
+  zstep.
+  zstep.
+  if_cases K0; zify_cond K0.
+  - cursor_chk.
+    zstep. sres_if. zstep. zstep. sres_if.
+    finish; try eassumption.
+  - assert (NB : nbE n = n) by (unfold nbE; destruct (Z.eqb_spec n 0); lia).
+    rewrite NB in *.
+    assert (HG : ov_read_bytes rsegs m (wa 127792) 8 = Some (le8 (Z_to_bv 64 66528))).
+    { pose proof (bytes_at_read rsegs m 127792 _ 0 8 HGOT ltac:(lia) ltac:(rewrite length_le8; lia)) as X.
+      rewrite Z.add_0_r in X. rewrite X. f_equal. }
+    zstep. zstep. zstep. zstep.
+    eapply evt_cut; [eapply (fill_loop (Z.to_nat n)) with (m0 := m) (n := n) (i := 0) (bs := bs);
+      [lia | lia | exact Hs0 | nbd_tac | exact Hlen | exact HU | exact HMI | exact MU0 | exact WM0] | ].
+    intros ms' (a1' & a4' & a5' & m1 & bs1 & E & MU1 & WM1 & MI1 & HU1 & HL1). subst ms'.
+    pose proof (bytes_at_transport rsegs _ m m1 PC inb HIN MU1 ltac:(cbn [disjoint_from]; lia)) as HIN1.
+    cursor_chk.
+    zstep.
+    if_cases K1; zify_cond K1.
+    + zstep. if_cases K2; zify_cond K2.
+      * finish; try eassumption.
+      * zstep. zstep. zstep. zstep.
+        eapply evt_cut; [eapply (xor_loop (Z.to_nat r)) with (m0 := m) (N := n) (K := r) (PC := PC) (i := 0) (bs := bs1) (inb := inb);
+          [lia | lia | lia | lia | exact HL1 | exact HU1 | exact HIN1 | lia | exact HBN | exact HP0 | lia | exact Hs5 | nbd_tac
+          | exact MI1 | exact MU1 | exact WM1 | reflexivity
+          | rewrite Z.add_0_r, <- Hs5; symmetry; apply Z_to_bv_lit_self
+          | rewrite Z.add_0_r, <- Hs5; symmetry; apply Z_to_bv_lit_self
+          | rewrite Z.add_0_r; symmetry; apply Z_to_bv_lit_self
+          | rewrite Z.sub_0_r, <- Hs6; symmetry; apply Z_to_bv_lit_self ] | ].
+        intros ms' (b0 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & s6' & m2 & bs2 & E & MU2 & WM2 & MI2 & HU2 & HL2 & HIN2). subst ms'.
+        finish; try eassumption.
+    + zstep. zstep. sres_if.
+      zstep. zstep. zstep. zstep.
+      eapply evt_cut; [eapply (xor_loop (Z.to_nat n)) with (m0 := m) (N := n) (K := n) (PC := PC) (i := 0) (bs := bs1) (inb := inb);
+        [lia | lia | lia | lia | exact HL1 | exact HU1 | exact HIN1 | lia | exact HBN | exact HP0 | lia | exact Hs5 | nbd_tac
+        | exact MI1 | exact MU1 | exact WM1 | reflexivity
+        | rewrite Z.add_0_r, <- Hs5; symmetry; apply Z_to_bv_lit_self
+        | rewrite Z.add_0_r, <- Hs5; symmetry; apply Z_to_bv_lit_self
+        | rewrite Z.add_0_r; symmetry; apply Z_to_bv_lit_self
+        | rewrite Z.sub_0_r, <- Hs0; symmetry; apply Z_to_bv_lit_self ] | ].
+      intros ms' (b0 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & s6' & m2 & bs2 & E & MU2 & WM2 & MI2 & HU2 & HL2 & HIN2). subst ms'.
+      finish; try eassumption.
+Qed.
+End S.

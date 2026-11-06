@@ -1,0 +1,2 @@
+answer[entry..0x8ab6c]+consumer	B=img/fuzz_command.asan-ubsan.debug	0x8aa10	A=img/fuzz_command.asan.debug	0x8a4c0	0x164
+answer[entry..0x8ab6c)excl	B=img/fuzz_command.asan-ubsan.debug	0x8aa10	A=img/fuzz_command.asan.debug	0x8a4c0	0x15c

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: ct
-rocq: OssFuzzTheorems.openssl.ct
+rocq: OSSVerify.openssl.ct
 origin: upstream
 summary: d2i_SCT_LIST, SCT_LIST_print, i2d_SCT_LIST; re-encoding not compared.
 entry: FuzzerTestOneInput

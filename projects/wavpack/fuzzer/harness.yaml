@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wavpack
 harness: fuzzer
-rocq: OssFuzzTheorems.wavpack.fuzzer
+rocq: OSSVerify.wavpack.fuzzer
 origin: upstream
 summary: Opens the input as a WavPack stream (tags, wrapper, DSD-as-PCM, OPEN_NO_CHECKSUM, 4 worker threads),
   calls ~25 getters, reads all tag items, appends tags, decodes all samples, reads the MD5 sum, seeks
@@ -135,6 +135,9 @@ builds:
       sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
 licence: NOASSERTION
 checks: []
+rejects:
+- where: source/fuzzer.cc:148-153
+  what: An input WavpackOpenFileInputEx64 cannot open as a WavPack stream is returned 1
 distribution:
   file: Distribution.v
   argv0: fuzzer
@@ -226,8 +229,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -236,8 +241,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -246,8 +253,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -256,5 +265,7 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2

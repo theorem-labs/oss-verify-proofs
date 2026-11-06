@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: mask_fuzzer
-rocq: OssFuzzTheorems.leptonica.mask_fuzzer
+rocq: OSSVerify.leptonica.mask_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then a replacement-mask pipeline (pixMaskOverColorPixels, pixMorphSequence, pixSeedfillBinary,
   pixRemoveBorderConnComps, pixXor) and pixPaintSelfThroughMask; outputs discarded.

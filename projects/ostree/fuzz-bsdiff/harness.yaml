@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ostree
 harness: fuzz-bsdiff
-rocq: OssFuzzTheorems.ostree.fuzz_bsdiff
+rocq: OSSVerify.ostree.fuzz_bsdiff
 origin: oss-fuzz
 summary: Runs bsdiff(old=input, new=fixed 536-byte ramp) into a GMemoryOutputStream; bspatch.h is included
   and a bspatch_stream declared but never used, so the patch is never applied back and compared (no diff->patch

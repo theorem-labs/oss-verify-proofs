@@ -9,16 +9,22 @@
 #   patches/     each of those files' diff, one file each, named by the file's path with each % written %25, each /
 #                %2F and each ~ %7E, then .diff: projects%2Fzlib%2Fchecksum_fuzzer%2Fharness.yaml.diff (a name over 200
 #                bytes: its first 150, ~, 16 hex digits of the path's SHA-256, .diff)
-#   head/        at the head commit: docs/, release.yaml, each reviewed project's projects/<project>/, and each
-#                reviewed fuzz target's proofs/<project>/<fuzz target>/provenance/ without its licence texts and zips
+#   head/        at the head commit: docs/, release.yaml, each reviewed project's projects/<project>/ less what a
+#                change brings into it in the new layout (tools/oft/layout.py: its fuzz targets' proofs,
+#                counterexamples and findings, and its unpatched.yaml), the project's public patch text
+#                (patches/<project>/, or projects/<project>/patches/ in the new layout), and each reviewed fuzz
+#                target's build record without its licence texts and zips, as proofs/<project>/<fuzz
+#                target>/provenance/ whatever the head's layout (the new layout's
+#                projects/<project>/<fuzz target>/proofs/provenance/ is written there)
 #   oss-fuzz/    OSS-Fuzz's project directory at the commit project.yaml's oss_fuzz pins, for each project that has one
 #   library/     each project's library source at the commit project.yaml's library pins, when it is a public GitHub
 #                repository of at most 50 MB
 #   missing.txt  each of those fetches that did not happen, and why
 #   since-last-review.diff  on a later push, when REVIEW_SESSION holds the last review's conversation: the changes
-#                since the commit that review was of, to the facts files and to each reviewed fuzz target's
-#                proofs/<project>/<fuzz target>/provenance/ without its licence texts and zips; none when that commit
-#                cannot be fetched or diffed (missing.txt says so)
+#                since the commit that review was of, to the facts files and to each reviewed fuzz target's build
+#                record in either layout (proofs/<project>/<fuzz target>/provenance/,
+#                projects/<project>/<fuzz target>/proofs/provenance/) without its licence texts and zips; none when that
+#                commit cannot be fetched or diffed (missing.txt says so)
 #
 # facts-review.yml runs it from a checkout of main, so it is this file as main has it. It runs nothing of the
 # pull request: git reads the pull request's commits as objects, and the files are written out as plain files with no
@@ -31,8 +37,8 @@ out=${1:?usage: facts-review-gather <new or empty directory>}
 [[ $PR =~ ^[0-9]+$ ]] || { echo "facts-review-gather: PR is not a number" >&2; exit 2; }
 [[ $REPO =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || { echo "facts-review-gather: REPO is not owner/name" >&2; exit 2; }
 NAME='^[A-Za-z0-9][A-Za-z0-9._+-]*$'
-FACTS=(':(glob)projects/*/project.yaml' ':(glob)projects/*/*/harness.yaml' ':(glob)projects/*/*/source/**'
-       ':(glob)projects/*/*/Distribution.v')
+FACTS=(':(glob)projects/*/project.yaml' ':(glob)patches/*/*.patch' ':(glob)projects/*/patches/*.patch'
+       ':(glob)projects/*/*/harness.yaml' ':(glob)projects/*/*/source/**' ':(glob)projects/*/*/Distribution.v')
 # A directory of its own: what a gather before left there (a project the pull request has since deleted, a diff name
 # already taken) is not this pull request's.
 if [ -d "$out" ] && [ -n "$(ls -A "$out")" ]; then echo "facts-review-gather: $out is not empty" >&2; exit 2; fi
@@ -131,11 +137,29 @@ at_head() {
   [ -n "$listed" ]
 }
 
-# The fuzz targets to review: each one whose facts changed, and every one of a project whose project.yaml the pull
-# request adds. A project.yaml it only modifies is reviewed by its diff: moving a pin edits every project.yaml at once.
+# The fuzz targets to review: each one whose facts changed, every one of an added project, and every one of a project
+# whose public patch text changed. A project.yaml it only modifies is reviewed by its diff: moving a pin edits every
+# project.yaml at once. Nested source files named harness.yaml are data, not fuzz targets. MAX_TARGETS bounds the
+# targets chosen file by file; the targets of a changed public patch are never dropped, since the patch changes every
+# build of its project and a review of only some of them would read as a review of all.
 : > "$out/missing.txt"
 MAX_TARGETS=60
-declare -A projects=() targets=() fetch=()
+declare -A projects=() targets=() required=() fetch=()
+# targets_for_project <project> [required]: every fuzz target of the project; with `required`, none of them may be left
+# out of the review.
+targets_for_project() {
+  local project=$1 must=${2:-} harnesses harness
+  harnesses=$(git -C "$git_dir" ls-tree -r --name-only "$head" -- "projects/$project") ||
+    { echo "facts-review-gather: git ls-tree could not list the fuzz targets of projects/$project at $head" >&2
+      exit 1; }
+  while IFS= read -r harness; do
+    [[ $harness == */harness.yaml ]] || continue
+    harness=${harness#projects/"$project"/}; harness=${harness%/harness.yaml}
+    [[ $harness =~ $NAME ]] || continue
+    targets[$project/$harness]=1
+    [ -z "$must" ] || required[$project/$harness]=1
+  done <<< "$harnesses"
+}
 while IFS=$'\t' read -r status path; do
   IFS=/ read -r _ project second _ <<< "$path"
   [[ $project =~ $NAME ]] || { echo "facts-review-gather: skipped the project name $project" >&2; continue; }
@@ -145,48 +169,80 @@ while IFS=$'\t' read -r status path; do
   if [ "$second" = project.yaml ]; then
     [ "$status" = A ] || continue
     fetch[$project]=1
-    harnesses=$(git -C "$git_dir" ls-tree -r --name-only "$head" -- "projects/$project") ||
-      { echo "facts-review-gather: git ls-tree could not list the fuzz targets of projects/$project at $head" >&2
-        exit 1; }
-    while IFS= read -r harness; do
-      [[ $harness == */harness.yaml ]] || continue
-      harness=${harness#projects/"$project"/}; harness=${harness%/harness.yaml}
-      [[ $harness =~ $NAME ]] && targets[$project/$harness]=1
-    done <<< "$harnesses"
+    targets_for_project "$project"
+  elif [[ $path =~ ^patches/[^/]+/[^/]+\.patch$ || $path =~ ^projects/[^/]+/patches/[^/]+\.patch$ ]]; then
+    fetch[$project]=1
+    targets_for_project "$project" required
   elif [[ $second =~ $NAME ]] && at_head "projects/$project/$second/harness.yaml"; then
     targets[$project/$second]=1
   fi
 done < "$out/changed.txt"
 if [ "${#targets[@]}" -gt "$MAX_TARGETS" ]; then
-  sorted=$(printf '%s\n' "${!targets[@]}" | sort)
-  mapfile -t all <<< "$sorted"
-  for target in "${all[@]:$MAX_TARGETS}"; do unset "targets[$target]"; done
-  echo "fuzz targets: ${#all[@]} changed; this review covers the first $MAX_TARGETS in name order and not the rest" \
-    >> "$out/missing.txt"
+  # every required target, then the others in name order up to MAX_TARGETS in all; past the cap, missing.txt says so
+  # whether or not a target is left out, since the review then runs longer than the cap allows for
+  sorted=$(for target in "${!targets[@]}"; do [ -n "${required[$target]:-}" ] || echo "$target"; done | sort)
+  others=()
+  [ -z "$sorted" ] || mapfile -t others <<< "$sorted"
+  room=$(( MAX_TARGETS > ${#required[@]} ? MAX_TARGETS - ${#required[@]} : 0 ))
+  left=$(( ${#others[@]} > room ? ${#others[@]} - room : 0 ))
+  echo "fuzz targets: ${#targets[@]} changed, over the cap of $MAX_TARGETS; this review covers the ${#required[@]}" \
+    "fuzz targets of projects whose public patch changed and leaves out $left others, in name order" >> "$out/missing.txt"
+  targets=()
+  for target in "${!required[@]}" "${others[@]:0:$room}"; do targets[$target]=1; done
 fi
 for target in "${!targets[@]}"; do fetch[${target%%/*}]=1; done
 
-# A project with something to review comes whole; one whose project.yaml alone changed brings only that file.
+# A project with something to review comes whole, less what a change brings into it in the new layout (its fuzz
+# targets' proofs, counterexamples and findings, and its unpatched.yaml), which the review reads no more than in the
+# old layout; one whose project.yaml alone changed brings only that file.  Its public patch text always comes with it,
+# in either layout.  Each reviewed fuzz target's build record comes from where the head has it:
+# proofs/<p>/<h>/provenance/ in the old layout, or else projects/<p>/<h>/proofs/provenance/ in the new (`moved`),
+# which goes to the old layout's place in head/, where the skill and review.md name it.
 paths=(docs release.yaml)
+sparse=()
+not_read=()
 for project in "${!projects[@]}"; do
-  if [ -n "${fetch[$project]:-}" ]; then paths+=("projects/$project"); else
+  if [ -n "${fetch[$project]:-}" ]; then
+    paths+=("projects/$project")
+    for kind in proofs counterexamples findings; do
+      sparse+=("!/projects/$project/*/$kind/*")
+      not_read+=(":(exclude,glob)projects/$project/*/$kind/**")
+    done
+    sparse+=("!/projects/$project/unpatched.yaml")
+    not_read+=(":(exclude)projects/$project/unpatched.yaml")
+  else
     if at_head "projects/$project/project.yaml"; then paths+=("projects/$project/project.yaml"); fi
+    if at_head "projects/$project/patches"; then paths+=("projects/$project/patches"); fi
   fi
+  if at_head "patches/$project"; then paths+=("patches/$project"); fi
 done
+moved=()
 for target in "${!targets[@]}"; do
-  if at_head "proofs/$target/provenance"; then paths+=("proofs/$target/provenance"); fi
+  if at_head "proofs/$target/provenance"; then paths+=("proofs/$target/provenance")
+  elif at_head "projects/$target/proofs/provenance"; then moved+=("projects/$target/proofs/provenance"); fi
 done
-# A sparse checkout fetches the files it needs in one batch, where git archive would fetch them one by one. git
+# A sparse checkout fetches the files it needs in one batch, where git archive would fetch them one by one; its
+# patterns leave out what the review does not read (a proof library can be most of a project's bytes). git
 # archive then reads no attributes (--worktree-attributes with an empty --attr-source): it writes the bytes as
 # committed, and no .gitattributes of the pull request's (an export-ignore) can keep a file from the review. Without
 # --worktree-attributes it reads the whole head commit into an index for the attributes and fetches every file of it
-# first: at internal #86's head 145,634 files and 8.5 GB, for the 933 files and 4 MB this review reads, about 10
-# minutes, and a fetch that broke ("bad pack header", run 40224321468).
-git -C "$git_dir" sparse-checkout set --no-cone "${paths[@]/#//}"
+# first: at one pull request's head 145,634 files and 8.5 GB, for the 933 files and 4 MB this review reads, about 10
+# minutes, and a fetch that broke ("bad pack header").
+git -C "$git_dir" sparse-checkout set --no-cone "${paths[@]/#//}" "${sparse[@]}" "${moved[@]/#//}"
 git -C "$git_dir" checkout -q --detach "$head"
 no_attributes=$(git -C "$git_dir" hash-object -w -t tree /dev/null)
-git -C "$git_dir" --attr-source="$no_attributes" archive --worktree-attributes --format=tar "$head" -- "${paths[@]}" |
-  tar -x -C "$out/head"
+git -C "$git_dir" --attr-source="$no_attributes" archive --worktree-attributes --format=tar "$head" -- "${paths[@]}" \
+  "${not_read[@]}" | tar -x -C "$out/head"
+if [ "${#moved[@]}" -gt 0 ]; then
+  mkdir "$scratch/moved"
+  git -C "$git_dir" --attr-source="$no_attributes" archive --worktree-attributes --format=tar "$head" -- \
+    "${moved[@]}" | tar -x -C "$scratch/moved"
+  for record in "${moved[@]}"; do
+    target=${record#projects/}; target=${target%/proofs/provenance}
+    mkdir -p "$out/head/proofs/$target"
+    mv "$scratch/moved/$record" "$out/head/proofs/$target/provenance"
+  done
+fi
 # No symbolic link of the pull request's is followed, from here on, by this script or by the review: a project.yaml
 # that is a link to a file the runner cannot read would stop the gather, and one to a file it can would be read.
 find "$out/head" -type l -delete
@@ -215,9 +271,13 @@ if [ "${#targets[@]}" -gt 0 ]; then printf '%s\n' "${!targets[@]}" | sort > "$ou
 since=$(sed -n 's/^head=//p' "${REVIEW_SESSION:-/nonexistent}/session" 2> /dev/null || true)
 if [[ $since =~ ^[0-9a-f]{40}$ ]]; then
   since_paths=("${FACTS[@]}")
-  for target in "${!targets[@]}"; do since_paths+=("proofs/$target/provenance"); done
-  since_paths+=(':(exclude,glob)proofs/*/*/provenance/**/LICENSES' ':(exclude,glob)proofs/*/*/provenance/**/LICENSES/**'
-                ':(exclude,glob)proofs/*/*/provenance/**/*.zip')
+  for target in "${!targets[@]}"; do
+    since_paths+=("proofs/$target/provenance" "projects/$target/proofs/provenance")
+  done
+  for record in 'proofs/*/*/provenance' 'projects/*/*/proofs/provenance'; do
+    since_paths+=(":(exclude,glob)$record/**/LICENSES" ":(exclude,glob)$record/**/LICENSES/**"
+                  ":(exclude,glob)$record/**/*.zip")
+  done
   if git -C "$git_dir" fetch -q --no-tags --filter=blob:none --depth=1 origin "$since" 2> /dev/null &&
      git -C "$git_dir" -c core.quotePath=false diff --no-renames --no-ext-diff --no-textconv --no-color \
        --submodule=short --src-prefix=a/ --dst-prefix=b/ "$since" "$head" -- "${since_paths[@]}" \

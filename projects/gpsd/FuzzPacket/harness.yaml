@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: gpsd
 harness: FuzzPacket
-rocq: OssFuzzTheorems.gpsd.FuzzPacket
+rocq: OSSVerify.gpsd.FuzzPacket
 origin: upstream
 summary: Loads the input into a gps_lexer_t and runs packet_parse, then (fresh lexer) packet_get on /dev/null
   until it returns <= 0; results discarded.

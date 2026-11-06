@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libhtp
 harness: fuzz_htp_c
-rocq: OssFuzzTheorems.libhtp.fuzz_htp_c
+rocq: OSSVerify.libhtp.fuzz_htp_c
 origin: upstream
 summary: Splits the input into client/server chunks with test_next_chunk (test/test.c) and feeds them
   to htp_connp_req_data/res_data under the IDS personality, handling DATA_OTHER hand-offs; all callbacks

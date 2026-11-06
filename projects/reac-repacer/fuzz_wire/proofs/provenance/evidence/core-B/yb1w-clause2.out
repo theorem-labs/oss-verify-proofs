@@ -1,0 +1,12 @@
+1086 named cells
+clause 2, ab1w_clause2.py key: FALSE-BY-NAME 93, NO-SYMBOL 500, TRUE 493
+clause 2, demangled key:       FALSE-BY-NAME 95, NO-SYMBOL 464, TRUE 527
+FALSE named-other / UNREAD                    142
+FALSE other / UNREAD                          43
+FALSE trampoline / UNREAD                     50
+TRUE                                          527
+descriptive-true                              274
+descriptive-true (in-order)                   10
+thunk                                         38
+unverifiable by symtab (st_size 0) / UNREAD   2
+inherited (same class, same symbol + offset in the donor): FALSE named-other / UNREAD: yes 142, FALSE other / UNREAD: yes 43, FALSE trampoline / UNREAD: yes 50, TRUE: no 47, TRUE: yes 480, descriptive-true: yes 274, descriptive-true (in-order): yes 10, thunk: yes 38, unverifiable by symtab (st_size 0) / UNREAD: yes 2

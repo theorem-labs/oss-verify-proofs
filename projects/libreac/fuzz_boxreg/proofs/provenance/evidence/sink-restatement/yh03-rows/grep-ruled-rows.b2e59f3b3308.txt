@@ -1,0 +1,55 @@
+# ref b2e59f3b330814c1e14de605768a0583f892b537
+# readers outside the two YH03.v (git grep -w, proofs/libreac/fuzz_boxreg/*.v)
+src0_A_stdio_read 2
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:18:sk_read := src0_A_stdio_read;
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:18:sk_read := src0_A_stdio_read;
+src0_E_stdio_read 0
+src0_A_stdio_seek 2
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:20:sk_seek := src0_A_stdio_seek;
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:20:sk_seek := src0_A_stdio_seek;
+src0_E_stdio_seek 0
+src0_D_str_wb 6
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:23:sk_mode_addr := src0_D_str_wb;
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:23:sk_mode_addr := src0_D_str_wb;
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+src0_D_str_tmp_out_gif 6
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:22:sk_path_addr := src0_D_str_tmp_out_gif;
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:22:sk_path_addr := src0_D_str_tmp_out_gif;
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+src0_D_str_3 6
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:24:sk_trailer_addr := src0_D_str_3;
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:24:sk_trailer_addr := src0_D_str_3;
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+src0_D_str_rwa 6
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:25:sk_rwa_addr := src0_D_str_rwa;
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:25:sk_rwa_addr := src0_D_str_rwa;
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+# positive control 1: a name YI5c.v reads, by the same command
+src0_D_ofl_lock 6
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:16:sk_ofl_lock := src0_D_ofl_lock;
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:32:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_path_addr sk_mode_addr sk_trailer_addr sk_rwa_addr sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:49:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_path_addr sk_mode_addr sk_trailer_addr sk_rwa_addr sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:16:sk_ofl_lock := src0_D_ofl_lock;
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:32:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_path_addr sk_mode_addr sk_trailer_addr sk_rwa_addr sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+b2e59f3b3308:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:49:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_path_addr sk_mode_addr sk_trailer_addr sk_rwa_addr sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+# positive control 2: the rows themselves, by git grep -w over the two YH03.v only
+src0_A_stdio_read 2
+src0_E_stdio_read 2
+src0_A_stdio_seek 2
+src0_E_stdio_seek 2
+src0_D_str_wb 2
+src0_D_str_tmp_out_gif 2
+src0_D_str_3 2
+src0_D_str_rwa 2

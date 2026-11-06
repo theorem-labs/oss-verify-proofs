@@ -1,0 +1,10 @@
+IMG_L_noG	72	IMG_L / IMG_LC without the hull clip (stage-out value)
+IMG_L	55	IMG_L / IMG_LC with the hull clip, outermost (bounds of IMG_B / IMG_E are those of IMG_REGIONS)
+IMG_XL_noG	73	AD1x IMG_XL = clipX IMG_L without the hull clip (stage-out value)
+IMG_XL	56	AD1x IMG_XL = clipX IMG_L with the hull clip
+clip_identity	false	the hull clip returns [r] for every piece of IMG_REGIONS after the STDOUT / SOBUF clips
+IMG_L_written	72	DIFFERS: stage-out states 72, the hull-clipped count is 55
+IMG_LC_written	72	DIFFERS: stage-out states 72, the hull-clipped count is 55
+IMG_XL_written	73	DIFFERS: stage-out states 73, the hull-clipped count is 56
+AD1y_DRV_G_LO	0x0	DIFFERS to the measured 0x5df080
+AD1y_DRV_G_HI	0x0	DIFFERS to the measured 0x5f3190

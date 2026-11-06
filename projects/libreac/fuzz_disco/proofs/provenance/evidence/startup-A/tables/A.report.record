@@ -1,0 +1,34 @@
+image img/fuzz_disco.asan sha256 5e39150dd8104df969eb360f9cc29c4f92fe12326afd23783a679e4fb4809f46
+states AB01.v (HS_tfib, 50)
+TFIB_MAIN 0x80aa4  TIDV 43  CANV 60  CANARY_ATOM 41
+img 0x10000..0x5fe000  rw window 0x9f000..0x5fe000  .data 0xa2208  asan_globals 0xa4dc0  .bss 0xa5a00..0x5fd930
+sregs_main SLit 0; SLit 587864; SOff 0 (-48); SLit 67584; SLit 6144080; SOff 14 0; SOff 15 0; SOff 16 0; SOff 0 8; SOff 3 0; SOff 3 0; SOff 0 8; SOff 4 0; SOff 22 0; SOff 23 0; SOff 24 0; SOff 25 0; SOff 26 0; SLit 527012; SOff 4 0; SLit 0; SLit 0; SLit 0; SLit 0; SLit 0; SLit 0; SLit 0; SLit 0; SOff 37 0; SOff 38 0; SOff 39 0; SOff 40 0
+kept owned .got cell (canary address): ['0xa1198']
+regions 80: R_A1a[1] R_A1b[1] R_A1c[1] R_A1d[1] R_A1e[1] R_A1f[1] R_A1g[1] R_A1h[1] R_A1i[1] R_A1j[1] R_A1k[1] R_A1l[1] R_A1m[1] R_A1n[1] R_A1o[1] R_A1p[1] R_A1q[1] R_A1r[1] R_A1s[1] R_A1t[1] R_A1u[1] R_A1v[1] R_A1w[1] R_A1x[1] R_A1y[1] R_A1z[1] R_A1aa[1] R_A1ab[1] R_A1ac[1] R_A1ad[1] R_A1ae[1] R_A1af[1] R_A1ag[1] R_A1ah[1] R_A1ai[1] R_A1aj[1] R_A1ak[1] R_A1al[1] R_A1am[1] R_A1an[1] R_A1ao[1] R_A1ap[1] R_A1aq[1] R_A1ar[1] R_A1as[1] R_A1at[1] R_A1au[1] R_A1av[1] R_A1aw[1] R_A1ax[1] R_A1ay[1] R_A1az[1] R_A1ba[1] R_A1bb[1] R_A1bc[1] R_A1bd[1] R_A1be[1] R_A1bf[1] R_A1bg[1] R_A2a[1] R_A2b[1] R_A2c[1] R_A2d[1] R_A2e[1] R_A2f[1] R_A2g[1] R_A2h[2] R_A2i[1] R_A3[1] R_A4[2] R_RS[0] R_A5a[8] R_A5b[4] R_A6[5] R_A7a[1] R_A7b[24] R_A7c[2] R_A8[1] R_A9a[7] R_A9b[1]
+NOTE twin ev/twin/fuzz_disco.asan.syms
+NOTE world core repo/proofs/libreac/fuzz_disco/lib/Reusable/YA0n.v: mkW takes 6 arguments, w_H8 LAST: AD2i gets Hypothesis H1_8 and W1 passes it to mkW sixth
+NOTE argH0: 2 ranges, read from repo/proofs/libreac/fuzz_disco/lib/Reusable/YA02.v
+NOTE R_A1e: a segment the donor does not have
+CITED bounds: atable ['YImgTop.IMG_LO', 'YImgTop.IMG_TOP'], rw window ['YImgTop.IMG_TOP'] (resolved through the module file); AD2i Requires the module and unfolds them at the tfib_rom_all / tfib_rw_window lia sites
+PRECHECK ok: every chunk justified in all 50 states (Python reading of cjust/wjust/rjust)
+GATE ok: 80 regions: lo <= hi, ordered, disjoint; chunks ordered, disjoint, inside their region; inside the page-extended PT_LOADs; 4 with gaps, each where the donor's region of that name has one
+TWIN R_A3 lo = oft_arg0: 674432 vs 674432 ok
+TWIN R_A3 hi = __start_asan_globals: 675264 vs 675264 ok
+TWIN R_A4 lo = __do_init.__initialized: 678408 vs 678408 ok
+TWIN R_A4 hi = __do_fini.__finalized: 678480 vs 678480 ok
+TWIN R_RS lo = read_stage: 6076176 vs 6076176 ok
+TWIN R_A5a lo = target_run.initialized: 6141712 vs 6141712 ok
+TWIN R_A7b lo = __thread_list_lock: 6275160 vs 6275160 ok
+TWIN R_A7b wlo = finished_atexit: 6275232 vs 6275232 ok
+TWIN R_A7b whi = exit.exit_lock: 6275776 vs 6275776 ok
+TWIN R_A8 lo = __malloc_replaced: 6276864 vs 6276864 ok
+TWIN R_A9a lo = tl_lock_count: 6279088 vs 6279088 ok
+TWIN R_A9a hi = __pthread_tsd_main: 6280184 vs 6280184 ok
+TWIN TFIB_MAIN pc = main: 527012 vs 527012 ok
+TWIN R_RS size = read_stage: 65536 vs 65536 ok
+TWIN R_A5a tid cell = builtin_tls+32: 6143912 vs 6143912 ok
+TWIN R_A7b canary cell = __stack_chk_guard: [6275216] vs 6275216 ok
+TWIN R_A2* kept .got cell value = __stack_chk_guard: 6275216 vs 6275216 ok
+PASS AD2j.v regions (key = region name): 80 rows, exactly the set the region definitions of AD2j.v defines
+PASS AD2j.v anchor roles (key = role, present iff the image defines its object): 16 rows, exactly the set the twin twin/fuzz_disco.asan.syms defines
+wrote AD2i.v, AD2j.v

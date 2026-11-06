@@ -1,0 +1,21 @@
+undo bss-zero-range.patch	rc=0	patching file A/AD1o.v | patching file A/AD25.v
+undo dead-arm-ad1g.patch	rc=0	patching file A/AD1g.v
+undo imgtop-alias.patch	rc=0	patching file A/AB1w.v | patching file A/ACeg.v | patching file A/AF0x.v | patching file Reusable/YCbq.v | patching file Reusable/YCe5.v
+undo ad1q-shape.patch	rc=0	patching file A/AD1q.v
+undo cell-lookup.patch	rc=0	patching file A/AFim.v | patching file A/AFin.v
+undo zero-shadow-forallb.patch	rc=0	patching file A/AFex.v | patching file A/AFf0.v | patching file A/AFf3.v | patching file A/AFf4.v | patching file A/AFfl.v | patching file A/AFjy.v
+apply zero-shadow-forallb.patch	rc=0	checking file A/AFex.v | checking file A/AFf0.v | checking file A/AFf3.v | checking file A/AFf4.v | checking file A/AFfl.v | checking file A/AFjy.v
+apply cell-lookup.patch	rc=0	checking file A/AFim.v | checking file A/AFin.v
+apply ad1q-shape.patch	rc=0	checking file A/AD1q.v
+apply imgtop-alias.patch	rc=0	checking file A/AB1w.v | checking file A/ACeg.v | checking file A/AF0x.v | checking file Reusable/YCbq.v | checking file Reusable/YCe5.v
+apply dead-arm-ad1g.patch	rc=0	checking file A/AD1g.v
+apply bss-zero-range.patch	rc=0	checking file A/AD1o.v | checking file A/AD25.v
+round trip	equal	the tree after undo + apply equals the stage-out text
+g-ACfn.patch	rc=0	checking file A/ACfn.v	patched text vs stage-g: equal
+g-AD1w.patch	rc=0	checking file A/AD1w.v	patched text vs stage-g: equal
+g-AD1m.patch	rc=0	checking file A/AD1m.v	patched text vs stage-g: equal
+g-AD1p.patch	rc=0	checking file A/AD1p.v	patched text vs stage-g: equal
+g-AD1q.patch	rc=0	checking file A/AD1q.v	patched text vs stage-g: equal
+g-AD1r.patch	rc=0	checking file A/AD1r.v	patched text vs stage-g: equal
+g-AD2f.patch	rc=0	checking file A/AD2f.v	patched text vs stage-g: equal
+control (g-ACfn.patch, context line 4 altered)	rc=1	checking file A/ACfn.v | Hunk #1 FAILED at 14. | 1 out of 4 hunks FAILED

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: sleuthkit
 harness: fls_apfs_fuzzer
-rocq: OssFuzzTheorems.sleuthkit.fls_apfs_fuzzer
+rocq: OSSVerify.sleuthkit.fls_apfs_fuzzer
 origin: upstream
 summary: tsk_pool_open_img_sing(APFS), pool image at hard-coded block 106, tsk_fs_open_img_decrypt(APFS_DETECT,
   "") then recursive tsk_fs_fls; results unused.

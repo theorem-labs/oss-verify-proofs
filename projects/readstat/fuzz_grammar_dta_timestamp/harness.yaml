@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: readstat
 harness: fuzz_grammar_dta_timestamp
-rocq: OssFuzzTheorems.readstat.fuzz_grammar_dta_timestamp
+rocq: OSSVerify.readstat.fuzz_grammar_dta_timestamp
 origin: upstream
 summary: dta_parse_timestamp() (Ragel grammar) of the input into a struct tm; return value ignored.
 entry: LLVMFuzzerTestOneInput

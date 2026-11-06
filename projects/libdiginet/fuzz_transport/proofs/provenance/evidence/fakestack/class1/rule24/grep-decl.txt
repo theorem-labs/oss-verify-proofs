@@ -1,0 +1,480 @@
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/boost-beast/http_request/proofs
+refs/remotes/origin/ossv/recipes:projects/boost-beast/http_request/proofs/lib/As/AS_InstLaws1.v:115:  Lemma inst_stack_malloc_1 : stack_malloc_1_stmt (KHp p). Proof. exact (stack_malloc_1_ok (KHp p) RFS_is). Qed.
+refs/remotes/origin/ossv/recipes:projects/boost-beast/http_request/proofs/lib/As/N5_stack_malloc1.v:148:  Lemma stack_malloc_1_ok : stack_malloc_1_stmt H.
+refs/remotes/origin/ossv/recipes:projects/boost-beast/http_request/proofs/lib/As/N5_stack_malloc2.v:159:  Lemma stack_malloc_2_ok : stack_malloc_2_stmt H.
+refs/remotes/origin/ossv/recipes:projects/boost-beast/http_request/proofs/lib/Bo/AS_InstLaws1.v:114:  Lemma inst_stack_malloc_1 : stack_malloc_1_stmt (KHp p). Proof. ltac2:(KReplay.run [|constr:(@OssFuzzTheorems.Proofs.boost_beast.http_request.lib.Bo.N5_stack_
+refs/remotes/origin/ossv/recipes:projects/boost-beast/http_request/proofs/lib/Bo/N5_stack_malloc1.v:149:  Lemma stack_malloc_1_ok : stack_malloc_1_stmt H.
+refs/remotes/origin/ossv/recipes:projects/boost-beast/http_request/proofs/lib/Bo/N5_stack_malloc2.v:160:  Lemma stack_malloc_2_ok : stack_malloc_2_stmt H.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/boost-json/fuzz_parse/proofs
+refs/remotes/origin/ossv/recipes:projects/boost-json/fuzz_parse/proofs/lib/As/AS_InstLaws1.v:112:  Lemma inst_stack_malloc_1 : ltac2:(zQ "20!ih3!jlf@2$1?5HCEIL@2$0?5HCEIL?1p"). Proof. exact (stack_malloc_1_ok (KHp p) RFS_is). Qed.
+refs/remotes/origin/ossv/recipes:projects/boost-json/fuzz_parse/proofs/lib/As/AS_InstLaws1.v:117:  Lemma inst_stack_malloc_2 : ltac2:(zQ "20!ih3!jre@2$1?5HCEIL@2$0?5HCEIL?1p"). Proof. exact (stack_malloc_2_ok (KHp p) RFS_is). Qed.
+refs/remotes/origin/ossv/recipes:projects/boost-json/fuzz_parse/proofs/lib/As/N5_stack_malloc1.v:76:  Lemma stack_malloc_1_ok : ltac2:(zQ "10!jj4@2$0?5HCEIL?1H").
+refs/remotes/origin/ossv/recipes:projects/boost-json/fuzz_parse/proofs/lib/As/N5_stack_malloc2.v:70:  Lemma stack_malloc_2_ok : ltac2:(zQ "10!jj4@2$0?5HCEIL?1H").
+refs/remotes/origin/ossv/recipes:projects/boost-json/fuzz_parse/proofs/lib/Bs/AS_InstLaws1.v:113:  Lemma inst_stack_malloc_1 : ltac2:(zQ "20!ih3!jlf@2$1?5HCEIL@2$0?5HCEIL?1p"). Proof. exact (stack_malloc_1_ok (KHp p) RFS_is). Qed.
+refs/remotes/origin/ossv/recipes:projects/boost-json/fuzz_parse/proofs/lib/Bs/AS_InstLaws1.v:118:  Lemma inst_stack_malloc_2 : ltac2:(zQ "20!ih3!jre@2$1?5HCEIL@2$0?5HCEIL?1p"). Proof. exact (stack_malloc_2_ok (KHp p) RFS_is). Qed.
+refs/remotes/origin/ossv/recipes:projects/boost-json/fuzz_parse/proofs/lib/Bs/N5_stack_malloc1.v:77:  Lemma stack_malloc_1_ok : ltac2:(zQ "10!jj4@2$0?5HCEIL?1H").
+refs/remotes/origin/ossv/recipes:projects/boost-json/fuzz_parse/proofs/lib/Bs/N5_stack_malloc2.v:71:  Lemma stack_malloc_2_ok : ltac2:(zQ "10!jj4@2$0?5HCEIL?1H").
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/bzip2/bzip2_compress_target/proofs
+refs/remotes/origin/ossv/recipes:projects/bzip2/bzip2_compress_target/proofs/lib/K/A/RT_stackmalloc.v:664:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/bzip2/bzip2_compress_target/proofs/lib/K/A/RT_stackmalloc.v:1402:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/bzip2/bzip2_compress_target/proofs/lib/K/A/R_fs2.v:191:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/bzip2/bzip2_compress_target/proofs/lib/K/A/R_fs2.v:501:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/cgif/cgif_file_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/A/AF0s.v:514:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/A/AF0u.v:514:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/YF0s.v:513:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/YF0u.v:513:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 2.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/cgif/cgif_rgb_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_rgb_fuzzer/proofs/lib/YF97.v:512:Corollary stack_malloc1_contract : forall B, AR_laws trasegs B -> TraSyms B -> astack_malloc_realizes trasegs B 1.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_rgb_fuzzer/proofs/lib/YF99.v:512:Corollary stack_malloc2_contract : forall B, AR_laws trasegs B -> TraSyms B -> astack_malloc_realizes trasegs B 2.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_rgb_fuzzer/proofs/lib/YF9s.v:512:Corollary stack_malloc1_contract : forall B, AR_laws trbsegs B -> TrbSyms B -> astack_malloc_realizes trbsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_rgb_fuzzer/proofs/lib/YF9u.v:512:Corollary stack_malloc2_contract : forall B, AR_laws trbsegs B -> TrbSyms B -> astack_malloc_realizes trbsegs B 2.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/cjson/cjson_read_fuzzer/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/coturn/FuzzStunClient/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/double-conversion/string_to_double_fuzzer/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/fast_float/from_chars/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/glaze/binary_reflection/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/json-c/json_object_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/json-c/json_object_fuzzer/proofs/lib/QU91.v:1966:Theorem hiA_stack_malloc_1 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+refs/remotes/origin/ossv/recipes:projects/json-c/json_object_fuzzer/proofs/lib/QU91.v:2550:Theorem hiA_stack_malloc_1_G : forall (Jf : OSA.TSet -> config -> Prop) (Jf_sc : forall T, silent_closed LV segs (Jf T)),
+refs/remotes/origin/ossv/recipes:projects/json-c/json_object_fuzzer/proofs/lib/QnRU.v:2588:Lemma stack_malloc_1_A : astack_mallocA_stmt asegs a_alayout (ARUN C) 1 fsmalloc1_entry.
+refs/remotes/origin/ossv/recipes:projects/json-c/json_object_fuzzer/proofs/lib/QnRU.v:2627:Lemma stack_malloc_2_A : astack_mallocA_stmt asegs a_alayout (ARUN C) 2 fsmalloc2_entry.
+refs/remotes/origin/ossv/recipes:projects/json-c/json_object_fuzzer/proofs/lib/QnRU.v:5171:Lemma stack_malloc_1_A : astack_mallocA_stmt asegs a_alayout (ARUN C) 1 fsmalloc1_entry.
+refs/remotes/origin/ossv/recipes:projects/json-c/json_object_fuzzer/proofs/lib/QnRU.v:5210:Lemma stack_malloc_2_A : astack_mallocA_stmt asegs a_alayout (ARUN C) 2 fsmalloc2_entry.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_bigint/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_bson_parser_max/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_json_cursor/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_json_encoder/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_msgpack_encoder/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_ubjson_encoder/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_ubjson_parser_max/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/leptonica/bilateral_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/A02/RT_fk_iface.v:420:Lemma stack_malloc_2_contract_of_F : stack_malloc_2_contractF RT -> stack_malloc_2_contract RT.
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/A02/RT_stackmalloc.v:470:Theorem rta_stack_malloc_1F : stack_malloc_contractF RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/A02/RT_stackmalloc.v:473:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/A02/RT_stackmalloc2.v:28:Theorem rta_stack_malloc_2F : stack_malloc_2_contractF RTA.
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/A02/RT_stackmalloc2.v:31:Theorem rta_stack_malloc_2 : stack_malloc_2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/A02/R_fs1.v:186:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/A02/R_fs2.v:185:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/B02/RT_fk_iface.v:420:Lemma stack_malloc_2_contract_of_F : stack_malloc_2_contractF RT -> stack_malloc_2_contract RT.
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/B02/RT_stackmalloc.v:470:Theorem rta_stack_malloc_1F : stack_malloc_contractF RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/B02/RT_stackmalloc.v:473:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/B02/RT_stackmalloc2.v:28:Theorem rta_stack_malloc_2F : stack_malloc_2_contractF RTA.
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/B02/RT_stackmalloc2.v:31:Theorem rta_stack_malloc_2 : stack_malloc_2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/B02/R_fs1.v:152:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/bilateral_fuzzer/proofs/lib/K5/B02/R_fs2.v:152:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/leptonica/colorfill_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/leptonica/colorfill_fuzzer/proofs/lib/K5/A08/RT_stackmalloc.v:646:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/colorfill_fuzzer/proofs/lib/K5/A08/R_fs1.v:186:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/colorfill_fuzzer/proofs/lib/K5/B08/RT_stackmalloc.v:646:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/colorfill_fuzzer/proofs/lib/K5/B08/R_fs1.v:186:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/leptonica/edge_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/leptonica/edge_fuzzer/proofs/lib/K5/A9/RT_stackmalloc.v:637:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/edge_fuzzer/proofs/lib/K5/A9/R_fs1.v:189:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/edge_fuzzer/proofs/lib/K5/B9/RT_stackmalloc.v:637:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/edge_fuzzer/proofs/lib/K5/B9/R_fs1.v:189:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/leptonica/fhmtgen_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/A10/RT_stackmalloc.v:636:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/A10/RT_stackmalloc.v:717:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/A10/R_fs1.v:188:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/A10/R_fs2.v:187:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/B10/RT_stackmalloc.v:636:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/B10/RT_stackmalloc.v:717:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/B10/R_fs1.v:188:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/B10/R_fs2.v:187:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/leptonica/graymorph_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/leptonica/graymorph_fuzzer/proofs/lib/K5/A14/RT_stackmalloc.v:647:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/graymorph_fuzzer/proofs/lib/K5/A14/R_fs1.v:187:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/graymorph_fuzzer/proofs/lib/K5/B14/RT_stackmalloc.v:647:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/graymorph_fuzzer/proofs/lib/K5/B14/R_fs1.v:187:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/leptonica/grayquant_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/RT_stackmalloc.v:637:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/RT_stackmalloc.v:718:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/RT_stackmallocF.v:74:Theorem rta_stack_malloc_1F : stack_malloc_contractF RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/R_fs1.v:189:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/R_fs2.v:188:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/grayquant_fuzzer/proofs/lib/K5/B15/RT_stackmalloc.v:637:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/grayquant_fuzzer/proofs/lib/K5/B15/RT_stackmalloc.v:718:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/leptonica/grayquant_fuzzer/proofs/lib/K5/B15/RT_stackmallocF.v:74:Theorem rta_stack_malloc_1F : stack_malloc_contractF RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/grayquant_fuzzer/proofs/lib/K5/B15/R_fs1.v:189:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/grayquant_fuzzer/proofs/lib/K5/B15/R_fs2.v:188:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/leptonica/jpegiostub_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/leptonica/jpegiostub_fuzzer/proofs/lib/K5/A16/RT_stackmalloc.v:646:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/jpegiostub_fuzzer/proofs/lib/K5/A16/R_fs1.v:186:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/jpegiostub_fuzzer/proofs/lib/K5/B16/RT_stackmalloc.v:646:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/jpegiostub_fuzzer/proofs/lib/K5/B16/R_fs1.v:186:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/leptonica/kernel_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/leptonica/kernel_fuzzer/proofs/lib/K5/A17/RT_stackmalloc.v:647:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/kernel_fuzzer/proofs/lib/K5/A17/R_fs1.v:186:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/kernel_fuzzer/proofs/lib/K5/B17/RT_stackmalloc.v:647:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/kernel_fuzzer/proofs/lib/K5/B17/R_fs1.v:186:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/leptonica/paintcmap_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/leptonica/paintcmap_fuzzer/proofs/lib/K5/A21/RT_stackmalloc.v:646:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/paintcmap_fuzzer/proofs/lib/K5/A21/RT_stackmalloc2.v:23:Theorem rta_stack_malloc_2 : stack_malloc_2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/leptonica/paintcmap_fuzzer/proofs/lib/K5/A21/R_fs1.v:186:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/paintcmap_fuzzer/proofs/lib/K5/A21/R_fs2.v:185:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/paintcmap_fuzzer/proofs/lib/K5/B21/RT_stackmalloc.v:646:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/paintcmap_fuzzer/proofs/lib/K5/B21/RT_stackmalloc2.v:23:Theorem rta_stack_malloc_2 : stack_malloc_2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/leptonica/paintcmap_fuzzer/proofs/lib/K5/B21/R_fs1.v:186:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/paintcmap_fuzzer/proofs/lib/K5/B21/R_fs2.v:185:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/leptonica/pix1_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix1_fuzzer/proofs/lib/K5/A22/RT_stackmalloc.v:646:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix1_fuzzer/proofs/lib/K5/A22/R_fs1.v:186:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix1_fuzzer/proofs/lib/K5/B22/RT_stackmalloc.v:646:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix1_fuzzer/proofs/lib/K5/B22/R_fs1.v:186:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/leptonica/pix_orient_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/A23/RT_fk_iface.v:420:Lemma stack_malloc_2_contract_of_F : stack_malloc_2_contractF RT -> stack_malloc_2_contract RT.
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/A23/RT_stackmalloc.v:397:Theorem rta_stack_malloc_1F : stack_malloc_contractF RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/A23/RT_stackmalloc.v:400:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/A23/RT_stackmalloc2.v:28:Theorem rta_stack_malloc_2F : stack_malloc_2_contractF RTA.
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/A23/RT_stackmalloc2.v:31:Theorem rta_stack_malloc_2 : stack_malloc_2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/A23/R_fs1.v:153:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/A23/R_fs2.v:153:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/B23/RT_fk_iface.v:420:Lemma stack_malloc_2_contract_of_F : stack_malloc_2_contractF RT -> stack_malloc_2_contract RT.
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/B23/RT_stackmalloc.v:397:Theorem rta_stack_malloc_1F : stack_malloc_contractF RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/B23/RT_stackmalloc.v:400:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/B23/RT_stackmalloc2.v:28:Theorem rta_stack_malloc_2F : stack_malloc_2_contractF RTA.
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/B23/RT_stackmalloc2.v:31:Theorem rta_stack_malloc_2 : stack_malloc_2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/B23/R_fs1.v:153:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/B23/R_fs2.v:153:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/libdiginet/fuzz_codec/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/libdiginet/fuzz_decode/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/libdiginet/fuzz_frame/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/libpcap/fuzz_pcap/proofs
+refs/remotes/origin/ossv/recipes:projects/libpcap/fuzz_pcap/proofs/lib/E2/A3W/AFake_arep.v:628:#[using="HL CI_OK"] Lemma stack_malloc_1_P__body : ltac:(let T := type of (fun (h : stack_malloc_1_P__stmt) => h L RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a
+refs/remotes/origin/ossv/recipes:projects/libpcap/fuzz_pcap/proofs/lib/E2/A3W/AFake_arep.v:699:#[using="HL CI_OK"] Theorem stack_malloc_1_P : ltac:(let t := eval cbv delta [stack_malloc_1_P__stmt] in stack_malloc_1_P__stmt in exact t).
+refs/remotes/origin/ossv/recipes:projects/libpcap/fuzz_pcap/proofs/lib/E2/A3W/AFake_arep.v:1761:#[using="HL CI_OK"] Lemma stack_malloc_1_P__body : ltac:(let T := type of (fun (h : stack_malloc_1_P__stmt) => h L RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 
+refs/remotes/origin/ossv/recipes:projects/libpcap/fuzz_pcap/proofs/lib/E2/A3W/AFake_arep.v:1832:#[using="HL CI_OK"] Theorem stack_malloc_1_P : ltac:(let t := eval cbv delta [stack_malloc_1_P__stmt] in stack_malloc_1_P__stmt in exact t).
+refs/remotes/origin/ossv/recipes:projects/libpcap/fuzz_pcap/proofs/lib/E2/A3W/F_aalloc1b__A3W.v:2323:#[using="Type"] Lemma stack_malloc1_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/libpcap/fuzz_pcap/proofs/lib/E2/A3W/F_aalloc1b__A3W.v:2533:#[using="Type"] Lemma stack_malloc1_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_boxreg/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_ctrl/proofs
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/A/ACtlBCode.v:16:Lemma actlb_pc_stack_malloc_1 : YG0f.pc_stack_malloc (YG0f.as_code AD2l.CtrlB) 1 = 0x3d72c.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/A/ACtlBCode.v:18:Lemma actlb_pc_stack_malloc_2 : YG0f.pc_stack_malloc (YG0f.as_code AD2l.CtrlB) 2 = 0x3d8bc.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/A/Prog/reac_ctrl_parseF.v:97:Lemma asan_stack_malloc_1_contract_of_F :
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/A/Rt/StackMalloc1.v:36:Theorem tfib_stack_malloc1_at : forall ly S (W : world tfibsegs) regs mem md pos S',
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/A/Rt/StackMalloc1.v:524:Theorem ctrl_stack_malloc1_hid_plain : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/A/Rt/StackMalloc1.v:530:Theorem ctrl_stack_malloc1_raw : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/A/Rt/StackMalloc1.v:535:Theorem ctrl_stack_malloc1 : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/A/Rt/StackMalloc2.v:36:Theorem tfib_stack_malloc2_at : forall ly S (W : world tfibsegs) regs mem md pos S',
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/A/Rt/StackMalloc2.v:524:Theorem ctrl_stack_malloc2_hid_plain : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/A/Rt/StackMalloc2.v:530:Theorem ctrl_stack_malloc2_raw : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/A/Rt/StackMalloc2.v:535:Theorem ctrl_stack_malloc2 : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/B/Prog/reac_ctrl_parseF.v:88:Lemma asan_stack_malloc_1_contract_of_F :
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/B/Rt/StackMalloc1.v:36:Theorem tfib_stack_malloc1_at : forall ly S (W : world tfibsegs) regs mem md pos S',
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/B/Rt/StackMalloc1.v:524:Theorem ctrl_stack_malloc1_hid_plain : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/B/Rt/StackMalloc1.v:530:Theorem ctrl_stack_malloc1_raw : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/B/Rt/StackMalloc1.v:535:Theorem ctrl_stack_malloc1 : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/B/Rt/StackMalloc2.v:36:Theorem tfib_stack_malloc2_at : forall ly S (W : world tfibsegs) regs mem md pos S',
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/B/Rt/StackMalloc2.v:524:Theorem ctrl_stack_malloc2_hid_plain : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/B/Rt/StackMalloc2.v:530:Theorem ctrl_stack_malloc2_raw : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/B/Rt/StackMalloc2.v:535:Theorem ctrl_stack_malloc2 : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/Reusable/CtrlBCode.v:16:Lemma ctrlb_pc_stack_malloc_1 : YG0f.pc_stack_malloc (YG0f.as_code YD2l.CtrlB) 1 = 0x3d868.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/Reusable/CtrlBCode.v:18:Lemma ctrlb_pc_stack_malloc_2 : YG0f.pc_stack_malloc (YG0f.as_code YD2l.CtrlB) 2 = 0x3d9f8.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_decode/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_disco/proofs
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_disco/proofs/lib/A/AF0s.v:517:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_disco/proofs/lib/A/AF0u.v:517:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_disco/proofs/lib/Reusable/YF0s.v:516:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_disco/proofs/lib/Reusable/YF0u.v:516:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 2.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_grant/proofs
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/A/Rt/AF0s.v:513:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> GrantSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/A/Rt/AF0u.v:513:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> GrantSyms B -> astack_malloc_realizes tfibsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/B/Rt/YF0s.v:515:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> GrantSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/B/Rt/YF0u.v:515:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> GrantSyms B -> astack_malloc_realizes tfibsegs B 2.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_identity/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_knock/proofs
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_knock/proofs/lib/A/AF0s.v:520:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_knock/proofs/lib/AU/YF0s.v:521:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_pcap/proofs
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_pcap/proofs/lib/A/AF0s.v:520:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> PcapSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_pcap/proofs/lib/Reusable/YF0s.v:522:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> PcapSyms B -> astack_malloc_realizes tfibsegs B 1.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_scene/proofs
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/A/AF0s.v:515:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/A/AF0u.v:515:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/YF0s.v:514:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/YF0u.v:514:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 2.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/mbedtls/fuzz_pkcs7/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/msgpack-c/unpack_pack_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_arep.v:388:Theorem stack_malloc_2_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_arep.v:1202:Theorem stack_malloc_1_GA : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_arep.v:1460:Theorem stack_malloc_1_GB : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_arep.v:1750:Theorem stack_malloc_2_GA : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_arep.v:2012:Theorem stack_malloc_2_GB : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_arep.v:2635:Theorem stack_malloc_2_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_arep.v:3446:Theorem stack_malloc_1_GA : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_arep.v:3704:Theorem stack_malloc_1_GB : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_arep.v:3994:Theorem stack_malloc_2_GA : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_arep.v:4256:Theorem stack_malloc_2_GB : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_sm0.v:267:Lemma stack_malloc1_gspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_sm0.v:418:Lemma stack_malloc2_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_sm0.v:827:Lemma stack_malloc2_gspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_sm0.v:991:Lemma stack_malloc2_gcspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_sm0.v:1241:Lemma stack_malloc1_gcspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_sm0.v:1956:Lemma stack_malloc1_gspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_sm0.v:2107:Lemma stack_malloc2_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_sm0.v:2516:Lemma stack_malloc2_gspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_sm0.v:2679:Lemma stack_malloc2_gcspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AFake_sm0.v:2929:Lemma stack_malloc1_gcspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AInstanceU2F.v:208:Theorem AHU2_stack_malloc_1 : smU_stmt2 1 128 8192 AFake_sm0.AFake_sm1g.ASTKMALLOC1.
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AInstanceU2F.v:210:Theorem AHU2_stack_malloc_2 : smU_stmt2 2 256 4096 AFake_sm0.AFake_sm2.ASTKMALLOC2.
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AInstanceU2F.v:504:Theorem AHU2_stack_malloc_1 : smU_stmt2 1 128 8192 AFake_sm0.TwinB.AFake_sm1g.ASTKMALLOC1.
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AInstanceU2F.v:506:Theorem AHU2_stack_malloc_2 : smU_stmt2 2 256 4096 AFake_sm0.TwinB.AFake_sm2.ASTKMALLOC2.
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AInstanceUF.v:175:Theorem AHU_stack_malloc_1 : smU_stmt 1 128 8192 ASTKMALLOC1.
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AInstanceUF.v:177:Theorem AHU_stack_malloc_2 : smU_stmt 2 256 4096 ASTKMALLOC2.
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AInstanceUF.v:427:Theorem AHU_stack_malloc_1 : smU_stmt 1 128 8192 ASTKMALLOC1.
+refs/remotes/origin/ossv/recipes:projects/msgpack-c/unpack_pack_fuzzer/proofs/lib/AsanW/AInstanceUF.v:429:Theorem AHU_stack_malloc_2 : smU_stmt 2 256 4096 ASTKMALLOC2.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/omx-clap-core/fuzz_manifest/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/omx-clap-core/fuzz_preset/proofs
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/FCm01xm.v:32:Corollary stack_malloc1_contract_xm : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B ->
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/FCm1s.v:564:Corollary stack_malloc1_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 1.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCm01xm.v:33:Corollary stack_malloc1_contract_xm : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B ->
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCm1s.v:565:Corollary stack_malloc1_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 1.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCxmCfxB.v:69:Corollary stack_malloc1_contract_xm_cfx_B : forall fx : YK11.FPState,
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/omx-clap-core/fuzz_state/proofs
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/A/FCm1s.v:533:Corollary stack_malloc1_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 1.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/A/FSClose.v:171:Lemma pc_stack_malloc_1_B : pc_stack_malloc (as_code TfibB) 1 = PC_stack_malloc_1.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/A/FSClose.v:235:Lemma fs_stack_malloc_1 : forall (rc : YM05.RunCeil) (fx : YK11.FPState), FSupoisonU.astack_malloc_realizesU tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/A/FSxU.v:30:Theorem stack_malloc1_contractU_x : forall B, AR_laws tfibsegs B -> TfibSyms B ->
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/B/FCm1s.v:534:Corollary stack_malloc1_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 1.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/B/FSCloseB.v:96:Lemma pc_stack_malloc_1_BU : pc_stack_malloc (as_code TfibBU) 1 = PC_stack_malloc_1.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/B/FSCloseB.v:157:Lemma H_stack_malloc_1 : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/B/FSxU.v:32:Theorem stack_malloc1_contractU_x : forall B, AR_laws tfibsegs B -> TfibSyms B ->
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/openssl/bignum/proofs
+refs/remotes/origin/ossv/recipes:projects/openssl/bignum/proofs/lib/BgA/RT_stackmalloc.v:609:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/openssl/bignum/proofs/lib/BgA/RT_stackmalloc2.v:19:Theorem rta_stack_malloc_1 : stack_malloc_contract_g RTA 1.
+refs/remotes/origin/ossv/recipes:projects/openssl/bignum/proofs/lib/BgA/R_fs1.v:184:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/openssl/bignum/proofs/lib/BgA/R_fs2.v:184:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/openssl/bignum/proofs/lib/BgB/RT_stackmalloc.v:609:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/openssl/bignum/proofs/lib/BgB/RT_stackmalloc2.v:19:Theorem rta_stack_malloc_1 : stack_malloc_contract_g RTA 1.
+refs/remotes/origin/ossv/recipes:projects/openssl/bignum/proofs/lib/BgB/R_fs1.v:184:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/openssl/bignum/proofs/lib/BgB/R_fs2.v:184:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/openssl/bndiv/proofs
+refs/remotes/origin/ossv/recipes:projects/openssl/bndiv/proofs/lib/A/RT_stackmalloc.v:644:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/openssl/bndiv/proofs/lib/A/R_fs2.v:183:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/openssl/bndiv/proofs/lib/B/RT_stackmalloc.v:641:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/openssl/bndiv/proofs/lib/B/R_fs2.v:182:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/openssl/ct/proofs
+refs/remotes/origin/ossv/recipes:projects/openssl/ct/proofs/lib/CtA/RT_stackmalloc.v:648:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/openssl/ct/proofs/lib/CtA/RT_stackmalloc.v:688:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/openssl/ct/proofs/lib/CtA/R_fs1.v:185:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/openssl/ct/proofs/lib/CtA/R_fs2.v:186:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/openssl/ct/proofs/lib/CtB/RT_stackmalloc.v:649:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/openssl/ct/proofs/lib/CtB/RT_stackmalloc.v:689:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/openssl/ct/proofs/lib/CtB/R_fs1.v:186:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/openssl/ct/proofs/lib/CtB/R_fs2.v:187:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/openssl/ct/proofs/lib/CtHXA/HxaHkFrame.v:268:Lemma hkA_stack_malloc1_ok : stack_malloc_contract RT 1 -> xhook_okA hkA_stack_malloc1.
+refs/remotes/origin/ossv/recipes:projects/openssl/ct/proofs/lib/CtHXB/HxbHkFrame.v:269:Lemma hkA_stack_malloc1_ok : stack_malloc_contract RT 1 -> xhook_okA hkA_stack_malloc1.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/openssl/echconfiglist_parser/proofs
+refs/remotes/origin/ossv/recipes:projects/openssl/echconfiglist_parser/proofs/lib/As/AS_InstLaws1.v:113:  Lemma inst_stack_malloc_1 : stack_malloc_1_stmt (KHp p). Proof. exact (stack_malloc_1_ok (KHp p) RFS_is). Qed.
+refs/remotes/origin/ossv/recipes:projects/openssl/echconfiglist_parser/proofs/lib/As/AS_InstLaws1x.v:21:  Lemma inst_stack_malloc_2 : stack_malloc_2_stmt (KHp p). Proof. exact (stack_malloc_2_ok (KHp p) RFS_is). Qed.
+refs/remotes/origin/ossv/recipes:projects/openssl/echconfiglist_parser/proofs/lib/As/N5_stack_malloc1.v:171:  Lemma stack_malloc_1_ok : stack_malloc_1_stmt H.
+refs/remotes/origin/ossv/recipes:projects/openssl/echconfiglist_parser/proofs/lib/As/N5_stack_malloc2.v:171:  Lemma stack_malloc_2_ok : stack_malloc_2_stmt H.
+refs/remotes/origin/ossv/recipes:projects/openssl/echconfiglist_parser/proofs/lib/Both/As/AS_InstLaws1.v:112:  Lemma inst_stack_malloc_1 : stack_malloc_1_stmt (KHp p). Proof. exact (stack_malloc_1_ok (KHp p) RFS_is). Qed.
+refs/remotes/origin/ossv/recipes:projects/openssl/echconfiglist_parser/proofs/lib/Both/As/AS_InstLaws1x.v:20:  Lemma inst_stack_malloc_2 : stack_malloc_2_stmt (KHp p). Proof. exact (stack_malloc_2_ok (KHp p) RFS_is). Qed.
+refs/remotes/origin/ossv/recipes:projects/openssl/echconfiglist_parser/proofs/lib/Both/As/N5_stack_malloc1.v:170:  Lemma stack_malloc_1_ok : stack_malloc_1_stmt H.
+refs/remotes/origin/ossv/recipes:projects/openssl/echconfiglist_parser/proofs/lib/Both/As/N5_stack_malloc2.v:170:  Lemma stack_malloc_2_ok : stack_malloc_2_stmt H.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/openssl/hashtable/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/openssl/pem/proofs
+refs/remotes/origin/ossv/recipes:projects/openssl/pem/proofs/lib/A/RT_stackmalloc.v:651:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/openssl/pem/proofs/lib/A/RT_stackmalloc.v:691:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/openssl/pem/proofs/lib/A/R_fs1.v:184:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/openssl/pem/proofs/lib/A/R_fs2.v:185:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/openssl/pem/proofs/lib/B/RT_stackmalloc.v:652:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/openssl/pem/proofs/lib/B/RT_stackmalloc.v:692:Theorem rta_stack_malloc_1 : stack_malloc_contract RTA 1.
+refs/remotes/origin/ossv/recipes:projects/openssl/pem/proofs/lib/B/R_fs1.v:185:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/openssl/pem/proofs/lib/B/R_fs2.v:186:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/openssl/punycode/proofs
+refs/remotes/origin/ossv/recipes:projects/openssl/punycode/proofs/lib/A/RT_stackmalloc.v:658:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/openssl/punycode/proofs/lib/A/R_fs2.v:183:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/openssl/punycode/proofs/lib/B/RT_stackmalloc.v:658:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/openssl/punycode/proofs/lib/B/R_fs2.v:185:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/plugin-hostd/fuzz_command/proofs
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtClosed.v:47:Theorem cmd_stack_malloc1_contract_closed : astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtSM1.v:515:Corollary cmd_stack_malloc1_contract : forall B, AR_laws tfibsegs B -> CmdBSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtClosed.v:49:Theorem cmd_stack_malloc1_contract_closed : astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtSM1.v:516:Corollary cmd_stack_malloc1_contract : forall B, AR_laws tfibsegs B -> CmdBSyms B -> astack_malloc_realizes tfibsegs B 1.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/plugin-hostd/fuzz_reply/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/pupnp/FuzzHttp/proofs
+refs/remotes/origin/ossv/recipes:projects/pupnp/FuzzHttp/proofs/lib/A0/ZAA/F_fs_body.v:1139:  #[using="Type"] Theorem stack_malloc1_B : stack_malloc_stmt_B 1.
+refs/remotes/origin/ossv/recipes:projects/pupnp/FuzzHttp/proofs/lib/A0/ZAA/F_fs_body.v:1144:  #[using="Type"] Theorem stack_malloc2_B : stack_malloc_stmt_B 2.
+refs/remotes/origin/ossv/recipes:projects/pupnp/FuzzHttp/proofs/lib/B0/ZAA/F_fs_body.v:1139:  #[using="Type"] Theorem stack_malloc1_B : stack_malloc_stmt_B 1.
+refs/remotes/origin/ossv/recipes:projects/pupnp/FuzzHttp/proofs/lib/B0/ZAA/F_fs_body.v:1144:  #[using="Type"] Theorem stack_malloc2_B : stack_malloc_stmt_B 2.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_headamp/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_link/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_pin/proofs
+refs/remotes/origin/ossv/recipes:projects/reac-pw/fuzz_pin/proofs/lib/A/AF0s.v:516:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/reac-pw/fuzz_pin/proofs/lib/AU/YF0s.v:517:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_qdisc/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_rate/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_role/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_segconf/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/reac-repacer/fuzz_egress/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/reac-repacer/fuzz_lock/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/reac-repacer/fuzz_uci/proofs
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/lib/A/Rt/AF0s.v:514:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> UciSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/lib/B/Rt/YF0s.v:516:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> UciSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/GATES.md:16:    Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> UciSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-B/GATES.md:13:    Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> UciSyms B -> astack_malloc_realizes tfibsegs B 1.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/reac-repacer/fuzz_wire/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_atpointer/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/A/R_fs1.v:181:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/A/R_fs2.v:181:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/A/Zlz.v:623:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/A/Zm0.v:20:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/B/R_fs1.v:182:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/B/R_fs2.v:182:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/B/Zlz.v:622:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/B/Zm0.v:19:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_dump/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/RT_stackmalloc1.v:39:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/RT_stackmalloc2.v:39:Theorem rta_stack_malloc_2 : stack_malloc2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/RT_win.v:35:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/R_fs1.v:182:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/R_fs1gc.v:98:Lemma stack_malloc_1_tail : forall (rax : word) ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/R_fs1gc.v:223:Lemma stack_malloc_1_gc_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/R_fs2.v:182:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/R_fs2gc.v:98:Lemma stack_malloc_2_tail : forall (rax : word) ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/R_fs2gc.v:223:Lemma stack_malloc_2_gc_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/RT_stackmalloc1.v:37:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/RT_stackmalloc2.v:37:Theorem rta_stack_malloc_2 : stack_malloc2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/RT_win.v:32:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/R_fs1.v:182:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/R_fs1gc.v:98:Lemma stack_malloc_1_tail : forall (rax : word) ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/R_fs1gc.v:223:Lemma stack_malloc_1_gc_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/R_fs2.v:182:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/R_fs2gc.v:98:Lemma stack_malloc_2_tail : forall (rax : word) ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/R_fs2gc.v:223:Lemma stack_malloc_2_gc_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_dump_raw_tape/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/RT_stackmalloc1.v:39:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/RT_win.v:35:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/R_fs1.v:182:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/R_fs1gc.v:98:Lemma stack_malloc_1_tail : forall (rax : word) ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/R_fs1gc.v:223:Lemma stack_malloc_1_gc_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/RT_stackmalloc1.v:37:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/RT_win.v:32:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/R_fs1.v:182:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/R_fs1gc.v:98:Lemma stack_malloc_1_tail : forall (rax : word) ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/R_fs1gc.v:223:Lemma stack_malloc_1_gc_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_element/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/B/RT_stackmalloc1.v:38:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/B/RT_win.v:33:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/B/R_fs1.v:183:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/B/R_fs1gc.v:99:Lemma stack_malloc_1_tail : forall (rax : word) ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/B/R_fs1gc.v:224:Lemma stack_malloc_1_gc_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/BA/RT_stackmalloc1.v:37:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/BA/RT_win.v:32:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/BA/R_fs1.v:182:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/BA/R_fs1gc.v:98:Lemma stack_malloc_1_tail : forall (rax : word) ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/BA/R_fs1gc.v:223:Lemma stack_malloc_1_gc_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_implementations/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/RT_stackmalloc1.v:39:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/RT_stackmalloc1z.v:22:Theorem rta_stack_malloc_1z : stack_malloc1z_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/RT_stackmalloc2.v:39:Theorem rta_stack_malloc_2 : stack_malloc2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/RT_win.v:35:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/R_fs1.v:182:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/R_fs1gc.v:98:Lemma stack_malloc_1_tail : forall (rax : word) ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/R_fs1gc.v:223:Lemma stack_malloc_1_gc_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/R_fs2.v:182:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/R_fs2gc.v:98:Lemma stack_malloc_2_tail : forall (rax : word) ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/R_fs2gc.v:223:Lemma stack_malloc_2_gc_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/RT_stackmalloc1.v:37:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/RT_stackmalloc1z.v:20:Theorem rta_stack_malloc_1z : stack_malloc1z_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/RT_stackmalloc2.v:37:Theorem rta_stack_malloc_2 : stack_malloc2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/RT_win.v:32:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/R_fs1.v:182:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/R_fs1gc.v:98:Lemma stack_malloc_1_tail : forall (rax : word) ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/R_fs1gc.v:223:Lemma stack_malloc_1_gc_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/R_fs2.v:182:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/R_fs2gc.v:98:Lemma stack_malloc_2_tail : forall (rax : word) ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/R_fs2gc.v:223:Lemma stack_malloc_2_gc_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_minifyimpl/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_minifyimpl/proofs/lib/AsanW/AU_fake_arep.v:179:Theorem stack_malloc_1_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_minifyimpl/proofs/lib/AsanW/AU_fake_sm1.v:43:Lemma stack_malloc1_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_minifyimpl/proofs/lib/BothW/AU_fake_arep.v:180:Theorem stack_malloc_1_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_minifyimpl/proofs/lib/BothW/AU_fake_sm1.v:44:Lemma stack_malloc1_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_ondemand/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_ondemand/proofs/lib/A/RT_stackmalloc1.v:20:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_ondemand/proofs/lib/A/R_fs1.v:181:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_ondemand/proofs/lib/B/RT_stackmalloc1.v:19:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_ondemand/proofs/lib/B/R_fs1.v:182:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_parser/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_parser/proofs/lib/AsanW/AFake_arep.v:177:Theorem stack_malloc_2_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_parser/proofs/lib/AsanW/AFake_arep2m.v:72:Theorem stack_malloc_2_P2 : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_parser/proofs/lib/AsanW/AFake_arep2m.v:298:Lemma stack_malloc_2_AI : stack_malloc_2_stmt AI fflag afake_rng.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_parser/proofs/lib/AsanW/AFake_sm2.v:43:Lemma stack_malloc2_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_parser/proofs/lib/BothW/AFake_arep.v:178:Theorem stack_malloc_2_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_parser/proofs/lib/BothW/AFake_arep2m.v:73:Theorem stack_malloc_2_P2 : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_parser/proofs/lib/BothW/AFake_arep2m.v:299:Lemma stack_malloc_2_AI : stack_malloc_2_stmt AI fflag afake_rng.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_parser/proofs/lib/BothW/AFake_sm2.v:44:Lemma stack_malloc2_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_print_json/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_print_json/proofs/lib/A/RT_stackmalloc1.v:20:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_print_json/proofs/lib/A/RT_stackmalloc1z.v:19:Theorem rta_stack_malloc_1z : stack_malloc1z_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_print_json/proofs/lib/A/R_fs1.v:181:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_print_json/proofs/lib/B/RT_stackmalloc1.v:19:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_print_json/proofs/lib/B/RT_stackmalloc1z.v:18:Theorem rta_stack_malloc_1z : stack_malloc1z_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_print_json/proofs/lib/B/R_fs1.v:182:Lemma stack_malloc_1_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_utf8/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_utf8/proofs/lib/AsanW/AFake_arep.v:397:Theorem stack_malloc_2_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_utf8/proofs/lib/AsanW/AFake_sm2.v:42:Lemma stack_malloc2_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_utf8/proofs/lib/AsanW/AHarnessU_closed.v:59:  Lemma stack_malloc_1_AI : stack_malloc_1_stmt AI fflag afake_rng.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_utf8/proofs/lib/AsanW/AU_fake_arep.v:399:Theorem stack_malloc_2_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_utf8/proofs/lib/AsanW/AU_fake_arep.v:632:Theorem stack_malloc_1_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_utf8/proofs/lib/AsanW/AU_fake_sm1.v:42:Lemma stack_malloc1_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_utf8/proofs/lib/BothW/AFake_arep.v:398:Theorem stack_malloc_2_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_utf8/proofs/lib/BothW/AFake_sm2.v:43:Lemma stack_malloc2_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_utf8/proofs/lib/BothW/AHarnessU_closed.v:60:  Lemma stack_malloc_1_AI : stack_malloc_1_stmt AI fflag afake_rng.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_utf8/proofs/lib/BothW/AU_fake_arep.v:400:Theorem stack_malloc_2_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_utf8/proofs/lib/BothW/AU_fake_arep.v:633:Theorem stack_malloc_1_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_utf8/proofs/lib/BothW/AU_fake_sm1.v:43:Lemma stack_malloc1_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/skcms/iccprofile_info/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/speex/speex_decode_fuzzer_float/proofs
+refs/remotes/origin/ossv/recipes:projects/speex/speex_decode_fuzzer_float/proofs/lib/A/X0fv.v:616:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/speex/speex_decode_fuzzer_float/proofs/lib/A/X0fv.v:1296:Theorem rta_stack_malloc_2 : stack_malloc_contract RTA 2.
+refs/remotes/origin/ossv/recipes:projects/speex/speex_decode_fuzzer_float/proofs/lib/A/X0gz.v:186:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/speex/speex_decode_fuzzer_float/proofs/lib/A/X0gz.v:490:Lemma stack_malloc_2_spec : forall ra sp gp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/spirv-tools/spvtools_binary_parser_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/spirv-tools/spvtools_binary_parser_fuzzer/proofs/lib/bpA/Rt/AS_InstLaws1.v:130:  Lemma inst_stack_malloc_1 : stack_malloc_1_stmt (KHp p). Proof. exact (stack_malloc_1_ok (KHp p) RFS_is). Qed.
+refs/remotes/origin/ossv/recipes:projects/spirv-tools/spvtools_binary_parser_fuzzer/proofs/lib/bpA/Rt/N5_stack_malloc1.v:167:  Lemma stack_malloc_1_ok : stack_malloc_1_stmt H.
+refs/remotes/origin/ossv/recipes:projects/spirv-tools/spvtools_binary_parser_fuzzer/proofs/lib/bpA/Rt/RtA_SM2.v:166:  Lemma stack_malloc_2_ok : stack_malloc_stmt_bp H 2 AFS_MALLOC_2.
+refs/remotes/origin/ossv/recipes:projects/spirv-tools/spvtools_binary_parser_fuzzer/proofs/lib/bpB/Rt/B5_stack_malloc1.v:166:  Lemma stack_malloc_1_ok : stack_malloc_1_stmt H.
+refs/remotes/origin/ossv/recipes:projects/spirv-tools/spvtools_binary_parser_fuzzer/proofs/lib/bpB/Rt/BS_InstLaws1.v:129:  Lemma inst_stack_malloc_1 : stack_malloc_1_stmt (KHp p). Proof. exact (stack_malloc_1_ok (KHp p) RFS_is). Qed.
+refs/remotes/origin/ossv/recipes:projects/spirv-tools/spvtools_binary_parser_fuzzer/proofs/lib/bpB/Rt/RtB_SM2.v:165:  Lemma stack_malloc_2_ok : stack_malloc_stmt_bp H 2 AFS_MALLOC_2.
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/tinyobjloader/fuzz_tobj_c/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/varnish/esi_parse_fuzzer/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/yajl-ruby/json_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/yajl-ruby/json_fuzzer/proofs/lib/A/AF_fakestack1.v:163:Lemma stack_malloc1_walk :
+refs/remotes/origin/ossv/recipes:projects/yajl-ruby/json_fuzzer/proofs/lib/A/A_bstack5.v:158:Lemma astack_malloc1 :
+refs/remotes/origin/ossv/recipes:projects/yajl-ruby/json_fuzzer/proofs/lib/B/BF_fakestack1.v:164:Lemma stack_malloc1_walk :
+refs/remotes/origin/ossv/recipes:projects/yajl-ruby/json_fuzzer/proofs/lib/B/B_bstack5.v:156:Lemma astack_malloc1 :
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/zlib/checksum_fuzzer/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/zstd/fse_read_ncount/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/zstd/huf_decompress/proofs
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/zstd/simple_decompress/proofs
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/AsanT/AFake_arepk1.v:65:Theorem stack_malloc_1k_P : forall (k : nat) (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/AsanT/AFake_arepk1.v:317:  Lemma stack_malloc_1k_AI : forall k, Z.of_nat k < 8192 -> stack_malloc_1k_stmt AI fflag afake_rng k.
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/AsanT/AFake_arepk2.v:65:Theorem stack_malloc_2k_P : forall (k : nat) (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/AsanT/AFake_arepk2.v:321:  Lemma stack_malloc_2k_AI : forall k, Z.of_nat k < 4096 -> stack_malloc_2k_stmt AI fflag afake_rng k.
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/AsanT/AFake_sm2.v:44:Lemma stack_malloc2_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/AsanT/AFake_smk1.v:122:Lemma stack_malloc1_cspecK : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/AsanT/AFake_smk2.v:104:Lemma stack_malloc2_cspecK : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/BothW/AFake_arepk1.v:66:Theorem stack_malloc_1k_P : forall (k : nat) (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/BothW/AFake_arepk1.v:318:  Lemma stack_malloc_1k_AI : forall k, Z.of_nat k < 8192 -> stack_malloc_1k_stmt AI fflag afake_rng k.
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/BothW/AFake_arepk2.v:66:Theorem stack_malloc_2k_P : forall (k : nat) (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/BothW/AFake_arepk2.v:322:  Lemma stack_malloc_2k_AI : forall k, Z.of_nat k < 4096 -> stack_malloc_2k_stmt AI fflag afake_rng k.
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/BothW/AFake_sm2.v:45:Lemma stack_malloc2_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/BothW/AFake_smk1.v:123:Lemma stack_malloc1_cspecK : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/zstd/simple_decompress/proofs/lib/BothW/AFake_smk2.v:105:Lemma stack_malloc2_cspecK : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+## git grep -nE '(Theorem|Lemma|Corollary)[[:space:]]+[A-Za-z0-9_]*stack_malloc_?[12]([^0-9][A-Za-z0-9_]*)?[[:space:]]*:' refs/remotes/origin/ossv/recipes -- projects/zstd/zstd_frame_info/proofs
+refs/remotes/origin/ossv/recipes:projects/zstd/zstd_frame_info/proofs/lib/AsanW/AFake2_arep.v:129:#[using="HL CI_OK"] Theorem stack_malloc_2_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/zstd/zstd_frame_info/proofs/lib/AsanW/AFake2_arep.v:343:  #[using="DI AQ ASEC HL CI CI_OK E EC"] Lemma stack_malloc_2_AI : stack_malloc_2_stmt AI fflag afake_rng.
+refs/remotes/origin/ossv/recipes:projects/zstd/zstd_frame_info/proofs/lib/AsanW/AFake_arep1k.v:59:#[using="HL CI_OK"] Theorem stack_malloc_1k_P : forall (k : nat) (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/zstd/zstd_frame_info/proofs/lib/AsanW/AFake_arep1k.v:325:  #[using="DI AQ ASEC HL CI CI_OK E EC"] Lemma stack_malloc_1k_AI : forall k, Z.of_nat k < 8192 -> stack_malloc_1_stmtk AI fflag afake_rng k.
+refs/remotes/origin/ossv/recipes:projects/zstd/zstd_frame_info/proofs/lib/AsanW/AFake_sm1k.v:131:#[using="Type"] Lemma stack_malloc1_cspecK : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/zstd/zstd_frame_info/proofs/lib/AsanW/AFake_sm2.v:40:#[using="Type"] Lemma stack_malloc2_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/zstd/zstd_frame_info/proofs/lib/BothW/AFake2_arep.v:129:#[using="HL CI_OK"] Theorem stack_malloc_2_P : forall (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/zstd/zstd_frame_info/proofs/lib/BothW/AFake2_arep.v:343:  #[using="DI AQ ASEC HL CI CI_OK E EC"] Lemma stack_malloc_2_AI : stack_malloc_2_stmt AI fflag afake_rng.
+refs/remotes/origin/ossv/recipes:projects/zstd/zstd_frame_info/proofs/lib/BothW/AFake_arep1k.v:59:#[using="HL CI_OK"] Theorem stack_malloc_1k_P : forall (k : nat) (L : alayout) (RNG : footprint)
+refs/remotes/origin/ossv/recipes:projects/zstd/zstd_frame_info/proofs/lib/BothW/AFake_arep1k.v:325:  #[using="DI AQ ASEC HL CI CI_OK E EC"] Lemma stack_malloc_1k_AI : forall k, Z.of_nat k < 8192 -> stack_malloc_1_stmtk AI fflag afake_rng k.
+refs/remotes/origin/ossv/recipes:projects/zstd/zstd_frame_info/proofs/lib/BothW/AFake_sm1k.v:131:#[using="Type"] Lemma stack_malloc1_cspecK : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+refs/remotes/origin/ossv/recipes:projects/zstd/zstd_frame_info/proofs/lib/BothW/AFake_sm2.v:40:#[using="Type"] Lemma stack_malloc2_cspec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6

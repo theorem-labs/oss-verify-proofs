@@ -1,0 +1,5 @@
+[reac-pw/fuzz_pin] A/AF0r.v:46 0x3cbe8 0x3dfc4
+[reac-pw/fuzz_pin] A/AF0r.v:75 0x99040 0xa4080
+[reac-pw/fuzz_pin] A/AF0r.v:75 0x99d30 0xa4d70
+[reac-pw/fuzz_pin] A/AF0r.v:76 0x990a0 0xa40e0
+[reac-pw/fuzz_pin] A/AF0r.v:76 0x99d40 0xa4d80

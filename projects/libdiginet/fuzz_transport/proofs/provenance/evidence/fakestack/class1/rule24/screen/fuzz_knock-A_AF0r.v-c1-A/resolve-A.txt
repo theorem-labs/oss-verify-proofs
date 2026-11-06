@@ -1,0 +1,5 @@
+[libreac/fuzz_knock] A/AF0r.v:45 0x3c1f4 0x3dfc4
+[libreac/fuzz_knock] A/AF0r.v:74 0x965c0 0xa4080
+[libreac/fuzz_knock] A/AF0r.v:74 0x972b0 0xa4d70
+[libreac/fuzz_knock] A/AF0r.v:75 0x96620 0xa40e0
+[libreac/fuzz_knock] A/AF0r.v:75 0x972c0 0xa4d80

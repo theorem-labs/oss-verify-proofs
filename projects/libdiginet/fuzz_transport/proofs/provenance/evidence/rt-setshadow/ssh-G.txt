@@ -1,0 +1,22 @@
+# images/fuzz_grant.asan sha256 57c26f99361583f69af95af52819bebfcf920468a03cf795b95e024fe9798a4d
+== __asan_set_shadow_00 at 0x546bc size 24 (6 words) section .text
+  546bc: 00058613  mv	a2, a1
+  546c0: 00048597  auipc	a1, 0x48
+  546c4: 1d05b583  ld	a1, 0x1d0(a1)  ; -> 0x9c890 [.got ] holds 0x9e6d8 [.data _ZN14__interception11real_memsetE] which holds 0x95e30 [.text memset]
+  546c8: 0005b303  ld	t1, 0(a1)
+  546cc: 00000593  mv	a1, zero
+  546d0: 00030067  jr	t1
+== __asan_set_shadow_f5 at 0x547c4 size 24 (6 words) section .text
+  547c4: 00048617  auipc	a2, 0x48
+  547c8: 0cc63603  ld	a2, 0xcc(a2)  ; -> 0x9c890 [.got ] holds 0x9e6d8 [.data _ZN14__interception11real_memsetE] which holds 0x95e30 [.text memset]
+  547cc: 00063303  ld	t1, 0(a2)
+  547d0: 00058613  mv	a2, a1
+  547d4: 0f500593  addi	a1, zero, 0xf5
+  547d8: 00030067  jr	t1
+== __asan_set_shadow_f8 at 0x547dc size 24 (6 words) section .text
+  547dc: 00048617  auipc	a2, 0x48
+  547e0: 0b463603  ld	a2, 0xb4(a2)  ; -> 0x9c890 [.got ] holds 0x9e6d8 [.data _ZN14__interception11real_memsetE] which holds 0x95e30 [.text memset]
+  547e4: 00063303  ld	t1, 0(a2)
+  547e8: 00058613  mv	a2, a1
+  547ec: 0f800593  addi	a1, zero, 0xf8
+  547f0: 00030067  jr	t1

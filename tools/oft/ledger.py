@@ -6,7 +6,14 @@ there and then removed or rewritten before any two trees CI compares, and
 neither tree shows it.  `run` holds every commit of BASE..TIP, and every parent
 of one, to the rule instead.
 
-A record is a findings/<project>/<harness>/<slug>/ with finding.yaml.  Its
+A record is a folder with finding.yaml: findings/<project>/<harness>/<slug>/
+in the old layout, projects/<project>/<harness>/findings/<slug>/ in the
+per-project one (layout.py).  The two are the same record, as
+findings/<project>/unpatched.yaml and projects/<project>/unpatched.yaml are the
+same pins, so the move `oft port-layout` makes deletes and renames nothing.  A
+commit of BASE..TIP that holds one record, or one project's pins, in both
+layouts is refused, since which of the two is the record is not known; only
+the per-project one is read there.  Its
 anchor is its first version that is evidence, which is decided by the record's
 own files alone: its input.bin and control.bin are regular files of at most the
 finding input cap that begin with a complete driver header; each of its
@@ -37,8 +44,8 @@ enrolled project's binaries keep that patch; from `pruned` or `not-a-defect`
 it may, since those carry no patch.  Its input.bin and control.bin are the anchor's,
 and its statements include the anchor's (a longer list makes a stronger claim,
 and CI checks each).  The unpatched pin of each build the anchor's statements
-name is frozen at the pin's own anchor: its first value in
-findings/<project>/unpatched.yaml at or after the record's anchor, found by
+name is frozen at the pin's own anchor: its first value in its project's
+unpatched.yaml at or after the record's anchor, found by
 ancestry in the same way, and two such anchors that differ are refused.  A pin
 for a build no anchored record names may be added or changed.
 
@@ -78,23 +85,33 @@ is never rewritten (ledger.yml fails a forced push to one) and its history has t
 be able to come right.  The history is read as git has it, with no replace ref
 or graft: either could hide a commit.
 
-Only git objects are read: commits and trees, the finding.yaml, input.bin and
-control.bin of each version and the unpatched.yaml of each commit at or after
-an anchor, each within its cap in the finding (facts.FINDING_INPUT_CAP for
-input.bin and control.bin, facts.FINDING_FILE_CAP for the others), and the
-release.yaml of TIP and of each reference commit above, within its own cap
-(lint.file_cap).  In a clone fetched without blobs, git fetches those on
-demand.
+Only git objects are read: commits and trees (each commit's files of findings
+are its first parent's with what git diff-tree finds changed between the two),
+the finding.yaml, input.bin and control.bin of each version and the
+unpatched.yaml of each commit at or after an anchor, each within its cap in the
+finding (facts.FINDING_INPUT_CAP for input.bin and control.bin,
+facts.FINDING_FILE_CAP for the others), and the release.yaml of TIP and of each
+reference commit above, within its own cap (facts.file_cap).  In a clone fetched
+without blobs, git fetches those on demand.
 """
 import os
 import re
 import subprocess
 
-from . import facts, names, rules, schema, yamlio
-from .lint import Finding, file_cap
+from . import facts, layout, names, rules, schema, yamlio
+from .lint import Finding
 
-# A file of a record that paths.py lists, relative to findings/; the record is the directory with finding.yaml.
-RECORD_FILE = re.compile(r"([^/]+)/([^/]+)/([^/]+)/(finding\.yaml|input\.bin|control\.bin|[^/]+\.patch)")
+# A file of a record that paths.py lists, in the per-project layout (layout.canonical of its path in either layout);
+# the record is the folder with finding.yaml.
+RECORD_FILE = re.compile(r"projects/([^/]+)/([^/]+)/findings/([^/]+)/"
+                         r"(finding\.yaml|input\.bin|control\.bin|[^/]+\.patch)")
+# A project's unpatched pins, in the per-project layout.
+UNPATCHED_FILE = re.compile(r"projects/([^/]+)/unpatched\.yaml")
+# The files of findings in a commit's tree in either layout, as git pathspecs from the top of the tree: findings/ in
+# the old layout, and in the per-project one each fuzz target's projects/<p>/<h>/findings/ and each project's
+# projects/<p>/unpatched.yaml.
+FINDINGS_FILES = (":(top,glob)findings/**", ":(top,glob)projects/*/*/findings/**",
+                  ":(top,glob)projects/*/unpatched.yaml")
 # What a finding's runs are of, compared by git object: CI re-runs its record against these.
 FIXED_FILES = ("input.bin", "control.bin")
 REGULAR = ("100644", "100755")
@@ -181,28 +198,92 @@ def _runner(git, commit):
     if not listed:
         return None
     mode, _, oid = listed.partition(b"\t")[0].decode().split(" ")
-    doc = git.yaml((mode, oid), cap=file_cap("release.yaml"))
+    doc = git.yaml((mode, oid), cap=facts.file_cap("release.yaml"))
     images = doc.get("images") if isinstance(doc, dict) else None
     runner = images.get("runner") if isinstance(images, dict) else None
     return runner if isinstance(runner, str) else None
 
 
-def _records(git, tree, memo):
-    """findings/ tree id -> ({"<p>/<h>/<slug>": {file name: (mode, object id)}}, {path: (mode, object id)})."""
-    if tree not in memo:
-        files = {}
-        for rec in git.out("ls-tree", "-r", "-z", tree).split(b"\0"):
-            if rec:
-                meta, _, path = rec.partition(b"\t")
-                mode, _, oid = meta.decode().split(" ")
-                files[path.decode(errors="surrogateescape")] = (mode, oid)
-        records = {}
-        for path, obj in files.items():
-            m = RECORD_FILE.fullmatch(path)
-            if m and m.group(2) != "bin":   # findings/<p>/bin/ is what `oft fetch --findings` unpacks
-                records.setdefault("/".join(m.group(1, 2, 3)), {})[m.group(4)] = obj
-        memo[tree] = ({k: v for k, v in records.items() if "finding.yaml" in v}, files)
-    return memo[tree]
+def _root_trees(git, commits):
+    """commit -> its tree id, all in one git call."""
+    return dict(zip(commits, git.out("cat-file", "--batch-check=%(objectname)",
+                                     stdin="".join("%s^{tree}\n" % c for c in commits).encode()).decode().split()))
+
+
+def _findings_files(git, pairs, known):
+    """Add to known the files of findings (FINDINGS_FILES) of each tree of pairs, [(a commit's tree id, the tree id it
+    is read against, which known has or an earlier pair adds, or None for the empty tree)]: known[tree] = (since,
+    {path: (mode, object id)}), the files of the tree it is read against with git diff-tree's changes from that one
+    applied, and since the tree id where those files last changed (None for no files).  All pairs are one git call,
+    and git reads only the folders that differ."""
+    if not pairs:
+        return
+    known.setdefault(None, (None, {}))
+    empty = git.out("hash-object", "-t", "tree", "--stdin", stdin=b"").decode().strip()
+    data = git.out("diff-tree", "--stdin", "-r", "-z", "--no-renames", "--", *FINDINGS_FILES,
+                   stdin="".join("%s %s\n" % (base or empty, tree) for tree, base in pairs).encode())
+    at = 0
+    for tree, base in pairs:
+        # diff-tree echoes each pair, then lists each change as ":<mode> <mode> <id> <id> <status>\0<path>\0"
+        end = data.index(b"\n", at)
+        if data[at:end] != ("%s %s" % (base or empty, tree)).encode():
+            raise LedgerError("git diff-tree did not echo %s %s" % (base or empty, tree))
+        at = end + 1
+        since, files = known[base]
+        if data[at:at + 1] == b":":
+            since, files = tree, dict(files)
+        while data[at:at + 1] == b":":
+            meta = data.index(b"\0", at)
+            end = data.index(b"\0", meta + 1)
+            _, mode, _, oid, status = data[at + 1:meta].decode().split(" ")
+            path = data[meta + 1:end].decode(errors="surrogateescape")
+            if status == "D":
+                del files[path]
+            else:
+                files[path] = (mode, oid)
+            at = end + 1
+        known[tree] = (since, files)
+
+
+class _Findings:
+    """The records and unpatched pins of one commit, read from both layouts.  records: "<p>/<h>/<slug>" -> {file
+    name: (mode, object id)} of each record (a folder with finding.yaml); dirs: the folder of each record; unpatched:
+    project -> (mode, object id) of its unpatched.yaml; unpatched_at: that file's path; both: the per-project path of
+    each record and unpatched.yaml the commit holds in both layouts, of which only the per-project one is read."""
+
+    def __init__(self, *layouts):
+        """layouts: {path: (mode, object id)} of the files of each layout, the old one first."""
+        self.records, self.dirs, self.unpatched, self.unpatched_at, self.both = {}, {}, {}, {}, []
+        for files in layouts:
+            records, dirs, unpatched, unpatched_at = {}, {}, {}, {}
+            for path, obj in files.items():
+                canonical = layout.canonical(path)
+                m = RECORD_FILE.fullmatch(canonical)
+                if m and layout.unit_of(path):   # no fuzz target's: projects/<p>/bin/ and the like
+                    key = "/".join(m.group(1, 2, 3))
+                    records.setdefault(key, {})[m.group(4)] = obj
+                    dirs[key] = path.rsplit("/", 1)[0]
+                m = UNPATCHED_FILE.fullmatch(canonical)
+                if m:
+                    unpatched[m.group(1)], unpatched_at[m.group(1)] = obj, path
+            records = {k: v for k, v in records.items() if "finding.yaml" in v}
+            self.both += [dirs[k] for k in records if k in self.records]
+            self.both += [unpatched_at[p] for p in unpatched if p in self.unpatched]
+            self.records.update(records)
+            self.dirs.update((k, dirs[k]) for k in records)
+            self.unpatched.update(unpatched)
+            self.unpatched_at.update(unpatched_at)
+        self.both.sort()
+
+
+def _records(files, memo):
+    """_Findings of a commit's files of findings, (since, {path: (mode, object id)}) as _findings_files reads them;
+    memo holds each by since."""
+    since, files = files
+    if since not in memo:
+        memo[since] = _Findings(*({path: obj for path, obj in files.items() if layout.of_path(path) == which}
+                                  for which in layout.LAYOUTS))
+    return memo[since]
 
 
 class _Evidence:
@@ -267,20 +348,25 @@ def run(root, base, tip="HEAD"):
         c, *ps = line.split()
         commits.append(c)
         parents[c] = ps
-    trees = {}
-    for c, line in zip(commits, git.out("cat-file", "--batch-check=%(objectname) %(objecttype)",
-                                        stdin="".join("%s:findings\n" % c for c in commits).encode())
-                       .decode().splitlines()):
-        oid, _, kind = line.partition(" ")
-        trees[c] = oid if kind == "tree" else None
+    # each commit's files of findings in either layout, read against its first parent's
+    trees, pairs, queued, known = _root_trees(git, commits), [], set(), {}
+    for c in commits:
+        if trees[c] not in queued:
+            queued.add(trees[c])
+            pairs.append((trees[c], trees[parents[c][0]] if parents[c] else None))
+    _findings_files(git, pairs, known)
     memo, versions = {}, {}
     reach = {}        # record -> {a commit at or after one of its anchors: the builds those anchors ran}
     anchors = {}      # record -> [(commit, _Evidence)], parents first
+    anchored_at = {}  # record -> its folder at its first anchor
     pin_reach = {}    # (project, harness, build) -> the commits at or after one of its pin's anchors
     pin_anchors = {}  # (project, harness, build) -> [(commit, the pin)], parents first
-    had = {}          # (record, file name) -> the first commit judged that had it at or after an anchor
+    pinned_at = {}    # project -> its unpatched.yaml at the first anchor of one of its pins
+    had = {}          # (record, file name) -> (the first commit judged that had it at or after an anchor, its path there)
     states_had = {}   # record -> [(a commit judged, the state it gave the record)], parents first
-    unpatched = {}    # project -> the first commit judged with an anchored record of it and its unpatched.yaml
+    unpatched = {}    # project -> (the first commit judged with an anchored record of it and its unpatched.yaml, its path)
+    both = {}         # the per-project path of a record or unpatched.yaml a commit of BASE..TIP had in both layouts ->
+                      # the first such commit
     for c in commits:
         for seen in reach.values():
             builds = [seen[p] for p in parents[c] if p in seen]
@@ -289,10 +375,13 @@ def run(root, base, tip="HEAD"):
         for seen in pin_reach.values():
             if any(p in seen for p in parents[c]):
                 seen.add(c)
-        if trees[c] is None:
+        at = _records(known[trees[c]], memo)
+        if not at.records and not at.unpatched:
             continue
-        records, files = _records(git, trees[c], memo)
-        for key, rec in sorted(records.items()):
+        if c in new:
+            for path in at.both:
+                both.setdefault(path, c)
+        for key, rec in sorted(at.records.items()):
             if c not in reach.get(key, ()):
                 version = tuple(sorted(rec.items()))
                 if version not in versions:
@@ -301,15 +390,16 @@ def run(root, base, tip="HEAD"):
                     continue   # a draft
                 reach.setdefault(key, {})[c] = versions[version].builds
                 anchors.setdefault(key, []).append((c, versions[version]))
+                anchored_at.setdefault(key, at.dirs[key])
             if c in scope:
                 for name in rec:
-                    had.setdefault((key, name), c)
+                    had.setdefault((key, name), (c, "%s/%s" % (at.dirs[key], name)))
                 st = _state(git, rec)
                 if st is not None:
                     states_had.setdefault(key, []).append((c, st))
                 p = key.split("/")[0]
-                if p + "/unpatched.yaml" in files:
-                    unpatched.setdefault(p, c)
+                if p in at.unpatched:
+                    unpatched.setdefault(p, (c, at.unpatched_at[p]))
         # the pins of the builds that the anchored records of each harness ran, from those anchors on
         frozen = {}
         for key, seen in reach.items():
@@ -317,21 +407,24 @@ def run(root, base, tip="HEAD"):
                 p, h, _ = key.split("/")
                 frozen.setdefault((p, h), set()).update(seen[c])
         for (p, h), builds in sorted(frozen.items()):
-            u = files.get(p + "/unpatched.yaml")
+            u = at.unpatched.get(p)
             pins = _pins(git.yaml(u), h) if u is not None else {}
             for b in sorted(builds):
                 k = (p, h, b)
                 if b in pins and c not in pin_reach.get(k, ()):
                     pin_reach.setdefault(k, set()).add(c)
                     pin_anchors.setdefault(k, []).append((c, pins[b]))
-    now, now_files = _records(git, trees[tip], memo) if trees[tip] else ({}, {})
+                    pinned_at.setdefault(p, at.unpatched_at[p])
+    now = _records(known[trees[tip]], memo)
     states = {}    # commit -> (its runner, its records), read once a record needs them
     meeting = []   # [[(m, c) for each merge base m of BASE and TIP], n], computed once a record needs them
 
     def state(commit):
         if commit not in states:
-            listed = git.out("ls-tree", "-d", commit, "findings").split(b"\t")[0].decode().split()
-            states[commit] = (_runner(git, commit), _records(git, listed[2], memo)[0] if listed else {})
+            tree = _root_trees(git, [commit])[commit]
+            if tree not in known:
+                _findings_files(git, [(tree, trees[tip])], known)
+            states[commit] = (_runner(git, commit), _records(known[tree], memo).records)
         return states[commit]
 
     def recorded(files):
@@ -374,34 +467,34 @@ def run(root, base, tip="HEAD"):
         return out
     tip_runner = _runner(git, tip)
     out = []
-    for (key, name), c in sorted(had.items()):
-        if name not in now.get(key, {}):
-            rel = "findings/%s/%s" % (key, name)
+    for path, c in sorted(both.items()):
+        out.append(Finding("paths", path, "in both layouts at %s" % c[:10]))
+    for (key, name), (c, rel) in sorted(had.items()):
+        if name not in now.records.get(key, {}):
             out.append(Finding("paths", rel, "a finding is never deleted: %s, which %s had" % (rel, c[:10])))
-    for p, c in sorted(unpatched.items()):
-        if p + "/unpatched.yaml" not in now_files:
-            rel = "findings/%s/unpatched.yaml" % p
+    for p, (c, rel) in sorted(unpatched.items()):
+        if p not in now.unpatched:
             out.append(Finding("paths", rel, "a finding's unpatched pins are never deleted: %s, which %s had"
                                % (rel, c[:10])))
     # a state only moves forward from one whose patch the pinned build carries (rules.SERIES_STATES), over the whole
     # history judged: the base alone does not show a finding that a commit of this change added as patched and a later
     # one set back to open, which would release a hold its binaries keep
     for key, seq in sorted(states_had.items()):
-        rel = "findings/%s/finding.yaml" % key
-        if key in now and _state(git, now[key]) == "open":
+        if key in now.records and _state(git, now.records[key]) == "open":
+            rel = now.dirs[key] + "/finding.yaml"
             was = [(c, s) for c, s in seq if s in rules.SERIES_STATES]
             if was:
                 out.append(Finding("paths", rel, "a finding's state never returns to open: %s was %s at %s"
                                    % (rel, was[0][1], was[0][0][:10])))
     for key, found in sorted(anchors.items()):
-        rel = "findings/" + key
+        rel = now.dirs.get(key, anchored_at[key])
         (first, ev), split = _first_once(found, new, _Evidence.differences)
         for c, what in split:
             out.append(Finding("paths", rel, "a finding is first recorded once: %s was first recorded by %s and by %s, "
                                "which differ in its %s" % (rel, first[:10], c[:10], " and ".join(what))))
-        if split or key not in now:
+        if split or key not in now.records:
             continue   # its anchors disagree, or it is deleted: reported above
-        rec = now[key]
+        rec = now.records[key]
         for name in FIXED_FILES:
             if name in rec and rec[name][1] != (ev.input_bin if name == "input.bin" else ev.control_bin):
                 out.append(Finding("paths", "%s/%s" % (rel, name), "a finding's %s is never changed: %s/%s, since %s"
@@ -441,12 +534,12 @@ def run(root, base, tip="HEAD"):
             out.append(Finding("paths", rel + "/finding.yaml", "a finding's recorded runs are never changed: "
                                "%s/finding.yaml %s.%s, since %s" % (rel, which, b, first[:10])))
     for (p, h, b), found in sorted(pin_anchors.items(), key=lambda kv: (kv[0][:2], _build_order(kv[0][2]))):
-        urel = "findings/%s/unpatched.yaml" % p
+        urel = now.unpatched_at.get(p, pinned_at[p])
         (first, pin), split = _first_once(found, new, lambda a, b: ["pin"] if a != b else [])
         for c, _ in split:
             out.append(Finding("paths", urel, "a finding's unpatched pins are first recorded once: %s harnesses.%s.%s "
                                "was first pinned by %s and by %s, which differ" % (urel, h, b, first[:10], c[:10])))
-        u = now_files.get(p + "/unpatched.yaml")
+        u = now.unpatched.get(p)
         doc = git.yaml(u) if u is not None else None
         if split or not isinstance(doc, dict):
             continue   # its anchors disagree, or deleted (above), or not YAML: lint's loader refuses it in the tree

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libpcap
 harness: fuzz_both
-rocq: OssFuzzTheorems.libpcap.fuzz_both
+rocq: OSSVerify.libpcap.fuzz_both
 origin: upstream
 summary: Byte 0 = filter length; the filter string is pcap_compile-d against a pcap file built from the
   rest (written to /tmp), and pcap_offline_filter is evaluated on every packet; the verdict is only fprintf-ed

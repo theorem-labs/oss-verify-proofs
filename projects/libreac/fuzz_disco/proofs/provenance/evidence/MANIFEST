@@ -1,0 +1,15 @@
+# provenance/evidence/ of libreac/fuzz_disco: what a reader needs to re-derive the numbers of the shipped proofs.
+# Form: <path> <kind> <sha256> <role>; kind = script | input | table | gate. Each slice directory has its own MANIFEST.
+# slice core-A/ (63 files, MANIFEST sha256 0d6549235af8eed611969ffacce8cce739060f77e90659d55703676b939ff7b9): image A (fuzz_disco.asan) runtime and allocator core, lib/A
+# slice core-Y/ (62 files, MANIFEST sha256 b2b0bcb8a498a7f8229a0966cf6f214d32d2e77410749b3ced0f51bc1b1883bb): image B (fuzz_disco.asan-ubsan) runtime and allocator core, lib/Reusable
+# slice g9-gxa/ (61 files, MANIFEST sha256 ea2d534acf7731d68aa01f74c6c958243a9702ee56239125cdf655ae8c9dfc54): relocated formatted-output layer and memory-interceptor layers, both ASan images
+# slice gates-A/ (30 files, MANIFEST sha256 85b46f76c05cf443bb9fca71be29ca76a2b9e17dbc5d18129e33bb82da7f5678): gate records on image A, re-run against its pin
+# slice gates-Y/ (31 files, MANIFEST sha256 d35af4dbb97835397e97b6a84c2dbfc500327b2f1b28a9f0085dcf1aa7a20a20): gate records on image B, re-run against its pin
+# slice gates-tree/ (8 files, MANIFEST sha256 3a95188f1a33dde614934b8dc5eaf481deaec3d58e3014840fa66070ab0dc397): whole-tree records: settings check, per-segment image match, start-up overlap check
+# slice image-facts/ (31 files, MANIFEST sha256 1255bc75585ea44976138ade7eac5abfacfcb1900de0d3d4d70c94b443e664d2): program listings and read-only ranges of both ASan images
+# slice startup-A/ (36 files, MANIFEST sha256 5c5d01e05a80874682ec3b600dd8373c91cd347cc1ccbfbf9197664dfe6fd6f8): image A start-up data
+# slice startup-Y/ (63 files, MANIFEST sha256 f12e518c4d15e70e8de685c9a802ca075397d584f542af7bb7b993cd96eb2836): image B start-up data
+# slice yh03/ (15 files, MANIFEST sha256 d48f5fb77e02eb5003fc5a84bdb1b15e01592b4697e08123fa63e7a4da6b7a96): address tables of the plain and ubsan builds
+README.md doc 5a502fdbcd2a8d4b34ca1b662291007fa7aa7285cb5fb1081a834b142d67e531 what this directory holds, and the note on internal commit ids in its run records
+mk_top_manifest.py script 1bf6786fd2123ffca793ef52900a897260e283644c38a765b9a9c9f8fa9eacf6 writes this MANIFEST from the files of this directory and the slice MANIFESTs
+untime-removed.tsv table c59a01652ff4825d4b369e554b6feeb1931e70cf408050f35fddc65f2a6f7118 timeout tokens removed from proof tactics and their marker comments, one row per site, written by the untime tool

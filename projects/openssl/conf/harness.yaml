@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: conf
-rocq: OssFuzzTheorems.openssl.conf
+rocq: OSSVerify.openssl.conf
 origin: upstream
 summary: NCONF_load_bio() on the input; result ignored.
 entry: FuzzerTestOneInput

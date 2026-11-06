@@ -6,22 +6,22 @@
  (deps (:elf %{project_root}/projects/wireshark/bin/fuzzshark_media_type-json/fuzzshark_media_type-json.plain))
  (action
   (run elf-snapshot %{elf} Plain.v --prefix Plain --module-name M
-       --namespace OssFuzzTheorems.wireshark.fuzzshark_media_type_json.images)))
+       --namespace OSSVerify.wireshark.fuzzshark_media_type_json.images)))
 (rule
  (targets Ubsan.v Ubsan_seg_000_chunk_000.hex Ubsan_seg_000_chunk_001.hex Ubsan_seg_000_chunk_002.hex Ubsan_seg_000_chunk_003.hex Ubsan_seg_001_chunk_000.hex Ubsan_seg_001_chunk_001.hex Ubsan_seg_001_chunk_002.hex Ubsan_seg_001_chunk_003.hex Ubsan_seg_002_chunk_000.hex Ubsan_seg_002_chunk_001.hex Ubsan_seg_003_chunk_000.hex Ubsan_seg_003_chunk_001.hex Ubsan_seg_003_chunk_002.hex)
  (deps (:elf %{project_root}/projects/wireshark/bin/fuzzshark_media_type-json/fuzzshark_media_type-json.ubsan))
  (action
   (run elf-snapshot %{elf} Ubsan.v --prefix Ubsan --module-name M
-       --namespace OssFuzzTheorems.wireshark.fuzzshark_media_type_json.images)))
+       --namespace OSSVerify.wireshark.fuzzshark_media_type_json.images)))
 (rule
  (targets Asan.v Asan_seg_000_chunk_000.hex Asan_seg_000_chunk_001.hex Asan_seg_000_chunk_002.hex Asan_seg_000_chunk_003.hex Asan_seg_000_chunk_004.hex Asan_seg_000_chunk_005.hex Asan_seg_000_chunk_006.hex Asan_seg_000_chunk_007.hex Asan_seg_000_chunk_008.hex Asan_seg_000_chunk_009.hex Asan_seg_000_chunk_010.hex Asan_seg_001_chunk_000.hex Asan_seg_001_chunk_001.hex Asan_seg_001_chunk_002.hex Asan_seg_001_chunk_003.hex Asan_seg_001_chunk_004.hex Asan_seg_001_chunk_005.hex Asan_seg_002_chunk_000.hex Asan_seg_002_chunk_001.hex Asan_seg_002_chunk_002.hex Asan_seg_003_chunk_000.hex Asan_seg_003_chunk_001.hex Asan_seg_003_chunk_002.hex Asan_seg_003_chunk_003.hex Asan_seg_003_chunk_004.hex Asan_seg_003_chunk_005.hex Asan_seg_003_chunk_006.hex Asan_seg_003_chunk_007.hex Asan_seg_003_chunk_008.hex Asan_seg_003_chunk_009.hex Asan_seg_003_chunk_010.hex Asan_seg_003_chunk_011.hex Asan_seg_003_chunk_012.hex Asan_seg_003_chunk_013.hex Asan_seg_003_chunk_014.hex Asan_seg_003_chunk_015.hex Asan_seg_003_chunk_016.hex)
  (deps (:elf %{project_root}/projects/wireshark/bin/fuzzshark_media_type-json/fuzzshark_media_type-json.asan))
  (action
   (run elf-snapshot %{elf} Asan.v --prefix Asan --module-name M
-       --namespace OssFuzzTheorems.wireshark.fuzzshark_media_type_json.images)))
+       --namespace OSSVerify.wireshark.fuzzshark_media_type_json.images)))
 (rule
  (targets AsanUbsan.v AsanUbsan_seg_000_chunk_000.hex AsanUbsan_seg_000_chunk_001.hex AsanUbsan_seg_000_chunk_002.hex AsanUbsan_seg_000_chunk_003.hex AsanUbsan_seg_000_chunk_004.hex AsanUbsan_seg_000_chunk_005.hex AsanUbsan_seg_000_chunk_006.hex AsanUbsan_seg_000_chunk_007.hex AsanUbsan_seg_000_chunk_008.hex AsanUbsan_seg_000_chunk_009.hex AsanUbsan_seg_000_chunk_010.hex AsanUbsan_seg_001_chunk_000.hex AsanUbsan_seg_001_chunk_001.hex AsanUbsan_seg_001_chunk_002.hex AsanUbsan_seg_001_chunk_003.hex AsanUbsan_seg_001_chunk_004.hex AsanUbsan_seg_001_chunk_005.hex AsanUbsan_seg_002_chunk_000.hex AsanUbsan_seg_002_chunk_001.hex AsanUbsan_seg_002_chunk_002.hex AsanUbsan_seg_003_chunk_000.hex AsanUbsan_seg_003_chunk_001.hex AsanUbsan_seg_003_chunk_002.hex AsanUbsan_seg_003_chunk_003.hex AsanUbsan_seg_003_chunk_004.hex AsanUbsan_seg_003_chunk_005.hex AsanUbsan_seg_003_chunk_006.hex AsanUbsan_seg_003_chunk_007.hex AsanUbsan_seg_003_chunk_008.hex AsanUbsan_seg_003_chunk_009.hex AsanUbsan_seg_003_chunk_010.hex AsanUbsan_seg_003_chunk_011.hex AsanUbsan_seg_003_chunk_012.hex AsanUbsan_seg_003_chunk_013.hex AsanUbsan_seg_003_chunk_014.hex AsanUbsan_seg_003_chunk_015.hex AsanUbsan_seg_003_chunk_016.hex)
  (deps (:elf %{project_root}/projects/wireshark/bin/fuzzshark_media_type-json/fuzzshark_media_type-json.asan-ubsan))
  (action
   (run elf-snapshot %{elf} AsanUbsan.v --prefix AsanUbsan --module-name M
-       --namespace OssFuzzTheorems.wireshark.fuzzshark_media_type_json.images)))
+       --namespace OSSVerify.wireshark.fuzzshark_media_type_json.images)))

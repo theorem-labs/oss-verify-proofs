@@ -1,0 +1,391 @@
+# roundconst-gate v2 32b39f3b34e9: every non-SAME row of R2 (the lane report) and of R1 (the run's gate-raw.tsv), read by hand
+# per value: the decision, then one line per distinct shape of context (stage-out file:line | text around the numeral).
+# R1 line numbers are port_addr_check's (port_core ran it on a stage-out copy without the provenance line): stage-out line = R1 line + 1.
+## R2: 1147 non-SAME rows, 24 values
+0x53  6 rows (MISMATCH 6): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AE3m.v:460 | Definition n_af6 : sstate := Eval vm_compute in vf_after_icpt 83 n_st6 RA_FX OSP_FX 0 [].
+     A/AE3m.v:1290 | cpt_memcpy_ext B LAWS AMEMCPY W E3 n_st6 ms6 _ ly S sp0 n_r06 n_rest6 83 RA_FX OSP_FX
+     A/AE3m.v:1310 | change (vf_after_icpt 83 n_st6 RA_FX OSP_FX 0 []) with n_af6 in
+     A/AE3m.v:1322 | remember (havoc E3 83 (map (getr (ms_regs ms6')) CLOB)) as E4
+     A/AE3m.v:1323 | assert (OLD4 : forall j, (j < 83)%nat -> ew E4 j = ew E3 j) by (intros j
+     Reusable/YO07.v:113 | if flag rattr 1 && negb (flag rattr 2) then [33; 255; 11; 78; 69; 84; 83; 67; 65; 80; 69; 50; 46; 48; 3; 1] ++ u
+0x6c  13 rows (MISMATCH 13): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AB16.v:25 | _bv 8 0x3c; Z_to_bv 8 0x73; Z_to_bv 8 0x65; Z_to_bv 8 0x61; Z_to_bv 8 0x6c; Z_to_bv 8 0x65; Z_to_bv 8 0x64; Z_to_b
+     A/AE20.v:211 | msteps segs (mkst regs (at_ base 108) (mem1 ret) rom) (mkst regs' ret (mem1
+     A/AE20.v:264 | - eapply (runs_trans segs _ (fun r => mkst r (at_ base 108) (mem1 ret) rom)
+     A/AE3j.v:30 | Definition lit_open1 : list Z := [99; 108; 105; 58; 32; 99; 97; 110; 110; 111; 11
+     A/AE3k.v:30 | Definition lit_rderr1 : list Z := [99; 108; 105; 58; 32; 114; 101; 97; 100; 32; 10
+     A/AE3l.v:32 | [99; 108; 105; 58; 32; 105; 110; 112; 117; 116;
+     A/AE3l.v:36 | Definition vr_zs1 : list Z := [99; 108; 105; 58; 32; 105; 110; 112; 117; 116;
+     A/AFfw.v:50 | t 0) (xpin 17 (SOff 110%nat 0) (xpin 7 (SOff 109%nat 0) (xpin 5 (SOff 108%nat 0)
+     A/AFgf.v:375 | apply (st_ok_forget_reg En5 _ _ 5%bv 108) in HS; [| intros X; discriminate | vm_
+     A/AFk8.v:52 | Definition hJ2 : nat := 108.
+0xa6  23 rows (MISMATCH 23): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AD1r.v:32 | Definition cond_BRt : acond := mkAC BC_NE (SOff 166 (-1)) (SLit 0).
+     A/AD1r.v:33 | Definition cond_BRf : acond := mkAC BC_EQ (SOff 166 (-1)) (SLit 0).
+     A/AD1r.v:111 | Lemma L2_fact_obls_eq : fact_obls LT165 L_facts = [(166%nat, fact_r)]. Proof. vm_compute. refle
+     A/AD1r.v:121 | /\ sr_get (ss_regs S_L2) 21%bv = SOff 166 (-1).
+     A/AD1r.v:472 | st_ok tfibsegs E S_L2 (restrict (w_H W) ms) -> bv_unsigned (ew E 166) = r -> 2 <= r <= 4 ->
+     A/AD1r.v:474 | st_ok tfibsegs E' S_L (restrict (w_H W) ms) /\ bv_unsigned (ew E' 166) = r - 1 /\ (forall j, (j < 165)%nat ->
+     A/AD1r.v:485 | assert (V65' : bv_unsigned (ew E' 166) = r - 1).
+     A/AD1r.v:486 | { change 166%nat with (165 + 1)%nat. rewrite (NEW 1%
+     A/AD1r.v:576 | bv_unsigned (ew E 164) = q -> bv_unsigned (ew E 166) = Z.of_nat r ->
+     A/AD1r.v:740 | assert (E4_65 : bv_unsigned (ew E4 166) = Z.of_nat (Datatypes.S r)) by (rewrit
+     A/AD1r.v:789 | { apply (st_ok_add_cond tfibsegs E4 S_BR _ BC_EQ (SOff 166 (-1)) (SLit 0) HSB). cbn [ac_c ac_a ac_
+     A/AD1r.v:957 | { apply (st_ok_add_cond tfibsegs E4 S_BR _ BC_NE (SOff 166 (-1)) (SLit 0) HSB). cbn [ac_c ac_a ac_
+     ... 7 more shapes
+0xbb  1 rows (MISMATCH 1): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AD2f.v:233 | SOff A_BUF 2; SOff A_BUF 0; SOff 180 0; SOff 185 0; SOff 186 0; SOff 187 0; SOff 188 0; SOff 189 0;
+0xce  3 rows (MISMATCH 3): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AD27.v:35 | Definition X_a0 : list sv := [SLit 2; SLit 2; SOff 206 0; SLit 2; SLit 2].
+     A/AD27.v:691 | - cbn [nth X_a0 sv_denot]. rewrite Z.add_0_r. subst E2. change 206%nat with (KJ + 6)%nat. rewrite (E_J_new
+     A/AD28.v:67 | 0 (-128), SLit 0x81054); (SLit 2, SOff 0 (-128), SLit 0x81054); (SOff 206 0, SOff 0 (-48), SLit 0x932fc);
+0xd0  182 rows (MISMATCH 182): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AD1r.v:38 | S_FQr : sstate := Eval vm_compute in drv_after S_FQ rsFQ K_FQ RA_FQ (-208).
+     A/AD1r.v:87 | Lemma S_FQr_eq : drv_after S_FQ rsFQ K_FQ RA_FQ (-208) = S_FQr. Proof. vm_compute. reflexivit
+     A/AD1r.v:92 | Lemma rsFQ_eq : rsFQ = tl L_mem0 /\ ss_mem S_XM = WIN (-208) :: rsFQ /\ ss_mem S_FQr = WIN (-208) :
+     A/AD1r.v:92 | tl L_mem0 /\ ss_mem S_XM = WIN (-208) :: rsFQ /\ ss_mem S_FQr = WIN (-208) :: rsFQ /\ concat XM_pieces = CM_mem
+     A/AD1r.v:96 | Lemma XM_sub_chk : subregions_chk CM_mem (WIN (-208) :: rsFQ) = true /\ length XM_pieces =
+     A/AD1r.v:96 | M_mem (WIN (-208) :: rsFQ) = true /\ length XM_pieces = length (WIN (-208) :: rsFQ). Proof. vm_compute. split; re
+     A/AD1r.v:104 | /\ ss_atoms_lt K_FQ S_FQ = true /\ regions_wf (WIN (-208) :: rsFQ) = true /\ no_cdata rsFQ = tru
+     A/AD1r.v:104 | ) :: rsFQ) = true /\ no_cdata rsFQ = true /\ mem_atoms_lt K_FQ (WIN (-208) :: rsFQ) = true
+     A/AD1r.v:105 | /\ forallb (drv_keep_ok (-208)) rsFQ = true /\ forallb drv_win_ok (ss
+     A/AD1r.v:106 | /\ forallb drv_win_ok (WIN (-208) :: rsFQ) = true /\ forallb so_win_ok (
+     A/AD1r.v:106 | lb drv_win_ok (WIN (-208) :: rsFQ) = true /\ forallb so_win_ok (WIN (-208) :: rsFQ) = true
+     A/AD1r.v:112 | egs S_L) 1%bv = SLit RA_LLVMF /\ sr_get (ss_regs S_L) 2%bv = SOff 0 (-208) /\ sr_get (ss_regs S_L) 3%bv = SLit TF
+     ... 146 more shapes
+0x102  1 rows (MISMATCH 1): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     Reusable/YG0l.v:115 | kBatchSlots * (Z.of_nat (length (all_batches s)) - 258) <= Z.of_nat (length (st_chunks s)).
+0x14c  4 rows (MISMATCH 4): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AE3k.v:71 | _compute in YP06.add_cond vd1_st9 (mkAC BC_NE (SAlu ALU_ADD (SOff 2 (-332)) (SOff 70 0)) (SOff 2 (-352))).
+     A/AE3k.v:76 | 1_af8 = (vd1_st9, RS_stopped (SR_branch BC_EQ (SAlu ALU_ADD (SOff 2 (-332)) (SOff 70 0)) (SOff 2 (-352)))). Proof
+     A/AE3k.v:574 | t_ok_add_cond_neg tfibsegs E7 vd1_st9 _ BC_EQ (SAlu ALU_ADD (SOff 2 (-332)) (SOff 70 0)) (SOff 2 (-352)) HS9 ltac
+     A/AE3k.v:575 | e (YP06.add_cond vd1_st9 (mkAC (neg_bc BC_EQ) (SAlu ALU_ADD (SOff 2 (-332)) (SOff 70 0)) (SOff 2 (-352)))) with v
+0x188  2 rows (MISMATCH 2): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AFic.v:30 | Hypothesis Hbsl : TFIB_INST + 296 <= bsl <= TFIB_INST + 392.
+     A/AFjm.v:370 | Lemma BSLv_range : TFIB_INST + 296 <= BSLv <= TFIB_INST + 392.
+0x279  1 rows (MISMATCH 1): word count 633 of build_table 0x322b8: a1b RANGE-SAME
+     A/AB1q.v:13 | at (build_table tfibsegs 0x34fc4 96%nat (build_table tfibsegs 0x322b8 633%nat TEmpty))))))))))))))))))))).
+0x340  4 rows (MISMATCH 4): R_A3 length 832 (the same 832 bytes [oft_arg0, __start_asan_globals) in both images) and an offset inside musl memcpy
+     A/AD28.v:294 | unfold R_A3 in Hr. change 690496 with (689664 + 832) in Hr.
+     A/AD28.v:295 | split; [unfold stdout_img | ]; eapply (img_at_of_cimg E H m 689664 832); try exact Hr; unfold STDOUT_LO, STDOU
+     A/AD2d.v:132 | d STDOUT_LO, STDOUT_HI in Ha. apply (img_cells_view I E H m rs 689664 832 HI HM Hsub); [vm_compute; tauto | lia].
+     A/AE3c.v:1361 | fin regs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x340)) (M i).
+0x47a  1 rows (MISMATCH 1): word count 1146 of the code range (0x99a4c, 1146%nat): a1b RANGE-SAME
+     A/AE34.v:23 | ; (0x99098, 25%nat); (0x990fc, 87%nat); (0x98f08, 435%nat); (0x99a4c, 1146%nat); (0x9cb5c, 47%nat);
+0x810  8 rows (MIXED 8): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AFl0.v:23 | Definition BST_SIZE : Z := 2064.
+     A/AFl2.v:58 | Definition R_O2 : YP09.region := YP09.mkRegion (Some 10%nat) 2056 2064 2056 2064 [].
+     A/AFl2.v:58 | tion R_O2 : YP09.region := YP09.mkRegion (Some 10%nat) 2056 2064 2056 2064 [].
+     A/AFl2.v:80 | Definition R_O2' : YP09.region := YP09.mkRegion (Some 10%nat) 2056 2064 2056 2064 [YP09.mkChunk 2056 (CVal 8 (S
+     A/AFl2.v:80 | ion R_O2' : YP09.region := YP09.mkRegion (Some 10%nat) 2056 2064 2056 2064 [YP09.mkChunk 2056 (CVal 8 (SOff 12%nat
+     A/AFl4.v:98 | _lo ly <= sp - 144 /\ sp <= bp - 16 /\ ly_stk_lo ly <= this /\ this + 2064 <= bp - 16 /\ (this + 2064 <= sp - 144
+     A/AFl4.v:98 | bp - 16 /\ ly_stk_lo ly <= this /\ this + 2064 <= bp - 16 /\ (this + 2064 <= sp - 144 \/ sp <= this) /\
+     A/AFl4.v:241 | 0); (Some 10%nat, 8, 12); (Some 10%nat, 16, 24); (Some 10%nat, 2056, 2064); (Some aT, t_unwinding, t_unwinding +
+0x8f8  15 rows (MISMATCH 15): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AE2t.v:134 | /\ ss_pc eA2 = FP_LW /\ reg_is eA2 24 (SOff 2 (-2296)) = true /\ YP09.r_base rA2 = Some 2%na
+     A/AE2t.v:470 | l kk, 0 <= kk < 4 -> mbyte tfibsegs (mrestrict H (ms_mem msb)) (sp0 - 2296 + (-28) + kk) = Some (Z_to_bv 8 0)).
+     A/AE2t.v:483 | replace (sp0 - 2296 + -28 + kk) with (sp0 + (-2324 + kk)) b
+     A/AE2t.v:486 | (LWrs : sv_denot EE (sr_get (ss_regs eA2) 24%bv) = Z_to_bv 64 (sp0 - 2296)).
+     A/AE2t.v:489 | ing (m_vm_lazy md) matb md) 11%bv 24%bv (4068%bv : bv 12) W_LW (sp0 - 2296) 32
+0x900  1 rows (MISMATCH 1): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AD1v.v:271 | spZ regs mod 16 = 0 /\ sp_window_lo - 2304 <= spZ regs <= sp_window_hi /\ ly_top l
+0xa00  1 rows (MISMATCH 1): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     Reusable/YG0f.v:221 | Definition t_cache_stats : Z := 208 + 2560.
+0xa90  10 rows (MISMATCH 10): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AFhm.v:74 | Lemma TABW_range : forall T a, TABW T a -> T + 292 <= a < T + 2704.
+     A/AFhm.v:304 | (forall a, bv_unsigned (ew E rT) + 292 <= a < bv_unsigned (ew E rT) + 2704 -> writable_at tfibsegs m a) ->
+     A/AFhm.v:317 | all_disjoint E (YP09.mkRegion (Some rT) 292 2704 0 0 []) l -> all_disjoint E r l.
+     A/AFhn.v:71 | Lemma Z_Thi : forall a, T + 2704 <= a -> ~ TABW T a.
+     A/AFkk.v:696 | Lemma SPAN3_disj : all_disjoint E0 (YP09.mkRegion (Some rT) 292 2704 0 0 []) (dropAt 35 REG0R3).
+     A/AFkl.v:408 | (forall a, T + 292 <= a < T + 2704 -> ~ WINU a) /\
+     A/AFkl.v:435 | all_disjoint E0 (YP09.mkRegion (Some rT) 292 2704 0 0 []) (dropAt 35 REG0X) ->
+     A/AFkx.v:537 | Lemma SPAN_disj : all_disjoint E0 (YP09.mkRegion (Some rT) 292 2704 0 0 []) (dropAt 35 REG0R).
+0x1200  3 rows (MISMATCH 3): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     Reusable/YG0t.v:829 | E0 : shadow_addr (ly_F ly + kFakeFramesOff) = SHADOW_OFF + qf * 512 + 4608).
+     Reusable/YG0t.v:830 | . rewrite Hqf. replace (qf * 4096 + (4096 + 32768)) with ((qf * 512 + 4608) * 8) by lia. rewrite Z_div_mult by lia
+     Reusable/YG0t.v:833 | + qo * 8 + i) with (aeval B ly (ASh (AF kFakeFramesOff)) + (qo * 8 - 4608 + i)) by (cbn [aeval]; rewrite E0; lia)
+0x17f0  9 rows (MISMATCH 9): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AFfc.v:101 | Lemma hdr_facts : hdr = MAP + 6128 /\ 1 <= ck_n k < 2 ^ 28 /\ hdr + 16 + c
+     A/AFig.v:42 | runto 0x53a30 (arm BC_LTU false (SOff aMAP 6128) (SOff aMAP 4112) (runto 0x32a24 (arm B
+     A/AFig.v:42 | MAP 6128) (SOff aMAP 4112) (runto 0x32a24 (arm BC_EQ false (SOff aMAP 6128) (SOff aMAP 4096) (runto 0x32a1c a)))).
+     A/AFjq.v:714 | s_arm HR BC_EQ false (SOff aMAP 6128) (SOff aMAP 4096).
+     A/AFjq.v:716 | rtA tfibtbl_rtA_ok 0x32a24 (runto 0x32a24 (arm BC_EQ false (SOff aMAP 6128) (SOff aMAP 4096) (runto 0x32a1c (ss_af
+     A/AFjq.v:717 | s_arm HR BC_LTU false (SOff aMAP 6128) (SOff aMAP 4112).
+0x2400  14 rows (MISMATCH 14): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AD1l.v:107 | assert (HFPI1 : AE2t.FPI_STK = 9216) by reflexivity; assert (HFPI2 : AE2u.F
+     A/AD1l.v:107 | : AE2t.FPI_STK = 9216) by reflexivity; assert (HFPI2 : AE2u.FPI_STK = 9216) by reflexivity;
+     A/AD1l.v:108 | assert (HFPI3 : AE2w.FPI_STK = 9216) by reflexivity; assert (HDS : DIAG_STK
+     A/AD1o.v:114 | assert (HPF : PF_STK = 9216) by reflexivity. assert (HVP : VPI_STK
+     A/AD1w.v:127 | Definition PF_STK : Z := 9216.
+     A/AE2t.v:36 | Definition FPI_STK : Z := 9216.
+     A/AFjk.v:558 | assert (D3 : 9216 <= MSv / 8) by (apply Z.div_le_lower_bo
+     A/AFjk.v:581 | { right. clear - Z8 Z10 Z7 Z1 MZ. unfold AFjm.SMv. assert (9216 <= MSv / 8) by (apply Z.div_le_lower_bo
+     A/AFjk.v:586 | <? SMv + MSv / 8) = true) by (apply Z.ltb_lt; clear - Z8 MZ; assert (9216 <= MSv / 8) by (apply Z.div_le_lower_bo
+     A/AFk1.v:695 | Lemma sm_bounds : 2148231452 <= SMv /\ SMv + 9216 <= SMv + MSv / 8 <= 17594333495296.
+0x4000  70 rows (MIXED 70): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AD1l.v:108 | HFPI3 : AE2w.FPI_STK = 9216) by reflexivity; assert (HDS : DIAG_STK = 16384) by reflexivity;
+     A/AD1x.v:29 | Definition DIAG_STK : Z := 16384.
+     A/AFer.v:92 | Lemma len_L : zlen L <= 16384.
+     A/AFf4.v:117 | mma ARR : In r arr /\ (i < length arr)%nat /\ NoDup arr /\ 1 <= nA <= 16384 /\ 0 <= idx < nA /\
+     A/AFfc.v:128 | RF : In r arr /\ (i < length arr)%nat /\ List.NoDup arr /\ 1 <= nA <= 16384 /\ 0 <= Z.of_nat i < nA.
+     A/AFfi.v:401 | - apply Z.mod_divide; [lia|]. exists (q * 16384 + c * 2 ^ 30 + 939524096 + kold). unfol
+     A/AFgi.v:271 | destruct (Z_lt_le_dec (sp0 - 16384) (p + N8v)); [|left; lia]. destruct (Z_
+     A/AFgi.v:272 | destruct (Z_lt_le_dec (p - 16) (sp0 - 16384)).
+     A/AFgi.v:273 | + destruct (Hp_static (sp0 - 16384)) as [N1 _]; [lia|]. apply N1. lia.
+     A/AFgu.v:64 | (34%nat, mkAF 1 16384 0);
+     A/AFgu.v:79 | fh_n : val_mem tfibsegs m0 (A_ALLOCATOR + 120) 8 n /\ 1 <= n <= 16384;
+     A/AFgv.v:180 | fh_Harr : 0 <= idx < n /\ n <= 16384 /\ qi = q + 8 * idx /\ ql = q + 8 * (n
+     ... 24 more shapes
+0x8000  131 rows (MIXED 131): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/ACfl.v:23 | Definition LLVMF_STK : Z := 32768.
+     A/AD1g.v:31 | Definition eTop : expr := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 4096) (EVar
+     A/AD1g.v:32 | Definition eSp0 : expr := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 16) (EVar 6
+     A/AD1g.v:102 | EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit (-32768)) (EVar 0)) (EMd M_MUL (ELit (-16)) (EV
+     A/AD1g.v:428 | Lemma uSp0 : u eSp0 = 32768 * V 0 + 16 * V 6 /\ 140735340871680 <=
+     A/AD1g.v:431 | assert (Hu : u eSp0 = 32768 * V 0 + 16 * V 6).
+     A/AD1g.v:435 | Lemma uTop : u eTop = 32768 * V 0 + 4096 * V 391 /\ 140735340871680
+     A/AD1g.v:438 | assert (Hu : u eTop = 32768 * V 0 + 4096 * V 391).
+     A/AD1g.v:442 | - replace (32768 * V 0 + 4096 * V 391) with ((8 * V 0 +
+     A/AD1g.v:575 | set (e1 := EMd M_MUL (ELit (-32768)) (EVar 0)). set (e2 := EMd M_MUL (ELit
+     A/AD1g.v:576 | assert (M1 : u e1 = (2 ^ 64 - 32768 * V 0) mod 2 ^ 64).
+     A/AD1g.v:585 | rewrite (Z.mod_small (2 ^ 64 - 32768 * V 0)) by lia.
+     ... 96 more shapes
+0x10000  574 rows (MIXED 574): IMG_LO / PT_LOAD0 start 0x10000: the same in both images (the MIXED names are coincident sizes)
+     A/AB1w.v:594 | Definition tfib_at_img_lo : Z := 0x10000.
+     A/ACeg.v:80 | Lemma tfib_img_range : forall a, in_img tfibsegs a -> 0x10000 <= a < 0x616000.
+     A/ACeg.v:115 | destruct (Z.le_gt_cases (p + req_size n) 0x10000) as [|H1]; [left; lia|].
+     A/ACeg.v:117 | apply (client_byte_not_img B ly S _ (Z.max p 0x10000) M).
+     A/ACeg.v:127 | destruct (Z.le_gt_cases (frame_addr ly cid pos + fs_frame_bytes cid) 0x10000) as [|H1]; [left; lia|].
+     A/ACeg.v:129 | apply (client_byte_not_img B ly S _ (Z.max (frame_addr ly cid pos) 0x10000) M).
+     A/AD1d.v:35 | (epg 292, ELit 4096); (epg 275, ELit 65536); (epg 274, ELit 4096); RINFO_P; (epg 2
+     A/AD1d.v:35 | epg 274, ELit 4096); RINFO_P; (epg 254, ELit 3727360); (epg 109, ELit 65536); IMG_P; STK_P ].
+     A/AD1e.v:138 | change (d109 E) with (dmm E (mk e109 65536 KRW)). apply (extra_of (3 + length (mus
+     A/AD1e.v:232 | apply Z.mod_divide in S2 as [q Hq]; [|lia]. rewrite Hq. replace (q * 65536 + 2 ^ 37) with ((8192 * q + 2 ^ 34) * 8
+     A/AD1f.v:205 | eapply (PG 109%nat 65536 (wzp (d109 E)) eq_refl ltac:(lia)); [un
+     A/AD1f.v:209 | change (65536 / 8) with 8192 in B1. change ((65536 +
+     ... 411 more shapes
+0x20000  70 rows (MISMATCH 70): the 2^17 allocator constants decided in item 4 (a2): kPtrArrayCommit, the 131072-byte shadow of map 500; the PT_LOAD0 span rows were moved by port_core
+     A/AD1d.v:40 | && kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072
+     A/AD1d.v:282 | /\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072 = true
+     A/AD1f.v:192 | eapply (KZ _ 500%nat 1048576 131072 B12 eq_refl HNB ltac:(lia) (proj1 (proj
+     A/AFek.v:35 | (aTOT, mkAF 2 131072 0); (aN, mkAF 1 4097 0); (aHASH, u64f);
+     A/AFel.v:267 | { change (2 ^ 16) with 65536. change (2 ^ 17) with 131072 in Ht. destruct (Z_lt_le_dec t 65536);
+     A/AFif.v:100 | SLit 131072; SLit 3; SLit 50; SLit 1844674407370955
+     A/AFjt.v:590 | sr_get (ss_regs S_V) 10%bv = TQ /\ sr_get (ss_regs S_V) 11%bv = SLit 131072 /\
+     A/AFjt.v:598 | Lemma QR_facts : idx = res -> QSv = Qb + 8 * res /\ QSv mod 131072 = Qb mod 131072 /\ QSv mod 4096 = 0 /\
+     A/AFjt.v:598 | QR_facts : idx = res -> QSv = Qb + 8 * res /\ QSv mod 131072 = Qb mod 131072 /\ QSv mod 4096 = 0 /\ (4096 <= Qb <= Q
+     A/AFjt.v:598 | 96 = 0 /\ (4096 <= Qb <= QSv /\ zone3cases Qb kPtrArrayResv) /\ QSv + 131072 <= Qb + kPtrArrayResv /\
+     A/AFjt.v:599 | + kPtrArrayResv <= ASAN_CEIL /\ (forall a, QR a <-> QSv <= a < QSv + 131072).
+     A/AFjt.v:605 | plit. { rewrite E1, Hq. replace (Qb + 8 * (q * 16384)) with (Qb + q * 131072) by zlia. rewrite Z.add_mod, Z_mod_mult
+     ... 55 more shapes
+## R1: 604 non-SAME rows, 44 values
+0x53  6 rows (MISMATCH 6): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AE3m.v:460 | Definition n_af6 : sstate := Eval vm_compute in vf_after_icpt 83 n_st6 RA_FX OSP_FX 0 [].
+     A/AE3m.v:1290 | cpt_memcpy_ext B LAWS AMEMCPY W E3 n_st6 ms6 _ ly S sp0 n_r06 n_rest6 83 RA_FX OSP_FX
+     A/AE3m.v:1310 | change (vf_after_icpt 83 n_st6 RA_FX OSP_FX 0 []) with n_af6 in
+     A/AE3m.v:1322 | remember (havoc E3 83 (map (getr (ms_regs ms6')) CLOB)) as E4
+     A/AE3m.v:1323 | assert (OLD4 : forall j, (j < 83)%nat -> ew E4 j = ew E3 j) by (intros j
+     Reusable/YO07.v:113 | ++ (if flag rattr 1 && negb (flag rattr 2) then [33; 255; 11; 78; 69; 84; 83; 67; 65; 80; 69; 50; 46; 48; 3; 1] ++ u16le numLoops ++ [0] else []).
+0x6c  17 rows (MISMATCH 17): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity; 3 of the rows are code offsets inside a musl function (fetch_word lemmas F_<offset> / FM_<offset>, re-read from the target image by decval stage 2)
+     A/AB16.v:25 | _bv 8 0x3c; Z_to_bv 8 0x73; Z_to_bv 8 0x65; Z_to_bv 8 0x61; Z_to_bv 8 0x6c; Z_to_bv 8 0x65; Z_to_bv 8 0x64; Z_to_b
+     A/AE20.v:211 | msteps segs (mkst regs (at_ base 108) (mem1 ret) rom) (mkst regs' ret (mem1 ret) rom)
+     A/AE20.v:264 | - eapply (runs_trans segs _ (fun r => mkst r (at_ base 108) (mem1 ret) rom)
+     A/AE3a.v:141 | Lemma FM_06c : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x6c)) = Some (0x02f587b3%bv : bv 32).
+     A/AE3c.v:139 | Lemma F_06c : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x6c)) = Some (0x32071463%bv : bv 32).
+     A/AE3d.v:140 | Lemma F_06c : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memset + 0x6c)) = Some (0x00e586b3%bv : bv 32).
+     A/AE3j.v:30 | Definition lit_open1 : list Z := [99; 108; 105; 58; 32; 99; 97; 110; 110; 111; 11
+     A/AE3k.v:30 | Definition lit_rderr1 : list Z := [99; 108; 105; 58; 32; 114; 101; 97; 100; 32; 10
+     A/AE3l.v:32 | [99; 108; 105; 58; 32; 105; 110; 112; 117; 116;
+     A/AE3l.v:36 | Definition vr_zs1 : list Z := [99; 108; 105; 58; 32; 105; 110; 112; 117; 116;
+     A/AFfw.v:50 | t 0) (xpin 17 (SOff 110%nat 0) (xpin 7 (SOff 109%nat 0) (xpin 5 (SOff 108%nat 0)
+     A/AFgf.v:375 | apply (st_ok_forget_reg En5 _ _ 5%bv 108) in HS; [| intros X; discriminate | vm_
+     ... 2 more shapes
+0xa6  23 rows (MISMATCH 23): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AD1r.v:32 | Definition cond_BRt : acond := mkAC BC_NE (SOff 166 (-1)) (SLit 0).
+     A/AD1r.v:33 | Definition cond_BRf : acond := mkAC BC_EQ (SOff 166 (-1)) (SLit 0).
+     A/AD1r.v:111 | Lemma L2_fact_obls_eq : fact_obls LT165 L_facts = [(166%nat, fact_r)]. Proof. vm_compute. refle
+     A/AD1r.v:121 | /\ sr_get (ss_regs S_L2) 21%bv = SOff 166 (-1).
+     A/AD1r.v:472 | st_ok tfibsegs E S_L2 (restrict (w_H W) ms) -> bv_unsigned (ew E 166) = r -> 2 <= r <= 4 ->
+     A/AD1r.v:474 | st_ok tfibsegs E' S_L (restrict (w_H W) ms) /\ bv_unsigned (ew E' 166) = r - 1 /\ (forall j, (j < 165)%nat -> ew E' j = ew E j).
+     A/AD1r.v:485 | assert (V65' : bv_unsigned (ew E' 166) = r - 1).
+     A/AD1r.v:486 | { change 166%nat with (165 + 1)%nat. rewrite (NEW 1%
+     A/AD1r.v:576 | bv_unsigned (ew E 164) = q -> bv_unsigned (ew E 166) = Z.of_nat r ->
+     A/AD1r.v:740 | assert (E4_65 : bv_unsigned (ew E4 166) = Z.of_nat (Datatypes.S r)) by (rewrit
+     A/AD1r.v:789 | { apply (st_ok_add_cond tfibsegs E4 S_BR _ BC_EQ (SOff 166 (-1)) (SLit 0) HSB). cbn [ac_c ac_a ac_
+     A/AD1r.v:957 | { apply (st_ok_add_cond tfibsegs E4 S_BR _ BC_NE (SOff 166 (-1)) (SLit 0) HSB). cbn [ac_c ac_a ac_
+     ... 7 more shapes
+0xbb  1 rows (MISMATCH 1): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AD2f.v:233 | SOff A_BUF 2; SOff A_BUF 0; SOff 180 0; SOff 185 0; SOff 186 0; SOff 187 0; SOff 188 0; SOff 189 0;
+0xce  3 rows (MISMATCH 3): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AD27.v:35 | Definition X_a0 : list sv := [SLit 2; SLit 2; SOff 206 0; SLit 2; SLit 2].
+     A/AD27.v:691 | - cbn [nth X_a0 sv_denot]. rewrite Z.add_0_r. subst E2. change 206%nat with (KJ + 6)%nat. rewrite (E_J_new
+     A/AD28.v:67 | x81054); (SLit 2, SOff 0 (-128), SLit 0x81054); (SOff 206 0, SOff 0 (-48), SLit 0x932fc);
+0xd0  184 rows (MISMATCH 184): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity; 2 of the rows are code offsets inside a musl function (fetch_word lemmas F_<offset> / FM_<offset>, re-read from the target image by decval stage 2)
+     A/AD1r.v:38 | S_FQr : sstate := Eval vm_compute in drv_after S_FQ rsFQ K_FQ RA_FQ (-208).
+     A/AD1r.v:87 | Lemma S_FQr_eq : drv_after S_FQ rsFQ K_FQ RA_FQ (-208) = S_FQr. Proof. vm_compute. reflexivit
+     A/AD1r.v:92 | Lemma rsFQ_eq : rsFQ = tl L_mem0 /\ ss_mem S_XM = WIN (-208) :: rsFQ /\ ss_mem S_FQr = WIN (-208) :
+     A/AD1r.v:92 | tl L_mem0 /\ ss_mem S_XM = WIN (-208) :: rsFQ /\ ss_mem S_FQr = WIN (-208) :: rsFQ /\ concat XM_pieces = CM_mem
+     A/AD1r.v:96 | Lemma XM_sub_chk : subregions_chk CM_mem (WIN (-208) :: rsFQ) = true /\ length XM_pieces =
+     A/AD1r.v:96 | M_mem (WIN (-208) :: rsFQ) = true /\ length XM_pieces = length (WIN (-208) :: rsFQ). Proof. vm_compute. split; re
+     A/AD1r.v:104 | /\ ss_atoms_lt K_FQ S_FQ = true /\ regions_wf (WIN (-208) :: rsFQ) = true /\ no_cdata rsFQ = tru
+     A/AD1r.v:104 | ) :: rsFQ) = true /\ no_cdata rsFQ = true /\ mem_atoms_lt K_FQ (WIN (-208) :: rsFQ) = true
+     A/AD1r.v:105 | /\ forallb (drv_keep_ok (-208)) rsFQ = true /\ forallb drv_win_ok (ss_mem S_VP) = true /\ forallb so_win_ok (ss_mem S_VP) = true
+     A/AD1r.v:106 | /\ forallb drv_win_ok (WIN (-208) :: rsFQ) = true /\ forallb so_win_ok (WIN (-208) :: rsFQ) = true
+     A/AD1r.v:112 | egs S_L) 1%bv = SLit RA_LLVMF /\ sr_get (ss_regs S_L) 2%bv = SOff 0 (-208) /\ sr_get (ss_regs S_L) 3%bv = SLit TF
+     A/AD1r.v:123 | regs S_FQ) 1%bv = SLit RA_FQ /\ sr_get (ss_regs S_FQ) 2%bv = SOff 0 (-208) /\ sr_get (ss_regs S_FQ) 3%bv = SLit T
+     ... 140 more shapes
+0xfc  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0xfc` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:283 | Lemma F_0fc : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0xfc)) = Some (0x01058593%bv : bv 32).
+0x102  1 rows (MISMATCH 1): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     Reusable/YG0l.v:115 | kBatchSlots * (Z.of_nat (length (all_batches s)) - 258) <= Z.of_nat (length (st_chunks s)).
+0x14c  5 rows (MISMATCH 5): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity; 1 of the rows are code offsets inside a musl function (fetch_word lemmas F_<offset> / FM_<offset>, re-read from the target image by decval stage 2)
+     A/AE3c.v:363 | Lemma F_14c : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x14c)) = Some (0x0116a423%bv : bv 32).
+     A/AE3k.v:71 | _compute in YP06.add_cond vd1_st9 (mkAC BC_NE (SAlu ALU_ADD (SOff 2 (-332)) (SOff 70 0)) (SOff 2 (-352))).
+     A/AE3k.v:76 | 1_af8 = (vd1_st9, RS_stopped (SR_branch BC_EQ (SAlu ALU_ADD (SOff 2 (-332)) (SOff 70 0)) (SOff 2 (-352)))). Proof
+     A/AE3k.v:574 | t_ok_add_cond_neg tfibsegs E7 vd1_st9 _ BC_EQ (SAlu ALU_ADD (SOff 2 (-332)) (SOff 70 0)) (SOff 2 (-352)) HS9 ltac
+     A/AE3k.v:575 | e (YP06.add_cond vd1_st9 (mkAC (neg_bc BC_EQ) (SAlu ALU_ADD (SOff 2 (-332)) (SOff 70 0)) (SOff 2 (-352)))) with v
+0x168  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x168` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:391 | Lemma F_168 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x168)) = Some (0x0045a783%bv : bv 32).
+0x188  3 rows (MISMATCH 3): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity; 1 of the rows are code offsets inside a musl function (fetch_word lemmas F_<offset> / FM_<offset>, re-read from the target image by decval stage 2)
+     A/AE3c.v:423 | Lemma F_188 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x188)) = Some (0x00458593%bv : bv 32).
+     A/AFic.v:30 | Hypothesis Hbsl : TFIB_INST + 296 <= bsl <= TFIB_INST + 392.
+     A/AFjm.v:370 | Lemma BSLv_range : TFIB_INST + 296 <= BSLv <= TFIB_INST + 392.
+0x198  3 rows (MISMATCH 3): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity; 1 of the rows are code offsets inside a musl function (fetch_word lemmas F_<offset> / FM_<offset>, re-read from the target image by decval stage 2)
+     A/AB1u.v:183 | Lemma D_11d104 : decode_any W_11d104 = Some (Branch BC_NE 15 16 408, 4%Z).
+     A/AE3c.v:165 | D_084 : decode_any (0x19079c63%bv : bv 32) = Some (Branch BC_NE 15 16 408, 4%Z).
+     A/AE3c.v:439 | Lemma F_198 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x198)) = Some (0x00e68023%bv : bv 32).
+0x19c  3 rows (MISMATCH 3): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity; 1 of the rows are code offsets inside a musl function (fetch_word lemmas F_<offset> / FM_<offset>, re-read from the target image by decval stage 2)
+     A/AB1u.v:358 | Lemma D_11d190 : decode_any W_11d190 = Some (Jal 0 412, 4%Z).
+     A/AE3c.v:305 | Lemma D_110 : decode_any (0x19c0006f%bv : bv 32) = Some (Jal 0 412, 4%Z).
+     A/AE3c.v:443 | Lemma F_19c : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x19c)) = Some (0x00168693%bv : bv 32).
+0x1a0  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x1a0` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:447 | Lemma F_1a0 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x1a0)) = Some (0xfff60613%bv : bv 32).
+0x1a4  1 rows (MIXED 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x1a4` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:451 | Lemma F_1a4 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x1a4)) = Some (0x01058593%bv : bv 32).
+0x1b0  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x1b0` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:463 | Lemma F_1b0 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x1b0)) = Some (0xff45a883%bv : bv 32).
+0x1d0  1 rows (MIXED 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x1d0` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:495 | Lemma F_1d0 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x1d0)) = Some (0x0082d29b%bv : bv 32).
+0x1f8  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x1f8` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:535 | Lemma F_1f8 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x1f8)) = Some (0x0056a423%bv : bv 32).
+0x204  1 rows (MIXED 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x204` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:547 | Lemma F_204 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x204)) = Some (0x01058593%bv : bv 32).
+0x279  1 rows (MISMATCH 1): word count 633 of build_table 0x322b8: a1b RANGE-SAME
+     A/AB1q.v:13 | at (build_table tfibsegs 0x34fc4 96%nat (build_table tfibsegs 0x322b8 633%nat TEmpty))))))))))))))))))))).
+0x27c  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x27c` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:667 | Lemma F_27c : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x27c)) = Some (0x0063e333%bv : bv 32).
+0x280  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x280` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:671 | Lemma F_280 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x280)) = Some (0xff060613%bv : bv 32).
+0x2b4  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x2b4` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:723 | Lemma F_2b4 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2b4)) = Some (0x0025c803%bv : bv 32).
+0x2ec  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x2ec` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:779 | Lemma F_2ec : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2ec)) = Some (0x00568223%bv : bv 32).
+0x314  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x314` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:819 | Lemma F_314 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x314)) = Some (0x00f684a3%bv : bv 32).
+0x338  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x338` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:855 | Lemma F_338 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x338)) = Some (0x00867713%bv : bv 32).
+0x33c  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x33c` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:859 | Lemma F_33c : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x33c)) = Some (0xd20706e3%bv : bv 32).
+0x340  5 rows (MISMATCH 5): R_A3 length 832 (the same 832 bytes [oft_arg0, __start_asan_globals) in both images) and an offset inside musl memcpy; 2 of the rows are code offsets inside a musl function (fetch_word lemmas F_<offset> / FM_<offset>, re-read from the target image by decval stage 2)
+     A/AD28.v:294 | unfold R_A3 in Hr. change 690496 with (689664 + 832) in Hr.
+     A/AD28.v:295 | split; [unfold stdout_img | ]; eapply (img_at_of_cimg E H m 689664 832); try exact Hr; unfold STDOUT_LO, STDOU
+     A/AD2d.v:132 | d STDOUT_LO, STDOUT_HI in Ha. apply (img_cells_view I E H m rs 689664 832 HI HM Hsub); [vm_compute; tauto | lia].
+     A/AE3c.v:863 | Lemma F_340 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x340)) = Some (0x0005c703%bv : bv 32).
+     A/AE3c.v:1361 | fin regs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x340)) (M i).
+0x344  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x344` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:867 | Lemma F_344 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x344)) = Some (0x0015c783%bv : bv 32).
+0x348  1 rows (MIXED 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x348` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:871 | Lemma F_348 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x348)) = Some (0x0025c803%bv : bv 32).
+0x354  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x354` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:883 | Lemma F_354 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x354)) = Some (0x0055c303%bv : bv 32).
+0x360  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x360` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:895 | Lemma F_360 : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x360)) = Some (0x00858593%bv : bv 32).
+0x3cc  1 rows (MISMATCH 1): a code offset inside a musl function (`tfib_A_musl_memcpy + 0x3cc` and the like; the lemma is named F_<offset>): the same function in both images, and each such fetch_word lemma is re-read from the target image by decval stage 2 (476 of 476 fetch rows verified)
+     A/AE3c.v:1003 | Lemma F_3cc : fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3cc)) = Some (0x02061663%bv : bv 32).
+0x47a  1 rows (MISMATCH 1): word count 1146 of the code range (0x99a4c, 1146%nat): a1b RANGE-SAME
+     A/AE34.v:23 | ; (0x99098, 25%nat); (0x990fc, 87%nat); (0x98f08, 435%nat); (0x99a4c, 1146%nat); (0x9cb5c, 47%nat);
+0x810  8 rows (MIXED 8): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AFl0.v:23 | Definition BST_SIZE : Z := 2064.
+     A/AFl2.v:58 | Definition R_O2 : YP09.region := YP09.mkRegion (Some 10%nat) 2056 2064 2056 2064 [].
+     A/AFl2.v:58 | tion R_O2 : YP09.region := YP09.mkRegion (Some 10%nat) 2056 2064 2056 2064 [].
+     A/AFl2.v:80 | Definition R_O2' : YP09.region := YP09.mkRegion (Some 10%nat) 2056 2064 2056 2064 [YP09.mkChunk 2056 (CVal 8 (S
+     A/AFl2.v:80 | ion R_O2' : YP09.region := YP09.mkRegion (Some 10%nat) 2056 2064 2056 2064 [YP09.mkChunk 2056 (CVal 8 (SOff 12%nat
+     A/AFl4.v:98 | ly_stk_lo ly <= sp - 144 /\ sp <= bp - 16 /\ ly_stk_lo ly <= this /\ this + 2064 <= bp - 16 /\ (this + 2064 <= sp - 144 \/ sp <= this) /\
+     A/AFl4.v:241 | 0); (Some 10%nat, 8, 12); (Some 10%nat, 16, 24); (Some 10%nat, 2056, 2064); (Some aT, t_unwinding, t_unwinding +
+0x8f8  15 rows (MISMATCH 15): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AE2t.v:134 | /\ ss_pc eA2 = FP_LW /\ reg_is eA2 24 (SOff 2 (-2296)) = true /\ YP09.r_base rA2 = Some 2%nat.
+     A/AE2t.v:470 | l kk, 0 <= kk < 4 -> mbyte tfibsegs (mrestrict H (ms_mem msb)) (sp0 - 2296 + (-28) + kk) = Some (Z_to_bv 8 0)).
+     A/AE2t.v:483 | replace (sp0 - 2296 + -28 + kk) with (sp0 + (-2324 + kk)) b
+     A/AE2t.v:486 | (LWrs : sv_denot EE (sr_get (ss_regs eA2) 24%bv) = Z_to_bv 64 (sp0 - 2296)).
+     A/AE2t.v:489 | ing (m_vm_lazy md) matb md) 11%bv 24%bv (4068%bv : bv 12) W_LW (sp0 - 2296) 32
+0x900  1 rows (MISMATCH 1): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AD1v.v:271 | Z regs <= sp_window_hi /\ ly_top ly - 6239 <= spZ regs <= ly_top ly + 48 /\
+0xa00  1 rows (MISMATCH 1): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     Reusable/YG0f.v:221 | Definition t_cache_stats : Z := 208 + 2560.
+0xa90  10 rows (MISMATCH 10): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AFhm.v:74 | Lemma TABW_range : forall T a, TABW T a -> T + 292 <= a < T + 2704.
+     A/AFhm.v:304 | (forall a, bv_unsigned (ew E rT) + 292 <= a < bv_unsigned (ew E rT) + 2704 -> writable_at tfibsegs m a) ->
+     A/AFhm.v:317 | all_disjoint E (YP09.mkRegion (Some rT) 292 2704 0 0 []) l -> all_disjoint E r l.
+     A/AFhn.v:71 | Lemma Z_Thi : forall a, T + 2704 <= a -> ~ TABW T a.
+     A/AFkk.v:696 | Lemma SPAN3_disj : all_disjoint E0 (YP09.mkRegion (Some rT) 292 2704 0 0 []) (dropAt 35 REG0R3).
+     A/AFkl.v:408 | (forall a, T + 292 <= a < T + 2704 -> ~ WINU a) /\
+     A/AFkl.v:435 | all_disjoint E0 (YP09.mkRegion (Some rT) 292 2704 0 0 []) (dropAt 35 REG0X) ->
+     A/AFkx.v:537 | Lemma SPAN_disj : all_disjoint E0 (YP09.mkRegion (Some rT) 292 2704 0 0 []) (dropAt 35 REG0R).
+0x1200  3 rows (MISMATCH 3): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     Reusable/YG0t.v:829 | E0 : shadow_addr (ly_F ly + kFakeFramesOff) = SHADOW_OFF + qf * 512 + 4608).
+     Reusable/YG0t.v:830 | . rewrite Hqf. replace (qf * 4096 + (4096 + 32768)) with ((qf * 512 + 4608) * 8) by lia. rewrite Z_div_mult by lia
+     Reusable/YG0t.v:833 | + qo * 8 + i) with (aeval B ly (ASh (AF kFakeFramesOff)) + (qo * 8 - 4608 + i)) by (cbn [aeval]; rewrite E0; lia)
+0x2400  14 rows (MISMATCH 14): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AD1l.v:107 | assert (HFPI1 : AE2t.FPI_STK = 9216) by reflexivity; assert (HFPI2 : AE2u.F
+     A/AD1l.v:107 | : AE2t.FPI_STK = 9216) by reflexivity; assert (HFPI2 : AE2u.FPI_STK = 9216) by reflexivity;
+     A/AD1l.v:108 | assert (HFPI3 : AE2w.FPI_STK = 9216) by reflexivity; assert (HDS : DIAG_STK = 16384) by reflexivity;
+     A/AD1o.v:114 | assert (HPF : PF_STK = 9216) by reflexivity. assert (HVP : VPI_STK
+     A/AD1w.v:127 | Definition PF_STK : Z := 9216.
+     A/AE2t.v:36 | Definition FPI_STK : Z := 9216.
+     A/AFjk.v:558 | assert (D3 : 9216 <= MSv / 8) by (apply Z.div_le_lower_bo
+     A/AFjk.v:581 | { right. clear - Z8 Z10 Z7 Z1 MZ. unfold AFjm.SMv. assert (9216 <= MSv / 8) by (apply Z.div_le_lower_bo
+     A/AFjk.v:586 | <? SMv + MSv / 8) = true) by (apply Z.ltb_lt; clear - Z8 MZ; assert (9216 <= MSv / 8) by (apply Z.div_le_lower_bo
+     A/AFk1.v:695 | Lemma sm_bounds : 2148231452 <= SMv /\ SMv + 9216 <= SMv + MSv / 8 <= 17594333495296.
+0x4000  70 rows (MIXED 70): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/AD1l.v:108 | assert (HFPI3 : AE2w.FPI_STK = 9216) by reflexivity; assert (HDS : DIAG_STK = 16384) by reflexivity;
+     A/AD1x.v:29 | Definition DIAG_STK : Z := 16384.
+     A/AFer.v:92 | Lemma len_L : zlen L <= 16384.
+     A/AFf4.v:117 | mma ARR : In r arr /\ (i < length arr)%nat /\ NoDup arr /\ 1 <= nA <= 16384 /\ 0 <= idx < nA /\
+     A/AFfc.v:128 | RF : In r arr /\ (i < length arr)%nat /\ List.NoDup arr /\ 1 <= nA <= 16384 /\ 0 <= Z.of_nat i < nA.
+     A/AFfi.v:401 | - apply Z.mod_divide; [lia|]. exists (q * 16384 + c * 2 ^ 30 + 939524096 + kold). unfol
+     A/AFgi.v:271 | destruct (Z_lt_le_dec (sp0 - 16384) (p + N8v)); [|left; lia]. destruct (Z_
+     A/AFgi.v:272 | destruct (Z_lt_le_dec (p - 16) (sp0 - 16384)).
+     A/AFgi.v:273 | + destruct (Hp_static (sp0 - 16384)) as [N1 _]; [lia|]. apply N1. lia.
+     A/AFgu.v:64 | (34%nat, mkAF 1 16384 0);
+     A/AFgu.v:79 | fh_n : val_mem tfibsegs m0 (A_ALLOCATOR + 120) 8 n /\ 1 <= n <= 16384;
+     A/AFgv.v:180 | fh_Harr : 0 <= idx < n /\ n <= 16384 /\ qi = q + 8 * idx /\ ql = q + 8 * (n - 1) /\
+     ... 24 more shapes
+0x8000  135 rows (MIXED 135): read by hand below: a model constant (stack frame sizes 9216 / 16384 / 32768, BST_SIZE 2064, t_cache_stats), a struct / frame offset (TFIB_INST + 392, MAP + 6128, T + 292 .. T + 2704, -208, -332, -2296, -2304), a symbolic register / value id (SOff 166, 187, 206, 83, 108), a character code of a string literal (108 = l), or an arithmetic constant; none is an image quantity
+     A/ACfl.v:23 | Definition LLVMF_STK : Z := 32768.
+     A/AD1g.v:31 | Definition eTop : expr := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 4096) (EVar
+     A/AD1g.v:32 | Definition eSp0 : expr := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 16) (EVar 6
+     A/AD1g.v:102 | EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit (-32768)) (EVar 0)) (EMd M_MUL (ELit (-16)) (EVar 6))) (E
+     A/AD1g.v:428 | Lemma uSp0 : u eSp0 = 32768 * V 0 + 16 * V 6 /\ 140735340871680 <=
+     A/AD1g.v:431 | assert (Hu : u eSp0 = 32768 * V 0 + 16 * V 6).
+     A/AD1g.v:435 | Lemma uTop : u eTop = 32768 * V 0 + 4096 * V 391 /\ 140735340871680
+     A/AD1g.v:438 | assert (Hu : u eTop = 32768 * V 0 + 4096 * V 391).
+     A/AD1g.v:442 | - replace (32768 * V 0 + 4096 * V 391) with ((8 * V 0 +
+     A/AD1g.v:575 | set (e1 := EMd M_MUL (ELit (-32768)) (EVar 0)). set (e2 := EMd M_MUL (ELit
+     A/AD1g.v:576 | assert (M1 : u e1 = (2 ^ 64 - 32768 * V 0) mod 2 ^ 64).
+     A/AD1g.v:585 | rewrite (Z.mod_small (2 ^ 64 - 32768 * V 0)) by lia.
+     ... 98 more shapes
+0x20000  71 rows (MISMATCH 71): the 2^17 allocator constants decided in item 4 (a2): kPtrArrayCommit, the 131072-byte shadow of map 500; the PT_LOAD0 span rows were moved by port_core
+     A/AD1d.v:40 | && kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072
+     A/AD1d.v:282 | /\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072 = true
+     A/AD1f.v:192 | eapply (KZ _ 500%nat 1048576 131072 B12 eq_refl HNB ltac:(lia) (proj1 (proj
+     A/AFek.v:35 | (aTOT, mkAF 2 131072 0); (aN, mkAF 1 4097 0); (aHASH, u64f); (aS2, mkAF TFIB_DEPOT (TFIB_DEPOT + 4 * 2 ^ 20 - 4) 2);
+     A/AFel.v:267 | { change (2 ^ 16) with 65536. change (2 ^ 17) with 131072 in Ht. des
+     A/AFif.v:100 | SLit 131072; SLit 3; SLit 50; SLit 18446744073709551615; SLit 0; SLit 222] /\
+     A/AFjt.v:590 | sr_get (ss_regs S_V) 10%bv = TQ /\ sr_get (ss_regs S_V) 11%bv = SLit 131072 /\
+     A/AFjt.v:598 | Lemma QR_facts : idx = res -> QSv = Qb + 8 * res /\ QSv mod 131072 = Qb mod 131072 /\ QSv mod 4096 = 0 /\
+     A/AFjt.v:598 | QR_facts : idx = res -> QSv = Qb + 8 * res /\ QSv mod 131072 = Qb mod 131072 /\ QSv mod 4096 = 0 /\ (4096 <= Qb <= Q
+     A/AFjt.v:598 | 96 = 0 /\ (4096 <= Qb <= QSv /\ zone3cases Qb kPtrArrayResv) /\ QSv + 131072 <= Qb + kPtrArrayResv /\
+     A/AFjt.v:599 | Qb + kPtrArrayResv <= ASAN_CEIL /\ (forall a, QR a <-> QSv <= a < QSv + 131072).
+     A/AFjt.v:605 | plit. { rewrite E1, Hq. replace (Qb + 8 * (q * 16384)) with (Qb + q * 131072) by zlia. rewrite Z.add_mod, Z_mod_mult
+     ... 56 more shapes

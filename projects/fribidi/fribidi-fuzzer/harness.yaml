@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: fribidi
 harness: fribidi-fuzzer
-rocq: OssFuzzTheorems.fribidi.fribidi_fuzzer
+rocq: OSSVerify.fribidi.fribidi_fuzzer
 origin: upstream
 summary: Treats the input as size/4 FriBidiChar code points; fribidi_get_bidi_types, fribidi_get_bracket_types
   and fribidi_get_par_embedding_levels_ex; the returned max level is discarded -- the only assert is `if

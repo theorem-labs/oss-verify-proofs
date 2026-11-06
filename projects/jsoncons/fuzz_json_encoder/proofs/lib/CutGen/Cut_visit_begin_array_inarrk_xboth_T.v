@@ -1,0 +1,107 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.jsoncons.fuzz_json_encoder.images Require Import AsanUbsan.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import PropExec AxSymExec3 AxSymExec3B AxSymExec3Sound AsanPlanCore LibSym SegRun SegPlan SegPlanAuto Pm5PlanKit.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCert CutOps CutHeap CutAuto CutLib Pm5CutKit.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutHeap2 CutAutoX CutCertA CutHeapA CutAutoXA.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.PmEncA Require Import EncSumsXB EncSums2XB.
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Set Printing Width 1000000. Set Printing Depth 1000000.
+Definition ITR : list (Z * nat) := [(751264, 731%nat)].
+Definition IT : itab := itab_of RSEGS ITR.
+Definition BF : nat := 5000.
+Definition NF : nat := 48.
+Definition ENDS : list Z := [753628].
+Definition HDECL : CH.hdecl := CH.HD (13824) (8224) [((EVar 10), (0), ELit 264); ((EVar 10), (304), ELit 96); ((EAlu Instr.ALU_SRL (EVar 10) (ELit 3)), (2147450880), ELit 51); ((EAlu Instr.ALU_SRL (EVar 32) (ELit 3)), (2147450880), ELit 3)] [((EVar 10), (264), ELit 40); ((EVar 10), (400), ELit 4); ((EVar 32), (0), ELit 24)] [(1459384, 1463120)].
+Definition SCELLS : list (Z * Z * Z) := [(1497016, 8, 2147450880)].
+Definition GLO : Z := 1459384.
+Definition GHI : Z := 1463120.
+Definition CSUMS : list CA.callsum := [CAXA.xs_cs (ESA.sinkn_xsumA 1055420 4368 (fun regs _ => if expr_eqb (nth 11 regs (ELit 0)) (ELit 150396) then [KZero (SA (EAlu Instr.ALU_SRL (APC.eaddz (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-32)) (ELit 3)) 2147450880) (ELit (1)); KZero (SA (EAlu Instr.ALU_SRL (APC.eaddz (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-28)) (ELit 3)) 2147450880) (ELit (1)); KZero (SA (EAlu Instr.ALU_SRL (APC.eaddz (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-26)) (ELit 3)) 2147450880) (ELit (1)); KZero (SA (EAlu Instr.ALU_SRL (APC.eaddz (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-8)) (ELit 3)) 2147450880) (ELit (1))] else [])); CAXA.xs_cs (ESA2.hcoln_xsumA 770716 4560 (EVar 32) (fun _ _ => [KZero (SA (EAlu Instr.ALU_SRL (APC.eaddz (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-32)) (ELit 3)) 2147450880) (ELit (1)); KZero (SA (EAlu Instr.ALU_SRL (APC.eaddz (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-28)) (ELit 3)) 2147450880) (ELit (1)); KZero (SA (EAlu Instr.ALU_SRL (APC.eaddz (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-26)) (ELit 3)) 2147450880) (ELit (1)); KZero (SA (EAlu Instr.ALU_SRL (APC.eaddz (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-8)) (ELit 3)) 2147450880) (ELit (1))])); CAXA.xs_cs (ESA2.push_xsumXB 843104 4304 [((EVar 34), 0, (EVar 35)); ((EAlu Instr.ALU_SRL (EVar 34) (ELit 3)), 2147450880, (EAlu Instr.ALU_SRL (APC.eaddz (EVar 35) (7)) (ELit 3)))] (fun _ g => [KDisj (SA (EVar 32) 0) (ELit 24) (SA (EVar g) 0) (EVar (g + 1)%nat)]) 4%nat (fun _ _ => None) [((EVar 10), 272, ELit 8)])].
+Definition XSTOPS : list Z := [].
+Definition APART : list (expr * Z * expr) := CH.stack_reg HDECL :: CH.hd_crs HDECL ++ CH.hd_wrs HDECL.
+(* [comment removed for export] *)
+Definition t0 : CC.cutpoint := CC.CP 751264 [EVar 0; EVar 1; EVar 2; EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; EVar 8; EVar 9; EVar 10; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31]
+  [KImg (1459384) (1463120);
+   KWord (SA (ELit 0) 1497016) 8 (ELit 2147450880);
+   KWord (SA (EVar 10) (8)) 8 (EVar 32);
+   KWord (SA (EVar 10) (16)) 8 (ELit (1435024));
+   KImg (1435000) (1435008);
+   KZero (SA (ELit 0) 2147630255) (ELit 1);
+   KWord (SA (EVar 10) (28)) 1 (ELit (0));
+   KWord (SA (EVar 10) (29)) 1 (ELit (0));
+   KWord (SA (EVar 10) (30)) 1 (ELit (0));
+   KWord (SA (EVar 10) (31)) 1 (ELit (0));
+   KWord (SA (EVar 10) (32)) 1 (ELit (0));
+   KWord (SA (EVar 10) (36)) 1 (ELit (4));
+   KWord (SA (EVar 10) (40)) 8 (ELit (120));
+   KWord (SA (EVar 10) (240)) 4 (ELit (1024));
+   KWord (SA (EVar 10) (264)) 8 (EVar 34);
+   KWord (SA (EVar 10) (272)) 8 (APC.eadd (EVar 34) (APC.escale (32) (EVar 33)));
+   KWord (SA (EVar 10) (280)) 8 (APC.eadd (EVar 34) (EVar 35));
+   KWord (SA (EVar 10) (288)) 4 (APC.escale (4) (EVar 33));
+   KWr (SA (EVar 10) (288)) (ELit (4));
+   KWord (SA (EVar 10) (296)) 8 (EVar 37);
+   KRange (EVar 37) (0) (18446744073709551615);
+   KWr (SA (EVar 10) (296)) (ELit (8));
+   KWord (SA (EVar 10) (320)) 8 (ELit (150396));
+   KWord (SA (EVar 10) (328)) 8 (ELit (2));
+   KWord (SA (EVar 10) (368)) 8 (ELit (150414));
+   KWord (SA (EVar 10) (376)) 8 (ELit (1));
+   KWord (SA (EVar 10) (400)) 4 (EVar 33);
+   KWr (SA (EVar 10) (400)) (ELit (4));
+   KRange (EVar 10) (7094272) (140737479966312);
+   KAlign (EVar 10) (8);
+   KZero (SA (EAlu Instr.ALU_SRL (EVar 10) (ELit 3)) 2147450880) (ELit (51));
+   KDisj (SA (ELit 0) 2147446784) (ELit 17592186048512) (SA (EVar 10) (0)) (ELit (408));
+   KRange (EVar 32) (7094272) (140737479966696);
+   KAlign (EVar 32) (8);
+   KZero (SA (EAlu Instr.ALU_SRL (EVar 32) (ELit 3)) 2147450880) (ELit (3));
+   KDisj (SA (ELit 0) 2147446784) (ELit 17592186048512) (SA (EVar 32) (0)) (ELit (24));
+   KDisj (SA (EVar 2) (-13824)) (ELit (13824)) (SA (EVar 10) (0)) (ELit (408));
+   KDisj (SA (EVar 2) (-13824)) (ELit (13824)) (SA (EVar 32) (0)) (ELit (24));
+   KDisj (SA (EVar 10) (0)) (ELit (408)) (SA (EVar 32) (0)) (ELit (24));
+   KUnk (SA (EVar 2) (-13824)) (ELit (13824));
+   KWr (SA (EVar 2) (-13824)) (ELit (13824));
+   KRange (EVar 2) (140735332496896) (140737488355328);
+   KAlign (EVar 2) (16);
+   KDisj (SA (ELit 0) 2147446784) (ELit 17592186048512) (SA (EVar 2) (-13824)) (ELit (13824));
+   KWord (SA (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-32)) 4 (ELit (1));
+   KWord (SA (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-28)) 1 (ELit (0));
+   KWord (SA (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-27)) 1 (EVar 39);
+   KWord (SA (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-26)) 1 (EVar 40);
+   KRange (EVar 40) (0) (1);
+   KWr (SA (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-26)) (ELit (1));
+   KWord (SA (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-8)) 8 (EVar 36);
+   KRange (EVar 36) (1) (18446744073709551615);
+   KUnk (SA (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-32)) (ELit (32));
+   KRange (EVar 33) (1) (1023);
+   KRange (APC.esub (EVar 35) (APC.escale (32) (EVar 33))) (1) (32768);
+   KRange (EVar 35) (32) (32768);
+   KRange (EVar 34) (4096) (140737479966688);
+   KAlign (EVar 34) (16);
+   KDisj (SA (ELit 0) 2147446784) (ELit 17592186048512) (SA (EVar 34) (0)) (EVar 35);
+   KDisj (SA (EVar 2) (-13824)) (ELit (13824)) (SA (EVar 34) (0)) (EVar 35);
+   KDisj (SA (EVar 10) (0)) (ELit (408)) (SA (EVar 34) (0)) (EVar 35);
+   KDisj (SA (EVar 32) (0)) (ELit (24)) (SA (EVar 34) (0)) (EVar 35);
+   KDisj (SA (EAlu Instr.ALU_SRL (EVar 34) (ELit 3)) 2147450880) (EAlu Instr.ALU_SRL (APC.eaddz (EVar 35) (7)) (ELit 3)) (SA (EAlu Instr.ALU_SRL (EVar 10) (ELit 3)) 2147450880) (ELit 51);
+   KDisj (SA (EAlu Instr.ALU_SRL (EVar 34) (ELit 3)) 2147450880) (EAlu Instr.ALU_SRL (APC.eaddz (EVar 35) (7)) (ELit 3)) (SA (EAlu Instr.ALU_SRL (EVar 32) (ELit 3)) 2147450880) (ELit 3);
+   KZero (SA (EAlu Instr.ALU_SRL (APC.eaddz (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-32)) (ELit 3)) 2147450880) (ELit (1));
+   KZero (SA (EAlu Instr.ALU_SRL (APC.eaddz (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-28)) (ELit 3)) 2147450880) (ELit (1));
+   KZero (SA (EAlu Instr.ALU_SRL (APC.eaddz (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-26)) (ELit 3)) 2147450880) (ELit (1));
+   KZero (SA (EAlu Instr.ALU_SRL (APC.eaddz (APC.eadd (EVar 34) (APC.escale (32) (EVar 33))) (-8)) (ELit 3)) 2147450880) (ELit (1))]
+  48 [((EVar 2), (-13824), ELit 13824); ((EVar 10), (288), ELit 4); ((EVar 10), (296), ELit 8); ((EVar 10), (400), ELit 4); ((APC.eadd (EVar 34) (APC.escale (32) (EVar 33))), (-26), ELit 1)] [] (ELit (1048576)).
+Definition BL0 : CA.blocks := [((EVar 34), (EVar 35))].
+Definition hints0 : list (nat * CC.subst) := [].
+Definition TMPL : list CC.cutpoint := [t0].
+Definition EXPL (c : CC.cutpoint) (h : list (nat * CC.subst)) (first : bool) :=
+  CA.explore RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF A0 NF TMPL ENDS CSUMS 0%nat [2%nat; 4%nat] [] XSTOPS (CC.cp_F c) (CC.cp_meas c) h 1500 first
+    (SS (CC.cp_pc c) (CC.cp_regs c) [] (CC.cp_know c) (CC.cp_nx c)).
+Definition tagcode (t : CC.tag) : Z * Z := match t with CC.TGoto j _ => (1, Z.of_nat j) | CC.TOther pc => (2, pc) end.
+Definition mkcp (c : CC.cutpoint) (o : CA.pout) : CC.cutpoint :=
+  CC.CP (CC.cp_pc c) (CC.cp_regs c) (CC.cp_know c) (CC.cp_nx c) (CC.cp_F c) (map fst (CA.po_leaves o)) (CC.cp_meas c).

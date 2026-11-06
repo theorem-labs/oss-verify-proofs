@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libzip
 harness: zip_read_metadata_fuzzer
-rocq: OssFuzzTheorems.libzip.zip_read_metadata_fuzzer
+rocq: OSSVerify.libzip.zip_read_metadata_fuzzer
 origin: upstream
 summary: 'open the input as an in-memory archive (ZIP_RDONLY) and call every metadata accessor per entry:
   zip_stat_index, external attributes, file comment, extra fields by index (local+central, <=64) and by

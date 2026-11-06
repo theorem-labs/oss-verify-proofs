@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: arrow
 harness: arrow-csv-fuzz
-rocq: OssFuzzTheorems.arrow.arrow_csv_fuzz
+rocq: OSSVerify.arrow.arrow_csv_fuzz
 origin: upstream
 summary: Five readers (serial table, threaded table, streaming, CountRowsAsync with and without newlines_in_values)
   run on the same bytes; their tables / row counts are NOT compared with each other.

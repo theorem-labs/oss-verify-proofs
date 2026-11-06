@@ -1,0 +1,5 @@
+# image A bin/fuzz_uci/fuzz_uci.asan 6ea017c24525 symbols: symtab
+FLAGGED 368 rows in 10 classes: DIFFERENT-SYMBOL=1 GEOMETRY-CHANGED=9 KIND-CHANGED=9 NO-COUNTERPART=1 NON-ADDRESS-CHANGED=174 SAME-VALUE-DIFFERENT-OBJECT=20 STALE-DONOR-CODE-POINTER=1 UNPAIRED-PORTED=40 UNPAIRED-SOURCE=105 UNRESOLVED=8
+# recovering symbols of bin/fuzz_grant/fuzz_grant.asan from 28 donors
+  recovered A c2c7559b29bd: {'functions': 1263, 'objects': 716, 'interpolated_objects': 16, 'gap_filled_functions': 53, 'ambiguous_left': 47, 'disambiguated': 19, 'multi_settled': 5, 'code_bytes': 436616, 'named_code_bytes': 435964}
+INPUTS USED by port_addr_check.py --src stage --dst stage-out --src-image A=bin/fuzz_grant/fuzz_grant.asan --dst-image A=bin/fuzz_uci/fuzz_uci.asan:unstripped/fuzz_uci/fuzz_uci.asan --donors-from donors --paired-only --out raw.tsv --summary --cache gate-cache --fail-on-flags

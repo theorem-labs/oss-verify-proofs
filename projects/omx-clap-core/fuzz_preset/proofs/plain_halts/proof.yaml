@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: omx-clap-core/fuzz_preset/plain_halts
+fingerprint: 8c5c9da7f0a89932346c2234d7649fbb70d202592a09f61991bf2b2f521d2b56

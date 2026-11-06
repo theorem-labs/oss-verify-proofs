@@ -1,0 +1,97 @@
+# the whole-table hand read (the image-A core's writer, row TCA, 2026-10-31) of the libdiginet/fuzz_transport image-A core: one row per
+# cell PAIR (tfib_A_<name> and tfib_E_<name>) whose label the hand read reads as naming a function other than the one
+# at the cell's value, and which tfibtable-A.py's own rule does not catch. The owner's test (2026-10-31): a cell is
+# WRONG when its label NAMES a function that the twin's symbol table has at ANOTHER address (T1), or names a source
+# function (one the compiler inlined: no symbol in the twin) other than the one at its value (T2), AND the label does
+# not also name the function at its value (an X_body cell on X stays). A label that only describes code, or names a
+# class and no function, stays NO-SYMBOL. Image B applies the same test (TFIB-TABLE-B.tsv, sha256 6ff7ed2cc9e2; internal record). tfibtable-A.py reads this file, classes each row's
+# two cells WRONG and writes the test, the named function and where it really is into the note.
+# Test FALSE (the integration owner's decision of 2026-10-31 11:55Z): the label is spelled as a FUNCTION (a C / C++
+# function name, Class_Method, ns_Func), the twin has NO symbol of that name at the cell's value (every symbol, local
+# and global, demangled), and the value starts (_A) / ends (_E) a DIFFERENT function. Thunk labels and plain
+# descriptions claim no symbol and stay. tfibtable-A.py classes a FALSE row's two cells FALSE; the rows are the pairs of
+# its FALSE SCREEN whose label is spelled as a function (records/TFIB-WHOLE-TABLE.md decides each screened pair).
+# name (the cell without tfib_A_ / tfib_E_)	test	the function the label names	where that function really is
+DieOnMapFailure_sealed	FALSE	DieOnMapFailure	no symbol of that name in the twin, local or global
+SealedTopOfMemory_check	FALSE	SealedTopOfMemory::check / SealedTopOfMemory	no symbol of either name in the twin, local or global
+SetSealedStartFrame_sealed_patch	FALSE	SetSealedStartFrame	no symbol of that name in the twin, local or global
+AllocatorMayReturnNull	T1	__sanitizer::AllocatorMayReturnNull	0x5f150
+Allocator_ComputeRZLog	T2	__asan::Allocator::ComputeRZLog	inlined: no symbol in the image
+Allocator_SharedInitCode	T2	__asan::Allocator::SharedInitCode	inlined: no symbol in the image
+AsanCheckDynamicRTPrereqs	T1	__asan::AsanCheckDynamicRTPrereqs	0x53594
+AsanCheckIncompatibleRT	T1	__asan::AsanCheckIncompatibleRT	0x53598
+AsanChunkView_GetAsanChunk_ptr_helper	T2	__asan::Allocator::GetAsanChunk	inlined: no symbol in the image
+AsanInitFromRtl_ENSURE_ASAN_INITED	T1	__asan::AsanInitFromRtl	0x5a07c
+AsanStats_Clear_ctor	T2	__asan::AsanStats::Clear / its constructor	inlined: no symbol in the image
+AsanThread_ClearShadowForThreadStackAndTLS	T1	__asan::AsanThread::ClearShadowForThreadStackAndTLS	0x5cbe0
+AsanThread_SetThreadStackAndTls	T1	__asan::AsanThread::SetThreadStackAndTls	0x5d458
+Atexit_internal_exit_hook_runner_12_insns_execut	T1	__sanitizer::Atexit	0x6e4ec
+DTLS_Destroy_ForEachDVT_no_op_4_insns	T1	__sanitizer::DTLS_Destroy	0x6a0e0
+DlsymAlloc_PointerIsMine_internal_allocator_From	T1	__sanitizer::internal_allocator (DlsymAlloc::PointerIsMine has no symbol)	0x5ec3c
+FakeStack_Allocate	T2	__asan::FakeStack::Allocate	inlined: no symbol in the image
+FakeStack_SetShadow	T2	__asan::FakeStack::SetShadow	inlined: no symbol in the image
+FlagParser_ParseString_parse_flags	T1	__sanitizer::FlagParser::ParseString	0x640f8
+FlagParser_PrintFlagDescriptions_gate_Verbosity	T1	__sanitizer::FlagParser::PrintFlagDescriptions	0x63b84
+GetNamedMappingFd_ReadProcess_openat_getdents64	T1	__sanitizer::GetNamedMappingFd	0x672e8
+GetPageSizeCached	T2	__sanitizer::GetPageSizeCached (the inline caching wrapper; the value holds its callee GetPageSize)	inlined: no symbol in the image
+GetThreadStackAndTls	T1	__sanitizer::GetThreadStackAndTls	0x6d72c
+GetThreadStackTopAndBottom_caller_ClearShadowFor	T1	__sanitizer::GetThreadStackTopAndBottom (and AsanThread::ClearShadowForThreadStackAndTLS 0x5cbe0)	0x6d050
+HeapProfile_Insert_asan_memory_profile	T1	__asan::HeapProfile::Insert	0x5429c
+IncreaseTotalMmap	T1	__sanitizer::IncreaseTotalMmap	0x60e20
+InitializeCommonInterceptors	T2	__sanitizer::InitializeCommonInterceptors	inlined: only its static metadata_mem is a symbol
+InitializeSignalInterceptors_or_syscall_hooks	T2	__sanitizer::InitializeSignalInterceptors	inlined: only its static was_called_once is a symbol
+InternalAlloc_RawInternalAlloc	T1	__sanitizer::InternalAlloc	0x5ed94
+InternalAllocatorLock_Unlock_or_stats_add_17_ins	T2	__sanitizer::InternalAllocatorLock / Unlock	inlined: no symbol in the image
+InternalFree_LowLevelAllocator_free_to_freelist	T1	__sanitizer::InternalFree	0x5eeb8
+InternalMmapVector_push_back	T2	__sanitizer::InternalMmapVector::push_back	inlined: no symbol in the image
+IsStackTraceSuppressed	T1	__asan::IsStackTraceSuppressed	0x5c474
+LargeMmapAllocator_EnsureSortedChunks	T1	__sanitizer::LargeMmapAllocator::EnsureSortedChunks	0x37938
+LowLevelAllocator_InternalAlloc_bump_allocator	T1	__sanitizer::InternalAlloc	0x5ed94
+MaybeStartBackgroudThread	T2	__sanitizer::MaybeStartBackgroudThread	inlined: only its static started is a symbol
+MmapFixedNoAccess_3_insn_arg_shim_0x65c98	T1	__sanitizer::MmapFixedNoAccess	0x6ee58
+MmapFixedNoReserve	T1	__sanitizer::MmapFixedNoReserve	0x6ebfc
+MmapFixedOrDie	T1	__sanitizer::MmapFixedOrDie	0x66c48
+MmapFixedOrDieOnFatalError_MmapFixedSuperNoReser	T1	__sanitizer::MmapFixedOrDieOnFatalError	0x66dcc
+MmapFixedSuperNoReserve_3_insn_shim_MmapFixed_co	T1	__sanitizer::MmapFixedSuperNoReserve	0x6ed2c
+MprotectNoAccess	T1	__sanitizer::MprotectNoAccess	0x66dd8
+OverrideCommonFlags_no_op_flag_hook_2_insns	T2	__sanitizer::OverrideCommonFlags	inlined: no symbol in the image
+QuarantineCache_DequeueBatch	T2	__sanitizer::QuarantineCache::DequeueBatch	inlined: no symbol in the image
+QuarantineCache_MergeBatches_Transfer	T1	__sanitizer::QuarantineCache::MergeBatches	0x340a4
+ReportFile_SetReportPath	T1	__sanitizer::ReportFile::SetReportPath	0x61840
+ReserveShadowMemoryRanges_sealed_early_shadow_re	T1	__sanitizer::ReserveShadowMemoryRange	0x6cc4c
+RoundUpTo_size_CHECK_helper_sanitizer_common_h_C	T2	__sanitizer::RoundUpTo	inlined: no symbol in the image
+ScopedInErrorReport_ReportError_helper	T1	__asan::ScopedInErrorReport (its destructor)	0x563a8
+SizeClassAllocator64_ReturnToAllocator_helper	T1	__sanitizer::SizeClassAllocator64::ReturnToAllocator	0x34c9c
+StackDepotBase_Get	T2	__sanitizer::StackDepotBase::Get	inlined: no symbol in the image
+StackDepotBase_find_bucket_chain_walk	T1	__sanitizer::StackDepotBase::find	0x73964
+StackDepotBase_lock_bucket_spin_lock	T1	__sanitizer::StackDepotBase::lock	0x73a18
+ThreadContextBase_ctor_ThreadRegistry_init_helpe	T1	__sanitizer::ThreadContextBase::ThreadContextBase	0x6a870
+Unwind_GetIP_slow_unwind_helper	T1	_Unwind_GetIP	0x8d160
+asan_globals_RegisterGlobal_vector_push_back	T2	__asan::RegisterGlobal / InternalMmapVector::push_back	inlined: no symbol in the image
+asan_handle_no_return_tiny_rtl_stub_2_insns	T1	__asan_handle_no_return	0x5a4c4
+asan_malloc_hook_RunMallocHooks_target_sanitizer	T1	__sanitizer::RunMallocHooks	0x61394
+asan_poison_stack_memory_PoisonAlignedStackMemor	T1	__asan_poison_stack_memory	0x553a8
+asan_register_globals	T1	__asan_register_globals	0x3f838
+asan_unpoison_stack_memory	T1	__asan_unpoison_stack_memory	0x55444
+asan_unregister_globals	T1	__asan_unregister_globals	0x40654
+fini_stub_ret	T1	_fini	0x939a8
+fprintf	T1	fprintf (no libc fprintf in the image; its ASan aliases)	__wrap_fprintf 0x42d20, __interceptor_fprintf 0x46500
+icpt_cfree_or_DlsymFree	T2	cfree / the DlsymAlloc free path	no symbol in the image
+icpt_vfprintf_2	T1	__interceptor_vfprintf	0x46134
+internal_allocator_getter	T1	__sanitizer::internal_allocator	0x5ec3c
+internal_sigaction_syscall_wrapper_selector	T1	__sanitizer::internal_sigaction	0x6d03c
+internal_strchr	T1	__sanitizer::internal_strchr	0x647f0
+internal_strcmp	T1	__sanitizer::internal_strcmp	0x648ac
+internal_strncmp	T1	__sanitizer::internal_strncmp	0x648f0
+libc_exit_fini_array_walker_stub	T1	__libc_exit_fini	0x939ac
+lock_unlock_pair_user_futex	T1	__lock / __unlock	0x9dae0 / 0x9dd68
+memcmp_2	T1	memcmp (its trampoline __interceptor_trampoline_memcmp)	0x42cf4 (musl memcmp 0x9d1e0)
+musl_exit_helper_stub	T1	exit	0x939f8
+pthread_key_atfork_tsd_table_init_11_insns	T2	__pthread_key_atfork	no symbol in the image
+pthread_key_create_body_tsd_init	T1	__pthread_key_create	0x9f260
+sanitizer_GetTls_DTLS_helper_sanitizer_tls_get_a	T1	__sanitizer::GetTls	0x6d33c
+sanitizer_free_hook_weak_default	T1	__sanitizer_free_hook	0x61504
+sanitizer_ignore_free_hook_weak_default_ret_0	T1	__sanitizer_ignore_free_hook	0x614fc
+syscall_cp_c_tail_sccp_9_insns	T1	__syscall_cp_c	0x9dddc
+ubsan_MaybeCallUbsanDefaultOptions	T2	__ubsan MaybeCallUbsanDefaultOptions	inlined: no symbol in the image
+vfprintf_2	T1	vfprintf (its trampoline __interceptor_trampoline_vfprintf)	0x42d18 (musl vfprintf 0x99a4c)

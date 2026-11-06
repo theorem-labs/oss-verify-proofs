@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssh
 harness: authkeys_fuzz
-rocq: OssFuzzTheorems.openssh.authkeys_fuzz
+rocq: OSSVerify.openssh.authkeys_fuzz
 origin: upstream
 summary: auth_check_authkey_line() is called for a fixed ed25519 key and a fixed cert against the input
   line (with a matching pubkey appended); results ignored ((void) casts).

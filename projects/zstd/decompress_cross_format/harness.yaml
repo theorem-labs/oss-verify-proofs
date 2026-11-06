@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zstd
 harness: decompress_cross_format
-rocq: OssFuzzTheorems.zstd.decompress_cross_format
+rocq: OSSVerify.zstd.decompress_cross_format
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, a differential check: One-shot: the same frame
   decoded as standard zstd1 (magic prepended) and as ZSTD_f_zstd1_magicless must agree on acceptance in

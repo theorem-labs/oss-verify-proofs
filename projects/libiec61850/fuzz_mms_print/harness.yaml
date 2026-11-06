@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libiec61850
 harness: fuzz_mms_print
-rocq: OssFuzzTheorems.libiec61850.fuzz_mms_print
+rocq: OSSVerify.libiec61850.fuzz_mms_print
 origin: upstream
 summary: Decode an MmsValue, size-encode it, then MmsValue_printToBuffer into a 4 KiB stack buffer; output
   not inspected.

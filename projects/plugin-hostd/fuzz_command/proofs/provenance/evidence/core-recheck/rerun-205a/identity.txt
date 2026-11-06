@@ -1,0 +1,7 @@
+RA: FLAGGED line EQUAL to the record; rc=4; rows 212053, sha256 of the rows without the # header 75ce43de2a88 (record 75ce43de2a88: EQUAL)
+RB: FLAGGED line EQUAL to the record; rc=4; rows 212121, sha256 of the rows without the # header 3eaa28b5e816 (record 3eaa28b5e816: EQUAL)
+PA-base: FLAGGED line EQUAL to the record; rc=4; rows 4981, sha256 of the rows without the # header 3fa30f18fd6e (record 3fa30f18fd6e: EQUAL)
+PA-plant: FLAGGED line EQUAL to the record; rc=4; rows 4981, sha256 of the rows without the # header 300217d64754 (record 300217d64754: EQUAL)
+PB-base: FLAGGED line EQUAL to the record; rc=4; rows 4994, sha256 of the rows without the # header 4b5de3d05022 (record 4b5de3d05022: EQUAL)
+PB-plant: FLAGGED line EQUAL to the record; rc=4; rows 4994, sha256 of the rows without the # header d8d989781ce9 (record d8d989781ce9: EQUAL)
+identity: 6 of 6 runs equal the record

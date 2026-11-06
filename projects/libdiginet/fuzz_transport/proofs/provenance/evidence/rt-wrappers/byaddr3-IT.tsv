@@ -1,0 +1,23 @@
+# kit cmpkit 86da41d3ef68, strictcmp3.py sha256 65688e94214a
+# I = img/ident.twin.asan sha256 5b0cbe573036
+# T = img/trans.twin.asan sha256 86efc3a80314
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes/NAME-ONLY acceptances	C-string acceptances	differing targets printed	words-only
+tramp_strcmp	I:T	0x42194	0x42cec	4	4	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+weak_hook_strcmp	I:T	0x42744	0x4329c	4	4	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+___interceptor_strcmp	I:T	0x42748	0x432a0	1328	1328	EQUAL-mod-pcrel	14	0	0	(2, 0, 2)	0	full+0x4bc[0x103d8|0x103e0]=8 full+0x500[0x103d8|0x103e0]=8	0x354@0x1cd06|0x1ccdf=b'strcmp\x00' 0x434@0x1cd06|0x1ccdf=b'strcmp\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	___interceptor_strcmp	I:T	0x354	0x1cd06	0x1ccdf	7	737472636d7000	b'strcmp\x00'
+CSTR	___interceptor_strcmp	I:T	0x434	0x1cd06	0x1ccdf	7	737472636d7000	b'strcmp\x00'
+__asan_region_is_poisoned	I:T	0x543d4	0x54f2c	836	836	EQUAL-mod-pcrel	26	0	0	(0, 0, 4)	0		0x30c@0x1f4da|0x1f527=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x310@0x20443|0x204a5=b'((beg)) < ((end))\x00' 0x32c@0x1f4da|0x1f527=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x330@0x154c7|0x1541a=b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	__asan_region_is_poisoned	I:T	0x30c	0x1f4da	0x1f527	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	I:T	0x310	0x20443	0x204a5	18	28286265672929203c202828656e64292900	b'((beg)) < ((end))\x00'
+CSTR	__asan_region_is_poisoned	I:T	0x32c	0x1f4da	0x1f527	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	I:T	0x330	0x154c7	0x1541a	78	28283020262620226d656d5f69735f7a65726f2072657475726e65642066616c73652c2062757420706f69736f6e6564206279746520776173206e6f7420666f756e6422292920213d2028302900	b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'
+TryAsanInitFromRtl	I:T	0x59868	0x5a3c0	160	160	EQUAL-mod-pcrel	2	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+tramp_strlen	I:T	0x4218c	0x42ce4	4	4	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+___interceptor_strlen	I:T	0x4221c	0x42d74	660	660	EQUAL-mod-pcrel	9	0	0	(1, 0, 1)	0	full+0x260[0x103d8|0x103e0]=8	0x1e0@0x16b1f|0x16ac0=b'strlen\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	___interceptor_strlen	I:T	0x1e0	0x16b1f	0x16ac0	7	7374726c656e00	b'strlen\x00'
+strlen	I:T	0x94c64	0x9d860	144	144	EQUAL-mod-pcrel	4	0	0	(2, 0, 0)	0	full+0x44[0x10368|0x10370]=8 full+0x48[0x10350|0x10358]=8		printed 0 of 0 targets	EQUAL-mod-pcrel
+mem_is_zero	I:T	0x64114	0x64c6c	180	180	EQUAL-mod-pcrel	2	0	0	(0, 0, 2)	0		0xa4@0x13507|0x1355a=b'/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_libc.cpp\x00' 0xa8@0x185d5|0x185cb=b'((size)) <= ((1ULL << (40)))\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	mem_is_zero	I:T	0xa4	0x13507	0x1355a	66	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f73616e6974697a65725f636f6d6d6f6e2f73616e6974697a65725f6c6962632e63707000	b'/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_libc.cpp\x00'
+CSTR	mem_is_zero	I:T	0xa8	0x185d5	0x185cb	29	282873697a652929203c3d20282831554c4c203c3c2028343029292900	b'((size)) <= ((1ULL << (40)))\x00'

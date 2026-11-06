@@ -1,0 +1,63 @@
+# Print Assumptions of the image-A cg walk theorems (S11 step 3), from a temporary audit file (lib/A/Prog/ZzS11AuditB.v,
+# not committed: one Require of the three modules, then one Print Assumptions per theorem below, in this order), built
+# by `cb build` with CB_COMPILE at clone HEAD d1c428870de (log build-20261031T072541Z.log, sha256
+# a6f37916c52ef1478ab69cc275a9a6f6cace9ae63e90d79844df1c618801b4f4, rc=0). Each theorem: the kernel's primitive types and operations (PrimInt63 / PrimString /
+# PrimArray) and FunctionalExtensionality.functional_extensionality_dep (the unit's library: lib/Lib/PropExec.v,
+# CrtFevt.v and the kit use functional_extensionality); no Axiom, Parameter or Admitted of the walks.
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_msg_next_walk.transport_diginet_msg_next_cg_holds.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  forall (A : Type) (B : A -> Type) (f g : forall x : A, B x),
+  (forall x : A, f x = g x) -> f = g
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_frame_parse_walk.transport_diginet_frame_parse_cg_holds.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  forall (A : Type) (B : A -> Type) (f g : forall x : A, B x),
+  (forall x : A, f x = g x) -> f = g
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_body_check_cgW.transport_diginet_body_check_cg_holds.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  forall (A : Type) (B : A -> Type) (f g : forall x : A, B x),
+  (forall x : A, f x = g x) -> f = g
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type

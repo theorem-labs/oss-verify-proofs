@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ghostscript
 harness: xml_parse_fuzzer
-rocq: OssFuzzTheorems.ghostscript.xml_parse_fuzzer
+rocq: OSSVerify.ghostscript.xml_parse_fuzzer
 origin: upstream
 summary: nothing is checked beyond crashes, sanitizers and uncaught exceptions.
 entry: LLVMFuzzerTestOneInput

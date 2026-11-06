@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ada-url
 harness: can_parse
-rocq: OssFuzzTheorems.ada_url.can_parse
+rocq: OSSVerify.ada_url.can_parse
 origin: upstream
 summary: 'Checks 3 properties (listed below); the first, an API contract: can_parse(source) == parse<url_aggregator>(source).has_value()
   == parse<url>(source).has_value(); with a base: can_parse(source,&base) == parse(source,&base).has_value(),

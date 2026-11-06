@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openvswitch
 harness: ofctl_parse_target
-rocq: OssFuzzTheorems.openvswitch.ofctl_parse_target
+rocq: OSSVerify.openvswitch.ofctl_parse_target
 origin: upstream
 summary: parse_ofp_flow_mod_str then ofputil_encode_flow_mod for the first usable protocol; encoded message
   deleted unchecked.

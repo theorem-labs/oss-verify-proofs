@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: reac-pw/fuzz_qdisc/ubsan_halts_may_fail
+fingerprint: d95058d671fc8104f08ac296568f31b08cfeb66ecf060ad4f26810d86bda439b

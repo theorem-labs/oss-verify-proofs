@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libcoap
 harness: observe_fuzzer
-rocq: OssFuzzTheorems.libcoap.observe_fuzzer
+rocq: OSSVerify.libcoap.observe_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

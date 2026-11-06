@@ -1,0 +1,53 @@
+gotcheck.py known-answer controls (plugin-hostd/fuzz_command, port_core re-check)
+
+1. Planted control (the value gate's own plants, plants.tsv of the planted-control run)
+   The gate port_addr_check 3d2eee813cce judges the planted .got cell lib/A/ACeg.v:21 A_GOT_uar 0xa6448 -> 0xa6450
+   (and lib/B/YCeg.v:22 0xa5fa8 -> 0xa5fb0) SAME-SYMBOL-ROUNDED: it does not see a .got cell moved to the next word.
+   Command (run on the build VM; PLANTDIR = the base and planted copies, RUNSDIR = the gate runs PA-* / PB-*):
+     bash got-control.sh PLANTDIR RUNSDIR IMGDIR control
+   Result (control/got-control.raw.txt, verbatim):
+
+gotcheck A-base rc=0: 477 files, 298 numerals inside .got (A [0xa6390,0xa7108))
+gotcheck A-plant rc=0: 477 files, 298 numerals inside .got
+== A: rows not OK in the plant copy, OK in the base copy:
+  A  ACeg.v:21  0xa6450  _ZN6__lsan10lsan_flagsE  FLAG  donor,name  DIFF gate SAME-SYMBOL-ROUNDED src ACeg.v:20
+== A: the planted cell in the base copy:
+  A-base/ACeg.v  21  0xa6448  __asan_option_detect_stack_use_after_return  donor 0x9dff0 -> __asan_option_detect_stack_use_after_return  ALIAS uar  OK
+gotcheck B-base rc=0: 469 files, 297 numerals inside .got (B [0xa5ef0,0xa6c68))
+gotcheck B-plant rc=0: 469 files, 297 numerals inside .got
+== B: rows not OK in the plant copy, OK in the base copy:
+  B  YCeg.v:22  0xa5fb0  _ZN6__lsan10lsan_flagsE  FLAG  donor,name  DIFF gate SAME-SYMBOL-ROUNDED src YCeg.v:20
+== B: the planted cell in the base copy:
+  B-base/YCeg.v  22  0xa5fa8  __asan_option_detect_stack_use_after_return  donor 0x9e260 -> __asan_option_detect_stack_use_after_return  ALIAS uar  OK
+got-control: PASS (both planted .got cells flagged; the base copies accept them; no other new flag)
+
+   Both planted cells are flagged by two independent checks: (a) the donor's GOT word (cgif 0x9dff0 / 0x9e260) points at
+   __asan_option_detect_stack_use_after_return, the planted word points at __lsan::lsan_flags; (b) the definition
+   name A_GOT_uar names use-after-return (alias uar), the planted word names lsan_flags.
+
+2. Perturbation control on the real tree (gotcheck.out, `--perturb`)
+   Every accepted row is re-judged with its value +4, +8, -8 and := the donor's value. A perturbed row stays accepted
+   only if every rule that accepted the row accepts it.
+     +4       0 of 850 still accepted
+     +8       4 still accepted: lib/A/Rt/RtSF7.v:34; lib/B/Rt/RtSF5.v:5; lib/B/Rt/RtSF7.v:5; lib/B/Rt/RtSF7.v:35
+     -8       1 still accepted: lib/B/Rt/RtSF5.v:5
+     :=donor  0 of 520 still accepted
+   Per rule (rows the rule accepted / of those, still accepted by that rule after the perturbation):
+     donor              +4 520/0  +8 520/0  -8 520/0  :=donor 520/0
+     stated             +4 530/0  +8 530/0  -8 530/0  :=donor 330/0
+     twin               +4 726/0  +8 726/0  -8 726/0  :=donor 520/0
+     name               +4 34/0   +8 34/0   -8 34/2   :=donor 30/0   (the token `flags` also names common_flags)
+     comment-WORD       +4 75/0   +8 75/2   -8 75/1
+     comment-TWIN-LINE  +4 16/0   +8 16/2   -8 16/0
+     comment-DISASM     +4 11/0   +8 11/0   -8 11/0
+     comment-NAME       +4 6/0    +8 6/0    -8 6/0
+     comment-CODE-SAME-FILE +4 14/0 +8 14/0 -8 14/0
+   The five rows a perturbation leaves accepted are comments that name a GOT BLOCK (`the GOT block 0xa63e8..`, `the
+   .got block 0xa5f48`): the comment also writes the next word's value. gottriage.py settles each by a hand rule that
+   measures the block itself (GOT-BLOCK-START: MemToShadow's auipc+ld pairs load exactly the five words of the block
+   that the file's code lists as (V, 40, [...]); GOT-CELL-NAMED for RtSF5.v:5 0xa5f50) and refuses +4, +8 and -8.
+
+3. Hand rules of gottriage.py: each re-judged with +4, +8, -8 (got-triage.out): every perturbed value refused for all
+   59 rows they settle (PROGRAM-GOT-BLOCK 3, GOT-BLOCK-START 4, GOT-CELL-NAMED 1, COMMENT-QUOTES-PREMISE 1, and the
+   supplements for the 50 twin-only rows: SAME-FILE 25, SIBLING-STATED 13, FIELD-NAME 4, PROGRAM-BOUND 4,
+   NAMED-CONST 2, GOTW-BOUND 2; a supplement is used only when all three perturbations are refused).

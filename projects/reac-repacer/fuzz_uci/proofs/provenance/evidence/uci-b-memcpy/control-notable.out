@@ -1,0 +1,5 @@
+fn	word	X	Y	measurement	verdict	detail
+_ZN11__sanitizer9VSNPrintfEPciPKcPv	+0x1c0	0x209bc	0x20be0	-	OPEN	unnamed (.rodata): region 132 | 136 bytes to the next FUNC / OBJECT start (extent unknown); use X: +0x1c4 opcode 0x33 reads it; use Y: +0x1c4 opcode 0x33 reads it
+_ZN9libunwind10CFI_ParserINS_17LocalAddressSpaceEE20parseFDEInstructionsERS1_RKNS2_8FDE_InfoERKNS2_8CIE_InfoEmiPNS2_10PrologInfoE	+0x140	0x20d8c	0x21454	-	OPEN	data-differs: (.rodata) | (.rodata); use X: +0x144 opcode 0x33 reads it; use Y: +0x144 opcode 0x33 reads it
+_ZN9libunwind10CFI_ParserINS_17LocalAddressSpaceEE8parseCIEERS1_mPNS2_8CIE_InfoE	+0x23c	0x20cd0	0x21398	-	OPEN	data-differs: (.rodata) | (.rodata); use X: +0x260 opcode 0x33 reads it; use Y: +0x260 opcode 0x33 reads it
+SUMMARY targets 3 functions 3 {('-', 'OPEN'): 3}

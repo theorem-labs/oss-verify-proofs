@@ -1,0 +1,27 @@
+check	file (fm lib)	fm value	image	disco value	what the audit measured
+C6-end-slide	A/Bz/A/I_strchrw.v	0x412e0	A	-	__interceptor_trampoline_strchr: fm end of __interceptor_trampoline_strstr / __wrap_strstr; disco end of __interceptor_trampoline_strcmp / __wrap_strcmp
+C6-end-slide	A/Bz/A/I_strchrw.v	0x412e0	B	-	__interceptor_trampoline_strchr: fm end of __interceptor_trampoline_strstr / __wrap_strstr; disco end of __interceptor_trampoline_strcmp / __wrap_strcmp
+C6-end-slide	A/Bz/A/I_strchrw.v	0x42e88	A	-	___interceptor_index: fm end of _ZL11StrstrCheckPvPcPKcS2_; disco end of ___interceptor_strcmp / __interceptor_strcmp
+C6-end-slide	A/Bz/A/I_strchrw.v	0x42e88	B	-	___interceptor_index: fm end of _ZL11StrstrCheckPvPcPKcS2_; disco end of ___interceptor_strcmp / __interceptor_strcmp
+C6-end-slide	A/Bz/A/I_strchrw.v	0x92ab4	A	-	strchr: fm end of tolower; disco end of memset
+C6-end-slide	A/Bz/A/I_strchrw.v	0x92ab4	B	-	strchr: fm end of tolower; disco end of memset
+C6-end-slide	A/Bz/A/I_strchrw.v	0x9b6f0	A	-	_ZN14__interception11real_strchrE: fm end of _ZN14__interception11real_strstrE; disco end of _ZN14__interception11real_strcmpE
+C6-end-slide	A/Bz/A/I_strchrw.v	0x9b6f0	B	-	_ZN14__interception11real_strchrE: fm end of _ZN14__interception11real_strstrE; disco end of _ZN14__interception11real_strcmpE
+C6-end-slide	A/FMH_Base.v	0x412e0	A	-	__interceptor_trampoline_strchr: fm end of __interceptor_trampoline_strstr / __wrap_strstr; disco end of __interceptor_trampoline_strcmp / __wrap_strcmp
+C6-end-slide	A/FMH_Base.v	0x412e0	B	-	__interceptor_trampoline_strchr: fm end of __interceptor_trampoline_strstr / __wrap_strstr; disco end of __interceptor_trampoline_strcmp / __wrap_strcmp
+C4-bound-not-a-seg-bound	A/FMgxaSeamNorm.v	0x677000	A	0x677000	loose bound above every tfibsegs end (fm segments end 0x5f70
+C4-bound-not-a-seg-bound	A/FMgxaSeamNorm.v	0x677000	B	0x677000	loose bound above every tfibsegs end (fm segments end 0x5f70
+C4-bound-not-a-seg-bound	A/RT_IImgA_ok.v	0x14000	A	0x14000	lower bound in fr_RQ_vsn_22e18 : ZFact (0x14000 <= sym 0x22e
+C4-bound-not-a-seg-bound	A/RT_IImgA_ok.v	0x14000	B	0x14000	lower bound in fr_RQ_vsn_22e18 : ZFact (0x14000 <= sym 0x22e
+C2-anon-bytes-differ	A/FMgxaSeamReady.v	0x20d00	A	0x19278	ro .str+0x0; .rodata: fm bytes 7072656669780000, disco bytes 707265666978006c
+C2-anon-bytes-differ	A/FMgxaSeamReady.v	0x20d00	B	0x19278	ro .str+0x0; .rodata: fm bytes 7072656669780000, disco bytes 707265666978006c
+C2-anon-bytes-differ	A/FMgxaSeamShadow.v	0x20d00	A	0x19278	ro .str+0x0; .rodata: fm bytes 7072656669780000, disco bytes 707265666978006c
+C2-anon-bytes-differ	A/FMgxaSeamShadow.v	0x20d00	B	0x19278	ro .str+0x0; .rodata: fm bytes 7072656669780000, disco bytes 707265666978006c
+C2-anon-bytes-differ	A/RT_IImgA.v	0x20537	A	0x207ad	ro anonymous (named by printf_core+0x5ec) (record value); .rodata: fm bytes 286e756c6c290025, disco bytes 286e756c6c290025
+C2-anon-bytes-differ	A/RT_IImgA.v	0x20537	B	0x207b5	ro anonymous (named by printf_core+0x5ec) (record value); .rodata: fm bytes 286e756c6c290025, disco bytes 286e756c6c290025
+C2-anon-bytes-differ	A/RT_IImgA.v	0x221b8	A	0x22858	ro anonymous (named by printf_core+0x534) (record value); .rodata: fm bytes 20d30600a0d30600, disco bytes 4c3e0700cc3e0700
+C2-anon-bytes-differ	A/RT_IImgA.v	0x221b8	B	0x22858	ro anonymous (named by printf_core+0x534) (record value); .rodata: fm bytes 20d30600a0d30600, disco bytes ec4107006c420700
+C2-anon-bytes-differ	A/RT_IImgA.v	0x22298	A	0x22938	ro anonymous (named by printf_core+0x6ac) (record value); .rodata: fm bytes 40d90600b8d30600, disco bytes 6c440700e43e0700
+C2-anon-bytes-differ	A/RT_IImgA.v	0x22298	B	0x22938	ro anonymous (named by printf_core+0x6ac) (record value); .rodata: fm bytes 40d90600b8d30600, disco bytes 0c48070084420700
+C2-anon-bytes-differ	A/RT_IImgA.v	0x222b8	A	0x22958	ro anonymous (named by pop_arg+0x14) (record value); .rodata: fm bytes 30db060024dc0600, disco bytes 5c46070050470700
+C2-anon-bytes-differ	A/RT_IImgA.v	0x222b8	B	0x22958	ro anonymous (named by pop_arg+0x14) (record value); .rodata: fm bytes 30db060024dc0600, disco bytes fc490700f04a0700

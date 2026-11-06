@@ -1,0 +1,33 @@
+(* libreac/fuzz_identity, build asan-ubsan: the read-only premise of the runtime wrappers (lib/B/Rt/StrlenDef.v,
+   lib/B/Rt/MemchrDef.v), in the form a program walk can carry across a call. The text is lib/A/Rt/WrapRo.v's.
+   A wrapper may read bytes of the image's read-only segments in two ways:
+   - bytes the runtime model pins (the GOT cells, the flags pointer, real_<fn>, the shadow offset): these are in
+     as_owned_static and their values are AR's const cells (the core's Tfib_const), so AR gives them and no
+     premise is needed;
+   - the musl constants (strlen/memchr read 0x10350 and 0x10368, 8 bytes each, in this build too) and the caller's
+     own .rodata strings: these are NOT owned, and aro_unowned below states them.
+   aro_unowned is the in-segment half of arodata_okP (lib/A/Prog/IdentBase.v:20, which is generic in segs and B and
+   is the only definition of it in this unit); aro_unowned_of_arodata turns one into the other. Unlike YG0d's
+   rom_view, it says nothing about owned image bytes, so it survives a call whose post keeps only the bytes that are
+   unowned before and after (__asan_stack_malloc_*, YG0d.v:298-299): aro_unowned_keep. *)
+From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith List Bool Lia.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YK11 YK0s YK0i YK15 YK0j YK18 YP09.
+From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YK04 YA0i YA0n.
+From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d.
+From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.libreac.fuzz_identity.lib.A.Prog Require Import IdentBase.
+Import ListNotations.
+Open Scope Z_scope.
+Definition aro_unowned (segs : list Segment) (B : asyms) (rd : reader) : Prop :=
+forall a, in_rom segs a -> ~ Exists (in_zr a) (as_owned_static B) -> ~ (as_errno B <= a < as_errno B + 4) ->
+rd a = option_map (fun b : byte => bv_unsigned b) (seg_rom segs (Z_to_bv 64 a)).
+Lemma aro_unowned_of_arodata : forall segs rlo rhi B rd, arodata_okP segs rlo rhi B rd -> aro_unowned segs B rd.
+Proof. intros segs rlo rhi B rd HR a Ha Ho He. apply HR; [left; exact Ha | exact Ho | exact He]. Qed.
+Lemma aro_unowned_keep : forall segs B (rd rd' : reader),
+aro_unowned segs B rd ->
+(forall a, in_rom segs a -> ~ Exists (in_zr a) (as_owned_static B) -> ~ (as_errno B <= a < as_errno B + 4) -> rd' a = rd a) ->
+aro_unowned segs B rd'.
+Proof. intros segs B rd rd' HR Hk a Ha Ho He. rewrite (Hk a Ha Ho He). exact (HR a Ha Ho He). Qed.

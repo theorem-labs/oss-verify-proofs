@@ -1,0 +1,127 @@
+alreloc_sweep.py: 8690 candidates, 120 planted (seed 2)
+CAUGHT sweep:address A/AB18.v:90 tok 0: 0x9d608 -> 0x9d610: port_core WRONG: right value 0x9d608
+CAUGHT sweep:address A/AB1d.v:236 tok 0: 0x9d5d0 -> 0x9d5d8: port_core WRONG: right value 0x9d5d0
+CAUGHT sweep:address A/AB1q.v:25 tok 8: 0x66c48 -> 0x66c50: port_core WRONG: right value 0x66c48
+CAUGHT sweep:insn A/AB1u.v:315 tok 1: 0x0056a423 -> 0x56a42b: port_core WRONG: fuzz_transport.asan holds 0x56a423 at 0x9d300
+CAUGHT sweep:insn A/AB1u.v:621 tok 0: 0x9d3f4 -> 0x9d3fc: port_core WRONG: fuzz_transport.asan holds 0xff060613 at 0x9d3fc
+CAUGHT sweep:insn A/AB1u.v:895 tok 1: 0x0055c303 -> 0x55c30b: port_core WRONG: fuzz_transport.asan holds 0x55c303 at 0x9d4d0
+CAUGHT sweep:insn A/AB1u.v:906 tok 0: 0x9d4d8 -> 0x9d4e0: port_core WRONG: fuzz_transport.asan holds 0xf680a3 at 0x9d4e0
+CAUGHT sweep:insn A/AB1u.v:1136 tok 0: 0x9d590 -> 0x9d598: port_core WRONG: fuzz_transport.asan holds 0x70693 at 0x9d598
+CAUGHT sweep:insn A/AB1u.v:1175 tok 1: 0x0035c883 -> 0x35c88b: port_core WRONG: fuzz_transport.asan holds 0x35c883 at 0x9d5b0
+CAUGHT sweep:insn A/AB1u.v:1286 tok 0: 0x9d608 -> 0x9d610: port_core WRONG: fuzz_transport.asan holds 0x8067 at 0x9d610
+CAUGHT sweep:address A/AB1w.v:84 tok 1: 0x42cf0 -> 0x42cf8: port_core WRONG: right value 0x42cf0
+CAUGHT sweep:address A/AB1w.v:91 tok 1: 0x42d0c -> 0x42d14: port_core WRONG: right value 0x42d0c
+CAUGHT sweep:address A/AB1w.v:265 tok 1: 0x61450 -> 0x61458: port_core WRONG: right value 0x61450
+CAUGHT sweep:address A/AB1w.v:304 tok 1: 0x64f54 -> 0x64f5c: port_core WRONG: right value 0x64f54
+CAUGHT sweep:address A/AB1w.v:383 tok 1: 0x6dea8 -> 0x6deb0: port_core WRONG: right value 0x6dea8
+CAUGHT sweep:address A/AB1w.v:388 tok 1: 0x6e400 -> 0x6e408: port_core WRONG: right value 0x6e400
+CAUGHT sweep:address A/AB1w.v:395 tok 0: 0x6e890 -> 0x6e898: port_core WRONG: right value 0x6e890
+CAUGHT sweep:program-rows A/AB1w.v:441 tok 46: 0x850f0 -> 0x850f8: port_core WRONG: right value 0x850f0
+CAUGHT sweep:address A/AB1w.v:499 tok 0: 0x97c68 -> 0x97c70: port_core WRONG: right value 0x97c68
+CAUGHT sweep:address A/AB1w.v:508 tok 0: 0x990fc -> 0x99104: port_core WRONG: right value 0x990fc
+CAUGHT sweep:func-end A/AB1w.v:520 tok 1: 0x9aa2c -> 0x9aa34: port_core WRONG: right value 0x9aa2c
+CAUGHT sweep:address A/AB1w.v:541 tok 0: 0x9d110 -> 0x9d118: port_core WRONG: right value 0x9d110
+CAUGHT sweep:address A/ACfl.v:19 tok 0: 0x81160 -> 0x81168: port_core WRONG: right value 0x81160
+CAUGHT sweep:address A/AD1e.v:162 tok 0: 0x616000 -> 0x616008: port_core WRONG: right value 0x616000
+CAUGHT sweep:model-line A/AD1f.v:192 tok 1: 1048576 -> 1048584: port_core WRONG: right value 1048576 (a model constant, unchanged)
+CAUGHT sweep:model-line A/AD1w.v:166 tok 5: 4194303 -> 4194311: port_core WRONG: right value 4194303 (a model constant, unchanged)
+CAUGHT sweep:constant A/AD25.v:107 tok 1: 65536 -> 65544: port_core WRONG: right value 65536 (a constant, unchanged)
+CAUGHT sweep:address A/AD28.v:33 tok 0: 0x8104c -> 0x81054: port_core WRONG: right value 0x8104c
+CAUGHT sweep:constant A/AD2a.v:130 tok 0: 65536 -> 65544: port_core WRONG: right value 65536 (a constant, unchanged)
+CAUGHT sweep:constant A/AD2g.v:89 tok 1: 65536 -> 65544: port_core WRONG: right value 65536 (a constant, unchanged)
+CAUGHT sweep:got-cell A/AE2k.v:24 tok 0: 0xa4090 -> 0xa4098: port_core WRONG: right value 0xa4090
+CAUGHT sweep:address A/AE2v.v:160 tok 0: 104458 -> 104466: port_core WRONG: right value 0x1980a
+CAUGHT sweep:got-cell A/AE2y.v:72 tok 0: 0xa4088 -> 0xa4090: port_core WRONG: right value 0xa4088
+CAUGHT sweep:address A/AE30.v:273 tok 9: 0x52e20 -> 0x52e28: port_core WRONG: right value 0x52e20
+CAUGHT sweep:address A/AE30.v:469 tok 9: 0x52e20 -> 0x52e28: port_core WRONG: right value 0x52e20
+CAUGHT sweep:model-line A/AE30.v:1394 tok 1: 0x200000 -> 0x200008: port_core WRONG: right value 0x200000 (a model constant, unchanged)
+CAUGHT sweep:insn-word A/AE33.v:1490 tok 7: 505731 -> 505739: port_core WRONG: right value 505731 (an instruction word, unchanged)
+CAUGHT sweep:insn A/AE3b.v:41 tok 0: 0x0005c703 -> 0x5c70b: port_core WRONG: right value 0x0005c703 (a decode fact of an unchanged word)
+CAUGHT sweep:insn A/AE3c.v:57 tok 0: 0x0005c883 -> 0x5c88b: port_core WRONG: right value 0x0005c883 (a decode fact of an unchanged word)
+CAUGHT sweep:insn A/AE3c.v:135 tok 2: 0x00467713 -> 0x46771b: port_core WRONG: fuzz_transport.asan holds 0x467713 at 0x9d278
+CAUGHT sweep:insn A/AE3c.v:955 tok 2: 0x0025c803 -> 0x25c80b: port_core WRONG: fuzz_transport.asan holds 0x25c803 at 0x9d5ac
+CAUGHT sweep:insn A/AE3c.v:961 tok 0: 0x0035c883 -> 0x35c88b: port_core WRONG: right value 0x0035c883 (a decode fact of an unchanged word)
+CAUGHT sweep:insn A/AE3e.v:346 tok 3: 2075956 -> 2075964: port_core WRONG: right value 2075956 (a decode fact of an unchanged word)
+CAUGHT sweep:insn A/AE3e.v:380 tok 0: 0x99040 -> 0x99048: port_core WRONG: fuzz_transport.asan holds 0x40d506b3 at 0x99048
+CAUGHT sweep:address A/AE3h.v:1692 tok 0: 0x9a220 -> 0x9a228: port_core WRONG: right value 0x9a220
+CAUGHT sweep:address A/AE3m.v:1437 tok 0: 83998 -> 84006: port_core WRONG: right value 0x1481e
+CAUGHT sweep:address A/AE6k.v:194 tok 4: 0x5244c -> 0x52454: port_core WRONG: right value 0x5244c
+CAUGHT sweep:address A/AE6k.v:526 tok 1: 0x550a0 -> 0x550a8: port_core WRONG: right value 0x550a0
+CAUGHT sweep:insn-word A/AE6r.v:281 tok 7: 538627 -> 538635: port_core WRONG: right value 538627 (an instruction word, unchanged)
+CAUGHT sweep:insn-word A/AE6w.v:1611 tok 2: 472835 -> 472843: port_core WRONG: right value 472835 (an instruction word, unchanged)
+CAUGHT sweep:address A/AE6x.v:32 tok 0: 0x9d114 -> 0x9d11c: port_core WRONG: right value 0x9d114
+CAUGHT sweep:address A/AE6z.v:143 tok 9: 0x43b70 -> 0x43b78: port_core WRONG: right value 0x43b70
+CAUGHT sweep:address A/AE6z.v:164 tok 4: 0x43b6c -> 0x43b74: port_core WRONG: right value 0x43b6c
+CAUGHT sweep:address A/AE6z.v:320 tok 1: 0x550a0 -> 0x550a8: port_core WRONG: right value 0x550a0
+CAUGHT sweep:address A/AE6z.v:2400 tok 2: 348320 -> 348328: port_core WRONG: right value 0x550a0
+CAUGHT sweep:address A/AE70.v:186 tok 9: 0x43bbc -> 0x43bc4: port_core WRONG: right value 0x43bbc
+CAUGHT sweep:address A/AE70.v:228 tok 9: 0x43bbc -> 0x43bc4: port_core WRONG: right value 0x43bbc
+CAUGHT sweep:address A/AE7d.v:30 tok 0: 0x42ce8 -> 0x42cf0: port_core WRONG: right value 0x42ce8
+CAUGHT sweep:address A/AE7e.v:177 tok 9: 0x430c4 -> 0x430cc: port_core WRONG: right value 0x430c4
+CAUGHT sweep:address A/AE7e.v:249 tok 9: 0x430c4 -> 0x430cc: port_core WRONG: right value 0x430c4
+CAUGHT sweep:model-line A/AFel.v:153 tok 11: 1048576 -> 1048584: port_core WRONG: right value 1048576 (a model constant, unchanged)
+CAUGHT sweep:address A/AFeq.v:149 tok 3: 0x13c4a0 -> 0x13c4a8: port_core WRONG: right value 0x13c4a0
+CAUGHT sweep:got-cell A/AFf9.v:199 tok 0: 0xa40b0 -> 0xa40b8: port_core WRONG: right value 0xa40b0
+CAUGHT sweep:address A/AFg1.v:288 tok 0: 0x53840 -> 0x53848: port_core WRONG: right value 0x53840
+CAUGHT sweep:address A/AFg2.v:99 tok 0: 0x365c4 -> 0x365cc: port_core WRONG: right value 0x365c4
+CAUGHT sweep:constant A/AFg6.v:92 tok 2: 65536 -> 65544: port_core WRONG: right value 65536 (a constant, unchanged)
+CAUGHT sweep:address A/AFgi.v:486 tok 1: 0x5cf050 -> 0x5cf058: port_core WRONG: right value 0x5cf050
+CAUGHT sweep:address A/AFgn.v:57 tok 1: 0xadc00 -> 0xadc08: port_core WRONG: right value 0xadc00
+CAUGHT sweep:address A/AFgn.v:66 tok 1: 0xac9f8 -> 0xaca00: port_core WRONG: right value 0xac9f8
+CAUGHT sweep:address A/AFgn.v:67 tok 3: 0xad6f0 -> 0xad6f8: port_core WRONG: right value 0xad6f0
+CAUGHT sweep:address A/AFgt.v:71 tok 0: 0x34030 -> 0x34038: port_core WRONG: right value 0x34030
+CAUGHT sweep:address A/AFgz.v:289 tok 0: 0x34798 -> 0x347a0: port_core WRONG: right value 0x34798
+CAUGHT sweep:address A/AFh4.v:362 tok 0: 0x36618 -> 0x36620: port_core WRONG: right value 0x36618
+CAUGHT sweep:address A/AFhg.v:167 tok 0: 0x342a0 -> 0x342a8: port_core WRONG: right value 0x342a0
+CAUGHT sweep:address A/AFi1.v:64 tok 0: 0xaa220 -> 0xaa228: port_core WRONG: right value 0xaa220
+CAUGHT sweep:address A/AFi2.v:34 tok 0: 0x3697c -> 0x36984: port_core WRONG: right value 0x3697c
+CAUGHT sweep:address A/AFi4.v:53 tok 0: 0x367d0 -> 0x367d8: port_core WRONG: right value 0x367d0
+CAUGHT sweep:address A/AFie.v:48 tok 4: 0x36be0 -> 0x36be8: port_core WRONG: right value 0x36be0
+CAUGHT sweep:address A/AFif.v:103 tok 0: 0x73284 -> 0x7328c: port_core WRONG: right value 0x73284
+CAUGHT sweep:address A/AFih.v:135 tok 0: 0x68068 -> 0x68070: port_core WRONG: right value 0x68068
+CAUGHT sweep:address A/AFih.v:190 tok 0: 0x68068 -> 0x68070: port_core WRONG: right value 0x68068
+CAUGHT sweep:address A/AFih.v:195 tok 0: 0x64744 -> 0x6474c: port_core WRONG: right value 0x64744
+CAUGHT sweep:address A/AFii.v:80 tok 0: 0x64f40 -> 0x64f48: port_core WRONG: right value 0x64f40
+CAUGHT sweep:address A/AFil.v:38 tok 0: 0x539a0 -> 0x539a8: port_core WRONG: right value 0x539a0
+CAUGHT sweep:address A/AFim.v:172 tok 0: 0x53704 -> 0x5370c: port_core WRONG: right value 0x53704
+CAUGHT sweep:address A/AFiq.v:358 tok 1: 0x326c0 -> 0x326c8: port_core WRONG: right value 0x326c0
+CAUGHT sweep:address A/AFj5.v:245 tok 6: 0x326c0 -> 0x326c8: port_core WRONG: right value 0x326c0
+CAUGHT sweep:address A/AFja.v:307 tok 0: 0x5f3b00 -> 0x5f3b08: port_core WRONG: right value 0x5f3b00
+CAUGHT sweep:address A/AFjj.v:541 tok 0: 0x36b3c -> 0x36b44: port_core WRONG: right value 0x36b3c
+CAUGHT sweep:address A/AFjk.v:570 tok 0: 0x545fc -> 0x54604: port_core WRONG: right value 0x545fc
+CAUGHT sweep:address A/AFjm.v:509 tok 0: 0xa3000 -> 0xa3008: port_core WRONG: right value 0xa3000
+CAUGHT sweep:address A/AFjm.v:587 tok 0: 0x17e8c8 -> 0x17e8d0: port_core WRONG: right value 0x17e8c8
+CAUGHT sweep:address A/AFjn.v:397 tok 0: 0x547e4 -> 0x547ec: port_core WRONG: right value 0x547e4
+CAUGHT sweep:address A/AFjp.v:961 tok 0: 0x3272c -> 0x32734: port_core WRONG: right value 0x3272c
+CAUGHT sweep:address A/AFjq.v:708 tok 3: 0x329f4 -> 0x329fc: port_core WRONG: right value 0x329f4
+CAUGHT sweep:address A/AFjw.v:269 tok 0: 0xa9658 -> 0xa9660: port_core WRONG: right value 0xa9658
+CAUGHT sweep:address A/AFjy.v:830 tok 3: 0x5cf050 -> 0x5cf058: port_core WRONG: right value 0x5cf050
+CAUGHT sweep:address A/AFjz.v:619 tok 0: 0x547e4 -> 0x547ec: port_core WRONG: right value 0x547e4
+CAUGHT sweep:address A/AFk1.v:631 tok 0: 0x54824 -> 0x5482c: port_core WRONG: right value 0x54824
+CAUGHT sweep:address A/AFk1.v:837 tok 2: 0x13e61d -> 0x13e625: port_core WRONG: right value 0x13e61d
+CAUGHT sweep:model-line A/AFk2.v:479 tok 0: 0x7ffffff0 -> 0x7ffffff8: port_core WRONG: right value 0x7ffffff0 (a model constant, unchanged)
+CAUGHT sweep:address A/AFk2.v:868 tok 0: 0x68068 -> 0x68070: port_core WRONG: right value 0x68068
+CAUGHT sweep:constant A/AFk5.v:565 tok 0: 65536 -> 65544: port_core WRONG: right value 65536 (a constant, unchanged)
+CAUGHT sweep:address A/AFk6.v:34 tok 0: 0x5cf050 -> 0x5cf058: port_core WRONG: right value 0x5cf050
+CAUGHT sweep:address A/AFk8.v:85 tok 0: 0x37338 -> 0x37340: port_core WRONG: right value 0x37338
+CAUGHT sweep:address A/AFk8.v:107 tok 0: 0x36f50 -> 0x36f58: port_core WRONG: right value 0x36f50
+CAUGHT sweep:address A/AFk9.v:50 tok 0: 0x34fe8 -> 0x34ff0: port_core WRONG: right value 0x34fe8
+CAUGHT sweep:address A/AFke.v:513 tok 0: 0x35008 -> 0x35010: port_core WRONG: right value 0x35008
+CAUGHT sweep:address A/AFke.v:621 tok 1: 0x35080 -> 0x35088: port_core WRONG: right value 0x35080
+CAUGHT sweep:constant A/AFke.v:650 tok 1: 262144 -> 262152: port_core WRONG: right value 262144 (a constant, unchanged)
+CAUGHT sweep:address A/AFkg.v:491 tok 1: 0x374dc -> 0x374e4: port_core WRONG: right value 0x374dc
+CAUGHT sweep:address A/AFki.v:507 tok 0: 0x374ec -> 0x374f4: port_core WRONG: right value 0x374ec
+CAUGHT sweep:span A/AFkm.v:1005 tok 1: 0x606000 -> 0x606008: port_core WRONG: right value 0x606000
+CAUGHT sweep:constant A/AFkn.v:1096 tok 2: 262144 -> 262152: port_core WRONG: right value 262144 (a constant, unchanged)
+CAUGHT sweep:constant A/AFkn.v:1887 tok 2: 262144 -> 262152: port_core WRONG: right value 262144 (a constant, unchanged)
+CAUGHT sweep:address A/AFko.v:434 tok 0: 0x37180 -> 0x37188: port_core WRONG: right value 0x37180
+CAUGHT sweep:address A/AFkz.v:790 tok 0: 0xac250 -> 0xac258: port_core WRONG: right value 0xac250
+CAUGHT sweep:constant Reusable/YG00.v:24 tok 0: 131072 -> 131080: port_core WRONG: right value 131072 (a constant, unchanged)
+CAUGHT sweep:model-line Reusable/YG00.v:26 tok 0: 1048576 -> 1048584: port_core WRONG: right value 1048576 (a model constant, unchanged)
+CAUGHT sweep:constant Reusable/YO01.v:49 tok 1: 131072 -> 131080: port_core WRONG: right value 131072 (a constant, unchanged)
+CHANGED (not planted) A/AB1u.v:316 tok 0: port_core right -> port_core WRONG: fuzz_transport.asan holds 0x56a423 at 0x9d300
+CHANGED (not planted) A/AB1u.v:896 tok 0: port_core right -> port_core WRONG: fuzz_transport.asan holds 0x55c303 at 0x9d4d0
+CHANGED (not planted) A/AB1u.v:1176 tok 0: port_core right -> port_core WRONG: fuzz_transport.asan holds 0x35c883 at 0x9d5b0
+CHANGED (not planted) A/AB1u.v:1285 tok 1: port_core right -> port_core WRONG: fuzz_transport.asan holds 0x8067 at 0x9d610
+controls: 120 planted, 120 caught, 4 other rows changed; decide status 1 (1 = WRONG rows reported)
+sweep2 rc=1 323s

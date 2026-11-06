@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: pjsip
 harness: fuzz-audio
-rocq: OssFuzzTheorems.pjsip.fuzz_audio
+rocq: OSSVerify.pjsip.fuzz_audio
 origin: upstream
 summary: 'For each registered audio codec (G.711 A/U-law, G.722, GSM, Speex, iLBC, L16 8/16/48 kHz, Opus
   when built) on a non-overlapping chunk: codec modify (VAD bit from input), decode the chunk, re-encode

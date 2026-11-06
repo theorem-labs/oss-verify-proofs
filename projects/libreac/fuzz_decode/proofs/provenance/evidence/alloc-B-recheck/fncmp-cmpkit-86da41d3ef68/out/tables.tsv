@@ -1,0 +1,15 @@
+function	word	measurement	X target	Y target	detail
+_ZNK6__asan18AddressDescription5PrintEPKc	0x14	TABLE-REL4-JUMP	0x20604	0x205a0	5 entries, function-relative targets equal
+_ZN6__asan12ErrorGenericC1Ejmmmmbm	0x224	TABLE-REL4-JUMP	0x20618	0x205b4	82 entries, function-relative targets equal
+_ZN6__asan9Decorator10ShadowByteEh	0x14	TABLE-REL4-JUMP	0x20780	0x2071c	83 entries, function-relative targets equal
+_ZN6__asan16ErrorDescription5PrintEv	0x1c	TABLE-REL4-JUMP	0x208cc	0x20868	25 entries, function-relative targets equal
+_ZN6__asanL23force_interface_symbolsEv	0x20	TABLE-REL4-JUMP	0x20930	0x208cc	52 entries, function-relative targets equal
+_ZN11__sanitizer19GetHandleSignalModeEi	0x24	TABLE-ABS8-PTR	0x9ddc8	0x98ea8	8 pointers, each naming the same thing ({'_ZN11__sanitizer21common_flags_dont_useE+0x64': 1, '_ZN11__sanitizer21common_flags_dont_useE+0x68': 1, '_ZN11__sanitizer21common_flags_dont_useE+0x60': 1, '_ZN11__sanitizer21common_flags_dont_useE+0x5c': 1, '_ZN11__sanitizer21common_flags_dont_useE+0x6c': 1, 'equal-non-pointer': 2, '_ZN11__sanitizer21common_flags_dont_useE+0x58': 1})
+_ZN11__sanitizer8OpenFileEPKcNS_14FileAccessModeEPi	0x60	TABLE-REL4-STR	0x20ab4	0x20a50	3 entries (jtcheck's reading: rel4 offsets to C strings), all settled: value 0 (not a string on either side; entry bytes equal) ; value 577 (not a string on either side; entry bytes equal) ; value 66 (not a string on either side; entry bytes equal)
+_ZNK11__sanitizer13SignalContext8DescribeEv	0x1c	TABLE-REL4-STR	0x20ac0	0x20a5c	8 entries (jtcheck's reading: rel4 offsets to C strings), all settled: b'ILL\x00' ; b'TRAP\x00' ; b'ABRT\x00' ; b'BUS\x00' ; b'FPE\x00' ; b'UNKNOWN SIGNAL\x00' ; b'UNKNOWN SIGNAL\x00' ; b'SEGV\x00'
+_ZN9libunwind17LocalAddressSpace11getEncodedPERmmhm	0x28	TABLE-REL4-JUMP	0x21030	0x20f6c	13 entries, function-relative targets equal
+_ZN9libunwind17LocalAddressSpace11getEncodedPERmmhm	0x1a8	TABLE-REL4-JUMP	0x21064	0x20fa0	6 entries, function-relative targets equal
+_ZN9libunwind14EHHeaderParserINS_17LocalAddressSpaceEE17getTableEntrySizeEh	0x24	TABLE-REL4-JUMP	0x212c4	0x21200	12 entries, function-relative targets equal
+sysconf	0xdc	TABLE-REL4-JUMP	0x213fc	0x21338	13 entries, function-relative targets equal
+__synccall	0x54	INITIALIZER	0x9e110	0x991f0	152 bytes: {'pointer handler+0x0 | handler+0x0': 1, 'equal': 18}
+__strftime_fmt_1	0x44	TABLE-REL4-JUMP	0x22634	0x22574	86 entries, function-relative targets equal

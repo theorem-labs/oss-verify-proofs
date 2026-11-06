@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: igraph
 harness: basic_properties_directed
-rocq: OssFuzzTheorems.igraph.basic_properties_directed
+rocq: OSSVerify.igraph.basic_properties_directed
 origin: upstream
 summary: 'Checks 4 properties (listed below); the first, a differential check: is_simple must equal !(has_multiple
   || has_loop): two independent predicate APIs must agree.'

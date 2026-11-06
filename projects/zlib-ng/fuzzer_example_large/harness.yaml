@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zlib-ng
 harness: fuzzer_example_large
-rocq: OssFuzzTheorems.zlib_ng.fuzzer_example_large
+rocq: OSSVerify.zlib_ng.fuzzer_example_large
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an invariant: Deflate a zero buffer, then the
   already-compressed bytes at level 0, then the zero buffer at level 9/Z_FILTERED; inflate total_out must

@@ -1,0 +1,14 @@
+# cellcheck.py record: the file-backed zN (ANum A) V cells of lib/A/AF0m.v (proofs/libreac/fuzz_disco)
+# against image A. Written by af0m/run.sh. Each run shows cellcheck.py's stdout (mismatch rows: file, line,
+# addr, n, written, image), then its stderr (the count), then its exit status.
+tool  cellcheck.py sha256 d38c9bef26ade31c6fc075784716ec1879c3eb0e18192a0b77e1ef7e5d5e46c9
+image A (fuzz_disco.asan) sha256 5e39150dd8104df969eb360f9cc29c4f92fe12326afd23783a679e4fb4809f46
+## run 1: the shipped file
+input lib/A/AF0m.v sha256 d4502d1ae1e9b691fb8bfe9f4452b7acc7bf634b939d50cb03ce5fa35d2e24ed
+# 662 file-backed cells, 0 mismatch
+rc 0
+## run 2: planted control: run 1's file with 'z8 (ANum 0xa4dc0) 0x20f80  ;' changed to 'z8 (ANum 0xa4dc0) 0x20f81  ;' (1 byte differs)
+input AF0m.v (control) sha256 7033d4ced3610a4db9f0e0b50cf47a7dac8fc6243909d14f38a0fa786ce5b463
+AF0m.v	189	0xa4dc0	8	0x20f81	0x20f80
+# 662 file-backed cells, 1 mismatch
+rc 1

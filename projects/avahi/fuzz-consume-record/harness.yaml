@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: avahi
 harness: fuzz-consume-record
-rocq: OssFuzzTheorems.avahi.fuzz_consume_record
+rocq: OSSVerify.avahi.fuzz_consume_record
 origin: upstream
 summary: 'Checks 6 properties (listed below); the first, a round trip: rdata serialize -> avahi_rdata_parse
   into a fresh record with the same name/class/type/ttl -> avahi_record_equal_no_ttl(original, reparsed)

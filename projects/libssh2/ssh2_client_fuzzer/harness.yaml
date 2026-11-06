@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libssh2
 harness: ssh2_client_fuzzer
-rocq: OssFuzzTheorems.libssh2.ssh2_client_fuzzer
+rocq: OSSVerify.libssh2.ssh2_client_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

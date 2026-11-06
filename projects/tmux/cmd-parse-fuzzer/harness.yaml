@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tmux
 harness: cmd-parse-fuzzer
-rocq: OssFuzzTheorems.tmux.cmd_parse_fuzzer
+rocq: OSSVerify.tmux.cmd_parse_fuzzer
 origin: upstream
 summary: cmd_parse_from_buffer on the input (<=2048 bytes) with CMD_PARSE_QUIET; the command list or error
   is freed. Parse status is only used to pick what to free.

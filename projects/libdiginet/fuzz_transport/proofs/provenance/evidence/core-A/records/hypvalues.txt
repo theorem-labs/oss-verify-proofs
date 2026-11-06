@@ -1,0 +1,9 @@
+hypderive.py WORK LIB OUT/hyp
+images: T e89be137db17 TIMG/stripped/fuzz_transport.asan, TT 86efc3a80314 TIMG/unstripped/fuzz_transport.asan, D c2c7559b29bd PG/bin/fuzz_grant/fuzz_grant.asan, DT 57c26f993615 PG/unstripped/fuzz_grant/fuzz_grant.asan
+listed 40573; differs-from-donor 1541 (DIFFERS 1531, DIFFERS-FORM 0, NEW 10)
+DIFFERS rows derived: OK 1537, WRONG 1, NEEDS-STARTUP 0, KNOWN 3, RUNTIME 0, OPEN 0
+DIFFERS rules: BYTES 56, CONTENT 147, COUNT 3, GOT 113, GPATCH 8, IMAGE-QTY 64, JTABLE 9, KNOWN 3, NEW 2, SHADOW-BOUND 1, SHSPAN 1, SHWIN 10, SYMBOL 1117, SYMBOL-ALIGNED 2, SYMBOL-RANK 5
+SAME rows that name a donor image value: 306: SAME-IN-BOTH 157, CONST (by hand / the bv-32 rule) 148, KNOWN 1, KEPT-IMAGE 0
+CONTENT (memory facts of listed rows with literal address and value): 373: OK 162, WRONG 0, RUNTIME 172, RELATIVE 39
+information only, DIFFERS outside hypothesis positions (unlisted-derived.tsv): 5407: NEW 137, OK 5184, OPEN 52, WRONG 34
+WRONG	A/AD1o.v:87	written 0x5f3200	right 0xa9360	donor 0xa14a0	SYMBOL	donor 0xa14a0 = __do_init.__object+0x10 (size 0x40, .bss); target __do_init.__object at 0xa9350 (size 0x40) + 0x10 = 0xa9360

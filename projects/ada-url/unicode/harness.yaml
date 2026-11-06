@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ada-url
 harness: unicode
-rocq: OssFuzzTheorems.ada_url.unicode
+rocq: OSSVerify.ada_url.unicode
 origin: upstream
 summary: 'Checks 4 properties (listed below); the first, an invariant: Per-byte classification subset
   laws: forbidden_host => forbidden_domain, ascii_digit => ascii_hex_digit, lowercase_hex => ascii_hex_digit,

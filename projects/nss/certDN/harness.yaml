@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nss
 harness: certDN
-rocq: OssFuzzTheorems.nss.certDN
+rocq: OSSVerify.nss.certDN
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

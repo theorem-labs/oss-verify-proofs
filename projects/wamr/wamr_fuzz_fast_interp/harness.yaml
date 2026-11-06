@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wamr
 harness: wamr_fuzz_fast_interp
-rocq: OssFuzzTheorems.wamr.wamr_fuzz_fast_interp
+rocq: OSSVerify.wamr.wamr_fuzz_fast_interp
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

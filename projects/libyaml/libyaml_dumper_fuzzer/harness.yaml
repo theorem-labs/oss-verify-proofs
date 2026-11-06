@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libyaml
 harness: libyaml_dumper_fuzzer
-rocq: OssFuzzTheorems.libyaml.libyaml_dumper_fuzzer
+rocq: OSSVerify.libyaml.libyaml_dumper_fuzzer
 origin: oss-fuzz
 summary: crashes/sanitizers in load, copy, dump, re-load and compare.
 entry: LLVMFuzzerTestOneInput

@@ -1,0 +1,379 @@
+status	e165_raw_line	cb0e_raw_line	verdict	src_file	src_line	dst_line	sentence	idx	kind	src_value	dst_value	reason	detail
+unchanged	23	23	UNRESOLVED	A/AB1w.v	10	11	Definition tfib_rodata_hi	0	hex	0x22c0c	0x22584	U-JT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 23
+unchanged	24	24	KIND-CHANGED	A/AB1w.v	11	12	Definition tfib_text_hi	0	hex	0x9b168	0x95a88	K-TLS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 24
+unchanged	25	25	KIND-CHANGED	A/AB1w.v	20	21	Definition tfib_tbss_lo	0	hex	0x9b168	0x95a88	K-TLS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 25
+unchanged	26	26	UNPAIRED-SOURCE	A/AB1w.v	67	-	Definition tfib_A_asan_stack_malloc_0	-	hex	0x3cda4	-	S-ABSENTRT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 26
+unchanged	27	27	UNPAIRED-SOURCE	A/AB1w.v	67	-	Definition tfib_E_asan_stack_malloc_0	-	hex	0x3cf18	-	S-ABSENTRT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 27
+unchanged	28	28	UNPAIRED-SOURCE	A/AB1w.v	69	-	Definition tfib_A_asan_stack_malloc_2	-	hex	0x3d0a8	-	S-ABSENTRT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 28
+unchanged	29	29	UNPAIRED-SOURCE	A/AB1w.v	69	-	Definition tfib_E_asan_stack_malloc_2	-	hex	0x3d244	-	S-ABSENTRT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 29
+unchanged	30	30	UNPAIRED-SOURCE	A/AB1w.v	70	-	Definition tfib_A_asan_stack_malloc_4	-	hex	0x3d244	-	S-ABSENTRT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 30
+unchanged	31	31	UNPAIRED-SOURCE	A/AB1w.v	70	-	Definition tfib_E_asan_stack_malloc_4	-	hex	0x3d410	-	S-ABSENTRT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 31
+unchanged	32	32	UNPAIRED-SOURCE	A/AB1w.v	86	-	Definition tfib_A_memcmp_2	-	hex	0x42144	-	S-ABSENTRT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 32
+unchanged	33	33	UNPAIRED-SOURCE	A/AB1w.v	86	-	Definition tfib_E_memcmp_2	-	hex	0x42148	-	S-ABSENTRT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 33
+unchanged	34	34	UNPAIRED-SOURCE	A/AB1w.v	121	-	Definition tfib_A_icpt_memcmp_MemcmpInterceptorCommon_entry_bcmp_m	-	hex	0x43850	-	S-ABSENTRT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 34
+unchanged	35	35	UNPAIRED-SOURCE	A/AB1w.v	121	-	Definition tfib_E_icpt_memcmp_MemcmpInterceptorCommon_entry_bcmp_m	-	hex	0x4390c	-	S-ABSENTRT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 35
+unchanged	36	36	UNPAIRED-SOURCE	A/AB1w.v	150	-	Definition tfib_A_asan_memset	-	hex	0x51c98	-	S-ABSENTRT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 36
+unchanged	37	37	UNPAIRED-SOURCE	A/AB1w.v	150	-	Definition tfib_E_asan_memset	-	hex	0x51ed8	-	S-ABSENTRT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 37
+unchanged	38	38	UNPAIRED-SOURCE	A/AB1w.v	441	-	Definition tfib_A_check_groupa	-	hex	0x81b70	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 38
+unchanged	39	39	UNPAIRED-SOURCE	A/AB1w.v	441	-	Definition tfib_E_check_groupa	-	hex	0x81f24	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 39
+unchanged	40	40	UNPAIRED-SOURCE	A/AB1w.v	444	-	Definition tfib_A_reac_ctrl_checksum_verify	-	hex	0x81f8c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 40
+unchanged	41	41	UNPAIRED-SOURCE	A/AB1w.v	444	-	Definition tfib_E_reac_ctrl_checksum_verify	-	hex	0x82000	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 41
+unchanged	42	42	UNPAIRED-SOURCE	A/AB1w.v	445	-	Definition tfib_A_reac_ctrl_parse	-	hex	0x82000	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 42
+unchanged	43	43	UNPAIRED-SOURCE	A/AB1w.v	445	-	Definition tfib_E_reac_ctrl_parse	-	hex	0x829a0	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 43
+unchanged	44	44	UNPAIRED-SOURCE	A/AB1w.v	446	-	Definition tfib_A_kind_of_link1	-	hex	0x829a0	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 44
+unchanged	45	45	UNPAIRED-SOURCE	A/AB1w.v	446	-	Definition tfib_E_kind_of_link1	-	hex	0x82a14	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 45
+unchanged	46	46	UNPAIRED-SOURCE	A/AB1w.v	447	-	Definition tfib_A_reac_ctrl_stamp_headamp	-	hex	0x82a14	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 46
+unchanged	47	47	UNPAIRED-SOURCE	A/AB1w.v	447	-	Definition tfib_E_reac_ctrl_stamp_headamp	-	hex	0x82c60	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 47
+unchanged	48	48	UNPAIRED-SOURCE	A/AB1w.v	448	-	Definition tfib_A_reac_ctrl_headamp_record_verify	-	hex	0x82c60	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 48
+unchanged	49	49	UNPAIRED-SOURCE	A/AB1w.v	448	-	Definition tfib_E_reac_ctrl_headamp_record_verify	-	hex	0x82d3c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 49
+unchanged	50	50	UNPAIRED-SOURCE	A/AB1w.v	449	-	Definition tfib_A_reac_ctrl_identity_poll_block	-	hex	0x82d3c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 50
+unchanged	51	51	UNPAIRED-SOURCE	A/AB1w.v	449	-	Definition tfib_E_reac_ctrl_identity_poll_block	-	hex	0x82d8c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 51
+unchanged	52	52	UNPAIRED-SOURCE	A/AB1w.v	450	-	Definition tfib_A_reac_ctrl_build_grant_sweep	-	hex	0x82d8c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 52
+unchanged	53	53	UNPAIRED-SOURCE	A/AB1w.v	450	-	Definition tfib_E_reac_ctrl_build_grant_sweep	-	hex	0x82ffc	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 53
+unchanged	54	54	UNPAIRED-SOURCE	A/AB1w.v	451	-	Definition tfib_A_ctrl_lay_block	-	hex	0x82ffc	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 54
+unchanged	55	55	UNPAIRED-SOURCE	A/AB1w.v	451	-	Definition tfib_E_ctrl_lay_block	-	hex	0x8339c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 55
+unchanged	56	56	UNPAIRED-SOURCE	A/AB1w.v	452	-	Definition tfib_A_ctrl_finish	-	hex	0x8339c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 56
+unchanged	57	57	UNPAIRED-SOURCE	A/AB1w.v	452	-	Definition tfib_E_ctrl_finish	-	hex	0x8354c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 57
+unchanged	58	58	UNPAIRED-SOURCE	A/AB1w.v	453	-	Definition tfib_A_reac_box_model_block	-	hex	0x8354c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 58
+unchanged	59	59	UNPAIRED-SOURCE	A/AB1w.v	453	-	Definition tfib_E_reac_box_model_block	-	hex	0x843cc	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 59
+unchanged	60	60	UNPAIRED-SOURCE	A/AB1w.v	454	-	Definition tfib_A_build_dt1_single	-	hex	0x843cc	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 60
+unchanged	61	61	UNPAIRED-SOURCE	A/AB1w.v	454	-	Definition tfib_E_build_dt1_single	-	hex	0x8483c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 61
+unchanged	62	62	UNPAIRED-SOURCE	A/AB1w.v	455	-	Definition tfib_A_reac_grant_alloc_fits	-	hex	0x8483c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 62
+unchanged	63	63	UNPAIRED-SOURCE	A/AB1w.v	455	-	Definition tfib_E_reac_grant_alloc_fits	-	hex	0x84860	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 63
+unchanged	64	64	UNPAIRED-SOURCE	A/AB1w.v	456	-	Definition tfib_A_reac_grant_allocate	-	hex	0x84860	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 64
+unchanged	65	65	UNPAIRED-SOURCE	A/AB1w.v	456	-	Definition tfib_E_reac_grant_allocate	-	hex	0x848f0	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 65
+unchanged	66	66	UNPAIRED-SOURCE	A/AB1w.v	457	-	Definition tfib_A_reac_grant_build_sweep	-	hex	0x848f0	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 66
+unchanged	67	67	UNPAIRED-SOURCE	A/AB1w.v	457	-	Definition tfib_E_reac_grant_build_sweep	-	hex	0x84d1c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 67
+unchanged	68	68	UNPAIRED-SOURCE	A/AB1w.v	458	-	Definition tfib_A_reac_headamp_tx_init	-	hex	0x84d1c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 68
+unchanged	69	69	UNPAIRED-SOURCE	A/AB1w.v	458	-	Definition tfib_E_reac_headamp_tx_init	-	hex	0x84d3c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 69
+unchanged	70	70	UNPAIRED-SOURCE	A/AB1w.v	459	-	Definition tfib_A_reac_headamp_tx_set	-	hex	0x84d3c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 70
+unchanged	71	71	UNPAIRED-SOURCE	A/AB1w.v	459	-	Definition tfib_E_reac_headamp_tx_set	-	hex	0x84e54	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 71
+unchanged	72	72	UNPAIRED-SOURCE	A/AB1w.v	460	-	Definition tfib_A_reac_headamp_default	-	hex	0x84e54	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 72
+unchanged	73	73	UNPAIRED-SOURCE	A/AB1w.v	460	-	Definition tfib_E_reac_headamp_default	-	hex	0x84e64	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 73
+unchanged	74	74	UNPAIRED-SOURCE	A/AB1w.v	461	-	Definition tfib_A_reac_headamp_tx_effective	-	hex	0x84e64	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 74
+unchanged	75	75	UNPAIRED-SOURCE	A/AB1w.v	461	-	Definition tfib_E_reac_headamp_tx_effective	-	hex	0x84f1c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 75
+unchanged	76	76	UNPAIRED-SOURCE	A/AB1w.v	462	-	Definition tfib_A_reac_headamp_tx_arm_scene	-	hex	0x84f1c	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 76
+unchanged	77	77	UNPAIRED-SOURCE	A/AB1w.v	462	-	Definition tfib_E_reac_headamp_tx_arm_scene	-	hex	0x85058	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 77
+unchanged	78	78	UNPAIRED-SOURCE	A/AB1w.v	463	-	Definition tfib_A_reac_headamp_tx_set_resweep	-	hex	0x85058	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 78
+unchanged	79	79	UNPAIRED-SOURCE	A/AB1w.v	463	-	Definition tfib_E_reac_headamp_tx_set_resweep	-	hex	0x850cc	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 79
+unchanged	80	80	UNPAIRED-SOURCE	A/AB1w.v	464	-	Definition tfib_A_reac_headamp_tx_next	-	hex	0x850cc	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 80
+unchanged	81	81	UNPAIRED-SOURCE	A/AB1w.v	464	-	Definition tfib_E_reac_headamp_tx_next	-	hex	0x857dc	-	S-GRANTPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 81
+unchanged	82	82	STALE-DONOR-CODE-POINTER	A/AB1w.v	540	564	Definition tfib_A_thunk_95368	1	hex	0x9592c	0x92970	THUNK	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 82
+unchanged	83	83	NO-COUNTERPART	A/AB1w.v	540	564	Definition tfib_E_thunk_95368	1	hex	0x95930	0x92978	THUNK	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 83
+unchanged	84	84	UNRESOLVED	A/AB1w.v	562	563	Definition tfib_E_set_thread_area	0	hex	0x98060	0x92984	U-UNMAP	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 84
+unchanged	85	85	UNPAIRED-SOURCE	A/AB1w.v	563	-	Definition tfib_A_thunk_96f9c	-	ident	0x96f9c	-	THUNK	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 85
+unchanged	86	86	UNPAIRED-SOURCE	A/AB1w.v	563	-	Definition tfib_A_thunk_96f9c	-	hex	0x9804c	-	THUNK	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 86
+unchanged	87	87	UNPAIRED-SOURCE	A/AB1w.v	563	-	Definition tfib_E_thunk_96f9c	-	ident	0x96f9c	-	THUNK	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 87
+unchanged	88	88	UNPAIRED-SOURCE	A/AB1w.v	563	-	Definition tfib_E_thunk_96f9c	-	hex	0x98054	-	THUNK	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 88
+unchanged	89	89	UNRESOLVED	A/AB1w.v	600	601	Definition tfib_at_ph_addr_z	0	hex	0x10040	0x10040	U-PHDR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 89
+unchanged	90	90	UNPAIRED-PORTED	A/AB1w.v	-	87	Definition tfib_A_check_no_overread	-	hex	-	0x7f4fc	P-UCIPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 90
+unchanged	91	91	UNPAIRED-PORTED	A/AB1w.v	-	87	Definition tfib_E_check_no_overread	-	hex	-	0x7f62c	P-UCIPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 91
+unchanged	92	92	UNPAIRED-PORTED	A/AB1w.v	-	87	Definition tfib_A_check_value	-	hex	-	0x7f62c	P-UCIPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 92
+unchanged	93	93	UNPAIRED-PORTED	A/AB1w.v	-	87	Definition tfib_E_check_value	-	hex	-	0x7f888	P-UCIPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 93
+unchanged	94	94	UNPAIRED-PORTED	A/AB1w.v	-	87	Definition tfib_A_check_clamp	-	hex	-	0x7f888	P-UCIPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 94
+unchanged	95	95	UNPAIRED-PORTED	A/AB1w.v	-	87	Definition tfib_E_check_clamp	-	hex	-	0x7fbfc	P-UCIPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 95
+unchanged	96	96	UNPAIRED-PORTED	A/AB1w.v	-	87	Definition tfib_A_rp_hot_clamp	-	hex	-	0x7fc64	P-UCIPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 96
+unchanged	97	97	UNPAIRED-PORTED	A/AB1w.v	-	87	Definition tfib_E_rp_hot_clamp	-	hex	-	0x7fef0	P-UCIPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 97
+unchanged	98	98	UNPAIRED-PORTED	A/AB1w.v	-	87	Definition tfib_A_rp_uci_int	-	hex	-	0x7fef0	P-UCIPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 98
+unchanged	99	99	UNPAIRED-PORTED	A/AB1w.v	-	87	Definition tfib_E_rp_uci_int	-	hex	-	0x80104	P-UCIPROG	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 99
+unchanged	100	100	NON-ADDRESS-CHANGED	A/AD1o.v	94	95	Lemma bss_shadow_facts / sentence 12	2	dec	0x14294	0x1372c	N-AD1o-BSS20	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 100
+unchanged	101	101	NON-ADDRESS-CHANGED	A/AD1o.v	94	95	Lemma bss_shadow_facts / sentence 13	3	dec	0xbf3ff	0xbe7ff	N-AD1o-TOP	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 101
+unchanged	102	102	NON-ADDRESS-CHANGED	A/AD1o.v	99	100	Lemma bss_shadow_facts / sentence 22	3	dec	0xab174	0xab0de	N-AD1o-ZLEN	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 102
+unchanged	103	103	NON-ADDRESS-CHANGED	A/AD27.v	69	70	Lemma img_sub_COf / sentence 2	1	dec	0x25	0x23	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 103
+unchanged	104	104	NON-ADDRESS-CHANGED	A/AD27.v	74	75	Lemma img_sub_US / sentence 2	1	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 104
+unchanged	105	105	NON-ADDRESS-CHANGED	A/AD27.v	94	95	Lemma img_sub_FW / sentence 3	1	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 105
+unchanged	106	106	NON-ADDRESS-CHANGED	A/AD27.v	96	97	Lemma img_sub_FW / sentence 6	1	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 106
+unchanged	107	107	NON-ADDRESS-CHANGED	A/AD28.v	293	294	Lemma imgs_of_R / sentence 5	2	dec	0x340	0x348	N-RA3	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 107
+unchanged	108	108	NON-ADDRESS-CHANGED	A/AD28.v	294	295	Lemma imgs_of_R / sentence 6	1	dec	0x340	0x348	N-RA3	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 108
+unchanged	109	109	NON-ADDRESS-CHANGED	A/AD2h.v	64	65	Lemma img_sub_SHORT / sentence 2	1	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 109
+unchanged	110	110	NON-ADDRESS-CHANGED	A/AD2h.v	69	70	Lemma img_sub_OVR / sentence 2	1	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 110
+unchanged	111	111	UNPAIRED-SOURCE	A/AF0l.v	12	-	Definition Tfib_code	-	hex	0x3cda4	-	S-AF0L	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 111
+unchanged	112	112	UNPAIRED-SOURCE	A/AF0l.v	12	-	Definition Tfib_code	-	hex	0x3d0a8	-	S-AF0L	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 112
+unchanged	113	113	UNPAIRED-SOURCE	A/AF0l.v	12	-	Definition Tfib_code	-	hex	0x3d244	-	S-AF0L	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 113
+unchanged	114	114	KIND-CHANGED	A/AF0l.v	13	14	Definition Tfib_code	10	hex	0x51c98	0x0	K-ABSENT0	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 114
+unchanged	115	115	KIND-CHANGED	A/AF0l.v	14	15	Definition Tfib_code	14	hex	0x42144	0x0	K-ABSENT0	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 115
+unchanged	116	116	UNPAIRED-SOURCE	A/AF0l.v	12	-	Definition Tfib_code	-	dec	0x0	-	S-AF0L	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 116
+unchanged	117	117	UNPAIRED-SOURCE	A/AF0l.v	12	-	Definition Tfib_code	-	dec	0x2	-	S-AF0L	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 117
+unchanged	118	118	UNPAIRED-SOURCE	A/AF0l.v	12	-	Definition Tfib_code	-	dec	0x4	-	S-AF0L	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 118
+unchanged	119	119	NON-ADDRESS-CHANGED	A/AFem.v	412	413	Lemma FACTS_fixed / sentence 32	0	dec	0x61a86	0x603b6	N-DEPOT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 119
+unchanged	122	140	UNPAIRED-PORTED	A/AFf0.v	-	470	Lemma zshadow' / sentence 28	-	dec	-	0x8	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 140
+unchanged	123	141	UNPAIRED-PORTED	A/AFf3.v	-	647	Lemma zshadow' / sentence 39	-	dec	-	0x8	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 141
+unchanged	124	142	UNPAIRED-PORTED	A/AFf4.v	-	897	Lemma zshadow' / sentence 32	-	dec	-	0x8	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 142
+unchanged	125	143	UNPAIRED-PORTED	A/AFf4.v	-	897	Lemma zshadow' / sentence 32	-	dec	-	0x8	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 143
+unchanged	126	144	UNPAIRED-PORTED	A/AFf4.v	-	897	Lemma zshadow' / sentence 32	-	dec	-	0x8	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 144
+unchanged	127	145	GEOMETRY-CHANGED	A/AFfc.v	100	101	Lemma hdr_facts	0	dec	0x17f0	0x17f0	G-6128	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 145
+unchanged	130	166	NON-ADDRESS-CHANGED	A/AFfu.v	409	410	Lemma p_facts / sentence 38	0	dec	0x14ba8	0x14040	N-IAL	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 166
+unchanged	131	167	NON-ADDRESS-CHANGED	A/AFg1.v	297	298	Lemma p_facts / sentence 38	0	dec	0x14ba8	0x14040	N-IAL	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 167
+unchanged	132	168	NON-ADDRESS-CHANGED	A/AFim.v	500	501	Lemma HSN / sentence 30	0	dec	0x3c	0x1	N-CELLPATCH	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 168
+unchanged	133	169	NON-ADDRESS-CHANGED	A/AFin.v	490	491	Lemma HSN / sentence 30	0	dec	0x3c	0x1	N-CELLPATCH	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 169
+unchanged	134	170	UNRESOLVED	A/AFjm.v	327	328	Lemma map_zoneN	2	dec	0x800b3118	0x800b25b0	U-TLSSH	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 170
+unchanged	135	171	GEOMETRY-CHANGED	A/AFjq.v	713	714	Lemma segUe / sentence 43	0	dec	0x17f0	0x17f0	G-6128	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 171
+unchanged	136	172	GEOMETRY-CHANGED	A/AFjq.v	715	716	Lemma segUe / sentence 52	2	dec	0x17f0	0x17f0	G-6128	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 172
+unchanged	137	173	GEOMETRY-CHANGED	A/AFjq.v	716	717	Lemma segUe / sentence 53	0	dec	0x17f0	0x17f0	G-6128	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 173
+unchanged	138	174	NON-ADDRESS-CHANGED	A/AFjr.v	627	628	Lemma FS2_ok / sentence 48	3	dec	0x142b0	0x13748	N-INST	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 174
+unchanged	139	181	UNRESOLVED	A/AFk1.v	694	695	Lemma sm_bounds	0	dec	0x800b3118	0x800b25b0	U-TLSSH	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 181
+unchanged	140	196	NON-ADDRESS-CHANGED	A/AD1x.v	25	26	Lemma IMG_X_wf	1	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 196
+unchanged	141	197	NON-ADDRESS-CHANGED	A/AD1x.v	26	27	Lemma IMG_X_wf	2	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 197
+unchanged	142	198	NON-ADDRESS-CHANGED	A/AD22.v	20	21	Lemma skipn3_dir	1	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 198
+unchanged	143	199	NON-ADDRESS-CHANGED	A/AD22.v	20	21	Lemma skipn3_dir	2	dec	0x27	0x25	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 199
+unchanged	144	200	NON-ADDRESS-CHANGED	A/AD27.v	87	88	Lemma FW_facts	31	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 200
+unchanged	145	201	NON-ADDRESS-CHANGED	A/AD28.v	105	106	Lemma S_COf_mem	6	dec	0x25	0x23	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 201
+unchanged	146	202	NON-ADDRESS-CHANGED	A/AD28.v	106	107	Lemma S_COf_mem	7	dec	0x25	0x23	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 202
+unchanged	147	203	NON-ADDRESS-CHANGED	A/AD28.v	106	107	Lemma S_COf_mem	8	dec	0x25	0x23	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 203
+unchanged	148	204	NON-ADDRESS-CHANGED	A/AD28.v	106	107	Lemma S_COf_mem	10	dec	0x25	0x23	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 204
+unchanged	149	205	NON-ADDRESS-CHANGED	A/AD28.v	107	108	Lemma S_COf_mem	12	dec	0x26	0x24	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 205
+unchanged	150	206	NON-ADDRESS-CHANGED	A/AD28.v	109	110	Lemma S_US_mem	6	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 206
+unchanged	151	207	NON-ADDRESS-CHANGED	A/AD2d.v	24	25	Definition B0_r5	0	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 207
+unchanged	152	208	NON-ADDRESS-CHANGED	A/AD2d.v	25	26	Definition B1_r5	0	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 208
+unchanged	153	209	NON-ADDRESS-CHANGED	A/AD2d.v	131	132	Lemma img_facts_of / sentence 6	1	dec	0x340	0x348	N-RA3	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 209
+unchanged	154	210	NON-ADDRESS-CHANGED	A/AD2e.v	63	64	Definition PM_tailL	0	dec	0x23	0x21	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 210
+unchanged	155	211	NON-ADDRESS-CHANGED	A/AD2e.v	68	69	Lemma PM_pieces_eq	0	dec	0x25	0x23	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 211
+unchanged	156	212	NON-ADDRESS-CHANGED	A/AD2e.v	68	69	Lemma PM_pieces_eq	2	dec	0x25	0x23	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 212
+unchanged	157	213	NON-ADDRESS-CHANGED	A/AD2e.v	192	193	Lemma rs_PM_sub / sentence 8	0	dec	0x23	0x21	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 213
+unchanged	158	214	NON-ADDRESS-CHANGED	A/AD2f.v	58	59	Definition IMG_E	0	dec	0x21	0x1f	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 214
+unchanged	159	215	NON-ADDRESS-CHANGED	A/AD2f.v	67	68	Lemma S_Pm_layout	0	dec	0x27	0x25	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 215
+unchanged	160	216	NON-ADDRESS-CHANGED	A/AD2f.v	67	68	Lemma S_Pm_layout	1	dec	0x21	0x1f	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 216
+unchanged	161	217	NON-ADDRESS-CHANGED	A/AD2f.v	67	68	Lemma S_Pm_layout	3	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 217
+unchanged	162	218	NON-ADDRESS-CHANGED	A/AD2f.v	85	86	Lemma sPE0_facts	13	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 218
+unchanged	163	219	NON-ADDRESS-CHANGED	A/AD2f.v	94	95	Lemma sPE1_facts	12	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 219
+unchanged	164	220	UNRESOLVED	A/AD2f.v	147	148	Definition SOBUF_HI	0	hex	0x5f85e8	0x5f2aa8	U-STDIN	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 220
+unchanged	165	221	NON-ADDRESS-CHANGED	A/AD2f.v	148	149	Definition IMG_B	0	dec	0x21	0x1f	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 221
+unchanged	166	222	NON-ADDRESS-CHANGED	A/AD2f.v	167	168	Lemma L_mem_wf	0	dec	0x23	0x21	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 222
+unchanged	167	223	NON-ADDRESS-CHANGED	A/AD2f.v	169	170	Lemma IMG_LC_len	0	dec	0x23	0x21	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 223
+unchanged	168	224	NON-ADDRESS-CHANGED	A/AD2f.v	184	185	Lemma sPE_mem	1	dec	0x24	0x22	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 224
+unchanged	169	225	NON-ADDRESS-CHANGED	A/AD2f.v	196	197	Lemma IMG_B_eq	0	dec	0x18	0x16	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 225
+unchanged	170	226	NON-ADDRESS-CHANGED	A/AD2f.v	196	197	Lemma IMG_B_eq	1	dec	0x18	0x16	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 226
+unchanged	171	227	NON-ADDRESS-CHANGED	A/AD2f.v	196	197	Lemma IMG_B_eq	3	dec	0x19	0x17	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 227
+unchanged	172	228	NON-ADDRESS-CHANGED	A/AD2f.v	196	197	Lemma IMG_B_eq	6	dec	0x1d	0x1b	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 228
+unchanged	173	229	NON-ADDRESS-CHANGED	A/AD2f.v	196	197	Lemma IMG_B_eq	7	dec	0x1d	0x1b	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 229
+unchanged	174	230	NON-ADDRESS-CHANGED	A/AD2f.v	196	197	Lemma IMG_B_eq	8	dec	0x21	0x1f	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 230
+unchanged	175	231	NON-ADDRESS-CHANGED	A/AD2f.v	197	198	Lemma IMG_B_eq	9	dec	0x18	0x16	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 231
+unchanged	176	232	NON-ADDRESS-CHANGED	A/AD2f.v	197	198	Lemma IMG_B_eq	10	dec	0x18	0x16	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 232
+unchanged	177	233	NON-ADDRESS-CHANGED	A/AD2f.v	197	198	Lemma IMG_B_eq	11	dec	0x19	0x17	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 233
+unchanged	178	234	NON-ADDRESS-CHANGED	A/AD2f.v	197	198	Lemma IMG_B_eq	12	dec	0x19	0x17	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 234
+unchanged	179	235	NON-ADDRESS-CHANGED	A/AD2f.v	197	198	Lemma IMG_B_eq	13	dec	0x21	0x1f	N-REGCNT	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 235
+unchanged	180	236	KIND-CHANGED	A/AE2t.v	63	64	Definition SH_LO	0	hex	0x7fffbaf0	0x7fffbab8	FMTWIN	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 236
+unchanged	181	237	NON-ADDRESS-CHANGED	A/AE2t.v	63	64	Definition SH_HI	0	hex	0x7fffbb00	0x7fffbac0	FMTWIN	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 237
+unchanged	182	238	DIFFERENT-SYMBOL	A/AE2u.v	63	64	Definition SH_LO	0	hex	0x7fffbaf8	0x7fffbab8	FMTWIN	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 238
+unchanged	183	239	KIND-CHANGED	A/AE2u.v	63	64	Definition SH_HI	0	hex	0x7fffbb00	0x7fffbac8	FMTWIN	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 239
+unchanged	184	240	KIND-CHANGED	A/AE2v.v	63	64	Definition SH_LO	0	hex	0x7fffb2e8	0x7fffb2c0	FMTWIN	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 240
+unchanged	185	241	UNRESOLVED	A/AE2v.v	63	64	Definition SH_HI	0	hex	0x7fffb2f8	0x7fffb2c8	FMTWIN	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 241
+unchanged	186	242	KIND-CHANGED	A/AE2w.v	63	64	Definition SH_LO	0	hex	0x7fffab20	0x7fffaaf8	FMTWIN	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 242
+unchanged	187	243	KIND-CHANGED	A/AE2w.v	63	64	Definition SH_HI	0	hex	0x7fffab28	0x7fffab00	FMTWIN	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 243
+unchanged	188	244	NON-ADDRESS-CHANGED	A/AE34.v	26	27	Definition icpt_ranges	1	dec	0x26	0x25	N-RANGES	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 244
+unchanged	189	245	NON-ADDRESS-CHANGED	A/AE34.v	26	27	Definition icpt_ranges	7	dec	0x5e	0x2f	N-RANGES	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 245
+unchanged	190	246	NON-ADDRESS-CHANGED	A/AE34.v	28	29	Definition icpt_ranges	23	dec	0x3f1	0x361	N-RANGES	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 246
+unchanged	191	247	UNRESOLVED	A/AE35.v	64	65	Definition SH_LO	0	hex	0x7fffa908	0x7fffa8e8	FMTWIN	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 247
+unchanged	192	248	NON-ADDRESS-CHANGED	A/AE35.v	64	65	Definition SH_HI	0	hex	0x7fffa910	0x7fffa8f0	FMTWIN	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 248
+unchanged	193	249	NON-ADDRESS-CHANGED	A/AE3j.v	253	254	Theorem tfib_vfprintf_open_A1 / sentence 97	0	dec	0x1d7c1	0x1d5f7	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 249
+unchanged	194	250	NON-ADDRESS-CHANGED	A/AE3j.v	254	255	Theorem tfib_vfprintf_open_A1 / sentence 98	2	dec	0x1d7c1	0x1d5f7	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 250
+unchanged	195	251	NON-ADDRESS-CHANGED	A/AE3j.v	256	257	Theorem tfib_vfprintf_open_A1 / sentence 99	2	dec	0x1d7c1	0x1d5f7	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 251
+unchanged	196	252	NON-ADDRESS-CHANGED	A/AE3j.v	256	257	Theorem tfib_vfprintf_open_A1 / sentence 99	3	dec	0x1d7c1	0x1d5f7	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 252
+unchanged	197	253	NON-ADDRESS-CHANGED	A/AE3j.v	506	507	Theorem tfib_vfprintf_open_A1 / sentence 403	1	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 253
+unchanged	198	254	NON-ADDRESS-CHANGED	A/AE3j.v	507	508	Theorem tfib_vfprintf_open_A1 / sentence 405	0	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 254
+unchanged	199	255	NON-ADDRESS-CHANGED	A/AE3j.v	507	508	Theorem tfib_vfprintf_open_A1 / sentence 405	1	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 255
+unchanged	200	256	NON-ADDRESS-CHANGED	A/AE3j.v	509	510	Theorem tfib_vfprintf_open_A1 / sentence 407	1	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 256
+unchanged	201	257	NON-ADDRESS-CHANGED	A/AE3j.v	513	514	Theorem tfib_vfprintf_open_A1 / sentence 408	7	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 257
+unchanged	202	258	NON-ADDRESS-CHANGED	A/AE3j.v	513	514	Theorem tfib_vfprintf_open_A1 / sentence 408	10	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 258
+unchanged	203	259	NON-ADDRESS-CHANGED	A/AE3j.v	525	526	Theorem tfib_vfprintf_open_A1 / sentence 408	12	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 259
+unchanged	204	260	NON-ADDRESS-CHANGED	A/AE3j.v	525	526	Theorem tfib_vfprintf_open_A1 / sentence 408	13	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 260
+unchanged	205	261	NON-ADDRESS-CHANGED	A/AE3j.v	525	526	Theorem tfib_vfprintf_open_A1 / sentence 408	14	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 261
+unchanged	206	262	NON-ADDRESS-CHANGED	A/AE3j.v	826	827	Theorem tfib_vfprintf_open_A2 / sentence 97	0	dec	0x1d7c1	0x1d5f7	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 262
+unchanged	207	263	NON-ADDRESS-CHANGED	A/AE3j.v	827	828	Theorem tfib_vfprintf_open_A2 / sentence 98	2	dec	0x1d7c1	0x1d5f7	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 263
+unchanged	208	264	NON-ADDRESS-CHANGED	A/AE3j.v	829	830	Theorem tfib_vfprintf_open_A2 / sentence 99	2	dec	0x1d7c1	0x1d5f7	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 264
+unchanged	209	265	NON-ADDRESS-CHANGED	A/AE3j.v	829	830	Theorem tfib_vfprintf_open_A2 / sentence 99	3	dec	0x1d7c1	0x1d5f7	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 265
+unchanged	210	266	NON-ADDRESS-CHANGED	A/AE3j.v	1085	1086	Theorem tfib_vfprintf_open_A2 / sentence 409	0	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 266
+unchanged	211	267	NON-ADDRESS-CHANGED	A/AE3j.v	1087	1088	Theorem tfib_vfprintf_open_A2 / sentence 410	9	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 267
+unchanged	212	268	NON-ADDRESS-CHANGED	A/AE3j.v	1118	1119	Theorem tfib_vfprintf_open_A2 / sentence 473	0	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 268
+unchanged	213	269	NON-ADDRESS-CHANGED	A/AE3j.v	1118	1119	Theorem tfib_vfprintf_open_A2 / sentence 473	1	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 269
+unchanged	214	270	NON-ADDRESS-CHANGED	A/AE3j.v	1119	1120	Theorem tfib_vfprintf_open_A2 / sentence 477	0	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 270
+unchanged	215	271	NON-ADDRESS-CHANGED	A/AE3j.v	1119	1120	Theorem tfib_vfprintf_open_A2 / sentence 477	1	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 271
+unchanged	216	272	NON-ADDRESS-CHANGED	A/AE3j.v	1350	1351	Theorem tfib_vfprintf_open_A3 / sentence 97	0	dec	0x1d7c1	0x1d5f7	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 272
+unchanged	217	273	NON-ADDRESS-CHANGED	A/AE3j.v	1351	1352	Theorem tfib_vfprintf_open_A3 / sentence 98	2	dec	0x1d7c1	0x1d5f7	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 273
+unchanged	218	274	NON-ADDRESS-CHANGED	A/AE3j.v	1353	1354	Theorem tfib_vfprintf_open_A3 / sentence 99	2	dec	0x1d7c1	0x1d5f7	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 274
+unchanged	219	275	NON-ADDRESS-CHANGED	A/AE3j.v	1353	1354	Theorem tfib_vfprintf_open_A3 / sentence 99	3	dec	0x1d7c1	0x1d5f7	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 275
+unchanged	220	276	NON-ADDRESS-CHANGED	A/AE3j.v	1600	1601	Theorem tfib_vfprintf_open_A3 / sentence 429	1	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 276
+unchanged	221	277	NON-ADDRESS-CHANGED	A/AE3j.v	1603	1604	Theorem tfib_vfprintf_open_A3 / sentence 430	2	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 277
+unchanged	222	278	NON-ADDRESS-CHANGED	A/AE3j.v	1603	1604	Theorem tfib_vfprintf_open_A3 / sentence 430	3	dec	0x1d7c3	0x1d5f9	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 278
+unchanged	223	279	NON-ADDRESS-CHANGED	A/AE3k.v	253	254	Theorem tfib_vfprintf_rderr_A1 / sentence 97	0	dec	0x1d7d8	0x1d60e	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 279
+unchanged	224	280	NON-ADDRESS-CHANGED	A/AE3k.v	254	255	Theorem tfib_vfprintf_rderr_A1 / sentence 98	2	dec	0x1d7d8	0x1d60e	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 280
+unchanged	225	281	NON-ADDRESS-CHANGED	A/AE3k.v	256	257	Theorem tfib_vfprintf_rderr_A1 / sentence 99	2	dec	0x1d7d8	0x1d60e	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 281
+unchanged	226	282	NON-ADDRESS-CHANGED	A/AE3k.v	256	257	Theorem tfib_vfprintf_rderr_A1 / sentence 99	3	dec	0x1d7d8	0x1d60e	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 282
+unchanged	227	283	NON-ADDRESS-CHANGED	A/AE3k.v	506	507	Theorem tfib_vfprintf_rderr_A1 / sentence 403	1	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 283
+unchanged	228	284	NON-ADDRESS-CHANGED	A/AE3k.v	507	508	Theorem tfib_vfprintf_rderr_A1 / sentence 405	0	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 284
+unchanged	229	285	NON-ADDRESS-CHANGED	A/AE3k.v	507	508	Theorem tfib_vfprintf_rderr_A1 / sentence 405	1	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 285
+unchanged	230	286	NON-ADDRESS-CHANGED	A/AE3k.v	509	510	Theorem tfib_vfprintf_rderr_A1 / sentence 407	1	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 286
+unchanged	231	287	NON-ADDRESS-CHANGED	A/AE3k.v	513	514	Theorem tfib_vfprintf_rderr_A1 / sentence 408	7	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 287
+unchanged	232	288	NON-ADDRESS-CHANGED	A/AE3k.v	513	514	Theorem tfib_vfprintf_rderr_A1 / sentence 408	10	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 288
+unchanged	233	289	NON-ADDRESS-CHANGED	A/AE3k.v	525	526	Theorem tfib_vfprintf_rderr_A1 / sentence 408	12	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 289
+unchanged	234	290	NON-ADDRESS-CHANGED	A/AE3k.v	525	526	Theorem tfib_vfprintf_rderr_A1 / sentence 408	13	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 290
+unchanged	235	291	NON-ADDRESS-CHANGED	A/AE3k.v	525	526	Theorem tfib_vfprintf_rderr_A1 / sentence 408	14	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 291
+unchanged	236	292	NON-ADDRESS-CHANGED	A/AE3k.v	826	827	Theorem tfib_vfprintf_rderr_A2 / sentence 97	0	dec	0x1d7d8	0x1d60e	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 292
+unchanged	237	293	NON-ADDRESS-CHANGED	A/AE3k.v	827	828	Theorem tfib_vfprintf_rderr_A2 / sentence 98	2	dec	0x1d7d8	0x1d60e	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 293
+unchanged	238	294	NON-ADDRESS-CHANGED	A/AE3k.v	829	830	Theorem tfib_vfprintf_rderr_A2 / sentence 99	2	dec	0x1d7d8	0x1d60e	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 294
+unchanged	239	295	NON-ADDRESS-CHANGED	A/AE3k.v	829	830	Theorem tfib_vfprintf_rderr_A2 / sentence 99	3	dec	0x1d7d8	0x1d60e	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 295
+unchanged	240	296	NON-ADDRESS-CHANGED	A/AE3k.v	1085	1086	Theorem tfib_vfprintf_rderr_A2 / sentence 409	0	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 296
+unchanged	241	297	NON-ADDRESS-CHANGED	A/AE3k.v	1087	1088	Theorem tfib_vfprintf_rderr_A2 / sentence 410	9	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 297
+unchanged	242	298	NON-ADDRESS-CHANGED	A/AE3k.v	1118	1119	Theorem tfib_vfprintf_rderr_A2 / sentence 473	0	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 298
+unchanged	243	299	NON-ADDRESS-CHANGED	A/AE3k.v	1118	1119	Theorem tfib_vfprintf_rderr_A2 / sentence 473	1	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 299
+unchanged	244	300	NON-ADDRESS-CHANGED	A/AE3k.v	1119	1120	Theorem tfib_vfprintf_rderr_A2 / sentence 477	0	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 300
+unchanged	245	301	NON-ADDRESS-CHANGED	A/AE3k.v	1119	1120	Theorem tfib_vfprintf_rderr_A2 / sentence 477	1	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 301
+unchanged	246	302	NON-ADDRESS-CHANGED	A/AE3k.v	1350	1351	Theorem tfib_vfprintf_rderr_A3 / sentence 97	0	dec	0x1d7d8	0x1d60e	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 302
+unchanged	247	303	NON-ADDRESS-CHANGED	A/AE3k.v	1351	1352	Theorem tfib_vfprintf_rderr_A3 / sentence 98	2	dec	0x1d7d8	0x1d60e	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 303
+unchanged	248	304	NON-ADDRESS-CHANGED	A/AE3k.v	1353	1354	Theorem tfib_vfprintf_rderr_A3 / sentence 99	2	dec	0x1d7d8	0x1d60e	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 304
+unchanged	249	305	NON-ADDRESS-CHANGED	A/AE3k.v	1353	1354	Theorem tfib_vfprintf_rderr_A3 / sentence 99	3	dec	0x1d7d8	0x1d60e	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 305
+unchanged	250	306	NON-ADDRESS-CHANGED	A/AE3k.v	1600	1601	Theorem tfib_vfprintf_rderr_A3 / sentence 429	1	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 306
+unchanged	251	307	NON-ADDRESS-CHANGED	A/AE3k.v	1603	1604	Theorem tfib_vfprintf_rderr_A3 / sentence 430	2	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 307
+unchanged	252	308	NON-ADDRESS-CHANGED	A/AE3k.v	1603	1604	Theorem tfib_vfprintf_rderr_A3 / sentence 430	3	dec	0x1d7da	0x1d610	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 308
+unchanged	253	309	NON-ADDRESS-CHANGED	A/AE3l.v	178	179	Theorem tfib_vfprintf_refused / sentence 92	1	dec	0x1977b	0x19622	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 309
+unchanged	254	310	NON-ADDRESS-CHANGED	A/AE3l.v	181	182	Theorem tfib_vfprintf_refused / sentence 93	2	dec	0x1977b	0x19622	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 310
+unchanged	255	311	NON-ADDRESS-CHANGED	A/AE3l.v	181	182	Theorem tfib_vfprintf_refused / sentence 93	3	dec	0x1977b	0x19622	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 311
+unchanged	256	312	NON-ADDRESS-CHANGED	A/AE3l.v	310	311	Theorem tfib_vfprintf_refused / sentence 228	1	dec	0x1977d	0x19624	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 312
+unchanged	257	313	NON-ADDRESS-CHANGED	A/AE3l.v	313	314	Theorem tfib_vfprintf_refused / sentence 229	2	dec	0x1977d	0x19624	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 313
+unchanged	258	314	NON-ADDRESS-CHANGED	A/AE3l.v	313	314	Theorem tfib_vfprintf_refused / sentence 229	3	dec	0x1977d	0x19624	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 314
+unchanged	259	315	NON-ADDRESS-CHANGED	A/AE3m.v	885	886	Theorem tfib_vfprintf_stdout_first / sentence 346	0	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 315
+unchanged	260	316	NON-ADDRESS-CHANGED	A/AE3m.v	888	889	Theorem tfib_vfprintf_stdout_first / sentence 348	6	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 316
+unchanged	261	317	NON-ADDRESS-CHANGED	A/AE3m.v	913	914	Theorem tfib_vfprintf_stdout_first / sentence 407	0	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 317
+unchanged	262	318	NON-ADDRESS-CHANGED	A/AE3m.v	913	914	Theorem tfib_vfprintf_stdout_first / sentence 407	1	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 318
+unchanged	263	319	NON-ADDRESS-CHANGED	A/AE3m.v	914	915	Theorem tfib_vfprintf_stdout_first / sentence 411	0	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 319
+unchanged	264	320	NON-ADDRESS-CHANGED	A/AE3m.v	914	915	Theorem tfib_vfprintf_stdout_first / sentence 411	1	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 320
+unchanged	265	321	NON-ADDRESS-CHANGED	A/AE3m.v	951	952	Theorem tfib_vfprintf_stdout_first / sentence 473	0	dec	0x14866	0x14766	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 321
+unchanged	266	322	NON-ADDRESS-CHANGED	A/AE3m.v	952	953	Theorem tfib_vfprintf_stdout_first / sentence 474	2	dec	0x14866	0x14766	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 322
+unchanged	267	323	NON-ADDRESS-CHANGED	A/AE3m.v	955	956	Theorem tfib_vfprintf_stdout_first / sentence 475	1	dec	0x14866	0x14766	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 323
+unchanged	268	324	NON-ADDRESS-CHANGED	A/AE3m.v	1434	1435	Theorem tfib_vfprintf_stdout_next / sentence 421	0	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 324
+unchanged	269	325	NON-ADDRESS-CHANGED	A/AE3m.v	1435	1436	Theorem tfib_vfprintf_stdout_next / sentence 422	0	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 325
+unchanged	270	326	NON-ADDRESS-CHANGED	A/AE3m.v	1435	1436	Theorem tfib_vfprintf_stdout_next / sentence 422	1	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 326
+unchanged	271	327	NON-ADDRESS-CHANGED	A/AE3m.v	1436	1437	Theorem tfib_vfprintf_stdout_next / sentence 423	0	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 327
+unchanged	272	328	NON-ADDRESS-CHANGED	A/AE3m.v	1436	1437	Theorem tfib_vfprintf_stdout_next / sentence 423	1	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 328
+unchanged	273	329	NON-ADDRESS-CHANGED	A/AE3m.v	1438	1439	Theorem tfib_vfprintf_stdout_next / sentence 425	2	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 329
+unchanged	274	330	NON-ADDRESS-CHANGED	A/AE3m.v	1444	1445	Theorem tfib_vfprintf_stdout_next / sentence 427	3	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 330
+unchanged	275	331	NON-ADDRESS-CHANGED	A/AE3m.v	1459	1460	Theorem tfib_vfprintf_stdout_next / sentence 427	10	dec	0x14865	0x14765	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 331
+unchanged	276	332	NON-ADDRESS-CHANGED	A/AE3n.v	256	257	Theorem tfib_vfprintf_usage_A1 / sentence 97	0	dec	0x1590c	0x157d4	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 332
+unchanged	277	333	NON-ADDRESS-CHANGED	A/AE3n.v	257	258	Theorem tfib_vfprintf_usage_A1 / sentence 98	2	dec	0x1590c	0x157d4	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 333
+unchanged	278	334	NON-ADDRESS-CHANGED	A/AE3n.v	259	260	Theorem tfib_vfprintf_usage_A1 / sentence 99	2	dec	0x1590c	0x157d4	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 334
+unchanged	279	335	NON-ADDRESS-CHANGED	A/AE3n.v	259	260	Theorem tfib_vfprintf_usage_A1 / sentence 99	3	dec	0x1590c	0x157d4	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 335
+unchanged	280	336	NON-ADDRESS-CHANGED	A/AE3n.v	509	510	Theorem tfib_vfprintf_usage_A1 / sentence 403	1	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 336
+unchanged	281	337	NON-ADDRESS-CHANGED	A/AE3n.v	510	511	Theorem tfib_vfprintf_usage_A1 / sentence 405	0	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 337
+unchanged	282	338	NON-ADDRESS-CHANGED	A/AE3n.v	510	511	Theorem tfib_vfprintf_usage_A1 / sentence 405	1	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 338
+unchanged	283	339	NON-ADDRESS-CHANGED	A/AE3n.v	512	513	Theorem tfib_vfprintf_usage_A1 / sentence 407	1	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 339
+unchanged	284	340	NON-ADDRESS-CHANGED	A/AE3n.v	516	517	Theorem tfib_vfprintf_usage_A1 / sentence 408	7	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 340
+unchanged	285	341	NON-ADDRESS-CHANGED	A/AE3n.v	516	517	Theorem tfib_vfprintf_usage_A1 / sentence 408	10	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 341
+unchanged	286	342	NON-ADDRESS-CHANGED	A/AE3n.v	528	529	Theorem tfib_vfprintf_usage_A1 / sentence 408	12	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 342
+unchanged	287	343	NON-ADDRESS-CHANGED	A/AE3n.v	528	529	Theorem tfib_vfprintf_usage_A1 / sentence 408	13	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 343
+unchanged	288	344	NON-ADDRESS-CHANGED	A/AE3n.v	528	529	Theorem tfib_vfprintf_usage_A1 / sentence 408	14	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 344
+unchanged	289	345	NON-ADDRESS-CHANGED	A/AE3n.v	829	830	Theorem tfib_vfprintf_usage_A2 / sentence 97	0	dec	0x1590c	0x157d4	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 345
+unchanged	290	346	NON-ADDRESS-CHANGED	A/AE3n.v	830	831	Theorem tfib_vfprintf_usage_A2 / sentence 98	2	dec	0x1590c	0x157d4	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 346
+unchanged	291	347	NON-ADDRESS-CHANGED	A/AE3n.v	832	833	Theorem tfib_vfprintf_usage_A2 / sentence 99	2	dec	0x1590c	0x157d4	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 347
+unchanged	292	348	NON-ADDRESS-CHANGED	A/AE3n.v	832	833	Theorem tfib_vfprintf_usage_A2 / sentence 99	3	dec	0x1590c	0x157d4	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 348
+unchanged	293	349	NON-ADDRESS-CHANGED	A/AE3n.v	1106	1107	Theorem tfib_vfprintf_usage_A2 / sentence 444	0	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 349
+unchanged	294	350	NON-ADDRESS-CHANGED	A/AE3n.v	1108	1109	Theorem tfib_vfprintf_usage_A2 / sentence 445	9	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 350
+unchanged	295	351	NON-ADDRESS-CHANGED	A/AE3n.v	1139	1140	Theorem tfib_vfprintf_usage_A2 / sentence 508	0	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 351
+unchanged	296	352	NON-ADDRESS-CHANGED	A/AE3n.v	1139	1140	Theorem tfib_vfprintf_usage_A2 / sentence 508	1	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 352
+unchanged	297	353	NON-ADDRESS-CHANGED	A/AE3n.v	1140	1141	Theorem tfib_vfprintf_usage_A2 / sentence 512	0	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 353
+unchanged	298	354	NON-ADDRESS-CHANGED	A/AE3n.v	1140	1141	Theorem tfib_vfprintf_usage_A2 / sentence 512	1	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 354
+unchanged	299	355	NON-ADDRESS-CHANGED	A/AE3n.v	1371	1372	Theorem tfib_vfprintf_usage_A3 / sentence 97	0	dec	0x1590c	0x157d4	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 355
+unchanged	300	356	NON-ADDRESS-CHANGED	A/AE3n.v	1372	1373	Theorem tfib_vfprintf_usage_A3 / sentence 98	2	dec	0x1590c	0x157d4	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 356
+unchanged	301	357	NON-ADDRESS-CHANGED	A/AE3n.v	1374	1375	Theorem tfib_vfprintf_usage_A3 / sentence 99	2	dec	0x1590c	0x157d4	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 357
+unchanged	302	358	NON-ADDRESS-CHANGED	A/AE3n.v	1374	1375	Theorem tfib_vfprintf_usage_A3 / sentence 99	3	dec	0x1590c	0x157d4	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 358
+unchanged	303	359	NON-ADDRESS-CHANGED	A/AE3n.v	1621	1622	Theorem tfib_vfprintf_usage_A3 / sentence 429	1	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 359
+unchanged	304	360	NON-ADDRESS-CHANGED	A/AE3n.v	1624	1625	Theorem tfib_vfprintf_usage_A3 / sentence 430	2	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 360
+unchanged	305	361	NON-ADDRESS-CHANGED	A/AE3n.v	1624	1625	Theorem tfib_vfprintf_usage_A3 / sentence 430	3	dec	0x1590e	0x157d6	N-FMTPTR	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 361
+unchanged	306	362	UNPAIRED-SOURCE	A/AFf0.v	471	-	Lemma zshadow' / sentence 32	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 362
+unchanged	307	363	UNPAIRED-SOURCE	A/AFf0.v	471	-	Lemma zshadow' / sentence 32	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 363
+unchanged	308	364	UNPAIRED-SOURCE	A/AFf0.v	471	-	Lemma zshadow' / sentence 32	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 364
+unchanged	309	365	UNPAIRED-SOURCE	A/AFf0.v	472	-	Lemma zshadow' / sentence 33	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 365
+unchanged	310	366	UNPAIRED-SOURCE	A/AFf0.v	472	-	Lemma zshadow' / sentence 33	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 366
+unchanged	311	367	UNPAIRED-SOURCE	A/AFf0.v	472	-	Lemma zshadow' / sentence 33	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 367
+unchanged	312	368	UNPAIRED-SOURCE	A/AFf3.v	648	-	Lemma zshadow' / sentence 43	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 368
+unchanged	313	369	UNPAIRED-SOURCE	A/AFf3.v	648	-	Lemma zshadow' / sentence 43	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 369
+unchanged	314	370	UNPAIRED-SOURCE	A/AFf3.v	648	-	Lemma zshadow' / sentence 43	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 370
+unchanged	315	371	UNPAIRED-SOURCE	A/AFf3.v	649	-	Lemma zshadow' / sentence 44	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 371
+unchanged	316	372	UNPAIRED-SOURCE	A/AFf3.v	649	-	Lemma zshadow' / sentence 44	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 372
+unchanged	317	373	UNPAIRED-SOURCE	A/AFf3.v	649	-	Lemma zshadow' / sentence 44	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 373
+unchanged	318	374	UNPAIRED-SOURCE	A/AFf4.v	898	-	Lemma zshadow' / sentence 34	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 374
+unchanged	319	375	UNPAIRED-SOURCE	A/AFf4.v	898	-	Lemma zshadow' / sentence 34	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 375
+unchanged	320	376	UNPAIRED-SOURCE	A/AFf4.v	898	-	Lemma zshadow' / sentence 34	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 376
+unchanged	321	377	UNPAIRED-SOURCE	A/AFf4.v	899	-	Lemma zshadow' / sentence 35	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 377
+unchanged	322	378	UNPAIRED-SOURCE	A/AFf4.v	899	-	Lemma zshadow' / sentence 35	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 378
+unchanged	323	379	UNPAIRED-SOURCE	A/AFf4.v	899	-	Lemma zshadow' / sentence 35	-	dec	0x8	-	PATCH-ZS	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 379
+unchanged	324	380	GEOMETRY-CHANGED	A/AFig.v	41	42	Definition st_end	2	dec	0x17f0	0x17f0	G-6128	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 380
+unchanged	325	381	GEOMETRY-CHANGED	A/AFig.v	41	42	Definition st_end	5	dec	0x17f0	0x17f0	G-6128	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 381
+unchanged	326	382	GEOMETRY-CHANGED	A/AFjq.v	838	839	Lemma segUo / sentence 200	0	dec	0x17f0	0x17f0	G-6128	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 382
+unchanged	327	383	GEOMETRY-CHANGED	A/AFjq.v	840	841	Lemma segUo / sentence 209	2	dec	0x17f0	0x17f0	G-6128	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 383
+unchanged	328	384	GEOMETRY-CHANGED	A/AFjq.v	841	842	Lemma segUo / sentence 210	0	dec	0x17f0	0x17f0	G-6128	unchanged; reason as gate-cb0e-triage-rows.tsv raw_line 384
+unchanged	15699	15757	GENERATOR-FILL	A/AD2e.v	69	70	Lemma PM_pieces_eq	3	dec	0x25	0x23	GF	unchanged; reason as the GENERATOR-FILL table of gate-cb0e-TRIAGE.md, row A/AD2e.v:69 idx 3
+unchanged	15701	15759	GENERATOR-FILL	A/AD2e.v	69	70	Lemma PM_pieces_eq	5	dec	0x25	0x23	GF	unchanged; reason as the GENERATOR-FILL table of gate-cb0e-TRIAGE.md, row A/AD2e.v:69 idx 5
+unchanged	16239	16297	GENERATOR-FILL	A/AD2f.v	184	185	Lemma sPE_mem	3	dec	0x24	0x22	GF	unchanged; reason as the GENERATOR-FILL table of gate-cb0e-TRIAGE.md, row A/AD2f.v:184 idx 3
+unchanged	16244	16302	GENERATOR-FILL	A/AD2f.v	196	197	Lemma IMG_B_eq	5	dec	0x19	0x17	GF	unchanged; reason as the GENERATOR-FILL table of gate-cb0e-TRIAGE.md, row A/AD2f.v:196 idx 5
+unchanged	45225	45283	GENERATOR-FILL	A/AE3m.v	955	956	Theorem tfib_vfprintf_stdout_first / sentence 475	3	dec	0x14866	0x14766	GF	unchanged; reason as the GENERATOR-FILL table of gate-cb0e-TRIAGE.md, row A/AE3m.v:955 idx 3
+unchanged	45506	45564	GENERATOR-FILL	A/AE3m.v	1444	1445	Theorem tfib_vfprintf_stdout_next / sentence 427	6	dec	0x14865	0x14765	GF	unchanged; reason as the GENERATOR-FILL table of gate-cb0e-TRIAGE.md, row A/AE3m.v:1444 idx 6
+new	120	-	UNPAIRED-PORTED	A/AFex.v	-	940	Lemma zshadow' / sentence 36	-	dec	-	0x8	PATCH-ZS	dst A/AFex.v:940 is `{ assert (CK : forallb (fun r0 : Z * Z => andb (andb (Z.eqb (fst r0 mod 8) 0) ...) Tfib_zero_shadow = true) by (vm_compute; reflexivity).`, a + line of zero-shadow-forallb.patch (sha256 8865b6699d8d); no line of the src file has this text. Literal 8 (the shadow granule in `fst r0 mod 8`): no address role. cb0e paired this sentence by key with src 938 (`assert (R8 : ... lo mod 8 = 0 ...)`, another text) and called it NON-ADDRESS-SAME; e165 pairs src 938 with dst 939, its identical text, so dst 940 has no partner
+new	121	-	UNPAIRED-PORTED	A/AFex.v	-	940	Lemma zshadow' / sentence 36	-	dec	-	0x0	PATCH-ZS	dst A/AFex.v:940 is `{ assert (CK : forallb (fun r0 : Z * Z => andb (andb (Z.eqb (fst r0 mod 8) 0) ...) Tfib_zero_shadow = true) by (vm_compute; reflexivity).`, a + line of zero-shadow-forallb.patch (sha256 8865b6699d8d); no line of the src file has this text. Literal 0 (the remainder in `Z.eqb (fst r0 mod 8) 0`): no address role. cb0e paired this sentence by key with src 938 (`assert (R8 : ... lo mod 8 = 0 ...)`, another text) and called it NON-ADDRESS-SAME; e165 pairs src 938 with dst 939, its identical text, so dst 940 has no partner
+new	128	-	UNPAIRED-PORTED	A/AFfl.v	-	830	Lemma zshadow' / sentence 36	-	dec	-	0x8	PATCH-ZS	dst A/AFfl.v:830 is `{ assert (CK : forallb (fun r0 : Z * Z => andb (andb (Z.eqb (fst r0 mod 8) 0) ...) Tfib_zero_shadow = true) by (vm_compute; reflexivity).`, a + line of zero-shadow-forallb.patch (sha256 8865b6699d8d); no line of the src file has this text. Literal 8 (the shadow granule in `fst r0 mod 8`): no address role. cb0e paired this sentence by key with src 828 (`assert (R8 : ... lo mod 8 = 0 ...)`, another text) and called it NON-ADDRESS-SAME; e165 pairs src 828 with dst 829, its identical text, so dst 830 has no partner
+new	129	-	UNPAIRED-PORTED	A/AFfl.v	-	830	Lemma zshadow' / sentence 36	-	dec	-	0x0	PATCH-ZS	dst A/AFfl.v:830 is `{ assert (CK : forallb (fun r0 : Z * Z => andb (andb (Z.eqb (fst r0 mod 8) 0) ...) Tfib_zero_shadow = true) by (vm_compute; reflexivity).`, a + line of zero-shadow-forallb.patch (sha256 8865b6699d8d); no line of the src file has this text. Literal 0 (the remainder in `Z.eqb (fst r0 mod 8) 0`): no address role. cb0e paired this sentence by key with src 828 (`assert (R8 : ... lo mod 8 = 0 ...)`, another text) and called it NON-ADDRESS-SAME; e165 pairs src 828 with dst 829, its identical text, so dst 830 has no partner
+gone	-	120	UNPAIRED-SOURCE	A/AFex.v	942	-	Lemma zshadow' / sentence 42	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 942 = dst 945 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw line 99124; literal 8
+gone	-	121	UNPAIRED-SOURCE	A/AFex.v	943	-	Lemma zshadow' / sentence 45	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 943 = dst 946 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99125, 99126, 99127; literal 8
+gone	-	122	UNPAIRED-SOURCE	A/AFex.v	943	-	Lemma zshadow' / sentence 45	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 943 = dst 946 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99125, 99126, 99127; literal 8
+gone	-	123	UNPAIRED-SOURCE	A/AFex.v	943	-	Lemma zshadow' / sentence 45	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 943 = dst 946 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99125, 99126, 99127; literal 8
+gone	-	124	UNPAIRED-SOURCE	A/AFex.v	944	-	Lemma zshadow' / sentence 49	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 944 = dst 947 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw line 99128; literal 8
+gone	-	125	UNPAIRED-SOURCE	A/AFex.v	946	-	Lemma zshadow' / sentence 52	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 946 = dst 949 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99129, 99130, 99131, 99132; literal 8
+gone	-	126	UNPAIRED-SOURCE	A/AFex.v	946	-	Lemma zshadow' / sentence 52	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 946 = dst 949 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99129, 99130, 99131, 99132; literal 8
+gone	-	127	UNPAIRED-SOURCE	A/AFex.v	946	-	Lemma zshadow' / sentence 52	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 946 = dst 949 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99129, 99130, 99131, 99132; literal 8
+gone	-	128	UNPAIRED-SOURCE	A/AFex.v	946	-	Lemma zshadow' / sentence 52	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 946 = dst 949 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99129, 99130, 99131, 99132; literal 8
+gone	-	129	UNPAIRED-PORTED	A/AFex.v	-	939	Lemma zshadow' / sentence 35	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 938 = dst 939 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw line 99122; literal 8
+gone	-	130	UNPAIRED-PORTED	A/AFex.v	-	939	Lemma zshadow' / sentence 35	-	dec	-	0x0	PATCH-ZS	now paired by identical text: src 938 = dst 939 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw line 99123; literal 0
+gone	-	131	UNPAIRED-PORTED	A/AFex.v	-	945	Lemma zshadow' / sentence 50	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 942 = dst 945 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw line 99124; literal 8
+gone	-	132	UNPAIRED-PORTED	A/AFex.v	-	946	Lemma zshadow' / sentence 53	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 943 = dst 946 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99125, 99126, 99127; literal 8
+gone	-	133	UNPAIRED-PORTED	A/AFex.v	-	946	Lemma zshadow' / sentence 53	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 943 = dst 946 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99125, 99126, 99127; literal 8
+gone	-	134	UNPAIRED-PORTED	A/AFex.v	-	946	Lemma zshadow' / sentence 53	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 943 = dst 946 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99125, 99126, 99127; literal 8
+gone	-	135	UNPAIRED-PORTED	A/AFex.v	-	947	Lemma zshadow' / sentence 57	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 944 = dst 947 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw line 99128; literal 8
+gone	-	136	UNPAIRED-PORTED	A/AFex.v	-	949	Lemma zshadow' / sentence 60	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 946 = dst 949 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99129, 99130, 99131, 99132; literal 8
+gone	-	137	UNPAIRED-PORTED	A/AFex.v	-	949	Lemma zshadow' / sentence 60	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 946 = dst 949 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99129, 99130, 99131, 99132; literal 8
+gone	-	138	UNPAIRED-PORTED	A/AFex.v	-	949	Lemma zshadow' / sentence 60	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 946 = dst 949 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99129, 99130, 99131, 99132; literal 8
+gone	-	139	UNPAIRED-PORTED	A/AFex.v	-	949	Lemma zshadow' / sentence 60	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 946 = dst 949 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 99129, 99130, 99131, 99132; literal 8
+gone	-	146	UNPAIRED-SOURCE	A/AFfl.v	832	-	Lemma zshadow' / sentence 42	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 832 = dst 835 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw line 105695; literal 8
+gone	-	147	UNPAIRED-SOURCE	A/AFfl.v	833	-	Lemma zshadow' / sentence 45	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 833 = dst 836 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105696, 105697, 105698; literal 8
+gone	-	148	UNPAIRED-SOURCE	A/AFfl.v	833	-	Lemma zshadow' / sentence 45	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 833 = dst 836 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105696, 105697, 105698; literal 8
+gone	-	149	UNPAIRED-SOURCE	A/AFfl.v	833	-	Lemma zshadow' / sentence 45	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 833 = dst 836 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105696, 105697, 105698; literal 8
+gone	-	150	UNPAIRED-SOURCE	A/AFfl.v	834	-	Lemma zshadow' / sentence 49	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 834 = dst 837 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw line 105699; literal 8
+gone	-	151	UNPAIRED-SOURCE	A/AFfl.v	836	-	Lemma zshadow' / sentence 52	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 836 = dst 839 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105700, 105701, 105702, 105703; literal 8
+gone	-	152	UNPAIRED-SOURCE	A/AFfl.v	836	-	Lemma zshadow' / sentence 52	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 836 = dst 839 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105700, 105701, 105702, 105703; literal 8
+gone	-	153	UNPAIRED-SOURCE	A/AFfl.v	836	-	Lemma zshadow' / sentence 52	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 836 = dst 839 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105700, 105701, 105702, 105703; literal 8
+gone	-	154	UNPAIRED-SOURCE	A/AFfl.v	836	-	Lemma zshadow' / sentence 52	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 836 = dst 839 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105700, 105701, 105702, 105703; literal 8
+gone	-	155	UNPAIRED-PORTED	A/AFfl.v	-	829	Lemma zshadow' / sentence 35	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 828 = dst 829 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw line 105693; literal 8
+gone	-	156	UNPAIRED-PORTED	A/AFfl.v	-	829	Lemma zshadow' / sentence 35	-	dec	-	0x0	PATCH-ZS	now paired by identical text: src 828 = dst 829 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw line 105694; literal 0
+gone	-	157	UNPAIRED-PORTED	A/AFfl.v	-	835	Lemma zshadow' / sentence 50	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 832 = dst 835 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw line 105695; literal 8
+gone	-	158	UNPAIRED-PORTED	A/AFfl.v	-	836	Lemma zshadow' / sentence 53	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 833 = dst 836 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105696, 105697, 105698; literal 8
+gone	-	159	UNPAIRED-PORTED	A/AFfl.v	-	836	Lemma zshadow' / sentence 53	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 833 = dst 836 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105696, 105697, 105698; literal 8
+gone	-	160	UNPAIRED-PORTED	A/AFfl.v	-	836	Lemma zshadow' / sentence 53	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 833 = dst 836 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105696, 105697, 105698; literal 8
+gone	-	161	UNPAIRED-PORTED	A/AFfl.v	-	837	Lemma zshadow' / sentence 57	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 834 = dst 837 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw line 105699; literal 8
+gone	-	162	UNPAIRED-PORTED	A/AFfl.v	-	839	Lemma zshadow' / sentence 60	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 836 = dst 839 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105700, 105701, 105702, 105703; literal 8
+gone	-	163	UNPAIRED-PORTED	A/AFfl.v	-	839	Lemma zshadow' / sentence 60	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 836 = dst 839 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105700, 105701, 105702, 105703; literal 8
+gone	-	164	UNPAIRED-PORTED	A/AFfl.v	-	839	Lemma zshadow' / sentence 60	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 836 = dst 839 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105700, 105701, 105702, 105703; literal 8
+gone	-	165	UNPAIRED-PORTED	A/AFfl.v	-	839	Lemma zshadow' / sentence 60	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 836 = dst 839 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 105700, 105701, 105702, 105703; literal 8
+gone	-	175	UNPAIRED-SOURCE	A/AFjy.v	1597	-	Lemma zshadow_final / sentence 47	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 1597 = dst 1600 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 145176, 145177, 145178; literal 8
+gone	-	176	UNPAIRED-SOURCE	A/AFjy.v	1597	-	Lemma zshadow_final / sentence 48	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 1597 = dst 1600 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 145176, 145177, 145178; literal 8
+gone	-	177	UNPAIRED-SOURCE	A/AFjy.v	1597	-	Lemma zshadow_final / sentence 49	-	dec	0x8	-	PATCH-ZS	now paired by identical text: src 1597 = dst 1600 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 145176, 145177, 145178; literal 8
+gone	-	178	UNPAIRED-PORTED	A/AFjy.v	-	1600	Lemma zshadow_final / sentence 51	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 1597 = dst 1600 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 145176, 145177, 145178; literal 8
+gone	-	179	UNPAIRED-PORTED	A/AFjy.v	-	1600	Lemma zshadow_final / sentence 52	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 1597 = dst 1600 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 145176, 145177, 145178; literal 8
+gone	-	180	UNPAIRED-PORTED	A/AFjy.v	-	1600	Lemma zshadow_final / sentence 53	-	dec	-	0x8	PATCH-ZS	now paired by identical text: src 1597 = dst 1600 (byte-identical line), e165 class NON-ADDRESS-SAME, e165 raw lines 145176, 145177, 145178; literal 8
+gone	-	182	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA01.v	299	300	Definition node_mmap2g	11	hex	0x104022	0x104022	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 140); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 182
+gone	-	183	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA01.v	299	300	Definition node_mmap2g	13	hex	0x104032	0x104032	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 141); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 183
+gone	-	184	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA01.v	300	301	Definition node_mmap2g	17	hex	0x100022	0x100022	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 142); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 184
+gone	-	185	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA01.v	300	301	Definition node_mmap2g	19	hex	0x100032	0x100032	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 143); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 185
+gone	-	186	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA01.v	301	302	Definition node_mmap2g	23	hex	0x104022	0x104022	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 144); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 186
+gone	-	187	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA01.v	301	302	Definition node_mmap2g	25	hex	0x104032	0x104032	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 145); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 187
+gone	-	188	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA01.v	302	303	Definition node_mmap2g	29	hex	0x100022	0x100022	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 146); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 188
+gone	-	189	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA01.v	302	303	Definition node_mmap2g	31	hex	0x100032	0x100032	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 147); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 189
+gone	-	190	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA01.v	715	716	Definition init_kn_g	3	hex	0x20112d	0x20112d	SV-HWCAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 148); reason SV-HWCAP as gate-cb0e-triage-rows.tsv raw_line 190
+gone	-	191	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA02.v	741	742	Lemma hw_facts_ok	1	hex	0x20112d	0x20112d	SV-HWCAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 149); reason SV-HWCAP as gate-cb0e-triage-rows.tsv raw_line 191
+gone	-	192	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA09.v	1271	1272	Lemma ff_class_100022	1	hex	0x100022	0x100022	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 150); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 192
+gone	-	193	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA09.v	1272	1273	Lemma ff_class_100032	1	hex	0x100032	0x100032	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 151); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 193
+gone	-	194	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA09.v	1273	1274	Lemma ff_class_104022	1	hex	0x104022	0x104022	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 152); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 194
+gone	-	195	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA09.v	1274	1275	Lemma ff_class_104032	1	hex	0x104032	0x104032	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 153); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 195
+gone	-	385	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA09.v	402	403	Lemma mmap_noreserve_b_100022	2	hex	0x100022	0x100022	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 343); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 385
+gone	-	386	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA09.v	403	404	Lemma mmap_noreserve_b_100032	2	hex	0x100032	0x100032	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 344); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 386
+gone	-	387	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA09.v	404	405	Lemma mmap_noreserve_b_104022	2	hex	0x104022	0x104022	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 345); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 387
+gone	-	388	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA09.v	405	406	Lemma mmap_noreserve_b_104032	2	hex	0x104032	0x104032	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 346); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 388
+gone	-	389	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA09.v	430	431	Definition noreplace_core	0	hex	0x100022	0x100022	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 347); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 389
+gone	-	390	SAME-VALUE-DIFFERENT-OBJECT	Reusable/YA09.v	430	431	Definition noreplace_core	1	hex	0x100032	0x100032	SV-MMAP	not judged in this run: the staged text is A/ only (no Reusable/). The control run (e165, committed Reusable/ added) flags this row again with the same key and class (control raw line 348); reason SV-MMAP as gate-cb0e-triage-rows.tsv raw_line 390

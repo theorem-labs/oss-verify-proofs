@@ -1,0 +1,82 @@
+INPUTS USED by port_addr_check.py --src stage --dst stage-out --src-image A=PG/bin/fuzz_grant/fuzz_grant.asan:PG/unstripped/fuzz_grant/fuzz_grant.asan --dst-image A=TIMG/stripped/fuzz_transport.asan:TIMG/unstripped/fuzz_transport.asan --donors-from DONORS --paired-only --out rec.tsv --summary --cache rec.cache --fail-on-flags
+  image src A  PG/bin/fuzz_grant/fuzz_grant.asan  sha256 c2c7559b29bd  584312 bytes  symbols: symtab of fuzz_grant.asan 57c26f993615
+  image dst A  TIMG/stripped/fuzz_transport.asan  sha256 e89be137db17  616792 bytes  symbols: symtab of fuzz_transport.asan 86efc3a80314
+  ref src  stage  -> local path
+  ref dst  stage-out  -> local path
+  count symbols of src A: 2002
+  count symbols of dst A: 2072
+  count src files read: 492
+  count dst files read: 492
+  count files paired: 492
+  count numerals: 188359
+  count files recognised or declared generated (GENERATED-SKIPPED): 0
+  count constructors whose declared field roles were read from the ported tree: 125
+  count constructors whose declared field roles were read from the source tree: 125
+  count stale-donor candidates dropped instead of judged: 0
+  count file pairs whose build came from no rule places the file's build (nor its own symbol-table agreement): 14
+  count file pairs whose build came from rule (i): 106
+  count file pairs whose build came from rule (ii): 864
+  count named-symbol cells UNMEASURED (the run reads the file against another build): 0
+  control fill_pass known answer (selftest_fill, run before anything is read): RAN  pass
+  control donor-vs-donor: NOT RUN  a separate run of this tool with one image on both sides; see port-addr-check.md
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-PORTED  count 149  reported as its own row, never silently
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-SOURCE  count 68  reported as its own row, never silently
+  note cache rec.cache  chosen by the --cache flag
+  note file pairing: normalised RELATIVE PATH after --map / --rename, then the identity of the first hex in the file name; never the basename alone. There is no donor-text carry filter, so no candidate is dropped for being absent from a same-named donor file (<AGENT> REPORT.md A.4)
+  note size-role slots (CLOSED list; a page-aligned value is read as a size ONLY in one of these, and every other slot -- a generic register value with no syscall number in its sentence, an address slot, a record address field, any slot kind not named here -- keeps its address reading and FLAGS if it moved): syscall-arg = the length / prot / flags argument of a syscall whose number the same sentence states (a7 = 222 mmap, 226 mprotect), or that position in a syscall argument tuple; arith-operand = an operand of `/`, `*` or a round mask (`+ 0x3ffff`): the value divides, scales or rounds a quantity, so it is a granule, never an address; bound = the bound of a comparison or an assertion (`<=`, `<`, `>=`, `>`) in a statement; declared-field = a constructor argument the tree's own `Inductive` declares as a length or a size (handled by field_role, before this rule); size-name = a definition whose own NAME states a size, length, count or offset (`FS_FROFF`, `*_LEN`), and whose name is not an address name
+# files paired 492; numerals 188359; "kernel" = of those, inside a fail-loud vm_compute / fetch_word fact
+GENERATOR-FILL	7	kernel 7	REPORTED
+IDENT-NAME	3850	kernel 2281
+IMAGE-EXTENT-SAME	55	kernel 9
+INSN-SAME	1391	kernel 962
+LABEL-KEPT	42	kernel 15
+NON-ADDRESS-SAME	174138	kernel 97406
+ROUND-CONSTANT-SAME	9	kernel 1
+SAME-CONTENT	7	kernel 6
+SAME-GEOMETRY	1677	kernel 308
+SAME-SYMBOL	6717	kernel 3600
+UNMEASURED-NAME	1	REPORTED
+DIFFERENT-SYMBOL	15	FLAG
+GEOMETRY-CHANGED	10	kernel 5	FLAG
+KIND-CHANGED	9	kernel 4	FLAG
+NON-ADDRESS-CHANGED	175	kernel 156	FLAG
+SAME-VALUE-DIFFERENT-OBJECT	20	kernel 6	FLAG
+STALE-DONOR-CODE-POINTER	3	kernel 3	FLAG
+UNPAIRED-PORTED	149	FLAG
+UNPAIRED-SOURCE	68	kernel 20	FLAG
+UNRESOLVED	16	kernel 12	FLAG
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+UNMEASURED named-symbol 0 / 1073 cells	UNMEASURED-NAME 1 rows	UNPAIRED-FILE-UNMEASURED 0 rows
+# image A PG/bin/fuzz_grant/fuzz_grant.asan c2c7559b29bd symbols: symtab
+# image A TIMG/stripped/fuzz_transport.asan e89be137db17 symbols: symtab
+UNMEASURED 1 rows in 1 classes: UNMEASURED-NAME=1 (measured by nothing: neither a finding nor a pass)
+FLAGGED 465 rows in 9 classes: DIFFERENT-SYMBOL=15 GEOMETRY-CHANGED=10 KIND-CHANGED=9 NON-ADDRESS-CHANGED=175 SAME-VALUE-DIFFERENT-OBJECT=20 STALE-DONOR-CODE-POINTER=3 UNPAIRED-PORTED=149 UNPAIRED-SOURCE=68 UNRESOLVED=16
+checker CKDIR/versions/205a90fd19b8/port_addr_check.py rc=4 (sha256 205a90fd19b8)
+checker files: 6 of 6 in versions/205a90fd19b8.SHA256SUMS OK
+ARITH-MISMATCH
+DIFFERENT-SYMBOL
+FLAGS-NOT-DECOMPOSABLE
+GEOMETRY-CHANGED
+GP-NOT-GLOBAL-POINTER
+HASH-UNCHANGED
+IMAGE-EXTENT-CHANGED
+IMAGE-EXTENT-STALE-ABOVE
+IMAGE-EXTENT-STALE-BELOW
+INSN-CHANGED
+KIND-CHANGED
+LABEL-COMPARED-WITH-PC
+LABEL-MIXED
+NO-COUNTERPART
+NON-ADDRESS-CHANGED
+SAME-VALUE-DIFFERENT-OBJECT
+SLID-TO-NEIGHBOUR
+STALE-DERIVED-QUOTIENT
+STALE-DONOR-CODE-POINTER
+STALE-DONOR-DATA-POINTER
+STALE-DONOR-ROUNDED
+TARGET-DIFFERENT-SYMBOL
+TARGET-OUTSIDE
+UNPAIRED-FILE
+UNPAIRED-PORTED
+UNPAIRED-SOURCE
+UNRESOLVED

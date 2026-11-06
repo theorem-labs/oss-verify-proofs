@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_init_b
-rocq: OssFuzzTheorems.libdwarf.fuzz_init_b
+rocq: OSSVerify.libdwarf.fuzz_init_b
 origin: upstream
 summary: dwarf_init_b only; prints 'Giving up, dwarf_init failed' on error (the exit(EXIT_FAILURE) there
   is commented out).

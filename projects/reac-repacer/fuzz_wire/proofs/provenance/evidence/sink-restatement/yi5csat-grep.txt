@@ -1,0 +1,30 @@
+# YI5cSat consumer grep, ref 77bc9603b25b (the series head before this commit)
+# command: git grep -l -w -e <word> 77bc9603b25b -- proofs/reac-repacer/fuzz_wire/lib
+sink_at	Reusable/YI14.v U/Reusable/YI14.v 
+file_at	Reusable/YE00.v Reusable/YI14.v U/Reusable/YI14.v 
+stdio_env	Reusable/YI14.v U/Reusable/YI14.v 
+fopen_spec	Reusable/YI14.v U/Reusable/YI14.v 
+unlink_spec	Reusable/YI14.v U/Reusable/YI14.v 
+file_sink_syms	0 files
+sk_file	0 files
+sk_path_addr	Reusable/YI14.v Reusable/YI5c.v Reusable/YL03.v U/Reusable/YI14.v U/Reusable/YI5c.v U/Reusable/YL03.v 
+sk_mode_addr	Reusable/YI14.v Reusable/YI5c.v Reusable/YL03.v U/Reusable/YI14.v U/Reusable/YI5c.v U/Reusable/YL03.v 
+sk_trailer_addr	Reusable/YI14.v Reusable/YI5c.v Reusable/YL03.v U/Reusable/YI14.v U/Reusable/YI5c.v U/Reusable/YL03.v 
+sk_rwa_addr	Reusable/YI14.v Reusable/YI5c.v Reusable/YL03.v U/Reusable/YI14.v U/Reusable/YI5c.v U/Reusable/YL03.v 
+sk_read	Reusable/YI14.v Reusable/YI5c.v U/Reusable/YI14.v U/Reusable/YI5c.v 
+sk_write	Reusable/YI14.v Reusable/YI5c.v U/Reusable/YI14.v U/Reusable/YI5c.v 
+sk_seek	Reusable/YI14.v Reusable/YI5c.v U/Reusable/YI14.v U/Reusable/YI5c.v 
+sk_close	Reusable/YI14.v Reusable/YI5c.v U/Reusable/YI14.v U/Reusable/YI5c.v 
+# lib/Reusable/YE00.v's file_at is its own definition:
+lib/Reusable/YE00.v:102:Definition file_at (m : word -> option byte) (f fd : Z) (P : list Z) : Prop :=
+lib/Reusable/YE00.v:122:astdio_env m /\ file_at m f fd P /\ val_mem segs m (ak_ofl_head K) 8 f /\ f <> 0 /\
+lib/Reusable/YE00.v:165:file_at m f fd P -> file_at m' f fd P.
+# and YE00.v does not Require YI14:
+  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
+  From Stdlib Require Import ZArith NArith List Lia Bool.
+  From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State.
+  From LinuxProcessSemantics.LinuxProcessSem.Sys.Fs Require Namei.
+  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require Import YP09 YI04 YI00 YI16 YK04.
+  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YG0n.
+# there is no YI5cSat.v in the unit:
+  (no match)

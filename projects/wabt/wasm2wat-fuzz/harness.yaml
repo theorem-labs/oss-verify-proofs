@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wabt
 harness: wasm2wat-fuzz
-rocq: OssFuzzTheorems.wabt.wasm2wat_fuzz
+rocq: OSSVerify.wabt.wasm2wat_fuzz
 origin: upstream
 summary: ReadBinaryIr with default options into a wabt::Module; result discarded (no WAT is actually written
   despite the name).

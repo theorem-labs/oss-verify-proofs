@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: bilinear_fuzzer
-rocq: OssFuzzTheorems.leptonica.bilinear_fuzzer
+rocq: OSSVerify.leptonica.bilinear_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixBilinearPta / pixBilinearPtaWithAlpha with EMPTY point arrays; outputs
   destroyed unchecked.

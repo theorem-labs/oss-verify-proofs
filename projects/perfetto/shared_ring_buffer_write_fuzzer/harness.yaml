@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: perfetto
 harness: shared_ring_buffer_write_fuzzer
-rocq: OssFuzzTheorems.perfetto.shared_ring_buffer_write_fuzzer
+rocq: OSSVerify.perfetto.shared_ring_buffer_write_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

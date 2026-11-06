@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: pycryptodome
 harness: aes_fuzzer
-rocq: OssFuzzTheorems.pycryptodome.aes_fuzzer
+rocq: OSSVerify.pycryptodome.aes_fuzzer
 origin: upstream
 summary: Key size from ConsumeEnum (16/24/32), AES_start_operation, then encrypt(data) and, separately,
   decrypt(data) of the SAME whole input into two buffers. It is not decrypt(encrypt(x)); both outputs

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lz4
 harness: compress_hc_fuzzer
-rocq: OssFuzzTheorems.lz4.compress_hc_fuzzer
+rocq: OSSVerify.lz4.compress_hc_fuzzer
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, a round trip: LZ4_compress_HC at a fuzzed level
   (LZ4HC_CLEVEL_MIN..MAX) into a fuzzed capacity in [0, size]; if it returns >0, LZ4_decompress_safe must

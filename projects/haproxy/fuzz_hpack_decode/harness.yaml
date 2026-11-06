@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: haproxy
 harness: fuzz_hpack_decode
-rocq: OssFuzzTheorems.haproxy.fuzz_hpack_decode
+rocq: OSSVerify.haproxy.fuzz_hpack_decode
 origin: upstream
 summary: Allocates a 4096-byte dynamic header table and runs hpack_decode_frame on the fuzzed bytes into
   a 1000-entry header list; the return code and decoded headers are discarded (no HPACK encode/decode

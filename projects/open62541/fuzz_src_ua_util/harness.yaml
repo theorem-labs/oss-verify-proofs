@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: open62541
 harness: fuzz_src_ua_util
-rocq: OssFuzzTheorems.open62541.fuzz_src_ua_util
+rocq: OSSVerify.open62541.fuzz_src_ua_util
 origin: upstream
 summary: Byte 0 selects UA_parseEndpointUrl or UA_parseEndpointUrlEthernet; outputs discarded. Allocation
   budget from the last 4 bytes.

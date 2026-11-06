@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: eigen
 harness: tensor_fuzzer
-rocq: OssFuzzTheorems.eigen.tensor_fuzzer
+rocq: OSSVerify.eigen.tensor_fuzzer
 origin: oss-fuzz
 summary: Rank-3 Tensor of fuzz values; maximum/minimum/sum/mean reductions, chip, shuffle, stride; all
   results discarded (and lazily unevaluated).

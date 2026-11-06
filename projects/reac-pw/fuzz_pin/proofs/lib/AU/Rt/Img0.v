@@ -1,0 +1,5 @@
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Img0.v at origin/ossv/recipes f26f9fbd8777; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); moved from lib/A/Img0.v to lib/A/Rt/Img0.v, and the Requires of the moved files follow; the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses. *)
+(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/Rt/Img0.v of this library, for reac-pw/fuzz_pin's asan-ubsan image (fuzz_pin.asan-ubsan d6f83d301522) instead of its asan image (fuzz_pin.asan 3e4859aed23f): image module Asan -> AsanUbsan (the asan-ubsan image's segments); no numeral changed (every address numeral checked on the asan-ubsan image). The comment lines above describe how lib/A/Rt/Img0.v was made and quote the asan image's values; the code and comments below carry the asan-ubsan values. *)
+Require OSSVerify.reac_pw.fuzz_pin.images.AsanUbsan.
+
+Definition rsegs := OSSVerify.reac_pw.fuzz_pin.images.AsanUbsan.M.loaded_segments.

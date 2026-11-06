@@ -1,0 +1,17 @@
+functions 100; differing targets in tcmp (full) 164
+kit kinds: {'data-differs': 90, 'lui-in-section': 74}
+settlement: {'CSTR-EMPTY': 67, 'DEBRUIJN': 6, 'DIFFERS': 14, 'INDEXED': 1, 'LUI': 74, 'RELJUMP': 1, 'RELSTR': 1}
+  _ZNK6__asan18AddressDescription5PrintEPKc 0x14 data-differs DIFFERS 5 entries of 4 bytes = 20 bytes read (bound: +0x4 `addi B, zero, 4` ; +0x8 `bltu B, i`; +0xc `slli i, i, 2`; +0x18 `add` ; +0x1c `lw _, 0(_)`): bytes DIFFER bot
+  _ZN6__asan12ErrorGenericC1Ejmmmmbm 0x224 data-differs DIFFERS indexed load with no bound found: extent unknown
+  _ZN6__asan9Decorator10ShadowByteEh 0x14 data-differs DIFFERS 83 entries of 4 bytes = 332 bytes read (bound: +0x4 `addi B, zero, 82` ; +0x8 `bltu B, i`; +0xc `slli i, i, 2`; +0x18 `add` ; +0x1c `lw _, 0(_)`): bytes DIFFER 
+  _ZN6__asan16ErrorDescription5PrintEv 0x1c data-differs DIFFERS 25 entries of 4 bytes = 100 bytes read (bound: +0xc `addi B, zero, 24` ; +0x10 `bltu B, i`; +0x14 `slli i, i, 2`; +0x20 `add` ; +0x24 `lw _, 0(_)`): bytes DIFFE
+  _ZN6__asanL23force_interface_symbolsEv 0x20 data-differs DIFFERS 52 entries of 4 bytes = 208 bytes read (bound: +0x10 `addi B, zero, 51` ; +0x14 `bltu B, i`; +0x18 `slli i, i, 2`; +0x24 `add` ; +0x28 `lw _, 0(_)`): bytes DIFF
+  _ZN11__sanitizer19GetHandleSignalModeEi 0x24 data-differs DIFFERS 8 entries of 8 bytes = 64 bytes read (bound: +0x4 `addi B, zero, 7` ; +0x8 `bltu B, i`; +0x1c `slli i, i, 3`; +0x28 `add` ; +0x2c `ld _, 0(_)`): bytes DIFFER bo
+  _ZN11__sanitizer9VSNPrintfEPciPKcPv 0x1c0 data-differs DIFFERS indexed load with no bound found: extent unknown
+  _ZN9libunwind10CFI_ParserINS_17LocalAddressSpaceEE20parseFDE 0x140 data-differs DIFFERS indexed load with no bound found: extent unknown
+  _ZN9libunwind17LocalAddressSpace11getEncodedPERmmhm 0x28 data-differs DIFFERS 13 entries of 4 bytes = 52 bytes read (bound: +0x18 `addi B, zero, 12` ; +0x1c `bltu B, i`; +0x20 `slli i, i, 2`; +0x2c `add` ; +0x30 `lw _, 0(_)`): bytes DIFFE
+  _ZN9libunwind17LocalAddressSpace11getEncodedPERmmhm 0x1a8 data-differs DIFFERS 6 entries of 4 bytes = 24 bytes read (bound: +0x198 `addi B, zero, 5` ; +0x19c `bltu B, i`; +0x1a0 `slli i, i, 2`; +0x1ac `add` ; +0x1b0 `lw _, 0(_)`): bytes DI
+  _ZN9libunwind14EHHeaderParserINS_17LocalAddressSpaceEE17getT 0x24 data-differs DIFFERS 12 entries of 4 bytes = 48 bytes read (bound: +0x14 `addi B, zero, 11` ; +0x18 `bltu B, i`; +0x1c `slli i, i, 2`; +0x28 `add` ; +0x2c `lw _, 0(_)`): bytes DIFFE
+  sysconf 0xdc data-differs DIFFERS 13 entries of 4 bytes = 52 bytes read (bound: +0xcc `addi B, zero, 12` ; +0xd0 `bltu B, i`; +0xd4 `slli i, i, 2`; +0xe0 `add` ; +0xe4 `lw _, 0(_)`): bytes DIFFE
+  __synccall 0x54 data-differs DIFFERS unreadable
+  __strftime_fmt_1 0x44 data-differs DIFFERS indexed load with no bound found: extent unknown

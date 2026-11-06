@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_srcfiles
-rocq: OssFuzzTheorems.libdwarf.fuzz_srcfiles
+rocq: OSSVerify.libdwarf.fuzz_srcfiles
 origin: upstream
 summary: 'On the first CU: dwarf_srcfiles, dwarf_check_lineheader_b, dwarf_print_lines, srclines_b, two-level
   line tables, subprogram data and ~12 per-line attribute getters; results unused.'

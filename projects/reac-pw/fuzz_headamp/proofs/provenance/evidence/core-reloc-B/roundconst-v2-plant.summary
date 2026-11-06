@@ -1,0 +1,22 @@
+# rows-plant.full.tsv.gz: selected 114122 kept rows equal to a donor quantity (floor 0x100 on spans only)
+#   MISMATCH	SAME-GEOMETRY	551
+#   MIXED	SAME-GEOMETRY	4
+#   SAME	SAME-GEOMETRY	113567
+#   class	MISMATCH	extent-to-next	2
+#   class	MISMATCH	extent-to-next(unnamed run)	12
+#   class	MISMATCH	extent-to-next(unnamed run)/2	77
+#   class	MISMATCH	extent-to-next(unnamed run)/4	163
+#   class	MISMATCH	extent-to-next/2	1
+#   class	MISMATCH	extent-to-next/4	5
+#   class	MISMATCH	extent-to-next/8	12
+#   class	MISMATCH	segment/2; span/2	102
+#   class	MISMATCH	segment/4; span/4	1
+#   class	MISMATCH	segment/8; span/8	2
+#   class	MISMATCH	segment; span	2
+#   class	MISMATCH	span	24
+#   class	MISMATCH	span/2	9
+#   class	MISMATCH	span/4	128
+#   class	MISMATCH	span/8	11
+#   class	MIXED	extent-to-next/2; section/2; span/2; symbol-size/2	2
+#   class	MIXED	extent-to-next/4; section/4; span/4; symbol-size/4	1
+#   class	MIXED	extent-to-next; section; span; symbol-size	1

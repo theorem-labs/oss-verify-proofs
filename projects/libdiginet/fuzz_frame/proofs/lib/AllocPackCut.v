@@ -1,0 +1,271 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YN03.v, with its module paths and module names changed; 425 of its 462 lines of code are new or changed and 499 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/AllocCut.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/AllocCut.v, with its module paths and module names changed; 70 of its 141 lines of code are new or changed and 391 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/AllocCf.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/AllocCf.v; 217 of its 242 lines of code are new or changed and 116 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/AllocSlots.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/AllocSlots.v, with its module paths and module names changed; 189 of its 241 lines of code are new or changed and 190 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/AllocPackCut.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+From Stdlib Require Import ZArith List Bool Lia.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.Reusable Require Import YK11 YK0s YK0i YM06 YP09 YM05 YK15 YM02.
+From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.Reusable Require Import YO0i YO0f YO0g YO0q YO0x YO0d YO0e YO05 YO02 YO03 YO0p YO0j YO0m YO0l YO0n YO0k YO0o YO04.
+From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.Reusable Require Import YO16 YL01 YK1j YO10 YO0s YO0u YO15 YN03 YN2b YN33.
+From OSSVerify.Proofs.libdiginet.fuzz_frame.lib Require Import AllocSI AllocGS AllocFree AllocMalloc AllocRealloc.
+From OSSVerify.Proofs.libdiginet.fuzz_frame.lib Require Import AllocMB AllocMallocMB AllocFreeMB AllocReallocMB AllocSlots.
+From OSSVerify.Proofs.libdiginet.fuzz_frame.lib Require Import AllocMallocPath AllocFreePath AllocBound.
+From OSSVerify.Proofs.libdiginet.fuzz_frame.lib Require Import AllocPack AllocPackRoom AllocPackFree AllocReallocOK.
+From OSSVerify.Proofs.libdiginet.fuzz_frame.lib Require Import AllocPackMalloc.
+From OSSVerify.Proofs.libdiginet.fuzz_frame.lib Require Import Contract AllocCut AllocForm.
+Import ListNotations.
+Local Open Scope Z_scope.
+
+Lemma bcount_pos A p n : In (p, n) (user_blocks A) -> 1 <= bcount A (band n).
+Proof.
+  intros Hin. unfold bcount.
+  assert (H : In (p, n) (List.filter (fun b => band (snd b) =? band n) (user_blocks A)))
+    by (apply (proj2 (List.filter_In _ _ _)); split; [exact Hin | cbn [snd]; apply Z.eqb_refl]).
+  destruct (List.filter _ _); [contradiction | cbn [length]; lia].
+Qed.
+
+Lemma leaves_yields {X} : forall (P : X -> Prop) (t : itree astate X) tr a, leaves P t -> yields t tr a -> P a.
+Proof.
+  induction t as [a' | q s k IH | e]; intros [|[q' z] tr] a Hl H; cbn in *; try contradiction.
+  - subst. exact Hl.
+  - destruct H as (-> & Hz & H). exact (IH z tr a (Hl z Hz) H).
+Qed.
+
+Lemma GALL_caps64 : 845 <= GALL (repeat 64 49).
+Proof. apply Z.leb_le. vm_compute. reflexivity. Qed.
+
+Lemma malloc_pack_step A b n tr r A' : WF A -> res_ok_pack A b -> room_pack b n ->
+  cpath04 (malloc n A) tr (r, A') -> (exists q, r = Some q) /\ res_ok_pack A' (pb_malloc b n).
+Proof.
+  intros HW HR HRm Hp.
+  pose proof (pack_room4 A b n HW HR HRm) as R4. pose proof (room_pack_n b n HRm) as [[Hn0 _] Hov].
+  pose proof HRm as (_ & Hcap & _).
+  destruct HR as (HII & HSI & HGS & HNL & HNR & HMB & HPS & HPC & HUP & Hub & HlL & HlC & Hlv & Hby & Hh).
+  pose proof (OK4_malloc n A (malloc_reqs_ok A n HW Hn0) HII Hn0 R4) as [_ HLV].
+  destruct (malloc_cpath04_some n A tr (r, A') Hov Hp) as [q Hq]. cbn [fst] in Hq. subst r.
+  split; [exists q; reflexivity|].
+  pose proof (cpath04_yields _ _ _ Hp) as Hy.
+  pose proof (leaves_cpath04 _ _ _ _ HLV Hp) as HP. unfold MPost in HP. cbn [snd] in HP. destruct HP as (II' & _).
+  pose proof (malloc_wf A n tr (Some q) A' HW Hn0 Hy) as HW'.
+  destruct (malloc_blocks A n tr (Some q) A' HW Hn0 Hy) as (l1 & l2 & E1 & E2 & _).
+  destruct (blocks_add_counts A A' q n l1 l2 E1 E2) as (C1 & C2).
+  pose proof (malloc_SI A n tr (Some q) A' HW HSI Hn0 Hy) as HSI'.
+  destruct (malloc_pack A n (pb_cap b) (pb_live b) tr (Some q) A' HW HSI HGS HNL HNR HPS HPC HUP HlC HlL Hlv Hn0 Hy)
+    as (HPS' & HPC' & HUP').
+  pose proof (malloc_hand A n tr (Some q) A' HW HSI HNR Hn0 Hp) as Hh'.
+  pose proof (AllocPackRoom.band_range n Hn0) as Hb.
+  pose proof (Hlv (band n) Hb) as Hlvb.
+  destruct (lv_add_bounds (pb_live b) (pb_cap b) (band n) 1 HlL Hb Hlv ltac:(lia)) as [HlL' Hlv'].
+  pose proof (nused_pack A' (pb_cap b) (lv_add (pb_live b) (band n) 1) HW' HSI' HPS' HPC' HUP' HlC HlL' Hlv') as NU.
+  unfold res_ok_pack, pb_malloc. cbn [pb_live pb_bytes pb_cap].
+  refine (conj II' (conj HSI' (conj (malloc_GS A n tr (Some q) A' HW HGS Hn0 Hy)
+    (conj (malloc_NL A n tr (Some q) A' HW HNL Hn0 Hy) (conj (malloc_noraw A n tr (Some q) A' HNR Hy)
+    (conj (malloc_MB A n tr (Some q) A' HW HMB Hn0 Hy) (conj HPS' (conj HPC' (conj HUP' _))))))))).
+  split; [lia|]. split; [exact HlL'|]. split; [exact HlC|]. split; [exact Hlv'|]. split; lia.
+Qed.
+
+Lemma free_pack_step A b p n tr u A' : WF A -> In (p, n) (user_blocks A) -> res_ok_pack A b ->
+  cpath04 (free (Some p) A) tr (u, A') -> res_ok_pack A' (pb_free b n).
+Proof.
+  intros HW Hin HR Hcp. destruct u.
+  pose proof (free_reqs_ok A p n HW Hin) as RQ.
+  destruct HR as (HII & HSI & HGS & HNL & HNR & HMB & HPS & HPC & HUP & Hub & HlL & HlC & Hlv & Hby & Hh).
+  pose proof (OK4_free (Some p) A RQ HII) as [_ HLV].
+  pose proof (cpath04_yields _ _ _ Hcp) as Hy.
+  pose proof (leaves_cpath04 _ _ _ _ HLV Hcp) as HP. unfold FPost in HP. cbn [snd] in HP. destruct HP as (II' & _).
+  destruct (free_blocks A p n tr A' HW Hin Hy) as (l1 & l2 & E1 & E2).
+  destruct (blocks_del_counts A A' p n l1 l2 HW E1 E2) as (C1 & C2 & C3 & C4).
+  destruct (free_pack A p n (pb_cap b) (pb_live b) tr tt A' HW HSI HPS HPC HUP Hin Hy) as (HPS' & HPC' & HUP').
+  pose proof (free_hand A p n tr A' HW Hin Hy) as Hh'.
+  assert (Hn0 : 0 <= n) by lia.
+  pose proof (AllocPackRoom.band_range n Hn0) as Hb.
+  pose proof (bcount_pos A p n Hin) as Hbc. pose proof (proj1 HUP (band n) Hb) as Hbl.
+  pose proof (Hlv (band n) Hb) as Hlvb.
+  destruct (lv_add_bounds (pb_live b) (pb_cap b) (band n) (-1) HlL Hb Hlv ltac:(lia)) as [HlL' Hlv'].
+  unfold res_ok_pack, pb_free. cbn [pb_live pb_bytes pb_cap].
+  refine (conj II' (conj (free_SI A p n tr A' HW HSI Hin Hy) (conj (free_GS A p n tr A' HW HGS Hin Hy)
+    (conj (free_NL A p n tr A' HW HNL Hin Hy) (conj (free_noraw A p n tr A' HW Hin HNR Hy)
+    (conj (free_MB A p n tr A' HW HMB Hin Hy) (conj HPS' (conj HPC' (conj HUP' _))))))))).
+  split; [lia|]. split; [exact HlL'|]. split; [exact HlC|]. split; [exact Hlv'|]. split; lia.
+Qed.
+
+Lemma realloc_pack_hand A b p k n tr r A' : WF A -> In (p, k) (user_blocks A) -> res_ok_pack A b -> room_pack b n ->
+  cpath04 (realloc (Some p) n A) tr (r, A') -> hand A' <= Z.max (hand A) (GALL (pb_cap b)).
+Proof.
+  intros HW Hin HR HRm Hp.
+  pose proof (room_pack_n b n HRm) as [[Hn0 _] _]. pose proof HRm as (_ & Hcap & _).
+  destruct HR as (HII & HSI & HGS & HNL & HNR & HMB & HPS & HPC & HUP & Hub & HlL & HlC & Hlv & Hby & Hh).
+  destruct (ra_cases canswer04 A p k n tr r A' HW Hin (rpath_cpath04 _ _ _ Hp)) as [[_ ->]|(g & am & i & fr & _ & _ & _ & _ & _ & _ & C)];
+    [lia|].
+  destruct C as [(_ & _ & ->)|[(_ & _ & _ & _ & ->)|[(_ & _ & _ & _ & ->)|(tr' & Hm)]]];
+    try (match goal with |- hand ?X <= _ => assert (E : hand X = hand A) by reflexivity; rewrite E; lia end).
+  destruct (ra_move canswer04 p n A tr' r A' Hm) as (tr1 & q & s1 & H1 & Hq).
+  pose proof (cpath04_rpath _ _ _ H1) as H1'. pose proof (cpath04_yields _ _ _ H1') as Y1.
+  pose proof (malloc_hand A n tr1 q s1 HW HSI HNR Hn0 H1') as Hh1.
+  pose proof (malloc_wf A n tr1 q s1 HW Hn0 Y1) as HW1.
+  pose proof (malloc_SI A n tr1 q s1 HW HSI Hn0 Y1) as HSI1.
+  destruct (malloc_pack A n (pb_cap b) (pb_live b) tr1 q s1 HW HSI HGS HNL HNR HPS HPC HUP HlC HlL Hlv Hn0 Y1)
+    as (HPS1 & HPC1 & HUP1).
+  pose proof (AllocPackRoom.band_range n Hn0) as Hb. pose proof (Hlv (band n) Hb) as Hlvb.
+  destruct (lv_add_bounds (pb_live b) (pb_cap b) (band n) 1 HlL Hb Hlv ltac:(lia)) as [HlL' Hlv'].
+  assert (NU : nused s1 <= GALL (pb_cap b)).
+  { destruct q as [q|].
+    - exact (nused_pack s1 (pb_cap b) _ HW1 HSI1 HPS1 HPC1 HUP1 HlC HlL' Hlv').
+    - exact (nused_pack s1 (pb_cap b) _ HW1 HSI1 HPS1 HPC1 HUP1 HlC HlL Hlv). }
+  destruct q as [q|]; [|destruct Hq as [_ ->]; lia].
+  destruct Hq as [_ (tr2 & H2)].
+  destruct (malloc_blocks A n tr1 (Some q) s1 HW Hn0 Y1) as (l1 & l2 & E1 & E2 & _).
+  pose proof (in_after_malloc A s1 l1 l2 q n (p, k) E1 E2 Hin) as Hin1.
+  pose proof (free_hand s1 p k tr2 A' HW1 Hin1 (cpath04_yields _ _ _ (cpath04_rpath _ _ _ H2))) as Hh2.
+  lia.
+Qed.
+
+Lemma realloc_pack_ok04 A b p k n : WF A -> In (p, k) (user_blocks A) -> res_ok_pack A b -> room_pack b n ->
+  ok04 mgrant (realloc (Some p) n A).
+Proof.
+  intros HW Hin HR HRm.
+  exact (realloc_ok04 A p k n HW Hin (proj1 HR) (proj1 (room_pack_n b n HRm)) (pack_room4 A b n HW HR HRm)
+    (room_pack_req b n HRm)).
+Qed.
+
+Lemma realloc_pack_step A b p k n tr r A' : WF A -> In (p, k) (user_blocks A) -> res_ok_pack A b -> room_pack b n ->
+  cpath04 (realloc (Some p) n A) tr (r, A') -> (exists q, r = Some q) /\ res_ok_pack A' (pb_realloc b k n).
+Proof.
+  intros HW Hin HR HRm Hp.
+  pose proof (room_pack_n b n HRm) as [Hn Ov]. pose proof HRm as (_ & Hcap & _).
+  destruct (realloc_cpath04_some A p k n tr r A' HW Hin Ov Hp) as [q ->].
+  split; [exists q; reflexivity|].
+  pose proof (realloc_II A p k n tr (Some q) A' HW Hin (proj1 HR) Hn (pack_room4 A b n HW HR HRm) (room_pack_req b n HRm) Hp)
+    as II'.
+  pose proof (realloc_pack_hand A b p k n tr (Some q) A' HW Hin HR HRm Hp) as Hh'.
+  pose proof (cpath04_yields _ _ _ Hp) as Hy.
+  pose proof (ub_le_ubytes A p k HW Hin) as HKU.
+  assert (HK : 0 <= k) by (apply (ub_nonneg A HW (p, k)); exact Hin).
+  destruct HR as (HII & HSI & HGS & HNL & HNR & HMB & HPS & HPC & HUP & Hub & HlL & HlC & Hlv & Hby & Hh).
+  pose proof (realloc_wf A p k n tr (Some q) A' HW Hin (proj1 Hn) Hy) as HW'.
+  destruct (realloc_inv A p k n tr (Some q) A' HW Hin (proj1 Hn) Hy HSI HGS HNL HNR) as (HSI' & HGS' & HNL' & HNR').
+  destruct (realloc_counts A p k n tr (Some q) A' HW Hin (proj1 Hn) Hy) as (C1 & C2).
+  pose proof (realloc_MB A p k n tr (Some q) A' HW Hin (proj1 Hn) Hy HMB) as HMB'.
+  destruct (realloc_pack malloc_pack A p k n (pb_cap b) (pb_live b) tr (Some q) A' HW HSI HGS HNL HNR HPS HPC HUP
+    HlC HlL Hlv Hin (proj1 Hn) Hy) as (HPS' & HPC' & HUP').
+  pose proof (AllocPackRoom.band_range n (proj1 Hn)) as Hbn. pose proof (AllocPackRoom.band_range k HK) as Hbk.
+  pose proof (Hlv (band n) Hbn) as Hlvn. pose proof (Hlv (band k) Hbk) as Hlvk.
+  pose proof (bcount_pos A p k Hin) as Hbc. pose proof (proj1 HUP (band k) Hbk) as Hbl.
+  assert (LB : length (lv_realloc (pb_live b) k n) = 49%nat /\
+    (forall j, 0 <= j < 49 -> 0 <= znth j (lv_realloc (pb_live b) k n) <= znth j (pb_cap b))).
+  { unfold lv_realloc. destruct (band n <? band k).
+    - exact (lv_add_bounds (pb_live b) (pb_cap b) (band n) 1 HlL Hbn Hlv ltac:(lia)).
+    - destruct (lv_add_bounds (pb_live b) (pb_cap b) (band k) (-1) HlL Hbk Hlv ltac:(lia)) as [L1 V1].
+      apply (lv_add_bounds _ (pb_cap b) (band n) 1 L1 Hbn V1).
+      rewrite znth_lv_add by (try rewrite HlL; lia). destruct (band n =? band k) eqn:E; [apply Z.eqb_eq in E; rewrite E|]; lia. }
+  destruct LB as [HlL' Hlv'].
+  unfold res_ok_pack, pb_realloc. cbn [pb_live pb_bytes pb_cap].
+  refine (conj II' (conj HSI' (conj HGS' (conj HNL' (conj HNR' (conj HMB' (conj HPS' (conj HPC' (conj HUP' _))))))))).
+  split; [lia|]. split; [exact HlL'|]. split; [exact HlC|]. split; [exact Hlv'|]. split; lia.
+Qed.
+
+Lemma malloc_pack_cpath A b n tr q A' : WF A -> res_ok_pack A b -> room_pack b n ->
+  cpath (malloc n A) tr (Some q, A') -> res_ok_pack A' (pb_malloc b n).
+Proof.
+  intros HW HR HRm Hp. pose proof (room_pack_n b n HRm) as [[Hn0 _] _].
+  exact (proj2 (malloc_pack_step A b n tr (Some q) A' HW HR HRm (malloc_some_cpath04 A n tr q A' HW Hn0 Hp))).
+Qed.
+
+Lemma free_pack_cpath A b p n tr u A' : WF A -> In (p, n) (user_blocks A) -> res_ok_pack A b ->
+  cpath (free (Some p) A) tr (u, A') -> res_ok_pack A' (pb_free b n).
+Proof.
+  intros HW Hin HR Hp. exact (free_pack_step A b p n tr u A' HW Hin HR (free_cpath04 A p n tr (u, A') HW Hin Hp)).
+Qed.
+
+Lemma malloc_pack_yields A b n tr q A' : WF A -> res_ok_pack A b -> room_pack b n ->
+  yields (malloc n A) tr (Some q, A') -> hand A' <= GALL (pb_cap b) -> res_ok_pack A' (pb_malloc b n).
+Proof.
+  intros HW HR HRm Hy Hh'.
+  pose proof (pack_room4 A b n HW HR HRm) as R4. pose proof (room_pack_n b n HRm) as [[Hn0 _] Hov].
+  pose proof HRm as (_ & Hcap & _).
+  destruct HR as (HII & HSI & HGS & HNL & HNR & HMB & HPS & HPC & HUP & Hub & HlL & HlC & Hlv & Hby & Hh).
+  pose proof (OK4_malloc n A (malloc_reqs_ok A n HW Hn0) HII Hn0 R4) as [_ HLV].
+  pose proof (leaves_yields _ _ _ _ HLV Hy) as HP. unfold MPost in HP. cbn [snd] in HP. destruct HP as (II' & _).
+  pose proof (malloc_wf A n tr (Some q) A' HW Hn0 Hy) as HW'.
+  destruct (malloc_blocks A n tr (Some q) A' HW Hn0 Hy) as (l1 & l2 & E1 & E2 & _).
+  destruct (blocks_add_counts A A' q n l1 l2 E1 E2) as (C1 & C2).
+  pose proof (malloc_SI A n tr (Some q) A' HW HSI Hn0 Hy) as HSI'.
+  destruct (malloc_pack A n (pb_cap b) (pb_live b) tr (Some q) A' HW HSI HGS HNL HNR HPS HPC HUP HlC HlL Hlv Hn0 Hy)
+    as (HPS' & HPC' & HUP').
+  pose proof (AllocPackRoom.band_range n Hn0) as Hb.
+  pose proof (Hlv (band n) Hb) as Hlvb.
+  destruct (lv_add_bounds (pb_live b) (pb_cap b) (band n) 1 HlL Hb Hlv ltac:(lia)) as [HlL' Hlv'].
+  unfold res_ok_pack, pb_malloc. cbn [pb_live pb_bytes pb_cap].
+  refine (conj II' (conj HSI' (conj (malloc_GS A n tr (Some q) A' HW HGS Hn0 Hy)
+    (conj (malloc_NL A n tr (Some q) A' HW HNL Hn0 Hy) (conj (malloc_noraw A n tr (Some q) A' HNR Hy)
+    (conj (malloc_MB A n tr (Some q) A' HW HMB Hn0 Hy) (conj HPS' (conj HPC' (conj HUP' _))))))))).
+  split; [lia|]. split; [exact HlL'|]. split; [exact HlC|]. split; [exact Hlv'|]. split; lia.
+Qed.
+
+Lemma free_pack_yields A b p n tr A' : WF A -> In (p, n) (user_blocks A) -> res_ok_pack A b ->
+  yields (free (Some p) A) tr (tt, A') -> res_ok_pack A' (pb_free b n).
+Proof.
+  intros HW Hin HR Hy.
+  pose proof (free_reqs_ok A p n HW Hin) as RQ.
+  destruct HR as (HII & HSI & HGS & HNL & HNR & HMB & HPS & HPC & HUP & Hub & HlL & HlC & Hlv & Hby & Hh).
+  pose proof (OK4_free (Some p) A RQ HII) as [_ HLV].
+  pose proof (leaves_yields _ _ _ _ HLV Hy) as HP. unfold FPost in HP. cbn [snd] in HP. destruct HP as (II' & _).
+  destruct (free_blocks A p n tr A' HW Hin Hy) as (l1 & l2 & E1 & E2).
+  destruct (blocks_del_counts A A' p n l1 l2 HW E1 E2) as (C1 & C2 & C3 & C4).
+  destruct (free_pack A p n (pb_cap b) (pb_live b) tr tt A' HW HSI HPS HPC HUP Hin Hy) as (HPS' & HPC' & HUP').
+  pose proof (free_hand A p n tr A' HW Hin Hy) as Hh'.
+  assert (Hn0 : 0 <= n) by lia.
+  pose proof (AllocPackRoom.band_range n Hn0) as Hb.
+  pose proof (bcount_pos A p n Hin) as Hbc. pose proof (proj1 HUP (band n) Hb) as Hbl.
+  pose proof (Hlv (band n) Hb) as Hlvb.
+  destruct (lv_add_bounds (pb_live b) (pb_cap b) (band n) (-1) HlL Hb Hlv ltac:(lia)) as [HlL' Hlv'].
+  unfold res_ok_pack, pb_free. cbn [pb_live pb_bytes pb_cap].
+  refine (conj II' (conj (free_SI A p n tr A' HW HSI Hin Hy) (conj (free_GS A p n tr A' HW HGS Hin Hy)
+    (conj (free_NL A p n tr A' HW HNL Hin Hy) (conj (free_noraw A p n tr A' HW Hin HNR Hy)
+    (conj (free_MB A p n tr A' HW HMB Hin Hy) (conj HPS' (conj HPC' (conj HUP' _))))))))).
+  split; [lia|]. split; [exact HlL'|]. split; [exact HlC|]. split; [exact Hlv'|]. split; lia.
+Qed.
+
+Lemma pack_laws : FormLaws pack_form.
+Proof.
+  split.
+  - intros A b H. exact (proj1 H).
+  - exact room_pack_n.
+  - intros A b n HW HR HRm. pose proof (room_pack_n b n HRm) as [[Hn0 _] _].
+    exact (proj1 (OK4_malloc n A (malloc_reqs_ok A n HW Hn0) (proj1 HR) Hn0 (pack_room4 A b n HW HR HRm))).
+  - exact malloc_pack_step.
+  - exact free_pack_step.
+  - exact realloc_pack_ok04.
+  - exact realloc_pack_step.
+Qed.
+
+Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Variable B : malloc_syms.
+Variable API : AllocAPI B.
+Let MR := aa_MR API.
+
+Theorem pack_malloc_contract : AllocExtra B MR -> ro_apart_b B = true -> malloc_contract_r B API pack_form.
+Proof. exact (malloc_contract_form B API pack_form pack_laws). Qed.
+
+Theorem pack_free_contract : AllocExtra B MR -> ro_apart_b B = true -> free_contract_r B API pack_form.
+Proof. exact (free_contract_form B API pack_form pack_laws). Qed.
+
+Theorem pack_calloc_contract : AllocExtra B MR -> ro_apart_b B = true -> forall pc, calloc_contract_r B API pack_form pc.
+Proof. exact (calloc_contract_form B API pack_form pack_laws). Qed.
+
+Theorem pack_realloc_null_contract : AllocExtra B MR -> ro_apart_b B = true -> realloc_null_realizes B MR ->
+  forall pc, ms_realloc B = Some pc -> realloc_null_contract_r B API pack_form pc.
+Proof. exact (realloc_null_contract_form B API pack_form pack_laws). Qed.
+
+Theorem pack_realloc_contract : AllocExtra B MR -> ro_apart_b B = true -> realloc_realizes B MR -> realloc_safe_p ->
+  forall pc, ms_realloc B = Some pc -> realloc_contract_r B API pack_form pc.
+Proof. exact (realloc_contract_form B API pack_form pack_laws). Qed.
+End c.

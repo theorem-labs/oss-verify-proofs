@@ -1,0 +1,2024 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Theorem Labs, 2026-10: the ARx-GENERIC twin of lib/A/W_journal.v (a Theorem Labs lane's step 1 of route (b), 2026-10-29
+   14:18Z / 14:22Z). W_journal.v is NOT edited: this file sits beside it, and every walk that cites W_journal.v builds
+   unchanged.
+   - Each AR-stated definition or lemma NAME of W_journal.v's Sections b, e, g and h has its twin NAME_x here, stated
+     over a Section relation `ARx` with its laws `LAWS : AR_laws_x segs B ARx hl`, the journal YCbqG.ajournal_x
+     (written AJ below; the ghost set Hp after S and Hp' after S') and its placement parameter PST. The proofs are
+     W_journal.v's, with cgif's laws al_* replaced by AR_laws_x's alx_* and the journal lemmas by YCbqG.v's _x ones.
+   - The AR-free names of W_journal.v (inG, gover, gagree, gx_ok, awr_ok_x, rom_pinned, rom_out, aview_gover_tr, ...)
+     are cited from W_journal.v, not copied.
+   - The BRIDGES (Section br) instantiate ARx at cgif's AR with Hp ignored and PST := [], and show each generic
+     DEFINITION equivalent to W_journal.v's AR one, through YCe5x.ajournal_x_YCbq (YCbqG.ajournal_x at that instance
+     is only IFF-equal to YCbq.ajournal: its image clause has the extra premise `~ Exists (in_zr a) [] ->`).
+   One difference of statement, forced by PST: ajournal_gx_rom_view_x needs the ROM bytes outside PST
+   (`forall a, in_rom segs a -> ~ Exists (in_zr a) PST`), which W_journal.v's form never needed (PST = [] there). *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0j YK0s.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP01 YP00 YP0i YCbn YP0b YP0a.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YN3v YI04.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK04 YA0i YA0n YA0o YCbm YA0q.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YP0d YP0c YC80 YC5d.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YCbqG.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YA0nH.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YAkMemnorm.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YCe5x.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_syms W_kit W_journal.
+(* the count names of the room round, ONE definition each (acnt, tr_peakP, Psec / Pcls / P24, ...):
+   lib/A/ReplyCnt.v, taken by path from commit caaa86be8d4 *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import ReplyCnt.
+Import ListNotations.
+Local Unset Lia Cache. Local Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope bv_scope.
+Open Scope Z_scope.
+(* the strndup rules' frame room below the call (the interceptor's frame, then the inner malloc's body to Allocate,
+   whose entry asks ly_bot < sp; AllocG.v:75): transparent local constants until the layer's own names land beside
+   STRNDUP_FRAME_CF in Reusable/YG0dcf.v; left-nested in the premise so `+ 2160 + 2144` converts by delta *)
+Local Definition STRNDUP_FRAME_CF_x : Z := 2160.
+Local Definition MALLOC_BODY_FRAME_CF_x : Z := 2144.
+
+Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Section b.
+Variable segs : list Segment.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
+Context {hl : Z}.
+Hypothesis LAWS : AR_laws_x segs B ARx hl.
+Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
+Local Notation AJ := (ajournal_x segs B PST ARx).
+
+(* W_journal.v:149 ajournal_rebase *)
+Lemma ajournal_rebase_xR {R : world segs -> world segs -> Prop} : forall G STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k memc',
+gx_ok segs B G ->
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
+(forall x, inGb G (bv_unsigned x) = false -> memc' x = memc x) ->
+mem_grows (mrestrict (w_H Wc) memc) (mrestrict (w_H Wc) memc') ->
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W (gover G mem memc') md own lyc Sc Hpc Wc memc' mdc k.
+Proof.
+intros G STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k memc' HG HJ Heq Hgr.
+pose proof HJ as (HAR & Hly & Hsecs & Hwle & Hio & Hfrs & Hnev & Hk & F1 & F2 & F3 & F4 & Hgone & Hpres & Hstatic & F5 & HQT).
+pose proof Hstatic as (Hal & Hstk0 & Hceil & Hslo & Hshi & H47 & Hbot & Htop2 & Htop).
+pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
+assert (T : forall a, aview segs (w_H Wc) memc a = aview segs (w_H W) mem a ->
+aview segs (w_H Wc) memc' a = aview segs (w_H W) (gover G mem memc') a).
+{ intros a. exact (aview_gover_tr segs B G W Wc mem memc memc' a HG Heq). }
+split.
+{ eapply (alx_frame _ _ _ LAWS _ _ _ _ _ _ _ _ HAR); [ | | reflexivity | reflexivity | reflexivity | |].
+  - intros a Ha Ho. destruct (inGb G a) eqn:Hg.
+    + exfalso. apply inGb_spec in Hg. destruct (HG a Hg) as (Hi & Hno & _).
+      apply Hno. exact (proj1 (alx_owned_image _ _ _ LAWS _ _ _ _ _ _ a HAR Hi) Ho).
+    + apply (aview_out_G segs G); [exact Ha | apply inGb_false; exact Hg | exact Heq].
+  - intros a Hv. eapply aview_keeps_vis; [exact Hgr | exact Hv].
+  - intros a _ Hh. apply Heq. destruct (inGb G (bv_unsigned (w64 a))) eqn:Hg; [|reflexivity].
+    exfalso. assert (Hi : in_img segs (bv_unsigned (w64 a))) by (apply HG; apply inGb_spec; exact Hg).
+    rewrite (hidden_not_img segs Wc _ Hi) in Hh. discriminate.
+  - (* QMm W0': a kept byte is not in G (gx_ok's as_kept clause), so memc' keeps it *)
+    intros a Ha (_ & Hkp & _). apply Heq. destruct (inGb G (bv_unsigned (w64 a))) eqn:Hg; [|reflexivity].
+    exfalso. apply inGb_spec in Hg. rewrite unsigned_lit_small in Hg by lia. exact (proj2 (proj2 (HG a Hg)) Hkp). }
+split; [exact Hly|]. split; [exact Hsecs|]. split; [exact Hwle|]. split; [exact Hio|].
+split; [exact Hfrs|]. split; [exact Hnev|]. split; [exact Hk|].
+split; [intros a Ha Hs; apply T; exact (F1 a Ha Hs)|].
+split; [intros p n i H1 H2 Hi Hnf; apply T; exact (F2 p n i H1 H2 Hi Hnf)|].
+split; [intros a Hi Hno He Hps Hsp; apply T; exact (F3 a Hi Hno He Hps Hsp)|].
+split; [intros cid pos a Hin Hr Hnf; apply T; exact (F4 cid pos a Hin Hr Hnf)|].
+split; [exact Hgone|].
+split.
+{ intros a Ha. destruct (Hpres a Ha) as [Hh [b Hb]]. split; [exact Hh|]. exists b.
+  rewrite Heq; [exact Hb|]. rewrite unsigned_lit_small by lia. apply inGb_false. intros HGa.
+  pose proof (inG_low segs B segs_low G a HG HGa). lia. }
+split; [exact Hstatic|]. split; [intros a Hx He; apply T; exact (F5 a Hx He) | exact HQT].
+Qed.
+Lemma ajournal_rebase_x : forall G STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k memc',
+gx_ok segs B G ->
+AJ STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
+(forall x, inGb G (bv_unsigned x) = false -> memc' x = memc x) ->
+mem_grows (mrestrict (w_H Wc) memc) (mrestrict (w_H Wc) memc') ->
+AJ STK sp0 FP ly S Hp W (gover G mem memc') md own lyc Sc Hpc Wc memc' mdc k.
+Proof. exact (@ajournal_rebase_xR (@wle segs)). Qed.
+
+(* W_journal.v:189 ajournal_start_ext *)
+Lemma ajournal_start_ext_xR {R : world segs -> world segs -> Prop} : forall STK sp0 FP ly S Hp W mem mem' md own lyc Sc Hpc Wc memc mdc k,
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
+(forall a, aview segs (w_H W) mem' a = aview segs (w_H W) mem a) ->
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W mem' md own lyc Sc Hpc Wc memc mdc k.
+Proof.
+intros STK sp0 FP ly S Hp W mem mem' md own lyc Sc Hpc Wc memc mdc k HJ Hx.
+destruct HJ as (HAR & Hly & Hsecs & Hwle & Hio & Hfrs & Hnev & Hk & F1 & F2 & F3 & F4 & Hgone & Hpres & Hstatic & F5 & HQT).
+split; [exact HAR|]. split; [exact Hly|]. split; [exact Hsecs|]. split; [exact Hwle|]. split; [exact Hio|].
+split; [exact Hfrs|]. split; [exact Hnev|]. split; [exact Hk|].
+split; [intros a Ha Hs; rewrite Hx; exact (F1 a Ha Hs)|].
+split; [intros p n i H1 H2 Hi Hnf; rewrite Hx; exact (F2 p n i H1 H2 Hi Hnf)|].
+split; [intros a Hi Hno He Hps Hsp; rewrite Hx; exact (F3 a Hi Hno He Hps Hsp)|].
+split; [intros cid pos a Hin Hr Hnf; rewrite Hx; exact (F4 cid pos a Hin Hr Hnf)|].
+split; [exact Hgone|]. split; [exact Hpres|]. split; [exact Hstatic|].
+split; [intros a Hx' He; rewrite Hx; exact (F5 a Hx' He) | exact HQT].
+Qed.
+Lemma ajournal_start_ext_x : forall STK sp0 FP ly S Hp W mem mem' md own lyc Sc Hpc Wc memc mdc k,
+AJ STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
+(forall a, aview segs (w_H W) mem' a = aview segs (w_H W) mem a) ->
+AJ STK sp0 FP ly S Hp W mem' md own lyc Sc Hpc Wc memc mdc k.
+Proof. exact (@ajournal_start_ext_xR (@wle segs)). Qed.
+
+(* THE JOURNAL: W_journal.v:209 ajournal_g and :214 ajournal_gx over AJ. *)
+Definition ajournal_g_xR (R : world segs -> world segs -> Prop) (G : list (Z * Z)) (STK sp0 : Z) (FP : list (Z * Z))
+(ly : alayout) (S : astate) (Hp : list Z) (W : world segs) (mem : word -> option byte) (md : Model)
+(own : list (Z * Z))
+(ly' : alayout) (S' : astate) (Hp' : list Z) (W' : world segs) (mem' : word -> option byte) (md' : Model) (k : Z) : Prop :=
+exists memS, (ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W memS md own ly' S' Hp' W' mem' md' k /\ gagree G (w_H W) mem memS.
+Definition ajournal_g_x (G : list (Z * Z)) (STK sp0 : Z) (FP : list (Z * Z))
+(ly : alayout) (S : astate) (Hp : list Z) (W : world segs) (mem : word -> option byte) (md : Model)
+(own : list (Z * Z))
+(ly' : alayout) (S' : astate) (Hp' : list Z) (W' : world segs) (mem' : word -> option byte) (md' : Model) (k : Z) : Prop :=
+exists memS, AJ STK sp0 FP ly S Hp W memS md own ly' S' Hp' W' mem' md' k /\ gagree G (w_H W) mem memS.
+(* ajournal_g_x keeps its body, for the proofs that unfold it; ajournal_g_x_wle checks that it is ajournal_g_xR at wle *)
+Lemma ajournal_g_x_wle : ajournal_g_x = ajournal_g_xR (@wle segs). Proof. reflexivity. Qed.
+Definition ajournal_gx_xR (R : world segs -> world segs -> Prop) (G : list (Z * Z)) (XO : Z) (OUT : list (Z * Z)) (STK sp0 : Z) (FP : list (Z * Z))
+(ly : alayout) (S : astate) (Hp : list Z) (W : world segs) (mem : word -> option byte) (md : Model)
+(own : list (Z * Z))
+(ly' : alayout) (S' : astate) (Hp' : list Z) (W' : world segs) (mem' : word -> option byte) (md' : Model) (k : Z) : Prop :=
+0 <= STK /\ 0 <= XO /\
+(ajournal_g_xR R) G (STK + XO) (sp0 + XO) FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k /\
+(forall a, sp0 <= a < sp0 + XO -> ~ inFP OUT a -> aview segs (w_H W') mem' a = aview segs (w_H W) mem a).
+Definition ajournal_gx_x (G : list (Z * Z)) (XO : Z) (OUT : list (Z * Z)) (STK sp0 : Z) (FP : list (Z * Z))
+(ly : alayout) (S : astate) (Hp : list Z) (W : world segs) (mem : word -> option byte) (md : Model)
+(own : list (Z * Z))
+(ly' : alayout) (S' : astate) (Hp' : list Z) (W' : world segs) (mem' : word -> option byte) (md' : Model) (k : Z) : Prop :=
+0 <= STK /\ 0 <= XO /\
+ajournal_g_x G (STK + XO) (sp0 + XO) FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k /\
+(forall a, sp0 <= a < sp0 + XO -> ~ inFP OUT a -> aview segs (w_H W') mem' a = aview segs (w_H W) mem a).
+(* ajournal_gx_x keeps its body, for the proofs that unfold it; ajournal_gx_x_wle checks that it is ajournal_gx_xR at wle *)
+Lemma ajournal_gx_x_wle : ajournal_gx_x = ajournal_gx_xR (@wle segs). Proof. reflexivity. Qed.
+
+(* W_journal.v:224 ajournal_gx_nil *)
+Lemma ajournal_gx_nil_xR {R : world segs -> world segs -> Prop} : forall STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+(ajournal_gx_xR R) [] 0 [] STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k <->
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
+Proof.
+intros STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k. split.
+- intros (_ & _ & (memS & HJ & Hag) & _). rewrite !Z.add_0_r in HJ.
+  eapply ajournal_start_ext_xR; [exact HJ|]. intros a. symmetry. apply (aview_gagree segs [] _ _ _ a Hag). reflexivity.
+- intros HJ. pose proof HJ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & Hstk0 & _) & _).
+  split; [lia|]. split; [lia|]. split; [exists mem; split; [rewrite !Z.add_0_r; exact HJ | apply gagree_refl]|].
+  intros a Ha. lia.
+Qed.
+Lemma ajournal_gx_nil_x : forall STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+ajournal_gx_x [] 0 [] STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k <->
+AJ STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
+Proof. exact (@ajournal_gx_nil_xR (@wle segs)). Qed.
+(* W_journal.v:235 ajournal_gx_pack *)
+Lemma ajournal_gx_pack_xR {R : world segs -> world segs -> Prop} : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k memS,
+0 <= STK -> 0 <= XO ->
+(ajournal_xR segs B PST ARx R) (STK + XO) (sp0 + XO) FP ly S Hp W memS md own ly' S' Hp' W' mem' md' k -> gagree G (w_H W) mem memS ->
+(forall a, sp0 <= a < sp0 + XO -> ~ inFP OUT a -> aview segs (w_H W') mem' a = aview segs (w_H W) mem a) ->
+(ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
+Proof.
+intros G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k memS H0 H1 HJ Hag Hout.
+split; [exact H0|]. split; [exact H1|]. split; [exists memS; split; [exact HJ | exact Hag] | exact Hout].
+Qed.
+Lemma ajournal_gx_pack_x : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k memS,
+0 <= STK -> 0 <= XO ->
+AJ (STK + XO) (sp0 + XO) FP ly S Hp W memS md own ly' S' Hp' W' mem' md' k -> gagree G (w_H W) mem memS ->
+(forall a, sp0 <= a < sp0 + XO -> ~ inFP OUT a -> aview segs (w_H W') mem' a = aview segs (w_H W) mem a) ->
+ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
+Proof. exact (@ajournal_gx_pack_xR (@wle segs)). Qed.
+
+(* W_journal.v:250 ajournal_gx_init *)
+Lemma ajournal_gx_init_xR {R : world segs -> world segs -> Prop} (R_refl : forall W, R W W) : forall G XO OUT STK FP ly S Hp W regs mem md ch,
+afn_pre_x segs B ARx STK ly S Hp W regs mem md ch ->
+0 <= XO -> XO mod 16 = 0 -> spZ regs + XO <= ly_top ly ->
+(forall a, spZ regs <= a < spZ regs + XO -> apresent (w_H W) mem a) ->
+(ajournal_gx_xR R) G XO OUT STK (spZ regs) FP ly S Hp W mem md [] ly S Hp W mem md 0.
+Proof.
+intros G XO OUT STK FP ly S Hp W regs mem md ch HPRE HXO HX16 HXtop HXp.
+pose proof HPRE as (HAR & Hra & Hra4 & Hgp & Htp & Hstk & Hpres & Hch & HQT).
+pose proof Hstk as (Hal & Hstk0 & Hceil & Hslo & Hshi & H47 & Hbot & Htop2 & Htop).
+apply (ajournal_gx_pack_xR G XO OUT STK (spZ regs) FP ly S Hp W mem md [] ly S Hp W mem md 0 mem); [lia | lia | | apply gagree_refl |].
+- split; [exact HAR|]. split; [apply layout_le_refl|]. split; [lia|]. split; [apply R_refl|]. split; [apply aos_step_refl|].
+  split; [reflexivity|]. split; [lia|]. split; [lia|].
+  split; [intros; reflexivity|]. split; [intros; reflexivity|]. split; [intros; reflexivity|]. split; [intros; reflexivity|].
+  split; [intros p n i H1 H2; exfalso; exact (H2 H1)|].
+  split; [intros a Ha; destruct (Z.lt_ge_cases a (spZ regs)); [apply Hpres; lia | apply HXp; lia]|].
+  split; [|split; [intros; reflexivity | exact HQT]].
+  unfold astk_ok. rewrite Z.add_mod, Hal, HX16 by lia. cbn. lia.
+- intros a Ha _. reflexivity.
+Qed.
+Lemma ajournal_gx_init_x : forall G XO OUT STK FP ly S Hp W regs mem md ch,
+afn_pre_x segs B ARx STK ly S Hp W regs mem md ch ->
+0 <= XO -> XO mod 16 = 0 -> spZ regs + XO <= ly_top ly ->
+(forall a, spZ regs <= a < spZ regs + XO -> apresent (w_H W) mem a) ->
+ajournal_gx_x G XO OUT STK (spZ regs) FP ly S Hp W mem md [] ly S Hp W mem md 0.
+Proof. exact (@ajournal_gx_init_xR (@wle segs) (wle_refl segs)). Qed.
+
+(* W_journal.v:309 ajournal_gx_exec, over YCbqG's ajournal_x_exec *)
+Lemma ajournal_gx_exec_xR {R : world segs -> world segs -> Prop} : forall G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k memc' mdc' (Wr : Z -> Prop),
+gx_ok segs B G ->
+(ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
+(forall x : word, ~ Wr (bv_unsigned x) -> mrestrict (w_H Wc) memc' x = mrestrict (w_H Wc) memc x) ->
+mem_grows (mrestrict (w_H Wc) memc) (mrestrict (w_H Wc) memc') ->
+(forall x : word, w_H Wc x = true -> memc' x = memc x) ->
+same_but_materialized mdc mdc' ->
+(forall a, Wr a -> (awr_byte STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own a /\ ~ (sp0 <= a < sp0 + XO)) \/
+ inG G a \/ (inFP OUT a /\ sp0 <= a < sp0 + XO)) ->
+(ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc' mdc' k.
+Proof.
+intros G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k memc' mdc' Wr HG HJ Hfr Hgr Hhid Hsame HW.
+destruct HJ as (HSTK & HXO & (memS & HJ & Hag) & Hout).
+pose proof HJ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & Hstk0 & Hceil & Hslo & Hshi & H47 & _) & _).
+pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
+set (memM := fun x : word => if inGb G (bv_unsigned x) then memc x else memc' x).
+assert (HM : forall x, inGb G (bv_unsigned x) = false -> memc' x = memM x)
+by (intros x Hg; unfold memM; rewrite Hg; reflexivity).
+assert (HJM : (ajournal_xR segs B PST ARx R) (STK + XO) (sp0 + XO) FP ly S Hp W memS md own lyc Sc Hpc Wc memM mdc' k).
+{ eapply (ajournal_x_execR segs B PST ARx LAWS segs_low _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ memM mdc'
+    (fun a => Wr a /\ ~ inG G a) HJ).
+  - intros x Hx. unfold memM, mrestrict. destruct (inGb G (bv_unsigned x)) eqn:Hg; [reflexivity|].
+    pose proof (Hfr x ltac:(intros HWx; apply Hx; split; [exact HWx | apply inGb_false; exact Hg])) as E.
+    unfold mrestrict in E. exact E.
+  - intros x Hx. pose proof (Hgr x) as Hg1. unfold memM, mrestrict in Hx, Hg1 |- *.
+    destruct (w_H Wc x); [exact Hx|]. destruct (inGb G (bv_unsigned x)); [exact Hx | exact (Hg1 Hx)].
+  - intros x Hh. unfold memM. destruct (inGb G (bv_unsigned x)); [reflexivity|]. exact (Hhid x Hh).
+  - exact Hsame.
+  - intros a [HWa HnG]. destruct (HW a HWa) as [[Haw _] | [HGa | [_ Hwin]]].
+    + destruct Haw as [Hs | Hrest]; [left; lia | right; exact Hrest].
+    + exfalso. exact (HnG HGa).
+    + left. lia. }
+assert (Hgr2 : mem_grows (mrestrict (w_H Wc) memM) (mrestrict (w_H Wc) memc')).
+{ intros x Hx. pose proof (Hgr x) as Hg1. unfold memM, mrestrict in Hx, Hg1 |- *.
+  destruct (w_H Wc x); [exact Hx|]. destruct (inGb G (bv_unsigned x)); [exact (Hg1 Hx) | exact Hx]. }
+pose proof (ajournal_rebase_xR G _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ memc' HG HJM HM Hgr2) as HJ2.
+apply (ajournal_gx_pack_xR G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc' mdc' k (gover G memS memc') HSTK HXO HJ2).
+- intros x Hg. unfold mrestrict, gover. rewrite Hg. exact (Hag x Hg).
+- intros a Ha Hno. rewrite <- (Hout a Ha Hno). apply aview_eq_of. apply Hfr.
+  rewrite unsigned_lit_small by lia. intros HWa. destruct (HW a HWa) as [[_ Hn] | [HGa | [Ho _]]].
+  + exact (Hn Ha).
+  + pose proof (inG_low segs B segs_low G a HG HGa). lia.
+  + exact (Hno Ho).
+Qed.
+Lemma ajournal_gx_exec_x : forall G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k memc' mdc' (Wr : Z -> Prop),
+gx_ok segs B G ->
+ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
+(forall x : word, ~ Wr (bv_unsigned x) -> mrestrict (w_H Wc) memc' x = mrestrict (w_H Wc) memc x) ->
+mem_grows (mrestrict (w_H Wc) memc) (mrestrict (w_H Wc) memc') ->
+(forall x : word, w_H Wc x = true -> memc' x = memc x) ->
+same_but_materialized mdc mdc' ->
+(forall a, Wr a -> (awr_byte STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own a /\ ~ (sp0 <= a < sp0 + XO)) \/
+ inG G a \/ (inFP OUT a /\ sp0 <= a < sp0 + XO)) ->
+ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc' mdc' k.
+Proof. exact (@ajournal_gx_exec_xR (@wle segs)). Qed.
+(* W_journal.v:353 ajournal_gx_materialize *)
+Lemma ajournal_gx_materialize_xR {R : world segs -> world segs -> Prop} : forall G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k X,
+(ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
+(ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc (with_vm_backing (m_vm_lazy mdc) X mdc) k.
+Proof.
+intros G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k X (H0 & H1 & (memS & HJ & Hag) & Hout).
+apply (ajournal_gx_pack_xR G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc _ k memS H0 H1); [|exact Hag | exact Hout].
+apply (ajournal_x_materializeR segs B PST ARx LAWS segs_low). exact HJ.
+Qed.
+Lemma ajournal_gx_materialize_x : forall G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k X,
+ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
+ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc (with_vm_backing (m_vm_lazy mdc) X mdc) k.
+Proof. exact (@ajournal_gx_materialize_xR (@wle segs)). Qed.
+(* W_journal.v:362 ajournal_gx_inner *)
+Lemma ajournal_gx_inner_xR {R : world segs -> world segs -> Prop} : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+(ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
+exists memS, (ajournal_xR segs B PST ARx R) (STK + XO) (sp0 + XO) FP ly S Hp W memS md own ly' S' Hp' W' mem' md' k /\
+(forall a, ~ inG G (bv_unsigned (Z_to_bv 64 a)) -> aview segs (w_H W) memS a = aview segs (w_H W) mem a).
+Proof.
+intros G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k (_ & _ & (memS & HJ & Hag) & _).
+exists memS. split; [exact HJ|]. intros a Ha. apply (aview_gagree segs G _ _ _ a Hag). apply inGb_false. exact Ha.
+Qed.
+Lemma ajournal_gx_inner_x : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
+exists memS, AJ (STK + XO) (sp0 + XO) FP ly S Hp W memS md own ly' S' Hp' W' mem' md' k /\
+(forall a, ~ inG G (bv_unsigned (Z_to_bv 64 a)) -> aview segs (w_H W) memS a = aview segs (w_H W) mem a).
+Proof. exact (@ajournal_gx_inner_xR (@wle segs)). Qed.
+(* W_journal.v:370 ajournal_gx_AR *)
+Lemma ajournal_gx_AR_xR {R : world segs -> world segs -> Prop} : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+(ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k -> ARx ly' S' Hp' W' mem' md'.
+Proof. intros G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k (_ & _ & (memS & HJ & _) & _). exact (proj1 HJ). Qed.
+Lemma ajournal_gx_AR_x : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k -> ARx ly' S' Hp' W' mem' md'.
+Proof. exact (@ajournal_gx_AR_xR (@wle segs)). Qed.
+(* W_journal.v:382 rom_pinned_view, from the const-cells law (field 16) *)
+Lemma rom_pinned_view_x : forall ly S Hp W mem md a, ARx ly S Hp W mem md -> rom_pinned segs B a ->
+aview segs (w_H W) mem a = option_map (fun b : byte => bv_unsigned b) (seg_rom segs (Z_to_bv 64 a)).
+Proof.
+intros ly S Hp W mem md a HAR Hp0. destruct (Hp0 ly) as (c & e & Hin & Hv & Hr & He).
+pose proof (proj1 (Forall_forall _ _) (alx_const_cells _ _ _ LAWS ly S Hp W mem md HAR) c Hin) as Hh.
+unfold cell_holds in Hh. rewrite Hv in Hh.
+specialize (Hh (Z.to_nat (a - aeval B ly (c_at c))) ltac:(lia)).
+rewrite Z2Nat.id in Hh by lia. replace (aeval B ly (c_at c) + (a - aeval B ly (c_at c))) with a in Hh by lia.
+rewrite Hh. exact He.
+Qed.
+(* W_journal.v:399 ajournal_gx_rom_view; the ROM bytes must lie outside PST (always true at PST = []) *)
+Lemma ajournal_gx_rom_view_xR {R : world segs -> world segs -> Prop} : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+(ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
+rom_out segs B G -> (forall a, in_rom segs a -> ~ Exists (in_zr a) PST) ->
+rom_view segs W mem -> rom_view segs W' mem'.
+Proof.
+intros G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k HJX HR HRP Hrv a Ha.
+pose proof HJX as (_ & _ & (memS & HJ & Hag) & _).
+destruct (HR a Ha) as (HnG & Hpin & Hne & Hnh).
+assert (Hd : forall r, {in_zr a r} + {~ in_zr a r}).
+{ intros r. unfold in_zr. destruct (Z_le_gt_dec (fst r) a); destruct (Z_lt_ge_dec a (fst r + snd r));
+  [left; lia | right; lia | right; lia | right; lia]. }
+destruct (Exists_dec (in_zr a) (as_owned_static B) Hd) as [Hown | Hno].
+{ exact (rom_pinned_view_x ly' S' Hp' W' mem' md' a
+    (ajournal_gx_AR_xR G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k HJX) (Hpin Hown)). }
+pose proof HJ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & F3 & _).
+assert (Hi : in_img segs a) by (destruct Ha as (sg & Hsg & _ & Hr); exists sg; split; [exact Hsg | exact Hr]).
+rewrite (F3 a Hi Hno Hne (HRP a Ha) ltac:(intros _; exact Hnh)).
+rewrite (aview_gagree segs G _ _ _ a Hag); [exact (Hrv a Ha)|].
+apply inGb_false. rewrite unsigned_lit_small; [exact HnG|]. pose proof (segs_low a Hi). pose proof asan_consts as (_ & _ & _ & _ & C5). lia.
+Qed.
+Lemma ajournal_gx_rom_view_x : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
+rom_out segs B G -> (forall a, in_rom segs a -> ~ Exists (in_zr a) PST) ->
+rom_view segs W mem -> rom_view segs W' mem'.
+Proof. exact (@ajournal_gx_rom_view_xR (@wle segs)). Qed.
+(* W_journal.v:419 acall_kept_rom_view *)
+Lemma acall_kept_rom_view_x : forall lyc Sc W memc W2 mem2 slo shi E ly2 S2 Hp2 md2,
+ARx ly2 S2 Hp2 W2 mem2 md2 ->
+acall_kept segs B lyc Sc W memc W2 mem2 slo shi E ->
+(forall a, in_rom segs a -> ~ (as_errno B <= a < as_errno B + 4) /\
+  (Exists (in_zr a) (as_owned_static B) -> rom_pinned segs B a)) ->
+rom_view segs W memc -> rom_view segs W2 mem2.
+Proof.
+intros lyc Sc W memc W2 mem2 slo shi E ly2 S2 Hp2 md2 HAR2 HK HR Hrv a Ha.
+destruct (HR a Ha) as (Hne & Hpin).
+assert (Hd : forall r, {in_zr a r} + {~ in_zr a r}).
+{ intros r. unfold in_zr. destruct (Z_le_gt_dec (fst r) a); destruct (Z_lt_ge_dec a (fst r + snd r));
+  [left; lia | right; lia | right; lia | right; lia]. }
+destruct (Exists_dec (in_zr a) (as_owned_static B) Hd) as [Hown | Hno].
+{ exact (rom_pinned_view_x ly2 S2 Hp2 W2 mem2 md2 a HAR2 (Hpin Hown)). }
+assert (Hi : in_img segs a) by (destruct Ha as (sg & Hsg & _ & Hr); exists sg; split; [exact Hsg | exact Hr]).
+rewrite (proj1 (proj2 (proj2 HK)) a Hi Hno Hne). exact (Hrv a Ha).
+Qed.
+(* W_journal.v:436 ajournal_gx_G_mono *)
+Lemma ajournal_gx_G_mono_xR {R : world segs -> world segs -> Prop} : forall G G' XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+(forall a, inG G a -> inG G' a) ->
+(ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
+(ajournal_gx_xR R) G' XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
+Proof.
+intros G G' XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k Hs (H0 & H1 & (memS & HJ & Hag) & Hout).
+split; [exact H0|]. split; [exact H1|]. split; [|exact Hout]. exists memS. split; [exact HJ|].
+intros x Hg. apply Hag. apply inGb_false. intros HGa. apply inGb_false in Hg. exact (Hg (Hs _ HGa)).
+Qed.
+Lemma ajournal_gx_G_mono_x : forall G G' XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+(forall a, inG G a -> inG G' a) ->
+ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
+ajournal_gx_x G' XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
+Proof. exact (@ajournal_gx_G_mono_xR (@wle segs)). Qed.
+
+(* W_journal.v:461 ajournal_sub_g: the inner journals, a callee's inside its caller's (same PST). *)
+Lemma ajournal_sub_g_xR {R : world segs -> world segs -> Prop} (R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3) : forall G STK sp0 FP ly S Hp W memS0 md own lyc Sc Hpc Wc memc mdc k memS1
+STK1 sp1 FP1 nf ly2 S2 Hp2 W2 mem2 md2 k1,
+gx_ok segs B G ->
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W memS0 md own lyc Sc Hpc Wc memc mdc k ->
+(ajournal_xR segs B PST ARx R) STK1 sp1 FP1 lyc Sc Hpc Wc memS1 mdc nf ly2 S2 Hp2 W2 mem2 md2 k1 ->
+gagree G (w_H Wc) memc memS1 ->
+sp0 - STK <= sp1 - STK1 -> sp1 <= sp0 ->
+(forall a, inFP FP1 a -> (inFP FP a /\ exists b n, In (b, n) (ablocks B lyc Sc) /\ b <= a < b + req_size n) \/
+ in_tmp_block (ablocks B ly S) (ablocks B lyc Sc) a) ->
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W (gover G memS0 memS1) md (nf ++ own) ly2 S2 Hp2 W2 mem2 md2 (k + k1).
+Proof.
+intros G STK sp0 FP ly S Hp W memS0 md own lyc Sc Hpc Wc memc mdc k memS1 STK1 sp1 FP1 nf ly2 S2 Hp2 W2 mem2 md2 k1 HG
+(HAR & Hly & Hsecs & Hwle & Hio & Hfrs & Hnev & Hk & F1 & F2 & F3 & F4 & Hgone & Hpres & Hstatic & F5 & HQT)
+(HAR2 & Hly2 & Hsecs2 & Hwle2 & Hio2 & Hfrs2 & Hnev2 & Hk2 & G1 & G2 & G3 & G4 & Hgone2 & Hpres2 & Hstatic2 & G5 & HQT2)
+Hag Hlo Hhi HF.
+pose proof Hstatic as (Hal & Hstk0 & Hceil & Hslo & Hshi & H47 & Hbot & Htop2 & Htop).
+pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
+assert (T : forall a, aview segs (w_H W2) mem2 a = aview segs (w_H Wc) memS1 a ->
+  aview segs (w_H Wc) memc a = aview segs (w_H W) memS0 a ->
+  aview segs (w_H W2) mem2 a = aview segs (w_H W) (gover G memS0 memS1) a).
+{ intros a E1 E0. rewrite E1. exact (aview_gover_sub segs B G W Wc memS0 memS1 memc a HG Hag E0). }
+assert (E1 : forall a, alloc_ceiling <= a < 2 ^ 64 -> aview segs (w_H Wc) memS1 a = aview segs (w_H Wc) memc a).
+{ intros a Ha. apply (aview_gagree segs G _ _ _ a Hag). rewrite unsigned_lit_small by lia. apply inGb_false.
+  intros HGa. pose proof (inG_low segs B segs_low G a HG HGa). lia. }
+split; [exact HAR2|].
+split; [eapply layout_le_trans; [exact Hsecs | exact Hly | exact Hly2]|].
+split; [lia|]. split; [eapply R_trans; eassumption|].
+assert (HFo : YI16.sink_open_fp FP1 -> YI16.sink_open_fp FP).
+{ intros (r & Hr & H0). destruct (HF 0 (ex_intro _ r (conj Hr H0))) as [((r' & Hr' & H0') & _) | (b & n & Hin & _ & Hb)].
+  - exists r'. split; [exact Hr' | exact H0'].
+  - exfalso. pose proof (alx_blocks _ _ _ LAWS _ _ _ _ _ _ _ _ HAR Hin) as (_ & H4096 & _). lia. }
+split; [eapply aos_step_trans_fp; [exact HFo | exact Hio | exact Hio2]|].
+split; [rewrite Hfrs2, Hfrs, app_assoc; reflexivity|]. split; [lia|]. split; [lia|].
+split.
+{ intros a Ha Hs. apply T; [apply G1; [exact Ha | lia] | exact (F1 a Ha Hs)]. }
+split.
+{ intros p n i H1 H2 Hi Hnf.
+  assert (Hc2 : In (p, n) (ablocks B lyc Sc)).
+  { destruct (in_dec (fun x y : Z * Z => ltac:(decide equality; apply Z.eq_dec)) (p, n) (ablocks B lyc Sc)) as [Hc|Hc]; [exact Hc|].
+    exfalso. exact (Hnf (Hgone p n i H1 Hc Hi)). }
+  apply T; [|exact (F2 p n i H1 Hc2 Hi Hnf)].
+  apply (G2 p n i Hc2); [exact H2 | exact Hi |].
+  intros Hf1. destruct (HF _ Hf1) as [[Hf _] | (b & m & Hbin & Hb0 & Hr)]; [exact (Hnf Hf)|].
+  assert (Hne : (b, m) <> (p, n)) by (intros E; rewrite E in Hb0; exact (Hb0 H1)).
+  pose proof (sep_blocks_x segs B ARx LAWS lyc Sc Hpc Wc memc mdc b m p n HAR Hbin Hc2 Hne) as Hd.
+  unfold zdisjoint in Hd. cbn [fst snd] in Hd. lia. }
+split.
+{ intros a Hi Hns He Hps Hsp. apply T; [|exact (F3 a Hi Hns He Hps Hsp)].
+  apply (G3 a Hi Hns He Hps). intros Ho1. exact (Hsp (HFo Ho1)). }
+split.
+{ intros cid pos a Hin Hr Hnf.
+  assert (HinC : In (cid, pos) (frames Sc)) by (rewrite Hfrs; apply in_or_app; right; exact Hin).
+  assert (Efr : frame_addr lyc cid pos = frame_addr ly cid pos).
+  { unfold frame_addr. destruct Hly as (_ & _ & _ & _ & _ & EF & _). rewrite EF. reflexivity. }
+  apply T; [|exact (F4 cid pos a Hin Hr Hnf)].
+  apply (G4 cid pos a HinC).
+  - unfold frame_rng in *. cbn [fst snd] in *. rewrite Efr. exact Hr.
+  - intros Hf1. destruct (HF _ Hf1) as [[Hf _] | (b & m & Hbin & Hb0 & Hrb)]; [exact (Hnf Hf)|].
+    destruct (frames_bounds_x segs B ARx LAWS lyc Sc Hpc Wc memc mdc cid pos HAR HinC) as (Hf0 & Hfc & Hfh).
+    destruct (alx_blocks _ _ _ LAWS lyc Sc Hpc Wc memc mdc b m HAR Hbin) as (_ & _ & _ & [Hh1 Hh2] & _).
+    pose proof (sep_block_frame_x segs B ARx LAWS lyc Sc Hpc Wc memc mdc b m cid pos HAR Hbin HinC) as Hd.
+    unfold zdisjoint, frame_rng, in_zr in Hd, Hr. cbn [fst snd] in Hd, Hr. rewrite Efr in Hd.
+    pose proof (shadow_addr_bounds (frame_addr ly cid pos) ltac:(zlia)).
+    pose proof (shadow_addr_bounds (frame_addr ly cid pos + fs_frame_bytes cid) ltac:(zlia)).
+    pose proof (shadow_range_end (frame_addr ly cid pos) (fs_frame_bytes cid) (fs_frame_bytes_nonneg cid)).
+    destruct Hr as [Hr|Hr]; zlia. }
+split.
+{ intros p n i H1 H2 Hi.
+  destruct (in_dec (fun x y : Z * Z => ltac:(decide equality; apply Z.eq_dec)) (p, n) (ablocks B lyc Sc)) as [Hc|Hc];
+  [|exact (Hgone p n i H1 Hc Hi)].
+  assert (Hf1 : inFP FP1 (p + i)) by (apply (Hgone2 p n i Hc); [exact H2 | exact Hi]).
+  destruct (HF _ Hf1) as [[Hf _] | (b & m & Hbin & Hb0 & Hr)]; [exact Hf|].
+  assert (Hne : (b, m) <> (p, n)) by (intros E; rewrite E in Hb0; exact (Hb0 H1)).
+  pose proof (sep_blocks_x segs B ARx LAWS lyc Sc Hpc Wc memc mdc b m p n HAR Hbin Hc Hne) as Hd.
+  unfold zdisjoint in Hd. cbn [fst snd] in Hd. lia. }
+split.
+{ intros a Ha.
+  destruct (Z_lt_le_dec a (sp1 - STK1)) as [Hb|Hb]; [|destruct (Z_lt_le_dec a sp1) as [Hb2|Hb2]; [apply Hpres2; lia|]].
+  - apply (apresent_transfer segs (w_H Wc) (w_H W2) memc mem2 a);
+    [lia | intros Him; pose proof (segs_low a Him); lia | | apply Hpres; exact Ha].
+    rewrite (G1 a ltac:(lia) ltac:(lia)). apply E1. lia.
+  - apply (apresent_transfer segs (w_H Wc) (w_H W2) memc mem2 a);
+    [lia | intros Him; pose proof (segs_low a Him); lia | | apply Hpres; exact Ha].
+    rewrite (G1 a ltac:(lia) ltac:(lia)). apply E1. lia. }
+split; [exact Hstatic|]. split; [|exact HQT2].
+{ intros a HXa He.
+  pose proof Hly as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Eextra & _).
+  apply T; [apply G5; [rewrite Eextra; exact HXa | exact He] | exact (F5 a HXa He)]. }
+Qed.
+Lemma ajournal_sub_g_x : forall G STK sp0 FP ly S Hp W memS0 md own lyc Sc Hpc Wc memc mdc k memS1
+STK1 sp1 FP1 nf ly2 S2 Hp2 W2 mem2 md2 k1,
+gx_ok segs B G ->
+AJ STK sp0 FP ly S Hp W memS0 md own lyc Sc Hpc Wc memc mdc k ->
+AJ STK1 sp1 FP1 lyc Sc Hpc Wc memS1 mdc nf ly2 S2 Hp2 W2 mem2 md2 k1 ->
+gagree G (w_H Wc) memc memS1 ->
+sp0 - STK <= sp1 - STK1 -> sp1 <= sp0 ->
+(forall a, inFP FP1 a -> (inFP FP a /\ exists b n, In (b, n) (ablocks B lyc Sc) /\ b <= a < b + req_size n) \/
+ in_tmp_block (ablocks B ly S) (ablocks B lyc Sc) a) ->
+AJ STK sp0 FP ly S Hp W (gover G memS0 memS1) md (nf ++ own) ly2 S2 Hp2 W2 mem2 md2 (k + k1).
+Proof. exact (@ajournal_sub_g_xR (@wle segs) (wle_trans segs)). Qed.
+(* W_journal.v:553 ajournal_gx_sub *)
+Lemma ajournal_gx_sub_xR {R : world segs -> world segs -> Prop} (R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3) : forall G STK sp0 XO0 OUT0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k
+STK1 sp1 XO1 OUT1 FP1 nf ly2 S2 Hp2 W2 mem2 md2 k1,
+(ajournal_gx_xR R) G XO0 OUT0 STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
+(ajournal_gx_xR R) G XO1 OUT1 STK1 sp1 FP1 lyc Sc Hpc Wc memc mdc nf ly2 S2 Hp2 W2 mem2 md2 k1 ->
+sp0 - STK <= sp1 - STK1 -> sp1 <= sp0 -> sp1 + XO1 <= sp0 + XO0 ->
+(forall a, inFP OUT1 a -> (sp0 - STK <= a < sp0) \/ inFP OUT0 a) ->
+gx_ok segs B G ->
+(forall a, inFP FP1 a -> (inFP FP a /\ exists b n, In (b, n) (ablocks B lyc Sc) /\ b <= a < b + req_size n) \/
+ in_tmp_block (ablocks B ly S) (ablocks B lyc Sc) a) ->
+(ajournal_gx_xR R) G XO0 OUT0 STK sp0 FP ly S Hp W mem md (nf ++ own) ly2 S2 Hp2 W2 mem2 md2 (k + k1).
+Proof.
+intros G STK sp0 XO0 OUT0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k STK1 sp1 XO1 OUT1 FP1 nf ly2 S2 Hp2 W2 mem2 md2 k1
+(HSTK & HXO0 & (memS0 & HJ0 & Hag0) & Hout0) (HSTK1 & HXO1 & (memS1 & HJ1 & Hag1) & Hout1) Hlo Hhi Hxo HO HG HF.
+pose proof HJ0 as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & _ & Hceil & Hslo & Hshi & H47 & _) & _).
+pose proof HJ1 as (_ & _ & _ & _ & _ & _ & _ & _ & G1 & _).
+pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
+apply (ajournal_gx_pack_xR G XO0 OUT0 STK sp0 FP ly S Hp W mem md (nf ++ own) ly2 S2 Hp2 W2 mem2 md2 (k + k1)
+  (gover G memS0 memS1) HSTK HXO0).
+- apply ((ajournal_sub_g_xR R_trans) G (STK + XO0) (sp0 + XO0) FP ly S Hp W memS0 md own lyc Sc Hpc Wc memc mdc k memS1
+    (STK1 + XO1) (sp1 + XO1) FP1 nf ly2 S2 Hp2 W2 mem2 md2 k1 HG HJ0 HJ1 Hag1); [lia | lia | exact HF].
+- intros x Hg. unfold mrestrict, gover. rewrite Hg. exact (Hag0 x Hg).
+- intros a Ha Hno.
+  destruct (Z_lt_le_dec a (sp1 + XO1)) as [Hin1 | Hge1].
+  + assert (Hno1 : ~ inFP OUT1 a) by (intros Ho; destruct (HO a Ho) as [Hs | Ho0]; [lia | exact (Hno Ho0)]).
+    rewrite (Hout1 a ltac:(lia) Hno1). exact (Hout0 a Ha Hno).
+  + rewrite (G1 a ltac:(lia) ltac:(lia)).
+    rewrite (aview_gagree segs G _ _ _ a Hag1).
+    * exact (Hout0 a Ha Hno).
+    * rewrite unsigned_lit_small by lia. apply inGb_false. intros HGa. pose proof (inG_low segs B segs_low G a HG HGa). lia.
+Qed.
+Lemma ajournal_gx_sub_x : forall G STK sp0 XO0 OUT0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k
+STK1 sp1 XO1 OUT1 FP1 nf ly2 S2 Hp2 W2 mem2 md2 k1,
+ajournal_gx_x G XO0 OUT0 STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
+ajournal_gx_x G XO1 OUT1 STK1 sp1 FP1 lyc Sc Hpc Wc memc mdc nf ly2 S2 Hp2 W2 mem2 md2 k1 ->
+sp0 - STK <= sp1 - STK1 -> sp1 <= sp0 -> sp1 + XO1 <= sp0 + XO0 ->
+(forall a, inFP OUT1 a -> (sp0 - STK <= a < sp0) \/ inFP OUT0 a) ->
+gx_ok segs B G ->
+(forall a, inFP FP1 a -> (inFP FP a /\ exists b n, In (b, n) (ablocks B lyc Sc) /\ b <= a < b + req_size n) \/
+ in_tmp_block (ablocks B ly S) (ablocks B lyc Sc) a) ->
+ajournal_gx_x G XO0 OUT0 STK sp0 FP ly S Hp W mem md (nf ++ own) ly2 S2 Hp2 W2 mem2 md2 (k + k1).
+Proof. exact (@ajournal_gx_sub_xR (@wle segs) (wle_trans segs)). Qed.
+(* route R: the call step of a harness walk at a gx journal, hosted in the engine over R: a call whose callee
+   (SRrG segs R) returns the inner journal composes with the caller's journal by ajournal_gx_sub_xR (R_trans). The strict
+   gx_callS_x below is it at wle; this is the one form the harness walks use. *)
+Lemma gx_callS_xR {R : world segs -> world segs -> Prop} (R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3) : forall G W (regsc : bvmap 5 word) memc pc STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k STK1 FP1
+(o : Z) raw ch1
+(K : alayout -> astate -> list Z -> world segs -> bvmap 5 word -> (word -> option byte) -> Model -> Prop),
+gx_ok segs B G ->
+(ajournal_gx_xR R) G 0 [] STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memc mdc k ->
+spZ regsc = sp0 + o -> o mod 16 = 0 -> o <= 0 -> 0 <= STK1 -> STK1 - o <= STK ->
+getr regsc 3 = w64 (as_gp B) -> getr regsc 4 = w64 (as_tp B) ->
+getr regsc 1 = raw -> YK0s.ret_ok raw -> 4096 <= bv_unsigned raw ->
+achain lyc (aview segs (w_H W) memc) (sp0 + o) (s0Z regsc) ch1 ->
+(afn_pre_x segs B ARx STK1 lyc Sc Hpc W regsc memc mdc ch1 ->
+ SRrG segs R W (mkCfg (mkst regsc pc memc (seg_rom segs)) mdc)
+ (fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 k1,
+  c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+  (ajournal_gx_xR R) G 0 [] STK1 (spZ regsc) FP1 lyc Sc Hpc W memc mdc [] ly2 S2 Hp2 W2 mem2 md2 k1 /\
+  aregs_preserved regsc regs2 /\ K ly2 S2 Hp2 W2 regs2 mem2 md2)) ->
+(forall a, inFP FP1 a -> (inFP FP a /\ exists b n, In (b, n) (ablocks B lyc Sc) /\ b <= a < b + req_size n) \/
+ in_tmp_block (ablocks B ly S) (ablocks B lyc Sc) a) ->
+SRrG segs R W (mkCfg (mkst regsc pc memc (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 k1,
+ c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+ (ajournal_gx_xR R) G 0 [] STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + k1) /\
+ (ajournal_gx_xR R) G 0 [] STK1 (sp0 + o) FP1 lyc Sc Hpc W memc mdc [] ly2 S2 Hp2 W2 mem2 md2 k1 /\
+ aregs_preserved regsc regs2 /\ K ly2 S2 Hp2 W2 regs2 mem2 md2).
+Proof.
+intros G W regsc memc pc STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k STK1 FP1 o raw ch1 K
+HGx HJ Hsp Hal Hneg Hstk1 Hbud Hgp Htp Hra Hraw Hra4 Hch Hcallee HF.
+eapply SRrG_mono.
+{ apply Hcallee.
+  destruct (ajournal_gx_inner_xR _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HJ) as (memS & HJi & _).
+  rewrite !Z.add_0_r in HJi.
+  eapply (afn_pre_x_atR segs B PST ARx STK sp0 FP ly S Hp W0 memS md own lyc Sc Hpc W memc mdc k regsc STK1 o ch1 HJi);
+    try eassumption.
+  - rewrite Hra. exact Hraw.
+  - unfold raZ. rewrite Hra. exact Hra4.
+  - rewrite Hsp. exact Hch. }
+cbv beta. intros W2 c2 _ (ly2 & S2 & Hp2 & regs2 & mem2 & md2 & k1 & -> & HJ1 & HP & HK).
+exists ly2, S2, Hp2, regs2, mem2, md2, k1. split; [reflexivity|].
+rewrite Hsp in HJ1.
+split; [| split; [exact HJ1 | split; [exact HP | exact HK]]].
+change own with ([] ++ own).
+eapply (ajournal_gx_sub_xR R_trans);
+  [exact HJ | exact HJ1 | lia | lia | lia | | exact HGx | exact HF].
+intros a (r & Hr & _). destruct Hr.
+Qed.
+Lemma gx_callS_x : forall G W (regsc : bvmap 5 word) memc pc STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k STK1 FP1
+(o : Z) raw ch1
+(K : alayout -> astate -> list Z -> world segs -> bvmap 5 word -> (word -> option byte) -> Model -> Prop),
+gx_ok segs B G ->
+ajournal_gx_x G 0 [] STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memc mdc k ->
+spZ regsc = sp0 + o -> o mod 16 = 0 -> o <= 0 -> 0 <= STK1 -> STK1 - o <= STK ->
+getr regsc 3 = w64 (as_gp B) -> getr regsc 4 = w64 (as_tp B) ->
+getr regsc 1 = raw -> YK0s.ret_ok raw -> 4096 <= bv_unsigned raw ->
+achain lyc (aview segs (w_H W) memc) (sp0 + o) (s0Z regsc) ch1 ->
+(afn_pre_x segs B ARx STK1 lyc Sc Hpc W regsc memc mdc ch1 ->
+ SRr segs W (mkCfg (mkst regsc pc memc (seg_rom segs)) mdc)
+ (fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 k1,
+  c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+  ajournal_gx_x G 0 [] STK1 (spZ regsc) FP1 lyc Sc Hpc W memc mdc [] ly2 S2 Hp2 W2 mem2 md2 k1 /\
+  aregs_preserved regsc regs2 /\ K ly2 S2 Hp2 W2 regs2 mem2 md2)) ->
+(forall a, inFP FP1 a -> (inFP FP a /\ exists b n, In (b, n) (ablocks B lyc Sc) /\ b <= a < b + req_size n) \/
+ in_tmp_block (ablocks B ly S) (ablocks B lyc Sc) a) ->
+SRr segs W (mkCfg (mkst regsc pc memc (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 k1,
+ c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+ ajournal_gx_x G 0 [] STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + k1) /\
+ ajournal_gx_x G 0 [] STK1 (sp0 + o) FP1 lyc Sc Hpc W memc mdc [] ly2 S2 Hp2 W2 mem2 md2 k1 /\
+ aregs_preserved regsc regs2 /\ K ly2 S2 Hp2 W2 regs2 mem2 md2).
+Proof. exact (@gx_callS_xR (@wle segs) (wle_trans segs)). Qed.
+(* YCbq.v:2688 range_addressable_of_block over ARx: ARx_shadow_law (YCbqG.v:110) needs that no hidden head of Hp lies
+   inside the block, so the twin takes that premise; under HP0 (Section hp0 below) it is one line at every state. *)
+Lemma range_addressable_of_block_x : forall ly S Hp W mem md p m a n,
+ARx ly S Hp W mem md -> In (p, m) (ablocks B ly S) -> (forall h, In h Hp -> ~ (p <= h < p + req_size m)) ->
+p <= a -> a + n <= p + req_size m ->
+range_addressable (aview segs (w_H W) mem) SHADOW_OFF a n.
+Proof.
+intros ly S Hp W mem md p m a n HAR Hin Hh Hpa Han.
+destruct (alx_shadow _ _ _ LAWS ly S Hp W mem md p m HAR Hin Hh) as [Hbs _].
+destruct (Z_lt_le_dec 0 n); [|apply range_addressable_nil; zlia].
+eapply block_shadow_range; [exact Hbs | zlia | zlia].
+Qed.
+(* YCbq.v:1946 shadow_hull_vis_of_block over ARx, with ARx_shadow_law's per-block premise (W4 / GmX's request). *)
+Lemma shadow_hull_vis_of_block_x : forall ly S Hp W mem md p m d n,
+ARx ly S Hp W mem md -> In (p, m) (ablocks B ly S) -> (forall h, In h Hp -> ~ (p <= h < p + req_size m)) ->
+p <= d -> d + n <= p + req_size m -> 0 < n ->
+shadow_hull_vis (aview segs (w_H W) mem) d n.
+Proof.
+intros ly S Hp W mem md p m d n HAR Hin Hh Hpd Hdn Hn s Hs.
+destruct (alx_shadow _ _ _ LAWS ly S Hp W mem md p m HAR Hin Hh) as [_ Hhv]. apply Hhv.
+pose proof (shadow_mono p d Hpd) as M1. pose proof (shadow_mono (d + n - 1) (p + req_size m - 1) ltac:(zlia)) as M2.
+assert (R8 : forall u v, u <= v -> u / 8 * 8 <= v / 8 * 8) by (intros u v Huv; apply Z.mul_le_mono_nonneg_r; [zlia|]; apply Z.div_le_mono; zlia).
+pose proof (R8 _ _ M1). pose proof (R8 _ _ M2). zlia.
+Qed.
+End b.
+(* the gx journal over R is monotone in R (ajournal_xR_mono under ajournal_gx_xR); a Theorem Labs lane's text (RFORMS-PREP.md
+   :378-390, route R 2026-10-30), placed with the journal engine,
+   after Section b so that its arguments are explicit: ajournal_gx_xR_mono segs B PST ARx R1 R2 H12 .. *)
+Lemma ajournal_gx_xR_mono : forall (segs : list Segment) B PST
+  (ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop)
+  (R1 R2 : world segs -> world segs -> Prop), (forall W W', R1 W W' -> R2 W W') ->
+  forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+  ajournal_gx_xR segs B PST ARx R1 G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
+  ajournal_gx_xR segs B PST ARx R2 G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
+Proof.
+intros segs B PST ARx R1 R2 H12 G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k
+  (H0 & H1 & (memS & HJ & Hag) & Hout).
+split; [exact H0|]. split; [exact H1|]. split; [|exact Hout]. exists memS. split; [|exact Hag].
+eapply ajournal_xR_mono; [exact H12 | exact HJ].
+Qed.
+
+(* HP0, a Theorem Labs lane's ruling (15:26Z by its clock): ONE instance-level Section hypothesis per walk, beside LAWS -
+   `HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = []` - in place of a per-contract "no hidden head in
+   this block" premise, which could not be re-established after a callee returns an existential Hp'. True at
+   fuzz_reply's cf instance: Hp grows only by a poison step (YGcfNames.v:499) and the program calls no poison routine
+   (lib/A/W_syms.v), so the instance parameter is Hp = [] (W_journal.v:745-748, YGcfNames.v:400). The AR side
+   instantiates at ARi0 (Section br), not ARi, under which HP0 is false. *)
+Section hp0.
+Variable segs : list Segment.
+Variable B : asyms.
+Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
+Context {hl : Z}.
+Hypothesis LAWS : AR_laws_x segs B ARx hl.
+Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
+Lemma hp_off_block_hp0 : forall ly S Hp W mem md p m, ARx ly S Hp W mem md ->
+forall h, In h Hp -> ~ (p <= h < p + req_size m).
+Proof. intros ly S Hp W mem md p m HAR h Hh. rewrite (HP0 ly S Hp W mem md HAR) in Hh. destruct Hh. Qed.
+Lemma range_addressable_of_block_hp0_x : forall ly S Hp W mem md p m a n,
+ARx ly S Hp W mem md -> In (p, m) (ablocks B ly S) -> p <= a -> a + n <= p + req_size m ->
+range_addressable (aview segs (w_H W) mem) SHADOW_OFF a n.
+Proof.
+intros ly S Hp W mem md p m a n HAR Hin Hpa Han.
+exact (range_addressable_of_block_x segs B ARx LAWS ly S Hp W mem md p m a n HAR Hin
+  (hp_off_block_hp0 ly S Hp W mem md p m HAR) Hpa Han).
+Qed.
+Lemma shadow_hull_vis_of_block_hp0_x : forall ly S Hp W mem md p m d n,
+ARx ly S Hp W mem md -> In (p, m) (ablocks B ly S) -> p <= d -> d + n <= p + req_size m -> 0 < n ->
+shadow_hull_vis (aview segs (w_H W) mem) d n.
+Proof.
+intros ly S Hp W mem md p m d n HAR Hin Hpd Hdn Hn.
+exact (shadow_hull_vis_of_block_x segs B ARx LAWS ly S Hp W mem md p m d n HAR Hin
+  (hp_off_block_hp0 ly S Hp W mem md p m HAR) Hpd Hdn Hn).
+Qed.
+End hp0.
+
+(* W_journal.v:586-704, the run chain of Reusable/YC80.v:54-142 over ajournal_gx_x. *)
+Section e.
+Variable psym : Type.
+Variable segs : list Segment.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
+Context {hl : Z}.
+Hypothesis LAWS : AR_laws_x segs B ARx hl.
+Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
+Hypothesis Hwx : wx_segs_nowrap segs.
+Variable fetch : Z -> option Z.
+Variable val : nat -> Z.
+Variable sigma : psym -> Z.
+Variable listing : ptable psym.
+Variable tpi0 : ptree psym.
+Variable tw0 : ctable.
+Hypothesis Hfetch : forall pc w, fetch pc = Some w -> fetch_word segs (Z_to_bv 64 pc) = Some (Z_to_bv 32 w).
+Hypothesis Hcert : pi_check psym fetch val sigma listing = true.
+Hypothesis HB : 0 <= val A_TEXT /\ val A_TEXT + 2 ^ 40 < 2 ^ 64 /\ val A_TEXT mod 4 = 0.
+Variable A_LIM : nat.
+Hypothesis HLIM0 : (A_TEXT < A_LIM)%nat.
+Hypothesis HLIM : forallb (pinstr_atoms_ltb A_LIM) listing = true.
+Hypothesis HLEN : 4 * Z.of_nat (length listing) <= 2 ^ 40.
+Hypothesis Htpi : ptree_of_list listing = tpi0.
+Hypothesis Htw : tw_of 0 listing = tw0.
+Variable G : list (Z * Z).
+Hypothesis HG : gx_ok segs B G.
+Variable XO : Z.
+Variable OUT : list (Z * Z).
+Local Notation AJG := (ajournal_gx_x segs B PST ARx G XO OUT).
+Local Notation img_env := (img_env val A_LIM).
+Local Notation st_ok_pi := (st_ok_pi segs val).
+Definition run_post_pi_tok_AJX_xR (R : world segs -> world segs -> Prop) (W : world segs) (E : env) (K : nat) (Bx : sv) (SH : list shent) (ss : sstate) (st' : shst)
+(r : ptrun_status psym)
+(ms : machine_state) (STK sp0 : Z) (FP : list (Z * Z)) ly S Hp W0 mem md own lyc Sc Hpc (mdc : Model) (k : Z)
+(Q : world segs -> config -> Prop) : Prop :=
+forall ws ms' mat',
+length ws = sh_j st' ->
+img_env (extK E K ws) ->
+match r with
+| PTS_call s => st_ok segs (extK E K ws) (setpc (sh_ss st') (sigma s)) (restrict (w_H W) ms')
+| _ => st_ok_pi (extK E K ws) (sh_ss st') (restrict (w_H W) ms')
+end ->
+sh_ok segs Bx SH (extK E K ws) (mrestrict (w_H W) (ms_mem ms')) ->
+(ajournal_gx_xR segs B PST ARx R G XO OUT) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms') (with_vm_backing (m_vm_lazy mdc) mat' mdc) k ->
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+SRr segs W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q.
+Definition run_post_pi_tok_AJX_x (W : world segs) (E : env) (K : nat) (Bx : sv) (SH : list shent) (ss : sstate) (st' : shst)
+(r : ptrun_status psym)
+(ms : machine_state) (STK sp0 : Z) (FP : list (Z * Z)) ly S Hp W0 mem md own lyc Sc Hpc (mdc : Model) (k : Z)
+(Q : world segs -> config -> Prop) : Prop :=
+forall ws ms' mat',
+length ws = sh_j st' ->
+img_env (extK E K ws) ->
+match r with
+| PTS_call s => st_ok segs (extK E K ws) (setpc (sh_ss st') (sigma s)) (restrict (w_H W) ms')
+| _ => st_ok_pi (extK E K ws) (sh_ss st') (restrict (w_H W) ms')
+end ->
+sh_ok segs Bx SH (extK E K ws) (mrestrict (w_H W) (ms_mem ms')) ->
+AJG STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms') (with_vm_backing (m_vm_lazy mdc) mat' mdc) k ->
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+SRr segs W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q.
+(* run_post_pi_tok_AJX_x keeps its body, for the proofs that unfold it; run_post_pi_tok_AJX_x_wle checks that it is run_post_pi_tok_AJX_xR at wle *)
+Lemma run_post_pi_tok_AJX_x_wle : run_post_pi_tok_AJX_x = run_post_pi_tok_AJX_xR (@wle segs). Proof. reflexivity. Qed.
+Lemma SRr_chain_pi_tok_AJX_xR {R : world segs -> world segs -> Prop} : forall W E K Bx SH ws ss (st' : shst) (r : ptrun_status psym) ms msr' STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+msteps segs (restrict (w_H W) ms) msr' ->
+length ws = sh_j st' ->
+img_env (extK E K ws) ->
+match r with
+| PTS_call s => st_ok segs (extK E K ws) (setpc (sh_ss st') (sigma s)) msr'
+| _ => st_ok_pi (extK E K ws) (sh_ss st') msr'
+end ->
+sh_ok segs Bx SH (extK E K ws) (ms_mem msr') ->
+frame_of E (ss_mem ss) (ms_mem (restrict (w_H W) ms)) (ms_mem msr') ->
+(ajournal_gx_xR segs B PST ARx R G XO OUT) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+awr_ok_x E (ss_mem ss) G XO OUT STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+(run_post_pi_tok_AJX_xR R) W E K Bx SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRr segs W (mkCfg ms mdc) Q.
+Proof.
+intros W E K Bx SH ws ss st' r ms msr' STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q Hms Hlen HE' HS' Hsh' Hfr HJ Hwr Hk.
+apply (SRr_msteps segs Hwx W ms msr' mdc Q Hms).
+intros model' Hsame Hcl.
+rewrite (same_but_materialized_wvb mdc model' Hsame).
+pose proof (restrict_unrestrict_clean (w_H W) (ms_mem ms) msr' Hcl) as Hrr.
+pose proof (mrestrict_unrestrict_mem (w_H W) (ms_mem ms) msr' Hcl) as Hmm.
+pose proof (msteps_mem_grows segs _ _ Hms) as Hgr. cbn [ms_mem restrict] in Hgr.
+apply (Hk ws (unrestrict (w_H W) (ms_mem ms) msr') (m_vm_materialized model') Hlen HE').
+- rewrite Hrr. exact HS'.
+- rewrite Hmm. exact Hsh'.
+- eapply (ajournal_gx_exec_xR segs B PST ARx LAWS segs_low G XO OUT) with (Wr := in_wrange E (ss_mem ss)); [exact HG | exact HJ | | | | | exact Hwr].
++ rewrite Hmm. exact Hfr.
++ rewrite Hmm. exact Hgr.
++ intros x Hx. cbn [unrestrict ms_mem]. unfold munrestrict. rewrite Hx. reflexivity.
++ rewrite <- (same_but_materialized_wvb mdc model' Hsame). exact Hsame.
+- cbn [unrestrict ms_mem]. apply frame_of_unrestrict. exact Hfr.
+- rewrite Hmm. exact Hfr.
+- rewrite Hmm. exact Hgr.
+Qed.
+Lemma SRr_chain_pi_tok_AJX_x : forall W E K Bx SH ws ss (st' : shst) (r : ptrun_status psym) ms msr' STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+msteps segs (restrict (w_H W) ms) msr' ->
+length ws = sh_j st' ->
+img_env (extK E K ws) ->
+match r with
+| PTS_call s => st_ok segs (extK E K ws) (setpc (sh_ss st') (sigma s)) msr'
+| _ => st_ok_pi (extK E K ws) (sh_ss st') msr'
+end ->
+sh_ok segs Bx SH (extK E K ws) (ms_mem msr') ->
+frame_of E (ss_mem ss) (ms_mem (restrict (w_H W) ms)) (ms_mem msr') ->
+AJG STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+awr_ok_x E (ss_mem ss) G XO OUT STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+run_post_pi_tok_AJX_x W E K Bx SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRr segs W (mkCfg ms mdc) Q.
+Proof. exact (@SRr_chain_pi_tok_AJX_xR (@wle segs)). Qed.
+Lemma SRr_run_pi_tok_AJX_xR {R : world segs -> world segs -> Prop} : forall W n E K Bx Bspan SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+(A_LIM <= K)%nat -> img_env E ->
+st_ok_pi E ss (restrict (w_H W) ms) ->
+sh_ok segs Bx SH E (mrestrict (w_H W) (ms_mem ms)) ->
+sh_static_ok K Bx Bspan SH (ss_facts ss) (ss_mem ss) = true ->
+sym_runN_pi_tok tpi0 tw0 K Bx Bspan SH n ss = (st', r) ->
+(ajournal_gx_xR segs B PST ARx R G XO OUT) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+Forall (ob_holds segs Bx E (mrestrict (w_H W) (ms_mem ms))) (sh_obls st') ->
+awr_ok_x E (ss_mem ss) G XO OUT STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+(run_post_pi_tok_AJX_xR R) W E K Bx SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRr segs W (mkCfg ms mdc) Q.
+Proof.
+intros W n E K Bx Bspan SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q HK HE HS Hsh Hchk Hrun HJ Hobl Hwr Hk.
+rewrite <- Htpi, <- Htw in Hrun.
+destruct (sym_run_pi_tok_sound psym segs fetch val sigma listing Hfetch Hcert HB A_LIM HLIM0 HLIM HLEN K Bx Bspan SH HK n E ss _ st' r
+HE HS Hsh Hchk Hrun Hobl) as (ws & msr' & Hlen & Hms & HE' & HP & Hsh' & _ & Hfr).
+eapply SRr_chain_pi_tok_AJX_xR; [exact Hms | exact Hlen | exact HE' | | exact Hsh' | exact Hfr | exact HJ | exact Hwr | exact Hk].
+destruct r; cbn [ptok_post] in HP; first [exact HP | destruct HP].
+Qed.
+Lemma SRr_run_pi_tok_AJX_x : forall W n E K Bx Bspan SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+(A_LIM <= K)%nat -> img_env E ->
+st_ok_pi E ss (restrict (w_H W) ms) ->
+sh_ok segs Bx SH E (mrestrict (w_H W) (ms_mem ms)) ->
+sh_static_ok K Bx Bspan SH (ss_facts ss) (ss_mem ss) = true ->
+sym_runN_pi_tok tpi0 tw0 K Bx Bspan SH n ss = (st', r) ->
+AJG STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+Forall (ob_holds segs Bx E (mrestrict (w_H W) (ms_mem ms))) (sh_obls st') ->
+awr_ok_x E (ss_mem ss) G XO OUT STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+run_post_pi_tok_AJX_x W E K Bx SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRr segs W (mkCfg ms mdc) Q.
+Proof. exact (@SRr_run_pi_tok_AJX_xR (@wle segs)). Qed.
+Lemma SRr_run_to_pi_tok_AJX_xR {R : world segs -> world segs -> Prop} : forall W n stop E K Bx Bspan SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+(A_LIM <= K)%nat -> img_env E ->
+st_ok_pi E ss (restrict (w_H W) ms) ->
+sh_ok segs Bx SH E (mrestrict (w_H W) (ms_mem ms)) ->
+sh_static_ok K Bx Bspan SH (ss_facts ss) (ss_mem ss) = true ->
+sym_run_toN_pi_tok tpi0 tw0 K Bx Bspan SH n stop ss = (st', r) ->
+(ajournal_gx_xR segs B PST ARx R G XO OUT) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+Forall (ob_holds segs Bx E (mrestrict (w_H W) (ms_mem ms))) (sh_obls st') ->
+awr_ok_x E (ss_mem ss) G XO OUT STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+(run_post_pi_tok_AJX_xR R) W E K Bx SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRr segs W (mkCfg ms mdc) Q.
+Proof.
+intros W n stop E K Bx Bspan SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q HK HE HS Hsh Hchk Hrun HJ Hobl Hwr Hk.
+rewrite <- Htpi, <- Htw in Hrun.
+destruct (sym_run_to_pi_tok_sound psym segs fetch val sigma listing Hfetch Hcert HB A_LIM HLIM0 HLIM HLEN K Bx Bspan SH HK n stop E ss _ st' r
+HE HS Hsh Hchk Hrun Hobl) as (ws & msr' & Hlen & Hms & HE' & HP & Hsh' & _ & Hfr).
+eapply SRr_chain_pi_tok_AJX_xR; [exact Hms | exact Hlen | exact HE' | | exact Hsh' | exact Hfr | exact HJ | exact Hwr | exact Hk].
+destruct r; cbn [ptok_post] in HP; first [exact HP | destruct HP].
+Qed.
+Lemma SRr_run_to_pi_tok_AJX_x : forall W n stop E K Bx Bspan SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+(A_LIM <= K)%nat -> img_env E ->
+st_ok_pi E ss (restrict (w_H W) ms) ->
+sh_ok segs Bx SH E (mrestrict (w_H W) (ms_mem ms)) ->
+sh_static_ok K Bx Bspan SH (ss_facts ss) (ss_mem ss) = true ->
+sym_run_toN_pi_tok tpi0 tw0 K Bx Bspan SH n stop ss = (st', r) ->
+AJG STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+Forall (ob_holds segs Bx E (mrestrict (w_H W) (ms_mem ms))) (sh_obls st') ->
+awr_ok_x E (ss_mem ss) G XO OUT STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+run_post_pi_tok_AJX_x W E K Bx SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRr segs W (mkCfg ms mdc) Q.
+Proof. exact (@SRr_run_to_pi_tok_AJX_xR (@wle segs)). Qed.
+(* route R: the step relation of the runs over R is SRrG segs R (Reusable/YA0nH.v:31); a straight-line run does not move
+   the world, so the G twins below take no hypothesis on R. SRrG_msteps_x is SRr_msteps (Reusable/YA0n.v:151) at SRrG,
+   with its proof: that proof never reads the relation. At R := wle each G twin is its strict twin by conversion. *)
+Lemma SRrG_msteps_x {R : world segs -> world segs -> Prop} : forall W ms msr' model Q,
+msteps segs (restrict (w_H W) ms) msr' ->
+(forall model', same_but_materialized model model' ->
+hclean (w_H W) msr' ->
+SRrG segs R W (mkCfg (unrestrict (w_H W) (ms_mem ms) msr') model') Q) ->
+SRrG segs R W (mkCfg ms model) Q.
+Proof.
+intros W ms msr' model Q Hms Hk HI T HK.
+destruct HI as (HH & Hwf & Hcov & Hinv & Hh).
+assert (P1 : forall c c', YK04.node_ok segs c unit (fun _ => []) (fun _ => c') ->
+srealizes segs c' T -> srealizes segs c T).
+{ intros c c' Hn Hr. exact (srz_silent1 segs c c' T Hn Hr). }
+apply (rz_msteps_restricted' segs (w_H W) HH Hwx (fun c => srealizes segs c T) P1
+(w_A W) ms msr' model Hcov Hwf Hinv Hh Hms).
+intros model' Hinv' Hsame Hcl. apply (Hk model' Hsame Hcl).
+- apply (AI_same segs (w_H W) (w_A W) model model'); [split; auto | exact Hsame | exact Hinv'].
+- exact HK.
+Qed.
+Definition run_post_pi_tok_AJX_xG (R : world segs -> world segs -> Prop) (W : world segs) (E : env) (K : nat) (Bx : sv) (SH : list shent) (ss : sstate) (st' : shst)
+(r : ptrun_status psym)
+(ms : machine_state) (STK sp0 : Z) (FP : list (Z * Z)) ly S Hp W0 mem md own lyc Sc Hpc (mdc : Model) (k : Z)
+(Q : world segs -> config -> Prop) : Prop :=
+forall ws ms' mat',
+length ws = sh_j st' ->
+img_env (extK E K ws) ->
+match r with
+| PTS_call s => st_ok segs (extK E K ws) (setpc (sh_ss st') (sigma s)) (restrict (w_H W) ms')
+| _ => st_ok_pi (extK E K ws) (sh_ss st') (restrict (w_H W) ms')
+end ->
+sh_ok segs Bx SH (extK E K ws) (mrestrict (w_H W) (ms_mem ms')) ->
+(ajournal_gx_xR segs B PST ARx R G XO OUT) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms') (with_vm_backing (m_vm_lazy mdc) mat' mdc) k ->
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+SRrG segs R W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q.
+Lemma SRrG_chain_pi_tok_AJX_xR {R : world segs -> world segs -> Prop} : forall W E K Bx SH ws ss (st' : shst) (r : ptrun_status psym) ms msr' STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+msteps segs (restrict (w_H W) ms) msr' ->
+length ws = sh_j st' ->
+img_env (extK E K ws) ->
+match r with
+| PTS_call s => st_ok segs (extK E K ws) (setpc (sh_ss st') (sigma s)) msr'
+| _ => st_ok_pi (extK E K ws) (sh_ss st') msr'
+end ->
+sh_ok segs Bx SH (extK E K ws) (ms_mem msr') ->
+frame_of E (ss_mem ss) (ms_mem (restrict (w_H W) ms)) (ms_mem msr') ->
+(ajournal_gx_xR segs B PST ARx R G XO OUT) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+awr_ok_x E (ss_mem ss) G XO OUT STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+(run_post_pi_tok_AJX_xG R) W E K Bx SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRrG segs R W (mkCfg ms mdc) Q.
+Proof.
+intros W E K Bx SH ws ss st' r ms msr' STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q Hms Hlen HE' HS' Hsh' Hfr HJ Hwr Hk.
+apply (SRrG_msteps_x W ms msr' mdc Q Hms).
+intros model' Hsame Hcl.
+rewrite (same_but_materialized_wvb mdc model' Hsame).
+pose proof (restrict_unrestrict_clean (w_H W) (ms_mem ms) msr' Hcl) as Hrr.
+pose proof (mrestrict_unrestrict_mem (w_H W) (ms_mem ms) msr' Hcl) as Hmm.
+pose proof (msteps_mem_grows segs _ _ Hms) as Hgr. cbn [ms_mem restrict] in Hgr.
+apply (Hk ws (unrestrict (w_H W) (ms_mem ms) msr') (m_vm_materialized model') Hlen HE').
+- rewrite Hrr. exact HS'.
+- rewrite Hmm. exact Hsh'.
+- eapply (ajournal_gx_exec_xR segs B PST ARx LAWS segs_low G XO OUT) with (Wr := in_wrange E (ss_mem ss)); [exact HG | exact HJ | | | | | exact Hwr].
++ rewrite Hmm. exact Hfr.
++ rewrite Hmm. exact Hgr.
++ intros x Hx. cbn [unrestrict ms_mem]. unfold munrestrict. rewrite Hx. reflexivity.
++ rewrite <- (same_but_materialized_wvb mdc model' Hsame). exact Hsame.
+- cbn [unrestrict ms_mem]. apply frame_of_unrestrict. exact Hfr.
+- rewrite Hmm. exact Hfr.
+- rewrite Hmm. exact Hgr.
+Qed.
+Lemma SRrG_run_pi_tok_AJX_xR {R : world segs -> world segs -> Prop} : forall W n E K Bx Bspan SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+(A_LIM <= K)%nat -> img_env E ->
+st_ok_pi E ss (restrict (w_H W) ms) ->
+sh_ok segs Bx SH E (mrestrict (w_H W) (ms_mem ms)) ->
+sh_static_ok K Bx Bspan SH (ss_facts ss) (ss_mem ss) = true ->
+sym_runN_pi_tok tpi0 tw0 K Bx Bspan SH n ss = (st', r) ->
+(ajournal_gx_xR segs B PST ARx R G XO OUT) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+Forall (ob_holds segs Bx E (mrestrict (w_H W) (ms_mem ms))) (sh_obls st') ->
+awr_ok_x E (ss_mem ss) G XO OUT STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+(run_post_pi_tok_AJX_xG R) W E K Bx SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRrG segs R W (mkCfg ms mdc) Q.
+Proof.
+intros W n E K Bx Bspan SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q HK HE HS Hsh Hchk Hrun HJ Hobl Hwr Hk.
+rewrite <- Htpi, <- Htw in Hrun.
+destruct (sym_run_pi_tok_sound psym segs fetch val sigma listing Hfetch Hcert HB A_LIM HLIM0 HLIM HLEN K Bx Bspan SH HK n E ss _ st' r
+HE HS Hsh Hchk Hrun Hobl) as (ws & msr' & Hlen & Hms & HE' & HP & Hsh' & _ & Hfr).
+eapply SRrG_chain_pi_tok_AJX_xR; [exact Hms | exact Hlen | exact HE' | | exact Hsh' | exact Hfr | exact HJ | exact Hwr | exact Hk].
+destruct r; cbn [ptok_post] in HP; first [exact HP | destruct HP].
+Qed.
+Lemma SRrG_run_to_pi_tok_AJX_xR {R : world segs -> world segs -> Prop} : forall W n stop E K Bx Bspan SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+(A_LIM <= K)%nat -> img_env E ->
+st_ok_pi E ss (restrict (w_H W) ms) ->
+sh_ok segs Bx SH E (mrestrict (w_H W) (ms_mem ms)) ->
+sh_static_ok K Bx Bspan SH (ss_facts ss) (ss_mem ss) = true ->
+sym_run_toN_pi_tok tpi0 tw0 K Bx Bspan SH n stop ss = (st', r) ->
+(ajournal_gx_xR segs B PST ARx R G XO OUT) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+Forall (ob_holds segs Bx E (mrestrict (w_H W) (ms_mem ms))) (sh_obls st') ->
+awr_ok_x E (ss_mem ss) G XO OUT STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+(run_post_pi_tok_AJX_xG R) W E K Bx SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRrG segs R W (mkCfg ms mdc) Q.
+Proof.
+intros W n stop E K Bx Bspan SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q HK HE HS Hsh Hchk Hrun HJ Hobl Hwr Hk.
+rewrite <- Htpi, <- Htw in Hrun.
+destruct (sym_run_to_pi_tok_sound psym segs fetch val sigma listing Hfetch Hcert HB A_LIM HLIM0 HLIM HLEN K Bx Bspan SH HK n stop E ss _ st' r
+HE HS Hsh Hchk Hrun Hobl) as (ws & msr' & Hlen & Hms & HE' & HP & Hsh' & _ & Hfr).
+eapply SRrG_chain_pi_tok_AJX_xR; [exact Hms | exact Hlen | exact HE' | | exact Hsh' | exact Hfr | exact HJ | exact Hwr | exact Hk].
+destruct r; cbn [ptok_post] in HP; first [exact HP | destruct HP].
+Qed.
+End e.
+
+(* W_journal.v:709 Section g: the instances at fuzz_reply's listing (the GUIDE's RUN / RUNTO), over ARx. *)
+Section g.
+Context {L : ptable wsym} {PL : PAListing L} {PI : PAImg L}.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world pa_segs -> (word -> option byte) -> Model -> Prop.
+Context {hl : Z}.
+Hypothesis LAWS : AR_laws_x pa_segs B ARx hl.
+Definition paj_run_x_x (G : list (Z * Z)) (HG : gx_ok pa_segs B G) (XO : Z) (OUT : list (Z * Z)) :=
+SRr_run_pi_tok_AJX_x wsym pa_segs B PST ARx LAWS pa_segs_low pa_wx (clookup pa_tbl) pa_val pa_sigma L
+pl_tpi pl_tw pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim pl_len pl_tpi_eq pl_tw_eq G HG XO OUT.
+Definition paj_run_to_x_x (G : list (Z * Z)) (HG : gx_ok pa_segs B G) (XO : Z) (OUT : list (Z * Z)) :=
+SRr_run_to_pi_tok_AJX_x wsym pa_segs B PST ARx LAWS pa_segs_low pa_wx (clookup pa_tbl) pa_val pa_sigma L
+pl_tpi pl_tw pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim pl_len pl_tpi_eq pl_tw_eq G HG XO OUT.
+(* route R: the two instances over a world relation R (the run lemmas' R twins, R implicit there); paj_run_x_x /
+   paj_run_to_x_x above are these at wle *)
+Definition paj_run_x_xR (R : world pa_segs -> world pa_segs -> Prop) (G : list (Z * Z)) (HG : gx_ok pa_segs B G) (XO : Z)
+  (OUT : list (Z * Z)) :=
+SRr_run_pi_tok_AJX_xR wsym pa_segs B PST ARx LAWS pa_segs_low pa_wx (clookup pa_tbl) pa_val pa_sigma L
+pl_tpi pl_tw pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim pl_len pl_tpi_eq pl_tw_eq G HG XO OUT (R := R).
+Definition paj_run_to_x_xR (R : world pa_segs -> world pa_segs -> Prop) (G : list (Z * Z)) (HG : gx_ok pa_segs B G)
+  (XO : Z) (OUT : list (Z * Z)) :=
+SRr_run_to_pi_tok_AJX_xR wsym pa_segs B PST ARx LAWS pa_segs_low pa_wx (clookup pa_tbl) pa_val pa_sigma L
+pl_tpi pl_tw pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim pl_len pl_tpi_eq pl_tw_eq G HG XO OUT (R := R).
+(* route R: the Section g instances of the G runs (concluding SRrG pa_segs R) *)
+Definition paj_run_x_xG (R : world pa_segs -> world pa_segs -> Prop) (G : list (Z * Z)) (HG : gx_ok pa_segs B G) (XO : Z)
+  (OUT : list (Z * Z)) :=
+SRrG_run_pi_tok_AJX_xR wsym pa_segs B PST ARx LAWS pa_segs_low pa_wx (clookup pa_tbl) pa_val pa_sigma L
+pl_tpi pl_tw pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim pl_len pl_tpi_eq pl_tw_eq G HG XO OUT (R := R).
+Definition paj_run_to_x_xG (R : world pa_segs -> world pa_segs -> Prop) (G : list (Z * Z)) (HG : gx_ok pa_segs B G)
+  (XO : Z) (OUT : list (Z * Z)) :=
+SRrG_run_to_pi_tok_AJX_xR wsym pa_segs B PST ARx LAWS pa_segs_low pa_wx (clookup pa_tbl) pa_val pa_sigma L
+pl_tpi pl_tw pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim pl_len pl_tpi_eq pl_tw_eq G HG XO OUT (R := R).
+End g.
+
+(* ---- THE ROOM ROUND (a Theorem Labs lane's ROOM-TEXTS.md v3, approved by a Theorem Labs lane; ruled R1 placement, 2026-10-30) ----
+   The allocator rules below carry the allocator's room invariant RM (pre RM Sc (charge + kr), post RM S2 kr) and the
+   LIVE counts at each call's own pre state (cnt_ok: the live secondary, class-24 and per-primary-class request counts
+   of the live blocks, against their bounds).  Both are bundled in one record so the kit stays image- and
+   CfParams-free; the cf instance (top_x) sets RM := room_live_cf and the counts to a Theorem Labs lane's rl_sec_ok /
+   rl_b24_ok / rl_prim_ok (count_block_iff); the AR bridges take RP_AR (everything trivially true).  acnt (ReplyCnt.v,
+   the one definition) counts the live requests satisfying P: ablocks keeps each block's request
+   (YG0d.v:430), so acnt over ablocks is the count over map snd (blocks S).
+   The record also carries the two room LAWS a walk over a generic RP uses (the kit review's note 3; texts fixed by
+   the relay walks' proofs): rp_RMM, the budget is monotone (a spec's budget can exceed what a path calls), and rp_RPF,
+   the room is kept across set_fs (the fake-frame seat; stack_free_state is a set_fs, YG01.v:577).  Both are `I` at
+   RP_AR and trivial at top_x (RM := fun S _ => NP S; NP = room_live_cf keeps set_fs by conversion). *)
+Record roomp : Type := mkRoomp {
+  rp_RM : astate -> nat -> Prop;
+  rp_Psec : Z -> bool;
+  rp_P24 : Z -> bool;
+  rp_Lsec : nat;
+  rp_L24 : nat;
+  rp_Pcls : Z -> Z -> bool;
+  rp_LPRIM : Z -> nat;
+  rp_RMM : forall S k k', (k <= k')%nat -> rp_RM S k' -> rp_RM S k;
+  rp_RPF : forall S f k, rp_RM S k -> rp_RM (set_fs f S) k }.
+Lemma RMM_of : forall RP S k k', (k <= k')%nat -> rp_RM RP S k' -> rp_RM RP S k.
+Proof. intros RP. exact (rp_RMM RP). Qed.
+Lemma RPF_of : forall RP S f k, rp_RM RP S k -> rp_RM RP (set_fs f S) k.
+Proof. intros RP. exact (rp_RPF RP). Qed.
+Lemma RPF_stack_free : forall RP S c p k, rp_RM RP S k -> rp_RM RP (stack_free_state c p S) k.
+Proof. intros RP S c p k H. unfold stack_free_state. exact (rp_RPF RP _ _ _ H). Qed.
+(* the count premise with a peak: the live counts of l plus a callee's peak net growth pk P (the max over all prefixes
+   of its run of the running net count of P-requests it added, realloc's transient included) stay under the bounds *)
+Definition cnt_ok_pk (RP : roomp) (pk : (Z -> bool) -> nat) (l : list (Z * Z)) : Prop :=
+  (acnt (rp_Psec RP) l + pk (rp_Psec RP) <= rp_Lsec RP)%nat /\
+  (acnt (rp_P24 RP) l + pk (rp_P24 RP) <= rp_L24 RP)%nat /\
+  (forall c, 1 <= c <= 30 -> (acnt (rp_Pcls RP c) l + pk (rp_Pcls RP c) <= rp_LPRIM RP c)%nat).
+(* the count premise of one allocator call: the live counts at its pre state *)
+Definition cnt_ok (RP : roomp) (l : list (Z * Z)) : Prop := cnt_ok_pk RP (fun _ => 0%nat) l.
+(* the AR bridges' instance: no room, no count (bounds 8, above every constant peak a spec states) *)
+Definition RP_AR : roomp :=
+  {| rp_RM := fun _ _ => True; rp_Psec := fun _ => false; rp_P24 := fun _ => false; rp_Lsec := 8; rp_L24 := 8;
+     rp_Pcls := fun _ _ => false; rp_LPRIM := fun _ => 8%nat;
+     rp_RMM := fun _ _ _ _ _ => I; rp_RPF := fun _ _ _ _ => I |}.
+Lemma rp_RM_AR : forall S k, rp_RM RP_AR S k.
+Proof. intros S k. exact I. Qed.
+Lemma acnt_nil : forall P, acnt P [] = 0%nat.
+Proof. reflexivity. Qed.
+Lemma acnt_cons : forall P b l, acnt P (b :: l) = ((if P (snd b) then 1 else 0) + acnt P l)%nat.
+Proof. intros P b l. unfold acnt. simpl. destruct (P (snd b)); reflexivity. Qed.
+Lemma acnt_false : forall l, acnt (fun _ => false) l = 0%nat.
+Proof. intros l. unfold acnt. induction (map snd l) as [|x t IH]; [reflexivity | exact IH]. Qed.
+Lemma cnt_ok_pk_AR : forall pk l, (pk (fun _ => false) <= 8)%nat -> cnt_ok_pk RP_AR pk l.
+Proof.
+  intros pk l H. unfold cnt_ok_pk; cbn [rp_Psec rp_P24 rp_Lsec rp_L24 rp_Pcls rp_LPRIM RP_AR].
+  rewrite acnt_false. split; [lia|]. split; [lia|]. intros c _. lia.
+Qed.
+Lemma cnt_ok_AR : forall l, cnt_ok RP_AR l.
+Proof. intros l. apply cnt_ok_pk_AR. cbv beta. lia. Qed.
+Lemma rp_RM_AR_iff : forall S k, rp_RM RP_AR S k <-> True.
+Proof. intros S k. split; intros _; exact I. Qed.
+Lemma room_True_l : forall P : Prop, (True /\ P) <-> P.
+Proof. intros P. tauto. Qed.
+Lemma room_True_r : forall P : Prop, (P /\ True) <-> P.
+Proof. intros P. tauto. Qed.
+(* a count premise with a peak gives a smaller peak's (used when a walk passes part of its peak on) *)
+Lemma cnt_ok_pk_mono : forall RP pk pk' l l',
+  (forall P, (acnt P l' + pk' P <= acnt P l + pk P)%nat) -> cnt_ok_pk RP pk l -> cnt_ok_pk RP pk' l'.
+Proof.
+  intros RP pk pk' l l' Hle (H1 & H2 & H3). split; [pose proof (Hle (rp_Psec RP)); lia|].
+  split; [pose proof (Hle (rp_P24 RP)); lia|]. intros c Hc. pose proof (Hle (rp_Pcls RP c)). specialize (H3 c Hc). lia.
+Qed.
+
+(* W_journal.v:770 Section h: THE ALLOCATOR'S SITE RULES over AJ. The text of each rule is W_journal.v's with the
+   journal AJ (Hp after S in the premise; the post's journal at some Hp2 after S2). Nothing else changes. *)
+Section h.
+Variable segs : list Segment.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
+Variable MT : ameter_ops.
+Variable MMAX : Z.
+(* the room round (ROOM-TEXTS.md v3): the room invariant RM and the live counts, at each call's own pre state *)
+Variable RP : roomp.
+(* route R, the QMm fit (1) (Main 2026-10-30): the call-boundary facts on the CALL memory that the cf rules at R
+   take after chain_pre, RO (part 3c removed memnorm) (at the cf instance RO := arodata_ok_cf segs TfibB, Reusable/YG0dcf.v:93;
+   a parameter here, as this engine names no image) *)
+Variable RO : (word -> option byte) -> Prop.
+(* route R (CfR 2026-10-30): the realloc rule's per-call hull admission, at the call state, the old block's address pa
+   and the new size n. HA is generic here; the cf instance takes the ENTRY form, cf_hull_adm Sc n (a premise, never a
+   field: the caller discharges it from its count at Sc). *)
+Variable HA : alayout -> astate -> bvmap 5 word -> list (Z * Z * Z) -> Z -> Z -> Prop.
+Local Notation code := (as_code B).
+Local Notation AJ := (ajournal_x segs B PST ARx).
+(* the room round: the stack room the allocator's engine needs below a call (a Theorem Labs lane's ACALL_PREFIX, YG0d.v:21), from
+   the journal's astk_ok (YCbq.v:333, its seventh conjunct `ly_bot ly + STK + ACALL_PREFIX < sp0 + ASTACK`) at a call at
+   sp0 + o with ASTACK - o <= STK; the journal keeps the layout's top, so ly_bot.  One line per rule call site. *)
+Lemma aj_stack_room_xR {R : world segs -> world segs -> Prop} : forall STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k (o : Z) (regsT : bvmap 5 word),
+  (ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+  spZ regsT = sp0 + o -> ASTACK - o <= STK -> ly_bot lyc + ACALL_PREFIX < spZ regsT.
+Proof.
+  intros STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k o regsT HJ Hsp Ho.
+  destruct HJ as (_ & HLY & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hstk & _).
+  destruct HLY as (_ & _ & _ & _ & _ & _ & _ & _ & Etop & _).
+  destruct Hstk as (_ & _ & _ & _ & _ & _ & Hbot & _).
+  unfold ly_bot in *. rewrite Etop. lia.
+Qed.
+Lemma aj_stack_room_x : forall STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k (o : Z) (regsT : bvmap 5 word),
+  AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+  spZ regsT = sp0 + o -> ASTACK - o <= STK -> ly_bot lyc + ACALL_PREFIX < spZ regsT.
+Proof. exact (@aj_stack_room_xR (@wle segs)). Qed.
+Definition amalloc_cf_rule_xR (R : world segs -> world segs -> Prop) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k n (o : Z) raw ch (kr : nat),
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+getr regsT 10 = w64 n -> 0 <= n < MMAX -> blocks_bytes Sc + n <= LIVE_MAX ->
+cnt_ok RP (ablocks B lyc Sc) ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+RO memT ->
+rp_RM RP Sc (1 + kr) ->
+mo_ok MT Sc (mo_malloc MT n) ->
+SRrG segs R W (mkCfg (mkst regsT (Z_to_bv 64 (pc_wrap_malloc code)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 (res : Z),
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 res /\ frames S2 = frames Sc /\
+4096 <= res /\ ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n)] /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun a => res <= a < res + req_size n) /\
+mo_le MT Sc S2 (mo_malloc MT n) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ (res <= a < res + req_size n) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+Definition amalloc_cf_rule_x : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k n (o : Z) raw ch (kr : nat),
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+getr regsT 10 = w64 n -> 0 <= n < MMAX -> blocks_bytes Sc + n <= LIVE_MAX ->
+cnt_ok RP (ablocks B lyc Sc) ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+rp_RM RP Sc (1 + kr) ->
+mo_ok MT Sc (mo_malloc MT n) ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 (pc_wrap_malloc code)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 (res : Z),
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+AJ STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 res /\ frames S2 = frames Sc /\
+4096 <= res /\ ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n)] /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun a => res <= a < res + req_size n) /\
+mo_le MT Sc S2 (mo_malloc MT n) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ (res <= a < res + req_size n) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+(* amalloc_cf_rule_x keeps its body; amalloc_cf_rule_xR also takes the call-boundary premise RO (QMm fit (1)), so at wle the strict rule gives it (amalloc_cf_rule_xR_of_x), and the converse does not hold *)
+Lemma amalloc_cf_rule_xR_of_x : amalloc_cf_rule_x -> amalloc_cf_rule_xR (@wle segs).
+Proof. intros H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k n o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 _m2 h15 h16. exact (H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k n o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16). Qed.
+Definition afree_cf_rule_xR (R : world segs -> world segs -> Prop) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k pa n (o : Z) raw ch (kr : nat),
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+In (pa, n) (ablocks B lyc Sc) ->
+getr regsT 10 = w64 pa ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+RO memT ->
+rp_RM RP Sc (1 + kr) ->
+cnt_ok RP (ablocks B lyc Sc) ->
+(In (pa, n) (ablocks B ly S) -> forall i, 0 <= i < req_size n -> inFP FP (pa + i)) ->
+mo_ok MT Sc (mo_free MT) ->
+SRrG segs R W (mkCfg (mkst regsT (Z_to_bv 64 (pc_wrap_free code)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\
+(exists l1 l2, ablocks B lyc Sc = l1 ++ (pa, n) :: l2 /\ ablocks B ly2 S2 = l1 ++ l2) /\
+frames S2 = frames Sc /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun a => pa <= a < pa + req_size n) /\
+mo_le MT Sc S2 (mo_free MT) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ (pa <= a < pa + req_size n) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+Definition afree_cf_rule_x : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k pa n (o : Z) raw ch (kr : nat),
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+In (pa, n) (ablocks B lyc Sc) ->
+getr regsT 10 = w64 pa ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+rp_RM RP Sc (1 + kr) ->
+cnt_ok RP (ablocks B lyc Sc) ->
+(In (pa, n) (ablocks B ly S) -> forall i, 0 <= i < req_size n -> inFP FP (pa + i)) ->
+mo_ok MT Sc (mo_free MT) ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 (pc_wrap_free code)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+AJ STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\
+(exists l1 l2, ablocks B lyc Sc = l1 ++ (pa, n) :: l2 /\ ablocks B ly2 S2 = l1 ++ l2) /\
+frames S2 = frames Sc /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun a => pa <= a < pa + req_size n) /\
+mo_le MT Sc S2 (mo_free MT) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ (pa <= a < pa + req_size n) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+(* afree_cf_rule_x keeps its body; afree_cf_rule_xR also takes the call-boundary premise RO (QMm fit (1)), so at wle the strict rule gives it (afree_cf_rule_xR_of_x), and the converse does not hold *)
+Lemma afree_cf_rule_xR_of_x : afree_cf_rule_x -> afree_cf_rule_xR (@wle segs).
+Proof. intros H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k pa n o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 _m2 h13 h14 h15 h16. exact (H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k pa n o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16). Qed.
+Definition afree_null_cf_rule_xR (R : world segs -> world segs -> Prop) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k (o : Z) raw ch (kr : nat),
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+getr regsT 10 = w64 0 ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+RO memT ->
+rp_RM RP Sc (1 + kr) ->
+cnt_ok RP (ablocks B lyc Sc) ->
+mo_ok MT Sc (mo_free MT) ->
+SRrG segs R W (mkCfg (mkst regsT (Z_to_bv 64 (pc_wrap_free code)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\
+Permutation (ablocks B ly2 S2) (ablocks B lyc Sc) /\
+frames S2 = frames Sc /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun _ => False) /\
+mo_le MT Sc S2 (mo_free MT) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+Definition afree_null_cf_rule_x : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k (o : Z) raw ch (kr : nat),
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+getr regsT 10 = w64 0 ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+rp_RM RP Sc (1 + kr) ->
+cnt_ok RP (ablocks B lyc Sc) ->
+mo_ok MT Sc (mo_free MT) ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 (pc_wrap_free code)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+AJ STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\
+Permutation (ablocks B ly2 S2) (ablocks B lyc Sc) /\
+frames S2 = frames Sc /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun _ => False) /\
+mo_le MT Sc S2 (mo_free MT) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+(* afree_null_cf_rule_x keeps its body; afree_null_cf_rule_xR also takes the call-boundary premise RO (QMm fit (1)), so at wle the strict rule gives it (afree_null_cf_rule_xR_of_x), and the converse does not hold *)
+Lemma afree_null_cf_rule_xR_of_x : afree_null_cf_rule_x -> afree_null_cf_rule_xR (@wle segs).
+Proof. intros H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 _m2 h12 h13 h14. exact (H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14). Qed.
+Definition arealloc_cf_rule_xR (R : world segs -> world segs -> Prop) (pc : Z) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k p n0 n (o : Z) raw ch (kr : nat),
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+(p = 0 \/ In (p, n0) (ablocks B lyc Sc)) ->
+getr regsT 10 = w64 p -> getr regsT 11 = w64 n ->
+1 <= n < MMAX -> blocks_bytes Sc + n <= LIVE_MAX ->
+cnt_ok RP (ablocks B lyc Sc) ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+RO memT ->
+HA lyc Sc regsT ch p n ->
+rp_RM RP Sc (2 + kr) ->
+(p <> 0 -> In (p, n0) (ablocks B ly S) -> forall i, 0 <= i < req_size n0 -> inFP FP (p + i)) ->
+mo_ok MT Sc (mo_malloc MT n + mo_free MT) ->
+SRrG segs R W (mkCfg (mkst regsT (Z_to_bv 64 pc) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 (res : Z),
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 3) /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 res /\ frames S2 = frames Sc /\
+4096 <= res /\
+(p = 0 -> Permutation (ablocks B ly2 S2) ((res, n) :: ablocks B lyc Sc)) /\
+(p <> 0 -> exists l1 l2, ablocks B lyc Sc = l1 ++ (p, n0) :: l2 /\ Permutation (ablocks B ly2 S2) ((res, n) :: l1 ++ l2)) /\
+(p <> 0 -> forall i, 0 <= i < Z.min n0 n -> aview segs (w_H W2) mem2 (res + i) = aview segs (w_H W) memT (p + i)) /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o)
+  (fun a => (res <= a < res + req_size n) \/ (p <> 0 /\ p <= a < p + req_size n0)) /\
+mo_le MT Sc S2 (mo_malloc MT n + mo_free MT) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ ((res <= a < res + req_size n) \/ (p <> 0 /\ p <= a < p + req_size n0)) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+Definition arealloc_cf_rule_x (pc : Z) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k p n0 n (o : Z) raw ch (kr : nat),
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+(p = 0 \/ In (p, n0) (ablocks B lyc Sc)) ->
+getr regsT 10 = w64 p -> getr regsT 11 = w64 n ->
+1 <= n < MMAX -> blocks_bytes Sc + n <= LIVE_MAX ->
+cnt_ok RP (ablocks B lyc Sc) ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+rp_RM RP Sc (2 + kr) ->
+(p <> 0 -> In (p, n0) (ablocks B ly S) -> forall i, 0 <= i < req_size n0 -> inFP FP (p + i)) ->
+mo_ok MT Sc (mo_malloc MT n + mo_free MT) ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 pc) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 (res : Z),
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+AJ STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 3) /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 res /\ frames S2 = frames Sc /\
+4096 <= res /\
+(p = 0 -> Permutation (ablocks B ly2 S2) ((res, n) :: ablocks B lyc Sc)) /\
+(p <> 0 -> exists l1 l2, ablocks B lyc Sc = l1 ++ (p, n0) :: l2 /\ Permutation (ablocks B ly2 S2) ((res, n) :: l1 ++ l2)) /\
+(p <> 0 -> forall i, 0 <= i < Z.min n0 n -> aview segs (w_H W2) mem2 (res + i) = aview segs (w_H W) memT (p + i)) /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o)
+  (fun a => (res <= a < res + req_size n) \/ (p <> 0 /\ p <= a < p + req_size n0)) /\
+mo_le MT Sc S2 (mo_malloc MT n + mo_free MT) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ ((res <= a < res + req_size n) \/ (p <> 0 /\ p <= a < p + req_size n0)) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+(* arealloc_cf_rule_x keeps its body; arealloc_cf_rule_xR also takes the call-boundary premise RO (QMm fit (1)), so at wle the strict rule gives it (arealloc_cf_rule_xR_of_x), and the converse does not hold *)
+Lemma arealloc_cf_rule_xR_of_x : forall pc, arealloc_cf_rule_x pc -> arealloc_cf_rule_xR (@wle segs) pc.
+Proof. intros pc H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k p n0 n o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16 _m2 _m3 h17 h18 h19. exact (H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k p n0 n o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16 h17 h18 h19). Qed.
+Definition astrndup_cf_rule_xR (R : world segs -> world segs -> Prop) (pc : Z) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k x n (o : Z) raw ch (kr : nat),
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+getr regsT 10 = w64 x -> getr regsT 11 = w64 n -> 0 < x -> 0 <= n -> x + n <= 2 ^ 63 ->
+n + 1 < MMAX -> blocks_bytes Sc + (n + 1) <= LIVE_MAX ->
+cnt_ok RP (ablocks B lyc Sc) ->
+(forall i, 0 <= i < n -> exists b, aview segs (w_H W) memT (x + i) = Some b /\ b <> 0) ->
+(forall a, x <= a < x + n -> ~ (sp0 + o - ASTACK <= a < sp0 + o)) ->
+amem_range x n -> range_addressable (aview segs (w_H W) memT) SHADOW_OFF x n -> (0 < n -> shadow_hull_vis (aview segs (w_H W) memT) x n) ->
+(exists p m, In (p, m) (ablocks B lyc Sc) /\ p <= x /\ x + n <= p + req_size m) ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+ly_bot lyc + STRNDUP_FRAME_CF_x + MALLOC_BODY_FRAME_CF_x < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) -> getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+frame0_ok lyc regsT = true ->
+rp_RM RP Sc (1 + kr) ->
+mo_ok MT Sc (mo_malloc MT (n + 1)) ->
+SRrG segs R W (mkCfg (mkst regsT (Z_to_bv 64 pc) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 (res : Z),
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 res /\ frames S2 = frames Sc /\
+4096 <= res /\ ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n + 1)] /\
+(forall i, 0 <= i < n -> aview segs (w_H W2) mem2 (res + i) = aview segs (w_H W) memT (x + i)) /\
+aview segs (w_H W2) mem2 (res + n) = Some 0 /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun a => res <= a < res + req_size (n + 1)) /\
+mo_le MT Sc S2 (mo_malloc MT (n + 1)) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ (res <= a < res + req_size (n + 1)) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+Definition astrndup_cf_rule_x (pc : Z) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k x n (o : Z) raw ch (kr : nat),
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+getr regsT 10 = w64 x -> getr regsT 11 = w64 n -> 0 < x -> 0 <= n -> x + n <= 2 ^ 63 ->
+n + 1 < MMAX -> blocks_bytes Sc + (n + 1) <= LIVE_MAX ->
+cnt_ok RP (ablocks B lyc Sc) ->
+(forall i, 0 <= i < n -> exists b, aview segs (w_H W) memT (x + i) = Some b /\ b <> 0) ->
+(forall a, x <= a < x + n -> ~ (sp0 + o - ASTACK <= a < sp0 + o)) ->
+amem_range x n -> range_addressable (aview segs (w_H W) memT) SHADOW_OFF x n -> (0 < n -> shadow_hull_vis (aview segs (w_H W) memT) x n) ->
+(exists p m, In (p, m) (ablocks B lyc Sc) /\ p <= x /\ x + n <= p + req_size m) ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+ly_bot lyc + STRNDUP_FRAME_CF_x + MALLOC_BODY_FRAME_CF_x < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) -> getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+frame0_ok lyc regsT = true ->
+rp_RM RP Sc (1 + kr) ->
+mo_ok MT Sc (mo_malloc MT (n + 1)) ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 pc) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 (res : Z),
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+AJ STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 res /\ frames S2 = frames Sc /\
+4096 <= res /\ ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n + 1)] /\
+(forall i, 0 <= i < n -> aview segs (w_H W2) mem2 (res + i) = aview segs (w_H W) memT (x + i)) /\
+aview segs (w_H W2) mem2 (res + n) = Some 0 /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun a => res <= a < res + req_size (n + 1)) /\
+mo_le MT Sc S2 (mo_malloc MT (n + 1)) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ (res <= a < res + req_size (n + 1)) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+(* astrndup_cf_rule_x keeps its body, for the proofs that unfold it; astrndup_cf_rule_x_wle checks that it is astrndup_cf_rule_xR at wle *)
+Lemma astrndup_cf_rule_x_wle : astrndup_cf_rule_x = astrndup_cf_rule_xR (@wle segs). Proof. reflexivity. Qed.
+(* ---- W_journal.v Section hc (a working branch 4d6dcd568a5, :900-1036): the beside-forms with the caller-context
+   premise. Each is its rule's twin above with `In (raZ regsT :: spine ch) CTX ->` inserted after chain_pre and nothing
+   else changed; `<rule>_c_weak_x` shows each is implied by the twin without the premise. ---- *)
+Section hc.
+Variable CTX : list (list Z).
+Definition amalloc_cf_rule_c_xR (R : world segs -> world segs -> Prop) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k n (o : Z) raw ch (kr : nat),
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+getr regsT 10 = w64 n -> 0 <= n < MMAX -> blocks_bytes Sc + n <= LIVE_MAX ->
+cnt_ok RP (ablocks B lyc Sc) ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+RO memT ->
+In (raZ regsT :: spine ch) CTX ->
+rp_RM RP Sc (1 + kr) ->
+mo_ok MT Sc (mo_malloc MT n) ->
+SRrG segs R W (mkCfg (mkst regsT (Z_to_bv 64 (pc_wrap_malloc code)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 (res : Z),
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 res /\ frames S2 = frames Sc /\
+4096 <= res /\ ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n)] /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun a => res <= a < res + req_size n) /\
+mo_le MT Sc S2 (mo_malloc MT n) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ (res <= a < res + req_size n) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+Definition amalloc_cf_rule_c_x : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k n (o : Z) raw ch (kr : nat),
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+getr regsT 10 = w64 n -> 0 <= n < MMAX -> blocks_bytes Sc + n <= LIVE_MAX ->
+cnt_ok RP (ablocks B lyc Sc) ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+In (raZ regsT :: spine ch) CTX ->
+rp_RM RP Sc (1 + kr) ->
+mo_ok MT Sc (mo_malloc MT n) ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 (pc_wrap_malloc code)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 (res : Z),
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+AJ STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 res /\ frames S2 = frames Sc /\
+4096 <= res /\ ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n)] /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun a => res <= a < res + req_size n) /\
+mo_le MT Sc S2 (mo_malloc MT n) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ (res <= a < res + req_size n) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+(* amalloc_cf_rule_c_x keeps its body; amalloc_cf_rule_c_xR also takes the call-boundary premise RO (QMm fit (1)), so at wle the strict rule gives it (amalloc_cf_rule_c_xR_of_x), and the converse does not hold *)
+Lemma amalloc_cf_rule_c_xR_of_x : amalloc_cf_rule_c_x -> amalloc_cf_rule_c_xR (@wle segs).
+Proof. intros H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k n o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 _m2 h15 h16 h17. exact (H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k n o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16 h17). Qed.
+Definition afree_cf_rule_c_xR (R : world segs -> world segs -> Prop) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k pa n (o : Z) raw ch (kr : nat),
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+In (pa, n) (ablocks B lyc Sc) ->
+getr regsT 10 = w64 pa ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+RO memT ->
+In (raZ regsT :: spine ch) CTX ->
+rp_RM RP Sc (1 + kr) ->
+cnt_ok RP (ablocks B lyc Sc) ->
+(In (pa, n) (ablocks B ly S) -> forall i, 0 <= i < req_size n -> inFP FP (pa + i)) ->
+mo_ok MT Sc (mo_free MT) ->
+SRrG segs R W (mkCfg (mkst regsT (Z_to_bv 64 (pc_wrap_free code)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\
+(exists l1 l2, ablocks B lyc Sc = l1 ++ (pa, n) :: l2 /\ ablocks B ly2 S2 = l1 ++ l2) /\
+frames S2 = frames Sc /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun a => pa <= a < pa + req_size n) /\
+mo_le MT Sc S2 (mo_free MT) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ (pa <= a < pa + req_size n) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+Definition afree_cf_rule_c_x : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k pa n (o : Z) raw ch (kr : nat),
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+In (pa, n) (ablocks B lyc Sc) ->
+getr regsT 10 = w64 pa ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+In (raZ regsT :: spine ch) CTX ->
+rp_RM RP Sc (1 + kr) ->
+cnt_ok RP (ablocks B lyc Sc) ->
+(In (pa, n) (ablocks B ly S) -> forall i, 0 <= i < req_size n -> inFP FP (pa + i)) ->
+mo_ok MT Sc (mo_free MT) ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 (pc_wrap_free code)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+AJ STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\
+(exists l1 l2, ablocks B lyc Sc = l1 ++ (pa, n) :: l2 /\ ablocks B ly2 S2 = l1 ++ l2) /\
+frames S2 = frames Sc /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun a => pa <= a < pa + req_size n) /\
+mo_le MT Sc S2 (mo_free MT) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ (pa <= a < pa + req_size n) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+(* afree_cf_rule_c_x keeps its body; afree_cf_rule_c_xR also takes the call-boundary premise RO (QMm fit (1)), so at wle the strict rule gives it (afree_cf_rule_c_xR_of_x), and the converse does not hold *)
+Lemma afree_cf_rule_c_xR_of_x : afree_cf_rule_c_x -> afree_cf_rule_c_xR (@wle segs).
+Proof. intros H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k pa n o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 _m2 h13 h14 h15 h16 h17. exact (H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k pa n o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16 h17). Qed.
+Definition afree_null_cf_rule_c_xR (R : world segs -> world segs -> Prop) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k (o : Z) raw ch (kr : nat),
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+getr regsT 10 = w64 0 ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+RO memT ->
+In (raZ regsT :: spine ch) CTX ->
+rp_RM RP Sc (1 + kr) ->
+cnt_ok RP (ablocks B lyc Sc) ->
+mo_ok MT Sc (mo_free MT) ->
+SRrG segs R W (mkCfg (mkst regsT (Z_to_bv 64 (pc_wrap_free code)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\
+Permutation (ablocks B ly2 S2) (ablocks B lyc Sc) /\
+frames S2 = frames Sc /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun _ => False) /\
+mo_le MT Sc S2 (mo_free MT) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+Definition afree_null_cf_rule_c_x : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k (o : Z) raw ch (kr : nat),
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+getr regsT 10 = w64 0 ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+In (raZ regsT :: spine ch) CTX ->
+rp_RM RP Sc (1 + kr) ->
+cnt_ok RP (ablocks B lyc Sc) ->
+mo_ok MT Sc (mo_free MT) ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 (pc_wrap_free code)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+AJ STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\
+Permutation (ablocks B ly2 S2) (ablocks B lyc Sc) /\
+frames S2 = frames Sc /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun _ => False) /\
+mo_le MT Sc S2 (mo_free MT) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+(* afree_null_cf_rule_c_x keeps its body; afree_null_cf_rule_c_xR also takes the call-boundary premise RO (QMm fit (1)), so at wle the strict rule gives it (afree_null_cf_rule_c_xR_of_x), and the converse does not hold *)
+Lemma afree_null_cf_rule_c_xR_of_x : afree_null_cf_rule_c_x -> afree_null_cf_rule_c_xR (@wle segs).
+Proof. intros H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 _m2 h12 h13 h14 h15. exact (H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15). Qed.
+Definition arealloc_cf_rule_c_xR (R : world segs -> world segs -> Prop) (pc : Z) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k p n0 n (o : Z) raw ch (kr : nat),
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+(p = 0 \/ In (p, n0) (ablocks B lyc Sc)) ->
+getr regsT 10 = w64 p -> getr regsT 11 = w64 n ->
+1 <= n < MMAX -> blocks_bytes Sc + n <= LIVE_MAX ->
+cnt_ok RP (ablocks B lyc Sc) ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+RO memT ->
+HA lyc Sc regsT ch p n ->
+In (raZ regsT :: spine ch) CTX ->
+rp_RM RP Sc (2 + kr) ->
+(p <> 0 -> In (p, n0) (ablocks B ly S) -> forall i, 0 <= i < req_size n0 -> inFP FP (p + i)) ->
+mo_ok MT Sc (mo_malloc MT n + mo_free MT) ->
+SRrG segs R W (mkCfg (mkst regsT (Z_to_bv 64 pc) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 (res : Z),
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 3) /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 res /\ frames S2 = frames Sc /\
+4096 <= res /\
+(p = 0 -> Permutation (ablocks B ly2 S2) ((res, n) :: ablocks B lyc Sc)) /\
+(p <> 0 -> exists l1 l2, ablocks B lyc Sc = l1 ++ (p, n0) :: l2 /\ Permutation (ablocks B ly2 S2) ((res, n) :: l1 ++ l2)) /\
+(p <> 0 -> forall i, 0 <= i < Z.min n0 n -> aview segs (w_H W2) mem2 (res + i) = aview segs (w_H W) memT (p + i)) /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o)
+  (fun a => (res <= a < res + req_size n) \/ (p <> 0 /\ p <= a < p + req_size n0)) /\
+mo_le MT Sc S2 (mo_malloc MT n + mo_free MT) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ ((res <= a < res + req_size n) \/ (p <> 0 /\ p <= a < p + req_size n0)) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+Definition arealloc_cf_rule_c_x (pc : Z) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k p n0 n (o : Z) raw ch (kr : nat),
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+(p = 0 \/ In (p, n0) (ablocks B lyc Sc)) ->
+getr regsT 10 = w64 p -> getr regsT 11 = w64 n ->
+1 <= n < MMAX -> blocks_bytes Sc + n <= LIVE_MAX ->
+cnt_ok RP (ablocks B lyc Sc) ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+In (raZ regsT :: spine ch) CTX ->
+rp_RM RP Sc (2 + kr) ->
+(p <> 0 -> In (p, n0) (ablocks B ly S) -> forall i, 0 <= i < req_size n0 -> inFP FP (p + i)) ->
+mo_ok MT Sc (mo_malloc MT n + mo_free MT) ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 pc) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 (res : Z),
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+AJ STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 3) /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 res /\ frames S2 = frames Sc /\
+4096 <= res /\
+(p = 0 -> Permutation (ablocks B ly2 S2) ((res, n) :: ablocks B lyc Sc)) /\
+(p <> 0 -> exists l1 l2, ablocks B lyc Sc = l1 ++ (p, n0) :: l2 /\ Permutation (ablocks B ly2 S2) ((res, n) :: l1 ++ l2)) /\
+(p <> 0 -> forall i, 0 <= i < Z.min n0 n -> aview segs (w_H W2) mem2 (res + i) = aview segs (w_H W) memT (p + i)) /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o)
+  (fun a => (res <= a < res + req_size n) \/ (p <> 0 /\ p <= a < p + req_size n0)) /\
+mo_le MT Sc S2 (mo_malloc MT n + mo_free MT) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ ((res <= a < res + req_size n) \/ (p <> 0 /\ p <= a < p + req_size n0)) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+(* arealloc_cf_rule_c_x keeps its body; arealloc_cf_rule_c_xR also takes the call-boundary premise RO (QMm fit (1)), so at wle the strict rule gives it (arealloc_cf_rule_c_xR_of_x), and the converse does not hold *)
+Lemma arealloc_cf_rule_c_xR_of_x : forall pc, arealloc_cf_rule_c_x pc -> arealloc_cf_rule_c_xR (@wle segs) pc.
+Proof. intros pc H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k p n0 n o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16 _m2 _m3 h17 h18 h19 h20. exact (H W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k p n0 n o raw ch kr h0 h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15 h16 h17 h18 h19 h20). Qed.
+Definition astrndup_cf_rule_c_xR (R : world segs -> world segs -> Prop) (pc : Z) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k x n (o : Z) raw ch (kr : nat),
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+getr regsT 10 = w64 x -> getr regsT 11 = w64 n -> 0 < x -> 0 <= n -> x + n <= 2 ^ 63 ->
+n + 1 < MMAX -> blocks_bytes Sc + (n + 1) <= LIVE_MAX ->
+cnt_ok RP (ablocks B lyc Sc) ->
+(forall i, 0 <= i < n -> exists b, aview segs (w_H W) memT (x + i) = Some b /\ b <> 0) ->
+(forall a, x <= a < x + n -> ~ (sp0 + o - ASTACK <= a < sp0 + o)) ->
+amem_range x n -> range_addressable (aview segs (w_H W) memT) SHADOW_OFF x n -> (0 < n -> shadow_hull_vis (aview segs (w_H W) memT) x n) ->
+(exists p m, In (p, m) (ablocks B lyc Sc) /\ p <= x /\ x + n <= p + req_size m) ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+ly_bot lyc + STRNDUP_FRAME_CF_x + MALLOC_BODY_FRAME_CF_x < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) -> getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+frame0_ok lyc regsT = true ->
+In (raZ regsT :: spine ch) CTX ->
+rp_RM RP Sc (1 + kr) ->
+mo_ok MT Sc (mo_malloc MT (n + 1)) ->
+SRrG segs R W (mkCfg (mkst regsT (Z_to_bv 64 pc) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 (res : Z),
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+(ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 res /\ frames S2 = frames Sc /\
+4096 <= res /\ ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n + 1)] /\
+(forall i, 0 <= i < n -> aview segs (w_H W2) mem2 (res + i) = aview segs (w_H W) memT (x + i)) /\
+aview segs (w_H W2) mem2 (res + n) = Some 0 /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun a => res <= a < res + req_size (n + 1)) /\
+mo_le MT Sc S2 (mo_malloc MT (n + 1)) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ (res <= a < res + req_size (n + 1)) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+Definition astrndup_cf_rule_c_x (pc : Z) : Prop :=
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k x n (o : Z) raw ch (kr : nat),
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+getr regsT 10 = w64 x -> getr regsT 11 = w64 n -> 0 < x -> 0 <= n -> x + n <= 2 ^ 63 ->
+n + 1 < MMAX -> blocks_bytes Sc + (n + 1) <= LIVE_MAX ->
+cnt_ok RP (ablocks B lyc Sc) ->
+(forall i, 0 <= i < n -> exists b, aview segs (w_H W) memT (x + i) = Some b /\ b <> 0) ->
+(forall a, x <= a < x + n -> ~ (sp0 + o - ASTACK <= a < sp0 + o)) ->
+amem_range x n -> range_addressable (aview segs (w_H W) memT) SHADOW_OFF x n -> (0 < n -> shadow_hull_vis (aview segs (w_H W) memT) x n) ->
+(exists p m, In (p, m) (ablocks B lyc Sc) /\ p <= x /\ x + n <= p + req_size m) ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ASTACK - o <= STK ->
+ly_bot lyc + ACALL_PREFIX < spZ regsT ->
+ly_bot lyc + STRNDUP_FRAME_CF_x + MALLOC_BODY_FRAME_CF_x < spZ regsT ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) -> getr regsT 1 = raw -> YK0s.ret_ok raw ->
+chain_pre lyc (aview segs (w_H W) memT) regsT ch ->
+frame0_ok lyc regsT = true ->
+In (raZ regsT :: spine ch) CTX ->
+rp_RM RP Sc (1 + kr) ->
+mo_ok MT Sc (mo_malloc MT (n + 1)) ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 pc) memT (seg_rom segs)) mdc)
+(fun W2 c2 => exists ly2 S2 Hp2 regs2 mem2 md2 (res : Z),
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+AJ STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 (k + 1) /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 res /\ frames S2 = frames Sc /\
+4096 <= res /\ ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n + 1)] /\
+(forall i, 0 <= i < n -> aview segs (w_H W2) mem2 (res + i) = aview segs (w_H W) memT (x + i)) /\
+aview segs (w_H W2) mem2 (res + n) = Some 0 /\
+acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun a => res <= a < res + req_size (n + 1)) /\
+mo_le MT Sc S2 (mo_malloc MT (n + 1)) /\
+rp_RM RP S2 kr /\
+(forall i, 0 <= i < 4 -> aview segs (w_H W2) mem2 (as_errno B + i) = aview segs (w_H W) memT (as_errno B + i)) /\
+(forall a, in_img segs a -> ~ aowned B lyc Sc a -> ~ aowned B ly2 S2 a -> ~ (as_errno B <= a < as_errno B + 4) ->
+ ~ (res <= a < res + req_size (n + 1)) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
+(* astrndup_cf_rule_c_x keeps its body, for the proofs that unfold it; astrndup_cf_rule_c_x_wle checks that it is astrndup_cf_rule_c_xR at wle *)
+Lemma astrndup_cf_rule_c_x_wle : astrndup_cf_rule_c_x = astrndup_cf_rule_c_xR (@wle segs). Proof. reflexivity. Qed.
+Lemma amalloc_cf_rule_c_weak_xR {R : world segs -> world segs -> Prop} : (amalloc_cf_rule_xR R) -> (amalloc_cf_rule_c_xR R).
+Proof. unfold amalloc_cf_rule_xR, amalloc_cf_rule_c_xR. intros H. intros. eapply H; eassumption. Qed.
+Lemma amalloc_cf_rule_c_weak_x : amalloc_cf_rule_x -> amalloc_cf_rule_c_x.
+Proof. unfold amalloc_cf_rule_x, amalloc_cf_rule_c_x. intros H. intros. eapply H; eassumption. Qed.
+Lemma afree_cf_rule_c_weak_xR {R : world segs -> world segs -> Prop} : (afree_cf_rule_xR R) -> (afree_cf_rule_c_xR R).
+Proof. unfold afree_cf_rule_xR, afree_cf_rule_c_xR. intros H. intros. eapply H; eassumption. Qed.
+Lemma afree_cf_rule_c_weak_x : afree_cf_rule_x -> afree_cf_rule_c_x.
+Proof. unfold afree_cf_rule_x, afree_cf_rule_c_x. intros H. intros. eapply H; eassumption. Qed.
+Lemma afree_null_cf_rule_c_weak_xR {R : world segs -> world segs -> Prop} : (afree_null_cf_rule_xR R) -> (afree_null_cf_rule_c_xR R).
+Proof. unfold afree_null_cf_rule_xR, afree_null_cf_rule_c_xR. intros H. intros. eapply H; eassumption. Qed.
+Lemma afree_null_cf_rule_c_weak_x : afree_null_cf_rule_x -> afree_null_cf_rule_c_x.
+Proof. unfold afree_null_cf_rule_x, afree_null_cf_rule_c_x. intros H. intros. eapply H; eassumption. Qed.
+Lemma arealloc_cf_rule_c_weak_xR {R : world segs -> world segs -> Prop} : forall pc, (arealloc_cf_rule_xR R) pc -> (arealloc_cf_rule_c_xR R) pc.
+Proof. unfold arealloc_cf_rule_xR, arealloc_cf_rule_c_xR. intros pc H. intros. eapply H; eassumption. Qed.
+Lemma arealloc_cf_rule_c_weak_x : forall pc, arealloc_cf_rule_x pc -> arealloc_cf_rule_c_x pc.
+Proof. unfold arealloc_cf_rule_x, arealloc_cf_rule_c_x. intros pc H. intros. eapply H; eassumption. Qed.
+Lemma astrndup_cf_rule_c_weak_xR {R : world segs -> world segs -> Prop} : forall pc, (astrndup_cf_rule_xR R) pc -> (astrndup_cf_rule_c_xR R) pc.
+Proof. unfold astrndup_cf_rule_xR, astrndup_cf_rule_c_xR. intros pc H. intros. eapply H; eassumption. Qed.
+Lemma astrndup_cf_rule_c_weak_x : forall pc, astrndup_cf_rule_x pc -> astrndup_cf_rule_c_x pc.
+Proof. exact (@astrndup_cf_rule_c_weak_xR (@wle segs)). Qed.
+End hc.
+End h.
+
+(* THE BRIDGES. At ARx := cgif's AR with Hp ignored (ARi) and PST := [], every generic definition of this file is
+   equivalent to W_journal.v's AR one, through YCe5x.ajournal_x_YCbq. *)
+Section br.
+Variable segs : list Segment.
+Variable B : asyms.
+Definition ARi : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop :=
+fun ly S (_ : list Z) W mem md => AR segs B ly S W mem md.
+Lemma ajournal_g_x_AR : forall G STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+ajournal_g_x segs B [] ARi G STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k <->
+ajournal_g segs B G STK sp0 FP ly S W mem md own ly' S' W' mem' md' k.
+Proof.
+intros G STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k. unfold ajournal_g_x, ajournal_g, ARi. split.
+- intros (memS & HJ & Hag). exists memS. split; [|exact Hag]. exact (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ).
+- intros (memS & HJ & Hag). exists memS. split; [|exact Hag]. exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ).
+Qed.
+Lemma ajournal_gx_x_AR : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+ajournal_gx_x segs B [] ARi G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k <->
+ajournal_gx segs B G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k.
+Proof.
+intros G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k. unfold ajournal_gx_x, ajournal_gx. split.
+- intros (H0 & H1 & HJ & Hout). split; [exact H0|]. split; [exact H1|]. split; [|exact Hout].
+  exact (proj1 (ajournal_g_x_AR _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ).
+- intros (H0 & H1 & HJ & Hout). split; [exact H0|]. split; [exact H1|]. split; [|exact Hout].
+  exact (proj2 (ajournal_g_x_AR G (STK + XO) (sp0 + XO) FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k) HJ).
+Qed.
+(* RULE BRIDGES: an AR rule hypothesis of W_journal.v gives its generic twin at ARi, PST := [], so a walk converted to
+   ARx can be re-instantiated at AR from the AR walk's own hypotheses (the old rules, and W2's caller-context _c
+   rules, W_journal.v Section hc). The post's ghost list is [] (ARi ignores it). *)
+Lemma amalloc_cf_rule_x_of_AR : forall MT MMAX, amalloc_cf_rule segs B MT MMAX -> amalloc_cf_rule_x segs B [] ARi MT MMAX RP_AR.
+Proof.
+intros MT MMAX H. unfold amalloc_cf_rule_x. intros * HJ. unfold ARi in HJ.
+apply (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & res & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2, res. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ2).
+Qed.
+Lemma amalloc_cf_rule_c_x_of_AR : forall MT MMAX CTX, amalloc_cf_rule_c segs B MT MMAX CTX -> amalloc_cf_rule_c_x segs B [] ARi MT MMAX RP_AR CTX.
+Proof.
+intros MT MMAX CTX H. unfold amalloc_cf_rule_c_x. intros * HJ. unfold ARi in HJ.
+apply (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & res & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2, res. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ2).
+Qed.
+Lemma afree_cf_rule_x_of_AR : forall MT, afree_cf_rule segs B MT -> afree_cf_rule_x segs B [] ARi MT RP_AR.
+Proof.
+intros MT H. unfold afree_cf_rule_x. intros * HJ. unfold ARi in HJ.
+apply (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ2).
+Qed.
+Lemma afree_cf_rule_c_x_of_AR : forall MT CTX, afree_cf_rule_c segs B MT CTX -> afree_cf_rule_c_x segs B [] ARi MT RP_AR CTX.
+Proof.
+intros MT CTX H. unfold afree_cf_rule_c_x. intros * HJ. unfold ARi in HJ.
+apply (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ2).
+Qed.
+Lemma afree_null_cf_rule_x_of_AR : forall MT, afree_null_cf_rule segs B MT -> afree_null_cf_rule_x segs B [] ARi MT RP_AR.
+Proof.
+intros MT H. unfold afree_null_cf_rule_x. intros * HJ. unfold ARi in HJ.
+apply (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ2).
+Qed.
+Lemma afree_null_cf_rule_c_x_of_AR : forall MT CTX, afree_null_cf_rule_c segs B MT CTX -> afree_null_cf_rule_c_x segs B [] ARi MT RP_AR CTX.
+Proof.
+intros MT CTX H. unfold afree_null_cf_rule_c_x. intros * HJ. unfold ARi in HJ.
+apply (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ2).
+Qed.
+Lemma arealloc_cf_rule_x_of_AR : forall MT MMAX pc, arealloc_cf_rule segs B MT MMAX pc -> arealloc_cf_rule_x segs B [] ARi MT MMAX RP_AR pc.
+Proof.
+intros MT MMAX pc H. unfold arealloc_cf_rule_x. intros * HJ. unfold ARi in HJ.
+apply (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & res & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2, res. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ2).
+Qed.
+Lemma arealloc_cf_rule_c_x_of_AR : forall MT MMAX CTX pc, arealloc_cf_rule_c segs B MT MMAX CTX pc -> arealloc_cf_rule_c_x segs B [] ARi MT MMAX RP_AR CTX pc.
+Proof.
+intros MT MMAX CTX pc H. unfold arealloc_cf_rule_c_x. intros * HJ. unfold ARi in HJ.
+apply (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & res & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2, res. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ2).
+Qed.
+Lemma astrndup_cf_rule_x_of_AR : forall MT MMAX pc, astrndup_cf_rule segs B MT MMAX pc -> astrndup_cf_rule_x segs B [] ARi MT MMAX RP_AR pc.
+Proof.
+intros MT MMAX pc H. unfold astrndup_cf_rule_x. intros * HJ. unfold ARi in HJ.
+apply (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & res & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2, res. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ2).
+Qed.
+Lemma astrndup_cf_rule_c_x_of_AR : forall MT MMAX CTX pc, astrndup_cf_rule_c segs B MT MMAX CTX pc -> astrndup_cf_rule_c_x segs B [] ARi MT MMAX RP_AR CTX pc.
+Proof.
+intros MT MMAX CTX pc H. unfold astrndup_cf_rule_c_x. intros * HJ. unfold ARi in HJ.
+apply (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & res & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2, res. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ2).
+Qed.
+(* ---- THE AR INSTANCE FOR WALKS WITH HP0: ARi0 := AR /\ Hp = [] (a Theorem Labs lane's HP0 ruling). The derivation bridges
+   below are one-directional compositions of the iff bridges at ARi above, which stay. ---- *)
+Definition ARi0 : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop :=
+fun ly S (Hp : list Z) W mem md => AR segs B ly S W mem md /\ Hp = [].
+Lemma ARi0_hp0 : forall ly S Hp W mem md, ARi0 ly S Hp W mem md -> Hp = [].
+Proof. intros ly S Hp W mem md H. exact (proj2 H). Qed.
+(* any AR_laws_x survives conjoining a predicate on the ghost list (YGcallcf.v:255's proof, with P on Hp) *)
+Lemma AR_laws_x_and_hp : forall {hl : Z} (AR0 : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop)
+(P : list Z -> Prop),
+AR_laws_x segs B AR0 hl -> AR_laws_x segs B (fun ly S Hp W mem md => AR0 ly S Hp W mem md /\ P Hp) hl.
+Proof.
+intros hl AR0 P L. constructor.
+- intros ly S Hp W mem md p n [H _]. exact (alx_blocks _ _ _ L ly S Hp W mem md p n H).
+- intros ly S Hp W mem md mem' md' [H HP] H1 H2 H3 H4 H5 H6 H7. exact (conj (alx_frame _ _ _ L ly S Hp W mem md mem' md' H H1 H2 H3 H4 H5 H6 H7) HP).
+- intros ly S Hp W mem md cid pos [H _]. exact (alx_frames _ _ _ L ly S Hp W mem md cid pos H).
+- intros ly S Hp W mem md a [H _]. exact (alx_stack _ _ _ L ly S Hp W mem md a H).
+- intros ly S Hp W mem md a [H _]. exact (alx_owned_image _ _ _ L ly S Hp W mem md a H).
+- intros ly S Hp W mem md [H _]. exact (alx_sep _ _ _ L ly S Hp W mem md H).
+- intros ly S Hp W mem md ly' [H _]. exact (alx_layout _ _ _ L ly S Hp W mem md ly' H).
+- intros ly S Hp W mem md a [H _]. exact (alx_client_img _ _ _ L ly S Hp W mem md a H).
+- intros ly S Hp W mem md a [H _]. exact (alx_extra _ _ _ L ly S Hp W mem md a H).
+- intros ly S Hp W mem md [H _]. exact (alx_const _ _ _ L ly S Hp W mem md H).
+- intros ly S Hp W mem md p n [H _]. exact (alx_shadow _ _ _ L ly S Hp W mem md p n H).
+- intros ly S Hp W mem md r [H _]. exact (alx_zshadow _ _ _ L ly S Hp W mem md r H).
+- intros ly S Hp W mem md a [H _]. exact (alx_zshadow_byte _ _ _ L ly S Hp W mem md a H).
+- intros ly S Hp W mem md b n [H _]. exact (alx_hshadow _ _ _ L ly S Hp W mem md b n H).
+- intros ly S Hp W mem md p n a [H _]. exact (alx_blocks_tail _ _ _ L ly S Hp W mem md p n a H).
+- intros ly S Hp W mem md [H _]. exact (alx_const_cells _ _ _ L ly S Hp W mem md H).
+- intros ly S Hp W mem md [H _]. exact (alx_img _ _ _ L ly S Hp W mem md H).
+- intros ly S Hp W mem md [H _]. exact (alx_layout_ok _ _ _ L ly S Hp W mem md H).
+Qed.
+(* LX0: the laws at ARi0 from the laws at ARi (YCbqG.v:1677 AR_laws_x_of_AR builds those) *)
+Lemma AR_laws_x_ARi0 : AR_laws_x segs B ARi 0 -> AR_laws_x segs B ARi0 0.
+Proof. intros L. exact (AR_laws_x_and_hp ARi (fun Hp => Hp = []) L). Qed.
+Lemma ajournal_x_impl : forall (R1 R2 : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop)
+PST STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+(R1 ly' S' Hp' W' mem' md' -> R2 ly' S' Hp' W' mem' md') ->
+ajournal_x segs B PST R1 STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
+ajournal_x segs B PST R2 STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
+Proof. intros R1 R2 PST STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k HR HJ.
+destruct HJ as (H1 & Hr). split; [exact (HR H1) | exact Hr]. Qed.
+Lemma ajournal_x_ARi0_YCbq : forall STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+ajournal_x segs B [] ARi0 STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
+YCbq.ajournal segs B STK sp0 FP ly S W mem md own ly' S' W' mem' md' k.
+Proof.
+intros STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k HJ.
+apply (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK segs B STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k)).
+exact (ajournal_x_impl ARi0 (fun ly S (_ : list Z) W mem md => AR segs B ly S W mem md) []
+  STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k (fun H0 => proj1 H0) HJ).
+Qed.
+Lemma ajournal_x_YCbq_ARi0 : forall STK sp0 FP ly S Hp W mem md own ly' S' W' mem' md' k,
+YCbq.ajournal segs B STK sp0 FP ly S W mem md own ly' S' W' mem' md' k ->
+ajournal_x segs B [] ARi0 STK sp0 FP ly S Hp W mem md own ly' S' [] W' mem' md' k.
+Proof.
+intros STK sp0 FP ly S Hp W mem md own ly' S' W' mem' md' k HJ.
+apply (ajournal_x_impl (fun ly S (_ : list Z) W mem md => AR segs B ly S W mem md) ARi0 []
+  STK sp0 FP ly S Hp W mem md own ly' S' [] W' mem' md' k (fun H0 => conj H0 eq_refl)).
+exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK segs B STK sp0 FP ly S Hp W mem md own ly' S' [] W' mem' md' k) HJ).
+Qed.
+Lemma ajournal_gx_x_ARi0_AR : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
+ajournal_gx_x segs B [] ARi0 G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
+ajournal_gx segs B G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k.
+Proof.
+intros G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k (H0 & H1 & (memS & HJ & Hag) & Hout).
+split; [exact H0|]. split; [exact H1|]. split; [|exact Hout].
+exists memS. split; [|exact Hag]. exact (ajournal_x_ARi0_YCbq _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HJ).
+Qed.
+Lemma ajournal_gx_AR_x_ARi0 : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' W' mem' md' k,
+ajournal_gx segs B G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k ->
+ajournal_gx_x segs B [] ARi0 G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' [] W' mem' md' k.
+Proof.
+intros G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' W' mem' md' k (H0 & H1 & (memS & HJ & Hag) & Hout).
+split; [exact H0|]. split; [exact H1|]. split; [|exact Hout].
+exists memS. split; [|exact Hag]. exact (ajournal_x_YCbq_ARi0 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HJ).
+Qed.
+(* afn_pre at AR gives afn_pre_x at ARi0 with Hp = [] (afn_pre_x is afn_pre's text over ARx) *)
+Lemma afn_pre_x_ARi0_of_AR : forall STK ly S W regs mem md ch,
+afn_pre segs B STK ly S W regs mem md ch -> afn_pre_x segs B ARi0 STK ly S [] W regs mem md ch.
+Proof. intros STK ly S W regs mem md ch (H1 & Hr). split; [split; [exact H1 | reflexivity] | exact Hr]. Qed.
+Lemma afn_pre_x_ARi0_to_AR : forall STK ly S Hp W regs mem md ch,
+afn_pre_x segs B ARi0 STK ly S Hp W regs mem md ch -> afn_pre segs B STK ly S W regs mem md ch.
+Proof. intros STK ly S Hp W regs mem md ch ((H1 & _) & Hr). split; [exact H1 | exact Hr]. Qed.
+(* RULE BRIDGES at ARi0 *)
+Lemma amalloc_cf_rule_x_of_AR0 : forall MT MMAX, amalloc_cf_rule segs B MT MMAX -> amalloc_cf_rule_x segs B [] ARi0 MT MMAX RP_AR.
+Proof.
+intros MT MMAX H. unfold amalloc_cf_rule_x. intros * HJ. apply ajournal_x_ARi0_YCbq in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & res & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2, res. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+apply ajournal_x_YCbq_ARi0. exact HJ2.
+Qed.
+Lemma amalloc_cf_rule_c_x_of_AR0 : forall MT MMAX CTX, amalloc_cf_rule_c segs B MT MMAX CTX -> amalloc_cf_rule_c_x segs B [] ARi0 MT MMAX RP_AR CTX.
+Proof.
+intros MT MMAX CTX H. unfold amalloc_cf_rule_c_x. intros * HJ. apply ajournal_x_ARi0_YCbq in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & res & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2, res. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+apply ajournal_x_YCbq_ARi0. exact HJ2.
+Qed.
+Lemma afree_cf_rule_x_of_AR0 : forall MT, afree_cf_rule segs B MT -> afree_cf_rule_x segs B [] ARi0 MT RP_AR.
+Proof.
+intros MT H. unfold afree_cf_rule_x. intros * HJ. apply ajournal_x_ARi0_YCbq in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+apply ajournal_x_YCbq_ARi0. exact HJ2.
+Qed.
+Lemma afree_cf_rule_c_x_of_AR0 : forall MT CTX, afree_cf_rule_c segs B MT CTX -> afree_cf_rule_c_x segs B [] ARi0 MT RP_AR CTX.
+Proof.
+intros MT CTX H. unfold afree_cf_rule_c_x. intros * HJ. apply ajournal_x_ARi0_YCbq in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+apply ajournal_x_YCbq_ARi0. exact HJ2.
+Qed.
+Lemma afree_null_cf_rule_x_of_AR0 : forall MT, afree_null_cf_rule segs B MT -> afree_null_cf_rule_x segs B [] ARi0 MT RP_AR.
+Proof.
+intros MT H. unfold afree_null_cf_rule_x. intros * HJ. apply ajournal_x_ARi0_YCbq in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+apply ajournal_x_YCbq_ARi0. exact HJ2.
+Qed.
+Lemma afree_null_cf_rule_c_x_of_AR0 : forall MT CTX, afree_null_cf_rule_c segs B MT CTX -> afree_null_cf_rule_c_x segs B [] ARi0 MT RP_AR CTX.
+Proof.
+intros MT CTX H. unfold afree_null_cf_rule_c_x. intros * HJ. apply ajournal_x_ARi0_YCbq in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+apply ajournal_x_YCbq_ARi0. exact HJ2.
+Qed.
+Lemma arealloc_cf_rule_x_of_AR0 : forall MT MMAX pc, arealloc_cf_rule segs B MT MMAX pc -> arealloc_cf_rule_x segs B [] ARi0 MT MMAX RP_AR pc.
+Proof.
+intros MT MMAX pc H. unfold arealloc_cf_rule_x. intros * HJ. apply ajournal_x_ARi0_YCbq in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & res & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2, res. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+apply ajournal_x_YCbq_ARi0. exact HJ2.
+Qed.
+Lemma arealloc_cf_rule_c_x_of_AR0 : forall MT MMAX CTX pc, arealloc_cf_rule_c segs B MT MMAX CTX pc -> arealloc_cf_rule_c_x segs B [] ARi0 MT MMAX RP_AR CTX pc.
+Proof.
+intros MT MMAX CTX pc H. unfold arealloc_cf_rule_c_x. intros * HJ. apply ajournal_x_ARi0_YCbq in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & res & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2, res. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+apply ajournal_x_YCbq_ARi0. exact HJ2.
+Qed.
+Lemma astrndup_cf_rule_x_of_AR0 : forall MT MMAX pc, astrndup_cf_rule segs B MT MMAX pc -> astrndup_cf_rule_x segs B [] ARi0 MT MMAX RP_AR pc.
+Proof.
+intros MT MMAX pc H. unfold astrndup_cf_rule_x. intros * HJ. apply ajournal_x_ARi0_YCbq in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & res & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2, res. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+apply ajournal_x_YCbq_ARi0. exact HJ2.
+Qed.
+Lemma astrndup_cf_rule_c_x_of_AR0 : forall MT MMAX CTX pc, astrndup_cf_rule_c segs B MT MMAX CTX pc -> astrndup_cf_rule_c_x segs B [] ARi0 MT MMAX RP_AR CTX pc.
+Proof.
+intros MT MMAX CTX pc H. unfold astrndup_cf_rule_c_x. intros * HJ. apply ajournal_x_ARi0_YCbq in HJ.
+intros. eapply SRr_mono; [eapply H; eassumption|].
+intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & res & Hc & HJ2 & HR).
+exists ly2, S2, (@nil Z), regs2, mem2, md2, res. split; [exact Hc|]. split; [|clear - HR; pose proof (rp_RM_AR S2 kr) as HRM; tauto].
+apply ajournal_x_YCbq_ARi0. exact HJ2.
+Qed.
+End br.
+End a.

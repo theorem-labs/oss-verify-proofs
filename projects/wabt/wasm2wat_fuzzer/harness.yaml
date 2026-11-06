@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wabt
 harness: wasm2wat_fuzzer
-rocq: OssFuzzTheorems.wabt.wasm2wat_fuzzer
+rocq: OSSVerify.wabt.wasm2wat_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

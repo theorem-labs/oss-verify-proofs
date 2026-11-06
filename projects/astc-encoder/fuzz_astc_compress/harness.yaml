@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: astc-encoder
 harness: fuzz_astc_compress
-rocq: OssFuzzTheorems.astc_encoder.fuzz_astc_compress
+rocq: OSSVerify.astc_encoder.fuzz_astc_compress
 origin: upstream
 summary: Picks a 2D block size, profile, quality (fastest..medium) and flags; compresses exactly one block
   of fuzzer RGBA8 pixels into a 16-byte buffer. astcenc_compress_image's status is stored and never read.

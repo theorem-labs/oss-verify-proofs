@@ -1,0 +1,4 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs: generated for reac-repacer/fuzz_uci's asan-ubsan image by atable.py (frozen 42e18a7eef50, start-up tool set of commit dbb5a97ad14) from fuzz_uci.asan-ubsan and its unstripped twin: image fields from the program headers, code fields as symbol + offset, TFIB_TEXT_N from the .text section size, stops_more the image's 13 self-loops; cgif_file_fuzzer's YB12.v at commit 25e3d17bdb50 gives the text only. *)

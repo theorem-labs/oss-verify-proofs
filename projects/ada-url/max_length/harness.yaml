@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ada-url
 harness: max_length
-rocq: OssFuzzTheorems.ada_url.max_length
+rocq: OSSVerify.ada_url.max_length
 origin: upstream
 summary: 'Checks one property, an invariant: With ada::set_max_input_length(512), no parse, base-relative
   parse, fuzz-chosen setter sequence (up to 16 steps) or percent-encoding-expanding setter can yield get_href_size()

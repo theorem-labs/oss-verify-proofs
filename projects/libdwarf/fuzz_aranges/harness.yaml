@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_aranges
-rocq: OssFuzzTheorems.libdwarf.fuzz_aranges
+rocq: OSSVerify.libdwarf.fuzz_aranges
 origin: upstream
 summary: dwarf_init_b, then dwarf_get_aranges and dwarf_get_arange_info_b for every arange; results ignored.
 entry: LLVMFuzzerTestOneInput

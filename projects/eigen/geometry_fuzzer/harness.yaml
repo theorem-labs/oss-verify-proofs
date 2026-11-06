@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: eigen
 harness: geometry_fuzzer
-rocq: OssFuzzTheorems.eigen.geometry_fuzzer
+rocq: OSSVerify.eigen.geometry_fuzzer
 origin: oss-fuzz
 summary: Quaternion slerp/inverse/conjugate/products, AngleAxis, affine Transform translate/rotate/scale/inverse,
   Hyperplane and ParametrizedLine distance/projection on fuzz floats; every result cast to void.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: irssi
 harness: theme-load-fuzz
-rocq: OssFuzzTheorems.irssi.theme_load_fuzz
+rocq: OSSVerify.irssi.theme_load_fuzz
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

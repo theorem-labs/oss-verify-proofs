@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: miniz
 harness: zip_fuzzer
-rocq: OssFuzzTheorems.miniz.zip_fuzzer
+rocq: OSSVerify.miniz.zip_fuzzer
 origin: upstream
 summary: 'mz_zip_reader_init_mem on the input, then for each non-directory, non-encrypted stored/deflated
   entry: validate headers, get filename, file_stat, extract_file_to_mem into a 256 KiB buffer; every return

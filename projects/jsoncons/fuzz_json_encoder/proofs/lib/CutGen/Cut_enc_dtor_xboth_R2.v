@@ -1,0 +1,21 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+From Corelib Require Import PrimString.
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.jsoncons.fuzz_json_encoder.images Require Import AsanUbsan.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import PropExec AxSymExec3 AxSymExec3B AxSymExec3Sound AsanPlanCore LibSym SegRun SegPlan SegPlanAuto Pm5PlanKit.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCert CutOps CutHeap CutAuto CutLib Pm5CutKit.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutHeap2 CutAutoX CutCertA CutHeapA CutAutoXA.
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Set Printing Width 1000000. Set Printing Depth 1000000.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCodec.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutGen Require Import Cut_enc_dtor_xboth_T Cut_enc_dtor_xboth_R0 Cut_enc_dtor_xboth_R1.
+Definition dict_Cut_enc_dtor_xboth_R2 : CCD.pt := CCD.mk_table 1411%positive "((2 0(1 2)(0 -24))(0 2147450880)(2 6#1(0 3))(3 1433600 1466368)((0 0)1497016)(0#5 8#2)(5(0 89)1 4611686018427387904)((1 2)-80)(0#8 8#1)((1 2)-72)(0 769420)(0#10 8#11)(5(0 90)1 4611686018427387904)((1 10)272)(0#14 8(1 32))((1 10)48)(0#16 1(0 2))((1 10)96)(0#18 1(0 0))((1 10)120)(0#20 1(0 0))((1 10)144)(0#22 1(0 0))((1 10)168)(0#24 1(0 0))((1 10)192)(0#26 1(0 0))((1 10)216)(0#28 1(0 0))((1 10)264)(0#30 8(1 32))((1 10)280)(2 0(1 32)(1 34))(0#32 8#33)(5(1 32)4096 140737479966720)(4(1 32)16)(5(1 34)32 32768)(5(1 33)0 1024)(4 0(0 32)(1 33))(5#39 0 32768)(4 0(0 -32)(1 33))(2 0#41(1 34))(5#42 0 32768)(2 9(1 34)(0 31))(5#44 0 0)((1 2)-4224)(0 4224)((1 32)0)(7#46#47#48(1 34))((1 10)0)(7#50(0 408)#48(1 34))((0 0)2147446784)(0 17592186048512)(7#52#53#48(1 34))(2 6(1 10)(0 3))(#55 2147450880)(2 6(1 32)(0 3))(#57 2147450880)(2 0(1 34)(0 7))(2 6#59(0 3))(7#56(0 51)#58#60)(#3 2147450880)(7#62(0 1)#58#60)(7#50(0 408)#58#60)(7#46#47#58#60)(9#50(0 272))(9#32(0 128))(6#50(0 408))(5(1 10)7094272 140737479966312)(4(1 10)8)(1#56(0 51))(7#52#53#50(0 408))(6#46#47)(5(1 2)140735332487296 140737488355328)(4(1 2)16)(1#62(0 1))(7#46#47#50(0 408))(7#56(0 51)#62(0 1))(0 4136)(9#46#79)((1 2)-32)(9#81(0 8))((1 2)-40)(0 731052)(0#83 8#84)((1 2)-24)(2 0(1 10)(0 264))(0#86 8#87)((1 2)-8)(0#89 8(1 1))((1 2)-16)(0#91 8(1 8))((1 2)-48)(0#93 8(1 10))((1 2)-56)(0#95 8(1 9))((1 2)-64)(0#97 8(1 18))(5(0 88)1 4611686018427387904))"%pstring.
+(* [comment removed for export] *)
+Definition t5 : CC.cutpoint := CCD.dec_cp_t dict_Cut_enc_dtor_xboth_R2 411%positive "(769864((1 0)(1 58)(2 0(1 2)(0 -80))(1 3)(1 4)(1 59)(1 60)(1 61)#1#2(1 62)(1 63)(1 64)(1 65)(1 66)(1 67)(1 68)(1 69)(2 0#3#2)(1 19)(1 20)(1 21)(1 22)(1 23)(1 24)(1 25)(1 26)(1 27)(1 70)(1 71)(1 72)(1 73))(#4#6#7#9#12#4#6#13#15#4#6#17#19#21#23#25#27#29#31#34#35#36#37#38#40#43#45#49#51#54#61#63#64#65#66#67#68#69#70#71#72#73#74#75#76#77#78#80#82#85#88#90#92#94#96#98)74(((1 2)-4224#47)((1 10)0(0 408)))()(0 88))"%pstring.
+Definition BL5 : CA.blocks := Eval vm_compute in CCD.dec_bl_t dict_Cut_enc_dtor_xboth_R2 17%positive "(((1 32)(1 34)))"%pstring.
+Definition hints5 : list (nat * CC.subst) := hints4.
+Definition o5 : CA.pout := CCD.dec_pout_t dict_Cut_enc_dtor_xboth_R2 589%positive "((0(0(731020 731020 769660 769676 731088 542968 1046256 1402040 1403068))(4#99(1 0)))(((1046256((1#84)(2(2 0(1 2)(0 -32)))(3(1 3))(4(1 4))(5(1 59))(6(1 60))(7(1 61))(8(1 10))(9(1 9))(10(1 32))(11(1 34))(12(0 0))(13(1 65))(14(1 66))(15(1 67))(16(1 68))(17(1 69))(18(1 18))(19(1 19))(20(1 20))(21(1 21))(22(1 22))(23(1 23))(24(1 24))(25(1 25))(26(1 26))(27(1 27))(28(1 70))(29(1 71))(30(1 72))(31(1 73)))()(#99#4#6#7#9#12#4#6#13#15#4#6#17#19#21#23#25#27#29#31#34#35#36#37#38#40#43#45#49#51#54#61#63#64#65#66#67#68#69#70#71#72#73#74#75#76#77#78#80#82#85#88#90#92#94#96#98))(1 1046256)))()())"%pstring.

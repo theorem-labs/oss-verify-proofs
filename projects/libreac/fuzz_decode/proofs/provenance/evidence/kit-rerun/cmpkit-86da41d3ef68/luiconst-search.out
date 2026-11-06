@@ -1,0 +1,40 @@
+# every lui-const in the cmpkit 86da41d3ef68 outputs of the A, B and settled records
+# cmpkit 86da41d3ef68 (tools/cmpkit/86da41d3ef68 at the tools commit 98e50c029045): 9f61b4cee422 ambiscan.py, 1480ca2faea0 bytecmp-1480ca2faea0.py, a98d2b3e8857 closure_strict3.py, 4d70e90bc1fa drvcmp.py, 8b0ea3862423 jtcheck.py, 9ae61e4a0e01 luiscan.py, 926a9a88afcd paircl.py, e6883477399d repin_check.py, 65688e94214a strictcmp3.py
+# python 3.12.3, pyelftools 0.33, capstone 5.0.7; provenance/evidence/kit-rerun/cmpkit-86da41d3ef68/run.sh cf1234f61476, diffcheck.py 8264f205f593, window.py a2b1e03e11ea; twin proofs: kit-rerun/cmpkit-86da41d3ef68/twins.log
+## strictcmp3 prints a lui target the dataflow settles as a constant as `lui-const (dataflow)`; luiscan counts them in its luiconst column
+## grep -c -F lui-const, per file
+$ grep -c -F lui-const kit-rerun/A/kit-rerun-4bbd3a74be89.scans-86da41d3ef68.log kit-rerun/B/fncmp.cmpkit-4bbd3a74be89.scans-86da41d3ef68.log kit-rerun/cmpkit-4bbd3a74be89/settled.scans-86da41d3ef68.log kit-rerun/A/kit-rerun-4bbd3a74be89/out/strictcmp3-cmp-86da41d3ef68.out kit-rerun/A/kit-rerun-4bbd3a74be89/out/luiscan-86da41d3ef68.out kit-rerun/A/kit-rerun-4bbd3a74be89/out/luitrace-pair-86da41d3ef68.out kit-rerun/B/luitrace-pair-TE-86da41d3ef68.out kit-rerun/B/luitrace-pair-SE-86da41d3ef68.out
+kit-rerun/A/kit-rerun-4bbd3a74be89.scans-86da41d3ef68.log:0
+kit-rerun/B/fncmp.cmpkit-4bbd3a74be89.scans-86da41d3ef68.log:0
+kit-rerun/cmpkit-4bbd3a74be89/settled.scans-86da41d3ef68.log:0
+kit-rerun/A/kit-rerun-4bbd3a74be89/out/strictcmp3-cmp-86da41d3ef68.out:0
+kit-rerun/A/kit-rerun-4bbd3a74be89/out/luiscan-86da41d3ef68.out:0
+kit-rerun/A/kit-rerun-4bbd3a74be89/out/luitrace-pair-86da41d3ef68.out:0
+kit-rerun/B/luitrace-pair-TE-86da41d3ef68.out:0
+kit-rerun/B/luitrace-pair-SE-86da41d3ef68.out:0
+(exit 1)
+## luiscan TOTAL lines (luiconst column)
+$ grep -h ^TOTAL kit-rerun/A/kit-rerun-4bbd3a74be89.scans-86da41d3ef68.log kit-rerun/B/fncmp.cmpkit-4bbd3a74be89.scans-86da41d3ef68.log kit-rerun/cmpkit-4bbd3a74be89/settled.scans-86da41d3ef68.log kit-rerun/A/kit-rerun-4bbd3a74be89/out/luiscan-86da41d3ef68.out
+TOTAL	cgif_file_fuzzer.asan-ubsan	functions 7	with-lui 3	with-exposure 0	luis 18	insec 0	inload 4	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	fuzz_decode.asan	functions 7	with-lui 3	with-exposure 0	luis 18	insec 0	inload 4	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	all	functions 14	with-lui 6	with-exposure 0	luis 36	insec 0	inload 8	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	files read 15	by-name compares seen (distinct names) 7	ambiguous hits 0	distinct ambiguous names 0	lines with a function token 66	resolved items NAME{FILE}/0xADDR (distinct) 0	files skipped 0
+TOTAL	files read 42	by-name compares seen (distinct names) 11	ambiguous hits 0	distinct ambiguous names 0	lines with a function token 120	resolved items NAME{FILE}/0xADDR (distinct) 0	files skipped 0
+TOTAL	keys 7	changed or on one side 0
+TOTAL	cgif_file_fuzzer.asan-ubsan.symtwin	functions 8	with-lui 4	with-exposure 0	luis 19	insec 0	inload 4	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	cgif_file_fuzzer.asan-ubsan	functions 8	with-lui 4	with-exposure 0	luis 19	insec 0	inload 4	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	fuzz_decode.asan-ubsan	functions 8	with-lui 4	with-exposure 0	luis 19	insec 0	inload 4	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	all	functions 24	with-lui 12	with-exposure 0	luis 57	insec 0	inload 12	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	files read 1	by-name compares seen (distinct names) 8	ambiguous hits 0	distinct ambiguous names 0	lines with a function token 122	resolved items NAME{FILE}/0xADDR (distinct) 0	files skipped 0
+TOTAL	files read 1	by-name compares seen (distinct names) 8	ambiguous hits 0	distinct ambiguous names 0	lines with a function token 122	resolved items NAME{FILE}/0xADDR (distinct) 0	files skipped 0
+TOTAL	keys 16	changed or on one side 0
+TOTAL	cgif_file_fuzzer.asan-ubsan.symtwin	functions 2	with-lui 1	with-exposure 0	luis 12	insec 0	inload 3	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	cgif_file_fuzzer.asan-ubsan	functions 2	with-lui 1	with-exposure 0	luis 12	insec 0	inload 3	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	fuzz_decode.asan-ubsan	functions 2	with-lui 1	with-exposure 0	luis 12	insec 0	inload 3	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	all	functions 6	with-lui 3	with-exposure 0	luis 36	insec 0	inload 9	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	files read 1	by-name compares seen (distinct names) 0	ambiguous hits 0	distinct ambiguous names 0	lines with a function token 0	resolved items NAME{FILE}/0xADDR (distinct) 0	files skipped 0
+TOTAL	files read 1	by-name compares seen (distinct names) 0	ambiguous hits 0	distinct ambiguous names 0	lines with a function token 0	resolved items NAME{FILE}/0xADDR (distinct) 0	files skipped 0
+TOTAL	settled keys 3	changed or missing 0
+TOTAL	cgif_file_fuzzer.asan-ubsan	functions 7	with-lui 3	with-exposure 0	luis 18	insec 0	inload 4	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	fuzz_decode.asan	functions 7	with-lui 3	with-exposure 0	luis 18	insec 0	inload 4	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	all	functions 14	with-lui 6	with-exposure 0	luis 36	insec 0	inload 8	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0

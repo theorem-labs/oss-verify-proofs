@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nettle
 harness: fuzz_dsa_sha256_keypair_from_sexp
-rocq: OssFuzzTheorems.nettle.fuzz_dsa_sha256_keypair_from_sexp
+rocq: OSSVerify.nettle.fuzz_dsa_sha256_keypair_from_sexp
 origin: oss-fuzz
 summary: dsa_sha256_keypair_from_sexp(&params, pub, priv, 0, size, data); result discarded.
 entry: LLVMFuzzerTestOneInput

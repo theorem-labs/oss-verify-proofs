@@ -1,0 +1,25 @@
+--- A/AD1q.v
++++ A/AD1q.v
+@@ -5,3 +5,4 @@
++(* Modified by Theorem Labs: the lib_shape instance is fuzz_uci's own plain-side instance checksum_shape (lib/ZTraceSpec.v: LIBK = K (LL 0 fs []), lib_delta = id, lib_room with sb_cap = CAPMAX; fuzz_uci returns 0 on every path), in place of fuzz_grant's grant_shape; this file uses the instance only through the class. *)
+ From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith NArith List Lia Bool String.
+ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
+@@ -14,7 +15,7 @@
+ From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.A Require Import ACfn.
+ From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import YO05 YO09 YO06 YO01.
+ From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import YI16.
+-From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.A Require Import GrantShape.
++From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib Require Import ZTraceSpec.
+ From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import YG0f YG0d.
+ From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.A Require Import AB1v AF0m ACeg AD1v AD1w AD1x AD1i.
+ From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import YC5d.
+@@ -25,7 +26,7 @@
+ Import AX2. Import AX2S. Import APG. Import APSG.
+ Open Scope Z_scope.
+ #[local] Existing Instance YK11.fx0.
+-#[local] Existing Instance grant_shape.
++#[local] Existing Instance checksum_shape.
+ Section b. Context {rc : YM05.RunCeil}.
+ Section d.
+ Variable B : asyms.

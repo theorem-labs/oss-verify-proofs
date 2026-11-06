@@ -1,0 +1,12 @@
+--- A/AD1p.v
++++ A/AD1p.v
+@@ -47,7 +47,8 @@
+ Variables (MT : ameter_ops) (XM_LIB XN_LIB : Z -> Z) (RLO RHI : Z).
+ Hypothesis MT_FREE : forall S m, mo_ok MT S m.
+ Hypothesis RO_IN : forall a, RLO <= a < RHI -> in_ro_tfa a.
+-Hypothesis LIBC : tfib_lib_contract_x B MT XM_LIB XN_LIB RLO RHI.
++(* the program contract at the harness globals' hull (A/AD2f.v DRV_G), as A/AD1m.v states it *)
++Hypothesis LIBC : tfib_lib_contract_x AD2f.DRV_G B MT XM_LIB XN_LIB RLO RHI.
+ Let MSITE : malloc_site_tfa B := tfib_malloc_site B ML AMALLOC.
+ Let RCHK : read_check_tfa B := tfib_read_check B ARDCHK.
+ Let MCPY : memcpy_site_tfa B := tfib_memcpy_site B AICPY.

@@ -1,0 +1,20 @@
+model_tags.py: unit libdiginet/fuzz_transport | labels read from proofs/libdiginet/fuzz_transport/lib/Reusable/YG00.v | record line: labels are tags 1..14, not addresses
+map: 201364->1 201376->2 202260->3 209280->4 210276->5 212388->6 213516->7 219184->8 221048->9 222820->10 391236->11 449860->12 460508->13 469488->14
+before (code occurrences, per tag): 1:8 2:8 3:3 4:2 5:1 6:1 7:2 8:2 9:2 10:1 11:2 12:6 13:2 14:2 | total 42 in 12 files
+  proofs/libdiginet/fuzz_transport/lib/A/AFeu.v: 1 (R3 1)
+  proofs/libdiginet/fuzz_transport/lib/A/AFft.v: 1 (R1 1)
+  proofs/libdiginet/fuzz_transport/lib/A/AFfy.v: 4 (R1 2, R3 2)
+  proofs/libdiginet/fuzz_transport/lib/A/AFfz.v: 2 (R1 1, R3 1)
+  proofs/libdiginet/fuzz_transport/lib/A/AFg2.v: 2 (R1 1, R3 1)
+  proofs/libdiginet/fuzz_transport/lib/A/AFi3.v: 2 (R1 1, R3 1)
+  proofs/libdiginet/fuzz_transport/lib/A/AFk0.v: 7 (R1 3, R3 4)
+  proofs/libdiginet/fuzz_transport/lib/Reusable/YD2n.v: 1 (R1 1)
+  proofs/libdiginet/fuzz_transport/lib/Reusable/YG00.v: 15 (R1 6, R3 9)
+  proofs/libdiginet/fuzz_transport/lib/Reusable/YG03.v: 4 (R1 2, R3 2)
+  proofs/libdiginet/fuzz_transport/lib/Reusable/YG06.v: 1 (R1 1)
+  proofs/libdiginet/fuzz_transport/lib/Reusable/YG0k.v: 2 (R1 1, R3 1)
+comment occurrences (not rewritten; listed for the record; cgif trees have none): 0
+zero-remaining command: git grep -n -w -E '201364|201376|202260|209280|210276|212388|213516|219184|221048|222820|391236|449860|460508|469488' -- ':(glob)proofs/libdiginet/fuzz_transport/**/*.v' ':(glob,exclude)proofs/libdiginet/fuzz_transport/**/provenance/**'
+census: no row for this unit; the counts above are its record
+after: 0 code occurrences of the 14 values; 0 word-boundary occurrences in all (= the 0 comment occurrences listed above)
+written: 42 occurrences in 12 files

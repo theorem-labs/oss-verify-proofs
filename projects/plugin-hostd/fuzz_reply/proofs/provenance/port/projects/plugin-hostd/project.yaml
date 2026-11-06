@@ -1,0 +1,12 @@
+# plugin-hostd: the daemon that hosts CLAP and LV2 plugins out of process, each in a worker of its own, behind
+# mod-host's command protocol: its command parser and dispatcher, and the relay of its workers' feedback. Pinned to a
+# commit of FreeMixer/plugin-hostd's fuzz records (FreeMixer/plugin-hostd#159, #166).
+repo: https://github.com/FreeMixer/plugin-hostd#65cd2b02e8306f7e5f98fa0adfd0b3f8c1df6a5c
+primary_contact: linuxnow@gmail.com
+homepage: https://github.com/FreeMixer/plugin-hostd
+language: c
+sanitizers: [address, undefined]
+fuzz_targets:
+  - fuzz_command
+  - fuzz_reply
+mutants: fuzz/sabotage

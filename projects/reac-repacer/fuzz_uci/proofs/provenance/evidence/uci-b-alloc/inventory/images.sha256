@@ -1,0 +1,4 @@
+token	sha256	image
+UCI_B_TWIN	8d07ffcf594874884207465cc34ff9f3b1062f21f6d9b3622e0771fa76490b16	fuzz_uci.asan-ubsan, the unstripped twin of the pinned image of index/binaries.tsv:7521
+EGRESS_B_TWIN	5db4802c6137e4d3fff1651b098ff56f3b1a6fe11023ea06ca4fef8910c600c6	fuzz_egress.asan-ubsan, the unstripped twin of the pinned image of index/binaries.tsv:7513
+WIRE_B_TWIN	51eb4bef24252e4df6e11baa89f653d20d74e38ae684f61bc94f4fb339ac97c3	fuzz_wire.asan-ubsan, the unstripped twin of the pinned image of index/binaries.tsv:7525

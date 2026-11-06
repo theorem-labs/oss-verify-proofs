@@ -1,0 +1,38 @@
+# fuzz_segconf.asan-ubsan (pin sha256 c3796c0b38f3; names from unstripped twin; .text of pin == twin, LOAD2 byte-equal). Disassembly: capstone RISCV64+C over the pin's .text; call targets resolved from jal offsets and auipc+jalr/ld chains; size args = constant a0/a1 at the call (tracked within a basic block; '?' = not a constant).
+# function	addr	size	insns	report_calls	report_kinds	srli3_shadow_index_insns	frame_bytes	fake_stack	calls_program	calls_runtime_interceptors	abort_sites	alloc_sites(size args)	leaf
+LLVMFuzzerTestOneInput	0x84dc0	4992	1248	34	_load1:9 _load4:19 _store1:1 _store2:1 _store4:4	23	352	class 3	check_absent,check_address,check_declared,check_ignore,check_knock_refused,check_model,check_provenance,check_refusals,check_role,check_segments,m_file,m_find,m_refuse,reac_segconf_declared,reac_segconf_ignore_file,reac_segconf_ignored,reac_segconf_init,reac_segconf_model,reac_segconf_parse,reac_segconf_parse_file,reac_segconf_role,reac_segconf_role_file	__asan_handle_no_return:1 __asan_memcpy:5 __asan_memset:2 __asan_set_shadow_f5:1 __asan_stack_malloc_3:1 __wrap_calloc:3 __wrap_free:5 __wrap_malloc:2 __wrap_memchr:1 __wrap_snprintf:2 __wrap_strcmp:1 __wrap_strlen:1 __wrap_strrchr:1 abort:1	0x85fd0	malloc@0x85064(0x40e8,?) calloc@0x85078(0x1,0x2414) malloc@0x8520c(?,?) free@0x8552c(p) calloc@0x85980(?,0x12) calloc@0x85990(?,0x14) free@0x85e98(p) free@0x85ea0(p) free@0x85ea8(p) free@0x85eb0(p)	calls program functions
+m_file	0x86140	3608	902	30	_load1:12 _load4:8 _load8:1 _store4:9	26	320	class 1	fold,fuzz_catalogue_row,ieq,m_find,m_refuse,strip	__asan_memcpy:2 __asan_memset:1 __asan_stack_malloc_1:1 __wrap_bcmp:1 __wrap_memchr:2 __wrap_snprintf:3 __wrap_strchr:1 __wrap_strlen:2	-	-	calls program functions
+check_segments	0x86f58	416	104	4	_load4:4	4	80	-	-	__asan_handle_no_return:1 __wrap_strcmp:1 abort:1	0x870a8	-	calls runtime/interceptors only
+check_role	0x870f8	148	37	2	_load4:2	2	16	-	-	__asan_handle_no_return:1 abort:1	0x87160	-	calls runtime/interceptors only
+check_model	0x8718c	132	33	1	_load4:1	1	16	-	-	__asan_handle_no_return:1 __wrap_strcmp:1 abort:1	0x871f4	-	calls runtime/interceptors only
+check_ignore	0x87210	104	26	1	_load4:1	1	16	-	-	__asan_handle_no_return:1 abort:1	0x87270	-	calls runtime/interceptors only
+check_provenance	0x87278	244	61	2	_load4:2	2	32	-	-	__asan_handle_no_return:1 __wrap_strcmp:2 abort:1	0x87340	-	calls runtime/interceptors only
+check_refusals	0x8736c	256	64	4	_load4:4	4	16	-	-	__asan_handle_no_return:1 abort:1	0x87418	-	calls runtime/interceptors only
+check_address	0x8746c	84	21	0		0	32	-	-	__asan_handle_no_return:1 __wrap_strlen:1 __wrap_strncmp:1 abort:1	0x874b8	-	calls runtime/interceptors only
+check_knock_refused	0x874c0	52	13	0		0	16	-	-	__asan_handle_no_return:1 __wrap_strstr:1 abort:1	0x874ec	-	calls runtime/interceptors only
+m_find	0x874f4	252	63	1	_load4:1	1	64	-	-	__wrap_bcmp:1 __wrap_strlen:1	-	-	calls runtime/interceptors only
+check_absent	0x875f0	116	29	0		0	32	-	reac_segconf_find,reac_segconf_ignored,reac_segconf_model,reac_segconf_role	__asan_handle_no_return:1 abort:1	0x8765c	-	calls program functions
+check_declared	0x87664	456	114	3	_load1:1 _load2:1 _load4:1	3	112	-	-	__asan_handle_no_return:1 __wrap_strcmp:1 abort:1	0x8781c	-	calls runtime/interceptors only
+m_refuse	0x8782c	416	104	4	_load4:3 _store4:1	2	48	-	-	__wrap_snprintf:2	-	-	calls runtime/interceptors only
+ieq	0x87b70	292	73	2	_load1:2	2	48	-	-	__wrap_strlen:1	-	-	calls runtime/interceptors only
+reac_segconf_init	0x87e14	36	9	0		0	16	-	-	__asan_memset:1	-	-	calls runtime/interceptors only
+reac_segconf_parse_file	0x87e38	5312	1328	41	_load1:19 _load4:8 _load8:1 _store1:6 _store4:7	38	352	class 5	reac_box_catalogue,reac_box_catalogue_by_token,refuse,trim	__asan_memcpy:1 __asan_memset:2 __asan_set_shadow_00:2 __asan_set_shadow_f8:2 __asan_stack_free_5:1 __asan_stack_malloc_5:1 __wrap_bcmp:5 __wrap_snprintf:7 __wrap_strcasecmp:8 __wrap_strchr:3 __wrap_strcmp:1 __wrap_strlen:3 __wrap_strncasecmp:1 __wrap_strspn:1	-	-	calls program functions
+refuse	0x892f8	840	210	5	_load1:1 _load4:3 _store4:1	4	160	class 0	-	__asan_stack_malloc_0:1 __wrap_snprintf:2 __wrap_vsnprintf:1	-	-	calls runtime/interceptors only
+trim	0x89640	324	81	3	_load1:2 _store1:1	3	32	-	-	__wrap_strlen:1	-	-	calls runtime/interceptors only
+reac_segconf_parse	0x89784	72	18	0		0	32	-	cross_check,reac_segconf_parse_file	-	-	-	calls program functions
+cross_check	0x897cc	696	174	9	_load4:5 _store1:1 _store4:3	6	128	-	refuse	-	-	-	calls program functions
+reac_segconf_find	0x89a84	244	61	1	_load4:1	1	64	-	-	__wrap_strcmp:1	-	-	calls runtime/interceptors only
+reac_segconf_ignored	0x89b78	104	26	1	_load4:1	1	16	-	reac_segconf_find	-	-	-	calls program functions
+reac_segconf_role	0x89be0	220	55	3	_load4:2 _store4:1	3	32	-	reac_segconf_find	-	-	-	calls program functions
+reac_segconf_role_file	0x89cbc	164	41	2	_load1:1 _load4:1	2	16	-	reac_segconf_find	-	-	-	calls program functions
+reac_segconf_ignore_file	0x89d60	164	41	2	_load1:1 _load4:1	2	16	-	reac_segconf_find	-	-	-	calls program functions
+reac_segconf_model	0x89e04	120	30	1	_load4:1	1	16	-	reac_segconf_find	-	-	-	calls program functions
+reac_segconf_declared	0x89e7c	924	231	3	_load4:3	3	224	class 1	reac_declared_vlan_add,reac_declared_vlan_split	__asan_stack_malloc_1:1	-	-	calls program functions
+reac_declared_vlan_split	0x8a218	496	124	4	_load1:2 _store1:1 _store2:1	4	64	-	name_ok	__asan_memcpy:1 __wrap_strlen:1 __wrap_strrchr:1 __wrap_strtol:1	-	-	calls program functions
+name_ok	0x8a408	268	67	2	_load1:2	2	64	-	-	isalnum:1	-	-	calls runtime/interceptors only
+reac_declared_vlan_add	0x8a514	708	177	7	_load2:1 _load4:4 _store2:1 _store4:1	3	112	-	-	__asan_memset:1 __wrap_strcmp:1 __wrap_strncpy:1	-	-	calls runtime/interceptors only
+fuzz_catalogue_row	0x8a7d8	200	50	1	_load8:1	1	64	-	-	__wrap_bcmp:1 __wrap_strlen:1	-	-	calls runtime/interceptors only
+reac_box_catalogue	0x8a8a0	84	21	1	_store8:1	1	16	-	-	-	-	-	leaf (report calls only)
+reac_box_catalogue_by_token	0x8a8f4	64	16	0		0	16	-	fuzz_catalogue_row(tail)	__wrap_strlen:1	-	-	calls program functions
+strip	0x879cc	420	105	10	_load1:2 _load8:6 _store8:2	4	16	-	-	-	-	-	leaf (report calls only)
+fold	0x87c94	280	70	3	_load1:1 _store1:2	3	16	-	-	-	-	-	leaf (report calls only)

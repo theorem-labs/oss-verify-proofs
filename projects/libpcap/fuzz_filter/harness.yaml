@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libpcap
 harness: fuzz_filter
-rocq: OssFuzzTheorems.libpcap.fuzz_filter
+rocq: OSSVerify.libpcap.fuzz_filter
 origin: upstream
 summary: pcap_open_dead with the last byte as linktype, pcap_compile of the input as a filter expression,
   then pcap_setfilter; errors only pcap_perror-ed.

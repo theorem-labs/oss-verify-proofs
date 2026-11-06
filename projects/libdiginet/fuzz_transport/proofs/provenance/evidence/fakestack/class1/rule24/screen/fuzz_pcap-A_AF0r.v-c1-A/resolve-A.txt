@@ -1,0 +1,6 @@
+[libreac/fuzz_pcap] A/AF0r.v:4 0x3cf18 0x3cf18
+[libreac/fuzz_pcap] A/AF0r.v:43 0x3c83c 0x3dfc4
+[libreac/fuzz_pcap] A/AF0r.v:72 0x99820 0xa4080
+[libreac/fuzz_pcap] A/AF0r.v:72 0x9a510 0xa4d70
+[libreac/fuzz_pcap] A/AF0r.v:73 0x99880 0xa40e0
+[libreac/fuzz_pcap] A/AF0r.v:73 0x9a520 0xa4d80

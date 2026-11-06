@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: dav1d
 harness: dav1d_fuzzer
-rocq: OssFuzzTheorems.dav1d.dav1d_fuzzer
+rocq: OSSVerify.dav1d.dav1d_fuzzer
 origin: upstream
 summary: Parses an IVF-framed input, skips frames until dav1d_parse_sequence_header succeeds, then decodes
   every frame with dav1d_send_data/dav1d_get_picture and drains; also exercises picture_unref after dav1d_close.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: file
 harness: magic_fuzzer_loaddb
-rocq: OssFuzzTheorems.file.magic_fuzzer_loaddb
+rocq: OSSVerify.file.magic_fuzzer_loaddb
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

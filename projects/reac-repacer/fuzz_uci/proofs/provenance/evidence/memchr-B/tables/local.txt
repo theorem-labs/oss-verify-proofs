@@ -1,0 +1,5 @@
+lib/A/Rt/Memchr.v: 0 global, 1 Local redefinition(s)
+lib/A/Rt/MemchrChk.v: 0 global, 1 Local redefinition(s)
+lib/B/Rt/Memchr.v: 0 global, 1 Local redefinition(s)
+lib/B/Rt/MemchrChk.v: 0 global, 1 Local redefinition(s)
+exit 0

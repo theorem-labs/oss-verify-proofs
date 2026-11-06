@@ -1,0 +1,158 @@
+schema: oss-verify-proofs build record v1
+entry_point:
+  project: libdiginet
+  harness: fuzz_decode
+  function: LLVMFuzzerTestOneInput
+  records:
+  - projects/libdiginet/project.yaml
+  - projects/libdiginet/fuzz_decode/harness.yaml
+upstream:
+  name: libdiginet
+  repository: https://github.com/FreeMixer/libdiginet
+  commit: 835f336ccb7abac683681c5791a5715041c71e32
+  licence: GPL-3.0-or-later
+  patch_count: 0
+  licence_evidence: LICENSE (the GPL version 3 text) and the SPDX-License-Identifier line of each src/, transport/src/, include/
+    and fuzz/ file at 835f336c
+oss_fuzz: null
+harness:
+  origin: upstream
+  source:
+    files:
+    - source/fuzz_decode.c
+    - source/fuzz.h
+    - source/spec.h
+    from:
+      repository: https://github.com/FreeMixer/libdiginet
+      commit: 835f336ccb7abac683681c5791a5715041c71e32
+      path: fuzz/fuzz_decode.c
+    modified: false
+    licence: GPL-3.0-or-later
+port:
+  repository: theorem-labs/oss-verify
+  commit: 63e86d975329c21192e679e40fc77bb61203baaf
+  path: projects/libdiginet
+  tools:
+    commit: ef32d395512d92ae354ce9b63217e28d42a4b9b9
+    paths:
+    - infra/
+    - tools/
+    built: 12201191e4db1f2259f1c40cfd218c09a954e286
+    how: 'the build ran oss-verify''s main''s tools/ and infra/ at this commit on projects/libdiginet/ at the port''s commit:
+      tools/enroll/port-commit makes the commit built (oss_verifier.commit in port/manifest.yaml) of the two'
+  asset:
+    file: libdiginet-port.tar.zst
+    bytes: 209194
+    sha256: 578f66fcccb01c26b3c78f0b939145e28387b8be9ef5a10cc69af572a15233dd
+  files: port/projects/libdiginet/ (the port's files for the project at the commit, less its seed corpora and other binary
+    or derived files, which the port archive carries) and port/manifest.yaml (the manifest of tools/check --twice, less its
+    host keys)
+  patches: []
+  build_system: build.sh (clang, ar; libdiginet's Makefile is not used)
+  how_to_rebuild: 'as docs/reproducing.md: unpack libdiginet-port.tar.zst and, from it, run tools/check --no-shell --lock
+    <projects/libdiginet/fuzz_decode/harness.yaml of this repository> libdiginet; it builds libdiginet at the commit the lock
+    names, on the builder image project.yaml names, and compares each binary'
+toolchain:
+  clang: 20.1.8
+  builder_image: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  images:
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  static_asan:
+    repository: https://github.com/theorem-labs/static-asan
+    commit: b05061352064fa2be1813ac5429149f3de5f057d
+    note: the builder image's static AddressSanitizer, as in the rc.2 records
+binaries:
+- build: plain
+  file: fuzz_decode.plain
+  bytes: 48808
+  sha256: d570b4c96d9e764af0482c34642d2e58e6eef3af84e768d2a076a56eaeb045a7
+- build: ubsan
+  file: fuzz_decode.ubsan
+  bytes: 49312
+  sha256: cfe3a2ee2a54a9693cae0c77632e069b3e7dd8ae01a8a8c25258faa955a31f71
+- build: asan
+  file: fuzz_decode.asan
+  bytes: 575896
+  sha256: 47bd808e8cb9d29fe1fbac5254b0cfe93d458f2dcc1dd19817566c94943a13e5
+- build: asan-ubsan
+  file: fuzz_decode.asan-ubsan
+  bytes: 576728
+  sha256: 1c8e7ec206824fd70cb4247dcdc2f122b5d8dba1571da738ab1f3eac35f5a30a
+binary_asset:
+  file: libdiginet-bin.tar.zst
+  bytes: 629004
+  sha256: b413c8c51d8ee133a9061d592b2b1884fc10bae05c4279a7f6299a27c1fc5272
+source_asset:
+  src:
+    file: libdiginet-src.tar.zst
+    bytes: 134191
+    sha256: 78c22a85913d2e6a3fe2d8302c5c60d7d2639ff1e5ad52ae8fc6f7c1ec66863f
+  src_manifest:
+    file: libdiginet-src.MANIFEST.tsv
+    bytes: 1174
+    sha256: 7fe0563350fe56a67fcfcc053baa7e4496285b348ef55204146c718cbf6bef9f
+rebuild:
+- 'the port''s projects/libdiginet/ at 63e86d97 with tools/ and infra/ of oss-verify''s main at ef32d395 (the commit 12201191
+  port-commit makes of them; oss_verifier.modified: false), tools/check --twice libdiginet on the builder image: all 16 binaries
+  of the 4 harnesses identical in the second build (port/manifest.yaml, rebuild.result identical), with these SHA-256s'
+- libdiginet-bin.tar.zst and the source assets packed by tools/enroll/assets.py from those files; every member of libdiginet-src.tar.zst
+  is a git blob of an upstream tree its MANIFEST names
+licence:
+  components:
+  - component: libdiginet
+    files: src/diginet_frame.c, src/diginet_msg.c, src/diginet_codec.c, src/diginet_decode.c and transport/src/diginet_session.c
+      (into one static library), the headers in include/diginet/, fuzz/fuzz.h, fuzz/spec.h and the fuzz target
+    licence: GPL-3.0-or-later
+    evidence: LICENSE (the GPL version 3 text) and the SPDX-License-Identifier line of each src/, transport/src/, include/
+      and fuzz/ file at 835f336c
+    texts:
+    - LICENSES/libdiginet-LICENSE
+  - component: musl libc (static)
+    files: '-'
+    licence: MIT
+    evidence: musl COPYRIGHT; linked in every build
+    texts:
+    - LICENSES/musl-COPYRIGHT
+  - component: 'LLVM runtimes: compiler-rt builtins; in ASan builds the sanitizer runtime and libunwind'
+    files: '-'
+    licence: Apache-2.0 WITH LLVM-exception
+    evidence: LICENSE.TXT of compiler-rt and libunwind at llvmorg-20.1.8 (87f0227c), as in the rc.2 records
+    texts:
+    - LICENSES/llvm-compiler-rt-LICENSE.TXT
+    - LICENSES/llvm-libunwind-LICENSE.TXT
+  - component: static-asan patches compiled into the ASan runtime and musl
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of theorem-labs/static-asan at b0506135 (MIT for Theorem Labs work; the LLVM and musl code it patches
+      keeps its own licence)
+    texts:
+    - LICENSES/static-asan-LICENSE
+  - component: 'the OSS Verify port''s driver (infra/base-builder/driver/: cli.c, adapter.c and the headers they include,
+      and the seals wrap_getenv.c, wrap_mkstemp.c and wrap_getpid.c), linked into every build'
+    files: '-'
+    licence: MIT OR Apache-2.0
+    evidence: the SPDX-License-Identifier line of each of those files at theorem-labs/oss-verify ef32d39
+    texts:
+    - LICENSES/oss-verify-MIT.txt
+    - LICENSES/oss-verify-LICENSE
+  not_in_binaries: []
+  source_bundle:
+  - file: libdiginet-src.tar.zst
+    sha256: 78c22a85913d2e6a3fe2d8302c5c60d7d2639ff1e5ad52ae8fc6f7c1ec66863f
+  - file: libdiginet-src.MANIFEST.tsv
+    sha256: 7fe0563350fe56a67fcfcc053baa7e4496285b348ef55204146c718cbf6bef9f
+  - file: libdiginet-port.tar.zst
+    sha256: 578f66fcccb01c26b3c78f0b939145e28387b8be9ef5a10cc69af572a15233dd
+proofs:
+  texts:
+  - LICENSES/anthropic-proofs-LICENSE
+  - LICENSES/anthropic-proofs-LICENSE-MIT
+  - LICENSES/anthropic-proofs-NOTICE
+  texts_location: the repository's top directory
+  licence: Apache-2.0 OR MIT for the 1034 Rocq files of this folder that carry that tag, each with Anthropic's copyright line;
+    MIT, the repository's licence (LICENSE), for the 4 tagged MIT; the other 205 carry no licence line
+  modified: 'The licence lines of 122 of its files were written in this repository in 2026-11, by the licence change of the
+    release series: an SPDX tag, and Anthropic''s copyright line above the tag where the file carries Anthropic''s text. In
+    2026-11, 207 more of its files took the licence lines of the Anthropic-licensed file each was made from, in this fuzz target
+    or another (docs/adding-a-proof.md, requirement 7), and one line `Modified by Theorem Labs, 2026-11` that names that file
+    and says how the file was changed from it'

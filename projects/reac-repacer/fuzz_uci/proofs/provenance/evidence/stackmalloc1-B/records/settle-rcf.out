@@ -1,0 +1,12 @@
+# G = fuzz_grant.asan-ubsan sha256 5a5ee7c02b4e2a1d1653dc0c256182c9b65c33dde3a7ddc98b9de2afffe7a417
+# U = fuzz_uci.asan-ubsan sha256 8d07ffcf594874884207465cc34ff9f3b1062f21f6d9b3622e0771fa76490b16
+word _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE+0x1218: G 0x62f18 (f8658913) -> 0x13e96 .rodata | U 0x617c4 (6a358913) -> 0x13e5f .rodata
+1. kit (strictcmp3 tsame): NOT SETTLED data-differs (.rodata) / (.rodata); region lengths 51658 / 51165
+2. settled (read-only True / True; bytes up to and including the NUL b'\x00' / b'\x00'): EQUAL
+3. control, U 0x13e5f planted 0x00 -> 0x58: b'\x00' / b"X'\x00": DIFFERENT -> caught
+4. table words of _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE in the proof (lib/B/Rt/YF0r.v fs_ranges): +0x358, +0x35c; +0x1218 among them: False
+5. G: +0x1218 addi writes x18; first use: +0x1228 01263c23: sd x18, 24(x12), stores the address into a record field
+5. U: +0x1218 addi writes x18; first use: +0x1228 01263c23: sd x18, 24(x12), stores the address into a record field
+5. the consumer is the same sd word at the same offset in both images: True
+not settled, control not caught, in the table, or consumer words differ: 0
+rc=0

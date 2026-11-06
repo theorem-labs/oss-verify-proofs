@@ -1,0 +1,33 @@
+image	check	result	measured
+U	__nl_langinfo_l+0xf8	PASS	string @0x13e5f first byte 00
+U	__nl_langinfo_l+0xfc	PASS	bnez a3, 0x1c
+U	__nl_langinfo_l+0x100	PASS	lbu a3, 0(a0)
+U	__nl_langinfo_l+0x104	PASS	beqz a3, 0x14
+U	__nl_langinfo_l+0x118	PASS	ret 
+U	__nl_langinfo_l+0xfc target	PASS	branch to +0x118
+U	__nl_langinfo_l+0x104 target	PASS	branch to +0x118
+U	_ZN11__sanitizer19RegisterCommonFlags+0x1218	PASS	addi s2, a1, 0x6a3; string @0x13e5f first byte 00
+U	vtable	PASS	s1 = 0x96c98, FlagHandlerInclude vtable + 16 = 0x96c98
+U	store +0x1228	PASS	sd s2, 0x18(a2)
+U	store +0x1274	PASS	sd s2, 0x18(a2)
+U	vptr +0x121c	PASS	sd s1, 0(a2)
+U	vptr +0x1268	PASS	sd s1, 0(a2)
+U	vtable methods	PASS	slots ['0x61874', '0x61930']
+U	Parse	PASS	loads of 0x18(a0): 0; stores: 1
+U	Format	PASS	ld a3,0x18(a0) at ['0x10']; one call at ['0x24'] to ['$x', '_ZN11__sanitizer17internal_snprintfEPcmPKcz']; a2 = b'%s'
+R	__nl_langinfo_l+0xf8	PASS	string @0x13e6c first byte 00
+R	__nl_langinfo_l+0xfc	PASS	bnez a3, 0x1c
+R	__nl_langinfo_l+0x100	PASS	lbu a3, 0(a0)
+R	__nl_langinfo_l+0x104	PASS	beqz a3, 0x14
+R	__nl_langinfo_l+0x118	PASS	ret 
+R	__nl_langinfo_l+0xfc target	PASS	branch to +0x118
+R	__nl_langinfo_l+0x104 target	PASS	branch to +0x118
+R	_ZN11__sanitizer19RegisterCommonFlags+0x1218	PASS	addi s2, a1, -0x614; string @0x13e6c first byte 00
+R	vtable	PASS	s1 = 0x98e48, FlagHandlerInclude vtable + 16 = 0x98e48
+R	store +0x1228	PASS	sd s2, 0x18(a2)
+R	store +0x1274	PASS	sd s2, 0x18(a2)
+R	vptr +0x121c	PASS	sd s1, 0(a2)
+R	vptr +0x1268	PASS	sd s1, 0(a2)
+R	vtable methods	PASS	slots ['0x62538', '0x625f4']
+R	Parse	PASS	loads of 0x18(a0): 0; stores: 1
+R	Format	PASS	ld a3,0x18(a0) at ['0x10']; one call at ['0x24'] to ['$x', '_ZN11__sanitizer17internal_snprintfEPcmPKcz']; a2 = b'%s'

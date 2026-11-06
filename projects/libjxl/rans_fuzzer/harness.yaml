@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjxl
 harness: rans_fuzzer
-rocq: OssFuzzTheorems.libjxl.rans_fuzzer
+rocq: OSSVerify.libjxl.rans_fuzzer
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an invariant: Every allocation the library made
   through the harness TrackingMemoryManager was freed by the end of the run (num_allocations==0, allocation

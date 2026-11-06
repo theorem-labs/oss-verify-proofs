@@ -1,0 +1,195 @@
+# B3 hand rows: every code numeral whose lib/AU value is not the value both derive_y b7b132fb12a7 and alreloc a5c53bb2bed4 give, decided against fuzz_headamp.asan-ubsan (pin 53edda9bdeeb, .symtab of 1674e30a0698); rows where the two tools disagree are also in crosscheck-alreloc-a5c53bb2bed4.tsv
+lib/A file:line	lib/AU file:line	A value	derive_y	alreloc	final	decision	class	evidence
+A/AB13.v:20	AU/YB13.v:21	12288	12288	12288	8192	both tools wrong	image-count	seg2 size: AsanUbsan_segment_002 seg_size 0x2000 ([0x9c000,0x9e000)); A 0x3000
+A/AB13.v:22	AU/YB13.v:23	5619712	5619712	5620864	5619712	for derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address
+A/AB13.v:24	AU/YB13.v:25	12288	12288	12288	8192	both tools wrong	image-count	seg2 size: AsanUbsan_segment_002 seg_size 0x2000 ([0x9c000,0x9e000)); A 0x3000
+A/AB13.v:26	AU/YB13.v:27	5619712	5619712	5620864	5619712	for derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address
+A/AB13.v:41	AU/YB13.v:42	12288	12288	12288	8192	both tools wrong	image-count	seg2 size: AsanUbsan_segment_002 seg_size 0x2000 ([0x9c000,0x9e000)); A 0x3000
+A/AB13.v:42	AU/YB13.v:43	5619712	5619712	5620864	5619712	for derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address
+A/AB13.v:76	AU/YB13.v:77	14048	14048	14048	15200	both tools wrong	image-count	seg3 file-backed end: PT_LOAD3 0x9e4e8+filesz 0x3678 = 0xa1b60 (= __stop_asan_globals) - seg3 base 0x9e000 = 15200; A 14048
+A/AB13.v:76	AU/YB13.v:77	5605664	5606816	5606816	5604512	both tools wrong	image-count	seg3 zero tail: seg_size 0x55c000 - 15200 = 5604512; A 5605664
+A/AB13.v:85	AU/YB13.v:86	438272	442368	438272	442368	for derive_y	image-count	seg1 size: AsanUbsan_segment_001 seg_size 0x6c000 (PT_LOAD1 0x30764+0x6a958 page-rounded [0x30000,0x9c000)); A 0x6b000
+A/AB13.v:86	AU/YB13.v:87	634880	638976	634880	638976	for derive_y	image-bound	seg2 base 0x9c000 (AsanUbsan_segment_002)
+A/AB13.v:86	AU/YB13.v:87	634880	638976	634880	638976	for derive_y	image-bound	seg2 base 0x9c000 (AsanUbsan_segment_002)
+A/AB13.v:86	AU/YB13.v:87	12288	8192	12288	8192	for derive_y	image-count	seg2 size: AsanUbsan_segment_002 seg_size 0x2000 ([0x9c000,0x9e000)); A 0x3000
+A/AB13.v:87	AU/YB13.v:88	5619712	5619712	5620864	5619712	for derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address
+A/AB13.v:89	AU/YB13.v:90	5619712	5619712	5620864	5619712	for derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address
+A/AB13.v:95	AU/YB13.v:96	14048	15200	14048	15200	for derive_y	derived	seg3 file-backed end 0xa1b60 (__stop_asan_globals) - 0x9e000 = 15200 (the 0xa16e0 of the line moves to 0xa1b60)
+A/AB13.v:105	AU/YB13.v:106	438272	442368	438272	442368	for derive_y	image-count	seg1 size: AsanUbsan_segment_001 seg_size 0x6c000 (PT_LOAD1 0x30764+0x6a958 page-rounded [0x30000,0x9c000)); A 0x6b000
+A/AB13.v:106	AU/YB13.v:107	634880	638976	634880	638976	for derive_y	image-bound	seg2 base 0x9c000 (AsanUbsan_segment_002)
+A/AB13.v:106	AU/YB13.v:107	634880	638976	634880	638976	for derive_y	image-bound	seg2 base 0x9c000 (AsanUbsan_segment_002)
+A/AB13.v:106	AU/YB13.v:107	12288	12288	12288	8192	both tools wrong	image-count	seg2 size: AsanUbsan_segment_002 seg_size 0x2000 ([0x9c000,0x9e000)); A 0x3000
+A/AB13.v:108	AU/YB13.v:109	634880	638976	634880	638976	for derive_y	image-bound	seg2 base 0x9c000 (AsanUbsan_segment_002)
+A/AB13.v:108	AU/YB13.v:109	12288	8192	12288	8192	for derive_y	image-count	seg2 size: AsanUbsan_segment_002 seg_size 0x2000 ([0x9c000,0x9e000)); A 0x3000
+A/AB13.v:109	AU/YB13.v:110	634880	638976	634880	638976	for derive_y	image-bound	seg2 base 0x9c000 (AsanUbsan_segment_002)
+A/AB13.v:114	AU/YB13.v:115	12288	8192	12288	8192	for derive_y	image-count	seg2 size: AsanUbsan_segment_002 seg_size 0x2000 ([0x9c000,0x9e000)); A 0x3000
+A/AB13.v:115	AU/YB13.v:116	5619712	5619712	5620864	5619712	for derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address
+A/AB13.v:119	AU/YB13.v:120	438272	438272	438272	442368	both tools wrong	image-count	seg1 size: AsanUbsan_segment_001 seg_size 0x6c000 (PT_LOAD1 0x30764+0x6a958 page-rounded [0x30000,0x9c000)); A 0x6b000
+A/AB13.v:123	AU/YB13.v:124	438272	438272	438272	442368	both tools wrong	image-count	seg1 size: AsanUbsan_segment_001 seg_size 0x6c000 (PT_LOAD1 0x30764+0x6a958 page-rounded [0x30000,0x9c000)); A 0x6b000
+A/AB13.v:143	AU/YB13.v:144	438272	438272	438272	442368	both tools wrong	image-count	seg1 size: AsanUbsan_segment_001 seg_size 0x6c000 (PT_LOAD1 0x30764+0x6a958 page-rounded [0x30000,0x9c000)); A 0x6b000
+A/AB13.v:145	AU/YB13.v:146	438272	438272	438272	442368	both tools wrong	image-count	seg1 size: AsanUbsan_segment_001 seg_size 0x6c000 (PT_LOAD1 0x30764+0x6a958 page-rounded [0x30000,0x9c000)); A 0x6b000
+A/AB13.v:153	AU/YB13.v:154	438272	442368	438272	442368	for derive_y	image-count	seg1 size: AsanUbsan_segment_001 seg_size 0x6c000 (PT_LOAD1 0x30764+0x6a958 page-rounded [0x30000,0x9c000)); A 0x6b000
+A/AB1h.v:52	AU/YB1h.v:53	0x6b000	0x6b080	0x6c000	0x6c000	for alreloc	image-count	seg1 size 0x6c000 (AsanUbsan_segment_001); A 0x6b000
+A/AB1h.v:53	AU/YB1h.v:54	0x3000	0x3000	0x2000	0x2000	for alreloc	image-count	seg2 size 0x2000 (AsanUbsan_segment_002); A 0x3000
+A/AB1h.v:77	AU/YB1h.v:78	12288	12288	12288	8192	both tools wrong	image-count	seg2 size: AsanUbsan_segment_002 seg_size 0x2000 ([0x9c000,0x9e000)); A 0x3000
+A/AB1h.v:79	AU/YB1h.v:80	5619712	5619712	5620864	5619712	for derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address
+A/AB1h.v:81	AU/YB1h.v:82	12288	12288	12288	8192	both tools wrong	image-count	seg2 size: AsanUbsan_segment_002 seg_size 0x2000 ([0x9c000,0x9e000)); A 0x3000
+A/AB1h.v:83	AU/YB1h.v:84	5619712	5619712	5620864	5619712	for derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address
+A/AB1h.v:101	AU/YB1h.v:102	12288	12288	12288	8192	both tools wrong	image-count	seg2 size: AsanUbsan_segment_002 seg_size 0x2000 ([0x9c000,0x9e000)); A 0x3000
+A/AB1h.v:102	AU/YB1h.v:103	5619712	5619712	5620864	5619712	for derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address
+A/AB1w.v:14	AU/YB1w.v:15	0x9bc80	0x9c0f8	0x9c100	0x9c0f8	for derive_y	section-bound	.preinit_array end: B [0x9c0f0,0x9c0f8)
+A/AB1w.v:15	AU/YB1w.v:16	0x9bc80	0x9c0f8	0x9c100	0x9c100	for alreloc	section-bound	.data.rel.ro start: B [0x9c100,0x9c790) (.preinit_array ends 0x9c0f8, 8-byte gap); A .preinit_array end = .data.rel.ro start = 0x9bc80
+A/ACef.v:16	AU/YCef.v:17	4710	4710	4710	4964	both tools wrong	insn-count	instructions from main 0x807a0 to __extenddftf2 0x85530: 4964 (A 4710 from 0x80720 to 0x850b8)
+A/ACeg.v:48	AU/YCeg.v:49	0x9bc80	0x9c0f8	0x9c100	0x9c100	for alreloc	section-bound	.data.rel.ro start: B [0x9c100,0x9c790) (.preinit_array ends 0x9c0f8, 8-byte gap); A .preinit_array end = .data.rel.ro start = 0x9bc80
+A/ACeh.v:60	AU/YCeh.v:61	0x9bc80	0x9c0f8	0x9c100	0x9c100	for alreloc	section-bound	.data.rel.ro start: B [0x9c100,0x9c790) (.preinit_array ends 0x9c0f8, 8-byte gap); A .preinit_array end = .data.rel.ro start = 0x9bc80
+A/ACej.v:12	AU/YCej.v:13	0x80e94	0x80f14	0x80e94	0x80fcc	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:13	AU/YCej.v:14	0x80e94	0x80f14	0x80e94	0x80fcc	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:14	AU/YCej.v:15	0x82e64	0x82ee4	0x82e64	0x82f00	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:15	AU/YCej.v:16	0x82e64	0x82ee4	0x82e64	0x82f00	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:16	AU/YCej.v:17	0x82e98	0x82f18	0x82e98	0x82f38	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:17	AU/YCej.v:18	0x82e98	0x82f18	0x82e98	0x82f38	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:18	AU/YCej.v:19	0x83744	0x837c4	0x83744	0x83904	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:19	AU/YCej.v:20	0x83744	0x837c4	0x83744	0x83904	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:20	AU/YCej.v:21	0x8379c	0x8381c	0x8379c	0x83958	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:21	AU/YCej.v:22	0x8379c	0x8381c	0x8379c	0x83958	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:22	AU/YCej.v:23	0x837a4	0x83824	0x837a4	0x83960	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:23	AU/YCej.v:24	0x837a4	0x83824	0x837a4	0x83960	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:24	AU/YCej.v:25	0x837ac	0x8382c	0x837ac	0x83968	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:25	AU/YCej.v:26	0x837ac	0x8382c	0x837ac	0x83968	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:26	AU/YCej.v:27	0x837b4	0x83834	0x837b4	0x83970	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:27	AU/YCej.v:28	0x837b4	0x83834	0x837b4	0x83970	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:45	AU/YCej.v:46	0x8379c	0x8381c	0x8379c	0x83958	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:46	AU/YCej.v:47	0x8379c	0x8381c	0x8379c	0x83958	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:47	AU/YCej.v:48	0x837a4	0x83824	0x837a4	0x83960	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:48	AU/YCej.v:49	0x837a4	0x83824	0x837a4	0x83960	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:49	AU/YCej.v:50	0x837ac	0x8382c	0x837ac	0x83968	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:50	AU/YCej.v:51	0x837ac	0x8382c	0x837ac	0x83968	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:51	AU/YCej.v:52	0x837b4	0x83834	0x837b4	0x83970	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:52	AU/YCej.v:53	0x837b4	0x83834	0x837b4	0x83970	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:57	AU/YCej.v:58	0x80e94	0x80f14	0x80e94	0x80fcc	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:58	AU/YCej.v:59	0x80e94	0x80f14	0x80e94	0x80fcc	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:59	AU/YCej.v:60	0x82e64	0x82ee4	0x82e64	0x82f00	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:60	AU/YCej.v:61	0x82e64	0x82ee4	0x82e64	0x82f00	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:61	AU/YCej.v:62	0x82e98	0x82f18	0x82e98	0x82f38	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:62	AU/YCej.v:63	0x82e98	0x82f18	0x82e98	0x82f38	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:63	AU/YCej.v:64	0x83744	0x837c4	0x83744	0x83904	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/ACej.v:64	AU/YCej.v:65	0x83744	0x837c4	0x83744	0x83904	neither	generated	YCej.v from gen_traces.py a78026af on fuzz_headamp.asan-ubsan
+A/AD1d.v:50	AU/YD1d.v:51	1446400	1447552	1446400	1446400	for alreloc	model-constant	kFakeStackSize 11571200 / 8, a run-time size; B start-up states AU/YB01.v carry 1446400 (19x) and 11571200 (123x); 1447552 appears nowhere
+A/AD1d.v:292	AU/YD1d.v:293	1446400	1447552	1446400	1446400	for alreloc	model-constant	kFakeStackSize 11571200 / 8, a run-time size; B start-up states AU/YB01.v carry 1446400 (19x) and 11571200 (123x); 1447552 appears nowhere
+A/AD1f.v:195	AU/YD1f.v:196	1446400	1447552	1446400	1446400	for alreloc	model-constant	kFakeStackSize 11571200 / 8, a run-time size; B start-up states AU/YB01.v carry 1446400 (19x) and 11571200 (123x); 1447552 appears nowhere
+A/AD1o.v:96	AU/YD1o.v:97	82660	82804	82699	82804	for derive_y	derived	0xa1ba0 / 8 (the line's 0xa1720 moved to 0xa1ba0)
+A/AD1o.v:96	AU/YD1o.v:97	783359	783359	784511	783359	for derive_y	image-count	(0x5fa000 - 1) / 8: B image top page 0x5fa000 (same as A)
+A/AD1o.v:101	AU/YD1o.v:102	82652	82796	82691	82796	for derive_y	derived	662368 / 8 (__stop_asan_globals B 0xa1b60)
+A/AD1o.v:101	AU/YD1o.v:102	700708	700564	701860	700564	for derive_y	derived	(0x5fa000 - 0xa1b60) / 8
+A/AD1r.v:218	AU/YD1r.v:219	0x9bc80	0x9c0f8	0x9c100	0x9c100	for alreloc	section-bound	.data.rel.ro start: B [0x9c100,0x9c790) (.preinit_array ends 0x9c0f8, 8-byte gap); A .preinit_array end = .data.rel.ro start = 0x9bc80
+A/AD1x.v:64	AU/YD1x.v:65	0x20c30	0x20c60	0x20c30	0x20c60	for derive_y	moved	VSNPrintf jump table entry 24: A base 0x20bd0 (VSNPrintf+0x1bc auipc/addi) -> B base 0x20c00
+A/AD2d.v:73	AU/YD2d.v:74	0x9bc80	0x9c0f8	0x9c100	0x9c100	for alreloc	section-bound	.data.rel.ro start: B [0x9c100,0x9c790) (.preinit_array ends 0x9c0f8, 8-byte gap); A .preinit_array end = .data.rel.ro start = 0x9bc80
+A/AD2d.v:135	AU/YD2d.v:136	0x9bc80	0x9c0f8	0x9c100	0x9c100	for alreloc	section-bound	.data.rel.ro start: B [0x9c100,0x9c790) (.preinit_array ends 0x9c0f8, 8-byte gap); A .preinit_array end = .data.rel.ro start = 0x9bc80
+A/AE23.v:39	AU/YE23.v:40	0x7fffc288	0x7fffc288	0x7fffc288	0x7fffc290	both tools wrong	shadow-hull	end of shadow window of B globals run [0x20f00,0x21480): 0x7fffc1e0+176 = 0x7fffc290
+A/AE2t.v:65	AU/YE2t.v:66	0x7fffbaf0	0x7fffbaf7	0x7fffbaf0	0x7fffbaf8	neither	shadow-hull	shadow hull of B FMT: [0x7fffbaf8, 0x7fffbb00)
+A/AE2t.v:65	AU/YE2t.v:66	0x7fffbaf8	0x7fffbaff	0x7fffbaf8	0x7fffbb00	neither	shadow-hull	shadow hull of B FMT: [0x7fffbaf8, 0x7fffbb00)
+A/AE2u.v:65	AU/YE2u.v:66	0x7fffbaf0	0x7fffbaf7	0x7fffbaf0	0x7fffbaf8	neither	shadow-hull	shadow hull of B FMT: [0x7fffbaf8, 0x7fffbb08)
+A/AE2u.v:65	AU/YE2u.v:66	0x7fffbb00	0x7fffbb07	0x7fffbb00	0x7fffbb08	neither	shadow-hull	shadow hull of B FMT: [0x7fffbaf8, 0x7fffbb08)
+A/AE2v.v:65	AU/YE2v.v:66	0x7fffb2e0	0x7fffb2e4	0x7fffb2e0	0x7fffb2e0	for alreloc	shadow-hull	shadow hull of B FMT: [0x7fffb2e0, 0x7fffb2f0)
+A/AE2v.v:65	AU/YE2v.v:66	0x7fffb2e8	0x7fffb2ec	0x7fffb2e8	0x7fffb2f0	neither	shadow-hull	shadow hull of B FMT: [0x7fffb2e0, 0x7fffb2f0)
+A/AE2w.v:65	AU/YE2w.v:66	0x7fffab10	0x7fffab14	0x7fffab10	0x7fffab10	for alreloc	shadow-hull	shadow hull of B FMT: [0x7fffab10, 0x7fffab20)
+A/AE2w.v:65	AU/YE2w.v:66	0x7fffab18	0x7fffab1c	0x7fffab18	0x7fffab20	neither	shadow-hull	shadow hull of B FMT: [0x7fffab10, 0x7fffab20)
+A/AE35.v:65	AU/YE35.v:66	0x7fffa900	0x7fffa904	0x7fffa900	0x7fffa900	for alreloc	shadow-hull	shadow hull of B FMT: [0x7fffa900, 0x7fffa908)
+A/AE35.v:65	AU/YE35.v:66	0x7fffa908	0x7fffa90c	0x7fffa908	0x7fffa908	for alreloc	shadow-hull	shadow hull of B FMT: [0x7fffa900, 0x7fffa908)
+A/AE37.v:38	AU/YE37.v:39	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa10c0 (8) = 0x21480
+A/AE37.v:40	AU/YE37.v:41	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1100 (8) = 0x21480
+A/AE37.v:42	AU/YE37.v:43	0x20f00	0x20f40	0x20f00	0x20f40	for derive_y	rom-pair	B bytes at 0xa1120 (8) = 0x20f40
+A/AE37.v:42	AU/YE37.v:43	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1140 (8) = 0x21480
+A/AE37.v:44	AU/YE37.v:45	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1180 (8) = 0x21480
+A/AE37.v:46	AU/YE37.v:47	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa11c0 (8) = 0x21480
+A/AE37.v:48	AU/YE37.v:49	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1200 (8) = 0x21480
+A/AE37.v:50	AU/YE37.v:51	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1240 (8) = 0x21480
+A/AE37.v:52	AU/YE37.v:53	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1280 (8) = 0x21480
+A/AE37.v:54	AU/YE37.v:55	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa12c0 (8) = 0x21480
+A/AE37.v:56	AU/YE37.v:57	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1300 (8) = 0x21480
+A/AE37.v:58	AU/YE37.v:59	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1340 (8) = 0x21480
+A/AE37.v:60	AU/YE37.v:61	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1380 (8) = 0x21480
+A/AE37.v:62	AU/YE37.v:63	0x21100	0x21140	0x21100	0x21140	for derive_y	rom-pair	B bytes at 0xa13a0 (8) = 0x21140
+A/AE37.v:62	AU/YE37.v:63	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa13c0 (8) = 0x21480
+A/AE37.v:64	AU/YE37.v:65	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1400 (8) = 0x21480
+A/AE37.v:66	AU/YE37.v:67	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1440 (8) = 0x21480
+A/AE37.v:68	AU/YE37.v:69	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1480 (8) = 0x21480
+A/AE37.v:70	AU/YE37.v:71	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa14c0 (8) = 0x21480
+A/AE37.v:72	AU/YE37.v:73	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1500 (8) = 0x21480
+A/AE37.v:74	AU/YE37.v:75	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1540 (8) = 0x21480
+A/AE37.v:76	AU/YE37.v:77	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1580 (8) = 0x21480
+A/AE37.v:78	AU/YE37.v:79	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa15c0 (8) = 0x21480
+A/AE37.v:80	AU/YE37.v:81	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1600 (8) = 0x21480
+A/AE37.v:82	AU/YE37.v:83	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1640 (8) = 0x21480
+A/AE37.v:84	AU/YE37.v:85	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1680 (8) = 0x21480
+A/AE37.v:86	AU/YE37.v:87	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa16c0 (8) = 0x21480
+A/AE37.v:88	AU/YE37.v:89	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1700 (8) = 0x21480
+A/AE37.v:90	AU/YE37.v:91	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1740 (8) = 0x21480
+A/AE37.v:92	AU/YE37.v:93	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1780 (8) = 0x21480
+A/AE37.v:94	AU/YE37.v:95	0x21340	0x21380	0x21340	0x21380	for derive_y	rom-pair	B bytes at 0xa17a0 (8) = 0x21380
+A/AE37.v:94	AU/YE37.v:95	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa17c0 (8) = 0x21480
+A/AE37.v:96	AU/YE37.v:97	0x21360	0x213a0	0x21360	0x213a0	for derive_y	rom-pair	B bytes at 0xa17e0 (8) = 0x213a0
+A/AE37.v:96	AU/YE37.v:97	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1800 (8) = 0x21480
+A/AE37.v:98	AU/YE37.v:99	0x21380	0x213c0	0x21380	0x213c0	for derive_y	rom-pair	B bytes at 0xa1820 (8) = 0x213c0
+A/AE37.v:98	AU/YE37.v:99	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1840 (8) = 0x21480
+A/AE37.v:100	AU/YE37.v:101	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1880 (8) = 0x21480
+A/AE37.v:102	AU/YE37.v:103	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa18c0 (8) = 0x21480
+A/AE37.v:104	AU/YE37.v:105	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1900 (8) = 0x21480
+A/AE37.v:106	AU/YE37.v:107	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1940 (8) = 0x21480
+A/AE37.v:108	AU/YE37.v:109	0x21420	0x21420	0x21460	0x21460	for alreloc	rom-pair	B bytes at 0xa1960 (8) = 0x21460
+A/AE37.v:108	AU/YE37.v:109	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1980 (8) = 0x21480
+A/AE37.v:112	AU/YE37.v:113	0x21480	0x214c0	0x21480	0x214c0	for derive_y	rom-pair	B bytes at 0xa19e0 (8) = 0x214c0
+A/AE37.v:114	AU/YE37.v:115	0x214a0	0x214e0	0x214a0	0x214e0	for derive_y	rom-pair	B bytes at 0xa1a20 (8) = 0x214e0
+A/AE37.v:116	AU/YE37.v:117	0x214c0	0x21500	0x214c0	0x21500	for derive_y	rom-pair	B bytes at 0xa1a60 (8) = 0x21500
+A/AE37.v:118	AU/YE37.v:119	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1ac0 (8) = 0x21480
+A/AE37.v:120	AU/YE37.v:121	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1b00 (8) = 0x21480
+A/AE37.v:122	AU/YE37.v:123	0x21440	0x21440	0x21480	0x21480	for alreloc	rom-pair	B bytes at 0xa1b40 (8) = 0x21480
+A/AE37.v:138	AU/YE37.v:139	176	168	176	176	for alreloc	image-count	x2_shw first window: B globals run [0x20f00,0x21480) = 1408 bytes -> 176 shadow cells (as A [0x20ec0,0x21440))
+A/AFem.v:130	AU/YFem.v:131	127070	127125	127125	127070	both tools wrong	model-constant	kit-derived bound TOT <= 127070 (depot frames bound from DEPOT_MAX 4096 and kUnwindMax 30 of the kit, as A3 recorded); not an address: derive_y and alreloc both moved it as a .rodata string address (+55); restored byte-identical
+A/AFem.v:208	AU/YFem.v:209	127070	127125	127125	127070	both tools wrong	model-constant	kit-derived bound TOT <= 127070 (depot frames bound from DEPOT_MAX 4096 and kUnwindMax 30 of the kit, as A3 recorded); not an address: derive_y and alreloc both moved it as a .rodata string address (+55); restored byte-identical
+A/AFem.v:414	AU/YFem.v:415	400166	400294	400166	400454	neither	derived	theDepot / 4: B _ZN11__sanitizerL8theDepotE 0x187118 / 4 = 400454 (A 0x186c98 / 4 = 400166)
+A/AFes.v:105	AU/YFes.v:106	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFes.v:136	AU/YFes.v:137	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFet.v:712	AU/YFet.v:713	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFet.v:714	AU/YFet.v:715	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFet.v:727	AU/YFet.v:728	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFeu.v:163	AU/YFeu.v:164	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFeu.v:165	AU/YFeu.v:166	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFeu.v:226	AU/YFeu.v:227	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFeu.v:237	AU/YFeu.v:238	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFf4.v:1047	AU/YFf4.v:1048	1441792	1441792	1442944	1441792	for derive_y	model-constant	(11571200 - (4096 + 32768)) / 8, run-time sizes (kFakeStackSize); not an address
+A/AFf9.v:381	AU/YFf9.v:382	4194240	4194240	4195392	4194240	for derive_y	model-constant	size quotient (4194240 = 2^22 - 64) of the run-time arena; not an address
+A/AFf9.v:381	AU/YFf9.v:382	4194240	4194240	4195392	4194240	for derive_y	model-constant	size quotient (4194240 = 2^22 - 64) of the run-time arena; not an address
+A/AFfg.v:100	AU/YFfg.v:101	0xe6000	0xe6000	0xe6480	0xe6480	for alreloc	moved	_ZN11__sanitizerL26internal_alloc_placeholderE+0x40040 (A 0xa5fc0 / B 0xa6440, size 0x81040; member offsets of the same layout)
+A/AFfg.v:106	AU/YFfg.v:107	0xe6000	0xe6000	0xe6480	0xe6480	for alreloc	moved	_ZN11__sanitizerL26internal_alloc_placeholderE+0x40040 (A 0xa5fc0 / B 0xa6440, size 0x81040; member offsets of the same layout)
+A/AFfg.v:232	AU/YFfg.v:233	0xe6000	0xe6000	0xe6480	0xe6480	for alreloc	moved	_ZN11__sanitizerL26internal_alloc_placeholderE+0x40040 (A 0xa5fc0 / B 0xa6440, size 0x81040; member offsets of the same layout)
+A/AFfg.v:232	AU/YFfg.v:233	3456	4608	3456	3456	for alreloc	kept	memset length of the same struct member (layout constant; B code same), = 0xe6d80-0xe6000 in A and 0xe7200-0xe6480 in B
+A/AFfu.v:409	AU/YFfu.v:410	84984	85128	85023	85128	for derive_y	derived	681024 / 8 (the line's 679872 moved +0x480 to 681024)
+A/AFg1.v:299	AU/YFg1.v:300	84984	85128	85023	85128	for derive_y	derived	681024 / 8 (the line's 679872 moved +0x480 to 681024)
+A/AFhd.v:57	AU/YFhd.v:58	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFhd.v:74	AU/YFhd.v:75	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFhd.v:94	AU/YFhd.v:95	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFhd.v:108	AU/YFhd.v:109	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFhd.v:124	AU/YFhd.v:125	100000	100000	100046	100000	for derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)
+A/AFi3.v:77	AU/YFi3.v:78	202260	202260	202388	202260	for derive_y	model-constant	spec location id of mcheck (a label, kept byte-identical as in A)
+A/AFi9.v:59	AU/YFi9.v:60	1048575	1048575	1049727	1048575	for derive_y	model-constant	mkAF bound 2^20 - 1; not an address
+A/AFih.v:70	AU/YFih.v:71	0x20c30	0x20c60	0x20c30	0x20c60	for derive_y	moved	VSNPrintf jump table entry 24 (B base 0x20c00)
+A/AFih.v:70	AU/YFih.v:71	0x465d0	0x46620	0x46650	0x46620	for derive_y	rom-pair	B bytes at 0x20c60 = 0x46620 (0x20c00+0x46620 = VSNPrintf+0x350, as A 0x20bd0+0x465d0)
+A/AFii.v:26	AU/YFii.v:27	0x21a74	0x21a74	0x21a74	0x21ab4	both tools wrong	moved	sysconf jump table: A base 0x21a68 (sysconf+0xd8 auipc/addi) entry 3; B base 0x21aa8 (sysconf+0xd8) entry 3 = 0x21ab4
+A/AFii.v:26	AU/YFii.v:27	0x6a0d0	0x69dc0	0x6a150	0x6a508	neither	rom-pair	B bytes at 0x21ab4 = 0x6a508 (table-relative: 0x21aa8+0x6a508 = 0x8bfb0 = sysconf+0x208, as A 0x21a68+0x6a0d0 = sysconf+0x208)
+A/AFjr.v:628	AU/YFjr.v:629	82688	82832	82727	82832	for derive_y	derived	(662488 + 168) / 8 (the line's 661336 moved to 662488)
+A/AFk0.v:772	AU/YFk0.v:773	202260	202260	202388	202260	for derive_y	model-constant	spec location id of mcheck (a label, kept byte-identical as in A)
+A/AFk1.v:661	AU/YFk1.v:662	0x21a74	0x21a74	0x21a74	0x21ab4	both tools wrong	moved	sysconf jump table: A base 0x21a68 (sysconf+0xd8 auipc/addi) entry 3; B base 0x21aa8 (sysconf+0xd8) entry 3 = 0x21ab4
+A/AFk1.v:661	AU/YFk1.v:662	0x6a0d0	0x69dc0	0x6a150	0x6a508	neither	rom-pair	B bytes at 0x21ab4 = 0x6a508 (table-relative: 0x21aa8+0x6a508 = 0x8bfb0 = sysconf+0x208, as A 0x21a68+0x6a0d0 = sysconf+0x208)
+A/AFk1.v:759	AU/YFk1.v:760	0x21a74	0x21a74	0x21a74	0x21ab4	both tools wrong	moved	sysconf jump table: A base 0x21a68 (sysconf+0xd8 auipc/addi) entry 3; B base 0x21aa8 (sysconf+0xd8) entry 3 = 0x21ab4
+A/AFk1.v:759	AU/YFk1.v:760	0x21a78	0x21a78	0x21a78	0x21ab8	both tools wrong	moved	end of sysconf jump-table entry 3: B 0x21ab4+4
+A/AFk1.v:846	AU/YFk1.v:847	0x21a74	0x21a74	0x21a74	0x21ab4	both tools wrong	moved	sysconf jump table: A base 0x21a68 (sysconf+0xd8 auipc/addi) entry 3; B base 0x21aa8 (sysconf+0xd8) entry 3 = 0x21ab4
+A/AFk1.v:846	AU/YFk1.v:847	0x21a78	0x21a78	0x21a78	0x21ab8	both tools wrong	moved	end of sysconf jump-table entry 3: B 0x21ab4+4
+A/AFk2.v:599	AU/YFk2.v:600	0x20c30	0x20c60	0x20c30	0x20c60	for derive_y	moved	VSNPrintf jump table entry 24 (B base 0x20c00)
+A/AFk2.v:599	AU/YFk2.v:600	0x465d0	0x46620	0x46650	0x46620	for derive_y	rom-pair	B bytes at 0x20c60 = 0x46620
+A/AFk2.v:617	AU/YFk2.v:618	0x20c30	0x20c60	0x20c30	0x20c60	for derive_y	moved	VSNPrintf jump table entry 24 (B base 0x20c00)
+A/AFk2.v:617	AU/YFk2.v:618	0x20c34	0x20c64	0x20c34	0x20c64	for derive_y	moved	end of VSNPrintf jump-table entry 24
+A/AFk2.v:617	AU/YFk2.v:618	0x103f0	0x10400	0x103f0	0x10400	for derive_y	moved	end of the 8-byte 0xaaaaaaaaaaaaaaaa pattern word: B 0x103f8+8 (A 0x103e8+8)
+A/AFk2.v:716	AU/YFk2.v:717	0x20c30	0x20c60	0x20c30	0x20c60	for derive_y	moved	VSNPrintf jump table entry 24
+A/AFk2.v:716	AU/YFk2.v:717	0x20c34	0x20c64	0x20c34	0x20c64	for derive_y	moved	end of VSNPrintf jump-table entry 24
+A/AFk2.v:721	AU/YFk2.v:722	0x103f0	0x10400	0x103f0	0x10400	for derive_y	moved	end of the pattern word B 0x103f8+8

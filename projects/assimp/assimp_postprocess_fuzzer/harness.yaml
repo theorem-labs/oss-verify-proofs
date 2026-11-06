@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: assimp
 harness: assimp_postprocess_fuzzer
-rocq: OssFuzzTheorems.assimp.assimp_postprocess_fuzzer
+rocq: OSSVerify.assimp.assimp_postprocess_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

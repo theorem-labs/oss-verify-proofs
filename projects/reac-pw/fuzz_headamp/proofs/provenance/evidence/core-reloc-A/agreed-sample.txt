@@ -1,0 +1,5 @@
+# agreed set: every code numeral where my value equals port_core 1e42da8952ec's value (no decision row), checked independently against headamp's binary
+# moved (role value != headamp value): 6635 rows, 0 unexplained - symbol+offset 6062, section/GOT/gap/section-offset/end-of 236, geometry 192, string 67, named point 51, image-hull/8 shadow bounds 27
+# kept and inside the role image range: 1484 rows - instruction words in fetch_word / decode_any facts 558 (all 461 fetch_word facts checked word for word against headamp's bytes), model constants with donor-twin consensus 260, image quantities equal in both images 106, same address in both images 556, decoded Jal immediates of a kept instruction word 2, kit-derived bound TOT <= 127070 (DEPOT_MAX 4096, kit) 2
+# kept and outside the image range: 154294 rows (register numbers, sizes, offsets, masks, nat indices)
+# ROM pairs (address, size, value) read from headamp's bytes: 460 checked, 0 wrong. .got cells: 211, 0 wrong (got-cells.tsv). change-with arithmetic: 961 sites, 0 mismatch.

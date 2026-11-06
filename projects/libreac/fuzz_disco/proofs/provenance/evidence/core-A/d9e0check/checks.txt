@@ -1,0 +1,21 @@
+# The four checks on the port_core d9e0589898fd check run (written by checks.py)
+# numerals in gate-raw.tsv: 9999; verdicts: NON-ADDRESS-SAME 9910, SAME-GEOMETRY 14, SAME-SYMBOL 75
+
+## 1. kept image-derived counts: 9924 kept numerals; donor quantities that differ in the target: 2576; kept numerals >= 0x100 equal to one of them: 0
+below 0x100 (not decided by value: every small integer coincides with some quotient or span; the registered by-value gate has the same floor): kept numerals equal to a differing donor quantity, by value: 0x1 x612 (span(.text.hi,.tbss.lo)/4 ...), 0x2 x938 (load2.pagelen/4096 ...), 0x3 x78 (span(.text.hi,.tbss.hi)/8 ...), 0x4 x129 (span(.text.hi,.tbss.lo) ...), 0x6 x30 (span(.text.hi,.tbss.hi)/4 ...), 0x10 x174 (span(asan_globals.hi,.bss.lo)), 0x18 x18 (asan_globals.size/8 ...), 0x1a x12 (span(.data.hi,.bss.lo)/8 ...), 0x30 x39 (asan_globals.size/4 ...)
+check 1: PASS
+
+## 2. GOT[0] and .got cells: donor .got 0x9df38+0xd70, target .got 0xa04b0+0xd58; numerals whose donor value is in the donor .got: 0
+check 2: PASS
+
+## 3. shadow offsets and model constants by role: `lui rd, 0x7fff8` (shadow offset 0x7fff8000) in .text: donor 2 at 0x525e4 _ZN6__asan22FindDynamicShadowStartEv+0xc, 0x59eac _ZN6__asan19SealedReserveShadowEv+0x30; target 2 at 0x53098 _ZN6__asan22FindDynamicShadowStartEv+0xc, 0x5a960 _ZN6__asan19SealedReserveShadowEv+0x30; same functions: yes
+ok	kHighMemBeg	kept	3
+ok	kHighMemEnd	kept	5
+ok	kLowMemEnd	kept	6
+ok	kLowShadowBeg (shadow offset)	kept	318
+ok	negative immediate	kept	10
+ok	shadow offset + k	kept	74
+check 3: PASS
+
+## 4. no-twin drops: 0 rows (no-twin.tsv, and check.tsv / review.tsv rows saying 'no twin')
+check 4: PASS

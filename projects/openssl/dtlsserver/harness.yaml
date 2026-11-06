@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: dtlsserver
-rocq: OssFuzzTheorems.openssl.dtlsserver
+rocq: OSSVerify.openssl.dtlsserver
 origin: upstream
 summary: DTLS server with fixed RSA/ECDSA/DSA keys and certs, handshake + SSL_read loop over the input;
   nothing compared.

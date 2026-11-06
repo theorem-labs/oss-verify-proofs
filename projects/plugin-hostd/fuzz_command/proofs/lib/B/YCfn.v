@@ -1,0 +1,93 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/ACfn.v for plugin-hostd/fuzz_command: module paths and image; the addresses of fuzz_command.asan (A_LLVMF, RA_LLVMF, A_EMPTY); the program's writable statics PG join the footprint of the call; a call index j and the global invariant GI (pre GI j, post GI (j + 1)) as the last two parameters; GI_cmdA, fuzz_command's GI on this image, in lib/A/Prog/CmdGlob.v, which this file re-exports. *)
+(* Modified by Theorem Labs, 2026-10: twin of lib/A/ACfn.v for the ASan+UBSan build fuzz_command.asan-ubsan: module paths A -> B, image Asan -> AsanUbsan, core files AB1v -> YB1v / AE2k -> YE2k (the image-B twins, same identifiers), CmdGlob -> lib.B.Prog.CmdGlob; the B addresses of fuzz_command.asan-ubsan (A_LLVMF 0x86530 the entry, RA_LLVMF 0x8642c the return site after `jal 86530` at 0x86428 in target_run, A_EMPTY 0x5e32a0 `oft_aligned_copy.empty`). EV_LIB is unchanged at 2900: B compiles the same C, so one call's allocator-event count is the same function of the payload (UBSan changed only which function an inlined allocator call lands in, not how many allocator entry calls run), and lib/B/Prog/HarnessArgsEv.v's ev_ltoi_lib proves EV_LTOI pl <= 2,505 <= EV_LIB. *)
+(* The return is FP-existential (the printf wrapper's shared post: the continuation takes the return configuration at some FP state fx', boxreg's BoxLibX.v clause), and the pre carries rounding mode 0. *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Sem.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require Import YK11 YK0s YK15 YK18 YP09 YI00.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require Import YK04 YA0i YA0n.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require Import YO09.
+From OSSVerify.plugin_hostd.fuzz_command.images Require Import AsanUbsan.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.B Require Import YB1v.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require Import YI16 YE00 YE01.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.B Require Import YE2k.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require Import YC5d.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.B.Prog Require Export CmdGlob.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Open Scope Z_scope.
+Definition A_LLVMF : Z := 0x86530.
+Definition RA_LLVMF : Z := 0x8642c.
+Definition A_EMPTY : Z := 0x5e32a0.
+(* the events one call may spend: the same function of the payload as the ASan build, because B compiles the same C
+   and makes the same allocator entry calls on each daemon path (UBSan changed only which function an inlined call
+   lands in: arg_i/xstrdup became arg_s/xmalloc/record, same counts). So the measured worst case is the same 2,372
+   (1,120 malloc + 1,252 free) on 32 x `pin_set a b c` (the ASan build's allocator-event measurement,
+   confirmed against B's own allocation-trace list), against cgif's 2,000. ev_ltoi_lib
+   (lib/B/Prog/HarnessArgsEv.v) proves EV_LTOI pl <= 2,505 <= EV_LIB for every payload. *)
+Definition EV_LIB : Z := 2900.
+Definition LIVE_LIB : Z := 2 ^ 33.
+Definition LLVMF_STK : Z := 32768.
+Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}.
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variables XM_LIB XN_LIB : Z -> Z.
+Variables RLO RHI : Z.
+Variable GI : nat -> reader -> Prop.
+Variable j : nat.
+Local Notation segs := tfibsegs.
+Local Notation rd W mem := (mrestrict (w_H W) mem).
+Definition tfib_lib_pre_x (regs : bvmap 5 word) (ly : alayout) (S : astate) (W : world segs) (mem : word -> option byte) (md : Model)
+(p n : Z) (pl : list byte) (M : Z) : Prop :=
+afn_pre segs B LLVMF_STK ly S W regs mem md [] /\
+(* rounding mode 0 (frm = fcsr bits 5..7): the printf wrappers' frm0_entry; no instruction from _start to here
+   writes fcsr, and the start-up state's fcsr is 0 (YK11.v) *)
+Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 /\
+raZ regs = RA_LLVMF /\
+getr regs 10 = w64 p /\ getr regs 11 = w64 n /\
+((n = 0 /\ p = A_EMPTY) \/ (0 < n < 2 ^ 26 /\ In (p, n) (ablocks B ly S))) /\
+n = Z.of_nat (length pl) /\ garr8 segs (rd W mem) p (map (fun b : byte => bv_unsigned b) pl) /\
+frames S = [] /\ st_nev S + EV_LIB <= EV_MAX /\ blocks_bytes S + LIVE_LIB <= LIVE_MAX /\
+arodata_okS segs B RLO RHI (aview segs (w_H W) mem) /\
+asink_none segs tfib_K (rd W mem) md /\
+fd_lookup (m_fds md) (alloc_fd (m_fds md)) = None /\
+Fs.fs_sorted (m_fs md) = true /\
+ameta_inv segs tfib_K ly (rd W mem) M /\
+mo_ok MT S (XM_LIB n) /\
+GI j (aview segs (w_H W) mem).
+Definition tfib_lib_post_x (regs : bvmap 5 word) (ly : alayout) (S : astate) (W : world segs) (mem : word -> option byte) (md : Model)
+(p n : Z) (M : Z) (l : lleaf)
+(ly' : alayout) (S' : astate) (W' : world segs) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model) (k : Z) : Prop :=
+ajournal segs B LLVMF_STK (spZ regs) (cmd_PG ++ [sink_token]) ly S W mem md [] ly' S' W' mem' md' k /\ k <= EV_LIB /\
+aregs_preserved regs regs' /\ getr regs' 10 = w64 0 /\
+Permutation (ablocks B ly' S') (ablocks B ly S) /\
+(forall fd, fd_lookup (m_fds md') fd = fd_lookup (m_fds md) fd) /\
+m_fs md' = ll_fs l /\ ll_ret l = 0 /\ ll_out l = [] /\ Fs.fs_sorted (ll_fs l) = true /\
+asink_none segs tfib_K (rd W' mem') md' /\
+ameta_inv segs tfib_K ly' (rd W' mem') M /\
+mo_le MT S S' (XN_LIB n) /\
+(forall i, 0 <= i < n -> aview segs (w_H W') mem' (p + i) = aview segs (w_H W) mem (p + i)) /\
+GI (Nat.succ j) (aview segs (w_H W') mem').
+Definition tfib_lib_contract_x : Prop :=
+forall ly S (W : world segs) (regs : bvmap 5 word) mem md p n pl M (K : lleaf -> TSet),
+AI segs (w_H W) (w_A W) md ->
+tfib_lib_pre_x regs ly S W mem md p n pl M ->
+(forall (l : lleaf) (W' : world segs) (c' : config),
+wle W W' -> AI segs (w_H W') (w_A W') (cfg_model c') ->
+(exists (fx' : YK11.FPState) ly' S' regs' mem' md' k,
+c' = @cfg_at fx' segs RA_LLVMF regs' mem' md' /\
+(forall k0 : bv 5, bv_unsigned k0 <> 10 -> Sem.reg_get (@fp_regs fx') k0 = Sem.reg_get (@fp_regs fx) k0) /\
+(@fp_csr fx' = @fp_csr fx \/ Z.land (Z.shiftr (bv_unsigned (@fp_csr fx')) 5) 7 = 0) /\
+tfib_lib_post_x regs ly S W mem md p n M l ly' S' W' regs' mem' md' k) ->
+srealizes segs c' (K l)) ->
+srealizes segs (cfg_at segs A_LLVMF regs mem md) (LIBK pl (m_fs md) K).
+End a.
+Definition tfib_lib_contract_x_all {rc : YM05.RunCeil} {LS : lib_shape} (B : asyms) (MT : ameter_ops) (XM_LIB XN_LIB : Z -> Z) (RLO RHI : Z)
+(GI : nat -> reader -> Prop) (j : nat) : Prop :=
+forall fx : YK11.FPState, @tfib_lib_contract_x fx rc LS B MT XM_LIB XN_LIB RLO RHI GI j.

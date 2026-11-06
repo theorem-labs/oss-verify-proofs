@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_gnu_index
-rocq: OssFuzzTheorems.libdwarf.fuzz_gnu_index
+rocq: OSSVerify.libdwarf.fuzz_gnu_index
 origin: upstream
 summary: '.debug_gnu_pubnames: dwarf_get_gnu_index_head, every block and every block entry; results unused.'
 entry: LLVMFuzzerTestOneInput

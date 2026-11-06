@@ -1,0 +1,50 @@
+image ../img/link.asan sha256 059dae63e07ca2d80ae9227fa125d40586a02172c96d2b6884f8617ab912061d (PIN)
+twin  ../img/link.asan.unstripped sha256 66cd0f159895f119b29a44eb3760cfda78506402a019729057dba69562af9d9f (PIN)
+asan_globals: addr 0xa62a0 size 2752 (43 descriptors of 64 bytes); expected addr 0xa62a0 size 2752 (43)
+i	desc_addr	beg	size	size_with_rz	rz_rule	section	symbol	sym_size	name	odr_indicator	odr_symbol	verdict
+0	0xa62a0	0x20fa0	5	32	32	.rodata	.str	32	.str	0xffffffffffffffff	none(-1)	OK
+1	0xa62e0	0x20fc0	1	32	32	.rodata	.str.1	32	.str.1	0xffffffffffffffff	none(-1)	OK
+2	0xa6320	0x20fe0	12	32	32	.rodata	.str.2	32	.str.2	0xffffffffffffffff	none(-1)	OK
+3	0xa6360	0x21000	5	32	32	.rodata	.str.3	32	.str.3	0xffffffffffffffff	none(-1)	OK
+4	0xa63a0	0x21020	6	32	32	.rodata	.str.4	32	.str.4	0xffffffffffffffff	none(-1)	OK
+5	0xa63e0	0x21040	9	32	32	.rodata	.str.5	32	.str.5	0xffffffffffffffff	none(-1)	OK
+6	0xa6420	0x21060	6	32	32	.rodata	.str.6	32	.str.6	0xffffffffffffffff	none(-1)	OK
+7	0xa6460	0x21080	24	64	64	.rodata	nl_errno.e	64	nl_errno.e	0xffffffffffffffff	none(-1)	OK
+8	0xa64a0	0x210c0	2	32	32	.rodata	.str.8	32	.str.8	0xffffffffffffffff	none(-1)	OK
+9	0xa64e0	0x210e0	16	32	32	.rodata	msg_build.codes	32	msg_build.codes	0xffffffffffffffff	none(-1)	OK
+10	0xa6520	0x21100	15	32	32	.rodata	.str.11	32	.str.11	0xffffffffffffffff	none(-1)	OK
+11	0xa6560	0x21120	15	32	32	.rodata	.str.12	32	.str.12	0xffffffffffffffff	none(-1)	OK
+12	0xa65a0	0x21140	11	32	32	.rodata	.str.13	32	.str.13	0xffffffffffffffff	none(-1)	OK
+13	0xa65e0	0x21160	9	32	32	.rodata	.str.14	32	.str.14	0xffffffffffffffff	none(-1)	OK
+14	0xa6620	0x21180	16	32	32	.rodata	.str.15	32	.str.15	0xffffffffffffffff	none(-1)	OK
+15	0xa6660	0x211a0	8	32	32	.rodata	.str.16	32	.str.16	0xffffffffffffffff	none(-1)	OK
+16	0xa66a0	0x211c0	5	32	32	.rodata	.str.17	32	.str.17	0xffffffffffffffff	none(-1)	OK
+17	0xa66e0	0x211e0	5	32	32	.rodata	.str.18	32	.str.18	0xffffffffffffffff	none(-1)	OK
+18	0xa6720	0x21200	6	32	32	.rodata	.str.19	32	.str.19	0xffffffffffffffff	none(-1)	OK
+19	0xa6760	0x21220	4	32	32	.rodata	.str.20	32	.str.20	0xffffffffffffffff	none(-1)	OK
+20	0xa67a0	0x21240	3	32	32	.rodata	.str.21	32	.str.21	0xffffffffffffffff	none(-1)	OK
+21	0xa67e0	0x21260	2	32	32	.rodata	.str.22	32	.str.22	0xffffffffffffffff	none(-1)	OK
+22	0xa6820	0x212a0	9	32	32	.rodata	.str	32	.str	0xffffffffffffffff	none(-1)	OK
+23	0xa6860	0x212c0	5	32	32	.rodata	.str.1	32	.str.1	0xffffffffffffffff	none(-1)	OK
+24	0xa68a0	0x212e0	8	32	32	.rodata	.str.2	32	.str.2	0xffffffffffffffff	none(-1)	OK
+25	0xa68e0	0x21300	148	192	192	.rodata	.str.3	192	.str.3	0xffffffffffffffff	none(-1)	OK
+26	0xa6920	0x213c0	15	32	32	.rodata	.str.4	32	.str.4	0xffffffffffffffff	none(-1)	OK
+27	0xa6960	0x213e0	103	160	160	.rodata	.str.5	160	.str.5	0xffffffffffffffff	none(-1)	OK
+28	0xa69a0	0x21480	35	96	96	.rodata	.str.6	96	.str.6	0xffffffffffffffff	none(-1)	OK
+29	0xa69e0	0x214e0	1	32	32	.rodata	.str.7	32	.str.7	0xffffffffffffffff	none(-1)	OK
+30	0xa6a20	0x21500	118	160	160	.rodata	.str.8	160	.str.8	0xffffffffffffffff	none(-1)	OK
+31	0xa6a60	0x215a0	122	160	160	.rodata	.str.9	160	.str.9	0xffffffffffffffff	none(-1)	OK
+32	0xa6aa0	0x21640	8	32	32	.rodata	.str.10	32	.str.10	0xffffffffffffffff	none(-1)	OK
+33	0xa6ae0	0x21660	13	32	32	.rodata	.str.33	32	.str.33	0xffffffffffffffff	none(-1)	OK
+34	0xa6b20	0x21680	3	32	32	.rodata	.str.37	32	.str.37	0xffffffffffffffff	none(-1)	OK
+35	0xa6b60	0xa1760	48	96	96	.data.rel.ro	odd	96	odd	0xffffffffffffffff	none(-1)	OK
+36	0xa6ba0	0xa17c0	88	128	128	.data.rel.ro	texts	128	texts	0xffffffffffffffff	none(-1)	OK
+37	0xa6be0	0x5dcac0	271992	339968	339968	.bss	g_nl	339968	g_nl	0xffffffffffffffff	none(-1)	OK
+38	0xa6c20	0x62fac0	512	640	640	.bss	g_names	640	g_names	0xffffffffffffffff	none(-1)	OK
+39	0xa6c60	0x62fd40	301	384	384	.bss	msg_build.long_alias	384	msg_build.long_alias	0xffffffffffffffff	none(-1)	OK
+40	0xa6ca0	0x62fec0	8	32	32	.bss	g_sink	32	g_sink	0xffffffffffffffff	none(-1)	OK
+41	0xa6ce0	0x62fee0	4096	5120	5120	.bss	g_said	5120	g_said	0xffffffffffffffff	none(-1)	OK
+42	0xa6d20	0x6312e0	8	32	32	.bss	g_say	32	g_say	0xffffffffffffffff	none(-1)	OK
+summary: 43 descriptors; 0 with an odr_indicator; 9151 shadow rows (8807 redzone/partial + 344 descriptor-array)
+wrote shadow-expected.tsv (9151 rows)
+VERDICT: PASS

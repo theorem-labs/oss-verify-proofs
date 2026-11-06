@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: re2
 harness: re2_fuzzer
-rocq: OssFuzzTheorems.re2.re2_fuzzer
+rocq: OSSVerify.re2.re2_fuzzer
 origin: upstream
 summary: FDP-chosen RE2::Options, anchor, pattern and text; after cost filters (char-class count, subexpression/substring
   walkers, program size and fanout <= limits) exercises FullMatch/PartialMatch/Consume/FindAndConsume

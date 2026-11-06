@@ -1,0 +1,5 @@
+PT_LOAD count pin 4 twin 4
+PT_LOAD 1 vaddr 0x10000 filesz 0x1d40 memsz 0x1d40 flags 4: headers EQUAL, bytes DIFFER
+PT_LOAD 2 vaddr 0x12d40 filesz 0xc890 memsz 0xc890 flags 5: headers EQUAL, bytes EQUAL
+PT_LOAD 3 vaddr 0x205d0 filesz 0xe8 memsz 0xa30 flags 6: headers EQUAL, bytes EQUAL
+PT_LOAD 4 vaddr 0x216b8 filesz 0x20c memsz 0x30e40 flags 6: headers EQUAL, bytes EQUAL

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_set_frame_all
-rocq: OssFuzzTheorems.libdwarf.fuzz_set_frame_all
+rocq: OSSVerify.libdwarf.fuzz_set_frame_all
 origin: upstream
 summary: 'For each of 5 frame-rule setters x {SHRT_MIN, SHRT_MAX, 0}: reads .debug_frame and .eh_frame,
   every CIE/FDE, selected register rules, the full register table and expanded frame instructions, printing

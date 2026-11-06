@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: server
-rocq: OssFuzzTheorems.openssl.server
+rocq: OSSVerify.openssl.server
 origin: upstream
 summary: TLS server with fixed RSA/ECDSA/DSA keys; optional early-data read (last input byte), handshake,
   SSL_read loop; nothing compared.

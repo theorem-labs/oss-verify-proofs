@@ -1,0 +1,23 @@
+# cb build of the three .vo (the build of record)
+cb-cache: mode=dune source=default dir=<vm>:<file> targets=3 compiled=3 from_cache=0 missing=0 failed=0
+cb: pins of reac-repacer/fuzz_uci: each file of <vm>:~<file> against projects/reac-repacer/fuzz_uci/harness.yaml at facts 25e3d17bdb50 (facts of base 25e3d17bdb, BASE.tsv)
+cb: pin reac-repacer/fuzz_uci fuzz_uci.asan 6ea017c24525 PINNED (asan pins 6ea017c24525 at facts 25e3d17bdb50)
+cb: pin reac-repacer/fuzz_uci fuzz_uci.asan-ubsan a1b86e424add PINNED (asan-ubsan pins a1b86e424add at facts 25e3d17bdb50)
+cb: pin reac-repacer/fuzz_uci fuzz_uci.plain a6119aa7f1f2 PINNED (plain pins a6119aa7f1f2 at facts 25e3d17bdb50)
+cb: pin reac-repacer/fuzz_uci fuzz_uci.ubsan fa87ac3037db PINNED (ubsan pins fa87ac3037db at facts 25e3d17bdb50)
+cb: pins reac-repacer/fuzz_uci at facts 25e3d17bdb50: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts 25e3d17bdb50
+proofs/reac-repacer/fuzz_uci/lib/Reusable/YF0v.vo (real: 1.88, user: 1.53, sys: 0.35, mem: 536032 ko)
+proofs/reac-repacer/fuzz_uci/lib/B/Rt/YF0r.vo (real: 8.21, user: 7.77, sys: 0.44, mem: 697188 ko)
+proofs/reac-repacer/fuzz_uci/lib/B/Rt/YF0s.vo (real: 37.88, user: 37.32, sys: 0.56, mem: 960444 ko)
+cb: target proofs/reac-repacer/fuzz_uci/lib/Reusable/YF0v.vo compiled
+cb: target proofs/reac-repacer/fuzz_uci/lib/B/Rt/YF0r.vo compiled
+cb: target proofs/reac-repacer/fuzz_uci/lib/B/Rt/YF0s.vo compiled
+rc=0 wall=55
+# control: YF0r.v cell (0x9e960, ...) planted as (0x9e968, ...), the same build (reverted after)
+cb-cache: mode=dune source=default dir=<vm>:<file> targets=1 compiled=0 from_cache=0 missing=0 failed=1
+File "./proofs/reac-repacer/fuzz_uci/lib/B/Rt/YF0r.v", line 78, characters 30-41:
+Error: In environment
+Unable to unify "true" with "false".
+proofs/reac-repacer/fuzz_uci/lib/B/Rt/YF0r.vo (real: 3.67, user: 3.24, sys: 0.42, mem: 658756 ko) exit 1
+cb: target proofs/reac-repacer/fuzz_uci/lib/B/Rt/YF0r.vo failed (exit 1)
+rc=1 wall=8

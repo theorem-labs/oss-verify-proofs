@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ndpi
 harness: fuzz_alg_anomalymodel
-rocq: OssFuzzTheorems.ndpi.fuzz_alg_anomalymodel
+rocq: OSSVerify.ndpi.fuzz_alg_anomalymodel
 origin: upstream
 summary: trains an ndpi anomaly model on up to 255 fuzzed feature rows and scores up to 255 more; scores
   discarded.

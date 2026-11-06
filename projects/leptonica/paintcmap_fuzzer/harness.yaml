@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: paintcmap_fuzzer
-rocq: OssFuzzTheorems.leptonica.paintcmap_fuzzer
+rocq: OSSVerify.leptonica.paintcmap_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixSetSelectCmap and pixSetSelectMaskedCmap on copies.
 entry: LLVMFuzzerTestOneInput

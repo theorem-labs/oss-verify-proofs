@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libiec61850
 harness: fuzz_pres_userdata
-rocq: OssFuzzTheorems.libiec61850.fuzz_pres_userdata
+rocq: OSSVerify.libiec61850.fuzz_pres_userdata
 origin: upstream
 summary: IsoPresentation_parseAcceptMessage over a ByteBuffer aliasing the input; result discarded.
 entry: LLVMFuzzerTestOneInput

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: oatpp
 harness: fuzz_mapper
-rocq: OssFuzzTheorems.oatpp.fuzz_mapper
+rocq: OSSVerify.oatpp.fuzz_mapper
 origin: upstream
 summary: mapper.readFromString<Object<Test1>>(input) then mapper.writeToString(dto); the output string
   is thrown away and catch(...) swallows every exception, so only memory errors / crashes count.

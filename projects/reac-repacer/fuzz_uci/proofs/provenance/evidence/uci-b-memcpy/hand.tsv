@@ -1,0 +1,50 @@
+key	reason (why the value is not used as an address there)
+_ZN11__sanitizer6GetTidEv+0x4 syscall a3 PURE at ecall	gettid (a7 = 0xb2 = 178) takes no argument: a3 is not read
+_ZN11__sanitizer6GetTidEv+0x4 syscall a4 PURE at ecall	gettid (a7 = 178) takes no argument: a4 is not read
+_ZN11__sanitizer6GetTidEv+0x4 syscall a5 PURE at ecall	gettid (a7 = 178) takes no argument: a5 is not read
+_ZN11__sanitizer11CheckFailedEPKciS1_yy+0x38 deep PURE [15] into _ZN11__sanitizer6GetTidEv	GetTid() takes no argument (mangled `Ev`) and its body is `li a7, 178; ecall; ret`: a5 is not read
+_ZN11__sanitizer11CheckFailedEPKciS1_yy+0x38 deep PURE [17] into _ZN11__sanitizer6GetTidEv	GetTid() takes no argument and its body is `li a7, 178; ecall; ret`: a7 is overwritten before the ecall
+_ZN11__sanitizer6PrintfEPKcz+0xc data store8 PURE	va spill of a5. Every chain reaching it is CheckFailed+0x7c -> Printf with format `%s: CHECK failed: %s:%d "%s" (0x%zx, 0x%zx) (tid=%u)\n` (a0); a5 is the 5th conversion `0x%zx` (v1): printed as a number
+_ZN11__sanitizer6PrintfEPKcz+0x10 data store8 PURE	va spill of a6, the same CheckFailed+0x7c format: a6 is the 6th conversion `0x%zx` (v2): printed as a number
+_ZN11__sanitizer6PrintfEPKcz+0x28 data stack address sp+24 taken while a spilled copy is tracked	`addi a0, sp, 0x18; sd a0, 0(sp)`: a store of the va_list start to sp+0, which nothing loads; the va_list is handed to SharedPrintfCode at +0x30 (`addi a2, sp, 0x18`); the conversions that read the tracked slots are `0x%zx` (rows above): numbers
+_ZN11__sanitizer6PrintfEPKcz+0x30 data stack address sp+24 taken while a spilled copy is tracked	`addi a2, sp, 0x18`: the va_list start handed to SharedPrintfCode; the conversions that read the tracked slots are `0x%zx` (rows above): numbers
+_ZN11__sanitizer6ReportEPKcz+0xc data store8 PURE	va spill of a5. Its chain is LargeMmapAllocator<NoOpMapUnmapCallback,...>::Allocate+0x88 -> Report with format `WARNING: %s: LargeMmapAllocator allocation overflow: 0x%zx bytes with 0x%zx alignment requested\n`: 3 conversions (a1-a3), so a5 is never read
+_ZN11__sanitizer6ReportEPKcz+0x1c data store8 PURE	va spill of a2. Its chain is ReportMunmapFailureAndDie+0x60 -> Report with format `ERROR: %s failed to deallocate 0x%zx (%zd) bytes at address %p (error code: %d)\n`: a2 is `0x%zx` (size): a number
+_ZN11__sanitizer6ReportEPKcz+0x20 data store8 PURE	va spill of a3. Chains: ReportMmapFailureAndDie+0xb0 -> Report `ERROR: %s: out of memory: failed to %s 0x%zx (%zd) bytes of %s (error code: %d)\n` (a3 = `0x%zx` size) and ReportMunmapFailureAndDie+0x60 -> Report (a3 = `(%zd)` size): numbers
+_ZN11__sanitizer6ReportEPKcz+0x24 data store8 PURE	va spill of a4. Chains: ReportMmapFailureAndDie+0xb0 (a4 = `(%zd)` size) and ReportMunmapFailureAndDie+0x60 (a4 = `%p` address, printed as a hexadecimal number, never dereferenced): numbers
+_ZN11__sanitizer6ReportEPKcz+0x28 data stack address sp+24 taken while a spilled copy is tracked	`addi a0, sp, 0x18; sd a0, 0(sp)`: a store of the va_list start to sp+0, which nothing loads; the va_list is handed to SharedPrintfCode at +0x34; the conversions that read the tracked slots are the numeric ones above
+_ZN11__sanitizer6ReportEPKcz+0x34 data stack address sp+24 taken while a spilled copy is tracked	`addi a2, sp, 0x18`: the va_list start handed to SharedPrintfCode; the conversions that read the tracked slots are the numeric ones above
+_ZN6__asan14AsanDeactivateEv+0x90 data store4 PURE	`sw a0, 8(sp)` of 0x00100010 into the local AllocatorOptions `disabled`: the two u16 fields min_redzone = 16 and max_redzone = 16 (asan_activation.cpp AsanDeactivate); a data store of two field values, not a base
+_ZN11__sanitizer13internal_mmapEPvmiiiy+0x4 syscall a3 PURE at ecall	mmap (a7 = 0xde = 222): a3 is `flags` (0x104022 = MAP_FIXED_NOREPLACE | MAP_NORESERVE | MAP_ANONYMOUS | MAP_PRIVATE): a number
+___interceptor_memset+0x9c indirect a5 PURE at jalr	the call through REAL(memset) (dst a0, c a1, n a2): a5 is not an argument
+___interceptor_memset+0x9c indirect a7 PURE at jalr	the call through REAL(memset): a7 is not an argument
+__lsysinfo+0xc syscall a2 PURE at ecall	sysinfo (a7 = 179) takes one argument (a0): a2 is not read
+__lsysinfo+0xc syscall a4 PURE at ecall	sysinfo takes one argument (a0): a4 is not read
+__lsysinfo+0xc syscall a5 PURE at ecall	sysinfo takes one argument (a0): a5 is not read
+getrlimit+0x44 syscall a4 PURE at ecall	prlimit64 (a7 = 0x105 = 261) takes four arguments (a0-a3): a4 is not read
+getrlimit+0x44 syscall a5 PURE at ecall	prlimit64 takes four arguments (a0-a3): a5 is not read
+_ZN11__sanitizer20SizeClassAllocator32INS_4AP32EE16PopulateF+0x70 data amo PURE	`amoadd.d zero, s1, (s5)` with s5 = stats + 0x18: AllocatorStats::Add(AllocatorStatMapped, kRegionSize = 0x100000), a byte counter
+_ZN11__sanitizer15internal_usleepEy+0x3c data stack address sp+0 taken while a spilled copy is tracked	`mv a0, sp`: the struct timespec {tv_sec, tv_nsec} computed from the 1000000 divisor, passed to nanosleep, which reads both as numbers
+_ZN11__sanitizer15internal_usleepEy+0x40 syscall a2 PURE at ecall	nanosleep (a7 = 0x65 = 101) takes two arguments (a0, a1): a2 is not read
+_ZN11__sanitizer13internal_readEiPvm+0x20 syscall a2 PURE at ecall	read (a7 = 0x3f = 63): a2 is `count` (the 0x100000 buffer size): a number
+_ZN11__sanitizer15internal_munmapEPvm+0x4 syscall a4 PURE at ecall	munmap (a7 = 0xd7 = 215) takes two arguments (a0, a1): a4 is not read
+_ZN11__sanitizer16ReadFileToBufferEPKcPPcPmS4_mPi+0xb4 data store8 PURE	`sd s7, 0(s1)`: `*buff_size = size` (uptr *buff_size, sanitizer_file.cpp ReadFileToBuffer): a size
+_ZN11__sanitizer13internal_openEPKcij+0x1c syscall a2 PURE at ecall	openat (a7 = 0x38 = 56): a2 is `flags` (0x80242 = O_CLOEXEC | O_TRUNC | O_CREAT | O_RDWR): a number
+_ZN11__sanitizer13internal_openEPKcij+0x1c syscall a4 PURE at ecall	openat takes four arguments (a0-a3): a4 is not read
+_ZN11__sanitizer20internal_sched_yieldEv+0x4 syscall a3 PURE at ecall	sched_yield (a7 = 0x7c = 124) takes no argument: a3 is not read
+sysconf+0xc0 ret a0 PURE	sysconf returns its `long` configuration value: 0x31069 = 200809 (_POSIX_VERSION) and 0x20000 = 131072 (ARG_MAX); the caller receives a number by the function's contract
+socket+0x18 syscall a1 PURE at ecall	socket (a7 = 0xc6 = 198): a1 is `type` (0x80002 = SOCK_CLOEXEC | SOCK_DGRAM): a number
+socket+0x18 syscall a6 PURE at ecall	socket takes three arguments (a0-a2): a6 is not read
+socket+0x68 syscall a1 PURE at ecall	socket retry: a1 is `type` with the flag bits masked off: a number
+socket+0x68 syscall a6 PURE at ecall	socket takes three arguments: a6 is not read
+socket+0x98 syscall a6 PURE at ecall	fcntl (a7 = 0x19 = 25) takes three arguments (a0-a2): a6 is not read
+socket+0xc0 syscall a6 PURE at ecall	fcntl takes three arguments: a6 is not read
+__syscall_cp_c+0x1c syscall a2 PURE at ecall	the chain is __vsyslog+0x2e0 -> open+0x7c (`li a0, 0x38`: openat) -> __syscall_cp -> __syscall_cp_c, which shifts the arguments: a2 is openat's `flags` (0x80101 | O_LARGEFILE = O_CLOEXEC | O_NOCTTY | O_WRONLY | O_LARGEFILE): a number
+__map_file+0x40 syscall a2 PURE at ecall	openat (a7 = 0x38): a2 is `flags` (0x88800 = O_CLOEXEC | O_LARGEFILE | O_NONBLOCK): a number
+__strftime_fmt_1+0x614 ret a1 PURE	__strftime_fmt_1 returns `const char *` in a0 only (C ABI); a1 at its return is not a return value
+__strftime_l+0x84 data store8 PURE	`sd a0, 0x18(sp)`: a local; its reloads are followed by the trace (no use as an address), and the address sp+0x18 is never taken (the taken addresses are sp+40, sp+48, sp+60)
+__strftime_l+0x12c data stack address sp+40 taken while a spilled copy is tracked	sp+40 is a different local from the tracked slot sp+24 (8-byte slot, not overlapped)
+__strftime_l+0x1a8 data stack address sp+60 taken while a spilled copy is tracked	sp+60 is a different local from the tracked slot sp+24
+__strftime_l+0x1ac data stack address sp+48 taken while a spilled copy is tracked	sp+48 is a different local from the tracked slot sp+24
+_ZN11__sanitizer6GetTidEv+0x4 syscall a6 PURE at ecall	gettid (a7 = 178) takes no argument: a6 is not read
+_ZN11__sanitizer9FutexWakeEPNS_15atomic_uint32_tEj+0x1c syscall a6 PURE at ecall	futex (a7 = 0x62 = 98) takes six arguments (a0-a5; a3-a5 are set to zero right before the ecall): a6 is not read

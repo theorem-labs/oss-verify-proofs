@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: open62541
 harness: fuzz_pubsub_connection_config
-rocq: OssFuzzTheorems.open62541.fuzz_pubsub_connection_config
+rocq: OSSVerify.open62541.fuzz_pubsub_connection_config
 origin: upstream
 summary: Decode a String and a Variant into a UA_PubSubConnectionConfig, then UA_PubSubConnectionConfig_copy;
   the copy is cleared without being compared to the source.

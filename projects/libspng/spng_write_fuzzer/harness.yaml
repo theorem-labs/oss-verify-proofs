@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libspng
 harness: spng_write_fuzzer
-rocq: OssFuzzTheorems.libspng.spng_write_fuzzer
+rocq: OSSVerify.libspng.spng_write_fuzzer
 origin: upstream
 summary: 'Checks one property, an API contract: After encoding an input-described image (IHDR, PLTE, tRNS,
   cHRM, gAMA, sBIT, sRGB, bKGD, hIST, pHYs, tIME and raw pixels, all from the input), spng_get_png_buffer

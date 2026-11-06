@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libiec61850
 harness: fuzz_mms_encode
-rocq: OssFuzzTheorems.libiec61850.fuzz_mms_encode
+rocq: OSSVerify.libiec61850.fuzz_mms_encode
 origin: upstream
 summary: Decode an MmsValue, ask MmsValue_encodeMmsData for the size, allocate, and encode into the buffer.
   The encoded bytes are never compared with the input and the second call's length is not compared with

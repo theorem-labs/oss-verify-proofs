@@ -1,0 +1,151 @@
+--- B/YFeu.v
++++ B/YFeu.v
+@@ -158,7 +158,7 @@
+ Definition transfer_g (X : astate) : qcache :=
+ mkQC (qc_list (st_qglobal X) ++ qc_list (st_qthread X)) (qc_bytes (st_qglobal X) + qc_bytes (st_qthread X)).
+ Definition recycle_body (g : qcache) : M unit :=
+-mcheck (2 * (kBatchBytes * Z.of_nat (length (qc_list g))) <=? qc_bytes g) 209280 ;;
++mcheck (2 * (kBatchBytes * Z.of_nat (length (qc_list g))) <=? qc_bytes g) 4 ;;
+ let '(g', popped) := pop_batches 100000%nat g [] in
+ modify (set_qglobal g') ;;
+ do_recycle 100000%nat popped.
+--- B/YFft.v
++++ B/YFft.v
+@@ -22,7 +22,7 @@
+ Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+ Definition enq_after_refill (k : chunk) (r : unit * astate) : itree astate (unit * astate) :=
+ match pc_chunks (cache (snd r) kBatchClass) with
+-| [] => ISpin 219184
++| [] => ISpin 8
+ | _ => IRet (tt, YFf2.S' (snd r) k (pc_chunks (cache (snd r) kBatchClass)))
+ end.
+ Lemma amreal_enqueue_nb : forall k X W c (Q : unit * astate -> world tfibsegs -> config -> Prop),
+--- B/YFfy.v
++++ B/YFfy.v
+@@ -452,11 +452,11 @@
+ | _ => s <- get;;
+ match find_user (st_chunks s) p with
+ | Some k0 =>
+-mcheck match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;
++mcheck match ck_state k0 with CAllocated => true | CQuarantined => false end 1;;
+ depot_put tr;;
+ modify (fun s0 : astate => set_chunks (upd_chunk (st_chunks s0) {| ck_beg := ck_beg k0; ck_req := ck_req k0; ck_state := CQuarantined |}) s0);;
+ enqueue {| ck_beg := ck_beg k0; ck_req := ck_req k0; ck_state := CQuarantined |};; maybe_drain
+-| None => fail (FCheck 201376)
++| None => fail (FCheck 2)
+ end
+ end) s').
+ assert (SPLIT : amreal tfibsegs (BODY s1) W (cfg_at tfibsegs 0x5373c regs mem md) (free_leaf tfibsegs B ly S W regs mem md p n) ->
+@@ -470,11 +470,11 @@
+ assert (MAIN : amreal tfibsegs ((s <- get;;
+ match find_user (st_chunks s) p with
+ | Some k0 =>
+-mcheck match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;
++mcheck match ck_state k0 with CAllocated => true | CQuarantined => false end 1;;
+ depot_put tr;;
+ modify (fun s0 : astate => set_chunks (upd_chunk (st_chunks s0) {| ck_beg := ck_beg k0; ck_req := ck_req k0; ck_state := CQuarantined |}) s0);;
+ enqueue {| ck_beg := ck_beg k0; ck_req := ck_req k0; ck_state := CQuarantined |};; maybe_drain
+-| None => fail (FCheck 201376)
++| None => fail (FCheck 2)
+ end) s1) W (cfg_at tfibsegs 0x5373c regs mem md) (free_leaf tfibsegs B ly S W regs mem md p n)).
+ 2:{ rewrite match_nonnull; [exact MAIN|]. intros Hp0.
+ pose proof (proj1 (Forall_forall _ _) (wf_chunks _ _ _ _ _ (am_wf B ly S _ M)) k Hk) as CK.
+--- B/YFfz.v
++++ B/YFfz.v
+@@ -429,11 +429,11 @@
+ | _ => s <- get;;
+ match find_user (st_chunks s) p with
+ | Some k0 =>
+-mcheck match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;
++mcheck match ck_state k0 with CAllocated => true | CQuarantined => false end 1;;
+ depot_put tr;;
+ modify (fun s0 : astate => set_chunks (upd_chunk (st_chunks s0) {| ck_beg := ck_beg k0; ck_req := ck_req k0; ck_state := CQuarantined |}) s0);;
+ enqueue {| ck_beg := ck_beg k0; ck_req := ck_req k0; ck_state := CQuarantined |};; maybe_drain
+-| None => fail (FCheck 201376)
++| None => fail (FCheck 2)
+ end
+ end) s').
+ assert (SPLIT : amreal tfibsegs (BODY s1) W (cfg_at tfibsegs 0x5373c regs mem md) (free_leaf tfibsegs B ly S W regs mem md p n) ->
+--- B/YFg2.v
++++ B/YFg2.v
+@@ -289,11 +289,11 @@
+ | _ => s <- get;;
+ match find_user (st_chunks s) p with
+ | Some k0 =>
+-mcheck match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;
++mcheck match ck_state k0 with CAllocated => true | CQuarantined => false end 1;;
+ depot_put tr;;
+ modify (fun s0 : astate => set_chunks (upd_chunk (st_chunks s0) {| ck_beg := ck_beg k0; ck_req := ck_req k0; ck_state := CQuarantined |}) s0);;
+ enqueue {| ck_beg := ck_beg k0; ck_req := ck_req k0; ck_state := CQuarantined |};; maybe_drain
+-| None => fail (FCheck 201376)
++| None => fail (FCheck 2)
+ end
+ end) s').
+ assert (SPLIT : amreal tfibsegs (BODY s1) W (cfg_at tfibsegs 0x5373c regs mem md) (free_leaf tfibsegs B ly S W regs mem md p n) ->
+--- B/YFi3.v
++++ B/YFi3.v
+@@ -39,7 +39,7 @@
+ let k := mkChunk beg n CAllocated in
+ (if needs_remap (ck_n k) then
+ z <- askz (KShadowRemap (ck_user k) (8 * (ck_n k / 8))) ;;
+-if aGranted z then ret tt else spin 449860
++if aGranted z then ret tt else spin 12
+ else ret tt) ;;
+ modify (fun s => set_chunks (upd_chunk (st_chunks s) k) s) ;;
+ ret (ck_user k)
+@@ -73,7 +73,7 @@
+ apply bind_cong. intros a s1. cbv beta. rewrite !bind_assoc_eq. apply bind_cong. intros b s2. cbv beta. rewrite !bind_assoc_eq. reflexivity.
+ Qed.
+ Lemma malloc_primary_eq : forall n trace s, from_primary n = true ->
+-malloc n trace s = (tick ;; mcheck (n <? kMaxAllowedMalloc - kPage) 202260   ;; refill_tree (chunk_class n) ;; malloc_join n trace (chunk_class n)) s.
++malloc n trace s = (tick ;; mcheck (n <? kMaxAllowedMalloc - kPage) 3   ;; refill_tree (chunk_class n) ;; malloc_join n trace (chunk_class n)) s.
+ Proof.
+ intros n trace s FP. unfold malloc, malloc_join, malloc_K, refill_tree, cache_alloc, pop_part. rewrite FP.
+ apply bind_cong. intros u1 s1. apply bind_cong. intros u2 s2. rewrite !bind_assoc_eq.
+--- B/YFk0.v
++++ B/YFk0.v
+@@ -749,17 +749,17 @@
+ Local Open Scope am_scope.
+ Definition sec_body : M (option sptr) :=
+ s <- YG00.get ;;
+-mcheck (Z.of_nat (length (st_sec_arr s)) <? kMaxNumChunks) 221048 ;;
++mcheck (Z.of_nat (length (st_sec_arr s)) <? kMaxNumChunks) 9 ;;
+ YG00.put (set_secs (st_secs s ++ [mkSec (sec_map_size n) (needed_size n) true]) s) ;;
+ (if Z.of_nat (length (st_sec_arr s)) =? st_sec_reserved s then
+ z2 <- askz (KMapPtrArray (8 * Z.of_nat (length (st_sec_arr s))) kPtrArrayCommit) ;;
+-if aGranted z2 then YG00.modify (fun s0 => set_sec_reserved (st_sec_reserved s0 + kPtrArrayEntriesPerCommit) s0) else spin 391236
++if aGranted z2 then YG00.modify (fun s0 => set_sec_reserved (st_sec_reserved s0 + kPtrArrayEntriesPerCommit) s0) else spin 11
+ else YG00.ret tt) ;;
+ YG00.modify (fun s0 => set_sec_arr (st_sec_arr s0 ++ [length (st_secs s)]) s0) ;;
+ YG00.ret (Some (PSec (length (st_secs s)) kPage)).
+ Definition KSEC (z : Z) : itree astate (sptr * astate) := (ob <- (if z =? 0 then YG00.ret None else sec_body) ;; malloc_K n tr ob) S1.
+ Lemma malloc_secondary_eq : forall s, from_primary n = false ->
+-malloc n tr s = (tick ;; mcheck (n <? kMaxAllowedMalloc - kPage) 202260 ;; ob <- sec_alloc n ;; malloc_K n tr ob) s.
++malloc n tr s = (tick ;; mcheck (n <? kMaxAllowedMalloc - kPage) 3 ;; ob <- sec_alloc n ;; malloc_K n tr ob) s.
+ Proof. clearP. intros s FP. unfold malloc, malloc_K. rewrite FP. reflexivity. Qed.
+ Lemma sec_ask_eq : forall (Wx : world tfibsegs) c Q,
+ amreal tfibsegs ((ob <- sec_alloc n ;; malloc_K n tr ob) S1) Wx c Q = amreal tfibsegs (IAsk (KMmapSec (sec_map_size n)) S1 KSEC) Wx c Q.
+@@ -1021,11 +1021,11 @@
+ Definition KDEP (s : astate) (beg : sptr) (z : Z) : itree astate (sptr * astate) :=
+ ((if z =? 0 then YG00.ret tt
+ else (s' <- YG00.get ;;
+-mcheck (depot_ids s' + 1 <? kDepotIdsPerBlock) 469488 ;;
+-mcheck (kStartFramesMax + depot_frames s' + Z.of_nat (length tr) + 1 <? kStoreFramesPerBlock) 460508 ;;
++mcheck (depot_ids s' + 1 <? kDepotIdsPerBlock) 14 ;;
++mcheck (kStartFramesMax + depot_frames s' + Z.of_nat (length tr) + 1 <? kStoreFramesPerBlock) 13 ;;
+ YG00.put (set_depot (st_depot s' ++ [tr]) s'))) ;;
+ (let k := mkChunk beg n CAllocated in
+-(if needs_remap (ck_n k) then z <- askz (KShadowRemap (ck_user k) (8 * (ck_n k / 8))) ;; if aGranted z then YG00.ret tt else spin 449860 else YG00.ret tt) ;;
++(if needs_remap (ck_n k) then z <- askz (KShadowRemap (ck_user k) (8 * (ck_n k / 8))) ;; if aGranted z then YG00.ret tt else spin 12 else YG00.ret tt) ;;
+ YG00.modify (fun s0 => set_chunks (upd_chunk (st_chunks s0) k) s0) ;;
+ YG00.ret (ck_user k))) s.
+ Lemma malloc_K_some : forall beg s (Wx : world tfibsegs) c Q,
+@@ -1122,7 +1122,7 @@
+ st_qglobal s4 = st_qglobal S -> st_fs s4 = st_fs S -> st_internal_inited s4 = st_internal_inited S ->
+ amreal tfibsegs (((z' <- askz (KShadowRemap (ck_user (mkChunk (PSec (length (st_secs S1)) kPage) n CAllocated))
+ (8 * (ck_n (mkChunk (PSec (length (st_secs S1)) kPage) n CAllocated) / 8))) ;;
+-(if aGranted z' then YG00.ret tt else spin 449860)) ;;
++(if aGranted z' then YG00.ret tt else spin 12)) ;;
+ (YG00.modify (fun s0 => set_chunks (upd_chunk (st_chunks s0) (mkChunk (PSec (length (st_secs S1)) kPage) n CAllocated)) s0) ;;
+ YG00.ret (ck_user (mkChunk (PSec (length (st_secs S1)) kPage) n CAllocated)))) s4) Wz c4 QLEAF.
+ Proof.

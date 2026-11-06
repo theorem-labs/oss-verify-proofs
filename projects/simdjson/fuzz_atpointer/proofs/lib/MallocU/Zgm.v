@@ -1,0 +1,55 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From stdpp Require Import gmap.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Lib Require Import Tac Image Z11w Z119 Zp5 ITree Nodes Decode Arr.
+From OSSVerify.simdjson.fuzz_atpointer.images Require Import Ubsan.
+From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Malloc Require Import Z9h Z9g Z9e Zf4 Zek Zeu Zew MallocKit_A2 Zev Zex Zez Zf0.
+From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Spec Require Import STree Malloc Zej Monad Prog.
+From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Malloc Require Import Zf5 Zf1 Zem Zj Zk Za.
+From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.MallocU Require Import Zhy Zhz Zhv Zhw Zhx Zht RMallocKit_A2 Zi0 Zgr Zg3 Zgn.
+Import ListNotations.
+Open Scope Z_scope.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+
+From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Lib Require Import Ceiling.
+From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.P Require Import Rnd.
+From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Malloc Require Import Z7h.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+Local Ltac std_lia__ := lia.
+Local Ltac lia := first [std_lia__ | try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *; std_lia__].
+Local Ltac std_nia__ := nia.
+Local Ltac nia := first [std_nia__ | try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *; std_nia__].
+Local Ltac OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Lib.Z11w.flia ::= first [ assumption | OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Lib.Z11w.slim; lia | lia ].
+Local Ltac OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Lib.Z11w.mlia ::= Z.div_mod_to_equations; lia.
+Local Ltac OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Lib.Step.slia ::= first [ exact I | lia | split; [lia|exact I] ].
+Section WithCeiling0. Context {CE__ : Ceiling} {RN__ : RunRnd}.
+Lemma ras_ret0 : forall (sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 x1 : word)
+    (s9v s8v s7v s6v s5v s4v s3v s2v s1v s0v rav : word) F fc (m : word -> option byte) (junk : list byte) (st' : mstate) (lo : Z),
+  rmrep st' m -> mem_inv usegs m ->
+  rw_cells usegs m (bv_unsigned sp + -144) (rta_frame junk s9v s8v s7v s6v s5v s4v s3v s2v s1v s0v rav) ->
+  stk usegs m lo (bv_unsigned sp + -144) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 144 ->
+  evt usegs (fun ms' => exists (a1' a2' : word),
+      ms' = MS (mkR rav sp gp tp t0 t1 t2 s0v s1v a0 a1' a2' a3 a4 a5 a6 a7 s2v s3v s4v s5v s6v s7v s8v s9v s10 s11 t3 t4 t5 t6)
+              F (ret_pc rav) fc None m (seg_rom usegs)
+      /\ stk usegs m lo (bv_unsigned sp))
+    (MS (mkR x1 (Z_to_bv 64 (bv_unsigned sp + -144)) gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 (Z_to_bv 64 RSSP_GUARD) s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+        F (Z_to_bv 64 0x70c3c) fc None m (seg_rom usegs)).
+Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
+  intros until lo. intros MR' MI FR ST LO LOLE.
+  pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
+  pose proof MR' as (_ & _ & (_ & _ & _ & _ & GUARD) & _).
+  unfold RSSP_GUARD, rta_frame, OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Spec.Malloc.MCEIL in *; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *.
+
+  step. step. step. if_cases K; zify_cond K. { exfalso. apply K. reflexivity. }
+
+  step. step. step. step. step. step. step. step. step. step. step. step. step.
+  release_frame FR ST (bv_unsigned sp).
+  apply evt_done. do 2 eexists. split; [reflexivity| exact ST].
+Qed.
+End WithCeiling0.

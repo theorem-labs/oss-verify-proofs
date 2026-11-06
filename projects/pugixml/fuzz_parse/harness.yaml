@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: pugixml
 harness: fuzz_parse
-rocq: OssFuzzTheorems.pugixml.fuzz_parse
+rocq: OSSVerify.pugixml.fuzz_parse
 origin: upstream
 summary: xml_document::load_buffer of the input three times (default, parse_minimal, parse_full flags);
   the xml_parse_result and the tree are discarded.

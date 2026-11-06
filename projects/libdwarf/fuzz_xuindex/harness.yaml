@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_xuindex
-rocq: OssFuzzTheorems.libdwarf.fuzz_xuindex
+rocq: OSSVerify.libdwarf.fuzz_xuindex
 origin: upstream
 summary: dwarf_get_xu_index_header(dbg, "cu", ...); result unused.
 entry: LLVMFuzzerTestOneInput

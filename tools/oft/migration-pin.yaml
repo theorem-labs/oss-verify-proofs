@@ -1,0 +1,31 @@
+# The one change pr.yml cannot judge by its base's rules: a change that brings the tools and the facts those tools
+# read together, where the base's tools do not know the new facts' shape and so read no proof at all.  For that
+# change alone, the change's own tools lint it, plan every part of it and check it (.github/workflows/pr.yml).  A
+# change may not name itself for that: this file does, and it is read from the base, so setting it is its own
+# reviewed pull request.
+#
+# `digest` is the SHA-256 of `git ls-tree -r <commit> -- tools theories`, with the line of this file left out (its
+# own content is what the digest would otherwise have to predict), followed by `git check-attr` over those paths for
+# the attributes that change the bytes git checks a file out as (keys.CHECKOUT_ATTRIBUTES), as the plan job computes
+# it over the pull request's merge commit.  A change takes its own tools only when the digest is set and equal to its own, and when the measured
+# condition holds as well: the base's tools read no fuzz target with a proof in the tree and the change's own read
+# some.  Those counts say only that the old tools cannot read these facts, not that the facts are sound; what judges the tree is
+# the lint, the plan and the check that follow.  An empty digest pins nothing, and then no change takes its own
+# tools.
+#
+# Three more keys, written only by the pull request that sets the pin and empty or absent otherwise, defer one
+# tree's proof check to a check outside pr.yml, when a check of every part of that tree does not fit in a merge
+# queue group's 360 minutes (a release line's join; a change that re-keys every part of the corpus): `check:
+# deferred`; `tree`, the SHA-256 of `git ls-tree -r <commit>` with the line of this file left out, so the whole
+# tree, not only tools/ and theories/; and `check_of_record`, one line naming the check that checks every part of
+# that tree instead.  For that tree pr.yml plans every part, runs lint, the tests and the controls, and no check
+# job, and required passes with "checks not run here" and names the check of record; release-check.yml plans
+# nothing for its push.  The tree alone says which change that is, whichever tools judge it (`digest`, above, or
+# the base's): what a deferral turns off is the check jobs, not the rules that judge the tree.  Any other tree is
+# judged and checked as usual, and with the pinned tools it fails pr.yml's plan.  An empty `check` defers nothing.
+# `bash tools/oft/ci/pin-digests.sh <commit>` prints both digests of a commit, as pr.yml computes them.
+#
+# It is one-shot: the pull request after the approved one empties it again.
+schema: oss-fuzz-theorems/migration-pin/1
+digest: ''
+pull_request: ''

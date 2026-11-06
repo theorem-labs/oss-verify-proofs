@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjpeg-turbo
 harness: decompress_libjpeg_fuzzer
-rocq: OssFuzzTheorems.libjpeg_turbo.decompress_libjpeg_fuzzer
+rocq: OSSVerify.libjpeg_turbo.decompress_libjpeg_fuzzer
 origin: upstream
 summary: 'libjpeg API decode: float IDCT, buffered-image mode, skip_scanlines, marker saving, a custom
   APP3 marker processor, RGB565 and colour quantisation; errors longjmp out; output only summed. The "sum

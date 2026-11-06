@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: casync
 harness: fuzz-compress
-rocq: OssFuzzTheorems.casync.fuzz_compress
+rocq: OSSVerify.casync.fuzz_compress
 origin: upstream
 summary: 24-byte header picks the compression alg; compressor_start_decode/compressor_input/compressor_decode
   into a MAX(size,128)-byte buffer; every error is log_debug_errno + return 0 and the decoded bytes are

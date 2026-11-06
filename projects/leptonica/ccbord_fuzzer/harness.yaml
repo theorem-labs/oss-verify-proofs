@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: ccbord_fuzzer
-rocq: OssFuzzTheorems.leptonica.ccbord_fuzzer
+rocq: OSSVerify.leptonica.ccbord_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixGetAllCCBorders, ccbaStepChainsToPixCoords, ccbaGenerateSPGlobalLocs
   and ccbaDisplayImage2 (rebuild the image from its border chains). The rebuilt image is not compared

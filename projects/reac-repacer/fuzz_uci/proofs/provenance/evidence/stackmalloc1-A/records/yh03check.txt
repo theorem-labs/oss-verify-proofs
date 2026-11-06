@@ -1,0 +1,20 @@
+# the three files: no src0_ row, so nothing to check (N/A)
+# self-test: 31 known answers OK (yh03check: + its parser)
+# rows 0 (refused: 3 problem(s); nothing is checked until every definition parses, every name resolves to one object and no D_ cell sits on a section boundary its symbol is not at)
+REFUSED:
+<gates><file>: 0 src0_A_ / src0_E_ definitions parsed
+<gates><file>: 0 src0_A_ / src0_E_ definitions parsed
+<gates><file>: 0 src0_A_ / src0_E_ definitions parsed
+rc=2
+# control: a src0_ row at __asan_stack_malloc_1 (right)
+# self-test: 31 known answers OK (yh03check: + its parser)
+<gates>/ok.YH03.v:1	__asan_stack_malloc_1	OK	A=0x3c1b8 (__asan_stack_malloc_1+0x0)	E=0x3c348 (_ZN6__asanL11MemToShadowEm+0x0) want __asan_stack_malloc_1=0x3c1b8..0x3c348
+# rows checked: 1; rows not OK: 0
+# D cells by symbol: 0 (OK 0, BAD 0); by the code of the function they name: OK-BY-LOAD 0, UNMEASURED 0; NOSYM 0 (no symbol of the name, not checked); string cells 0 (yh03regen --elf checks them)
+rc=0
+# control: the same row with A off by 4 (planted)
+# self-test: 31 known answers OK (yh03check: + its parser)
+<gates>/bad.YH03.v:1	__asan_stack_malloc_1	BAD	A=0x3c1bc (__asan_stack_malloc_1+0x4)	E=0x3c348 (_ZN6__asanL11MemToShadowEm+0x0) want __asan_stack_malloc_1=0x3c1b8..0x3c348
+# rows checked: 1; rows not OK: 1
+# D cells by symbol: 0 (OK 0, BAD 0); by the code of the function they name: OK-BY-LOAD 0, UNMEASURED 0; NOSYM 0 (no symbol of the name, not checked); string cells 0 (yh03regen --elf checks them)
+rc=1

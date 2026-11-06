@@ -1,0 +1,25 @@
+file:line(donor lib/CJ/RL/I/IImgA.v at a20012f42d99)	old	alreloc new	alreloc rule	decision	written	evidence
+IImgA.v:15	0x85cb8	0x86130	same-code function	OK	0x86130	__fe_getround+0x14 in both images; image B's instruction there is `auipc a1, 0xfff9b` (capstone 5.0.9 on the unstripped twin 1674e30a0698; twin bytes = pin bytes)
+IImgA.v:15	0xfff9c	0xfff9c	INSN-UNSURE	HAND	0xfff9b	immediate of image B's own auipc at 0x86130 (bytes read); with `addi a1, a1, 0x408` at 0x86134 it forms 0x21538
+IImgA.v:15	-0x7c0	(no row)	not reported by alreloc (a 12-bit immediate in a comment)	HAND	0x408	immediate of image B's own `addi a1, a1, 0x408` at 0x86134 (bytes read), the low half of the pair with 0x86130 that forms 0x21538
+IImgA.v:15	0x214f8	0x214f8	UNMAPPED	HAND	0x21538	the table address formed by image B's own pair 0x86130 / 0x86134; its 12 bytes 03 00 00 00 01 00 00 00 02 00 00 00 = A's at 0x214f8 (.rodata, not .got: B's .got is [0x9c790, 0x9d4e8))
+IImgA.v:16	0x10610	0x10610	UNMAPPED (no symbol home)	HAND	0x105f0	the comment names the non-ASan twin's table: for A the plain image's 0x10610, for B the UBSan image's, measured 0x105f0 (= headamp's lib/CJ/RL/I/IImgU.v N_exact 0x1145c)
+IImgA.v:16	0x85248	0x856c0	FUNC entry	OK	0x856c0	__extendsftf2 0x856c0, 348 B in image B's .symtab
+IImgA.v:17	0x853a4	0x8581c	FUNC entry	OK	0x8581c	__floatditf 0x8581c, 292 B
+IImgA.v:19	0x1145c	0x1145c	UNMAPPED (no symbol home)	KEEP (class 5)	0x1145c	CJ library key (__fe_getround's table key); byte-identical to the donor and to headamp's IImgP.v / IImgU.v
+IImgA.v:19	0x214f8	0x214f8	UNMAPPED	HAND	0x21538	as IImgA.v:15 0x214f8
+IImgA.v:20	0x200dc	0x20113	section .rodata string	WRONG -> KEEP (class 5)	0x200dc	CJ library key of __extendsftf2 (C_extendsftf2.v); alreloc's .rodata-string rule moved a model constant that merely lies in A's .rodata
+IImgA.v:20	0x85248	0x856c0	FUNC entry	OK	0x856c0	__extendsftf2
+IImgA.v:21	0x853a4	0x8581c	FUNC entry	OK	0x8581c	__floatditf (key 0x7f000900 is above the image: no alreloc row; class 5, byte-identical)
+IImgA.v:22	0x84f34	0x853ac	FUNC entry	OK	0x853ac	__lttf2 = __letf2 = __cmptf2 = __eqtf2 = __netf2 0x853ac, 200 B
+IImgA.v:22	0x84ffc	0x85474	FUNC entry	OK	0x85474	__getf2 = __gttf2 0x85474, 188 B
+IImgA.v:22	0x854c8	0x85940	FUNC entry	OK	0x85940	__subtf3 0x85940, 16 B
+IImgA.v:23	0x854d8	0x85950	FUNC entry	OK	0x85950	__addtf3 0x85950, 1996 B
+IImgA.v:23	0x85ca4	0x8611c	FUNC entry	OK	0x8611c	__fe_getround 0x8611c, 48 B
+IImgA.v:23	0x85cd4	0x8614c	FUNC entry	OK	0x8614c	__fe_raise_inexact 0x8614c, 12 B
+IImgA.v:25	0x1b24c	0x1b207	section .rodata string	WRONG -> KEEP (class 5)	0x1b24c	CJ library key (interval start, G_letf2.v sym 0x1b24c)
+IImgA.v:25	0x1b3d0	0x1b38b	section .rodata string	WRONG -> KEEP (class 5)	0x1b3d0	CJ library key (interval end)
+IImgA.v:25	433384	433384	DECIMAL-UNSURE	HAND	434528	interval offset: __lttf2 0x853ac - 0x1b24c = __getf2 0x85474 - 0x1b314 = 434528
+IImgA.v:26	0x1bc70	0x1bc70	UNMAPPED (no symbol home)	KEEP (class 5)	0x1bc70	CJ library key (interval start, G_subtf3.v sym 0x1bc70)
+IImgA.v:26	0x1c488	0x1c4c6	section .rodata string	WRONG -> KEEP (class 5)	0x1c488	CJ library key (interval end)
+IImgA.v:26	432216	432216	DECIMAL-UNSURE	HAND	433360	interval offset: __subtf3 0x85940 - 0x1bc70 = __addtf3 0x85950 - 0x1bc80 = __fe_getround 0x8611c - 0x1c44c = __fe_raise_inexact 0x8614c - 0x1c47c = 433360

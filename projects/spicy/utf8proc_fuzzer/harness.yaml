@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spicy
 harness: utf8proc_fuzzer
-rocq: OssFuzzTheorems.spicy.utf8proc_fuzzer
+rocq: OSSVerify.spicy.utf8proc_fuzzer
 origin: upstream
 summary: Requires a NUL-terminated input of at most 64 KiB, then iterates codepoints through utf8proc_iterate
   and calls the case/category/width/grapheme-break queries, then utf8proc_NFD/NFC/NFKD/NFKC/NFKC_Casefold

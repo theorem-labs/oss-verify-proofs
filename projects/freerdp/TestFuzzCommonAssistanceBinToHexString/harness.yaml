@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: freerdp
 harness: TestFuzzCommonAssistanceBinToHexString
-rocq: OssFuzzTheorems.freerdp.TestFuzzCommonAssistanceBinToHexString
+rocq: OSSVerify.freerdp.TestFuzzCommonAssistanceBinToHexString
 origin: upstream
 summary: freerdp_assistance_bin_to_hex_string(Data, Size); the hex string is freed without checking its
   length (2*Size) or content, or converting it back.

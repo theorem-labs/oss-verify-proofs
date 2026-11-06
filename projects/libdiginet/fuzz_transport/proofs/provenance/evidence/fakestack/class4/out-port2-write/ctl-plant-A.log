@@ -1,0 +1,5 @@
+donor: pinned sha256 c2c7559b29bd, twin sha256 57c26f993615, allocated sections equal (build-id note excepted): True
+target: pinned sha256 5d0de45f1a24, twin sha256 d661c15fd118, allocated sections equal (build-id note excepted): True
+libreac/fuzz_grant ref e10f488c53fc image A class 4: 12 of 12 ranges paired and compared; pc-relative words 62 (walked), 416 (whole functions)
+25 resolve lines: 9 move a value (0x3d410 -> 0x3dfc4, 0x9c860 -> 0xa4080, 0x9c8c0 -> 0xa40e0, 0x9d550 -> 0xa4d70, 0x9d560 -> 0xa4d80), 0 name the image of a header range, the rest keep the value
+FAIL: A/Rt/AF0r.v range 0x3d244 (__asan_stack_malloc_4): range DIFFERENT (8, 1, 0) 0 differ; function DIFFERENT (8, 1, 0) 0 differ

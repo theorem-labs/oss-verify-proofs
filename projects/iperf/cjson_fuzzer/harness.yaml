@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: iperf
 harness: cjson_fuzzer
-rocq: OssFuzzTheorems.iperf.cjson_fuzzer
+rocq: OSSVerify.iperf.cjson_fuzzer
 origin: oss-fuzz
 summary: NUL-terminates the input, cJSON_Parse()s it and cJSON_Delete()s the tree if non-NULL. The parse
   result is never inspected (no print/re-parse).

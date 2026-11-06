@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libphonenumber
 harness: fuzz_asyoutypeformatter
-rocq: OssFuzzTheorems.libphonenumber.fuzz_asyoutypeformatter
+rocq: OSSVerify.libphonenumber.fuzz_asyoutypeformatter
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

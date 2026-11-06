@@ -1,0 +1,110 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.Proofs.boost_beast.http_request.lib Require Import HeapCeil.
+From OSSVerify.Proofs.boost_beast.http_request.lib.Lib Require Import Tac Frame Arr CellsX TacX.
+From OSSVerify.Proofs.boost_beast.http_request.lib Require Import AsanAllocModel LazyRestrict LazyLedger LazyNodes.
+From OSSVerify.Proofs.boost_beast.http_request.lib.Bo Require Import BSegs AsShadow.
+From OSSVerify.Proofs.boost_beast.http_request.lib.As Require Import AllocWf AllocKit.
+From OSSVerify.Proofs.boost_beast.http_request.lib.Bo Require Import AllocRep AsDepotInv.
+Import ListNotations.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+Section HCW.
+  Context {HCEIL : HeapCeil}.
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Definition astatw (a : Z) : Prop :=
+    AINST + 112 <= a < AINST + 920 \/ 0x1ff688 <= a < 0x60f6b0 \/ AIAINIT <= a < AIAINIT + 4 \/ AIAINST <= a < AIAINST + 0x81030.
+  (* [comment removed for export] *)
+  Definition awrit (s s' : ast) (d : depot) (lo SP a : Z) : Prop :=
+       lo <= a < SP
+    \/ a_thr s + 64 <= a < a_thr s + kPageSize
+    \/ a_sb s <= a < a_sb s + kSpaceSize + kPageSize
+    \/ sh (a_sb s) <= a < sh (a_sb s + kSpaceSize + kPageSize)
+    \/ a_pa s <= a < a_pa s + kPtrArrayReserve
+    \/ (exists sc, (In sc (as_sec (a_st s)) \/ In sc (as_sec (a_st s')))
+          /\ (sc_map_beg sc <= a < sc_map_beg sc + sc_map_size sc \/ sh (sc_map_beg sc) <= a < sh (sc_map_beg sc) + sc_map_size sc / 8))
+    \/ astatw a
+    \/ d_nb d <= a < d_nb d + 16 * 65536 \/ d_sb d <= a < d_sb d + 8 * 262144.
+
+  Definition acompl (s s' : ast) (d : depot) (lo SP : Z) (m m' : mem) : Prop :=
+    forall a, 0 <= a < 2 ^ 64 -> ~ awrit s s' d lo SP a -> m' (wa a) = m (wa a).
+
+  (* [comment removed for export] *)
+  Definition avmx (s s' : ast) (mo mo' : Model) : Prop :=
+    forall x : word, in_rangesb x (vm_maps (m_vmmaps mo)) = true ->
+         (in_rangesb x (vm_maps (m_vmmaps mo')) = true
+          \/ exists sc, In sc (as_sec (a_st s)) /\ ~ In sc (as_sec (a_st s')) /\ sc_map_beg sc <= bv_unsigned x < sc_map_beg sc + sc_map_size sc)
+      /\ forall sc, In sc (as_sec (a_st s')) -> ~ In sc (as_sec (a_st s)) -> ~ (sc_map_beg sc <= bv_unsigned x < sc_map_beg sc + sc_map_size sc).
+
+  (* [comment removed for export] *)
+  Lemma acompl_of_munch : forall s s' d lo SP W m m',
+    munch W m m' -> (forall iv a, In iv W -> fst iv <= a < snd iv -> awrit s s' d lo SP a) -> acompl s s' d lo SP m m'.
+  Proof.
+    intros s s' d lo SP W m m' MU SUB a Ha NW. pose proof (MU (wa a)) as E. rewrite wa_unsigned in E by exact Ha. apply E. clear E MU.
+    induction W as [|[x y] W IH]; [exact I|]. cbn. split.
+    - intros R. apply NW. apply (SUB (x, y) a); [left; reflexivity| exact R].
+    - apply IH. intros iv b Hiv Hb. apply (SUB iv b); [right; exact Hiv| exact Hb].
+  Qed.
+  Lemma acompl_of_munchF : forall s s' d lo SP W m m',
+    munch W m m' -> Forall (fun iv => forall a, fst iv <= a < snd iv -> awrit s s' d lo SP a) W -> acompl s s' d lo SP m m'.
+  Proof.
+    intros s s' d lo SP W m m' MU FA. apply (acompl_of_munch s s' d lo SP W m m' MU).
+    intros iv a Hiv Ha. exact (proj1 (Forall_forall _ _) FA iv Hiv a Ha).
+  Qed.
+Scheme kc__1 := Elimination for Corelib.Init.Logic.or Sort Prop.
+Scheme kc__2 := Elimination for Corelib.Init.Logic.ex Sort Prop.
+Scheme kc__3 := Elimination for Corelib.Init.Logic.and Sort Prop.
+  (* [comment removed for export] *)
+  Lemma awrit_mono : forall s s1 s2 d lo SP a,
+    (forall sc, In sc (as_sec (a_st s1)) -> In sc (as_sec (a_st s2)) \/ In sc (as_sec (a_st s))) ->
+    awrit s s1 d lo SP a -> awrit s s2 d lo SP a.
+  Proof.
+    ltac2:(KReplay.run [|constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.ast); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsDepotInv.depot); constr:(@Corelib.Numbers.BinNums.Z); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.schunk); constr:(@Stdlib.Lists.List.In); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.as_sec); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.a_st); constr:(@Corelib.Init.Logic.or); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AG_WriteSet.HCW.awrit); constr:(@kc__1); constr:(@Corelib.Init.Logic.and); constr:(@Stdlib.ZArith.BinInt.Z.le); constr:(@Stdlib.ZArith.BinInt.Z.lt); constr:(@Stdlib.ZArith.BinInt.Z.add); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.a_thr); constr:(@Corelib.Numbers.BinNums.Zpos); constr:(@Corelib.Numbers.BinNums.xO); constr:(@Corelib.Numbers.BinNums.xH); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.kPageSize); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.a_sb); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.kSpaceSize); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsShadow.sh); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.a_pa); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.kPtrArrayReserve); constr:(@Corelib.Init.Logic.ex); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.sc_map_beg); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.sc_map_size); constr:(@Stdlib.ZArith.BinInt.Z.div); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AG_WriteSet.HCW.astatw); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsDepotInv.d_nb); constr:(@Stdlib.ZArith.BinInt.Z.mul); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsDepotInv.d_sb); constr:(@Corelib.Init.Logic.and_ind); constr:(@Corelib.Init.Logic.or_introl); constr:(@Corelib.Init.Logic.conj); constr:(@Corelib.Init.Logic.or_intror); constr:(@kc__2); constr:(@kc__3); constr:(@Corelib.Init.Logic.ex_intro); constr:(@Corelib.Init.Logic.or_ind); constr:(@kc__2 (@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.schunk))|] [|@sc; @H1; @H0; @H; @I; @o; @R; @x; @W; @SUB; @a; @SP; @lo; @d; @s2; @s1; @s|] "#1g#E#m#K###Z#+#(#)#,#-#*#.#/#0#1#2#3#5#'#&#%#$#\#_#6#4#7#8#9#:#;#J#H#P#f#o#Y#=#<#@#>#?#A#B#C#D#n#m#l#I#O#R#T#S#U#L#]#k#`#N#M#X#e#g#V#[#^#d#i#j#Q#h#W#a#b#c=#S%#T%#U%#V%#W%#X&#Y$#Z&#[%#\$#]$#^$#_$#`$#a$#b$#c$#d$#e&#f'#g)#h(#i$#j$#k$#l%,H-#(CD#(CS&$,F-#(CS&##&#k##(#k#$C#ZS2KHS#S$S%S&&S#S%%S%S$$$#1F.S5.#.#.#.#.#9#'*#&#S%',E%S%#$%#2F&#S%'$S''#E%S%#$&#)(&#S%)'%S%#$%#3F&#S%'$S(%S%#$%#,I-#(CD#(CDs#+#$#:D&#S$;D'%#%S$#$&#)(&#S$9s#)<)#'&#%S$#$'##*#$1#j#$C#+C#4S%/G&#S%9s#4.s#3.#.#.#.#.#.#.#.#.#9#VS3.#'1#%S%#$2#0G&#S%.*.#9#VS3s###'(#%S%#$)##,##?##A##s#8##s#>##s#D##s#K##s#Y#&GS$%S$S#$$#1I'#s#V&#S$'%E%S$#$%#2I&#S$'$S''#E%S$#$&#)(&#S$)'%S$#$%#3I&#S$'$S(%S$#$%#,J-#(CD###s#U&s#TS#%S#s#R$$#&s#QS#%S#s#N$$##&#$*#j#$C#+C#4S$/H&#S$'$s#A%S$#$%#0H&#S$'$s#=%S$#$%##(##.##0##?##s#%##s#+##s#2##s#9#j##s#=#&HS#%S#G$$#1J'#s$5&#S#'%E%S##$%#2J&#S#'$S''#E%S##$&#)(&#S#)'%S##$%#3J&#S#'$S(%S##$%#,L-#(CD###s$5&s$3G%Gs$1$$#&s$0G%Gs$-$$##&#$*#j#$C#+C#4S#/K&#S#'$s#|%S##$%#0K&#S#'$s#x%S##$%##(##.##0##?##s#%##s#+##s#2##s#9#%GH&FH%HK$$#1M'#s$p&#H'%E%H#$%#2M&#H'$S''#E%H#$&#)(&#H)'%H#$%#3M&#H'$S(%H#$%#,N-#(CD###s#>&s$nK%Ks$l$$#&s$kK%Ks$h$$##&#$*#j#$C#+C#4H/I&#H'$s$[%H#$%#0I&#H'$s$W%H#$%##(##.##0##?##s#%##s#+##s#2#6s#;s#:S&D5s#:$#j#%s#>#j#&s#y#8s#zs#ys#A#Dj#'s$X#U#Dj##s%X##s$Bs%9$#s$;j#$C#+C###s$.#s$J##s$P##s$V##s$]##s#ls$K$#s#ej#$C#+C###s#X#s#t##s#z##s$$##s$+#&KG$#s#W1L'#s%f&#G'%E%G#$%#2L&#G'$S''#E%G#$&#)(&#G)'%G#$%#3L&#G'$S(%G#$%#,M-#(CD###s$o&s%dH%Hs%b$$#&s%aH%Hs%^$$##&#$*#j#$C#+C#4G/F&#G'$s%Q%G#$%#0F&#G'$s%M%G#$%##(##.##0##?##s#%##s#+##s#2##s#9#j##s#<##s$1s#W1N'#E%K#&JF%FI$$#1O'#s&I&#F'%E%F#$%#2O&#F'$S''#E%F#$&#)(&#F)'%F#$%#3O&#F'$S(%F#$%#,P-#(CD###s$8&s&GI%Is&E$$#&s&DI%Is&A$$##&#$*#j#$C#+C#4F/L&#F'$s&4%F#$%#0L&#F'$s&0%F#$%##(##.##0##?##s#%##s#+##s#2#6s#6s#4S&D5s#4%#*s#;%#j#%s#?#j#&s$o#8s$ps$ns#D#Dj#'s#x#U#Dj##s%O##s#hs%=$#s#aj#$C#+C###s#T#s#p##s#v##s#|##s$fs#p$#s$_j#$C#+C###s$R#s$n##s$t##s$z#&IK%KF$$#'s#Zs'>&#K$#s#Z2N&#K'$S''#E%K#$&#)(&#K)'%K#$%#3N&#K'$S(%K#$%#,O-#(CD###s$5&s':F%Fs'8$$#&s'7F%Fs'4$$##&#$*#j#$C#+C#4K/J&#K'$s''%K#$%#0J&#K'$s'#%K#$%##(##.##0##?##s#%##s#+##s#2##s#6#j##s#:##s$.s#T2P'#S''#E%I#&MJ%JL$$#1Q'#s'|&#J'%E%J#$%#2Q&#J'$S''#E%J#$&#)(&#J)'%J#$%#3Q&#J'$S(%J#$%#,S*-#(CD###s$6&s'zL%Ls'x$$#&s'wL%Ls't$$##&#$*#j#$C#+C#4J/N&#J'$s'g%J#$%#0N&#J'$s'c%J#$%##(##.##0##?##s#%##s#+##s#2#6s#1s#.S&D5s#.&#*s#5&#*s#<&#j#%s#@#j#&s$i#8s$js$gs#F#Dj#'s#t#U#Dj##s&B##s#js&6$#s#cj#$C#+C###s#V#s#r##s#x##s$ds#q$#s$]j#$C#+C###s$P#s$l##s$r#&LI%IJ$$#1P'#s(q&#I'%E%I#$%#&s#`I$#s#^)s#b&#I)s#b%I#$%#3P&#I'$S(%I#$%#,Q-#(CD###s$4&s(kJ%Js(i$$#&s(hJ%Js(e$$##&#$*#j#$C#+C#4I/M&#I'$s(X%I#$%#0M&#I'$s(T%I#$%##(##.##0##?##s#%##s#+##s#.##s#5#j##s#9##s$,s#R2S*'#S''#E)#%L#&OM%MN$$#1R'#s)R&#M'%E%M#$%#2R&#M'$S''#E%M#$&#)(&#M)'%M#$%#3R&#M'$S(%M#$%#,S)-#(CD###s$5&s)PN%Ns)N$$#&s)MN%Ns)J$$##&#$*#j#$C#+C#4M/P&#M'$s)=%M#$%#0P&#M'$s)9%M#$%##(##.##0##?##s#%##s#+##s#2#6s#+s#)S&D5s#)'#*s#/'#*s#6'#*s#='#j#%s#A#j#&s$c#8s$ds$bs#H#Dj#'s#q#U#Dj##s&;##s#ls&4$#s#ej#$C#+C###s#X#s#t##s$cs#r$#s$\j#$C#+C###s$O#s$k#&NL%LM$$#1S*'#s*F&#L'%E%L#$%#&s#`L%Ls#_$$#)s#c&#L$#s#a3S*&#L'$S(%L#$%#,R-#(CD###s$3&s*?M%Ms*=$$#&s*<M%Ms*9$$##&#$*#j#$C#+C#4L/O&#L'$s*,%L#$%#0O&#L'$s*(%L#$%##(##.##0##?##s#%##s#)##s#-##s#4#j##s#8##s$*s#P3S)'#S(%N#&QO%OP$$#1S+'#s+$&#O'%E%O#$%#2S+&#O'$S''#E%O#$&#)(&#O)'%O#$%#3S+&#O'$S(%O#$%#,S,-#(CD###s$1&s*~P%Ps*|$$#&s*{P%Ps*x$$##&#$*#j#$C#+C#4O/S*&#O'$s*k%O#$%#0S*&#O'$s*g%O#$%##(##.##0##?##s#%##s#+##s#2#6s#&s#$S&D5s#$(#*s#*(#*s#0(#*s#7(#*s#>(#j#%s#B#j#&s$[#8s$\s$Zs#G#Dj#'s#k#U#Dj##s&2##s#ks&0$#s#dj#$C#+C###s#W#s$_s#p$#s$Xj#$C#+C###s$K&PN%NO$$#1S)'#s+s&#N'%E%N#$%#2S)&#N'$S''#E%N#$&#)(&#N)'%N#$%#&s#hN$#s#g,S+-#(CD###s$2&s+nO%Os+l$$#&s+kO%Os+h$$##&#$*#j#$C#+C#4N/Q&#N'$s+[%N#$%#0Q&#N'$s+W%N#$%##(##.##0##?##B##s#(##s#/##s#6#j##s#:##Bs%@$#;j#$C#+C##s#rs#&$#s#kj#$C#+C#,S--#(CD###s#-&s,<Q%Qs,:$$#&s,9Q%Qs,6$$##&#$*#j#$C#+C#j##1##/s$)$#(j#$C#U#D,S.-#(CD###6&s,OS*%S*s,M$$#&s,LS*%S*s,I$$##&#$*#,S/-#(CS&#(CS&0#$#:S&&#R;S&'%#%R#$&#)(&#R<(s,\'%#%R#$&##)#$0#,S6-#(CD#(CD7#$#&s,oS+%S+s,m$$#&s,lS+%S+s,i$$##&#$*#j#$C#+C#j##2#:S%&#S);S%'%#%S)#$&#)(&#S)<(s,z'%#%S)#$&##)#(CS$>,S7-#(CS$##&#:S#&#S,;S#'%#%S,#$&#)(&#S,<(s-0'%#%S,#$&##)#,S8-#(CD#,S9-#(CD##&#&s-DS.%S.s-B$$#&s-AS.%S.s->$$##&#$*#j#$C#,S:-#(CG#(CGs#C#$#:G&#S-;G'%#%S-#$&#)(&#S-<(s-R'%#%S-#$&##)#(CG@#3#(CHs#%(CHs###$#j##&#,S;-#(CK#(CK<5$#Dj#(+#U#Dj##?#(CHAVS.KD#)*(CFs#4,S<-#(CF##&#,S=-#(CI#(CI4#$#j##(#,S>-#(CJ#(CJ.*$#Dj#'*#U#Dj##4#5('Dj#'/#U#Dj##5#796/'#Dl#)<;#j#(>#U#Dj##s#.#7s#?s#/s#*B#S&6s#>s#1#DXS?Cs#DG#j#*s#U#j#(s#c#V#S&Dj##s#j#j##s$:#YS@s$;s$.s#y#Dj#'s$A#j#$C#V#S&Dj##s$P#j#+C#YSACs$fs$V#D5s%rs%e#*s&%s%e#*s&+s%e#*s&1s%e#*s&8s%e#*s&?s%e#j#'s$p#U#Dj##s%S##s&Cs%i&S*P%PQ$$#1S,'#s.h&#P'%E%P#$%#2S,&#P'$S''#E%P#$&#)(&#P)'%P#$%#3S,&#P'$S(%P#$%#4P/R&#P'$s.E%P#$%#0R&#P'$s.A%P#$%##(##.##s%,##1##7##=##s#$#54)D*s%2)#*7)#*=)#*s##)#*s#*)#*s#1)#j#&s&Q##s#3+/S)&#Q'$s._%Q#&RQ%QS*$$#1S-'#s/D&#Q'%E%Q#$%#2S-&#Q'$S''#E%Q#$&#)(&#Q)'%Q#$%#3S-&#Q'$S(%Q#$%##s%Os&|$#s%Hj#$C#+C#4Q$s##A0S)&#Q'$s.y%Q#$%##(##*##,##1##7##=##s#$##s#+#/S+'#s/2%S*#&S+R%RS)$$#1S/'#s/s&#R'%E%R#$%#2S/&#R'$S''#E%R#$&#)(&#R)'%R#$%#3S/&#R'$S(%R#$%#(CDs%B##s&#&s/oS)%S)s/m$$#&s/lS)%S)s/i$$##&#$*#j#$C#+C#4R/S,&#R'$s/\%R#$%#0S,&#R'$s/X%R#$%##(##.##0##=##s####s#)##s#0#620S&D50+#*6+#*8+#*s#%+#*s#++#*s#1+#*s#8+#*s#?+#j#%s#C#j#&s#u#8s#vs#ts#H#Dj#'s$2#0S+'#s/p%S*#6=;S&D*@;#*s#&;#*s#(;#*s#5;#*s#;;#*s#A;#*s#H;#*s#O;#j#%,#j#&s#b#8s#cs#as#X#Dj#'s$=#ZS4s$Cs$>s$.3#Dj#&s't#ZS4s($s'us$ds$1#Dj#'s')#U#Dj##s)I#7s'^s)Js'%s$i#Dj#&s'c#U#Dj##s)2#7s+?s)3s(Xs'k#Dj#&s)9#U#Dj##s*g#7s,{s*hs*0s)B#Dj#&s*o#U#Dj##s,A#7s.]s,Bs+es*y#Dj#&s,J#U#Dj##s-y#7s/Fs-zs-?s,U#Dj#&s.'#U#Dj##s02#7s1-s03s/Ss.3#DZS2FHGS#S$S%m#$#j#,s13#j#-s15#j#.S0#j#/S0#j#0S0#j#1SB#j#2S1#j#3S1#j#4S1##"). Qed.
+  (* [comment removed for export] *)
+  Lemma acompl_refl : forall s s' d lo SP m, acompl s s' d lo SP m m.
+  Proof. intros s s' d lo SP m a _ _. reflexivity. Qed.
+
+  (* [comment removed for export] *)
+  Lemma avmx_same : forall s s' mo mo',
+    vm_maps (m_vmmaps mo') = vm_maps (m_vmmaps mo) -> as_sec (a_st s') = as_sec (a_st s) -> avmx s s' mo mo'.
+  Proof. intros s s' mo mo' EV ES x Hx. rewrite EV, ES. split; [left; exact Hx|]. intros sc A B. exact (False_ind _ (B A)). Qed.
+  Lemma avmx_mat_l : forall s s' mo mo1 mo', same_but_materialized mo mo1 -> avmx s s' mo1 mo' -> avmx s s' mo mo'.
+  Proof. intros s s' mo mo1 mo' SB A x Hx. apply A. rewrite (same_but_materialized_vmmaps mo mo1 SB). exact Hx. Qed.
+  Lemma avmx_mat_r : forall s s' mo mo1 mo', avmx s s' mo mo1 -> same_but_materialized mo1 mo' -> avmx s s' mo mo'.
+  Proof. intros s s' mo mo1 mo' A SB x Hx. rewrite (same_but_materialized_vmmaps mo1 mo' SB). exact (A x Hx). Qed.
+  (* [comment removed for export] *)
+  Lemma avmx_remove : forall s s' mo mo' sc0,
+    In sc0 (as_sec (a_st s)) -> ~ In sc0 (as_sec (a_st s')) ->
+    (forall sc, In sc (as_sec (a_st s')) -> In sc (as_sec (a_st s))) ->
+    (forall x : word, in_rangesb x (vm_maps (m_vmmaps mo)) = true ->
+       in_rangesb x (vm_maps (m_vmmaps mo')) = true \/ sc_map_beg sc0 <= bv_unsigned x < sc_map_beg sc0 + sc_map_size sc0) ->
+    avmx s s' mo mo'.
+  Proof.
+    intros s s' mo mo' sc0 IN OUT SUB COV x Hx. split.
+    - destruct (COV x Hx) as [C|C]; [left; exact C| right; exists sc0; split; [exact IN| split; [exact OUT| exact C]]].
+    - intros sc A B. exact (False_ind _ (B (SUB sc A))).
+  Qed.
+  (* [comment removed for export] *)
+  Lemma avmx_cons : forall s s' mo mo' (a msz z : Z),
+    0 <= a -> 0 < msz -> a + msz < 2 ^ 64 ->
+    region_free (vm_maps (m_vmmaps mo)) (wz a) (wz msz) = true ->
+    (forall x : word, in_rangesb x (vm_maps (m_vmmaps mo)) = true -> in_rangesb x (vm_maps (m_vmmaps mo')) = true) ->
+    (forall sc, In sc (as_sec (a_st s')) -> In sc (as_sec (a_st s)) \/ sc = mkSC a msz z) ->
+    avmx s s' mo mo'.
+  Proof.
+    intros s s' mo mo' a msz z Ha Hm Ham FR INCL SEC x Hx. split; [left; exact (INCL x Hx)|].
+    intros sc Hin Hnot R. destruct (SEC sc Hin) as [Old| ->]; [exact (Hnot Old)|]. cbn [sc_map_beg sc_map_size] in R.
+    pose proof (region_free_not_in _ _ _ x FR) as NI. unfold wz in NI. rewrite !unsigned_lit in NI by lia.
+    rewrite (NI R) in Hx. discriminate Hx.
+  Qed.
+End HCW.

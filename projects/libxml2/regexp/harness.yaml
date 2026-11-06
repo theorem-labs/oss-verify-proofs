@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libxml2
 harness: regexp
-rocq: OssFuzzTheorems.libxml2.regexp
+rocq: OSSVerify.libxml2.regexp
 origin: upstream
 summary: 'Checks one property, an API contract: If an injected malloc failure happened during xmlRegexpCompile,
   it must return NULL (one direction only: a spurious NULL is not flagged).'

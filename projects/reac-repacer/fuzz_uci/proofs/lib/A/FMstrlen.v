@@ -1,0 +1,533 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-10: cgif_file_fuzzer lib/A/AE6x.v's proof of the memchr interceptor (entry walk, musl body, shadow check) with AE7d.v's 2144-byte frame and eight saved registers, restated for the strlen interceptor of libreac/fuzz_disco over lib/Rt/StrlenDef.v's contract; module paths. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/Rt/Strlen.v, with its module paths, module names and addresses changed; 195 of its 505 lines of code are new or changed and 133 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-10: relocated from port-fm's cgif_file_fuzzer-coordinate copy (origin/cold/port-fm-rtscan f8664b31b9c, proofs/cgif/cgif_file_fuzzer/lib/A/FMstrlen.v) to fuzz_identity.asan by an address map recorded by the porting lane; module paths, the record class TfibSyms (unchanged), YA0m import dropped. *)
+(* Modified by Theorem Labs, 2026-10-29: for r-identity's acceptance (cold/h-rw-ide-6-wrapacc), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE 05:31Z: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_identity lib/A/FMstrlen.v (origin/ossv/recipes 70952e1c8c9)
+   to reac-repacer/fuzz_uci image A (fuzz_uci.asan, sha256 6ea017c24525) on the fuzz_uci A core (276afc86670b): module
+   paths; record class TfibSyms -> UciSyms (code only; the donor's own Modified-by lines are kept as its record).
+   Numerals moved by symbol + offset from the fuzz_identity unstripped twin to the fuzz_uci unstripped twin (each
+   function is the same code up to pc-relative fields: bytecmp 7daa0e2a03d9 with repin_check 9cbc3553c09e's target pass); a .got slot moves to the slot that
+   holds the same symbol. Every changed numeral, old -> new, symbol + offset in fuzz_identity.asan [occurrences]:
+     0x4218c -> 0x41068   __interceptor_trampoline_strlen+0x0   [1 code, 1 comment]
+     0x4221c -> 0x410f4   ___interceptor_strlen+0x0   [1 comment]
+     0x4226c -> 0x41144   ___interceptor_strlen+0x50   [1 code, 2 comment]
+     0x422d4 -> 0x411ac   ___interceptor_strlen+0xb8   [1 code, 2 comment]
+     0x94c64 -> 0x909a0   strlen+0x0   [2 code, 1 comment]
+     0x9e0b0 -> 0x98d20   __interception::real_strlen+0x0   [1 code, 1 comment]
+   This file only. *)
+From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0k YK0s YK0n YP0n YK1d.
+From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import
+YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP08 YP03 YP04 YP0g YP01.
+From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import YN3v YI04.
+From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import YG0v YO0f.
+From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q.
+From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import
+YG00 YG0a YG01 YG0f YG0n YG0d.
+Require Import
+  OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.A.AB1v
+  OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.A.AE34
+  OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.A.AF0l
+  OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.A.AF0m
+  OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.A.AF0x
+  OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.A.AB1w
+  OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.A.AE39
+  OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.A.AE20
+  OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.A.AE2y.
+From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.A Require Import FMsl0.
+From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.A Require FMstrlen_chk1 FMstrlen_chk2 FMstrlen_musl.
+From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import YM05.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope bv_scope.
+Open Scope Z_scope.
+#[local] Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+(* the strlen trampoline 0x41068 jumps to the wrapper body 0x410f4; the body calls musl strlen 0x909a0
+   through the slot 0x98d20 and returns to 0x41144, where the range check begins; the epilogue is 0x411ac *)
+Definition SL_ENTRY : Z := 0x41068.
+Definition SL_REAL : Z := 0x909a0.
+Definition SL_RET : Z := 0x41144.
+Definition SL_END : Z := 0x411ac.
+Definition SL_FRAME : Z := 2144.
+Definition SL_WIN : Z := 2160.
+Definition slA_rodata : list (Z * Z * list (Z * BinNums.N * Z)) := icpt_rodata ++ [(0x98d20, 8, [(0, 8%N, 0x909a0)])].
+Lemma slA_rodata_chk : forall ly, rodata_chk ly slA_rodata = true.
+Proof. intros ly. vm_compute. reflexivity. Qed.
+Definition stkA : YP09.region := YP09.mkRegion (Some 2%nat) (- SL_WIN) 0 (- SL_WIN) 0 [].
+Definition factsA : list (nat * afact) := [(2%nat, mkAF (2^44) (2^47) 4); (10%nat, mkAF 1 (2^47) 0)].
+Definition ssA : sstate := mkSS SL_ENTRY sr_atoms (stkA :: map ro_region slA_rodata) None (mkFacts factsA [] []).
+Definition RUNTOR (s : sstate) := sym_run_toN tfibsegs tbl_sl FUEL SL_REAL s.
+Definition eA : sstate := Eval vm_compute in fst (RUNTOR ssA).
+Lemma r_A : RUNTOR ssA = (eA, RS_running). Proof. vm_compute. reflexivity. Qed.
+(* probe: what the entry phase leaves in the registers at the musl call *)
+(* the wrapper's prologue, the runtime's init test and the indirect call leave this shape at musl strlen *)
+Definition RG (s : sstate) (r : Z) : sv := sr_get (ss_regs s) (Z_to_bv 5 r).
+Definition reg_is (ss : sstate) (r : Z) (v : sv) : bool := sv_eqb (RG ss r) v.
+Definition chunk_is (off : Z) (v : sv) (c : YP09.chunk) : bool :=
+(YP09.c_off c =? off) && match YP09.c_val c with CVal n e => N.eqb n 8 && sv_eqb e v | _ => false end.
+Definition has_chunk (ss : sstate) (off : Z) (v : sv) : bool :=
+match ss_mem ss with r :: _ => existsb (chunk_is off v) (YP09.r_chunks r) | [] => false end.
+(* ra, s0, s1, s2, s3, s4, s5, s6 are saved at these offsets below the caller's sp *)
+Definition SAVEDA : list (Z * Z) := [(1, -8); (8, -16); (9, -24); (18, -32); (19, -40); (20, -48); (21, -56); (22, -64)].
+Definition KEPTA : list Z := [3; 4; 19; 20; 21; 22; 23; 24; 25; 26; 27].
+Definition shapeA (ss : sstate) : bool :=
+(ss_pc ss =? SL_REAL) &&
+match ss_mem ss with r :: _ => obase_eqb (YP09.r_base r) (Some 2%nat) && (YP09.r_wlo r =? - SL_WIN) && (YP09.r_whi r =? 0) | [] => false end &&
+reg_is ss 10 (SOff 10 0) && reg_is ss 1 (SLit SL_RET) && reg_is ss 2 (SOff 2 (- SL_FRAME)) &&
+reg_is ss 8 (SOff 2 0) && reg_is ss 9 (SLit 1) && reg_is ss 18 (SOff 10 0) &&
+forallb (fun r => reg_is ss r (SOff (Z.to_nat r) 0)) KEPTA &&
+forallb (fun p => has_chunk ss (snd p) (SOff (Z.to_nat (fst p)) 0)) SAVEDA.
+Lemma shapeA_ok : shapeA eA = true. Proof. vm_compute. reflexivity. Qed.
+Lemma chunk_is_sound : forall off v c, chunk_is off v c = true -> c = YP09.mkChunk off (CVal 8 v).
+Proof.
+intros off v [o cv] Hc. unfold chunk_is in Hc. cbn [YP09.c_off YP09.c_val] in Hc. apply andb_prop in Hc as [Ho Hv].
+apply Z.eqb_eq in Ho. destruct cv as [nn e| | |]; try discriminate. apply andb_prop in Hv as [Hn He].
+apply N.eqb_eq in Hn. apply sv_eqb_eq in He. subst. reflexivity.
+Qed.
+(* the epilogue: sp += 0x70, the eight saved words come back, ret *)
+Definition RUN (s : sstate) := sym_runN tfibsegs tbl_sl FUEL s.
+Definition epi_chunks : list YP09.chunk :=
+[YP09.mkChunk 2136 (CVal 8 (SOff 32 0)); YP09.mkChunk 2128 (CVal 8 (SOff 33 0));
+YP09.mkChunk 2120 (CVal 8 (SOff 34 0)); YP09.mkChunk 2112 (CVal 8 (SOff 35 0));
+YP09.mkChunk 2104 (CVal 8 (SOff 36 0)); YP09.mkChunk 2096 (CVal 8 (SOff 37 0));
+YP09.mkChunk 2088 (CVal 8 (SOff 38 0)); YP09.mkChunk 2080 (CVal 8 (SOff 39 0))].
+Definition ss_epi : sstate :=
+mkSS SL_END sr_atoms [YP09.mkRegion (Some 2%nat) 0 SL_FRAME 0 0 epi_chunks] None (mkFacts [(2%nat, mkAF (2^43) (2^47) 4)] [] []).
+Definition epi_e : sstate := Eval vm_compute in fst (RUN ss_epi).
+Lemma r_epi : RUN ss_epi = (epi_e, RS_stopped (SR_jalr (SOff 32 0))). Proof. vm_compute. reflexivity. Qed.
+(* ---- the two pieces this walk composes, as the interfaces their files prove ---- *)
+(* the scratch depth of the range check region 0x41144..0x411ac (FMstrlen_chk.v) *)
+Definition CHK_SCR : Z := 72.
+Section iface.
+Variable B : asyms.
+(* what FMstrlen_chk.v proves of the region from SL_RET to SL_END *)
+Definition chk_post (ly : alayout) (S : astate) (W : world tfibsegs) (regs : bvmap 5 word)
+(mem : word -> option byte) (md : Model) (n : Z) : world tfibsegs -> config -> Prop :=
+fun W' c' => W' = W /\ exists regs' mem' md',
+c' = cfg_at tfibsegs SL_END regs' mem' md' /\
+AR tfibsegs B ly S W mem' md' /\
+(forall r, acallee_saved r -> r <> 9 -> r <> 18 -> r <> 19 -> r <> 20 -> r <> 21 -> r <> 22 ->
+getr regs' (Z_to_bv 5 r) = getr regs (Z_to_bv 5 r)) /\
+same_but_materialized md md' /\
+getr regs' 10 = w64 (n - 1) /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - CHK_SCR <= a < spZ regs) -> aview tfibsegs (w_H W) mem' a = aview tfibsegs (w_H W) mem a) /\
+(forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a).
+Definition SL_CHK : Prop :=
+forall ly S (W : world tfibsegs) regs mem md p n,
+AR tfibsegs B ly S W mem md ->
+spZ regs mod 16 = 0 -> ly_stk_lo ly + CHK_SCR <= spZ regs -> spZ regs <= ly_stk_hi ly ->
+(forall a, spZ regs - CHK_SCR <= a < spZ regs -> apresent (w_H W) mem a) ->
+getr regs 10 = w64 (n - 1) -> getr regs 18 = w64 p -> getr regs 9 = w64 1 ->
+0 < p -> 1 <= n < 2 ^ 32 -> p + n <= 2 ^ 63 ->
+amem_range p n ->
+range_addressable (aview tfibsegs (w_H W) mem) SHADOW_OFF p n ->
+shadow_hull_vis (aview tfibsegs (w_H W) mem) p n ->
+SRr tfibsegs W (cfg_at tfibsegs SL_RET regs mem md) (chk_post ly S W regs mem md n).
+End iface.
+(* what FMstrlen_musl.v proves of musl strlen *)
+Definition MUSL_SL : Prop :=
+forall (s : list byte) (p : word) (mem rom : word -> option byte) regs,
+~ In NUL s ->
+bv_unsigned p + Z.of_nat (length s) + 8 < 2 ^ 64 ->
+(forall j, (j <= length s)%nat -> rdn tfibsegs mem (Z_to_bv 64 (bv_unsigned p + Z.of_nat j)) 1 = Some [nth j (s ++ [NUL]) NUL]) ->
+(forall a : Z, bv_unsigned p + Z.of_nat (length s) < a
+< bv_unsigned p + Z.of_nat (length s) - (bv_unsigned p + Z.of_nat (length s)) mod 8 + 8 ->
+rdn tfibsegs mem (Z_to_bv 64 a) 1 <> None) ->
+(forall a : Z, AE3a.tfib_D_const_HIGHS_0x8080808080808080 <= a < AE3a.tfib_D_const_ONES_0x0101010101010100 + 8 ->
+rdn tfibsegs mem (Z_to_bv 64 a) 1 = rdn tfibsegs (fun _ : word => @None byte) (Z_to_bv 64 a) 1) ->
+getr regs 10 = p ->
+exists regs', msteps tfibsegs (mkst regs (Z_to_bv 64 tfib_A_musl_strlen) mem rom) (mkst regs' (v_jalr (getr regs 1) 0) mem rom)
+/\ getr regs' 10 = Z_to_bv 64 (Z.of_nat (length s))
+/\ (forall r : bv 5, r <> 10%bv -> r <> 11%bv -> r <> 12%bv -> r <> 13%bv -> r <> 14%bv -> r <> 15%bv -> r <> 16%bv ->
+getr regs' r = getr regs r).
+(* ---- the composition: entry, musl strlen, the range check, the epilogue (as A/AE7d.v, the musl call as A/AE6x.v) ---- *)
+(* as A/AE6x.v:71-105 *)
+Lemma bytes_of_str : forall (H : word -> bool) (mem : word -> option byte) x k,
+0 <= k -> (forall i, 0 <= i < k -> exists b, aview tfibsegs H mem (x + i) = Some b /\ b <> 0) ->
+exists bs : list byte, length bs = Z.to_nat k /\ ~ In NUL bs /\
+forall j, (j < length bs)%nat -> mbyte tfibsegs (mrestrict H mem) (x + Z.of_nat j) = Some (nth j bs NUL).
+Proof.
+intros H mem x k Hk Hs.
+set (bs := map (fun j : nat => match mbyte tfibsegs (mrestrict H mem) (x + Z.of_nat j) with Some b => b | None => NUL end) (seq 0 (Z.to_nat k))).
+assert (L : length bs = Z.to_nat k) by (subst bs; rewrite length_map, length_seq; reflexivity).
+assert (B : forall j, (j < length bs)%nat -> mbyte tfibsegs (mrestrict H mem) (x + Z.of_nat j) = Some (nth j bs NUL) /\ nth j bs NUL <> NUL).
+{ intros j Hj. rewrite L in Hj. destruct (Hs (Z.of_nat j) ltac:(lia)) as (b & Hb & Hb0).
+apply aview_some in Hb as (bb & E & Ev).
+assert (NE : nth_error bs j = Some bb).
+{ subst bs. rewrite nth_error_map, nth_error_seq. replace (j <? Z.to_nat k)%nat with true by (symmetry; apply Nat.ltb_lt; exact Hj).
+cbn. rewrite E. reflexivity. }
+rewrite (nth_error_nth _ _ _ NE). split; [exact E|]. intros Hn. apply Hb0. rewrite <- Ev, Hn. reflexivity. }
+exists bs. split; [exact L|]. split.
+- intros Hin. apply In_nth with (d := NUL) in Hin as (j & Hj & Hnj). exact (proj2 (B j Hj) Hnj).
+- intros j Hj. exact (proj1 (B j Hj)).
+Qed.
+Lemma rdn1_mbyte : forall (m : word -> option byte) a,
+rdn tfibsegs m (Z_to_bv 64 a) 1 = match mbyte tfibsegs m a with Some b => Some [b] | None => None end.
+Proof.
+intros m a. cbn [rdn]. change (match m (Z_to_bv 64 a) with Some b => Some b | None => seg_rom tfibsegs (Z_to_bv 64 a) end) with (mbyte tfibsegs m a).
+destruct (mbyte tfibsegs m a); reflexivity.
+Qed.
+Lemma munrestrict_mrestrict_same : forall (H : word -> bool) (m : word -> option byte) z, munrestrict H m (mrestrict H m) z = m z.
+Proof. intros H m z. unfold munrestrict, mrestrict. destruct (H z); reflexivity. Qed.
+Section g.
+Variable B : asyms.
+Hypothesis LAWS : AR_laws tfibsegs B.
+Hypothesis TB : UciSyms B.
+(* the two pieces: the range check (FMstrlen_chk2.v, which keeps s2 and s6 as well) and musl strlen (FMstrlen_musl.v) *)
+Lemma sl_chk : SL_CHK B.
+Proof.
+intros ly S W regs mem md p n HAR Hal Hslo Hshi Hpres GN GP G9 Hp1 Hn Hpn HAM HRA HHULL.
+eapply SRr_mono; [eapply (FMstrlen_chk2.sl_check_srr B LAWS TB ly S W regs mem md p n); first [exact HAR | exact Hal | exact Hslo | exact Hshi | exact Hpres | exact GN | exact GP | exact G9 | exact HAM | exact HRA | exact HHULL | lia] |].
+cbv beta. intros W' c' _ (-> & regs' & mem' & md' & Hc & HAR' & KEPT & Hsbm & A10 & Hfr & Hpres').
+split; [reflexivity|]. exists regs', mem', md'. split; [exact Hc|]. split; [exact HAR'|].
+split; [intros r Hr H9 H18 H19 H20 H21 H22; exact (KEPT r Hr H9 H19 H20 H21)|].
+split; [exact Hsbm|]. split; [exact A10|]. split; [exact Hfr | exact Hpres'].
+Qed.
+Lemma sl_musl : MUSL_SL.
+Proof. exact FMstrlen_musl.tfib_musl_strlen. Qed.
+(* from the call of musl strlen onwards (A/AE7d.v:94 snl_tail, with the musl call of A/AE6x.v:110 mchr_tail) *)
+Lemma sl_tail : forall ly S (W : world tfibsegs) regs mem md (regs1 : bvmap 5 word) (mem1 : word -> option byte) mat1 x k,
+ecall_pre tfibsegs B ly S W regs mem md ->
+ly_stk_lo ly + 2 * ESTACK <= spZ regs -> (forall a, spZ regs - 2 * ESTACK <= a < spZ regs -> apresent (w_H W) mem a) ->
+0 < x -> 0 <= k -> k + 1 < 2 ^ 32 -> x + k + 1 <= 2 ^ 63 ->
+first_byte tfibsegs W mem x (k + 1) 0 k ->
+src_ok tfibsegs W regs mem x (k + 1) -> (forall a, x <= a <= x + k -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs)) -> amem_range x (k + 1) ->
+range_addressable (aview tfibsegs (w_H W) mem) SHADOW_OFF x (k + 1) ->
+shadow_hull_vis (aview tfibsegs (w_H W) mem) x (k + 1) ->
+(forall a, x + k < a < x + k - (x + k) mod 8 + 8 -> aview tfibsegs (w_H W) mem a <> None) ->
+mconsts_view W mem ->
+getr regs1 10 = w64 x -> getr regs1 1 = w64 SL_RET -> getr regs1 2 = w64 (spZ regs - SL_FRAME) ->
+getr regs1 9 = w64 1 -> getr regs1 18 = w64 x ->
+getr regs1 3 = getr regs 3 -> getr regs1 4 = getr regs 4 ->
+getr regs1 23 = getr regs 23 -> getr regs1 24 = getr regs 24 -> getr regs1 25 = getr regs 25 -> getr regs1 26 = getr regs 26 -> getr regs1 27 = getr regs 27 ->
+(forall z : word, ~ (spZ regs - SL_WIN <= bv_unsigned z < spZ regs) -> mem1 z = mem z) ->
+(forall a, spZ regs - SL_WIN <= a < spZ regs -> apresent (w_H W) mem1 a) ->
+val_mem tfibsegs (mrestrict (w_H W) mem1) (spZ regs - 8) 8 (bv_unsigned (getr regs 1)) ->
+val_mem tfibsegs (mrestrict (w_H W) mem1) (spZ regs - 16) 8 (bv_unsigned (getr regs 8)) ->
+val_mem tfibsegs (mrestrict (w_H W) mem1) (spZ regs - 24) 8 (bv_unsigned (getr regs 9)) ->
+val_mem tfibsegs (mrestrict (w_H W) mem1) (spZ regs - 32) 8 (bv_unsigned (getr regs 18)) ->
+val_mem tfibsegs (mrestrict (w_H W) mem1) (spZ regs - 40) 8 (bv_unsigned (getr regs 19)) ->
+val_mem tfibsegs (mrestrict (w_H W) mem1) (spZ regs - 48) 8 (bv_unsigned (getr regs 20)) ->
+val_mem tfibsegs (mrestrict (w_H W) mem1) (spZ regs - 56) 8 (bv_unsigned (getr regs 21)) ->
+val_mem tfibsegs (mrestrict (w_H W) mem1) (spZ regs - 64) 8 (bv_unsigned (getr regs 22)) ->
+SRr tfibsegs W (mkCfg (mkst regs1 (Z_to_bv 64 SL_REAL) mem1 (seg_rom tfibsegs)) (with_vm_backing (m_vm_lazy md) mat1 md))
+(fun W' c' => W' = W /\ exists regs' mem' md',
+c' = cfg_at tfibsegs (raZ regs) regs' mem' md' /\
+AR tfibsegs B ly S W mem' md' /\ aregs_preserved regs regs' /\ same_but_materialized md md' /\
+getr regs' 10 = w64 k /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs) -> aview tfibsegs (w_H W) mem' a = aview tfibsegs (w_H W) mem a) /\
+(forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
+Proof.
+intros ly S W regs mem md regs1 mem1 mat1 x k HPRE Hslo2 Hpres2 Hx Hk0 Hk32 Hxk Hfb Hsrc Hsband Ham Hra Hhull Htail Hrom
+G10 G1 G2 G9 G18 G3 G4 G23 G24 G25 G26 G27 MEQ1 PRS1 V0 V1 V2 V3 V4 V5 V6 V7.
+pose proof HPRE as (HAR & Hra' & Hal16 & Hslo & Htop & HpresE & Hgp & Htp).
+pose proof AF0x.Hwx_tfa as Hwx. unfold ESTACK, SL_WIN, SL_FRAME in *.
+pose proof (am_layout B ly S _ (proj1 HAR)) as HLY. pose proof (lo_top ly HLY) as (Lbot & Ltop & _ & Lhi & _ & _ & Lbeg). unfold kHighMemBeg, kHighMemEnd in Lbeg, Lhi.
+set (sp0 := spZ regs) in *. assert (Hsp44 : 2 ^ 44 <= sp0 <= 2 ^ 47) by lia.
+set (H := w_H W) in *.
+assert (Hamr : x + k + 1 <= 2 ^ 47 - 1) by (unfold amem_range, kLowMemEnd, kHighMemBeg, kHighMemEnd in Ham; lia).
+assert (AV1 : forall a, 0 <= a < 2 ^ 64 -> ~ (sp0 - 2160 <= a < sp0) -> aview tfibsegs H mem1 a = aview tfibsegs H mem a).
+{ intros a Hr Ha. apply aview_same. apply MEQ1. rewrite unsigned_lit_small by lia. exact Ha. }
+assert (SRCW : forall a, x <= a <= x + k -> ~ (sp0 - 2160 <= a < sp0)) by (intros a Ha; pose proof (Hsband a Ha); lia).
+destruct Hfb as (Hkn & Hbef & Hlast).
+destruct (bytes_of_str H mem1 x k Hk0) as (bs & LEN & NONUL & BS).
+{ intros i Hi. destruct (Hbef i Hi) as (b & Hb & Hb0). exists b. split; [|exact Hb0]. rewrite AV1; [exact Hb | lia | apply SRCW; lia]. }
+assert (KLEN : Z.of_nat (length bs) = k) by lia.
+(* the call of musl strlen (A/AE6x.v:153-192) *)
+destruct (sl_musl bs (w64 x) (mrestrict H mem1) (seg_rom tfibsegs) regs1 NONUL) as (regs2 & Hms & A10 & KEEP).
+- unfold w64. rewrite unsigned_lit_small by lia. lia.
+- intros j Hj. unfold w64. rewrite unsigned_lit_small by lia.
+apply (proj2 (rdn_mbytes tfibsegs _ 1 _ _)). split; [reflexivity|]. intros i Hi. replace i with 0%nat by lia. cbn [nth_error Z.of_nat]. rewrite Z.add_0_r.
+destruct (Nat.lt_ge_cases j (length bs)) as [Hlt|Hge].
++ rewrite (BS j Hlt), app_nth1 by lia. reflexivity.
++ assert (Hj' : j = length bs) by lia. subst j. rewrite app_nth2 by lia. rewrite Nat.sub_diag. cbn [nth].
+rewrite KLEN. rewrite (AF0x.aview_byte H mem1 _ 0); [reflexivity|]. rewrite AV1; [exact (Hlast ltac:(lia)) | lia | apply SRCW; lia].
+- intros a Ha. unfold w64 in Ha. rewrite unsigned_lit_small in Ha by lia. rewrite KLEN in Ha.
+pose proof (Z.mod_pos_bound (x + k) 8 ltac:(lia)) as Hm8. pose proof (Hsband (x + k) ltac:(lia)) as Hnk.
+intros Hnone.
+assert (Hv : aview tfibsegs H mem1 a <> None) by (rewrite (AV1 a) by lia; apply (Htail a); lia).
+apply (proj1 (AF0x.aview_vis H mem1 a)) in Hv.
+destruct (mbyte tfibsegs (mrestrict H mem1) a) as [b|] eqn:Eb; [|exact (Hv eq_refl)].
+assert (E : rdn tfibsegs (mrestrict H mem1) (Z_to_bv 64 a) 1 = Some [b]).
+{ apply (proj2 (rdn_mbytes tfibsegs (mrestrict H mem1) 1 a [b])). split; [reflexivity|]. intros i Hi. destruct i; [|lia]. cbn [nth_error Z.of_nat]. rewrite Z.add_0_r. exact Eb. }
+rewrite E in Hnone. discriminate.
+- intros a Ha. pose proof mc_bounds as [MB1 MB2].
+unfold AE3a.tfib_D_const_HIGHS_0x8080808080808080, AE3a.tfib_D_const_ONES_0x0101010101010100 in Ha.
+assert (Hin : MC_LO <= a < MC_HI) by lia.
+pose proof (Hrom a Hin) as Hv. fold H in Hv. rewrite <- (AV1 a) in Hv by lia.
+rewrite !rdn1_mbyte. unfold aview in Hv.
+change (mbyte tfibsegs (fun _ : word => None) a) with (seg_rom tfibsegs (Z_to_bv 64 a)).
+destruct (mbyte tfibsegs (mrestrict H mem1) a) as [b|], (seg_rom tfibsegs (Z_to_bv 64 a)) as [b'|]; cbn in Hv; try discriminate; [|reflexivity].
+injection Hv as Hv. do 2 f_equal. apply bv_eq. exact Hv.
+- exact G10.
+- rewrite G1 in Hms. replace (v_jalr (w64 SL_RET) 0) with (Z_to_bv 64 SL_RET : word) in Hms by (apply bv_eq; vm_compute; reflexivity).
+change (Z_to_bv 64 tfib_A_musl_strlen) with (Z_to_bv 64 SL_REAL) in Hms.
+eapply (SRr_msteps tfibsegs Hwx W); [rewrite restrict_mkst_fx; exact Hms|].
+intros model' Hsbm _. rewrite (same_but_materialized_wvb _ model' Hsbm). rewrite ?wvb_wvb.
+cbn [unrestrict ms_regs ms_pc ms_mem ms_rom]. fold H.
+set (mem2 := munrestrict H mem1 (mrestrict H mem1)).
+assert (M2 : forall z, mem2 z = mem1 z) by (intros z; subst mem2; apply munrestrict_mrestrict_same).
+assert (AV2 : forall a, aview tfibsegs H mem2 a = aview tfibsegs H mem1 a) by (intros a; apply aview_same; apply M2).
+assert (KEEPr : forall r : bv 5, r <> 10%bv -> r <> 11%bv -> r <> 12%bv -> r <> 13%bv -> r <> 14%bv -> r <> 15%bv -> r <> 16%bv ->
+getr regs2 r = getr regs1 r) by (intros r; apply KEEP).
+assert (R2sp : spZ regs2 = sp0 - 2144).
+{ unfold spZ. rewrite KEEPr by (intros H'; discriminate H'). rewrite G2. unfold w64. apply unsigned_lit_small. lia. }
+(* the range check (A/AE7d.v:205-227) *)
+eapply SRr_bind.
+{ apply (sl_chk ly S W regs2 mem2 (with_vm_backing (m_vm_lazy md) (m_vm_materialized model') md) x (k + 1)).
+- apply (al_frame _ _ LAWS ly S W mem md mem2 _ HAR).
++ intros a Hr Hown. rewrite AV2. apply AV1; [exact Hr|]. intros Hs. exact (al_stack _ _ LAWS ly S W mem md a HAR ltac:(unfold sp0 in *; lia) Hown).
++ intros a Hv. rewrite (AE2y.aview_mod _ mem2 a). rewrite (AE2y.aview_mod _ mem a) in Hv.
+assert (Hr : 0 <= a mod 2 ^ 64 < 2 ^ 64) by (apply Z.mod_pos_bound; lia). set (a' := a mod 2 ^ 64) in *.
+rewrite AV2. destruct (Z_lt_le_dec a' (sp0 - 2160)) as [L1|L1]; [rewrite AV1 by lia; exact Hv|].
+destruct (Z_lt_le_dec a' sp0) as [L3|L3]; [| rewrite AV1 by lia; exact Hv].
+apply aview_some_of_apresent. apply PRS1. lia.
++ apply (same_but_materialized_frame md _ (with_vm_backing_same md (m_vm_materialized model'))).
++ apply (same_but_materialized_frame md _ (with_vm_backing_same md (m_vm_materialized model'))).
++ apply (same_but_materialized_frame md _ (with_vm_backing_same md (m_vm_materialized model'))).
++ exact (AE2y.hs_kept_trans _ _ _ _ (AE2y.hs_kept_win _ _ _ _ _ _ _ _ MEQ1 HpresE ltac:(lia) ltac:(lia)) (AE2y.hs_kept_eq _ _ _ M2)).
+- rewrite R2sp. replace (sp0 - 2144) with (sp0 + (-134) * 16) by lia. rewrite Z_mod_plus_full. exact Hal16.
+- rewrite R2sp. unfold CHK_SCR. unfold sp0 in *. lia.
+- rewrite R2sp. unfold sp0 in *. lia.
+- intros a Ha. rewrite R2sp in Ha. unfold CHK_SCR in Ha.
+apply (apresent_same H mem1 mem2 a (M2 _)).
+destruct (Z_lt_le_dec a (sp0 - 2160)) as [L1|L1].
++ apply (apresent_same H mem mem1 a). { apply MEQ1. rewrite unsigned_lit_small by lia. lia. } apply HpresE. unfold sp0 in *. lia.
++ apply PRS1. lia.
+- rewrite A10. unfold w64. rewrite KLEN. f_equal. lia.
+- rewrite KEEPr by (intros H'; discriminate H'). exact G18.
+- rewrite KEEPr by (intros H'; discriminate H'). exact G9.
+- lia.
+- lia.
+- lia.
+- exact Ham.
+- eapply range_addressable_agree; [|exact Hra]. intros y Hy. change (shadow_of_addr SHADOW_OFF y) with (shadow_addr y).
+pose proof (shadow_addr_bounds y ltac:(unfold kHighMemEnd; lia)) as [B1 B2]. unfold kLowMemEnd, kHighShadowEnd in B1, B2. rewrite AV2. apply AV1; unfold sp0 in *; lia.
+- intros s Hs. rewrite AV2, AV1; [exact (Hhull s Hs) | |];
+pose proof (shadow_addr_bounds x ltac:(unfold kHighMemEnd; lia)) as [B1 B2]; pose proof (shadow_addr_bounds (x + (k + 1) - 1) ltac:(unfold kHighMemEnd; lia)) as [T1 T2];
+unfold kLowMemEnd, kHighShadowEnd in B1, B2, T1, T2;
+pose proof (Z.div_mod (shadow_addr x) 8 ltac:(lia)); pose proof (Z.mod_pos_bound (shadow_addr x) 8 ltac:(lia));
+pose proof (Z.div_mod (shadow_addr (x + (k + 1) - 1)) 8 ltac:(lia)); pose proof (Z.mod_pos_bound (shadow_addr (x + (k + 1) - 1)) 8 ltac:(lia));
+unfold sp0 in *; lia. }
+cbv beta. intros W3 c3 _ (-> & regs3 & mem3 & md3 & -> & HAR3 & KEPT3 & Hsbm3 & A10' & Hfr3 & Hpres3).
+rewrite R2sp in Hfr3. unfold CHK_SCR in Hfr3.
+(* the epilogue (A/AE7d.v:230-331) *)
+set (E4 := Ereg regs3 [getr regs 1; getr regs 8; getr regs 9; getr regs 18; getr regs 19; getr regs 20; getr regs 21; getr regs 22]).
+assert (K3 : forall z (rr : bv 5), rr = Z_to_bv 5 z -> acallee_saved z -> z <> 9 -> z <> 18 -> z <> 19 -> z <> 20 -> z <> 21 -> z <> 22 -> getr regs3 rr = getr regs2 rr).
+{ intros z rr -> H1 H2 H3 H4 H5 H6 H7. exact (KEPT3 z H1 H2 H3 H4 H5 H6 H7). }
+assert (R3sp : getr regs3 2 = w64 (sp0 - 2144)).
+{ rewrite (K3 2 2%bv ltac:(apply bv_eq; reflexivity)) by (unfold acallee_saved; lia). rewrite KEEPr by (intros H'; discriminate H'). exact G2. }
+assert (E4_2 : bv_unsigned (ew E4 2) = sp0 - 2144).
+{ subst E4. rewrite (ew_Ereg_nat regs3 _ 2 2%bv eq_refl), R3sp. unfold w64. apply unsigned_lit_small. lia. }
+assert (MB3 : forall a, 0 <= a < 2 ^ 64 -> sp0 - 64 <= a < sp0 -> mbyte tfibsegs (mrestrict H mem3) a = mbyte tfibsegs (mrestrict H mem1) a).
+{ intros a Hr Ha. apply mbyte_of_aview. rewrite <- (AV2 a). apply Hfr3; [exact Hr | lia]. }
+assert (VM : forall a v, val_mem tfibsegs (mrestrict H mem1) a 8 v -> sp0 - 64 <= a -> a + 8 <= sp0 -> val_mem tfibsegs (mrestrict H mem3) a 8 v).
+{ intros a v Hv Hlo Hhi. apply (AF0x.val_mem_ext (mrestrict H mem1)); [|exact Hv]. intros j Hj. apply MB3; lia. }
+assert (HSe : st_ok tfibsegs E4 ss_epi (restrict H (mkst regs3 (w64 SL_END) mem3 (seg_rom tfibsegs)))).
+{ rewrite restrict_mkst_fx. unfold ss_epi. apply (entry_st_ok_full tfibsegs);
+change (Ereg regs3 [getr regs 1; getr regs 8; getr regs 9; getr regs 18; getr regs 19; getr regs 20; getr regs 21; getr regs 22]) with E4.
+- apply regs_ok_Ereg.
+- vm_compute. reflexivity.
+- apply Forall_cons; [|apply Forall_nil].
+unfold region_ok. cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks]. unfold SL_FRAME.
+replace (base_val E4 (Some 2%nat)) with (sp0 - 2144) by (symmetry; exact E4_2).
+split; [lia|]. split; [lia|]. split; [intros o Ho; exfalso; lia|].
+unfold epi_chunks.
+assert (CK : forall (j : nat) (r : bv 5) off, nth j [getr regs 1; getr regs 8; getr regs 9; getr regs 18; getr regs 19; getr regs 20; getr regs 21; getr regs 22] (Z_to_bv 64 0) = getr regs r ->
+off = 2136 - 8 * Z.of_nat j -> Z.of_nat j < 8 ->
+val_mem tfibsegs (mrestrict H mem1) (sp0 - 8 - 8 * Z.of_nat j) 8 (bv_unsigned (getr regs r)) ->
+YP09.chunk_ok tfibsegs E4 (mrestrict H mem3) (sp0 - 2144) (YP09.mkChunk off (CVal 8 (SOff (32 + j) 0)))).
+{ intros j r off Hnth Hoff Hj8 Hv. eapply (chunk_ok_val tfibsegs E4 _ (sp0 - 2144) off 8 _ (bv_unsigned (getr regs r))).
+- cbn [sv_denot]. subst E4. rewrite (ew_Ereg_extra regs3 _ j), Hnth, Z.add_0_r, Z_to_bv_bv_unsigned. reflexivity.
+- pose proof (u64_range (getr regs r)). zside.
+- zside.
+- subst off. replace (sp0 - 2144 + (2136 - 8 * Z.of_nat j)) with (sp0 - 8 - 8 * Z.of_nat j) by lia. apply VM; [exact Hv | lia | lia]. }
+repeat apply Forall_cons; try apply Forall_nil.
++ apply (CK 0%nat 1%bv); [reflexivity | reflexivity | cbn; lia | replace (sp0 - 8 - 8 * Z.of_nat 0) with (sp0 - 8) by lia; exact V0].
++ apply (CK 1%nat 8%bv); [reflexivity | reflexivity | cbn; lia | replace (sp0 - 8 - 8 * Z.of_nat 1) with (sp0 - 16) by lia; exact V1].
++ apply (CK 2%nat 9%bv); [reflexivity | reflexivity | cbn; lia | replace (sp0 - 8 - 8 * Z.of_nat 2) with (sp0 - 24) by lia; exact V2].
++ apply (CK 3%nat 18%bv); [reflexivity | reflexivity | cbn; lia | replace (sp0 - 8 - 8 * Z.of_nat 3) with (sp0 - 32) by lia; exact V3].
++ apply (CK 4%nat 19%bv); [reflexivity | reflexivity | cbn; lia | replace (sp0 - 8 - 8 * Z.of_nat 4) with (sp0 - 40) by lia; exact V4].
++ apply (CK 5%nat 20%bv); [reflexivity | reflexivity | cbn; lia | replace (sp0 - 8 - 8 * Z.of_nat 5) with (sp0 - 48) by lia; exact V5].
++ apply (CK 6%nat 21%bv); [reflexivity | reflexivity | cbn; lia | replace (sp0 - 8 - 8 * Z.of_nat 6) with (sp0 - 56) by lia; exact V6].
++ apply (CK 7%nat 22%bv); [reflexivity | reflexivity | cbn; lia | replace (sp0 - 8 - 8 * Z.of_nat 7) with (sp0 - 64) by lia; exact V7].
+- apply pairwise_disjoint_of_extents. cbn. repeat split.
+- split; [|split; exact I]. cbn [f_atoms atoms_ok]. unfold afact_ok. cbn [af_lo af_hi af_al2]. rewrite E4_2.
+change (2 ^ 4) with 16. unfold sp0 in *. repeat split; try lia.
+all: replace (spZ regs - 2144) with (spZ regs + (-134) * 16) by lia; rewrite Z_mod_plus_full; exact Hal16. }
+eapply SRr_bind; [apply (sl_phase W E4 ss_epi epi_e _ _ _ HSe r_epi)|].
+cbv beta. intros W4 c4 _ (-> & ms4 & mat4 & -> & HS4 & HF4 & HFr4). rewrite ?wvb_wvb in *.
+eapply (SRr_ret_at tfibsegs tbl_sl tbl_sl_ok Hwx W E4); [exact HS4 | reflexivity | vm_compute; reflexivity |].
+intros mat'. rewrite wvb_wvb.
+assert (MEQ4 : forall z, ms_mem ms4 z = mem3 z) by (intros z; apply HF4; intros Hin; destruct (in_wrange_windows E4 _ _ Hin) as (b & lo & hi & Ht & Hw); cbn in Ht; destruct Ht as [Hq|[]]; injection Hq as <- <- <-; cbn [base_val] in Hw; lia).
+rreg HS4 (1%bv : bv 5) Q1. rreg HS4 (2%bv : bv 5) Q2. rreg HS4 (10%bv : bv 5) Q10.
+rreg HS4 (8%bv : bv 5) Q8. rreg HS4 (9%bv : bv 5) Q9. rreg HS4 (18%bv : bv 5) Q18. rreg HS4 (19%bv : bv 5) Q19.
+rreg HS4 (20%bv : bv 5) Q20. rreg HS4 (21%bv : bv 5) Q21. rreg HS4 (22%bv : bv 5) Q22.
+rreg HS4 (3%bv : bv 5) Q3. rreg HS4 (4%bv : bv 5) Q4.
+rreg HS4 (23%bv : bv 5) Q23. rreg HS4 (24%bv : bv 5) Q24. rreg HS4 (25%bv : bv 5) Q25. rreg HS4 (26%bv : bv 5) Q26. rreg HS4 (27%bv : bv 5) Q27.
+assert (X32 : ew E4 32 = getr regs 1) by (subst E4; exact (ew_Ereg_extra regs3 _ 0)).
+rewrite X32 in Q1.
+assert (X : forall j rr, nth j [getr regs 1; getr regs 8; getr regs 9; getr regs 18; getr regs 19; getr regs 20; getr regs 21; getr regs 22] (Z_to_bv 64 0) = getr regs rr -> ew E4 (32 + j) = getr regs rr)
+by (intros jj rr Hnth; subst E4; rewrite (ew_Ereg_extra regs3 _ jj); exact Hnth).
+assert (Y : forall i (rr : bv 5), Z.of_nat i = bv_unsigned rr -> ew E4 i = getr regs3 rr) by (intros ii rr Hnth; subst E4; exact (ew_Ereg_nat regs3 _ ii rr Hnth)).
+replace (v_jalr (getr (ms_regs ms4) 1) 0) with (w64 (raZ regs)) by (rewrite Q1; unfold raZ, w64; rewrite Z_to_bv_bv_unsigned; symmetry; exact Hra').
+split; [reflexivity|]. exists (ms_regs ms4), (ms_mem ms4), (with_vm_backing (m_vm_lazy md3) mat' md3).
+pose proof (same_but_materialized_frame md3 _ (with_vm_backing_same md3 mat')) as MF.
+assert (AV4 : forall a, aview tfibsegs H (ms_mem ms4) a = aview tfibsegs H mem3 a) by (intros a; apply aview_same; apply MEQ4).
+split; [reflexivity|].
+split; [|split; [|split; [|split; [|split]]]].
++ apply (al_frame _ _ LAWS ly S W mem3 md3 (ms_mem ms4) _ HAR3).
+* intros a Hr Hown. apply AV4.
+* intros a Hv. rewrite AV4. exact Hv.
+* apply MF. * apply MF. * apply MF.
+* exact (AE2y.hs_kept_eq _ _ _ MEQ4).
++ intros r Hr. unfold acallee_saved in Hr.
+destruct Hr as [-> | [-> | [-> | [-> | [-> | Hr]]]]].
+* replace (Z_to_bv 5 2) with (2%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q2. apply bv_eq. rewrite Z_to_bv_unsigned, E4_2. unfold sp0, spZ, bv_wrap. change (bv_modulus 64) with (2 ^ 64).
+pose proof (u64_range (getr regs 2)). rewrite Z.mod_small by lia. lia.
+* replace (Z_to_bv 5 3) with (3%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q3, (Y 3%nat 3%bv eq_refl), (K3 3 3%bv ltac:(apply bv_eq; reflexivity)) by (unfold acallee_saved; lia). rewrite KEEPr by (intros H'; discriminate H'). exact G3.
+* replace (Z_to_bv 5 4) with (4%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q4, (Y 4%nat 4%bv eq_refl), (K3 4 4%bv ltac:(apply bv_eq; reflexivity)) by (unfold acallee_saved; lia). rewrite KEEPr by (intros H'; discriminate H'). exact G4.
+* replace (Z_to_bv 5 8) with (8%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q8. exact (X 1%nat 8%bv eq_refl).
+* replace (Z_to_bv 5 9) with (9%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q9. exact (X 2%nat 9%bv eq_refl).
+* assert (Hc : r = 18 \/ r = 19 \/ r = 20 \/ r = 21 \/ r = 22 \/ r = 23 \/ r = 24 \/ r = 25 \/ r = 26 \/ r = 27) by lia.
+destruct Hc as [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | [-> | ->]]]]]]]]].
+-- replace (Z_to_bv 5 18) with (18%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q18. exact (X 3%nat 18%bv eq_refl).
+-- replace (Z_to_bv 5 19) with (19%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q19. exact (X 4%nat 19%bv eq_refl).
+-- replace (Z_to_bv 5 20) with (20%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q20. exact (X 5%nat 20%bv eq_refl).
+-- replace (Z_to_bv 5 21) with (21%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q21. exact (X 6%nat 21%bv eq_refl).
+-- replace (Z_to_bv 5 22) with (22%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q22. exact (X 7%nat 22%bv eq_refl).
+-- replace (Z_to_bv 5 23) with (23%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q23, (Y 23%nat 23%bv eq_refl), (K3 23 23%bv ltac:(apply bv_eq; reflexivity)) by (unfold acallee_saved; lia). rewrite KEEPr by (intros H'; discriminate H'). exact G23.
+-- replace (Z_to_bv 5 24) with (24%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q24, (Y 24%nat 24%bv eq_refl), (K3 24 24%bv ltac:(apply bv_eq; reflexivity)) by (unfold acallee_saved; lia). rewrite KEEPr by (intros H'; discriminate H'). exact G24.
+-- replace (Z_to_bv 5 25) with (25%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q25, (Y 25%nat 25%bv eq_refl), (K3 25 25%bv ltac:(apply bv_eq; reflexivity)) by (unfold acallee_saved; lia). rewrite KEEPr by (intros H'; discriminate H'). exact G25.
+-- replace (Z_to_bv 5 26) with (26%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q26, (Y 26%nat 26%bv eq_refl), (K3 26 26%bv ltac:(apply bv_eq; reflexivity)) by (unfold acallee_saved; lia). rewrite KEEPr by (intros H'; discriminate H'). exact G26.
+-- replace (Z_to_bv 5 27) with (27%bv : bv 5) by (apply bv_eq; reflexivity). rewrite Q27, (Y 27%nat 27%bv eq_refl), (K3 27 27%bv ltac:(apply bv_eq; reflexivity)) by (unfold acallee_saved; lia). rewrite KEEPr by (intros H'; discriminate H'). exact G27.
++ eapply same_but_materialized_trans; [exact Hsbm3 | apply with_vm_backing_same].
++ rewrite Q10, (Y 10%nat 10%bv eq_refl), A10'. unfold w64. f_equal; lia.
++ intros a Hr Hs. rewrite AV4. rewrite Hfr3 by (unfold sp0 in *; lia). rewrite AV2. apply AV1; [exact Hr | unfold sp0 in *; lia].
++ intros a Hp. apply (apresent_same H mem3 (ms_mem ms4) a (MEQ4 _)). apply Hpres3.
+apply (apresent_same H mem1 mem2 a (M2 _)).
+rewrite (AE2y.apresent_mod _ mem1 a). rewrite (AE2y.apresent_mod _ mem a) in Hp.
+assert (Ha : 0 <= a mod 2 ^ 64 < 2 ^ 64) by (apply Z.mod_pos_bound; lia). set (a' := a mod 2 ^ 64) in *.
+destruct (Z_lt_le_dec a' (sp0 - 2160)) as [L1|L1]; [apply (apresent_same H mem mem1 a'); [apply MEQ1; rewrite unsigned_lit_small by lia; lia | exact Hp]|].
+destruct (Z_lt_le_dec a' sp0) as [L3|L3]; [apply PRS1; lia|].
+apply (apresent_same H mem mem1 a'); [apply MEQ1; rewrite unsigned_lit_small by lia; lia | exact Hp].
+Qed.
+(* the wrapper from its trampoline (A/AE7d.v:360 strnlen_icpt_srr) *)
+Theorem strlen_icpt_srr : forall ly S (W : world tfibsegs) regs mem md x k,
+ecall_pre tfibsegs B ly S W regs mem md ->
+ly_stk_lo ly + 2 * ESTACK <= spZ regs ->
+(forall a, spZ regs - 2 * ESTACK <= a < spZ regs -> apresent (w_H W) mem a) ->
+getr regs 10 = w64 x -> 0 < x -> 0 <= k -> k + 1 < 2 ^ 32 -> x + k + 1 <= 2 ^ 63 ->
+first_byte tfibsegs W mem x (k + 1) 0 k ->
+src_ok tfibsegs W regs mem x (k + 1) ->
+(forall a, x <= a <= x + k -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs)) ->
+amem_range x (k + 1) ->
+range_addressable (aview tfibsegs (w_H W) mem) SHADOW_OFF x (k + 1) ->
+shadow_hull_vis (aview tfibsegs (w_H W) mem) x (k + 1) ->
+(forall a, x + k < a < x + k - (x + k) mod 8 + 8 -> aview tfibsegs (w_H W) mem a <> None) ->
+mconsts_view W mem ->
+SRr tfibsegs W (cfg_at tfibsegs SL_ENTRY regs mem md)
+(fun W' c' => W' = W /\ exists regs' mem' md',
+c' = cfg_at tfibsegs (raZ regs) regs' mem' md' /\
+AR tfibsegs B ly S W mem' md' /\ aregs_preserved regs regs' /\ same_but_materialized md md' /\
+getr regs' 10 = w64 k /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs) -> aview tfibsegs (w_H W) mem' a = aview tfibsegs (w_H W) mem a) /\
+(forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
+Proof.
+intros ly S W regs mem md x k HPRE Hslo2 Hpres2 G10 Hx Hk0 Hk32 Hxk Hfb Hsrc Hsband Ham Hra Hhull Htail Hrom.
+pose proof HPRE as (HAR & Hra' & Hal16 & Hslo & Htop & HpresE & Hgp & Htp). unfold ESTACK in Hslo, HpresE.
+pose proof (am_layout B ly S _ (proj1 HAR)) as HLY. pose proof (lo_top ly HLY) as (Lbot & Ltop & _ & Lhi & _ & _ & Lbeg). unfold kHighMemBeg, kHighMemEnd in Lbeg, Lhi.
+pose (H := w_H W).
+assert (Hsp : 2 ^ 44 <= spZ regs <= 2 ^ 47) by lia.
+assert (Hamr : x + k + 1 <= 2 ^ 47 - 1) by (pose proof Ham as Ham'; unfold amem_range, kLowMemEnd, kHighMemBeg, kHighMemEnd in Ham'; lia).
+unfold cfg_at. change (w64 SL_ENTRY) with (Z_to_bv 64 SL_ENTRY).
+set (EE := AE2y.Env regs []).
+assert (EEreg : forall i (r : bv 5), Z.of_nat i = bv_unsigned r -> ew EE i = getr regs r) by (intros; apply AE2y.Env_reg; assumption).
+assert (EE2 : bv_unsigned (ew EE 2) = spZ regs) by (rewrite (EEreg 2%nat 2%bv eq_refl); reflexivity).
+assert (EE10 : ew EE 10 = Z_to_bv 64 x) by (rewrite (EEreg 10%nat 10%bv eq_refl); exact G10).
+(* the entry phase, from the trampoline to the call of musl strlen (A/AE7d.v:379-397) *)
+assert (HS0 : st_ok tfibsegs EE ssA (restrict H (mkst regs (Z_to_bv 64 SL_ENTRY) mem (seg_rom tfibsegs)))).
+{ rewrite restrict_mkst_fx. unfold ssA. unfold EE, AE2y.Env. apply (entry_st_ok_full tfibsegs); change (Ereg regs (map (Z_to_bv 64) [])) with EE.
+- apply regs_ok_Ereg.
+- vm_compute. reflexivity.
+- apply Forall_cons; [| exact (rodata_ok B TB slA_rodata ly S H mem EE (slA_rodata_chk ly) (proj1 HAR))].
+unfold stkA, SL_WIN. apply (region_ok_stack tfibsegs EE _ 2 (spZ regs) (- 2160)); [exact EE2 | lia | lia |].
+intros a Ha. apply AF0x.apresent_writable; [unfold AF0x.TFIB_IMG_END, kHighMemBeg in *; lia|]. apply HpresE. lia.
+- apply pairwise_disjoint_of_extents. unfold stkA, slA_rodata, icpt_rodata, ro_region, extent_of_region, SL_WIN.
+cbn [map app fst snd YP09.r_base YP09.r_lo YP09.r_hi base_val Z.of_N]. rewrite EE2.
+cbn [zpairwise_disjoint zall_disjoint]. unfold zdisj. cbn [fst snd]. repeat split; lia.
+- split; [|split; exact I]. cbn [f_atoms atoms_ok factsA]. unfold afact_ok. cbn [af_lo af_hi af_al2].
+rewrite EE2, EE10, !unsigned_lit_small by lia.
+change (2 ^ 4) with 16. change (2 ^ 0) with 1. repeat split; first [exact Hal16 | apply Z.mod_1_r | lia]. }
+eapply SRr_bind; [apply (sl_phase_to W EE SL_REAL _ _ _ _ _ HS0 r_A)|].
+cbv beta. intros W1 c1 _ (-> & ms1 & mat1 & -> & HS1 & HF1 & HFr1). rewrite ?wvb_wvb in *.
+assert (MEQ1 : forall z : word, ~ (spZ regs - SL_WIN <= bv_unsigned z < spZ regs) -> ms_mem ms1 z = mem z).
+{ intros z Hz. apply (HF1 z). intros Hin.
+unshelve epose proof (in_wrange_single_b EE _ (bv_unsigned z) 2 (- SL_WIN) 0 (spZ regs) _ EE2 Hin) as X; [vm_compute; reflexivity|]. unfold SL_WIN in *. lia. }
+clear HF1 HFr1.
+(* the state at the call, read off shapeA (A/AE7d.v:398-423) *)
+pose proof shapeA_ok as Hsh. unfold shapeA in Hsh.
+apply andb_prop in Hsh as [Hsh HSV]. apply andb_prop in Hsh as [Hsh HK].
+apply andb_prop in Hsh as [Hsh R18]. apply andb_prop in Hsh as [Hsh R9]. apply andb_prop in Hsh as [Hsh R8].
+apply andb_prop in Hsh as [Hsh R2]. apply andb_prop in Hsh as [Hsh R1]. apply andb_prop in Hsh as [Hsh R10].
+apply andb_prop in Hsh as [Hpc Smem].
+destruct (ss_mem eA) as [|r0 rest] eqn:Hmem; [discriminate|].
+apply andb_prop in Smem as [Smem Hwhi]. apply andb_prop in Smem as [Hbase Hwlo].
+apply obase_eqb_eq in Hbase. apply Z.eqb_eq in Hwlo. apply Z.eqb_eq in Hwhi. apply Z.eqb_eq in Hpc.
+assert (RD : forall (r : bv 5) v, reg_is eA (bv_unsigned r) v = true -> getr (ms_regs ms1) r = sv_denot EE v).
+{ intros r v Hr. unfold reg_is, RG in Hr. apply sv_eqb_eq in Hr. rewrite Z_to_bv_bv_unsigned in Hr. rewrite <- Hr. apply (st_ok_reg_denot H EE eA ms1 r HS1). }
+assert (RA : forall (r : bv 5) i, Z.of_nat i = bv_unsigned r -> reg_is eA (bv_unsigned r) (SOff i 0) = true -> getr (ms_regs ms1) r = getr regs r).
+{ intros r i Hi Hr. rewrite (RD r _ Hr). cbn [sv_denot]. rewrite (EEreg i r Hi), Z.add_0_r, Z_to_bv_bv_unsigned. reflexivity. }
+assert (RK : forall (r : bv 5) i, Z.of_nat i = bv_unsigned r -> In (Z.of_nat i) KEPTA -> getr (ms_regs ms1) r = getr regs r).
+{ intros r i Hi Hin. apply (RA r i Hi). rewrite forallb_forall in HK. rewrite Hi in Hin. specialize (HK _ Hin). cbn beta in HK. rewrite <- Hi, Nat2Z.id in HK. rewrite <- Hi. exact HK. }
+assert (CK : forall j rz off, nth_error SAVEDA j = Some (rz, off) -> val_mem tfibsegs (mrestrict H (ms_mem ms1)) (spZ regs + off) 8 (bv_unsigned (getr regs (Z_to_bv 5 rz)))).
+{ intros j rz off Hj. rewrite forallb_forall in HSV. specialize (HSV (rz, off) (nth_error_In _ _ Hj)). cbn [fst snd] in HSV.
+assert (Hrz : 0 <= rz < 32) by (do 8 (destruct j as [|j]; [cbn in Hj; injection Hj as <- <-; lia|]); destruct j; discriminate).
+unfold has_chunk in HSV. rewrite Hmem in HSV. apply existsb_exists in HSV as (c & Hin & Hc). apply chunk_is_sound in Hc. subst c.
+pose proof (st_ok_mem_ok tfibsegs EE eA _ HS1) as (_ & Hrs & _). cbn [ms_mem restrict] in Hrs. rewrite Hmem in Hrs.
+pose proof (Forall_inv Hrs) as (_ & _ & _ & Hcs).
+pose proof (proj1 (Forall_forall _ _) Hcs _ Hin) as Hck. rewrite Hbase in Hck. cbn [base_val] in Hck. rewrite EE2 in Hck.
+apply (val_of_chunk_ok tfibsegs EE _ _ off 8 (SOff (Z.to_nat rz) 0) _ Hck).
+- cbn [sv_denot]. rewrite (EEreg (Z.to_nat rz) (Z_to_bv 5 rz)), Z.add_0_r, Z_to_bv_bv_unsigned; [reflexivity|].
+rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 5) with 32. rewrite Z.mod_small by lia. lia.
+- pose proof (u64_range (getr regs (Z_to_bv 5 rz))). zside.
+- zside. }
+pose proof (st_ok_restrict_mkst tfibsegs H EE _ _ HS1 eq_refl) as Hshape. rewrite Hpc in Hshape. rewrite Hshape.
+apply (sl_tail ly S W regs mem md (ms_regs ms1) (ms_mem ms1) mat1 x k HPRE Hslo2 Hpres2 Hx Hk0 Hk32 Hxk Hfb Hsrc Hsband Ham Hra Hhull Htail Hrom).
+- rewrite (RD 10%bv (SOff 10 0) R10). cbn [sv_denot]. rewrite EE10, unsigned_lit_small by lia. rewrite Z.add_0_r. exact eq_refl.
+- rewrite (RD 1%bv (SLit SL_RET) R1). reflexivity.
+- rewrite (RD 2%bv (SOff 2 (- SL_FRAME)) R2). cbn [sv_denot]. rewrite EE2. reflexivity.
+- rewrite (RD 9%bv (SLit 1) R9). reflexivity.
+- rewrite (RD 18%bv (SOff 10 0) R18). cbn [sv_denot]. rewrite EE10, unsigned_lit_small by lia. rewrite Z.add_0_r. reflexivity.
+- exact (RK 3%bv 3%nat eq_refl ltac:(cbn; lia)).
+- exact (RK 4%bv 4%nat eq_refl ltac:(cbn; lia)).
+- exact (RK 23%bv 23%nat eq_refl ltac:(cbn; lia)).
+- exact (RK 24%bv 24%nat eq_refl ltac:(cbn; lia)).
+- exact (RK 25%bv 25%nat eq_refl ltac:(cbn; lia)).
+- exact (RK 26%bv 26%nat eq_refl ltac:(cbn; lia)).
+- exact (RK 27%bv 27%nat eq_refl ltac:(cbn; lia)).
+- exact MEQ1.
+- intros a Ha.
+apply (st_ok_window_apresent H EE eA ms1 0 r0 a HS1 ltac:(rewrite Hmem; reflexivity)); [| unfold TFIB_IMG_END, SL_WIN in *; lia].
+rewrite Hbase, Hwlo, Hwhi. cbn [base_val]. rewrite EE2. unfold SL_WIN in *. lia.
+- replace (spZ regs - 8) with (spZ regs + -8) by lia. exact (CK 0%nat 1 (-8) eq_refl).
+- replace (spZ regs - 16) with (spZ regs + -16) by lia. exact (CK 1%nat 8 (-16) eq_refl).
+- replace (spZ regs - 24) with (spZ regs + -24) by lia. exact (CK 2%nat 9 (-24) eq_refl).
+- replace (spZ regs - 32) with (spZ regs + -32) by lia. exact (CK 3%nat 18 (-32) eq_refl).
+- replace (spZ regs - 40) with (spZ regs + -40) by lia. exact (CK 4%nat 19 (-40) eq_refl).
+- replace (spZ regs - 48) with (spZ regs + -48) by lia. exact (CK 5%nat 20 (-48) eq_refl).
+- replace (spZ regs - 56) with (spZ regs + -56) by lia. exact (CK 6%nat 21 (-56) eq_refl).
+- replace (spZ regs - 64) with (spZ regs + -64) by lia. exact (CK 7%nat 22 (-64) eq_refl).
+Qed.
+End g.
+End d.

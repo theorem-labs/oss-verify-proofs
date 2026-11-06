@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: yajl-ruby
 harness: json_fuzzer
-rocq: OssFuzzTheorems.yajl_ruby.json_fuzzer
+rocq: OSSVerify.yajl_ruby.json_fuzzer
 origin: oss-fuzz
 summary: 'Checks 2 properties (listed below); the first, an invariant: Every number token delivered to
   the number callback has length > 0 (essentially guaranteed by the lexer).'

@@ -1,10 +1,10 @@
 # Where the proofs come from
 
 The proofs were written by automated proving systems: language-model agents
-that write Rocq proof scripts. The agents worked against a checker, which this
-page describes. For this release, `oft check` checks every proof again, in the
-checker image ([checking.md](checking.md)). A proof is accepted because the
-Rocq kernel checks it, not because of who or what wrote it.
+that write Rocq proof scripts. Before a proof is published, `oft check` checks
+it in the checker image, and a weekly run checks every proof again
+([checking.md](checking.md)). A proof is accepted because the Rocq kernel
+checks it, not because of who or what wrote it.
 
 ## The proving task
 
@@ -36,7 +36,7 @@ This repository has the same parts, in its own layout:
 | in the task | in this repository |
 |---|---|
 | the statement file | `projects/<project>/<harness>/Statements.v`, rendered from the facts by `oft generate` ([statements.md](statements.md)) |
-| a submission | `proofs/<project>/<harness>/lib/`, and one directory for each statement, `proofs/<project>/<harness>/<statement>/` |
+| a submission | `projects/<project>/<harness>/proofs/lib/`, and one directory for each statement, `projects/<project>/<harness>/proofs/<statement>/` |
 | the task's checker | `oft check`, with the wrapper that it writes and its audit of `Print Assumptions` ([checking.md](checking.md)) |
 | the task's binaries and tools | the binaries attached to the release, and the checker image |
 
@@ -51,7 +51,7 @@ Then `oft check` gives the result the statement's type and audits its
 assumptions.
 
 Each proof also gets a build record of its binaries, in
-`proofs/<project>/<harness>/provenance/` ([building.md](building.md#where-a-binary-comes-from)).
+`projects/<project>/<harness>/proofs/provenance/` ([building.md](building.md#where-a-binary-comes-from)).
 The record says where the proofs of the fuzz target came from (`proofs.origin`
 in `PROVENANCE.yaml`). A fuzz target that came from a package may also hold
 proofs written in this repository: `proofs.written_here` names their

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: astc-encoder
 harness: fuzz_astc_decompress
-rocq: OssFuzzTheorems.astc_encoder.fuzz_astc_decompress
+rocq: OSSVerify.astc_encoder.fuzz_astc_decompress
 origin: upstream
 summary: Picks block size/profile/quality/flags and a 1..4 x 1..4 block grid; decompresses fuzzer bytes
   as ASTC blocks into an RGBA8 image. Status and pixels ignored.

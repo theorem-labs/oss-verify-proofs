@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ostree
 harness: fuzz-bootconfig
-rocq: OssFuzzTheorems.ostree.fuzz_bootconfig
+rocq: OSSVerify.ostree.fuzz_bootconfig
 origin: oss-fuzz
 summary: Writes the input to a temp bootloader-entry file (optionally using a '+'-prefixed input prefix
   as the tries-counter filename suffix), parses it with ostree_bootconfig_parser_parse_at, calls the tries/get

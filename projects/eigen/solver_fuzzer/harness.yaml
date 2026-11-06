@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: eigen
 harness: solver_fuzzer
-rocq: OssFuzzTheorems.eigen.solver_fuzzer
+rocq: OSSVerify.eigen.solver_fuzzer
 origin: oss-fuzz
 summary: Builds an int matrix and vector from fuzz ints and calls triangularView<Lower/Upper>().solve
   (also on conjugate() and transpose()); results discarded.

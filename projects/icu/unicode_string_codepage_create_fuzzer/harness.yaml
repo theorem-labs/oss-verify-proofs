@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: icu
 harness: unicode_string_codepage_create_fuzzer
-rocq: OssFuzzTheorems.icu.unicode_string_codepage_create_fuzzer
+rocq: OSSVerify.icu.unicode_string_codepage_create_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

@@ -1,0 +1,4 @@
+basescan.tsv TOTAL: bases 23361; bases EQUAL 20292, bases EQUAL+BYTES 199, bases EQUAL+INDEX 2427, bases EQUAL+TABLE 30, bases NOT CERTIFIED 413, bases DIFFERS 0
+  the verdict classes sum to 23361, the base count is 23361
+  rows reading DIFFERS: 0
+GATE wire-b-alloc-base VERDICT: PASS head 75cd74cdfee5b2ed1165fe5fbe48ef157f89a474 inputs basescan.py a500fff1960c (basescan.tsv)

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_cab_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_cab_fuzzer
+rocq: OSSVerify.libarchive.libarchive_cab_fuzzer
 origin: upstream
 summary: Reads the input as a CAB archive (+ all filters); per entry calls pathname, size, mtime, mode
   and drains archive_read_data. Every return value is discarded.

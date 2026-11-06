@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_bson_parser_max
-rocq: OssFuzzTheorems.jsoncons.fuzz_bson_parser_max
+rocq: OSSVerify.jsoncons.fuzz_bson_parser_max
 origin: upstream
 summary: bson_stream_reader into a default_json_visitor (no-op sink) with an error_code; nothing checked.
 entry: LLVMFuzzerTestOneInput

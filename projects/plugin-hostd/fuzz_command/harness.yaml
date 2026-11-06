@@ -1,0 +1,248 @@
+schema: oss-fuzz-theorems/harness/1
+project: plugin-hostd
+harness: fuzz_command
+rocq: OSSVerify.plugin_hostd.fuzz_command
+origin: upstream
+summary: 'Reads the input as up to 32 messages, each a flags byte, a two-byte length and up to 8192 bytes, copies each into
+  an allocation of exactly its length and hands it to verbs_receive, plugin-hostd''s command parser and dispatcher. A recorder
+  stands in for the supervisor, the pins, the descriptor scans and the socket: it records every call and, as the flags byte
+  chooses, accepts it with the verb''s declared reply or refuses it with a declared error code. After each message the harness
+  checks the reply and the calls, then sends the message again as its words joined by one space.'
+entry: LLVMFuzzerTestOneInput
+source:
+  files:
+  - source/fuzz_command.c
+  - source/recorder.c
+  - source/recorder.h
+  - source/syntax.h
+  - source/fuzz.h
+  from:
+    repository: https://github.com/FreeMixer/plugin-hostd
+    commit: 65cd2b02e8306f7e5f98fa0adfd0b3f8c1df6a5c
+    path: fuzz/fuzz_command.c
+  modified: false
+  licence: GPL-3.0-or-later
+library:
+  repository: https://github.com/FreeMixer/plugin-hostd
+  commit: 65cd2b02e8306f7e5f98fa0adfd0b3f8c1df6a5c
+  version: 0.10.0
+  licence: GPL-3.0-or-later
+modifications:
+- Linked against a static libplugin-hostd.a of src/verbs.c of plugin-hostd 0.10.0 at commit 65cd2b02 and the harness's recorder,
+  fuzz/recorder.c, compiled with mod-host's protocol headers as FreeMixer ships them, as plugin-hostd's Makefile builds its
+  fuzz targets but with this toolchain in place of a native clang and libFuzzer.
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on
+  its input.
+- A small driver reads the input file, calls the fuzz target one to four times and prints each return value.
+builds:
+  plain:
+    file: fuzz_command.plain
+    bytes: 70080
+    sha256: a20873dc7f0ef97c37ed3d3ba52f8ec46c65d11791861ddd9496eb460162d163
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  ubsan:
+    file: fuzz_command.ubsan
+    bytes: 70808
+    sha256: 941fc716e36e0a944c349592946c49198ea064477c1dae4fbd5a655ca658eab9
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  asan:
+    file: fuzz_command.asan
+    bytes: 634904
+    sha256: c0661b96b5bd458ba489f91a4693b6a8acd6c0f74d5e20798ed78e937f858bb9
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+  asan-ubsan:
+    file: fuzz_command.asan-ubsan
+    bytes: 633720
+    sha256: bbe55d24d0965b89b7fe2ae4d7d8f984d83fba09ca3caab96b10d6c1a1ffab16
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+licence: NOASSERTION
+checks:
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_command.c:199-259
+  what: Every message gets exactly one reply, a NUL-terminated string with no earlier NUL. When a recorded call answered,
+    the reply is that answer unchanged; otherwise it is a refusal or the "resp 0" of quit. A refusal is "resp <code>" of a
+    declared error code, and any other reply has the shape its verb declares or mod-host's "resp 0".
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_command.c:271-297
+  what: A verb the daemon parses itself (its own verbs, and mod-host's remove, connect, disconnect and quit) is acted on only
+    with an argument count its declared syntax allows, counting at most 64 words; a line passed on to every worker for the
+    workers to refuse is exempt.
+- kind: reference-oracle
+  strength: partial
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_command.c:299-444
+  what: Each recorded call gets the message's words where the verb's declaration puts them (as written, as atoi reads them,
+    or the whole line with single spaces), and add's placement and client, chain's members and their count, and pin_set's
+    verdict are the ones the harness works out from the words. Other arguments are not checked.
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_command.c:446-456
+  what: 'A refused command (a reply with a negative code) leaves the recorded state as it was: no accepted call, no descriptor
+    scan or other follow-up, and no quit.'
+- kind: roundtrip
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_command.c:458-503
+  what: A command the daemon acted on, sent again from the same state as its words joined by one space, makes the same calls
+    with the same arguments, the same reply, the same state and host settings, and quits the same.
+- kind: invariant
+  strength: weak
+  stops_with: abort
+  live: unknown
+  where: source/recorder.c:263-267
+  what: The reply shape each verb declares, filled in, fits one line of the protocol (4096 bytes).
+statements:
+  plain_halts:
+    kind: halts
+    builds:
+    - plain
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  ubsan_halts:
+    kind: halts
+    builds:
+    - ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_halts:
+    kind: halts
+    builds:
+    - asan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_ubsan_halts:
+    kind: halts
+    builds:
+    - asan-ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open
+  ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - ubsan
+    reading: alloc-forced-only
+    budgets: standard
+    status: open
+  asan_ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan-ubsan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open

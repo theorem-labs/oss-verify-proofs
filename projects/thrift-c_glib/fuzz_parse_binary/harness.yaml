@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: thrift-c_glib
 harness: fuzz_parse_binary
-rocq: OssFuzzTheorems.thrift_c_glib.fuzz_parse_binary
+rocq: OSSVerify.thrift_c_glib.fuzz_parse_binary
 origin: upstream
 summary: Read a FuzzTest (FuzzTestNoUuid.thrift) GObject struct from the input via thrift_binary_protocol
   over a ThriftMemoryBuffer; the GError is freed and the result discarded.

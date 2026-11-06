@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: ml-kem
-rocq: OssFuzzTheorems.openssl.ml_kem
+rocq: OSSVerify.openssl.ml_kem
 origin: upstream
 summary: Key exchange op derives both ways but explicitly does not compare ("TODO add check of shared
   secrets"); export/import and EVP_PKEY_eq results ignored.

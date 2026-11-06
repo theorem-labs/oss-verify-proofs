@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cmake
 harness: cmCMakePathFuzzer
-rocq: OssFuzzTheorems.cmake.cmCMakePathFuzzer
+rocq: OSSVerify.cmake.cmCMakePathFuzzer
 origin: upstream
 summary: cmCMakePath queries (Has*/Is*), component getters, Normal(), operator/ and operator== on two
   halves; all results discarded.

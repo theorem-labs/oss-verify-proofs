@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: quic-srtm
-rocq: OssFuzzTheorems.openssl.quic_srtm
+rocq: OSSVerify.openssl.quic_srtm
 origin: upstream
 summary: 'Checks one property, an invariant: After every successful add/remove/cull/lookup the harness
   calls the library''s ossl_quic_srtm_check(): both hash indexes (by opaque/seq and by blinded token)

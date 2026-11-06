@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libavc
 harness: svc_dec_fuzzer
-rocq: OssFuzzTheorems.libavc.svc_dec_fuzzer
+rocq: OSSVerify.libavc.svc_dec_fuzzer
 origin: upstream
 summary: 'SVC (scalable H.264) decoder: arch/color/cores/target layer from input bytes, decodeHeader,
   then up to kMaxNumDecodeCalls decodes; return code explicitly discarded with (void(ret)).'

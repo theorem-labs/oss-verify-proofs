@@ -1,0 +1,5 @@
+file	hunk	class	grant (4f87de75d67)	knock (88154566652a)	residue	cgif c8557374ad2e lineage
+Rt/AF0s.v	1	depot	projects/reac-repacer/fuzz_wire/proofs/lib/A/Rt/AF0s.v:65-65	knock-relocated:A/Rt/AF0s.v:65-65	names the depot form (ly_NB): insert grant[] -> knock[; try destruct ( ly_NB ly = ? 0 ) ; try destruct ( ly_SB ly = ? 0 )]	-
+
+Rt/AF0s.v: 1 hunks: depot 1, layout-grow 0, other 0; Requires of knock-only files: -
+total: 1 hunks: depot 1, layout-grow 0, other 0

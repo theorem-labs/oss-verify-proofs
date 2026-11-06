@@ -1,0 +1,394 @@
+# port_addr_check 3d2eee813cce (sha256 3d2eee813cce41c92be6131e56292d73e473d2582156655895ff2a1ce5c73b82, tools registry 9278eb49a9d tools/port_addr_check/3d2eee813cce/), one run over the unit:
+#   --src src4 (reac-pw/fuzz_role lib/A at 9f8c843f0e03, the 386 files this step ports) --dst the 386 committed files of a3 b0cad0df5623
+#   --src-image A=fuzz_role.asan 614cffc0864c : unstripped 6da77bafc5c0   --dst-image A=fuzz_headamp.asan f3e0669d2819 : unstripped b5f352154c54   --assign **=A   --generated A/ACej.v   --fail-on-flags
+# RESULT: 386 files paired, 166,251 numerals. Verdicts: SAME-SYMBOL 7,417, SAME-GEOMETRY 1,229, IDENT-NAME 3,227, INSN-SAME 1,296, NON-ADDRESS-SAME 152,535, SAME-CONTENT 29, ROUND-CONSTANT-SAME 47, IMAGE-EXTENT-SAME 72, LABEL-KEPT 19, GENERATOR-FILL 6, GENERATED-SKIPPED 1 (A/ACej.v).
+# FLAGGED 373 rows in 9 classes: NON-ADDRESS-CHANGED 181, UNPAIRED-SOURCE 149, UNPAIRED-PORTED 24, UNRESOLVED 6, STALE-DERIVED-QUOTIENT 5, DIFFERENT-SYMBOL 3, KIND-CHANGED 3, SAME-VALUE-DIFFERENT-OBJECT 1, FLAGS-NOT-DECOMPOSABLE 1. EVERY row read; 0 wrong values; 0 changes made.
+# CONTROLS: the tool's own selftest (control fill_pass known answer) RAN pass. donor-on-donor (the SAME role tree on both sides with the role image on both sides): FLAGGED 6 rows in 1 class, UNRESOLVED=6 - the same six cells, so the class is "cannot name", and no value class fires on an identity port. PLANT: a copy of the ported tree with A/AB1k.v:118's F_050 address set to a role-side address (0x65730 -> 0x64f98) gives DIFFERENT-SYMBOL 3 -> 4 (+1 row), so the value classes fire.
+# REGISTERED LIMITS of this check (named as part of the record): the tool's own false-EQUAL classes - SAME-CONTENT can equate two different symbols whose strings are equal up to the NUL cut (29 rows here), INSN-SAME compares a jal word on opcode and rd only (1,296 rows), ROUND-CONSTANT-SAME accepts a round value as a constant (47 rows); and codeptr 12348302dfd2, run separately over the same files, accepts a different symbol when the value equals the pin word. What covers them here: the fetch_word audit reads all 461 instruction-word facts from headamp's bytes (0 wrong), the ROM-pair audit reads 460 (address, size, value) triples (0 wrong), class5.tsv checks 1,406 donor-twin constants, got-cells.tsv checks all 211 .got cells by served symbol, and roundconst-v2.tsv gates every kept donor quantity.
+
+## every flagged class, as read
+class	rows	reading
+NON-ADDRESS-CHANGED	181	181 rows, two kinds: (a) decimal addresses INSIDE a .rodata string that moved with the string (A/AE3j, AE3k, AE3n, AE3l, AE3m, AFfu: str:"cli: cannot open %s\n"+19 and the like; the strings are byte-equal in the two images); (b) my recorded count decisions below the image base: the IMG_REGIONS lengths (0x52->0x4c, 0x53->0x4d, 0x4f->0x49, 0x51->0x4b, 0x55->0x4f, 0x46->0x40, 0x47->0x41, 0x4b->0x45 = 82->76, 83->77, 79->73, 81->75, 85->79, 70->64, 71->65, 75->69) and R_A3's length 0x348 -> 0x340 (840 -> 832).
+UNPAIRED-SOURCE	149	149 rows, all on lines this step rewrites on purpose: A/AE37.v 126 (role's 49 descriptors against headamp's 43), A/AB1w.v 22 (role's __asan_stack_malloc_3 pair and role's 10 program functions), A/AF0l.v 1 (Tfib_code's arm keyed 3).
+UNPAIRED-PORTED	24	24 rows, the other side of the same patches: A/AB1w.v 22 (headamp's __asan_stack_malloc_4 pair and its 10 program functions, each A and E value checked against headamp's .symtab) and A/AE34.v 2 (the interceptor range split (0x41b98, 3); (0x41ba8, 20) around the inserted strncmp trampoline).
+UNRESOLVED	6	6 rows the tool cannot name on one or both sides: A/AB1w.v:599 tfib_at_ph_addr_z 0x10040 (the program-header address, the same in both images), A/AFjm.v:328 and A/AFk1.v:695 (shadow of builtin_tls-area .bss, moved 0x800b2e30 -> 0x800b3168 = shadow of the same symbol+offset), and A/AE2t.v / AE2v.v / AE2w.v SH_HI (shadow hull ends, recomputed). The donor-on-donor control gives exactly these 6, so the class is "cannot name", not "wrong".
+STALE-DERIVED-QUOTIENT	5	5 rows: A/AE37.v:84 is the 49-vs-43 pairing again (a descriptor cell against role's image.top page 1528). The four A/AE3m.v rows are the decimal 0x14820 -> 0x1480f: a string-interior address (str:"%d\n"+2) that moved with its string, which the tool also reads as 84000*8 = role's print_lock; the string identity is the right one (the byte strings are equal, STR evidence in the decisions ledger).
+KIND-CHANGED	3	3 rows: A/AE37.v:149 x2_shw and A/AE23.v:38 XW2 are the same 49-vs-43 pairing (both written from headamp's bytes); A/AE2v.v:64 SH_LO 0x7fffb2e8 -> 0x7fffb2e0 is my shadow-hull decision (shadow hull of headamp's FMT string, decisions row, category shadow-hull).
+DIFFERENT-SYMBOL	3	3 rows, all A/AE37.v's x2_rodata: role's 49-descriptor table and headamp's 43-descriptor table are paired cell by position inside one Definition, so role's .str pointer at cell n is compared with headamp's cell n of a different descriptor. The table is WRITTEN from headamp's asan_globals bytes and every one of its 301 cells was read back from the image (rom-pair audit 460/460), so the pairing, not the value, is what differs.
+FLAGS-NOT-DECOMPOSABLE	1	1 row: A/AB1w.v:570 tfib_D_GOT_common_flags 0x9a820 -> 0x9c360. Both are the .got slot that serves __sanitizer::common_flags_dont_use (role 0x9a820, headamp 0x9c360, checked in got-cells.tsv); the tool only notes that the donor value also reads as an mmap flags word.
+SAME-VALUE-DIFFERENT-OBJECT	1	1 row: A/AE35.v:64 SH_HI 0x7fffa908 is unchanged because headamp's own hull ends on the same shadow byte: role FMT 0x1481e + 3 -> shadow 0x7fffa904 -> hull end 0x7fffa908; headamp FMT 0x1480d + 3 -> shadow 0x7fffa902 -> hull end 0x7fffa908. Recomputed, not copied (its SH_LO did change, 0x7fffa904 -> 0x7fffa900).
+
+## the flagged rows (verdict, file, source line, sentence, source value, ported value, note)
+UNPAIRED-SOURCE	A/AB1w.v	66	Definition tfib_A_asan_stack_malloc_3	0x3cbfc		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	66	Definition tfib_E_asan_stack_malloc_3	0x3cda8		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_A_check_absent	0x82bb4		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_E_check_absent	0x82bdc		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_A_check_role	0x82bdc		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_E_check_role	0x82c04		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_A_check_malformed	0x82c04		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_E_check_malformed	0x82c30		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_A_check_answer	0x82c30		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_E_check_answer	0x82c80		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_A_check_code	0x82c80		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_E_check_code	0x82ccc		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_A_pod_nearest	0x82ccc		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_E_pod_nearest	0x82e04		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_A_reac_role_refuse_code	0x82e6c		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_E_reac_role_refuse_code	0x82ec8		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_A_reac_role_cfg_changes	0x82ec8		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_E_reac_role_cfg_changes	0x82ed4		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_A_reac_role_cfg_apply_state	0x82ed4		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_E_reac_role_cfg_apply_state	0x82ef0		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_A_reac_role_prop_parse	0x82ef0		sentence missing in ported file
+UNPAIRED-SOURCE	A/AB1w.v	68	Definition tfib_E_reac_role_prop_parse	0x83424		sentence missing in ported file
+FLAGS-NOT-DECOMPOSABLE	A/AB1w.v	570	Definition tfib_D_GOT_common_flags	0x9a820	0x9c360	an mmap / mprotect flags word: the donor's 0x9a820 is MAP_ANONYMOUS|MAP_DENYWRITE|MAP_LOCKED|MAP_POPULATE|MAP_NONBLOCK|MAP_SYNC, and the ported 0x9c36
+UNRESOLVED	A/AB1w.v	599	Definition tfib_at_ph_addr_z	0x10040	0x10040	value unchanged (a copied literal?); both side unnamed; (seg0:gap: unnamed)
+UNPAIRED-PORTED	A/AB1w.v	67	Definition tfib_A_asan_stack_malloc_4		0x3ccac	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	67	Definition tfib_E_asan_stack_malloc_4		0x3ce78	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_A_check_no_overrun		0x83e3c	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_E_check_no_overrun		0x83ee8	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_A_check_count		0x83ee8	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_E_check_count		0x83f7c	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_A_check_cells_valid		0x83f7c	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_E_check_cells_valid		0x8405c	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_A_check_object		0x8405c	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_E_check_object		0x84148	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_A_check_cells		0x84148	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_E_check_cells		0x842e8	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_A_check_keys		0x842e8	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_E_check_keys		0x84368	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_A_check_refusal		0x84368	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_E_check_refusal		0x843e8	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_A_check_plain		0x843e8	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_E_check_plain		0x84544	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_A_reac_headamp_prop_parse		0x845ac	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_E_reac_headamp_prop_parse		0x845b4	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_A_reac_headamp_prop_parse_result		0x845b4	sentence missing in source file
+UNPAIRED-PORTED	A/AB1w.v	69	Definition tfib_E_reac_headamp_prop_parse_result		0x84f24	sentence missing in source file
+NON-ADDRESS-CHANGED	A/AD1g.v	1070	Lemma tfib_layout_ok / sentence 93	0x5e8	0x5ea	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD1o.v	95	Lemma bss_shadow_facts / sentence 12	0x13fac	0x142e4	decimal literal; in range: str:"If true, assume that dynamic initializer"+28
+NON-ADDRESS-CHANGED	A/AD1o.v	95	Lemma bss_shadow_facts / sentence 13	0xbefff	0xbf3ff	decimal literal; in range: __sanitizer::internal_alloc_placeholder+0x1a9ff
+NON-ADDRESS-CHANGED	A/AD1o.v	100	Lemma bss_shadow_facts / sentence 22	0xab05c	0xab124	decimal literal; in range: __sanitizer::internal_alloc_placeholder+0x6a5c
+NON-ADDRESS-CHANGED	A/AD27.v	70	Lemma img_sub_COf / sentence 2	0x53	0x4d	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD27.v	75	Lemma img_sub_US / sentence 2	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD27.v	95	Lemma img_sub_FW / sentence 3	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD27.v	97	Lemma img_sub_FW / sentence 6	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD28.v	294	Lemma imgs_of_R / sentence 5	0x348	0x340	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD28.v	295	Lemma imgs_of_R / sentence 6	0x348	0x340	below image base (decimal)
+UNPAIRED-PORTED	A/AE34.v	28	Definition icpt_ranges		0x3	no aligned numeral
+UNPAIRED-PORTED	A/AE34.v	28	Definition icpt_ranges		0x41ba8	no aligned numeral
+UNPAIRED-SOURCE	A/AF0l.v	13	Definition Tfib_code	0x3cbfc		the port has no arm keyed 3
+NON-ADDRESS-CHANGED	A/AF0l.v	13	Definition Tfib_code	0x3	0x4	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AFem.v	413	Lemma FACTS_fixed / sentence 32	0x614b6	0x61b26	decimal literal; in range: __sanitizer::RegisterCommonFlags::FlagParser::CommonFlags+0x26a
+NON-ADDRESS-CHANGED	A/AFfu.v	408	Lemma p_facts / sentence 38	0x148c0	0x14bf8	decimal literal; in range: str:"libunwind:  _backtrace: start_ip=0x%lx, "+26
+NON-ADDRESS-CHANGED	A/AFg1.v	298	Lemma p_facts / sentence 38	0x148c0	0x14bf8	decimal literal; in range: str:"libunwind:  _backtrace: start_ip=0x%lx, "+26
+UNRESOLVED	A/AFjm.v	328	Lemma map_zoneN	0x800b2e30	0x800b3168	both side unnamed; (shadow of 0x5d7180 (seg3:.bss): no object starts there)
+NON-ADDRESS-CHANGED	A/AFjr.v	627	Lemma FS2_ok / sentence 48	0x13fc8	0x14300	decimal literal; in range: str:"If true, assume that dynamic initializer"+56
+UNRESOLVED	A/AFk1.v	695	Lemma sm_bounds	0x800b2e30	0x800b3168	both side unnamed; (shadow of 0x5d7180 (seg3:.bss): no object starts there)
+NON-ADDRESS-CHANGED	A/AB1h.v	65	Lemma tfib_res_sizes	0x5e8000	0x5ea000	an allocator operation argument or an element of a list of sizes: a byte count, not an address
+NON-ADDRESS-CHANGED	A/ACef.v	15	Definition tfib_lib_count	0xeb4	0x1266	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD1x.v	26	Lemma IMG_X_wf	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD1x.v	27	Lemma IMG_X_wf	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD22.v	21	Lemma skipn3_dir	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD22.v	21	Lemma skipn3_dir	0x55	0x4f	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD27.v	88	Lemma FW_facts	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD28.v	106	Lemma S_COf_mem	0x53	0x4d	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD28.v	107	Lemma S_COf_mem	0x53	0x4d	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD28.v	107	Lemma S_COf_mem	0x53	0x4d	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD28.v	107	Lemma S_COf_mem	0x53	0x4d	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD28.v	108	Lemma S_COf_mem	0x54	0x4e	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD28.v	110	Lemma S_US_mem	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2d.v	25	Definition B0_r5	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2d.v	26	Definition B1_r5	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2d.v	132	Lemma img_facts_of / sentence 6	0x348	0x340	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2e.v	64	Definition PM_tailL	0x51	0x4b	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2e.v	69	Lemma PM_pieces_eq	0x53	0x4d	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2e.v	69	Lemma PM_pieces_eq	0x53	0x4d	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2e.v	193	Lemma rs_PM_sub / sentence 8	0x51	0x4b	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	59	Definition IMG_E	0x4f	0x49	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	68	Lemma S_Pm_layout	0x55	0x4f	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	68	Lemma S_Pm_layout	0x4f	0x49	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	68	Lemma S_Pm_layout	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	86	Lemma sPE0_facts	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	95	Lemma sPE1_facts	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	149	Definition IMG_B	0x4f	0x49	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	168	Lemma L_mem_wf	0x51	0x4b	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	170	Lemma IMG_LC_len	0x51	0x4b	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	185	Lemma sPE_mem	0x52	0x4c	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	197	Lemma IMG_B_eq	0x46	0x40	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	197	Lemma IMG_B_eq	0x46	0x40	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	197	Lemma IMG_B_eq	0x47	0x41	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	197	Lemma IMG_B_eq	0x4b	0x45	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	197	Lemma IMG_B_eq	0x4b	0x45	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	197	Lemma IMG_B_eq	0x4f	0x49	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	198	Lemma IMG_B_eq	0x46	0x40	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	198	Lemma IMG_B_eq	0x46	0x40	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	198	Lemma IMG_B_eq	0x47	0x41	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	198	Lemma IMG_B_eq	0x47	0x41	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AD2f.v	198	Lemma IMG_B_eq	0x4f	0x49	below image base (decimal)
+KIND-CHANGED	A/AE23.v	38	Definition XW2	0x7fffc2a0	0x7fffc28c	bound near 2^31 (0x7fffc2a0); its shadow reading would be .text
+UNRESOLVED	A/AE2t.v	64	Definition SH_HI	0x7fffbaf8	0x7fffbaf8	value unchanged (a copied literal?); both side unnamed; (shadow of 0x1d7c0 (seg0:.rodata): no object starts there)
+KIND-CHANGED	A/AE2v.v	64	Definition SH_LO	0x7fffb2e8	0x7fffb2e0	shadow of 0x19740 (seg0:.rodata): no object starts there
+UNRESOLVED	A/AE2v.v	64	Definition SH_HI	0x7fffb2f8	0x7fffb2e8	ported side unnamed;
+UNRESOLVED	A/AE2w.v	64	Definition SH_HI	0x7fffab18	0x7fffab18	value unchanged (a copied literal?); source side unnamed; (shadow of 0x158c0 (seg0:.rodata): no object starts there)
+NON-ADDRESS-CHANGED	A/AE34.v	27	Definition icpt_ranges	0x17	0x14	below image base (decimal)
+SAME-VALUE-DIFFERENT-OBJECT	A/AE35.v	64	Definition SH_HI	0x7fffa908	0x7fffa908	value unchanged (a copied literal?); the value denotes shadow(str:".str.22"+7) in the donor but shadow of 0x14840 (seg0:.rodata): no object starts the
+NON-ADDRESS-CHANGED	A/AE37.v	37	Definition x2_rodata	0xc40	0xac0	below image base (decimal)
+STALE-DERIVED-QUOTIENT	A/AE37.v	84	Definition x2_rodata	0x5f8	0x5f8	a derived quotient in a witness slot: the donor's image.top written as page is 1528, and this image's image.top gives 1530; the port wrote 1528 (uncha
+NON-ADDRESS-CHANGED	A/AE37.v	109	Definition x2_rodata	0x19	0xe	below image base
+NON-ADDRESS-CHANGED	A/AE37.v	109	Definition x2_rodata	0x40	0x20	below image base
+NON-ADDRESS-CHANGED	A/AE37.v	113	Definition x2_rodata	0x5	0x4	below image base
+NON-ADDRESS-CHANGED	A/AE37.v	115	Definition x2_rodata	0xa	0x5	below image base
+DIFFERENT-SYMBOL	A/AE37.v	117	Definition x2_rodata	0x21500	0x9c060	the source symbol is elsewhere in the target;
+NON-ADDRESS-CHANGED	A/AE37.v	117	Definition x2_rodata	0x5	0x48	below image base
+NON-ADDRESS-CHANGED	A/AE37.v	117	Definition x2_rodata	0x20	0x80	below image base
+DIFFERENT-SYMBOL	A/AE37.v	119	Definition x2_rodata	0x21520	0x9c0e0	the source symbol is elsewhere in the target;
+NON-ADDRESS-CHANGED	A/AE37.v	119	Definition x2_rodata	0xa	0x70	below image base
+NON-ADDRESS-CHANGED	A/AE37.v	119	Definition x2_rodata	0x20	0xa0	below image base
+DIFFERENT-SYMBOL	A/AE37.v	121	Definition x2_rodata	0x21540	0x9c180	the source symbol is elsewhere in the target;
+NON-ADDRESS-CHANGED	A/AE37.v	121	Definition x2_rodata	0x19	0x40	below image base
+NON-ADDRESS-CHANGED	A/AE37.v	121	Definition x2_rodata	0x40	0x60	below image base
+UNPAIRED-SOURCE	A/AE37.v	122	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	122	Definition x2_rodata	0xffffffffffffffff		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	123	Definition x2_rodata	0xac0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	123	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	123	Definition x2_rodata	0x21580		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	123	Definition x2_rodata	0xac8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	123	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	123	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	123	Definition x2_rodata	0xad0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	123	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	123	Definition x2_rodata	0x20		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	123	Definition x2_rodata	0xae0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	123	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	123	Definition x2_rodata	0x215c0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	124	Definition x2_rodata	0xae8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	124	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	124	Definition x2_rodata	0x0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	124	Definition x2_rodata	0xaf0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	124	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	124	Definition x2_rodata	0x0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	124	Definition x2_rodata	0xaf8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	124	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	124	Definition x2_rodata	0xffffffffffffffff		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	125	Definition x2_rodata	0xb00		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	125	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	125	Definition x2_rodata	0x215a0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	125	Definition x2_rodata	0xb08		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	125	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	125	Definition x2_rodata	0xe		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	125	Definition x2_rodata	0xb10		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	125	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	125	Definition x2_rodata	0x20		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	125	Definition x2_rodata	0xb20		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	125	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	125	Definition x2_rodata	0x215c0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	126	Definition x2_rodata	0xb28		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	126	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	126	Definition x2_rodata	0x0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	126	Definition x2_rodata	0xb30		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	126	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	126	Definition x2_rodata	0x0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	126	Definition x2_rodata	0xb38		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	126	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	126	Definition x2_rodata	0xffffffffffffffff		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	127	Definition x2_rodata	0xb40		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	127	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	127	Definition x2_rodata	0x9a500		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	127	Definition x2_rodata	0xb48		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	127	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	127	Definition x2_rodata	0x48		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	127	Definition x2_rodata	0xb50		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	127	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	127	Definition x2_rodata	0x80		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	127	Definition x2_rodata	0xb60		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	127	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	127	Definition x2_rodata	0x214e0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	128	Definition x2_rodata	0xb68		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	128	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	128	Definition x2_rodata	0x0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	128	Definition x2_rodata	0xb70		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	128	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	128	Definition x2_rodata	0x0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	128	Definition x2_rodata	0xb78		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	128	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	128	Definition x2_rodata	0xffffffffffffffff		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	129	Definition x2_rodata	0xb80		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	129	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	129	Definition x2_rodata	0x9a580		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	129	Definition x2_rodata	0xb88		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	129	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	129	Definition x2_rodata	0x70		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	129	Definition x2_rodata	0xb90		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	129	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	129	Definition x2_rodata	0xa0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	129	Definition x2_rodata	0xba0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	129	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	129	Definition x2_rodata	0x214e0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	130	Definition x2_rodata	0xba8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	130	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	130	Definition x2_rodata	0x0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	130	Definition x2_rodata	0xbb0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	130	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	130	Definition x2_rodata	0x0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	130	Definition x2_rodata	0xbb8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	130	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	130	Definition x2_rodata	0xffffffffffffffff		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	131	Definition x2_rodata	0xbc0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	131	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	131	Definition x2_rodata	0x9a620		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	131	Definition x2_rodata	0xbc8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	131	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	131	Definition x2_rodata	0x40		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	131	Definition x2_rodata	0xbd0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	131	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	131	Definition x2_rodata	0x60		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	131	Definition x2_rodata	0xbe0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	131	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	131	Definition x2_rodata	0x214e0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	132	Definition x2_rodata	0xbe8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	132	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	132	Definition x2_rodata	0x0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	132	Definition x2_rodata	0xbf0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	132	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	132	Definition x2_rodata	0x0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	132	Definition x2_rodata	0xbf8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	132	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	132	Definition x2_rodata	0xffffffffffffffff		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	133	Definition x2_rodata	0xc00		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	133	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	133	Definition x2_rodata	0x9a680		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	133	Definition x2_rodata	0xc08		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	133	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	133	Definition x2_rodata	0x10		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	133	Definition x2_rodata	0xc10		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	133	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	133	Definition x2_rodata	0x20		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	133	Definition x2_rodata	0xc20		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	133	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	133	Definition x2_rodata	0x215c0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	134	Definition x2_rodata	0xc28		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	134	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	134	Definition x2_rodata	0x0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	134	Definition x2_rodata	0xc30		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	134	Definition x2_rodata	0x8		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	134	Definition x2_rodata	0x0		no aligned numeral
+UNPAIRED-SOURCE	A/AE37.v	134	Definition x2_rodata	0xc38		no aligned numeral
+NON-ADDRESS-CHANGED	A/AE37.v	149	Definition x2_shw	0xc4	0xb0	below image base (decimal)
+KIND-CHANGED	A/AE37.v	149	Definition x2_shw	0x7fffc2a0	0x7fffc28c	bound near 2^31 (0x7fffc2a0); its shadow reading would be .text
+NON-ADDRESS-CHANGED	A/AE37.v	149	Definition x2_shw	0x18	0x10	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AE37.v	149	Definition x2_shw	0x34	0x30	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AE37.v	149	Definition x2_shw	0x188	0x158	below image base (decimal)
+NON-ADDRESS-CHANGED	A/AE3j.v	253	Theorem tfib_vfprintf_open_A1 / sentence 97	0x1d7b2	0x1d7b0	decimal literal; in range: str:"cli: cannot open %s\n"+17
+NON-ADDRESS-CHANGED	A/AE3j.v	254	Theorem tfib_vfprintf_open_A1 / sentence 98	0x1d7b2	0x1d7b0	decimal literal; in range: str:"cli: cannot open %s\n"+17
+NON-ADDRESS-CHANGED	A/AE3j.v	256	Theorem tfib_vfprintf_open_A1 / sentence 99	0x1d7b2	0x1d7b0	decimal literal; in range: str:"cli: cannot open %s\n"+17
+NON-ADDRESS-CHANGED	A/AE3j.v	256	Theorem tfib_vfprintf_open_A1 / sentence 99	0x1d7b2	0x1d7b0	decimal literal; in range: str:"cli: cannot open %s\n"+17
+NON-ADDRESS-CHANGED	A/AE3j.v	506	Theorem tfib_vfprintf_open_A1 / sentence 403	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	507	Theorem tfib_vfprintf_open_A1 / sentence 405	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	507	Theorem tfib_vfprintf_open_A1 / sentence 405	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	509	Theorem tfib_vfprintf_open_A1 / sentence 407	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	513	Theorem tfib_vfprintf_open_A1 / sentence 408	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	513	Theorem tfib_vfprintf_open_A1 / sentence 408	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	525	Theorem tfib_vfprintf_open_A1 / sentence 408	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	525	Theorem tfib_vfprintf_open_A1 / sentence 408	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	525	Theorem tfib_vfprintf_open_A1 / sentence 408	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	826	Theorem tfib_vfprintf_open_A2 / sentence 97	0x1d7b2	0x1d7b0	decimal literal; in range: str:"cli: cannot open %s\n"+17
+NON-ADDRESS-CHANGED	A/AE3j.v	827	Theorem tfib_vfprintf_open_A2 / sentence 98	0x1d7b2	0x1d7b0	decimal literal; in range: str:"cli: cannot open %s\n"+17
+NON-ADDRESS-CHANGED	A/AE3j.v	829	Theorem tfib_vfprintf_open_A2 / sentence 99	0x1d7b2	0x1d7b0	decimal literal; in range: str:"cli: cannot open %s\n"+17
+NON-ADDRESS-CHANGED	A/AE3j.v	829	Theorem tfib_vfprintf_open_A2 / sentence 99	0x1d7b2	0x1d7b0	decimal literal; in range: str:"cli: cannot open %s\n"+17
+NON-ADDRESS-CHANGED	A/AE3j.v	1085	Theorem tfib_vfprintf_open_A2 / sentence 409	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	1087	Theorem tfib_vfprintf_open_A2 / sentence 410	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	1118	Theorem tfib_vfprintf_open_A2 / sentence 473	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	1118	Theorem tfib_vfprintf_open_A2 / sentence 473	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	1119	Theorem tfib_vfprintf_open_A2 / sentence 477	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	1119	Theorem tfib_vfprintf_open_A2 / sentence 477	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	1350	Theorem tfib_vfprintf_open_A3 / sentence 97	0x1d7b2	0x1d7b0	decimal literal; in range: str:"cli: cannot open %s\n"+17
+NON-ADDRESS-CHANGED	A/AE3j.v	1351	Theorem tfib_vfprintf_open_A3 / sentence 98	0x1d7b2	0x1d7b0	decimal literal; in range: str:"cli: cannot open %s\n"+17
+NON-ADDRESS-CHANGED	A/AE3j.v	1353	Theorem tfib_vfprintf_open_A3 / sentence 99	0x1d7b2	0x1d7b0	decimal literal; in range: str:"cli: cannot open %s\n"+17
+NON-ADDRESS-CHANGED	A/AE3j.v	1353	Theorem tfib_vfprintf_open_A3 / sentence 99	0x1d7b2	0x1d7b0	decimal literal; in range: str:"cli: cannot open %s\n"+17
+NON-ADDRESS-CHANGED	A/AE3j.v	1600	Theorem tfib_vfprintf_open_A3 / sentence 429	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	1603	Theorem tfib_vfprintf_open_A3 / sentence 430	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3j.v	1603	Theorem tfib_vfprintf_open_A3 / sentence 430	0x1d7b4	0x1d7b2	decimal literal; in range: str:"cli: cannot open %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3k.v	253	Theorem tfib_vfprintf_rderr_A1 / sentence 97	0x1d7c9	0x1d7c7	decimal literal; in range: str:"cli: read error on %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3k.v	254	Theorem tfib_vfprintf_rderr_A1 / sentence 98	0x1d7c9	0x1d7c7	decimal literal; in range: str:"cli: read error on %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3k.v	256	Theorem tfib_vfprintf_rderr_A1 / sentence 99	0x1d7c9	0x1d7c7	decimal literal; in range: str:"cli: read error on %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3k.v	256	Theorem tfib_vfprintf_rderr_A1 / sentence 99	0x1d7c9	0x1d7c7	decimal literal; in range: str:"cli: read error on %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3k.v	506	Theorem tfib_vfprintf_rderr_A1 / sentence 403	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	507	Theorem tfib_vfprintf_rderr_A1 / sentence 405	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	507	Theorem tfib_vfprintf_rderr_A1 / sentence 405	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	509	Theorem tfib_vfprintf_rderr_A1 / sentence 407	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	513	Theorem tfib_vfprintf_rderr_A1 / sentence 408	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	513	Theorem tfib_vfprintf_rderr_A1 / sentence 408	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	525	Theorem tfib_vfprintf_rderr_A1 / sentence 408	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	525	Theorem tfib_vfprintf_rderr_A1 / sentence 408	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	525	Theorem tfib_vfprintf_rderr_A1 / sentence 408	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	826	Theorem tfib_vfprintf_rderr_A2 / sentence 97	0x1d7c9	0x1d7c7	decimal literal; in range: str:"cli: read error on %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3k.v	827	Theorem tfib_vfprintf_rderr_A2 / sentence 98	0x1d7c9	0x1d7c7	decimal literal; in range: str:"cli: read error on %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3k.v	829	Theorem tfib_vfprintf_rderr_A2 / sentence 99	0x1d7c9	0x1d7c7	decimal literal; in range: str:"cli: read error on %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3k.v	829	Theorem tfib_vfprintf_rderr_A2 / sentence 99	0x1d7c9	0x1d7c7	decimal literal; in range: str:"cli: read error on %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3k.v	1085	Theorem tfib_vfprintf_rderr_A2 / sentence 409	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	1087	Theorem tfib_vfprintf_rderr_A2 / sentence 410	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	1118	Theorem tfib_vfprintf_rderr_A2 / sentence 473	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	1118	Theorem tfib_vfprintf_rderr_A2 / sentence 473	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	1119	Theorem tfib_vfprintf_rderr_A2 / sentence 477	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	1119	Theorem tfib_vfprintf_rderr_A2 / sentence 477	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	1350	Theorem tfib_vfprintf_rderr_A3 / sentence 97	0x1d7c9	0x1d7c7	decimal literal; in range: str:"cli: read error on %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3k.v	1351	Theorem tfib_vfprintf_rderr_A3 / sentence 98	0x1d7c9	0x1d7c7	decimal literal; in range: str:"cli: read error on %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3k.v	1353	Theorem tfib_vfprintf_rderr_A3 / sentence 99	0x1d7c9	0x1d7c7	decimal literal; in range: str:"cli: read error on %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3k.v	1353	Theorem tfib_vfprintf_rderr_A3 / sentence 99	0x1d7c9	0x1d7c7	decimal literal; in range: str:"cli: read error on %s\n"+19
+NON-ADDRESS-CHANGED	A/AE3k.v	1600	Theorem tfib_vfprintf_rderr_A3 / sentence 429	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	1603	Theorem tfib_vfprintf_rderr_A3 / sentence 430	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3k.v	1603	Theorem tfib_vfprintf_rderr_A3 / sentence 430	0x1d7cb	0x1d7c9	decimal literal; in range: str:"cli: read error on %s\n"+21
+NON-ADDRESS-CHANGED	A/AE3l.v	178	Theorem tfib_vfprintf_refused / sentence 92	0x1978a	0x1971c	decimal literal; in range: str:"cli: input >= %u bytes, refused\n"+14
+NON-ADDRESS-CHANGED	A/AE3l.v	181	Theorem tfib_vfprintf_refused / sentence 93	0x1978a	0x1971c	decimal literal; in range: str:"cli: input >= %u bytes, refused\n"+14
+NON-ADDRESS-CHANGED	A/AE3l.v	181	Theorem tfib_vfprintf_refused / sentence 93	0x1978a	0x1971c	decimal literal; in range: str:"cli: input >= %u bytes, refused\n"+14
+NON-ADDRESS-CHANGED	A/AE3l.v	310	Theorem tfib_vfprintf_refused / sentence 228	0x1978c	0x1971e	decimal literal; in range: str:"cli: input >= %u bytes, refused\n"+16
+NON-ADDRESS-CHANGED	A/AE3l.v	313	Theorem tfib_vfprintf_refused / sentence 229	0x1978c	0x1971e	decimal literal; in range: str:"cli: input >= %u bytes, refused\n"+16
+NON-ADDRESS-CHANGED	A/AE3l.v	313	Theorem tfib_vfprintf_refused / sentence 229	0x1978c	0x1971e	decimal literal; in range: str:"cli: input >= %u bytes, refused\n"+16
+NON-ADDRESS-CHANGED	A/AE3m.v	885	Theorem tfib_vfprintf_stdout_first / sentence 346	0x14820	0x1480f	decimal literal; in range: str:"%d\n"+2
+NON-ADDRESS-CHANGED	A/AE3m.v	888	Theorem tfib_vfprintf_stdout_first / sentence 348	0x14820	0x1480f	decimal literal; in range: str:"%d\n"+2
+NON-ADDRESS-CHANGED	A/AE3m.v	913	Theorem tfib_vfprintf_stdout_first / sentence 407	0x14820	0x1480f	decimal literal; in range: str:"%d\n"+2
+STALE-DERIVED-QUOTIENT	A/AE3m.v	913	Theorem tfib_vfprintf_stdout_first / sentence 407	0x14820	0x1480f	a derived quotient of a donor address: 84000 * 8 = 0xa4100 is the donor's __asan::print_lock, which this image has at 0xa5ac0; the port wrote 83983 (m
+NON-ADDRESS-CHANGED	A/AE3m.v	914	Theorem tfib_vfprintf_stdout_first / sentence 411	0x14820	0x1480f	decimal literal; in range: str:"%d\n"+2
+STALE-DERIVED-QUOTIENT	A/AE3m.v	914	Theorem tfib_vfprintf_stdout_first / sentence 411	0x14820	0x1480f	a derived quotient of a donor address: 84000 * 8 = 0xa4100 is the donor's __asan::print_lock, which this image has at 0xa5ac0; the port wrote 83983 (m
+NON-ADDRESS-CHANGED	A/AE3m.v	951	Theorem tfib_vfprintf_stdout_first / sentence 473	0x14821	0x14810	decimal literal; in range: str:"%d\n"+3
+NON-ADDRESS-CHANGED	A/AE3m.v	952	Theorem tfib_vfprintf_stdout_first / sentence 474	0x14821	0x14810	decimal literal; in range: str:"%d\n"+3
+NON-ADDRESS-CHANGED	A/AE3m.v	955	Theorem tfib_vfprintf_stdout_first / sentence 475	0x14821	0x14810	decimal literal; in range: str:"%d\n"+3
+NON-ADDRESS-CHANGED	A/AE3m.v	1434	Theorem tfib_vfprintf_stdout_next / sentence 421	0x14820	0x1480f	decimal literal; in range: str:"%d\n"+2
+NON-ADDRESS-CHANGED	A/AE3m.v	1435	Theorem tfib_vfprintf_stdout_next / sentence 422	0x14820	0x1480f	decimal literal; in range: str:"%d\n"+2
+STALE-DERIVED-QUOTIENT	A/AE3m.v	1435	Theorem tfib_vfprintf_stdout_next / sentence 422	0x14820	0x1480f	a derived quotient of a donor address: 84000 * 8 = 0xa4100 is the donor's __asan::print_lock, which this image has at 0xa5ac0; the port wrote 83983 (m
+NON-ADDRESS-CHANGED	A/AE3m.v	1436	Theorem tfib_vfprintf_stdout_next / sentence 423	0x14820	0x1480f	decimal literal; in range: str:"%d\n"+2
+NON-ADDRESS-CHANGED	A/AE3m.v	1436	Theorem tfib_vfprintf_stdout_next / sentence 423	0x14820	0x1480f	decimal literal; in range: str:"%d\n"+2
+STALE-DERIVED-QUOTIENT	A/AE3m.v	1438	Theorem tfib_vfprintf_stdout_next / sentence 425	0x14820	0x1480f	a derived quotient of a donor address: 84000 * 8 = 0xa4100 is the donor's __asan::print_lock, which this image has at 0xa5ac0; the port wrote 83983 (m
+NON-ADDRESS-CHANGED	A/AE3m.v	1444	Theorem tfib_vfprintf_stdout_next / sentence 427	0x14820	0x1480f	decimal literal; in range: str:"%d\n"+2
+NON-ADDRESS-CHANGED	A/AE3m.v	1459	Theorem tfib_vfprintf_stdout_next / sentence 427	0x14820	0x1480f	decimal literal; in range: str:"%d\n"+2
+NON-ADDRESS-CHANGED	A/AE3n.v	256	Theorem tfib_vfprintf_usage_A1 / sentence 97	0x158ae	0x1589d	decimal literal; in range: str:"usage: %s INPUT\n"+7
+NON-ADDRESS-CHANGED	A/AE3n.v	257	Theorem tfib_vfprintf_usage_A1 / sentence 98	0x158ae	0x1589d	decimal literal; in range: str:"usage: %s INPUT\n"+7
+NON-ADDRESS-CHANGED	A/AE3n.v	259	Theorem tfib_vfprintf_usage_A1 / sentence 99	0x158ae	0x1589d	decimal literal; in range: str:"usage: %s INPUT\n"+7
+NON-ADDRESS-CHANGED	A/AE3n.v	259	Theorem tfib_vfprintf_usage_A1 / sentence 99	0x158ae	0x1589d	decimal literal; in range: str:"usage: %s INPUT\n"+7
+NON-ADDRESS-CHANGED	A/AE3n.v	509	Theorem tfib_vfprintf_usage_A1 / sentence 403	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	510	Theorem tfib_vfprintf_usage_A1 / sentence 405	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	510	Theorem tfib_vfprintf_usage_A1 / sentence 405	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	512	Theorem tfib_vfprintf_usage_A1 / sentence 407	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	516	Theorem tfib_vfprintf_usage_A1 / sentence 408	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	516	Theorem tfib_vfprintf_usage_A1 / sentence 408	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	528	Theorem tfib_vfprintf_usage_A1 / sentence 408	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	528	Theorem tfib_vfprintf_usage_A1 / sentence 408	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	528	Theorem tfib_vfprintf_usage_A1 / sentence 408	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	829	Theorem tfib_vfprintf_usage_A2 / sentence 97	0x158ae	0x1589d	decimal literal; in range: str:"usage: %s INPUT\n"+7
+NON-ADDRESS-CHANGED	A/AE3n.v	830	Theorem tfib_vfprintf_usage_A2 / sentence 98	0x158ae	0x1589d	decimal literal; in range: str:"usage: %s INPUT\n"+7
+NON-ADDRESS-CHANGED	A/AE3n.v	832	Theorem tfib_vfprintf_usage_A2 / sentence 99	0x158ae	0x1589d	decimal literal; in range: str:"usage: %s INPUT\n"+7
+NON-ADDRESS-CHANGED	A/AE3n.v	832	Theorem tfib_vfprintf_usage_A2 / sentence 99	0x158ae	0x1589d	decimal literal; in range: str:"usage: %s INPUT\n"+7
+NON-ADDRESS-CHANGED	A/AE3n.v	1106	Theorem tfib_vfprintf_usage_A2 / sentence 444	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	1108	Theorem tfib_vfprintf_usage_A2 / sentence 445	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	1139	Theorem tfib_vfprintf_usage_A2 / sentence 508	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	1139	Theorem tfib_vfprintf_usage_A2 / sentence 508	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	1140	Theorem tfib_vfprintf_usage_A2 / sentence 512	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	1140	Theorem tfib_vfprintf_usage_A2 / sentence 512	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	1371	Theorem tfib_vfprintf_usage_A3 / sentence 97	0x158ae	0x1589d	decimal literal; in range: str:"usage: %s INPUT\n"+7
+NON-ADDRESS-CHANGED	A/AE3n.v	1372	Theorem tfib_vfprintf_usage_A3 / sentence 98	0x158ae	0x1589d	decimal literal; in range: str:"usage: %s INPUT\n"+7
+NON-ADDRESS-CHANGED	A/AE3n.v	1374	Theorem tfib_vfprintf_usage_A3 / sentence 99	0x158ae	0x1589d	decimal literal; in range: str:"usage: %s INPUT\n"+7
+NON-ADDRESS-CHANGED	A/AE3n.v	1374	Theorem tfib_vfprintf_usage_A3 / sentence 99	0x158ae	0x1589d	decimal literal; in range: str:"usage: %s INPUT\n"+7
+NON-ADDRESS-CHANGED	A/AE3n.v	1621	Theorem tfib_vfprintf_usage_A3 / sentence 429	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	1624	Theorem tfib_vfprintf_usage_A3 / sentence 430	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9
+NON-ADDRESS-CHANGED	A/AE3n.v	1624	Theorem tfib_vfprintf_usage_A3 / sentence 430	0x158b0	0x1589f	decimal literal; in range: str:"usage: %s INPUT\n"+9

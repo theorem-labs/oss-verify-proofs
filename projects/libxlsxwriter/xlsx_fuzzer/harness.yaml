@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libxlsxwriter
 harness: xlsx_fuzzer
-rocq: OssFuzzTheorems.libxlsxwriter.xlsx_fuzzer
+rocq: OSSVerify.libxlsxwriter.xlsx_fuzzer
 origin: upstream
 summary: Writes a fuzzed prefix to a mkstemp file (then overwritten), creates a workbook there, writes
   up to 25x25 fuzzed strings with worksheet_write_string, and workbook_close()s (which serializes the

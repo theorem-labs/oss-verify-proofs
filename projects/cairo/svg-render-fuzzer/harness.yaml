@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cairo
 harness: svg-render-fuzzer
-rocq: OssFuzzTheorems.cairo.svg_render_fuzzer
+rocq: OSSVerify.cairo.svg_render_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

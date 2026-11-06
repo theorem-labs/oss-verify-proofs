@@ -1,0 +1,2 @@
+file	line	old	why	(an --override row for each, or the run refuses to apply)
+B/YD1r.v	0	-	require-unresolved: neither the stage nor the target lib holds B.TransportDrvGB (line 166) (a module the unit writes itself: write it, or --patch the Require)

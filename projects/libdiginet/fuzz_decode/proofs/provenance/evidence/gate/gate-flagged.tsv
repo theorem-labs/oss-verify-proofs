@@ -1,0 +1,610 @@
+verdict	kernel_checked	image	src_file	src_line	dst_file	dst_line	sentence	idx	kind	src_value	dst_value	src_class	src_res	dst_res	note
+UNPAIRED-SOURCE	no	P	FrameAPI.v	33	FrameAPI.v		Definition frame_plain		hex	0x1454c		ADDR	calloc+0x0; end of ___errno_location		no aligned numeral
+UNPAIRED-SOURCE	no	P	FrameAPI.v	62	FrameAPI.v		Definition frame_facts_plain		hex	0x1454c		ADDR	calloc+0x0; end of ___errno_location		no aligned numeral
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	8	Reusable/YH03.v		Definition src0_text_lo		hex	0x12674		ADDR	_start+0x0; BND(load1.lo,.text.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	8	Reusable/YH03.v		Definition src0_text_hi		hex	0x1c010		EXTENT	EXTENT(val:load1.memhi)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	9	Reusable/YH03.v		Definition src0_rodata_lo		hex	0x10298		ADDR	BND(.rodata.lo); XREF(printf_core+0x5a8, printf_core+0x5d0, printf_core+0x630 +6); str:"-+   0X0x"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	9	Reusable/YH03.v		Definition src0_rodata_hi		hex	0x11114		ADDR	END by name: BND(.rodata.hi,.eh_frame_hdr.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	10	Reusable/YH03.v		Definition src0_eh_frame_lo		hex	0x11220		ADDR	__EH_FRAME_LIST_END__+0x0; BND(.eh_frame_hdr.hi,.eh_frame.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	10	Reusable/YH03.v		Definition src0_eh_frame_hi		hex	0x11674		EXTENT	EXTENT(val:load0.memhi)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	11	Reusable/YH03.v		Definition src0_init_array_lo		hex	0x1d010		ADDR	__init+0x0; BND(load2.lo,relro.lo,.init_array.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	11	Reusable/YH03.v		Definition src0_init_array_hi		hex	0x1d018		ADDR	END by name: __fini+0x0; BND(.init_array.hi,.fini_array.lo); end of __init		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	12	Reusable/YH03.v		Definition src0_fini_array_lo		hex	0x1d018		ADDR	__fini+0x0; BND(.init_array.hi,.fini_array.lo); end of __init		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	12	Reusable/YH03.v		Definition src0_fini_array_hi		hex	0x1d020		ADDR	END by name: stderr+0x0; BND(.fini_array.hi,.data.rel.ro.lo); end of __fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	13	Reusable/YH03.v		Definition src0_data_rel_ro_lo		hex	0x1d020		ADDR	stderr+0x0; BND(.fini_array.hi,.data.rel.ro.lo); end of __fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	13	Reusable/YH03.v		Definition src0_data_rel_ro_hi		hex	0x1d030		ADDR	END by name: BND(.data.rel.ro.hi,.got.lo); end of stdout		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	14	Reusable/YH03.v		Definition src0_got_lo		hex	0x1d030		ADDR	BND(.data.rel.ro.hi,.got.lo); end of stdout		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	14	Reusable/YH03.v		Definition src0_got_hi		hex	0x1d0e0		ADDR	END by name: BND(load2.filehi,.got.hi,.relro_padding.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	15	Reusable/YH03.v		Definition src0_data_lo		hex	0x1e0e0		ADDR	__dso_handle+0x0; BND(load3.lo,.data.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	15	Reusable/YH03.v		Definition src0_data_hi		hex	0x1e2ec		ADDR	END by name: BND(load3.filehi,.data.hi); end of __default_stacksize		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	16	Reusable/YH03.v		Definition src0_bss_lo		hex	0x1e2f0		ADDR	__do_init.__initialized+0x0; BND(.bss.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	16	Reusable/YH03.v		Definition src0_bss_hi		hex	0x4ef18		EXTENT	EXTENT(val:load3.memhi)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	17	Reusable/YH03.v		Definition src0_A_start		hex	0x12674		ADDR	_start+0x0; BND(load1.lo,.text.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	17	Reusable/YH03.v		Definition src0_E_start		hex	0x126bc		ADDR	END by name: __do_init+0x0; end of _start_c		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	18	Reusable/YH03.v		Definition src0_A_do_init		hex	0x126bc		ADDR	__do_init+0x0; end of _start_c		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	18	Reusable/YH03.v		Definition src0_E_do_init		hex	0x12730		ADDR	END by name: __do_fini+0x0; end of __do_init		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	19	Reusable/YH03.v		Definition src0_A_do_fini		hex	0x12730		ADDR	__do_fini+0x0; end of __do_init		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	19	Reusable/YH03.v		Definition src0_E_do_fini		hex	0x127c0		ADDR	END by name: main+0x0; end of __do_fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	20	Reusable/YH03.v		Definition src0_E_main		hex	0x12a84		ADDR	END by name: target_alloc_init+0x0; end of main		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	21	Reusable/YH03.v		Definition src0_A_target_alloc_init		hex	0x12a84		ADDR	target_alloc_init+0x0; end of main		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	21	Reusable/YH03.v		Definition src0_E_target_alloc_init		hex	0x12a88		ADDR	END by name: target_alloc_count+0x0; end of target_alloc_init		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	22	Reusable/YH03.v		Definition src0_A_target_alloc_count		hex	0x12a88		ADDR	target_alloc_count+0x0; end of target_alloc_init		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	22	Reusable/YH03.v		Definition src0_E_target_alloc_count		hex	0x12a90		ADDR	END by name: target_run+0x0; end of target_alloc_count		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	23	Reusable/YH03.v		Definition src0_E_target_run		hex	0x12be8		ADDR	END by name: oft_exit_guard+0x0; end of target_run		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	24	Reusable/YH03.v		Definition src0_A_*_exit_guard		hex	0x12be8		ADDR	oft_exit_guard+0x0; end of target_run		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	24	Reusable/YH03.v		Definition src0_E_*_exit_guard		hex	0x12c18		ADDR	END by name: emit_printf+0x0; end of oft_exit_guard		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	25	Reusable/YH03.v		Definition src0_A_emit_printf		hex	0x12c18		ADDR	emit_printf+0x0; end of oft_exit_guard		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	25	Reusable/YH03.v		Definition src0_E_emit_printf		hex	0x12c60		ADDR	END by name: LLVMFuzzerTestOneInput+0x0; end of emit_printf		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	26	Reusable/YH03.v		Definition src0_E_LLVMFuzzerTestOneInput		hex	0x132f8		ADDR	END by name: check_round_trip+0x0; end of LLVMFuzzerTestOneInput		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	27	Reusable/YH03.v		Definition src0_A_init		hex	0x13ae0		ADDR	_init+0x0; end of reac_upstream_decode		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	27	Reusable/YH03.v		Definition src0_E_init		hex	0x13ae4		ADDR	END by name: __init_libc+0x0; end of _init		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	28	Reusable/YH03.v		Definition src0_A_init_libc		hex	0x13ae4		ADDR	__init_libc+0x0; end of _init		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	28	Reusable/YH03.v		Definition src0_E_init_libc		hex	0x13d10		ADDR	END by name: __libc_start_init+0x0; end of __init_libc		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	29	Reusable/YH03.v		Definition src0_A_libc_start_init		hex	0x13d10		ADDR	__libc_start_init+0x0; end of __init_libc		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	29	Reusable/YH03.v		Definition src0_E_libc_start_init		hex	0x13d5c		ADDR	END by name: __libc_start_main+0x0; end of __libc_start_init		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	30	Reusable/YH03.v		Definition src0_A_libc_start_main		hex	0x13d5c		ADDR	__libc_start_main+0x0; end of __libc_start_init		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	30	Reusable/YH03.v		Definition src0_E_libc_start_main		hex	0x13dbc		ADDR	END by name: libc_start_main_stage2+0x0; end of __libc_start_main		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	31	Reusable/YH03.v		Definition src0_A_libc_start_main_stage2		hex	0x13dbc		ADDR	libc_start_main_stage2+0x0; end of __libc_start_main		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	31	Reusable/YH03.v		Definition src0_E_libc_start_main_stage2		hex	0x13e04		ADDR	END by name: __init_tls+0x0; end of libc_start_main_stage2		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	32	Reusable/YH03.v		Definition src0_A_init_tls		hex	0x13e04		ADDR	__init_tls+0x0; end of libc_start_main_stage2		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	32	Reusable/YH03.v		Definition src0_E_init_tls		hex	0x140b4		ADDR	END by name: abort+0x0; end of __init_tls		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	33	Reusable/YH03.v		Definition src0_A_funcs_on_exit		hex	0x14164		ADDR	__funcs_on_exit+0x0; end of _Exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	33	Reusable/YH03.v		Definition src0_E_funcs_on_exit		hex	0x1422c		ADDR	END by name: __cxa_finalize+0x0; end of __funcs_on_exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	34	Reusable/YH03.v		Definition src0_A_cxa_finalize		hex	0x1422c		ADDR	__cxa_finalize+0x0; end of __funcs_on_exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	34	Reusable/YH03.v		Definition src0_E_cxa_finalize		hex	0x14230		ADDR	END by name: atexit+0x0; end of __cxa_finalize		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	35	Reusable/YH03.v		Definition src0_A_atexit		hex	0x14230		ADDR	atexit+0x0; end of __cxa_finalize		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	35	Reusable/YH03.v		Definition src0_E_atexit		hex	0x142f4		ADDR	END by name: call+0x0; end of atexit		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	36	Reusable/YH03.v		Definition src0_A_atexit_call		hex	0x142f4		ADDR	call+0x0; end of atexit		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	36	Reusable/YH03.v		Definition src0_E_atexit_call		hex	0x142f8		ADDR	END by name: _fini+0x0; end of call		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	37	Reusable/YH03.v		Definition src0_A_fini		hex	0x142f8		ADDR	_fini+0x0; end of call		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	37	Reusable/YH03.v		Definition src0_E_fini		hex	0x142fc		ADDR	END by name: __libc_exit_fini+0x0; end of _fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	38	Reusable/YH03.v		Definition src0_A_libc_exit_fini		hex	0x142fc		ADDR	__libc_exit_fini+0x0; end of _fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	38	Reusable/YH03.v		Definition src0_E_libc_exit_fini		hex	0x14348		ADDR	END by name: exit+0x0; end of __libc_exit_fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	39	Reusable/YH03.v		Definition src0_A_exit		hex	0x14348		ADDR	exit+0x0; end of __libc_exit_fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	39	Reusable/YH03.v		Definition src0_E_exit		hex	0x143bc		ADDR	END by name: __init_ssp+0x0; end of exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	40	Reusable/YH03.v		Definition src0_A_Exit		hex	0x14148		ADDR	_Exit+0x0; end of abort		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	40	Reusable/YH03.v		Definition src0_E_Exit		hex	0x14164		ADDR	END by name: __funcs_on_exit+0x0; end of _Exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	41	Reusable/YH03.v		Definition src0_A_open		hex	0x14424		ADDR	open+0x0; end of __stack_chk_fail		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	41	Reusable/YH03.v		Definition src0_E_open		hex	0x14508		ADDR	END by name: __syscall_ret+0x0; end of open		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	42	Reusable/YH03.v		Definition src0_A_init_ssp		hex	0x143bc		ADDR	__init_ssp+0x0; end of exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	42	Reusable/YH03.v		Definition src0_E_init_ssp		hex	0x1441c		ADDR	END by name: __stack_chk_fail+0x0; end of __init_ssp		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	43	Reusable/YH03.v		Definition src0_E_stack_chk_fail		hex	0x14424		ADDR	END by name: open+0x0; end of __stack_chk_fail		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	44	Reusable/YH03.v		Definition src0_E_syscall_ret		hex	0x14540		ADDR	END by name: ___errno_location+0x0; end of __syscall_ret		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	45	Reusable/YH03.v		Definition src0_E_errno_location		hex	0x1454c		ADDR	END by name: calloc+0x0; end of ___errno_location		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	46	Reusable/YH03.v		Definition src0_E_free		hex	0x14688		ADDR	END by name: __libc_calloc+0x0; end of free		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	47	Reusable/YH03.v		Definition src0_A_libc_calloc		hex	0x14688		ADDR	__libc_calloc+0x0; end of free		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	47	Reusable/YH03.v		Definition src0_E_libc_calloc		hex	0x147c0		ADDR	END by name: __libc_malloc+0x0; end of __libc_calloc		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	48	Reusable/YH03.v		Definition src0_A_libc_malloc		hex	0x147c0		ADDR	__libc_malloc+0x0; end of __libc_calloc		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	48	Reusable/YH03.v		Definition src0_E_libc_malloc		hex	0x147c4		ADDR	END by name: default_malloc+0x0; end of __libc_malloc		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	49	Reusable/YH03.v		Definition src0_E_malloc		hex	0x147c8		ADDR	END by name: __libc_free+0x0; end of default_malloc		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	50	Reusable/YH03.v		Definition src0_E_libc_free		hex	0x14994		ADDR	END by name: get_meta+0x0; end of __libc_free		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	51	Reusable/YH03.v		Definition src0_E_get_meta		hex	0x14aa4		ADDR	END by name: nontrivial_free+0x0; end of get_meta		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	52	Reusable/YH03.v		Definition src0_E_nontrivial_free		hex	0x14e7c		ADDR	END by name: __malloc_alloc_meta+0x0; end of nontrivial_free		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	53	Reusable/YH03.v		Definition src0_E_alloc_meta		hex	0x15154		ADDR	END by name: __libc_malloc_impl+0x0; end of __malloc_alloc_meta		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	54	Reusable/YH03.v		Definition src0_E_libc_malloc_impl		hex	0x154c4		ADDR	END by name: alloc_slot+0x0; end of __libc_malloc_impl		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	55	Reusable/YH03.v		Definition src0_E_alloc_slot		hex	0x15d68		ADDR	END by name: enframe+0x0; end of alloc_slot		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	56	Reusable/YH03.v		Definition src0_E_enframe		hex	0x15eb8		ADDR	END by name: __malloc_allzerop+0x0; end of enframe		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	57	Reusable/YH03.v		Definition src0_E_malloc_allzerop		hex	0x16030		ADDR	END by name: __vm_wait+0x0; end of __malloc_allzerop		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	58	Reusable/YH03.v		Definition src0_E_vm_wait		hex	0x16034		ADDR	END by name: __mmap+0x0; end of __vm_wait		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	59	Reusable/YH03.v		Definition src0_E_mmap		hex	0x16120		ADDR	END by name: __mprotect+0x0; end of __mmap		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	60	Reusable/YH03.v		Definition src0_E_mprotect		hex	0x16168		ADDR	END by name: __munmap+0x0; end of __mprotect		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	61	Reusable/YH03.v		Definition src0_E_munmap		hex	0x161b0		ADDR	END by name: __block_all_sigs+0x0; end of __munmap		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	62	Reusable/YH03.v		Definition src0_A_fflush		hex	0x16284		ADDR	fflush+0x0; end of raise		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	62	Reusable/YH03.v		Definition src0_E_fflush		hex	0x163f4		ADDR	END by name: __lockfile+0x0; end of fflush		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	63	Reusable/YH03.v		Definition src0_A_lockfile		hex	0x163f4		ADDR	__lockfile+0x0; end of fflush		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	63	Reusable/YH03.v		Definition src0_E_lockfile		hex	0x164f0		ADDR	END by name: __unlockfile+0x0; end of __lockfile		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	64	Reusable/YH03.v		Definition src0_A_unlockfile		hex	0x164f0		ADDR	__unlockfile+0x0; end of __lockfile		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	64	Reusable/YH03.v		Definition src0_E_unlockfile		hex	0x16550		ADDR	END by name: fprintf+0x0; end of __unlockfile		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	65	Reusable/YH03.v		Definition src0_A_stdio_write		hex	0x16a08		ADDR	__stdio_write+0x0; end of __stdio_close		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	65	Reusable/YH03.v		Definition src0_E_stdio_write		hex	0x16b98		ADDR	END by name: __stdio_seek+0x0; end of __stdio_write		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	66	Reusable/YH03.v		Definition src0_A_stdio_seek		hex	0x16b98		ADDR	__stdio_seek+0x0; end of __stdio_write		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	66	Reusable/YH03.v		Definition src0_E_stdio_seek		hex	0x16ba0		ADDR	END by name: __stdout_write+0x0; end of __stdio_seek		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	67	Reusable/YH03.v		Definition src0_A_aio_close		hex	0x169d8		ADDR	__aio_close+0x0; end of __ofl_unlock		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	67	Reusable/YH03.v		Definition src0_E_aio_close		hex	0x169dc		ADDR	END by name: __stdio_close+0x0; end of __aio_close		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	68	Reusable/YH03.v		Definition src0_A_stdio_close		hex	0x169dc		ADDR	__stdio_close+0x0; end of __aio_close		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	68	Reusable/YH03.v		Definition src0_E_stdio_close		hex	0x16a08		ADDR	END by name: __stdio_write+0x0; end of __stdio_close		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	69	Reusable/YH03.v		Definition src0_A_fprintf		hex	0x16550		ADDR	fprintf+0x0; end of __unlockfile		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	69	Reusable/YH03.v		Definition src0_E_fprintf		hex	0x165b4		ADDR	END by name: __fwritex+0x0; end of fprintf		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	70	Reusable/YH03.v		Definition src0_A_fwritex		hex	0x165b4		ADDR	__fwritex+0x0; end of fprintf		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	70	Reusable/YH03.v		Definition src0_E_fwritex		hex	0x166ec		ADDR	END by name: fwrite+0x0; end of __fwritex		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	71	Reusable/YH03.v		Definition src0_A_fwrite		hex	0x166ec		ADDR	fwrite+0x0; end of __fwritex		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	71	Reusable/YH03.v		Definition src0_E_fwrite		hex	0x167a4		ADDR	END by name: __towrite+0x0; end of fwrite		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	72	Reusable/YH03.v		Definition src0_A_towrite		hex	0x167a4		ADDR	__towrite+0x0; end of fwrite		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	72	Reusable/YH03.v		Definition src0_E_towrite		hex	0x167f8		ADDR	END by name: __stdio_exit+0x0; end of __towrite		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	73	Reusable/YH03.v		Definition src0_A_stdio_exit		hex	0x167f8		ADDR	__stdio_exit+0x0; end of __towrite		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	73	Reusable/YH03.v		Definition src0_E_stdio_exit		hex	0x1699c		ADDR	END by name: __ofl_lock+0x0; end of __stdio_exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	74	Reusable/YH03.v		Definition src0_A_ofl_lock		hex	0x1699c		ADDR	__ofl_lock+0x0; end of __stdio_exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	74	Reusable/YH03.v		Definition src0_E_ofl_lock		hex	0x169cc		ADDR	END by name: __ofl_unlock+0x0; end of __ofl_lock		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	75	Reusable/YH03.v		Definition src0_A_ofl_unlock		hex	0x169cc		ADDR	__ofl_unlock+0x0; end of __ofl_lock		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	75	Reusable/YH03.v		Definition src0_E_ofl_unlock		hex	0x169d8		ADDR	END by name: __aio_close+0x0; end of __ofl_unlock		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	76	Reusable/YH03.v		Definition src0_A_stdout_write		hex	0x16ba0		ADDR	__stdout_write+0x0; end of __stdio_seek		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	76	Reusable/YH03.v		Definition src0_E_stdout_write		hex	0x16c40		ADDR	END by name: vfprintf+0x0; end of __stdout_write		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	77	Reusable/YH03.v		Definition src0_A_vfprintf		hex	0x16c40		ADDR	vfprintf+0x0; end of __stdout_write		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	77	Reusable/YH03.v		Definition src0_E_vfprintf		hex	0x16df0		ADDR	END by name: printf_core+0x0; end of vfprintf		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	78	Reusable/YH03.v		Definition src0_A_printf_core		hex	0x16df0		ADDR	printf_core+0x0; end of vfprintf		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	78	Reusable/YH03.v		Definition src0_E_printf_core		hex	0x17c20		ADDR	END by name: pop_arg+0x0; end of printf_core		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	79	Reusable/YH03.v		Definition src0_A_pop_arg		hex	0x17c20		ADDR	pop_arg+0x0; end of printf_core		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	79	Reusable/YH03.v		Definition src0_E_pop_arg		hex	0x17d54		ADDR	END by name: pad+0x0; end of pop_arg		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	80	Reusable/YH03.v		Definition src0_A_pad		hex	0x17d54		ADDR	pad+0x0; end of pop_arg		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	80	Reusable/YH03.v		Definition src0_E_pad		hex	0x17e28		ADDR	END by name: fmt_fp+0x0; end of pad		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	81	Reusable/YH03.v		Definition src0_A_fmt_fp		hex	0x17e28		ADDR	fmt_fp+0x0; end of pad		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	81	Reusable/YH03.v		Definition src0_E_fmt_fp		hex	0x194f0		ADDR	END by name: strerror+0x0; end of fmt_fp		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	82	Reusable/YH03.v		Definition src0_A_strerror		hex	0x194f0		ADDR	strerror+0x0; end of fmt_fp		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	82	Reusable/YH03.v		Definition src0_E_strerror		hex	0x1952c		ADDR	END by name: __lctrans_impl+0x0; end of strerror		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	83	Reusable/YH03.v		Definition src0_A_lctrans_impl		hex	0x1952c		ADDR	__lctrans_impl+0x0; end of strerror		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	83	Reusable/YH03.v		Definition src0_E_lctrans_impl		hex	0x19530		ADDR	END by name: __lctrans+0x0; end of __lctrans_impl		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	84	Reusable/YH03.v		Definition src0_A_lctrans		hex	0x19530		ADDR	__lctrans+0x0; end of __lctrans_impl		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	84	Reusable/YH03.v		Definition src0_E_lctrans		hex	0x19534		ADDR	END by name: wctomb+0x0; end of __lctrans		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	85	Reusable/YH03.v		Definition src0_A_wctomb		hex	0x19534		ADDR	wctomb+0x0; end of __lctrans		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	85	Reusable/YH03.v		Definition src0_E_wctomb		hex	0x19558		ADDR	END by name: wcrtomb+0x0; end of wctomb		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	86	Reusable/YH03.v		Definition src0_A_wcrtomb		hex	0x19558		ADDR	wcrtomb+0x0; end of wctomb		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	86	Reusable/YH03.v		Definition src0_E_wcrtomb		hex	0x19684		ADDR	END by name: __extenddftf2+0x0; end of wcrtomb		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	87	Reusable/YH03.v		Definition src0_A_extenddftf2		hex	0x19684		ADDR	__extenddftf2+0x0; end of wcrtomb		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	87	Reusable/YH03.v		Definition src0_E_extenddftf2		hex	0x19814		ADDR	END by name: __signbitl+0x0; end of __extenddftf2		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	88	Reusable/YH03.v		Definition src0_A_signbitl		hex	0x19814		ADDR	__signbitl+0x0; end of __extenddftf2		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	88	Reusable/YH03.v		Definition src0_E_signbitl		hex	0x1981c		ADDR	END by name: __fpclassifyl+0x0; end of __signbitl		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	89	Reusable/YH03.v		Definition src0_A_fpclassifyl		hex	0x1981c		ADDR	__fpclassifyl+0x0; end of __signbitl		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	89	Reusable/YH03.v		Definition src0_E_fpclassifyl		hex	0x19860		ADDR	END by name: frexpl+0x0; end of __fpclassifyl		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	90	Reusable/YH03.v		Definition src0_A_frexpl		hex	0x19860		ADDR	frexpl+0x0; end of __fpclassifyl		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	90	Reusable/YH03.v		Definition src0_E_frexpl		hex	0x19938		ADDR	END by name: __cmptf2+0x0; end of frexpl		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	91	Reusable/YH03.v		Definition src0_A_letf2		hex	0x19938		ADDR	__cmptf2+0x0; end of frexpl		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	91	Reusable/YH03.v		Definition src0_E_letf2		hex	0x19a00		ADDR	END by name: __multf3+0x0; end of __cmptf2		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	92	Reusable/YH03.v		Definition src0_A_multf3		hex	0x19a00		ADDR	__multf3+0x0; end of __cmptf2		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	92	Reusable/YH03.v		Definition src0_E_multf3		hex	0x1a100		ADDR	END by name: __floatsitf+0x0; end of __multf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	93	Reusable/YH03.v		Definition src0_A_floatsitf		hex	0x1a100		ADDR	__floatsitf+0x0; end of __multf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	93	Reusable/YH03.v		Definition src0_E_floatsitf		hex	0x1a208		ADDR	END by name: scalbn+0x0; end of __floatsitf		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	94	Reusable/YH03.v		Definition src0_A_scalbn		hex	0x1a208		ADDR	scalbn+0x0; end of __floatsitf		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	94	Reusable/YH03.v		Definition src0_E_scalbn		hex	0x1a2a0		ADDR	END by name: __subtf3+0x0; end of scalbn		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	95	Reusable/YH03.v		Definition src0_A_subtf3		hex	0x1a2a0		ADDR	__subtf3+0x0; end of scalbn		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	95	Reusable/YH03.v		Definition src0_E_subtf3		hex	0x1a2b0		ADDR	END by name: __addtf3+0x0; end of __subtf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	96	Reusable/YH03.v		Definition src0_A_addtf3		hex	0x1a2b0		ADDR	__addtf3+0x0; end of __subtf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	96	Reusable/YH03.v		Definition src0_E_addtf3		hex	0x1aa7c		ADDR	END by name: __fe_getround+0x0; end of __addtf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	97	Reusable/YH03.v		Definition src0_A_fe_getround		hex	0x1aa7c		ADDR	__fe_getround+0x0; end of __addtf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	97	Reusable/YH03.v		Definition src0_E_fe_getround		hex	0x1aaac		ADDR	END by name: __fe_raise_inexact+0x0; end of __fe_getround		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	98	Reusable/YH03.v		Definition src0_A_fe_raise_inexact		hex	0x1aaac		ADDR	__fe_raise_inexact+0x0; end of __fe_getround		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	98	Reusable/YH03.v		Definition src0_E_fe_raise_inexact		hex	0x1aab8		ADDR	END by name: __fixunstfsi+0x0; end of __fe_raise_inexact		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	99	Reusable/YH03.v		Definition src0_A_fixunstfsi		hex	0x1aab8		ADDR	__fixunstfsi+0x0; end of __fe_raise_inexact		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	99	Reusable/YH03.v		Definition src0_E_fixunstfsi		hex	0x1ab4c		ADDR	END by name: __floatunsitf+0x0; end of __fixunstfsi		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	100	Reusable/YH03.v		Definition src0_A_floatunsitf		hex	0x1ab4c		ADDR	__floatunsitf+0x0; end of __fixunstfsi		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	100	Reusable/YH03.v		Definition src0_E_floatunsitf		hex	0x1ac38		ADDR	END by name: __fixtfsi+0x0; end of __floatunsitf		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	101	Reusable/YH03.v		Definition src0_A_fixtfsi		hex	0x1ac38		ADDR	__fixtfsi+0x0; end of __floatunsitf		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	101	Reusable/YH03.v		Definition src0_E_fixtfsi		hex	0x1ace0		ADDR	END by name: __divtf3+0x0; end of __fixtfsi		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	102	Reusable/YH03.v		Definition src0_A_divtf3		hex	0x1ace0		ADDR	__divtf3+0x0; end of __fixtfsi		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	102	Reusable/YH03.v		Definition src0_E_divtf3		hex	0x1b5e4		ADDR	END by name: vprintf+0x0; end of __divtf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	103	Reusable/YH03.v		Definition src0_A_vprintf		hex	0x1b5e4		ADDR	vprintf+0x0; end of __divtf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	103	Reusable/YH03.v		Definition src0_E_vprintf		hex	0x1b600		ADDR	END by name: bcmp+0x0; end of vprintf		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	104	Reusable/YH03.v		Definition src0_A_bcmp		hex	0x1b600		ADDR	bcmp+0x0; end of vprintf		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	104	Reusable/YH03.v		Definition src0_E_bcmp		hex	0x1b604		ADDR	END by name: memcmp+0x0; end of bcmp		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	105	Reusable/YH03.v		Definition src0_A_memcmp		hex	0x1b604		ADDR	memcmp+0x0; end of bcmp		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	105	Reusable/YH03.v		Definition src0_E_memcmp		hex	0x1b634		ADDR	END by name: memcpy+0x0; end of memcmp		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	106	Reusable/YH03.v		Definition src0_E_memcpy		hex	0x1ba38		ADDR	END by name: memset+0x0; end of memcpy		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	107	Reusable/YH03.v		Definition src0_E_memset		hex	0x1bb30		ADDR	END by name: strnlen+0x0; end of memset		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	108	Reusable/YH03.v		Definition src0_E_strnlen		hex	0x1bb74		ADDR	END by name: memchr+0x0; end of strnlen		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	109	Reusable/YH03.v		Definition src0_E_memchr		hex	0x1bc40		ADDR	END by name: __lock+0x0; end of memchr		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	110	Reusable/YH03.v		Definition src0_E_lock		hex	0x1bec8		ADDR	END by name: __unlock+0x0; end of __lock		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	111	Reusable/YH03.v		Definition src0_E_unlock		hex	0x1bf3c		ADDR	END by name: __syscall_cp_c+0x0; end of __unlock		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	112	Reusable/YH03.v		Definition src0_E_syscall_cp_c		hex	0x1bf60		ADDR	END by name: __syscall_cp+0x0; end of __syscall_cp_c		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	113	Reusable/YH03.v		Definition src0_A_syscall_cp		hex	0x1bf60		ADDR	__syscall_cp+0x0; end of __syscall_cp_c		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	113	Reusable/YH03.v		Definition src0_E_syscall_cp		hex	0x1bf64		ADDR	END by name: __set_thread_area+0x0; end of __syscall_cp		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	114	Reusable/YH03.v		Definition src0_A_set_thread_area		hex	0x1bf64		ADDR	__set_thread_area+0x0; end of __syscall_cp		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	114	Reusable/YH03.v		Definition src0_E_set_thread_area		hex	0x1bf70		ADDR	END by name: no object ends here (last byte seg1:.text unnamed; the value is _exit+0x0)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	115	Reusable/YH03.v		Definition src0_A_unistd_exit		hex	0x1bf70		ADDR	_exit+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	115	Reusable/YH03.v		Definition src0_E_unistd_exit		hex	0x1bf7c		ADDR	END by name: close+0x0; end of _exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	116	Reusable/YH03.v		Definition src0_A_close		hex	0x1bf7c		ADDR	close+0x0; end of _exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	116	Reusable/YH03.v		Definition src0_E_close		hex	0x1bfd0		ADDR	END by name: __lseek+0x0; end of close		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	117	Reusable/YH03.v		Definition src0_A_lseek		hex	0x1bfd0		ADDR	__lseek+0x0; end of close		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	117	Reusable/YH03.v		Definition src0_E_lseek		hex	0x1bfdc		ADDR	END by name: read+0x0; end of __lseek		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	118	Reusable/YH03.v		Definition src0_A_read		hex	0x1bfdc		ADDR	read+0x0; end of __lseek		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	118	Reusable/YH03.v		Definition src0_E_read		hex	0x1c010		EXTENT	EXTENT(val:load1.memhi)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	119	Reusable/YH03.v		Definition src0_D_str_n0X0x		hex	0x10298		ADDR	BND(.rodata.lo); XREF(printf_core+0x5a8, printf_core+0x5d0, printf_core+0x630 +6); str:"-+   0X0x"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	120	Reusable/YH03.v		Definition src0_D_str_n0X_0X_0X_0x_0x_0x		hex	0x102a2		ADDR	XREF(fmt_fp+0xcc, fmt_fp+0xe8); str:"-0X+0X 0X-0x+0x 0x"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	121	Reusable/YH03.v		Definition src0_D_str_cli_out_of_memory_n		hex	0x102b5		ADDR	XREF(main+0x27c, main+0x2bc); str:"cli: out of memory\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	122	Reusable/YH03.v		Definition src0_D_str_d_n		hex	0x102c9		ADDR	XREF(emit_printf+0x30); str:"%d\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	123	Reusable/YH03.v		Definition src0_D_str		hex	0x102cd		ADDR	XREF(__init_libc+0xcc)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	124	Reusable/YH03.v		Definition src0_D_str_2		hex	0x102ce		ADDR	XREF(__init_libc+0xe4, __init_libc+0xfc, fmt_fp+0x1380 +1); str:"."		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	125	Reusable/YH03.v		Definition src0_D_str_usage_s_INPUT_n		hex	0x102d0		ADDR	XREF(main+0x1ac); str:"usage: %s INPUT\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	126	Reusable/YH03.v		Definition src0_D_str_cli_config_len_overruns		hex	0x102e1		ADDR	XREF(main+0x1e8); str:"cli: config_len overruns input\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	127	Reusable/YH03.v		Definition src0_D_str_inf		hex	0x10301		ADDR	XREF(fmt_fp+0x20c); str:"inf"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	128	Reusable/YH03.v		Definition src0_D_str_INF		hex	0x10305		ADDR	XREF(fmt_fp+0x2cc, fmt_fp+0x2dc, fmt_fp+0x38c); str:"INF"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	129	Reusable/YH03.v		Definition src0_D_str_cli_input_u_bytes_refuse		hex	0x10309		ADDR	XREF(main+0x258); str:"cli: input >= %u bytes, refused\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	130	Reusable/YH03.v		Definition src0_D_str_cli_cannot_open_s_n		hex	0x1032a		ADDR	XREF(main+0x2a0); str:"cli: cannot open %s\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	131	Reusable/YH03.v		Definition src0_D_str_cli_read_error_on_s_n		hex	0x1033f		ADDR	XREF(main+0x23c); str:"cli: read error on %s\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	132	Reusable/YH03.v		Definition src0_D_str_NAN		hex	0x10356		ADDR	XREF(fmt_fp+0x2d0); str:"NAN"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	133	Reusable/YH03.v		Definition src0_D_str_nan		hex	0x1035a		ADDR	XREF(fmt_fp+0x210, fmt_fp+0x228, fmt_fp+0x250); str:"nan"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	134	Reusable/YH03.v		Definition src0_D_str_cli_input_shorter_than_h		hex	0x1035e		ADDR	XREF(main+0x1cc); str:"cli: input shorter than header\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	135	Reusable/YH03.v		Definition src0_D_str_dev_null		hex	0x1037e		ADDR	XREF(__init_libc+0x194, __init_libc+0x1c4, __init_libc+0x1f4); str:"/dev/null"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	136	Reusable/YH03.v		Definition src0_D_str_null		hex	0x10388		ADDR	XREF(printf_core+0x5ec); str:"(null)"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	137	Reusable/YH03.v		Definition src0_D_const_double_0x1p28		hex	0x10390		ADDR	XREF(fmt_fp+0x1b4)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	138	Reusable/YH03.v		Definition src0_D_const_double_1_0		hex	0x103a8		ADDR	XREF(fmt_fp+0xd50)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	140	Reusable/YH03.v		Definition src0_D_const_double_0_5		hex	0x103b8		ADDR	XREF(fmt_fp+0xb40)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	142	Reusable/YH03.v		Definition src0_D_const_double_0x1p1023		hex	0x103c8		ADDR	XREF(scalbn+0xc)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	143	Reusable/YH03.v		Definition src0_D_const_double_1_5		hex	0x103d0		ADDR	XREF(fmt_fp+0xd5c)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	144	Reusable/YH03.v		Definition src0_D_const_u64_fmt_fp_1e9_recip_misc		hex	0x103d8		ADDR	XREF(fmt_fp+0x520, printf_core+0x5f8)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	145	Reusable/YH03.v		Definition src0_D_const_double_0x1p_969_0x1p_1022_0x1p		hex	0x103e0		ADDR	XREF(scalbn+0x44)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	146	Reusable/YH03.v		Definition src0_D_const_double_0x1p120		hex	0x103f0		ADDR	XREF(frexpl+0x48)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	151	Reusable/YH03.v		Definition src0_D_jt_printf_core_1		hex	0x10530		ADDR	end of app_mask; XREF(printf_core+0x534); JT(table of printf_core+0x534, entry +0x0)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	152	Reusable/YH03.v		Definition src0_D_jt_printf_core_2		hex	0x10610		ADDR	XREF(printf_core+0x6ac); JT(table of printf_core+0x6ac, entry +0x0); str:"(t"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	153	Reusable/YH03.v		Definition src0_D_jt_pop_arg		hex	0x10630		ADDR	XREF(pop_arg+0x14); JT(table of pop_arg+0x14, entry +0x0)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	154	Reusable/YH03.v		Definition src0_D_states		hex	0x10678		ADDR	states+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	155	Reusable/YH03.v		Definition src0_D_xdigits		hex	0x10848		ADDR	xdigits+0x0; end of states; str:"0123456789ABCDEFNo error information"		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	156	Reusable/YH03.v		Definition src0_D_errmsgstr		hex	0x10858		ADDR	errmsgstr+0x0; end of xdigits; str:"0123456789ABCDEFNo error information"+16		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	157	Reusable/YH03.v		Definition src0_D_global_pointer		hex	0x10800		ADDR	states+0x188		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	158	Reusable/YH03.v		Definition src0_D_errmsgidx		hex	0x11000		ADDR	errmsgidx+0x0; end of errmsgstr		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	159	Reusable/YH03.v		Definition src0_D_fe_getround		hex	0x11108		ADDR	end of errmsgidx; XREF(__fe_getround+0x18)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	160	Reusable/YH03.v		Definition src0_D_EH_FRAME_LIST		hex	0x11220		ADDR	__EH_FRAME_LIST_END__+0x0; BND(.eh_frame_hdr.hi,.eh_frame.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	161	Reusable/YH03.v		Definition src0_D_init_array_start		hex	0x1d010		ADDR	__init+0x0; BND(load2.lo,relro.lo,.init_array.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	162	Reusable/YH03.v		Definition src0_D_fini_array_start		hex	0x1d018		ADDR	__fini+0x0; BND(.init_array.hi,.fini_array.lo); end of __init		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	163	Reusable/YH03.v		Definition src0_D_stderr		hex	0x1d020		ADDR	stderr+0x0; BND(.fini_array.hi,.data.rel.ro.lo); end of __fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	164	Reusable/YH03.v		Definition src0_D_stdout		hex	0x1d028		ADDR	stdout+0x0; end of stderr		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	165	Reusable/YH03.v		Definition src0_D_got_DYNAMIC_reserved		hex	0x1d030		ADDR	BND(.data.rel.ro.hi,.got.lo); end of stdout		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	166	Reusable/YH03.v		Definition src0_D_got_DYNAMIC		hex	0x1d038		ADDR	XREF(__init_tls+0x58, static_init_tls+0x58)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	167	Reusable/YH03.v		Definition src0_D_got_main		hex	0x1d040		ADDR	GOT[main+0x0]; XREF(_start_c+0x10)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	168	Reusable/YH03.v		Definition src0_D_got_init		hex	0x1d048		ADDR	GOT[_init+0x0]; XREF(_start_c+0x14)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	169	Reusable/YH03.v		Definition src0_D_got_fini		hex	0x1d050		ADDR	GOT[_fini+0x0]; XREF(_start_c+0x18)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	170	Reusable/YH03.v		Definition src0_D_got_register_frame_info		hex	0x1d058		ADDR	XREF(__do_init+0x40)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	171	Reusable/YH03.v		Definition src0_D_got_cxa_finalize		hex	0x1d060		ADDR	GOT[__cxa_finalize+0x0]; XREF(__do_fini+0x40)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	172	Reusable/YH03.v		Definition src0_D_got_deregister_frame_info		hex	0x1d068		ADDR	XREF(__do_fini+0x64)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	173	Reusable/YH03.v		Definition src0_D_got_stderr		hex	0x1d070		ADDR	GOT[stderr+0x0]; XREF(main+0x19c, main+0x1bc, main+0x1d8 +5)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	174	Reusable/YH03.v		Definition src0_D_got_LLVMFuzzerInitialize		hex	0x1d078		ADDR	XREF(target_run+0x134)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	175	Reusable/YH03.v		Definition src0_D_got_stdout		hex	0x1d080		ADDR	GOT[stdout+0x0]; XREF(oft_exit_guard+0x1c)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	176	Reusable/YH03.v		Definition src0_D_got_environ		hex	0x1d0a0		ADDR	GOT[___environ+0x0]; XREF(__init_libc+0x30)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	177	Reusable/YH03.v		Definition src0_D_got_progname_full		hex	0x1d0a8		ADDR	GOT[__progname_full+0x0]; XREF(__init_libc+0xd4)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	178	Reusable/YH03.v		Definition src0_D_got_progname		hex	0x1d0b0		ADDR	GOT[__progname+0x0]; XREF(__init_libc+0xdc)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	179	Reusable/YH03.v		Definition src0_D_got_init_array_end		hex	0x1d0b8		ADDR	END by name: the end of the constant word at 0x1d0b0, read by __init_libc+0xdc		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	180	Reusable/YH03.v		Definition src0_D_got_init_array_start		hex	0x1d0c0		ADDR	GOT[__init+0x0]; XREF(__libc_start_init+0x20, libc_start_init+0x20)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	182	Reusable/YH03.v		Definition src0_D_got_fini_array_end		hex	0x1d0d0		ADDR	END by name: the end of the constant word at 0x1d0c8, read by __init_ssp+0x14, __init_ssp+0x28		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	183	Reusable/YH03.v		Definition src0_D_got_fini_array_start		hex	0x1d0d8		ADDR	GOT[__fini+0x0]; XREF(__libc_exit_fini+0x1c, libc_exit_fini+0x1c)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	184	Reusable/YH03.v		Definition src0_D_dso_handle		hex	0x1e0e0		ADDR	__dso_handle+0x0; BND(load3.lo,.data.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	185	Reusable/YH03.v		Definition src0_D_*_arg0		hex	0x1e0e8		ADDR	oft_arg0+0x0; end of __dso_handle		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	186	Reusable/YH03.v		Definition src0_D_*_argc		hex	0x1e0f0		ADDR	oft_argc+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	187	Reusable/YH03.v		Definition src0_D_*_argv		hex	0x1e0f8		ADDR	oft_argv+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	188	Reusable/YH03.v		Definition src0_D_stderr_FILE		hex	0x1e108		ADDR	__stderr_FILE+0x0; end of oft_argv		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	189	Reusable/YH03.v		Definition src0_D_stderr_used		hex	0x1e1f0		ADDR	__stderr_used+0x0; end of __stderr_FILE		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	190	Reusable/YH03.v		Definition src0_D_stdout_FILE		hex	0x1e1f8		ADDR	__stdout_FILE+0x0; end of __stderr_used		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	191	Reusable/YH03.v		Definition src0_D_stdout_used		hex	0x1e2e0		ADDR	__stdout_used+0x0; end of __stdout_FILE		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	192	Reusable/YH03.v		Definition src0_D_default_stacksize		hex	0x1e2e8		ADDR	__default_stacksize+0x0; end of __stdout_used		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	193	Reusable/YH03.v		Definition src0_D_do_init_initialized		hex	0x1e2f0		ADDR	__do_init.__initialized+0x0; BND(.bss.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	194	Reusable/YH03.v		Definition src0_D_do_init_object		hex	0x1e2f8		ADDR	__do_init.__object+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	195	Reusable/YH03.v		Definition src0_D_do_fini_finalized		hex	0x1e338		ADDR	__do_fini.__finalized+0x0; end of __do_init.__object		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	197	Reusable/YH03.v		Definition src0_D_target_run_initialized		hex	0x2e340		ADDR	target_run.initialized+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	198	Reusable/YH03.v		Definition src0_D_*_in_callback		hex	0x2e344		ADDR	oft_in_callback+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	200	Reusable/YH03.v		Definition src0_D_environ		hex	0x2e370		ADDR	___environ+0x0; end of oft_aligned_copy.empty		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	201	Reusable/YH03.v		Definition src0_D_thread_list_lock		hex	0x4e448		ADDR	__thread_list_lock+0x0; end of builtin_tls		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	202	Reusable/YH03.v		Definition src0_D_main_tls		hex	0x4e450		ADDR	main_tls+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	203	Reusable/YH03.v		Definition src0_D_builtin_tls		hex	0x2e378		ADDR	builtin_tls+0x0; end of ___environ		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	204	Reusable/YH03.v		Definition src0_D_finished_atexit		hex	0x4e488		ADDR	finished_atexit+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	205	Reusable/YH03.v		Definition src0_D_atexit_lock		hex	0x4e48c		ADDR	lock+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	206	Reusable/YH03.v		Definition src0_D_atexit_slot		hex	0x4e490		ADDR	slot+0x0; end of lock		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	207	Reusable/YH03.v		Definition src0_D_atexit_head		hex	0x4e498		ADDR	head+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	208	Reusable/YH03.v		Definition src0_D_atexit_builtin		hex	0x4e4a0		ADDR	builtin+0x0; end of head		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	209	Reusable/YH03.v		Definition src0_D_exit_exit_lock		hex	0x4e6a8		ADDR	exit.exit_lock+0x0; end of builtin		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	211	Reusable/YH03.v		Definition src0_D_sysinfo		hex	0x4e6b8		ADDR	__sysinfo+0x0; end of __stack_chk_guard		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	212	Reusable/YH03.v		Definition src0_D_progname		hex	0x4e6c0		ADDR	__progname+0x0; end of __sysinfo		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	213	Reusable/YH03.v		Definition src0_D_progname_full		hex	0x4e6c8		ADDR	__progname_full+0x0; end of __progname		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	215	Reusable/YH03.v		Definition src0_D_hwcap		hex	0x4e738		ADDR	__hwcap+0x0; end of __libc		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	218	Reusable/YH03.v		Definition src0_D_malloc_replaced		hex	0x4eae8		ADDR	__malloc_replaced+0x0; end of __malloc_context		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	219	Reusable/YH03.v		Definition src0_D_stdin_used		hex	0x4eaf0		ADDR	__stdin_used+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	222	Reusable/YH03.v		Definition src0_D_stderr_buf		hex	0x4eb08		ADDR	buf+0x0; end of ofl_head		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	223	Reusable/YH03.v		Definition src0_D_stdout_buf		hex	0x4eb10		ADDR	buf+0x0; end of buf		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	224	Reusable/YH03.v		Definition src0_A_calloc		hex	0x1454c		ADDR	calloc+0x0; end of ___errno_location		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	224	Reusable/YH03.v		Definition src0_E_calloc		hex	0x14684		ADDR	END by name: free+0x0; end of calloc		sentence missing in ported file
+UNPAIRED-SOURCE	no	P	Reusable/YH03.v	226	Reusable/YH03.v		Definition src0_debruijn_len		dec	0x20		NONADDR	below image base (decimal)		sentence missing in ported file
+NON-ADDRESS-CHANGED	no	P	Reusable/YN3f.v	283	Reusable/YN3f.v	284	Lemma D_17b98	4	dec	0x1fda74	0x1fdbac	NONADDR	above image top	above image top	
+NON-ADDRESS-CHANGED	no	P	Reusable/YN3f.v	343	Reusable/YN3f.v	344	Lemma D_17c20	4	dec	0x1fd9ec	0x1fdb24	NONADDR	above image top	above image top	
+UNPAIRED-SOURCE	no	U	U/FrameAPI.v	33	U/FrameAPI.v		Definition frame_ubsan		hex	0x14b7c		ADDR	calloc+0x0; end of ___errno_location		no aligned numeral
+UNPAIRED-SOURCE	no	U	U/FrameAPI.v	62	U/FrameAPI.v		Definition frame_facts_ubsan		hex	0x14b7c		ADDR	calloc+0x0; end of ___errno_location		no aligned numeral
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	8	U/Reusable/YH03.v		Definition src0_text_lo		hex	0x126dc		ADDR	_start+0x0; BND(load1.lo,.text.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	8	U/Reusable/YH03.v		Definition src0_text_hi		hex	0x1c640		EXTENT	EXTENT(val:load1.memhi)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	9	U/Reusable/YH03.v		Definition src0_rodata_lo		hex	0x10298		ADDR	BND(.rodata.lo); XREF(printf_core+0x5a8, printf_core+0x5d0, printf_core+0x630 +6); str:"-+   0X0x"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	9	U/Reusable/YH03.v		Definition src0_rodata_hi		hex	0x1111c		ADDR	END by name: BND(.rodata.hi,.eh_frame_hdr.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	10	U/Reusable/YH03.v		Definition src0_eh_frame_lo		hex	0x11228		ADDR	__EH_FRAME_LIST_END__+0x0; BND(.eh_frame_hdr.hi,.eh_frame.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	10	U/Reusable/YH03.v		Definition src0_eh_frame_hi		hex	0x116dc		EXTENT	EXTENT(val:load0.memhi)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	11	U/Reusable/YH03.v		Definition src0_init_array_lo		hex	0x1d640		ADDR	__init+0x0; BND(load2.lo,relro.lo,.init_array.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	11	U/Reusable/YH03.v		Definition src0_init_array_hi		hex	0x1d648		ADDR	END by name: __fini+0x0; BND(.init_array.hi,.fini_array.lo); end of __init		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	12	U/Reusable/YH03.v		Definition src0_fini_array_lo		hex	0x1d648		ADDR	__fini+0x0; BND(.init_array.hi,.fini_array.lo); end of __init		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	12	U/Reusable/YH03.v		Definition src0_fini_array_hi		hex	0x1d650		ADDR	END by name: stderr+0x0; BND(.fini_array.hi,.data.rel.ro.lo); end of __fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	13	U/Reusable/YH03.v		Definition src0_data_rel_ro_lo		hex	0x1d650		ADDR	stderr+0x0; BND(.fini_array.hi,.data.rel.ro.lo); end of __fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	13	U/Reusable/YH03.v		Definition src0_data_rel_ro_hi		hex	0x1d660		ADDR	END by name: BND(.data.rel.ro.hi,.got.lo); end of stdout		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	14	U/Reusable/YH03.v		Definition src0_got_lo		hex	0x1d660		ADDR	BND(.data.rel.ro.hi,.got.lo); end of stdout		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	14	U/Reusable/YH03.v		Definition src0_got_hi		hex	0x1d710		ADDR	END by name: BND(load2.filehi,.got.hi,.relro_padding.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	15	U/Reusable/YH03.v		Definition src0_data_lo		hex	0x1e710		ADDR	__dso_handle+0x0; BND(load3.lo,.data.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	15	U/Reusable/YH03.v		Definition src0_data_hi		hex	0x1e91c		ADDR	END by name: BND(load3.filehi,.data.hi); end of __default_stacksize		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	16	U/Reusable/YH03.v		Definition src0_bss_lo		hex	0x1e920		ADDR	__do_init.__initialized+0x0; BND(.bss.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	16	U/Reusable/YH03.v		Definition src0_bss_hi		hex	0x4f548		EXTENT	EXTENT(val:load3.memhi)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	17	U/Reusable/YH03.v		Definition src0_A_start		hex	0x126dc		ADDR	_start+0x0; BND(load1.lo,.text.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	17	U/Reusable/YH03.v		Definition src0_E_start		hex	0x12724		ADDR	END by name: __do_init+0x0; end of _start_c		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	18	U/Reusable/YH03.v		Definition src0_A_do_init		hex	0x12724		ADDR	__do_init+0x0; end of _start_c		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	18	U/Reusable/YH03.v		Definition src0_E_do_init		hex	0x12798		ADDR	END by name: __do_fini+0x0; end of __do_init		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	19	U/Reusable/YH03.v		Definition src0_A_do_fini		hex	0x12798		ADDR	__do_fini+0x0; end of __do_init		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	19	U/Reusable/YH03.v		Definition src0_E_do_fini		hex	0x12828		ADDR	END by name: main+0x0; end of __do_fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	20	U/Reusable/YH03.v		Definition src0_E_main		hex	0x12aec		ADDR	END by name: target_alloc_init+0x0; end of main		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	21	U/Reusable/YH03.v		Definition src0_A_target_alloc_init		hex	0x12aec		ADDR	target_alloc_init+0x0; end of main		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	21	U/Reusable/YH03.v		Definition src0_E_target_alloc_init		hex	0x12af0		ADDR	END by name: target_alloc_count+0x0; end of target_alloc_init		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	22	U/Reusable/YH03.v		Definition src0_A_target_alloc_count		hex	0x12af0		ADDR	target_alloc_count+0x0; end of target_alloc_init		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	22	U/Reusable/YH03.v		Definition src0_E_target_alloc_count		hex	0x12af8		ADDR	END by name: target_run+0x0; end of target_alloc_count		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	23	U/Reusable/YH03.v		Definition src0_E_target_run		hex	0x12c50		ADDR	END by name: oft_exit_guard+0x0; end of target_run		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	24	U/Reusable/YH03.v		Definition src0_A_*_exit_guard		hex	0x12c50		ADDR	oft_exit_guard+0x0; end of target_run		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	24	U/Reusable/YH03.v		Definition src0_E_*_exit_guard		hex	0x12c80		ADDR	END by name: emit_printf+0x0; end of oft_exit_guard		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	25	U/Reusable/YH03.v		Definition src0_A_emit_printf		hex	0x12c80		ADDR	emit_printf+0x0; end of oft_exit_guard		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	25	U/Reusable/YH03.v		Definition src0_E_emit_printf		hex	0x12cc8		ADDR	END by name: LLVMFuzzerTestOneInput+0x0; end of emit_printf		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	26	U/Reusable/YH03.v		Definition src0_E_LLVMFuzzerTestOneInput		hex	0x134e4		ADDR	END by name: check_round_trip+0x0; end of LLVMFuzzerTestOneInput		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	27	U/Reusable/YH03.v		Definition src0_A_init		hex	0x14110		ADDR	_init+0x0; end of reac_upstream_decode		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	27	U/Reusable/YH03.v		Definition src0_E_init		hex	0x14114		ADDR	END by name: __init_libc+0x0; end of _init		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	28	U/Reusable/YH03.v		Definition src0_A_init_libc		hex	0x14114		ADDR	__init_libc+0x0; end of _init		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	28	U/Reusable/YH03.v		Definition src0_E_init_libc		hex	0x14340		ADDR	END by name: __libc_start_init+0x0; end of __init_libc		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	29	U/Reusable/YH03.v		Definition src0_A_libc_start_init		hex	0x14340		ADDR	__libc_start_init+0x0; end of __init_libc		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	29	U/Reusable/YH03.v		Definition src0_E_libc_start_init		hex	0x1438c		ADDR	END by name: __libc_start_main+0x0; end of __libc_start_init		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	30	U/Reusable/YH03.v		Definition src0_A_libc_start_main		hex	0x1438c		ADDR	__libc_start_main+0x0; end of __libc_start_init		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	30	U/Reusable/YH03.v		Definition src0_E_libc_start_main		hex	0x143ec		ADDR	END by name: libc_start_main_stage2+0x0; end of __libc_start_main		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	31	U/Reusable/YH03.v		Definition src0_A_libc_start_main_stage2		hex	0x143ec		ADDR	libc_start_main_stage2+0x0; end of __libc_start_main		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	31	U/Reusable/YH03.v		Definition src0_E_libc_start_main_stage2		hex	0x14434		ADDR	END by name: __init_tls+0x0; end of libc_start_main_stage2		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	32	U/Reusable/YH03.v		Definition src0_A_init_tls		hex	0x14434		ADDR	__init_tls+0x0; end of libc_start_main_stage2		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	32	U/Reusable/YH03.v		Definition src0_E_init_tls		hex	0x146e4		ADDR	END by name: abort+0x0; end of __init_tls		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	33	U/Reusable/YH03.v		Definition src0_A_funcs_on_exit		hex	0x14794		ADDR	__funcs_on_exit+0x0; end of _Exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	33	U/Reusable/YH03.v		Definition src0_E_funcs_on_exit		hex	0x1485c		ADDR	END by name: __cxa_finalize+0x0; end of __funcs_on_exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	34	U/Reusable/YH03.v		Definition src0_A_cxa_finalize		hex	0x1485c		ADDR	__cxa_finalize+0x0; end of __funcs_on_exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	34	U/Reusable/YH03.v		Definition src0_E_cxa_finalize		hex	0x14860		ADDR	END by name: atexit+0x0; end of __cxa_finalize		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	35	U/Reusable/YH03.v		Definition src0_A_atexit		hex	0x14860		ADDR	atexit+0x0; end of __cxa_finalize		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	35	U/Reusable/YH03.v		Definition src0_E_atexit		hex	0x14924		ADDR	END by name: call+0x0; end of atexit		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	36	U/Reusable/YH03.v		Definition src0_A_atexit_call		hex	0x14924		ADDR	call+0x0; end of atexit		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	36	U/Reusable/YH03.v		Definition src0_E_atexit_call		hex	0x14928		ADDR	END by name: _fini+0x0; end of call		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	37	U/Reusable/YH03.v		Definition src0_A_fini		hex	0x14928		ADDR	_fini+0x0; end of call		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	37	U/Reusable/YH03.v		Definition src0_E_fini		hex	0x1492c		ADDR	END by name: __libc_exit_fini+0x0; end of _fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	38	U/Reusable/YH03.v		Definition src0_A_libc_exit_fini		hex	0x1492c		ADDR	__libc_exit_fini+0x0; end of _fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	38	U/Reusable/YH03.v		Definition src0_E_libc_exit_fini		hex	0x14978		ADDR	END by name: exit+0x0; end of __libc_exit_fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	39	U/Reusable/YH03.v		Definition src0_A_exit		hex	0x14978		ADDR	exit+0x0; end of __libc_exit_fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	39	U/Reusable/YH03.v		Definition src0_E_exit		hex	0x149ec		ADDR	END by name: __init_ssp+0x0; end of exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	40	U/Reusable/YH03.v		Definition src0_A_Exit		hex	0x14778		ADDR	_Exit+0x0; end of abort		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	40	U/Reusable/YH03.v		Definition src0_E_Exit		hex	0x14794		ADDR	END by name: __funcs_on_exit+0x0; end of _Exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	41	U/Reusable/YH03.v		Definition src0_A_open		hex	0x14a54		ADDR	open+0x0; end of __stack_chk_fail		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	41	U/Reusable/YH03.v		Definition src0_E_open		hex	0x14b38		ADDR	END by name: __syscall_ret+0x0; end of open		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	42	U/Reusable/YH03.v		Definition src0_A_init_ssp		hex	0x149ec		ADDR	__init_ssp+0x0; end of exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	42	U/Reusable/YH03.v		Definition src0_E_init_ssp		hex	0x14a4c		ADDR	END by name: __stack_chk_fail+0x0; end of __init_ssp		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	43	U/Reusable/YH03.v		Definition src0_E_stack_chk_fail		hex	0x14a54		ADDR	END by name: open+0x0; end of __stack_chk_fail		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	44	U/Reusable/YH03.v		Definition src0_E_syscall_ret		hex	0x14b70		ADDR	END by name: ___errno_location+0x0; end of __syscall_ret		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	45	U/Reusable/YH03.v		Definition src0_E_errno_location		hex	0x14b7c		ADDR	END by name: calloc+0x0; end of ___errno_location		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	46	U/Reusable/YH03.v		Definition src0_E_free		hex	0x14cb8		ADDR	END by name: __libc_calloc+0x0; end of free		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	47	U/Reusable/YH03.v		Definition src0_A_libc_calloc		hex	0x14cb8		ADDR	__libc_calloc+0x0; end of free		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	47	U/Reusable/YH03.v		Definition src0_E_libc_calloc		hex	0x14df0		ADDR	END by name: __libc_malloc+0x0; end of __libc_calloc		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	48	U/Reusable/YH03.v		Definition src0_A_libc_malloc		hex	0x14df0		ADDR	__libc_malloc+0x0; end of __libc_calloc		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	48	U/Reusable/YH03.v		Definition src0_E_libc_malloc		hex	0x14df4		ADDR	END by name: default_malloc+0x0; end of __libc_malloc		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	49	U/Reusable/YH03.v		Definition src0_E_malloc		hex	0x14df8		ADDR	END by name: __libc_free+0x0; end of default_malloc		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	50	U/Reusable/YH03.v		Definition src0_E_libc_free		hex	0x14fc4		ADDR	END by name: get_meta+0x0; end of __libc_free		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	51	U/Reusable/YH03.v		Definition src0_E_get_meta		hex	0x150d4		ADDR	END by name: nontrivial_free+0x0; end of get_meta		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	52	U/Reusable/YH03.v		Definition src0_E_nontrivial_free		hex	0x154ac		ADDR	END by name: __malloc_alloc_meta+0x0; end of nontrivial_free		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	53	U/Reusable/YH03.v		Definition src0_E_alloc_meta		hex	0x15784		ADDR	END by name: __libc_malloc_impl+0x0; end of __malloc_alloc_meta		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	54	U/Reusable/YH03.v		Definition src0_E_libc_malloc_impl		hex	0x15af4		ADDR	END by name: alloc_slot+0x0; end of __libc_malloc_impl		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	55	U/Reusable/YH03.v		Definition src0_E_alloc_slot		hex	0x16398		ADDR	END by name: enframe+0x0; end of alloc_slot		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	56	U/Reusable/YH03.v		Definition src0_E_enframe		hex	0x164e8		ADDR	END by name: __malloc_allzerop+0x0; end of enframe		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	57	U/Reusable/YH03.v		Definition src0_E_malloc_allzerop		hex	0x16660		ADDR	END by name: __vm_wait+0x0; end of __malloc_allzerop		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	58	U/Reusable/YH03.v		Definition src0_E_vm_wait		hex	0x16664		ADDR	END by name: __mmap+0x0; end of __vm_wait		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	59	U/Reusable/YH03.v		Definition src0_E_mmap		hex	0x16750		ADDR	END by name: __mprotect+0x0; end of __mmap		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	60	U/Reusable/YH03.v		Definition src0_E_mprotect		hex	0x16798		ADDR	END by name: __munmap+0x0; end of __mprotect		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	61	U/Reusable/YH03.v		Definition src0_E_munmap		hex	0x167e0		ADDR	END by name: __block_all_sigs+0x0; end of __munmap		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	62	U/Reusable/YH03.v		Definition src0_A_fflush		hex	0x168b4		ADDR	fflush+0x0; end of raise		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	62	U/Reusable/YH03.v		Definition src0_E_fflush		hex	0x16a24		ADDR	END by name: __lockfile+0x0; end of fflush		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	63	U/Reusable/YH03.v		Definition src0_A_lockfile		hex	0x16a24		ADDR	__lockfile+0x0; end of fflush		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	63	U/Reusable/YH03.v		Definition src0_E_lockfile		hex	0x16b20		ADDR	END by name: __unlockfile+0x0; end of __lockfile		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	64	U/Reusable/YH03.v		Definition src0_A_unlockfile		hex	0x16b20		ADDR	__unlockfile+0x0; end of __lockfile		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	64	U/Reusable/YH03.v		Definition src0_E_unlockfile		hex	0x16b80		ADDR	END by name: fprintf+0x0; end of __unlockfile		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	65	U/Reusable/YH03.v		Definition src0_A_stdio_write		hex	0x17038		ADDR	__stdio_write+0x0; end of __stdio_close		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	65	U/Reusable/YH03.v		Definition src0_E_stdio_write		hex	0x171c8		ADDR	END by name: __stdio_seek+0x0; end of __stdio_write		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	66	U/Reusable/YH03.v		Definition src0_A_stdio_seek		hex	0x171c8		ADDR	__stdio_seek+0x0; end of __stdio_write		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	66	U/Reusable/YH03.v		Definition src0_E_stdio_seek		hex	0x171d0		ADDR	END by name: __stdout_write+0x0; end of __stdio_seek		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	67	U/Reusable/YH03.v		Definition src0_A_aio_close		hex	0x17008		ADDR	__aio_close+0x0; end of __ofl_unlock		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	67	U/Reusable/YH03.v		Definition src0_E_aio_close		hex	0x1700c		ADDR	END by name: __stdio_close+0x0; end of __aio_close		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	68	U/Reusable/YH03.v		Definition src0_A_stdio_close		hex	0x1700c		ADDR	__stdio_close+0x0; end of __aio_close		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	68	U/Reusable/YH03.v		Definition src0_E_stdio_close		hex	0x17038		ADDR	END by name: __stdio_write+0x0; end of __stdio_close		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	69	U/Reusable/YH03.v		Definition src0_A_fprintf		hex	0x16b80		ADDR	fprintf+0x0; end of __unlockfile		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	69	U/Reusable/YH03.v		Definition src0_E_fprintf		hex	0x16be4		ADDR	END by name: __fwritex+0x0; end of fprintf		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	70	U/Reusable/YH03.v		Definition src0_A_fwritex		hex	0x16be4		ADDR	__fwritex+0x0; end of fprintf		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	70	U/Reusable/YH03.v		Definition src0_E_fwritex		hex	0x16d1c		ADDR	END by name: fwrite+0x0; end of __fwritex		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	71	U/Reusable/YH03.v		Definition src0_A_fwrite		hex	0x16d1c		ADDR	fwrite+0x0; end of __fwritex		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	71	U/Reusable/YH03.v		Definition src0_E_fwrite		hex	0x16dd4		ADDR	END by name: __towrite+0x0; end of fwrite		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	72	U/Reusable/YH03.v		Definition src0_A_towrite		hex	0x16dd4		ADDR	__towrite+0x0; end of fwrite		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	72	U/Reusable/YH03.v		Definition src0_E_towrite		hex	0x16e28		ADDR	END by name: __stdio_exit+0x0; end of __towrite		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	73	U/Reusable/YH03.v		Definition src0_A_stdio_exit		hex	0x16e28		ADDR	__stdio_exit+0x0; end of __towrite		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	73	U/Reusable/YH03.v		Definition src0_E_stdio_exit		hex	0x16fcc		ADDR	END by name: __ofl_lock+0x0; end of __stdio_exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	74	U/Reusable/YH03.v		Definition src0_A_ofl_lock		hex	0x16fcc		ADDR	__ofl_lock+0x0; end of __stdio_exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	74	U/Reusable/YH03.v		Definition src0_E_ofl_lock		hex	0x16ffc		ADDR	END by name: __ofl_unlock+0x0; end of __ofl_lock		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	75	U/Reusable/YH03.v		Definition src0_A_ofl_unlock		hex	0x16ffc		ADDR	__ofl_unlock+0x0; end of __ofl_lock		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	75	U/Reusable/YH03.v		Definition src0_E_ofl_unlock		hex	0x17008		ADDR	END by name: __aio_close+0x0; end of __ofl_unlock		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	76	U/Reusable/YH03.v		Definition src0_A_stdout_write		hex	0x171d0		ADDR	__stdout_write+0x0; end of __stdio_seek		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	76	U/Reusable/YH03.v		Definition src0_E_stdout_write		hex	0x17270		ADDR	END by name: vfprintf+0x0; end of __stdout_write		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	77	U/Reusable/YH03.v		Definition src0_A_vfprintf		hex	0x17270		ADDR	vfprintf+0x0; end of __stdout_write		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	77	U/Reusable/YH03.v		Definition src0_E_vfprintf		hex	0x17420		ADDR	END by name: printf_core+0x0; end of vfprintf		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	78	U/Reusable/YH03.v		Definition src0_A_printf_core		hex	0x17420		ADDR	printf_core+0x0; end of vfprintf		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	78	U/Reusable/YH03.v		Definition src0_E_printf_core		hex	0x18250		ADDR	END by name: pop_arg+0x0; end of printf_core		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	79	U/Reusable/YH03.v		Definition src0_A_pop_arg		hex	0x18250		ADDR	pop_arg+0x0; end of printf_core		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	79	U/Reusable/YH03.v		Definition src0_E_pop_arg		hex	0x18384		ADDR	END by name: pad+0x0; end of pop_arg		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	80	U/Reusable/YH03.v		Definition src0_A_pad		hex	0x18384		ADDR	pad+0x0; end of pop_arg		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	80	U/Reusable/YH03.v		Definition src0_E_pad		hex	0x18458		ADDR	END by name: fmt_fp+0x0; end of pad		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	81	U/Reusable/YH03.v		Definition src0_A_fmt_fp		hex	0x18458		ADDR	fmt_fp+0x0; end of pad		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	81	U/Reusable/YH03.v		Definition src0_E_fmt_fp		hex	0x19b20		ADDR	END by name: strerror+0x0; end of fmt_fp		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	82	U/Reusable/YH03.v		Definition src0_A_strerror		hex	0x19b20		ADDR	strerror+0x0; end of fmt_fp		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	82	U/Reusable/YH03.v		Definition src0_E_strerror		hex	0x19b5c		ADDR	END by name: __lctrans_impl+0x0; end of strerror		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	83	U/Reusable/YH03.v		Definition src0_A_lctrans_impl		hex	0x19b5c		ADDR	__lctrans_impl+0x0; end of strerror		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	83	U/Reusable/YH03.v		Definition src0_E_lctrans_impl		hex	0x19b60		ADDR	END by name: __lctrans+0x0; end of __lctrans_impl		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	84	U/Reusable/YH03.v		Definition src0_A_lctrans		hex	0x19b60		ADDR	__lctrans+0x0; end of __lctrans_impl		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	84	U/Reusable/YH03.v		Definition src0_E_lctrans		hex	0x19b64		ADDR	END by name: wctomb+0x0; end of __lctrans		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	85	U/Reusable/YH03.v		Definition src0_A_wctomb		hex	0x19b64		ADDR	wctomb+0x0; end of __lctrans		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	85	U/Reusable/YH03.v		Definition src0_E_wctomb		hex	0x19b88		ADDR	END by name: wcrtomb+0x0; end of wctomb		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	86	U/Reusable/YH03.v		Definition src0_A_wcrtomb		hex	0x19b88		ADDR	wcrtomb+0x0; end of wctomb		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	86	U/Reusable/YH03.v		Definition src0_E_wcrtomb		hex	0x19cb4		ADDR	END by name: __extenddftf2+0x0; end of wcrtomb		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	87	U/Reusable/YH03.v		Definition src0_A_extenddftf2		hex	0x19cb4		ADDR	__extenddftf2+0x0; end of wcrtomb		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	87	U/Reusable/YH03.v		Definition src0_E_extenddftf2		hex	0x19e44		ADDR	END by name: __signbitl+0x0; end of __extenddftf2		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	88	U/Reusable/YH03.v		Definition src0_A_signbitl		hex	0x19e44		ADDR	__signbitl+0x0; end of __extenddftf2		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	88	U/Reusable/YH03.v		Definition src0_E_signbitl		hex	0x19e4c		ADDR	END by name: __fpclassifyl+0x0; end of __signbitl		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	89	U/Reusable/YH03.v		Definition src0_A_fpclassifyl		hex	0x19e4c		ADDR	__fpclassifyl+0x0; end of __signbitl		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	89	U/Reusable/YH03.v		Definition src0_E_fpclassifyl		hex	0x19e90		ADDR	END by name: frexpl+0x0; end of __fpclassifyl		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	90	U/Reusable/YH03.v		Definition src0_A_frexpl		hex	0x19e90		ADDR	frexpl+0x0; end of __fpclassifyl		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	90	U/Reusable/YH03.v		Definition src0_E_frexpl		hex	0x19f68		ADDR	END by name: __cmptf2+0x0; end of frexpl		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	91	U/Reusable/YH03.v		Definition src0_A_letf2		hex	0x19f68		ADDR	__cmptf2+0x0; end of frexpl		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	91	U/Reusable/YH03.v		Definition src0_E_letf2		hex	0x1a030		ADDR	END by name: __multf3+0x0; end of __cmptf2		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	92	U/Reusable/YH03.v		Definition src0_A_multf3		hex	0x1a030		ADDR	__multf3+0x0; end of __cmptf2		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	92	U/Reusable/YH03.v		Definition src0_E_multf3		hex	0x1a730		ADDR	END by name: __floatsitf+0x0; end of __multf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	93	U/Reusable/YH03.v		Definition src0_A_floatsitf		hex	0x1a730		ADDR	__floatsitf+0x0; end of __multf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	93	U/Reusable/YH03.v		Definition src0_E_floatsitf		hex	0x1a838		ADDR	END by name: scalbn+0x0; end of __floatsitf		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	94	U/Reusable/YH03.v		Definition src0_A_scalbn		hex	0x1a838		ADDR	scalbn+0x0; end of __floatsitf		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	94	U/Reusable/YH03.v		Definition src0_E_scalbn		hex	0x1a8d0		ADDR	END by name: __subtf3+0x0; end of scalbn		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	95	U/Reusable/YH03.v		Definition src0_A_subtf3		hex	0x1a8d0		ADDR	__subtf3+0x0; end of scalbn		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	95	U/Reusable/YH03.v		Definition src0_E_subtf3		hex	0x1a8e0		ADDR	END by name: __addtf3+0x0; end of __subtf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	96	U/Reusable/YH03.v		Definition src0_A_addtf3		hex	0x1a8e0		ADDR	__addtf3+0x0; end of __subtf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	96	U/Reusable/YH03.v		Definition src0_E_addtf3		hex	0x1b0ac		ADDR	END by name: __fe_getround+0x0; end of __addtf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	97	U/Reusable/YH03.v		Definition src0_A_fe_getround		hex	0x1b0ac		ADDR	__fe_getround+0x0; end of __addtf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	97	U/Reusable/YH03.v		Definition src0_E_fe_getround		hex	0x1b0dc		ADDR	END by name: __fe_raise_inexact+0x0; end of __fe_getround		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	98	U/Reusable/YH03.v		Definition src0_A_fe_raise_inexact		hex	0x1b0dc		ADDR	__fe_raise_inexact+0x0; end of __fe_getround		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	98	U/Reusable/YH03.v		Definition src0_E_fe_raise_inexact		hex	0x1b0e8		ADDR	END by name: __fixunstfsi+0x0; end of __fe_raise_inexact		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	99	U/Reusable/YH03.v		Definition src0_A_fixunstfsi		hex	0x1b0e8		ADDR	__fixunstfsi+0x0; end of __fe_raise_inexact		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	99	U/Reusable/YH03.v		Definition src0_E_fixunstfsi		hex	0x1b17c		ADDR	END by name: __floatunsitf+0x0; end of __fixunstfsi		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	100	U/Reusable/YH03.v		Definition src0_A_floatunsitf		hex	0x1b17c		ADDR	__floatunsitf+0x0; end of __fixunstfsi		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	100	U/Reusable/YH03.v		Definition src0_E_floatunsitf		hex	0x1b268		ADDR	END by name: __fixtfsi+0x0; end of __floatunsitf		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	101	U/Reusable/YH03.v		Definition src0_A_fixtfsi		hex	0x1b268		ADDR	__fixtfsi+0x0; end of __floatunsitf		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	101	U/Reusable/YH03.v		Definition src0_E_fixtfsi		hex	0x1b310		ADDR	END by name: __divtf3+0x0; end of __fixtfsi		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	102	U/Reusable/YH03.v		Definition src0_A_divtf3		hex	0x1b310		ADDR	__divtf3+0x0; end of __fixtfsi		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	102	U/Reusable/YH03.v		Definition src0_E_divtf3		hex	0x1bc14		ADDR	END by name: vprintf+0x0; end of __divtf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	103	U/Reusable/YH03.v		Definition src0_A_vprintf		hex	0x1bc14		ADDR	vprintf+0x0; end of __divtf3		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	103	U/Reusable/YH03.v		Definition src0_E_vprintf		hex	0x1bc30		ADDR	END by name: bcmp+0x0; end of vprintf		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	104	U/Reusable/YH03.v		Definition src0_A_bcmp		hex	0x1bc30		ADDR	bcmp+0x0; end of vprintf		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	104	U/Reusable/YH03.v		Definition src0_E_bcmp		hex	0x1bc34		ADDR	END by name: memcmp+0x0; end of bcmp		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	105	U/Reusable/YH03.v		Definition src0_A_memcmp		hex	0x1bc34		ADDR	memcmp+0x0; end of bcmp		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	105	U/Reusable/YH03.v		Definition src0_E_memcmp		hex	0x1bc64		ADDR	END by name: memcpy+0x0; end of memcmp		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	106	U/Reusable/YH03.v		Definition src0_E_memcpy		hex	0x1c068		ADDR	END by name: memset+0x0; end of memcpy		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	107	U/Reusable/YH03.v		Definition src0_E_memset		hex	0x1c160		ADDR	END by name: strnlen+0x0; end of memset		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	108	U/Reusable/YH03.v		Definition src0_E_strnlen		hex	0x1c1a4		ADDR	END by name: memchr+0x0; end of strnlen		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	109	U/Reusable/YH03.v		Definition src0_E_memchr		hex	0x1c270		ADDR	END by name: __lock+0x0; end of memchr		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	110	U/Reusable/YH03.v		Definition src0_E_lock		hex	0x1c4f8		ADDR	END by name: __unlock+0x0; end of __lock		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	111	U/Reusable/YH03.v		Definition src0_E_unlock		hex	0x1c56c		ADDR	END by name: __syscall_cp_c+0x0; end of __unlock		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	112	U/Reusable/YH03.v		Definition src0_E_syscall_cp_c		hex	0x1c590		ADDR	END by name: __syscall_cp+0x0; end of __syscall_cp_c		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	113	U/Reusable/YH03.v		Definition src0_A_syscall_cp		hex	0x1c590		ADDR	__syscall_cp+0x0; end of __syscall_cp_c		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	113	U/Reusable/YH03.v		Definition src0_E_syscall_cp		hex	0x1c594		ADDR	END by name: __set_thread_area+0x0; end of __syscall_cp		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	114	U/Reusable/YH03.v		Definition src0_A_set_thread_area		hex	0x1c594		ADDR	__set_thread_area+0x0; end of __syscall_cp		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	114	U/Reusable/YH03.v		Definition src0_E_set_thread_area		hex	0x1c5a0		ADDR	END by name: no object ends here (last byte seg1:.text unnamed; the value is _exit+0x0)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	115	U/Reusable/YH03.v		Definition src0_A_unistd_exit		hex	0x1c5a0		ADDR	_exit+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	115	U/Reusable/YH03.v		Definition src0_E_unistd_exit		hex	0x1c5ac		ADDR	END by name: close+0x0; end of _exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	116	U/Reusable/YH03.v		Definition src0_A_close		hex	0x1c5ac		ADDR	close+0x0; end of _exit		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	116	U/Reusable/YH03.v		Definition src0_E_close		hex	0x1c600		ADDR	END by name: __lseek+0x0; end of close		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	117	U/Reusable/YH03.v		Definition src0_A_lseek		hex	0x1c600		ADDR	__lseek+0x0; end of close		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	117	U/Reusable/YH03.v		Definition src0_E_lseek		hex	0x1c60c		ADDR	END by name: read+0x0; end of __lseek		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	118	U/Reusable/YH03.v		Definition src0_A_read		hex	0x1c60c		ADDR	read+0x0; end of __lseek		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	118	U/Reusable/YH03.v		Definition src0_E_read		hex	0x1c640		EXTENT	EXTENT(val:load1.memhi)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	119	U/Reusable/YH03.v		Definition src0_D_str_n0X0x		hex	0x10298		ADDR	BND(.rodata.lo); XREF(printf_core+0x5a8, printf_core+0x5d0, printf_core+0x630 +6); str:"-+   0X0x"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	120	U/Reusable/YH03.v		Definition src0_D_str_n0X_0X_0X_0x_0x_0x		hex	0x102a2		ADDR	XREF(fmt_fp+0xcc, fmt_fp+0xe8); str:"-0X+0X 0X-0x+0x 0x"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	121	U/Reusable/YH03.v		Definition src0_D_str_cli_out_of_memory_n		hex	0x102b5		ADDR	XREF(main+0x27c, main+0x2bc); str:"cli: out of memory\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	122	U/Reusable/YH03.v		Definition src0_D_str_d_n		hex	0x102c9		ADDR	XREF(emit_printf+0x30); str:"%d\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	123	U/Reusable/YH03.v		Definition src0_D_str		hex	0x102cd		ADDR	XREF(__init_libc+0xcc)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	124	U/Reusable/YH03.v		Definition src0_D_str_2		hex	0x102ce		ADDR	XREF(__init_libc+0xe4, __init_libc+0xfc, fmt_fp+0x1380 +1); str:"."		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	125	U/Reusable/YH03.v		Definition src0_D_str_usage_s_INPUT_n		hex	0x102d0		ADDR	XREF(main+0x1ac); str:"usage: %s INPUT\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	126	U/Reusable/YH03.v		Definition src0_D_str_cli_config_len_overruns		hex	0x102e1		ADDR	XREF(main+0x1e8); str:"cli: config_len overruns input\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	127	U/Reusable/YH03.v		Definition src0_D_str_inf		hex	0x10301		ADDR	XREF(fmt_fp+0x20c); str:"inf"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	128	U/Reusable/YH03.v		Definition src0_D_str_INF		hex	0x10305		ADDR	XREF(fmt_fp+0x2cc, fmt_fp+0x2dc, fmt_fp+0x38c); str:"INF"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	129	U/Reusable/YH03.v		Definition src0_D_str_cli_input_u_bytes_refuse		hex	0x10309		ADDR	XREF(main+0x258); str:"cli: input >= %u bytes, refused\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	130	U/Reusable/YH03.v		Definition src0_D_str_cli_cannot_open_s_n		hex	0x1032a		ADDR	XREF(main+0x2a0); str:"cli: cannot open %s\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	131	U/Reusable/YH03.v		Definition src0_D_str_cli_read_error_on_s_n		hex	0x1033f		ADDR	XREF(main+0x23c); str:"cli: read error on %s\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	132	U/Reusable/YH03.v		Definition src0_D_str_NAN		hex	0x10356		ADDR	XREF(fmt_fp+0x2d0); str:"NAN"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	133	U/Reusable/YH03.v		Definition src0_D_str_nan		hex	0x1035a		ADDR	XREF(fmt_fp+0x210, fmt_fp+0x228, fmt_fp+0x250); str:"nan"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	134	U/Reusable/YH03.v		Definition src0_D_str_cli_input_shorter_than_h		hex	0x1035e		ADDR	XREF(main+0x1cc); str:"cli: input shorter than header\n"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	135	U/Reusable/YH03.v		Definition src0_D_str_dev_null		hex	0x1037e		ADDR	XREF(__init_libc+0x194, __init_libc+0x1c4, __init_libc+0x1f4); str:"/dev/null"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	136	U/Reusable/YH03.v		Definition src0_D_str_null		hex	0x10388		ADDR	XREF(printf_core+0x5ec); str:"(null)"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	137	U/Reusable/YH03.v		Definition src0_D_const_double_0x1p28		hex	0x10390		ADDR	XREF(fmt_fp+0x1b4)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	138	U/Reusable/YH03.v		Definition src0_D_const_double_1_0		hex	0x103a8		ADDR	XREF(fmt_fp+0xd50)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	140	U/Reusable/YH03.v		Definition src0_D_const_double_0_5		hex	0x103c0		ADDR	XREF(fmt_fp+0xb40)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	142	U/Reusable/YH03.v		Definition src0_D_const_double_0x1p1023		hex	0x103d0		ADDR	XREF(scalbn+0xc)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	143	U/Reusable/YH03.v		Definition src0_D_const_double_1_5		hex	0x103d8		ADDR	XREF(fmt_fp+0xd5c)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	144	U/Reusable/YH03.v		Definition src0_D_const_u64_fmt_fp_1e9_recip_misc		hex	0x103e0		ADDR	XREF(fmt_fp+0x520)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	145	U/Reusable/YH03.v		Definition src0_D_const_double_0x1p_969_0x1p_1022_0x1p		hex	0x103e8		ADDR	XREF(scalbn+0x44)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	146	U/Reusable/YH03.v		Definition src0_D_const_double_0x1p120		hex	0x103f8		ADDR	XREF(frexpl+0x48)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	151	U/Reusable/YH03.v		Definition src0_D_jt_printf_core_1		hex	0x10538		ADDR	end of app_mask; XREF(printf_core+0x534); JT(table of printf_core+0x534, entry +0x0)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	152	U/Reusable/YH03.v		Definition src0_D_jt_printf_core_2		hex	0x10618		ADDR	XREF(printf_core+0x6ac); JT(table of printf_core+0x6ac, entry +0x0); str:"Pz"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	153	U/Reusable/YH03.v		Definition src0_D_jt_pop_arg		hex	0x10638		ADDR	XREF(pop_arg+0x14); JT(table of pop_arg+0x14, entry +0x0); str:"@|"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	154	U/Reusable/YH03.v		Definition src0_D_states		hex	0x10680		ADDR	states+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	155	U/Reusable/YH03.v		Definition src0_D_xdigits		hex	0x10850		ADDR	xdigits+0x0; end of states; str:"0123456789ABCDEFNo error information"		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	156	U/Reusable/YH03.v		Definition src0_D_errmsgstr		hex	0x10860		ADDR	errmsgstr+0x0; end of xdigits; str:"0123456789ABCDEFNo error information"+16		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	157	U/Reusable/YH03.v		Definition src0_D_global_pointer		hex	0x10800		ADDR	states+0x180		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	158	U/Reusable/YH03.v		Definition src0_D_errmsgidx		hex	0x11008		ADDR	errmsgidx+0x0; end of errmsgstr		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	159	U/Reusable/YH03.v		Definition src0_D_fe_getround		hex	0x11110		ADDR	end of errmsgidx; XREF(__fe_getround+0x18)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	160	U/Reusable/YH03.v		Definition src0_D_EH_FRAME_LIST		hex	0x11228		ADDR	__EH_FRAME_LIST_END__+0x0; BND(.eh_frame_hdr.hi,.eh_frame.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	161	U/Reusable/YH03.v		Definition src0_D_init_array_start		hex	0x1d640		ADDR	__init+0x0; BND(load2.lo,relro.lo,.init_array.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	162	U/Reusable/YH03.v		Definition src0_D_fini_array_start		hex	0x1d648		ADDR	__fini+0x0; BND(.init_array.hi,.fini_array.lo); end of __init		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	163	U/Reusable/YH03.v		Definition src0_D_stderr		hex	0x1d650		ADDR	stderr+0x0; BND(.fini_array.hi,.data.rel.ro.lo); end of __fini		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	164	U/Reusable/YH03.v		Definition src0_D_stdout		hex	0x1d658		ADDR	stdout+0x0; end of stderr		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	165	U/Reusable/YH03.v		Definition src0_D_got_DYNAMIC_reserved		hex	0x1d660		ADDR	BND(.data.rel.ro.hi,.got.lo); end of stdout		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	166	U/Reusable/YH03.v		Definition src0_D_got_DYNAMIC		hex	0x1d668		ADDR	XREF(__init_tls+0x58, static_init_tls+0x58)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	167	U/Reusable/YH03.v		Definition src0_D_got_main		hex	0x1d670		ADDR	GOT[main+0x0]; XREF(_start_c+0x10)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	168	U/Reusable/YH03.v		Definition src0_D_got_init		hex	0x1d678		ADDR	GOT[_init+0x0]; XREF(_start_c+0x14)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	169	U/Reusable/YH03.v		Definition src0_D_got_fini		hex	0x1d680		ADDR	GOT[_fini+0x0]; XREF(_start_c+0x18)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	170	U/Reusable/YH03.v		Definition src0_D_got_register_frame_info		hex	0x1d688		ADDR	XREF(__do_init+0x40)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	171	U/Reusable/YH03.v		Definition src0_D_got_cxa_finalize		hex	0x1d690		ADDR	GOT[__cxa_finalize+0x0]; XREF(__do_fini+0x40)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	172	U/Reusable/YH03.v		Definition src0_D_got_deregister_frame_info		hex	0x1d698		ADDR	XREF(__do_fini+0x64)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	173	U/Reusable/YH03.v		Definition src0_D_got_stderr		hex	0x1d6a0		ADDR	GOT[stderr+0x0]; XREF(main+0x19c, main+0x1bc, main+0x1d8 +5)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	174	U/Reusable/YH03.v		Definition src0_D_got_LLVMFuzzerInitialize		hex	0x1d6a8		ADDR	XREF(target_run+0x134)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	175	U/Reusable/YH03.v		Definition src0_D_got_stdout		hex	0x1d6b0		ADDR	GOT[stdout+0x0]; XREF(oft_exit_guard+0x1c)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	176	U/Reusable/YH03.v		Definition src0_D_got_environ		hex	0x1d6d0		ADDR	GOT[___environ+0x0]; XREF(__init_libc+0x30)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	177	U/Reusable/YH03.v		Definition src0_D_got_progname_full		hex	0x1d6d8		ADDR	GOT[__progname_full+0x0]; XREF(__init_libc+0xd4)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	178	U/Reusable/YH03.v		Definition src0_D_got_progname		hex	0x1d6e0		ADDR	GOT[__progname+0x0]; XREF(__init_libc+0xdc)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	179	U/Reusable/YH03.v		Definition src0_D_got_init_array_end		hex	0x1d6e8		ADDR	END by name: the end of the constant word at 0x1d6e0, read by __init_libc+0xdc		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	180	U/Reusable/YH03.v		Definition src0_D_got_init_array_start		hex	0x1d6f0		ADDR	GOT[__init+0x0]; XREF(__libc_start_init+0x20, libc_start_init+0x20)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	182	U/Reusable/YH03.v		Definition src0_D_got_fini_array_end		hex	0x1d700		ADDR	END by name: the end of the constant word at 0x1d6f8, read by __init_ssp+0x14, __init_ssp+0x28		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	183	U/Reusable/YH03.v		Definition src0_D_got_fini_array_start		hex	0x1d708		ADDR	GOT[__fini+0x0]; XREF(__libc_exit_fini+0x1c, libc_exit_fini+0x1c)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	184	U/Reusable/YH03.v		Definition src0_D_dso_handle		hex	0x1e710		ADDR	__dso_handle+0x0; BND(load3.lo,.data.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	185	U/Reusable/YH03.v		Definition src0_D_*_arg0		hex	0x1e718		ADDR	oft_arg0+0x0; end of __dso_handle		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	186	U/Reusable/YH03.v		Definition src0_D_*_argc		hex	0x1e720		ADDR	oft_argc+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	187	U/Reusable/YH03.v		Definition src0_D_*_argv		hex	0x1e728		ADDR	oft_argv+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	188	U/Reusable/YH03.v		Definition src0_D_stderr_FILE		hex	0x1e738		ADDR	__stderr_FILE+0x0; end of oft_argv		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	189	U/Reusable/YH03.v		Definition src0_D_stderr_used		hex	0x1e820		ADDR	__stderr_used+0x0; end of __stderr_FILE		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	190	U/Reusable/YH03.v		Definition src0_D_stdout_FILE		hex	0x1e828		ADDR	__stdout_FILE+0x0; end of __stderr_used		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	191	U/Reusable/YH03.v		Definition src0_D_stdout_used		hex	0x1e910		ADDR	__stdout_used+0x0; end of __stdout_FILE		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	192	U/Reusable/YH03.v		Definition src0_D_default_stacksize		hex	0x1e918		ADDR	__default_stacksize+0x0; end of __stdout_used		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	193	U/Reusable/YH03.v		Definition src0_D_do_init_initialized		hex	0x1e920		ADDR	__do_init.__initialized+0x0; BND(.bss.lo)		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	194	U/Reusable/YH03.v		Definition src0_D_do_init_object		hex	0x1e928		ADDR	__do_init.__object+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	195	U/Reusable/YH03.v		Definition src0_D_do_fini_finalized		hex	0x1e968		ADDR	__do_fini.__finalized+0x0; end of __do_init.__object		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	197	U/Reusable/YH03.v		Definition src0_D_target_run_initialized		hex	0x2e970		ADDR	target_run.initialized+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	198	U/Reusable/YH03.v		Definition src0_D_*_in_callback		hex	0x2e974		ADDR	oft_in_callback+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	200	U/Reusable/YH03.v		Definition src0_D_environ		hex	0x2e9a0		ADDR	___environ+0x0; end of oft_aligned_copy.empty		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	201	U/Reusable/YH03.v		Definition src0_D_thread_list_lock		hex	0x4ea78		ADDR	__thread_list_lock+0x0; end of builtin_tls		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	202	U/Reusable/YH03.v		Definition src0_D_main_tls		hex	0x4ea80		ADDR	main_tls+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	203	U/Reusable/YH03.v		Definition src0_D_builtin_tls		hex	0x2e9a8		ADDR	builtin_tls+0x0; end of ___environ		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	204	U/Reusable/YH03.v		Definition src0_D_finished_atexit		hex	0x4eab8		ADDR	finished_atexit+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	205	U/Reusable/YH03.v		Definition src0_D_atexit_lock		hex	0x4eabc		ADDR	lock+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	206	U/Reusable/YH03.v		Definition src0_D_atexit_slot		hex	0x4eac0		ADDR	slot+0x0; end of lock		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	207	U/Reusable/YH03.v		Definition src0_D_atexit_head		hex	0x4eac8		ADDR	head+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	208	U/Reusable/YH03.v		Definition src0_D_atexit_builtin		hex	0x4ead0		ADDR	builtin+0x0; end of head		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	209	U/Reusable/YH03.v		Definition src0_D_exit_exit_lock		hex	0x4ecd8		ADDR	exit.exit_lock+0x0; end of builtin		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	211	U/Reusable/YH03.v		Definition src0_D_sysinfo		hex	0x4ece8		ADDR	__sysinfo+0x0; end of __stack_chk_guard		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	212	U/Reusable/YH03.v		Definition src0_D_progname		hex	0x4ecf0		ADDR	__progname+0x0; end of __sysinfo		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	213	U/Reusable/YH03.v		Definition src0_D_progname_full		hex	0x4ecf8		ADDR	__progname_full+0x0; end of __progname		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	215	U/Reusable/YH03.v		Definition src0_D_hwcap		hex	0x4ed68		ADDR	__hwcap+0x0; end of __libc		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	218	U/Reusable/YH03.v		Definition src0_D_malloc_replaced		hex	0x4f118		ADDR	__malloc_replaced+0x0; end of __malloc_context		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	219	U/Reusable/YH03.v		Definition src0_D_stdin_used		hex	0x4f120		ADDR	__stdin_used+0x0		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	222	U/Reusable/YH03.v		Definition src0_D_stderr_buf		hex	0x4f138		ADDR	buf+0x0; end of ofl_head		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	223	U/Reusable/YH03.v		Definition src0_D_stdout_buf		hex	0x4f140		ADDR	buf+0x0; end of buf		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	224	U/Reusable/YH03.v		Definition src0_A_calloc		hex	0x14b7c		ADDR	calloc+0x0; end of ___errno_location		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	224	U/Reusable/YH03.v		Definition src0_E_calloc		hex	0x14cb4		ADDR	END by name: free+0x0; end of calloc		sentence missing in ported file
+UNPAIRED-SOURCE	no	U	U/Reusable/YH03.v	226	U/Reusable/YH03.v		Definition src0_debruijn_len		dec	0x20		NONADDR	below image base (decimal)		sentence missing in ported file
+NON-ADDRESS-CHANGED	no	U	U/Reusable/YN3f.v	283	U/Reusable/YN3f.v	284	Lemma D_17b98	4	dec	0x1fda74	0x1fdbac	NONADDR	above image top	above image top	
+NON-ADDRESS-CHANGED	no	U	U/Reusable/YN3f.v	343	U/Reusable/YN3f.v	344	Lemma D_17c20	4	dec	0x1fd9ec	0x1fdb24	NONADDR	above image top	above image top	
+KIND-CHANGED	yes	P	AllocRoom.v	33	AllocRoom.v	34	Definition CAP30	0	dec	0x15000	0x15000	NONADDR	decimal literal; in range: __malloc_alloc_meta+0x184	get_meta+0x0; end of __libc_free	
+NON-ADDRESS-CHANGED	yes	P	FrameAPI.v	14	FrameAPI.v	15	Definition frame_RELRO	1	dec	0xb8	0xd0	NONADDR	below image base (decimal)	below image base (decimal)	
+NON-ADDRESS-CHANGED	yes	P	Reusable/YL0k.v	183	Reusable/YL0k.v	184	Definition src0_R	1	dec	0xb8	0xd0	NONADDR	below image base (decimal)	below image base (decimal)	
+NON-ADDRESS-CHANGED	yes	P	Reusable/YL0v.v	392	Reusable/YL0v.v	393	Lemma rodata_nl_src1	2	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	P	Reusable/YL0v.v	395	Reusable/YL0v.v	396	Lemma rodata_nl2_src1	2	dec	0x10354	0x10366	NONADDR	decimal literal; in range: str:"cli: read error on %s\n"+21	decimal literal; in range: str:"cli: read error on %s\n"+21	
+NON-ADDRESS-CHANGED	yes	P	Reusable/YL0w.v	158	Reusable/YL0w.v	159	Theorem src0_open_failed / sentence 198	0	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	P	Reusable/YL0w.v	158	Reusable/YL0w.v	159	Theorem src0_open_failed / sentence 198	1	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	P	Reusable/YL0w.v	159	Reusable/YL0w.v	160	Theorem src0_open_failed / sentence 202	0	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	P	Reusable/YL0w.v	159	Reusable/YL0w.v	160	Theorem src0_open_failed / sentence 202	1	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	P	Reusable/YL0w_cfw.v	153	Reusable/YL0w_cfw.v	154	Theorem src0_open_failed_cf / sentence 198	0	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	P	Reusable/YL0w_cfw.v	153	Reusable/YL0w_cfw.v	154	Theorem src0_open_failed_cf / sentence 198	1	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	P	Reusable/YL0w_cfw.v	154	Reusable/YL0w_cfw.v	155	Theorem src0_open_failed_cf / sentence 202	0	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	P	Reusable/YL0w_cfw.v	154	Reusable/YL0w_cfw.v	155	Theorem src0_open_failed_cf / sentence 202	1	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	U	U/FrameAPI.v	14	U/FrameAPI.v	15	Definition frame_RELRO	1	dec	0xb8	0xd0	NONADDR	below image base (decimal)	below image base (decimal)	
+NON-ADDRESS-CHANGED	yes	U	U/Reusable/YL0k.v	183	U/Reusable/YL0k.v	184	Definition src0_R	1	dec	0xb8	0xd0	NONADDR	below image base (decimal)	below image base (decimal)	
+NON-ADDRESS-CHANGED	yes	U	U/Reusable/YL0v.v	392	U/Reusable/YL0v.v	393	Lemma rodata_nl_src1	2	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	U	U/Reusable/YL0v.v	395	U/Reusable/YL0v.v	396	Lemma rodata_nl2_src1	2	dec	0x10354	0x10366	NONADDR	decimal literal; in range: str:"cli: read error on %s\n"+21	decimal literal; in range: str:"cli: read error on %s\n"+21	
+NON-ADDRESS-CHANGED	yes	U	U/Reusable/YL0w.v	158	U/Reusable/YL0w.v	159	Theorem src0_open_failed / sentence 198	0	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	U	U/Reusable/YL0w.v	158	U/Reusable/YL0w.v	159	Theorem src0_open_failed / sentence 198	1	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	U	U/Reusable/YL0w.v	159	U/Reusable/YL0w.v	160	Theorem src0_open_failed / sentence 202	0	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	U	U/Reusable/YL0w.v	159	U/Reusable/YL0w.v	160	Theorem src0_open_failed / sentence 202	1	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	U	U/Reusable/YL0w_cfw.v	153	U/Reusable/YL0w_cfw.v	154	Theorem src0_open_failed_cf / sentence 198	0	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	U	U/Reusable/YL0w_cfw.v	153	U/Reusable/YL0w_cfw.v	154	Theorem src0_open_failed_cf / sentence 198	1	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	U	U/Reusable/YL0w_cfw.v	154	U/Reusable/YL0w_cfw.v	155	Theorem src0_open_failed_cf / sentence 202	0	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	
+NON-ADDRESS-CHANGED	yes	U	U/Reusable/YL0w_cfw.v	154	U/Reusable/YL0w_cfw.v	155	Theorem src0_open_failed_cf / sentence 202	1	dec	0x1033d	0x1034f	NONADDR	decimal literal; in range: str:"cli: cannot open %s\n"+19	decimal literal; in range: str:"cli: cannot open %s\n"+19	

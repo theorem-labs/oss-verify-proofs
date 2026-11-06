@@ -1,0 +1,7 @@
+# strictcmp2 tcmp by address (kit 4bbd3a74be89); columns as pairs.out
+# _ZN6__asanL11MemToShadowEm: the copy the jal at __asan_stack_malloc_1 +0x144 lands on (0x3d410 / 0x3c348); copies in GA ['0x3b6e8', '0x3d410', '0x528a4', '0x53eec', '0x5cdd8'], in UA ['0x3aafc', '0x3c348', '0x514dc', '0x52b24', '0x5ba10']
+_ZN6__asanL11MemToShadowEm@stack_malloc_1+0x144	GA:UA	0x3d410	0x3c348	316	316	EQUAL-mod-pcrel	15	0	0	(0, 0, 2)	0		0x124@0x1fa8a|0x1f8b3=b'/llvm-project/compiler-rt/lib/asan/asan_mapping.h\x00' 0x128@0x17059|0x16f18=b'((AddrIsInMem(p))) != (0)\x00'
+CSTR	_ZN6__asanL11MemToShadowEm@stack_malloc_1+0x144	GA:UA	0x124	0x1fa8a	0x1f8b3	50	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f6d617070696e672e6800	b'/llvm-project/compiler-rt/lib/asan/asan_mapping.h\x00'
+CSTR	_ZN6__asanL11MemToShadowEm@stack_malloc_1+0x144	GA:UA	0x128	0x17059	0x16f18	26	2828416464724973496e4d656d287029292920213d2028302900	b'((AddrIsInMem(p))) != (0)\x00'
+# _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE +0x358, 8 bytes: the 2 words AF0r.v fs_ranges covers ((0x61ccc, 2) / (0x60904, 2))
+_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE+0x358[8]	GA:UA	0x61ccc	0x60904	8	8	EQUAL	0	0	0	(0, 0, 0)	0		

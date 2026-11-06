@@ -1,0 +1,49 @@
+# path kind sha256 role
+README.md file 82c217cfa3ac9ebd4c365616d8a5196175c93f56935ce4fe287693342462e9be in no slice
+af/af_stack_classes.before.out out aace21014f0a1256bdef030502c70a1dafbb0ca1f79f9dce6d0f9bb3684acbc1 its control (before)
+af/af_stack_classes.control.out out fd0e357297086534c02e37d61af83c7f72e185002ed2b8a0dd670be97e8aaffc its control
+af/af_stack_classes.out out f640c58a19446c0fe5a3736d01b2393bcd2c9b3ada03350c0903f2ea46ecb7d2 its output
+af/af_stack_classes.py py d191e0f7439dc42c82627595485f86d61c3faef731cd350e5f52b1cfbc9f125c script check of the stack classes that lib/A/AStackApi.v (lines 4-5, 28) cites at this path
+af/bypath_check.control.out out be8361db4dbc64379d1b80eef38a5fa4b667a0e0bdca5f236f291c13989f698a its control
+af/bypath_check.out out d79ace863c2cb4616cd0ff279cfe726d00ace109baad1ce29be067614ecaa6e5 its output, which lib/A/AStackApi.v (lines 30-31) cites at this path
+af/bypath_check.py py 49b188705e3f8ea47d0959f883545090a1915a7b08c920ff27460d5d8a713f6a by-path copy check that lib/A/AStackApi.v cites at this path
+startgen/AE23.body-removed.tsv tsv 017e62e1e78db9315039ea95c4378a981d478d90c18b43cdcb903178526353e5 body comment lines removed before the generator
+startgen/AE37.body-removed.tsv tsv 1434a2510d7062b1f9de27d9961f7c4360b77549cc024b5a96e49b9c7fc1e080 body comment lines removed before the generator
+startgen/AE3i.body-removed.tsv tsv 7c751e90ea0509034147979ccb4445de87fc7bf81d3ae8ba9fb60e5c502dd03a body comment lines removed before the generator
+startgen/AF0m.owned-with-bss-globals.v v 2c69c569c0239b86f21a93e6d54ad35865bbf5ce20e255016a5c5e3f566747b1 gen_ad2 owned-cells input that lib/A/AD2j.v (line 4) cites at this path
+startgen/HEADERS.md md 3572f9bd0f7250b76e3a84086df2d9d0e27d3de2e24f2f5f36c8fde9981721eb statement: the licence-header record, with record citations
+startgen/README.md md d7d72206886e9b971a7f4708dccb7419b5f891753fe30c4b9dc7518bc06ff58c index of the start-up records and the record citations
+startgen/RUNS.md md a3d0711ecda0f36a1ca39ead1609341330d5aa1adcfa1f5e36bbb871fc2ed5ac statement: the start-up runs and checks, with record citations
+startgen/acej-wild-listing.txt txt 0db646156b0ebf8046734437244d6a282e1d0e34e19dc7b24ac3236c7a04b6b8 image listing that lib/A/ACejUniv.v (line 19) cites at this path
+startgen/acej/ACEJ.md md 4d3cfa4d73c4686a9ae01b41e6afd40a1ebc00302ced432fe74d64e71c6126ee statement: ACej commands and results, with record citations
+startgen/acej/acej_check.final.out out efcab01eac4aae17a740d23a3cd8fab3717f5d0ac75688a84b3b0873c25f43e1 run output
+startgen/acej/added.fmemopen.json json 0b02ee06fdd537f9c14d4c62a934b111caca3f68a8489c6d35b77089041cc9d0 composer input
+startgen/acej/decide.link.json json 22714ff83e487e356869bf6e0812ce1dd180ab233b6da6b096852359228eef0d composer input
+startgen/acej/negctl.out out e9b4239017da0f225dfbc451cc8a57ede50edf5e34f5f1979a85f13d4a651dc2 run output
+startgen/ae37/AE37.md md 48092fea98a10387520609f15884db4b2b70503d7e4a169ca9dabae80bb38334 statement: AE23 / AE37 command and result, with record citations
+startgen/ae37/REMOVED-LINES.tsv tsv 5a27c39af46a41022c6bdb0bce75cd07e1227c6677ce808822433571d6305a23 lines ae37gen.py removed
+startgen/ae37/ae37-values.tsv tsv ea1fdef6bd27819d28d7f118a91f6e3ff9a4128250946f092204b4651a6b626d per-value table of ae37gen.py
+startgen/ae37/ae37gen.py py 85990ea0ac7bf573fb6c50fb1778d4e1c2b5a575dd1b9897e2905af7ccd7e136 script
+startgen/asan_globals_check.negctl-pcap.out out 0596c58eed15a47cf12eb681977cefc1a87a774779da86ec4eb5d359e520e8a9 run output
+startgen/asan_globals_check.out out a8b8c1f5fc19b6c348fff823efde8248364e8ce1be18fc5a46bf47089c5f23f6 run output
+startgen/asan_globals_check.py py 49e968aaf8d3b7572a10d70b5ff29da94a99cc374d3e2d400d518c5142010166 script
+startgen/asan_globals_shadow.expected.tsv tsv b4488fed587620a3254327d52eee564d61e9594d57f568af764453efedac7b2d expected shadow rows of asan_globals
+startgen/bases.sha256 sha256 f87f2e9c10f074fac871ff1c57ebf82f771ad531042d9072ba41c666600a13bc sha256 list
+startgen/codeptr-decl.sh sh 8a733b2d3f0dc4f241f0bc0f1d9270e2fa78c9057c26ad7da97ad9e427e8bc11 script
+startgen/deviation-tools.sha256 sha256 4a04febe0213f5e48ff488591fe7f64acac6de899330496dcb34e107ff0d6ff7 sha256 list
+startgen/flag-reads.af0m.txt txt cee8dbee67a1c96c4789cf949e91f088be5ea6c7bb48540806c4ef04da7e85d8 listing
+startgen/flagreads.py py f6df1cda0572ea85f5b5513049fa4a29659b11c6dfc75430833b3b97f365aa33 script
+startgen/imgread_check.py py 62d6ce4a9ede54caab6495f616f53883f3d82e71cbae05a9b369812a6d4b9307 script
+startgen/nmtext.control-pcap.out out 1a4f6a50a9739af2b10ae9b1c70586392ce538887c929db439c5892a67131b6a run output
+startgen/nmtext.py py 250259da729ce99a59f1cd8d6b8068ce8a0ac1f875ab638baf1d53107bfab302 script
+startgen/owned_globals.py py e2090c24400ce8df0f70596da19d84cde09b54ed6f227a89e0ff00dbb971fb90 script
+startgen/runs-30d/startup-set-2026-10-30d.SHA256SUMS-check.out out 9a006b5f9e65fd1dbf12d2a9bd7f316ab9f4cb00c74e0f236a46710fc30e454d run output: the 2026-10-30d set checked against its SHA256SUMS
+startgen/runs-30d/startup-set-2026-10-30d.sha256 sha256 4fc48cc7fc06e1c31d584cb227582a58f16517931320a9ab58cf7c1c507e9564 sha256 list of the start-up set 2026-10-30d
+startgen/runs/atable.AB12.out out 57427de3d9654c0dfb59b56f6880a0f97093288882bfbe665a0983e09cead610 run output
+startgen/runs/collector-logs.sha256 sha256 a83498444949d100796b4cb6a0f087d431452c7c3af58d19c8a3bbf6d4b9ddc9 sha256 list
+startgen/runs/flagreads.after.out out 6507f88fd50439fa26ae9640f6452c5c632a6ef3305499d1445da3fc260c25a1 run output
+startgen/runs/flagreads.before.out out 2164dfa6c712e9b23faa047acaaaa2d5a176a86ca519f6b232941c8d1fa3bb76 run output
+startgen/runs/gen_ad1k.sites.md md 5d97198b54d45f3669b02c3e8018c6aa6fb5114bc606ec70a9ffd3c3561c9698 gen_ad1k site table
+startgen/runs/gen_ad2.gate-table.md md 24138d5fa6574608320828f3939ec1d9a0186684464fa9d14fde53a576799323 gen_ad2 gate table
+startgen/startup-set-2026-10-30b.SHA256SUMS-check.out out 621a5c1de6087d0e6648dcebdf5519bb3b88c1947477d451edfc5fddf74a2b21 run output
+startgen/startup-set-2026-10-30b.sha256 sha256 ca63cdf0005d95307d8afaaf38bf6d2517a473da921a14db76c8028f3334fc5a sha256 list

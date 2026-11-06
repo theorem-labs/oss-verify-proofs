@@ -1,0 +1,10 @@
+image B: rows by rule {'resolve': 72, 'range start': 2, 'range end': 2, 'FUNC entry': 13, 'same-code function': 8, 'OBJECT start': 10, 'SIZES_KEEP': 6, 'derived image bound': 6, 'symbol': 1, 'not an address': 4}
+kept values that lie in a donor symbol (each a model constant or an instruction word, see RELOC-PLAN.md):
+  B/Rt/RtSF5.v:200 1048576 kept [SIZES_KEEP] (lies in _ZN11__sanitizerL26internal_alloc_placeholderE+0x4e1c0 of the donor)
+  B/Rt/RtSM5T.v:103 0x1427f1 -> 0x13e231 MOVED [symbol] (_ZN11__sanitizer21common_flags_dont_useE+0x89 on both sides): confirm it is an address
+  B/Rt/RtSM5T.v:239 0x0007c283 kept [not an address] (lies in _ZN11__sanitizer17SymbolizerProcess11SendCommandEPKc+0x1f of the donor)
+  B/Rt/RtSM5T.v:240 0x0007c283 kept [not an address] (lies in _ZN11__sanitizer17SymbolizerProcess11SendCommandEPKc+0x1f of the donor)
+  B/Rt/RtSM5T.v:245 0x00160613 kept [not an address] (lies in _ZN11__sanitizerL9useCountsE+0x1db13 of the donor)
+  B/Rt/RtSM5T.v:246 0x00160613 kept [not an address] (lies in _ZN11__sanitizerL9useCountsE+0x1db13 of the donor)
+  B/Rt/RtSM5T.v:473 1048576 kept [SIZES_KEEP] (lies in _ZN11__sanitizerL26internal_alloc_placeholderE+0x4e1c0 of the donor)
+PASS: 0 wrong rows

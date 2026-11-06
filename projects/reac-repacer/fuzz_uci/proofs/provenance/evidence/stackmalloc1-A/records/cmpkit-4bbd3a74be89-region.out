@@ -1,0 +1,2 @@
+# the targets strictcmp2 reports different in pairs.out / pairs-by-address.out, measured with its own region()
+_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE +0x1218: data-differs, targets 0x13f5f / 0x13e5f (.rodata / .rodata); region lengths 51389 / 51165; first 32 bytes 00270048494e543a20696620796f7520646f6e277420636172652061626f7574 / 00270048494e543a20696620796f7520646f6e277420636172652061626f7574; first differing byte at region offset 4241; C string at the target: None / None

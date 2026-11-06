@@ -1,0 +1,6 @@
+grantB-S-call.elf: 270818 360 340 270819 235 335 270820 315 230 
+grantB-S-rodata.elf: 544975   5 205 544976 106 171 
+grantB-S-root.elf: 270555  20   0 
+grantB-U-call.elf:  270818 360 340  270819 235 335  270820 315 230 
+grantB-U-rodata.elf:  544975   5 205  544976 106 171 
+grantB-U-root.elf:  270555  20   0 

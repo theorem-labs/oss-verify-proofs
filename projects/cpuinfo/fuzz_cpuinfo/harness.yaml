@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cpuinfo
 harness: fuzz_cpuinfo
-rocq: OssFuzzTheorems.cpuinfo.fuzz_cpuinfo
+rocq: OSSVerify.cpuinfo.fuzz_cpuinfo
 origin: upstream
 summary: input written to a file and parsed by cpuinfo_linux_parse_multiline_file / parse_small_file /
   parse_cpulist; callbacks only fold the bytes into a volatile sink.

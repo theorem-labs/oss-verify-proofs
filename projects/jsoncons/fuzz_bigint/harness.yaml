@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_bigint
-rocq: OssFuzzTheorems.jsoncons.fuzz_bigint
+rocq: OSSVerify.jsoncons.fuzz_bigint
 origin: upstream
 summary: bigint(input) then a % b and b % a against a fixed 38-digit constant, for inputs < 5000 bytes;
   results discarded; std::runtime_error swallowed.

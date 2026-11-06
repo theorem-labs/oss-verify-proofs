@@ -1,0 +1,171 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import
+PropExec CatExec StoreOk AllocSim MmapSim MemSplit SymExec2 SymExec2Sound SymRun SymDrive SymDriveX.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations. Import SX2. Import SX2S.
+Open Scope bv_scope.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
+Ltac2 tcn__LibKnowFrame () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Init.Peano."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.MemImageType."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CatExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.LibKnowFrame.FPX_1."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.MmapSim."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.StoreOk."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymExec2.SX2."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SymExec2Sound.SX2S."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["1O"; "1Some"; "1bool"; "1cons"; "1length"; "1list"; "1nat"; "1nil"; "1option"; "1true"; "2and"; "2eq"; "2or"; "3lt"; "4Z"; "0E"]; ["5Segment"; "0M"; "0M'"; "6wbytes"; "7apart_b"; "7kn_frame"; "8zfill"; "9rdn"; ":mem_grows"; ";ELit"; ";KBlob"; ";KWord"; ";KZero"; ";SA"; ";adenot"; ";eb"]; [";edenot"; ";env"; ";expr"; ";kentry"; "<estart"; "<flat"; "<kentry_ok"; "<know_ok"; "=add"; "=le"; "=lt"; "=of_nat"; "=pow"; "0a"; "0allkn"; "0b"]; ["0bs"; "0e"; "0k"; "0kn"; "0n"; "0off"; "0segs"; ">Z_to_bv"; ">bv"; ">bv_unsigned"; "0ub"; "0uk"; "0un"; "0x"; "0z"]]).
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+Section FPX_1. Context {fx : PropExec.FPState}.
+Definition apart_b (allkn : list kentry) (ub : expr) (uk un : Z) (b : expr) (k n : Z) : bool :=
+if expr_eqb b ub then (Z.leb (k + n) uk || Z.leb (uk + un) k)%bool
+else ranges_apart allkn ub uk un b k n.
+Lemma apart_b_sound : ltac2:(TCodec.tc2 tcn__LibKnowFrame "QL'5'@%211'Q1'QHyR0%211'8y8%511%311p051'Q3%=11'Q2'>&Q7r:r9r8r7%544321';'2&Dr6r5r4r3r2%67;:54321(9%:3921'<&Q9&Q8&Q4r;(M%12DC%4231%621@%42@?%7261%:231%:22A%<216%>231p0@1p0L1pS:Q31pS6Q41pS0Q61pSJQ61pSHQ71pSFQ91pRNQ;1pQ4Q>1pQ0QG1pS>QI1").
+Proof.
+intros segs E M allkn ub uk un b k n HK H. unfold apart_b in H.
+destruct (expr_eqb b ub) eqn:Heq.
+- apply expr_eqb_eq in Heq. subst b. unfold estart. cbn [a_base a_off].
+apply orb_prop in H. destruct H as [H|H]; apply Z.leb_le in H; lia.
+- eapply ranges_apart_sound; [exact HK | exact H].
+Qed.
+Definition kn_frame1 (allkn : list kentry) (ub : expr) (uk un : Z) (K : kentry) : list kentry :=
+match K with
+| KWord (SA b k) w _ => if apart_b allkn ub uk un b k (Z.of_nat w) then [K] else []
+| KZero (SA b k) (ELit l) =>
+if (Z.leb 0 l && Z.ltb l (2 ^ 64))%bool then
+if apart_b allkn ub uk un b k l then [K]
+else if expr_eqb b ub then
+(if Z.ltb k uk then [KZero (SA b k) (ELit (Z.min l (uk - k)))] else [])
+++ (if Z.ltb (uk + un) (k + l) then [KZero (SA b (Z.max k (uk + un))) (ELit (k + l - Z.max k (uk + un)))] else [])
+else []
+else []
+| KZero _ _ => []
+| KBlob (SA b k) (ELit l) _ => if (Z.leb 0 l && Z.ltb l (2 ^ 64) && apart_b allkn ub uk un b k l)%bool then [K] else []
+| KBlob _ _ _ => []
+| KImg lo hi => if (Z.leb 0 lo && Z.ltb lo hi && Z.leb hi (2 ^ 64) && apart_b allkn ub uk un (ELit 0) lo (hi - lo))%bool then [K] else []
+| KAlign _ _ => [K]
+| KRange _ _ _ => [K]
+| KDisj _ _ _ _ => [K]
+| KWr _ _ => [K]
+end.
+Definition kn_frame (kn : list kentry) (ub : expr) (uk un : Z) : list kentry :=
+flat_map (kn_frame1 kn ub uk un) kn.
+Lemma edenot_lit0 : ltac2:(TCodec.tc2 tcn__LibKnowFrame ">'Q1';'>&QIyR0&Q0r1(Iz%211%5241%8271%;3:14pQ0=1").
+Proof. intros. reflexivity. Qed.
+Lemma know_ok_frame : ltac2:(TCodec.tc2 tcn__LibKnowFrame "R7'5'@%211'Q1'QHyR0%211'8y8%511%311p051pSL62'Q3%>11'Q2'>&Q7r8r7r6r4%544321&Q5(Mr3%2251r2%53:21'<&Q:&QIr1%22L1&Q4r:r5%=2A1%4231%9261&Q9&Q8%124E%321:%?251';r9%11D%=1E%43Q721p061pSLQ=1&H%127Q3r<r;&E%14Q7Q6Q5E%Q9443<1p061p091p0Q11p0Q81pSJQ?1pSHQ@1pSFQB1pS8QD1pQ6QG1pQ4QI1pQ0R21pS>R41").
+Proof.
+intros segs E M M' kn ub uk un HK Hfl OUT GR.
+pose proof (flat_u E _ _ Hfl) as Hu. destruct Hfl as (F1 & F2 & F3 & F4).
+unfold know_ok, kn_frame. apply Forall_forall. intros K' HinF.
+apply in_flat_map in HinF as (K & Hin & Hb).
+pose proof (proj1 (Forall_forall _ _) HK K Hin) as HKK.
+assert (APART : forall b k n, apart_b kn ub uk un b k n = true ->
+((estart E (SA ub uk) + un <= estart E (SA b k))%Z \/ (estart E (SA b k) + n <= estart E (SA ub uk))%Z)).
+{ intros b k n H. eapply apart_b_sound; [exact HK | exact H]. }
+destruct K as [[b k] w v|[b k] len|[b k] len bk|lo hi|e m|e lo hi|[b k] n|a1 n1 a2 n2];
+cbn [kn_frame1] in Hb.
+-
+destruct (apart_b kn ub uk un b k (Z.of_nat w)) eqn:Hap; [|destruct Hb].
+destruct Hb as [<-|[]]. cbn [kentry_ok] in HKK |- *.
+destruct HKK as (Hw & Hf & Hr). split; [exact Hw|]. split; [exact Hf|].
+rewrite <- Hr. apply rdn_agree. intros j Hj.
+pose proof (flat_u E _ _ Hf) as Hub. destruct Hf as (G1 & G2 & G3 & G4).
+apply OUT. rewrite u_small by lia. destruct (APART b k (Z.of_nat w) Hap); lia.
+-
+destruct len as [l| | | | | | |]; try (destruct Hb; fail); [|destruct Hb..].
+destruct (Z.leb 0 l && Z.ltb l (2 ^ 64))%bool eqn:Hl; [|destruct Hb].
+apply andb_prop in Hl as [Hl0 Hl1]. apply Z.leb_le in Hl0. apply Z.ltb_lt in Hl1.
+cbn [kentry_ok] in HKK. destruct HKK as (Hf & Hz).
+assert (El : elenZ E (ELit l) = l) by (unfold elenZ; cbn [edenot]; apply u_small; lia).
+rewrite El in *. pose proof Hf as Hf0. destruct Hf as (G1 & G2 & G3 & G4).
+destruct (apart_b kn ub uk un b k l) eqn:Hap.
++ destruct Hb as [<-|[]]. cbn [kentry_ok]. rewrite El. split; [exact Hf0|].
+intros i Hi. rewrite OUT; [apply Hz; exact Hi|].
+rewrite u_small by lia. destruct (APART b k l Hap); lia.
++ destruct (expr_eqb b ub) eqn:Heq; [|destruct Hb].
+apply expr_eqb_eq in Heq. subst b.
+unfold estart in G1, G2, G4, OUT, Hz |- *. cbn [a_base a_off] in G1, G2, G4, OUT, Hz |- *.
+apply in_app_or in Hb. destruct Hb as [Hb|Hb].
+* destruct (Z.ltb k uk) eqn:Hlt; [|destruct Hb]. apply Z.ltb_lt in Hlt.
+destruct Hb as [<-|[]]. cbn [kentry_ok]. unfold flat, elenZ, estart. cbn [a_base a_off edenot].
+rewrite u_small by lia. split; [split; [exact G1 | split; [exact G2 | split; lia]]|].
+intros i Hi. rewrite OUT; [apply Hz; lia|]. rewrite u_small by lia. lia.
+* destruct (Z.ltb (uk + un) (k + l)) eqn:Hlt; [|destruct Hb]. apply Z.ltb_lt in Hlt.
+destruct Hb as [<-|[]]. cbn [kentry_ok]. unfold flat, elenZ, estart. cbn [a_base a_off edenot].
+rewrite u_small by lia. split; [split; [lia | split; [lia | split; lia]]|].
+intros i Hi. rewrite OUT; [|rewrite u_small by lia; lia].
+replace (bv_unsigned (edenot E ub) + Z.max k (uk + un) + i)%Z
+with (bv_unsigned (edenot E ub) + k + (Z.max k (uk + un) - k + i))%Z by lia.
+apply Hz. lia.
+-
+destruct len as [l| | | | | | |]; try (destruct Hb; fail); [|destruct Hb..].
+destruct (Z.leb 0 l && Z.ltb l (2 ^ 64) && apart_b kn ub uk un b k l)%bool eqn:Hl; [|destruct Hb].
+destruct Hb as [<-|[]].
+apply andb_prop in Hl as [Hl Hap]. apply andb_prop in Hl as [Hl0 Hl1].
+apply Z.leb_le in Hl0. apply Z.ltb_lt in Hl1.
+cbn [kentry_ok] in HKK |- *. destruct HKK as (Hf & Hlen & Hz). split; [exact Hf|]. split; [exact Hlen|].
+assert (El : elenZ E (ELit l) = l) by (unfold elenZ; cbn [edenot]; apply u_small; lia).
+rewrite El in *. destruct Hf as (G1 & G2 & G3 & G4).
+intros i Hi. rewrite OUT; [apply Hz; exact Hi|].
+rewrite u_small by lia. destruct (APART b k l Hap); lia.
+-
+destruct (Z.leb 0 lo && Z.ltb lo hi && Z.leb hi (2 ^ 64) && apart_b kn ub uk un (ELit 0) lo (hi - lo))%bool eqn:Hl; [|destruct Hb].
+destruct Hb as [<-|[]].
+apply andb_prop in Hl as [Hl Hap]. apply andb_prop in Hl as [Hl Hhi]. apply andb_prop in Hl as [Hlo Hlh].
+apply Z.leb_le in Hlo. apply Z.ltb_lt in Hlh. apply Z.leb_le in Hhi.
+cbn [kentry_ok] in HKK |- *. destruct HKK as (H0 & H1 & Hnone). split; [exact H0|]. split; [exact H1|].
+intros i Hi. rewrite OUT; [apply Hnone; exact Hi|].
+pose proof (APART (ELit 0) lo (hi - lo)%Z Hap) as AP. unfold estart in AP |- *. cbn [a_base a_off] in AP |- *.
+rewrite edenot_lit0 in AP. rewrite u_small by lia. lia.
+- destruct Hb as [<-|[]]. exact HKK.
+- destruct Hb as [<-|[]]. exact HKK.
+-
+destruct Hb as [<-|[]]. cbn [kentry_ok] in HKK |- *.
+destruct HKK as (Hf & Hst). split; [exact Hf|].
+intros d m Hd Hm. eapply store_ok_mono; [exact GR | apply Hst; assumption].
+- destruct Hb as [<-|[]]. exact HKK.
+Qed.
+Lemma zfill_inside : ltac2:(TCodec.tc2 tcn__LibKnowFrame "Q7'QHyR0%211'8y8%511%311p051':&Q9&QIr4%22;1r1%42=1%6231&Q:&Q8r3%92B1%3281%5271%>271';&Fr5r2%342@91(1&QGz%22K1%42K1%:3K61p0<1pSLQ11pQ4M1pS:Q31pRLQ41").
+Proof.
+intros a n M x H. unfold zfill, zmem.
+rewrite (proj2 (Z.leb_le _ _) (proj1 H)). rewrite (proj2 (Z.ltb_lt _ _) (proj2 H)). reflexivity.
+Qed.
+Lemma zfill_outside : ltac2:(TCodec.tc2 tcn__LibKnowFrame "Q3'QHyR0%211'8y8%511%311p051'<&Q:&QIr1%22;1r4%42=1%6231&Q9&Q8r3%92B1%3261%5219%>271';&Fr5r2%342>91%:12%63G21p081pSLM1pQ4I1pS:O1pRLQ01").
+Proof. intros a n M x H. apply zfill_out. exact H. Qed.
+Lemma know_ok_zfill : ltac2:(TCodec.tc2 tcn__LibKnowFrame "R3'5'@%211'Q1'QHyR0%211'8y8%511%311p051'Q3%=11'Q2'>&Q7r7r6r5r4%544321&Q5(Mr3%2251r2%53:21&Q:z%2216&Q<+2+R0%3221%72?1r;r:&F&N%A2GF%2241&QG%12Q6Hr9%73421(3(L(I%11N%32:1&Er8%241Q4Q3Q2%83Q:41%Q74CB:1p0E1p0K1p0O1p0Q61pSJQ=1pSHQ>1pSFQ@1pS8QB1pQ4QE1pQ0QN1pS>R01").
+Proof.
+intros segs E M kn ub uk un HK Hfl Hpos Hun.
+pose proof (flat_u E _ _ Hfl) as Hu. pose proof Hfl as Hfl'. destruct Hfl' as (F1 & F2 & F3 & F4).
+unfold estart in F1, F2, F3, F4. cbn [a_base a_off] in F1, F2, F3, F4.
+apply know_ok_cons.
+- eapply (kzero_intro segs E _ ub (edenot E ub) uk (ELit un) un); [reflexivity | | exact F1 | exact Hpos | exact F4 |].
++ cbn [edenot]. apply u_small. clear -Hpos Hun. lia.
++ intros i Hi. apply zfill_inside. rewrite Hu, !u_small by lia. unfold estart. cbn [a_base a_off]. lia.
+- eapply know_ok_frame; [exact HK | exact Hfl | |].
++ intros x Hx. apply zfill_outside. rewrite Hu, u_small by lia. exact Hx.
++ intros x Hx. unfold zfill, zmem. destruct (_ && _)%bool; [discriminate | exact Hx].
+Qed.
+Lemma know_ok_wblob : ltac2:(TCodec.tc2 tcn__LibKnowFrame "RE'5'@%211'Q1'QHyR0%211'8y8%511%311p051'Q3%=11'Q2'>'6%A18&Q7r8r7r6r5%544321&Q5(Mr4%2251&Q;&4r2%22F1%411%93>61';&Or9%221;r3%53F21&=(0%=2Q1@%3221&Q:%@2Q4G%B11&Q<+2+R0%3221%7251r=r<&Cr;&N%Q02EQ6%2251%5341Q6(3(J(I%Q22QFQ:%Q411%311%5391Q>&Er:%241Q1QB5%:3QJ41%QE4CB<1p0E1p0N1p0Q31p0Q:1p0QE1pS2QL1pS6QN1pSHR01pSFR21pS8R41pQ4R71pQ0R@1pS>RB1").
+Proof.
+intros segs E M kn ub uk k bs HK Hfl Hb Hpos Hsmall.
+pose proof (flat_u E _ _ Hfl) as Hu. pose proof Hfl as Hfl'. destruct Hfl' as (F1 & F2 & F3 & F4).
+unfold estart in F1, F2, F3, F4. cbn [a_base a_off] in F1, F2, F3, F4.
+apply know_ok_cons.
+- eapply (kblob_intro segs E _ ub (edenot E ub) uk _ k bs); [reflexivity | exact Hb | | exact F1 | exact F2 | exact F4 |].
++ cbn [edenot]. apply u_small. clear -Hsmall. lia.
++ intros i Hi.
+rewrite MemSplit.wbytes_inside by (rewrite Hu; unfold estart; cbn [a_base a_off]; rewrite ?u_small by lia; lia).
+f_equal. f_equal. rewrite Hu, u_small by lia. unfold estart. cbn [a_base a_off]. lia.
+- eapply know_ok_frame; [exact HK | exact Hfl | |].
++ intros x Hx. apply MemSplit.wbytes_outside; rewrite Hu; [unfold estart; cbn [a_base a_off]; lia | exact Hx].
++ apply wbytes_grows.
+Qed.
+Lemma wbytes_nil_id : ltac2:(TCodec.tc2 tcn__LibKnowFrame "B'QHyR0%211'8y8%511%311p051';&Cr2r1(7%118%53431%73815pRL>1pQ4:1").
+Proof. intros. reflexivity. Qed.
+Lemma rdn_1_of_mem : ltac2:(TCodec.tc2 tcn__LibKnowFrame "Q5'5'@%211'QHyR0%211'8y8%511%311pSL51';r3r2%211(1r1%2291%73941%C1;%>11&Gr5r4u1%4432=1(3(7%11D%33E@1%?2;1%D3;61p0>1pS0I1pRLM1pQ4I1pS>Q21").
+Proof. intros segs M a b H. cbn [rdn]. rewrite H. reflexivity. Qed.
+Lemma kword1_of_mem : ltac2:(TCodec.tc2 tcn__LibKnowFrame "R@'5'@%211'Q1'QHyR0%211'8y8%511%311pSL51'Q2'>';&Q0r6r4%3221r3%63>21':&Q9zr2%3221&Q:+X0%2241%8241&Q8&QIr5%22L1%421A%=2<1%52OD%7215+1%9221&Q<+2+R0%3221%F251r9&QGr7%A2Q;1%C21Q1%42Q=1%611(1%72Q=E%22Q=1%Q93Q=41&Q6r<r;r:(K(M%12A?u1(I%11QA%63431%;4:981p0=1p0I1p0Q31p0Q:1p0QD1pSNQL1pS<QM1pRLR51pS4R01pQ4R21pQ0R;1pS>R=1").
+Proof.
+intros segs E M e a off z He Hz H1 H2 Hm.
+eapply (kword_intro segs E M e a off 1 (ELit z) (Z_to_bv 64 z)); try assumption; try reflexivity; try lia.
+rewrite (rdn_1_of_mem segs M _ _ Hm). cbn. rewrite u_small by lia. reflexivity.
+Qed.
+End FPX_1.
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_cpio_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_cpio_fuzzer
+rocq: OSSVerify.libarchive.libarchive_cpio_fuzzer
 origin: upstream
 summary: Reads the input as a cpio archive (+ all filters); per entry calls pathname, size, mtime, mode,
   uid, gid, ino, nlink, rdev, hardlink and drains archive_read_data. Every return value is discarded.

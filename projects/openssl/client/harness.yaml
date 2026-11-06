@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: client
-rocq: OssFuzzTheorems.openssl.client
+rocq: OSSVerify.openssl.client
 origin: upstream
 summary: TLS client handshake over a memory BIO fed the input, then SSL_read until error; nothing compared.
 entry: FuzzerTestOneInput

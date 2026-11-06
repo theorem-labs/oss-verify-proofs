@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: gpsd
 harness: FuzzClient
-rocq: OssFuzzTheorems.gpsd.FuzzClient
+rocq: OSSVerify.gpsd.FuzzClient
 origin: upstream
 summary: NUL-terminates the input, then json_watch_read (?WATCH), json_device_read (?DEVICE) and, if a
   device path was parsed, parse_uri_dest; all return values discarded.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: postfix
 harness: fuzz_mime
-rocq: OssFuzzTheorems.postfix.fuzz_mime
+rocq: OSSVerify.postfix.fuzz_mime
 origin: oss-fuzz
 summary: One mime_state_update(REC_TYPE_NORM) call over the whole input with five empty callbacks, then
   mime_state_free. Nothing the parser emits is observed.

@@ -1,0 +1,82 @@
+function	build	role	donor file	status	donor	proofs
+diginet_frame_parse	plain	contract	Prog/diginet_frame_parse_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_frame_parse	plain	walk	Prog/diginet_frame_parse.v	relocated	fuzz_frame	18 Qed/Defined
+diginet_frame_parse	ubsan	contract	U/Prog/diginet_frame_parse_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_frame_parse	ubsan	walk	U/Prog/diginet_frame_parse.v	relocated	fuzz_frame	25 Qed/Defined
+diginet_frame_build	plain	contract	Prog/diginet_frame_build_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_frame_build	plain	walk	Prog/diginet_frame_build.v	relocated	fuzz_frame	34 Qed/Defined
+diginet_frame_build	ubsan	contract	U/Prog/diginet_frame_build_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_frame_build	ubsan	walk	U/Prog/diginet_frame_build.v	relocated	fuzz_frame	27 Qed/Defined
+diginet_announce_parse	plain	contract	Prog/diginet_announce_parse_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_announce_parse	plain	walk	Prog/diginet_announce_parse.v	relocated	fuzz_frame	24 Qed/Defined
+diginet_announce_parse	ubsan	contract	U/Prog/diginet_announce_parse_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_announce_parse	ubsan	walk	U/Prog/diginet_announce_parse.v	relocated	fuzz_frame	14 Qed/Defined
+diginet_body_check	plain	contract	Prog/diginet_body_check_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_body_check	plain	walk	Prog/diginet_body_check.v	relocated	fuzz_frame	23 Qed/Defined
+diginet_body_check	ubsan	contract	U/Prog/diginet_body_check_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_body_check	ubsan	walk	U/Prog/diginet_body_check.v	relocated	fuzz_frame	26 Qed/Defined
+diginet_frame_is_keepalive	plain	contract	Prog/diginet_frame_is_keepalive_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_frame_is_keepalive	plain	walk	Prog/diginet_frame_is_keepalive.v	relocated	fuzz_frame	2 Qed/Defined
+diginet_frame_is_keepalive	ubsan	contract	U/Prog/diginet_frame_is_keepalive_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_frame_is_keepalive	ubsan	walk	U/Prog/diginet_frame_is_keepalive.v	relocated	fuzz_frame	3 Qed/Defined
+diginet_mac_is_digidesign	plain	contract	Prog/diginet_mac_is_digidesign_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_mac_is_digidesign	plain	walk	Prog/diginet_mac_is_digidesign.v	relocated	fuzz_frame	1 Qed/Defined
+diginet_mac_is_digidesign	ubsan	contract	U/Prog/diginet_mac_is_digidesign_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_mac_is_digidesign	ubsan	walk	U/Prog/diginet_mac_is_digidesign.v	relocated	fuzz_frame	1 Qed/Defined
+diginet_msg_next	plain	contract	Prog/diginet_msg_next_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_msg_next	plain	walk	Prog/diginet_msg_next.v	relocated	fuzz_frame	19 Qed/Defined
+diginet_msg_next	ubsan	contract	U/Prog/diginet_msg_next_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_msg_next	ubsan	walk	U/Prog/diginet_msg_next.v	relocated	fuzz_frame	24 Qed/Defined
+diginet_cursor_init	plain	contract	Prog/diginet_cursor_init_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_cursor_init	plain	walk	Prog/diginet_cursor_init.v	relocated	fuzz_frame	1 Qed/Defined
+diginet_cursor_init	ubsan	contract	U/Prog/diginet_cursor_init_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_cursor_init	ubsan	walk	U/Prog/diginet_cursor_init.v	relocated	fuzz_frame	2 Qed/Defined
+rd32	ubsan	contract	U/Prog/rd32_c.v	relocated	fuzz_frame	0 Qed/Defined
+rd32	ubsan	walk	U/Prog/rd32.v	relocated	fuzz_frame	4 Qed/Defined
+diginet_sum16	ubsan	contract	U/Prog/diginet_sum16_c.v	relocated	fuzz_frame	0 Qed/Defined
+diginet_sum16	ubsan	walk	U/Prog/diginet_sum16.v	relocated	fuzz_frame	5 Qed/Defined
+copy_strz	ubsan	contract	U/Prog/copy_strz_c.v	relocated	fuzz_frame	0 Qed/Defined
+copy_strz	ubsan	walk	U/Prog/copy_strz.v	relocated	fuzz_frame	18 Qed/Defined
+diginet_personality_from_name	plain	contract	Prog/diginet_personality_from_name_c.v	relocated	fuzz_codec	0 Qed/Defined
+diginet_personality_from_name	plain	walk	Prog/diginet_personality_from_name.v	relocated	fuzz_codec	7 Qed/Defined
+diginet_personality_from_name	ubsan	contract	U/Prog/diginet_personality_from_name_c.v	relocated	fuzz_codec	0 Qed/Defined
+diginet_personality_from_name	ubsan	walk	U/Prog/diginet_personality_from_name.v	relocated	fuzz_codec	7 Qed/Defined
+strcmp	plain	contract	Prog/strcmp_c.v	relocated	fuzz_codec	0 Qed/Defined
+strcmp	plain	walk	Prog/strcmp.v	relocated	fuzz_codec	11 Qed/Defined
+strcmp	ubsan	contract	U/Prog/strcmp_c.v	relocated	fuzz_codec	0 Qed/Defined
+strcmp	ubsan	walk	U/Prog/strcmp.v	relocated	fuzz_codec	11 Qed/Defined
+diginet_body_check	plain	wide contract	Prog/diginet_body_check_w_c.v	relocated	fuzz_frame widep	0 Qed/Defined
+diginet_body_check	plain	wide walk	Prog/diginet_body_check_w.v	relocated	fuzz_frame widep	4 Qed/Defined
+diginet_frame_build	plain	wide contract	Prog/diginet_frame_build_w_c.v	relocated	fuzz_frame widep	0 Qed/Defined
+diginet_frame_build	plain	wide walk	Prog/diginet_frame_build_w.v	relocated	fuzz_frame widep	6 Qed/Defined
+diginet_sum16	ubsan	wide contract	U/Prog/diginet_sum16_w_c.v	relocated	fuzz_frame wideu	0 Qed/Defined
+diginet_sum16	ubsan	wide walk	U/Prog/diginet_sum16_w.v	relocated	fuzz_frame wideu	2 Qed/Defined
+diginet_msg_next	ubsan	wide contract	U/Prog/diginet_msg_next_w_c.v	relocated	fuzz_frame wideu	0 Qed/Defined
+diginet_msg_next	ubsan	wide walk	U/Prog/diginet_msg_next_w.v	relocated	fuzz_frame wideu	2 Qed/Defined
+diginet_body_check	ubsan	wide contract	U/Prog/diginet_body_check_w_c.v	relocated	fuzz_frame wideu	0 Qed/Defined
+diginet_body_check	ubsan	wide walk	U/Prog/diginet_body_check_w.v	relocated	fuzz_frame wideu	5 Qed/Defined
+diginet_frame_build	ubsan	wide contract	U/Prog/diginet_frame_build_w_c.v	relocated	fuzz_frame wideu	0 Qed/Defined
+diginet_frame_build	ubsan	wide walk	U/Prog/diginet_frame_build_w.v	relocated	fuzz_frame wideu	5 Qed/Defined
+diginet_frame_parse	plain	equality	-	diginet_frame_parse: 444 bytes at 0x136f0 / 0x1771c, 4 pc-relative words (2 differ), all targets move	fuzz_frame	
+diginet_frame_parse	ubsan	equality	-	diginet_frame_parse: 488 bytes at 0x13a18 / 0x18034, 7 pc-relative words (2 differ), all targets move	fuzz_frame	
+diginet_frame_build	plain	equality	-	diginet_frame_build: 516 bytes at 0x138ac / 0x178d8, 8 pc-relative words (5 differ), all targets move	fuzz_frame	
+diginet_frame_build	ubsan	equality	-	diginet_frame_build: 704 bytes at 0x13c44 / 0x18260, 10 pc-relative words (5 differ), all targets move	fuzz_frame	
+diginet_announce_parse	plain	equality	-	diginet_announce_parse: 212 bytes at 0x13ab0 / 0x17adc, 4 pc-relative words (0 differ), all targets move	fuzz_frame	
+diginet_announce_parse	ubsan	equality	-	diginet_announce_parse: 192 bytes at 0x13f04 / 0x18520, 4 pc-relative words (0 differ), all targets move	fuzz_frame	
+diginet_body_check	plain	equality	-	diginet_body_check: 268 bytes at 0x13b84 / 0x17c38, 4 pc-relative words (0 differ), all targets move	fuzz_frame	
+diginet_body_check	ubsan	equality	-	diginet_body_check: 328 bytes at 0x14028 / 0x186cc, 4 pc-relative words (0 differ), all targets move	fuzz_frame	
+diginet_frame_is_keepalive	plain	equality	-	diginet_frame_is_keepalive: 48 bytes at 0x136c0 / 0x176ec, 0 pc-relative words (0 differ), all targets move	fuzz_frame	
+diginet_frame_is_keepalive	ubsan	equality	-	diginet_frame_is_keepalive: 64 bytes at 0x139d8 / 0x17ff4, 0 pc-relative words (0 differ), all targets move	fuzz_frame	
+diginet_mac_is_digidesign	plain	equality	-	diginet_mac_is_digidesign: 48 bytes at 0x13690 / 0x176bc, 0 pc-relative words (0 differ), all targets move	fuzz_frame	
+diginet_mac_is_digidesign	ubsan	equality	-	diginet_mac_is_digidesign: 68 bytes at 0x13994 / 0x17fb0, 0 pc-relative words (0 differ), all targets move	fuzz_frame	
+diginet_msg_next	plain	equality	-	diginet_msg_next: 396 bytes at 0x13cb4 / 0x17d68, 9 pc-relative words (0 differ), all targets move	fuzz_frame	
+diginet_msg_next	ubsan	equality	-	diginet_msg_next: 480 bytes at 0x141a0 / 0x18844, 9 pc-relative words (0 differ), all targets move	fuzz_frame	
+diginet_cursor_init	plain	equality	-	diginet_cursor_init: 36 bytes at 0x13c90 / 0x17d44, 0 pc-relative words (0 differ), all targets move	fuzz_frame	
+diginet_cursor_init	ubsan	equality	-	diginet_cursor_init: 48 bytes at 0x14170 / 0x18814, 0 pc-relative words (0 differ), all targets move	fuzz_frame	
+rd32	ubsan	equality	-	rd32: 68 bytes at 0x13c00 / 0x1821c, 0 pc-relative words (0 differ), all targets move	fuzz_frame	
+diginet_sum16	ubsan	equality	-	diginet_sum16: 80 bytes at 0x13944 / 0x17f60, 0 pc-relative words (0 differ), all targets move	fuzz_frame	
+copy_strz	ubsan	equality	-	copy_strz: 100 bytes at 0x13fc4 / 0x185e0, 1 pc-relative words (0 differ), all targets move	fuzz_frame	
+diginet_personality_from_name	plain	equality	-	diginet_personality_from_name: 136 bytes at 0x1523c / 0x17bb0, 3 pc-relative words (2 differ), all targets move	fuzz_codec	
+diginet_personality_from_name	ubsan	equality	-	diginet_personality_from_name: 136 bytes at 0x155f0 / 0x18644, 3 pc-relative words (2 differ), all targets move	fuzz_codec	
+strcmp	plain	equality	-	strcmp: 56 bytes equal (0x1dcc4 -> 0x1fe0c)	fuzz_codec	
+strcmp	ubsan	equality	-	strcmp: 56 bytes equal (0x1e14c -> 0x2093c)	fuzz_codec	

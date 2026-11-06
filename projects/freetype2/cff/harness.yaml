@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: freetype2
 harness: cff
-rocq: OssFuzzTheorems.freetype2.cff
+rocq: OSSVerify.freetype2.cff
 origin: upstream
 summary: template.cpp calls `(void) target.run(data, size)` on a static freetype::CffFuzzTarget; the FuzzTarget/FaceFuzzTarget
   framework (fuzzing/src/targets, iterators/, visitors/) loads faces, named instances, sizes and glyphs,

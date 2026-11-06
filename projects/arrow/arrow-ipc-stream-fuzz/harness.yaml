@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: arrow
 harness: arrow-ipc-stream-fuzz
-rocq: OssFuzzTheorems.arrow.arrow_ipc_stream_fuzz
+rocq: OSSVerify.arrow.arrow_ipc_stream_fuzz
 origin: upstream
 summary: ToString() on each batch that validated (printing must not crash).
 entry: LLVMFuzzerTestOneInput

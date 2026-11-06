@@ -1,0 +1,12 @@
+# alreloc per-numeral report: plugin-hostd/fuzz_command lib/A/Rt/RtStack.v at 781f46bc05cd -> libdiginet/fuzz_transport asan lib/A/Rt/RtStack.v: written
+# source image <AGENTS>/pau-pipeline/plugin-hostd/unstripped/fuzz_command/fuzz_command.asan; unit image <WORK>/target/unstripped/fuzz_transport/fuzz_transport.asan
+file:line	old	new	rule	old in source image	new in unit image
+A/Rt/RtStack.v:20	0x3f908	0x3f908	resolve (identity)	__asan_stack_malloc_0	__asan_register_globals+0xd0
+A/Rt/RtStack.v:20	0x3fa7c	0x3fa7c	resolve (identity)	__asan_stack_malloc_1	__asan_register_globals+0x244
+A/Rt/RtStack.v:20	0x3fc0c	0x3fc0c	resolve (identity)	__asan_stack_malloc_3	__asan_register_globals+0x3d4
+A/Rt/RtStack.v:20	0x3fdb8	0x3fdb8	resolve (identity)	__asan_stack_malloc_4	__asan_register_globals+0x580
+A/Rt/RtStack.v:20	0x3ff84	0x3ff84	resolve (identity)	__asan_stack_malloc_5	__asan_register_globals+0x74c
+A/Rt/RtStack.v:24	0x40244	0x40244	resolve (identity)	__asan_stack_malloc_7	__asan_register_globals+0xa0c
+A/Rt/RtStack.v:26	0x40190	0x40190	resolve (identity)	__asan_stack_free_5	__asan_register_globals+0x958
+A/Rt/RtStack.v:28	0x403c0	0x403c0	resolve (identity)	__asan_stack_free_7	__asan_register_globals+0xb88
+A/Rt/RtStack.v:74	0x40190	0x40190	resolve (identity)	__asan_stack_free_5	__asan_register_globals+0x958

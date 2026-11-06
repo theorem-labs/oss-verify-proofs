@@ -1,0 +1,6 @@
+# self-test: 133 known answers OK (yh03regen 94 + yh03check 39)
+# section bounds: proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v: 14 of 14 section cells equal the image's section headers
+# unit identity: proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v: the image's 4 PT_LOADs equal the plain pin 76a5b76842fc (<pinned>/fuzz_boxreg.plain, pinned by projects/libreac/fuzz_boxreg/harness.yaml; ELF section-header fields and build-id masked)
+# COPIED: not checked for proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v (pass --other-side THE_OTHER_BUILDS_YH03.v and --proofs THE_UNITS_PROOFS_DIR)
+# rows checked: 128; rows not OK: 26
+# D cells by symbol: 41 (OK 41, BAD 0); by the code of the function they name: OK-BY-LOAD 1, UNMEASURED 0; NOSYM 46 (no symbol of the name, not checked); string cells 22 (checked only by yh03regen --elf, with an unstripped image)

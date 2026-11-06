@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: smime
-rocq: OssFuzzTheorems.openssl.smime
+rocq: OSSVerify.openssl.smime
 origin: upstream
 summary: SMIME_read_PKCS7, then for each signer info PKCS7_cert_from_signer_info and PKCS7_get_smimecap;
   results only freed.

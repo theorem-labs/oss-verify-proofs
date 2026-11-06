@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: colorquant_fuzzer
-rocq: OssFuzzTheorems.leptonica.colorquant_fuzzer
+rocq: OSSVerify.leptonica.colorquant_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then a chain of colour quantisers (pixThresholdTo4bpp, pixColorGray, pixOctcubeQuantFromCmap,
   pixMedianCutQuant x4, pixFewColors*QuantMixed, pixOctreeQuantByPopulation, pixColorSegment, pixOctreeColorQuant

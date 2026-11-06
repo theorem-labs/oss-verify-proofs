@@ -1,0 +1,7 @@
+donor libreac/fuzz_ctrl at e10f488c53fc: 369 lib/Reusable modules with an A twin in lib/A (its image-B core under lib/Reusable)
+B/Rt/StackMalloc0Tbl.v:19: lib.Reusable -> lib.B for YB1v YE34 YF0l YF0m YF0x YE2y
+B/Rt/StackMalloc0Tbl.v: 53 modules Required under the unit's prefix, 53 resolved
+B/Rt/StackMalloc0.v:19: lib.Reusable -> lib.B for YB1v YE34 YF0l YF0m YF0x YE2y
+B/Rt/StackMalloc0.v: 56 modules Required under the unit's prefix, 56 resolved
+B/Rt/StackRawKept.v: no Require of a core module from lib.Reusable
+B/Rt/StackRawKept.v: 22 modules Required under the unit's prefix, 22 resolved

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tmux
 harness: input-fuzzer
-rocq: OssFuzzTheorems.tmux.input_fuzzer
+rocq: OSSVerify.tmux.input_fuzzer
 origin: upstream
 summary: input_parse_buffer feeds the input (<=512 bytes) to an 80x25 pane's terminal-escape parser, then
   drains the command queue and runs the libevent loop once.

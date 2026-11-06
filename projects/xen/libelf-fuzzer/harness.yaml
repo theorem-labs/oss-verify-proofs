@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: xen
 harness: libelf-fuzzer
-rocq: OssFuzzTheorems.xen.libelf_fuzzer
+rocq: OSSVerify.xen.libelf_fuzzer
 origin: upstream
 summary: elf_init, elf_parse_binary, then elf_xen_parse twice (hvm false/true) on the input; results ignored.
 entry: LLVMFuzzerTestOneInput

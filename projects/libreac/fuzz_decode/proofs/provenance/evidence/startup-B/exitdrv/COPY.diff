@@ -1,0 +1,206 @@
+# written by copycheck.py: every removed span is shown as <redacted>; nothing else differs
+--- original/EXITDRV.md (sha256 337cd4a543e524427f97317c58e593077da71c65186ba04ddd41b09402f15c6f)
++++ copy/EXITDRV.md (sha256 25ddc26fb32cb9b34c3f30b97be458b723f089af0eec37a548ad51582c3d7cf9)
+@@ -3,1 +3,1 @@
+-<redacted> / <redacted>, 2026-10-29. Read-only on every git tree; nothing built, committed or pushed. rule 24:
++OWNER_WORKER / LANE_1, 2026-10-29. Read-only on every git tree; nothing built, committed or pushed. rule 24:
+@@ -4,1 +4,1 @@
+-no function proved — only numerals moved and module paths renamed. Owner of the decode files: <redacted>; porter:
++no function proved — only numerals moved and module paths renamed. Owner of the decode files: OWNER_WORKER; porter:
+@@ -5,1 +5,1 @@
+-<redacted>. Donor: `proofs/cgif/cgif_file_fuzzer` at `origin/ossv/recipes c8557374ad2e` (hub `<redacted>`).
++PORTER_WORKER. Donor: `proofs/cgif/cgif_file_fuzzer` at `origin/ossv/recipes c8557374ad2e` (hub `HUB`).
+@@ -7,1 +7,1 @@
+-## 0. Deliverables (all under <redacted>/)
++## 0. Deliverables (all under WORKDIR/)
+@@ -17,1 +17,1 @@
+-Revision 2 (<redacted>, 2026-10-29 10:4xZ), from the first build (log <redacted>):
++Revision 2 (LANE_2, 2026-10-29 10:4xZ), from the first build (log WORKDIR_LOG):
+@@ -18,1 +18,1 @@
+-- `TfibSyms` -> `GrantSyms` (AF0m.v's record; owner <redacted> 10:02Z), was `DecodeSyms`.
++- `TfibSyms` -> `GrantSyms` (AF0m.v's record; owner PORTER_WORKER 10:02Z), was `DecodeSyms`.
+@@ -24,1 +24,1 @@
+-Regenerate: `python3 <redacted>/exitdrv.py` (prints the numeral table + CONTROLS, re-reads the donor from
++Regenerate: `python3 WORKDIR/exitdrv.py` (prints the numeral table + CONTROLS, re-reads the donor from
+@@ -30,1 +30,1 @@
+-- **Pins (image BYTES)** — the <redacted> ORIGINALs, re-hashed here:
++- **Pins (image BYTES)** — the LANE_3 ORIGINALs, re-hashed here:
+@@ -33,1 +33,1 @@
+-  Symlinked under `<redacted>/`. **Every cell value and every ODR / shadow / segment fact is read
++  Symlinked under `WORKDIR/`. **Every cell value and every ODR / shadow / segment fact is read
+@@ -35,1 +35,1 @@
+-- **Symbols** — the unstripped twins `<redacted>/fuzz_decode.asan{,-ubsan}` `.symtab` only
++- **Symbols** — the unstripped twins `WORKDIR/fuzz_decode.asan{,-ubsan}` `.symtab` only
+@@ -37,1 +37,1 @@
+-- **Code map** — `<redacted>/binmatch.cgif.asan.json` (side A) and `…asan-ubsan.json` (side B): the
++- **Code map** — `WORKDIR/binmatch.cgif.asan.json` (side A) and `…asan-ubsan.json` (side B): the
+@@ -40,1 +40,1 @@
+-- **Data map (side A)** — `<redacted>/map.cgif2decode.asan.json` (<redacted> `<redacted>`, cgif-asan→decode-asan): a data
++- **Data map (side A)** — `WORKDIR/map.cgif2decode.asan.json` (MAP_KIT `MAP_TOOL`, cgif-asan→decode-asan): a data
+@@ -43,1 +43,1 @@
+-- **Data map (side B)** — no cgif-asan-ubsan <redacted> is needed: AE23 and YE23 (and AD1y/YD1y) are the SAME
++- **Data map (side B)** — no cgif-asan-ubsan MAP_TOOL is needed: AE23 and YE23 (and AD1y/YD1y) are the SAME
+@@ -60,1 +60,1 @@
+-  (cgif's are all −1). This is exactly the donor-breaking fact (<redacted> F1).
++  (cgif's are all −1). This is exactly the donor-breaking fact (WORKDIR_NOTE_1 F1).
+@@ -93,1 +93,1 @@
+-**not** the <redacted> value, cert F3); `X3_PC` 0x300c4 | 0x30110 (`__do_fini`); `X23_RA` 0x8883c | 0x88de4
++**not** the MAP_TOOL value, cert F3); `X3_PC` 0x300c4 | 0x30110 (`__do_fini`); `X23_RA` 0x8883c | 0x88de4
+@@ -105,1 +105,1 @@
+-Unsplit, no owned entry meets DRV_IVS (DRVW_not_owned holds: <redacted>/drvivs.py, 0 overlaps), and XW2 still lists the
++Unsplit, no owned entry meets DRV_IVS (DRVW_not_owned holds: WORKDIR/drvivs.py, 0 overlaps), and XW2 still lists the
+@@ -206,1 +206,1 @@
+-## 6. Renames applied (<redacted> §3)
++## 6. Renames applied (WORKDIR_NOTE_2 §3)
+@@ -221,1 +221,1 @@
+-2. **Record / field names depend on <redacted>'s AF0m / AD2l.** I applied `TfibSyms → DecodeSyms` per <redacted> §3
++2. **Record / field names depend on PORTER_WORKER's AF0m / AD2l.** I applied `TfibSyms → DecodeSyms` per WORKDIR_NOTE_2 §3
+@@ -223,1 +223,1 @@
+-   differently, a one-line `\b` rename in these files follows. Coordinate with <redacted> (porter of AF0m).
++   differently, a one-line `\b` rename in these files follows. Coordinate with PORTER_WORKER (porter of AF0m).
+@@ -225,1 +225,1 @@
+-   from the driver window (<redacted> F2). That is AF0m's file, not mine.
++   from the driver window (WORKDIR_NOTE_1 F2). That is AF0m's file, not mine.
+--- original/exitdrv.run2.out (sha256 2dec73eee925572cc0676e3e83ac1e60da78ca513ecaf1f29cbcd65b8e618679)
++++ copy/exitdrv.run2.out (sha256 24a4e1bdf3c74e45de9635a465f286df217302e93a2a7919b05cc83308bf2d42)
+@@ -26,1 +26,1 @@
+-  0x9da20     0x9dc90     DATA   0x987c8     0x98d70     <redacted>+symtab ('.fini_array', 0)
++  0x9da20     0x9dc90     DATA   0x987c8     0x98d70     MAP_TOOL+symtab ('.fini_array', 0)
+@@ -27,1 +27,1 @@
+-  0x9da28     0x9dc98     DATA   0x987d0     0x98d78     <redacted>+symtab ('__fini', 0)
++  0x9da28     0x9dc98     DATA   0x987d0     0x98d78     MAP_TOOL+symtab ('__fini', 0)
+@@ -28,1 +28,1 @@
+-  0x9da30     0x9dca0     DATA   0x987d8     0x98d80     <redacted>+symtab ('_ZL7preinit', 0)
++  0x9da30     0x9dca0     DATA   0x987d8     0x98d80     MAP_TOOL+symtab ('_ZL7preinit', 0)
+@@ -35,1 +35,1 @@
+-  0xa2660     0xa28d0     DATA   0x9d3f8     0x9d9a0     <redacted>+symtab ('__stderr_used', 0)
++  0xa2660     0xa28d0     DATA   0x9d3f8     0x9d9a0     MAP_TOOL+symtab ('__stderr_used', 0)
+@@ -36,1 +36,1 @@
+-  0xa2668     0xa28d8     DATA   0x9d400     0x9d9a8     <redacted>+symtab ('__stdout_FILE', 0)
++  0xa2668     0xa28d8     DATA   0x9d400     0x9d9a8     MAP_TOOL+symtab ('__stdout_FILE', 0)
+@@ -37,1 +37,1 @@
+-  0xa2750     0xa29c0     DATA   0x9d4e8     0x9da90     <redacted>+symtab ('__stdout_used', 0)
++  0xa2750     0xa29c0     DATA   0x9d4e8     0x9da90     MAP_TOOL+symtab ('__stdout_used', 0)
+@@ -38,1 +38,1 @@
+-  0xa2758     0xa29c8     DATA   0x9d4f0     0x9da98     <redacted>+symtab ('__stdin_FILE', 0)
++  0xa2758     0xa29c8     DATA   0x9d4f0     0x9da98     MAP_TOOL+symtab ('__stdin_FILE', 0)
+@@ -39,1 +39,1 @@
+-  0xa2840     0xa2ab0     DATA   0x9d5d8     0x9db80     <redacted>+symtab ('__stdin_used', 0)
++  0xa2840     0xa2ab0     DATA   0x9d5d8     0x9db80     MAP_TOOL+symtab ('__stdin_used', 0)
+@@ -40,1 +40,1 @@
+-  0xa2848     0xa2ab8     DATA   0x9d5e0     0x9db88     <redacted>+symtab ('__default_stacksize', 0)
++  0xa2848     0xa2ab8     DATA   0x9d5e0     0x9db88     MAP_TOOL+symtab ('__default_stacksize', 0)
+@@ -41,1 +41,1 @@
+-  0xa2940     0xa2bc0     DATA   0x9d700     0x9dc80     <redacted>+symtab ('___asan_globals_registered', 0)
++  0xa2940     0xa2bc0     DATA   0x9d700     0x9dc80     MAP_TOOL+symtab ('___asan_globals_registered', 0)
+@@ -42,1 +42,1 @@
+-  0xa2948     0xa2bc8     DATA   0x9d708     0x9dc88     <redacted>+symtab ('__do_init.__initialized', 0)
++  0xa2948     0xa2bc8     DATA   0x9d708     0x9dc88     MAP_TOOL+symtab ('__do_init.__initialized', 0)
+@@ -43,1 +43,1 @@
+-  0xa2990     0xa2c10     DATA   0x9d750     0x9dcd0     <redacted>+symtab ('__do_fini.__finalized', 0)
++  0xa2990     0xa2c10     DATA   0x9d750     0x9dcd0     MAP_TOOL+symtab ('__do_fini.__finalized', 0)
+@@ -44,1 +44,1 @@
+-  0xa38b0     0xa3b30     DATA   0x9e670     0x9ebf0     <redacted>+symtab ('_ZN6__asanL14mu_for_globalsE', 0)
++  0xa38b0     0xa3b30     DATA   0x9e670     0x9ebf0     MAP_TOOL+symtab ('_ZN6__asanL14mu_for_globalsE', 0)
+@@ -45,1 +45,1 @@
+-  0xa38b8     0xa3b38     DATA   0x9e678     0x9ebf8     <redacted>+symtab ('_ZN6__asanL14mu_for_globalsE', 8)
++  0xa38b8     0xa3b38     DATA   0x9e678     0x9ebf8     MAP_TOOL+symtab ('_ZN6__asanL14mu_for_globalsE', 8)
+@@ -46,1 +46,1 @@
+-  0x5d8654    0x5d88d4    DATA   0x5d3414    0x5d3994    <redacted>+symtab ('oft_in_callback', 0)
++  0x5d8654    0x5d88d4    DATA   0x5d3414    0x5d3994    MAP_TOOL+symtab ('oft_in_callback', 0)
+@@ -48,1 +48,1 @@
+-  0x5d8f90    0x5d9210    DATA   0x5d3d58    0x5d42d8    <redacted>+symtab ('builtin_tls', 200)
++  0x5d8f90    0x5d9210    DATA   0x5d3d58    0x5d42d8    MAP_TOOL+symtab ('builtin_tls', 200)
+@@ -49,1 +49,1 @@
+-  0x5f8fe0    0x5f9260    DATA   0x5f3da8    0x5f4328    <redacted>+symtab ('finished_atexit', 0)
++  0x5f8fe0    0x5f9260    DATA   0x5f3da8    0x5f4328    MAP_TOOL+symtab ('finished_atexit', 0)
+@@ -50,1 +50,1 @@
+-  0x5f8fe4    0x5f9264    DATA   0x5f3dac    0x5f432c    <redacted>+symtab ('lock', 0)
++  0x5f8fe4    0x5f9264    DATA   0x5f3dac    0x5f432c    MAP_TOOL+symtab ('lock', 0)
+@@ -51,1 +51,1 @@
+-  0x5f8fe8    0x5f9268    DATA   0x5f3db0    0x5f4330    <redacted>+symtab ('slot', 0)
++  0x5f8fe8    0x5f9268    DATA   0x5f3db0    0x5f4330    MAP_TOOL+symtab ('slot', 0)
+@@ -52,1 +52,1 @@
+-  0x5f8ff0    0x5f9270    DATA   0x5f3db8    0x5f4338    <redacted>+symtab ('head', 0)
++  0x5f8ff0    0x5f9270    DATA   0x5f3db8    0x5f4338    MAP_TOOL+symtab ('head', 0)
+@@ -53,1 +53,1 @@
+-  0x5f8ff8    0x5f9278    DATA   0x5f3dc0    0x5f4340    <redacted>+symtab ('builtin', 0)
++  0x5f8ff8    0x5f9278    DATA   0x5f3dc0    0x5f4340    MAP_TOOL+symtab ('builtin', 0)
+@@ -54,1 +54,1 @@
+-  0x5f9000    0x5f9280    DATA   0x5f3dc8    0x5f4348    <redacted>+symtab ('builtin', 8)
++  0x5f9000    0x5f9280    DATA   0x5f3dc8    0x5f4348    MAP_TOOL+symtab ('builtin', 8)
+@@ -55,1 +55,1 @@
+-  0x5f9008    0x5f9288    DATA   0x5f3dd0    0x5f4350    <redacted>+symtab ('builtin', 16)
++  0x5f9008    0x5f9288    DATA   0x5f3dd0    0x5f4350    MAP_TOOL+symtab ('builtin', 16)
+@@ -56,1 +56,1 @@
+-  0x5f9100    0x5f9380    DATA   0x5f3ec8    0x5f4448    <redacted>+symtab ('builtin', 264)
++  0x5f9100    0x5f9380    DATA   0x5f3ec8    0x5f4448    MAP_TOOL+symtab ('builtin', 264)
+@@ -57,1 +57,1 @@
+-  0x5f9108    0x5f9388    DATA   0x5f3ed0    0x5f4450    <redacted>+symtab ('builtin', 272)
++  0x5f9108    0x5f9388    DATA   0x5f3ed0    0x5f4450    MAP_TOOL+symtab ('builtin', 272)
+@@ -58,1 +58,1 @@
+-  0x5f9110    0x5f9390    DATA   0x5f3ed8    0x5f4458    <redacted>+symtab ('builtin', 280)
++  0x5f9110    0x5f9390    DATA   0x5f3ed8    0x5f4458    MAP_TOOL+symtab ('builtin', 280)
+@@ -59,1 +59,1 @@
+-  0x5f9200    0x5f9480    DATA   0x5f3fc8    0x5f4548    <redacted>+symtab ('exit.exit_lock', 0)
++  0x5f9200    0x5f9480    DATA   0x5f3fc8    0x5f4548    MAP_TOOL+symtab ('exit.exit_lock', 0)
+@@ -60,1 +60,1 @@
+-  0x5f9204    0x5f9484    DATA   0x5f3fcc    0x5f454c    <redacted>+symtab ('.bss', 5597388)
++  0x5f9204    0x5f9484    DATA   0x5f3fcc    0x5f454c    MAP_TOOL+symtab ('.bss', 5597388)
+@@ -61,1 +61,1 @@
+-  0x5f9223    0x5f94a3    DATA   0x5f3feb    0x5f456b    <redacted>+symtab ('__libc', 3)
++  0x5f9223    0x5f94a3    DATA   0x5f3feb    0x5f456b    MAP_TOOL+symtab ('__libc', 3)
+@@ -62,1 +62,1 @@
+-  0x5f9224    0x5f94a4    DATA   0x5f3fec    0x5f456c    <redacted>+symtab ('__libc', 4)
++  0x5f9224    0x5f94a4    DATA   0x5f3fec    0x5f456c    MAP_TOOL+symtab ('__libc', 4)
+@@ -63,1 +63,1 @@
+-  0x5f9680    0x5f9900    DATA   0x5f4448    0x5f49c8    <redacted>+symtab ('ofl_lock', 0)
++  0x5f9680    0x5f9900    DATA   0x5f4448    0x5f49c8    MAP_TOOL+symtab ('ofl_lock', 0)
+@@ -64,1 +64,1 @@
+-  0x5f9688    0x5f9908    DATA   0x5f4450    0x5f49d0    <redacted>+symtab ('ofl_head', 0)
++  0x5f9688    0x5f9908    DATA   0x5f4450    0x5f49d0    MAP_TOOL+symtab ('ofl_head', 0)
+@@ -65,1 +65,1 @@
+-  0x5f9690    0x5f9910    DATA   0x5f4458    0x5f49d8    <redacted>+symtab ('buf', 0)
++  0x5f9690    0x5f9910    DATA   0x5f4458    0x5f49d8    MAP_TOOL+symtab ('buf', 0)
+@@ -76,1 +76,1 @@
+-  0xa2578     0xa27e8     DEC    0x9d310     0x9d8b8     <redacted>+symtab ('__stderr_FILE', 0)
++  0xa2578     0xa27e8     DEC    0x9d310     0x9d8b8     MAP_TOOL+symtab ('__stderr_FILE', 0)
+@@ -77,1 +77,1 @@
+-  0xa2668     0xa28d8     DEC    0x9d400     0x9d9a8     <redacted>+symtab ('__stdout_FILE', 0)
++  0xa2668     0xa28d8     DEC    0x9d400     0x9d9a8     MAP_TOOL+symtab ('__stdout_FILE', 0)
+@@ -78,1 +78,1 @@
+-  0xa2758     0xa29c8     DEC    0x9d4f0     0x9da98     <redacted>+symtab ('__stdin_FILE', 0)
++  0xa2758     0xa29c8     DEC    0x9d4f0     0x9da98     MAP_TOOL+symtab ('__stdin_FILE', 0)
+@@ -79,1 +79,1 @@
+-  0x5d8f90    0x5d9210    DEC    0x5d3d58    0x5d42d8    <redacted>+symtab ('builtin_tls', 200)
++  0x5d8f90    0x5d9210    DEC    0x5d3d58    0x5d42d8    MAP_TOOL+symtab ('builtin_tls', 200)
+@@ -80,1 +80,1 @@
+-  0x5f8fd0    0x5f9250    DEC    0x5f3d98    0x5f4318    <redacted>+symtab ('__stack_chk_guard', 0)
++  0x5f8fd0    0x5f9250    DEC    0x5f3d98    0x5f4318    MAP_TOOL+symtab ('__stack_chk_guard', 0)
+@@ -81,1 +81,1 @@
+-  0x5f96a0    0x5f9920    DEC    0x5f4468    0x5f49e0    <redacted>+symtab ('buf', 8)
++  0x5f96a0    0x5f9920    DEC    0x5f4468    0x5f49e0    MAP_TOOL+symtab ('buf', 8)
+@@ -86,1 +86,1 @@
+-  0xa2530     0xa27a0     DRV    0x9d2c8     0x9d870     <redacted>+symtab ('oft_arg0', 0)
++  0xa2530     0xa27a0     DRV    0x9d2c8     0x9d870     MAP_TOOL+symtab ('oft_arg0', 0)
+@@ -87,1 +87,1 @@
+-  0xa2870     0xa2ae0     DRV    0x9d610     0x9dbb0     <redacted>+symtab ('asan_globals', 0)
++  0xa2870     0xa2ae0     DRV    0x9d610     0x9dbb0     MAP_TOOL+symtab ('asan_globals', 0)
+@@ -88,1 +88,1 @@
+-  0xa2948     0xa2bc8     DRV    0x9d708     0x9dc88     <redacted>+symtab ('__do_init.__initialized', 0)
++  0xa2948     0xa2bc8     DRV    0x9d708     0x9dc88     MAP_TOOL+symtab ('__do_init.__initialized', 0)
+@@ -89,1 +89,1 @@
+-  0xa2990     0xa2c10     DRV    0x9d750     0x9dcd0     <redacted>+symtab ('__do_fini.__finalized', 0)
++  0xa2990     0xa2c10     DRV    0x9d750     0x9dcd0     MAP_TOOL+symtab ('__do_fini.__finalized', 0)
+@@ -90,1 +90,1 @@
+-  0x5d8650    0x5d88d0    DRV    0x5d3410    0x5d3990    <redacted>+symtab ('target_run.initialized', 0)
++  0x5d8650    0x5d88d0    DRV    0x5d3410    0x5d3990    MAP_TOOL+symtab ('target_run.initialized', 0)
+@@ -91,1 +91,1 @@
+-  0x5d8f38    0x5d91b8    DRV    0x5d3d00    0x5d4280    <redacted>+symtab ('builtin_tls', 112)
++  0x5d8f38    0x5d91b8    DRV    0x5d3d00    0x5d4280    MAP_TOOL+symtab ('builtin_tls', 112)
+@@ -92,1 +92,1 @@
+-  0x5f8fe0    0x5f9260    DRV    0x5f3da8    0x5f4328    <redacted>+symtab ('finished_atexit', 0)
++  0x5f8fe0    0x5f9260    DRV    0x5f3da8    0x5f4328    MAP_TOOL+symtab ('finished_atexit', 0)
+@@ -93,1 +93,1 @@
+-  0x5f9200    0x5f9480    DRV    0x5f3fc8    0x5f4548    <redacted>+symtab ('exit.exit_lock', 0)
++  0x5f9200    0x5f9480    DRV    0x5f3fc8    0x5f4548    MAP_TOOL+symtab ('exit.exit_lock', 0)

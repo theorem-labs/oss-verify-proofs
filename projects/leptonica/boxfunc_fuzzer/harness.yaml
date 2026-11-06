@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: boxfunc_fuzzer
-rocq: OssFuzzTheorems.leptonica.boxfunc_fuzzer
+rocq: OSSVerify.leptonica.boxfunc_fuzzer
 origin: upstream
 summary: boxaReadMem, then boxaReconcileAllByMedian twice (L_ADJUST_LEFT_AND_RIGHT and L_ADJUST_SKIP);
   results discarded.

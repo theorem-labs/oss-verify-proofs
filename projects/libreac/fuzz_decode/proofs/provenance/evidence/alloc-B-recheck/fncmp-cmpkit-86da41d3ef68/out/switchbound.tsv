@@ -1,0 +1,3 @@
+function	word	measurement	X table	Y table	detail
+_ZN11__sanitizer9VSNPrintfEPciPKcPv	0x1c0	RELJUMP	0x20ae0	0x20a7c	33 entries (guard +0x1b4 bltu s0, a7, 0x15c, s0 = 32 at the guard, single definition +0x68 `addi s0, zero, 0x20` (only other writes: the epilogue restore +0x45c); index a7; dispatch +0x1c4..+0x1d0): function-relative targets equal
+_ZN9libunwind10CFI_ParserINS_17LocalAddressSpaceEE20parseFDEInstructionsERS1_RKNS2_8FDE_InfoERKNS2_8CIE_InfoEmiPNS2_10PrologInfoE	0x140	RELJUMP	0x20f54	0x20e90	48 entries (guard +0x134 bltu s1, s9, 0xa60, s1 = 47 at the guard, by data-flow; index s9; dispatch +0x144..+0x150): function-relative targets equal

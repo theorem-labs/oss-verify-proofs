@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: ml-dsa
-rocq: OssFuzzTheorems.openssl.ml_dsa
+rocq: OSSVerify.openssl.ml_dsa
 origin: upstream
 summary: Raw-key import from input bytes, keygen, todata/fromdata export-import (result unchecked), EVP_PKEY_eq(alice,
   alice)/(alice, bob) with results ignored.

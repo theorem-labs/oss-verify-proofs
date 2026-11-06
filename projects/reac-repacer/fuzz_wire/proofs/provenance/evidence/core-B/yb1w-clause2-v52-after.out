@@ -1,0 +1,11 @@
+41 name controls and 78 planted cells pass
+782 named cells (A 381, D 23, E 378)
+clause 2, ab1w_clause2.py key: NO-SYMBOL 284, TRUE 498
+clause 2, demangled key:       NO-SYMBOL 248, TRUE 534
+TRUE                                          534
+TRUE (.got slot)                              8
+TRUE (array slot)                             2
+TRUE (string)                                 1
+descriptive-true                              232
+descriptive-true (in-order)                   5
+inherited (same class, same symbol + offset in the donor): TRUE: no 47, TRUE: yes 487, TRUE (.got slot): yes 8, TRUE (array slot): yes 2, TRUE (string): yes 1, descriptive-true: yes 232, descriptive-true (in-order): yes 5

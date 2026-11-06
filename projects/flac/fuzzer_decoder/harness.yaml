@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: flac
 harness: fuzzer_decoder
-rocq: OssFuzzTheorems.flac.fuzzer_decoder
+rocq: OSSVerify.flac.fuzzer_decoder
 origin: upstream
 summary: Datasource-driven FLAC++ stream decoder (ogg or native) with fuzzed metadata respond/ignore,
   md5 checking, and a random sequence of process/seek/flush/reset calls; all bool results only fed to

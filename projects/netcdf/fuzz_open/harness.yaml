@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: netcdf
 harness: fuzz_open
-rocq: OssFuzzTheorems.netcdf.fuzz_open
+rocq: OSSVerify.netcdf.fuzz_open
 origin: upstream
 summary: nc_open_mem() of the input as an in-memory netCDF file; nc_close() on success; nothing is read
   back or checked.

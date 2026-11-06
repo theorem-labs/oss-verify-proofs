@@ -1,0 +1,1838 @@
+# lui trace of the B record, pair T : E (kit-rerun/A/kit-rerun-4bbd3a74be89/luitrace.py sha256 316e9c4c2144, the A record's own tool; 8 functions)
+# cmpkit 86da41d3ef68 (tools/cmpkit/86da41d3ef68 at the tools commit 98e50c029045): 9f61b4cee422 ambiscan.py, 1480ca2faea0 bytecmp-1480ca2faea0.py, a98d2b3e8857 closure_strict3.py, 4d70e90bc1fa drvcmp.py, 8b0ea3862423 jtcheck.py, 9ae61e4a0e01 luiscan.py, 926a9a88afcd paircl.py, e6883477399d repin_check.py, 65688e94214a strictcmp3.py
+# python 3.12.3, pyelftools 0.33, capstone 5.0.7; provenance/evidence/kit-rerun/cmpkit-86da41d3ef68/run.sh cf1234f61476, diffcheck.py 8264f205f593, window.py a2b1e03e11ea; twin proofs: kit-rerun/cmpkit-86da41d3ef68/twins.log
+## luitrace.py pair
+$ python3 kit-rerun/A/kit-rerun-4bbd3a74be89/luitrace.py pair img/unstripped/cgif_file_fuzzer.asan-ubsan img/unstripped/fuzz_decode.asan-ubsan _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb,_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm,_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEEE6RefillEPNS7_8PerClassEPS6_m,_ZN6__asan12PoisonShadowEmmh,_ZN11__sanitizer13internal_mmapEPvmiiiy,_ZN11__sanitizer13StackDepotPutENS_10StackTraceE,memset,_ZN11__sanitizer9TryMemCpyEPvPKvm
+# X img/unstripped/cgif_file_fuzzer.asan-ubsan
+# Y img/unstripped/fuzz_decode.asan-ubsan
+ROW	function	+off	reg	valX	valY	values-equal	class	use-kinds	uses	chain-words	words-equal	words-differ (offset:mnemonic X/Y)
+ROW	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x74	a5	0x10000	0x10000	yes	b	BRANCH,CALLARG	7	8	5	+0x250:jal/jal +0x26c:jal/jal +0x28c:jal/jal
+ROW	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0xbc	a5	0x55555000	0x55555000	yes	b	ALU,BRANCH,CALLARG,MEMBASE	61	49	46	+0x250:jal/jal +0x26c:jal/jal +0x28c:jal/jal
+ROW	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0xc0	a6	0x33333000	0x33333000	yes	b	ALU,BRANCH,CALLARG,MEMBASE	58	46	43	+0x250:jal/jal +0x26c:jal/jal +0x28c:jal/jal
+ROW	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0xc4	a7	0xf0f1000	0xf0f1000	yes	b	ALU,BRANCH,CALLARG,MEMBASE	53	41	38	+0x250:jal/jal +0x26c:jal/jal +0x28c:jal/jal
+ROW	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0xc8	t0	0x1010000	0x1010000	yes	b	ALU,BRANCH,CALLARG,MEMBASE	52	40	37	+0x250:jal/jal +0x26c:jal/jal +0x28c:jal/jal
+ROW	_ZN11__sanitizer9TryMemCpyEPvPKvm	+0x34	a0	0xaaaab000	0xaaaab000	yes	a	ALU,STOREDATA	4	5	5	-
+ROW	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x120	a0	0x1000	0x1000	yes	a	ALU,BRANCH	2	3	3	-
+ROW	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x134	a0	0x4000	0x4000	yes	a	ALU,BRANCH	2	3	3	-
+ROW	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x148	a0	0x8000	0x8000	yes	a	ALU,BRANCH	2	3	3	-
+ROW	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x15c	a0	0x10000	0x10000	yes	b	ALU,BRANCH,CALLARG,MEMBASE,STOREDATA	220	197	179	+0x224:jal/jal +0x238:jal/jal +0x27c:jal/jal +0x280:jal/jal +0x29c:jal/jal +0x35c:jal/jal +0x384:jal/jal +0x3a8:jal/jal +0x480:jal/jal +0x494:jal/jal +0x4b4:jal/jal +0x54c:jal/jal +0x6e0:jal/jal +0x730:jal/jal +0x8b0:jal/jal +0x8dc:jal/jal +0x944:jal/jal +0x948:jal/jal
+ROW	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x174	s4	0x10000	0x10000	yes	b	ALU,BRANCH,CALLARG,MEMBASE,STOREDATA	228	203	183	+0x180:jal/jal +0x194:jal/jal +0x224:jal/jal +0x238:jal/jal +0x27c:jal/jal +0x280:jal/jal +0x29c:jal/jal +0x35c:jal/jal +0x384:jal/jal +0x3a8:jal/jal +0x480:jal/jal +0x494:jal/jal +0x4b4:jal/jal +0x54c:jal/jal +0x6e0:jal/jal +0x730:jal/jal +0x8b0:jal/jal +0x8dc:jal/jal +0x944:jal/jal +0x948:jal/jal
+ROW	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x498	a0	0xfff80000	0xfff80000	yes	b	ALU,BRANCH,CALLARG,MEMBASE	49	47	41	+0x29c:jal/jal +0x35c:jal/jal +0x4b4:jal/jal +0x4bc:jal/jal +0x54c:jal/jal +0x948:jal/jal
+ROW	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x564	a4	0x10000	0x10000	yes	b	ALU,BRANCH,CALLARG	4	5	4	+0x6e0:jal/jal
+ROW	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x5b8	a2	0x55555000	0x55555000	yes	b	ALU,CALLARG,MEMBASE	33	33	32	+0x6e0:jal/jal
+ROW	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x5bc	a3	0x33333000	0x33333000	yes	b	ALU,CALLARG,MEMBASE	30	30	29	+0x6e0:jal/jal
+ROW	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x5c0	a4	0xf0f1000	0xf0f1000	yes	b	ALU,CALLARG,MEMBASE	25	25	24	+0x6e0:jal/jal
+ROW	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x5c4	a5	0x1010000	0x1010000	yes	b	ALU,CALLARG,MEMBASE	26	24	23	+0x6e0:jal/jal
+ROW	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x8b4	a0	0xfff80000	0xfff80000	yes	b	ALU,CALLARG	4	5	4	+0x8dc:jal/jal
+ROW	memset	+0x48	a1	0x10101000	0x10101000	yes	a	ALU,STOREDATA	24	25	25	-
+TOTAL	lui rows 19	class a 5	class b 14	unmatched none
+
+# full trace, image X
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31550	+0x120	a0	0x1000	a	ALU,BRANCH
+	USE	+0x124	addiw a0, a0, -0x7f	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x128	bgeu s5, a0, 0xc	BRANCH	reg=a0	val=0xf81	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31550	+0x134	a0	0x4000	a	ALU,BRANCH
+	USE	+0x138	addiw a0, a0, -0xff	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x13c	bgeu s5, a0, 0xc	BRANCH	reg=a0	val=0x3f01	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31550	+0x148	a0	0x8000	a	ALU,BRANCH
+	USE	+0x14c	addiw a0, a0, -0x1ff	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x150	bgeu s5, a0, 0xc	BRANCH	reg=a0	val=0x7e01	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31550	+0x15c	a0	0x10000	b	ALU,BRANCH,CALLARG,MEMBASE,STOREDATA
+	USE	+0x160	addiw a0, a0, -0x3ff	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x164	sltu a0, s5, a0	ALU	reg=s5,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x168	xori s3, a0, 7	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x198	bltu s1, s3, 0xac	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x244	bltu s3, a0, -0xa0	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x358	mv a2, s3	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4138	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b0	add a4, s3, s2	ALU	reg=s3,s2	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c4	bltu a4, s9, 0x5d4	BRANCH	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x8b0	jal 0x398a0	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x390	add a4, s3, s2	ALU	reg=s3,s2	val=?	ea=-	sec=-	sym=-
+	USE	+0x3a8	jal 0x40be8	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x55c	sub a4, s3, s1	ALU	reg=s3,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x560	add a1, a4, a1	ALU	reg=a4,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x57c	sd a1, 0x10(a0)	STOREDATA	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x580	bltu s3, a4, 0x1c	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5a4	bltu a1, s3, 0x10	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5b4	srli a1, s3, 1	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5c8	or a1, s3, a1	ALU	reg=s3,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x5dc	srli a6, a1, 2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x5e0	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x604	srli a6, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x608	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x60c	srli a6, a1, 8	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x610	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x614	srli a6, a1, 0x10	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x618	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x61c	srli a6, a1, 0x20	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x620	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x624	not a1, a1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x628	srli a6, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x62c	and a2, a6, a2	ALU	reg=a6,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x630	sub a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x634	and a2, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x638	srli a1, a1, 2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x63c	and a1, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x640	add a1, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x644	srli a2, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x648	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x650	and a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x658	mul a1, a1, a5	ALU	reg=a1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x65c	srli a1, a1, 0x38	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x660	subw a2, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x664	slli a1, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x668	srl a4, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x66c	sllw a2, a3, a2	ALU	reg=a3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x670	xori a1, a1, 0x7e	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x674	andi a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x678	not a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x67c	and a2, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x680	or a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x684	snez a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x688	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x68c	addi a1, a1, -2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x690	slli a1, a1, 3	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x694	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x698	ld a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6a0	sd a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x5a8	addi a1, s3, 0x1f	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5ac	srli a1, a1, 5	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e8	sllw s4, a1, s3	ALU	reg=a1,s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1f8	add s3, a0, s4	ALU	reg=a0,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1fc	sltu s0, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x200	and s0, a3, s0	ALU	reg=a3,s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x204	addi a0, s0, -1	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x208	and a2, a0, s4	ALU	reg=a0,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x210	add s3, a2, s3	ALU	reg=a2,s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x224	jal 0x2cc38	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x274	mv a1, s3	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x27c	jal 0x24ff0	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a8	add s4, s2, s4	ALU	reg=s2,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	and a0, s4, s9	ALU	reg=s4,s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b4	beqz a0, 0xc	BRANCH	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c0	add s9, s4, s1	ALU	reg=s4,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c4	bltu a4, s9, 0x5d4	BRANCH	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x8ac	mv a3, s9	ALU	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x8b0	jal 0x398a0	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b8	add s4, s9, s4	ALU	reg=s9,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2bc	and s4, s4, s8	ALU	reg=s4,s8	val=?	ea=-	sec=-	sym=-
+	USE	+0x388	add s4, s2, s4	ALU	reg=s2,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x38c	and a0, s4, s9	ALU	reg=s4,s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x394	bnez a0, -0xdc	BRANCH	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c8	lbu a0, -0xf(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e0	sb a0, -0xf(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e4	sh a1, -0xe(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e8	sw s1, -0xc(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2f0	addi s5, s4, -0x10	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x300	sb a0, 1(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x3b8	sd a0, 8(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x3bc	beqz s0, 0x20	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x46c	addi s9, s9, 7	ALU	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x470	andi s6, s9, -8	ALU	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x474	sub a1, s4, s2	ALU	reg=s4,s2	val=?	ea=-	sec=-	sym=-
+	USE	+0x480	jal 0x21e30	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x484	sub a1, s2, s6	ALU	reg=s2,s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x488	add a1, a1, s0	ALU	reg=a1,s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x490	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x494	jal 0x21e1c	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x494	jal 0x21e1c	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e4	lbu a1, 1(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x6fc	sb a0, 1(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x704	sb a1, 0(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x708	beq s5, s2, 0x20	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x728	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x730	jal 0x2e970	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x734	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x710	bltu s5, a3, 0x21c	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x940	mv a4, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x944	jal 0x3980c	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x98	bgeu s5, a0, 0x68	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x104	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x114	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x128	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x13c	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x150	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a8	mv a0, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ac	bltu a1, s5, 8	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1b4	add a0, a0, s0	ALU	reg=a0,s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c0	addi a0, a0, -1	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c8	and a0, a0, s8	ALU	reg=a0,s8	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d0	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d4	andi a1, a0, 7	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d8	bnez a1, 0x6a0	BRANCH	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e0	seqz s1, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1f0	add s1, s5, s1	ALU	reg=s5,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x214	bltu a0, s5, 0x10	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x270	mv a0, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x27c	jal 0x24ff0	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x8c0	and a3, s1, a0	ALU	reg=s1,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x8d8	mv a4, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x8dc	jal 0x39874	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x8dc	jal 0x39874	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x90	sd s1, 8(sp)	STOREDATA	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2d8	srli a1, s1, 0x20	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2dc	srli a2, s5, 0x30	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e4	sh a1, -0xe(s4)	STOREDATA	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e8	sw s1, -0xc(s4)	STOREDATA	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ec	bnez a2, 0x5c8	BRANCH	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x3a8	jal 0x40be8	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a0	and s6, s1, a0	ALU	reg=s1,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a4	beqz s6, 0x14	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b8	beq s1, s6, 0x94	BRANCH	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b8	beq s1, s6, 0x94	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x570	add a3, a3, s1	ALU	reg=a3,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x578	sd a3, 8(a0)	STOREDATA	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x72c	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x730	jal 0x2e970	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x34c	addi a1, s6, 0x3e0	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x354	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4138	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4138	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x368	sb zero, 0x3d8(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x8c	addi s10, s6, 0x7ff	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	lh a0, 0x629(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	lh a0, 0x62b(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x304	beqz s10, 0x98	BRANCH	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x3dc	ld a0, 0x20(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x418	ld a0, 0x40(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x71c	sd s5, 8(s2)	STOREDATA	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x6bc	mv a2, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6c0	bltu s1, a1, 8	BRANCH	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6d8	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x4d0	add s6, s4, s6	ALU	reg=s4,s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4e4	bgeu a2, s6, 0x44	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x534	srli a2, s6, 3	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x538	add a0, a0, a2	ALU	reg=a0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x540	and a1, s1, a1	ALU	reg=s1,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x544	andi a1, a1, 7	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x548	sb a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x548	sb a1, 0(a0)	STOREDATA	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x2954c	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x2954c	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x2954c	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x504	bgeu a4, s6, 8	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x520	bltu a7, s6, 0x254	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x818	bgeu a3, s6, -0x2f0	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7e8	bgeu a1, s6, -0x2c0	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7d8	bltu s6, a2, 0x44	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x790	bgeu a5, s6, 0x60	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x804	bgeu s6, a1, -0x2dc	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x798	bltu a4, s6, 0x10	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7ac	bltu s6, a2, 0x70	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7bc	bgeu a1, s6, -0x294	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7a4	bgeu s6, a4, -0x27c	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x524	bgeu a6, s6, 0x250	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x508	bgeu a2, s6, 0x20	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a8	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x4ac	mv a1, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b4	jal 0x21dfc	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b4	jal 0x21dfc	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x308	ld a0, 0(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x37c	mv a0, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x384	jal 0x2537c	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x25c	ld a2, 0x621(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x318	addi a0, s6, 0x3d8	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x320	andi a2, a0, -4	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x328	lr.w.aq a4, (a2)	MEMBASE	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x33c	sc.w a5, a5, (a2)	MEMBASE	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x948	jal 0x3387c	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x948	jal 0x3387c	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x294	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x298	mv a2, s3	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x29c	jal 0x41f8	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x29c	jal 0x41f8	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x234	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x238	jal 0x35638	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x218	bltu a0, s3, 0xc	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x21c	ld a0, 0x621(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x220	bgeu a0, s1, 0x60	BRANCH	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x280	jal 0x2a64c	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	mv a0, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x254	bgeu a1, s5, -0xa4	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31550	+0x174	s4	0x10000	b	ALU,BRANCH,CALLARG,MEMBASE,STOREDATA
+	USE	+0x178	addiw s8, s4, -1	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x17c	and a0, a0, s8	ALU	reg=a0,s8	val=?	ea=-	sec=-	sym=-
+	USE	+0x180	jal 0x51dc	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x190	and a0, a0, s8	ALU	reg=a0,s8	val=?	ea=-	sec=-	sym=-
+	USE	+0x194	jal 0x51c8	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a8	add s4, s2, s4	ALU	reg=s2,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	and a0, s4, s9	ALU	reg=s4,s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b4	beqz a0, 0xc	BRANCH	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c0	add s9, s4, s1	ALU	reg=s4,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c4	bltu a4, s9, 0x5d4	BRANCH	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x8ac	mv a3, s9	ALU	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x8b0	jal 0x398a0	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b8	add s4, s9, s4	ALU	reg=s9,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2bc	and s4, s4, s8	ALU	reg=s4,s8	val=?	ea=-	sec=-	sym=-
+	USE	+0x388	add s4, s2, s4	ALU	reg=s2,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x38c	and a0, s4, s9	ALU	reg=s4,s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x394	bnez a0, -0xdc	BRANCH	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c8	lbu a0, -0xf(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e0	sb a0, -0xf(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e4	sh a1, -0xe(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e8	sw s1, -0xc(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2f0	addi s5, s4, -0x10	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x300	sb a0, 1(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x3b8	sd a0, 8(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x46c	addi s9, s9, 7	ALU	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x470	andi s6, s9, -8	ALU	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x474	sub a1, s4, s2	ALU	reg=s4,s2	val=?	ea=-	sec=-	sym=-
+	USE	+0x480	jal 0x21e30	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x484	sub a1, s2, s6	ALU	reg=s2,s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x488	add a1, a1, s0	ALU	reg=a1,s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x490	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x494	jal 0x21e1c	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x494	jal 0x21e1c	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e4	lbu a1, 1(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x6fc	sb a0, 1(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x704	sb a1, 0(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x708	beq s5, s2, 0x20	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x728	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x730	jal 0x2e970	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x734	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x710	bltu s5, a3, 0x21c	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x940	mv a4, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x944	jal 0x3980c	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x98	bgeu s5, a0, 0x68	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x104	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x114	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x128	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x13c	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x150	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x164	sltu a0, s5, a0	ALU	reg=s5,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x168	xori s3, a0, 7	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x198	bltu s1, s3, 0xac	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x244	bltu s3, a0, -0xa0	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a8	mv a0, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ac	bltu a1, s5, 8	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1b4	add a0, a0, s0	ALU	reg=a0,s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c0	addi a0, a0, -1	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c8	and a0, a0, s8	ALU	reg=a0,s8	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d0	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d4	andi a1, a0, 7	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d8	bnez a1, 0x6a0	BRANCH	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x358	mv a2, s3	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4138	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b0	add a4, s3, s2	ALU	reg=s3,s2	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c4	bltu a4, s9, 0x5d4	BRANCH	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x8b0	jal 0x398a0	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2dc	srli a2, s5, 0x30	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ec	bnez a2, 0x5c8	BRANCH	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x3a8	jal 0x40be8	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x3a8	jal 0x40be8	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x55c	sub a4, s3, s1	ALU	reg=s3,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x560	add a1, a4, a1	ALU	reg=a4,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x57c	sd a1, 0x10(a0)	STOREDATA	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x580	bltu s3, a4, 0x1c	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5a4	bltu a1, s3, 0x10	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5b4	srli a1, s3, 1	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5c8	or a1, s3, a1	ALU	reg=s3,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x5dc	srli a6, a1, 2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x5e0	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x604	srli a6, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x608	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x60c	srli a6, a1, 8	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x610	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x614	srli a6, a1, 0x10	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x618	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x61c	srli a6, a1, 0x20	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x620	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x624	not a1, a1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x628	srli a6, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x62c	and a2, a6, a2	ALU	reg=a6,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x630	sub a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x634	and a2, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x638	srli a1, a1, 2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x63c	and a1, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x640	add a1, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x644	srli a2, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x648	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x650	and a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x658	mul a1, a1, a5	ALU	reg=a1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x65c	srli a1, a1, 0x38	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x660	subw a2, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x664	slli a1, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x668	srl a4, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x66c	sllw a2, a3, a2	ALU	reg=a3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x670	xori a1, a1, 0x7e	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x674	andi a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x678	not a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x67c	and a2, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x680	or a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x684	snez a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x688	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x68c	addi a1, a1, -2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x690	slli a1, a1, 3	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x694	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x698	ld a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6a0	sd a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x71c	sd s5, 8(s2)	STOREDATA	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x6d8	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x5a8	addi a1, s3, 0x1f	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5ac	srli a1, a1, 5	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x4d0	add s6, s4, s6	ALU	reg=s4,s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4e4	bgeu a2, s6, 0x44	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x534	srli a2, s6, 3	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x538	add a0, a0, a2	ALU	reg=a0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x548	sb a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x2954c	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x2954c	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x34c	addi a1, s6, 0x3e0	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x354	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4138	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4138	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x368	sb zero, 0x3d8(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x8c	addi s10, s6, 0x7ff	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	lh a0, 0x629(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	lh a0, 0x62b(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x304	beqz s10, 0x98	BRANCH	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x3dc	ld a0, 0x20(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x418	ld a0, 0x40(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x504	bgeu a4, s6, 8	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x520	bltu a7, s6, 0x254	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x818	bgeu a3, s6, -0x2f0	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7e8	bgeu a1, s6, -0x2c0	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7d8	bltu s6, a2, 0x44	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x790	bgeu a5, s6, 0x60	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x804	bgeu s6, a1, -0x2dc	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x798	bltu a4, s6, 0x10	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7ac	bltu s6, a2, 0x70	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7bc	bgeu a1, s6, -0x294	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7a4	bgeu s6, a4, -0x27c	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x524	bgeu a6, s6, 0x250	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x508	bgeu a2, s6, 0x20	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a8	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b4	jal 0x21dfc	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x308	ld a0, 0(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x390	add a4, s3, s2	ALU	reg=s3,s2	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e0	seqz s1, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e4	addiw a2, s4, 1	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e8	sllw s4, a1, s3	ALU	reg=a1,s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1f0	add s1, s5, s1	ALU	reg=s5,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1f4	sltu a3, s2, a2	ALU	reg=s2,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x1f8	add s3, a0, s4	ALU	reg=a0,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1fc	sltu s0, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x200	and s0, a3, s0	ALU	reg=a3,s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x204	addi a0, s0, -1	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x208	and a2, a0, s4	ALU	reg=a0,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x210	add s3, a2, s3	ALU	reg=a2,s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x214	bltu a0, s5, 0x10	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x224	jal 0x2cc38	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x224	jal 0x2cc38	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x25c	ld a2, 0x621(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x270	mv a0, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x274	mv a1, s3	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x27c	jal 0x24ff0	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x27c	jal 0x24ff0	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x318	addi a0, s6, 0x3d8	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x320	andi a2, a0, -4	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x328	lr.w.aq a4, (a2)	MEMBASE	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x33c	sc.w a5, a5, (a2)	MEMBASE	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x948	jal 0x3387c	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x948	jal 0x3387c	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x8c0	and a3, s1, a0	ALU	reg=s1,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x8d8	mv a4, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x8dc	jal 0x39874	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x8dc	jal 0x39874	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x90	sd s1, 8(sp)	STOREDATA	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2d8	srli a1, s1, 0x20	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e4	sh a1, -0xe(s4)	STOREDATA	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e8	sw s1, -0xc(s4)	STOREDATA	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x3bc	beqz s0, 0x20	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a0	and s6, s1, a0	ALU	reg=s1,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a4	beqz s6, 0x14	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b8	beq s1, s6, 0x94	BRANCH	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b8	beq s1, s6, 0x94	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x570	add a3, a3, s1	ALU	reg=a3,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x578	sd a3, 8(a0)	STOREDATA	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x72c	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x730	jal 0x2e970	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6bc	mv a2, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6c0	bltu s1, a1, 8	BRANCH	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x540	and a1, s1, a1	ALU	reg=s1,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x544	andi a1, a1, 7	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x548	sb a1, 0(a0)	STOREDATA	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x2954c	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x4ac	mv a1, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b4	jal 0x21dfc	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x37c	mv a0, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x384	jal 0x2537c	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x294	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x298	mv a2, s3	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x29c	jal 0x41f8	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x29c	jal 0x41f8	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x234	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x238	jal 0x35638	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x218	bltu a0, s3, 0xc	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x21c	ld a0, 0x621(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x220	bgeu a0, s1, 0x60	BRANCH	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x280	jal 0x2a64c	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x280	jal 0x2a64c	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	mv a0, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x254	bgeu a1, s5, -0xa4	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31550	+0x498	a0	0xfff80000	b	ALU,BRANCH,CALLARG,MEMBASE
+	USE	+0x49c	srli a0, a0, 0x10	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a0	and s6, s1, a0	ALU	reg=s1,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a4	beqz s6, 0x14	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b8	beq s1, s6, 0x94	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x2954c	CALLARG	reg=a0	val=0xfff8	ea=-	sec=-	sym=-
+	USE	+0x34c	addi a1, s6, 0x3e0	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x354	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4138	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4138	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x368	sb zero, 0x3d8(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x8c	addi s10, s6, 0x7ff	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	lh a0, 0x629(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	lh a0, 0x62b(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x304	beqz s10, 0x98	BRANCH	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x3dc	ld a0, 0x20(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x418	ld a0, 0x40(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4bc	jal 0x21de0	CALLARG	reg=a0	val=0xfff8	ea=-	sec=-	sym=-
+	USE	+0x4d0	add s6, s4, s6	ALU	reg=s4,s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4e4	bgeu a2, s6, 0x44	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x534	srli a2, s6, 3	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x538	add a0, a0, a2	ALU	reg=a0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x548	sb a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x2954c	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x504	bgeu a4, s6, 8	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x520	bltu a7, s6, 0x254	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x818	bgeu a3, s6, -0x2f0	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7e8	bgeu a1, s6, -0x2c0	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7d8	bltu s6, a2, 0x44	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x790	bgeu a5, s6, 0x60	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x804	bgeu s6, a1, -0x2dc	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x798	bltu a4, s6, 0x10	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7ac	bltu s6, a2, 0x70	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7bc	bgeu a1, s6, -0x294	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7a4	bgeu s6, a4, -0x27c	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x524	bgeu a6, s6, 0x250	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x508	bgeu a2, s6, 0x20	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4ac	mv a1, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b4	jal 0x21dfc	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x308	ld a0, 0(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x25c	ld a2, 0x621(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x318	addi a0, s6, 0x3d8	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x320	andi a2, a0, -4	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x328	lr.w.aq a4, (a2)	MEMBASE	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x33c	sc.w a5, a5, (a2)	MEMBASE	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x948	jal 0x3387c	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x948	jal 0x3387c	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x294	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x29c	jal 0x41f8	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x21c	ld a0, 0x621(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31550	+0x564	a4	0x10000	b	ALU,BRANCH,CALLARG
+	USE	+0x568	addiw a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x580	bltu s3, a4, 0x1c	BRANCH	reg=a4	val=0x10001	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a4	val=0x10001	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=0x10001	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31550	+0x5b8	a2	0x55555000	b	ALU,CALLARG,MEMBASE
+	USE	+0x5cc	addiw a2, a2, 0x555	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x5e4	slli a6, a2, 0x20	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x5e8	add a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x62c	and a2, a6, a2	ALU	reg=a6,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x630	sub a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x634	and a2, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x638	srli a1, a1, 2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x63c	and a1, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x640	add a1, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x644	srli a2, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x648	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x650	and a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x658	mul a1, a1, a5	ALU	reg=a1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x65c	srli a1, a1, 0x38	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x660	subw a2, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x664	slli a1, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x668	srl a4, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x66c	sllw a2, a3, a2	ALU	reg=a3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x670	xori a1, a1, 0x7e	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x674	andi a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x678	not a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x67c	and a2, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x680	or a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x684	snez a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x688	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x68c	addi a1, a1, -2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x690	slli a1, a1, 3	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x694	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x698	ld a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6a0	sd a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31550	+0x5bc	a3	0x33333000	b	ALU,CALLARG,MEMBASE
+	USE	+0x5d0	addiw a3, a3, 0x333	ALU	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5ec	slli a6, a3, 0x20	ALU	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5f0	add a3, a3, a6	ALU	reg=a3,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x634	and a2, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x63c	and a1, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x640	add a1, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x644	srli a2, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x648	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x650	and a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x658	mul a1, a1, a5	ALU	reg=a1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x65c	srli a1, a1, 0x38	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x660	subw a2, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x664	slli a1, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x668	srl a4, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x66c	sllw a2, a3, a2	ALU	reg=a3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x670	xori a1, a1, 0x7e	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x674	andi a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x678	not a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x67c	and a2, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x680	or a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x684	snez a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x688	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x68c	addi a1, a1, -2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x690	slli a1, a1, 3	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x694	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x698	ld a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6a0	sd a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31550	+0x5c0	a4	0xf0f1000	b	ALU,CALLARG,MEMBASE
+	USE	+0x5d4	addiw a4, a4, -0xf1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x5f4	slli a6, a4, 0x20	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x5f8	add a4, a4, a6	ALU	reg=a4,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x650	and a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x658	mul a1, a1, a5	ALU	reg=a1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x65c	srli a1, a1, 0x38	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x660	subw a2, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x664	slli a1, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x668	srl a4, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x66c	sllw a2, a3, a2	ALU	reg=a3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x670	xori a1, a1, 0x7e	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x674	andi a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x678	not a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x67c	and a2, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x680	or a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x684	snez a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x688	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x68c	addi a1, a1, -2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x690	slli a1, a1, 3	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x694	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x698	ld a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6a0	sd a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31550	+0x5c4	a5	0x1010000	b	ALU,CALLARG,MEMBASE
+	USE	+0x5d8	addiw a5, a5, 0x101	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x5fc	slli a6, a5, 0x20	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x600	add a5, a5, a6	ALU	reg=a5,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x658	mul a1, a1, a5	ALU	reg=a1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x65c	srli a1, a1, 0x38	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x660	subw a2, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x664	slli a1, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x668	srl a4, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x66c	sllw a2, a3, a2	ALU	reg=a3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x670	xori a1, a1, 0x7e	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x674	andi a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x678	not a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x67c	and a2, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x680	or a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x684	snez a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x688	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x68c	addi a1, a1, -2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x690	slli a1, a1, 3	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x694	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x698	ld a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6a0	sd a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4ddb0	CALLARG	reg=a5	val=0x101010101010101	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a5	val=0x101010101010101	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31550	+0x8b4	a0	0xfff80000	b	ALU,CALLARG
+	USE	+0x8b8	srli a0, a0, 0x10	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x8bc	addi a0, a0, 7	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x8c0	and a3, s1, a0	ALU	reg=s1,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x8dc	jal 0x39874	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+LUI	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	0x359e4	+0x74	a5	0x10000	b	BRANCH,CALLARG
+	USE	+0x78	bltu a5, a3, 0x1c	BRANCH	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+	USE	+0xa4	jal 0x234	CALLARG	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+	USE	+0x7c	bltu a5, a4, 0x18	BRANCH	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35a6c	CALLARG	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+LUI	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	0x359e4	+0xbc	a5	0x55555000	b	ALU,BRANCH,CALLARG,MEMBASE
+	USE	+0xd0	addiw a5, a5, 0x555	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0xe8	slli t1, a5, 0x20	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0xec	add a5, a5, t1	ALU	reg=a5,t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x130	and a5, t1, a5	ALU	reg=t1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x134	sub a2, a2, a5	ALU	reg=a2,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x138	and a5, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x13c	srli a2, a2, 2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x140	and a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x144	add a2, a5, a2	ALU	reg=a5,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x148	srli a5, a2, 4	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x14c	add a2, a2, a5	ALU	reg=a2,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x154	and a2, a2, a7	ALU	reg=a2,a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x15c	mul a2, a2, t0	ALU	reg=a2,t0	val=?	ea=-	sec=-	sym=-
+	USE	+0x160	srli a2, a2, 0x38	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x164	subw a5, a5, a2	ALU	reg=a5,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x168	slli a2, a2, 1	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	srl a7, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x170	sllw a5, a6, a5	ALU	reg=a6,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x174	xori a2, a2, 0x7e	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x178	andi a6, a7, 1	ALU	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x17c	not a5, a5	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x180	and a4, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x184	or a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	snez a4, a4	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x18c	add a2, a2, a4	ALU	reg=a2,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x190	addi s0, a2, -2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x194	beqz s0, 0xa0	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35a6c	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35a6c	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35a6c	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x288	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a8	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e0	slli s0, s0, 0x20	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e8	add a0, s0, a0	ALU	reg=s0,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ec	add a0, a4, a0	ALU	reg=a4,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1fc	and a3, a3, a0	ALU	reg=a3,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x200	bnez a3, 0x54	BRANCH	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x19c	bgeu s0, a2, 0xd4	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a4	mul s1, s0, a2	ALU	reg=s0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a8	add s1, a1, s1	ALU	reg=a1,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ac	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a0	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b4	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c0	sw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c8	ld a2, 8(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d0	add a4, s1, a4	ALU	reg=s1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d4	lwu a4, 0x10(a4)	MEMBASE	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+LUI	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	0x359e4	+0xc0	a6	0x33333000	b	ALU,BRANCH,CALLARG,MEMBASE
+	USE	+0xd4	addiw a6, a6, 0x333	ALU	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0xf0	slli t1, a6, 0x20	ALU	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0xf4	add a6, a6, t1	ALU	reg=a6,t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x138	and a5, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x140	and a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x144	add a2, a5, a2	ALU	reg=a5,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x148	srli a5, a2, 4	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x14c	add a2, a2, a5	ALU	reg=a2,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x154	and a2, a2, a7	ALU	reg=a2,a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x15c	mul a2, a2, t0	ALU	reg=a2,t0	val=?	ea=-	sec=-	sym=-
+	USE	+0x160	srli a2, a2, 0x38	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x164	subw a5, a5, a2	ALU	reg=a5,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x168	slli a2, a2, 1	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	srl a7, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x170	sllw a5, a6, a5	ALU	reg=a6,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x174	xori a2, a2, 0x7e	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x178	andi a6, a7, 1	ALU	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x17c	not a5, a5	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x180	and a4, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x184	or a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	snez a4, a4	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x18c	add a2, a2, a4	ALU	reg=a2,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x190	addi s0, a2, -2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x194	beqz s0, 0xa0	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35a6c	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35a6c	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35a6c	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x288	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a8	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e0	slli s0, s0, 0x20	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e8	add a0, s0, a0	ALU	reg=s0,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ec	add a0, a4, a0	ALU	reg=a4,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1fc	and a3, a3, a0	ALU	reg=a3,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x200	bnez a3, 0x54	BRANCH	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x19c	bgeu s0, a2, 0xd4	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a4	mul s1, s0, a2	ALU	reg=s0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a8	add s1, a1, s1	ALU	reg=a1,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ac	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a0	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b4	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c0	sw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c8	ld a2, 8(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d0	add a4, s1, a4	ALU	reg=s1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d4	lwu a4, 0x10(a4)	MEMBASE	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+LUI	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	0x359e4	+0xc4	a7	0xf0f1000	b	ALU,BRANCH,CALLARG,MEMBASE
+	USE	+0xd8	addiw a7, a7, -0xf1	ALU	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0xf8	slli t1, a7, 0x20	ALU	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0xfc	add a7, a7, t1	ALU	reg=a7,t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x154	and a2, a2, a7	ALU	reg=a2,a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x15c	mul a2, a2, t0	ALU	reg=a2,t0	val=?	ea=-	sec=-	sym=-
+	USE	+0x160	srli a2, a2, 0x38	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x164	subw a5, a5, a2	ALU	reg=a5,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x168	slli a2, a2, 1	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	srl a7, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x170	sllw a5, a6, a5	ALU	reg=a6,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x174	xori a2, a2, 0x7e	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x178	andi a6, a7, 1	ALU	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x17c	not a5, a5	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x180	and a4, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x184	or a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	snez a4, a4	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x18c	add a2, a2, a4	ALU	reg=a2,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x190	addi s0, a2, -2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x194	beqz s0, 0xa0	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35a6c	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35a6c	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35a6c	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x288	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a8	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e0	slli s0, s0, 0x20	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e8	add a0, s0, a0	ALU	reg=s0,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ec	add a0, a4, a0	ALU	reg=a4,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1fc	and a3, a3, a0	ALU	reg=a3,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x200	bnez a3, 0x54	BRANCH	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x19c	bgeu s0, a2, 0xd4	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a4	mul s1, s0, a2	ALU	reg=s0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a8	add s1, a1, s1	ALU	reg=a1,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ac	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a0	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b4	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c0	sw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c8	ld a2, 8(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d0	add a4, s1, a4	ALU	reg=s1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d4	lwu a4, 0x10(a4)	MEMBASE	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+LUI	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	0x359e4	+0xc8	t0	0x1010000	b	ALU,BRANCH,CALLARG,MEMBASE
+	USE	+0xdc	addiw t0, t0, 0x101	ALU	reg=t0	val=?	ea=-	sec=-	sym=-
+	USE	+0x100	slli t1, t0, 0x20	ALU	reg=t0	val=?	ea=-	sec=-	sym=-
+	USE	+0x104	add t0, t0, t1	ALU	reg=t0,t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x15c	mul a2, a2, t0	ALU	reg=a2,t0	val=?	ea=-	sec=-	sym=-
+	USE	+0x160	srli a2, a2, 0x38	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x164	subw a5, a5, a2	ALU	reg=a5,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x168	slli a2, a2, 1	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	srl a7, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x170	sllw a5, a6, a5	ALU	reg=a6,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x174	xori a2, a2, 0x7e	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x178	andi a6, a7, 1	ALU	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x17c	not a5, a5	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x180	and a4, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x184	or a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	snez a4, a4	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x18c	add a2, a2, a4	ALU	reg=a2,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x190	addi s0, a2, -2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x194	beqz s0, 0xa0	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35a6c	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35a6c	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35a6c	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x288	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a8	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e0	slli s0, s0, 0x20	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e8	add a0, s0, a0	ALU	reg=s0,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ec	add a0, a4, a0	ALU	reg=a4,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1fc	and a3, a3, a0	ALU	reg=a3,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x200	bnez a3, 0x54	BRANCH	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x19c	bgeu s0, a2, 0xd4	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x35a30	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a4	mul s1, s0, a2	ALU	reg=s0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a8	add s1, a1, s1	ALU	reg=a1,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ac	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a0	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b4	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c0	sw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c8	ld a2, 8(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d0	add a4, s1, a4	ALU	reg=s1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d4	lwu a4, 0x10(a4)	MEMBASE	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35a50	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+LUI	memset	0x9790c	+0x48	a1	0x10101000	a	ALU,STOREDATA
+	USE	+0x50	slli a4, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x5c	addi a3, a4, 0x100	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x64	mulhu a2, a6, a3	ALU	reg=a6,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x68	sw a2, 0(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x70	sw a2, -4(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x78	sw a2, 4(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x7c	sw a2, 8(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x84	sw a2, -0xc(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x88	sw a2, -8(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x90	sw a2, 0xc(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x94	sw a2, 0x10(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x98	sw a2, 0x14(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x9c	sw a2, 0x18(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xb0	sw a2, -0x1c(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xb4	sw a2, -0x18(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xb8	sw a2, -0x14(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xbc	sw a2, -0x10(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xc4	slli a2, a2, 0x20	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xcc	srli a3, a2, 0x20	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xd0	or a2, a2, a3	ALU	reg=a2,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0xd8	sd a2, 0(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xdc	sd a2, 8(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xe0	sd a2, 0x10(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xe4	sd a2, 0x18(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+LUI	_ZN11__sanitizer9TryMemCpyEPvPKvm	0x6dcc8	+0x34	a0	0xaaaab000	a	ALU,STOREDATA
+	USE	+0x38	addi s5, a0, -0x556	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x3c	sw s5, 8(sp)	STOREDATA	reg=s5	val=0xaaaaaaaa	ea=-	sec=-	sym=-
+	USE	+0x40	sw s5, 0xc(sp)	STOREDATA	reg=s5	val=0xaaaaaaaa	ea=-	sec=-	sym=-
+	USE	+0x70	sw s5, 4(sp)	STOREDATA	reg=s5	val=0xaaaaaaaa	ea=-	sec=-	sym=-
+
+# full trace, image Y
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31298	+0x120	a0	0x1000	a	ALU,BRANCH
+	USE	+0x124	addiw a0, a0, -0x7f	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x128	bgeu s5, a0, 0xc	BRANCH	reg=a0	val=0xf81	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31298	+0x134	a0	0x4000	a	ALU,BRANCH
+	USE	+0x138	addiw a0, a0, -0xff	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x13c	bgeu s5, a0, 0xc	BRANCH	reg=a0	val=0x3f01	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31298	+0x148	a0	0x8000	a	ALU,BRANCH
+	USE	+0x14c	addiw a0, a0, -0x1ff	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x150	bgeu s5, a0, 0xc	BRANCH	reg=a0	val=0x7e01	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31298	+0x15c	a0	0x10000	b	ALU,BRANCH,CALLARG,MEMBASE,STOREDATA
+	USE	+0x160	addiw a0, a0, -0x3ff	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x164	sltu a0, s5, a0	ALU	reg=s5,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x168	xori s3, a0, 7	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x198	bltu s1, s3, 0xac	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x244	bltu s3, a0, -0xa0	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x358	mv a2, s3	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4218	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b0	add a4, s3, s2	ALU	reg=s3,s2	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c4	bltu a4, s9, 0x5d4	BRANCH	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x8b0	jal 0x39748	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x390	add a4, s3, s2	ALU	reg=s3,s2	val=?	ea=-	sec=-	sym=-
+	USE	+0x3a8	jal 0x40a90	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x55c	sub a4, s3, s1	ALU	reg=s3,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x560	add a1, a4, a1	ALU	reg=a4,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x57c	sd a1, 0x10(a0)	STOREDATA	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x580	bltu s3, a4, 0x1c	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5a4	bltu a1, s3, 0x10	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5b4	srli a1, s3, 1	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5c8	or a1, s3, a1	ALU	reg=s3,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x5dc	srli a6, a1, 2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x5e0	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x604	srli a6, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x608	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x60c	srli a6, a1, 8	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x610	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x614	srli a6, a1, 0x10	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x618	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x61c	srli a6, a1, 0x20	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x620	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x624	not a1, a1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x628	srli a6, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x62c	and a2, a6, a2	ALU	reg=a6,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x630	sub a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x634	and a2, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x638	srli a1, a1, 2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x63c	and a1, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x640	add a1, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x644	srli a2, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x648	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x650	and a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x658	mul a1, a1, a5	ALU	reg=a1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x65c	srli a1, a1, 0x38	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x660	subw a2, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x664	slli a1, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x668	srl a4, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x66c	sllw a2, a3, a2	ALU	reg=a3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x670	xori a1, a1, 0x7e	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x674	andi a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x678	not a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x67c	and a2, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x680	or a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x684	snez a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x688	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x68c	addi a1, a1, -2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x690	slli a1, a1, 3	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x694	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x698	ld a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6a0	sd a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x5a8	addi a1, s3, 0x1f	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5ac	srli a1, a1, 5	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e8	sllw s4, a1, s3	ALU	reg=a1,s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1f8	add s3, a0, s4	ALU	reg=a0,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1fc	sltu s0, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x200	and s0, a3, s0	ALU	reg=a3,s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x204	addi a0, s0, -1	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x208	and a2, a0, s4	ALU	reg=a0,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x210	add s3, a2, s3	ALU	reg=a2,s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x224	jal 0x2cae0	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x274	mv a1, s3	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x27c	jal 0x24d84	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a8	add s4, s2, s4	ALU	reg=s2,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	and a0, s4, s9	ALU	reg=s4,s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b4	beqz a0, 0xc	BRANCH	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c0	add s9, s4, s1	ALU	reg=s4,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c4	bltu a4, s9, 0x5d4	BRANCH	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x8ac	mv a3, s9	ALU	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x8b0	jal 0x39748	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b8	add s4, s9, s4	ALU	reg=s9,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2bc	and s4, s4, s8	ALU	reg=s4,s8	val=?	ea=-	sec=-	sym=-
+	USE	+0x388	add s4, s2, s4	ALU	reg=s2,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x38c	and a0, s4, s9	ALU	reg=s4,s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x394	bnez a0, -0xdc	BRANCH	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c8	lbu a0, -0xf(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e0	sb a0, -0xf(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e4	sh a1, -0xe(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e8	sw s1, -0xc(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2f0	addi s5, s4, -0x10	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x300	sb a0, 1(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x3b8	sd a0, 8(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x3bc	beqz s0, 0x20	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x46c	addi s9, s9, 7	ALU	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x470	andi s6, s9, -8	ALU	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x474	sub a1, s4, s2	ALU	reg=s4,s2	val=?	ea=-	sec=-	sym=-
+	USE	+0x480	jal 0x21974	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x484	sub a1, s2, s6	ALU	reg=s2,s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x488	add a1, a1, s0	ALU	reg=a1,s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x490	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x494	jal 0x21960	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x494	jal 0x21960	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e4	lbu a1, 1(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x6fc	sb a0, 1(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x704	sb a1, 0(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x708	beq s5, s2, 0x20	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x728	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x730	jal 0x2e818	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x734	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x710	bltu s5, a3, 0x21c	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x940	mv a4, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x944	jal 0x396b4	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x98	bgeu s5, a0, 0x68	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x104	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x114	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x128	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x13c	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x150	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a8	mv a0, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ac	bltu a1, s5, 8	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1b4	add a0, a0, s0	ALU	reg=a0,s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c0	addi a0, a0, -1	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c8	and a0, a0, s8	ALU	reg=a0,s8	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d0	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d4	andi a1, a0, 7	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d8	bnez a1, 0x6a0	BRANCH	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e0	seqz s1, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1f0	add s1, s5, s1	ALU	reg=s5,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x214	bltu a0, s5, 0x10	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x270	mv a0, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x27c	jal 0x24d84	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x8c0	and a3, s1, a0	ALU	reg=s1,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x8d8	mv a4, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x8dc	jal 0x3971c	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x8dc	jal 0x3971c	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x90	sd s1, 8(sp)	STOREDATA	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2d8	srli a1, s1, 0x20	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2dc	srli a2, s5, 0x30	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e4	sh a1, -0xe(s4)	STOREDATA	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e8	sw s1, -0xc(s4)	STOREDATA	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ec	bnez a2, 0x5c8	BRANCH	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x3a8	jal 0x40a90	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a0	and s6, s1, a0	ALU	reg=s1,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a4	beqz s6, 0x14	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b8	beq s1, s6, 0x94	BRANCH	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b8	beq s1, s6, 0x94	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x570	add a3, a3, s1	ALU	reg=a3,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x578	sd a3, 8(a0)	STOREDATA	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x72c	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x730	jal 0x2e818	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x34c	addi a1, s6, 0x3e0	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x354	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4218	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4218	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x368	sb zero, 0x3d8(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x8c	addi s10, s6, 0x7ff	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	lh a0, 0x629(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	lh a0, 0x62b(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x304	beqz s10, 0x98	BRANCH	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x3dc	ld a0, 0x20(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x418	ld a0, 0x40(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x71c	sd s5, 8(s2)	STOREDATA	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x6bc	mv a2, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6c0	bltu s1, a1, 8	BRANCH	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6d8	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x4d0	add s6, s4, s6	ALU	reg=s4,s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4e4	bgeu a2, s6, 0x44	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x534	srli a2, s6, 3	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x538	add a0, a0, a2	ALU	reg=a0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x540	and a1, s1, a1	ALU	reg=s1,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x544	andi a1, a1, 7	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x548	sb a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x548	sb a1, 0(a0)	STOREDATA	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x292e0	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x292e0	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x292e0	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x504	bgeu a4, s6, 8	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x520	bltu a7, s6, 0x254	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x818	bgeu a3, s6, -0x2f0	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7e8	bgeu a1, s6, -0x2c0	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7d8	bltu s6, a2, 0x44	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x790	bgeu a5, s6, 0x60	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x804	bgeu s6, a1, -0x2dc	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x798	bltu a4, s6, 0x10	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7ac	bltu s6, a2, 0x70	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7bc	bgeu a1, s6, -0x294	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7a4	bgeu s6, a4, -0x27c	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x524	bgeu a6, s6, 0x250	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x508	bgeu a2, s6, 0x20	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a8	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x4ac	mv a1, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b4	jal 0x21940	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b4	jal 0x21940	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x308	ld a0, 0(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x37c	mv a0, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x384	jal 0x25110	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x25c	ld a2, 0x621(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x318	addi a0, s6, 0x3d8	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x320	andi a2, a0, -4	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x328	lr.w.aq a4, (a2)	MEMBASE	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x33c	sc.w a5, a5, (a2)	MEMBASE	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x948	jal 0x33724	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x948	jal 0x33724	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x294	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x298	mv a2, s3	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x29c	jal 0x42d8	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x29c	jal 0x42d8	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x234	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x238	jal 0x354e0	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x218	bltu a0, s3, 0xc	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x21c	ld a0, 0x621(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x220	bgeu a0, s1, 0x60	BRANCH	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x280	jal 0x2a3e0	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	mv a0, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x254	bgeu a1, s5, -0xa4	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31298	+0x174	s4	0x10000	b	ALU,BRANCH,CALLARG,MEMBASE,STOREDATA
+	USE	+0x178	addiw s8, s4, -1	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x17c	and a0, a0, s8	ALU	reg=a0,s8	val=?	ea=-	sec=-	sym=-
+	USE	+0x180	jal 0x52bc	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x190	and a0, a0, s8	ALU	reg=a0,s8	val=?	ea=-	sec=-	sym=-
+	USE	+0x194	jal 0x52a8	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a8	add s4, s2, s4	ALU	reg=s2,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	and a0, s4, s9	ALU	reg=s4,s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b4	beqz a0, 0xc	BRANCH	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c0	add s9, s4, s1	ALU	reg=s4,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c4	bltu a4, s9, 0x5d4	BRANCH	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x8ac	mv a3, s9	ALU	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x8b0	jal 0x39748	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b8	add s4, s9, s4	ALU	reg=s9,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2bc	and s4, s4, s8	ALU	reg=s4,s8	val=?	ea=-	sec=-	sym=-
+	USE	+0x388	add s4, s2, s4	ALU	reg=s2,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x38c	and a0, s4, s9	ALU	reg=s4,s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x394	bnez a0, -0xdc	BRANCH	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c8	lbu a0, -0xf(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e0	sb a0, -0xf(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e4	sh a1, -0xe(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e8	sw s1, -0xc(s4)	MEMBASE	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2f0	addi s5, s4, -0x10	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x300	sb a0, 1(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x3b8	sd a0, 8(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x46c	addi s9, s9, 7	ALU	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x470	andi s6, s9, -8	ALU	reg=s9	val=?	ea=-	sec=-	sym=-
+	USE	+0x474	sub a1, s4, s2	ALU	reg=s4,s2	val=?	ea=-	sec=-	sym=-
+	USE	+0x480	jal 0x21974	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x484	sub a1, s2, s6	ALU	reg=s2,s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x488	add a1, a1, s0	ALU	reg=a1,s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x490	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x494	jal 0x21960	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x494	jal 0x21960	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e4	lbu a1, 1(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x6fc	sb a0, 1(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x704	sb a1, 0(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x708	beq s5, s2, 0x20	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x728	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x730	jal 0x2e818	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x734	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x710	bltu s5, a3, 0x21c	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x940	mv a4, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x944	jal 0x396b4	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x98	bgeu s5, a0, 0x68	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x104	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x114	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x128	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x13c	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x150	bgeu s5, a0, 0xc	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x164	sltu a0, s5, a0	ALU	reg=s5,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x168	xori s3, a0, 7	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x198	bltu s1, s3, 0xac	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x244	bltu s3, a0, -0xa0	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a8	mv a0, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ac	bltu a1, s5, 8	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1b4	add a0, a0, s0	ALU	reg=a0,s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c0	addi a0, a0, -1	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c8	and a0, a0, s8	ALU	reg=a0,s8	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d0	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d4	andi a1, a0, 7	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d8	bnez a1, 0x6a0	BRANCH	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x358	mv a2, s3	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4218	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b0	add a4, s3, s2	ALU	reg=s3,s2	val=?	ea=-	sec=-	sym=-
+	USE	+0x2c4	bltu a4, s9, 0x5d4	BRANCH	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x8b0	jal 0x39748	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2dc	srli a2, s5, 0x30	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ec	bnez a2, 0x5c8	BRANCH	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x3a8	jal 0x40a90	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x3a8	jal 0x40a90	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x55c	sub a4, s3, s1	ALU	reg=s3,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x560	add a1, a4, a1	ALU	reg=a4,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x57c	sd a1, 0x10(a0)	STOREDATA	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x580	bltu s3, a4, 0x1c	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5a4	bltu a1, s3, 0x10	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5b4	srli a1, s3, 1	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5c8	or a1, s3, a1	ALU	reg=s3,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x5dc	srli a6, a1, 2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x5e0	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x604	srli a6, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x608	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x60c	srli a6, a1, 8	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x610	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x614	srli a6, a1, 0x10	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x618	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x61c	srli a6, a1, 0x20	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x620	or a1, a1, a6	ALU	reg=a1,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x624	not a1, a1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x628	srli a6, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x62c	and a2, a6, a2	ALU	reg=a6,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x630	sub a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x634	and a2, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x638	srli a1, a1, 2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x63c	and a1, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x640	add a1, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x644	srli a2, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x648	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x650	and a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x658	mul a1, a1, a5	ALU	reg=a1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x65c	srli a1, a1, 0x38	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x660	subw a2, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x664	slli a1, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x668	srl a4, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x66c	sllw a2, a3, a2	ALU	reg=a3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x670	xori a1, a1, 0x7e	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x674	andi a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x678	not a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x67c	and a2, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x680	or a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x684	snez a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x688	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x68c	addi a1, a1, -2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x690	slli a1, a1, 3	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x694	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x698	ld a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6a0	sd a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x71c	sd s5, 8(s2)	STOREDATA	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x6d8	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x5a8	addi a1, s3, 0x1f	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5ac	srli a1, a1, 5	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x4d0	add s6, s4, s6	ALU	reg=s4,s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4e4	bgeu a2, s6, 0x44	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x534	srli a2, s6, 3	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x538	add a0, a0, a2	ALU	reg=a0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x548	sb a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x292e0	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x292e0	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x34c	addi a1, s6, 0x3e0	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x354	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4218	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4218	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x368	sb zero, 0x3d8(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x8c	addi s10, s6, 0x7ff	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	lh a0, 0x629(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	lh a0, 0x62b(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x304	beqz s10, 0x98	BRANCH	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x3dc	ld a0, 0x20(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x418	ld a0, 0x40(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x504	bgeu a4, s6, 8	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x520	bltu a7, s6, 0x254	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x818	bgeu a3, s6, -0x2f0	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7e8	bgeu a1, s6, -0x2c0	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7d8	bltu s6, a2, 0x44	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x790	bgeu a5, s6, 0x60	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x804	bgeu s6, a1, -0x2dc	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x798	bltu a4, s6, 0x10	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7ac	bltu s6, a2, 0x70	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7bc	bgeu a1, s6, -0x294	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7a4	bgeu s6, a4, -0x27c	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x524	bgeu a6, s6, 0x250	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x508	bgeu a2, s6, 0x20	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a8	mv a0, s4	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b4	jal 0x21940	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x308	ld a0, 0(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x390	add a4, s3, s2	ALU	reg=s3,s2	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e0	seqz s1, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e4	addiw a2, s4, 1	ALU	reg=s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e8	sllw s4, a1, s3	ALU	reg=a1,s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1f0	add s1, s5, s1	ALU	reg=s5,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1f4	sltu a3, s2, a2	ALU	reg=s2,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x1f8	add s3, a0, s4	ALU	reg=a0,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1fc	sltu s0, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x200	and s0, a3, s0	ALU	reg=a3,s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x204	addi a0, s0, -1	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x208	and a2, a0, s4	ALU	reg=a0,s4	val=?	ea=-	sec=-	sym=-
+	USE	+0x210	add s3, a2, s3	ALU	reg=a2,s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x214	bltu a0, s5, 0x10	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x224	jal 0x2cae0	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x224	jal 0x2cae0	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x25c	ld a2, 0x621(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x270	mv a0, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x274	mv a1, s3	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x27c	jal 0x24d84	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x27c	jal 0x24d84	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x318	addi a0, s6, 0x3d8	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x320	andi a2, a0, -4	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x328	lr.w.aq a4, (a2)	MEMBASE	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x33c	sc.w a5, a5, (a2)	MEMBASE	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x948	jal 0x33724	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x948	jal 0x33724	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x8c0	and a3, s1, a0	ALU	reg=s1,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x8d8	mv a4, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x8dc	jal 0x3971c	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x8dc	jal 0x3971c	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x90	sd s1, 8(sp)	STOREDATA	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2d8	srli a1, s1, 0x20	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e4	sh a1, -0xe(s4)	STOREDATA	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2e8	sw s1, -0xc(s4)	STOREDATA	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x3bc	beqz s0, 0x20	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a0	and s6, s1, a0	ALU	reg=s1,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a4	beqz s6, 0x14	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b8	beq s1, s6, 0x94	BRANCH	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b8	beq s1, s6, 0x94	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x570	add a3, a3, s1	ALU	reg=a3,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x578	sd a3, 8(a0)	STOREDATA	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x72c	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x730	jal 0x2e818	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6bc	mv a2, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6c0	bltu s1, a1, 8	BRANCH	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x540	and a1, s1, a1	ALU	reg=s1,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x544	andi a1, a1, 7	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x548	sb a1, 0(a0)	STOREDATA	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x292e0	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x4ac	mv a1, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b4	jal 0x21940	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x37c	mv a0, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x384	jal 0x25110	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x294	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x298	mv a2, s3	ALU	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x29c	jal 0x42d8	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x29c	jal 0x42d8	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x234	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x238	jal 0x354e0	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x218	bltu a0, s3, 0xc	BRANCH	reg=s3	val=?	ea=-	sec=-	sym=-
+	USE	+0x21c	ld a0, 0x621(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x220	bgeu a0, s1, 0x60	BRANCH	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x280	jal 0x2a3e0	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x280	jal 0x2a3e0	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	mv a0, s5	ALU	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x254	bgeu a1, s5, -0xa4	BRANCH	reg=s5	val=?	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31298	+0x498	a0	0xfff80000	b	ALU,BRANCH,CALLARG,MEMBASE
+	USE	+0x49c	srli a0, a0, 0x10	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a0	and s6, s1, a0	ALU	reg=s1,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x4a4	beqz s6, 0x14	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b8	beq s1, s6, 0x94	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x292e0	CALLARG	reg=a0	val=0xfff8	ea=-	sec=-	sym=-
+	USE	+0x34c	addi a1, s6, 0x3e0	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x354	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4218	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x35c	jal 0x4218	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x368	sb zero, 0x3d8(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x8c	addi s10, s6, 0x7ff	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	lh a0, 0x629(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	lh a0, 0x62b(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x304	beqz s10, 0x98	BRANCH	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x3dc	ld a0, 0x20(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x418	ld a0, 0x40(s6)	MEMBASE	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4bc	jal 0x21924	CALLARG	reg=a0	val=0xfff8	ea=-	sec=-	sym=-
+	USE	+0x4d0	add s6, s4, s6	ALU	reg=s4,s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4e4	bgeu a2, s6, 0x44	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x534	srli a2, s6, 3	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x538	add a0, a0, a2	ALU	reg=a0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x548	sb a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x54c	jal 0x292e0	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x504	bgeu a4, s6, 8	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x520	bltu a7, s6, 0x254	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x818	bgeu a3, s6, -0x2f0	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7e8	bgeu a1, s6, -0x2c0	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7d8	bltu s6, a2, 0x44	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x790	bgeu a5, s6, 0x60	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x804	bgeu s6, a1, -0x2dc	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x798	bltu a4, s6, 0x10	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7ac	bltu s6, a2, 0x70	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7bc	bgeu a1, s6, -0x294	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x7a4	bgeu s6, a4, -0x27c	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x524	bgeu a6, s6, 0x250	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x508	bgeu a2, s6, 0x20	BRANCH	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4ac	mv a1, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x4b4	jal 0x21940	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x308	ld a0, 0(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x25c	ld a2, 0x621(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+	USE	+0x318	addi a0, s6, 0x3d8	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x320	andi a2, a0, -4	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x328	lr.w.aq a4, (a2)	MEMBASE	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x33c	sc.w a5, a5, (a2)	MEMBASE	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x948	jal 0x33724	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x948	jal 0x33724	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x294	mv a0, s6	ALU	reg=s6	val=?	ea=-	sec=-	sym=-
+	USE	+0x29c	jal 0x42d8	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x21c	ld a0, 0x621(s10)	MEMBASE	reg=s10	val=?	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31298	+0x564	a4	0x10000	b	ALU,BRANCH,CALLARG
+	USE	+0x568	addiw a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x580	bltu s3, a4, 0x1c	BRANCH	reg=a4	val=0x10001	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a4	val=0x10001	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=0x10001	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31298	+0x5b8	a2	0x55555000	b	ALU,CALLARG,MEMBASE
+	USE	+0x5cc	addiw a2, a2, 0x555	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x5e4	slli a6, a2, 0x20	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x5e8	add a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x62c	and a2, a6, a2	ALU	reg=a6,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x630	sub a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x634	and a2, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x638	srli a1, a1, 2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x63c	and a1, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x640	add a1, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x644	srli a2, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x648	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x650	and a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x658	mul a1, a1, a5	ALU	reg=a1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x65c	srli a1, a1, 0x38	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x660	subw a2, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x664	slli a1, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x668	srl a4, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x66c	sllw a2, a3, a2	ALU	reg=a3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x670	xori a1, a1, 0x7e	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x674	andi a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x678	not a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x67c	and a2, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x680	or a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x684	snez a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x688	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x68c	addi a1, a1, -2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x690	slli a1, a1, 3	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x694	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x698	ld a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6a0	sd a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31298	+0x5bc	a3	0x33333000	b	ALU,CALLARG,MEMBASE
+	USE	+0x5d0	addiw a3, a3, 0x333	ALU	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5ec	slli a6, a3, 0x20	ALU	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x5f0	add a3, a3, a6	ALU	reg=a3,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x634	and a2, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x63c	and a1, a1, a3	ALU	reg=a1,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x640	add a1, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x644	srli a2, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x648	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x650	and a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x658	mul a1, a1, a5	ALU	reg=a1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x65c	srli a1, a1, 0x38	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x660	subw a2, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x664	slli a1, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x668	srl a4, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x66c	sllw a2, a3, a2	ALU	reg=a3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x670	xori a1, a1, 0x7e	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x674	andi a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x678	not a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x67c	and a2, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x680	or a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x684	snez a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x688	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x68c	addi a1, a1, -2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x690	slli a1, a1, 3	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x694	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x698	ld a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6a0	sd a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31298	+0x5c0	a4	0xf0f1000	b	ALU,CALLARG,MEMBASE
+	USE	+0x5d4	addiw a4, a4, -0xf1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x5f4	slli a6, a4, 0x20	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x5f8	add a4, a4, a6	ALU	reg=a4,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x650	and a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x658	mul a1, a1, a5	ALU	reg=a1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x65c	srli a1, a1, 0x38	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x660	subw a2, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x664	slli a1, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x668	srl a4, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x66c	sllw a2, a3, a2	ALU	reg=a3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x670	xori a1, a1, 0x7e	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x674	andi a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x678	not a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x67c	and a2, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x680	or a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x684	snez a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x688	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x68c	addi a1, a1, -2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x690	slli a1, a1, 3	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x694	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x698	ld a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6a0	sd a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31298	+0x5c4	a5	0x1010000	b	ALU,CALLARG,MEMBASE
+	USE	+0x5d8	addiw a5, a5, 0x101	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x5fc	slli a6, a5, 0x20	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x600	add a5, a5, a6	ALU	reg=a5,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x658	mul a1, a1, a5	ALU	reg=a1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x65c	srli a1, a1, 0x38	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x660	subw a2, a2, a1	ALU	reg=a2,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x664	slli a1, a1, 1	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x668	srl a4, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x66c	sllw a2, a3, a2	ALU	reg=a3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x670	xori a1, a1, 0x7e	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x674	andi a4, a4, 1	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x678	not a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x67c	and a2, s3, a2	ALU	reg=s3,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x680	or a1, a1, a4	ALU	reg=a1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x684	snez a2, a2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x688	add a1, a1, a2	ALU	reg=a1,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x68c	addi a1, a1, -2	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x690	slli a1, a1, 3	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x694	add a0, a0, a1	ALU	reg=a0,a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x698	ld a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6a0	sd a1, 0(a0)	MEMBASE	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e0	jal 0x4dc58	CALLARG	reg=a5	val=0x101010101010101	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a5	val=0x101010101010101	ea=-	sec=-	sym=-
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x31298	+0x8b4	a0	0xfff80000	b	ALU,CALLARG
+	USE	+0x8b8	srli a0, a0, 0x10	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x8bc	addi a0, a0, 7	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x8c0	and a3, s1, a0	ALU	reg=s1,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x8dc	jal 0x3971c	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+LUI	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	0x3580c	+0x74	a5	0x10000	b	BRANCH,CALLARG
+	USE	+0x78	bltu a5, a3, 0x1c	BRANCH	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+	USE	+0xa4	jal 0x234	CALLARG	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+	USE	+0x7c	bltu a5, a4, 0x18	BRANCH	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35834	CALLARG	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a5	val=0x10000	ea=-	sec=-	sym=-
+LUI	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	0x3580c	+0xbc	a5	0x55555000	b	ALU,BRANCH,CALLARG,MEMBASE
+	USE	+0xd0	addiw a5, a5, 0x555	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0xe8	slli t1, a5, 0x20	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0xec	add a5, a5, t1	ALU	reg=a5,t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x130	and a5, t1, a5	ALU	reg=t1,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x134	sub a2, a2, a5	ALU	reg=a2,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x138	and a5, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x13c	srli a2, a2, 2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x140	and a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x144	add a2, a5, a2	ALU	reg=a5,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x148	srli a5, a2, 4	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x14c	add a2, a2, a5	ALU	reg=a2,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x154	and a2, a2, a7	ALU	reg=a2,a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x15c	mul a2, a2, t0	ALU	reg=a2,t0	val=?	ea=-	sec=-	sym=-
+	USE	+0x160	srli a2, a2, 0x38	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x164	subw a5, a5, a2	ALU	reg=a5,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x168	slli a2, a2, 1	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	srl a7, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x170	sllw a5, a6, a5	ALU	reg=a6,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x174	xori a2, a2, 0x7e	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x178	andi a6, a7, 1	ALU	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x17c	not a5, a5	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x180	and a4, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x184	or a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	snez a4, a4	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x18c	add a2, a2, a4	ALU	reg=a2,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x190	addi s0, a2, -2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x194	beqz s0, 0xa0	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35834	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35834	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35834	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x288	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a8	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e0	slli s0, s0, 0x20	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e8	add a0, s0, a0	ALU	reg=s0,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ec	add a0, a4, a0	ALU	reg=a4,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1fc	and a3, a3, a0	ALU	reg=a3,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x200	bnez a3, 0x54	BRANCH	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x19c	bgeu s0, a2, 0xd4	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a4	mul s1, s0, a2	ALU	reg=s0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a8	add s1, a1, s1	ALU	reg=a1,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ac	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a0	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b4	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c0	sw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c8	ld a2, 8(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d0	add a4, s1, a4	ALU	reg=s1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d4	lwu a4, 0x10(a4)	MEMBASE	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+LUI	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	0x3580c	+0xc0	a6	0x33333000	b	ALU,BRANCH,CALLARG,MEMBASE
+	USE	+0xd4	addiw a6, a6, 0x333	ALU	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0xf0	slli t1, a6, 0x20	ALU	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0xf4	add a6, a6, t1	ALU	reg=a6,t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x138	and a5, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x140	and a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x144	add a2, a5, a2	ALU	reg=a5,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x148	srli a5, a2, 4	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x14c	add a2, a2, a5	ALU	reg=a2,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x154	and a2, a2, a7	ALU	reg=a2,a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x15c	mul a2, a2, t0	ALU	reg=a2,t0	val=?	ea=-	sec=-	sym=-
+	USE	+0x160	srli a2, a2, 0x38	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x164	subw a5, a5, a2	ALU	reg=a5,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x168	slli a2, a2, 1	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	srl a7, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x170	sllw a5, a6, a5	ALU	reg=a6,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x174	xori a2, a2, 0x7e	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x178	andi a6, a7, 1	ALU	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x17c	not a5, a5	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x180	and a4, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x184	or a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	snez a4, a4	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x18c	add a2, a2, a4	ALU	reg=a2,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x190	addi s0, a2, -2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x194	beqz s0, 0xa0	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35834	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35834	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35834	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x288	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a8	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e0	slli s0, s0, 0x20	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e8	add a0, s0, a0	ALU	reg=s0,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ec	add a0, a4, a0	ALU	reg=a4,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1fc	and a3, a3, a0	ALU	reg=a3,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x200	bnez a3, 0x54	BRANCH	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x19c	bgeu s0, a2, 0xd4	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a4	mul s1, s0, a2	ALU	reg=s0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a8	add s1, a1, s1	ALU	reg=a1,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ac	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a0	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b4	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c0	sw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c8	ld a2, 8(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d0	add a4, s1, a4	ALU	reg=s1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d4	lwu a4, 0x10(a4)	MEMBASE	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+LUI	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	0x3580c	+0xc4	a7	0xf0f1000	b	ALU,BRANCH,CALLARG,MEMBASE
+	USE	+0xd8	addiw a7, a7, -0xf1	ALU	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0xf8	slli t1, a7, 0x20	ALU	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0xfc	add a7, a7, t1	ALU	reg=a7,t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x154	and a2, a2, a7	ALU	reg=a2,a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x15c	mul a2, a2, t0	ALU	reg=a2,t0	val=?	ea=-	sec=-	sym=-
+	USE	+0x160	srli a2, a2, 0x38	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x164	subw a5, a5, a2	ALU	reg=a5,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x168	slli a2, a2, 1	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	srl a7, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x170	sllw a5, a6, a5	ALU	reg=a6,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x174	xori a2, a2, 0x7e	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x178	andi a6, a7, 1	ALU	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x17c	not a5, a5	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x180	and a4, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x184	or a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	snez a4, a4	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x18c	add a2, a2, a4	ALU	reg=a2,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x190	addi s0, a2, -2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x194	beqz s0, 0xa0	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35834	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35834	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35834	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x288	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a8	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e0	slli s0, s0, 0x20	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e8	add a0, s0, a0	ALU	reg=s0,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ec	add a0, a4, a0	ALU	reg=a4,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1fc	and a3, a3, a0	ALU	reg=a3,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x200	bnez a3, 0x54	BRANCH	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x19c	bgeu s0, a2, 0xd4	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a4	mul s1, s0, a2	ALU	reg=s0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a8	add s1, a1, s1	ALU	reg=a1,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ac	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a0	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b4	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c0	sw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c8	ld a2, 8(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d0	add a4, s1, a4	ALU	reg=s1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d4	lwu a4, 0x10(a4)	MEMBASE	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+LUI	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6	0x3580c	+0xc8	t0	0x1010000	b	ALU,BRANCH,CALLARG,MEMBASE
+	USE	+0xdc	addiw t0, t0, 0x101	ALU	reg=t0	val=?	ea=-	sec=-	sym=-
+	USE	+0x100	slli t1, t0, 0x20	ALU	reg=t0	val=?	ea=-	sec=-	sym=-
+	USE	+0x104	add t0, t0, t1	ALU	reg=t0,t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x15c	mul a2, a2, t0	ALU	reg=a2,t0	val=?	ea=-	sec=-	sym=-
+	USE	+0x160	srli a2, a2, 0x38	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x164	subw a5, a5, a2	ALU	reg=a5,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x168	slli a2, a2, 1	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x16c	srl a7, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x170	sllw a5, a6, a5	ALU	reg=a6,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x174	xori a2, a2, 0x7e	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x178	andi a6, a7, 1	ALU	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x17c	not a5, a5	ALU	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x180	and a4, a4, a5	ALU	reg=a4,a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x184	or a2, a2, a6	ALU	reg=a2,a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x188	snez a4, a4	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x18c	add a2, a2, a4	ALU	reg=a2,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x190	addi s0, a2, -2	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x194	beqz s0, 0xa0	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35834	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35834	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x250	jal 0x35834	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x288	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a8	mv a3, s0	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e0	slli s0, s0, 0x20	ALU	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1e8	add a0, s0, a0	ALU	reg=s0,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ec	add a0, a4, a0	ALU	reg=a4,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x1fc	and a3, a3, a0	ALU	reg=a3,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x200	bnez a3, 0x54	BRANCH	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x19c	bgeu s0, a2, 0xd4	BRANCH	reg=s0	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x28c	jal 0x357f8	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a4	mul s1, s0, a2	ALU	reg=s0,a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x1a8	add s1, a1, s1	ALU	reg=a1,s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1ac	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2a0	mv a1, s1	ALU	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x2ac	jal 0x4a4	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+	USE	+0x2b4	lw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c0	sw a2, 0(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1c8	ld a2, 8(s1)	MEMBASE	reg=s1	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d0	add a4, s1, a4	ALU	reg=s1,a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x1d4	lwu a4, 0x10(a4)	MEMBASE	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a5	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+	USE	+0x26c	jal 0x35818	CALLARG	reg=a7	val=?	ea=-	sec=-	sym=-
+LUI	memset	0x92a1c	+0x48	a1	0x10101000	a	ALU,STOREDATA
+	USE	+0x50	slli a4, a1, 4	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x5c	addi a3, a4, 0x100	ALU	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x64	mulhu a2, a6, a3	ALU	reg=a6,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x68	sw a2, 0(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x70	sw a2, -4(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x78	sw a2, 4(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x7c	sw a2, 8(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x84	sw a2, -0xc(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x88	sw a2, -8(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x90	sw a2, 0xc(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x94	sw a2, 0x10(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x98	sw a2, 0x14(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x9c	sw a2, 0x18(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xb0	sw a2, -0x1c(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xb4	sw a2, -0x18(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xb8	sw a2, -0x14(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xbc	sw a2, -0x10(a3)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xc4	slli a2, a2, 0x20	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xcc	srli a3, a2, 0x20	ALU	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xd0	or a2, a2, a3	ALU	reg=a2,a3	val=?	ea=-	sec=-	sym=-
+	USE	+0xd8	sd a2, 0(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xdc	sd a2, 8(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xe0	sd a2, 0x10(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0xe4	sd a2, 0x18(a1)	STOREDATA	reg=a2	val=?	ea=-	sec=-	sym=-
+LUI	_ZN11__sanitizer9TryMemCpyEPvPKvm	0x6d8b8	+0x34	a0	0xaaaab000	a	ALU,STOREDATA
+	USE	+0x38	addi s5, a0, -0x556	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x3c	sw s5, 8(sp)	STOREDATA	reg=s5	val=0xaaaaaaaa	ea=-	sec=-	sym=-
+	USE	+0x40	sw s5, 0xc(sp)	STOREDATA	reg=s5	val=0xaaaaaaaa	ea=-	sec=-	sym=-
+	USE	+0x70	sw s5, 4(sp)	STOREDATA	reg=s5	val=0xaaaaaaaa	ea=-	sec=-	sym=-

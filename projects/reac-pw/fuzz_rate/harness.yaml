@@ -1,0 +1,248 @@
+schema: oss-fuzz-theorems/harness/1
+project: reac-pw
+harness: fuzz_rate
+rocq: OSSVerify.reac_pw.fuzz_rate
+origin: upstream
+summary: Builds a PipeWire Props object from the input and parses its sample-rate key; then decides the parsed rate and a
+  second input rate for a master or slave with a fuzz-chosen drivable mask, and writes the drivable-rate list into a fuzz-sized
+  buffer, comparing each answer with the closed rate list and the record of the object written. The key and the refusal enumeration
+  come from libreac's configuration header; the harness works out each rate's bit from its own closed list and names
+  each refusal code itself.
+entry: LLVMFuzzerTestOneInput
+source:
+  files:
+  - source/fuzz_rate.c
+  - source/fuzz.h
+  - source/pod.h
+  from:
+    repository: https://github.com/FreeREAC/reac-pw
+    commit: f86a30a3d06e84e8a7d6ec647cae77c4cbc9137b
+    path: fuzz/fuzz_rate.c
+  modified: false
+  licence: GPL-3.0-or-later
+library:
+  repository: https://github.com/FreeREAC/reac-pw
+  commit: f86a30a3d06e84e8a7d6ec647cae77c4cbc9137b
+  version: 1.0.42
+  licence: GPL-3.0-or-later
+modifications:
+- Linked against a static library of reac-pw's nine input readers and the harness's box-model table, built from source with
+  libreac's and PipeWire SPA's headers only; neither library is linked.
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on
+  its input.
+- A small driver reads the input file, calls the fuzz target one to four times and prints each return value.
+builds:
+  plain:
+    file: fuzz_rate.plain
+    bytes: 53632
+    sha256: 2bbd88d40188265153dbe7205abefd9dcdf66369c9cb99e8588999d081a221e6
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  ubsan:
+    file: fuzz_rate.ubsan
+    bytes: 54736
+    sha256: 75532555040f82db14128f76fd4d2d19936b993e04ec7c7621cdc5e521e161e8
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  asan:
+    file: fuzz_rate.asan
+    bytes: 584568
+    sha256: 22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+  asan-ubsan:
+    file: fuzz_rate.asan-ubsan
+    bytes: 585336
+    sha256: c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+licence: NOASSERTION
+checks:
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_rate.c:130-141
+  what: A Props write with no rate key returns 0 and leaves the caller's rate unchanged.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_rate.c:143-156
+  what: A rate key holding an Int, or a Float whose nearest integer fits an int, returns 1 and that rate (the first such key's).
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_rate.c:158-173
+  what: A rate key with no usable number, or an object that is not a Props object, returns -1 and leaves the caller's rate
+    unchanged.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_rate.c:175-188
+  what: The decision refuses a slave first, then a rate off the closed list (44100, 48000, 96000), then a rate outside the
+    drivable mask, and accepts every other rate.
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_rate.c:190-200
+  what: Each refusal publishes its own code from the shared vocabulary.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_rate.c:202-215
+  what: A rate's bit is its place in the closed list, it is in the list exactly when it has a bit, and the best drivable rate
+    is the highest one in the mask.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_rate.c:217-229
+  what: The drivable list is the drivable rates in ascending order, comma separated; the length returned is the whole list's
+    and the buffer holds as much as fits, NUL-terminated.
+failure_handlers: unknown
+statements:
+  plain_halts:
+    kind: halts
+    builds:
+    - plain
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  ubsan_halts:
+    kind: halts
+    builds:
+    - ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_halts:
+    kind: halts
+    builds:
+    - asan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_ubsan_halts:
+    kind: halts
+    builds:
+    - asan-ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open
+  ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - ubsan
+    reading: alloc-forced-only
+    budgets: standard
+    status: open
+  asan_ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan-ubsan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open

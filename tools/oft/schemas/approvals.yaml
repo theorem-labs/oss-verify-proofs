@@ -2,7 +2,9 @@
 # `./oft release-tree` keeps the proofs of these statements, removes the others, and removes this file;
 # `./oft approvals` writes it from the proofs in a checkout.  A fuzz target has one entry per source (origin and
 # record), so proofs written here and proofs from a submission on one fuzz target are listed apart; a statement is in
-# one entry of its fuzz target only, and a release carries the union of the statements its entries list.
+# one entry of its fuzz target only, and a release carries the union of the statements its entries list.  An entry
+# from a project's enrollment merge (origin enrollment) is a ceiling: it lists the statements its enrollment facts pull
+# requests wrote, and a release carries the proofs of those that exist, are not held back and do not refute.
 tag: oss-fuzz-theorems/approvals/1
 root: {type: ref, name: approvals}
 defs:
@@ -26,7 +28,20 @@ defs:
         items: {type: statement-name}
       approved_by: {type: str, pattern: '^[A-Za-z0-9](-?[A-Za-z0-9])*$', max: 39}   # a GitHub login
       date: {type: date}
-      # where the proofs began: written in this repository, or submitted
-      origin: {type: enum, values: [this-repository, submission]}
+      # where the proofs began: written in this repository, or submitted; or written here after the merge of the
+      # project's enrollment pull request on the OSS Verify port, which approves them (its merge watcher writes the
+      # entry)
+      origin: {type: enum, values: [this-repository, submission, enrollment]}
       # a submission only: the record of the review behind this approval
       record: {type: str, pattern: '^[a-z0-9][a-z0-9._-]*$', max: 100, optional: true}
+      # an enrollment entry only: the merge that wrote it.  The merge watcher writes approved_by as merged_by without a
+      # trailing [bot], and date as the merge's UTC date
+      enrollment:
+        type: object
+        optional: true
+        fields:
+          # a pull request on theorem-labs/oss-verify (the group keeps lint's links rule from reading a link here)
+          pull_request: {type: str, pattern: '^https://(github\.com)/theorem-labs/oss-verify/pull/[0-9]+$'}
+          merged_by: {type: str, pattern: '^[A-Za-z0-9](-?[A-Za-z0-9])*(\[bot\])?$', max: 44}   # as GitHub gives it
+          merged_at: {type: str, pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$'}
+          merge_commit: {type: commit}   # on theorem-labs/oss-verify

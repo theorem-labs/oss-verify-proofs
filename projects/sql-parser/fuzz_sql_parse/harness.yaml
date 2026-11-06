@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: sql-parser
 harness: fuzz_sql_parse
-rocq: OssFuzzTheorems.sql_parser.fuzz_sql_parse
+rocq: OSSVerify.sql_parser.fuzz_sql_parse
 origin: oss-fuzz
 summary: hsql::SQLParser::parse(input, &res); return value, res.isValid() and the statement list are all
   ignored.

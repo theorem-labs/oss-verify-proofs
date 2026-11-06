@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libheif
 harness: box_fuzzer
-rocq: OssFuzzTheorems.libheif.box_fuzzer
+rocq: OSSVerify.libheif.box_fuzzer
 origin: upstream
 summary: Reads ISOBMFF boxes in a loop from a memory BitstreamRange with a 2 GiB total-memory limit and
   calls get_type/get_type_string/dump on each; dump output is discarded.

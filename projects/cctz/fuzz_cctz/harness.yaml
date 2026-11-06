@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cctz
 harness: fuzz_cctz
-rocq: OssFuzzTheorems.cctz.fuzz_cctz
+rocq: OSSVerify.cctz.fuzz_cctz
 origin: oss-fuzz
 summary: load_time_zone(fuzzed name); cctz::parse(fuzzed format, fuzzed date); convert(civil_second(6
   fuzzed uint32)); cctz::format(fuzzed format); every return value discarded.

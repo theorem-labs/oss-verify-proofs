@@ -1,0 +1,7 @@
+[libreac/fuzz_disco] A/Rt/StackMalloc0.v:3 0x3d474 0x3d474
+[libreac/fuzz_disco] A/Rt/StackMalloc0Tbl.v:3 0x3d474 0x3d474
+[libreac/fuzz_disco] A/Rt/StackMalloc0Tbl.v:41 0x3dca4 0x3dfc4
+[libreac/fuzz_disco] A/Rt/StackMalloc0Tbl.v:70 0xa0500 0xa4080
+[libreac/fuzz_disco] A/Rt/StackMalloc0Tbl.v:70 0xa11f0 0xa4d70
+[libreac/fuzz_disco] A/Rt/StackMalloc0Tbl.v:71 0xa0560 0xa40e0
+[libreac/fuzz_disco] A/Rt/StackMalloc0Tbl.v:71 0xa1200 0xa4d80

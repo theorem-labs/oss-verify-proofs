@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: boringssl
 harness: crl_getcrlstatusforcert_fuzzer
-rocq: OssFuzzTheorems.boringssl.crl_getcrlstatusforcert_fuzzer
+rocq: OSSVerify.boringssl.crl_getcrlstatusforcert_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

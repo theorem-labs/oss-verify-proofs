@@ -1,0 +1,11 @@
+plant c: 0x5e6bc +0x24c  lui a3, 0x40  ->  lui a3, 0x41
+plant d: table byte 0x104ed  0x0d  ->  0xf2
+original sha256 ce511d541cdabbe3
+  planted-c sha256 895f84e544e9edab
+plant c: luilui verdict on the planted function: DIFFERS (other functions not none / EQUAL: none)
+    (linear: OP srli t2, a2, 1), 0x5555555555555555)), 0x3333333333333333), and(srli(sub((linear: OP not a2, a2), and((linear: OP srli t2, a2, 1), 0x5555555555555555)), 0x2), 0x3333333333333333)), 0x4)), 0xf0f0f0f0f0f0f0f), 0x101010101010101), 0x38), 0x3f), 0x3)']
+    (linear: OP srli t2, a2, 1), 0x5555555555555555)), 0x3333333333333333), and(srli(sub((linear: OP not a2, a2), and((linear: OP srli t2, a2, 1), 0x5555555555555555)), 0x2), 0x3333333333333333)), 0x4)), 0xf0f0f0f0f0f0f0f), 0x101010101010101), 0x38), 0x3f), 0x3)']
+  planted-d sha256 7ec0692864f78db3
+plant d: luilui verdict on the planted function: DIFFERS (other functions not none / EQUAL: none)
+     sha256 3513f5be9db30dd0] (index <= 0x3f) => DIFFERS: table bytes differ at 0x104e8 / 0x10500 (64 bytes); table bytes differ at 0x104e8 / 0x10500 (64 bytes); table bytes differ at 0x104e8 / 0x10500 (64 bytes); table bytes differ at 0x104e8 / 0x10500 (64 bytes)
+plant_luilui: both controls REFUSED (DIFFERS)

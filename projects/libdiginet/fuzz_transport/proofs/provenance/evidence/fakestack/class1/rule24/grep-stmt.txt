@@ -1,0 +1,322 @@
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/boost-beast/http_request/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/boost-json/fuzz_parse/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/bzip2/bzip2_compress_target/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/cgif/cgif_file_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACeb.v:33:astack_malloc_realizes tfibsegs B 2 -> stack_malloc_progressP B -> astack_free_law tfibsegs B -> frame_flag_lawP tfibsegs B ->
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACed.v:125:Lemma tfibX_ASM1 : astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACed.v:126:Proof. exact (AF0s.stack_malloc1_contract B tfibX_LAWS HB). Qed.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACed.v:127:Lemma tfibX_ASM2 : astack_malloc_realizes tfibsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACed.v:128:Proof. exact (AF0u.stack_malloc2_contract B tfibX_LAWS HB). Qed.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACfi.v:90:Lemma link_ASM2 : astack_malloc_realizes tfibsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACfi.v:91:Proof. exact (stack_malloc2_contract B LAWS HB). Qed.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/A/AF0s.v:514:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/A/AF0u.v:514:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/YCeb.v:27:astack_malloc_realizes tfibsegs B 2 -> stack_malloc_progressP B -> astack_free_law tfibsegs B -> frame_flag_lawP tfibsegs B ->
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/YCed.v:118:Lemma tfibX_ASM1 : astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/YCed.v:119:Proof. exact (YF0s.stack_malloc1_contract B tfibX_LAWS HB). Qed.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/YCed.v:120:Lemma tfibX_ASM2 : astack_malloc_realizes tfibsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/YCed.v:121:Proof. exact (YF0u.stack_malloc2_contract B tfibX_LAWS HB). Qed.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/YCfi.v:88:Lemma link_ASM2 : astack_malloc_realizes tfibsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/YCfi.v:89:Proof. exact (stack_malloc2_contract B LAWS HB). Qed.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/YF0s.v:513:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_file_fuzzer/proofs/lib/YF0u.v:513:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 2.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/cgif/cgif_rgb_fuzzer/proofs
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_rgb_fuzzer/proofs/lib/YF97.v:512:Corollary stack_malloc1_contract : forall B, AR_laws trasegs B -> TraSyms B -> astack_malloc_realizes trasegs B 1.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_rgb_fuzzer/proofs/lib/YF99.v:512:Corollary stack_malloc2_contract : forall B, AR_laws trasegs B -> TraSyms B -> astack_malloc_realizes trasegs B 2.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_rgb_fuzzer/proofs/lib/YF9s.v:512:Corollary stack_malloc1_contract : forall B, AR_laws trbsegs B -> TrbSyms B -> astack_malloc_realizes trbsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_rgb_fuzzer/proofs/lib/YF9u.v:512:Corollary stack_malloc2_contract : forall B, AR_laws trbsegs B -> TrbSyms B -> astack_malloc_realizes trbsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_rgb_fuzzer/proofs/lib/YZ00.v:38:Let ASM1_A : forall fx : YK11.FPState, @astack_malloc_realizes fx rc trasegs B 1 := fun fx => stack_malloc1_contract (fx:=fx) B LAWS HB.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_rgb_fuzzer/proofs/lib/YZ00.v:39:Let ASM2_A : forall fx : YK11.FPState, @astack_malloc_realizes fx rc trasegs B 2 := fun fx => stack_malloc2_contract (fx:=fx) B LAWS HB.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_rgb_fuzzer/proofs/lib/YZ01.v:36:Let ASM1_A : forall fx : YK11.FPState, @astack_malloc_realizes fx rc trbsegs B 1 := fun fx => stack_malloc1_contract (fx:=fx) B LAWS HB.
+refs/remotes/origin/ossv/recipes:projects/cgif/cgif_rgb_fuzzer/proofs/lib/YZ01.v:37:Let ASM2_A : forall fx : YK11.FPState, @astack_malloc_realizes fx rc trbsegs B 2 := fun fx => stack_malloc2_contract (fx:=fx) B LAWS HB.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/cjson/cjson_read_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/coturn/FuzzStunClient/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/double-conversion/string_to_double_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/fast_float/from_chars/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/glaze/binary_reflection/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/json-c/json_object_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_bigint/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_bson_parser_max/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_json_cursor/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_json_encoder/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_msgpack_encoder/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_ubjson_encoder/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/jsoncons/fuzz_ubjson_parser_max/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/leptonica/bilateral_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/leptonica/colorfill_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/leptonica/edge_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/leptonica/fhmtgen_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/leptonica/graymorph_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/leptonica/grayquant_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/leptonica/jpegiostub_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/leptonica/kernel_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/leptonica/paintcmap_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/leptonica/pix1_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/leptonica/pix_orient_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/libdiginet/fuzz_codec/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/libdiginet/fuzz_decode/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/libdiginet/fuzz_frame/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/libpcap/fuzz_pcap/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_boxreg/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_ctrl/proofs
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/A/Prog/C_reac_ctrl_parseP.v:8:   2. the call `jal __asan_stack_malloc_1` (0x835e8): the core's astack_malloc_realizes at class 1, through
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/A/Prog/C_reac_ctrl_parseP.v:200:   stack_malloc_progressP; YG0d.v:285 astack_malloc_realizes at class 1). *)
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/B/ACtlAll.v:346:Let ASM1 : Reusable.YG0d.astack_malloc_realizes segs CtrlB 1 :=
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_ctrl/proofs/lib/B/ACtlAll.v:349:Let ASM2 : Reusable.YG0d.astack_malloc_realizes segs CtrlB 2 :=
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_decode/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_disco/proofs
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_disco/proofs/lib/A/AF0s.v:517:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_disco/proofs/lib/A/AF0u.v:517:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_disco/proofs/lib/A/Prog/DiscoLibX.v:144:Proof. intros fq. exact (AF0s.stack_malloc1_contract (fx := fq) TB dl_laws AD2l.TfibB_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_disco/proofs/lib/A/Prog/DiscoLibX.v:147:Proof. intros fq. exact (AF0u.stack_malloc2_contract (fx := fq) TB dl_laws AD2l.TfibB_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_disco/proofs/lib/Reusable/YF0s.v:516:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_disco/proofs/lib/Reusable/YF0u.v:516:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_disco/proofs/lib/Y/Prog/DiscoYLibX.v:115:Proof. intros fq. exact (@YF0s.stack_malloc1_contract fq rc B tfib_laws YD2l.TfibB_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_disco/proofs/lib/Y/Prog/DiscoYLibX.v:118:Proof. intros fq. exact (@YF0u.stack_malloc2_contract fq rc B tfib_laws YD2l.TfibB_syms). Qed.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_grant/proofs
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/A/Prog/GrantClose.v:179:Lemma grant_ASM1 : astack_malloc_realizes tfibsegs GrantB 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/A/Prog/GrantClose.v:180:Proof. exact (AF0s.stack_malloc1_contract GrantB grant_LAWS GrantB_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/A/Prog/GrantClose.v:181:Lemma grant_ASM2 : astack_malloc_realizes tfibsegs GrantB 2.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/A/Prog/GrantClose.v:182:Proof. exact (AF0u.stack_malloc2_contract GrantB grant_LAWS GrantB_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/A/Rt/AF0s.v:513:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> GrantSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/A/Rt/AF0u.v:513:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> GrantSyms B -> astack_malloc_realizes tfibsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/B/GrantBCloseInst.v:223:Proof. exact (YF0s.stack_malloc1_contract GrantB grantB_LAWS GrantB_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/B/GrantBCloseInst.v:225:Proof. exact (YF0u.stack_malloc2_contract GrantB grantB_LAWS GrantB_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/B/Rt/YF0s.v:515:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> GrantSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_grant/proofs/lib/B/Rt/YF0u.v:515:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> GrantSyms B -> astack_malloc_realizes tfibsegs B 2.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_identity/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_knock/proofs
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_knock/proofs/lib/A/AF0s.v:520:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_knock/proofs/lib/A/APgLib.v:29:   - the links: cgif's link_ASM2 (class 2, A/AF0s.v stack_malloc2_contract) -> link_ASM1 (class 1, knock's
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_knock/proofs/lib/A/APgLib.v:30:     A/AF0s.v stack_malloc1_contract at 0x3c064). knock's harness calls no allocator, so cgif's AMALLOC / AFREE have
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_knock/proofs/lib/A/APgLib.v:275:Lemma link_ASM1 : astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_knock/proofs/lib/A/APgLib.v:276:Proof. exact (stack_malloc1_contract B LAWS HB). Qed.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_knock/proofs/lib/A/APgMain0.v:48:     ASM1 : astack_malloc_realizes tfibsegs B 1;  SMP : stack_malloc_progressP B;  FFL : frame_flag_lawP tfibsegs B;
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_knock/proofs/lib/AU/APgLib.v:19:     lib/AU/YF0s.v's stack_malloc1_contract, TL and LAWS are <worker>'s lib/AU/APgImgLink.v tfibX_lib / tfibX_LAWS;
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_knock/proofs/lib/AU/APgLib.v:260:Lemma link_ASM1 : astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_knock/proofs/lib/AU/APgLib.v:261:Proof. exact (stack_malloc1_contract B LAWS HB). Qed.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_knock/proofs/lib/AU/APgMain0.v:42:     ASM1 : astack_malloc_realizes tfibsegs B 1;  SMP : stack_malloc_progressP B;  FFL : frame_flag_lawP tfibsegs B;
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_knock/proofs/lib/AU/YF0s.v:521:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_pcap/proofs
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_pcap/proofs/lib/A/AF0s.v:520:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> PcapSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_pcap/proofs/lib/A/Prog/PcapEntryFinal.v:63:     ASM1   astack_malloc_realizes SEGS B 1 AF0s.stack_malloc1_contract via PcapSyms at the instance (pca-6)
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_pcap/proofs/lib/A/Prog/PcapEntryFinal.v:64:                                                                             lib/A/AF0s.v:520 stack_malloc1_contract.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_pcap/proofs/lib/A/Prog/PcapEntryFinal.v:311:   DISCHARGER AF0s.stack_malloc1_contract via PcapSyms at the instance (pca-6) *)
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_pcap/proofs/lib/A/Prog/PcapEntryInst.v:24:     ASM1     inst_ASM1: AF0s.stack_malloc1_contract at PcapB with PcapB_LAWS and AD2l.PcapB_syms
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_pcap/proofs/lib/A/Prog/PcapEntryInst.v:268:  fitc (@AF0s.stack_malloc1_contract fx rc B (@PcapBFacts.PcapB_LAWS rc) AD2l.PcapB_syms).
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_pcap/proofs/lib/A/Prog/PcapHarnessPE.v:43:     ASM1   astack_malloc_realizes SEGS B 1     the side-stack entry for class 1 (YG0d.v, cgif core)
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_pcap/proofs/lib/B/PcapCloseB.v:283:Proof. intros rc fx. exact (@RF0s.stack_malloc1_contract fx rc B_U (@RG0q.AR_laws_ok rc segs B_U) RD2l.TfibB_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_pcap/proofs/lib/B/PcapOpenInstB.v:179:    (@RF0s.stack_malloc1_contract fx rc BB (@RG0q.AR_laws_ok rc ASEGS BB) RD2l.TfibB_syms)
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_pcap/proofs/lib/Reusable/YF0s.v:522:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> PcapSyms B -> astack_malloc_realizes tfibsegs B 1.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/libreac/fuzz_scene/proofs
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/A/AF0s.v:515:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/A/AF0u.v:515:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 2.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/A/G_Close.v:23:   AF0s.stack_malloc1_contract / AF0u.stack_malloc2_contract (CS_CID = 2) with AR_laws_ok and HB; stack_malloc_8_sz /
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/A/G_Close.v:362:   - ASM1 / ASM2 (YG0d.v:285): AF0s.v stack_malloc1_contract / AF0u.v stack_malloc2_contract at B, with
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/A/G_Close.v:411:    (fun rc fx => AF0s.stack_malloc1_contract B (AR_laws_ok _ B) HB)    (fun rc fx => AF0u.stack_malloc2_contract B (AR_laws_ok _ B) HB)
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/A/G_Top.v:329:  abcmp_realizes SEGS B (SIGMA SS___interceptor_trampoline_bcmp) -> astack_malloc_realizes SEGS B 1 ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/A/P_check_step.v:122:(* relocated cgif_file_fuzzer A/AF0u.v:514 stack_malloc2_contract (<worker> / pg-core relocation). *)
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/A/P_check_step_S0.v:68:(* relocated cgif_file_fuzzer A/AF0u.v:514 stack_malloc2_contract (<worker> / pg-core relocation). *)
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/A/Prog/P_reac_ctrl_parse.v:141:     ASM1 : astack_malloc_realizes SEGS B 1, SMP : stack_malloc_progressP B, ASF : astack_free_law SEGS B,
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/G_Close.v:29:   fx0, each with the type of the Variable it replaces. ASM1 / ASM2 close by YF0s.stack_malloc1_contract /
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/G_Close.v:30:   YF0u.stack_malloc2_contract (CS_CID = 2) with AR_laws_ok and HB. <worker>'s rows (<internal path>)
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/G_Close.v:367:(* ASM1 / ASM2 (YG0d.v:285) are rows no more: AU/YF0s.v:514 stack_malloc1_contract / AU/YF0u.v:514
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/G_Close.v:368:   stack_malloc2_contract at B, with AR_laws_ok and HB (CS_CID = 2, AU/P_check_step_cut.v), at the call site. *)
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/G_Close.v:418:    (fun rc fx => YF0s.stack_malloc1_contract B (AR_laws_ok _ B) HB)    (fun rc fx => YF0u.stack_malloc2_contract B (AR_laws_ok _ B) HB)
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/G_Top.v:338:  abcmp_realizes SEGS B (SIGMA SS___interceptor_trampoline_bcmp) -> astack_malloc_realizes SEGS B 1 ->
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/P_check_step.v:123:(* relocated cgif_file_fuzzer A/AF0u.v:514 stack_malloc2_contract (<worker> / pg-core relocation). *)
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/P_check_step_S0.v:81:(* relocated cgif_file_fuzzer A/AF0u.v:514 stack_malloc2_contract (<worker> / pg-core relocation). *)
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/Prog/P_reac_ctrl_parse.v:175:     ASM1 : astack_malloc_realizes SEGS B 1, SMP : stack_malloc_progressP B, ASF : astack_free_law SEGS B,
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/YF0s.v:514:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/libreac/fuzz_scene/proofs/lib/AU/YF0u.v:514:Corollary stack_malloc2_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 2.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/mbedtls/fuzz_pkcs7/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/msgpack-c/unpack_pack_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/omx-clap-core/fuzz_manifest/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/omx-clap-core/fuzz_preset/proofs
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/FCapi.v:36:  - exact (FCm1s.stack_malloc1_contract_x B ARx I TB).
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/FCm01xm.v:32:Corollary stack_malloc1_contract_xm : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B ->
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/FCm1s.v:564:Corollary stack_malloc1_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 1.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/PresetCfnA.v:918:   d05d97a36005) proves stack_malloc0_contract_xm for cid 0 and stack_malloc1_contract_xm for cid 1, in
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/Prog/S8aEntry.v:46:   astack_malloc_realizes_xm); supplier = the frame-class lane's stack_malloc1_contract_xm (lib/A/FCm01xm.v:32, Qed,
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/A/Prog/S8aEntry.v:132:   YGcallMxmn.v:207). DISCHARGE at image A: `FCm01xm.stack_malloc1_contract_xm B ARx I TB` (lib/A/FCm01xm.v:32, Qed,
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCapi.v:38:  - exact (FCm1s.stack_malloc1_contract_x B ARx I TB).
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCm01xm.v:33:Corollary stack_malloc1_contract_xm : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B ->
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCm1s.v:565:Corollary stack_malloc1_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 1.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCxmCfxB.v:17:   - stack_malloc1_contract_xm_cfx_B: the class-1 contract in the form ex_value B' takes it, the text of HSM1 of
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCxmCfxB.v:20:     It is lib/AU/FCm01xm.v stack_malloc1_contract_xm at ARx := ARcf tfibsegs TfibB, TfibSyms from
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCxmCfxB.v:69:Corollary stack_malloc1_contract_xm_cfx_B : forall fx : YK11.FPState,
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCxmCfxB.v:76:    (FCm01xm.stack_malloc1_contract_xm (fx := fx) YD2l.TfibB (ARcf (cp := CP) tfibsegs YD2l.TfibB)
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/AU/PresetCfnB.v:919:   d05d97a36005) proves stack_malloc0_contract_xm for cid 0 and stack_malloc1_contract_xm for cid 1, in
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/B/Prog/ExvB_Inst.v:172:   lib/AU/FCxmCfxB.v stack_malloc1_contract_xm_cfx_B (FrameXm102 07210922d952). No premise left.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/B/Prog/ExvB_Inst.v:180:  (fun fx' => FCxmCfxB.stack_malloc1_contract_xm_cfx_B fx') n fx).
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_preset/proofs/lib/Reusable/YGcallMxmn.v:56:   stack_malloc1_contract_xm from the image walks FCm0s.v:49 / FCm1s.v:51 in its own per-image leaves (lib/A/FCm01xm.v
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/omx-clap-core/fuzz_state/proofs
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/A/FCapi.v:31:  - exact (FCm1s.stack_malloc1_contract_x B ARx I TB).
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/A/FCm1s.v:533:Corollary stack_malloc1_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 1.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/A/FSClose.v:45:       A14 H_stack_malloc_1      lemma fs_stack_malloc_1 <- FSxU.stack_malloc1_contractU_x (A/FSxU.v:30)
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/A/FSClose.v:234:(* A14: A/FSxU.v:30 stack_malloc1_contractU_x *)
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/A/FSClose.v:236:Proof. intros rc fx. exact (FSxU.stack_malloc1_contractU_x TfibB LAWS TfibB_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/A/FSxU.v:30:Theorem stack_malloc1_contractU_x : forall B, AR_laws tfibsegs B -> TfibSyms B ->
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/A/FSxU.v:35:exact (FCm1s.stack_malloc1_contract_x B (FSifaceU.ARU_nohp tfibsegs B U)
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/B/FCapi.v:32:  - exact (FCm1s.stack_malloc1_contract_x B ARx I TB).
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/B/FCm1s.v:534:Corollary stack_malloc1_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 1.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/B/FSCloseB.v:159:Proof. intros rc fx. exact (FSxU.stack_malloc1_contractU_x TfibBU LAWS0 TfibBU_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/B/FSxU.v:32:Theorem stack_malloc1_contractU_x : forall B, AR_laws tfibsegs B -> TfibSyms B ->
+refs/remotes/origin/ossv/recipes:projects/omx-clap-core/fuzz_state/proofs/lib/B/FSxU.v:37:exact (FCm1s.stack_malloc1_contract_x B (FSifaceU.ARU_nohp tfibsegs B U)
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/openssl/bignum/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/openssl/bndiv/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/openssl/ct/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/openssl/echconfiglist_parser/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/openssl/hashtable/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/openssl/pem/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/openssl/punycode/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/plugin-hostd/fuzz_command/proofs
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/A/Prog/CmdProgClosed.v:183:Proof. exact (fun fx0 => @RtClosed.cmd_stack_malloc1_contract_closed fx0 rc B HB). Qed.
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtClosed.v:47:Theorem cmd_stack_malloc1_contract_closed : astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtClosed.v:48:Proof. exact (RtSM1.cmd_stack_malloc1_contract B (YG0q.AR_laws_ok tfibsegs B) HB). Qed.
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtClosed.v:117:Print Assumptions cmd_stack_malloc1_contract_closed.
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtSM1.v:4:(* Modified by Theorem Labs, 2026-10: the walk of __asan_stack_malloc_1 (0x3fa7c) of plugin-hostd/fuzz_command's ASan build: module paths; TfibSyms becomes CmdBSyms; the image's TLS words and its image end 
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtSM1.v:515:Corollary cmd_stack_malloc1_contract : forall B, AR_laws tfibsegs B -> CmdBSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/B/Prog/CmdProgClosed.v:177:Proof. exact (fun fx0 => @RtClosed.cmd_stack_malloc1_contract_closed fx0 rc B HB). Qed.
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtClosed.v:49:Theorem cmd_stack_malloc1_contract_closed : astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtClosed.v:50:Proof. exact (RtSM1.cmd_stack_malloc1_contract B (YG0q.AR_laws_ok tfibsegs B) HB). Qed.
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtClosed.v:129:Print Assumptions cmd_stack_malloc1_contract_closed.
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtSM1.v:4:(* Modified by Theorem Labs, 2026-10: the walk of __asan_stack_malloc_1 (0x3fa7c) of plugin-hostd/fuzz_command's ASan build: module paths; TfibSyms becomes CmdBSyms; the image's TLS words and its image end 
+refs/remotes/origin/ossv/recipes:projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtSM1.v:516:Corollary cmd_stack_malloc1_contract : forall B, AR_laws tfibsegs B -> CmdBSyms B -> astack_malloc_realizes tfibsegs B 1.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/plugin-hostd/fuzz_reply/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/pupnp/FuzzHttp/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_headamp/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_link/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_pin/proofs
+refs/remotes/origin/ossv/recipes:projects/reac-pw/fuzz_pin/proofs/lib/A/AF0s.v:516:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/reac-pw/fuzz_pin/proofs/lib/A/PPgCSpec.v:249:   F-FS1 (callee offer: the side stack for frames, class 1 at 0x3ca58, lib/A/AF0s.v stack_malloc1_contract
+refs/remotes/origin/ossv/recipes:projects/reac-pw/fuzz_pin/proofs/lib/A/PPgMain.v:23:       ASM1 : astack_malloc_realizes tfibsegs B 1 (__asan_stack_malloc_1 at 0x80724),
+refs/remotes/origin/ossv/recipes:projects/reac-pw/fuzz_pin/proofs/lib/A/PinWrapBinders.v:550:Proof. exact (AF0s.stack_malloc1_contract AD2l.TfibB pin_LAWS AD2l.TfibB_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/reac-pw/fuzz_pin/proofs/lib/AU/PPgMain.v:36:       ASM1 : astack_malloc_realizes tfibsegs B 1 (__asan_stack_malloc_1 at 0x80724),
+refs/remotes/origin/ossv/recipes:projects/reac-pw/fuzz_pin/proofs/lib/AU/PinWrapBinders.v:561:Proof. exact (YF0s.stack_malloc1_contract YD2l.TfibB pin_LAWS YD2l.TfibB_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/reac-pw/fuzz_pin/proofs/lib/AU/YF0s.v:517:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 1.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_qdisc/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_rate/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_role/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/reac-pw/fuzz_segconf/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/reac-repacer/fuzz_egress/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/reac-repacer/fuzz_lock/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/reac-repacer/fuzz_uci/proofs
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/lib/A/Rt/AF0s.v:514:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> UciSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/lib/A/UciClose.v:160:   with a0 = 0x60: lib/A/Rt/AF0s.v stack_malloc1_contract (fuzz_grant's released lib/A/Rt/AF0r.v / AF0s.v relocated
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/lib/A/UciClose.v:164:Proof. intros rc fx. exact (@AF0s.stack_malloc1_contract fx rc AD2l.UciB (AR_laws_ok tfibsegs AD2l.UciB) AD2l.UciB_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/lib/B/Rt/YF0s.v:516:Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> UciSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/lib/B/UciBClose.v:197:   a record field at lib/Reusable/YG0d.v:537). lib/B/Rt/YF0s.v:516 stack_malloc1_contract (forall B, AR_laws tfibsegs B
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/lib/B/UciBClose.v:198:   -> UciSyms B -> astack_malloc_realizes tfibsegs B 1; gate record provenance/evidence/stackmalloc1-B, commit
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/lib/B/UciBClose.v:203:Proof. intros rc fx. exact (@BF0s.stack_malloc1_contract fx rc B (AR_laws_ok tfibsegs B) BD2l.UciB_syms). Qed.
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/close-B/RECORD.md:20:| H_RT_STACK_MALLOC1 | lib/B/UciBClose.v:202 | DISCHARGED, Lemma | lib/B/Rt/YF0s.v:516 stack_malloc1_contract (evidence 135b5746fc67) |
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/close-B/scripts/mk_record.py:31:    'H_RT_STACK_MALLOC1': 'lib/B/Rt/YF0s.v:516 stack_malloc1_contract (evidence 135b5746fc67)',
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/GATES.md:16:    Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> UciSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/GATES.md:142:Print Assumptions of `stack_malloc1_contract` (an uncommitted scratch file, built and deleted): 14 axioms, PrimInt63
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/GATES.md:149:`exact (@AF0s.stack_malloc1_contract fx rc B (AR_laws_ok tfibsegs B) AD2l.UciB_syms)`: cb rc 0, the same 14 axioms.
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/MANIFEST.md:59:| records/print-assumptions.txt | Check + Print Assumptions of stack_malloc1_contract (an uncommitted scratch file's source and compile output) |
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/METHOD.md:10:lib/A/Rt/AF0s.v (tfib_stack_malloc_at and the corollary stack_malloc1_contract, line 513) and lib/Reusable/YF0v.v
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/files-sm1.txt:4:#   A/Rt/AF0s.v <- lib/A/Rt/AF0s.v    (tfib_stack_malloc_at and the corollary stack_malloc1_contract)
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/gates/records-sm1.py:24:  print-assumptions.txt  the scratch file and its Check + Print Assumptions of stack_malloc1_contract
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/gates/records-sm1.py:120:        '# Check + Print Assumptions of stack_malloc1_contract, and the consumer\'s hypothesis type closed by exact (an\n'
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/gates/records-sm1.py:130:        '# UciClose.v\'s two bindings and closes it by exact of stack_malloc1_contract. Built by `CB_COMPILE=<it> cb build`.\n'
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/records/consumer-fit.txt:4:# UciClose.v's two bindings and closes it by exact of stack_malloc1_contract. Built by `CB_COMPILE=<it> cb build`.
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/records/consumer-fit.txt:28:  exact (@AF0s.stack_malloc1_contract fx rc B (AR_laws_ok tfibsegs B) AD2l.UciB_syms).
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/records/print-assumptions.txt:1:# Check + Print Assumptions of stack_malloc1_contract, and the consumer's hypothesis type closed by exact (an
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/records/print-assumptions.txt:23:  exact (@AF0s.stack_malloc1_contract fx rc B (AR_laws_ok tfibsegs B) AD2l.UciB_syms).
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/records/print-assumptions.txt:26:Check AF0s.stack_malloc1_contract.
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/records/print-assumptions.txt:27:Print Assumptions AF0s.stack_malloc1_contract.
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/records/print-assumptions.txt:30:AF0s.stack_malloc1_contract
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-A/records/print-assumptions.txt:32:         AR_laws tfibsegs B → UciSyms B → astack_malloc_realizes tfibsegs B 1
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-B/GATES.md:13:    Corollary stack_malloc1_contract : forall B, AR_laws tfibsegs B -> UciSyms B -> astack_malloc_realizes tfibsegs B 1.
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-B/GATES.md:105:Print Assumptions of `stack_malloc1_contract` (an uncommitted scratch file, built and deleted): 14 axioms, PrimInt63
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-B/MANIFEST.md:42:| records/build.txt, records/print-assumptions.txt | the cb build of record and its control; Print Assumptions of stack_malloc1_contract |
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-B/METHOD.md:8:the symbolic runs, the probe loop), lib/B/Rt/YF0s.v (tfib_stack_malloc_at and the corollary stack_malloc1_contract,
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-B/files-sm1.txt:4:#   Rt/YF0s.v  <- lib/B/Rt/YF0s.v   (tfib_stack_malloc_at and the corollary stack_malloc1_contract)
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-B/gates/records-sm1.py:18:  print-assumptions.txt  Check + Print Assumptions of stack_malloc1_contract (the uncommitted scratch file's output)"""
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-B/gates/records-sm1.py:95:i, j = t.find('stack_malloc1_contract\n'), t.find('ZPaSm1.vo (real')
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-B/gates/records-sm1.py:98:    '# Check + Print Assumptions YF0s.stack_malloc1_contract, from an uncommitted scratch file lib/B/Rt/ZPaSm1.v built by cb\n'
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-B/records/print-assumptions.txt:1:# Check + Print Assumptions YF0s.stack_malloc1_contract, from an uncommitted scratch file lib/B/Rt/ZPaSm1.v built by cb
+refs/remotes/origin/ossv/recipes:projects/reac-repacer/fuzz_uci/proofs/provenance/evidence/stackmalloc1-B/records/print-assumptions.txt:3:stack_malloc1_contract
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/reac-repacer/fuzz_wire/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_atpointer/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/A/Zkt.v:79:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/A/Zkt.v:143:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/A/Zm0.v:20:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/B/Zkt.v:80:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/B/Zkt.v:144:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_atpointer/proofs/lib/B/Zm0.v:19:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_dump/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/Dmp_pj_closedA.v:18:Lemma rta_sm2 : stack_malloc2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/RT_iface2.v:82:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/RT_iface2.v:114:Definition stack_malloc2_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/RT_iface2.v:163:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/RT_stackmalloc1.v:39:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/RT_stackmalloc2.v:39:Theorem rta_stack_malloc_2 : stack_malloc2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/A/RT_win.v:35:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/Dmp_pj_closedA.v:17:Lemma rta_sm2 : stack_malloc2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/RT_iface2.v:82:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/RT_iface2.v:114:Definition stack_malloc2_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/RT_iface2.v:163:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/RT_stackmalloc1.v:37:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/RT_stackmalloc2.v:37:Theorem rta_stack_malloc_2 : stack_malloc2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump/proofs/lib/B/RT_win.v:32:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_dump_raw_tape/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/RT_iface2.v:79:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/RT_iface2.v:144:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/RT_stackmalloc1.v:39:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/RT_win.v:35:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/RT_iface2.v:79:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/RT_iface2.v:144:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/RT_stackmalloc1.v:37:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/RT_win.v:32:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_element/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/B/RT_iface2.v:80:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/B/RT_iface2.v:145:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/B/RT_stackmalloc1.v:38:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/B/RT_win.v:33:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/BA/RT_iface2.v:79:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/BA/RT_iface2.v:144:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/BA/RT_stackmalloc1.v:37:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_element/proofs/lib/BA/RT_win.v:32:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_implementations/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/RT_iface2.v:82:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/RT_iface2.v:114:Definition stack_malloc2_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/RT_iface2.v:163:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/RT_stackmalloc1.v:39:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/RT_stackmalloc2.v:39:Theorem rta_stack_malloc_2 : stack_malloc2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/A/RT_win.v:35:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/RT_iface2.v:82:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/RT_iface2.v:114:Definition stack_malloc2_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/RT_iface2.v:163:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/RT_stackmalloc1.v:37:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/RT_stackmalloc2.v:37:Theorem rta_stack_malloc_2 : stack_malloc2_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_implementations/proofs/lib/B/RT_win.v:32:Lemma w_stack_malloc1 : stack_malloc1_contract S2.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_minifyimpl/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_ondemand/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_ondemand/proofs/lib/A/RT_iface2.v:79:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_ondemand/proofs/lib/A/RT_iface2.v:143:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_ondemand/proofs/lib/A/RT_stackmalloc1.v:20:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_ondemand/proofs/lib/B/RT_iface2.v:80:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_ondemand/proofs/lib/B/RT_iface2.v:144:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_ondemand/proofs/lib/B/RT_stackmalloc1.v:19:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_parser/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_print_json/proofs
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_print_json/proofs/lib/A/RT_iface2.v:77:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_print_json/proofs/lib/A/RT_iface2.v:125:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_print_json/proofs/lib/A/RT_stackmalloc1.v:20:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_print_json/proofs/lib/B/RT_iface2.v:78:Definition stack_malloc1_contract : Prop :=
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_print_json/proofs/lib/B/RT_iface2.v:126:  rc2_stack_malloc_1 : stack_malloc1_contract;
+refs/remotes/origin/ossv/recipes:projects/simdjson/fuzz_print_json/proofs/lib/B/RT_stackmalloc1.v:19:Theorem rta_stack_malloc_1 : stack_malloc1_contract RTA.
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/simdjson/fuzz_utf8/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/skcms/iccprofile_info/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/speex/speex_decode_fuzzer_float/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/spirv-tools/spvtools_binary_parser_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/tinyobjloader/fuzz_tobj_c/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/varnish/esi_parse_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/yajl-ruby/json_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/zlib/checksum_fuzzer/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/zstd/fse_read_ncount/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/zstd/huf_decompress/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/zstd/simple_decompress/proofs
+## git grep -nE 'stack_malloc_realizes +[A-Za-z_0-9]+ +[A-Za-z_0-9]+ +[12]|stack_malloc[12]_contract' refs/remotes/origin/ossv/recipes -- projects/zstd/zstd_frame_info/proofs

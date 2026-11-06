@@ -1,0 +1,4 @@
+donor: pinned sha256 a1b86e424add, twin sha256 8d07ffcf5948, allocated sections equal (build-id note excepted): True
+target: pinned sha256 41113a03c82f, twin sha256 e217cb0a84f1, allocated sections equal (build-id note excepted): True
+reac-repacer/fuzz_uci at 9b0ac6f0e678, class 1, image B: 9 ranges paired and compared (bodies __asan_stack_malloc_1); 63 resolve lines: 5 move a value (0x3c348 -> 0x3e000, 0x97118 -> 0xa3ce0, 0x97178 -> 0xa3d40, 0x97e08 -> 0xa49d0, 0x97e18 -> 0xa49e0), 0 name the image of a header range, the rest keep the value
+PASS

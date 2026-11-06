@@ -28,7 +28,13 @@ these things:
   `elf-snapshot`, and `rocq-read-file` 0.0.2, an OCaml plugin that reads the
   image's bytes at compile time. They are outside the kernel. `Images.v`
   checks by computation that each image is well formed. This rules out an image
-  so malformed that every statement about it holds for no reason.
+  so malformed that every statement about it holds for no reason:
+  `theories/Premises.v` proves that for every well-formed image the entry and
+  input premises of each statement shape hold together, so a `halts_may_fail`
+  statement, which has no other premise, is never vacuous. The budget premise
+  of the other halts and agreement statements reads the run, and is shown
+  satisfiable only on toy images (`tests/proofs/toy/ebreak/`), not for any
+  real build.
 - **`oft check`** ([tools/oft/check.py](../tools/oft/check.py)): the wrapper
   that it writes to give a proof the type of its statement, and its reading of
   `Print Assumptions`. A wrong wrapper or a wrong reading could accept a proof

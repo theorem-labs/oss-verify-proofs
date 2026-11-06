@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: flac
 harness: fuzzer_encoder
-rocq: OssFuzzTheorems.flac.fuzzer_encoder
+rocq: OSSVerify.flac.fuzzer_encoder
 origin: upstream
 summary: Fuzzed settings (incl. set_verify) then process_interleaved of fuzzed int32 samples; process/finish
   results are discarded, so a verify mismatch (FLAC__STREAM_ENCODER_VERIFY_MISMATCH_IN_AUDIO_DATA) is

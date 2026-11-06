@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: abseil-cpp
 harness: string_utilities_fuzzer
-rocq: OssFuzzTheorems.abseil_cpp.string_utilities_fuzzer
+rocq: OSSVerify.abseil_cpp.string_utilities_fuzzer
 origin: oss-fuzz
 summary: StrFormat("%g"/"%d") of fuzzed float/double/int/bool, then SimpleAtof/SimpleAtod/SimpleAtoi/SimpleAtob
   on the formatted string; a parse failure only returns 0 and the parsed value is never compared to the

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libplist
 harness: xplist_fuzzer
-rocq: OssFuzzTheorems.libplist.xplist_fuzzer
+rocq: OSSVerify.libplist.xplist_fuzzer
 origin: upstream
 summary: Calls plist_from_xml on the raw input and frees the resulting node; the return code and tree
   are never inspected (no re-serialisation).

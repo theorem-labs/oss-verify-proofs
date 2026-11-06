@@ -1,0 +1,65 @@
+cgif 0x103a0     8 -> decode 0x103b0     8  ('.rodata', 208)
+   0x103b0   w8 0xafffff00000fffff   AF0m (8, 12682135451164737535)    ok 
+cgif 0x9df78    72 -> decode 0x98d20    72  ('.got', 64)
+   0x98d20   w8 0x130860             AF0m (8, 1247328)                 ok ('_ZN11__sanitizer14PageSizeCachedE', 0)
+   0x98d28   w8 0x9abf8              AF0m (8, 633848)                  ok ('_ZN11__sanitizer22SecondaryAllocatorNameE', 0)
+   0x98d30   w8 0x1328e8             AF0m (8, 1255656)                 ok ('_ZN11__sanitizer21common_flags_dont_useE', 0)
+   0x98d38   w8 0x9e5b8              AF0m (8, 648632)                  ok ('_ZN6__asan28asan_flags_dont_use_directlyE', 0)
+   0x98d40   w8 0xa0db8              AF0m (8, 658872)                  ok ('__asan_shadow_memory_dynamic_address', 0)
+   0x98d48   w8 0xa1aa8              AF0m (8, 662184)                  ok ('_ZN6__asan10kMidMemBegE', 0)
+   0x98d50   w8 0xa1ab0              AF0m (8, 662192)                  ok ('_ZN6__asan10kMidMemEndE', 0)
+   0x98d58   w8 0xa1aa0              AF0m (8, 662176)                  ok ('_ZN6__asan11kHighMemEndE', 0)
+   0x98d60   w8 0x9abc0              AF0m (8, 633792)                  ok ('_ZN14__interception11real_memsetE', 0)
+cgif 0x9ec28    16 -> decode 0x999d0    16  ('.got', 3312)
+   0x999d0   w8 0x9d610              AF0m (8, 644624)                  ok ('asan_globals', 0)
+   0x999d8   w8 0x9d6d0              AF0m (8, 644816)                  ok ('.debug_line', 644816)
+cgif 0x9fe28     8 -> decode 0x9abc0     8  ('_ZN14__interception11real_memsetE', 0)
+   0x9abc0   w8 0x92474              AF0m (8, 599156)                  ok ('memset', 0)
+cgif 0xa2870   192 -> decode 0x9d610   192  ('asan_globals', 0)
+   0x9d610   w8 0x20d40              AF0m (8, 134464)                  ok ('REAC_MODE_44K1', 0)
+   0x9d618   w8 0xc                  AF0m (8, 12)                      ok 
+   0x9d620   w8 0x20                 AF0m (8, 32)                      ok 
+   0x9d628   w8 0x17dd3              AF0m (8, 97747)                   ok ('.rodata', 31475)
+   0x9d630   w8 0x20da0              AF0m (8, 134560)                  ok ('.rodata', 68288)
+   0x9d638   w8 0x0                  AF0m (8, 0)                       ok 
+   0x9d640   w8 0x0                  AF0m (8, 0)                       ok 
+   0x9d648   w8 0x5d3440             AF0m (8, 6108224)                 ok ('__odr_asan_gen_REAC_MODE_44K1', 0)
+   0x9d650   w8 0x20d60              AF0m (8, 134496)                  ok ('REAC_MODE_48K', 0)
+   0x9d658   w8 0xc                  AF0m (8, 12)                      ok 
+   0x9d660   w8 0x20                 AF0m (8, 32)                      ok 
+   0x9d668   w8 0x1588f              AF0m (8, 88207)                   ok ('.rodata', 21935)
+   0x9d670   w8 0x20da0              AF0m (8, 134560)                  ok ('.rodata', 68288)
+   0x9d678   w8 0x0                  AF0m (8, 0)                       ok 
+   0x9d680   w8 0x0                  AF0m (8, 0)                       ok 
+   0x9d688   w8 0x5d3441             AF0m (8, 6108225)                 ok ('__odr_asan_gen_REAC_MODE_48K', 0)
+   0x9d690   w8 0x20d80              AF0m (8, 134528)                  ok ('REAC_MODE_96K', 0)
+   0x9d698   w8 0xc                  AF0m (8, 12)                      ok 
+   0x9d6a0   w8 0x20                 AF0m (8, 32)                      ok 
+   0x9d6a8   w8 0x12d84              AF0m (8, 77188)                   ok ('.rodata', 10916)
+   0x9d6b0   w8 0x20da0              AF0m (8, 134560)                  ok ('.rodata', 68288)
+   0x9d6b8   w8 0x0                  AF0m (8, 0)                       ok 
+   0x9d6c0   w8 0x0                  AF0m (8, 0)                       ok 
+   0x9d6c8   w8 0x5d3442             AF0m (8, 6108226)                 ok ('__odr_asan_gen_REAC_MODE_96K', 0)
+cgif 0xa3810     8 -> decode 0x9e5d0     8  ('_ZN6__asan28asan_flags_dont_use_directlyE', 24)
+   0x9e5d0   w8 0x101010000000001    AF0m (8, 72340168526266369)       ok 
+cgif 0xa3840     8 -> decode 0x9e600     8  ('_ZN6__asan28asan_flags_dont_use_directlyE', 72)
+   0x9e600   w8 0x1000100000000      AF0m (8, 281479271677952)         ok 
+cgif 0xa585c     1 -> decode 0xa061c     1  ('_ZN6__asanL17can_poison_memoryE', 0)
+   0xa061c   w1 0x1                  AF0m (1, 1)                       ok 
+cgif 0xa5ff8     8 -> decode 0xa0db8     8  ('__asan_shadow_memory_dynamic_address', 0)
+   0xa0db8   w8 0x7fff8000           AF0m (8, 2147450880)              ok 
+cgif 0xa6cd8     1 -> decode 0xa1a98     1  ('_ZN6__asanL11asan_initedE', 0)
+   0xa1a98   w1 0x1                  AF0m (1, 1)                       ok 
+cgif 0xa6ce0    24 -> decode 0xa1aa0    24  ('_ZN6__asan11kHighMemEndE', 0)
+   0xa1aa0   w8 0x7fffffffffff       AF0m (8, 140737488355327)         ok 
+   0xa1aa8   w8 0x0                  AF0m (8, 0)                       ok 
+   0xa1ab0   w8 0x0                  AF0m (8, 0)                       ok 
+cgif 0x135aa0    8 -> decode 0x130860    8  ('_ZN11__sanitizer14PageSizeCachedE', 0)
+   0x130860  w8 0x1000               AF0m (8, 4096)                    ok 
+cgif 0x137ba0    8 -> decode 0x132960    8  ('_ZN11__sanitizer21common_flags_dont_useE', 120)
+   0x132960  w8 0xffffffffffffffff   AF0m (8, 18446744073709551615)    ok 
+x2_shw [('0x7fffc1a8', 4), ('0x7fffc1ac', 4), ('0x7fffc1b0', 4), ('0x8000bac2', 24)]
+cellr cgif 0xa2940 -> decode 0x9d700 ('___asan_globals_registered', 0) AF0m (8, 1)
+cellr cgif 0xa38b0 -> decode 0x9e670 ('_ZN6__asanL14mu_for_globalsE', 0) AF0m (8, 0)
+ODR region [0x5d3440, 0x5d3443) (asan_globals odr_indicator of the 3 descriptors: ['0x5d3440', '0x5d3441', '0x5d3442'])
+MISSES (not a Tfib_const cell of AF0m with this value, or a shadow byte not covered): none

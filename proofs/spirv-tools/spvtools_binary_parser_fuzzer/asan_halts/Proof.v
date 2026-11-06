@@ -1,5 +1,0 @@
-From OssFuzzTheorems.spirv_tools.spvtools_binary_parser_fuzzer Require Statements.
-From OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Theorems.
-
-Theorem asan_halts_holds : OssFuzzTheorems.spirv_tools.spvtools_binary_parser_fuzzer.Statements.asan_halts.
-Proof. exact OssFuzzTheorems.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Theorems.halts_allowed_spirv_tools_spvtools_binary_parser_fuzzer_halts_asan. Qed.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: resiprocate
 harness: fuzzUtil
-rocq: OssFuzzTheorems.resiprocate.fuzzUtil
+rocq: OSSVerify.resiprocate.fuzzUtil
 origin: upstream
 summary: Wraps the input in a shared resip::Data and calls DnsUtil::isIpV4Address and DnsUtil::isIpV6Address;
   both booleans are discarded (no cross-check against another address parser).

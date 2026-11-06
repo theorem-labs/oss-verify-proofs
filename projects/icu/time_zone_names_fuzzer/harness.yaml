@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: icu
 harness: time_zone_names_fuzzer
-rocq: OssFuzzTheorems.icu.time_zone_names_fuzzer
+rocq: OSSVerify.icu.time_zone_names_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

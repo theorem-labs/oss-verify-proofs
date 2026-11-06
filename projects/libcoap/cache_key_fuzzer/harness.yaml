@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libcoap
 harness: cache_key_fuzzer
-rocq: OssFuzzTheorems.libcoap.cache_key_fuzzer
+rocq: OSSVerify.libcoap.cache_key_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

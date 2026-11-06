@@ -1,0 +1,25 @@
+# alreloc per-numeral report: libreac/fuzz_grant lib/A/Rt/StackMalloc4.v at e10f488c53fc -> libdiginet/fuzz_transport asan lib/A/Rt/StackMalloc4.v: written
+# source image <LIBREAC_V190>/x/unstripped/fuzz_grant/fuzz_grant.asan; unit image <WORK>/target/unstripped/fuzz_transport/fuzz_transport.asan
+file:line	old	new	rule	old in source image	new in unit image
+A/Rt/StackMalloc4.v:4	0x3d244	0x3d244	resolve (identity)	__asan_stack_malloc_4	_ZN6__asan9FakeStack7DestroyEi+0x2b4
+A/Rt/StackMalloc4.v:4	0x409000	0x409000	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x2825e8	_ZN11__sanitizerL8theDepotE+0x27a728
+A/Rt/StackMalloc4.v:79	17594333495296	17594333495296	SIZES_KEEP	-	-
+A/Rt/StackMalloc4.v:79	6266880	6381568	derived image bound	-	-
+A/Rt/StackMalloc4.v:82	6266880	6381568	derived image bound	-	-
+A/Rt/StackMalloc4.v:116	0x5d8208	0x5f4228	symbol	builtin_tls+0x800	builtin_tls+0x800
+A/Rt/StackMalloc4.v:117	0x5d8208	0x5f4228	symbol	builtin_tls+0x800	builtin_tls+0x800
+A/Rt/StackMalloc4.v:118	0x5d82e4	0x5f4304	symbol	builtin_tls+0x8dc	builtin_tls+0x8dc
+A/Rt/StackMalloc4.v:119	0x5d82e4	0x5f4304	symbol	builtin_tls+0x8dc	builtin_tls+0x8dc
+A/Rt/StackMalloc4.v:184	0x5d8208	0x5f4228	symbol	builtin_tls+0x800	builtin_tls+0x800
+A/Rt/StackMalloc4.v:185	0x5d82e4	0x5f4304	symbol	builtin_tls+0x8dc	builtin_tls+0x8dc
+A/Rt/StackMalloc4.v:239	4231168	4231168	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x2825e8	_ZN11__sanitizerL8theDepotE+0x27a728
+A/Rt/StackMalloc4.v:242	6266880	6381568	derived image bound	-	-
+A/Rt/StackMalloc4.v:244	4231168	4231168	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x2825e8	_ZN11__sanitizerL8theDepotE+0x27a728
+A/Rt/StackMalloc4.v:244	66112	66112	resolve (identity)	-	-
+A/Rt/StackMalloc4.v:252	6266880	6381568	derived image bound	-	-
+A/Rt/StackMalloc4.v:252	783360	797696	derived image bound	_ZN11__sanitizerL26internal_alloc_placeholderE+0x196c0	_ZN11__sanitizerL26internal_alloc_placeholderE+0x15000
+A/Rt/StackMalloc4.v:253	17594333495296	17594333495296	SIZES_KEEP	-	-
+A/Rt/StackMalloc4.v:254	6266880	6381568	derived image bound	-	-
+A/Rt/StackMalloc4.v:254	783360	797696	derived image bound	_ZN11__sanitizerL26internal_alloc_placeholderE+0x196c0	_ZN11__sanitizerL26internal_alloc_placeholderE+0x15000
+A/Rt/StackMalloc4.v:277	1441792	1441792	resolve (identity)	_ZN11__sanitizerL9useCountsE+0x29600	_ZN11__sanitizerL9useCountsE+0x21740
+A/Rt/StackMalloc4.v:279	1441792	1441792	resolve (identity)	_ZN11__sanitizerL9useCountsE+0x29600	_ZN11__sanitizerL9useCountsE+0x21740

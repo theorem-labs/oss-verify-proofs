@@ -1,0 +1,235 @@
+schema: oss-fuzz-theorems/harness/1
+project: libreac
+harness: fuzz_pcap
+rocq: OSSVerify.libreac.fuzz_pcap
+origin: upstream
+summary: Reads the payload as a record-buffer capacity and a pcap file, which pcap_source_open opens through a stand-in for
+  fopen that answers one path with fmemopen over a copy of that file. It reads every record that fits into a buffer of exactly
+  that capacity (its own allocation), walking the file alongside the reader to know what each should be, then closes, reopens
+  and reads the first record again without a timestamp, and closes once more.
+entry: LLVMFuzzerTestOneInput
+source:
+  files:
+  - source/fuzz_pcap.c
+  from:
+    repository: https://github.com/FreeREAC/libreac
+    commit: d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+    path: fuzz/fuzz_pcap.c
+  modified: false
+  licence: GPL-3.0-or-later
+library:
+  repository: https://github.com/FreeREAC/libreac
+  commit: d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+  version: 1.9.0
+  licence: GPL-3.0-or-later
+modifications:
+- Linked against a static libreac.a of every src/*.c of libreac 1.9.0 at commit d16f3f4e, compiled with each build's flags,
+  as libreac's Makefile builds its fuzz targets but with this toolchain in place of a native clang and libFuzzer.
+- libreac's Makefile links this target with -Wl,--wrap=fopen, which collides with the sealed AddressSanitizer runtime's own
+  __wrap_fopen. Instead, src/pcap_source.c is compiled a second time with -Dfopen=libreac_fuzz_fopen and the target with -D__wrap_fopen=libreac_fuzz_fopen
+  -D__real_fopen=fopen, in all four builds, and that object is linked before libreac.a. No source file changes.
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on
+  its input.
+- A small driver reads the input file, calls the fuzz target one to four times and prints each return value.
+builds:
+  plain:
+    file: fuzz_pcap.plain
+    bytes: 49336
+    sha256: 1e8e7da32456ca11f5e70cba9413adf96bbeb09fb14d1c68e2a3c29a6cb0de01
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  ubsan:
+    file: fuzz_pcap.ubsan
+    bytes: 49488
+    sha256: 83af59086893b5608e2e6e71ea75e7355843d61ec2b20bf3fa1106f362b5e43f
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  asan:
+    file: fuzz_pcap.asan
+    bytes: 571416
+    sha256: b7a91d9b1fb0017df0462bf382b3211837851bf801e792673b1cee0797cdca2a
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+  asan-ubsan:
+    file: fuzz_pcap.asan-ubsan
+    bytes: 571112
+    sha256: 9e66f771f22af67aadc8b8ddcd7ee91f46c4c63442c694faaf2375f9c5b79321
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+licence: NOASSERTION
+checks:
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_pcap.c:92-118
+  what: Open accepts exactly a file of at least 24 bytes with one of the two classic magics, notes the byte order, and a reader
+    that failed to open holds no stream.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_pcap.c:132-203
+  what: Each record handed back fits the buffer, is the file's next record that fits and is not empty, with the original length,
+    and an 802.1Q tag stripped exactly when the record carries one, its VID kept; reading stops within one record per 16 bytes
+    of file.
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_pcap.c:205-213
+  what: The timestamp of each record handed back is the record header's seconds and microseconds.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_pcap.c:219-269
+  what: The walk ends with 0 exactly at the end of the file and with -1 on a cut record or header, never with any other answer.
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_pcap.c:273-295
+  what: After close the reader holds no stream and answers -1; it reopens, and the reopened reader gives the same first answer
+    as before.
+statements:
+  plain_halts:
+    kind: halts
+    builds:
+    - plain
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  ubsan_halts:
+    kind: halts
+    builds:
+    - ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_halts:
+    kind: halts
+    builds:
+    - asan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_ubsan_halts:
+    kind: halts
+    builds:
+    - asan-ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open
+  ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - ubsan
+    reading: alloc-forced-only
+    budgets: standard
+    status: open
+  asan_ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan-ubsan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open

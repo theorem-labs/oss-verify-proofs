@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: keystone
 harness: fuzz_asm_armv8_arm
-rocq: OssFuzzTheorems.keystone.fuzz_asm_armv8_arm
+rocq: OSSVerify.keystone.fuzz_asm_armv8_arm
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

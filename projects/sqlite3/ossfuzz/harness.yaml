@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: sqlite3
 harness: ossfuzz
-rocq: OssFuzzTheorems.sqlite3.ossfuzz
+rocq: OSSVerify.sqlite3.ossfuzz
 origin: upstream
 summary: Runs the fuzzed text as SQL through sqlite3_exec() on an in-memory database with a progress-handler
   time cutoff, VDBE-op/LIKE/length limits, a 20 MB heap limit and an authorizer that denies vdbe_*/parser_trace

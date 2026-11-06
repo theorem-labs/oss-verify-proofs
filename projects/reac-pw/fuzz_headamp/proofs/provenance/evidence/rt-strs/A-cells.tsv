@@ -1,0 +1,624 @@
+# rt-strs image A: every numeral alreloc a5c53bb2bed4 reported (donor -> fuzz_headamp.asan), with an independent check by symbol + offset over both unstripped twins (pyelftools), the instruction word at both places for code addresses, and the .got slot contents; plus the hand rows (literals the tool does not touch).
+# donors: libreac/fuzz_identity lib/A at origin/ossv/recipes 09c6822d886 (fuzz_identity.asan symbols 98c4713d9086), libreac/fuzz_boxreg lib/A at 09c6822d886 (fuzz_boxreg.asan symbols 4ce59ee9aac7); unit fuzz_headamp.asan pin f3e0669d2819, symbols b5f352154c54
+file:line	donor	final	rule	independent check	verdict	where
+A/FMsl0.v:1	0x4218c	0x41b98	FUNC entry	0x41b98 __wrap_strlen+0x0 word~pcrel(0900006f/0940006f)	ok	comment (source text kept)
+A/FMsl0.v:36	0x4221c	0x41c2c	range start (FUNC entry, A .. B)	0x41c2c __interceptor_strlen+0x0 word=	ok	comment (source text kept)
+A/FMsl0.v:36	0x424b0	0x41ec0	range end (end 0x424b0 -> 0x41ec0, last byte in __intercepto	0x41ec0 __interceptor_strnlen+0x0 word=	ok	comment (source text kept)
+A/FMsl0.v:37	0x4218c	0x41b98	FUNC entry	0x41b98 __wrap_strlen+0x0 word~pcrel(0900006f/0940006f)	ok	comment (source text kept)
+A/FMsl0.v:38	0x424b0	0x41ec0	FUNC entry	0x41ec0 __interceptor_strnlen+0x0 word=	ok	comment (source text kept)
+A/FMsl0.v:39	0x4221c	0x41c2c	FUNC entry	0x41c2c __interceptor_strlen+0x0 word=	ok	code
+A/FMsl0.v:50	0x4218c	0x41b98	FUNC entry	0x41b98 __wrap_strlen+0x0 word~pcrel(0900006f/0940006f)	ok	code
+A/FMsl0.v:51	0x4221c	0x41c2c	FUNC entry	0x41c2c __interceptor_strlen+0x0 word=	ok	code
+A/FMsl0.v:52	0x424ac	0x41ebc	same-code function	0x41ebc __interceptor_strlen+0x290 word=	ok	code
+A/FMsl0.v:53	0x424b0	0x41ec0	FUNC entry	0x41ec0 __interceptor_strnlen+0x0 word=	ok	code
+A/FMstrlen.v:37	0x4218c	0x41b98	FUNC entry	0x41b98 __wrap_strlen+0x0 word~pcrel(0900006f/0940006f)	ok	code
+A/FMstrlen.v:37	0x4221c	0x41c2c	FUNC entry	0x41c2c __interceptor_strlen+0x0 word=	ok	comment (source text kept)
+A/FMstrlen.v:37	0x94c64	0x95afc	FUNC entry	0x95afc strlen+0x0 word=	ok	comment (source text kept)
+A/FMstrlen.v:38	0x9e0b0	0x9e070	OBJECT start	0x9e070 _ZN14__interception11real_strlenE+0x0	ok	comment (source text kept)
+A/FMstrlen.v:38	0x4226c	0x41c7c	same-code function	0x41c7c __interceptor_strlen+0x50 word=	ok	comment (source text kept)
+A/FMstrlen.v:38	0x422d4	0x41ce4	same-code function	0x41ce4 __interceptor_strlen+0xb8 word=	ok	comment (source text kept)
+A/FMstrlen.v:39	0x4218c	0x41b98	FUNC entry	0x41b98 __wrap_strlen+0x0 word~pcrel(0900006f/0940006f)	ok	code
+A/FMstrlen.v:40	0x94c64	0x95afc	FUNC entry	0x95afc strlen+0x0 word=	ok	code
+A/FMstrlen.v:41	0x4226c	0x41c7c	same-code function	0x41c7c __interceptor_strlen+0x50 word=	ok	code
+A/FMstrlen.v:42	0x422d4	0x41ce4	same-code function	0x41ce4 __interceptor_strlen+0xb8 word=	ok	code
+A/FMstrlen.v:45	0x9e0b0	0x9e070	OBJECT start	0x9e070 _ZN14__interception11real_strlenE+0x0	ok	code
+A/FMstrlen.v:45	0x94c64	0x95afc	FUNC entry	0x95afc strlen+0x0 word=	ok	code
+A/FMstrlen.v:91	0x4226c	0x41c7c	range start (same-code function, A .. B)	0x41c7c __interceptor_strlen+0x50 word=	ok	comment (source text kept)
+A/FMstrlen.v:91	0x422d4	0x41ce4	range end (end 0x422d4 -> 0x41ce4, last byte in __intercepto	0x41ce4 __interceptor_strlen+0xb8 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:35	0x4226c	0x41c7c	same-code function	0x41c7c __interceptor_strlen+0x50 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:36	0x9e0b0	0x9e070	OBJECT start	0x9e070 _ZN14__interception11real_strlenE+0x0	ok	comment (source text kept)
+A/FMstrlen_chk1.v:36	0x422d4	0x41ce4	same-code function	0x41ce4 __interceptor_strlen+0xb8 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:38	0x9c3a0	0x9c3a0	not an address (operand of a product or power) (identity)	kept	ok-kept	comment (source text kept)
+A/FMstrlen_chk1.v:40	0x543d4	0x54888	FUNC entry	0x54888 __asan_region_is_poisoned+0x0 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:40	0x4239c	0x41dac	same-code function	0x41dac __interceptor_strlen+0x180 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:41	0x423ac	0x41dbc	same-code function	0x41dbc __interceptor_strlen+0x190 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:45	0x4226c	0x41c7c	same-code function	0x41c7c __interceptor_strlen+0x50 word=	ok	code
+A/FMstrlen_chk1.v:46	0x422d4	0x41ce4	same-code function	0x41ce4 __interceptor_strlen+0xb8 word=	ok	code
+A/FMstrlen_chk1.v:47	0x543d4	0x54888	FUNC entry	0x54888 __asan_region_is_poisoned+0x0 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:48	0x54544	0x549f8	same-code function	0x549f8 __asan_region_is_poisoned+0x170 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:75	0x10007fff8000	0x10007fff8000	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:77	0x10007fff8000	0x10007fff8000	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:77	0x10007fff8000	0x10007fff8000	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:79	0x9c3a0	0x9c360	.got slot of the same target	src slot->0x136ae8 _ZN11__sanitizer21common_flags_dont_useE+0x0; unit slot->0x1368e8	ok	code
+A/FMstrlen_chk1.v:79	0x136ae8	0x1368e8	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	code
+A/FMstrlen_chk1.v:79	0x136be3	0x1369e3	symbol	0x1369e3 _ZN11__sanitizer21common_flags_dont_useE+0xfb	ok	code
+A/FMstrlen_chk1.v:80	0x9c3a0	0x9c360	.got slot of the same target	src slot->0x136ae8 _ZN11__sanitizer21common_flags_dont_useE+0x0; unit slot->0x1368e8	ok	code
+A/FMstrlen_chk1.v:80	0x136ae8	0x1368e8	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	code
+A/FMstrlen_chk1.v:80	0x136be3	0x1369e3	symbol	0x1369e3 _ZN11__sanitizer21common_flags_dont_useE+0xfb	ok	code
+A/FMstrlen_chk1.v:91	0x42298	0x41ca8	same-code function	0x41ca8 __interceptor_strlen+0x7c word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:91	0x422c4	0x41cd4	same-code function	0x41cd4 __interceptor_strlen+0xa8 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:93	0x423ac	0x41dbc	same-code function	0x41dbc __interceptor_strlen+0x190 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:97	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:98	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:98	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:99	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:99	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:109	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:110	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:110	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:111	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:111	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:121	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:122	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:122	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:123	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:123	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:133	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:134	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:134	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:135	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:135	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:145	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:146	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:146	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:147	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:147	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:157	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:158	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:158	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:159	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:159	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:169	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:170	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:170	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:171	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:171	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:181	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:182	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:182	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:183	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:183	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:193	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:194	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:194	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:195	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	code
+A/FMstrlen_chk1.v:195	0x422cc	0x41cdc	same-code function	0x41cdc __interceptor_strlen+0xb0 word=	ok	code
+A/FMstrlen_chk1.v:202	0x423a0	0x41db0	same-code function	0x41db0 __interceptor_strlen+0x184 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:203	0x423f0	0x41e00	same-code function	0x41e00 __interceptor_strlen+0x1d4 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:203	0x424a8	0x41eb8	same-code function	0x41eb8 __interceptor_strlen+0x28c word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:213	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:213	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:216	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk1.v:217	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk1.v:221	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:221	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:224	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk1.v:225	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk1.v:235	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:235	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:238	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk1.v:239	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk1.v:243	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:243	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk1.v:246	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk1.v:247	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk1.v:249	0x4239c	0x41dac	same-code function	0x41dac __interceptor_strlen+0x180 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:250	0x423ac	0x41dbc	same-code function	0x41dbc __interceptor_strlen+0x190 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:259	0x422c4	0x41cd4	same-code function	0x41cd4 __interceptor_strlen+0xa8 word=	ok	comment (source text kept)
+A/FMstrlen_chk1.v:259	0x422c8	0x41cd8	same-code function	0x41cd8 __interceptor_strlen+0xac word=	ok	comment (source text kept)
+A/FMstrlen_chk2.v:790	472835	472835	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:791	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk2.v:793	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk2.v:794	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk2.v:798	505731	505731	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:852	472835	472835	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:853	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk2.v:860	505731	505731	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:914	472835	472835	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:915	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk2.v:922	505731	505731	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:976	472835	472835	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:977	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk2.v:984	505731	505731	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:1038	472835	472835	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:1039	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk2.v:1046	505731	505731	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:1100	472835	472835	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:1101	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk2.v:1108	505731	505731	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:1162	472835	472835	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:1163	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk2.v:1170	505731	505731	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:1224	472835	472835	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:1225	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk2.v:1232	505731	505731	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:1286	472835	472835	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:1287	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/FMstrlen_chk2.v:1294	505731	505731	not an address (instruction word (argument w of ldR, which i	kept	ok-kept	code
+A/FMstrlen_chk2.v:1371	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1372	345416	346620	resolve	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1378	345416	346620	resolve	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1381	345416	346620	resolve	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1422	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1423	345416	346620	resolve	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1429	345416	346620	resolve	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1432	345416	346620	resolve	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1507	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1508	345416	346620	resolve	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1514	345416	346620	resolve	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1517	345416	346620	resolve	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1558	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1559	345416	346620	resolve	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1565	345416	346620	resolve	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_chk2.v:1568	345416	346620	resolve	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/FMstrlen_musl.v:21	0x94c64	0x95afc	range start (FUNC entry, A .. B)	0x95afc strlen+0x0 word=	ok	comment (source text kept)
+A/FMstrlen_musl.v:21	0x94cf4	0x95b8c	range end (end 0x94cf4 -> 0x95b8c, last byte in strlen+0x8f)	0x95b8c strncat+0x0 word=	ok	comment (source text kept)
+A/FMstrlen_musl.v:36	0x00050613	0x00050613	not an address (instruction word (the word of a fetch_word f	kept	ok-kept	code
+A/FMstrlen_musl.v:38	0x00050613	0x00050613	not an address (instruction word (a decode_any argument)) (i	kept	ok-kept	code
+A/FMstrlen_musl.v:44	0x00054583	0x00054583	not an address (instruction word (the word of a fetch_word f	kept	ok-kept	code
+A/FMstrlen_musl.v:46	0x00054583	0x00054583	not an address (instruction word (a decode_any argument)) (i	kept	ok-kept	code
+A/FMstrlen_musl.v:52	0x00150613	0x00150613	not an address (instruction word (the word of a fetch_word f	kept	ok-kept	code
+A/FMstrlen_musl.v:54	0x00150613	0x00150613	not an address (instruction word (a decode_any argument)) (i	kept	ok-kept	code
+A/FMstrlen_musl.v:56	0x00050593	0x00050593	not an address (instruction word (the word of a fetch_word f	kept	ok-kept	code
+A/FMstrlen_musl.v:58	0x00050593	0x00050593	not an address (instruction word (a decode_any argument)) (i	kept	ok-kept	code
+A/FMstrlen_musl.v:60	0x00158693	0x00158693	not an address (instruction word (the word of a fetch_word f	kept	ok-kept	code
+A/FMstrlen_musl.v:62	0x00158693	0x00158693	not an address (instruction word (a decode_any argument)) (i	kept	ok-kept	code
+A/FMstrlen_musl.v:68	0x00068c63	0x00068c63	not an address (instruction word (the word of a fetch_word f	kept	ok-kept	code
+A/FMstrlen_musl.v:70	0x00068c63	0x00068c63	not an address (instruction word (a decode_any argument)) (i	kept	ok-kept	code
+A/FMstrlen_musl.v:72	0x00064683	0x00064683	not an address (instruction word (the word of a fetch_word f	kept	ok-kept	code
+A/FMstrlen_musl.v:74	0x00064683	0x00064683	not an address (instruction word (a decode_any argument)) (i	kept	ok-kept	code
+A/FMstrlen_musl.v:76	0x00160613	0x00160613	not an address (instruction word (the word of a fetch_word f	kept	ok-kept	code
+A/FMstrlen_musl.v:78	0x00160613	0x00160613	not an address (instruction word (a decode_any argument)) (i	kept	ok-kept	code
+A/FMstrlen_musl.v:80	0x00158593	0x00158593	not an address (instruction word (the word of a fetch_word f	kept	ok-kept	code
+A/FMstrlen_musl.v:82	0x00158593	0x00158593	not an address (instruction word (a decode_any argument)) (i	kept	ok-kept	code
+A/FMstrlen_musl.v:128	0x00064683	0x00064683	not an address (instruction word (the word of a fetch_word f	kept	ok-kept	code
+A/FMstrlen_musl.v:130	0x00064683	0x00064683	not an address (instruction word (a decode_any argument)) (i	kept	ok-kept	code
+A/FMstrlen_musl.v:132	0x00160613	0x00160613	not an address (instruction word (the word of a fetch_word f	kept	ok-kept	code
+A/FMstrlen_musl.v:134	0x00160613	0x00160613	not an address (instruction word (a decode_any argument)) (i	kept	ok-kept	code
+A/FMstrlen_musl.v:136	0x00158593	0x00158593	not an address (instruction word (the word of a fetch_word f	kept	ok-kept	code
+A/FMstrlen_musl.v:138	0x00158593	0x00158593	not an address (instruction word (a decode_any argument)) (i	kept	ok-kept	code
+A/Rt/Strcmp.v:11	0x42748	0x42158	FUNC entry	0x42158 __interceptor_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:12	0x42194	0x41ba0	FUNC entry	0x41ba0 __wrap_strcmp+0x0 word~pcrel(5b40006f/5b80006f)	ok	comment (source text kept)
+A/Rt/Strcmp.v:12	0x42748	0x42158	FUNC entry	0x42158 __interceptor_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:15	0x42194	0x41ba0	FUNC entry	0x41ba0 __wrap_strcmp+0x0 word~pcrel(5b40006f/5b80006f)	ok	comment (source text kept)
+A/Rt/Strcmp.v:15	0x42748	0x42158	FUNC entry	0x42158 __interceptor_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:16	0x59868	0x59d1c	FUNC entry	0x59d1c _ZN6__asan18TryAsanInitFromRtlEv+0x0 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:17	0x427a8	0x421b8	same-code function	0x421b8 __interceptor_strcmp+0x60 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:18	0x427a8	0x421b8	range start (same-code function, A .. B)	0x421b8 __interceptor_strcmp+0x60 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:18	0x427c0	0x421d0	range end (end 0x427c0 -> 0x421d0, last byte in __intercepto	0x421d0 __interceptor_strcmp+0x78 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:18	0x427c4	0x421d4	same-code function	0x421d4 __interceptor_strcmp+0x7c word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:20	0x427c4	0x421d4	same-code function	0x421d4 __interceptor_strcmp+0x7c word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:20	0x42830	0x42240	same-code function	0x42240 __interceptor_strcmp+0xe8 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:21	0x42830	0x42240	same-code function	0x42240 __interceptor_strcmp+0xe8 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:21	0x42880	0x42290	same-code function	0x42290 __interceptor_strcmp+0x138 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:22	0x42880	0x42290	same-code function	0x42290 __interceptor_strcmp+0x138 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:23	0x42744	0x42154	FUNC entry	0x42154 __sanitizer_weak_hook_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:32	0x42138	0x42138	resolve (identity)	0x41b44 _ZN11__sanitizer24InternalMmapVectorNoCtorIN6__asan22GlobalRegistrationSiteELb0EE7ReallocEm+0xc4	kept: history comment, the source text (comments are verbatim)	comment (source text kept)
+A/Rt/Strcmp.v:32	0x42194	0x41ba0	FUNC entry	0x41ba0 __wrap_strcmp+0x0 word~pcrel(5b40006f/5b80006f)	ok	comment (source text kept)
+A/Rt/Strcmp.v:33	0x426ec	0x426ec	resolve (identity)	0x420fc __interceptor_strnlen+0x23c	kept: history comment, the source text (comments are verbatim)	comment (source text kept)
+A/Rt/Strcmp.v:33	0x42748	0x42158	FUNC entry	0x42158 __interceptor_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:34	0x426f0	0x42100	same-code function	0x42100 __interceptor_strnlen+0x240 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:34	0x4274c	0x4215c	same-code function	0x4215c __interceptor_strcmp+0x4 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:35	0x426f4	0x42104	same-code function	0x42104 __interceptor_strnlen+0x244 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:35	0x42750	0x42160	same-code function	0x42160 __interceptor_strcmp+0x8 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:36	0x42728	0x42138	same-code function	0x42138 __interceptor_strnlen+0x278 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:36	0x42784	0x42194	same-code function	0x42194 __interceptor_strcmp+0x3c word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:37	0x42848	0x42258	same-code function	0x42258 __interceptor_strcmp+0x100 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:37	0x428a4	0x422b4	same-code function	0x422b4 __interceptor_strcmp+0x15c word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:38	0x42880	0x42290	same-code function	0x42290 __interceptor_strcmp+0x138 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:38	0x428dc	0x422ec	same-code function	0x422ec __interceptor_strcmp+0x194 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:39	0x426e8	0x426e8	resolve (identity)	0x420f8 __interceptor_strnlen+0x238	kept: history comment, the source text (comments are verbatim)	comment (source text kept)
+A/Rt/Strcmp.v:39	0x42744	0x42154	FUNC entry	0x42154 __sanitizer_weak_hook_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:40	0x42840	0x42250	same-code function	0x42250 __interceptor_strcmp+0xf8 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:40	0x4289c	0x422ac	same-code function	0x422ac __interceptor_strcmp+0x154 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:41	0x42768	0x42178	same-code function	0x42178 __interceptor_strcmp+0x20 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:41	0x427c4	0x421d4	same-code function	0x421d4 __interceptor_strcmp+0x7c word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:41	0x0005a517	0x0005a517	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	comment (source text kept)
+A/Rt/Strcmp.v:42	0x4276c	0x4217c	same-code function	0x4217c __interceptor_strcmp+0x24 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:42	0x427c8	0x421d8	same-code function	0x421d8 __interceptor_strcmp+0x80 word~pcrel(bdc53c03/18c53c03)	ok	comment (source text kept)
+A/Rt/Strcmp.v:43	0x9c860	0x9c820	.got slot of the same target	src slot->0xa04f0 _ZN11__sanitizer17IOCTL_FDGETDRVPRME+0x0; unit slot->0xa04b0	ok	comment (source text kept)
+A/Rt/Strcmp.v:43	0x9c3a0	0x9c360	.got slot of the same target	src slot->0x136ae8 _ZN11__sanitizer21common_flags_dont_useE+0x0; unit slot->0x1368e8	ok	comment (source text kept)
+A/Rt/Strcmp.v:43	0x136668	0x136468	symbol	0x136468 _ZN11__sanitizerL21binary_name_cache_strE+0xbe8	ok	comment (source text kept)
+A/Rt/Strcmp.v:43	0x136ae8	0x1368e8	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	comment (source text kept)
+A/Rt/Strcmp.v:50	0xa5c98	0xa5a98	OBJECT start	0xa5a98 _ZN6__asanL11asan_initedE+0x0	ok	comment (source text kept)
+A/Rt/Strcmp.v:87	0x42194	0x41ba0	FUNC entry	0x41ba0 __wrap_strcmp+0x0 word~pcrel(5b40006f/5b80006f)	ok	code
+A/Rt/Strcmp.v:87	0x42748	0x42158	FUNC entry	0x42158 __interceptor_strcmp+0x0 word=	ok	code
+A/Rt/Strcmp.v:88	0x42748	0x42158	FUNC entry	0x42158 __interceptor_strcmp+0x0 word=	ok	code
+A/Rt/Strcmp.v:92	0x42880	0x42290	same-code function	0x42290 __interceptor_strcmp+0x138 word=	ok	code
+A/Rt/Strcmp.v:125	0x42880	0x42290	same-code function	0x42290 __interceptor_strcmp+0x138 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:125	0x428e0	0x422f0	same-code function	0x422f0 __interceptor_strcmp+0x198 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:135	0x42880	0x42290	range start (same-code function, A .. B)	0x42290 __interceptor_strcmp+0x138 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:135	0x42888	0x42298	range end (end 0x42888 -> 0x42298, last byte in __intercepto	0x42298 __interceptor_strcmp+0x140 word=	ok	comment (source text kept)
+A/Rt/Strcmp.v:512	0x42194	0x41ba0	FUNC entry	0x41ba0 __wrap_strcmp+0x0 word~pcrel(5b40006f/5b80006f)	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:8	0x42748	0x42158	FUNC entry	0x42158 __interceptor_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:8	0x427c4	0x421d4	same-code function	0x421d4 __interceptor_strcmp+0x7c word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:8	0x42830	0x42240	same-code function	0x42240 __interceptor_strcmp+0xe8 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:10	0x427c4	0x421d4	range start (same-code function, A .. B)	0x421d4 __interceptor_strcmp+0x7c word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:10	0x427e4	0x421f4	range end (end 0x427e4 -> 0x421f4, last byte in __intercepto	0x421f4 __interceptor_strcmp+0x9c word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:11	0x427e8	0x421f8	same-code function	0x421f8 __interceptor_strcmp+0xa0 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:12	0x427f0	0x42200	same-code function	0x42200 __interceptor_strcmp+0xa8 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:12	0x429c4	0x423d4	same-code function	0x423d4 __interceptor_strcmp+0x27c word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:12	0x42a84	0x42494	same-code function	0x42494 __interceptor_strcmp+0x33c word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:13	0x42830	0x42240	same-code function	0x42240 __interceptor_strcmp+0xe8 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:13	0x42820	0x42230	same-code function	0x42230 __interceptor_strcmp+0xd8 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:13	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:14	0x42a50	0x42460	range start (same-code function, A .. B)	0x42460 __interceptor_strcmp+0x308 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:14	0x42a80	0x42490	range end (end 0x42a80 -> 0x42490, last byte in __intercepto	0x42490 __interceptor_strcmp+0x338 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:14	0x4282c	0x4223c	same-code function	0x4223c __interceptor_strcmp+0xe4 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:14	0x42830	0x42240	same-code function	0x42240 __interceptor_strcmp+0xe8 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkX.v:51	0x427c4	0x421d4	same-code function	0x421d4 __interceptor_strcmp+0x7c word=	ok	code
+A/Rt/StrcmpChkX.v:52	0x42830	0x42240	same-code function	0x42240 __interceptor_strcmp+0xe8 word=	ok	code
+A/Rt/StrcmpChkX.v:79	0x10007fff8000	0x10007fff8000	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:81	0x10007fff8000	0x10007fff8000	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:81	0x10007fff8000	0x10007fff8000	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:93	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:94	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:94	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:95	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:95	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:105	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:106	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:106	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:107	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:107	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:117	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:118	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:118	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:119	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:119	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:129	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:130	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:130	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:131	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:131	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:141	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:142	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:142	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:143	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:143	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:153	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:154	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:154	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:155	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:155	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:165	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:166	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:166	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:167	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:167	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:177	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:178	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:178	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:179	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:179	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:189	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:190	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:190	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:191	0x42824	0x42234	same-code function	0x42234 __interceptor_strcmp+0xdc word=	ok	code
+A/Rt/StrcmpChkX.v:191	0x42828	0x42238	same-code function	0x42238 __interceptor_strcmp+0xe0 word=	ok	code
+A/Rt/StrcmpChkX.v:207	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:207	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:210	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:211	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:215	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:215	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:218	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:219	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:229	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:229	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:232	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:233	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:237	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:237	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:240	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:241	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:247	1272552	1272040	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	code
+A/Rt/StrcmpChkX.v:272	1272552	1272040	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	code
+A/Rt/StrcmpChkX.v:349	1272552	1272040	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	code
+A/Rt/StrcmpChkX.v:947	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:948	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:953	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:954	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:958	472835	472835	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1068	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1069	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1079	472835	472835	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1189	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1190	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1200	472835	472835	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1310	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1311	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1321	472835	472835	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1431	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1432	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1442	472835	472835	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1552	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1553	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1563	472835	472835	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1673	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1674	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1684	472835	472835	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1794	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1795	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1805	472835	472835	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1915	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1916	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:1926	472835	472835	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkX.v:2087	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2088	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2094	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2097	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2169	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2170	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2176	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2179	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2309	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2310	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2316	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2319	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2391	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2392	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2398	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkX.v:2401	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:8	0x42748	0x42158	FUNC entry	0x42158 __interceptor_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:8	0x42830	0x42240	same-code function	0x42240 __interceptor_strcmp+0xe8 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:8	0x42880	0x42290	same-code function	0x42290 __interceptor_strcmp+0x138 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:11	0x42830	0x42240	same-code function	0x42240 __interceptor_strcmp+0xe8 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:11	0x136ae8	0x1368e8	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:12	0x42838	0x42248	same-code function	0x42248 __interceptor_strcmp+0xf0 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:12	0x42840	0x42250	same-code function	0x42250 __interceptor_strcmp+0xf8 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:12	0x42a48	0x42458	same-code function	0x42458 __interceptor_strcmp+0x300 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:13	0x42b64	0x42574	same-code function	0x42574 __interceptor_strcmp+0x41c word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:13	0x42880	0x42290	same-code function	0x42290 __interceptor_strcmp+0x138 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:14	0x42870	0x42280	same-code function	0x42280 __interceptor_strcmp+0x128 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:14	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:14	0x4287c	0x4228c	same-code function	0x4228c __interceptor_strcmp+0x134 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:15	0x42b30	0x42540	range start (same-code function, A .. B)	0x42540 __interceptor_strcmp+0x3e8 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:15	0x42b60	0x42570	range end (end 0x42b60 -> 0x42570, last byte in __intercepto	0x42570 __interceptor_strcmp+0x418 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:15	0x42880	0x42290	same-code function	0x42290 __interceptor_strcmp+0x138 word=	ok	comment (source text kept)
+A/Rt/StrcmpChkY.v:52	0x42830	0x42240	same-code function	0x42240 __interceptor_strcmp+0xe8 word=	ok	code
+A/Rt/StrcmpChkY.v:53	0x42880	0x42290	same-code function	0x42290 __interceptor_strcmp+0x138 word=	ok	code
+A/Rt/StrcmpChkY.v:80	0x10007fff8000	0x10007fff8000	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:82	0x10007fff8000	0x10007fff8000	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:82	0x10007fff8000	0x10007fff8000	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:83	1272552	1272040	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	code
+A/Rt/StrcmpChkY.v:94	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:95	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:95	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:96	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:96	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:106	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:107	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:107	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:108	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:108	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:118	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:119	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:119	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:120	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:120	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:130	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:131	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:131	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:132	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:132	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:142	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:143	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:143	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:144	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:144	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:154	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:155	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:155	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:156	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:156	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:166	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:167	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:167	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:168	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:168	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:178	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:179	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:179	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:180	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:180	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:190	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:191	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:191	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:192	0x42874	0x42284	same-code function	0x42284 __interceptor_strcmp+0x12c word=	ok	code
+A/Rt/StrcmpChkY.v:192	0x42878	0x42288	same-code function	0x42288 __interceptor_strcmp+0x130 word=	ok	code
+A/Rt/StrcmpChkY.v:208	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:208	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:211	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:212	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:216	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:216	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:219	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:220	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:230	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:230	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:233	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:234	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:238	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:238	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:241	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:242	0x54548	0x549fc	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:248	1272552	1272040	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	code
+A/Rt/StrcmpChkY.v:262	1272552	1272040	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	code
+A/Rt/StrcmpChkY.v:275	1272552	1272040	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	code
+A/Rt/StrcmpChkY.v:352	1272552	1272040	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	code
+A/Rt/StrcmpChkY.v:950	407043	407043	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:951	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:956	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:957	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:961	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1071	407043	407043	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1072	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1082	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1192	407043	407043	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1193	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1203	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1313	407043	407043	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1314	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1324	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1434	407043	407043	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1435	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1445	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1555	407043	407043	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1556	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1566	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1676	407043	407043	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1677	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1687	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1797	407043	407043	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1798	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1808	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1918	407043	407043	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1919	2147450880	2147450880	SIZES_KEEP	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:1929	439939	439939	not an address (instruction word (the 32-bit code word at 0x	kept	ok-kept	code
+A/Rt/StrcmpChkY.v:2090	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2091	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2097	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2100	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2172	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2173	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2179	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2182	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2312	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2313	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2319	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2322	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2394	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2395	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2401	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpChkY.v:2404	345416	346620	same-code function	0x549fc __asan_region_is_poisoned+0x174 word=	ok	code
+A/Rt/StrcmpDef.v:13	0x42194	0x41ba0	FUNC entry	0x41ba0 __wrap_strcmp+0x0 word~pcrel(5b40006f/5b80006f)	ok	comment (source text kept)
+A/Rt/StrcmpDef.v:13	0x42748	0x42158	FUNC entry	0x42158 __interceptor_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/StrcmpDef.v:13	0x418f8	0x41304	same-code function	0x41304 _ZN11__sanitizer12DenseMapBaseINS_8DenseMapIPKcNS_13IntrusiveListIN6__asan13DynInitGlobalEEENS_12DenseMapInfoIS3_EENS_6detail12DenseMapPairIS3_S7_EEEES3_S7_S9_SC_E15LookupBucketForIS3_EEbRKT_RPSC_+0x44 word=	ok	comment (source text kept)
+A/Rt/StrcmpDef.v:13	0x41eb4	0x418c0	same-code function	0x418c0 _ZN11__sanitizer8DenseMapIPKcNS_13IntrusiveListIN6__asan13DynInitGlobalEEENS_12DenseMapInfoIS2_EENS_6detail12DenseMapPairIS2_S6_EEE15allocateBucketsEj+0x1a0 word~pcrel(fffd0517/fffd1517)	ok	comment (source text kept)
+A/Rt/StrcmpDef.v:14	0x42748	0x42158	FUNC entry	0x42158 __interceptor_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/StrcmpDef.v:14	0x41eb4	0x418c0	same-code function	0x418c0 _ZN11__sanitizer8DenseMapIPKcNS_13IntrusiveListIN6__asan13DynInitGlobalEEENS_12DenseMapInfoIS2_EENS_6detail12DenseMapPairIS2_S6_EEE15allocateBucketsEj+0x1a0 word~pcrel(fffd0517/fffd1517)	ok	comment (source text kept)
+A/Rt/StrcmpDef.v:15	0x42744	0x42154	FUNC entry	0x42154 __sanitizer_weak_hook_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/StrcmpDef.v:15	0x41eb0	0x418bc	same-code function	0x418bc _ZN11__sanitizer8DenseMapIPKcNS_13IntrusiveListIN6__asan13DynInitGlobalEEENS_12DenseMapInfoIS2_EENS_6detail12DenseMapPairIS2_S6_EEE15allocateBucketsEj+0x19c word=	ok	comment (source text kept)
+A/Rt/StrcmpDef.v:25	0x42194	0x41ba0	FUNC entry	0x41ba0 __wrap_strcmp+0x0 word~pcrel(5b40006f/5b80006f)	ok	comment (source text kept)
+A/Rt/StrcmpLoop.v:9	0x427a8	0x421b8	same-code function	0x421b8 __interceptor_strcmp+0x60 word=	ok	comment (source text kept)
+A/Rt/StrcmpLoop.v:10	0x427ac	0x421bc	same-code function	0x421bc __interceptor_strcmp+0x64 word=	ok	comment (source text kept)
+A/Rt/StrcmpLoop.v:11	0x427b0	0x421c0	same-code function	0x421c0 __interceptor_strcmp+0x68 word=	ok	comment (source text kept)
+A/Rt/StrcmpLoop.v:12	0x427b4	0x421c4	same-code function	0x421c4 __interceptor_strcmp+0x6c word=	ok	comment (source text kept)
+A/Rt/StrcmpLoop.v:13	0x427b8	0x421c8	same-code function	0x421c8 __interceptor_strcmp+0x70 word=	ok	comment (source text kept)
+A/Rt/StrcmpLoop.v:14	0x427bc	0x421cc	same-code function	0x421cc __interceptor_strcmp+0x74 word=	ok	comment (source text kept)
+A/Rt/StrcmpLoop.v:14	0x427c4	0x421d4	same-code function	0x421d4 __interceptor_strcmp+0x7c word=	ok	comment (source text kept)
+A/Rt/StrcmpLoop.v:15	0x427c0	0x421d0	same-code function	0x421d0 __interceptor_strcmp+0x78 word=	ok	comment (source text kept)
+A/Rt/StrcmpLoop.v:15	0x427a8	0x421b8	same-code function	0x421b8 __interceptor_strcmp+0x60 word=	ok	comment (source text kept)
+A/Rt/StrcmpLoop.v:16	0x427a8	0x421b8	same-code function	0x421b8 __interceptor_strcmp+0x60 word=	ok	comment (source text kept)
+A/Rt/StrcmpLoop.v:18	0x427c4	0x421d4	same-code function	0x421d4 __interceptor_strcmp+0x7c word=	ok	comment (source text kept)
+A/Rt/StrcmpLoop.v:47	0x427a8	0x421b8	same-code function	0x421b8 __interceptor_strcmp+0x60 word=	ok	code
+A/Rt/StrcmpLoop.v:48	0x427c4	0x421d4	same-code function	0x421d4 __interceptor_strcmp+0x7c word=	ok	code
+A/Rt/StrcmpLoop.v:62	0x427a8	0x421b8	same-code function	0x421b8 __interceptor_strcmp+0x60 word=	ok	code
+A/Rt/StrcmpLoop.v:63	0x427ac	0x421bc	same-code function	0x421bc __interceptor_strcmp+0x64 word=	ok	code
+A/Rt/StrcmpLoop.v:68	0x427a8	0x421b8	same-code function	0x421b8 __interceptor_strcmp+0x60 word=	ok	code
+A/Rt/StrcmpLoop.v:76	0x427ac	0x421bc	same-code function	0x421bc __interceptor_strcmp+0x64 word=	ok	code
+A/Rt/StrcmpLoop.v:77	0x427b0	0x421c0	same-code function	0x421c0 __interceptor_strcmp+0x68 word=	ok	code
+A/Rt/StrcmpLoop.v:80	0x00054c83	0x00054c83	not an address (instruction word or immediate (a `Z_to_bv K`	kept	ok-kept	code
+A/Rt/StrcmpLoop.v:83	0x427ac	0x421bc	same-code function	0x421bc __interceptor_strcmp+0x64 word=	ok	code
+A/Rt/StrcmpLoop.v:83	0x00054c83	0x00054c83	not an address (instruction word (the file uses the value as	kept	ok-kept	code
+A/Rt/StrcmpLoop.v:90	0x427b0	0x421c0	same-code function	0x421c0 __interceptor_strcmp+0x68 word=	ok	code
+A/Rt/StrcmpLoop.v:91	0x427b4	0x421c4	same-code function	0x421c4 __interceptor_strcmp+0x6c word=	ok	code
+A/Rt/StrcmpLoop.v:96	0x427b0	0x421c0	same-code function	0x421c0 __interceptor_strcmp+0x68 word=	ok	code
+A/Rt/StrcmpLoop.v:104	0x427b4	0x421c4	same-code function	0x421c4 __interceptor_strcmp+0x6c word=	ok	code
+A/Rt/StrcmpLoop.v:105	0x427b8	0x421c8	same-code function	0x421c8 __interceptor_strcmp+0x70 word=	ok	code
+A/Rt/StrcmpLoop.v:108	0x00054d03	0x00054d03	not an address (instruction word or immediate (a `Z_to_bv K`	kept	ok-kept	code
+A/Rt/StrcmpLoop.v:111	0x427b4	0x421c4	same-code function	0x421c4 __interceptor_strcmp+0x6c word=	ok	code
+A/Rt/StrcmpLoop.v:111	0x00054d03	0x00054d03	not an address (instruction word (the file uses the value as	kept	ok-kept	code
+A/Rt/StrcmpLoop.v:117	0x427b8	0x421c8	same-code function	0x421c8 __interceptor_strcmp+0x70 word=	ok	code
+A/Rt/StrcmpLoop.v:118	0x427bc	0x421cc	same-code function	0x421cc __interceptor_strcmp+0x74 word=	ok	code
+A/Rt/StrcmpLoop.v:121	0x001a0a13	0x001a0a13	not an address (instruction word or immediate (a `Z_to_bv K`	kept	ok-kept	code
+A/Rt/StrcmpLoop.v:123	0x427b8	0x421c8	same-code function	0x421c8 __interceptor_strcmp+0x70 word=	ok	code
+A/Rt/StrcmpLoop.v:123	0x001a0a13	0x001a0a13	not an address (instruction word (the file uses the value as	kept	ok-kept	code
+A/Rt/StrcmpLoop.v:130	0x427bc	0x421cc	same-code function	0x421cc __interceptor_strcmp+0x74 word=	ok	code
+A/Rt/StrcmpLoop.v:133	0x000c8463	0x000c8463	not an address (instruction word or immediate (a `Z_to_bv K`	kept	ok-kept	code
+A/Rt/StrcmpLoop.v:135	0x427bc	0x421cc	same-code function	0x421cc __interceptor_strcmp+0x74 word=	ok	code
+A/Rt/StrcmpLoop.v:135	0x000c8463	0x000c8463	not an address (instruction word (the file uses the value as	kept	ok-kept	code
+A/Rt/StrcmpLoop.v:141	0x427bc	0x421cc	same-code function	0x421cc __interceptor_strcmp+0x74 word=	ok	code
+A/Rt/StrcmpLoop.v:141	0x427c0	0x421d0	same-code function	0x421d0 __interceptor_strcmp+0x78 word=	ok	code
+A/Rt/StrcmpLoop.v:144	0x000c8463	0x000c8463	not an address (instruction word or immediate (a `Z_to_bv K`	kept	ok-kept	code
+A/Rt/StrcmpLoop.v:146	0x427bc	0x421cc	same-code function	0x421cc __interceptor_strcmp+0x74 word=	ok	code
+A/Rt/StrcmpLoop.v:146	0x000c8463	0x000c8463	not an address (instruction word (the file uses the value as	kept	ok-kept	code
+A/Rt/StrcmpLoop.v:152	0x427c0	0x421d0	same-code function	0x421d0 __interceptor_strcmp+0x78 word=	ok	code
+A/Rt/StrcmpLoop.v:157	0x427c0	0x421d0	same-code function	0x421d0 __interceptor_strcmp+0x78 word=	ok	code
+A/Rt/StrcmpLoop.v:164	0x427c0	0x421d0	same-code function	0x421d0 __interceptor_strcmp+0x78 word=	ok	code
+A/Rt/StrcmpLoop.v:169	0x427c0	0x421d0	same-code function	0x421d0 __interceptor_strcmp+0x78 word=	ok	code
+A/Rt/StrcmpLoop.v:195	0x427bc	0x421cc	same-code function	0x421cc __interceptor_strcmp+0x74 word=	ok	code
+A/Rt/StrcmpTbl.v:11	0x42194	0x41ba0	FUNC entry	0x41ba0 __wrap_strcmp+0x0 word~pcrel(5b40006f/5b80006f)	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:11	0x42744	0x42154	FUNC entry	0x42154 __sanitizer_weak_hook_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:12	0x42744	0x42154	FUNC entry	0x42154 __sanitizer_weak_hook_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:12	0x42748	0x42158	FUNC entry	0x42158 __interceptor_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:15	0x42130	0x41b3c	same-code function	0x41b3c _ZN11__sanitizer24InternalMmapVectorNoCtorIN6__asan22GlobalRegistrationSiteELb0EE7ReallocEm+0xbc word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:15	0x42138	0x41b44	same-code function	0x41b44 _ZN11__sanitizer24InternalMmapVectorNoCtorIN6__asan22GlobalRegistrationSiteELb0EE7ReallocEm+0xc4 word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:16	0x42194	0x41ba0	FUNC entry	0x41ba0 __wrap_strcmp+0x0 word~pcrel(5b40006f/5b80006f)	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:19	0x59868	0x59d1c	FUNC entry	0x59d1c _ZN6__asan18TryAsanInitFromRtlEv+0x0 word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:19	0x543d4	0x54888	FUNC entry	0x54888 __asan_region_is_poisoned+0x0 word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:53	0x42194	0x41ba0	FUNC entry	0x41ba0 __wrap_strcmp+0x0 word~pcrel(5b40006f/5b80006f)	ok	code
+A/Rt/StrcmpTbl.v:53	0x42744	0x42154	FUNC entry	0x42154 __sanitizer_weak_hook_strcmp+0x0 word=	ok	code
+A/Rt/StrcmpTbl.v:62	0x42748	0x42158	FUNC entry	0x42158 __interceptor_strcmp+0x0 word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:65	0x42194	0x41ba0	FUNC entry	0x41ba0 __wrap_strcmp+0x0 word~pcrel(5b40006f/5b80006f)	ok	code
+A/Rt/StrcmpTbl.v:65	0x42748	0x42158	FUNC entry	0x42158 __interceptor_strcmp+0x0 word=	ok	code
+A/Rt/StrcmpTbl.v:66	0x42744	0x42154	FUNC entry	0x42154 __sanitizer_weak_hook_strcmp+0x0 word=	ok	code
+A/Rt/StrcmpTbl.v:66	0x42c74	0x42684	same-code function	0x42684 __interceptor_strcmp+0x52c word=	ok	code
+A/Rt/StrcmpTbl.v:66	0x42c78	0x42c64	FUNC entry	0x42c64 __interceptor_strchr+0x0 word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:71	0x9c3a0	0x9c360	.got slot of the same target	src slot->0x136ae8 _ZN11__sanitizer21common_flags_dont_useE+0x0; unit slot->0x1368e8	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:71	0x136ae8	0x1368e8	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:72	0x427c4	0x421d4	same-code function	0x421d4 __interceptor_strcmp+0x7c word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:72	0x427c8	0x421d8	same-code function	0x421d8 __interceptor_strcmp+0x80 word~pcrel(bdc53c03/18c53c03)	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:72	0x9c3a0	0x9c360	.got slot of the same target	src slot->0x136ae8 _ZN11__sanitizer21common_flags_dont_useE+0x0; unit slot->0x1368e8	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:72	0x136ae8	0x1368e8	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:73	0x136be2	0x1369e2	symbol	0x1369e2 _ZN11__sanitizer21common_flags_dont_useE+0xfa	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:73	0x427cc	0x421dc	same-code function	0x421dc __interceptor_strcmp+0x84 word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:74	0x136be0	0x1369e0	symbol	0x1369e0 _ZN11__sanitizer21common_flags_dont_useE+0xf8	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:74	0x427d0	0x421e0	same-code function	0x421e0 __interceptor_strcmp+0x88 word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:75	0x136bdd	0x1369dd	symbol	0x1369dd _ZN11__sanitizer21common_flags_dont_useE+0xf5	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:75	0x427d4	0x421e4	same-code function	0x421e4 __interceptor_strcmp+0x8c word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:76	0x42830	0x42240	same-code function	0x42240 __interceptor_strcmp+0xe8 word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:76	0x136bd8	0x1369d8	symbol	0x1369d8 _ZN11__sanitizer21common_flags_dont_useE+0xf0	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:77	0x427e4	0x421f4	same-code function	0x421f4 __interceptor_strcmp+0x9c word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:77	0x42834	0x42244	same-code function	0x42244 __interceptor_strcmp+0xec word=	ok	comment (source text kept)
+A/Rt/StrcmpTbl.v:80	0x9c3a0	0x9c360	.got slot of the same target	src slot->0x136ae8 _ZN11__sanitizer21common_flags_dont_useE+0x0; unit slot->0x1368e8	ok	code
+A/Rt/StrcmpTbl.v:80	0x136ae8	0x1368e8	OBJECT start	0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0	ok	code
+A/Rt/StrcmpTbl.v:80	0x136bd8	0x1369d8	symbol	0x1369d8 _ZN11__sanitizer21common_flags_dont_useE+0xf0	ok	code
+A/Rt/Strlen.v:2	0x4218c	0x41b98	FUNC entry	0x41b98 __wrap_strlen+0x0 word~pcrel(0900006f/0940006f)	ok	comment (source text kept)
+A/Rt/Strlen.v:3	0x418f0	0x412fc	same-code function	0x412fc _ZN11__sanitizer12DenseMapBaseINS_8DenseMapIPKcNS_13IntrusiveListIN6__asan13DynInitGlobalEEENS_12DenseMapInfoIS3_EENS_6detail12DenseMapPairIS3_S7_EEEES3_S7_S9_SC_E15LookupBucketForIS3_EEbRKT_RPSC_+0x3c word=	ok	comment (source text kept)
+A/Rt/Strlen.v:4	0x4218c	0x41b98	FUNC entry	0x41b98 __wrap_strlen+0x0 word~pcrel(0900006f/0940006f)	ok	comment (source text kept)
+A/Rt/Strlen.v:5	0x10350	0x10350	resolve (identity)	None None	kept: history comment, the source text (comments are verbatim)	comment (source text kept)
+A/Rt/Strlen.v:5	0x10368	0x10368	resolve (identity)	None None	kept: history comment, the source text (comments are verbatim)	comment (source text kept)
+A/Rt/WrapRoM.v:2	0x10350	0x10350	range start (resolve, A .. B) (identity)	None None	kept: history comment, the source text (comments are verbatim)	comment (source text kept)
+A/Rt/WrapRoM.v:2	0x10370	0x10370	range end (resolve) (identity)	None None	kept: history comment, the source text (comments are verbatim)	comment (source text kept)
+A/Rt/SetShadow.v:4	0x546bc	0x546bc	resolve (identity)	0x55330 _ZN6__asan26AppendToErrorMessageBufferEPKc+0x44	kept: history comment, the source text (comments are verbatim)	comment (source text kept)
+A/Rt/SetShadow.v:4	0x547c4	0x547c4	resolve (identity)	0x55438 _ZN6__asan26AppendToErrorMessageBufferEPKc+0x14c	kept: history comment, the source text (comments are verbatim)	comment (source text kept)
+A/Rt/SetShadow.v:5	0x54060	0x54cd4	FUNC entry	0x54cd4 __asan_set_shadow_f5+0x0 word~pcrel(00045617/00047617)	ok	comment (source text kept)
+A/Rt/SetShadow.v:5	0x98ed8	0x9c390	.got slot of the same target	src slot->0x9ad28 _ZN14__interception11real_memsetE+0x0; unit slot->0x9e1d8	ok	comment (source text kept)
+A/Rt/SetShadow.v:5	0x9ad28	0x9e1d8	OBJECT start	0x9e1d8 _ZN14__interception11real_memsetE+0x0	ok	comment (source text kept)
+A/Rt/SetShadow.v:5	0x92588	0x958b0	FUNC entry	0x958b0 memset+0x0 word=	ok	comment (source text kept)
+A/Rt/SetShadow.v:29	0x54060	0x54cd4	FUNC entry	0x54cd4 __asan_set_shadow_f5+0x0 word~pcrel(00045617/00047617)	ok	code
+A/Rt/SetShadow.v:35	0x98ed8	0x9c390	.got slot of the same target	src slot->0x9ad28 _ZN14__interception11real_memsetE+0x0; unit slot->0x9e1d8	ok	code
+A/Rt/SetShadow.v:35	0x9ad28	0x9e1d8	OBJECT start	0x9e1d8 _ZN14__interception11real_memsetE+0x0	ok	code
+A/Rt/SetShadow.v:35	0x9ad28	0x9e1d8	OBJECT start	0x9e1d8 _ZN14__interception11real_memsetE+0x0	ok	code
+A/Rt/SetShadow.v:35	0x92588	0x958b0	FUNC entry	0x958b0 memset+0x0 word=	ok	code
+A/FMsl0.v:51	0x0900006f	0x0940006f	HAND instruction word	fuzz_headamp.asan word at 0x41b98 = 0x0940006f (j +0x94 -> 0x41c2c)	fixed (the tool does not touch words)	code
+A/Rt/StrcmpTbl.v:66	0x5b40006f	0x5b80006f	HAND instruction word	fuzz_headamp.asan word at 0x41ba0 = 0x5b80006f (j +0x5b8 -> 0x42158)	fixed	code
+A/Rt/StrcmpTbl.v:67	0x42c78	0x42688	HAND point	alreloc: 0x42c64 (__interceptor_strchr entry, the donor-only neighbour); the probe states the first address past ___interceptor_strcmp 0x42158 + 1328 = 0x42688 (__sanitizer_weak_hook_strncmp here), outside tbl_sc	fixed (point rule)	code
+A/FMstrlen_chk1.v:80	(0x9c3a0,8,0x136ae8);(0x136be3,1,1)	(0x9c360,8,0x1368e8);(0x1369e3,1,1)	runtime cells	A/AF0m.v (a2 1e6517d5536, sha256 feb1c1145c39): z8 (ANum 0x9c360) 0x1368e8, z1 (ANum 0x1369e3) 0x1; .got 0x9c360 is headamp's own slot of common_flags_dont_use	ok	code
+A/Rt/StrcmpTbl.v:81	(0x9c3a0,8,0x136ae8);(0x136bd8,16,..)	(0x9c360,8,0x1368e8);(0x1369d8,16,0x101000100000000;0x101010101010101)	runtime cells	A/AF0m.v: z8 (ANum 0x1369d8) 0x101000100000000 (strict_string_checks byte 0x1369dd = 0), z8 (ANum 0x1369e0) 0x101010101010101 (intercept_strcmp byte 0x1369e2 = 1)	ok	code
+A/Rt/SetShadow.v:36	(0x98ed8,8,0x9ad28);(0x9ad28,8,0x92588)	(0x9c390,8,0x9e1d8);(0x9e1d8,8,0x958b0)	runtime cells	A/AF0m.v: z8 (ANum 0x9c390) 0x9e1d8 (.got slot of real_memset), z8 (ANum 0x9e1d8) 0x958b0 (memset); static image bytes equal	ok	code
+A/FMstrlen_chk2.v:1372..1568 (12)	345416	346620	resolve (decimal ra)	0x54548 = __asan_region_is_poisoned+0x174 (fuzz_identity) -> 0x549fc = __asan_region_is_poisoned+0x174 (fuzz_headamp), word before it 0x3d10f0ef in both (jal mem_is_zero)	ok	code
+A/Rt/StrcmpDef.v:39-40	STRCMP_ENTRY 0x42194	STRCMP_ENTRY_A 0x41ba0, STRCMP_ENTRY_B 0x41c20	HAND structure	__interceptor_trampoline_strcmp in both twins (A 0x41ba0 -> 0x42158, B 0x41c20 -> 0x421d8)	written	code
+image-derived counts	(0x4221c,165);(0x42744,333);(0x54060,6)	(0x41c2c,165);(0x42154,333);(0x54cd4,6)	recomputed	___interceptor_strlen 660 B = 165; weak hook 4 B + ___interceptor_strcmp 1328 B = 333; __asan_set_shadow_f5 24 B = 6 (fuzz_headamp.asan .symtab)	ok (equal)	code

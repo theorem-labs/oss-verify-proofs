@@ -1,0 +1,4 @@
+evidence_manifest_check.py sha256 4c6defa30007921c76f0bc7dc826bb90e48abf4f03f4e82f83b2c610c070ec4c
+$ python3 evidence_manifest_check.py <proofs repository> a14c209e0066cff0514840dba723c117d3ff3473 proofs/reac-repacer/fuzz_uci/provenance/evidence
+evidence: 577 file(s), 1 MANIFEST(s), every file named, 577 naming line(s), each sha256 equal
+rc=0

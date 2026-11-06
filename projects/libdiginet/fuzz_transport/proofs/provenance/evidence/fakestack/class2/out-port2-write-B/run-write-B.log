@@ -1,0 +1,14 @@
+== class 2, donor libreac/fuzz_ctrl at 2fceb489f4aa
+== image B (asan-ubsan): donor pin 12136677c5cf, target pin 41113a03c82f
+twins B: proved (2 pairs)
+donor: pinned sha256 12136677c5cf, twin sha256 ee07e2c38d94, allocated sections equal (build-id note excepted): True
+target: pinned sha256 41113a03c82f, twin sha256 e217cb0a84f1, allocated sections equal (build-id note excepted): True
+libreac/fuzz_ctrl at 2fceb489f4aa, class 2, image B: 8 ranges paired and compared (bodies __asan_stack_malloc_2); 21 resolve lines: 6 move a value (0x3dd78 -> 0x3e000, 0xa08e0 -> 0xa3ce0, 0xa0940 -> 0xa3d40, 0xa15d0 -> 0xa49d0, 0xa15e0 -> 0xa49e0), 0 name the image of a header range, the rest keep the value
+PASS
+control self B: PASS, 0 values moved
+control plant B: caught (1 FAIL lines; fuzz_transport.asan-ubsan: planted or for the and at __asan_stack_malloc_2 + 0x94 (word 0x00e678b3 -> 0x00e668b3))
+alreloc: 2 files written; 0 UNMAPPED or unreviewed CONFLICT, 0 KEPT-ADDR (image-range numerals left unchanged) -- review each
+alreloc: per-numeral report: 43 numerals in 2 files under <OUT>/report/libdiginet/fuzz_transport (one .tsv per file)
+PASS: 0 wrong rows
+B/Rt/StackMalloc2Tbl.v: header 6 lines restored from the donor, 0 CtrlTSyms renamed, notice added
+B/Rt/StackMalloc2.v: header 6 lines restored from the donor, 4 CtrlTSyms renamed, notice added

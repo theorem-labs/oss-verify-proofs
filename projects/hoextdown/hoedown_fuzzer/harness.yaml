@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: hoextdown
 harness: hoedown_fuzzer
-rocq: OssFuzzTheorems.hoextdown.hoedown_fuzzer
+rocq: OSSVerify.hoextdown.hoedown_fuzzer
 origin: upstream
 summary: Renders the input as Markdown to HTML with a fixed, large set of extensions and HTML flags; the
   output buffer is freed without being inspected (the fwrite to stdout is commented out).

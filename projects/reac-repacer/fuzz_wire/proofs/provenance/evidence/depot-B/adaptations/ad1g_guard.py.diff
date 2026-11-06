@@ -1,0 +1,18 @@
+--- 4483a8de6e6f:proofs/reac-repacer/fuzz_wire/provenance/evidence/depot/ad1g_guard.py
++++ depot-B/ad1g_guard.py
+@@ -9,7 +9,7 @@
+     `apply Z_mod_mult || (change N with (K * 4096); apply Z_mod_mult).`  becomes  `apply Z_mod_mult.`
+ when N is not K * 4096 (port_core moved the image bound N but not the factor K, so the second arm can never apply); a
+ live arm (N = K * 4096) is refused, not removed. The file is rewritten in place; the run refuses (exit 1) unless the
+-anchor occurs exactly once. Prints the unified diff."""
++anchor occurs exactly once. Prints the unified diff, labelled by the file's path below lib/ (B/YD1g.v for image B's twin)."""
+ import difflib, re, sys
+ 
+ p = sys.argv[1]
+@@ -24,4 +24,5 @@
+ new = DEAD.sub('apply Z_mod_mult.', old)
+ print('ad1g_guard: dead arm removed: %d is not %d * 4096 (= %d)' % (n, k, k * 4096))
+ open(p, 'w').write(new)
+-sys.stdout.writelines(difflib.unified_diff(old.splitlines(True), new.splitlines(True), 'a/A/AD1g.v', 'b/A/AD1g.v'))
++rel = p.split('/lib/')[-1]
++sys.stdout.writelines(difflib.unified_diff(old.splitlines(True), new.splitlines(True), 'a/' + rel, 'b/' + rel))

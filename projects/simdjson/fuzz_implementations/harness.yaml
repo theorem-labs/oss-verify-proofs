@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: simdjson
 harness: fuzz_implementations
-rocq: OssFuzzTheorems.simdjson.fuzz_implementations
+rocq: OSSVerify.simdjson.fuzz_implementations
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

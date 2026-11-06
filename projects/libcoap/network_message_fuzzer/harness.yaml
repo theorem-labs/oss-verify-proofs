@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libcoap
 harness: network_message_fuzzer
-rocq: OssFuzzTheorems.libcoap.network_message_fuzzer
+rocq: OSSVerify.libcoap.network_message_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

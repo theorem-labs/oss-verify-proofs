@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wget
 harness: wget_cookie_fuzzer
-rocq: OssFuzzTheorems.wget.wget_cookie_fuzzer
+rocq: OSSVerify.wget.wget_cookie_fuzzer
 origin: upstream
 summary: cookie_handle_set_cookie three times (ports 81, 81, 80; paths p, p/d/) into a fresh cookie jar,
   then cookie_jar_delete.

@@ -1,0 +1,122 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+
+
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib Require CodeAt StepGen GwInst GwEq. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6nq.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q91D.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QQLG.
+
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q9A7.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q9A7.Mq1.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q2qa.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q2qa.Mq0. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q2qa.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q2qa.Mq2. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qy5Y.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Qy5Y.Mq0.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QUrT.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QUrT.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QBpX.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QBpX.
+Import ListNotations. Unset Keyed Unification. Local Ltac OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib.StepGen.g_amo_step AMO ::= OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib.StepGen.mkr__g_amo_step_1 AMO. Local Ltac OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib.StepGen.g_anchor_rw ::= OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib.StepGen.mkr__g_anchor_rw_2. Local Ltac OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib.StepGen.g_anchor_rw_any ::= OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib.StepGen.mkr__g_anchor_rw_any_0. Local Ltac OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib.StepGen.sg_step_core ::= OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib.StepGen.mkr__sg_step_core_3. Local Ltac OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib.StepGen.sg_zstep ::= OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib.StepGen.mkr__sg_zstep_4. Local Ltac Qfw3_c1.Mq3.zeq_fast ::= Qfw3_c1.Mq3.mkr__zeq_fast_0.
+Local Open Scope Z_scope.
+
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib Require CodeAt StepGen GwInst.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Lemma gw_code : CodeAt.code_at usegs 0xd1e2c QQLG.multf3_code.  Proof. StepGen.code_at_vm. Qed.
+Lemma gw_base4 : (0xd1e2c mod 4 = 0)%Z.  Proof. reflexivity. Qed.
+Lemma gw_baser : (0 <= 0xd1e2c /\ 0xd1e2c + 1792 <= 2^40)%Z.  Proof. vm_compute. split; discriminate. Qed.
+
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+
+Local Ltac flia ::= flia_fast. Local Ltac mkr__flia_1 := flia_fast.
+Local Ltac unfold_sf_in H ::= unfold_sf_in_recast H. Local Ltac mkr__unfold_sf_in_2 H := unfold_sf_in_recast H.
+Local Ltac blia ::= blia_fast. Local Ltac mkr__blia_3 := blia_fast.
+
+Local Ltac step ::= step_fast. Local Ltac mkr__step_4 := step_fast.
+Local Ltac zsimp ::= zsimp_fast. Local Ltac mkr__zsimp_5 := zsimp_fast.
+
+Definition multf3_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+(R : Z) (m : word -> option byte) : machine_state -> Prop :=
+fun ms' => exists t0 t1 t2 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 m',
+ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 (lo64 R)) (Z_to_bv 64 (hi64 R)) a2 a3 a4 a5 a6 a7
+s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (ret_pc ra) fc None m' (seg_rom usegs)
+/\ munch [(bv_unsigned sp - 80, bv_unsigned sp)] m m' /\ wmono usegs m m' /\ mem_inv usegs m'
+/\ stk usegs m' (bv_unsigned sp - 80) (bv_unsigned sp).
+Lemma gw_eq_multf3_post : @multf3_post = ltac:(GwInst.gw_term (@Q91D.multf3_post usegs) (@multf3_post)). Proof. unfold multf3_post, Q91D.multf3_post; first [reflexivity | autorewrite with gw_eqs; reflexivity]. Qed.
+#[export] Hint Rewrite gw_eq_multf3_post : gw_eqs.
+
+Definition saved9 (s8 s7 s6 s5 s4 s3 s2 s1 s0 : word) (j : list byte) : list cell :=
+[CB 8 j; C8 s8; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0].
+Lemma gw_eq_saved9 : @saved9 = ltac:(GwInst.gw_term (@Q91D.saved9) (@saved9)). Proof. unfold saved9, Q91D.saved9; first [reflexivity | autorewrite with gw_eqs; reflexivity]. Qed.
+#[export] Hint Rewrite gw_eq_saved9 : gw_eqs.
+
+Lemma land_M32_small : forall x, 0 <= x < 4294967296 -> Z.land x 4294967295 = x.
+Proof. first [GwInst.gw_exact (@Q91D.land_M32_small usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.land_M32_small usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+Lemma land_ones_r : forall x, 0 <= x < 2^64 -> Z.land x 18446744073709551615 = x.
+Proof. first [GwInst.gw_exact (@Q91D.land_ones_r usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.land_ones_r usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+Lemma land_ones_l : forall x, 0 <= x < 2^64 -> Z.land 18446744073709551615 x = x.
+Proof. first [GwInst.gw_exact (@Q91D.land_ones_l usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.land_ones_l usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+
+Lemma sra63_neg : forall x, -2^63 <= x < 0 -> Z.shiftr (bv_signed (Z_to_bv 64 x)) 63 = -1.
+Proof. first [GwInst.gw_exact (@Q91D.sra63_neg usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.sra63_neg usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+Lemma sra63_negw : forall x, 2^63 <= x < 2^64 -> Z.shiftr (bv_signed (Z_to_bv 64 x)) 63 = -1.
+Proof. first [GwInst.gw_exact (@Q91D.sra63_negw usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.sra63_negw usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+Lemma sra63_pos : forall x, 0 <= x < 2^63 -> Z.shiftr (bv_signed (Z_to_bv 64 x)) 63 = 0.
+Proof. first [GwInst.gw_exact (@Q91D.sra63_pos usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.sra63_pos usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+Lemma lxor_b2z_1 : forall b, Z.lxor (Z.b2z b) 1 = Z.b2z (negb b).
+Proof. first [GwInst.gw_exact (@Q91D.lxor_b2z_1 usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.lxor_b2z_1 usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+
+Ltac zzr := zsimp; rewrite ?Z.add_0_r;
+try rewrite !land_sub_neg by alia;
+try rewrite !land_M32_small by alia;
+try rewrite !sra63_neg by alia; try rewrite !sra63_pos by alia;
+try rewrite !land_ones_l by (first [zrange | alia]);
+rewrite ?Z.land_0_l.
+Ltac zrstep := step; zzr.
+
+Lemma mfr_normal : ltac2:(Q6nq.tyx '(@Q91D.mfr_normal usegs 0xd1e2c gw_code gw_base4 gw_baser) [[@gw_eq_multf3_post__3; @gw_eq_multf3_post__2; @gw_eq_multf3_post]; [@gw_eq_saved9__3; @gw_eq_saved9__2; @gw_eq_saved9]] '([131072; 281474976710655; 18446744073709551615]%Z : list Z) '(Q6nq.gwt_unf (@ONES64) (Q6nq.gwt_unf (@MASKLO) (Q6nq.gwt_unf (@MASK48) Q6nq.gwt_nil)))).
+Proof. first [GwInst.gw_exact (@Q91D.mfr_normal usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.mfr_normal usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+
+Lemma mfr_caseA : ltac2:(Q6nq.tyx '(@Q91D.mfr_caseA usegs 0xd1e2c gw_code gw_base4 gw_baser) [[@gw_eq_multf3_post__3; @gw_eq_multf3_post__2; @gw_eq_multf3_post]; [@gw_eq_saved9__3; @gw_eq_saved9__2; @gw_eq_saved9]] '([(-126); 127; 18446744073709551615]%Z : list Z) '(Q6nq.gwt_unf (@ONES64) (Q6nq.gwt_unf (@MASKLO) Q6nq.gwt_nil))).
+Proof. first [GwInst.gw_exact (@Q91D.mfr_caseA usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.mfr_caseA usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+
+Lemma mfr_caseB : ltac2:(Q6nq.tyx '(@Q91D.mfr_caseB usegs 0xd1e2c gw_code gw_base4 gw_baser) [[@gw_eq_multf3_post__3; @gw_eq_multf3_post__2; @gw_eq_multf3_post]; [@gw_eq_saved9__3; @gw_eq_saved9__2; @gw_eq_saved9]] '([127; 18446744073709551615]%Z : list Z) '(Q6nq.gwt_unf (@ONES64) (Q6nq.gwt_unf (@MASKLO) Q6nq.gwt_nil))).
+Proof. first [GwInst.gw_exact (@Q91D.mfr_caseB usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.mfr_caseB usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+
+Lemma mfr_caseC : ltac2:(Q6nq.tyx '(@Q91D.mfr_caseC usegs 0xd1e2c gw_code gw_base4 gw_baser) [[@gw_eq_multf3_post__3; @gw_eq_multf3_post__2; @gw_eq_multf3_post]; [@gw_eq_saved9__3; @gw_eq_saved9__2; @gw_eq_saved9]] '([127; 18446744073709551615]%Z : list Z) '(Q6nq.gwt_unf (@ONES64) (Q6nq.gwt_unf (@MASKLO) Q6nq.gwt_nil))).
+Proof. first [GwInst.gw_exact (@Q91D.mfr_caseC usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.mfr_caseC usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+
+Section Walk.
+Variables (sp : word).
+
+#[using="Type"] Lemma Lepi : ltac2:(Q6nq.tyx '(@Q91D.Lepi usegs 0xd1e2c gw_code gw_base4 gw_baser) [[@gw_eq_w0__3; @gw_eq_w0__2; @gw_eq_w0]; [@gw_eq_multf3_post]; [@gw_eq_saved9]] '([(-80); 4096; 861128]%Z : list Z) 'Q6nq.gwt_nil).
+Proof. rewrite ?gw_eq_multf3_post, ?gw_eq_saved9; ltac2:(GwEq.gw_rw [[@gw_eq_w0__3; @gw_eq_w0__2; @gw_eq_w0]]); first [GwInst.gw_exact (@Q91D.Lepi usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.Lepi usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+
+#[using="Type"] Lemma Linf : ltac2:(Q6nq.tyx '(@Q91D.Linf usegs 0xd1e2c gw_code gw_base4 gw_baser) [[@gw_eq_multf3_post]; [@gw_eq_saved9]] '([(-80); 4096; 860392; 9223090561878065152]%Z : list Z) '(Q6nq.gwt_unf (@INF_HI) Q6nq.gwt_nil)).
+Proof. rewrite ?gw_eq_multf3_post, ?gw_eq_saved9; first [GwInst.gw_exact (@Q91D.Linf usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.Linf usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+
+#[using="Type"] Lemma Lup : ltac2:(Q6nq.tyx '(@Q91D.Lup usegs 0xd1e2c gw_code gw_base4 gw_baser) [[@gw_eq_multf3_post]; [@gw_eq_saved9]] '([(-80); 4096; 861116; 18446744073709551615]%Z : list Z) '(Q6nq.gwt_unf (@ONES64) (Q6nq.gwt_unf (@MASKLO) Q6nq.gwt_nil))).
+Proof. rewrite ?gw_eq_multf3_post, ?gw_eq_saved9; first [GwInst.gw_exact (@Q91D.Lup usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.Lup usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+
+#[using="Type"] Lemma Ltie : ltac2:(Q6nq.tyx '(@Q91D.Ltie usegs 0xd1e2c gw_code gw_base4 gw_baser) [[@gw_eq_multf3_post]; [@gw_eq_saved9]] '([(-80); 4096; 860460; 9223372036854775808; 18446744073709551615]%Z : list Z) '(Q6nq.gwt_unf (@SIGN64) (Q6nq.gwt_unf (@ONES64) (Q6nq.gwt_unf (@MASKLO) Q6nq.gwt_nil)))).
+Proof. rewrite ?gw_eq_multf3_post, ?gw_eq_saved9; first [GwInst.gw_exact (@Q91D.Ltie usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.Ltie usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+
+#[using="Type"] Lemma Lrnd2 : ltac2:(Q6nq.tyx '(@Q91D.Lrnd2 usegs 0xd1e2c gw_code gw_base4 gw_baser) [[@gw_eq_multf3_post]; [@gw_eq_saved9]] '([(-80); 4096; 860444; 9223372036854775808]%Z : list Z) '(Q6nq.gwt_unf (@SIGN64) Q6nq.gwt_nil)).
+Proof. rewrite ?gw_eq_multf3_post, ?gw_eq_saved9; first [GwInst.gw_exact (@Q91D.Lrnd2 usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.Lrnd2 usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+
+#[using="Type"] Lemma Lhalf : ltac2:(Q6nq.tyx '(@Q91D.Lhalf usegs 0xd1e2c gw_code gw_base4 gw_baser) [[@gw_eq_multf3_post]; [@gw_eq_saved9]] '([(-80); 4096; 861104; 9223372036854775808]%Z : list Z) '(Q6nq.gwt_unf (@SIGN64) Q6nq.gwt_nil)).
+Proof. rewrite ?gw_eq_multf3_post, ?gw_eq_saved9; first [GwInst.gw_exact (@Q91D.Lhalf usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.Lhalf usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+
+#[using="Type"] Lemma Lfin : ltac2:(Q6nq.tyx '(@Q91D.Lfin usegs 0xd1e2c gw_code gw_base4 gw_baser) [[@gw_eq_multf3_post]; [@gw_eq_saved9]] '([(-131072); (-16383); (-80); 4096; 32767; 860412; 281474976710655; 18446744073709551615]%Z : list Z) '(Q6nq.gwt_unf (@ONES64) (Q6nq.gwt_unf (@MASKLO) (Q6nq.gwt_unf (@MASK48) Q6nq.gwt_nil)))).
+Proof. rewrite ?gw_eq_multf3_post, ?gw_eq_saved9; first [GwInst.gw_exact (@Q91D.Lfin usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.Lfin usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+
+#[using="Type"] Lemma Ltail : ltac2:(Q6nq.tyx '(@Q91D.Ltail usegs 0xd1e2c gw_code gw_base4 gw_baser) [[@gw_eq_multf3_post]; [@gw_eq_saved9]] '([(-16383); (-1024); (-80); 1024; 4096; 65536; 860216; 281474976710655; 18446744073709551615]%Z : list Z) '(Q6nq.gwt_unf (@multf3_mid_pc) (Q6nq.gwt_unf (@ONES64) (Q6nq.gwt_unf (@MASKLO) (Q6nq.gwt_unf (@MASK48) Q6nq.gwt_nil))))).
+Proof. rewrite ?gw_eq_multf3_post, ?gw_eq_saved9; first [GwInst.gw_exact (@Q91D.Ltail usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.Ltail usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.
+End Walk.
+
+Lemma multf3_core : ltac2:(Q6nq.tyx '(@Q91D.multf3_core usegs 0xd1e2c gw_code gw_base4 gw_baser) [[@gw_eq_multf3_post]; [@gw_eq_saved9]] '([(-1024); (-80); 1024; 4096; 32768; 859820; 281474976710655; 18446744073709551615]%Z : list Z) '(Q6nq.gwt_unf (@multf3_core_pc) (Q6nq.gwt_unf (@ONES64) (Q6nq.gwt_unf (@MASKLO) (Q6nq.gwt_unf (@MASK48) Q6nq.gwt_nil))))).
+Proof. rewrite ?gw_eq_multf3_post, ?gw_eq_saved9; first [GwInst.gw_exact (@Q91D.multf3_core usegs 0xd1e2c gw_code gw_base4 gw_baser) | autorewrite with gw_eqs; GwInst.gw_exact (@Q91D.multf3_core usegs 0xd1e2c gw_code gw_base4 gw_baser)]. Qed.

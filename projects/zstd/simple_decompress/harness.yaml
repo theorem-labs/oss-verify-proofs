@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zstd
 harness: simple_decompress
-rocq: OssFuzzTheorems.zstd.simple_decompress
+rocq: OSSVerify.zstd.simple_decompress
 origin: upstream
 summary: 'Checks one property, an API contract: If one-shot decompression succeeds, ZSTD_findDecompressedSize
   must not be an error and must be unknown or equal the decompressed size (frame-header content size vs

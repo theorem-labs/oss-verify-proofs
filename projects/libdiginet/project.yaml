@@ -1,0 +1,56 @@
+schema: oss-fuzz-theorems/project/1
+project: libdiginet
+description: 'libdiginet implements DigiNet, the raw-Ethernet protocol of the Digidesign Control|24 and ProControl control
+  surfaces: frames, the command stream, the controls in it, and the session with the desk.'
+homepage: https://github.com/FreeMixer/libdiginet
+language: c
+status: available
+enrolled: true
+library:
+  name: libdiginet
+  repository: https://github.com/FreeMixer/libdiginet
+  commit: 835f336ccb7abac683681c5791a5715041c71e32
+  version: 0.1.1
+  licence: GPL-3.0-or-later
+harnesses:
+- name: fuzz_frame
+  status: included
+  origin: upstream
+- name: fuzz_decode
+  status: included
+  origin: upstream
+- name: fuzz_codec
+  status: included
+  origin: upstream
+- name: fuzz_transport
+  status: included
+  origin: upstream
+build:
+  system: custom
+  clang: 20.1.8
+  builder: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  oss_verify:
+    repository: theorem-labs/oss-verify
+    commit: 63e86d975329c21192e679e40fc77bb61203baaf
+    path: projects/libdiginet
+assets:
+  bin:
+    release: v2026.11.1
+    file: libdiginet-bin.tar.zst
+    bytes: 629004
+    sha256: b413c8c51d8ee133a9061d592b2b1884fc10bae05c4279a7f6299a27c1fc5272
+  src:
+    release: v2026.11.1-src
+    file: libdiginet-src.tar.zst
+    bytes: 134191
+    sha256: 78c22a85913d2e6a3fe2d8302c5c60d7d2639ff1e5ad52ae8fc6f7c1ec66863f
+  src_manifest:
+    release: v2026.11.1-src
+    file: libdiginet-src.MANIFEST.tsv
+    bytes: 1174
+    sha256: 7fe0563350fe56a67fcfcc053baa7e4496285b348ef55204146c718cbf6bef9f
+  port:
+    release: v2026.11.1-src
+    file: libdiginet-port.tar.zst
+    bytes: 209194
+    sha256: 578f66fcccb01c26b3c78f0b939145e28387b8be9ef5a10cc69af572a15233dd

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nss
 harness: pkcs12
-rocq: OssFuzzTheorems.nss.pkcs12
+rocq: OSSVerify.nss.pkcs12
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

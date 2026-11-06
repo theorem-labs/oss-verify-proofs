@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import unittest
 
-from oft import facts, fetch, lint, schema
+from oft import facts, fetch, layout, lint, rules, schema
 from oft.tests.helpers import FIXTURE_RECIPE, build_record, older_shape, tree
 
 
@@ -348,7 +348,8 @@ def add_go_target(t):
 
 
 # a port-built build record in the shape docs/adding-a-proof.md gives: the port's project directory and the
-# tools/check manifest under port/, in place of recipe/
+# tools/check manifest under port/, in place of recipe/.  The port's project has no build patches, so its directory has
+# no series, as in oss-verify (docs/project-yaml.md: `*.patch` and `series` are optional)
 MAKE_RECORD = {
     "PROVENANCE.yaml": "schema: x\n",
     "PROVENANCE.md": "# Build record\n",
@@ -1266,6 +1267,34 @@ class Linting(unittest.TestCase):
             found = t.lint()
         self.assertTrue(any("checksum_fuzzer's build record carries a port build" in f.msg for f in found),
                         [str(f) for f in found])
+
+    def test_a_port_claim_contradicts_a_per_project_build_record(self):
+        """The rules read a build record in its fuzz target's layout, and name it there: its recipe.asset, and its
+        recipe/."""
+        record = layout.provenance_dir("zlib", "checksum_fuzzer", layout.NEW)
+        with tree(render=False) as t:
+            project = t.yaml("projects/zlib/project.yaml")
+            project["build"]["oss_verify"] = dict(PORT, path="projects/zlib")
+            project["assets"]["port"] = dict(PORT_ASSET, file="zlib-port.tar.zst")
+            t.put_yaml("projects/zlib/project.yaml", project)
+            t.write(record + "/PROVENANCE.yaml", build_record())
+            t.write(record + "/recipe/tools/build-body.sh", "#!/bin/sh\n")
+            loaded = facts.load(t.root)
+            rules.check(loaded)
+        self.assertIn("%s/PROVENANCE.yaml: recipe.asset, recipe.tar.zst in v2026.11.0: build.oss_verify says the OSS "
+                      "Verify port built projects/zlib's binaries, and no recipe did, so its build records cite none"
+                      % record, loaded.errors)
+        self.assertIn("projects/zlib/checksum_fuzzer/harness.yaml: build.oss_verify says the port built every binary, "
+                      "and checksum_fuzzer's build record carries a build recipe (%s/recipe/)" % record, loaded.errors)
+
+    def test_a_recipe_built_project_cannot_have_a_per_project_port_build_record(self):
+        record = layout.provenance_dir("zlib", "checksum_fuzzer", layout.NEW)
+        with tree(render=False) as t:
+            t.write(record + "/port/manifest.yaml", "project: zlib\n")
+            loaded = facts.load(t.root)
+            rules.check(loaded)
+        self.assertIn("projects/zlib/checksum_fuzzer/harness.yaml: checksum_fuzzer's build record carries a port build "
+                      "(%s/port/), and project.yaml's build.oss_verify names no port" % record, loaded.errors)
 
     def test_a_port_build_record_holds_only_this_projects_port_directory(self):
         with tree(render=False) as t:

@@ -1,0 +1,29 @@
+# gate: the four ELFs that projects/libreac/fuzz_disco/harness.yaml pins, and the memory image the build makes of each (segment_match.py)
+# tree: harness.yaml at commit b1afc3e80791ebe54b1034a568112da851f005f0; snapshot tool elf_snapshot.py sha256 a7f4d38c861c07ff6fe8634648cea8ab38b5f5f735357b98ad87a10f0e93b05f
+# command: python3 segment_match.py <harness.yaml> <pin directory> <elf_snapshot.py> <work directory>
+# verdict: exit 0 (PASS)
+# control 1: one byte of image asan's segment 2 hex flipped after the snapshot (--hex-override asan:2:0x100): exit 1, SUMMARY: pins 4/4 match, segments 15/16 match, mismatches 1
+# control 2: one byte at file offset 0x3000 of a copy of fuzz_disco.ubsan flipped: exit 1, SUMMARY: pins 3/4 match, segments 16/16 match, mismatches 1
+TOOL snapshot sha256=a7f4d38c861c07ff6fe8634648cea8ab38b5f5f735357b98ad87a10f0e93b05f
+HARNESS sha256=4bff10c8e916d38939a9069fd26cb0b6072ce9751fce09f50a9169b36bb6b6ca
+PIN plain fuzz_disco.plain bytes=58944 sha256=04988e3ab31341965e44f0ca1bb0e5ed18fe6892e2c753df7a87bec197576f7c MATCH
+SEG plain 0 vaddr=0x10000 filesz=0x1c90 memsz=0x1c90 span=0x10000-0x12000 sha256(file bytes)=6232a646bebef7ba MATCH
+SEG plain 1 vaddr=0x12c90 filesz=0xc184 memsz=0xc184 span=0x12000-0x1f000 sha256(file bytes)=8c05deb9791b68fb MATCH
+SEG plain 2 vaddr=0x1fe18 filesz=0xe8 memsz=0x1e8 span=0x1f000-0x20000 sha256(file bytes)=048991df8e16c2aa MATCH
+SEG plain 3 vaddr=0x20f00 filesz=0x20c memsz=0x30e38 span=0x20000-0x52000 sha256(file bytes)=fd3f6f50d967b6c7 MATCH
+PIN ubsan fuzz_disco.ubsan bytes=60920 sha256=56121de6ba4cff85e0fa262e9783f384e35fb8642d057f7a3a4290bcc245b22e MATCH
+SEG ubsan 0 vaddr=0x10000 filesz=0x1d40 memsz=0x1d40 span=0x10000-0x12000 sha256(file bytes)=5f7f44234886110a MATCH
+SEG ubsan 1 vaddr=0x12d40 filesz=0xc890 memsz=0xc890 span=0x12000-0x20000 sha256(file bytes)=0d3b11442251ab81 MATCH
+SEG ubsan 2 vaddr=0x205d0 filesz=0xe8 memsz=0xa30 span=0x20000-0x21000 sha256(file bytes)=29909eff5f8a9261 MATCH
+SEG ubsan 3 vaddr=0x216b8 filesz=0x20c memsz=0x30e40 span=0x21000-0x53000 sha256(file bytes)=0336a3e300d714c7 MATCH
+PIN asan fuzz_disco.asan bytes=602136 sha256=5e39150dd8104df969eb360f9cc29c4f92fe12326afd23783a679e4fb4809f46 MATCH
+SEG asan 0 vaddr=0x10000 filesz=0x1feac memsz=0x1feac span=0x10000-0x30000 sha256(file bytes)=3fa924c4c7a02fcd MATCH
+SEG asan 1 vaddr=0x30eac filesz=0x6dffc memsz=0x6dffc span=0x30000-0x9f000 sha256(file bytes)=02abfd978c789ff2 MATCH
+SEG asan 2 vaddr=0x9fea8 filesz=0x1360 memsz=0x2158 span=0x9f000-0xa2000 sha256(file bytes)=562cc0d404bf6b8a MATCH
+SEG asan 3 vaddr=0xa2208 filesz=0x37f8 memsz=0x55b728 span=0xa2000-0x5fe000 sha256(file bytes)=50f0eef4a8b76c91 MATCH
+PIN asan-ubsan fuzz_disco.asan-ubsan bytes=603064 sha256=cee6f04ad3d4928e242405689ae058bb9e8b6533000c90bde984a2f0d5ff5146 MATCH
+SEG asan-ubsan 0 vaddr=0x10000 filesz=0x1ff24 memsz=0x1ff24 span=0x10000-0x30000 sha256(file bytes)=7332322e4bcf15fd MATCH
+SEG asan-ubsan 1 vaddr=0x30f24 filesz=0x6e324 memsz=0x6e324 span=0x30000-0xa0000 sha256(file bytes)=12527785402f16e2 MATCH
+SEG asan-ubsan 2 vaddr=0xa0248 filesz=0x1360 memsz=0x1db8 span=0xa0000-0xa2000 sha256(file bytes)=cb79f076fdae975c MATCH
+SEG asan-ubsan 3 vaddr=0xa25a8 filesz=0x37f8 memsz=0x55b748 span=0xa2000-0x5fe000 sha256(file bytes)=7a3a4237aa584b06 MATCH
+SUMMARY: pins 4/4 match, segments 16/16 match, mismatches 0

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libyaml
 harness: libyaml_deconstructor_fuzzer
-rocq: OssFuzzTheorems.libyaml.libyaml_deconstructor_fuzzer
+rocq: OSSVerify.libyaml.libyaml_deconstructor_fuzzer
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

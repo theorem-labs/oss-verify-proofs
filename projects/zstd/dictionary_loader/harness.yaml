@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zstd
 harness: dictionary_loader
-rocq: OssFuzzTheorems.zstd.dictionary_loader
+rocq: OSSVerify.zstd.dictionary_loader
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, a round trip: The input is both the dictionary
   (random load method, content type auto/raw/full, loadDictionary vs refPrefix) and the data: if ZSTD_compress2

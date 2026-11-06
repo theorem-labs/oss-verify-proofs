@@ -1,0 +1,33 @@
+image A: rows by rule {'resolve': 25, 'FUNC entry': 14, 'same-code function': 11, 'symbol': 20, 'OBJECT start': 12, 'not an address': 8, 'SIZES_KEEP': 6, 'derived image bound': 7}
+kept values that lie in a donor symbol (each a model constant or an instruction word, see RELOC-PLAN.md):
+  A/Rt/AF0r.v:38 0x5d7ad0 -> 0x5f3af0 MOVED [symbol] (builtin_tls+0xc8 on both sides): confirm it is an address
+  A/Rt/AF0r.v:72 0x1366f1 -> 0x13e5b1 MOVED [symbol] (_ZN11__sanitizer21common_flags_dont_useE+0x89 on both sides): confirm it is an address
+  A/Rt/AF0r.v:73 0x5d7af0 -> 0x5f3b10 MOVED [symbol] (builtin_tls+0xe8 on both sides): confirm it is an address
+  A/Rt/AF0r.v:73 0x5d7af8 -> 0x5f3b18 MOVED [symbol] (builtin_tls+0xf0 on both sides): confirm it is an address
+  A/Rt/AF0r.v:73 0x5d82d0 -> 0x5f42f0 MOVED [symbol] (builtin_tls+0x8c8 on both sides): confirm it is an address
+  A/Rt/AF0r.v:81 0x5d8208 -> 0x5f4228 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  A/Rt/AF0r.v:81 0x5d82e4 -> 0x5f4304 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  A/Rt/AF0r.v:207 0x0007c283 kept [not an address] (lies in _ZN6__lsan10LeakReport14ReportTopLeaksEm+0xef of the donor)
+  A/Rt/AF0r.v:208 0x0007c283 kept [not an address] (lies in _ZN6__lsan10LeakReport14ReportTopLeaksEm+0xef of the donor)
+  A/Rt/AF0r.v:213 0x00160613 kept [not an address] (lies in _ZN11__sanitizerL9useCountsE+0x29c13 of the donor)
+  A/Rt/AF0r.v:214 0x00160613 kept [not an address] (lies in _ZN11__sanitizerL9useCountsE+0x29c13 of the donor)
+  A/Rt/AF0r.v:442 1048576 kept [SIZES_KEEP] (lies in _ZN11__sanitizerL26internal_alloc_placeholderE+0x5a2c0 of the donor)
+  A/Rt/StackMalloc4.v:116 0x5d8208 -> 0x5f4228 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  A/Rt/StackMalloc4.v:117 0x5d8208 -> 0x5f4228 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  A/Rt/StackMalloc4.v:118 0x5d82e4 -> 0x5f4304 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  A/Rt/StackMalloc4.v:119 0x5d82e4 -> 0x5f4304 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  A/Rt/StackMalloc4.v:184 0x5d8208 -> 0x5f4228 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  A/Rt/StackMalloc4.v:185 0x5d82e4 -> 0x5f4304 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:39 0x5d7ad0 -> 0x5f3af0 MOVED [symbol] (builtin_tls+0xc8 on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:68 0x1366f1 -> 0x13e5b1 MOVED [symbol] (_ZN11__sanitizer21common_flags_dont_useE+0x89 on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:69 0x5d7af0 -> 0x5f3b10 MOVED [symbol] (builtin_tls+0xe8 on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:69 0x5d7af8 -> 0x5f3b18 MOVED [symbol] (builtin_tls+0xf0 on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:69 0x5d82d0 -> 0x5f42f0 MOVED [symbol] (builtin_tls+0x8c8 on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:77 0x5d8208 -> 0x5f4228 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:77 0x5d82e4 -> 0x5f4304 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:203 0x0007c283 kept [not an address] (lies in _ZN6__lsan10LeakReport14ReportTopLeaksEm+0xef of the donor)
+  A/Rt/StackMalloc4Tbl.v:204 0x0007c283 kept [not an address] (lies in _ZN6__lsan10LeakReport14ReportTopLeaksEm+0xef of the donor)
+  A/Rt/StackMalloc4Tbl.v:209 0x00160613 kept [not an address] (lies in _ZN11__sanitizerL9useCountsE+0x29c13 of the donor)
+  A/Rt/StackMalloc4Tbl.v:210 0x00160613 kept [not an address] (lies in _ZN11__sanitizerL9useCountsE+0x29c13 of the donor)
+  A/Rt/StackMalloc4Tbl.v:438 1048576 kept [SIZES_KEEP] (lies in _ZN11__sanitizerL26internal_alloc_placeholderE+0x5a2c0 of the donor)
+PASS: 0 wrong rows

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libgit2
 harness: objects_fuzzer
-rocq: OssFuzzTheorems.libgit2.objects_fuzzer
+rocq: OSSVerify.libgit2.objects_fuzzer
 origin: upstream
 summary: git_object__from_raw on the input as each of blob/tree/commit/tag (SHA1); parsed objects are
   freed without inspection.

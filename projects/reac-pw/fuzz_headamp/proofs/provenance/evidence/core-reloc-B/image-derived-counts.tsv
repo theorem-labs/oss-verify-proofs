@@ -1,0 +1,89 @@
+file	line	quantity	formula on the pin	pin value	file value	verdict
+AU/YB13.v	118	seg0 size	PT_LOAD0 page-rounded length	0x20000	0x20000	OK
+AU/YB13.v	120	seg1 size	PT_LOAD1 page-rounded length	0x6c000	0x6c000	OK
+AU/YB13.v	21	seg2 size	PT_LOAD2 page-rounded length	8192	8192	OK
+AU/YB13.v	23	seg3 size	PT_LOAD3 page-rounded length	0x55c000	0x55c000	OK
+AU/YB13.v	77	seg3 file-backed end offset	PT_LOAD3 vaddr+filesz - seg3 base	15200	15200	OK
+AU/YB13.v	77	seg3 zero tail	seg3 size - file-backed end offset	0x5584a0	0x5584a0	OK
+AU/YB13.v	96	seg3 file-backed end offset	PT_LOAD3 vaddr+filesz - seg3 base	15200	15200	OK
+AU/YB13.v	96	seg3 file-backed end	PT_LOAD3 vaddr+filesz (= __stop_asan_globals)	0xa1b60	0xa1b60	OK
+AU/YB1h.v	53	seg0 base	PT_LOAD0 page-rounded base	0x10000	0x10000	OK
+AU/YB1h.v	53	seg0 size	PT_LOAD0 page-rounded size	0x20000	0x20000	OK
+AU/YB1h.v	53	seg1 base	PT_LOAD1 page-rounded base	0x30000	0x30000	OK
+AU/YB1h.v	53	seg1 size	PT_LOAD1 page-rounded size	0x6c000	0x6c000	OK
+AU/YB1h.v	53	seg2 base	PT_LOAD2 page-rounded base	0x9c000	0x9c000	OK
+AU/YB1h.v	53	seg2 size	PT_LOAD2 page-rounded size	8192	8192	OK
+AU/YB1h.v	53	seg3 base	PT_LOAD3 page-rounded base	0x9e000	0x9e000	OK
+AU/YB1h.v	53	seg3 size	PT_LOAD3 page-rounded size	0x55c000	0x55c000	OK
+AU/YB1h.v	67	sum of segment sizes	sum of PT_LOAD page-rounded lengths	0x5ea000	0x5ea000	OK
+AU/YFia.v	135	seg0 base	PT_LOAD0 page-rounded base	0x10000	0x10000	OK
+AU/YFia.v	135	seg0 size	PT_LOAD0 page-rounded size	0x20000	0x20000	OK
+AU/YFia.v	135	seg1 base	PT_LOAD1 page-rounded base	0x30000	0x30000	OK
+AU/YFia.v	135	seg1 size	PT_LOAD1 page-rounded size	0x6c000	0x6c000	OK
+AU/YFia.v	135	seg2 base	PT_LOAD2 page-rounded base	0x9c000	0x9c000	OK
+AU/YFia.v	135	seg2 size	PT_LOAD2 page-rounded size	8192	8192	OK
+AU/YFia.v	135	seg3 base	PT_LOAD3 page-rounded base	0x9e000	0x9e000	OK
+AU/YFia.v	135	seg3 size	PT_LOAD3 page-rounded size	0x55c000	0x55c000	OK
+AU/YB1v.v	17	sysconf .. .text end, words	(.text end - sysconf) / 4	15557	15557	OK
+AU/YB1v.v	16	sysconf	st_value sysconf	0x8bda8	0x8bda8	OK
+AU/YB1v.v	18	oft_exit_guard	st_value oft_exit_guard	0x80bc8	0x80bc8	OK
+AU/YCef.v	17	main .. __extenddftf2, words	(__extenddftf2 - main) / 4	4964	4964	OK
+AU/YD1g.v	1072	image hull span	image top - image base	0x5ea000	0x5ea000	OK
+AU/YD1g.v	1072	image hull pages	(image top - image base) / 4096	1514	1514	OK
+AU/YE22.v	40	YF0m Tfib_const_abs row of the __stack_chk_guard .got word	index of z8 (ANum <.got slot holding __stack_chk_guard>)	193	193	OK
+AU/YE37.v	139	shadow window 0 start	shadow of descriptor run start (asan_globals array last)	0x7fffc1e0	0x7fffc1e0	OK
+AU/YE37.v	139	shadow window 0 cells	run length / 8	176	176	OK
+AU/YE37.v	139	shadow window 1 start	shadow of descriptor run start (asan_globals array last)	0x7fffc294	0x7fffc294	OK
+AU/YE37.v	139	shadow window 1 cells	run length / 8	16	16	OK
+AU/YE37.v	139	shadow window 2 start	shadow of descriptor run start (asan_globals array last)	0x8000b89c	0x8000b89c	OK
+AU/YE37.v	139	shadow window 2 cells	run length / 8	48	48	OK
+AU/YE37.v	139	shadow window 3 start	shadow of descriptor run start (asan_globals array last)	0x8000c214	0x8000c214	OK
+AU/YE37.v	139	shadow window 3 cells	run length / 8	344	344	OK
+AU/YE37.v	39	asan_globals	section start	0xa10a0	0xa10a0	OK
+AU/YE37.v	39	descriptor table bytes	asan_globals size (= 64 * descriptors)	2752	2752	OK
+AU/YE37.v	249	lowest shadow window start	min window start	0x7fffc1e0	0x7fffc1e0	OK
+AU/YE37.v	249	shadow end of the descriptor array	shadow(asan_globals) + size/8	0x8000c36c	0x8000c36c	OK
+AU/YE23.v	40	shadow window 0 lo	shadow of run start	0x7fffc1e0	0x7fffc1e0	OK
+AU/YE23.v	40	shadow window 0 hi	lo + run length / 8	0x7fffc290	0x7fffc290	OK
+AU/YE23.v	40	shadow window 1 lo	shadow of run start	0x7fffc294	0x7fffc294	OK
+AU/YE23.v	40	shadow window 1 hi	lo + run length / 8	0x7fffc2a4	0x7fffc2a4	OK
+AU/YE23.v	40	shadow window 2 lo	shadow of run start	0x8000b89c	0x8000b89c	OK
+AU/YE23.v	40	shadow window 2 hi	lo + run length / 8	0x8000b8cc	0x8000b8cc	OK
+AU/YE23.v	40	shadow window 3 lo	shadow of run start	0x8000c214	0x8000c214	OK
+AU/YE23.v	40	shadow window 3 hi	lo + run length / 8	0x8000c36c	0x8000c36c	OK
+AU/YD1o.v	97	image top	image top page	0x5fa000	0x5fa000	OK
+AU/YD1o.v	97	(top - 1) / 8	(image top - 1) / 8	0xbf3ff	0xbf3ff	OK
+AU/YD1o.v	102	__stop_asan_globals	asan_globals end	0xa1b60	0xa1b60	OK
+AU/YD1o.v	102	its /8	__stop_asan_globals / 8	0x1436c	0x1436c	OK
+AU/YD1o.v	102	image top	image top page	0x5fa000	0x5fa000	OK
+AU/YD1o.v	102	__stop_asan_globals	asan_globals end	0xa1b60	0xa1b60	OK
+AU/YD1o.v	102	(top - stop) / 8	(image top - __stop_asan_globals) / 8	0xab094	0xab094	OK
+AU/YFem.v	415	theDepot / 4	st_value _ZN11__sanitizerL8theDepotE / 4	0x61c46	0x61c46	OK
+AU/YD1f.v	27	shadow of image base	shadow(image base)	0x7fffa000	0x7fffa000	OK
+AU/YD1f.v	27	image span / 8	(image top - image base) / 8	0xbd400	0xbd400	OK
+AU/YE2t.v	66	FMT shadow hull lo	shadow(0x1d7dd) & ~7	0x7fffbaf8	0x7fffbaf8	OK
+AU/YE2t.v	66	FMT shadow hull hi	(shadow(0x1d7dd+20-1)+1) rounded up to 8	0x7fffbb00	0x7fffbb00	OK
+AU/YE2u.v	66	FMT shadow hull lo	shadow(0x1d7f2) & ~7	0x7fffbaf8	0x7fffbaf8	OK
+AU/YE2u.v	66	FMT shadow hull hi	(shadow(0x1d7f2+22-1)+1) rounded up to 8	0x7fffbb08	0x7fffbb08	OK
+AU/YE2v.v	66	FMT shadow hull lo	shadow(0x1972e) & ~7	0x7fffb2e0	0x7fffb2e0	OK
+AU/YE2v.v	66	FMT shadow hull hi	(shadow(0x1972e+32-1)+1) rounded up to 8	0x7fffb2f0	0x7fffb2f0	OK
+AU/YE2w.v	66	FMT shadow hull lo	shadow(0x158bd) & ~7	0x7fffab10	0x7fffab10	OK
+AU/YE2w.v	66	FMT shadow hull hi	(shadow(0x158bd+16-1)+1) rounded up to 8	0x7fffab20	0x7fffab20	OK
+AU/YE35.v	66	FMT shadow hull lo	shadow(0x14834) & ~7	0x7fffa900	0x7fffa900	OK
+AU/YE35.v	66	FMT shadow hull hi	(shadow(0x14834+3-1)+1) rounded up to 8	0x7fffa908	0x7fffa908	OK
+AU/YD2j.v	-	YD2j regions	len IMG_REGIONS	73	73	OK
+AU/YD2j.v	-	R_A3 lo	st_value oft_arg0	658784	658784	OK
+AU/YD2j.v	-	R_A3 hi	asan_globals start	659616	659616	OK
+AU/YD2j.v	-	R_A3 length	asan_globals - oft_arg0	832	832	OK
+AU/YD2j.v	-	descriptors	asan_globals size / 64	43	43	OK
+AU/YD28.v	296	R_A3 length	asan_globals - oft_arg0	832	832	OK
+AU/YD28.v	297	R_A3 length	asan_globals - oft_arg0	832	832	OK
+AU/YD2d.v	134	R_A3 length	asan_globals - oft_arg0	832	832	OK
+images/AsanUbsan.v	-	proof image seg0 base	PT_LOAD page rounding	0x10000	0x10000	OK
+images/AsanUbsan.v	-	proof image seg0 size	PT_LOAD page rounding	0x20000	0x20000	OK
+images/AsanUbsan.v	-	proof image seg1 base	PT_LOAD page rounding	0x30000	0x30000	OK
+images/AsanUbsan.v	-	proof image seg1 size	PT_LOAD page rounding	0x6c000	0x6c000	OK
+images/AsanUbsan.v	-	proof image seg2 base	PT_LOAD page rounding	0x9c000	0x9c000	OK
+images/AsanUbsan.v	-	proof image seg2 size	PT_LOAD page rounding	0x2000	0x2000	OK
+images/AsanUbsan.v	-	proof image seg3 base	PT_LOAD page rounding	0x9e000	0x9e000	OK
+images/AsanUbsan.v	-	proof image seg3 size	PT_LOAD page rounding	0x55c000	0x55c000	OK

@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: libreac/fuzz_boxreg/asan_agrees
+fingerprint: ef452883240bef4cd8e50a201f78571a91d30182b21d8af6f86bf23d56a4823e

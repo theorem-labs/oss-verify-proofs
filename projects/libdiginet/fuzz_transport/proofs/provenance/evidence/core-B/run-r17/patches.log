@@ -1,0 +1,102 @@
+== <core-B>/B-ceg-const.patch
+patching file B/YCeg.v
+
+== <core-B>/B-g-YCfn.patch
+patching file B/YCfn.v
+
+== <core-B>/B-g-YD1m.patch
+patching file B/YD1m.v
+
+== <core-B>/B-g-YD1p.patch
+patching file B/YD1p.v
+
+== <core-B>/B-g-YD1q.patch
+patching file B/YD1q.v
+
+== <core-B>/B-g-YD1r.patch
+patching file B/YD1r.v
+
+== <core-B>/B-g-YD1w.patch
+patching file B/YD1w.v
+
+== <core-B>/B-g-YD2f.patch
+patching file B/YD2f.v
+
+== <core-B>/B-model-tags.patch
+patching file B/YFeu.v
+Hunk #1 succeeded at 157 (offset -1 lines).
+patching file B/YFft.v
+Hunk #1 succeeded at 21 (offset -1 lines).
+patching file B/YFfy.v
+Hunk #1 succeeded at 451 (offset -1 lines).
+Hunk #2 succeeded at 469 (offset -1 lines).
+patching file B/YFfz.v
+Hunk #1 succeeded at 428 (offset -1 lines).
+patching file B/YFg2.v
+Hunk #1 succeeded at 288 (offset -1 lines).
+patching file B/YFi3.v
+Hunk #1 succeeded at 38 (offset -1 lines).
+Hunk #2 succeeded at 72 (offset -1 lines).
+patching file B/YFk0.v
+Hunk #1 succeeded at 748 (offset -1 lines).
+Hunk #2 succeeded at 1020 (offset -1 lines).
+Hunk #3 succeeded at 1121 (offset -1 lines).
+
+== <core-B>/B-noodr.patch
+patching file B/YD1d.v
+patching file B/YD1e.v
+patching file B/YD1f.v
+patching file B/YD1g.v
+
+== <core-B>/B-qcache.patch
+patching file B/YFgg.v
+patching file B/YFgh.v
+
+== <core-B>/B-sec-cells.patch
+patching file B/YB1w.v
+Hunk #1 succeeded at 19 (offset -1 lines).
+
+== <core-B>/B-stops-more.patch
+patching file B/YB1w.v
+Hunk #1 succeeded at 620 (offset 2 lines).
+
+== <core-B>/B-tfib-wrong.patch
+patching file B/YB1w.v
+Hunk #1 succeeded at 36 (offset 1 line).
+Hunk #2 succeeded at 54 (offset 1 line).
+Hunk #3 succeeded at 66 (offset 1 line).
+Hunk #4 succeeded at 81 (offset 1 line).
+Hunk #5 succeeded at 118 (offset 1 line).
+Hunk #6 succeeded at 131 (offset 1 line).
+Hunk #7 succeeded at 142 (offset 1 line).
+Hunk #8 succeeded at 158 (offset 1 line).
+Hunk #9 succeeded at 188 (offset 1 line).
+Hunk #10 succeeded at 243 (offset 1 line).
+Hunk #11 succeeded at 284 (offset 1 line).
+Hunk #12 succeeded at 298 (offset 1 line).
+Hunk #13 succeeded at 308 (offset 1 line).
+Hunk #14 succeeded at 320 (offset 1 line).
+Hunk #15 succeeded at 333 (offset 1 line).
+Hunk #16 succeeded at 353 (offset 1 line).
+Hunk #17 succeeded at 394 (offset 1 line).
+Hunk #18 succeeded at 416 (offset 1 line).
+Hunk #19 succeeded at 468 (offset 1 line).
+
+== <core-B>/B-untime.patch
+patching file B/YCeg.v
+Hunk #1 succeeded at 303 (offset -1 lines).
+
+== <core-B>/B-yd1g-arm.patch
+patching file B/YD1g.v
+Hunk #1 succeeded at 1068 (offset -12 lines).
+
+== <core-B>/B-yd1q-shape.patch
+patching file B/YD1q.v
+Hunk #1 succeeded at 16 (offset 1 line).
+Hunk #2 succeeded at 26 (offset 2 lines).
+
+== <core-B>/B-yfet-cost.patch
+patching file B/YFet.v
+Hunk #1 succeeded at 288 (offset -1 lines).
+Hunk #2 succeeded at 477 (offset -1 lines).
+

@@ -14,7 +14,7 @@ import tempfile
 import unittest
 
 from oft import yamlio
-from oft.tests.helpers import REPO
+from oft.tests.helpers import REPO, child_environment
 from oft.tests.test_facts_review_gate import HAVE_WORKFLOW, NO_WORKFLOW, WORKFLOW
 
 RUN = os.path.join(REPO, "tools", "oft", "ci", "facts-review-run")
@@ -65,6 +65,8 @@ for a in "$@"; do case $a in --*) ;; *s) echo "${a%s}" >> "$CALLS.timeouts"; bre
 exec /usr/bin/timeout "$@"
 """
 
+# facts-review-run reads the agent's output with jq: without it every review fails (the runner image has no jq).
+@unittest.skipUnless(shutil.which("jq"), "jq is not installed")
 class Session(unittest.TestCase):
     def setUp(self):
         self.tmp = pathlib.Path(tempfile.mkdtemp(prefix="oft-test-"))
@@ -81,8 +83,9 @@ class Session(unittest.TestCase):
         (self.checkout / "review" / "reviewed.txt").write_text(f"head={HEAD}\nbase_ref=main\nmerge_base={LAST}\n")
 
     def run_review(self, **environment):
-        env = {"PATH": f"{self.tmp / 'bin'}:{os.environ['PATH']}", "HOME": str(self.home), "PR": "7",
-               "REVIEW_SESSION": str(self.session), **environment}
+        env = child_environment(str(self.home), PATH=f"{self.tmp / 'bin'}:{os.environ['PATH']}", PR="7",
+                                REVIEW_SESSION=str(self.session))
+        env.update(environment)
         return subprocess.run([RUN, "review"], cwd=self.checkout, env=env, capture_output=True, text=True)
 
     def last_review(self):
@@ -327,8 +330,8 @@ class Session(unittest.TestCase):
         # The comment shows that line as the run wrote it, so a reworded line cannot silently drop out of it.
         (self.tmp / "review.md").write_text("No findings.\n")
         c = subprocess.run([COMMENT, str(self.tmp / "review.md")], capture_output=True, text=True, check=True,
-                           env={"PATH": os.environ["PATH"], "TRIES": "\n".join(self.tries()),
-                                "SERVED": (self.checkout / "review" / "served").read_text()})
+                           env=child_environment(str(self.home), TRIES="\n".join(self.tries()),
+                                                 SERVED=(self.checkout / "review" / "served").read_text()))
         self.assertIn(f"ended: {self.tries()[0]}.</sub>", c.stdout)
 
     @unittest.skipUnless(HAVE_WORKFLOW, NO_WORKFLOW)
@@ -355,10 +358,9 @@ class Session(unittest.TestCase):
 
     def test_without_review_session_nothing_is_kept_or_resumed(self):
         self.last_review()
-        env = {k: v for k, v in os.environ.items() if k != "REVIEW_SESSION"}
         r = subprocess.run([RUN, "review"], cwd=self.checkout, capture_output=True, text=True,
-                           env={**env, "PATH": f"{self.tmp / 'bin'}:{os.environ['PATH']}", "HOME": str(self.home),
-                                "PR": "7"})
+                           env=child_environment(str(self.home), PATH=f"{self.tmp / 'bin'}:{os.environ['PATH']}",
+                                                 PR="7"))
         self.assertEqual(r.returncode, 0, r.stderr)
         [call] = self.calls()
         self.assertNotIn("--resume", call)

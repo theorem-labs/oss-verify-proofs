@@ -1,0 +1,23 @@
+# CA = img/cmd.asan sha256 68db792d5fa7
+# TA = img/trn.asan sha256 108062932420
+# CB = img/cmd.asan-ubsan sha256 658cefbe806b
+# TB = img/trn.asan-ubsan sha256 815ecd35b970
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(str-eq,jumptab-eq,const-eq,code-raw-eq)	target-differ	fallbacks
+__asan_stack_malloc_5	CA:TA	0x3ff84	0x3dcfc	524	524	EQUAL-mod-pcrel	7	0	0	(0, 0, 0, 0)	0	gotabs+0x1c[.got|.got]='0x1'
+__asan_stack_malloc_5	CB:TB	0x3ffd0	0x3dd40	524	524	EQUAL-mod-pcrel	7	0	0	(0, 0, 0, 0)	0	gotabs+0x1c[.got|.got]='0x1'
+__asan_stack_free_5	CA:TA	0x40190	0x3df08	180	180	EQUAL-mod-pcrel	3	0	0	(1, 0, 0, 0)	0	str+0x20[.rodata|.rodata]=b'\xf5\xf5\xf5\xf5\xf5\xf5\xf5\xf5\x9a\x99\x99\x99\x99\x99\xf1?'
+__asan_stack_free_5	CB:TB	0x401dc	0x3df4c	180	180	EQUAL-mod-pcrel	3	0	0	(1, 0, 0, 0)	0	str+0x20[.rodata|.rodata]=b'\xf5\xf5\xf5\xf5\xf5\xf5\xf5\xf5\x9a\x99\x99\x99\x99\x99\xf1?'
+__interceptor___tls_get_addr	CA:TA	0x4b040	0x47658	124	124	EQUAL-mod-pcrel	5	0	0	(0, 0, 0, 0)	0	
+__interceptor___tls_get_addr	CB:TB	0x4b08c	0x4769c	124	124	EQUAL-mod-pcrel	5	0	0	(0, 0, 0, 0)	0	
+__tls_get_addr	CA:TA	0x9fbb8	0x9de04	36	36	EQUAL	0	0	0	(0, 0, 0, 0)	0	
+__tls_get_addr	CB:TB	0x9f714	0x9da7c	36	36	EQUAL	0	0	0	(0, 0, 0, 0)	0	
+_ZN6__asan16GetCurrentThreadEv	CA:TA	0x61e40	0x5cbb8	32	32	EQUAL	0	0	0	(0, 0, 0, 0)	0	
+_ZN6__asan16GetCurrentThreadEv	CB:TB	0x61e8c	0x5cbfc	32	32	EQUAL	0	0	0	(0, 0, 0, 0)	0	
+_ZN6__asan10AsanTSDGetEv	CA:TA	0x5a98c	0x55704	64	64	EQUAL-mod-pcrel	7	0	0	(2, 0, 0, 0)	0	str+0x28[.rodata|.rodata]=b'/llvm-project/compiler-r' str+0x2c[.rodata|.rodata]=b'((tsd_key_inited)) != (0'
+_ZN6__asan10AsanTSDGetEv	CB:TB	0x5a9d8	0x55748	64	64	EQUAL-mod-pcrel	6	0	0	(2, 0, 0, 0)	0	str+0x28[.rodata|.rodata]=b'/llvm-project/compiler-r' str+0x2c[.rodata|.rodata]=b'((tsd_key_inited)) != (0'
+pthread_getspecific	CA:TA	0xa0c6c	0x9eeb8	28	28	EQUAL	0	0	0	(0, 0, 0, 0)	0	
+pthread_getspecific	CB:TB	0xa07c8	0x9eb30	28	28	EQUAL	0	0	0	(0, 0, 0, 0)	0	
+_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	CA:TA	0x6f554	0x6a2cc	848	848	EQUAL-mod-pcrel	32	0	0	(10, 0, 0, 0)	0	gotabs+0x64[.got|.got]='0x8' str+0x98[.rodata|.rodata]=b'DTLS_NextBlock' str+0xdc[.rodata|.rodata]=b'__tls_get_addr: DTLS_Nex' str+0x134[.rodata|.rodata]=b'DTLS_NextBlock' str+0x140[.rodata|.rodata]=b'__tls_get_addr: DTLS_Nex' str+0x268[.rodata|.rodata]=b'__tls_get_addr: DTLS_Fin' str+0x2a4[.rodata|.rodata]=b'/llvm-project/compiler-r' str+0x2a8[.rodata|.rodata]=b'((static_tls_begin)) <= ' str+0x2cc[.rodata|.rodata]=b'__tls_get_addr: %p {0x%z' str+0x330[.rodata|.rodata]=b'__tls_get_addr: static t' str+0x344[.rodata|.rodata]=b"__tls_get_addr: Can't gu"
+_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	CB:TB	0x6f5a0	0x6a310	848	848	EQUAL-mod-pcrel	32	0	0	(10, 0, 0, 0)	0	gotabs+0x64[.got|.got]='0x8' str+0x98[.rodata|.rodata]=b'DTLS_NextBlock' str+0xdc[.rodata|.rodata]=b'__tls_get_addr: DTLS_Nex' str+0x134[.rodata|.rodata]=b'DTLS_NextBlock' str+0x140[.rodata|.rodata]=b'__tls_get_addr: DTLS_Nex' str+0x268[.rodata|.rodata]=b'__tls_get_addr: DTLS_Fin' str+0x2a4[.rodata|.rodata]=b'/llvm-project/compiler-r' str+0x2a8[.rodata|.rodata]=b'((static_tls_begin)) <= ' str+0x2cc[.rodata|.rodata]=b'__tls_get_addr: %p {0x%z' str+0x330[.rodata|.rodata]=b'__tls_get_addr: static t' str+0x344[.rodata|.rodata]=b"__tls_get_addr: Can't gu"
+_ZN6__asanL11MemToShadowEm	CA:TA	0x3e24c	0x3bfd4	316	316	EQUAL-mod-pcrel	10	0	0	(2, 0, 0, 0)	0	str+0x124[.rodata|.rodata]=b'/llvm-project/compiler-r' str+0x128[.rodata|.rodata]=b'((AddrIsInMem(p))) != (0'
+_ZN6__asanL11MemToShadowEm	CB:TB	0x3e298	0x3c038	316	316	EQUAL-mod-pcrel	10	0	0	(2, 0, 0, 0)	0	str+0x124[.rodata|.rodata]=b'/llvm-project/compiler-r' str+0x128[.rodata|.rodata]=b'((AddrIsInMem(p))) != (0'

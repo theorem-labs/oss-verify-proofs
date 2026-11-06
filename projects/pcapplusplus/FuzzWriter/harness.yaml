@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: pcapplusplus
 harness: FuzzWriter
-rocq: OssFuzzTheorems.pcapplusplus.FuzzWriter
+rocq: OSSVerify.pcapplusplus.FuzzWriter
 origin: upstream
 summary: 'Reads every packet of the input capture and writes it to a pcap/pcapng writer (converter shape:
   .pcap in -> .pcapng out for FuzzWriter, .pcapng in -> .pcap out for FuzzWriterNg), prints writer stats.

@@ -1,0 +1,91 @@
+### check 4: fuzz_disco YD2j (generated)
+
+AD2j YD2j.v, AD1k YD1k.v, image fuzz_disco.asan-ubsan (sha256 cee6f04ad3d4928e)
+
+| region | lo | hi | chunks | first chunk at lo | contiguous (gaps) | donor same region: gaps | in TSEGS | outside PT_LOAD memsz | sizes = donor's (bounds moved) |
+|---|---|---|---|---|---|---|---|---|---|
+| R_A1a | 0x10000 | 0x102e8 | 1 | yes | yes | none | yes | none | no |
+| R_A1b | 0x102f0 | 0x10308 | 1 | yes | yes | none | yes | none | no |
+| R_A1c | 0x10310 | 0x10338 | 1 | yes | yes | none | yes | none | no |
+| R_A1d | 0x10340 | 0x10350 | 1 | yes | yes | none | yes | none | no |
+| R_A1e | 0x10358 | 0x103a0 | 1 | yes | yes | none | yes | none | no |
+| R_A1f | 0x103a8 | 0x103b0 | 1 | yes | yes | none | yes | none | no |
+| R_A1g | 0x103c0 | 0x103d0 | 1 | yes | yes | none | yes | none | no |
+| R_A1h | 0x103d8 | 0x10448 | 1 | yes | yes | none | yes | none | no |
+| R_A1i | 0x10488 | 0x10548 | 1 | yes | yes | none | yes | none | no |
+| R_A1j | 0x10588 | 0x1cd70 | 1 | yes | yes | none | yes | none | no |
+| R_A1k | 0x1cd85 | 0x20d00 | 1 | yes | yes | none | yes | none | no |
+| R_A1l | 0x20d04 | 0x20f9e | 1 | yes | yes | none | yes | none | no |
+| R_A1m | 0x20fc0 | 0x20fc8 | 1 | yes | yes | none | yes | none | no |
+| R_A1n | 0x20fe0 | 0x20fe6 | 1 | yes | yes | none | yes | none | no |
+| R_A1o | 0x21000 | 0x21005 | 1 | yes | yes | none | yes | none | no |
+| R_A1p | 0x21020 | 0x21026 | 1 | yes | yes | - | yes | none | no |
+| R_A1q | 0x21040 | 0x21045 | 1 | yes | yes | - | yes | none | no |
+| R_A1r | 0x21060 | 0x21064 | 1 | yes | yes | - | yes | none | no |
+| R_A1s | 0x21080 | 0x21085 | 1 | yes | yes | - | yes | none | no |
+| R_A1t | 0x210a0 | 0x210a6 | 1 | yes | yes | - | yes | none | no |
+| R_A1u | 0x210c0 | 0x210c6 | 1 | yes | yes | - | yes | none | no |
+| R_A1v | 0x210e0 | 0x210e6 | 1 | yes | yes | - | yes | none | no |
+| R_A1w | 0x21100 | 0x21107 | 1 | yes | yes | - | yes | none | no |
+| R_A1x | 0x21120 | 0x2112a | 1 | yes | yes | - | yes | none | no |
+| R_A1y | 0x21140 | 0x21145 | 1 | yes | yes | - | yes | none | no |
+| R_A1z | 0x21160 | 0x21164 | 1 | yes | yes | - | yes | none | no |
+| R_A1aa | 0x21180 | 0x21187 | 1 | yes | yes | - | yes | none | no |
+| R_A1ab | 0x211a0 | 0x211c7 | 1 | yes | yes | - | yes | none | no |
+| R_A1ac | 0x211e0 | 0x211e7 | 1 | yes | yes | - | yes | none | no |
+| R_A1ad | 0x21200 | 0x21208 | 1 | yes | yes | - | yes | none | no |
+| R_A1ae | 0x21220 | 0x21225 | 1 | yes | yes | - | yes | none | no |
+| R_A1af | 0x21240 | 0x21243 | 1 | yes | yes | - | yes | none | no |
+| R_A1ag | 0x21260 | 0x21267 | 1 | yes | yes | - | yes | none | no |
+| R_A1ah | 0x21280 | 0x21286 | 1 | yes | yes | - | yes | none | no |
+| R_A1ai | 0x212a0 | 0x212e4 | 1 | yes | yes | - | yes | none | no |
+| R_A1aj | 0x21300 | 0x21307 | 1 | yes | yes | - | yes | none | no |
+| R_A1ak | 0x21320 | 0x21328 | 1 | yes | yes | - | yes | none | no |
+| R_A1al | 0x21340 | 0x21342 | 1 | yes | yes | - | yes | none | no |
+| R_A1am | 0x21360 | 0x21389 | 1 | yes | yes | - | yes | none | no |
+| R_A1an | 0x213c0 | 0x213c2 | 1 | yes | yes | - | yes | none | no |
+| R_A1ao | 0x213e0 | 0x213e1 | 1 | yes | yes | - | yes | none | no |
+| R_A1ap | 0x21400 | 0x2140d | 1 | yes | yes | - | yes | none | no |
+| R_A1aq | 0x21420 | 0x2142e | 1 | yes | yes | - | yes | none | no |
+| R_A1ar | 0x21440 | 0x21451 | 1 | yes | yes | - | yes | none | no |
+| R_A1as | 0x21480 | 0x21493 | 1 | yes | yes | - | yes | none | no |
+| R_A1at | 0x214c0 | 0x214cf | 1 | yes | yes | - | yes | none | no |
+| R_A1au | 0x214e0 | 0x214ec | 1 | yes | yes | - | yes | none | no |
+| R_A1av | 0x21500 | 0x21505 | 1 | yes | yes | - | yes | none | no |
+| R_A1aw | 0x21520 | 0x21526 | 1 | yes | yes | - | yes | none | no |
+| R_A1ax | 0x21540 | 0x21550 | 1 | yes | yes | - | yes | none | no |
+| R_A1ay | 0x21560 | 0x21562 | 1 | yes | yes | - | yes | none | no |
+| R_A1az | 0x21580 | 0x215a7 | 1 | yes | yes | - | yes | none | no |
+| R_A1ba | 0x215c0 | 0x215e7 | 1 | yes | yes | - | yes | none | no |
+| R_A1bb | 0x21600 | 0x21606 | 1 | yes | yes | - | yes | none | no |
+| R_A1bc | 0x21620 | 0x21628 | 1 | yes | yes | - | yes | none | no |
+| R_A1bd | 0x21640 | 0x21648 | 1 | yes | yes | - | yes | none | no |
+| R_A1be | 0x21660 | 0x2168c | 1 | yes | yes | - | yes | none | no |
+| R_A1bf | 0x216a0 | 0x21c28 | 1 | yes | yes | - | yes | none | no |
+| R_A1bg | 0x21c2c | 0x21c8c | 1 | yes | yes | - | yes | none | no |
+| R_A1bh | 0x21c8e | 0xa0000 | 1 | yes | yes | - | yes | [0x2ff24,0x30f24), [0x9f248,0xa0000) | no |
+| R_A2a | 0xa0000 | 0xa0678 | 1 | yes | yes | none | yes | [0xa0000,0xa0248) | no |
+| R_A2b | 0xa06a0 | 0xa06b8 | 1 | yes | yes | none | yes | none | no |
+| R_A2c | 0xa06e0 | 0xa06f8 | 1 | yes | yes | none | yes | none | no |
+| R_A2d | 0xa0720 | 0xa0890 | 1 | yes | yes | none | yes | none | no |
+| R_A2e | 0xa0910 | 0xa1418 | 1 | yes | yes | none | yes | none | no |
+| R_A2f | 0xa1420 | 0xa1508 | 1 | yes | yes | none | yes | none | no |
+| R_A2g | 0xa1510 | 0xa1528 | 1 | yes | yes | - | yes | none | no |
+| R_A2h | 0xa1538 | 0xa1590 | 2 | yes | yes | - | yes | none | no |
+| R_A2i | 0xa15a8 | 0xa25a8 | 1 | yes | yes | - | yes | [0xa2000,0xa25a8) | no |
+| R_A3 | 0xa4e20 | 0xa5160 | 1 | yes | yes | none | yes | none | yes |
+| R_A4 | 0xa5dc8 | 0xa5e10 | 2 | yes | yes | none | yes | none | yes |
+| R_RS | 0x5cbad0 | 0x5dbad0 | 0 | yes | [0x5cbad0,0x5dbad0) | [0x5c88d0,0x5d88d0) | yes | none | yes |
+| R_A5a | 0x5dbad0 | 0x5dc36c | 8 | yes | [0x5dc340,0x5dc348) | [0x5d9140,0x5d9148) | yes | none | no |
+| R_A5b | 0x5dc370 | 0x5dc3b8 | 4 | yes | yes | none | yes | none | yes |
+| R_A6 | 0x5dc3c0 | 0x5dc408 | 5 | yes | yes | none | yes | none | no |
+| R_A7a | 0x5dc44c | 0x5dc458 | 1 | yes | yes | none | yes | none | yes |
+| R_A7b | 0x5fc418 | 0x5fc6d0 | 24 | yes | [0x5fc690,0x5fc698) | [0x5f9490,0x5f9498) | yes | none | no |
+| R_A7c | 0x5fc6d8 | 0x5fc720 | 2 | yes | [0x5fc708,0x5fc710) | [0x5f9508,0x5f9510) | yes | none | yes |
+| R_A8 | 0x5fcac0 | 0x5fd368 | 1 | yes | yes | none | yes | none | yes |
+| R_A9a | 0x5fd370 | 0x5fd7b8 | 7 | yes | yes | none | yes | none | no |
+| R_A9b | 0x5fd7c0 | 0x5fe000 | 1 | yes | yes | none | yes | [0x5fdcf0,0x5fe000) | no |
+
+AD1k restatements checked: 72 (72 ok)
+
+VERDICT: pass (81 regions)

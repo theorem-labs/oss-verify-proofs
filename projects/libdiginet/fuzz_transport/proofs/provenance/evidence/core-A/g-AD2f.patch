@@ -1,0 +1,39 @@
+--- A/AD2f.v
++++ A/AD2f.v
+@@ -145,12 +145,17 @@
+ (flat_map (clip_chunk lo hi) (r_chunks r)).
+ Definition STDOUT_LO : Z := 0xa8738.  Definition STDOUT_HI : Z := 0xa8820.
+ Definition SOBUF_LO : Z := 0x6141f8.   Definition SOBUF_HI : Z := 0x614608.
++(* The harness globals' hull [DRV_G_LO, DRV_G_HI) (A/AD1y.v: g_cfg [0x5df080, +60) to OW [0x5f3060, +304)) as a
++   list of program-global ranges (W_journalG.v's G): the bytes the driver lets the PROGRAM call change. The loop
++   state kept across that call leaves the hull out: IMG_L, IMG_LC and L_pieces clip it out after STDOUT and SOBUF,
++   outermost. On the start-up list A/AD2j.v, cut around the hull, no region meets it, so the clip changes none. *)
++Definition DRV_G : list (Z * Z) := [(DRV_G_LO, DRV_G_HI - DRV_G_LO)].
+ Definition IMG_B : smem := firstn 54 (skipn 3 (ss_mem sB1)).
+ Definition clip_out (lo hi : Z) (r : YP09.region) : list YP09.region :=
+ if ((hi <=? r_lo r) || (r_hi r <=? lo))%bool then [r] else
+ (if (r_lo r <? lo)%bool then [clip_region (r_lo r) lo r] else []) ++ (if (hi <? r_hi r)%bool then [clip_region hi (r_hi r) r] else []).
+-Definition IMG_L : smem := Eval vm_compute in flat_map (fun r => flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r)) IMG_B.
+-Definition IMG_LC : smem := Eval vm_compute in flat_map (fun r => flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r)) IMG_E.
++Definition IMG_L : smem := Eval vm_compute in flat_map (fun r => flat_map (clip_out DRV_G_LO DRV_G_HI) (flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r))) IMG_B.
++Definition IMG_LC : smem := Eval vm_compute in flat_map (fun r => flat_map (clip_out DRV_G_LO DRV_G_HI) (flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r))) IMG_E.
+ Definition L_regs : list sv :=
+ [SLit 0; SLit RA_LLVMF; SOff 0 (-208); SLit 67584; SLit 6241008; SOff 167 0; SOff 168 0; SOff 169 0;
+ SOff 162 0; SOff 163 0; SOff 163 0; SOff 162 0; SOff 170 0; SOff 171 0; SOff 172 0; SOff 173 0;
+@@ -176,7 +181,7 @@
+ Proof. split; [| intros k]; vm_compute; reflexivity. Qed.
+ Definition L_pieces : list smem :=
+ [ [WIN208; TRF] ] ++ map (fun r => [r]) (firstn 2 (skipn 1 (ss_mem S_Pm)))
+-++ map (fun r => flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r)) IMG_E ++ [ []; []; []; []; [] ].
++++ map (fun r => flat_map (clip_out DRV_G_LO DRV_G_HI) (flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r))) IMG_E ++ [ []; []; []; []; [] ].
+ Lemma L_pieces_eq : concat L_pieces = L_mem /\ length L_pieces = length (ss_mem sPE0) /\ forall k, length L_pieces = length (ss_mem (sPE1 k)).
+ Proof. repeat split; intros; vm_compute; reflexivity. Qed.
+ Definition L_piecesC : list smem := Eval vm_compute in L_pieces.
+@@ -283,3 +288,7 @@
+ Lemma CM_so_ok : forallb so_win_ok CM_mem = true /\ forallb so_win_ok (WIN (-128) :: rs_FB) = true /\ forallb so_win_ok L_mem = true.
+ Proof. vm_compute. repeat split; reflexivity. Qed.
+ Lemma IMG_L_wf : regions_wf IMG_L = true. Proof. reflexivity. Qed.
++(* Every image region of the loop state avoids the harness globals' hull. `tl` drops the stack window WIN208 (base
++   Some 0, which region_avoids_G (A/AD1y.v) passes anyway); A/AD1r.v walks tl L_mem. *)
++Lemma L_mem_avoids_G : forallb region_avoids_G (tl L_mem) = true.
++Proof. vm_compute. reflexivity. Qed.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libical
 harness: libicalvcard_fuzzer
-rocq: OssFuzzTheorems.libical.libicalvcard_fuzzer
+rocq: OSSVerify.libical.libicalvcard_fuzzer
 origin: oss-fuzz
 summary: vcardparser_parse_string on the NUL-terminated input; component freed unchecked.
 entry: LLVMFuzzerTestOneInput

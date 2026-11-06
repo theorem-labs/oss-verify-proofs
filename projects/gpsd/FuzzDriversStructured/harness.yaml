@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: gpsd
 harness: FuzzDriversStructured
-rocq: OssFuzzTheorems.gpsd.FuzzDriversStructured
+rocq: OSSVerify.gpsd.FuzzDriversStructured
 origin: upstream
 summary: Byte 0 selects one of 10 GNSS protocols (SiRF, UBX, Zodiac, GeoStar, Navcom, NMEA, RTCM3, TSIP,
   GREIS, Skytraq); the harness frames the rest as a packet with a VALID checksum/CRC so it passes the

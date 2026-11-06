@@ -1,0 +1,49 @@
+# the three files
+TOOL <file> sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
+read A/Rt/AF0r.v: 3 reported
+   :21 PLAIN TACTIC: Unset Lia Cache.
+   :21 PLAIN TACTIC: Unset Nia Cache.
+   :25 ESCAPES TACTIC: Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=
+read A/Rt/AF0s.v: 3 reported
+   :23 PLAIN TACTIC: Unset Lia Cache.
+   :23 PLAIN TACTIC: Unset Nia Cache.
+   :28 ESCAPES TACTIC: Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=
+read Reusable/YF0v.v: 3 reported
+   :13 PLAIN TACTIC: Unset Lia Cache.
+   :13 PLAIN TACTIC: Unset Nia Cache.
+   :16 ESCAPES TACTIC: Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=
+SUMMARY: 3 files read of 3 given; ESCAPES 3; PLAIN 6; UNMEASURED 0; KERNEL 0; levels TACTIC 9, OPTION 0; HINTS 0 (report only, tactic-level)
+rc=0
+# fuzz_grant's released counterparts (recipes 4f87de75d67)
+TOOL <file> sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
+read proofs/libreac/fuzz_grant/lib/A/Rt/AF0r.v: 3 reported
+   :20 PLAIN TACTIC: Unset Lia Cache.
+   :20 PLAIN TACTIC: Unset Nia Cache.
+   :24 ESCAPES TACTIC: Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=
+read proofs/libreac/fuzz_grant/lib/A/Rt/AF0s.v: 3 reported
+   :22 PLAIN TACTIC: Unset Lia Cache.
+   :22 PLAIN TACTIC: Unset Nia Cache.
+   :27 ESCAPES TACTIC: Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=
+read proofs/libreac/fuzz_grant/lib/Reusable/YF0v.v: 3 reported
+   :12 PLAIN TACTIC: Unset Lia Cache.
+   :12 PLAIN TACTIC: Unset Nia Cache.
+   :15 ESCAPES TACTIC: Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=
+SUMMARY: 3 files read of 3 given; ESCAPES 3; PLAIN 6; UNMEASURED 0; KERNEL 0; levels TACTIC 9, OPTION 0; HINTS 0 (report only, tactic-level)
+rc=0
+# control: a second global Zify flag line planted in AF0s.v
+TOOL <file> sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
+read A/Rt/AF0r.v: 3 reported
+   :21 PLAIN TACTIC: Unset Lia Cache.
+   :21 PLAIN TACTIC: Unset Nia Cache.
+   :25 ESCAPES TACTIC: Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=
+read A/Rt/AF0s.v: 4 reported
+   :23 PLAIN TACTIC: Unset Lia Cache.
+   :23 PLAIN TACTIC: Unset Nia Cache.
+   :28 ESCAPES TACTIC: Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=
+   :29 ESCAPES TACTIC: Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=
+read Reusable/YF0v.v: 3 reported
+   :13 PLAIN TACTIC: Unset Lia Cache.
+   :13 PLAIN TACTIC: Unset Nia Cache.
+   :16 ESCAPES TACTIC: Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=
+SUMMARY: 3 files read of 3 given; ESCAPES 4; PLAIN 6; UNMEASURED 0; KERNEL 0; levels TACTIC 10, OPTION 0; HINTS 0 (report only, tactic-level)
+rc=0

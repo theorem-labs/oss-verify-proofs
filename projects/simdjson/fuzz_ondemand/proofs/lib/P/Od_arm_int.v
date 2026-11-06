@@ -1,0 +1,215 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.Lib Require Import Tac Arr Bytes StoreFast FP.
+From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.Sj Require Import SjS1Out SjOd.
+From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.P Require Import Od_defs Od_tables.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Open Scope bv_scope.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+
+Lemma B_nonzero_lt_len : forall bs q, B bs q <> 0%Z -> (q < blen bs)%Z.
+Proof. intros bs q H. destruct (Z.lt_ge_cases q (blen bs)) as [L|G]; [exact L|]. exfalso. apply H. apply B_pad. exact G. Qed.
+
+Lemma zxb_digit : forall c, (0 <= c < 256)%Z -> (Z.land ((c + -48) mod 18446744073709551616) 255 < 10)%Z -> (48 <= c <= 57)%Z.
+Proof.
+  intros c Hc H. change 255%Z with (Z.ones 8) in H. rewrite Z.land_ones in H by lia.
+  change (2 ^ 8)%Z with 256%Z in H.
+  destruct (Z.lt_ge_cases c 48) as [L|G].
+  - exfalso. replace ((c + -48) mod 18446744073709551616)%Z with (c + 18446744073709551568)%Z in H
+      by (apply Z.mod_unique with (q := (-1)%Z); lia).
+    replace ((c + 18446744073709551568) mod 256)%Z with (c + 208)%Z in H
+      by (apply Z.mod_unique with (q := 72057594037927935%Z); lia).
+    lia.
+  - rewrite (Z.mod_small (c + -48)) in H by lia. rewrite Z.mod_small in H by lia. lia.
+Qed.
+
+Section ArmInt.
+  Variable E : odenv.
+  Hypothesis OK : od_ok E.
+  Notation bs := (o_bs E).
+  Notation idxs := (o_idxs E).
+
+  Lemma od_int_tail : forall (Q : machine_state -> Prop) st (c : Z) xt0 xt1 xt2 xa0 xa2 xa3 xa4 xa5 xa6 xt3 xt4 xt5 xF xfc m1,
+    tokT bs idxs (o_n E - 1) = C_RBRACKET ->
+    od_head_ok bs idxs 1 st -> frm0 xfc -> ODINV E st m1 ->
+    od_plus_k E Q st ->
+    (0 <= c < 256)%Z ->
+    evt psegs Q (ODST E 0x277a4 xt0 xt1 xt2 xa0 (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) xa2 xa3 xa4 xa5 xa6 (Z_to_bv 64 c)
+                      (Z_to_bv 64 (FR_IT E)) (Z_to_bv 64 2) (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) xt3 xt4 xt5 xF xfc m1).
+  Proof using OK.
+    intros Q st c xt0 xt1 xt2 xa0 xa2 xa3 xa4 xa5 xa6 xt3 xt4 xt5 xF xfc m1 HLAST HH FRM INV HK HC.
+    pose proof HH as (HP & HD & HE & HA & HB).
+    od_open_inv INV. od_env OK.
+    pose proof (ofin_read m1 c MI HC) as RT. unfold OT_FIN in RT.
+    assert (KNONE : forall xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xt3 xt4 xt5,
+      evt psegs Q (ODST E OD_PLUS xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7
+                      (Z_to_bv 64 (FR_IT E)) (Z_to_bv 64 2) (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) xt3 xt4 xt5 xF xfc m1)).
+    { intros. apply (HK st); [| exact FRM| od_close_inv].
+      apply (acc_arm_out bs idxs st _ S1 HLAST HH). apply acc_none. }
+    unfold OD_PLUS in KNONE.
+    zstep. zstep. if_cases K1; zify_cond K1; [apply KNONE|].
+    zstep. zstep. if_cases K2; zify_cond K2.
+    -
+      zstep. zstep. zstep. zstep. odnorm. zstep.
+      if_cases K3; zify_cond K3; [apply KNONE|].
+      zstep. zstep. zstep. if_cases K4; zify_cond K4; [apply KNONE|].
+      zstep. if_cases K5; zify_cond K5; try (exfalso; lia). clear K5.
+      zstep. zstep. zstep. zstep. zstep.
+      apply (HK (consume 1 st)); [| exact FRM| od_close_inv].
+      apply (acc_arm_out bs idxs st _ S1 HLAST HH). apply acc_scalar.
+    - zstep. if_cases K2b; zify_cond K2b; [apply KNONE|].
+      zstep. zstep. zstep. zstep. odnorm. zstep.
+      if_cases K3; zify_cond K3; [apply KNONE|].
+      zstep. zstep. zstep. if_cases K4; zify_cond K4; [apply KNONE|].
+      zstep. if_cases K5; zify_cond K5; try (exfalso; lia). clear K5.
+      zstep. zstep. zstep. zstep. zstep.
+      apply (HK (consume 1 st)); [| exact FRM| od_close_inv].
+      apply (acc_arm_out bs idxs st _ S1 HLAST HH). apply acc_scalar.
+  Qed.
+
+  Lemma od_int_loop : forall (f : nat) (Q : machine_state -> Prop) st (q0 k : Z) xt0 xt1 xt2 xa0 xa2 xa3 xa5 xa7 xt3 xt4 xt5 xF xfc m1,
+    tokT bs idxs (o_n E - 1) = C_RBRACKET ->
+    od_head_ok bs idxs 1 st -> frm0 xfc -> ODINV E st m1 ->
+    od_plus_k E Q st ->
+    (0 <= q0)%Z -> (0 <= k)%Z -> (48 <= B bs (q0 + k) <= 57)%Z -> (blen bs - (q0 + k) <= Z.of_nat f)%Z ->
+    evt psegs Q (ODST E 0x27780 xt0 xt1 xt2 xa0 (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) xa2 xa3 (Z_to_bv 64 k) xa5 (Z_to_bv 64 (o_BUF E + q0 + 1)) xa7
+                      (Z_to_bv 64 (FR_IT E)) (Z_to_bv 64 2) (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) xt3 xt4 xt5 xF xfc m1).
+  Proof using OK.
+    intros f. induction f as [|f IH];
+      intros Q st q0 k xt0 xt1 xt2 xa0 xa2 xa3 xa5 xa7 xt3 xt4 xt5 xF xfc m1 HLAST HH FRM INV HK Hq0 Hk HDIG Hf.
+    - exfalso. assert (q0 + k < blen bs)%Z by (apply B_nonzero_lt_len; lia). lia.
+    - assert (QL : (q0 + k < blen bs)%Z) by (apply B_nonzero_lt_len; lia).
+      assert (INV2 := INV). od_open_inv INV. od_env OK.
+      pose proof (od_B_range E BOK (q0 + k + 1)) as R1.
+      pose proof (tokB_read m1 E (q0 + k + 1) BUFRO ltac:(lia)) as RB1.
+      set (c := B bs (q0 + k + 1)) in *.
+      zstep. zstep. odnorm. zstep. zstep. zstep. zstep. zstep. zstep. zstep.
+      if_cases K; zify_cond K.
+      +
+        eapply evt_eq; [| eapply (IH Q st q0 (k + 1)%Z); [exact HLAST| exact HH| exact FRM| exact INV2| exact HK| lia| lia| | ]].
+        * od_st_eq.
+        * replace (q0 + (k + 1))%Z with (q0 + k + 1)%Z by lia. fold c. apply (zxb_digit c R1 K).
+        * lia.
+      + eapply evt_eq; [| eapply (od_int_tail Q st c); [exact HLAST| exact HH| exact FRM| exact INV2| exact HK| lia]].
+        od_st_eq.
+  Qed.
+
+  Theorem od_arm_int64 : arm_stmt E 0x27734.
+  Proof using OK.
+    unfold arm_stmt. intros Q st xt0 xt1 xt2 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xt3 xt4 xt5 xF xfc m1 HLAST HH FRM INV HK.
+    pose proof HH as (HP & HD & HE & HA & HB).
+    assert (INV2 := INV). od_open_inv INV. od_env OK.
+    pose proof (od_tokI_range E S1 (o_pos st) ltac:(lia)) as TR.
+    pose proof (tokI_read m1 E ws (o_pos st) IDXA (conj IDXL IDXF) ltac:(lia)) as RD1.
+    set (off := tokI bs idxs (o_pos st)) in *.
+    pose proof (od_B_range E BOK off) as R0.
+    pose proof (tokB_read m1 E off BUFRO ltac:(lia)) as RB0.
+    set (b0 := B bs off) in *.
+    zstep. if_false.
+    zstep. zstep. odnorm. zstep. zstep. odnorm. zstep. zstep.
+    match goal with |- context [Z.b2z (?x <? 1)] => set (neg := Z.b2z (x <? 1)) in * end.
+    assert (NGR : (0 <= neg <= 1)%Z) by (unfold neg; destruct (_ <? 1)%Z; cbn; lia). clearbody neg.
+    pose proof (od_B_range E BOK (off + neg)) as Rn.
+    pose proof (tokB_read m1 E (off + neg) BUFRO ltac:(lia)) as RBn.
+    set (d0 := B bs (off + neg)) in *.
+    zstep. zstep. odnorm. zstep. zstep. zstep. zstep.
+    if_cases K; zify_cond K.
+    - apply (HK st); [| exact FRM| od_close_inv].
+      apply (acc_arm_out bs idxs st _ S1 HLAST HH). apply acc_none.
+    - zstep. zstep. zstep. zstep. zstep. zstep.
+      eapply evt_eq; [| eapply (od_int_loop (Z.to_nat (blen bs)) Q st (off + neg) 0); [exact HLAST| exact HH| exact FRM| exact INV2| exact HK| lia| lia| | lia]].
+      + od_st_eq.
+      + replace (off + neg + 0)%Z with (off + neg)%Z by lia. fold d0. apply (zxb_digit d0 Rn). lia.
+  Qed.
+
+  Lemma od_uint_tail : forall (Q : machine_state -> Prop) st (c : Z) xt0 xt1 xt2 xa1 xa2 xa3 xa4 xa5 xa7 xt3 xt4 xt5 xF xfc m1,
+    tokT bs idxs (o_n E - 1) = C_RBRACKET ->
+    od_head_ok bs idxs 1 st -> frm0 xfc -> ODINV E st m1 ->
+    od_plus_k E Q st ->
+    (0 <= c < 256)%Z ->
+    evt psegs Q (ODST E 0x279a4 xt0 xt1 xt2 (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) xa1 xa2 xa3 xa4 xa5 (Z_to_bv 64 c) xa7
+                      (Z_to_bv 64 (FR_IT E)) (Z_to_bv 64 2) (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) xt3 xt4 xt5 xF xfc m1).
+  Proof using OK.
+    intros Q st c xt0 xt1 xt2 xa1 xa2 xa3 xa4 xa5 xa7 xt3 xt4 xt5 xF xfc m1 HLAST HH FRM INV HK HC.
+    pose proof HH as (HP & HD & HE & HA & HB).
+    od_open_inv INV. od_env OK.
+    pose proof (ofin_read m1 c MI HC) as RT. unfold OT_FIN in RT.
+    assert (KNONE : forall xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xt3 xt4 xt5,
+      evt psegs Q (ODST E OD_PLUS xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7
+                      (Z_to_bv 64 (FR_IT E)) (Z_to_bv 64 2) (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) xt3 xt4 xt5 xF xfc m1)).
+    { intros. apply (HK st); [| exact FRM| od_close_inv].
+      apply (acc_arm_out bs idxs st _ S1 HLAST HH). apply acc_none. }
+    unfold OD_PLUS in KNONE.
+    assert (KFIN : forall xt0 xt1 xt2 xa1 xa2 xa3 xa4 xa5 xa7 xt3 xt4 xt5,
+      evt psegs Q (ODST E 0x279c0 xt0 xt1 xt2 (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) xa1 xa2 xa3 xa4 xa5 (Z_to_bv 64 c) xa7
+                      (Z_to_bv 64 (FR_IT E)) (Z_to_bv 64 2) (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) xt3 xt4 xt5 xF xfc m1)).
+    { intros. zstep. zstep. zstep. zstep. odnorm. zstep.
+      if_cases K3; zify_cond K3; [apply KNONE|].
+      zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep.
+      if_cases K4; zify_cond K4; [apply KNONE|].
+      zstep. if_cases K5; zify_cond K5; try (exfalso; lia). clear K5.
+      zstep. zstep. zstep. zstep.
+      apply (HK (consume 1 st)); [| exact FRM| od_close_inv].
+      apply (acc_arm_out bs idxs st _ S1 HLAST HH). apply acc_scalar. }
+    zstep. zstep. zstep. if_cases K1; zify_cond K1; [apply KNONE|].
+    zstep. zstep. if_cases K2; zify_cond K2; [apply KFIN|].
+    zstep. zstep. if_cases K2b; zify_cond K2b; [apply KNONE|].
+    apply KFIN.
+  Qed.
+
+  Lemma od_uint_loop : forall (f : nat) (Q : machine_state -> Prop) st (q : Z) xt0 xt1 xt2 xa1 xa2 xa3 xa4 xa6 xa7 xt3 xt4 xt5 xF xfc m1,
+    tokT bs idxs (o_n E - 1) = C_RBRACKET ->
+    od_head_ok bs idxs 1 st -> frm0 xfc -> ODINV E st m1 ->
+    od_plus_k E Q st ->
+    (0 <= q)%Z -> (48 <= B bs q <= 57)%Z -> (blen bs - q <= Z.of_nat f)%Z ->
+    evt psegs Q (ODST E 0x27980 xt0 xt1 xt2 (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) xa1 xa2 xa3 xa4 (Z_to_bv 64 (o_BUF E + q + 1)) xa6 xa7
+                      (Z_to_bv 64 (FR_IT E)) (Z_to_bv 64 2) (Z_to_bv 64 (o_IDX E + 4 * o_pos st)) xt3 xt4 xt5 xF xfc m1).
+  Proof using OK.
+    intros f. induction f as [|f IH];
+      intros Q st q xt0 xt1 xt2 xa1 xa2 xa3 xa4 xa6 xa7 xt3 xt4 xt5 xF xfc m1 HLAST HH FRM INV HK Hq HDIG Hf.
+    - exfalso. assert (q < blen bs)%Z by (apply B_nonzero_lt_len; lia). lia.
+    - assert (QL : (q < blen bs)%Z) by (apply B_nonzero_lt_len; lia).
+      assert (INV2 := INV). od_open_inv INV. od_env OK.
+      pose proof (od_B_range E BOK (q + 1)) as R1.
+      pose proof (tokB_read m1 E (q + 1) BUFRO ltac:(lia)) as RB1.
+      set (c := B bs (q + 1)) in *.
+      zstep. odnorm. zstep. zstep. zstep. zstep. zstep. zstep. zstep. zstep.
+      if_cases K; zify_cond K.
+      + eapply evt_eq; [| eapply (IH Q st (q + 1)%Z); [exact HLAST| exact HH| exact FRM| exact INV2| exact HK| lia| | ]].
+        * od_st_eq.
+        * fold c. apply (zxb_digit c R1 K).
+        * lia.
+      + eapply evt_eq; [| eapply (od_uint_tail Q st c); [exact HLAST| exact HH| exact FRM| exact INV2| exact HK| lia]].
+        od_st_eq.
+  Qed.
+
+  Theorem od_arm_uint64 : arm_stmt E 0x2794c.
+  Proof using OK.
+    unfold arm_stmt. intros Q st xt0 xt1 xt2 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xt3 xt4 xt5 xF xfc m1 HLAST HH FRM INV HK.
+    pose proof HH as (HP & HD & HE & HA & HB).
+    assert (INV2 := INV). od_open_inv INV. od_env OK.
+    pose proof (od_tokI_range E S1 (o_pos st) ltac:(lia)) as TR.
+    pose proof (tokI_read m1 E ws (o_pos st) IDXA (conj IDXL IDXF) ltac:(lia)) as RD1.
+    set (off := tokI bs idxs (o_pos st)) in *.
+    pose proof (od_B_range E BOK off) as R0.
+    pose proof (tokB_read m1 E off BUFRO ltac:(lia)) as RB0.
+    set (b0 := B bs off) in *.
+    zstep. if_false.
+    zstep. zstep. odnorm. zstep. zstep. odnorm. zstep. zstep. zstep. zstep.
+    if_cases K; zify_cond K.
+    - apply (HK st); [| exact FRM| od_close_inv].
+      apply (acc_arm_out bs idxs st _ S1 HLAST HH). apply acc_none.
+    - zstep. zstep. zstep. zstep.
+      eapply evt_eq; [| eapply (od_uint_loop (Z.to_nat (blen bs)) Q st off); [exact HLAST| exact HH| exact FRM| exact INV2| exact HK| lia| | lia]].
+      + od_st_eq.
+      + fold b0. apply (zxb_digit b0 R0). lia.
+  Qed.
+End ArmInt.

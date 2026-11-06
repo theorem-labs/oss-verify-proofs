@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_7zip_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_7zip_fuzzer
+rocq: OSSVerify.libarchive.libarchive_7zip_fuzzer
 origin: upstream
 summary: Reads the input as a 7-Zip archive (7zip format + all filters, passphrase 'password') through
   a single-chunk read callback; per entry calls pathname, pathname_w, size, mtime, mode and the three

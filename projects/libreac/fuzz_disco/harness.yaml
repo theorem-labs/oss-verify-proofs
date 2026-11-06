@@ -1,0 +1,250 @@
+schema: oss-fuzz-theorems/harness/1
+project: libreac
+harness: fuzz_disco
+rocq: OSSVerify.libreac.fuzz_disco
+origin: upstream
+summary: 'Reads the payload as our MAC, a setup byte and up to 512 operations on a clock the input moves back and forth: classify
+  a frame (each in its own allocation) and pass it through the announce gate into the discovery table, offer it to the hunt,
+  or age the table, serialise it as JSON into a buffer of an input-chosen size and step the hunt.'
+entry: LLVMFuzzerTestOneInput
+source:
+  files:
+  - source/fuzz_disco.c
+  from:
+    repository: https://github.com/FreeREAC/libreac
+    commit: d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+    path: fuzz/fuzz_disco.c
+  modified: false
+  licence: GPL-3.0-or-later
+library:
+  repository: https://github.com/FreeREAC/libreac
+  commit: d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+  version: 1.9.0
+  licence: GPL-3.0-or-later
+modifications:
+- Linked against a static libreac.a of every src/*.c of libreac 1.9.0 at commit d16f3f4e, compiled with each build's flags,
+  as libreac's Makefile builds its fuzz targets but with this toolchain in place of a native clang and libFuzzer.
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on
+  its input.
+- A small driver reads the input file, calls the fuzz target one to four times and prints each return value.
+builds:
+  plain:
+    file: fuzz_disco.plain
+    bytes: 58944
+    sha256: 04988e3ab31341965e44f0ca1bb0e5ed18fe6892e2c753df7a87bec197576f7c
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  ubsan:
+    file: fuzz_disco.ubsan
+    bytes: 60920
+    sha256: 56121de6ba4cff85e0fa262e9783f384e35fb8642d057f7a3a4290bcc245b22e
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  asan:
+    file: fuzz_disco.asan
+    bytes: 602136
+    sha256: 5e39150dd8104df969eb360f9cc29c4f92fe12326afd23783a679e4fb4809f46
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+  asan-ubsan:
+    file: fuzz_disco.asan-ubsan
+    bytes: 603064
+    sha256: cee6f04ad3d4928e242405689ae058bb9e8b6533000c90bde984a2f0d5ff5146
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+licence: NOASSERTION
+checks:
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_disco.c:181-237
+  what: A sighting comes from a frame of at least 50 bytes, is the frame's own source and never our MAC, its geometry is the
+    frame length's (at least that, for the hunt), its role is in range, outside FILLER its block checksum closes, and a declared
+    width is at most REAC_MAX_CHANNELS.
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_disco.c:106-158
+  what: The gate, the table and the hunt's table never hold more than REAC_DISCO_MAX peers or the same MAC twice, and every
+    table role is in range.
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_disco.c:251-276
+  what: An observe reports 0 or 1, the table's seq moves by that report plus one on the first refusal for room, and an entry
+    the table holds as a box never becomes a master.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_disco.c:277-356
+  what: 'An observe changes the table as the harness calculates: a known entry takes each fact that sharpens it and the new
+    time, reporting a change exactly when a fact changed; a new MAC gets an entry with the sighting''s facts; a full table
+    refuses a new MAC and marks itself overflowed.'
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_disco.c:703-735
+  what: Ageing removes exactly the entries a forward clock shows unheard for longer than the stale limit (none when the clock
+    stepped back) and moves the table's seq on by one exactly when it removed some; a hunt step reports 0 or 1 and every verdict
+    has a name.
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_disco.c:749-784
+  what: Classify, the gate and the hunt's observe answer only their documented values, and the hunt never reports as a master
+    a peer its table holds as a box.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_disco.c:556-648
+  what: A table always serialises into a buffer of REAC_DISCO_JSON_MAX bytes, and a successful serialisation is one NUL-terminated
+    JSON array of the length returned with one object per entry, holding that entry's MAC, role, model, width, owned flag
+    and age in ms.
+statements:
+  plain_halts:
+    kind: halts
+    builds:
+    - plain
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  ubsan_halts:
+    kind: halts
+    builds:
+    - ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_halts:
+    kind: halts
+    builds:
+    - asan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_ubsan_halts:
+    kind: halts
+    builds:
+    - asan-ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open
+  ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - ubsan
+    reading: alloc-forced-only
+    budgets: standard
+    status: open
+  asan_ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan-ubsan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open

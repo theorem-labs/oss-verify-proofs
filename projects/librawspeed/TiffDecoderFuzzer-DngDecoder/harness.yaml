@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: librawspeed
 harness: TiffDecoderFuzzer-DngDecoder
-rocq: OssFuzzTheorems.librawspeed.TiffDecoderFuzzer_DngDecoder
+rocq: OSSVerify.librawspeed.TiffDecoderFuzzer_DngDecoder
 origin: upstream
 summary: TiffParser::parse, isAppropriateDecoder (result ignored), then the chosen TIFF-based decoder
   (Arw, Cr2, Dcr, Dcs, Dng, Erf, Iiq, Kdc, Mef, Mos, Nef, Orf, Pef, Rw2, Srw, Sti, Threefr) decodeRaw

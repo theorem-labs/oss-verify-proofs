@@ -1,0 +1,15 @@
+# Regeneration on the NEW asan pin (the port commit build). run.sh: only its pin line changed.
+utc 2026-10-30T18:52:53Z
+palist.py sha256 4d8dcc54f4c027562a3387b8a111f6b76deef4e8b0acf7d9abef5e0731b4a2a7 (unchanged)
+run.sh sha256 6a56e0143eceeb337644650840eacaa2a464c790c8c8a1ea07b3da0f50581f3b
+image  fuzz_transport.asan (new pin)            sha256 e89be137db17b720e0310addc2dcc601998945478a9102e6a9850b0566106350
+twin   fuzz_transport.asan unstripped (new)     sha256 86efc3a80314981197619c115e313dbde50e8b86a6c5fefad4e5cc420250c792
+.text of image and twin: addr 0x310d0 size 0x71878 equal True
+command: sh run.sh <image> <twin>
+rc 0
+DgnTransportSyms.v  output sha256 3102a58ab8bb0d01b33f37917a4a5f664a2dbe20b49023d3ef713fd70c269a39  equal to this tree
+DgnTransportAddr.v  output sha256 619e00b661c9784a7f353a2040a3fc5384326946cc5863738bee05aaa3e26cee  equal to this tree
+DgnTransportList.v  output sha256 03f98941c9d4b4b2e64a7582dfc8275ee8910562b463d3c56362b43bbd3f7c7c  equal to this tree
+# refusals (the checks fail closed):
+old image with the new run.sh: rc 1: run.sh: <old image> is sha256 29ec57e03c5d06cc1c7060d8aa33823e846d253b9b9ba1dfd8f5c94027f83254, not the pin e89be137db17b720e0310addc2dcc601998945478a9102e6a9850b0566106350
+new image with the OLD twin (palist.py direct): rc 1: image and twin differ at 0x8125c

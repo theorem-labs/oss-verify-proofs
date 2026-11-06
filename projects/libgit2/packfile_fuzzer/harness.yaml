@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libgit2
 harness: packfile_fuzzer
-rocq: OssFuzzTheorems.libgit2.packfile_fuzzer
+rocq: OSSVerify.libgit2.packfile_fuzzer
 origin: upstream
 summary: Feeds the input (minus a flag byte) to a git_indexer backed by an in-memory mempack ODB, optionally
   appending the SHA1 trailer, then git_indexer_commit and unlinks the written .idx/.pack; results only

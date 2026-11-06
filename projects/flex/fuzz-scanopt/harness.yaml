@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: flex
 harness: fuzz-scanopt
-rocq: OssFuzzTheorems.flex.fuzz_scanopt
+rocq: OSSVerify.flex.fuzz_scanopt
 origin: oss-fuzz
 summary: First 23 bytes become an option string, the rest an argument; scanopt_init(flexopts, argv) then
   one scanopt() call; results ignored.

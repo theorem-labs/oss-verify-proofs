@@ -1,0 +1,4 @@
+img	donor	ref	files	donor pin	verdict	ranges	pcrel walked	pcrel whole fns	resolve moves	layout move
+A	libreac/fuzz_grant	e10f488c53fc	A/Rt/StackMalloc4Tbl.v A/Rt/StackMalloc4.v A/Rt/AF0r.v	c2c7559b29bd	PASS	12 of 12	62	416	9	same
+A	libreac/fuzz_identity	e10f488c53fc	A/Rt/StackMalloc4Tbl.v A/Rt/StackMalloc4.v A/Rt/StackMallocTbl.v	c954b804786c	FAIL(1)	10 of 11	47	403	5	same
+A	plugin-hostd/fuzz_command	e10f488c53fc	A/Rt/RtSM4T.v A/Rt/RtSM4.v A/Rt/RtSM1T.v	c0661b96b5bd	FAIL(2)	13 of 15	87	504	9	same

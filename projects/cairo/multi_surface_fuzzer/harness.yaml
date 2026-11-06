@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cairo
 harness: multi_surface_fuzzer
-rocq: OssFuzzTheorems.cairo.multi_surface_fuzzer
+rocq: OSSVerify.cairo.multi_surface_fuzzer
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

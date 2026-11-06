@@ -3,7 +3,7 @@
 FILE lists fuzz targets, one per line: `<project>/<harness>`; for proofs that began as a submission, a tab, the
 record of the review that cleared them, a tab and the statements that record covers, separated by commas (a record
 always names them).  Blank lines and lines that start with # are skipped.  Each line becomes an entry, one per source:
-a record line names the statements of its fuzz target that have a proof under proofs/<project>/<harness>/ and that the
+a record line names the statements of its fuzz target that have a proof in its proofs folder and that the
 record covers; a bare line (no record) is this repository's entry and names every statement with a proof no
 record line of the same fuzz target covers, so a bare line alone names every proof.  A fuzz target may be on several
 lines: at most one bare line, and record lines with different records whose statements do not overlap.  It refuses a
@@ -12,8 +12,11 @@ is never listed, nor a fuzz target of a project a finding holds back: each is re
 statements have no proof, a proof no line of its fuzz target covers, and a fuzz target whose lib/ the release will
 keep while some of its proofs are not listed.  An entry already in approvals.yaml for the same fuzz target, origin
 and record, with the same statements, keeps its approved_by and date; only a new or changed entry takes
---approved-by and --date.  The entries are sorted by fuzz target, origin and record, so the same checkout and list
-give the same file.  The file is checked against its schema and the rules before it is written.
+--approved-by and --date.  An enrollment entry (origin enrollment) comes from the merge of its project's enrollment
+pull request, not from FILE: each one in approvals.yaml is kept as written, and a bare line of its fuzz target names
+only the proofs it does not list; nothing is written when approvals.yaml is there but cannot be read, or holds an
+enrollment entry that does not match the schema.  The entries are sorted by fuzz target, origin and record, so the
+same checkout and list give the same file.  The file is checked against its schema and the rules before it is written.
 """
 import os
 import sys
@@ -72,6 +75,20 @@ def _previous(tree):
         if isinstance(old, list) else {}
 
 
+def _enrolled(tree):
+    """{index in fuzz_targets: entry} of the enrollment entries of the approvals.yaml in the checkout, as written ({}
+    when it has none), or None when the file is there but cannot be read."""
+    if not os.path.isfile(tree.path("approvals.yaml")):
+        return {}
+    try:
+        doc = yamlio.load_file(tree.path("approvals.yaml"))
+    except Exception:
+        return None
+    old = doc.get("fuzz_targets") if isinstance(doc, dict) else None
+    return {i: e for i, e in enumerate(old) if isinstance(e, dict) and e.get("origin") == "enrollment"} \
+        if isinstance(old, list) else {}
+
+
 def write(root, listing, approved_by, date, out=sys.stdout):
     wanted = _read_list(listing, out)
     if wanted is None:
@@ -79,7 +96,25 @@ def write(root, listing, approved_by, date, out=sys.stdout):
         return 1
     tree = facts.load(root)
     previous = _previous(tree)
-    # the file this writes is not an input: an outdated one must not stop it
+    enrolled = _enrolled(tree)
+    if enrolled is None:
+        print("oft approvals: approvals.yaml cannot be read, so its enrollment entries cannot be kept; nothing "
+              "written: repair it, or remove it when it holds no enrollment entry, and run oft approvals again",
+              file=out)
+        return 1
+    bad = [p for i, e in enrolled.items()
+           for p in schema.validate_def("approvals", "approval", e, "approvals.yaml: approvals.fuzz_targets[%d]" % i)]
+    if bad:
+        for p in bad:
+            print("error: " + p, file=out)
+        print("oft approvals: %d problem(s) in the enrollment entries it keeps as written; nothing written" % len(bad),
+              file=out)
+        return 1
+    # the statements each fuzz target's enrollment entries list
+    ceiling = {}
+    for e in enrolled.values():
+        ceiling.setdefault(e["fuzz_target"], set()).update(e["statements"])
+    # the file this writes is not an input, but for its enrollment entries: an outdated one must not stop it
     tree.approvals = None
     tree.errors = [e for e in tree.errors if not e.startswith("approvals.yaml")]
     rules.check(tree)
@@ -115,10 +150,12 @@ def write(root, listing, approved_by, date, out=sys.stdout):
             withheld.append(unit)
             continue
         proofs = proved.get(unit, set())
-        recorded = set().union(*(c for c in wanted[unit].values() if c is not None))
+        # what the record lines and the enrollment entries of the fuzz target cover; a bare line names the other proofs
+        recorded = set().union(ceiling.get(unit, set()), *(c for c in wanted[unit].values() if c is not None))
         if None not in wanted[unit]:
             uncovered += ["%s/%s" % (unit, s) for s in sorted(proofs - recorded)]
-        listed = set()
+        # the proofs of its enrollment entries that the release keeps
+        listed = {s for s in ceiling.get(unit, ()) if s in proofs and "%s/%s" % (unit, s) not in held_ids}
         # submission sorts before this-repository, then by record: the order of the entries in the file
         for record in sorted(wanted[unit], key=lambda r: (r is None, r or "")):
             covers = wanted[unit][record]
@@ -127,8 +164,9 @@ def write(root, listing, approved_by, date, out=sys.stdout):
             held_out += ["%s/%s" % (unit, s) for s in sorted(cut)]
             statements -= cut
             if not statements:
-                # a line whose every proof is held has proofs: its held lines say why it is not listed
-                if not cut:
+                # a line whose every proof is held has proofs: its held lines say why it is not listed; so has a bare
+                # line whose proofs its fuzz target's enrollment entries list
+                if not cut and not (covers is None and proofs & ceiling.get(unit, set())):
                     missing.append("%s, record %s" % (unit, record) if record else unit)
                 continue
             listed |= statements
@@ -141,7 +179,7 @@ def write(root, listing, approved_by, date, out=sys.stdout):
                     and isinstance(old.get("approved_by"), str) and isinstance(old.get("date"), str):
                 e["approved_by"], e["date"] = old["approved_by"], old["date"]
             entries.append(e)
-        if listed and dirs.get(unit, set()) - listed and os.path.isdir(tree.path("proofs", unit, "lib")):
+        if listed and dirs.get(unit, set()) - listed and unit in tree.proof_libs:
             partial.append(unit)
     for unit in withheld:
         if unit.split("/")[0] in held.held:
@@ -158,6 +196,9 @@ def write(root, listing, approved_by, date, out=sys.stdout):
         print("a refutation, not listed: %s" % sid, file=out)
     for unit in partial:
         print("the release will have " + release_tree.PARTIAL % unit, file=out)
+    # the enrollment entries as written, among the entries this writes, by fuzz target, origin and record
+    entries = sorted(entries + list(enrolled.values()),
+                     key=lambda e: (e["fuzz_target"], e["origin"], e.get("record", "")))
     doc = {"schema": SCHEMA, "fuzz_targets": entries}
     problems = schema.validate("approvals", doc)
     if not problems:

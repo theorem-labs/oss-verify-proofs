@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: c-blosc2
 harness: decompress_chunk_fuzzer
-rocq: OssFuzzTheorems.c_blosc2.decompress_chunk_fuzzer
+rocq: OSSVerify.c_blosc2.decompress_chunk_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

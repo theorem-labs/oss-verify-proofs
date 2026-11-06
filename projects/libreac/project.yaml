@@ -1,0 +1,71 @@
+schema: oss-fuzz-theorems/project/1
+project: libreac
+description: 'A C library for Roland REAC audio over Ethernet (EtherType 0x8819): frame decode and encode, control blocks,
+  stagebox identity and head-amps, discovery, and a pcap reader.'
+homepage: https://github.com/FreeREAC/libreac
+language: c
+status: available
+enrolled: true
+library:
+  name: libreac
+  repository: https://github.com/FreeREAC/libreac
+  commit: d16f3f4eba605ee2cb9e7a70bf72685f1b7b5d25
+  version: 1.9.0
+  licence: GPL-3.0-or-later
+harnesses:
+- name: fuzz_decode
+  status: included
+  origin: upstream
+- name: fuzz_ctrl
+  status: included
+  origin: upstream
+- name: fuzz_identity
+  status: included
+  origin: upstream
+- name: fuzz_disco
+  status: included
+  origin: upstream
+- name: fuzz_scene
+  status: included
+  origin: upstream
+- name: fuzz_boxreg
+  status: included
+  origin: upstream
+- name: fuzz_knock
+  status: included
+  origin: upstream
+- name: fuzz_grant
+  status: included
+  origin: upstream
+- name: fuzz_pcap
+  status: included
+  origin: upstream
+build:
+  system: custom
+  clang: 20.1.8
+  builder: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  oss_verify:
+    repository: theorem-labs/oss-verify
+    commit: 6a4a32ac65b497b2f5d9d8990bb6f9aefbe54d16
+    path: projects/libreac
+assets:
+  bin:
+    release: v2026.11.1
+    file: libreac-bin.tar.zst
+    bytes: 1035913
+    sha256: 594035117541b17608787f42207352ccb0c9216e7bd1fdfd79943d50d8712907
+  src:
+    release: v2026.11.1-src
+    file: libreac-src.tar.zst
+    bytes: 607561
+    sha256: ce3c753a03098a88fdc81b17784c0c4b53ef84648101eac8ba7c6b0f769b8eab
+  src_manifest:
+    release: v2026.11.1-src
+    file: libreac-src.MANIFEST.tsv
+    bytes: 1374
+    sha256: 50d8080f1512640a852a9bad5f5f70c561a2ede49b2ebbea06ebce780a4362fb
+  port:
+    release: v2026.11.1-src
+    file: libreac-port.tar.zst
+    bytes: 216174
+    sha256: fc7075728374dee1d84d8ab20b04fe6ba27ab539b83f39ef8fe6533180c075d8

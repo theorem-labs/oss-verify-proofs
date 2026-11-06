@@ -1,0 +1,26 @@
+cptriage: 102 rows
+  codeptr  CELL-ADDR+OWN-STATIC                     2
+  codeptr  CELL-VALUE                               6
+  codeptr  CELL-VALUE+K-LENGTH                      4
+  codeptr  IDENT                                    1
+  codeptr  INSN-FIELD                               2
+  codeptr  INSN-WORD                                14
+  codeptr  K-LENGTH                                 8
+  codeptr  K-RANGE                                  8
+  codeptr  RO-CHUNK                                 6
+  cplimit  CELL-ADDR                                3
+  cplimit  CELL-ADDR+OWN-STATIC                     2
+  cplimit  CELL-VALUE                               2
+  cplimit  K-ADDR                                   2
+  cplimit  K-LENGTH                                 10
+  cplimit  K-RANGE                                  10
+  cplimit  RECORD-FIELD                             2
+  cplimit  RO-CHUNK-END                             5
+  cplimit  ROW-START                                14
+  cplimit  ZERO-SHADOW                              1
+control: the rules on the must-find findings (cgif's unrelocated files checked against our images; each listed value is a donor literal the file carries unchanged):
+  60 findings shown (the first 12 per file in codeptr's line), 4 settled by a rule: A AD2i.v 0x3fffff K-RANGE; A AD2j.v 0x103b8 RO-CHUNK-END; B YD2i.v 0x3fffff K-RANGE; B YD2j.v 0x103b8 RO-CHUNK-END
+control: the quantity rule on known image quantities of lib/A/AB03.v (must be refused):
+  KRange (EVar 5) d+  = 525830: refused; the donor file has it after the same text (numbers masked): False; the other units' AB03.v hold 525830 at the same place in 0 of 12 units; others: libreac_fuzz_boxreg (525814); libreac_fuzz_ctrl (525822); libreac_fuzz_decode (525814); libreac_fuzz_disco (525822); libreac_fuzz_grant (525818); libreac_fuzz_identity (525818); libreac_fuzz_knock (525811); libreac_fuzz_pcap (525815); libreac_fuzz_scene (525817); omx-clap-core_fuzz_manifest (525815); omx-clap-core_fuzz_preset (525824); omx-clap-core_fuzz_state (525821)
+  KRange (EVar 5)  = 1542: refused; the donor file has it after the same text (numbers masked): False; the other units' AB03.v hold 1542 at the same place in 0 of 12 units; others: libreac_fuzz_boxreg (1526); libreac_fuzz_ctrl (1534); libreac_fuzz_decode (1526); libreac_fuzz_disco (1534); libreac_fuzz_grant (1530); libreac_fuzz_identity (1530); libreac_fuzz_knock (1523); libreac_fuzz_pcap (1527); libreac_fuzz_scene (1529); omx-clap-core_fuzz_manifest (1527); omx-clap-core_fuzz_preset (1536); omx-clap-core_fuzz_state (1533)
+  KWr {| a_base := ELit 0; a_off := d+ |}  = 781312: refused; the donor file has it after the same text (numbers masked): False; the other units' AB03.v hold 781312 at the same place in 0 of 12 units; others: libreac_fuzz_boxreg (8360,773120); libreac_fuzz_ctrl (10152,777216); libreac_fuzz_decode (8800,773120); libreac_fuzz_disco (8040,777216); libreac_fuzz_grant (9448,775168); libreac_fuzz_identity (8296,775168); libreac_fuzz_knock (6888,771584); libreac_fuzz_pcap (10024,773632); libreac_fuzz_scene (10272,774656); omx-clap-core_fuzz_manifest (8776,773632); omx-clap-core_fuzz_preset (8392,778240); omx-clap-core_fuzz_state (8328,776704)

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nettle
 harness: fuzz_rsa_keypair_from_der
-rocq: OssFuzzTheorems.nettle.fuzz_rsa_keypair_from_der
+rocq: OSSVerify.nettle.fuzz_rsa_keypair_from_der
 origin: oss-fuzz
 summary: rsa_keypair_from_der(&pub, &priv, 0, size, data) (which runs rsa_*_key_prepare internally); result
   discarded, no signature/encryption with the key.

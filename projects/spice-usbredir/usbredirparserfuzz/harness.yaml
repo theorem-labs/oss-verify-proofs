@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spice-usbredir
 harness: usbredirparserfuzz
-rocq: OssFuzzTheorems.spice_usbredir.usbredirparserfuzz
+rocq: OSSVerify.spice_usbredir.usbredirparserfuzz
 origin: upstream
 summary: usbredirparser driven through its callbacks with short reads/writes, optional usbredirparser_unserialize
   of fuzzed state and interleaved usbredirparser_serialize; packet payloads are memcpy-read in full (read_all)

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tarantool
 harness: http_parser_fuzzer
-rocq: OssFuzzTheorems.tarantool.http_parser_fuzzer
+rocq: OSSVerify.tarantool.http_parser_fuzzer
 origin: upstream
 summary: http_parse_header_line once over the input; return ignored.
 entry: LLVMFuzzerTestOneInput

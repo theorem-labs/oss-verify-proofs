@@ -1,0 +1,269 @@
+schema: oss-fuzz-theorems/harness/1
+project: omx-dsp
+harness: fuzz_delay
+rocq: OSSVerify.omx_dsp.fuzz_delay
+origin: upstream
+summary: Reads a flags byte and a ring size of 1 to 4096. The fractional mode arms a Lagrange delay line of order 3, order
+  5 or any signed byte, and runs up to 12 finite blocks, each with any float delay. The integer mode runs up to 12 blocks
+  of a stereo or mono integer delay pair, with delays in tenths of a millisecond at a declared rate. It can also check the
+  ms-to-samples conversion for any finite ms and rate. The harness keeps its own copy of the take as the oracle.
+entry: LLVMFuzzerTestOneInput
+source:
+  files:
+  - source/fuzz_delay.c
+  - source/fuzz.h
+  from:
+    repository: https://github.com/FreeMixer/omx-dsp
+    commit: a0ee1dfeefff63c25bf37e95d31683ec12c0f690
+    path: fuzz/fuzz_delay.c
+  modified: false
+  licence: GPL-3.0-or-later
+library:
+  repository: https://github.com/FreeMixer/omx-dsp
+  commit: a0ee1dfeefff63c25bf37e95d31683ec12c0f690
+  version: 0.27.0
+  licence: GPL-3.0-or-later
+modifications:
+- Linked against libomxdsp.a, which build.sh compiles from omx-dsp's five src/*.c files with -DOMX_CONTRACTS and -ffp-contract=off;
+  both delay lines are inline in the headers. The Makefile's own fuzz build uses native clang with libFuzzer, which this build
+  replaces with the standard driver.
+- omx-contract's headers are pinned to the tag v3.4.0 (1169c701), where the library's Makefile uses whichever omx-contract
+  is installed, at or above its packaging floor of 3.1.0.
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on
+  its input.
+- A small driver reads the input file, calls the fuzz target one to four times and prints each return value.
+builds:
+  plain:
+    file: fuzz_delay.plain
+    bytes: 57656
+    sha256: 5532446ccadbee4ac6705db26f11cd757da958a897214c7da378a4c9a78ad385
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  ubsan:
+    file: fuzz_delay.ubsan
+    bytes: 59120
+    sha256: bba7f78ae9aaf31e59f6f9f7af9d0cccc178a29a4bfde2fdb1a206279c1ab69b
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  asan:
+    file: fuzz_delay.asan
+    bytes: 595080
+    sha256: e35f444a4ec9aa9ccbd93688fbee78099dba052ee929090618d62bfa70657ca3
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+  asan-ubsan:
+    file: fuzz_delay.asan-ubsan
+    bytes: 596392
+    sha256: 91c9a89a8db49ecab994088b582adec9c940dcf24ed1cf5e68bcac2dbeb938fe
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+licence: NOASSERTION
+checks:
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_delay.c:99-134
+  what: A ring takes a line exactly when the order is 3 or 5 and the ring is longer than the kernel's reach. A refusal returns
+    the code that names its cause and leaves the line unarmed.
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_delay.c:150-165
+  what: An unarmed line reports a latency of 0 and leaves the block unchanged, bit for bit.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_delay.c:170-192
+  what: The delay delivered is finite and inside the ring's longest delay, and a non-finite request reads as 0. The delay
+    also equals the harness's own reading of the rule in the library's comment.
+- kind: invariant
+  strength: partial
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_delay.c:202-215
+  what: Every sample from the fractional line is finite and no larger than the absolute sum of the Lagrange weights times
+    the take's peak.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_delay.c:218-226
+  what: A whole-sample delay outputs the take delayed by that many samples, bit for bit, with zero before the take starts.
+- kind: reference-oracle
+  strength: partial
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_delay.c:232-238
+  what: A fractional delay outputs the Lagrange sum, computed by the harness over its copy of the take, to within a tolerance
+    scaled by the weights and the peak.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_delay.c:261-302
+  what: omx_idelay_samples is inside the ring. It is the rounded delay saturated at the ring's last slot, and 0 for a delay
+    of no length. This holds both for any finite ms and rate and for the grid's ms and declared rates.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_delay.c:318-347
+  what: A steady integer delay on either leg outputs the take delayed, bit for bit.
+- kind: invariant
+  strength: partial
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_delay.c:329-356
+  what: While the integer delay moves, each sample on either leg stays between the old tap and the new tap it fades across.
+- kind: self-validation
+  strength: partial
+  stops_with: abort
+  live: unknown
+  where: source/fuzz.h:160-168
+  what: At the end of the input, no contract of the library is recorded as broken. The ledger is emptied after the calls whose
+    PRE the harness breaks on purpose.
+failure_handlers: unknown
+statements:
+  plain_halts:
+    kind: halts
+    builds:
+    - plain
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  ubsan_halts:
+    kind: halts
+    builds:
+    - ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_halts:
+    kind: halts
+    builds:
+    - asan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_ubsan_halts:
+    kind: halts
+    builds:
+    - asan-ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open
+  ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - ubsan
+    reading: alloc-forced-only
+    budgets: standard
+    status: open
+  asan_ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan-ubsan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open

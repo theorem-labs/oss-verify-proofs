@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zydis
 harness: ZydisFuzzDecoder
-rocq: OssFuzzTheorems.zydis.ZydisFuzzDecoder
+rocq: OSSVerify.zydis.ZydisFuzzDecoder
 origin: upstream
 summary: 'After decoding, formatting, tokenizing, single-operand format/tokenize, ZydisCalcAbsoluteAddress,
   mnemonic/register/feature/segment helpers on control-block values: all results ignored.'

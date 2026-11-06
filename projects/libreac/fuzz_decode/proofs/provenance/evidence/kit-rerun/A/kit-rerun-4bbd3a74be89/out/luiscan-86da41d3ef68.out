@@ -1,0 +1,20 @@
+ROW	image	function	addr	size	luis	insec	inload	memfed	memfed_out	luiconst	unmeasured	exposure
+# image DONOR_TWIN sha256 ce511d541cda
+ROW	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	0x31550	2440	12	0	3	0	0	0	0	0
+ROW	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	0x359e4	728	5	0	1	0	0	0	0	0
+ROW	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEEE6RefillEPNS7_8PerClassEPS6_m	0x36134	256	0	0	0	0	0	0	0	0
+ROW	cgif_file_fuzzer.asan-ubsan	_ZN6__asan12PoisonShadowEmmh	0x53800	1276	0	0	0	0	0	0	0	0
+ROW	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer13internal_mmapEPvmiiiy	0x64198	12	0	0	0	0	0	0	0	0
+ROW	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	0x724e0	32	0	0	0	0	0	0	0	0
+ROW	cgif_file_fuzzer.asan-ubsan	memset	0x9790c	248	1	0	0	0	0	0	0	0
+TOTAL	cgif_file_fuzzer.asan-ubsan	functions 7	with-lui 3	with-exposure 0	luis 18	insec 0	inload 4	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+# image DECODE_A_TWIN sha256 4cb0a852e826
+ROW	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	0x3124c	2440	12	0	3	0	0	0	0	0
+ROW	fuzz_decode.asan	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	0x357c0	728	5	0	1	0	0	0	0	0
+ROW	fuzz_decode.asan	_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEEE6RefillEPNS7_8PerClassEPS6_m	0x35f10	256	0	0	0	0	0	0	0	0
+ROW	fuzz_decode.asan	_ZN6__asan12PoisonShadowEmmh	0x53040	1276	0	0	0	0	0	0	0	0
+ROW	fuzz_decode.asan	_ZN11__sanitizer13internal_mmapEPvmiiiy	0x63d3c	12	0	0	0	0	0	0	0	0
+ROW	fuzz_decode.asan	_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	0x72084	32	0	0	0	0	0	0	0	0
+ROW	fuzz_decode.asan	memset	0x92474	248	1	0	0	0	0	0	0	0
+TOTAL	fuzz_decode.asan	functions 7	with-lui 3	with-exposure 0	luis 18	insec 0	inload 4	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	all	functions 14	with-lui 6	with-exposure 0	luis 36	insec 0	inload 8	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0

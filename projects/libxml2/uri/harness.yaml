@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libxml2
 harness: uri
-rocq: OssFuzzTheorems.libxml2.uri
+rocq: OSSVerify.libxml2.uri
 origin: upstream
 summary: 'Checks one property, an API contract: OOM reporting contract for 8 URI functions (xmlParseURISafe,
   xmlSaveUri, xmlURIUnescapeString, xmlCanonicPath, xmlPathToURI, xmlBuildURISafe, xmlBuildRelativeURISafe,

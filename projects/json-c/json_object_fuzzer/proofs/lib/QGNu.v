@@ -1,0 +1,140 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+
+
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib Require CodeAt StepGen GwInst GwEq GwEqH GwApply GwApply2. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6nq.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qe1A.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QKNz.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qnip.
+
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+From stdpp Require Import gmap.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QXup.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QXup. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QWxq_c1.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QWxq_c1.Mq0. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Lib.GwApply.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib.GwApply.ZBridge. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qfw3_c1.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Qfw3_c1.Mq2. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q9A7.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q9A7.Mq1. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q5Rg.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q5Rg. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QlEo_c1.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QlEo_c1.Mq0. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QWxq_c1.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QWxq_c1.Mq1. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q5Rg.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q5Rg.Mq0.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QEQM.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QEQM.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q2qa.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q2qa.Mq1. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qy5Y.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Qy5Y.Mq4. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q4J3.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q4J3.Mq3. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QlQE.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QlQE. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QPjm.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QPjm.Mq1. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QPjm.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QPjm.Mq4.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QZAi.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QZAi.Mq2. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QUZl.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QUZl. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q7S0.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q7S0.Mq0. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Ql2m.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Ql2m.Mq3. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QGeV.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QGeV.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qy5Y.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Qy5Y.Mq6. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QPjm.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QPjm.Mq2. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QFkE.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QFkE. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6y7.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q6y7. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QJE4.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QJE4.Mq2. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q3o5.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q3o5.Mq0. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QULt.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QULt.Mq0.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QQXM.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QQXM. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qv2Y.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Qv2Y. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QIMz.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QIMz. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qn7h.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Qn7h. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QXT6.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QXT6. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qnip.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Qnip. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qhxl.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Qhxl. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QKaC.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QKaC. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q3Uw.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q3Uw.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q3o5. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QNAo.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Import QlEo_c1.Mq0.Exc. Local Ltac Qfw3_c1.Mq3.model_reg_tac n X mexpr ::= Qfw3_c1.Mq3.mkr__model_reg_tac_1 n X mexpr. Local Ltac Qfw3_c1.Mq3.zeq_fast ::= Qfw3_c1.Mq3.mkr__zeq_fast_0.
+Open Scope Z_scope.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6q3.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Q6q3.
+
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib Require CodeAt StepGen GwInst GwApply GwApply2.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+Module GwI.
+Definition segs := rsegs.
+Definition RATP := QKNz.RATP.
+Definition RDEBRUIJN := QKNz.RDEBRUIJN.
+Definition RGOT_SSP := QKNz.RGOT_SSP.
+Definition RIMG_HI := QKNz.RIMG_HI.
+Definition RDATA_LO := QKNz.RDATA_LO.
+Definition gw_RTEXT_LO := ltac:(let gw_v_ := eval cbv in (fst (nth 1 QKNz.ref_reserved (0%Z, 0%Z))) in exact gw_v_).
+Definition gw_RDATA2_LO := ltac:(let gw_v_ := eval cbv in (fst (nth 3 QKNz.ref_reserved (0%Z, 0%Z))) in exact gw_v_).
+Definition ref_reserved := QKNz.ref_reserved.
+Definition rfree_sym := QKNz.rfree_sym.
+Definition rfree_entry := QKNz.rfree_entry.
+Definition rnontrivial_free_entry := QKNz.rnontrivial_free_entry.
+Definition ref_find_segment_none := @QKNz.ref_find_segment_none.
+Definition ref_ro_addr_false := @QKNz.ref_ro_addr_false.
+Definition ref_memory_read_none := @QKNz.ref_memory_read_none.
+Definition ref_wview_overlay := @QKNz.ref_wview_overlay.
+Definition ref_seg_rom_none := @QKNz.ref_seg_rom_none.
+Definition ref_mrd_overlay := @QKNz.ref_mrd_overlay.
+Definition rfree_fp_lt := @rfree_fp_lt.
+Definition rlibc_free_implT := @rlibc_free_implT.
+Definition rfree_stmt_of_impl := @Qnip.rfree_stmt_of_impl.
+Lemma LAY_hi_RATP : ltac2:(GwEq.gw_fact_ty 'segs '(@Qe1A.Mq9.gw_all) @LAY_hi_RATP). Proof. GwApply.gw_side. Qed.
+End GwI.
+
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+Section RC__1. Context {RC__ : Q6q3.RunConsts}.
+
+#[using="Type"] Lemma rauxv_ok_pres_B : forall C m m' B,
+rauxv_ok m B -> rpres_except C m m' ->
+(forall a, B <= a -> ~ C a) -> (forall a, RAUXV_CELL <= a < RAUXV_CELL + 8 -> ~ C a) ->
+rauxv_ok m' B.
+Proof. ltac2:(GwEq.gw_rw [[@gw_eq_rauxv_ok__3; @gw_eq_rauxv_ok__2; @gw_eq_rauxv_ok]; [@gw_eq_rpres_except__3; @gw_eq_rpres_except__2; @gw_eq_rpres_except]]); first [GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rauxv_ok_pres_B) | autorewrite with gw_eqs; GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rauxv_ok_pres_B)]. Qed.
+
+Section FP.
+Variables (st st' : mstate) (LB0 : list block) (blk : block) (lo sp : Z) (m m' : mem).
+Hypothesis C : CINV st LB0.
+Hypothesis MR : rmrep st m.
+Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis LS : lo <= sp.
+Hypothesis BLKR : forall blk', In blk' (lbrm LB0 blk) -> exists r', (s_regions st') !! fst (blk_slot blk') = Some r'.
+Hypothesis SHR : forall rid r', (s_regions st') !! rid = Some r' -> (s_regions st) !! rid = Some r'.
+Hypothesis PE : rpres_except (fun a => rfree_fp st lo sp a \/ DROPPED st st' a \/ 482764 <= a < 482768) m m'.
+
+Let FPT := fun a => rfree_fp st lo sp a \/ DROPPED st st' a \/ 482764 <= a < 482768.
+
+#[using="RC__ m MR LO LS"] Lemma rfp_not_high a : sp <= a -> ~ FPT a.
+Proof. first [GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rfp_not_high) | autorewrite with gw_eqs; GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rfp_not_high)]. Qed.
+
+#[using="RC__ m MR LO"] Lemma rfp_not_img a : 0x60000 <= a < 0x97000 -> ~ (RCTX <= a < RCTX + 928) -> ~ (482764 <= a < 482768) -> ~ FPT a.
+Proof. first [GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rfp_not_img) | autorewrite with gw_eqs; GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rfp_not_img)]. Qed.
+
+#[using="RC__ m MR LO"] Lemma rfp_not_image a : 0x60000 <= a < 0x97000 -> ~ ralloc_static a -> ~ FPT a.
+Proof. ltac2:(GwEq.gw_rw [[@gw_eq_ralloc_static__3; @gw_eq_ralloc_static__2; @gw_eq_ralloc_static]]); first [GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rfp_not_image) | autorewrite with gw_eqs; GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rfp_not_image)]. Qed.
+
+#[using="RC__ m C MR LO BLKR SHR"] Lemma rfp_not_block blk' a : In blk' (lbrm LB0 blk) -> blk_addr blk' <= a < blk_addr blk' + blk_size blk' -> ~ FPT a.
+Proof. first [GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rfp_not_block) | autorewrite with gw_eqs; GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rfp_not_block)]. Qed.
+
+#[using="RC__ st st' lo C MR LO LS BLKR SHR PE FPT"] Lemma rheap_pres_free LB' : (forall b, In b LB' -> In b (lbrm LB0 blk)) -> rheap_pres LB' sp m m'.
+Proof. ltac2:(GwEq.gw_rw [[@gw_eq_rheap_pres__3; @gw_eq_rheap_pres__2; @gw_eq_rheap_pres]]); first [ (pose proof PE as gw_h_; clear PE; ltac2:(GwEqH.gw_rw_in @gw_h_ [[@gw_eq_rfree_fp__3; @gw_eq_rfree_fp__2; @gw_eq_rfree_fp]; [@gw_eq_rpres_except__3; @gw_eq_rpres_except__2; @gw_eq_rpres_except]]); rename gw_h_ into PE) | idtac ]; first [GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rheap_pres_free) | autorewrite with gw_eqs; GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rheap_pres_free)]. Qed.
+
+#[using="st st' lo MR LO LS PE FPT"] Lemma rauxv_ok_free B : rauxv_ok m B -> sp <= B -> rauxv_ok m' B.
+Proof. ltac2:(GwEq.gw_rw [[@gw_eq_rauxv_ok__3; @gw_eq_rauxv_ok__2; @gw_eq_rauxv_ok]]); first [ (pose proof PE as gw_h_; clear PE; ltac2:(GwEqH.gw_rw_in @gw_h_ [[@gw_eq_rfree_fp__3; @gw_eq_rfree_fp__2; @gw_eq_rfree_fp]; [@gw_eq_rpres_except__3; @gw_eq_rpres_except__2; @gw_eq_rpres_except]]); rename gw_h_ into PE) | idtac ]; first [GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rauxv_ok_free) | autorewrite with gw_eqs; GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rauxv_ok_free)]. Qed.
+End FP.
+
+#[using="Type"] Theorem rfree_impl_spec_proof : rfree_impl_stmt.
+Proof. ltac2:(GwEq.gw_rw [[@gw_eq_rfree_impl_stmt__3; @gw_eq_rfree_impl_stmt__2; @gw_eq_rfree_impl_stmt]]); first [GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rfree_impl_spec_proof) | autorewrite with gw_eqs; GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rfree_impl_spec_proof)]. Qed.
+
+#[using="Type"] Theorem rfree_spec_proof : rfree_stmt.
+Proof. ltac2:(GwEq.gw_rw [[@gw_eq_rfree_stmt__3; @gw_eq_rfree_stmt__2; @gw_eq_rfree_stmt]]); first [GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rfree_spec_proof) | autorewrite with gw_eqs; GwApply2.gw_by_name2 GwI.segs (@Qe1A.Mq9.rfree_spec_proof)]. Qed.
+
+End RC__1.

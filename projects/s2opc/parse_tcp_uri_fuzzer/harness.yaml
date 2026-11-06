@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: s2opc
 harness: parse_tcp_uri_fuzzer
-rocq: OssFuzzTheorems.s2opc.parse_tcp_uri_fuzzer
+rocq: OSSVerify.s2opc.parse_tcp_uri_fuzzer
 origin: upstream
 summary: SOPC_Helper_URI_SplitUri on a NUL-terminated copy of the input; outputs freed unchecked.
 entry: LLVMFuzzerTestOneInput

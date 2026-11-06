@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: miniz
 harness: miniz_zip_validate_fuzzer
-rocq: OssFuzzTheorems.miniz.miniz_zip_validate_fuzzer
+rocq: OSSVerify.miniz.miniz_zip_validate_fuzzer
 origin: upstream
 summary: mz_zip_validate_mem_archive with two flag sets (and on the first 1024 bytes), then mz_compress
   + mz_uncompress of the input into a 2x buffer, then adler32/crc32; every result discarded.

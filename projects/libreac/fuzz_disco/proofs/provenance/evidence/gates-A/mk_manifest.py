@@ -1,0 +1,198 @@
+#!/usr/bin/env python3
+"""mk_manifest.py -- write this directory's MANIFEST: one line per file, `<path> <kind> <sha256> <role>`.
+
+The kinds and roles are the table below; the sha256 is measured. Refuses (exit 1, nothing written) when a file of the
+directory has no row, or a row names a file that is not there.
+
+Usage: mk_manifest.py [DIR]   (default: the directory of this script)
+"""
+import hashlib, os, sys
+
+HEADER = """\
+# evidence/gates-A: gate records re-run on the series base b1afc3e80791 (gate 10: on the series tree d57e4e79e469) against
+# image A (fuzz_disco.asan, sha256 5e39150dd810...)
+# Kind: measurement; proves no function. These records carry the values of the lib/A files that no script reproduces.
+# One line per file: path (relative to this directory), kind, sha256, role.
+# kind: script = script of record; table = per-value table; gate = gate record; input = input a script reads.
+# Re-run: run.sh GATE (every input an environment variable, outputs outside the tree). The checking tools are cited by
+# name and sha256, not copied: port_addr_check efa19b81e92b (gate 1), 3d2eee813cce (gate 6, the checker of record),
+# 0d24592683b6 (gate 9, installed after it) and 205a90fd19b8 (gate 10, installed after that) and its frozen kit
+# 5033540ba83b (gate 2's symbol recovery), codeptr 12348302dfd2 and ifchk f5cde600cc18 through startup-set-2026-10-30d
+# (frozen-run.sh 40cd8a4bf5bf), codeptr-controls.sh 25c012a65b96, cellcheck cc60c6705e6f, ownedcheck b663903ddda1,
+# shadowcheck e04173f5a5a5, roundconst v2 32b39f3b34e9 and v1 8ad299147f2e (gate 7).
+"""
+
+PAC_LIMITS = ('Registered limits of port_addr_check (classes that can read EQUAL where the meaning differs): SAME-CONTENT '
+              'across two different symbols whose strings agree up to the NUL; INSN-SAME on a jal / auipc / lui word compares '
+              'opcode + rd only; ROUND-CONSTANT-SAME passes a page-multiple value without reading it (gate 7 reads it by '
+              'value); predict mode\'s MAPS-STRING maps by string content alone; the named-symbol rule depends on the '
+              'donor\'s recovered symbols.')
+
+PAC0D24_LIMITS = ('Registered limits of port_addr_check 0d24592683b6, as its owner lists them: a donor function or object '
+                  'that no symbolised donor build carries cannot be named (UNRESOLVED, not wrong); address versus size '
+                  'is decided by name and context, so a size-like name that is an address (or the reverse) lands in '
+                  'NON-ADDRESS-* and is compared by value only, and ROUND-CONSTANT-SAME, now only for page multiples '
+                  'inside no named symbol, is a review bucket (gate 7 reads those rows by value); a decimal is an '
+                  'address only when it is a symbol start, boundary, GOT slot, xref, jump-table cell, call return site '
+                  'or a decimal copy of a hex code address of the same file (the 74 MAP-SIZE rows are decimals that are '
+                  'a call return site or a pc in one image); an END-named value whose preceding object the donor set '
+                  'cannot name is UNRESOLVED; --assign \'**=auto\' takes a file\'s image from its Require line, else its '
+                  'directory, else how its numerals land, and says AMBIGUOUS on a tie; SLID-TO-NEIGHBOUR is decided '
+                  'only for single cells and windows of at most 0x100 bytes; instruction words are compared modulo '
+                  'relocation immediates, not re-decoded against the target\'s bytes; where the target\'s symbols are '
+                  'recovered by donor matching, the named-symbol rule still needs the donor to agree (each target image '
+                  'here has its own symbols); run from its read-only versioned directory, a run needs --cache (given).')
+
+PAC205A_LIMITS = ('Registered limits of port_addr_check 205a90fd19b8, as its owner lists them: an anonymous-symbol match '
+                  '(.str* / .L*) gives SAME-SYMBOL without a byte check; GENERATOR-FILL can mask a checkable .got move (a '
+                  '.got cell moved in a start-up file is reported, never flagged); a function-table cell whose name is '
+                  'a different function than the one at its value can read SAME-SYMBOL when one name contains the other '
+                  '(the owner\'s notice after installation: gate 10 lists such rows, none, and measures every '
+                  'lib/A/AB1w.v function cell by name); the size rule is slot-gated, so a size in a generic register '
+                  'slot keeps its address reading and flags (the accepted cost, here lib/A/AFk8.v:56, AFk9.v:28 and :54, '
+                  'the allocator granule, triaged MAP-SIZE). The list of the withdrawn 9873fe3cf51b stands: a relocated '
+                  'numeric quotient in `change (..) with N` that lands inside a symbol passes SAME-SYMBOL; rows an '
+                  'earlier version paired are unpaired since the text-anchored sentence pairing; the auto image choice '
+                  'is not deterministic for two lib/CJ files; its harness has no donor-on-donor self-control; at a '
+                  'boundary a start cell can read as the end of the function before it; the B-core invocation is not '
+                  'documented; a donor count kept unchanged is not caught (gate 8 recomputes the counts); '
+                  'ROUND-CONSTANT-SAME still applies outside a named symbol and a geometry-slot name (gate 7 reads those '
+                  'rows by value); a code-pointer cell accepts a different symbol when the value equals the pin word; '
+                  'by-address moves are caught only inside .got; SAME-CONTENT counts when neither side names a symbol; '
+                  'the named-symbol rule is absolute only against an image\'s own .symtab (each target image here has '
+                  'its own); mmap flags outside a flag slot, a 13-bit branch immediate read as a .got quantity and the '
+                  'AT_HWCAP range are not measured. Its general limits: an object no symbolised donor build carries is '
+                  'UNRESOLVED, as is an END-named value whose preceding object the donor set cannot name; a decimal is '
+                  'an address only at a symbol start, boundary, GOT slot, xref, jump-table cell or call return site, or '
+                  'as a decimal copy of a hex code address of the same file; --assign \'**=auto\' takes a file\'s image '
+                  'from its Require line, else its directory, else how its numerals land; SLID-TO-NEIGHBOUR is decided '
+                  'only for single cells and windows of at most 0x100 bytes; instruction words are compared modulo '
+                  'relocation immediates except where the proof states the pc (INSN-SAME-AT-TARGET).')
+
+RC_GAPS = ('Registered limits of roundconst v2 (its README\'s named gaps): a small kept donor quantity whose value is also '
+           'a right target quantity reads SAME (shown by the gap control); an unnamed run that does not pair is not '
+           'gated at any size; function sizes and extents, and quantities of non-allocated sections, are not quantities '
+           'of it (gate 8 recomputes the counts these leave).')
+
+ROWS = [
+    ('run.sh', 'script', 'every gate\'s re-run command (gates 1-10, the twin check and each planted control); inputs are '
+     'environment variables; writes outputs and a PASS / FIRED verdict line per run to $OUT; the shipped tables of '
+     'gates 7 and 8 are compared byte for byte (cmp) with their re-run'),
+    ('mk_manifest.py', 'script', 'writes this MANIFEST from its role table and the measured sha256'),
+    ('twin_check.py', 'script', 'prints pin and twin sha256, each PT_LOAD of the pin and whether the twin\'s is byte-equal, '
+     'the image top; exit 0 when PT_LOAD 2..4 are equal; re-run (run.sh twin) reproduces twin-check.txt byte for byte'),
+    ('twin-check.txt', 'gate', 'twin_check.py on the four fuzz_disco pins and their unstripped twins: PT_LOAD 2..4 '
+     'byte-equal for each (PT_LOAD 1 differs only in ELF header bytes); image A top 0x5fd930 -> IMG_TOP 0x5fe000'),
+    ('gate-1-address-check.md', 'gate', 'port_addr_check efa19b81e92b over lib/A at the base against cgif\'s released lib, '
+     'images keyed A / B / P / U, --fail-on-flags: counts, every flagged row triaged, planted control; covers '
+     'proofs/libreac/fuzz_disco/lib/A/*.v that pair with a cgif file. ' + PAC_LIMITS + ' Its hand row for '
+     'lib/A/AB1v.v:14 (OVER-COVER, right) is corrected to DEFECT, fixed in the series, by gate-6-address-check-3d2e.md'),
+    ('gate-2-donor-decimals.md', 'gate', 'donor_decimals.py over lib/A at the base: controls, funnel classes, every '
+     'unexplained row triaged, planted control, and the old-vs-new equivalence; covers proofs/libreac/fuzz_disco/lib/A/*.v'),
+    ('donordec/donor_decimals.py', 'script', 'by-value donor-stale decimal scan, a new version that takes every path as '
+     'an argument; on the same inputs it writes the same rows as the earlier version (e7d879e2ed9c), measured on both controls and on lib/A'),
+    ('donordec/funnel.py', 'script', 'classifies donor_decimals.py rows (NOT-IN-DONOR, SIZE, ODD-IN-CODE, INSN-IMM, '
+     'LABEL, DISCO-POINTER) and lists the unexplained rest; a new version with arguments (earlier version 940cb11df71e)'),
+    ('donordec/triage_unexplained.py', 'script', 'checks every value funnel.py leaves UNEXPLAINED is a recorded '
+     'disco-own value (donordec/unexplained-safe.tsv); an unlisted one is a candidate donor-stale decimal'),
+    ('donordec/unexplained-safe.tsv', 'table', 'the funnel UNEXPLAINED decimal values of lib/A, each judged disco-own '
+     'or a size by hand (1446400 shadow zero-fill length, allocator instance a_offs, a theDepot value, do_stretch length)'),
+    ('gate-3-codeptr.md', 'gate', 'codeptr 12348302dfd2 on the nine start-up files of image A (AB01 AB03 AB05 AB12 AD1k '
+     'AD2i AD2j AF0m ACej) against the A pin, stale against cgif asan with the donor files: control of record, raw '
+     'findings triaged, declared run 0 findings, planted control; covers those nine proofs/libreac/fuzz_disco/lib/A files. '
+     'Registered limit: a literal in the same slot as a donor address passes when both images hold the same file bytes '
+     'there, so a CELL naming a different symbol passes when its value equals the pin word'),
+    ('gate-4-ifchk.md', 'gate', 'ifchk f5cde600cc18 (--owned AF0m.v --states AB01.v --ad1g AD1g.v --image the A pin): '
+     'every TFIB_CONST cell in every state equals the stated value; planted control; covers proofs/libreac/fuzz_disco/lib/A/'
+     '{AF0m,AB01,AD1g}.v'),
+    ('gate-5-cells.md', 'gate', 'cellcheck cc60c6705e6f, ownedcheck b663903ddda1, shadowcheck e04173f5a5a5 and the owned '
+     'read-only pin count on AF0m.v against the A pin, compared with the earlier results; one planted control per tool; '
+     'covers proofs/libreac/fuzz_disco/lib/A/AF0m.v'),
+    ('ro_pins.py', 'script', 'counts AF0m.v\'s owned read-only static bytes and those a const cell pins, with af0m.py\'s '
+     'own rule (af0m f8201f503394 imported from the start-up set); its output is folded into gate-5-cells.md'),
+    ('addr/addr_triage.py', 'script', 'triages every flagged row of gates 1, 6, 9 and 10 (and with --also every row whose '
+     'verdict moved between checker versions): a class, right / DEFECT and a per-row detail, from the pin, its twin, '
+     'cgif\'s symbols and the checked files, each rule measuring its fact first (MAP-SIZE, FAKESTACK-OFFSET, LOOSE-BOUND '
+     'and AF0M-CELL added for gate 9; SEGMENT-GEOMETRY, IMAGE-LOW, WINDOW-64K, ALIGN-64K, SIZE-BOUND-64K, BYTES-2^16, '
+     'RANGE-16BIT and NAMED-SIZE added for gate 10, which read only rows carrying 205a90fd19b8\'s size-slot note; on the '
+     'tables of gates 1, 6 and 9 its per-row triage is byte-equal to the version before them); the hand table covers '
+     'the rest; regenerates the per-row triage from a re-run of the address checker'),
+    ('addr/hand-triage.tsv', 'table', 'the flagged rows of gate 1 that no rule of addr_triage.py covers, one row per '
+     'flagged row or group, each with the class, right / DEFECT, a check addr_triage.py evaluates, and the reason'),
+    ('addr/hand-triage-series.tsv', 'table', 'the hand table of gate 10 (the series tree): hand-triage.tsv without its '
+     'three rows that do not apply there (lib/A/AB13.v:84 twice, lib/A/AB1v.v:14 with 16403) and with four rows of the '
+     'series tree no rule covers (lib/A/AB1v.v:14 with 16102, lib/A/AFem.v:130 and :208 the TOT bound 127008, '
+     'lib/A/AFem.v:208 the depot bucket count), each with the class, right / DEFECT, a check and the reason'),
+    ('gate-6-address-check-3d2e.md', 'gate', 'port_addr_check 3d2eee813cce, the checker of record now, with gate 1\'s '
+     'command and file set: counts (FLAGGED 12439 in 11 classes, as gate 1), the row diff from gate 1 (7 rows, the '
+     'dst_res note only; verdicts identical), every flagged row triaged (0 DEFECT), planted control, and the correction '
+     'of gate 1\'s lib/A/AB1v.v:14 hand row to DEFECT (fixed in the series code commit ac99185f1f10); covers the same '
+     'proofs/libreac/fuzz_disco/lib/A files as gate 1. ' + PAC_LIMITS),
+    ('addr/run_diff.py', 'script', 'pairs the rows of two port_addr_check tables of one file set by the numeral\'s '
+     'identity (file, line, sentence, index, kind, values; not by position) and prints the verdict counts of each, every '
+     'changed row with the columns that differ and its verdict move, the rows only on one side, and the count of each '
+     'verdict move; --moved-out writes the moved rows for addr_triage.py; run.sh addr3/diff, addr0d24/diff, addr205a/diff'),
+    ('rc/plant_check.py', 'script', 'judges one planted control of gate 7: roundconst v2 on a planted copy of one file '
+     'against the unplanted copy (exactly one MISMATCH row more at the planted position, or for the gap control a SAME '
+     'row and no non-SAME change), and prints roundconst v1\'s difference beside it'),
+    ('gate-7-roundconst.md', 'gate', 'roundconst v2 32b39f3b34e9 (kept donor image geometry, by value) on gate 6\'s full '
+     'table with all four builds keyed against the four pins and their twins: counts by status and class, its README\'s '
+     'controls (donor on donor 0 non-SAME; a kept donor PT_LOAD length, word count and small table length planted in '
+     'copies of lib/A files, each one MISMATCH more; the gap control SAME), and every MISMATCH / MIXED row triaged by '
+     'a stated rule (0 untriaged, 0 DEFECT); covers proofs/libreac/fuzz_disco/lib/A/*.v. ' + RC_GAPS),
+    ('rc/rc_triage.py', 'script', 'triages every non-SAME row of a roundconst v2 run over lib/A: one class per numeral '
+     'occurrence by a stated rule, measured where the rule names an image fact (pin words, decoded immediates, twin '
+     'function and object sizes, AF0m cells, p_align, the sanitizer runtime being one build); regenerates rc/triage-A.tsv'),
+    ('rc/hand-triage.tsv', 'table', 'the 4 non-SAME groups of gate 7 that need a hand reason (AD1g.v:1070, AD2a.v:363, '
+     'AFjq.v:709 and :799), each with class, verdict, a check rc_triage.py evaluates, and the reason'),
+    ('rc/triage-A.tsv', 'table', 'the per-row triage of gate 7, grouped by (file, line, value, kind, class): n rows, '
+     'statuses, the gate\'s class, the triage class, right / DEFECT and the evidence; 6956 rows, 0 DEFECT; reproduced '
+     'byte for byte by run.sh rc'),
+    ('gate-8-counts.md', 'gate', 'every image-derived count of lib/A (2028: word counts, code range lengths, table '
+     'lengths, sizes, slices, extents) recomputed from the A pin and its twin by a stated rule, with cgif\'s own count '
+     'recomputed by the same rule: EQUAL 495, TRUE 1, GENERATED 93, NOT-IMAGE 1436, DIFFERS 3 (A/AB1v.v:14, '
+     'A/AE34.v:26, A/AE34.v:22: donor counts kept, each ruled a defect by the unit owner and fixed in the series code '
+     'commits ac99185f1f10 / 48b29458d1c3, build check pending), planted control; covers what roundconst v2\'s gaps '
+     'leave (small kept counts, unnamed runs, function sizes) for proofs/libreac/fuzz_disco/lib/A/**.v'),
+    ('counts/count_recompute.py', 'script', 'finds every count of lib/A by nine stated text patterns and recomputes it '
+     'from the pin and twin (and the donor\'s from cgif\'s pin and twin) by the rule its docstring states; rulings are '
+     'arguments; regenerates counts/counts-A.tsv'),
+    ('counts/counts-A.tsv', 'table', 'one row per count of gate 8: key, name / call, shipped, rule with its values, '
+     'recomputed, donor shipped, donor recomputed, status, note, ruling; reproduced byte for byte by run.sh counts'),
+    ('gate-9-address-check-0d24.md', 'gate', 'port_addr_check 0d24592683b6, installed after 3d2eee813cce, with gate 1\'s '
+     'command and file set from an empty cache: counts (FLAGGED 12517 in 12 classes; 3d2eee813cce 12439 in 11), the row '
+     'diff from gate 6 (145 rows differ: 82 verdicts moved out of ROUND-CONSTANT-SAME, 78 of them to findings, and 63 '
+     'notes), every flagged row and every moved row triaged (0 DEFECT, 0 untriaged; lib/A/AB1v.v:14 stays the defect '
+     'gate 6 records, fixed in the series), gate 1\'s planted control (FIRED); covers the same '
+     'proofs/libreac/fuzz_disco/lib/A files as gate 1. ' + PAC0D24_LIMITS),
+    ('gate-10-address-check-205a.md', 'gate', 'port_addr_check 205a90fd19b8, installed after 0d24592683b6, and '
+     '0d24592683b6, each with gate 1\'s command and file set over the series tree d57e4e79e469 (the base plus the unit '
+     'owner\'s code fixes) from an empty cache: counts (FLAGGED 12515 in 12 classes; 0d24592683b6 12526 in 12), the row '
+     'diff on that tree (374 rows differ, 328 verdicts moved: 4 into NON-ADDRESS-CHANGED, each the A pin\'s own segment '
+     'or image geometry, 13 out of findings, 311 from a pass to a pass, each read by hand; no row from DIFFERENT-SYMBOL '
+     'or UNMEASURED-NAME to SAME-SYMBOL), every flagged row and every moved row triaged (0 DEFECT, 0 untriaged; no size '
+     'kept from cgif flags), gate 1\'s planted control (FIRED) and the checker owner\'s planted size in two nearest '
+     'equivalents (FIRED on 205a90fd19b8, SAME-SYMBOL on 0d24592683b6); covers the proofs/libreac/fuzz_disco/lib/A files '
+     'of the series tree that pair with a cgif file. ' + PAC205A_LIMITS),
+]
+
+
+def main():
+    d = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.dirname(os.path.abspath(__file__)))
+    have = sorted(os.path.relpath(os.path.join(r, f), d) for r, _, fs in os.walk(d) for f in fs
+                  if f != 'MANIFEST' and '__pycache__' not in r)
+    named = [p for p, _, _ in ROWS]
+    bad = [f'no row for {p}' for p in have if p not in named] + [f'no file {p}' for p in named if p not in have]
+    if bad:
+        sys.exit('mk_manifest: REFUSED: ' + '; '.join(bad))
+    lines = [HEADER.rstrip('\n')]
+    for p, kind, role in ROWS:
+        h = hashlib.sha256(open(os.path.join(d, p), 'rb').read()).hexdigest()
+        lines.append(f'{p} {kind} {h} {role}')
+    with open(os.path.join(d, 'MANIFEST'), 'w') as f:
+        f.write('\n'.join(lines) + '\n')
+    print(f'mk_manifest: {len(ROWS)} files named')
+
+
+if __name__ == '__main__':
+    main()

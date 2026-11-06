@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: xz
 harness: fuzz_decode_stream_mt
-rocq: OssFuzzTheorems.xz.fuzz_decode_stream_mt
+rocq: OSSVerify.xz.fuzz_decode_stream_mt
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an API contract: lzma_code() driven to completion
   on the multithreaded .xz decoder (threads=2, LZMA_IGNORE_CHECK) never returns LZMA_PROG_ERROR (liblzma''s

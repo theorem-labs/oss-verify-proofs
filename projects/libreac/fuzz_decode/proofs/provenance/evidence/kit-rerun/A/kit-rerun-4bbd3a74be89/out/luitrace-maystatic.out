@@ -1,0 +1,62 @@
+# image DONOR_TWIN
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0xc4	ld a2, -0x258(a2)	base=a2
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x3c4	ld a0, -0x708(a0)	base=a0
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x4c8	ld a0, 0x7f4(a0)	base=a0
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x4ec	ld a2, 0x7d8(a2)	base=a2
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x4f4	ld a3, 0x7d8(a3)	base=a3
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x510	ld a3, 0x7c4(a3)	base=a3
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x52c	ld a1, 0x788(a1)	base=a1
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x6b0	ld a0, 0x604(a0)	base=a0
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x6cc	ld a1, 0x610(a1)	base=a1
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x718	ld a0, 0x6c4(a0)	base=a0
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x778	ld a7, 0x53c(a7)	base=a7
+MAY-STATIC	_ZN11__sanitizer17CombinedAllocatorINS_20SizeCla	+0x30	ld a0, -0x7d0(a0)	base=a0
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x28	lb a3, 0x2b8(a3)	base=a3
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x40	ld a3, -0x634(a3)	base=a3
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x60	ld a5, -0x64c(a5)	base=a5
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x68	ld a6, -0x64c(a6)	base=a6
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x84	ld t0, -0x660(t0)	base=t0
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0xa0	ld t3, -0x69c(t3)	base=t3
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x178	ld t2, -0x774(t2)	base=t2
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x248	ld a4, 0x7cc(a4)	base=a4
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x250	ld a5, 0x7cc(a5)	base=a5
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x26c	ld a5, 0x7b8(a5)	base=a5
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x288	ld s3, 0x7a4(a3)	base=a3
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x2b0	ld a1, 0x74c(a1)	base=a1
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x2c0	ld s4, 0x72c(a1)	base=a1
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x3a4	ld t1, 0x660(t1)	base=t1
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x48c	ld t1, 0x5c0(t1)	base=t1
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x498	ld a0, 0x5bc(a0)	base=a0
+TOTAL	cgif_file_fuzzer.asan-ubsan	base sites 215	may be static 28
+# image DECODE_A_TWIN
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0xc4	ld a2, 0xbc(a2)	base=a2
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x3c4	ld a0, 0x734(a0)	base=a0
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x4c8	ld a0, 0x630(a0)	base=a0
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x4ec	ld a2, 0x614(a2)	base=a2
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x4f4	ld a3, 0x614(a3)	base=a3
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x510	ld a3, 0x600(a3)	base=a3
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x52c	ld a1, 0x5c4(a1)	base=a1
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x6b0	ld a0, 0x440(a0)	base=a0
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x6cc	ld a1, 0x44c(a1)	base=a1
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x718	ld a0, -0x630(a0)	base=a0
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x778	ld a7, 0x378(a7)	base=a7
+MAY-STATIC	_ZN11__sanitizer17CombinedAllocatorINS_20SizeCla	+0x30	ld a0, 0x58c(a0)	base=a0
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x28	lb a3, 0x5b8(a3)	base=a3
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x40	ld a3, -0x33c(a3)	base=a3
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x60	ld a5, -0x354(a5)	base=a5
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x68	ld a6, -0x354(a6)	base=a6
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x84	ld t0, -0x368(t0)	base=t0
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0xa0	ld t3, -0x3a4(t3)	base=t3
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x178	ld t2, -0x47c(t2)	base=t2
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x248	ld a4, -0x53c(a4)	base=a4
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x250	ld a5, -0x53c(a5)	base=a5
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x26c	ld a5, -0x550(a5)	base=a5
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x288	ld s3, -0x564(a3)	base=a3
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x2b0	ld a1, -0x5bc(a1)	base=a1
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x2c0	ld s4, -0x5dc(a1)	base=a1
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x3a4	ld t1, -0x6a8(t1)	base=t1
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x48c	ld t1, -0x748(t1)	base=t1
+MAY-STATIC	_ZN6__asan12PoisonShadowEmmh	+0x498	ld a0, -0x74c(a0)	base=a0
+TOTAL	fuzz_decode.asan	base sites 215	may be static 28
+TOTAL	all	base sites 430	may be static 56
+TOTAL	lui-reached base sites (both images) 42	may-static sites 28	INTERSECTION 0	empty

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_parse
-rocq: OssFuzzTheorems.jsoncons.fuzz_parse
+rocq: OSSVerify.jsoncons.fuzz_parse
 origin: upstream
 summary: json::parse(input); value discarded; ser_error swallowed.
 entry: LLVMFuzzerTestOneInput

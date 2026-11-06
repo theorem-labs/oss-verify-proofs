@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: bzip2
 harness: bzip2_decompress_target
-rocq: OssFuzzTheorems.bzip2.bzip2_decompress_target
+rocq: OSSVerify.bzip2.bzip2_decompress_target
 origin: oss-fuzz
 summary: BZ2_bzBuffToBuffDecompress into a 2*size buffer; return code only optionally printed under __DEBUG__.
 entry: LLVMFuzzerTestOneInput

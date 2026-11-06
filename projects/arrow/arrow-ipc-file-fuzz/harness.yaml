@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: arrow
 harness: arrow-ipc-file-fuzz
-rocq: OssFuzzTheorems.arrow.arrow_ipc_file_fuzz
+rocq: OSSVerify.arrow.arrow_ipc_file_fuzz
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, a differential check: Differential IPC reading:
   the file reader without and with PreBufferMetadata, and (when the file read succeeded, schemas match

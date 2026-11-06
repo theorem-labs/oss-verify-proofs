@@ -6,10 +6,10 @@
  (deps (:elf %{project_root}/projects/yoga/bin/fuzz_layout/fuzz_layout.plain))
  (action
   (run elf-snapshot %{elf} Plain.v --prefix Plain --module-name M
-       --namespace OssFuzzTheorems.yoga.fuzz_layout.images)))
+       --namespace OSSVerify.yoga.fuzz_layout.images)))
 (rule
  (targets Asan.v Asan_seg_000.hex Asan_seg_001.hex Asan_seg_002.hex Asan_seg_003.hex)
  (deps (:elf %{project_root}/projects/yoga/bin/fuzz_layout/fuzz_layout.asan))
  (action
   (run elf-snapshot %{elf} Asan.v --prefix Asan --module-name M
-       --namespace OssFuzzTheorems.yoga.fuzz_layout.images)))
+       --namespace OSSVerify.yoga.fuzz_layout.images)))

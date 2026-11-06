@@ -1,0 +1,10 @@
+CSTR lines in the file: 19050; ACCEPT lines in the file: 1068
+root _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS: CSTR rows 3174, distinct (function, word) 3174, distinct members with ACCEPT lines 178
+root _ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan: CSTR rows 3174, distinct (function, word) 3174, distinct members with ACCEPT lines 178
+root _ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocat: CSTR rows 3174, distinct (function, word) 3174, distinct members with ACCEPT lines 178
+root memset: CSTR rows 0, distinct (function, word) 0, distinct members with ACCEPT lines 0
+root _ZN11__sanitizer13internal_mmapEPvmiiiy: CSTR rows 0, distinct (function, word) 0, distinct members with ACCEPT lines 0
+root _ZN11__sanitizer13StackDepotPutENS_10StackTraceE: CSTR rows 3174, distinct (function, word) 3174, distinct members with ACCEPT lines 178
+root _ZN6__asan12PoisonShadowEmmh: CSTR rows 3174, distinct (function, word) 3174, distinct members with ACCEPT lines 178
+root _ZN11__sanitizer9TryMemCpyEPvPKvm: CSTR rows 3180, distinct (function, word) 3180, distinct members with ACCEPT lines 178
+UNION over the roots: distinct C-string acceptances (function, word) 3180; distinct members with ACCEPT lines 178; distinct ACCEPT lines 178

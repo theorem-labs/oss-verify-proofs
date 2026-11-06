@@ -1,0 +1,7 @@
+copy Reusable/FCiface.v: image-free (no numeral in [0x10000, 0x6153d0)); blob 3f560946aa83
+Reusable/FCiface.v: copied, header 16 lines kept, 6 module paths renamed
+copy Reusable/YF0v.v:93 17594333495296 = 0x10007fff8000: above the image span [0x10000, 0x6153d0), not an image address
+copy Reusable/YF0v.v:93 2199291686912 = 0x2000ffff000: above the image span [0x10000, 0x6153d0), not an image address
+copy Reusable/YF0v.v: image-free (no numeral in [0x10000, 0x6153d0)); blob 75c25878eab7
+Reusable/YF0v.v: copied, header 4 lines kept, 4 module paths renamed
+rc=0

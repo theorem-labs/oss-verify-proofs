@@ -1,0 +1,5 @@
+# X sha256 47b0b091fc6d; Y sha256 5a5ee7c02b4e; kit files loaded from the directory of this script
+ACCEPT	function	word	kit kind	X target	Y target	class	evidence	extent	X bytes	Y bytes	verdict
+ENTRY	function	word	entry	X entry -> target	Y entry -> target	same
+ACCEPT	_ZN11__sanitizer9VSNPrintfEPciPKcPv	0x1c0	data-differs	0x209cc	0x20be0	REFUSED	jtcheck 226254f48c97 proves no table shape for the indexed address at +0x1c0 on both images; its own reason, X: `the indirect jump at +0x1d0 is not a resolvable dispatch`; Y: it proves 4-byte entries, 33 of them: no proof, not a difference; readers: - | not shown to read a C string: +0x1c4 add (28, 28) ; +0x1cc add (28, 28)	4 bytes to the NUL	90560400	c0620400	UNSETTLED
+ROW	_ZN11__sanitizer9VSNPrintfEPciPKcPv	kit DIFFERENT with 1 target pairs reported	settled-equal 0 of 1	ROW NOT SETTLED

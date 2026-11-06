@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jq
 harness: libfuzzer-onig
-rocq: OssFuzzTheorems.jq.libfuzzer_onig
+rocq: OSSVerify.jq.libfuzzer_onig
 origin: upstream
 summary: onig_new on the whole input as a UTF-8 pattern; freed if it compiled.
 entry: LLVMFuzzerTestOneInput

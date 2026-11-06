@@ -16,7 +16,7 @@
     wrong argument count, a missing or unreadable FILE, a FILE shorter than its
     header, or one of 64 MiB or more, it exits with status 2 without calling the
     harness.  Every statement quantifies over all of these cases and over every
-    other process input (see Vocabulary in OssFuzzTheorems.Core.Shapes).
+    other process input (see Vocabulary in OSSVerify.Core.Shapes).
 
     WHAT THE HARNESS CHECKS.  Creates an ihevcd decoder with a fuzzer-picked
     output colour format, architecture and core count, decodes the header then
@@ -29,8 +29,8 @@
     harness README, not here: this file changes only when a statement does. *)
 
 From Stdlib Require Import QArith.
-From OssFuzzTheorems.Core Require Import Shapes.
-From OssFuzzTheorems.libhevc.hevc_dec_fuzzer Require Images Distribution.
+From OSSVerify.Core Require Import Shapes.
+From OSSVerify.libhevc.hevc_dec_fuzzer Require Images Distribution.
 
 (** ** Halting *)
 
@@ -137,8 +137,9 @@ Definition asan_ubsan_agreement_decidable : Prop :=
 
 (** ** Proving a statement
 
-    A proof is a directory proofs/libhevc/hevc_dec_fuzzer/<statement>/ whose
-    Proof.v ends, for example, in
+    A proof is a directory named after the statement, in this fuzz target's
+    proofs folder (docs/proving.md says where it is), whose Proof.v ends, for
+    example, in
       Theorem plain_halts_holds : Statements.plain_halts.
     A bound proof names its bound:
       Theorem asan_disagrees_at_most_holds : Statements.asan_disagrees_at_most (1 # 1000).

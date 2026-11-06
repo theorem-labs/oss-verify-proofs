@@ -1,0 +1,179 @@
+# Note: the name of the unit's YH03.v:44 cell (an internal library symbol name) is written CELL44 in this record.
+# command: EV/checks/yh03-gate.py WORK LIB OUT/yh03 (TIMG=TIMG YH03CHECK=OUT/tools/yh03check/fb3bfbc1eea8)
+# gate (e): yh03check fb3bfbc1eea8 (v6.4, + yh03regen 1254e5c96a44), every run with --pinned and --pins
+# images: plain twin c2d42d895415 of pin bb20ce415827, ubsan twin c53d4b20cfc1 of pin af7b86991906 ($TIMG/unstripped, $TIMG/stripped)
+# the pins file projects/libdiginet/fuzz_transport/harness.yaml of the scratch checkout: PINS (sha256 31f9695f19a5)
+# LIB = LIB (read as proofs/libdiginet/fuzz_transport/lib of the scratch checkout)
+# LIB/Reusable/YH03.v sha256 d2ed809cf234b5b075e87c07b9e3a33689a42442321b80d065a664d9f36f2a31
+# LIB/U/Reusable/YH03.v sha256 7bd59a9964452b5e4f912acb04c28369b9aec894dfa1bb18d2310df40778d8f8
+# staged YH03-style files (a src0_ / ubs0_ A, E or D cell) in RUN/stage-out: 0
+base-plain: rc 0; rows printed 42; self-test: 223 known answers OK (yh03regen 163 + yh03check 60)
+  # section bounds: not applicable for proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: the file has no <prefix>_<section>_lo / _hi cell
+  # build: proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: plain (the pinned binary's sha256 bb20ce415827 is builds.plain of projects/libdiginet/fuzz_transport/harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 0 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+  # unit identity: proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: the image's 4 PT_LOADs equal the plain pin bb20ce415827 ($TIMG/stripped/fuzz_transport.plain; ELF section-header fields and build-id masked)
+  # not checked by any rule: proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: src0_vmlock
+  # COPIED: not checked for proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v (pass --other-side THE_OTHER_BUILDS_YH03.v and --proofs THE_UNITS_PROOFS_DIR)
+  # rows checked: 27; rows not OK: 0
+  # D cells by symbol: 9 (OK 9, BAD 0); by the code of the function they name: OK-BY-LOAD 0, UNMEASURED 0; OK-GOT0 0 (GOT[0] of the pinned binary); NOSYM 6 (no symbol of the name, not checked); string cells 0 (checked only by yh03regen --elf, with an unstripped image)
+base-ubsan: rc 0; rows printed 42; self-test: 223 known answers OK (yh03regen 163 + yh03check 60)
+  # section bounds: not applicable for proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v: the file has no <prefix>_<section>_lo / _hi cell
+  # build: proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v: ubsan (the pinned binary's sha256 af7b86991906 is builds.ubsan of projects/libdiginet/fuzz_transport/harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 70 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+  # unit identity: proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v: the image's 4 PT_LOADs equal the ubsan pin af7b86991906 ($TIMG/stripped/fuzz_transport.ubsan; ELF section-header fields and build-id masked)
+  # not checked by any rule: proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v: src0_vmlock
+  # COPIED: not checked for proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v (pass --other-side THE_OTHER_BUILDS_YH03.v and --proofs THE_UNITS_PROOFS_DIR)
+  # rows checked: 27; rows not OK: 0
+  # D cells by symbol: 9 (OK 9, BAD 0); by the code of the function they name: OK-BY-LOAD 0, UNMEASURED 0; OK-GOT0 0 (GOT[0] of the pinned binary); NOSYM 6 (no symbol of the name, not checked); string cells 0 (checked only by yh03regen --elf, with an unstripped image)
+# plant-plain: copy of proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v with src0_A_main 0x131c4 -> 0x131c8 (one row moved)
+plant-plain: rc 1; rows printed 42; self-test: 223 known answers OK (yh03regen 163 + yh03check 60)
+  # section bounds: not applicable for proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: the file has no <prefix>_<section>_lo / _hi cell
+  # build: proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: plain (the pinned binary's sha256 bb20ce415827 is builds.plain of harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 0 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+  # unit identity: proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: the image's 4 PT_LOADs equal the plain pin bb20ce415827 ($TIMG/stripped/fuzz_transport.plain; ELF section-header fields and build-id masked)
+  # not checked by any rule: proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: src0_vmlock
+  # COPIED: not checked for proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v (pass --other-side THE_OTHER_BUILDS_YH03.v and --proofs THE_UNITS_PROOFS_DIR)
+  # rows checked: 27; rows not OK: 1
+  # D cells by symbol: 9 (OK 9, BAD 0); by the code of the function they name: OK-BY-LOAD 0, UNMEASURED 0; OK-GOT0 0 (GOT[0] of the pinned binary); NOSYM 6 (no symbol of the name, not checked); string cells 0 (checked only by yh03regen --elf, with an unstripped image)
+  plant-plain: rows not OK 0 -> 1; rows that differ: 1 -> 1
+    < 9	main	OK A-ONLY	A=0x131c4 (main+0x0)	E=- want main=0x131c4..0x13488
+    > 9	main	BAD A-ONLY	A=0x131c8 (main+0x4)	E=- want main=0x131c4..0x13488
+  plant-plain: control CAUGHT
+# plant-ubsan: copy of proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v with src0_A_main 0x132c0 -> 0x132c4 (one row moved)
+plant-ubsan: rc 1; rows printed 42; self-test: 223 known answers OK (yh03regen 163 + yh03check 60)
+  # section bounds: not applicable for proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v: the file has no <prefix>_<section>_lo / _hi cell
+  # build: proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v: ubsan (the pinned binary's sha256 af7b86991906 is builds.ubsan of harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 70 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+  # unit identity: proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v: the image's 4 PT_LOADs equal the ubsan pin af7b86991906 ($TIMG/stripped/fuzz_transport.ubsan; ELF section-header fields and build-id masked)
+  # not checked by any rule: proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v: src0_vmlock
+  # COPIED: not checked for proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v (pass --other-side THE_OTHER_BUILDS_YH03.v and --proofs THE_UNITS_PROOFS_DIR)
+  # rows checked: 27; rows not OK: 1
+  # D cells by symbol: 9 (OK 9, BAD 0); by the code of the function they name: OK-BY-LOAD 0, UNMEASURED 0; OK-GOT0 0 (GOT[0] of the pinned binary); NOSYM 6 (no symbol of the name, not checked); string cells 0 (checked only by yh03regen --elf, with an unstripped image)
+  plant-ubsan: rows not OK 0 -> 1; rows that differ: 1 -> 1
+    < 9	main	OK A-ONLY	A=0x132c0 (main+0x0)	E=- want main=0x132c0..0x13584
+    > 9	main	BAD A-ONLY	A=0x132c4 (main+0x4)	E=- want main=0x132c0..0x13584
+  plant-ubsan: control CAUGHT
+ident-plain: rc 0; rows printed 42; self-test: 223 known answers OK (yh03regen 163 + yh03check 60)
+  # section bounds: not applicable for proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: the file has no <prefix>_<section>_lo / _hi cell
+  # build: proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: plain (the pinned binary's sha256 bb20ce415827 is builds.plain of projects/libdiginet/fuzz_transport/harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 0 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+  # unit identity: proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: the image's 4 PT_LOADs equal the plain pin bb20ce415827 ($TIMG/stripped/fuzz_transport.plain; ELF section-header fields and build-id masked)
+  # not checked by any rule: proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v: src0_vmlock
+  # COPIED: 0 of the 0 code cells (A_ / E_) equal in both builds' files are read outside the address files (under proofs/libdiginet/fuzz_transport/lib); D_ cells are never COPIED
+  # rows checked: 27; rows not OK: 0
+  # D cells by symbol: 9 (OK 9, BAD 0); by the code of the function they name: OK-BY-LOAD 0, UNMEASURED 0; OK-GOT0 0 (GOT[0] of the pinned binary); NOSYM 6 (no symbol of the name, not checked); string cells 0 (checked only by yh03regen --elf, with an unstripped image)
+ident-ubsan: rc 0; rows printed 42; self-test: 223 known answers OK (yh03regen 163 + yh03check 60)
+  # section bounds: not applicable for proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v: the file has no <prefix>_<section>_lo / _hi cell
+  # build: proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v: ubsan (the pinned binary's sha256 af7b86991906 is builds.ubsan of projects/libdiginet/fuzz_transport/harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 70 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+  # unit identity: proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v: the image's 4 PT_LOADs equal the ubsan pin af7b86991906 ($TIMG/stripped/fuzz_transport.ubsan; ELF section-header fields and build-id masked)
+  # not checked by any rule: proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v: src0_vmlock
+  # COPIED: 0 of the 0 code cells (A_ / E_) equal in both builds' files are read outside the address files (under proofs/libdiginet/fuzz_transport/lib); D_ cells are never COPIED
+  # rows checked: 27; rows not OK: 0
+  # D cells by symbol: 9 (OK 9, BAD 0); by the code of the function they name: OK-BY-LOAD 0, UNMEASURED 0; OK-GOT0 0 (GOT[0] of the pinned binary); NOSYM 6 (no symbol of the name, not checked); string cells 0 (checked only by yh03regen --elf, with an unstripped image)
+mixed: rc 2; rows printed 0; self-test: 223 known answers OK (yh03regen 163 + yh03check 60)
+  # rows 0 (refused: 1 problem(s); no row is printed until --pinned or --flavour is given, every section cell is the image's section header, the pin sha decides a build the corroboration agrees with and every file pairs with that build and unit)
+  REFUSED:
+  proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v: the ubsan build's file against the plain build's image: check lib/Reusable against the plain build, lib/U/Reusable against the ubsan build
+  mixed: control CAUGHT (the ubsan file on the plain twin with the plain pin: refused, rc 2)
+hand-plain: 6 NOSYM D cell(s), 1 cell(s) `not checked by any rule` (src0_vmlock)
+  proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:36	D_const_HIGHS_0x8080808080808080	OK	the 8 bytes at 0x103c0: 0x8080808080808080 (the name says 0x8080808080808080)
+  proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:37	D_const_ONES_0x0101010101010100	OK	the 8 bytes at 0x103d0: 0x0101010101010100 (the name says 0x0101010101010100)
+  proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:38	D_debruijn32	OK	the 32 bytes at 0x10460 are a permutation of 0..31: True; the multiplier the table encodes: 0x077cb531; table[((1 << i) * 0x077cb531 mod 2^32) >> 27] = i for i = 0..31: True
+  proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:39	D_size_classes	OK	0x10530 is __malloc_size_classes+0x0 (twin symtab); its name, `.` written `_`, ends with `size_classes`: True
+  proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:42	D_got_stack_chk_guard	OK	the 8 bytes at 0x214e0: 0x62b20; the symbol __stack_chk_guard is at 0x62b20
+  proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:44	DCELL44	OK	0x32770 is oft_aligned_copy.empty+0x0 (twin symtab); its name, `.` written `_`, ends with `aligned_copy_empty`: True
+  hand-plain control (const rule, D_const_HIGHS_0x8080808080808080 at 0x103c8): CAUGHT
+  hand-plain control (debruijn rule, D_debruijn32 at 0x10461): CAUGHT
+  src0_vmlock	OK	the file states None; the twin symtab has no vmlock symbol, so the right value is None
+hand-ubsan: 6 NOSYM D cell(s), 1 cell(s) `not checked by any rule` (src0_vmlock)
+  proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:36	D_const_HIGHS_0x8080808080808080	OK	the 8 bytes at 0x103d0: 0x8080808080808080 (the name says 0x8080808080808080)
+  proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:37	D_const_ONES_0x0101010101010100	OK	the 8 bytes at 0x103e0: 0x0101010101010100 (the name says 0x0101010101010100)
+  proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:38	D_debruijn32	OK	the 32 bytes at 0x10500 are a permutation of 0..31: True; the multiplier the table encodes: 0x077cb531; table[((1 << i) * 0x077cb531 mod 2^32) >> 27] = i for i = 0..31: True
+  proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:39	D_size_classes	OK	0x10520 is __malloc_size_classes+0x0 (twin symtab); its name, `.` written `_`, ends with `size_classes`: True
+  proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:42	D_got_stack_chk_guard	OK	the 8 bytes at 0x22050: 0x63690; the symbol __stack_chk_guard is at 0x63690
+  proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:44	DCELL44	OK	0x332e0 is oft_aligned_copy.empty+0x0 (twin symtab); its name, `.` written `_`, ends with `aligned_copy_empty`: True
+  hand-ubsan control (const rule, D_const_HIGHS_0x8080808080808080 at 0x103d8): CAUGHT
+  hand-ubsan control (debruijn rule, D_debruijn32 at 0x10501): CAUGHT
+  src0_vmlock	OK	the file states None; the twin symtab has no vmlock symbol, so the right value is None
+yh03-gate: PASS
+# rows of base-plain (yh03check fb3bfbc1eea8, proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v on the plain twin c2d42d895415)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:9	main	OK A-ONLY	A=0x131c4 (main+0x0)	E=- want main=0x131c4..0x13488
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:10	target_run	OK A-ONLY	A=0x13494 (target_run+0x0)	E=- want target_run=0x13494..0x135ec
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:11	LLVMFuzzerTestOneInput	OK A-ONLY	A=0x13664 (LLVMFuzzerTestOneInput+0x0)	E=- want LLVMFuzzerTestOneInput=0x13664..0x144ec
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:12	stack_chk_fail	OK A-ONLY	A=0x18914 (__stack_chk_fail_local+0x0)	E=- want __stack_chk_fail=0x18914..0x1891c
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:13	syscall_ret	OK A-ONLY	A=0x1891c (__syscall_ret+0x0)	E=- want __syscall_ret=0x1891c..0x18954
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:14	errno_location	OK A-ONLY	A=0x18954 (__errno_location+0x0)	E=- want ___errno_location=0x18954..0x18960
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:15	free	OK A-ONLY	A=0x18960 (free+0x0)	E=- want free=0x18960..0x18964
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:16	malloc	OK A-ONLY	A=0x18aa0 (malloc+0x0)	E=- want default_malloc=0x18aa0..0x18aa4
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:17	libc_free	OK A-ONLY	A=0x18aa4 (__libc_free+0x0)	E=- want __libc_free=0x18aa4..0x18c70
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:18	get_meta	OK A-ONLY	A=0x18c70 (get_meta+0x0)	E=- want get_meta=0x18c70..0x18d80
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:19	nontrivial_free	OK A-ONLY	A=0x18d80 (nontrivial_free+0x0)	E=- want nontrivial_free=0x18d80..0x19158
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:20	alloc_meta	OK A-ONLY	A=0x19158 (__malloc_alloc_meta+0x0)	E=- want __malloc_alloc_meta=0x19158..0x19430
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:21	libc_malloc_impl	OK A-ONLY	A=0x19430 (__libc_malloc_impl+0x0)	E=- want __libc_malloc_impl=0x19430..0x197a0
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:22	alloc_slot	OK A-ONLY	A=0x197a0 (alloc_slot+0x0)	E=- want alloc_slot=0x197a0..0x1a044
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:23	enframe	OK A-ONLY	A=0x1a044 (enframe+0x0)	E=- want enframe=0x1a044..0x1a194
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:24	malloc_allzerop	OK A-ONLY	A=0x1a194 (__malloc_allzerop+0x0)	E=- want __malloc_allzerop=0x1a194..0x1a30c
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:25	vm_wait	OK A-ONLY	A=0x1a30c (dummy+0x0)	E=- want __vm_wait=0x1a30c..0x1a310
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:26	mmap	OK A-ONLY	A=0x1a310 (mmap+0x0)	E=- want __mmap=0x1a310..0x1a3fc
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:27	mprotect	OK A-ONLY	A=0x1a3fc (mprotect+0x0)	E=- want __mprotect=0x1a3fc..0x1a444
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:28	munmap	OK A-ONLY	A=0x1a444 (munmap+0x0)	E=- want __munmap=0x1a444..0x1a48c
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:29	memcpy	OK A-ONLY	A=0x1f910 (memcpy+0x0)	E=- want memcpy=0x1f910..0x1fd14
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:30	memset	OK A-ONLY	A=0x1fd14 (memset+0x0)	E=- want memset=0x1fd14..0x1fe0c
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:31	strnlen	OK A-ONLY	A=0x1fed4 (strnlen+0x0)	E=- want strnlen=0x1fed4..0x1ff18
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:32	memchr	OK A-ONLY	A=0x1ff18 (memchr+0x0)	E=- want memchr=0x1ff18..0x1ffe4
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:33	lock	OK A-ONLY	A=0x1ffe4 (__lock+0x0)	E=- want __lock=0x1ffe4..0x2026c
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:34	unlock	OK A-ONLY	A=0x2026c (__unlock+0x0)	E=- want __unlock=0x2026c..0x202e0
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:35	syscall_cp_c	OK A-ONLY	A=0x202e0 (sccp+0x0)	E=- want __syscall_cp_c=0x202e0..0x20304
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:36	D_const_HIGHS_0x8080808080808080	NOSYM	V=0x103c0 ((no symbol))	no symbol named const_HIGHS_0x8080808080808080, __const_HIGHS_0x8080808080808080, _const_HIGHS_0x8080808080808080 or alike: not checked
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:37	D_const_ONES_0x0101010101010100	NOSYM	V=0x103d0 ((no symbol))	no symbol named const_ONES_0x0101010101010100, __const_ONES_0x0101010101010100, _const_ONES_0x0101010101010100 or alike: not checked
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:38	D_debruijn32	NOSYM	V=0x10460 (LLVMFuzzerTestOneInput.SCALE+0x20(end))	no symbol named debruijn32, __debruijn32, _debruijn32 or alike: not checked
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:39	D_size_classes	NOSYM	V=0x10530 (__malloc_size_classes+0x0)	no symbol named size_classes, __size_classes, _size_classes or alike: not checked
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:40	D_small_cnt_tab	OK	V=0x10590 (small_cnt_tab+0x0)	want small_cnt_tab=0x10590 (exact)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:41	D_med_cnt_tab	OK	V=0x105ab (med_cnt_tab+0x0)	want med_cnt_tab=0x105ab (exact)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:42	D_got_stack_chk_guard	NOSYM	V=0x214e0 ((no symbol))	no symbol named got_stack_chk_guard, __got_stack_chk_guard, _got_stack_chk_guard or alike: not checked
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:43	D_read_stage	OK	V=0x22759 (read_stage+0x0)	want read_stage=0x22759 (exact)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:44	DCELL44	NOSYM	V=0x32770 (oft_aligned_copy.empty+0x0)	no symbol named CELL44, CELL44, CELL44 or alike: not checked
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:45	D_stack_chk_guard	OK	V=0x62b20 (__stack_chk_guard+0x0)	want __stack_chk_guard=0x62b20 (underscore)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:46	D_libc	OK	V=0x62b40 (__libc+0x0)	want __libc=0x62b40 (underscore)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:47	D_malloc_lock	OK	V=0x62bb0 (__malloc_lock+0x0)	want __malloc_lock=0x62bb0 (underscore)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:48	D_malloc_context	OK	V=0x62bb8 (__malloc_context+0x0)	want __malloc_context=0x62bb8 (underscore)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:49	D_ofl_lock	OK	V=0x62f68 (ofl_lock+0x0)	want ofl_lock=0x62f68 (exact)
+proofs/libdiginet/fuzz_transport/lib/Reusable/YH03.v:50	D_ofl_head	OK	V=0x62f70 (ofl_head+0x0)	want ofl_head=0x62f70 (exact)
+# rows of base-ubsan (yh03check fb3bfbc1eea8, proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v on the ubsan twin c53d4b20cfc1)
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:9	main	OK A-ONLY	A=0x132c0 (main+0x0)	E=- want main=0x132c0..0x13584
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:10	target_run	OK A-ONLY	A=0x13590 (target_run+0x0)	E=- want target_run=0x13590..0x136e8
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:11	LLVMFuzzerTestOneInput	OK A-ONLY	A=0x13760 (LLVMFuzzerTestOneInput+0x0)	E=- want LLVMFuzzerTestOneInput=0x13760..0x1482c
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:12	stack_chk_fail	OK A-ONLY	A=0x19444 (__stack_chk_fail_local+0x0)	E=- want __stack_chk_fail=0x19444..0x1944c
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:13	syscall_ret	OK A-ONLY	A=0x1944c (__syscall_ret+0x0)	E=- want __syscall_ret=0x1944c..0x19484
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:14	errno_location	OK A-ONLY	A=0x19484 (__errno_location+0x0)	E=- want ___errno_location=0x19484..0x19490
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:15	free	OK A-ONLY	A=0x19490 (free+0x0)	E=- want free=0x19490..0x19494
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:16	malloc	OK A-ONLY	A=0x195d0 (malloc+0x0)	E=- want default_malloc=0x195d0..0x195d4
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:17	libc_free	OK A-ONLY	A=0x195d4 (__libc_free+0x0)	E=- want __libc_free=0x195d4..0x197a0
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:18	get_meta	OK A-ONLY	A=0x197a0 (get_meta+0x0)	E=- want get_meta=0x197a0..0x198b0
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:19	nontrivial_free	OK A-ONLY	A=0x198b0 (nontrivial_free+0x0)	E=- want nontrivial_free=0x198b0..0x19c88
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:20	alloc_meta	OK A-ONLY	A=0x19c88 (__malloc_alloc_meta+0x0)	E=- want __malloc_alloc_meta=0x19c88..0x19f60
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:21	libc_malloc_impl	OK A-ONLY	A=0x19f60 (__libc_malloc_impl+0x0)	E=- want __libc_malloc_impl=0x19f60..0x1a2d0
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:22	alloc_slot	OK A-ONLY	A=0x1a2d0 (alloc_slot+0x0)	E=- want alloc_slot=0x1a2d0..0x1ab74
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:23	enframe	OK A-ONLY	A=0x1ab74 (enframe+0x0)	E=- want enframe=0x1ab74..0x1acc4
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:24	malloc_allzerop	OK A-ONLY	A=0x1acc4 (__malloc_allzerop+0x0)	E=- want __malloc_allzerop=0x1acc4..0x1ae3c
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:25	vm_wait	OK A-ONLY	A=0x1ae3c (dummy+0x0)	E=- want __vm_wait=0x1ae3c..0x1ae40
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:26	mmap	OK A-ONLY	A=0x1ae40 (mmap+0x0)	E=- want __mmap=0x1ae40..0x1af2c
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:27	mprotect	OK A-ONLY	A=0x1af2c (mprotect+0x0)	E=- want __mprotect=0x1af2c..0x1af74
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:28	munmap	OK A-ONLY	A=0x1af74 (munmap+0x0)	E=- want __munmap=0x1af74..0x1afbc
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:29	memcpy	OK A-ONLY	A=0x20440 (memcpy+0x0)	E=- want memcpy=0x20440..0x20844
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:30	memset	OK A-ONLY	A=0x20844 (memset+0x0)	E=- want memset=0x20844..0x2093c
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:31	strnlen	OK A-ONLY	A=0x20a04 (strnlen+0x0)	E=- want strnlen=0x20a04..0x20a48
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:32	memchr	OK A-ONLY	A=0x20a48 (memchr+0x0)	E=- want memchr=0x20a48..0x20b14
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:33	lock	OK A-ONLY	A=0x20b14 (__lock+0x0)	E=- want __lock=0x20b14..0x20d9c
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:34	unlock	OK A-ONLY	A=0x20d9c (__unlock+0x0)	E=- want __unlock=0x20d9c..0x20e10
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:35	syscall_cp_c	OK A-ONLY	A=0x20e10 (sccp+0x0)	E=- want __syscall_cp_c=0x20e10..0x20e34
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:36	D_const_HIGHS_0x8080808080808080	NOSYM	V=0x103d0 ((no symbol))	no symbol named const_HIGHS_0x8080808080808080, __const_HIGHS_0x8080808080808080, _const_HIGHS_0x8080808080808080 or alike: not checked
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:37	D_const_ONES_0x0101010101010100	NOSYM	V=0x103e0 ((no symbol))	no symbol named const_ONES_0x0101010101010100, __const_ONES_0x0101010101010100, _const_ONES_0x0101010101010100 or alike: not checked
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:38	D_debruijn32	NOSYM	V=0x10500 (static_init_tls.msg+0x5c(end))	no symbol named debruijn32, __debruijn32, _debruijn32 or alike: not checked
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:39	D_size_classes	NOSYM	V=0x10520 (__malloc_size_classes+0x0)	no symbol named size_classes, __size_classes, _size_classes or alike: not checked
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:40	D_small_cnt_tab	OK	V=0x10580 (small_cnt_tab+0x0)	want small_cnt_tab=0x10580 (exact)
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:41	D_med_cnt_tab	OK	V=0x1059b (med_cnt_tab+0x0)	want med_cnt_tab=0x1059b (exact)
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:42	D_got_stack_chk_guard	NOSYM	V=0x22050 ((no symbol))	no symbol named got_stack_chk_guard, __got_stack_chk_guard, _got_stack_chk_guard or alike: not checked
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:43	D_read_stage	OK	V=0x232c9 (read_stage+0x0)	want read_stage=0x232c9 (exact)
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:44	DCELL44	NOSYM	V=0x332e0 (oft_aligned_copy.empty+0x0)	no symbol named CELL44, CELL44, CELL44 or alike: not checked
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:45	D_stack_chk_guard	OK	V=0x63690 (__stack_chk_guard+0x0)	want __stack_chk_guard=0x63690 (underscore)
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:46	D_libc	OK	V=0x636b0 (__libc+0x0)	want __libc=0x636b0 (underscore)
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:47	D_malloc_lock	OK	V=0x63720 (__malloc_lock+0x0)	want __malloc_lock=0x63720 (underscore)
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:48	D_malloc_context	OK	V=0x63728 (__malloc_context+0x0)	want __malloc_context=0x63728 (underscore)
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:49	D_ofl_lock	OK	V=0x63ad8 (ofl_lock+0x0)	want ofl_lock=0x63ad8 (exact)
+proofs/libdiginet/fuzz_transport/lib/U/Reusable/YH03.v:50	D_ofl_head	OK	V=0x63ae0 (ofl_head+0x0)	want ofl_head=0x63ae0 (exact)

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: flac
 harness: fuzzer_metadata
-rocq: OssFuzzTheorems.flac.fuzzer_metadata
+rocq: OSSVerify.flac.fuzzer_metadata
 origin: upstream
 summary: Writes the input to a temp .flac, runs level-0 getters, a level-1 SimpleIterator command sequence
   and a level-2 Chain/Iterator command sequence (get/insert/set/delete/resize blocks, sort/merge padding,

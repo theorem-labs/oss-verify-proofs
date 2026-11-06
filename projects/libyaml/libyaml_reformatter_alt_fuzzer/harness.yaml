@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libyaml
 harness: libyaml_reformatter_alt_fuzzer
-rocq: OssFuzzTheorems.libyaml.libyaml_reformatter_alt_fuzzer
+rocq: OSSVerify.libyaml.libyaml_reformatter_alt_fuzzer
 origin: oss-fuzz
 summary: load documents and yaml_emitter_dump each into a buffer (canonical/unicode flags from the first
   2 bytes); the emitted bytes are freed unread.

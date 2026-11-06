@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openvswitch
 harness: json_parser_target
-rocq: OssFuzzTheorems.openvswitch.json_parser_target
+rocq: OSSVerify.openvswitch.json_parser_target
 origin: upstream
 summary: json_from_string -> json_to_string (sorted, pretty) -> jsonrpc_msg_from_json -> jsonrpc_msg_to_json
   -> json_to_string; serialized strings are freed without comparison (a round trip is exercised but never

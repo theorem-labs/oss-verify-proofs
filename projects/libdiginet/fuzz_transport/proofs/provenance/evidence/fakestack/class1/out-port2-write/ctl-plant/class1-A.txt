@@ -1,0 +1,4 @@
+donor: pinned sha256 aac16e1fe728, twin sha256 78efaeda1de5, allocated sections equal (build-id note excepted): True
+target: pinned sha256 829764b54463, twin sha256 9dc57b2c7a71, allocated sections equal (build-id note excepted): True
+libreac/fuzz_ctrl at 2fceb489f4aa, class 1, image A: 8 ranges paired and compared (bodies __asan_stack_malloc_1); 19 resolve lines: 6 move a value (0x3dc3c -> 0x3dfc4, 0x9fac0 -> 0xa4080, 0x9fb20 -> 0xa40e0, 0xa07b0 -> 0xa4d70, 0xa07c0 -> 0xa4d80), 0 name the image of a header range, the rest keep the value
+FAIL: A/Rt/StackMalloc1Tbl.v range 0x3d72c (__asan_stack_malloc_1): range DIFFERENT (8, 1, 0) 0 differ; function DIFFERENT (8, 1, 0) 0 differ

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libcoap
 harness: get_asn1_tag_fuzzer
-rocq: OssFuzzTheorems.libcoap.get_asn1_tag_fuzzer
+rocq: OSSVerify.libcoap.get_asn1_tag_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

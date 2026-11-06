@@ -1,0 +1,9 @@
+xcheck rc=1 519s
+control rc=0 245s
+sweep rc=1 389s
+sweep2 rc=1 323s
+record rc=0 2s
+record run rc=1 (1 = WRONG rows listed, read by hand in the record)
+controls: 8 planted, 8 caught, 0 other rows changed; decide status 1 (1 = WRONG rows reported)
+controls: 80 planted, 80 caught, 1 other rows changed; decide status 1 (1 = WRONG rows reported)
+controls: 120 planted, 120 caught, 4 other rows changed; decide status 1 (1 = WRONG rows reported)

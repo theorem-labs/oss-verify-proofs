@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wolftpm
 harness: fwtpm_fuzz
-rocq: OssFuzzTheorems.wolftpm.fwtpm_fuzz
+rocq: OSSVerify.wolftpm.fwtpm_fuzz
 origin: upstream
 summary: Raw TPM command packet (10 bytes .. FWTPM_MAX_COMMAND_SIZE) into FWTPM_ProcessCommand of a persistent
   firmware-TPM context (after TPM2_Startup, reset every 1000 iterations); the response and rspSize are

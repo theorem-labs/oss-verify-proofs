@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libultrahdr
 harness: ultrahdr_dec_fuzzer
-rocq: OssFuzzTheorems.libultrahdr.ultrahdr_dec_fuzzer
+rocq: OSSVerify.libultrahdr.ultrahdr_dec_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

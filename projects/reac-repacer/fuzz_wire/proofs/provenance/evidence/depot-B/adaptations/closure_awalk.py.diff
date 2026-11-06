@@ -1,0 +1,45 @@
+--- 4483a8de6e6f:proofs/reac-repacer/fuzz_wire/provenance/evidence/depot/closure_awalk.py
++++ depot-B/closure_awalk.py
+@@ -1,21 +1,34 @@
+ #!/usr/bin/env python3
+-"""closure_awalk.py FILE... -- second closure rule (pending ruling): in the Require-closure files (knock-only lib/A files),
++"""closure_awalk.py [--image A|B] FILE... -- second closure rule (pending ruling): in the Require-closure files (knock-only lib/A files),
+ the module AWalkFw0 in a `Require` line is written as AB1v, the same rename as the consumer merges (--merge
+ F:2:AWalkFw0=AB1v). In libreac/fuzz_knock, AB1v takes its tfibsegs from AWalkFw0 (one constant); in this unit (grant
+ lineage) AB1v defines tfibsegs itself, so a closure file must name AB1v's to meet the consumers' (measured: A/AD3g.v:244
+ `Found no subterm matching "AB1v.tfibsegs"`). Only `Require` lines change; AWalkFw0 then leaves the closure. Each site
+-is printed (FILE:LINE: before -> after) with the total; a qualified use AWalkFw0.x in code refuses (exit)."""
+-import re, sys
++is printed (FILE:LINE: before -> after) with the total; a qualified use AWalkFw0.x in code refuses (exit).
++--image B: the image-B files (lib/B), where the module is YB1v. Code only: a line is read with comments removed (a comment
++that names AWalkFw0 next to the word Require is not touched), and a Require line that also holds a comment refuses."""
++import os, re, sys
+ 
++sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
++from depot_classify import decomment
++
+ total = 0
+-for f in sys.argv[1:]:
+-    lines = open(f).read().split('\n')
++args = sys.argv[1:]
++V = 'AB1v'
++if args[:1] == ['--image']:
++    V = {'A': 'AB1v', 'B': 'YB1v'}[args[1]]
++    args = args[2:]
++for f in args:
++    text = open(f).read()
++    lines, code = text.split('\n'), decomment(text).split('\n')
+     n = 0
+     for i, ln in enumerate(lines):
+-        if re.search(r'\bAWalkFw0\.[A-Za-z_]', ln):
++        if re.search(r'\bAWalkFw0\.[A-Za-z_]', code[i]):
+             sys.exit('closure_awalk: %s:%d uses AWalkFw0 qualified: %s' % (f, i + 1, ln.strip()))
+-        if re.search(r'\bRequire\b', ln) and re.search(r'\bAWalkFw0\b', ln):
+-            new = re.sub(r'\s*\bAWalkFw0\b', '', ln) if re.search(r'\bAB1v\b', ln) else re.sub(r'\bAWalkFw0\b', 'AB1v', ln)
++        if re.search(r'\bRequire\b', code[i]) and re.search(r'\bAWalkFw0\b', code[i]):
++            if code[i] != ln:
++                sys.exit('closure_awalk: %s:%d: a Require line with a comment: %s' % (f, i + 1, ln.strip()))
++            new = re.sub(r'\s*\bAWalkFw0\b', '', ln) if re.search(r'\b%s\b' % V, ln) else re.sub(r'\bAWalkFw0\b', V, ln)
+             print('%s:%d: %s  ->  %s' % (f.split('/lib/')[-1], i + 1, ln.strip(), new.strip()))
+             lines[i] = new
+             n += 1

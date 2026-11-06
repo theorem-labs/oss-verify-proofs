@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: capstone
 harness: fuzz_disasmnext
-rocq: OssFuzzTheorems.capstone.fuzz_disasmnext
+rocq: OSSVerify.capstone.fuzz_disasmnext
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

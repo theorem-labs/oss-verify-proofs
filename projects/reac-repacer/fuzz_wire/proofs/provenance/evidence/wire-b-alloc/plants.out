@@ -1,0 +1,14 @@
+#	X fuzz_wire.asan-ubsan sha256 51eb4bef2425	Y fuzz_grant.asan-ubsan sha256 5a5ee7c02b4e	compared functions 943
+PLANT-A	_ZN6__asan16AllocatorOptions7SetFromEPKNS_5FlagsEPKN11__sanitizer11CommonFlagsE	+0x10	lui t0,0x700 ; lui t1,0xffa00 ; add t0,t0,t1 ; sd zero,0(t0)	the sum 0x100000 is _ZN11__sanitizerL26internal_alloc_placeholderE+0x5e600 in X and _ZN11__sanitizerL26internal_alloc_placeholderE+0x59480 in Y
+PLANT-A-ROW	+0x1c base	DIFFERS	full address X ['_ZN11__sanitizerL26internal_alloc_placeholderE+0x5e600'] | Y ['_ZN11__sanitizerL26internal_alloc_placeholderE+0x59480']
+PLANT-A-VERDICT	CAUGHT: DIFFERS
+PLANT-A-KIT	_ZN6__asan16AllocatorOptions7SetFromEPKNS_5FlagsEPKN11__sanitizer11CommonFlagsE	verdict EQUAL	target-differ 0	(the kit of record on the planted pair)
+PLANT-C	_ZN6__asan16AllocatorOptions7SetFromEPKNS_5FlagsEPKN11__sanitizer11CommonFlagsE	+0x10	lui t0,0x700 ; li t1,14 ; divuw t0,t0,t1 ; slli t0,t0,1 ; sd zero,0(t0)	the value 0x100000 is _ZN11__sanitizerL26internal_alloc_placeholderE+0x5e600 in X and _ZN11__sanitizerL26internal_alloc_placeholderE+0x59480 in Y
+PLANT-C-ROW	+0x20 base	DIFFERS	full address X ['_ZN11__sanitizerL26internal_alloc_placeholderE+0x5e600'] | Y ['_ZN11__sanitizerL26internal_alloc_placeholderE+0x59480']
+PLANT-C-VERDICT	CAUGHT: DIFFERS
+PLANT-C-KIT	_ZN6__asan16AllocatorOptions7SetFromEPKNS_5FlagsEPKN11__sanitizer11CommonFlagsE	verdict EQUAL	target-differ 0	(the kit of record on the planted pair)
+PLANT-B	_ZN11__sanitizer10StackStore9BlockInfo11GetOrUnpackEPS0_	+0x308	the call at +0x30c is re-pointed to _ZN11__sanitizer10ProtectGapEmmmm (X 0x6b70c, Y 0x6c550), whose parameter a3 is `uptr zero_base_max_shadow_start` (an address) [sanitizer_common/sanitizer_common.h:160 `uptr zero_base_max_shadow_start` (2 declarations match; the first by header, then file name)]
+PLANT-B-ROW	+0x30c arg	NOT CERTIFIED	_ZN11__sanitizer10ProtectGapEmmmm parameter a3 `uptr zero_base_max_shadow_start`: an address-sized integer whose name does not say it is a count or a length [sa
+PLANT-B-BEFORE	+0x30c arg (i) CALL ARGUMENT
+PLANT-B-VERDICT	REFUSED: NOT CERTIFIED
+PLANT-B-KIT	_ZN11__sanitizer10StackStore9BlockInfo11GetOrUnpackEPS0_	verdict DIFFERENT-target	target-differ [('0x308', '_ZN11__sanitizerL26internal_alloc_placeholderE+0x5e600', '_ZN11__sanitizerL26internal_alloc_placeholderE+0x59480', 'lui-in-section', ('0x100000 in .bss | 0x100000 in .bss', 'names', None))]

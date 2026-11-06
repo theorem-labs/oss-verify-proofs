@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: coturn
 harness: FuzzStunClient
-rocq: OssFuzzTheorems.coturn.FuzzStunClient
+rocq: OSSVerify.coturn.FuzzStunClient
 origin: upstream
 summary: 7 sub-harnesses (message-type classification, channel-data framing, address encode and decode, request
   and response builders, first-address attribute lookup, a response matrix, the stun_buffer API); every return

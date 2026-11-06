@@ -1,0 +1,170 @@
+# Generator recipe: lib/CJ/RL/GX/G_vsnprintf.v, the program tree vsnprintf_prog (lines 28-90)
+
+## The lines this recipe covers
+
+Lines 28-90 of lib/CJ/RL/GX/G_vsnprintf.v at commit dde52d349c2c34a82325f0f2f2d973bf87d8c2b4 (blob cdfc880101f30ef1627330444aa65d4ae9e514d2,
+sha256 e9ac7aca96e3cecc11c3945330e4dd7b37535a49e97557bd2f830462bd0106d0): the Definition of vsnprintf_prog, from its `Definition` line to the line that ends
+with `.`, that is the `PNode` and `PJ_<op>` lines of the tree. As a file (the 63 lines and a final newline) they have
+sha256 742a4b6bacb2d4039dc84b64078c8ae20f8d838b5304cc10599119201eb8be11.
+
+The tree is used at line 114: `Definition PROGAT_CODE_vsnprintf (IMG : RImg) := vsnprintf_prog (sym 0x7f000200) (sym 0x22e18) (sym 0x21738) (sym K_SN_WRITE) (sym 0x7f000400) (sym 0x15f04).`.
+The file's Requires name no image: its Section takes `Context {IMG : RImg}`. The unit gives IMG for lib/CJ/RL/GX in lib/CJ/RL/I/InstFmtP.v (the plain image, key map lib/CJ/RL/I/IImgP.v: N_img_fmt, which is N_sym on every key but 0x35000) and in lib/CJ/RL/I/InstFmtU.v (the ubsan image, key map lib/CJ/RL/I/IImgU.v). So the pins of this tree are fuzz_command.plain and fuzz_command.ubsan.
+
+## The generator
+
+- ptree_emit.py, sha256 000e02022cc9d7fdc7a84ce4f62959039a57c2c1a13d601880297c2739c408a7. Python 3.12.3, standard library and pyelftools 0.33, no
+  network. It reads the function's bytes from the image's PT_LOAD segment, decodes each 32-bit word as the 32-bit
+  decoder of the RISC-V semantics (theories/Riscv/Decode.v) does, writes it as the notation PJ_<constructor>_... of
+  lib/CJ/RL/Reloc/RProgNotJ.v (blob 64af5199ca0d90beff75c174ed890d361e0be2d3) with Instr.v's operand order and each
+  field's unsigned value, writes a jal out of the function and each auipc pair as a term over the parameters (checked
+  against RStep.v's jimm21, hi20 and lo12 before it is written), and lays the tree out in leaves of 10 instructions,
+  split at len // 2 leaves. Its docstring states every rule. It writes the Definition block only, and refuses (exit 2,
+  nothing written) a word it cannot write as a PJ notation, an external address the map does not name, and any
+  argument or output that holds a string of the --deny list.
+- resolve_keys.py, sha256 f6d960fa05b157fd3c0a0014284b1e1ad5e2b84c56b115f27c2324d09e181aa2. It carries each `sym` key of line 114 to the image as
+  IInst.v's tsym does, and names the twin's symbol at each address (for a .got slot: the symbol its 8 bytes point to).
+  ptree_emit.py does not read its output: the addresses it prints are copied into the command.
+
+## Inputs
+
+| input | file | sha256 |
+|---|---|---|
+| image (published) | fuzz_command.plain: $PINS/plain/fuzz_command | a20873dc7f0ef97c37ed3d3ba52f8ec46c65d11791861ddd9496eb460162d163 |
+| its unstripped twin (resolve_keys.py only: symbols, .got) | $PINS/plain/fuzz_command.debug | fbe3a48ad296243f008e6b74dc919b75eddf7fe1d4b5b2da836a012dd0e22bd4 |
+| key map of fuzz_command.plain (resolve_keys.py only) | $UNIT/lib/CJ/RL/I/IImgP.v, blob 05d241a79cd8f47937a7ca2221a0e882187eb9e6 | 38f98f59eecf990eb12369c2a9423dc8d1baf87aa4466764d76a18f7f6f39a9a |
+| image (published) | fuzz_command.ubsan: $PINS/ubsan/fuzz_command | 941fc716e36e0a944c349592946c49198ea064477c1dae4fbd5a655ca658eab9 |
+| its unstripped twin (resolve_keys.py only: symbols, .got) | $PINS/ubsan/fuzz_command.debug | b53195c315816eb593a1d71121c92df9e865f0586dd4edbdbcad9b18cbbd79f5 |
+| key map of fuzz_command.ubsan (resolve_keys.py only) | $UNIT/lib/CJ/RL/I/IImgU.v, blob 02618dbf51b82c01279dd725d09071474b3e6b61 | b7b326c198cbb0564fa4de70b880f960644ee560ac29f4571bf4f77903c3a5f9 |
+| image (published) | fuzz_command.asan: $PINS/asan/fuzz_command | c0661b96b5bd458ba489f91a4693b6a8acd6c0f74d5e20798ed78e937f858bb9 |
+| its unstripped twin (resolve_keys.py only: symbols, .got) | $PINS/asan/fuzz_command.debug | 68db792d5fa79d84aff962832b8860777b5da99be208f85fc20e427c7697e30d |
+| key map of fuzz_command.asan (resolve_keys.py only) | $UNIT/lib/A/RT_IImgA.v, blob 4dec0001329f7e9118840ba37dbaba853b5f2da5 | 8767cfd8a008e6b925ebb9481ab3bb97c3eab5bde7d046d1e88c754787cbd11f |
+| image (published) | fuzz_command.asan-ubsan: $PINS/asan-ubsan/fuzz_command | bbe55d24d0965b89b7fe2ae4d7d8f984d83fba09ca3caab96b10d6c1a1ffab16 |
+| its unstripped twin (resolve_keys.py only: symbols, .got) | $PINS/asan-ubsan/fuzz_command.debug | 658cefbe806b535ba1fbe5a37c8efe02099fc39c326f300e9b1c969d479df401 |
+| key map of fuzz_command.asan-ubsan (resolve_keys.py only) | $UNIT/lib/B/RT_IImgA.v, blob ed415bc88cf4480866c749842c669a6919373e2e | 1e439d6c99f567f3b0c2e7991145e4c66c0b7feccebc61a02c46a9919bd701ea |
+| deny list (ptree_emit.py --deny): internal names, one per line; private, not published | $DENY | bcdc797a74b48a2a76d955655628e1c61c538beb30226e15895b2c59a90d5763 |
+
+$PINS holds plain/, ubsan/, asan/ and asan-ubsan/, each with the image and its twin. $UNIT is the unit root
+projects/plugin-hostd/fuzz_command/proofs at dde52d349c2c. The deny list changes no output byte: it only makes the
+generator refuse an argument or an output that holds one of its strings.
+
+## fuzz_command.plain (the unit's pin)
+
+Key resolution (key map lib/CJ/RL/I/IImgP.v, lists N_exact and N_iv):
+
+    python3 resolve_keys.py --map $UNIT/lib/CJ/RL/I/IImgP.v --exact N_exact --iv N_iv \
+      --twin $PINS/plain/fuzz_command.debug --pin $PINS/plain/fuzz_command --fn 0x7f000200 \
+      --key got_ssp=0x22e18 --key B_memset=0x21738 --key K_snw=0x7f000300 --key B_vfprintf=0x7f000400 \
+      --key B_stack_chk_fail=0x15f04
+
+Output (tab-separated):
+
+    function	0x7f000200	0x1f90c	vsnprintf+0x0	size 204
+    got_ssp	0x22e18	0x22a68	.got+0xa0	slot holds 0x54450 = __stack_chk_guard+0x0
+    B_memset	0x21738	0x20914	memset+0x0	size 248
+    K_snw	0x7f000300	0x1f9d8	sn_write+0x0	size 220
+    B_vfprintf	0x7f000400	0x1af4c	vfprintf+0x0	size 432
+    B_stack_chk_fail	0x15f04	0x18880	__stack_chk_fail/__stack_chk_fail_local+0x0	size 8
+    bytes	0x1f90c+204	equal in twin and image
+
+Command:
+
+    python3 ptree_emit.py --pin $PINS/plain/fuzz_command --start 0x1f90c --end 0x1f9d8 \
+      --target got_ssp=0x22a68 --target B_memset=0x20914 --target K_snw=0x1f9d8 \
+      --target B_vfprintf=0x1af4c --target B_stack_chk_fail=0x18880 --name vsnprintf_prog --base B \
+      --deny $DENY --out vsnprintf.plain.v
+
+Result: exit 0; vsnprintf.plain.v, sha256 742a4b6bacb2d4039dc84b64078c8ae20f8d838b5304cc10599119201eb8be11. `diff` against lines 28-90 (as a file) is
+empty: BYTE-EQUAL. A second run wrote the same bytes.
+
+## fuzz_command.ubsan (the unit's pin)
+
+Key resolution (key map lib/CJ/RL/I/IImgU.v, lists N_exact and N_iv):
+
+    python3 resolve_keys.py --map $UNIT/lib/CJ/RL/I/IImgU.v --exact N_exact --iv N_iv \
+      --twin $PINS/ubsan/fuzz_command.debug --pin $PINS/ubsan/fuzz_command --fn 0x7f000200 \
+      --key got_ssp=0x22e18 --key B_memset=0x21738 --key K_snw=0x7f000300 --key B_vfprintf=0x7f000400 \
+      --key B_stack_chk_fail=0x15f04
+
+Output (tab-separated):
+
+    function	0x7f000200	0x1fb10	vsnprintf+0x0	size 204
+    got_ssp	0x22e18	0x22d40	.got+0xa0	slot holds 0x54730 = __stack_chk_guard+0x0
+    B_memset	0x21738	0x20b18	memset+0x0	size 248
+    K_snw	0x7f000300	0x1fbdc	sn_write+0x0	size 220
+    B_vfprintf	0x7f000400	0x1b150	vfprintf+0x0	size 432
+    B_stack_chk_fail	0x15f04	0x18a84	__stack_chk_fail/__stack_chk_fail_local+0x0	size 8
+    bytes	0x1fb10+204	equal in twin and image
+
+Command:
+
+    python3 ptree_emit.py --pin $PINS/ubsan/fuzz_command --start 0x1fb10 --end 0x1fbdc \
+      --target got_ssp=0x22d40 --target B_memset=0x20b18 --target K_snw=0x1fbdc \
+      --target B_vfprintf=0x1b150 --target B_stack_chk_fail=0x18a84 --name vsnprintf_prog --base B \
+      --deny $DENY --out vsnprintf.ubsan.v
+
+Result: exit 0; vsnprintf.ubsan.v, sha256 742a4b6bacb2d4039dc84b64078c8ae20f8d838b5304cc10599119201eb8be11. `diff` against lines 28-90 (as a file) is
+empty: BYTE-EQUAL. A second run wrote the same bytes.
+
+## fuzz_command.asan (another pin of the build)
+
+Key resolution (key map lib/A/RT_IImgA.v, lists A_exact_vsn and A_iv):
+
+    python3 resolve_keys.py --map $UNIT/lib/A/RT_IImgA.v --exact A_exact_vsn --iv A_iv \
+      --twin $PINS/asan/fuzz_command.debug --pin $PINS/asan/fuzz_command --fn 0x7f000200 \
+      --key got_ssp=0x22e18 --key B_memset=0x21738 --key K_snw=0x7f000300 --key B_vfprintf=0x7f000400 \
+      --key B_stack_chk_fail=0x15f04
+
+Output (tab-separated):
+
+    function	0x7f000200	0x9e490	vsnprintf+0x0	size 204
+    got_ssp	0x22e18	0xa7098	.got+0xd08	slot holds 0x6045d8 = __stack_chk_guard+0x0
+    B_memset	0x21738	0x57628	__interceptor_trampoline_memset/__wrap_memset+0x0	size 4
+    K_snw	0x7f000300	0x9e55c	sn_write+0x0	size 220
+    B_vfprintf	0x7f000400	0x45174	__interceptor_trampoline_vfprintf/__wrap_vfprintf+0x0	size 4
+    B_stack_chk_fail	0x15f04	0x94ffc	__stack_chk_fail/__stack_chk_fail_local+0x0	size 8
+    bytes	0x9e490+204	equal in twin and image
+
+Command:
+
+    python3 ptree_emit.py --pin $PINS/asan/fuzz_command --start 0x9e490 --end 0x9e55c \
+      --target got_ssp=0xa7098 --target B_memset=0x57628 --target K_snw=0x9e55c \
+      --target B_vfprintf=0x45174 --target B_stack_chk_fail=0x94ffc --name vsnprintf_prog --base B \
+      --deny $DENY --out vsnprintf.asan.v
+
+Result: exit 0; vsnprintf.asan.v, sha256 742a4b6bacb2d4039dc84b64078c8ae20f8d838b5304cc10599119201eb8be11. `diff` against lines 28-90 (as a file) is
+empty: BYTE-EQUAL. A second run wrote the same bytes.
+
+## fuzz_command.asan-ubsan (another pin of the build)
+
+Key resolution (key map lib/B/RT_IImgA.v, lists A_exact_vsn and A_iv):
+
+    python3 resolve_keys.py --map $UNIT/lib/B/RT_IImgA.v --exact A_exact_vsn --iv A_iv \
+      --twin $PINS/asan-ubsan/fuzz_command.debug --pin $PINS/asan-ubsan/fuzz_command --fn 0x7f000200 \
+      --key got_ssp=0x22e18 --key B_memset=0x21738 --key K_snw=0x7f000300 --key B_vfprintf=0x7f000400 \
+      --key B_stack_chk_fail=0x15f04
+
+Output (tab-separated):
+
+    function	0x7f000200	0x9dfec	vsnprintf+0x0	size 204
+    got_ssp	0x22e18	0xa6bf8	.got+0xd08	slot holds 0x604158 = __stack_chk_guard+0x0
+    B_memset	0x21738	0x57674	__interceptor_trampoline_memset/__wrap_memset+0x0	size 4
+    K_snw	0x7f000300	0x9e0b8	sn_write+0x0	size 220
+    B_vfprintf	0x7f000400	0x451c0	__interceptor_trampoline_vfprintf/__wrap_vfprintf+0x0	size 4
+    B_stack_chk_fail	0x15f04	0x94b58	__stack_chk_fail/__stack_chk_fail_local+0x0	size 8
+    bytes	0x9dfec+204	equal in twin and image
+
+Command:
+
+    python3 ptree_emit.py --pin $PINS/asan-ubsan/fuzz_command --start 0x9dfec --end 0x9e0b8 \
+      --target got_ssp=0xa6bf8 --target B_memset=0x57674 --target K_snw=0x9e0b8 \
+      --target B_vfprintf=0x451c0 --target B_stack_chk_fail=0x94b58 --name vsnprintf_prog --base B \
+      --deny $DENY --out vsnprintf.asan-ubsan.v
+
+Result: exit 0; vsnprintf.asan-ubsan.v, sha256 742a4b6bacb2d4039dc84b64078c8ae20f8d838b5304cc10599119201eb8be11. `diff` against lines 28-90 (as a file) is
+empty: BYTE-EQUAL. A second run wrote the same bytes.
+
+## Verdict
+
+BYTE-EQUAL on both of the unit's pins (fuzz_command.plain and fuzz_command.ubsan). On the other two pins of the
+build (fuzz_command.asan, fuzz_command.asan-ubsan) the output is the same bytes. Lines 28-90 are the output of
+ptree_emit.py (sha256 000e02022cc9d7fdc7a84ce4f62959039a57c2c1a13d601880297c2739c408a7) on the unit's pins.

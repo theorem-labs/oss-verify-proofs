@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: haproxy
 harness: fuzz_h1_parse
-rocq: OssFuzzTheorems.haproxy.fuzz_h1_parse
+rocq: OSSVerify.haproxy.fuzz_h1_parse
 origin: oss-fuzz
 summary: First byte selects request/response; h1_headers_to_hdr_list over a NUL-terminated copy of the
   rest into a 101-entry header list; the return value, parsed start line and headers are discarded.

@@ -1,0 +1,234 @@
+schema: oss-fuzz-theorems/harness/1
+project: libdiginet
+harness: fuzz_transport
+rocq: OssFuzzTheorems.libdiginet.fuzz_transport
+origin: upstream
+summary: 'Runs the library''s control-surface session state machine with the harness as its network io and clock. A config
+  is read from the input, then up to 1024 operations: raw or built desk frames, announces, time passing, submitted commands,
+  wake, close, a failing send, and polls. The harness runs its own model of the documented session alongside and holds every
+  frame sent, every notice, the state, the timers and the command queue to that model. Inputs of 64 MiB or more are ignored.'
+entry: LLVMFuzzerTestOneInput
+source:
+  files:
+  - source/fuzz_transport.c
+  - source/fuzz.h
+  - source/spec.h
+  from:
+    repository: https://github.com/FreeMixer/libdiginet
+    commit: 835f336ccb7abac683681c5791a5715041c71e32
+    path: fuzz/fuzz_transport.c
+  modified: false
+  licence: GPL-3.0-or-later
+library:
+  repository: https://github.com/FreeMixer/libdiginet
+  commit: 835f336ccb7abac683681c5791a5715041c71e32
+  version: 0.1.1
+  licence: GPL-3.0-or-later
+modifications:
+- 'Linked against libdiginet at commit 835f336c: the frame, command cursor, controls and decoder sources and the session state
+  machine, built into one static library. The packet socket and descriptor io are not built; the library''s own libFuzzer
+  build uses the same sources.'
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on
+  its input.
+- A small driver reads the input file, calls the fuzz target one to four times and prints each return value.
+builds:
+  plain:
+    file: fuzz_transport.plain
+    bytes: 64568
+    sha256: 81d5585d6e5c54a3bcd78f29ccbaf477ac6949fa7253b977e4d60618dbd540b0
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+  ubsan:
+    file: fuzz_transport.ubsan
+    bytes: 67520
+    sha256: 9743b17ae4e0077df225ced728f295d5446473b1666c1a6a04a256fd306a373b
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+  asan:
+    file: fuzz_transport.asan
+    bytes: 616792
+    sha256: e89be137db17b720e0310addc2dcc601998945478a9102e6a9850b0566106350
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+  asan-ubsan:
+    file: fuzz_transport.asan-ubsan
+    bytes: 615896
+    sha256: 41113a03c82fde8282db830ab5f4fbe376e392a38d22670b8cb8c9f02969ece4
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+licence: NOASSERTION
+checks:
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_transport.c:1157-1164
+  what: The session accepts every configuration the harness builds, each within the documented ranges.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_transport.c:398-420
+  what: Every frame the session sends is a well-formed frame from this host to the known desk, zero-padded to 60 bytes, with
+    the right header sum, and never holds the system family F0 13 xx 70.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_transport.c:422-430
+  what: Each acknowledgement the session sends echoes the send counter of the desk frame it answers, with no body and retry
+    0.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_transport.c:432-495
+  what: A new data frame goes only while online, with nothing in flight and no back-off holding; a retransmission is the frame
+    in flight again, byte for byte but its retry field, which counts 1, 2, ... never past the retry limit, and goes no sooner
+    than the timeout; the acked notice names the frame in flight; the ack-lost notice comes for it after exactly the retry
+    limit.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_transport.c:497-569
+  what: Online only after the desk acknowledges the wake frame and an e1 names this host since then; no wake frame while the
+    desk is in a session with another host, and a wake returns the documented code; each desk announce notice carries the
+    place of this host address, the desk type, the version and the name, and each desk data notice its body, counter and retry.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_transport.c:571-580
+  what: 'A keepalive goes only when due on its own clock, while online, with nothing in flight and no back-off holding: never
+    early.'
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_transport.c:582-654
+  what: Each sent data frame stays within the command and body limits and carries the host counter advanced by its commands;
+    with tagged commands, its count is right, it carries only commands submitted and still pending, and a frame with display
+    writes follows the last by at least the configured gap.
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_transport.c:656-676
+  what: Submit refuses a command holding F0 13 xx 70 and nothing else as such, and refuses for a full queue only when 512
+    commands are pending.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_transport.c:680-688
+  what: After each operation, the session has acknowledged each desk data frame owed an acknowledgement once each time it
+    came, and no other frame.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_transport.c:690-742
+  what: After each operation, a wake frame went exactly when the host woke and a close frame exactly when owed; each desk
+    data frame but a keepalive or a repeat, each announce and each foreign session was noticed as owed; and the state changed
+    exactly as the header diagram says, in order, each change naming its reason.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_transport.c:744-771
+  what: After each operation, an acknowledgement of the frame in flight was taken and noticed, a frame in flight still unacknowledged
+    after the timeout was sent again or dropped, and the reported deadline is from now to one second away and never later
+    than the next retransmission.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_transport.c:773-783
+  what: 'After each operation, with tagged commands, a keepalive due while online with nothing in flight and no back-off holding
+    has gone: never skipped.'
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_transport.c:785-819
+  what: With tagged commands, after each operation the queue holds exactly the pending commands in order, a newer command
+    in its key place, and after a tick a command that may go has gone.
+failure_handlers: none
+statements:
+  plain_halts:
+    kind: halts
+    builds:
+    - plain
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  ubsan_halts:
+    kind: halts
+    builds:
+    - ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_halts:
+    kind: halts
+    builds:
+    - asan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_ubsan_halts:
+    kind: halts
+    builds:
+    - asan-ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open
+  ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - ubsan
+    reading: alloc-forced-only
+    budgets: standard
+    status: open
+  asan_ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan-ubsan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open

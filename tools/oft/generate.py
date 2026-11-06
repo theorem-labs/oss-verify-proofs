@@ -7,14 +7,12 @@ what CI runs: a hand-edited generated file, a stale one, or a facts change
 without its rendering all fail it.
 """
 import os
+import posixpath
 import sys
 
-from . import facts, names, paths, render, rules, schema, shapes
+from . import facts, layout, names, paths, render, rules, schema, shapes
 from .facts import PHRASEBOOK as PB
 
-THEORY_DEPS = "Stdlib stdpp ReadFile Flocq LinuxProcessSemantics OssFuzzTheorems.Core"
-# A proof may also use Ltac2, which Rocq installs as its own theory; dune finds a theory only when it is listed.
-PROOF_THEORY_DEPS = THEORY_DEPS + " Ltac2"
 REPO_URL = "https://github.com/theorem-labs/oss-verify-proofs"
 COUNT_WORDS = {1: "One", 2: "Two", 3: "Three", 4: "Four"}
 STOP_WORDS = {"abort": "abort()", "assert": "assert()", "trap": "a trap", "throw": "an uncaught exception",
@@ -137,9 +135,9 @@ def statements_v(h):
                 subject=_t(T, "subject_" + _origin(h), count=COUNT_WORDS[len(builds)], s="" if len(builds) == 1 else "s",
                            harness=h.name, project=h.project.name, library=lib),
                 build_table="\n".join(_t(T, _lang(h, "build_" + b)) for b in builds),
-                driver=(_t(T, "driver_api", library_name=lib_name, source=_source_words(h))
+                driver=(_t(T, "driver_api", library_name=lib_name, source=_source_words(h), namespace=h.tree.namespace)
                         if h.data["origin"] == "this-repository"
-                        else _t(T, _lang(h, "driver_harness"), entry=h.data["entry"])
+                        else _t(T, _lang(h, "driver_harness"), entry=h.data["entry"], namespace=h.tree.namespace)
                         + (_t(T, "driver_" + h.project.data["language"],
                               **({"go": h.project.data["build"]["go"]} if h.project.data["language"] == "go" else {}))
                            if h.project.data["language"] in DRIVER_NOTES else "")),
@@ -167,7 +165,7 @@ def statements_v(h):
     proving = _t(T, "proving", project=h.project.name, harness=h.name, example=example,
                  bound_example=_t(T, "bound_example", name=bounds[0].name) if bounds else "")
     return _t(T, "file", project=h.project.name, harness=h.name, header=_comment(header, False),
-              rocq=h.data["rocq"], distribution_require=" Distribution" if bounds else "",
+              namespace=h.tree.namespace, rocq=h.data["rocq"], distribution_require=" Distribution" if bounds else "",
               sections="\n" + "\n\n".join(sections) + "\n",
               proving=_comment(proving, False)) + "\n"
 
@@ -319,21 +317,59 @@ def characterise_v(h):
                 and_rejects=_t(T, "and_rejects") if any_bound else "",
                 and_claim=_t(T, "and_claim") if any_bound else "")
     return _t(T, "file", project=h.project.name, harness=h.name, header=_comment(header, False),
-              rocq=h.data["rocq"], distribution_require=" Distribution" if any_bound else "",
+              namespace=h.tree.namespace, rocq=h.data["rocq"],
+              distribution_require=" Distribution" if any_bound else "",
               definitions="\n" + "\n\n".join(defs)) + "\n"
 
 
-# ------------------------------------------------------- Images.v, dune files
+# --------------------------------------------- Images.v, Symbols.v, dune files
 
 def images_v(h):
     T = "Images.v.tmpl"
     builds = [b for b, _ in h.builds()]
     return _t(T, "file", project=h.project.name, harness=h.name, count=COUNT_WORDS[len(builds)].lower(),
-              s="s" if len(builds) > 1 else "", header=_comment(_t(T, "header"), False), rocq=h.data["rocq"],
+              s="s" if len(builds) > 1 else "", namespace=h.tree.namespace, rocq=h.data["rocq"],
+              header=_comment(_t(T, "header", namespace=h.tree.namespace), False),
               modules=" ".join(names.BUILD_MODULE[b] for b in builds),
               definitions="\n".join(_t(T, "definition", ident=names.BUILD_IDENT[b], module=names.BUILD_MODULE[b])
                                     for b in builds),
               lemmas="\n".join(_t(T, "lemma", ident=names.BUILD_IDENT[b]) for b in builds)) + "\n"
+
+
+def _symbols_namespace(T, rows, idents, what):
+    """The values of one namespace of a Symbols.v module (template blocks module and sections): the comment on the
+    names its rows share, which it leaves out, and the definitions of the addresses and of the sizes of the others."""
+    shared = ["[%s]" % n for n in dict.fromkeys(s.name for s in rows) if n not in idents]
+    left_out = ""
+    if shared:
+        block = "left_out_one" if len(shared) == 1 else "left_out_many"
+        left_out = _t(T, "left_out", text=_comment(_t(T, block, what=what, names=render.join_words(shared)))) + "\n"
+    named = [s for s in rows if s.name in idents]
+    return dict(left_out=left_out,
+                addresses="\n".join(_t(T, "address", ident=idents[s.name], address="0x%x" % s.address) for s in named),
+                sizes="\n".join(_t(T, "size", ident=idents[s.name], size=s.size) for s in named))
+
+
+def symbols_v(h):
+    """Symbols.v: a module for each build with a symbol fact (names.BUILD_MODULE) that defines the address of each
+    function and data object of the fact under its name, and its size under the same name in the module's Size, and
+    in its module Sec the same of each allocated section (names.symbol_idents), and says which names it leaves out;
+    None for a harness with no symbol fact."""
+    by_build = h.symbols()
+    if not by_build:
+        return None
+    T = "Symbols.v.tmpl"
+    modules = []
+    for b, (_sha256, rows) in by_build.items():
+        idents, section_idents = names.symbol_idents(rows)
+        symbols_, sections = [s for s in rows if s.kind != "section"], [s for s in rows if s.kind == "section"]
+        sec = (_t(T, "sections", **_symbols_namespace(T, sections, section_idents, "sections")) + "\n"
+               if sections else "")
+        modules.append(_t(T, "module", module=names.BUILD_MODULE[b], sections=sec,
+                          **_symbols_namespace(T, symbols_, idents, "functions or objects")))
+    return _t(T, "file", project=h.project.name, harness=h.name, count=COUNT_WORDS[len(by_build)].lower(),
+              s="s" if len(by_build) > 1 else "", header=_comment(_t(T, "header"), False),
+              modules="\n\n".join(modules)) + "\n"
 
 
 def hex_targets(module, segments):
@@ -356,23 +392,40 @@ def images_dune(h):
     return _t(T, "file", rules="\n".join(rules_)) + "\n"
 
 
+def theory_deps(namespace, proof=False):
+    """The theories a harness's dune file depends on, and a proof's, which may also use Ltac2: Rocq installs Ltac2 as
+    its own theory, and dune finds a theory only when it is listed."""
+    deps = "Stdlib stdpp ReadFile Flocq LinuxProcessSemantics " + names.rocq_core(namespace)
+    return deps + " Ltac2" if proof else deps
+
+
 def harness_dune(h):
-    return _t("harness-dune.tmpl", "file", rocq=h.data["rocq"], package=names.opam_package(h.project.name),
-              theories=THEORY_DEPS) + "\n"
+    tree = h.project.tree
+    return _t("harness-dune.tmpl", "file", rocq=h.data["rocq"],
+              package=names.opam_package(tree.opam_stem, h.project.name), theories=theory_deps(tree.namespace)) + "\n"
 
 
 def proof_dune(tree, sid):
     p, hn, s = sid.split("/")
-    lib = (" " + names.rocq_proof(p, hn, "lib")) if "%s/%s" % (p, hn) in tree.proof_libs else ""
-    return _t("proof-dune.tmpl", "file", rocq=names.rocq_proof(p, hn, s),
-              package=names.opam_package(p) + "-proofs",
-              theories=PROOF_THEORY_DEPS + " " + names.rocq_harness(p, hn) + lib) + "\n"
+    ns = tree.namespace
+    lib = (" " + names.rocq_proof(ns, p, hn, "lib")) if "%s/%s" % (p, hn) in tree.proof_libs else ""
+    return _t("proof-dune.tmpl", "file", rocq=names.rocq_proof(ns, p, hn, s),
+              package=names.opam_package(tree.opam_stem, p) + "-proofs",
+              theories=theory_deps(ns, proof=True) + " " + names.rocq_harness(ns, p, hn) + lib) + "\n"
 
 
-def proof_lib_dune(p, hn):
-    return _t("proof-dune.tmpl", "lib", rocq=names.rocq_proof(p, hn, "lib"),
-              package=names.opam_package(p) + "-proofs",
-              theories=PROOF_THEORY_DEPS + " " + names.rocq_harness(p, hn)) + "\n"
+def proof_lib_dune(namespace, opam_stem, p, hn):
+    """The dune file of fuzz target p/hn's proof library, under the release's names (Tree.namespace, Tree.opam_stem):
+    check.py and check-units.sh render it too, from a tree they do not load whole."""
+    return _t("proof-dune.tmpl", "lib", rocq=names.rocq_proof(namespace, p, hn, "lib"),
+              package=names.opam_package(opam_stem, p) + "-proofs",
+              theories=theory_deps(namespace, proof=True) + " " + names.rocq_harness(namespace, p, hn)) + "\n"
+
+
+def barrier_dune():
+    """The dune file of each per-project proofs and counterexamples folder: it shuts the folder out of the statement
+    theory of the folder above, whose (include_subdirs qualified) would take it."""
+    return _t("proof-dune.tmpl", "barrier") + "\n"
 
 
 def dune_project(tree):
@@ -381,23 +434,31 @@ def dune_project(tree):
     for proj in sorted(tree.available(), key=lambda p: p.name):
         if "assets" not in proj.data:
             continue                    # every binary withheld: nothing to build, so no package
-        pk.append(_t(T, "package", name=names.opam_package(proj.name),
+        pk.append(_t(T, "package", name=names.opam_package(tree.opam_stem, proj.name), opam_stem=tree.opam_stem,
                      synopsis="Theorem statements about %s's %s" % (proj.name, _project_subject(proj))))
-    with_proofs = sorted({sid.split("/")[0] for sid in tree.proofs} | {u.split("/")[0] for u in tree.proof_libs})
+    # Every project with a statements package has a proofs package too, whether or not it has proofs yet: so a
+    # project's first proof pull request leaves dune-project alone, and two programs' first proofs do not conflict
+    # in it.  A package with no stanza attached needs (allow_empty) since dune 3.0.
+    with_proofs = sorted({p.name for p in tree.available() if "assets" in p.data}
+                         | {sid.split("/")[0] for sid in tree.proofs}
+                         | {u.split("/")[0] for u in tree.proof_libs})
     for p in with_proofs:
-        pk.append(_t(T, "package", name=names.opam_package(p) + "-proofs",
+        pk.append(_t(T, "proofs_package", name=names.opam_package(tree.opam_stem, p) + "-proofs",
+                     opam_stem=tree.opam_stem,
                      synopsis="Proofs of statements about %s's %s" % (p, _project_subject(tree.projects[p]))))
     r = tree.release
     rv = r["rocq"]["version"].split(".")
     return _t(T, "file", packages=("\n" + "\n\n".join(pk)) if pk else "", rocq_min="%s.%s" % (rv[0], rv[1]),
-              rocq_next="%s.%d" % (rv[0], int(rv[1]) + 1), lps_name=r["semantics"]["name"]) + "\n"
+              rocq_next="%s.%d" % (rv[0], int(rv[1]) + 1), lps_name=r["semantics"]["name"],
+              opam_stem=tree.opam_stem) + "\n"
 
 
 def project_opam(tree, proj):
     r = tree.release
     rv = r["rocq"]["version"].split(".")
     a = proj.data["assets"]["bin"]
-    return _t("project.opam.tmpl", "file", package=names.opam_package(proj.name), release=r["release"],
+    return _t("project.opam.tmpl", "file", package=names.opam_package(tree.opam_stem, proj.name),
+              opam_stem=tree.opam_stem, release=r["release"],
               project=proj.name, subject=_project_subject(proj), rocq_min="%s.%s" % (rv[0], rv[1]),
               rocq_next="%s.%d" % (rv[0], int(rv[1]) + 1), lps_name=r["semantics"]["name"],
               bin_file=a["file"], bin_release=a["release"], bin_sha256=a["sha256"]) + "\n"
@@ -485,16 +546,15 @@ def _statement_line(h, st):
     return _t(T, "line_" + st.kind, san=san)
 
 
-def status_cell(tree, st, root="../../../"):
-    """The status of a statement in words; `root` is the way from the page to
-    the repository root (a harness page is three levels down, a project page
-    two)."""
+def status_cell(tree, st, from_dir):
+    """The status of a statement in words; a proof or counterexample is linked by its way from from_dir, the folder of
+    the page (a harness page is in its statement folder, a project page in its project folder)."""
     w = PB["statements"][st.status]["words"]
     if st.status in ("proved", "refuted"):
         at = (" at b = %s" % st.proof.data["bound"]) if st.kind == "bound" and "bound" in st.proof.data else ""
-        return "[%s](%s%s/)%s" % (w, root, st.proof.path, at)
+        return "[%s](%s/)%s" % (w, posixpath.relpath(st.proof.path, from_dir), at)
     if st.status == "counterexample":
-        return "[%s](%s%s/)" % (w, root, st.counterexample.path)
+        return "[%s](%s/)" % (w, posixpath.relpath(st.counterexample.path, from_dir))
     if st.status == "suspected-false":
         return "%s: %s" % (w, render.md_cell(st.data["reason"]))
     if st.status == "witnessed-false":
@@ -596,7 +656,8 @@ def harness_readme(tree, h):
         own = sorted({f for s in h.statements.values() if s.status == "model-gap" for f in s.data.get("gap", [])})
         if own:
             gap = "\n" + _t(T, "model_gap_some", features=facts.feature_words(own)) + "\n"
-    rows = [_t(T, "row", name=s.name, line=_statement_line(h, s), status=status_cell(tree, s)) for s in _order(h)]
+    rows = [_t(T, "row", name=s.name, line=_statement_line(h, s), status=status_cell(tree, s, h.dir))
+            for s in _order(h)]
     brows = []
     for b, rec in h.builds(published_only=False):
         if rec.get("withheld"):
@@ -775,11 +836,16 @@ def project_readme(tree, proj):
                 continue
             issues.append(_t(T, "issue_row", what="%s `%s`" % (h.name, s.name),
                              status=PB["statements"][s.status]["words"]
-                             if s.status != "counterexample" else status_cell(tree, s, root="../../"),
+                             if s.status != "counterexample" else status_cell(tree, s, proj.dir),
                              why=why_words(s).replace("](../", "](../../")))
     issues_txt = _t(T, "issues_table", rows="\n".join(issues)) if issues else _t(T, "issues_none")
-    pitems = [_t(T, "patch_item", id=p_["id"], summary=p_["summary"].rstrip("."), upstream=UPSTREAM_WORDS[p_["upstream"]])
-              for p_ in patches]
+    pitems = []
+    for p_ in patches:
+        upstream = UPSTREAM_WORDS[p_["upstream"]]
+        if p_.get("url"):
+            upstream = "[%s](%s)" % (upstream, p_["url"])
+        pitems.append(_t(T, "patch_item", id=p_["id"], file="../../" + proj.patch_path(p_["file"]),
+                         summary=p_["summary"].rstrip("."), upstream=upstream))
     n_unlisted = lib.get("patch_count", 0) - len(patches)
     if n_unlisted > 0:
         pitems.append(_t(T, "patch_unlisted", n=render.plural(n_unlisted, "patch", "patches"),
@@ -791,7 +857,8 @@ def project_readme(tree, proj):
     proofs = [(sid, pd) for sid, pd in sorted(tree.proofs.items()) if sid.split("/")[0] == proj.name]
     if proofs:
         ptxt = _t(T, "proofs_table", rows="\n".join(
-            _t(T, "proof_row", id=sid, path="../../" + pd.path, result="refuted" if pd.refutes else "proved")
+            _t(T, "proof_row", id=sid, path=posixpath.relpath(pd.path, proj.dir),
+               result="refuted" if pd.refutes else "proved")
             for sid, pd in proofs))
     else:
         ptxt = _t(T, "proofs_none")
@@ -838,8 +905,11 @@ def project_readme(tree, proj):
         sentences.append(_coverage(T, "coverage_oss_verify", oss_verify_targets, oss_verify_included, api_note))
     coverage = " ".join(sentences)
     return _t(T, "file_available", project=proj.name, lead=_lead(tree, proj), coverage=coverage,
-              sources=("project.yaml, */harness.yaml, proofs/, counterexamples/ and notes/%s.md" % proj.name
-                       if proj.notes else "project.yaml, */harness.yaml, proofs/ and counterexamples/"),
+              sources=(("project.yaml, */harness.yaml, proofs/, counterexamples/ and notes/%s.md" % proj.name
+                        if proj.notes else "project.yaml, */harness.yaml, proofs/ and counterexamples/")
+                       if tree.layout == layout.OLD else
+                       ("project.yaml, */harness.yaml, */proofs/, */counterexamples/ and notes/%s.md" % proj.name
+                        if proj.notes else "project.yaml, */harness.yaml, */proofs/ and */counterexamples/")),
               binaries=(_t(T, "binaries_some", n_binaries=render.plural(len(builds), "binary", "binaries"),
                            bytes=render.human_bytes(sum(r["bytes"] for _, _, r in builds)),
                            held=(", %d more withheld" % n_held) if n_held else "")
@@ -1084,7 +1154,10 @@ def readme(tree):
     not_in_oss_fuzz = tree.not_in_oss_fuzz()
     projects = render.join_words("[`%s`](projects/%s/)" % (n, n) for n in not_in_oss_fuzz)
     any_port = any(facts.port(p) for p in tree.projects.values())
-    return _t(T, "file", n_projects=render.thousands(len(tree.projects)),
+    return _t(T, "file", record_place=_t(T, "record_place_" + tree.layout),
+              unit_rows=_t(T, "unit_rows_" + tree.layout),
+              counterexamples_row=_t(T, "counterexamples_row_" + tree.layout),
+              n_projects=render.thousands(len(tree.projects)),
               n_oss_fuzz_projects=render.thousands(tree.oss_fuzz_project_count()),
               n_available=render.thousands(len(tree.available())),
               n_oss_fuzz_available=render.thousands(len(oss_fuzz_available)),
@@ -1238,19 +1311,20 @@ def _failure_words(d):
 
 
 def proved_rows(tree):
-    """One dict per entry point with a proof under proofs/, in project and harness order."""
+    """One dict per entry point with a proof in its proofs folder, in project and harness order."""
     rows = []
     for h in tree.harnesses():
         proved = [s for s in _order(h) if s.status == "proved"]
         if not proved:
             continue
+        lay = tree.unit_layout("%s/%s" % (h.project.name, h.name))
         rows.append({"library": h.project.name, "entry": h.name,
-                     "path": "proofs/%s/%s/" % (h.project.name, h.name),
+                     "path": layout.proofs_dir(h.project.name, h.name, lay) + "/",
                      "statements": proved, "statement_file": "%s/Statements.v" % h.dir,
                      "builds": ", ".join(names.BUILD_WORDS[s.data["builds"][-1]] for s in proved
                                          if s.kind == "agreement") or "-",
                      "failures": render.join_words(sorted({_failure_words(s.data) for s in proved}), "and"),
-                     "build_record": "proofs/%s/%s/provenance/PROVENANCE.md" % (h.project.name, h.name)})
+                     "build_record": layout.provenance_dir(h.project.name, h.name, lay) + "/PROVENANCE.md"})
     return rows
 
 
@@ -1287,7 +1361,8 @@ def render_all(tree):
     for proj in tree.projects.values():
         out[os.path.join(proj.dir, "README.md")] = project_readme(tree, proj)
         if proj.data["status"] == "available" and "assets" in proj.data:
-            out[os.path.join(proj.dir, names.opam_package(proj.name) + ".opam")] = project_opam(tree, proj)
+            out[os.path.join(proj.dir, names.opam_package(tree.opam_stem, proj.name) + ".opam")] = \
+                project_opam(tree, proj)
     for h in tree.harnesses():
         out[os.path.join(h.dir, "README.md")] = harness_readme(tree, h)
         if "distribution" in h.data:
@@ -1296,6 +1371,9 @@ def render_all(tree):
             continue
         out[os.path.join(h.dir, "dune")] = harness_dune(h)
         out[os.path.join(h.dir, "Images.v")] = images_v(h)
+        sy = symbols_v(h)
+        if sy is not None:
+            out[os.path.join(h.dir, "Symbols.v")] = sy
         out[os.path.join(h.dir, "images", "dune")] = images_dune(h)
         out[os.path.join(h.dir, "Statements.v")] = statements_v(h)
         ch = characterise_v(h)
@@ -1303,9 +1381,16 @@ def render_all(tree):
             out[os.path.join(h.dir, "Characterise.v")] = ch
     for sid, pd in tree.proofs.items():
         out[os.path.join(pd.path, "dune")] = proof_dune(tree, sid)
-    for unit in tree.proof_libs:
+    for unit, lib in tree.proof_libs.items():
         p, _, hn = unit.partition("/")
-        out[os.path.join("proofs", p, hn, "lib", "dune")] = proof_lib_dune(p, hn)
+        out[os.path.join(lib, "dune")] = proof_lib_dune(tree.namespace, tree.opam_stem, p, hn)
+    # each per-project proofs and counterexamples folder that holds anything is shut out of the statement theory
+    for unit, lay in tree.unit_layouts.items():
+        p, _, hn = unit.partition("/")
+        if lay == layout.NEW:
+            for kind, d in zip(("proofs", "counterexamples"), layout.barrier_dirs(p, hn)):
+                if kind in tree.unit_kinds[unit]:
+                    out[os.path.join(d, "dune")] = barrier_dune()
     return out
 
 
@@ -1328,15 +1413,20 @@ def existing_generated(root):
     return found
 
 
-def run(root, check=False, out=sys.stdout):
+def run(root, check=False, out=sys.stdout, shared=None):
+    """Render (or, with check, compare) the generated files.  `shared` picks the scope: None every generated file,
+    False every one but the shared generated files (paths.SHARED), True the shared ones alone.  The shared files are
+    rendered from the whole tree, so the line's render after a merge owns them."""
     tree = facts.load(root)
     rules.check(tree)
+    rules.symbol_facts(tree)
     if tree.errors:
         for e in tree.errors:
             print("error: " + e, file=out)
         print("oft generate: %d error(s) in the facts; nothing rendered" % len(tree.errors), file=out)
         return 1
-    rendered = render_all(tree)
+    in_scope = (lambda rel: True) if shared is None else (lambda rel: paths.is_shared(rel) is shared)
+    rendered = {rel: text for rel, text in render_all(tree).items() if in_scope(rel)}
     bad = 0
     for rel, text in sorted(rendered.items()):
         p = os.path.join(root, rel)
@@ -1350,12 +1440,20 @@ def run(root, check=False, out=sys.stdout):
             os.makedirs(os.path.dirname(p) or ".", exist_ok=True)
             with open(p, "w", encoding="utf-8", newline="\n") as f:
                 f.write(text)
-    stale = [r for r in existing_generated(root) if r not in rendered]
+    stale = [r for r in existing_generated(root) if r not in rendered and in_scope(r)]
     for rel in sorted(stale):
+        if shared and not check:
+            # the render owns the shared files whole: one the facts no longer produce goes with the rest
+            os.remove(os.path.join(root, rel))
+            print("removed %s" % rel, file=out)
+            continue
         print("%s: generated file that the facts no longer produce; remove it" % rel, file=out)
         bad += 1
     if not rendered:
         print("oft generate: rendered nothing", file=out)
         return 1
+    if shared is False:
+        print("oft generate: the shared generated files (tools/oft/paths.py SHARED) are left to the line's render",
+              file=out)
     print("oft generate%s: %d files, %d problem(s)" % (" --check" if check else "", len(rendered), bad), file=out)
     return 1 if bad else 0

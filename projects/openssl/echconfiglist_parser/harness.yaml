@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: echconfiglist_parser
-rocq: OssFuzzTheorems.openssl.echconfiglist_parser
+rocq: OSSVerify.openssl.echconfiglist_parser
 origin: upstream
 summary: OSSL_ECHSTORE_read_echconfiglist on the raw input and again on a copy whose length/version header
   is patched to pass the first checks; results ignored.

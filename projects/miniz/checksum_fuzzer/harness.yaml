@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: miniz
 harness: checksum_fuzzer
-rocq: OssFuzzTheorems.miniz.checksum_fuzzer
+rocq: OSSVerify.miniz.checksum_fuzzer
 origin: upstream
 summary: crc32 and adler32 over the whole input (<=1 MiB); both values discarded (no comparison against
   a reference or incremental computation).

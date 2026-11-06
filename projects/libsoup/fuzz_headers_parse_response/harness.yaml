@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libsoup
 harness: fuzz_headers_parse_response
-rocq: OssFuzzTheorems.libsoup.fuzz_headers_parse_response
+rocq: OSSVerify.libsoup.fuzz_headers_parse_response
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

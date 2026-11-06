@@ -1,0 +1,1 @@
+# luipair: 1729 pairs compared, lui words differ in 0 of them; 217 pairs with >= 2 luis; 10 bases hold two or more lui values exactly ({'DISP-EQUAL-WORDS': 10}); 62 more only through a widened node

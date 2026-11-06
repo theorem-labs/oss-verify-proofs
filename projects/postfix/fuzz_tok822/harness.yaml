@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: postfix
 harness: fuzz_tok822
-rocq: OssFuzzTheorems.postfix.fuzz_tok822
+rocq: OSSVerify.postfix.fuzz_tok822
 origin: oss-fuzz
 summary: tok822_parse_limit(input, 10) then tok822_internalize and two tok822_externalize calls into one
   VSTRING; the externalized address is never re-parsed or compared with the input (no parse->externalize

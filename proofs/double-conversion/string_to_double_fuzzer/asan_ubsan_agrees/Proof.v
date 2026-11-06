@@ -1,5 +1,0 @@
-From OssFuzzTheorems.double_conversion.string_to_double_fuzzer Require Statements.
-From OssFuzzTheorems.Proofs.double_conversion.string_to_double_fuzzer.lib Require Theorems.
-
-Theorem asan_ubsan_agrees_holds : OssFuzzTheorems.double_conversion.string_to_double_fuzzer.Statements.asan_ubsan_agrees.
-Proof. exact OssFuzzTheorems.Proofs.double_conversion.string_to_double_fuzzer.lib.Theorems.strong_universal_error_free_string_to_double_fuzzer_both. Qed.

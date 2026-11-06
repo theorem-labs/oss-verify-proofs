@@ -1,0 +1,58 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFl1.v, with its module paths changed and its addresses moved to plugin-hostd/fuzz_command's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/AFl1.v (donor image sha256 c0661b96b5bd), with its module paths changed and its addresses moved to reac-pw/fuzz_segconf's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/AFl1.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YK11 YK0s YK0i YP09 YO0d.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YI04.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YK04 YA0i.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YA0n.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YG00 YG0a YG01.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YG0f.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YG0n YG0d.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YG0m.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YB1v YF0m.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YM05.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Local Open Scope Z_scope.
+Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Local Open Scope am_scope.
+Definition A_Refill : Z := 0x37e68.
+Definition A_ALLOCATOR : Z := 0xa9158.
+Definition RSTACK : Z := 1024.
+Definition refill_tree (c : Z) : M unit := init_cache_if_needed ;; refill_if_empty c.
+Section d.
+Variable B : asyms.
+Definition refill_pre (ly : alayout) (S : astate) (W : world tfibsegs) (regs : bvmap 5 word)
+(mem : word -> option byte) (md : Model) (c : Z) : Prop :=
+AR tfibsegs B ly S W mem md /\ A_bytes (w_A W) + EV_A <= abudget S /\
+refill_reg S c /\
+qloosem S /\
+YK0s.ret_ok (getr regs 1) /\ 4096 <= raZ regs /\
+spZ regs mod 16 = 0 /\ ly_stk_lo ly + RSTACK <= spZ regs /\ spZ regs <= ly_stk_hi ly /\
+(forall a, spZ regs - RSTACK <= a < spZ regs -> apresent (w_H W) mem a) /\
+getr regs 3 = w64 (as_gp B) /\ getr regs 4 = w64 (as_tp B) /\
+getr regs 10 = w64 (ly_T ly + t_cache) /\ getr regs 11 = w64 (ly_T ly + t_cache + 80 * c) /\
+getr regs 12 = w64 A_ALLOCATOR /\ getr regs 13 = w64 c /\
+1 <= c <= 31 /\ pc_chunks (cache S c) = [].
+Definition refill_leaf (ly : alayout) (S : astate) (W : world tfibsegs) (regs : bvmap 5 word)
+(mem : word -> option byte) (md : Model) (c : Z)
+(r : unit * astate) (W' : world tfibsegs) (c' : config) : Prop :=
+exists regs' mem' md',
+c' = cfg_at tfibsegs (raZ regs) regs' mem' md' /\
+acall_post tfibsegs B RSTACK ly S W regs mem md (fun _ => False) ly (snd r) W' regs' mem' md' /\
+getr regs' 10 = w64 (match pc_chunks (cache (snd r) c) with [] => 0 | _ => 1 end).
+Definition tfib_refill_spec : Prop :=
+forall ly S W regs mem md c,
+refill_pre ly S W regs mem md c ->
+amreal tfibsegs (refill_tree c S) W (cfg_at tfibsegs A_Refill regs mem md) (refill_leaf ly S W regs mem md c).
+End d.
+End b.

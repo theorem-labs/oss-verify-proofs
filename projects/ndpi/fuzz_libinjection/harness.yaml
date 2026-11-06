@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ndpi
 harness: fuzz_libinjection
-rocq: OssFuzzTheorems.ndpi.fuzz_libinjection
+rocq: OSSVerify.ndpi.fuzz_libinjection
 origin: upstream
 summary: libinjection SQLi detection in six quote/dialect modes, libinjection_sqli fingerprint, and XSS
   detection over the raw bytes; verdicts discarded.

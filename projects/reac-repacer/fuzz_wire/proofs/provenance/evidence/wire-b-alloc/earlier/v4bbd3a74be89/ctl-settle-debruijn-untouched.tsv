@@ -1,0 +1,5 @@
+# X sha256 51eb4bef2425; Y sha256 5a5ee7c02b4e; kit files loaded from the directory of this script
+ACCEPT	function	word	kit kind	X target	Y target	class	evidence	extent	X bytes	Y bytes	verdict
+ENTRY	function	word	entry	X entry -> target	Y entry -> target	same
+ACCEPT	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	0xdc	data-differs	0x10428	0x10428	INDEXED	+0xd8 srli a1,*,58 (index 0..63); +0xe0 add; +0xe4 lbu 0(a1) (1 bytes per entry, 64 entries)	64 bytes at +0	00010207030d081304190e1c0922142805111a260f2e1d300a1f2336153229393f060c12181b212710252d2f1e3531383e0b1720242c34373d162b333c2a3b3a	00010207030d081304190e1c0922142805111a260f2e1d300a1f2336153229393f060c12181b212710252d2f1e3531383e0b1720242c34373d162b333c2a3b3a	SETTLED-EQUAL
+ROW	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	kit EQUAL-mod-pcrel with 1 target pairs reported	settled-equal 1 of 1	ROW SETTLED-EQUAL

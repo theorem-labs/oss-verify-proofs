@@ -1,0 +1,16 @@
+# reac-repacer/fuzz_wire image-B __asan_stack_malloc_0 / _1 contracts: the donor files (fuzz_grant's RELEASED lib,
+# normalised by ../core-B/mkdon.sh: lib/B/Rt/* -> Rt/*, lib/Reusable/* -> root). Each donor blob is the same at
+# recipes 4f87de75d67 (proofs/libreac/fuzz_grant/lib/...) and at origin/ossv/recipes 283c35cdd4dc
+# (projects/libreac/fuzz_grant/proofs/lib/...):
+#   Rt/StackMalloc0.v    <- lib/B/Rt/StackMalloc0.v    blob 5fa59c37a532 (tfib_stack_malloc_at, stack_malloc0_contract)
+#   Rt/StackMalloc0Tbl.v <- lib/B/Rt/StackMalloc0Tbl.v blob edb042b027b7 (the class-0 constants, probe points, cells)
+#   Rt/YF0r.v            <- lib/B/Rt/YF0r.v            blob d741f2d982c3 (the class-1 constants and the code table)
+#   Rt/YF0s.v            <- lib/B/Rt/YF0s.v            blob 9269619b602a (tfib_stack_malloc_at, stack_malloc1_contract)
+#   YF0v.v               <- lib/Reusable/YF0v.v        blob 75c25878eab7 (own_free_frame / own_free_frame_shadow, which
+#                           StackMalloc0.v and YF0s.v Require; the unit's lib/Reusable does not hold it, so it is staged
+#                           once, into lib/Reusable)
+Rt/StackMalloc0.v
+Rt/StackMalloc0Tbl.v
+Rt/YF0r.v
+Rt/YF0s.v
+YF0v.v

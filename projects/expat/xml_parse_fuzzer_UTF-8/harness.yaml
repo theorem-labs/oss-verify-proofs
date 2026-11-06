@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: expat
 harness: xml_parse_fuzzer_UTF-8
-rocq: OssFuzzTheorems.expat.xml_parse_fuzzer_UTF_8
+rocq: OSSVerify.expat.xml_parse_fuzzer_UTF_8
 origin: upstream
 summary: Runs the input through four parsers (plain for ENCODING_FOR_FUZZING, namespace-aware, external-entity
   "e1", external DTD), each XML_Parse non-final then final, with a hash salt derived from siphash of the

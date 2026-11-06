@@ -1,0 +1,16 @@
+# record run
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 571 rows in 9 classes: DIFFERENT-SYMBOL=70 GEOMETRY-CHANGED=171 KIND-CHANGED=7 NON-ADDRESS-CHANGED=171 SAME-VALUE-DIFFERENT-OBJECT=2 STALE-DONOR-CODE-POINTER=10 UNPAIRED-PORTED=51 UNPAIRED-SOURCE=84 UNRESOLVED=5
+checker <file> rc=4 (sha256 0d24592683b6)
+# control: YF0l.v pc_wrap_memcpy planted as 0x7fbf8 (LLVMFuzzerTestOneInput, a wrong function)
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 8 rows in 3 classes: KIND-CHANGED=1 STALE-DONOR-CODE-POINTER=1 UNPAIRED-SOURCE=6
+checker <file> rc=4 (sha256 0d24592683b6)
+# control: YF0l.v pc_wrap_memcpy planted as 0x50c14 (pc_asan_memcpy, a value of the same sentence)
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 7 rows in 2 classes: STALE-DONOR-CODE-POINTER=1 UNPAIRED-SOURCE=6
+checker <file> rc=4 (sha256 0d24592683b6)
+# control: the same file unplanted
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 7 rows in 2 classes: KIND-CHANGED=1 UNPAIRED-SOURCE=6
+checker <file> rc=4 (sha256 0d24592683b6)

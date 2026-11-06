@@ -1,0 +1,68 @@
+# ref 7d9c0d2c199462513e621298a67cb694a7963a48
+# readers outside the two YH03.v (git grep -w, proofs/libreac/fuzz_boxreg/*.v)
+src0_debruijn_len 0
+src0_vmlock 60
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YH02.v:24:src0_D_size_classes src0_D_small_cnt_tab src0_D_med_cnt_tab src0_D_debruijn32 src0_tp (-164) None src0_vmlock 32.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0g.v:441:Hypothesis Hvml : forall v, src0_vmlock = Some v ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0g_cf.v:442:Hypothesis Hvml : forall v, src0_vmlock = Some v ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0h.v:278:Hypothesis Hvml : forall v, src0_vmlock = Some v ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0h_cf.v:279:Hypothesis Hvml : forall v, src0_vmlock = Some v ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0k.v:1085:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0k.v:1091:unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0k_cf.v:1086:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0k_cf.v:1092:unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0l.v:1187:apply outside_winA; unfold static_owned in Hs; cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs;
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0l_cf.v:1188:apply outside_winA; unfold static_owned in Hs; cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs;
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0m.v:702:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0m_cf.v:703:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0n.v:756:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0n_cf.v:757:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0o.v:612:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN0o_cf.v:613:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN1f.v:324:unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YN1f_cf.v:325:unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YV00.v:9:(* src0_vmlock (YH03.v) is Some v when musl's __vm_wait is the real routine: it reads the 4-byte word at v and returns
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YV00.v:13:Definition vml_mem : smem := match src0_vmlock with Some v => [vml_region v] | None => [] end.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YV00.v:15:Ltac vml_case H := unfold src0_vmlock in H; first [ discriminate H | injection H as <- ].
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YV00.v:16:Lemma In_vml_mem : forall r, In r vml_mem -> exists v, src0_vmlock = Some v /\ r = vml_region v.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YV00.v:18:intros r. unfold vml_mem. destruct src0_vmlock as [v|]; intros H; [|destruct H].
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YV00.v:21:Lemma vml_static : forall v x, src0_vmlock = Some v -> v <= x < v + 4 -> static_owned src0_msyms x.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YV00.v:30:forall v, src0_vmlock = Some v ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YV00.v:39:(forall v, src0_vmlock = Some v ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YV00.v:43:intros segs E m H. unfold vml_mem. destruct src0_vmlock as [v|] eqn:Hv; [|constructor].
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YV00.v:60:(forall v, src0_vmlock = Some v -> Forall (fun r => extent_disjoint E r (vml_region v)) l) ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/Reusable/YV00.v:63:intros E l Hp Hd. unfold vml_mem. destruct src0_vmlock as [v|] eqn:Hv; [|rewrite app_nil_r; exact Hp].
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH02.v:24:src0_D_size_classes src0_D_small_cnt_tab src0_D_med_cnt_tab src0_D_debruijn32 src0_tp (-164) None src0_vmlock 33.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0g.v:441:Hypothesis Hvml : forall v, src0_vmlock = Some v ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0g_cf.v:442:Hypothesis Hvml : forall v, src0_vmlock = Some v ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0h.v:278:Hypothesis Hvml : forall v, src0_vmlock = Some v ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0h_cf.v:279:Hypothesis Hvml : forall v, src0_vmlock = Some v ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0k.v:1085:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0k.v:1091:unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0k_cf.v:1086:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0k_cf.v:1092:unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0l.v:1187:apply outside_winA; unfold static_owned in Hs; cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs;
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0l_cf.v:1188:apply outside_winA; unfold static_owned in Hs; cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs;
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0m.v:702:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0m_cf.v:703:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0n.v:756:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0n_cf.v:757:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0o.v:612:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN0o_cf.v:613:{ unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B1 src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN1f.v:324:unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YN1f_cf.v:325:unfold static_owned in Hs. cbn [ms_lock ms_libc ms_got_guard ms_guard ms_debruijn ms_debruijn_len ms_size_classes ms_small_cnt ms_med_cnt vml_lo vml_len ms_vmlock src0_vmlock B src0_msyms] in Hs.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YV00.v:9:(* src0_vmlock (YH03.v) is Some v when musl's __vm_wait is the real routine: it reads the 4-byte word at v and returns
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YV00.v:13:Definition vml_mem : smem := match src0_vmlock with Some v => [vml_region v] | None => [] end.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YV00.v:15:Ltac vml_case H := unfold src0_vmlock in H; first [ discriminate H | injection H as <- ].
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YV00.v:16:Lemma In_vml_mem : forall r, In r vml_mem -> exists v, src0_vmlock = Some v /\ r = vml_region v.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YV00.v:18:intros r. unfold vml_mem. destruct src0_vmlock as [v|]; intros H; [|destruct H].
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YV00.v:21:Lemma vml_static : forall v x, src0_vmlock = Some v -> v <= x < v + 4 -> static_owned src0_msyms x.
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YV00.v:30:forall v, src0_vmlock = Some v ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YV00.v:39:(forall v, src0_vmlock = Some v ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YV00.v:43:intros segs E m H. unfold vml_mem. destruct src0_vmlock as [v|] eqn:Hv; [|constructor].
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YV00.v:60:(forall v, src0_vmlock = Some v -> Forall (fun r => extent_disjoint E r (vml_region v)) l) ->
+7d9c0d2c1994:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YV00.v:63:intros E l Hp Hd. unfold vml_mem. destruct src0_vmlock as [v|] eqn:Hv; [|rewrite app_nil_r; exact Hp].
+# positive control 1: src0_D_ofl_lock by the same command
+src0_D_ofl_lock 6
+# positive control 2: src0_debruijn_len by git grep -w over the two YH03.v only
+src0_debruijn_len 2

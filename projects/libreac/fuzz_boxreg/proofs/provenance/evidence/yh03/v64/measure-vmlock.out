@@ -1,0 +1,10 @@
+# fuzz_boxreg.plain
+__vm_wait value 0x15ff4 size 4 type STT_FUNC
+symbols at that address: $x (STT_NOTYPE, size 0), __vm_wait (STT_FUNC, size 4), dummy (STT_FUNC, size 4)
+bytes: 67 80 00 00 (jalr zero,0(ra): a bare return)
+symbols whose name holds 'vmlock': none
+# fuzz_boxreg.ubsan
+__vm_wait value 0x163f4 size 4 type STT_FUNC
+symbols at that address: $x (STT_NOTYPE, size 0), __vm_wait (STT_FUNC, size 4), dummy (STT_FUNC, size 4)
+bytes: 67 80 00 00 (jalr zero,0(ra): a bare return)
+symbols whose name holds 'vmlock': none

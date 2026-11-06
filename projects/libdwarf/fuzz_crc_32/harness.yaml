@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_crc_32
-rocq: OssFuzzTheorems.libdwarf.fuzz_crc_32
+rocq: OSSVerify.libdwarf.fuzz_crc_32
 origin: upstream
 summary: dwarf_init_b (return ignored) then dwarf_crc32(dbg, NULL, &error); the source says 'Ignoring
   res!'.

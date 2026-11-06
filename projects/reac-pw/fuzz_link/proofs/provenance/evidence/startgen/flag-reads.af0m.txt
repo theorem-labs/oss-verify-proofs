@@ -1,0 +1,35 @@
+# cells the interceptors of reac-pw/fuzz_link read (flagreads.py --all-real) with no cell of that address and width in
+# Tfib_const_abs: 1-byte flag loads from common_flags_dont_use / asan_flags_dont_use_directly made by the reached
+# interceptors, and the 8-byte loads of __interception::real_<f> that ANY ___interceptor_* body of the image makes
+# before its indirect call (reached or not)
+0x13c05d/1
+0x13c062/1
+0x13c075/1
+0x13bf89/1
+0x13bf8a/1
+0xa7c86/1
+0xa36d0/8
+0xa36d8/8
+0xa36e0/8
+0xa3740/8
+0xa37d8/8
+0xa3708/8
+0xa3720/8
+0xa3728/8
+0xa3748/8
+0xa3750/8
+0xa3758/8
+0xa3760/8
+0xa3768/8
+0xa3770/8
+0xa3790/8
+0xa3798/8
+0xa37a0/8
+0xa37a8/8
+0xa37b0/8
+0xa37b8/8
+0xa37c0/8
+0xa37c8/8
+0xa37d0/8
+0xa37e0/8
+0xa37e8/8

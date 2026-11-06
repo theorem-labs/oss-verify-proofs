@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: s2opc
 harness: server_request_fuzzer
-rocq: OssFuzzTheorems.s2opc.server_request_fuzzer
+rocq: OSSVerify.s2opc.server_request_fuzzer
 origin: upstream
 summary: Feeds the input as TCP bytes to a server-side secure-connection chunk decoder (SC_Chunks_DecodeReceivedBuffer
   / SC_Chunks_TreatTcpPayload) until either returns false.

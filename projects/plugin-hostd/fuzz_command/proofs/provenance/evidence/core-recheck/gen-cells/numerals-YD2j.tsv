@@ -1,0 +1,692 @@
+file	line	pos	kind	value	block	role	reason	measurement	result	expected
+lib/B/YD2j.v	12	0	dec	0x10000	R_A1a	region-lo	RO-RUN	R_A1a lo = start of run 0 of 186: 0x10000 = first PT_LOAD vaddr; runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x10000
+lib/B/YD2j.v	12	1	dec	0x102e8	R_A1a	region-hi	RO-RUN	R_A1a hi = end of run 0 of 186: 0x102e8 = start of owned (0x102e8, 0x8); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x102e8
+lib/B/YD2j.v	12	2	dec	0x0	R_A1a	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	12	3	dec	0x0	R_A1a	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	13	0	dec	0x10000	R_A1a	chunk-off	RO-RUN	run 0 of 186 starts at 0x10000 = first PT_LOAD vaddr	OK	0x10000
+lib/B/YD2j.v	13	1	dec	0x2e8	R_A1a	chunk-len	RO-RUN	run 0 = [0x10000, 0x102e8 = start of owned (0x102e8, 0x8)), length 744	OK	0x2e8
+lib/B/YD2j.v	15	0	dec	0x102f0	R_A1b	region-lo	RO-RUN	R_A1b lo = start of run 1 of 186: 0x102f0 = end of owned (0x102e8, 0x8); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x102f0
+lib/B/YD2j.v	15	1	dec	0x10308	R_A1b	region-hi	RO-RUN	R_A1b hi = end of run 1 of 186: 0x10308 = start of owned (0x10308, 0x8); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x10308
+lib/B/YD2j.v	15	2	dec	0x0	R_A1b	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	15	3	dec	0x0	R_A1b	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	16	0	dec	0x102f0	R_A1b	chunk-off	RO-RUN	run 1 of 186 starts at 0x102f0 = end of owned (0x102e8, 0x8)	OK	0x102f0
+lib/B/YD2j.v	16	1	dec	0x18	R_A1b	chunk-len	RO-RUN	run 1 = [0x102f0, 0x10308 = start of owned (0x10308, 0x8)), length 24	OK	0x18
+lib/B/YD2j.v	18	0	dec	0x10310	R_A1c	region-lo	RO-RUN	R_A1c lo = start of run 2 of 186: 0x10310 = end of owned (0x10308, 0x8); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x10310
+lib/B/YD2j.v	18	1	dec	0x10328	R_A1c	region-hi	RO-RUN	R_A1c hi = end of run 2 of 186: 0x10328 = start of owned (0x10328, 0x8); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x10328
+lib/B/YD2j.v	18	2	dec	0x0	R_A1c	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	18	3	dec	0x0	R_A1c	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	19	0	dec	0x10310	R_A1c	chunk-off	RO-RUN	run 2 of 186 starts at 0x10310 = end of owned (0x10308, 0x8)	OK	0x10310
+lib/B/YD2j.v	19	1	dec	0x18	R_A1c	chunk-len	RO-RUN	run 2 = [0x10310, 0x10328 = start of owned (0x10328, 0x8)), length 24	OK	0x18
+lib/B/YD2j.v	21	0	dec	0x10330	R_A1d	region-lo	RO-RUN	R_A1d lo = start of run 3 of 186: 0x10330 = end of owned (0x10328, 0x8); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x10330
+lib/B/YD2j.v	21	1	dec	0x10340	R_A1d	region-hi	RO-RUN	R_A1d hi = end of run 3 of 186: 0x10340 = start of owned (0x10340, 0x8); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x10340
+lib/B/YD2j.v	21	2	dec	0x0	R_A1d	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	21	3	dec	0x0	R_A1d	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	22	0	dec	0x10330	R_A1d	chunk-off	RO-RUN	run 3 of 186 starts at 0x10330 = end of owned (0x10328, 0x8)	OK	0x10330
+lib/B/YD2j.v	22	1	dec	0x10	R_A1d	chunk-len	RO-RUN	run 3 = [0x10330, 0x10340 = start of owned (0x10340, 0x8)), length 16	OK	0x10
+lib/B/YD2j.v	24	0	dec	0x10348	R_A1e	region-lo	RO-RUN	R_A1e lo = start of run 4 of 186: 0x10348 = end of owned (0x10340, 0x8); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x10348
+lib/B/YD2j.v	24	1	dec	0x103a0	R_A1e	region-hi	RO-RUN	R_A1e hi = end of run 4 of 186: 0x103a0 = start of owned (0x103a0, 0x8); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x103a0
+lib/B/YD2j.v	24	2	dec	0x0	R_A1e	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	24	3	dec	0x0	R_A1e	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	25	0	dec	0x10348	R_A1e	chunk-off	RO-RUN	run 4 of 186 starts at 0x10348 = end of owned (0x10340, 0x8)	OK	0x10348
+lib/B/YD2j.v	25	1	dec	0x58	R_A1e	chunk-len	RO-RUN	run 4 = [0x10348, 0x103a0 = start of owned (0x103a0, 0x8)), length 88	OK	0x58
+lib/B/YD2j.v	27	0	dec	0x103b0	R_A1f	region-lo	RO-RUN	R_A1f lo = start of run 5 of 186: 0x103b0 = end of owned (0x103a8, 0x8); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x103b0
+lib/B/YD2j.v	27	1	dec	0x103b8	R_A1f	region-hi	RO-RUN	R_A1f hi = end of run 5 of 186: 0x103b8 = start of owned (0x103b8, 0x8); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x103b8
+lib/B/YD2j.v	27	2	dec	0x0	R_A1f	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	27	3	dec	0x0	R_A1f	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	28	0	dec	0x103b0	R_A1f	chunk-off	RO-RUN	run 5 of 186 starts at 0x103b0 = end of owned (0x103a8, 0x8)	OK	0x103b0
+lib/B/YD2j.v	28	1	dec	0x8	R_A1f	chunk-len	RO-RUN	run 5 = [0x103b0, 0x103b8 = start of owned (0x103b8, 0x8)), length 8	OK	0x8
+lib/B/YD2j.v	30	0	dec	0x103c0	R_A1g	region-lo	RO-RUN	R_A1g lo = start of run 6 of 186: 0x103c0 = end of owned (0x103b8, 0x8); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x103c0
+lib/B/YD2j.v	30	1	dec	0x10428	R_A1g	region-hi	RO-RUN	R_A1g hi = end of run 6 of 186: 0x10428 = start of owned (0x10428, 0x40); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x10428
+lib/B/YD2j.v	30	2	dec	0x0	R_A1g	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	30	3	dec	0x0	R_A1g	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	31	0	dec	0x103c0	R_A1g	chunk-off	RO-RUN	run 6 of 186 starts at 0x103c0 = end of owned (0x103b8, 0x8)	OK	0x103c0
+lib/B/YD2j.v	31	1	dec	0x68	R_A1g	chunk-len	RO-RUN	run 6 = [0x103c0, 0x10428 = start of owned (0x10428, 0x40)), length 104	OK	0x68
+lib/B/YD2j.v	33	0	dec	0x10468	R_A1h	region-lo	RO-RUN	R_A1h lo = start of run 7 of 186: 0x10468 = end of owned (0x10428, 0x40); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x10468
+lib/B/YD2j.v	33	1	dec	0x10528	R_A1h	region-hi	RO-RUN	R_A1h hi = end of run 7 of 186: 0x10528 = start of owned (0x10528, 0x40); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x10528
+lib/B/YD2j.v	33	2	dec	0x0	R_A1h	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	33	3	dec	0x0	R_A1h	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	34	0	dec	0x10468	R_A1h	chunk-off	RO-RUN	run 7 of 186 starts at 0x10468 = end of owned (0x10428, 0x40)	OK	0x10468
+lib/B/YD2j.v	34	1	dec	0xc0	R_A1h	chunk-len	RO-RUN	run 7 = [0x10468, 0x10528 = start of owned (0x10528, 0x40)), length 192	OK	0xc0
+lib/B/YD2j.v	36	0	dec	0x10568	R_A1i	region-lo	RO-RUN	R_A1i lo = start of run 8 of 186: 0x10568 = end of owned (0x10528, 0x40); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x10568
+lib/B/YD2j.v	36	1	dec	0x1cf22	R_A1i	region-hi	RO-RUN	R_A1i hi = end of run 8 of 186: 0x1cf22 = start of owned (0x1cf22, 0x15); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x1cf22
+lib/B/YD2j.v	36	2	dec	0x0	R_A1i	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	36	3	dec	0x0	R_A1i	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	37	0	dec	0x10568	R_A1i	chunk-off	RO-RUN	run 8 of 186 starts at 0x10568 = end of owned (0x10528, 0x40)	OK	0x10568
+lib/B/YD2j.v	37	1	dec	0xc9ba	R_A1i	chunk-len	RO-RUN	run 8 = [0x10568, 0x1cf22 = start of owned (0x1cf22, 0x15)), length 51642	OK	0xc9ba
+lib/B/YD2j.v	39	0	dec	0x1cf37	R_A1j	region-lo	RO-RUN	R_A1j lo = start of run 9 of 186: 0x1cf37 = end of owned (0x1cf22, 0x15); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x1cf37
+lib/B/YD2j.v	39	1	dec	0x20e70	R_A1j	region-hi	RO-RUN	R_A1j hi = end of run 9 of 186: 0x20e70 = start of owned (0x20e70, 0x4); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x20e70
+lib/B/YD2j.v	39	2	dec	0x0	R_A1j	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	39	3	dec	0x0	R_A1j	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	40	0	dec	0x1cf37	R_A1j	chunk-off	RO-RUN	run 9 of 186 starts at 0x1cf37 = end of owned (0x1cf22, 0x15)	OK	0x1cf37
+lib/B/YD2j.v	40	1	dec	0x3f39	R_A1j	chunk-len	RO-RUN	run 9 = [0x1cf37, 0x20e70 = start of owned (0x20e70, 0x4)), length 16185	OK	0x3f39
+lib/B/YD2j.v	42	0	dec	0x20e74	R_A1k	region-lo	RO-RUN	R_A1k lo = start of run 10 of 186: 0x20e74 = end of owned (0x20e70, 0x4); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x20e74
+lib/B/YD2j.v	42	1	dec	0x210e3	R_A1k	region-hi	RO-RUN	R_A1k hi = end of run 10 of 186: 0x210e3 = start of owned (0x210e3, 0x1d); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x210e3
+lib/B/YD2j.v	42	2	dec	0x0	R_A1k	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	42	3	dec	0x0	R_A1k	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	43	0	dec	0x20e74	R_A1k	chunk-off	RO-RUN	run 10 of 186 starts at 0x20e74 = end of owned (0x20e70, 0x4)	OK	0x20e74
+lib/B/YD2j.v	43	1	dec	0x26f	R_A1k	chunk-len	RO-RUN	run 10 = [0x20e74, 0x210e3 = start of owned (0x210e3, 0x1d)), length 623	OK	0x26f
+lib/B/YD2j.v	45	0	dec	0x21100	R_A1l	region-lo	RO-RUN	R_A1l lo = start of run 11 of 186: 0x21100 = end of owned (0x210e3, 0x1d); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x21100
+lib/B/YD2j.v	45	1	dec	0x2335c	R_A1l	region-hi	RO-RUN	R_A1l hi = end of run 182 of 186: 0x2335c = start of owned (0x2335c, 0x4); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x2335c
+lib/B/YD2j.v	45	2	dec	0x0	R_A1l	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	45	3	dec	0x0	R_A1l	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	46	0	dec	0x21100	R_A1l	chunk-off	RO-RUN	run 11 of 186 starts at 0x21100 = end of owned (0x210e3, 0x1d)	OK	0x21100
+lib/B/YD2j.v	46	1	dec	0x8	R_A1l	chunk-len	RO-RUN	run 11 = [0x21100, 0x21108 = start of owned (0x21108, 0x18)), length 8	OK	0x8
+lib/B/YD2j.v	47	0	dec	0x21120	R_A1l	chunk-off	RO-RUN	run 12 of 186 starts at 0x21120 = end of owned (0x21108, 0x18)	OK	0x21120
+lib/B/YD2j.v	47	1	dec	0x7	R_A1l	chunk-len	RO-RUN	run 12 = [0x21120, 0x21127 = start of owned (0x21127, 0x19)), length 7	OK	0x7
+lib/B/YD2j.v	48	0	dec	0x21140	R_A1l	chunk-off	RO-RUN	run 13 of 186 starts at 0x21140 = end of owned (0x21127, 0x19)	OK	0x21140
+lib/B/YD2j.v	48	1	dec	0x5	R_A1l	chunk-len	RO-RUN	run 13 = [0x21140, 0x21145 = start of owned (0x21145, 0x1b)), length 5	OK	0x5
+lib/B/YD2j.v	49	0	dec	0x21160	R_A1l	chunk-off	RO-RUN	run 14 of 186 starts at 0x21160 = end of owned (0x21145, 0x1b)	OK	0x21160
+lib/B/YD2j.v	49	1	dec	0x2	R_A1l	chunk-len	RO-RUN	run 14 = [0x21160, 0x21162 = start of owned (0x21162, 0x1e)), length 2	OK	0x2
+lib/B/YD2j.v	50	0	dec	0x21180	R_A1l	chunk-off	RO-RUN	run 15 of 186 starts at 0x21180 = end of owned (0x21162, 0x1e)	OK	0x21180
+lib/B/YD2j.v	50	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 15 = [0x21180, 0x2118b = start of owned (0x2118b, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	51	0	dec	0x211a0	R_A1l	chunk-off	RO-RUN	run 16 of 186 starts at 0x211a0 = end of owned (0x2118b, 0x15)	OK	0x211a0
+lib/B/YD2j.v	51	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 16 = [0x211a0, 0x211ab = start of owned (0x211ab, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	52	0	dec	0x211c0	R_A1l	chunk-off	RO-RUN	run 17 of 186 starts at 0x211c0 = end of owned (0x211ab, 0x15)	OK	0x211c0
+lib/B/YD2j.v	52	1	dec	0xe	R_A1l	chunk-len	RO-RUN	run 17 = [0x211c0, 0x211ce = start of owned (0x211ce, 0x12)), length 14	OK	0xe
+lib/B/YD2j.v	53	0	dec	0x211e0	R_A1l	chunk-off	RO-RUN	run 18 of 186 starts at 0x211e0 = end of owned (0x211ce, 0x12)	OK	0x211e0
+lib/B/YD2j.v	53	1	dec	0x11	R_A1l	chunk-len	RO-RUN	run 18 = [0x211e0, 0x211f1 = start of owned (0x211f1, 0x2f)), length 17	OK	0x11
+lib/B/YD2j.v	54	0	dec	0x21220	R_A1l	chunk-off	RO-RUN	run 19 of 186 starts at 0x21220 = end of owned (0x211f1, 0x2f)	OK	0x21220
+lib/B/YD2j.v	54	1	dec	0x4	R_A1l	chunk-len	RO-RUN	run 19 = [0x21220, 0x21224 = start of owned (0x21224, 0x1c)), length 4	OK	0x4
+lib/B/YD2j.v	55	0	dec	0x21240	R_A1l	chunk-off	RO-RUN	run 20 of 186 starts at 0x21240 = end of owned (0x21224, 0x1c)	OK	0x21240
+lib/B/YD2j.v	55	1	dec	0x3d	R_A1l	chunk-len	RO-RUN	run 20 = [0x21240, 0x2127d = start of owned (0x2127d, 0x23)), length 61	OK	0x3d
+lib/B/YD2j.v	56	0	dec	0x212a0	R_A1l	chunk-off	RO-RUN	run 21 of 186 starts at 0x212a0 = end of owned (0x2127d, 0x23)	OK	0x212a0
+lib/B/YD2j.v	56	1	dec	0xc	R_A1l	chunk-len	RO-RUN	run 21 = [0x212a0, 0x212ac = start of owned (0x212ac, 0x14)), length 12	OK	0xc
+lib/B/YD2j.v	57	0	dec	0x212c0	R_A1l	chunk-off	RO-RUN	run 22 of 186 starts at 0x212c0 = end of owned (0x212ac, 0x14)	OK	0x212c0
+lib/B/YD2j.v	57	1	dec	0x1	R_A1l	chunk-len	RO-RUN	run 22 = [0x212c0, 0x212c1 = start of owned (0x212c1, 0x1f)), length 1	OK	0x1
+lib/B/YD2j.v	58	0	dec	0x212e0	R_A1l	chunk-off	RO-RUN	run 23 of 186 starts at 0x212e0 = end of owned (0x212c1, 0x1f)	OK	0x212e0
+lib/B/YD2j.v	58	1	dec	0xe	R_A1l	chunk-len	RO-RUN	run 23 = [0x212e0, 0x212ee = start of owned (0x212ee, 0x12)), length 14	OK	0xe
+lib/B/YD2j.v	59	0	dec	0x21300	R_A1l	chunk-off	RO-RUN	run 24 of 186 starts at 0x21300 = end of owned (0x212ee, 0x12)	OK	0x21300
+lib/B/YD2j.v	59	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 24 = [0x21300, 0x2130b = start of owned (0x2130b, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	60	0	dec	0x21320	R_A1l	chunk-off	RO-RUN	run 25 of 186 starts at 0x21320 = end of owned (0x2130b, 0x15)	OK	0x21320
+lib/B/YD2j.v	60	1	dec	0x11	R_A1l	chunk-len	RO-RUN	run 25 = [0x21320, 0x21331 = start of owned (0x21331, 0x2f)), length 17	OK	0x11
+lib/B/YD2j.v	61	0	dec	0x21360	R_A1l	chunk-off	RO-RUN	run 26 of 186 starts at 0x21360 = end of owned (0x21331, 0x2f)	OK	0x21360
+lib/B/YD2j.v	61	1	dec	0x11	R_A1l	chunk-len	RO-RUN	run 26 = [0x21360, 0x21371 = start of owned (0x21371, 0x2f)), length 17	OK	0x11
+lib/B/YD2j.v	62	0	dec	0x213a0	R_A1l	chunk-off	RO-RUN	run 27 of 186 starts at 0x213a0 = end of owned (0x21371, 0x2f)	OK	0x213a0
+lib/B/YD2j.v	62	1	dec	0x11	R_A1l	chunk-len	RO-RUN	run 27 = [0x213a0, 0x213b1 = start of owned (0x213b1, 0x2f)), length 17	OK	0x11
+lib/B/YD2j.v	63	0	dec	0x213e0	R_A1l	chunk-off	RO-RUN	run 28 of 186 starts at 0x213e0 = end of owned (0x213b1, 0x2f)	OK	0x213e0
+lib/B/YD2j.v	63	1	dec	0x11	R_A1l	chunk-len	RO-RUN	run 28 = [0x213e0, 0x213f1 = start of owned (0x213f1, 0x2f)), length 17	OK	0x11
+lib/B/YD2j.v	64	0	dec	0x21420	R_A1l	chunk-off	RO-RUN	run 29 of 186 starts at 0x21420 = end of owned (0x213f1, 0x2f)	OK	0x21420
+lib/B/YD2j.v	64	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 29 = [0x21420, 0x2142b = start of owned (0x2142b, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	65	0	dec	0x21440	R_A1l	chunk-off	RO-RUN	run 30 of 186 starts at 0x21440 = end of owned (0x2142b, 0x15)	OK	0x21440
+lib/B/YD2j.v	65	1	dec	0x1f	R_A1l	chunk-len	RO-RUN	run 30 = [0x21440, 0x2145f = start of owned (0x2145f, 0x21)), length 31	OK	0x1f
+lib/B/YD2j.v	66	0	dec	0x21480	R_A1l	chunk-off	RO-RUN	run 31 of 186 starts at 0x21480 = end of owned (0x2145f, 0x21)	OK	0x21480
+lib/B/YD2j.v	66	1	dec	0xc	R_A1l	chunk-len	RO-RUN	run 31 = [0x21480, 0x2148c = start of owned (0x2148c, 0x14)), length 12	OK	0xc
+lib/B/YD2j.v	67	0	dec	0x214a0	R_A1l	chunk-off	RO-RUN	run 32 of 186 starts at 0x214a0 = end of owned (0x2148c, 0x14)	OK	0x214a0
+lib/B/YD2j.v	67	1	dec	0x17	R_A1l	chunk-len	RO-RUN	run 32 = [0x214a0, 0x214b7 = start of owned (0x214b7, 0x29)), length 23	OK	0x17
+lib/B/YD2j.v	68	0	dec	0x214e0	R_A1l	chunk-off	RO-RUN	run 33 of 186 starts at 0x214e0 = end of owned (0x214b7, 0x29)	OK	0x214e0
+lib/B/YD2j.v	68	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 33 = [0x214e0, 0x214eb = start of owned (0x214eb, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	69	0	dec	0x21500	R_A1l	chunk-off	RO-RUN	run 34 of 186 starts at 0x21500 = end of owned (0x214eb, 0x15)	OK	0x21500
+lib/B/YD2j.v	69	1	dec	0x23	R_A1l	chunk-len	RO-RUN	run 34 = [0x21500, 0x21523 = start of owned (0x21523, 0x3d)), length 35	OK	0x23
+lib/B/YD2j.v	70	0	dec	0x21560	R_A1l	chunk-off	RO-RUN	run 35 of 186 starts at 0x21560 = end of owned (0x21523, 0x3d)	OK	0x21560
+lib/B/YD2j.v	70	1	dec	0x8	R_A1l	chunk-len	RO-RUN	run 35 = [0x21560, 0x21568 = start of owned (0x21568, 0x18)), length 8	OK	0x8
+lib/B/YD2j.v	71	0	dec	0x21580	R_A1l	chunk-off	RO-RUN	run 36 of 186 starts at 0x21580 = end of owned (0x21568, 0x18)	OK	0x21580
+lib/B/YD2j.v	71	1	dec	0x51	R_A1l	chunk-len	RO-RUN	run 36 = [0x21580, 0x215d1 = start of owned (0x215d1, 0x2f)), length 81	OK	0x51
+lib/B/YD2j.v	72	0	dec	0x21600	R_A1l	chunk-off	RO-RUN	run 37 of 186 starts at 0x21600 = end of owned (0x215d1, 0x2f)	OK	0x21600
+lib/B/YD2j.v	72	1	dec	0xa	R_A1l	chunk-len	RO-RUN	run 37 = [0x21600, 0x2160a = start of owned (0x2160a, 0x16)), length 10	OK	0xa
+lib/B/YD2j.v	73	0	dec	0x21620	R_A1l	chunk-off	RO-RUN	run 38 of 186 starts at 0x21620 = end of owned (0x2160a, 0x16)	OK	0x21620
+lib/B/YD2j.v	73	1	dec	0xc	R_A1l	chunk-len	RO-RUN	run 38 = [0x21620, 0x2162c = start of owned (0x2162c, 0x14)), length 12	OK	0xc
+lib/B/YD2j.v	74	0	dec	0x21640	R_A1l	chunk-off	RO-RUN	run 39 of 186 starts at 0x21640 = end of owned (0x2162c, 0x14)	OK	0x21640
+lib/B/YD2j.v	74	1	dec	0xf	R_A1l	chunk-len	RO-RUN	run 39 = [0x21640, 0x2164f = start of owned (0x2164f, 0x11)), length 15	OK	0xf
+lib/B/YD2j.v	75	0	dec	0x21660	R_A1l	chunk-off	RO-RUN	run 40 of 186 starts at 0x21660 = end of owned (0x2164f, 0x11)	OK	0x21660
+lib/B/YD2j.v	75	1	dec	0x2c	R_A1l	chunk-len	RO-RUN	run 40 = [0x21660, 0x2168c = start of owned (0x2168c, 0x34)), length 44	OK	0x2c
+lib/B/YD2j.v	76	0	dec	0x216c0	R_A1l	chunk-off	RO-RUN	run 41 of 186 starts at 0x216c0 = end of owned (0x2168c, 0x34)	OK	0x216c0
+lib/B/YD2j.v	76	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 41 = [0x216c0, 0x216cb = start of owned (0x216cb, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	77	0	dec	0x216e0	R_A1l	chunk-off	RO-RUN	run 42 of 186 starts at 0x216e0 = end of owned (0x216cb, 0x15)	OK	0x216e0
+lib/B/YD2j.v	77	1	dec	0x6	R_A1l	chunk-len	RO-RUN	run 42 = [0x216e0, 0x216e6 = start of owned (0x216e6, 0x1a)), length 6	OK	0x6
+lib/B/YD2j.v	78	0	dec	0x21700	R_A1l	chunk-off	RO-RUN	run 43 of 186 starts at 0x21700 = end of owned (0x216e6, 0x1a)	OK	0x21700
+lib/B/YD2j.v	78	1	dec	0x1d	R_A1l	chunk-len	RO-RUN	run 43 = [0x21700, 0x2171d = start of owned (0x2171d, 0x23)), length 29	OK	0x1d
+lib/B/YD2j.v	79	0	dec	0x21740	R_A1l	chunk-off	RO-RUN	run 44 of 186 starts at 0x21740 = end of owned (0x2171d, 0x23)	OK	0x21740
+lib/B/YD2j.v	79	1	dec	0x6	R_A1l	chunk-len	RO-RUN	run 44 = [0x21740, 0x21746 = start of owned (0x21746, 0x1a)), length 6	OK	0x6
+lib/B/YD2j.v	80	0	dec	0x21760	R_A1l	chunk-off	RO-RUN	run 45 of 186 starts at 0x21760 = end of owned (0x21746, 0x1a)	OK	0x21760
+lib/B/YD2j.v	80	1	dec	0x24	R_A1l	chunk-len	RO-RUN	run 45 = [0x21760, 0x21784 = start of owned (0x21784, 0x3c)), length 36	OK	0x24
+lib/B/YD2j.v	81	0	dec	0x217c0	R_A1l	chunk-off	RO-RUN	run 46 of 186 starts at 0x217c0 = end of owned (0x21784, 0x3c)	OK	0x217c0
+lib/B/YD2j.v	81	1	dec	0xc	R_A1l	chunk-len	RO-RUN	run 46 = [0x217c0, 0x217cc = start of owned (0x217cc, 0x14)), length 12	OK	0xc
+lib/B/YD2j.v	82	0	dec	0x217e0	R_A1l	chunk-off	RO-RUN	run 47 of 186 starts at 0x217e0 = end of owned (0x217cc, 0x14)	OK	0x217e0
+lib/B/YD2j.v	82	1	dec	0x8	R_A1l	chunk-len	RO-RUN	run 47 = [0x217e0, 0x217e8 = start of owned (0x217e8, 0x18)), length 8	OK	0x8
+lib/B/YD2j.v	83	0	dec	0x21800	R_A1l	chunk-off	RO-RUN	run 48 of 186 starts at 0x21800 = end of owned (0x217e8, 0x18)	OK	0x21800
+lib/B/YD2j.v	83	1	dec	0xf	R_A1l	chunk-len	RO-RUN	run 48 = [0x21800, 0x2180f = start of owned (0x2180f, 0x11)), length 15	OK	0xf
+lib/B/YD2j.v	84	0	dec	0x21820	R_A1l	chunk-off	RO-RUN	run 49 of 186 starts at 0x21820 = end of owned (0x2180f, 0x11)	OK	0x21820
+lib/B/YD2j.v	84	1	dec	0xa	R_A1l	chunk-len	RO-RUN	run 49 = [0x21820, 0x2182a = start of owned (0x2182a, 0x16)), length 10	OK	0xa
+lib/B/YD2j.v	85	0	dec	0x21840	R_A1l	chunk-off	RO-RUN	run 50 of 186 starts at 0x21840 = end of owned (0x2182a, 0x16)	OK	0x21840
+lib/B/YD2j.v	85	1	dec	0x7	R_A1l	chunk-len	RO-RUN	run 50 = [0x21840, 0x21847 = start of owned (0x21847, 0x19)), length 7	OK	0x7
+lib/B/YD2j.v	86	0	dec	0x21860	R_A1l	chunk-off	RO-RUN	run 51 of 186 starts at 0x21860 = end of owned (0x21847, 0x19)	OK	0x21860
+lib/B/YD2j.v	86	1	dec	0xa	R_A1l	chunk-len	RO-RUN	run 51 = [0x21860, 0x2186a = start of owned (0x2186a, 0x16)), length 10	OK	0xa
+lib/B/YD2j.v	87	0	dec	0x21880	R_A1l	chunk-off	RO-RUN	run 52 of 186 starts at 0x21880 = end of owned (0x2186a, 0x16)	OK	0x21880
+lib/B/YD2j.v	87	1	dec	0x8	R_A1l	chunk-len	RO-RUN	run 52 = [0x21880, 0x21888 = start of owned (0x21888, 0x18)), length 8	OK	0x8
+lib/B/YD2j.v	88	0	dec	0x218a0	R_A1l	chunk-off	RO-RUN	run 53 of 186 starts at 0x218a0 = end of owned (0x21888, 0x18)	OK	0x218a0
+lib/B/YD2j.v	88	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 53 = [0x218a0, 0x218ab = start of owned (0x218ab, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	89	0	dec	0x218c0	R_A1l	chunk-off	RO-RUN	run 54 of 186 starts at 0x218c0 = end of owned (0x218ab, 0x15)	OK	0x218c0
+lib/B/YD2j.v	89	1	dec	0x4	R_A1l	chunk-len	RO-RUN	run 54 = [0x218c0, 0x218c4 = start of owned (0x218c4, 0x1c)), length 4	OK	0x4
+lib/B/YD2j.v	90	0	dec	0x218e0	R_A1l	chunk-off	RO-RUN	run 55 of 186 starts at 0x218e0 = end of owned (0x218c4, 0x1c)	OK	0x218e0
+lib/B/YD2j.v	90	1	dec	0x3	R_A1l	chunk-len	RO-RUN	run 55 = [0x218e0, 0x218e3 = start of owned (0x218e3, 0x1d)), length 3	OK	0x3
+lib/B/YD2j.v	91	0	dec	0x21900	R_A1l	chunk-off	RO-RUN	run 56 of 186 starts at 0x21900 = end of owned (0x218e3, 0x1d)	OK	0x21900
+lib/B/YD2j.v	91	1	dec	0x9	R_A1l	chunk-len	RO-RUN	run 56 = [0x21900, 0x21909 = start of owned (0x21909, 0x17)), length 9	OK	0x9
+lib/B/YD2j.v	92	0	dec	0x21920	R_A1l	chunk-off	RO-RUN	run 57 of 186 starts at 0x21920 = end of owned (0x21909, 0x17)	OK	0x21920
+lib/B/YD2j.v	92	1	dec	0x5	R_A1l	chunk-len	RO-RUN	run 57 = [0x21920, 0x21925 = start of owned (0x21925, 0x1b)), length 5	OK	0x5
+lib/B/YD2j.v	93	0	dec	0x21940	R_A1l	chunk-off	RO-RUN	run 58 of 186 starts at 0x21940 = end of owned (0x21925, 0x1b)	OK	0x21940
+lib/B/YD2j.v	93	1	dec	0x3	R_A1l	chunk-len	RO-RUN	run 58 = [0x21940, 0x21943 = start of owned (0x21943, 0x1d)), length 3	OK	0x3
+lib/B/YD2j.v	94	0	dec	0x21960	R_A1l	chunk-off	RO-RUN	run 59 of 186 starts at 0x21960 = end of owned (0x21943, 0x1d)	OK	0x21960
+lib/B/YD2j.v	94	1	dec	0x8	R_A1l	chunk-len	RO-RUN	run 59 = [0x21960, 0x21968 = start of owned (0x21968, 0x18)), length 8	OK	0x8
+lib/B/YD2j.v	95	0	dec	0x21980	R_A1l	chunk-off	RO-RUN	run 60 of 186 starts at 0x21980 = end of owned (0x21968, 0x18)	OK	0x21980
+lib/B/YD2j.v	95	1	dec	0x2	R_A1l	chunk-len	RO-RUN	run 60 = [0x21980, 0x21982 = start of owned (0x21982, 0x1e)), length 2	OK	0x2
+lib/B/YD2j.v	96	0	dec	0x219a0	R_A1l	chunk-off	RO-RUN	run 61 of 186 starts at 0x219a0 = end of owned (0x21982, 0x1e)	OK	0x219a0
+lib/B/YD2j.v	96	1	dec	0x6	R_A1l	chunk-len	RO-RUN	run 61 = [0x219a0, 0x219a6 = start of owned (0x219a6, 0x1a)), length 6	OK	0x6
+lib/B/YD2j.v	97	0	dec	0x219c0	R_A1l	chunk-off	RO-RUN	run 62 of 186 starts at 0x219c0 = end of owned (0x219a6, 0x1a)	OK	0x219c0
+lib/B/YD2j.v	97	1	dec	0x4	R_A1l	chunk-len	RO-RUN	run 62 = [0x219c0, 0x219c4 = start of owned (0x219c4, 0x1c)), length 4	OK	0x4
+lib/B/YD2j.v	98	0	dec	0x219e0	R_A1l	chunk-off	RO-RUN	run 63 of 186 starts at 0x219e0 = end of owned (0x219c4, 0x1c)	OK	0x219e0
+lib/B/YD2j.v	98	1	dec	0x3	R_A1l	chunk-len	RO-RUN	run 63 = [0x219e0, 0x219e3 = start of owned (0x219e3, 0x1d)), length 3	OK	0x3
+lib/B/YD2j.v	99	0	dec	0x21a00	R_A1l	chunk-off	RO-RUN	run 64 of 186 starts at 0x21a00 = end of owned (0x219e3, 0x1d)	OK	0x21a00
+lib/B/YD2j.v	99	1	dec	0x2	R_A1l	chunk-len	RO-RUN	run 64 = [0x21a00, 0x21a02 = start of owned (0x21a02, 0x1e)), length 2	OK	0x2
+lib/B/YD2j.v	100	0	dec	0x21a20	R_A1l	chunk-off	RO-RUN	run 65 of 186 starts at 0x21a20 = end of owned (0x21a02, 0x1e)	OK	0x21a20
+lib/B/YD2j.v	100	1	dec	0x4	R_A1l	chunk-len	RO-RUN	run 65 = [0x21a20, 0x21a24 = start of owned (0x21a24, 0x1c)), length 4	OK	0x4
+lib/B/YD2j.v	101	0	dec	0x21a40	R_A1l	chunk-off	RO-RUN	run 66 of 186 starts at 0x21a40 = end of owned (0x21a24, 0x1c)	OK	0x21a40
+lib/B/YD2j.v	101	1	dec	0x5	R_A1l	chunk-len	RO-RUN	run 66 = [0x21a40, 0x21a45 = start of owned (0x21a45, 0x1b)), length 5	OK	0x5
+lib/B/YD2j.v	102	0	dec	0x21a60	R_A1l	chunk-off	RO-RUN	run 67 of 186 starts at 0x21a60 = end of owned (0x21a45, 0x1b)	OK	0x21a60
+lib/B/YD2j.v	102	1	dec	0x6	R_A1l	chunk-len	RO-RUN	run 67 = [0x21a60, 0x21a66 = start of owned (0x21a66, 0x1a)), length 6	OK	0x6
+lib/B/YD2j.v	103	0	dec	0x21a80	R_A1l	chunk-off	RO-RUN	run 68 of 186 starts at 0x21a80 = end of owned (0x21a66, 0x1a)	OK	0x21a80
+lib/B/YD2j.v	103	1	dec	0x7	R_A1l	chunk-len	RO-RUN	run 68 = [0x21a80, 0x21a87 = start of owned (0x21a87, 0x19)), length 7	OK	0x7
+lib/B/YD2j.v	104	0	dec	0x21aa0	R_A1l	chunk-off	RO-RUN	run 69 of 186 starts at 0x21aa0 = end of owned (0x21a87, 0x19)	OK	0x21aa0
+lib/B/YD2j.v	104	1	dec	0x5	R_A1l	chunk-len	RO-RUN	run 69 = [0x21aa0, 0x21aa5 = start of owned (0x21aa5, 0x1b)), length 5	OK	0x5
+lib/B/YD2j.v	105	0	dec	0x21ac0	R_A1l	chunk-off	RO-RUN	run 70 of 186 starts at 0x21ac0 = end of owned (0x21aa5, 0x1b)	OK	0x21ac0
+lib/B/YD2j.v	105	1	dec	0x8	R_A1l	chunk-len	RO-RUN	run 70 = [0x21ac0, 0x21ac8 = start of owned (0x21ac8, 0x18)), length 8	OK	0x8
+lib/B/YD2j.v	106	0	dec	0x21ae0	R_A1l	chunk-off	RO-RUN	run 71 of 186 starts at 0x21ae0 = end of owned (0x21ac8, 0x18)	OK	0x21ae0
+lib/B/YD2j.v	106	1	dec	0x2	R_A1l	chunk-len	RO-RUN	run 71 = [0x21ae0, 0x21ae2 = start of owned (0x21ae2, 0x1e)), length 2	OK	0x2
+lib/B/YD2j.v	107	0	dec	0x21b00	R_A1l	chunk-off	RO-RUN	run 72 of 186 starts at 0x21b00 = end of owned (0x21ae2, 0x1e)	OK	0x21b00
+lib/B/YD2j.v	107	1	dec	0x2	R_A1l	chunk-len	RO-RUN	run 72 = [0x21b00, 0x21b02 = start of owned (0x21b02, 0x1e)), length 2	OK	0x2
+lib/B/YD2j.v	108	0	dec	0x21b20	R_A1l	chunk-off	RO-RUN	run 73 of 186 starts at 0x21b20 = end of owned (0x21b02, 0x1e)	OK	0x21b20
+lib/B/YD2j.v	108	1	dec	0x4	R_A1l	chunk-len	RO-RUN	run 73 = [0x21b20, 0x21b24 = start of owned (0x21b24, 0x1c)), length 4	OK	0x4
+lib/B/YD2j.v	109	0	dec	0x21b40	R_A1l	chunk-off	RO-RUN	run 74 of 186 starts at 0x21b40 = end of owned (0x21b24, 0x1c)	OK	0x21b40
+lib/B/YD2j.v	109	1	dec	0x8	R_A1l	chunk-len	RO-RUN	run 74 = [0x21b40, 0x21b48 = start of owned (0x21b48, 0x18)), length 8	OK	0x8
+lib/B/YD2j.v	110	0	dec	0x21b60	R_A1l	chunk-off	RO-RUN	run 75 of 186 starts at 0x21b60 = end of owned (0x21b48, 0x18)	OK	0x21b60
+lib/B/YD2j.v	110	1	dec	0x6	R_A1l	chunk-len	RO-RUN	run 75 = [0x21b60, 0x21b66 = start of owned (0x21b66, 0x1a)), length 6	OK	0x6
+lib/B/YD2j.v	111	0	dec	0x21b80	R_A1l	chunk-off	RO-RUN	run 76 of 186 starts at 0x21b80 = end of owned (0x21b66, 0x1a)	OK	0x21b80
+lib/B/YD2j.v	111	1	dec	0x4	R_A1l	chunk-len	RO-RUN	run 76 = [0x21b80, 0x21b84 = start of owned (0x21b84, 0x1c)), length 4	OK	0x4
+lib/B/YD2j.v	112	0	dec	0x21ba0	R_A1l	chunk-off	RO-RUN	run 77 of 186 starts at 0x21ba0 = end of owned (0x21b84, 0x1c)	OK	0x21ba0
+lib/B/YD2j.v	112	1	dec	0x9	R_A1l	chunk-len	RO-RUN	run 77 = [0x21ba0, 0x21ba9 = start of owned (0x21ba9, 0x17)), length 9	OK	0x9
+lib/B/YD2j.v	113	0	dec	0x21bc0	R_A1l	chunk-off	RO-RUN	run 78 of 186 starts at 0x21bc0 = end of owned (0x21ba9, 0x17)	OK	0x21bc0
+lib/B/YD2j.v	113	1	dec	0x108	R_A1l	chunk-len	RO-RUN	run 78 = [0x21bc0, 0x21cc8 = start of owned (0x21cc8, 0x38)), length 264	OK	0x108
+lib/B/YD2j.v	114	0	dec	0x21d00	R_A1l	chunk-off	RO-RUN	run 79 of 186 starts at 0x21d00 = end of owned (0x21cc8, 0x38)	OK	0x21d00
+lib/B/YD2j.v	114	1	dec	0x4	R_A1l	chunk-len	RO-RUN	run 79 = [0x21d00, 0x21d04 = start of owned (0x21d04, 0x1c)), length 4	OK	0x4
+lib/B/YD2j.v	115	0	dec	0x21d20	R_A1l	chunk-off	RO-RUN	run 80 of 186 starts at 0x21d20 = end of owned (0x21d04, 0x1c)	OK	0x21d20
+lib/B/YD2j.v	115	1	dec	0x7	R_A1l	chunk-len	RO-RUN	run 80 = [0x21d20, 0x21d27 = start of owned (0x21d27, 0x19)), length 7	OK	0x7
+lib/B/YD2j.v	116	0	dec	0x21d40	R_A1l	chunk-off	RO-RUN	run 81 of 186 starts at 0x21d40 = end of owned (0x21d27, 0x19)	OK	0x21d40
+lib/B/YD2j.v	116	1	dec	0x8	R_A1l	chunk-len	RO-RUN	run 81 = [0x21d40, 0x21d48 = start of owned (0x21d48, 0x18)), length 8	OK	0x8
+lib/B/YD2j.v	117	0	dec	0x21d60	R_A1l	chunk-off	RO-RUN	run 82 of 186 starts at 0x21d60 = end of owned (0x21d48, 0x18)	OK	0x21d60
+lib/B/YD2j.v	117	1	dec	0x6	R_A1l	chunk-len	RO-RUN	run 82 = [0x21d60, 0x21d66 = start of owned (0x21d66, 0x1a)), length 6	OK	0x6
+lib/B/YD2j.v	118	0	dec	0x21d80	R_A1l	chunk-off	RO-RUN	run 83 of 186 starts at 0x21d80 = end of owned (0x21d66, 0x1a)	OK	0x21d80
+lib/B/YD2j.v	118	1	dec	0x2	R_A1l	chunk-len	RO-RUN	run 83 = [0x21d80, 0x21d82 = start of owned (0x21d82, 0x1e)), length 2	OK	0x2
+lib/B/YD2j.v	119	0	dec	0x21da0	R_A1l	chunk-off	RO-RUN	run 84 of 186 starts at 0x21da0 = end of owned (0x21d82, 0x1e)	OK	0x21da0
+lib/B/YD2j.v	119	1	dec	0x3	R_A1l	chunk-len	RO-RUN	run 84 = [0x21da0, 0x21da3 = start of owned (0x21da3, 0x1d)), length 3	OK	0x3
+lib/B/YD2j.v	120	0	dec	0x21dc0	R_A1l	chunk-off	RO-RUN	run 85 of 186 starts at 0x21dc0 = end of owned (0x21da3, 0x1d)	OK	0x21dc0
+lib/B/YD2j.v	120	1	dec	0xc	R_A1l	chunk-len	RO-RUN	run 85 = [0x21dc0, 0x21dcc = start of owned (0x21dcc, 0x14)), length 12	OK	0xc
+lib/B/YD2j.v	121	0	dec	0x21de0	R_A1l	chunk-off	RO-RUN	run 86 of 186 starts at 0x21de0 = end of owned (0x21dcc, 0x14)	OK	0x21de0
+lib/B/YD2j.v	121	1	dec	0xe	R_A1l	chunk-len	RO-RUN	run 86 = [0x21de0, 0x21dee = start of owned (0x21dee, 0x12)), length 14	OK	0xe
+lib/B/YD2j.v	122	0	dec	0x21e00	R_A1l	chunk-off	RO-RUN	run 87 of 186 starts at 0x21e00 = end of owned (0x21dee, 0x12)	OK	0x21e00
+lib/B/YD2j.v	122	1	dec	0x11	R_A1l	chunk-len	RO-RUN	run 87 = [0x21e00, 0x21e11 = start of owned (0x21e11, 0x2f)), length 17	OK	0x11
+lib/B/YD2j.v	123	0	dec	0x21e40	R_A1l	chunk-off	RO-RUN	run 88 of 186 starts at 0x21e40 = end of owned (0x21e11, 0x2f)	OK	0x21e40
+lib/B/YD2j.v	123	1	dec	0x11	R_A1l	chunk-len	RO-RUN	run 88 = [0x21e40, 0x21e51 = start of owned (0x21e51, 0x2f)), length 17	OK	0x11
+lib/B/YD2j.v	124	0	dec	0x21e80	R_A1l	chunk-off	RO-RUN	run 89 of 186 starts at 0x21e80 = end of owned (0x21e51, 0x2f)	OK	0x21e80
+lib/B/YD2j.v	124	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 89 = [0x21e80, 0x21e8b = start of owned (0x21e8b, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	125	0	dec	0x21ea0	R_A1l	chunk-off	RO-RUN	run 90 of 186 starts at 0x21ea0 = end of owned (0x21e8b, 0x15)	OK	0x21ea0
+lib/B/YD2j.v	125	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 90 = [0x21ea0, 0x21eab = start of owned (0x21eab, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	126	0	dec	0x21ec0	R_A1l	chunk-off	RO-RUN	run 91 of 186 starts at 0x21ec0 = end of owned (0x21eab, 0x15)	OK	0x21ec0
+lib/B/YD2j.v	126	1	dec	0xc	R_A1l	chunk-len	RO-RUN	run 91 = [0x21ec0, 0x21ecc = start of owned (0x21ecc, 0x14)), length 12	OK	0xc
+lib/B/YD2j.v	127	0	dec	0x21ee0	R_A1l	chunk-off	RO-RUN	run 92 of 186 starts at 0x21ee0 = end of owned (0x21ecc, 0x14)	OK	0x21ee0
+lib/B/YD2j.v	127	1	dec	0xf	R_A1l	chunk-len	RO-RUN	run 92 = [0x21ee0, 0x21eef = start of owned (0x21eef, 0x11)), length 15	OK	0xf
+lib/B/YD2j.v	128	0	dec	0x21f00	R_A1l	chunk-off	RO-RUN	run 93 of 186 starts at 0x21f00 = end of owned (0x21eef, 0x11)	OK	0x21f00
+lib/B/YD2j.v	128	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 93 = [0x21f00, 0x21f0b = start of owned (0x21f0b, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	129	0	dec	0x21f20	R_A1l	chunk-off	RO-RUN	run 94 of 186 starts at 0x21f20 = end of owned (0x21f0b, 0x15)	OK	0x21f20
+lib/B/YD2j.v	129	1	dec	0x4	R_A1l	chunk-len	RO-RUN	run 94 = [0x21f20, 0x21f24 = start of owned (0x21f24, 0x1c)), length 4	OK	0x4
+lib/B/YD2j.v	130	0	dec	0x21f40	R_A1l	chunk-off	RO-RUN	run 95 of 186 starts at 0x21f40 = end of owned (0x21f24, 0x1c)	OK	0x21f40
+lib/B/YD2j.v	130	1	dec	0x3	R_A1l	chunk-len	RO-RUN	run 95 = [0x21f40, 0x21f43 = start of owned (0x21f43, 0x1d)), length 3	OK	0x3
+lib/B/YD2j.v	131	0	dec	0x21f60	R_A1l	chunk-off	RO-RUN	run 96 of 186 starts at 0x21f60 = end of owned (0x21f43, 0x1d)	OK	0x21f60
+lib/B/YD2j.v	131	1	dec	0x6	R_A1l	chunk-len	RO-RUN	run 96 = [0x21f60, 0x21f66 = start of owned (0x21f66, 0x1a)), length 6	OK	0x6
+lib/B/YD2j.v	132	0	dec	0x21f80	R_A1l	chunk-off	RO-RUN	run 97 of 186 starts at 0x21f80 = end of owned (0x21f66, 0x1a)	OK	0x21f80
+lib/B/YD2j.v	132	1	dec	0xc	R_A1l	chunk-len	RO-RUN	run 97 = [0x21f80, 0x21f8c = start of owned (0x21f8c, 0x14)), length 12	OK	0xc
+lib/B/YD2j.v	133	0	dec	0x21fa0	R_A1l	chunk-off	RO-RUN	run 98 of 186 starts at 0x21fa0 = end of owned (0x21f8c, 0x14)	OK	0x21fa0
+lib/B/YD2j.v	133	1	dec	0xf	R_A1l	chunk-len	RO-RUN	run 98 = [0x21fa0, 0x21faf = start of owned (0x21faf, 0x11)), length 15	OK	0xf
+lib/B/YD2j.v	134	0	dec	0x21fc0	R_A1l	chunk-off	RO-RUN	run 99 of 186 starts at 0x21fc0 = end of owned (0x21faf, 0x11)	OK	0x21fc0
+lib/B/YD2j.v	134	1	dec	0xa	R_A1l	chunk-len	RO-RUN	run 99 = [0x21fc0, 0x21fca = start of owned (0x21fca, 0x16)), length 10	OK	0xa
+lib/B/YD2j.v	135	0	dec	0x21fe0	R_A1l	chunk-off	RO-RUN	run 100 of 186 starts at 0x21fe0 = end of owned (0x21fca, 0x16)	OK	0x21fe0
+lib/B/YD2j.v	135	1	dec	0x2	R_A1l	chunk-len	RO-RUN	run 100 = [0x21fe0, 0x21fe2 = start of owned (0x21fe2, 0x1e)), length 2	OK	0x2
+lib/B/YD2j.v	136	0	dec	0x22000	R_A1l	chunk-off	RO-RUN	run 101 of 186 starts at 0x22000 = end of owned (0x21fe2, 0x1e)	OK	0x22000
+lib/B/YD2j.v	136	1	dec	0x4	R_A1l	chunk-len	RO-RUN	run 101 = [0x22000, 0x22004 = start of owned (0x22004, 0x1c)), length 4	OK	0x4
+lib/B/YD2j.v	137	0	dec	0x22020	R_A1l	chunk-off	RO-RUN	run 102 of 186 starts at 0x22020 = end of owned (0x22004, 0x1c)	OK	0x22020
+lib/B/YD2j.v	137	1	dec	0x10	R_A1l	chunk-len	RO-RUN	run 102 = [0x22020, 0x22030 = start of owned (0x22030, 0x10)), length 16	OK	0x10
+lib/B/YD2j.v	138	0	dec	0x22040	R_A1l	chunk-off	RO-RUN	run 103 of 186 starts at 0x22040 = end of owned (0x22030, 0x10)	OK	0x22040
+lib/B/YD2j.v	138	1	dec	0x3d	R_A1l	chunk-len	RO-RUN	run 103 = [0x22040, 0x2207d = start of owned (0x2207d, 0x23)), length 61	OK	0x3d
+lib/B/YD2j.v	139	0	dec	0x220a0	R_A1l	chunk-off	RO-RUN	run 104 of 186 starts at 0x220a0 = end of owned (0x2207d, 0x23)	OK	0x220a0
+lib/B/YD2j.v	139	1	dec	0x36	R_A1l	chunk-len	RO-RUN	run 104 = [0x220a0, 0x220d6 = start of owned (0x220d6, 0x2a)), length 54	OK	0x36
+lib/B/YD2j.v	140	0	dec	0x22100	R_A1l	chunk-off	RO-RUN	run 105 of 186 starts at 0x22100 = end of owned (0x220d6, 0x2a)	OK	0x22100
+lib/B/YD2j.v	140	1	dec	0x8	R_A1l	chunk-len	RO-RUN	run 105 = [0x22100, 0x22108 = start of owned (0x22108, 0x18)), length 8	OK	0x8
+lib/B/YD2j.v	141	0	dec	0x22120	R_A1l	chunk-off	RO-RUN	run 106 of 186 starts at 0x22120 = end of owned (0x22108, 0x18)	OK	0x22120
+lib/B/YD2j.v	141	1	dec	0xa	R_A1l	chunk-len	RO-RUN	run 106 = [0x22120, 0x2212a = start of owned (0x2212a, 0x16)), length 10	OK	0xa
+lib/B/YD2j.v	142	0	dec	0x22140	R_A1l	chunk-off	RO-RUN	run 107 of 186 starts at 0x22140 = end of owned (0x2212a, 0x16)	OK	0x22140
+lib/B/YD2j.v	142	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 107 = [0x22140, 0x2214b = start of owned (0x2214b, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	143	0	dec	0x22160	R_A1l	chunk-off	RO-RUN	run 108 of 186 starts at 0x22160 = end of owned (0x2214b, 0x15)	OK	0x22160
+lib/B/YD2j.v	143	1	dec	0x19	R_A1l	chunk-len	RO-RUN	run 108 = [0x22160, 0x22179 = start of owned (0x22179, 0x27)), length 25	OK	0x19
+lib/B/YD2j.v	144	0	dec	0x221a0	R_A1l	chunk-off	RO-RUN	run 109 of 186 starts at 0x221a0 = end of owned (0x22179, 0x27)	OK	0x221a0
+lib/B/YD2j.v	144	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 109 = [0x221a0, 0x221ab = start of owned (0x221ab, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	145	0	dec	0x221c0	R_A1l	chunk-off	RO-RUN	run 110 of 186 starts at 0x221c0 = end of owned (0x221ab, 0x15)	OK	0x221c0
+lib/B/YD2j.v	145	1	dec	0x10	R_A1l	chunk-len	RO-RUN	run 110 = [0x221c0, 0x221d0 = start of owned (0x221d0, 0x10)), length 16	OK	0x10
+lib/B/YD2j.v	146	0	dec	0x221e0	R_A1l	chunk-off	RO-RUN	run 111 of 186 starts at 0x221e0 = end of owned (0x221d0, 0x10)	OK	0x221e0
+lib/B/YD2j.v	146	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 111 = [0x221e0, 0x221eb = start of owned (0x221eb, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	147	0	dec	0x22200	R_A1l	chunk-off	RO-RUN	run 112 of 186 starts at 0x22200 = end of owned (0x221eb, 0x15)	OK	0x22200
+lib/B/YD2j.v	147	1	dec	0xd	R_A1l	chunk-len	RO-RUN	run 112 = [0x22200, 0x2220d = start of owned (0x2220d, 0x13)), length 13	OK	0xd
+lib/B/YD2j.v	148	0	dec	0x22220	R_A1l	chunk-off	RO-RUN	run 113 of 186 starts at 0x22220 = end of owned (0x2220d, 0x13)	OK	0x22220
+lib/B/YD2j.v	148	1	dec	0xd	R_A1l	chunk-len	RO-RUN	run 113 = [0x22220, 0x2222d = start of owned (0x2222d, 0x13)), length 13	OK	0xd
+lib/B/YD2j.v	149	0	dec	0x22240	R_A1l	chunk-off	RO-RUN	run 114 of 186 starts at 0x22240 = end of owned (0x2222d, 0x13)	OK	0x22240
+lib/B/YD2j.v	149	1	dec	0x10	R_A1l	chunk-len	RO-RUN	run 114 = [0x22240, 0x22250 = start of owned (0x22250, 0x10)), length 16	OK	0x10
+lib/B/YD2j.v	150	0	dec	0x22260	R_A1l	chunk-off	RO-RUN	run 115 of 186 starts at 0x22260 = end of owned (0x22250, 0x10)	OK	0x22260
+lib/B/YD2j.v	150	1	dec	0x4f	R_A1l	chunk-len	RO-RUN	run 115 = [0x22260, 0x222af = start of owned (0x222af, 0x31)), length 79	OK	0x4f
+lib/B/YD2j.v	151	0	dec	0x222e0	R_A1l	chunk-off	RO-RUN	run 116 of 186 starts at 0x222e0 = end of owned (0x222af, 0x31)	OK	0x222e0
+lib/B/YD2j.v	151	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 116 = [0x222e0, 0x222eb = start of owned (0x222eb, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	152	0	dec	0x22300	R_A1l	chunk-off	RO-RUN	run 117 of 186 starts at 0x22300 = end of owned (0x222eb, 0x15)	OK	0x22300
+lib/B/YD2j.v	152	1	dec	0x43	R_A1l	chunk-len	RO-RUN	run 117 = [0x22300, 0x22343 = start of owned (0x22343, 0x3d)), length 67	OK	0x43
+lib/B/YD2j.v	153	0	dec	0x22380	R_A1l	chunk-off	RO-RUN	run 118 of 186 starts at 0x22380 = end of owned (0x22343, 0x3d)	OK	0x22380
+lib/B/YD2j.v	153	1	dec	0xc	R_A1l	chunk-len	RO-RUN	run 118 = [0x22380, 0x2238c = start of owned (0x2238c, 0x14)), length 12	OK	0xc
+lib/B/YD2j.v	154	0	dec	0x223a0	R_A1l	chunk-off	RO-RUN	run 119 of 186 starts at 0x223a0 = end of owned (0x2238c, 0x14)	OK	0x223a0
+lib/B/YD2j.v	154	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 119 = [0x223a0, 0x223ab = start of owned (0x223ab, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	155	0	dec	0x223c0	R_A1l	chunk-off	RO-RUN	run 120 of 186 starts at 0x223c0 = end of owned (0x223ab, 0x15)	OK	0x223c0
+lib/B/YD2j.v	155	1	dec	0x19	R_A1l	chunk-len	RO-RUN	run 120 = [0x223c0, 0x223d9 = start of owned (0x223d9, 0x27)), length 25	OK	0x19
+lib/B/YD2j.v	156	0	dec	0x22400	R_A1l	chunk-off	RO-RUN	run 121 of 186 starts at 0x22400 = end of owned (0x223d9, 0x27)	OK	0x22400
+lib/B/YD2j.v	156	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 121 = [0x22400, 0x2240b = start of owned (0x2240b, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	157	0	dec	0x22420	R_A1l	chunk-off	RO-RUN	run 122 of 186 starts at 0x22420 = end of owned (0x2240b, 0x15)	OK	0x22420
+lib/B/YD2j.v	157	1	dec	0x12	R_A1l	chunk-len	RO-RUN	run 122 = [0x22420, 0x22432 = start of owned (0x22432, 0x2e)), length 18	OK	0x12
+lib/B/YD2j.v	158	0	dec	0x22460	R_A1l	chunk-off	RO-RUN	run 123 of 186 starts at 0x22460 = end of owned (0x22432, 0x2e)	OK	0x22460
+lib/B/YD2j.v	158	1	dec	0x8	R_A1l	chunk-len	RO-RUN	run 123 = [0x22460, 0x22468 = start of owned (0x22468, 0x18)), length 8	OK	0x8
+lib/B/YD2j.v	159	0	dec	0x22480	R_A1l	chunk-off	RO-RUN	run 124 of 186 starts at 0x22480 = end of owned (0x22468, 0x18)	OK	0x22480
+lib/B/YD2j.v	159	1	dec	0x9	R_A1l	chunk-len	RO-RUN	run 124 = [0x22480, 0x22489 = start of owned (0x22489, 0x17)), length 9	OK	0x9
+lib/B/YD2j.v	160	0	dec	0x224a0	R_A1l	chunk-off	RO-RUN	run 125 of 186 starts at 0x224a0 = end of owned (0x22489, 0x17)	OK	0x224a0
+lib/B/YD2j.v	160	1	dec	0xe	R_A1l	chunk-len	RO-RUN	run 125 = [0x224a0, 0x224ae = start of owned (0x224ae, 0x12)), length 14	OK	0xe
+lib/B/YD2j.v	161	0	dec	0x224c0	R_A1l	chunk-off	RO-RUN	run 126 of 186 starts at 0x224c0 = end of owned (0x224ae, 0x12)	OK	0x224c0
+lib/B/YD2j.v	161	1	dec	0x7	R_A1l	chunk-len	RO-RUN	run 126 = [0x224c0, 0x224c7 = start of owned (0x224c7, 0x19)), length 7	OK	0x7
+lib/B/YD2j.v	162	0	dec	0x224e0	R_A1l	chunk-off	RO-RUN	run 127 of 186 starts at 0x224e0 = end of owned (0x224c7, 0x19)	OK	0x224e0
+lib/B/YD2j.v	162	1	dec	0x23	R_A1l	chunk-len	RO-RUN	run 127 = [0x224e0, 0x22503 = start of owned (0x22503, 0x1d)), length 35	OK	0x23
+lib/B/YD2j.v	163	0	dec	0x22520	R_A1l	chunk-off	RO-RUN	run 128 of 186 starts at 0x22520 = end of owned (0x22503, 0x1d)	OK	0x22520
+lib/B/YD2j.v	163	1	dec	0x12	R_A1l	chunk-len	RO-RUN	run 128 = [0x22520, 0x22532 = start of owned (0x22532, 0x2e)), length 18	OK	0x12
+lib/B/YD2j.v	164	0	dec	0x22560	R_A1l	chunk-off	RO-RUN	run 129 of 186 starts at 0x22560 = end of owned (0x22532, 0x2e)	OK	0x22560
+lib/B/YD2j.v	164	1	dec	0x13	R_A1l	chunk-len	RO-RUN	run 129 = [0x22560, 0x22573 = start of owned (0x22573, 0x2d)), length 19	OK	0x13
+lib/B/YD2j.v	165	0	dec	0x225a0	R_A1l	chunk-off	RO-RUN	run 130 of 186 starts at 0x225a0 = end of owned (0x22573, 0x2d)	OK	0x225a0
+lib/B/YD2j.v	165	1	dec	0x4	R_A1l	chunk-len	RO-RUN	run 130 = [0x225a0, 0x225a4 = start of owned (0x225a4, 0x1c)), length 4	OK	0x4
+lib/B/YD2j.v	166	0	dec	0x225c0	R_A1l	chunk-off	RO-RUN	run 131 of 186 starts at 0x225c0 = end of owned (0x225a4, 0x1c)	OK	0x225c0
+lib/B/YD2j.v	166	1	dec	0xf	R_A1l	chunk-len	RO-RUN	run 131 = [0x225c0, 0x225cf = start of owned (0x225cf, 0x11)), length 15	OK	0xf
+lib/B/YD2j.v	167	0	dec	0x225e0	R_A1l	chunk-off	RO-RUN	run 132 of 186 starts at 0x225e0 = end of owned (0x225cf, 0x11)	OK	0x225e0
+lib/B/YD2j.v	167	1	dec	0xa	R_A1l	chunk-len	RO-RUN	run 132 = [0x225e0, 0x225ea = start of owned (0x225ea, 0x16)), length 10	OK	0xa
+lib/B/YD2j.v	168	0	dec	0x22600	R_A1l	chunk-off	RO-RUN	run 133 of 186 starts at 0x22600 = end of owned (0x225ea, 0x16)	OK	0x22600
+lib/B/YD2j.v	168	1	dec	0xa	R_A1l	chunk-len	RO-RUN	run 133 = [0x22600, 0x2260a = start of owned (0x2260a, 0x16)), length 10	OK	0xa
+lib/B/YD2j.v	169	0	dec	0x22620	R_A1l	chunk-off	RO-RUN	run 134 of 186 starts at 0x22620 = end of owned (0x2260a, 0x16)	OK	0x22620
+lib/B/YD2j.v	169	1	dec	0xc	R_A1l	chunk-len	RO-RUN	run 134 = [0x22620, 0x2262c = start of owned (0x2262c, 0x14)), length 12	OK	0xc
+lib/B/YD2j.v	170	0	dec	0x22640	R_A1l	chunk-off	RO-RUN	run 135 of 186 starts at 0x22640 = end of owned (0x2262c, 0x14)	OK	0x22640
+lib/B/YD2j.v	170	1	dec	0xe	R_A1l	chunk-len	RO-RUN	run 135 = [0x22640, 0x2264e = start of owned (0x2264e, 0x12)), length 14	OK	0xe
+lib/B/YD2j.v	171	0	dec	0x22660	R_A1l	chunk-off	RO-RUN	run 136 of 186 starts at 0x22660 = end of owned (0x2264e, 0x12)	OK	0x22660
+lib/B/YD2j.v	171	1	dec	0x11	R_A1l	chunk-len	RO-RUN	run 136 = [0x22660, 0x22671 = start of owned (0x22671, 0x2f)), length 17	OK	0x11
+lib/B/YD2j.v	172	0	dec	0x226a0	R_A1l	chunk-off	RO-RUN	run 137 of 186 starts at 0x226a0 = end of owned (0x22671, 0x2f)	OK	0x226a0
+lib/B/YD2j.v	172	1	dec	0x4	R_A1l	chunk-len	RO-RUN	run 137 = [0x226a0, 0x226a4 = start of owned (0x226a4, 0x1c)), length 4	OK	0x4
+lib/B/YD2j.v	173	0	dec	0x226c0	R_A1l	chunk-off	RO-RUN	run 138 of 186 starts at 0x226c0 = end of owned (0x226a4, 0x1c)	OK	0x226c0
+lib/B/YD2j.v	173	1	dec	0x11	R_A1l	chunk-len	RO-RUN	run 138 = [0x226c0, 0x226d1 = start of owned (0x226d1, 0x2f)), length 17	OK	0x11
+lib/B/YD2j.v	174	0	dec	0x22700	R_A1l	chunk-off	RO-RUN	run 139 of 186 starts at 0x22700 = end of owned (0x226d1, 0x2f)	OK	0x22700
+lib/B/YD2j.v	174	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 139 = [0x22700, 0x2270b = start of owned (0x2270b, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	175	0	dec	0x22720	R_A1l	chunk-off	RO-RUN	run 140 of 186 starts at 0x22720 = end of owned (0x2270b, 0x15)	OK	0x22720
+lib/B/YD2j.v	175	1	dec	0xf	R_A1l	chunk-len	RO-RUN	run 140 = [0x22720, 0x2272f = start of owned (0x2272f, 0x11)), length 15	OK	0xf
+lib/B/YD2j.v	176	0	dec	0x22740	R_A1l	chunk-off	RO-RUN	run 141 of 186 starts at 0x22740 = end of owned (0x2272f, 0x11)	OK	0x22740
+lib/B/YD2j.v	176	1	dec	0xc	R_A1l	chunk-len	RO-RUN	run 141 = [0x22740, 0x2274c = start of owned (0x2274c, 0x14)), length 12	OK	0xc
+lib/B/YD2j.v	177	0	dec	0x22760	R_A1l	chunk-off	RO-RUN	run 142 of 186 starts at 0x22760 = end of owned (0x2274c, 0x14)	OK	0x22760
+lib/B/YD2j.v	177	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 142 = [0x22760, 0x2276b = start of owned (0x2276b, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	178	0	dec	0x22780	R_A1l	chunk-off	RO-RUN	run 143 of 186 starts at 0x22780 = end of owned (0x2276b, 0x15)	OK	0x22780
+lib/B/YD2j.v	178	1	dec	0x6	R_A1l	chunk-len	RO-RUN	run 143 = [0x22780, 0x22786 = start of owned (0x22786, 0x1a)), length 6	OK	0x6
+lib/B/YD2j.v	179	0	dec	0x227a0	R_A1l	chunk-off	RO-RUN	run 144 of 186 starts at 0x227a0 = end of owned (0x22786, 0x1a)	OK	0x227a0
+lib/B/YD2j.v	179	1	dec	0xc	R_A1l	chunk-len	RO-RUN	run 144 = [0x227a0, 0x227ac = start of owned (0x227ac, 0x14)), length 12	OK	0xc
+lib/B/YD2j.v	180	0	dec	0x227c0	R_A1l	chunk-off	RO-RUN	run 145 of 186 starts at 0x227c0 = end of owned (0x227ac, 0x14)	OK	0x227c0
+lib/B/YD2j.v	180	1	dec	0x8	R_A1l	chunk-len	RO-RUN	run 145 = [0x227c0, 0x227c8 = start of owned (0x227c8, 0x18)), length 8	OK	0x8
+lib/B/YD2j.v	181	0	dec	0x227e0	R_A1l	chunk-off	RO-RUN	run 146 of 186 starts at 0x227e0 = end of owned (0x227c8, 0x18)	OK	0x227e0
+lib/B/YD2j.v	181	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 146 = [0x227e0, 0x227eb = start of owned (0x227eb, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	182	0	dec	0x22800	R_A1l	chunk-off	RO-RUN	run 147 of 186 starts at 0x22800 = end of owned (0x227eb, 0x15)	OK	0x22800
+lib/B/YD2j.v	182	1	dec	0xa	R_A1l	chunk-len	RO-RUN	run 147 = [0x22800, 0x2280a = start of owned (0x2280a, 0x16)), length 10	OK	0xa
+lib/B/YD2j.v	183	0	dec	0x22820	R_A1l	chunk-off	RO-RUN	run 148 of 186 starts at 0x22820 = end of owned (0x2280a, 0x16)	OK	0x22820
+lib/B/YD2j.v	183	1	dec	0x5	R_A1l	chunk-len	RO-RUN	run 148 = [0x22820, 0x22825 = start of owned (0x22825, 0x1b)), length 5	OK	0x5
+lib/B/YD2j.v	184	0	dec	0x22840	R_A1l	chunk-off	RO-RUN	run 149 of 186 starts at 0x22840 = end of owned (0x22825, 0x1b)	OK	0x22840
+lib/B/YD2j.v	184	1	dec	0xe	R_A1l	chunk-len	RO-RUN	run 149 = [0x22840, 0x2284e = start of owned (0x2284e, 0x12)), length 14	OK	0xe
+lib/B/YD2j.v	185	0	dec	0x22860	R_A1l	chunk-off	RO-RUN	run 150 of 186 starts at 0x22860 = end of owned (0x2284e, 0x12)	OK	0x22860
+lib/B/YD2j.v	185	1	dec	0x11	R_A1l	chunk-len	RO-RUN	run 150 = [0x22860, 0x22871 = start of owned (0x22871, 0x2f)), length 17	OK	0x11
+lib/B/YD2j.v	186	0	dec	0x228a0	R_A1l	chunk-off	RO-RUN	run 151 of 186 starts at 0x228a0 = end of owned (0x22871, 0x2f)	OK	0x228a0
+lib/B/YD2j.v	186	1	dec	0x4	R_A1l	chunk-len	RO-RUN	run 151 = [0x228a0, 0x228a4 = start of owned (0x228a4, 0x1c)), length 4	OK	0x4
+lib/B/YD2j.v	187	0	dec	0x228c0	R_A1l	chunk-off	RO-RUN	run 152 of 186 starts at 0x228c0 = end of owned (0x228a4, 0x1c)	OK	0x228c0
+lib/B/YD2j.v	187	1	dec	0x8	R_A1l	chunk-len	RO-RUN	run 152 = [0x228c0, 0x228c8 = start of owned (0x228c8, 0x18)), length 8	OK	0x8
+lib/B/YD2j.v	188	0	dec	0x228e0	R_A1l	chunk-off	RO-RUN	run 153 of 186 starts at 0x228e0 = end of owned (0x228c8, 0x18)	OK	0x228e0
+lib/B/YD2j.v	188	1	dec	0x6	R_A1l	chunk-len	RO-RUN	run 153 = [0x228e0, 0x228e6 = start of owned (0x228e6, 0x1a)), length 6	OK	0x6
+lib/B/YD2j.v	189	0	dec	0x22900	R_A1l	chunk-off	RO-RUN	run 154 of 186 starts at 0x22900 = end of owned (0x228e6, 0x1a)	OK	0x22900
+lib/B/YD2j.v	189	1	dec	0x9	R_A1l	chunk-len	RO-RUN	run 154 = [0x22900, 0x22909 = start of owned (0x22909, 0x17)), length 9	OK	0x9
+lib/B/YD2j.v	190	0	dec	0x22920	R_A1l	chunk-off	RO-RUN	run 155 of 186 starts at 0x22920 = end of owned (0x22909, 0x17)	OK	0x22920
+lib/B/YD2j.v	190	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 155 = [0x22920, 0x2292b = start of owned (0x2292b, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	191	0	dec	0x22940	R_A1l	chunk-off	RO-RUN	run 156 of 186 starts at 0x22940 = end of owned (0x2292b, 0x15)	OK	0x22940
+lib/B/YD2j.v	191	1	dec	0xd	R_A1l	chunk-len	RO-RUN	run 156 = [0x22940, 0x2294d = start of owned (0x2294d, 0x13)), length 13	OK	0xd
+lib/B/YD2j.v	192	0	dec	0x22960	R_A1l	chunk-off	RO-RUN	run 157 of 186 starts at 0x22960 = end of owned (0x2294d, 0x13)	OK	0x22960
+lib/B/YD2j.v	192	1	dec	0x10	R_A1l	chunk-len	RO-RUN	run 157 = [0x22960, 0x22970 = start of owned (0x22970, 0x10)), length 16	OK	0x10
+lib/B/YD2j.v	193	0	dec	0x22980	R_A1l	chunk-off	RO-RUN	run 158 of 186 starts at 0x22980 = end of owned (0x22970, 0x10)	OK	0x22980
+lib/B/YD2j.v	193	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 158 = [0x22980, 0x2298b = start of owned (0x2298b, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	194	0	dec	0x229a0	R_A1l	chunk-off	RO-RUN	run 159 of 186 starts at 0x229a0 = end of owned (0x2298b, 0x15)	OK	0x229a0
+lib/B/YD2j.v	194	1	dec	0xc	R_A1l	chunk-len	RO-RUN	run 159 = [0x229a0, 0x229ac = start of owned (0x229ac, 0x14)), length 12	OK	0xc
+lib/B/YD2j.v	195	0	dec	0x229c0	R_A1l	chunk-off	RO-RUN	run 160 of 186 starts at 0x229c0 = end of owned (0x229ac, 0x14)	OK	0x229c0
+lib/B/YD2j.v	195	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 160 = [0x229c0, 0x229cb = start of owned (0x229cb, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	196	0	dec	0x229e0	R_A1l	chunk-off	RO-RUN	run 161 of 186 starts at 0x229e0 = end of owned (0x229cb, 0x15)	OK	0x229e0
+lib/B/YD2j.v	196	1	dec	0xb	R_A1l	chunk-len	RO-RUN	run 161 = [0x229e0, 0x229eb = start of owned (0x229eb, 0x15)), length 11	OK	0xb
+lib/B/YD2j.v	197	0	dec	0x22a00	R_A1l	chunk-off	RO-RUN	run 162 of 186 starts at 0x22a00 = end of owned (0x229eb, 0x15)	OK	0x22a00
+lib/B/YD2j.v	197	1	dec	0x8	R_A1l	chunk-len	RO-RUN	run 162 = [0x22a00, 0x22a08 = start of owned (0x22a08, 0x18)), length 8	OK	0x8
+lib/B/YD2j.v	198	0	dec	0x22a20	R_A1l	chunk-off	RO-RUN	run 163 of 186 starts at 0x22a20 = end of owned (0x22a08, 0x18)	OK	0x22a20
+lib/B/YD2j.v	198	1	dec	0x9	R_A1l	chunk-len	RO-RUN	run 163 = [0x22a20, 0x22a29 = start of owned (0x22a29, 0x17)), length 9	OK	0x9
+lib/B/YD2j.v	199	0	dec	0x22a40	R_A1l	chunk-off	RO-RUN	run 164 of 186 starts at 0x22a40 = end of owned (0x22a29, 0x17)	OK	0x22a40
+lib/B/YD2j.v	199	1	dec	0xe	R_A1l	chunk-len	RO-RUN	run 164 = [0x22a40, 0x22a4e = start of owned (0x22a4e, 0x12)), length 14	OK	0xe
+lib/B/YD2j.v	200	0	dec	0x22a60	R_A1l	chunk-off	RO-RUN	run 165 of 186 starts at 0x22a60 = end of owned (0x22a4e, 0x12)	OK	0x22a60
+lib/B/YD2j.v	200	1	dec	0x18	R_A1l	chunk-len	RO-RUN	run 165 = [0x22a60, 0x22a78 = start of owned (0x22a78, 0x28)), length 24	OK	0x18
+lib/B/YD2j.v	201	0	dec	0x22aa0	R_A1l	chunk-off	RO-RUN	run 166 of 186 starts at 0x22aa0 = end of owned (0x22a78, 0x28)	OK	0x22aa0
+lib/B/YD2j.v	201	1	dec	0xd	R_A1l	chunk-len	RO-RUN	run 166 = [0x22aa0, 0x22aad = start of owned (0x22aad, 0x13)), length 13	OK	0xd
+lib/B/YD2j.v	202	0	dec	0x22ac0	R_A1l	chunk-off	RO-RUN	run 167 of 186 starts at 0x22ac0 = end of owned (0x22aad, 0x13)	OK	0x22ac0
+lib/B/YD2j.v	202	1	dec	0x13	R_A1l	chunk-len	RO-RUN	run 167 = [0x22ac0, 0x22ad3 = start of owned (0x22ad3, 0x2d)), length 19	OK	0x13
+lib/B/YD2j.v	203	0	dec	0x22b00	R_A1l	chunk-off	RO-RUN	run 168 of 186 starts at 0x22b00 = end of owned (0x22ad3, 0x2d)	OK	0x22b00
+lib/B/YD2j.v	203	1	dec	0x10	R_A1l	chunk-len	RO-RUN	run 168 = [0x22b00, 0x22b10 = start of owned (0x22b10, 0x10)), length 16	OK	0x10
+lib/B/YD2j.v	204	0	dec	0x22b20	R_A1l	chunk-off	RO-RUN	run 169 of 186 starts at 0x22b20 = end of owned (0x22b10, 0x10)	OK	0x22b20
+lib/B/YD2j.v	204	1	dec	0x1a	R_A1l	chunk-len	RO-RUN	run 169 = [0x22b20, 0x22b3a = start of owned (0x22b3a, 0x26)), length 26	OK	0x1a
+lib/B/YD2j.v	205	0	dec	0x22b60	R_A1l	chunk-off	RO-RUN	run 170 of 186 starts at 0x22b60 = end of owned (0x22b3a, 0x26)	OK	0x22b60
+lib/B/YD2j.v	205	1	dec	0x10	R_A1l	chunk-len	RO-RUN	run 170 = [0x22b60, 0x22b70 = start of owned (0x22b70, 0x10)), length 16	OK	0x10
+lib/B/YD2j.v	206	0	dec	0x22b80	R_A1l	chunk-off	RO-RUN	run 171 of 186 starts at 0x22b80 = end of owned (0x22b70, 0x10)	OK	0x22b80
+lib/B/YD2j.v	206	1	dec	0xc	R_A1l	chunk-len	RO-RUN	run 171 = [0x22b80, 0x22b8c = start of owned (0x22b8c, 0x14)), length 12	OK	0xc
+lib/B/YD2j.v	207	0	dec	0x22ba0	R_A1l	chunk-off	RO-RUN	run 172 of 186 starts at 0x22ba0 = end of owned (0x22b8c, 0x14)	OK	0x22ba0
+lib/B/YD2j.v	207	1	dec	0x15	R_A1l	chunk-len	RO-RUN	run 172 = [0x22ba0, 0x22bb5 = start of owned (0x22bb5, 0x2b)), length 21	OK	0x15
+lib/B/YD2j.v	208	0	dec	0x22be0	R_A1l	chunk-off	RO-RUN	run 173 of 186 starts at 0x22be0 = end of owned (0x22bb5, 0x2b)	OK	0x22be0
+lib/B/YD2j.v	208	1	dec	0x17	R_A1l	chunk-len	RO-RUN	run 173 = [0x22be0, 0x22bf7 = start of owned (0x22bf7, 0x29)), length 23	OK	0x17
+lib/B/YD2j.v	209	0	dec	0x22c20	R_A1l	chunk-off	RO-RUN	run 174 of 186 starts at 0x22c20 = end of owned (0x22bf7, 0x29)	OK	0x22c20
+lib/B/YD2j.v	209	1	dec	0x1b	R_A1l	chunk-len	RO-RUN	run 174 = [0x22c20, 0x22c3b = start of owned (0x22c3b, 0x25)), length 27	OK	0x1b
+lib/B/YD2j.v	210	0	dec	0x22c60	R_A1l	chunk-off	RO-RUN	run 175 of 186 starts at 0x22c60 = end of owned (0x22c3b, 0x25)	OK	0x22c60
+lib/B/YD2j.v	210	1	dec	0x11	R_A1l	chunk-len	RO-RUN	run 175 = [0x22c60, 0x22c71 = start of owned (0x22c71, 0x2f)), length 17	OK	0x11
+lib/B/YD2j.v	211	0	dec	0x22ca0	R_A1l	chunk-off	RO-RUN	run 176 of 186 starts at 0x22ca0 = end of owned (0x22c71, 0x2f)	OK	0x22ca0
+lib/B/YD2j.v	211	1	dec	0x2f	R_A1l	chunk-len	RO-RUN	run 176 = [0x22ca0, 0x22ccf = start of owned (0x22ccf, 0x31)), length 47	OK	0x2f
+lib/B/YD2j.v	212	0	dec	0x22d00	R_A1l	chunk-off	RO-RUN	run 177 of 186 starts at 0x22d00 = end of owned (0x22ccf, 0x31)	OK	0x22d00
+lib/B/YD2j.v	212	1	dec	0xf	R_A1l	chunk-len	RO-RUN	run 177 = [0x22d00, 0x22d0f = start of owned (0x22d0f, 0x11)), length 15	OK	0xf
+lib/B/YD2j.v	213	0	dec	0x22d20	R_A1l	chunk-off	RO-RUN	run 178 of 186 starts at 0x22d20 = end of owned (0x22d0f, 0x11)	OK	0x22d20
+lib/B/YD2j.v	213	1	dec	0x16	R_A1l	chunk-len	RO-RUN	run 178 = [0x22d20, 0x22d36 = start of owned (0x22d36, 0x2a)), length 22	OK	0x16
+lib/B/YD2j.v	214	0	dec	0x22d60	R_A1l	chunk-off	RO-RUN	run 179 of 186 starts at 0x22d60 = end of owned (0x22d36, 0x2a)	OK	0x22d60
+lib/B/YD2j.v	214	1	dec	0x19	R_A1l	chunk-len	RO-RUN	run 179 = [0x22d60, 0x22d79 = start of owned (0x22d79, 0x27)), length 25	OK	0x19
+lib/B/YD2j.v	215	0	dec	0x22da0	R_A1l	chunk-off	RO-RUN	run 180 of 186 starts at 0x22da0 = end of owned (0x22d79, 0x27)	OK	0x22da0
+lib/B/YD2j.v	215	1	dec	0xf	R_A1l	chunk-len	RO-RUN	run 180 = [0x22da0, 0x22daf = start of owned (0x22daf, 0x11)), length 15	OK	0xf
+lib/B/YD2j.v	216	0	dec	0x22dc0	R_A1l	chunk-off	RO-RUN	run 181 of 186 starts at 0x22dc0 = end of owned (0x22daf, 0x11)	OK	0x22dc0
+lib/B/YD2j.v	216	1	dec	0x2	R_A1l	chunk-len	RO-RUN	run 181 = [0x22dc0, 0x22dc2 = start of owned (0x22dc2, 0x1e)), length 2	OK	0x2
+lib/B/YD2j.v	217	0	dec	0x22de0	R_A1l	chunk-off	RO-RUN	run 182 of 186 starts at 0x22de0 = end of owned (0x22dc2, 0x1e)	OK	0x22de0
+lib/B/YD2j.v	217	1	dec	0x57c	R_A1l	chunk-len	RO-RUN	run 182 = [0x22de0, 0x2335c = start of owned (0x2335c, 0x4)), length 1404	OK	0x57c
+lib/B/YD2j.v	219	0	dec	0x23360	R_A1m	region-lo	RO-RUN	R_A1m lo = start of run 183 of 186: 0x23360 = end of owned (0x2335c, 0x4); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x23360
+lib/B/YD2j.v	219	1	dec	0x233c0	R_A1m	region-hi	RO-RUN	R_A1m hi = end of run 183 of 186: 0x233c0 = start of owned (0x233c0, 0x2); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x233c0
+lib/B/YD2j.v	219	2	dec	0x0	R_A1m	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	219	3	dec	0x0	R_A1m	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	220	0	dec	0x23360	R_A1m	chunk-off	RO-RUN	run 183 of 186 starts at 0x23360 = end of owned (0x2335c, 0x4)	OK	0x23360
+lib/B/YD2j.v	220	1	dec	0x60	R_A1m	chunk-len	RO-RUN	run 183 = [0x23360, 0x233c0 = start of owned (0x233c0, 0x2)), length 96	OK	0x60
+lib/B/YD2j.v	222	0	dec	0x233c2	R_A1n	region-lo	RO-RUN	R_A1n lo = start of run 184 of 186: 0x233c2 = end of owned (0x233c0, 0x2); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x233c2
+lib/B/YD2j.v	222	1	dec	0x246e4	R_A1n	region-hi	RO-RUN	R_A1n hi = end of run 184 of 186: 0x246e4 = .rodata end (cut); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x246e4
+lib/B/YD2j.v	222	2	dec	0x0	R_A1n	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	222	3	dec	0x0	R_A1n	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	223	0	dec	0x233c2	R_A1n	chunk-off	RO-RUN	run 184 of 186 starts at 0x233c2 = end of owned (0x233c0, 0x2)	OK	0x233c2
+lib/B/YD2j.v	223	1	dec	0x1322	R_A1n	chunk-len	RO-RUN	run 184 = [0x233c2, 0x246e4 = .rodata end (cut)), length 4898	OK	0x1322
+lib/B/YD2j.v	225	0	dec	0x246e4	R_A1o	region-lo	RO-RUN	R_A1o lo = start of run 185 of 186: 0x246e4 = .rodata end (cut); runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0x246e4
+lib/B/YD2j.v	225	1	dec	0xa5000	R_A1o	region-hi	RO-RUN	R_A1o hi = end of run 185 of 186: 0xa5000 = page floor of PT_GNU_RELRO; runs of [0x10000, 0xa5000) minus Tfib_owned_static, cut at .rodata end 0x246e4	OK	0xa5000
+lib/B/YD2j.v	225	2	dec	0x0	R_A1o	region-wlo	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	225	3	dec	0x0	R_A1o	region-whi	RO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	226	0	dec	0x246e4	R_A1o	chunk-off	RO-RUN	run 185 of 186 starts at 0x246e4 = .rodata end (cut)	OK	0x246e4
+lib/B/YD2j.v	226	1	dec	0x8091c	R_A1o	chunk-len	RO-RUN	run 185 = [0x246e4, 0xa5000 = page floor of PT_GNU_RELRO), length 526620	OK	0x8091c
+lib/B/YD2j.v	228	0	dec	0xa5000	R_A2a	region-lo	RELRO-RUN	R_A2a lo = start of run 0 of 12: 0xa5000 = page floor of PT_GNU_RELRO; runs of [0xa5000 (PT_GNU_RELRO page), 0xa7c68 (.data start)) minus Tfib_owned_static; the owned .got word 0xa6bf8 holding &__stack_chk_guard kept as an image chunk, as the donor's R_A2e keeps 0x9eea8 (holds the donor's &__stack_chk_guard: True)	OK	0xa5000
+lib/B/YD2j.v	228	1	dec	0xa5f30	R_A2a	region-hi	RELRO-RUN	R_A2a hi = end of run 5 of 12: 0xa5f30 = start of owned (0xa5f30, 0x20); runs of [0xa5000 (PT_GNU_RELRO page), 0xa7c68 (.data start)) minus Tfib_owned_static; the owned .got word 0xa6bf8 holding &__stack_chk_guard kept as an image chunk, as the donor's R_A2e keeps 0x9eea8 (holds the donor's &__stack_chk_guard: True)	OK	0xa5f30
+lib/B/YD2j.v	228	2	dec	0x0	R_A2a	region-wlo	RELRO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	228	3	dec	0x0	R_A2a	region-whi	RELRO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	229	0	dec	0xa5000	R_A2a	chunk-off	RELRO-RUN	run 0 of 12 starts at 0xa5000 = page floor of PT_GNU_RELRO	OK	0xa5000
+lib/B/YD2j.v	229	1	dec	0x890	R_A2a	chunk-len	RELRO-RUN	run 0 = [0xa5000, 0xa5890 = start of owned (0xa5890, 0x90)), length 2192	OK	0x890
+lib/B/YD2j.v	230	0	dec	0xa5920	R_A2a	chunk-off	RELRO-RUN	run 1 of 12 starts at 0xa5920 = end of owned (0xa5890, 0x90)	OK	0xa5920
+lib/B/YD2j.v	230	1	dec	0xd0	R_A2a	chunk-len	RELRO-RUN	run 1 = [0xa5920, 0xa59f0 = start of owned (0xa59f0, 0x30)), length 208	OK	0xd0
+lib/B/YD2j.v	231	0	dec	0xa5a20	R_A2a	chunk-off	RELRO-RUN	run 2 of 12 starts at 0xa5a20 = end of owned (0xa59f0, 0x30)	OK	0xa5a20
+lib/B/YD2j.v	231	1	dec	0x1c0	R_A2a	chunk-len	RELRO-RUN	run 2 = [0xa5a20, 0xa5be0 = start of owned (0xa5be0, 0x60)), length 448	OK	0x1c0
+lib/B/YD2j.v	232	0	dec	0xa5c40	R_A2a	chunk-off	RELRO-RUN	run 3 of 12 starts at 0xa5c40 = end of owned (0xa5be0, 0x60)	OK	0xa5c40
+lib/B/YD2j.v	232	1	dec	0xa0	R_A2a	chunk-len	RELRO-RUN	run 3 = [0xa5c40, 0xa5ce0 = start of owned (0xa5ce0, 0x20)), length 160	OK	0xa0
+lib/B/YD2j.v	233	0	dec	0xa5d00	R_A2a	chunk-off	RELRO-RUN	run 4 of 12 starts at 0xa5d00 = end of owned (0xa5ce0, 0x20)	OK	0xa5d00
+lib/B/YD2j.v	233	1	dec	0x90	R_A2a	chunk-len	RELRO-RUN	run 4 = [0xa5d00, 0xa5d90 = start of owned (0xa5d90, 0x30)), length 144	OK	0x90
+lib/B/YD2j.v	234	0	dec	0xa5dc0	R_A2a	chunk-off	RELRO-RUN	run 5 of 12 starts at 0xa5dc0 = end of owned (0xa5d90, 0x30)	OK	0xa5dc0
+lib/B/YD2j.v	234	1	dec	0x170	R_A2a	chunk-len	RELRO-RUN	run 5 = [0xa5dc0, 0xa5f30 = start of owned (0xa5f30, 0x20)), length 368	OK	0x170
+lib/B/YD2j.v	236	0	dec	0xa5fb0	R_A2b	region-lo	RELRO-RUN	R_A2b lo = start of run 6 of 12: 0xa5fb0 = end of owned (0xa5fa8, 0x8); runs of [0xa5000 (PT_GNU_RELRO page), 0xa7c68 (.data start)) minus Tfib_owned_static; the owned .got word 0xa6bf8 holding &__stack_chk_guard kept as an image chunk, as the donor's R_A2e keeps 0x9eea8 (holds the donor's &__stack_chk_guard: True)	OK	0xa5fb0
+lib/B/YD2j.v	236	1	dec	0xa6ab8	R_A2b	region-hi	RELRO-RUN	R_A2b hi = end of run 6 of 12: 0xa6ab8 = start of owned (0xa6ab8, 0x8); runs of [0xa5000 (PT_GNU_RELRO page), 0xa7c68 (.data start)) minus Tfib_owned_static; the owned .got word 0xa6bf8 holding &__stack_chk_guard kept as an image chunk, as the donor's R_A2e keeps 0x9eea8 (holds the donor's &__stack_chk_guard: True)	OK	0xa6ab8
+lib/B/YD2j.v	236	2	dec	0x0	R_A2b	region-wlo	RELRO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	236	3	dec	0x0	R_A2b	region-whi	RELRO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	237	0	dec	0xa5fb0	R_A2b	chunk-off	RELRO-RUN	run 6 of 12 starts at 0xa5fb0 = end of owned (0xa5fa8, 0x8)	OK	0xa5fb0
+lib/B/YD2j.v	237	1	dec	0xb08	R_A2b	chunk-len	RELRO-RUN	run 6 = [0xa5fb0, 0xa6ab8 = start of owned (0xa6ab8, 0x8)), length 2824	OK	0xb08
+lib/B/YD2j.v	239	0	dec	0xa6ac0	R_A2c	region-lo	RELRO-RUN	R_A2c lo = start of run 7 of 12: 0xa6ac0 = end of owned (0xa6ab8, 0x8); runs of [0xa5000 (PT_GNU_RELRO page), 0xa7c68 (.data start)) minus Tfib_owned_static; the owned .got word 0xa6bf8 holding &__stack_chk_guard kept as an image chunk, as the donor's R_A2e keeps 0x9eea8 (holds the donor's &__stack_chk_guard: True)	OK	0xa6ac0
+lib/B/YD2j.v	239	1	dec	0xa6ba8	R_A2c	region-hi	RELRO-RUN	R_A2c hi = end of run 7 of 12: 0xa6ba8 = start of owned (0xa6ba8, 0x8); runs of [0xa5000 (PT_GNU_RELRO page), 0xa7c68 (.data start)) minus Tfib_owned_static; the owned .got word 0xa6bf8 holding &__stack_chk_guard kept as an image chunk, as the donor's R_A2e keeps 0x9eea8 (holds the donor's &__stack_chk_guard: True)	OK	0xa6ba8
+lib/B/YD2j.v	239	2	dec	0x0	R_A2c	region-wlo	RELRO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	239	3	dec	0x0	R_A2c	region-whi	RELRO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	240	0	dec	0xa6ac0	R_A2c	chunk-off	RELRO-RUN	run 7 of 12 starts at 0xa6ac0 = end of owned (0xa6ab8, 0x8)	OK	0xa6ac0
+lib/B/YD2j.v	240	1	dec	0xe8	R_A2c	chunk-len	RELRO-RUN	run 7 = [0xa6ac0, 0xa6ba8 = start of owned (0xa6ba8, 0x8)), length 232	OK	0xe8
+lib/B/YD2j.v	242	0	dec	0xa6bb0	R_A2d	region-lo	RELRO-RUN	R_A2d lo = start of run 8 of 12: 0xa6bb0 = end of owned (0xa6ba8, 0x8); runs of [0xa5000 (PT_GNU_RELRO page), 0xa7c68 (.data start)) minus Tfib_owned_static; the owned .got word 0xa6bf8 holding &__stack_chk_guard kept as an image chunk, as the donor's R_A2e keeps 0x9eea8 (holds the donor's &__stack_chk_guard: True)	OK	0xa6bb0
+lib/B/YD2j.v	242	1	dec	0xa6be8	R_A2d	region-hi	RELRO-RUN	R_A2d hi = end of run 8 of 12: 0xa6be8 = start of owned (0xa6be8, 0x10); runs of [0xa5000 (PT_GNU_RELRO page), 0xa7c68 (.data start)) minus Tfib_owned_static; the owned .got word 0xa6bf8 holding &__stack_chk_guard kept as an image chunk, as the donor's R_A2e keeps 0x9eea8 (holds the donor's &__stack_chk_guard: True)	OK	0xa6be8
+lib/B/YD2j.v	242	2	dec	0x0	R_A2d	region-wlo	RELRO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	242	3	dec	0x0	R_A2d	region-whi	RELRO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	243	0	dec	0xa6bb0	R_A2d	chunk-off	RELRO-RUN	run 8 of 12 starts at 0xa6bb0 = end of owned (0xa6ba8, 0x8)	OK	0xa6bb0
+lib/B/YD2j.v	243	1	dec	0x38	R_A2d	chunk-len	RELRO-RUN	run 8 = [0xa6bb0, 0xa6be8 = start of owned (0xa6be8, 0x10)), length 56	OK	0x38
+lib/B/YD2j.v	245	0	dec	0xa6bf8	R_A2e	region-lo	RELRO-RUN	R_A2e lo = start of run 9 of 12: 0xa6bf8 = end of owned (0xa6be8, 0x10); runs of [0xa5000 (PT_GNU_RELRO page), 0xa7c68 (.data start)) minus Tfib_owned_static; the owned .got word 0xa6bf8 holding &__stack_chk_guard kept as an image chunk, as the donor's R_A2e keeps 0x9eea8 (holds the donor's &__stack_chk_guard: True)	OK	0xa6bf8
+lib/B/YD2j.v	245	1	dec	0xa6c50	R_A2e	region-hi	RELRO-RUN	R_A2e hi = end of run 10 of 12: 0xa6c50 = start of owned (0xa6c50, 0x10); runs of [0xa5000 (PT_GNU_RELRO page), 0xa7c68 (.data start)) minus Tfib_owned_static; the owned .got word 0xa6bf8 holding &__stack_chk_guard kept as an image chunk, as the donor's R_A2e keeps 0x9eea8 (holds the donor's &__stack_chk_guard: True)	OK	0xa6c50
+lib/B/YD2j.v	245	2	dec	0x0	R_A2e	region-wlo	RELRO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	245	3	dec	0x0	R_A2e	region-whi	RELRO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	246	0	dec	0xa6bf8	R_A2e	chunk-off	RELRO-RUN	run 9 of 12 starts at 0xa6bf8 = end of owned (0xa6be8, 0x10)	OK	0xa6bf8
+lib/B/YD2j.v	246	1	dec	0x8	R_A2e	chunk-len	RELRO-RUN	run 9 = [0xa6bf8, 0xa6c00 = end of the .got word holding &__stack_chk_guard), length 8	OK	0x8
+lib/B/YD2j.v	247	0	dec	0xa6c00	R_A2e	chunk-off	RELRO-RUN	run 10 of 12 starts at 0xa6c00 = end of owned (0xa6bf8, 0x8)	OK	0xa6c00
+lib/B/YD2j.v	247	1	dec	0x50	R_A2e	chunk-len	RELRO-RUN	run 10 = [0xa6c00, 0xa6c50 = start of owned (0xa6c50, 0x10)), length 80	OK	0x50
+lib/B/YD2j.v	249	0	dec	0xa6c68	R_A2f	region-lo	RELRO-RUN	R_A2f lo = start of run 11 of 12: 0xa6c68 = end of owned (0xa6c60, 0x8); runs of [0xa5000 (PT_GNU_RELRO page), 0xa7c68 (.data start)) minus Tfib_owned_static; the owned .got word 0xa6bf8 holding &__stack_chk_guard kept as an image chunk, as the donor's R_A2e keeps 0x9eea8 (holds the donor's &__stack_chk_guard: True)	OK	0xa6c68
+lib/B/YD2j.v	249	1	dec	0xa7c68	R_A2f	region-hi	RELRO-RUN	R_A2f hi = end of run 11 of 12: 0xa7c68 = start of owned (0xa7c68, 0x28b0); runs of [0xa5000 (PT_GNU_RELRO page), 0xa7c68 (.data start)) minus Tfib_owned_static; the owned .got word 0xa6bf8 holding &__stack_chk_guard kept as an image chunk, as the donor's R_A2e keeps 0x9eea8 (holds the donor's &__stack_chk_guard: True)	OK	0xa7c68
+lib/B/YD2j.v	249	2	dec	0x0	R_A2f	region-wlo	RELRO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	249	3	dec	0x0	R_A2f	region-whi	RELRO-RUN	no write window (read-only image)	OK	0x0
+lib/B/YD2j.v	250	0	dec	0xa6c68	R_A2f	chunk-off	RELRO-RUN	run 11 of 12 starts at 0xa6c68 = end of owned (0xa6c60, 0x8)	OK	0xa6c68
+lib/B/YD2j.v	250	1	dec	0x1000	R_A2f	chunk-len	RELRO-RUN	run 11 = [0xa6c68, 0xa7c68 = start of owned (0xa7c68, 0x28b0)), length 4096	OK	0x1000
+lib/B/YD2j.v	252	0	dec	0xaa518	R_A3	region-lo	DATA-RUN	first .data byte no owned range covers 0xaa518; .data end 0xaa858; 1 run	OK	0xaa518
+lib/B/YD2j.v	252	1	dec	0xaa858	R_A3	region-hi	DATA-RUN	first .data byte no owned range covers 0xaa518; .data end 0xaa858; 1 run	OK	0xaa858
+lib/B/YD2j.v	252	2	dec	0xaa518	R_A3	region-wlo	DATA-RUN	write window = the region	OK	0xaa518
+lib/B/YD2j.v	252	3	dec	0xaa858	R_A3	region-whi	DATA-RUN	write window = the region	OK	0xaa858
+lib/B/YD2j.v	253	0	dec	0xaa518	R_A3	chunk-off	DATA-RUN	first .data byte no owned range covers 0xaa518; .data end 0xaa858; 1 run	OK	0xaa518
+lib/B/YD2j.v	253	1	dec	0x340	R_A3	chunk-len	DATA-RUN	first .data byte no owned range covers 0xaa518; .data end 0xaa858; 1 run	OK	0x340
+lib/B/YD2j.v	255	0	dec	0xad588	R_A4	region-lo	SAME-AS-DONOR	lo 0xad588 named sym:__do_init.__initialized+0x0 = donor 0xa2bc8	OK	-
+lib/B/YD2j.v	255	1	dec	0xad5d0	R_A4	region-hi	SAME-AS-DONOR	hi end 0xad5d0 named before:__do_fini.__finalized = donor end 0xa2c10	OK	-
+lib/B/YD2j.v	255	2	dec	0xad588	R_A4	region-wlo	SAME-AS-DONOR	wlo 0xad588 named sym:__do_init.__initialized+0x0 = donor 0xa2bc8	OK	-
+lib/B/YD2j.v	255	3	dec	0xad5d0	R_A4	region-whi	SAME-AS-DONOR	whi end 0xad5d0 named before:__do_fini.__finalized = donor end 0xa2c10	OK	-
+lib/B/YD2j.v	256	0	dec	0xad588	R_A4	chunk-off	SAME-AS-DONOR	chunk 0xad588 named sym:__do_init.__initialized+0x0 = donor 0xa2bc8	OK	-
+lib/B/YD2j.v	256	1	dec	0x1	R_A4	cval-w	SAME-AS-DONOR	CVal width = donor 1	OK	0x1
+lib/B/YD2j.v	256	2	dec	0x1	R_A4	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 1 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x1
+lib/B/YD2j.v	257	0	dec	0xad589	R_A4	chunk-off	SAME-AS-DONOR	chunk 0xad589 named after:__do_init.__initialized+0x1 = donor 0xa2bc9	OK	-
+lib/B/YD2j.v	257	1	dec	0x47	R_A4	chunk-len	SAME-AS-DONOR	chunk end 0xad5d0 named before:__do_fini.__finalized = donor end 0xa2c10	OK	-
+lib/B/YD2j.v	259	0	dec	0x5d3290	R_RS	region-lo	READ-STAGE	twin symbol read_stage [0x5d3290, 0x5e3290)	OK	0x5d3290
+lib/B/YD2j.v	259	1	dec	0x5e3290	R_RS	region-hi	READ-STAGE	twin symbol read_stage [0x5d3290, 0x5e3290)	OK	0x5e3290
+lib/B/YD2j.v	259	2	dec	0x0	R_RS	region-wlo	READ-STAGE	no write window	OK	0x0
+lib/B/YD2j.v	259	3	dec	0x0	R_RS	region-whi	READ-STAGE	no write window	OK	0x0
+lib/B/YD2j.v	262	0	dec	0x5e3290	R_A5a	region-lo	PROG-STATICS	read_stage end 0x5e3290 (= donor lo by name: sym:target_run.initialized+0x0)	OK	0x5e3290
+lib/B/YD2j.v	262	1	dec	0x5e4074	R_A5a	region-hi	SAME-AS-DONOR	hi end 0x5e4074 named last:sym:builtin_tls+0x23 = donor end 0x5d916c	OK	-
+lib/B/YD2j.v	262	2	dec	0x5e3290	R_A5a	region-wlo	PROG-STATICS	write window starts at lo (as the donor)	OK	0x5e3290
+lib/B/YD2j.v	262	3	dec	0x5e32c0	R_A5a	region-whi	PROG-STATICS	write window ends at g_rec 0x5e32c0 (the file header: the driver's own statics before g_rec)	OK	0x5e32c0
+lib/B/YD2j.v	263	0	dec	0x5e3290	R_A5a	chunk-off	SAME-AS-DONOR	chunk 0x5e3290 named sym:target_run.initialized+0x0 = donor 0x5d88d0	OK	-
+lib/B/YD2j.v	263	1	dec	0x4	R_A5a	chunk-len	SAME-AS-DONOR	chunk end 0x5e3294 named before:oft_in_callback = donor end 0x5d88d4	OK	-
+lib/B/YD2j.v	264	0	dec	0x5e3294	R_A5a	chunk-off	SAME-AS-DONOR	chunk 0x5e3294 named sym:oft_in_callback+0x0 = donor 0x5d88d4	OK	-
+lib/B/YD2j.v	264	1	dec	0x1	R_A5a	cval-w	SAME-AS-DONOR	CVal width = donor 1	OK	0x1
+lib/B/YD2j.v	264	2	dec	0x0	R_A5a	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 0 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x0
+lib/B/YD2j.v	265	0	dec	0x5e3295	R_A5a	chunk-off	SAME-AS-DONOR	chunk 0x5e3295 named after:oft_in_callback+0x1 = donor 0x5d88d5	OK	-
+lib/B/YD2j.v	265	1	dec	0x2b	R_A5a	chunk-len	PROG-STATICS	ends at g_rec 0x5e32c0: no byte of cmd_PG outside GI_cmdA	OK	0x2b
+lib/B/YD2j.v	266	0	dec	0x5e32c8	R_A5a	chunk-off	PROG-STATICS	piece 0 of 7 = [0x5e32c8, 0x5e32cc): GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0x5e32c8
+lib/B/YD2j.v	266	1	dec	0x4	R_A5a	chunk-len	PROG-STATICS	piece 0 length; GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0x4
+lib/B/YD2j.v	267	0	dec	0x5e3650	R_A5a	chunk-off	PROG-STATICS	piece 1 of 7 = [0x5e3650, 0x5e365c): GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0x5e3650
+lib/B/YD2j.v	267	1	dec	0xc	R_A5a	chunk-len	PROG-STATICS	piece 1 length; GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0xc
+lib/B/YD2j.v	268	0	dec	0x5e3660	R_A5a	chunk-off	PROG-STATICS	piece 2 of 7 = [0x5e3660, 0x5e3670): GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0x5e3660
+lib/B/YD2j.v	268	1	dec	0x10	R_A5a	chunk-len	PROG-STATICS	piece 2 length; GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0x10
+lib/B/YD2j.v	269	0	dec	0x5e3760	R_A5a	chunk-off	PROG-STATICS	piece 3 of 7 = [0x5e3760, 0x5e3768): GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0x5e3760
+lib/B/YD2j.v	269	1	dec	0x8	R_A5a	chunk-len	PROG-STATICS	piece 3 length; GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0x8
+lib/B/YD2j.v	270	0	dec	0x5e37c3	R_A5a	chunk-off	PROG-STATICS	piece 4 of 7 = [0x5e37c3, 0x5e37e0): GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0x5e37c3
+lib/B/YD2j.v	270	1	dec	0x1d	R_A5a	chunk-len	PROG-STATICS	piece 4 length; GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0x1d
+lib/B/YD2j.v	271	0	dec	0x5e37e0	R_A5a	chunk-off	PROG-STATICS	piece 5 of 7 = [0x5e37e0, 0x5e37e4): GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0x5e37e0
+lib/B/YD2j.v	271	1	dec	0x4	R_A5a	chunk-len	PROG-STATICS	piece 5 length; GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0x4
+lib/B/YD2j.v	272	0	dec	0x5e3801	R_A5a	chunk-off	PROG-STATICS	piece 6 of 7 = [0x5e3801, 0x5e4048): GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0x5e3801
+lib/B/YD2j.v	272	1	dec	0x847	R_A5a	chunk-len	PROG-STATICS	piece 6 length; GI_cmdA sub-ranges g_rec+8, g_rec+912, g_rec+928, record.spill+0, g_quitting+0 and the runs of [g_rec, builtin_tls) outside cmd_PG, Tfib_owned_static, the ODR-indicator bytes 0x5e37c0,0x5e37c1,0x5e37c2,0x5e3800 and __environ	OK	0x847
+lib/B/YD2j.v	273	0	dec	0x5e4050	R_A5a	chunk-off	SAME-AS-DONOR	chunk 0x5e4050 named sym:builtin_tls+0x0 = donor 0x5d9148	OK	-
+lib/B/YD2j.v	273	1	dec	0x8	R_A5a	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	273	2	dec	0x5e4050	R_A5a	cval-lit	SAME-AS-DONOR	start-up pointer at builtin_tls+0x0 = donor 0x5d9148 at builtin_tls+0x0	OK	-
+lib/B/YD2j.v	274	0	dec	0x5e4058	R_A5a	chunk-off	SAME-AS-DONOR	chunk 0x5e4058 named sym:builtin_tls+0x8 = donor 0x5d9150	OK	-
+lib/B/YD2j.v	274	1	dec	0x8	R_A5a	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	274	2	dec	0x5e4050	R_A5a	cval-lit	SAME-AS-DONOR	start-up pointer at builtin_tls+0x0 = donor 0x5d9148 at builtin_tls+0x0	OK	-
+lib/B/YD2j.v	275	0	dec	0x5e4060	R_A5a	chunk-off	SAME-AS-DONOR	chunk 0x5e4060 named sym:builtin_tls+0x10 = donor 0x5d9158	OK	-
+lib/B/YD2j.v	275	1	dec	0x8	R_A5a	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	275	2	dec	0x5e4050	R_A5a	cval-lit	SAME-AS-DONOR	start-up pointer at builtin_tls+0x0 = donor 0x5d9148 at builtin_tls+0x0	OK	-
+lib/B/YD2j.v	276	0	dec	0x5e4068	R_A5a	chunk-off	SAME-AS-DONOR	chunk 0x5e4068 named sym:builtin_tls+0x18 = donor 0x5d9160	OK	-
+lib/B/YD2j.v	276	1	dec	0x8	R_A5a	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	276	2	dec	0x0	R_A5a	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 0 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x0
+lib/B/YD2j.v	277	0	dec	0x5e4070	R_A5a	chunk-off	SAME-AS-DONOR	chunk 0x5e4070 named sym:builtin_tls+0x20 = donor 0x5d9168	OK	-
+lib/B/YD2j.v	277	1	dec	0x4	R_A5a	cval-w	SAME-AS-DONOR	CVal width = donor 4	OK	0x4
+lib/B/YD2j.v	277	2	dec	0x8	R_A5a	cval-soff	SAME-AS-DONOR	SOff symbol index = donor 8	OK	0x8
+lib/B/YD2j.v	277	3	dec	0x0	R_A5a	cval-soff	SAME-AS-DONOR	SOff offset = donor 0	OK	0x0
+lib/B/YD2j.v	279	0	dec	0x5e4078	R_A5b	region-lo	SAME-AS-DONOR	lo 0x5e4078 named sym:builtin_tls+0x28 = donor 0x5d9170	OK	-
+lib/B/YD2j.v	279	1	dec	0x5e40c0	R_A5b	region-hi	SAME-AS-DONOR	hi end 0x5e40c0 named last:sym:builtin_tls+0x6f = donor end 0x5d91b8	OK	-
+lib/B/YD2j.v	279	2	dec	0x5e4078	R_A5b	region-wlo	SAME-AS-DONOR	wlo 0x5e4078 named sym:builtin_tls+0x28 = donor 0x5d9170	OK	-
+lib/B/YD2j.v	279	3	dec	0x5e40c0	R_A5b	region-whi	SAME-AS-DONOR	whi end 0x5e40c0 named last:sym:builtin_tls+0x6f = donor end 0x5d91b8	OK	-
+lib/B/YD2j.v	280	0	dec	0x5e4078	R_A5b	chunk-off	SAME-AS-DONOR	chunk 0x5e4078 named sym:builtin_tls+0x28 = donor 0x5d9170	OK	-
+lib/B/YD2j.v	280	1	dec	0x4	R_A5b	cval-w	SAME-AS-DONOR	CVal width = donor 4	OK	0x4
+lib/B/YD2j.v	280	2	dec	0x2	R_A5b	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 2 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x2
+lib/B/YD2j.v	281	0	dec	0x5e407c	R_A5b	chunk-off	SAME-AS-DONOR	chunk 0x5e407c named sym:builtin_tls+0x2c = donor 0x5d9174	OK	-
+lib/B/YD2j.v	281	1	dec	0x6	R_A5b	chunk-len	SAME-AS-DONOR	chunk end 0x5e4082 named last:sym:builtin_tls+0x31 = donor end 0x5d917a	OK	-
+lib/B/YD2j.v	282	0	dec	0x5e4082	R_A5b	chunk-off	SAME-AS-DONOR	chunk 0x5e4082 named sym:builtin_tls+0x32 = donor 0x5d917a	OK	-
+lib/B/YD2j.v	282	1	dec	0x1	R_A5b	cval-w	SAME-AS-DONOR	CVal width = donor 1	OK	0x1
+lib/B/YD2j.v	282	2	dec	0x1	R_A5b	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 1 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x1
+lib/B/YD2j.v	283	0	dec	0x5e4083	R_A5b	chunk-off	SAME-AS-DONOR	chunk 0x5e4083 named sym:builtin_tls+0x33 = donor 0x5d917b	OK	-
+lib/B/YD2j.v	283	1	dec	0x3d	R_A5b	chunk-len	SAME-AS-DONOR	chunk end 0x5e40c0 named last:sym:builtin_tls+0x6f = donor end 0x5d91b8	OK	-
+lib/B/YD2j.v	285	0	dec	0x5e40c8	R_A6	region-lo	SAME-AS-DONOR	lo 0x5e40c8 named sym:builtin_tls+0x78 = donor 0x5d91c0	OK	-
+lib/B/YD2j.v	285	1	dec	0x5e4110	R_A6	region-hi	SAME-AS-DONOR	hi end 0x5e4110 named last:sym:builtin_tls+0xbf = donor end 0x5d9208	OK	-
+lib/B/YD2j.v	285	2	dec	0x0	R_A6	region-wlo	SAME-AS-DONOR	donor: no window	OK	0x0
+lib/B/YD2j.v	285	3	dec	0x0	R_A6	region-whi	SAME-AS-DONOR	donor: no window	OK	0x0
+lib/B/YD2j.v	286	0	dec	0x5e40c8	R_A6	chunk-off	SAME-AS-DONOR	chunk 0x5e40c8 named sym:builtin_tls+0x78 = donor 0x5d91c0	OK	-
+lib/B/YD2j.v	286	1	dec	0x8	R_A6	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	286	2	dec	0x5e40c8	R_A6	cval-lit	SAME-AS-DONOR	start-up pointer at builtin_tls+0x78 = donor 0x5d91c0 at builtin_tls+0x78	OK	-
+lib/B/YD2j.v	287	0	dec	0x5e40d0	R_A6	chunk-off	SAME-AS-DONOR	chunk 0x5e40d0 named sym:builtin_tls+0x80 = donor 0x5d91c8	OK	-
+lib/B/YD2j.v	287	1	dec	0x18	R_A6	chunk-len	SAME-AS-DONOR	chunk end 0x5e40e8 named last:sym:builtin_tls+0x97 = donor end 0x5d91e0	OK	-
+lib/B/YD2j.v	288	0	dec	0x5e40e8	R_A6	chunk-off	SAME-AS-DONOR	chunk 0x5e40e8 named sym:builtin_tls+0x98 = donor 0x5d91e0	OK	-
+lib/B/YD2j.v	288	1	dec	0x8	R_A6	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	288	2	dec	0x6043e0	R_A6	cval-lit	SAME-AS-DONOR	start-up pointer at __libc+0x38 = donor 0x5f94d8 at __libc+0x38	OK	-
+lib/B/YD2j.v	289	0	dec	0x5e40f0	R_A6	chunk-off	SAME-AS-DONOR	chunk 0x5e40f0 named sym:builtin_tls+0xa0 = donor 0x5d91e8	OK	-
+lib/B/YD2j.v	289	1	dec	0x18	R_A6	chunk-len	SAME-AS-DONOR	chunk end 0x5e4108 named last:sym:builtin_tls+0xb7 = donor end 0x5d9200	OK	-
+lib/B/YD2j.v	290	0	dec	0x5e4108	R_A6	chunk-off	SAME-AS-DONOR	chunk 0x5e4108 named sym:builtin_tls+0xb8 = donor 0x5d9200	OK	-
+lib/B/YD2j.v	290	1	dec	0x8	R_A6	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	290	2	dec	0x29	R_A6	cval-soff	SAME-AS-DONOR	SOff symbol index = donor 41	OK	0x29
+lib/B/YD2j.v	290	3	dec	0x0	R_A6	cval-soff	SAME-AS-DONOR	SOff offset = donor 0	OK	0x0
+lib/B/YD2j.v	292	0	dec	0x5e4154	R_A7a	region-lo	SAME-AS-DONOR	lo 0x5e4154 named sym:builtin_tls+0x104 = donor 0x5d924c	OK	-
+lib/B/YD2j.v	292	1	dec	0x5e4160	R_A7a	region-hi	SAME-AS-DONOR	hi end 0x5e4160 named last:sym:builtin_tls+0x10f = donor end 0x5d9258	OK	-
+lib/B/YD2j.v	292	2	dec	0x0	R_A7a	region-wlo	SAME-AS-DONOR	donor: no window	OK	0x0
+lib/B/YD2j.v	292	3	dec	0x0	R_A7a	region-whi	SAME-AS-DONOR	donor: no window	OK	0x0
+lib/B/YD2j.v	293	0	dec	0x5e4154	R_A7a	chunk-off	SAME-AS-DONOR	chunk 0x5e4154 named sym:builtin_tls+0x104 = donor 0x5d924c	OK	-
+lib/B/YD2j.v	293	1	dec	0xc	R_A7a	chunk-len	SAME-AS-DONOR	chunk end 0x5e4160 named last:sym:builtin_tls+0x10f = donor end 0x5d9258	OK	-
+lib/B/YD2j.v	295	0	dec	0x604120	R_A7b	region-lo	SAME-AS-DONOR	lo 0x604120 named sym:__thread_list_lock+0x0 = donor 0x5f9218	OK	-
+lib/B/YD2j.v	295	1	dec	0x6043d8	R_A7b	region-hi	SAME-AS-DONOR	hi end 0x6043d8 named last:sym:__libc+0x2f = donor end 0x5f94d0	OK	-
+lib/B/YD2j.v	295	2	dec	0x604168	R_A7b	region-wlo	SAME-AS-DONOR	wlo 0x604168 named sym:finished_atexit+0x0 = donor 0x5f9260	OK	-
+lib/B/YD2j.v	295	3	dec	0x604388	R_A7b	region-whi	SAME-AS-DONOR	whi end 0x604388 named before:exit.exit_lock = donor end 0x5f9480	OK	-
+lib/B/YD2j.v	296	0	dec	0x604120	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604120 named sym:__thread_list_lock+0x0 = donor 0x5f9218	OK	-
+lib/B/YD2j.v	296	1	dec	0x10	R_A7b	chunk-len	SAME-AS-DONOR	chunk end 0x604130 named last:sym:main_tls+0x7 = donor end 0x5f9228	OK	-
+lib/B/YD2j.v	297	0	dec	0x604130	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604130 named sym:main_tls+0x8 = donor 0x5f9228	OK	-
+lib/B/YD2j.v	297	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	297	2	dec	0xa4258	R_A7b	cval-lit	SAME-AS-DONOR	start-up pointer at TLS block+0x0 = donor 0x9cc70 at TLS block+0x0	OK	-
+lib/B/YD2j.v	298	0	dec	0x604138	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604138 named sym:main_tls+0x10 = donor 0x5f9230	OK	-
+lib/B/YD2j.v	298	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	298	2	dec	0x0	R_A7b	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 0 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x0
+lib/B/YD2j.v	299	0	dec	0x604140	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604140 named sym:main_tls+0x18 = donor 0x5f9238	OK	-
+lib/B/YD2j.v	299	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	299	2	dec	0x18	R_A7b	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 24 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x18
+lib/B/YD2j.v	300	0	dec	0x604148	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604148 named sym:main_tls+0x20 = donor 0x5f9240	OK	-
+lib/B/YD2j.v	300	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	300	2	dec	0x8	R_A7b	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 8 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x8
+lib/B/YD2j.v	301	0	dec	0x604150	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604150 named sym:main_tls+0x28 = donor 0x5f9248	OK	-
+lib/B/YD2j.v	301	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	301	2	dec	0x0	R_A7b	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 0 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x0
+lib/B/YD2j.v	302	0	dec	0x604158	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604158 named sym:__stack_chk_guard+0x0 = donor 0x5f9250	OK	-
+lib/B/YD2j.v	302	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	302	2	dec	0x29	R_A7b	cval-soff	SAME-AS-DONOR	SOff symbol index = donor 41	OK	0x29
+lib/B/YD2j.v	302	3	dec	0x0	R_A7b	cval-soff	SAME-AS-DONOR	SOff offset = donor 0	OK	0x0
+lib/B/YD2j.v	303	0	dec	0x604160	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604160 named sym:__abort_lock+0x0 = donor 0x5f9258	OK	-
+lib/B/YD2j.v	303	1	dec	0x10	R_A7b	chunk-len	SAME-AS-DONOR	chunk end 0x604170 named before:slot = donor end 0x5f9268	OK	-
+lib/B/YD2j.v	304	0	dec	0x604170	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604170 named sym:slot+0x0 = donor 0x5f9268	OK	-
+lib/B/YD2j.v	304	1	dec	0x4	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 4	OK	0x4
+lib/B/YD2j.v	304	2	dec	0x1	R_A7b	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 1 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x1
+lib/B/YD2j.v	305	0	dec	0x604174	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604174 named after:slot+0x4 = donor 0x5f926c	OK	-
+lib/B/YD2j.v	305	1	dec	0x4	R_A7b	chunk-len	SAME-AS-DONOR	chunk end 0x604178 named before:head = donor end 0x5f9270	OK	-
+lib/B/YD2j.v	306	0	dec	0x604178	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604178 named sym:head+0x0 = donor 0x5f9270	OK	-
+lib/B/YD2j.v	306	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	306	2	dec	0x604180	R_A7b	cval-lit	SAME-AS-DONOR	start-up pointer at builtin+0x0 = donor 0x5f9278 at builtin+0x0	OK	-
+lib/B/YD2j.v	307	0	dec	0x604180	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604180 named sym:builtin+0x0 = donor 0x5f9278	OK	-
+lib/B/YD2j.v	307	1	dec	0x8	R_A7b	chunk-len	SAME-AS-DONOR	chunk end 0x604188 named last:sym:builtin+0x7 = donor end 0x5f9280	OK	-
+lib/B/YD2j.v	308	0	dec	0x604188	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604188 named sym:builtin+0x8 = donor 0x5f9280	OK	-
+lib/B/YD2j.v	308	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	308	2	dec	0x94e18	R_A7b	cval-lit	SAME-AS-DONOR	start-up pointer at call+0x0 = donor 0x8d824 at call+0x0	OK	-
+lib/B/YD2j.v	309	0	dec	0x604190	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604190 named sym:builtin+0x10 = donor 0x5f9288	OK	-
+lib/B/YD2j.v	309	1	dec	0xf8	R_A7b	chunk-len	SAME-AS-DONOR	chunk end 0x604288 named last:sym:builtin+0x107 = donor end 0x5f9380	OK	-
+lib/B/YD2j.v	310	0	dec	0x604288	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604288 named sym:builtin+0x108 = donor 0x5f9380	OK	-
+lib/B/YD2j.v	310	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	310	2	dec	0x75af0	R_A7b	cval-lit	SAME-AS-DONOR	start-up pointer at __sanitizer_cov_dump+0x0 = donor 0x6fa80 at __sanitizer_cov_dump+0x0	OK	-
+lib/B/YD2j.v	311	0	dec	0x604290	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x604290 named sym:builtin+0x110 = donor 0x5f9388	OK	-
+lib/B/YD2j.v	311	1	dec	0x108	R_A7b	chunk-len	SAME-AS-DONOR	chunk end 0x604398 named before:__progname = donor end 0x5f9490	OK	-
+lib/B/YD2j.v	312	0	dec	0x6043a0	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x6043a0 named sym:program_invocation_name+0x0 = donor 0x5f9498	OK	-
+lib/B/YD2j.v	312	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	312	2	dec	0x1	R_A7b	cval-soff	SAME-AS-DONOR	SOff symbol index = donor 1	OK	0x1
+lib/B/YD2j.v	312	3	dec	0x0	R_A7b	cval-soff	SAME-AS-DONOR	SOff offset = donor 0	OK	0x0
+lib/B/YD2j.v	313	0	dec	0x6043a8	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x6043a8 named sym:__libc+0x0 = donor 0x5f94a0	OK	-
+lib/B/YD2j.v	313	1	dec	0x1	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 1	OK	0x1
+lib/B/YD2j.v	313	2	dec	0x1	R_A7b	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 1 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x1
+lib/B/YD2j.v	314	0	dec	0x6043a9	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x6043a9 named sym:__libc+0x1 = donor 0x5f94a1	OK	-
+lib/B/YD2j.v	314	1	dec	0x7	R_A7b	chunk-len	SAME-AS-DONOR	chunk end 0x6043b0 named last:sym:__libc+0x7 = donor end 0x5f94a8	OK	-
+lib/B/YD2j.v	315	0	dec	0x6043b0	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x6043b0 named sym:__libc+0x8 = donor 0x5f94a8	OK	-
+lib/B/YD2j.v	315	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	315	2	dec	0x5	R_A7b	cval-soff	SAME-AS-DONOR	SOff symbol index = donor 5	OK	0x5
+lib/B/YD2j.v	315	3	dec	0x0	R_A7b	cval-soff	SAME-AS-DONOR	SOff offset = donor 0	OK	0x0
+lib/B/YD2j.v	316	0	dec	0x6043b8	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x6043b8 named sym:__libc+0x10 = donor 0x5f94b0	OK	-
+lib/B/YD2j.v	316	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	316	2	dec	0x604128	R_A7b	cval-lit	SAME-AS-DONOR	start-up pointer at main_tls+0x0 = donor 0x5f9220 at main_tls+0x0	OK	-
+lib/B/YD2j.v	317	0	dec	0x6043c0	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x6043c0 named sym:__libc+0x18 = donor 0x5f94b8	OK	-
+lib/B/YD2j.v	317	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	317	2	dec	0xf8	R_A7b	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 248 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0xf8
+lib/B/YD2j.v	318	0	dec	0x6043c8	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x6043c8 named sym:__libc+0x20 = donor 0x5f94c0	OK	-
+lib/B/YD2j.v	318	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	318	2	dec	0x8	R_A7b	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 8 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x8
+lib/B/YD2j.v	319	0	dec	0x6043d0	R_A7b	chunk-off	SAME-AS-DONOR	chunk 0x6043d0 named sym:__libc+0x28 = donor 0x5f94c8	OK	-
+lib/B/YD2j.v	319	1	dec	0x8	R_A7b	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	319	2	dec	0x1	R_A7b	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 1 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x1
+lib/B/YD2j.v	321	0	dec	0x6043e0	R_A7c	region-lo	SAME-AS-DONOR	lo 0x6043e0 named sym:__libc+0x38 = donor 0x5f94d8	OK	-
+lib/B/YD2j.v	321	1	dec	0x604428	R_A7c	region-hi	SAME-AS-DONOR	hi end 0x604428 named before:__malloc_context = donor end 0x5f9520	OK	-
+lib/B/YD2j.v	321	2	dec	0x0	R_A7c	region-wlo	SAME-AS-DONOR	donor: no window	OK	0x0
+lib/B/YD2j.v	321	3	dec	0x0	R_A7c	region-whi	SAME-AS-DONOR	donor: no window	OK	0x0
+lib/B/YD2j.v	322	0	dec	0x6043e0	R_A7c	chunk-off	SAME-AS-DONOR	chunk 0x6043e0 named sym:__libc+0x38 = donor 0x5f94d8	OK	-
+lib/B/YD2j.v	322	1	dec	0x30	R_A7c	chunk-len	SAME-AS-DONOR	chunk end 0x604410 named before:__hwcap = donor end 0x5f9508	OK	-
+lib/B/YD2j.v	323	0	dec	0x604418	R_A7c	chunk-off	SAME-AS-DONOR	chunk 0x604418 named sym:freebuf_queue+0x0 = donor 0x5f9510	OK	-
+lib/B/YD2j.v	323	1	dec	0x10	R_A7c	chunk-len	SAME-AS-DONOR	chunk end 0x604428 named before:__malloc_context = donor end 0x5f9520	OK	-
+lib/B/YD2j.v	325	0	dec	0x6047c8	R_A8	region-lo	SAME-AS-DONOR	lo 0x6047c8 named sym:__malloc_replaced+0x0 = donor 0x5f98c0	OK	-
+lib/B/YD2j.v	325	1	dec	0x605070	R_A8	region-hi	SAME-AS-DONOR	hi end 0x605070 named before:funcs = donor end 0x5fa168	OK	-
+lib/B/YD2j.v	325	2	dec	0x0	R_A8	region-wlo	SAME-AS-DONOR	donor: no window	OK	0x0
+lib/B/YD2j.v	325	3	dec	0x0	R_A8	region-whi	SAME-AS-DONOR	donor: no window	OK	0x0
+lib/B/YD2j.v	326	0	dec	0x6047c8	R_A8	chunk-off	SAME-AS-DONOR	chunk 0x6047c8 named sym:__malloc_replaced+0x0 = donor 0x5f98c0	OK	-
+lib/B/YD2j.v	326	1	dec	0x8a8	R_A8	chunk-len	SAME-AS-DONOR	chunk end 0x605070 named before:funcs = donor end 0x5fa168	OK	-
+lib/B/YD2j.v	328	0	dec	0x605078	R_A9a	region-lo	SAME-AS-DONOR	lo 0x605078 named sym:tl_lock_count+0x0 = donor 0x5fa170	OK	-
+lib/B/YD2j.v	328	1	dec	0x6054c0	R_A9a	region-hi	SAME-AS-DONOR	hi end 0x6054c0 named before:__pthread_tsd_main = donor end 0x5fa5b8	OK	-
+lib/B/YD2j.v	328	2	dec	0x0	R_A9a	region-wlo	SAME-AS-DONOR	donor: no window	OK	0x0
+lib/B/YD2j.v	328	3	dec	0x0	R_A9a	region-whi	SAME-AS-DONOR	donor: no window	OK	0x0
+lib/B/YD2j.v	329	0	dec	0x605078	R_A9a	chunk-off	SAME-AS-DONOR	chunk 0x605078 named sym:tl_lock_count+0x0 = donor 0x5fa170	OK	-
+lib/B/YD2j.v	329	1	dec	0x8	R_A9a	chunk-len	SAME-AS-DONOR	chunk end 0x605080 named before:keys = donor end 0x5fa178	OK	-
+lib/B/YD2j.v	330	0	dec	0x605080	R_A9a	chunk-off	SAME-AS-DONOR	chunk 0x605080 named sym:keys+0x0 = donor 0x5fa178	OK	-
+lib/B/YD2j.v	330	1	dec	0x8	R_A9a	cval-w	SAME-AS-DONOR	CVal width = donor 8	OK	0x8
+lib/B/YD2j.v	330	2	dec	0x5aa58	R_A9a	cval-lit	SAME-AS-DONOR	start-up pointer at _ZN6__asan15PlatformTSDDtorEPv+0x0 = donor 0x549e8 at _ZN6__asan15PlatformTSDDtorEPv+0x0	OK	-
+lib/B/YD2j.v	331	0	dec	0x605088	R_A9a	chunk-off	SAME-AS-DONOR	chunk 0x605088 named sym:keys+0x8 = donor 0x5fa180	OK	-
+lib/B/YD2j.v	331	1	dec	0x3f8	R_A9a	chunk-len	SAME-AS-DONOR	chunk end 0x605480 named before:next_key = donor end 0x5fa578	OK	-
+lib/B/YD2j.v	332	0	dec	0x605480	R_A9a	chunk-off	SAME-AS-DONOR	chunk 0x605480 named sym:next_key+0x0 = donor 0x5fa578	OK	-
+lib/B/YD2j.v	332	1	dec	0x4	R_A9a	cval-w	SAME-AS-DONOR	CVal width = donor 4	OK	0x4
+lib/B/YD2j.v	332	2	dec	0x0	R_A9a	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 0 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x0
+lib/B/YD2j.v	333	0	dec	0x605484	R_A9a	chunk-off	SAME-AS-DONOR	chunk 0x605484 named after:next_key+0x4 = donor 0x5fa57c	OK	-
+lib/B/YD2j.v	333	1	dec	0x4	R_A9a	chunk-len	SAME-AS-DONOR	chunk end 0x605488 named before:key_lock = donor end 0x5fa580	OK	-
+lib/B/YD2j.v	334	0	dec	0x605488	R_A9a	chunk-off	SAME-AS-DONOR	chunk 0x605488 named sym:key_lock+0x0 = donor 0x5fa580	OK	-
+lib/B/YD2j.v	334	1	dec	0x4	R_A9a	cval-w	SAME-AS-DONOR	CVal width = donor 4	OK	0x4
+lib/B/YD2j.v	334	2	dec	0x0	R_A9a	cval-lit	SAME-AS-DONOR	start-up word = donor plain value 0 at the same object; PT_TLS (filesz, memsz, align) ours (0, 20, 8) = donor (0, 20, 8)	OK	0x0
+lib/B/YD2j.v	335	0	dec	0x60548c	R_A9a	chunk-off	SAME-AS-DONOR	chunk 0x60548c named sym:key_lock+0x4 = donor 0x5fa584	OK	-
+lib/B/YD2j.v	335	1	dec	0x34	R_A9a	chunk-len	SAME-AS-DONOR	chunk end 0x6054c0 named before:__pthread_tsd_main = donor end 0x5fa5b8	OK	-
+lib/B/YD2j.v	337	0	dec	0x6054c8	R_A9b	region-lo	SAME-AS-DONOR	lo 0x6054c8 named sym:__pthread_tsd_main+0x8 = donor 0x5fa5c0	OK	-
+lib/B/YD2j.v	337	1	dec	0x606000	R_A9b	region-hi	HULL-END	page ceiling of the last PT_LOAD end 0x606000	OK	0x606000
+lib/B/YD2j.v	337	2	dec	0x0	R_A9b	region-wlo	HULL-END	no write window	OK	0x0
+lib/B/YD2j.v	337	3	dec	0x0	R_A9b	region-whi	HULL-END	no write window	OK	0x0
+lib/B/YD2j.v	338	0	dec	0x6054c8	R_A9b	chunk-off	SAME-AS-DONOR	lo 0x6054c8 named sym:__pthread_tsd_main+0x8 = donor 0x5fa5c0	OK	-
+lib/B/YD2j.v	338	1	dec	0xb38	R_A9b	chunk-len	HULL-END	page ceiling of the last PT_LOAD end 0x606000 - lo	OK	0xb38

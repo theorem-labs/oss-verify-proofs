@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zstd
 harness: dictionary_decompress
-rocq: OssFuzzTheorems.zstd.dictionary_decompress
+rocq: OSSVerify.zstd.dictionary_decompress
 origin: upstream
 summary: Train a dictionary from the input (FUZZ_train), load it by DDict/loadDictionary/refPrefix, then
   decompress the input with it; the decompression result is ignored.

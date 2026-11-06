@@ -1,0 +1,82 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bndiv/lib/Lib/Image.v, with its module paths changed; 1 of its 57 lines of code is new or changed. *)
+(* Modified by Theorem Labs, 2026-10: moved from image B (fuzz_preset.asan-ubsan f8f98a95), commit 3244f5c71f6, to the #102 pin B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5): 0 address numerals by the frozen alreloc (sha256 c4338d099cfb8025, commit d99acc3edd9, same-unit move, --assume-source), each by symbol + offset in both images, or for a .rodata string by its unique content in both; GXA keys and history lines kept (report and decisions: the relocation record, the internal file resolve-B-why.tsv). *)
+(* Modified by Theorem Labs, 2026-10: relocated onto omx-clap-core/fuzz_preset.asan-ubsan (image B, f8f98a95) from commit 7e395de08f5 proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/Lib/Image.v: module paths (lib/A/Bz -> lib/AU/PSnpBz), the image binding Asan -> AsanUbsan, and 0 address numerals by alreloc (sha256 c4338d099cfb8025, commit d99acc3edd97, --build asan-ubsan --from-build asan), each by symbol + offset in both images (per-numeral report: the relocation record, reloc-B). *)
+(* Ported by the runtime port from commit affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/Lib/Image.v, unchanged. *)
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU.PSnpBz Require BvWfKernel.
+(* [comment removed for export] *)
+
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU.PSnpBz.Lib Require Import PropExec MState Mem Cells Step.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Open Scope bv_scope.
+
+Section WithSegs.
+Variable segs : list Segment.
+
+Fixpoint ro_bytes_b (A : Z) (bs : list byte) : bool :=
+  match bs with
+  | [] => true
+  | b :: bs' =>
+      match seg_rom segs (wa A) with
+      | Some b' => bv_eqb b b' && ro_addr segs (wa A) && ro_bytes_b (A + 1) bs'
+      | None => false
+      end
+  end.
+
+Lemma ro_bytes_b_sound : forall bs A, ro_bytes_b A bs = true -> ro_bytes segs A bs.
+Proof.
+  induction bs as [|b bs IH]; intros A H; cbn in *; [exact I|].
+  destruct (seg_rom segs (wa A)) as [b'|] eqn:E; [|discriminate].
+  apply andb_prop in H. destruct H as [H1 H3]. apply andb_prop in H1. destruct H1 as [H1 H2].
+  unfold bv_eqb in H1. apply Z.eqb_eq in H1. apply bv_eq in H1. subst b'.
+  split; [split; [exact E| exact H2]|]. apply IH. exact H3.
+Qed.
+
+Lemma ro_cells_image : forall m A bs,
+  mem_inv segs m -> ro_bytes_b A bs = true -> (0 <= A)%Z -> (A + Z.of_nat (length bs) <= 2^64)%Z ->
+  ro_cells segs m A [CB (length bs) bs].
+Proof.
+  intros m A bs Hinv Hb HA Hl. split.
+  - cbn. split; [reflexivity|exact I].
+  - cbn [cells_bytes cbytes]. rewrite app_nil_r. apply ro_bytes_at; try assumption.
+    apply ro_bytes_b_sound. exact Hb.
+Qed.
+
+(* [comment removed for export] *)
+Fixpoint image_bytes (A : Z) (n : nat) : option (list byte) :=
+  match n with
+  | O => Some []
+  | S n' => match seg_rom segs (wa A), image_bytes (A + 1) n' with
+            | Some b, Some bs => Some (b :: bs)
+            | _, _ => None
+            end
+  end.
+
+Lemma image_bytes_length : forall n A bs, image_bytes A n = Some bs -> length bs = n.
+Proof.
+  induction n as [|n IH]; intros A bs H; cbn in H.
+  - inversion H. reflexivity.
+  - destruct (seg_rom segs (wa A)); [|discriminate]. destruct (image_bytes (A + 1) n) eqn:E; [|discriminate].
+    inversion H. cbn. f_equal. eapply IH. exact E.
+Qed.
+
+End WithSegs.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+From OSSVerify.omx_clap_core.fuzz_preset.images Require Import Plain.
+From OSSVerify.omx_clap_core.fuzz_preset.images Require Import Ubsan.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+Definition psegs : list Segment := Plain.M.loaded_segments.
+Definition usegs : list Segment := Ubsan.M.loaded_segments.
+
+(* [comment removed for export] *)

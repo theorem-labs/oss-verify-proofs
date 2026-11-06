@@ -5,8 +5,8 @@ statements open findings of an enrolled project hold back, and every finding tha
 release keeps may name any of them or carry a holding finding's evidence, whole or in part.  `needles` builds what to
 look for, `found` judges one file and `search` judges every file the cut keeps or writes.
 
-What it catches is a closed list (frozen on 2026-10-26: findings/ never
-ships, a held project is removed or cut to a held page, and every release pull request is reviewed, so this check is a
+What it catches is a closed list (frozen on 2026-10-26: findings never
+ship, a held project is removed or cut to a held page, and every release pull request is reviewed, so this check is a
 safety net for the common accident, not the protection).  A copy of a holding finding's evidence is caught
 
 1. whole, or any part of WINDOW or more long characters, or a whole short unit (a hunk's lines, its added text or its
@@ -64,7 +64,8 @@ driver's header, its bytes and byte windows, its SHA-256, the windows of its hex
 payload, whole (from PAYLOAD_MIN characters) and in windows.  A digest, recorded or computed, counts by its name and the
 windows of its hex.
 
-Names (slugs, patch file names, digests, held fuzz targets and statements) count only at a name boundary, in the
+Names (slugs, patch file names, digests, held fuzz targets and statements, and a held project's own recipe: its SHA-256,
+its file name and, when no kept fact names it, its release tag) count only at a name boundary, in the
 file's path and text with escapes decoded, case folded, every dash read as `_`, each path resolved, and each line break
 and each blank beside a `/` deleted.  A name followed by a source or header suffix (`openssl/x509.h`) is a file name.
 """
@@ -94,8 +95,9 @@ MIN_DISTINCT = 8
 DECODE_ROUNDS = 8
 # the SHA-256 of empty output, in every finding record and in this repository's own tools, which reveals nothing
 EMPTY_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-# where a fuzz target's own files live: a file under one of these may name a statement of it without its project
-UNIT_DIRS = ("proofs", "projects", "counterexamples", "patches")
+# where a fuzz target's own files live: a file under one of these may name a statement of it without its project (its
+# proofs, counterexamples and findings are under projects/ in the per-project layout)
+UNIT_DIRS = ("projects", "proofs", "counterexamples")
 # what every counterexample note and finding summary writes about a run: build names, outcomes, articles, connectives
 # and numbers.  A window made only of these words says what the statements already say (`the plain and ubsan builds
 # exit 0, the control ...` is in public counterexample notes), so it is no evidence; a window with one other word is.
@@ -391,7 +393,7 @@ def _byte_views(data, rounds, alone):
 
 def canonical(data):
     """data (bytes) in the canonical long form: each reading, decoded and kept to its alphanumeric characters, joined
-    by NUL characters.  `found` compares its windows in exactly this text; #117 reads it too."""
+    by NUL characters.  `found` compares its windows in exactly this text."""
     return "\0".join(_long(_decoded(t)) for t in _readings(data))
 
 
@@ -699,8 +701,8 @@ def _input_needles(out, rel, data):
 
 
 def _module(p, h):
-    """The Rocq module of fuzz target p/h without its root: each `OssFuzzTheorems.<p>.<h>` holds it at a name boundary,
-    and Rocq also resolves it, as in `From OssFuzzTheorems Require <p>.<h>.Statements`."""
+    """The Rocq module of fuzz target p/h without its root: each `<namespace>.<p>.<h>` holds it at a name boundary,
+    and Rocq also resolves it, as in `From <namespace> Require <p>.<h>.Statements`."""
     return "%s.%s" % (names.ident(p), names.ident(h))
 
 
@@ -732,21 +734,49 @@ def _finding_needles(tree, f, out):
             add(out, rel, data)
 
 
+def _own_recipe_needles(tree, hold, out):
+    """Add to out the needles of each recipe of its own that a project held whole pins (assets.bin.recipe, not one of
+    release.yaml's recipes): its SHA-256, its file name, and its release tag unless a fact the release keeps names that
+    tag (the release's own tags, a listed recipe's, or an asset of a project it keeps), where the tag says nothing of
+    the held project."""
+    listed = facts.release_recipes(tree)
+    kept_tags = {r["release"] for r in listed}
+    if tree.release:
+        kept_tags |= {"v" + tree.release["release"], "v%s-src" % tree.release["release"]}
+    for q, proj in tree.projects.items():
+        if q not in hold.whole:
+            for k, a in (proj.data.get("assets") or {}).items():
+                kept_tags |= {a["release"]} | ({a["recipe"]["release"]} if k == "bin" and "recipe" in a else set())
+    for p in sorted(hold.whole):
+        own = facts.bin_recipe(tree, tree.projects[p])
+        if own is None or own in listed:
+            continue
+        what = "of held project %s's own recipe %s in %s" % (p, own["file"], own["release"])
+        _digest(out, own["sha256"], "%s, the SHA-256 %s" % (own["sha256"], what))
+        out.names.append(_name(own["file"], "%s, the file name %s" % (own["file"], what)))
+        if own["release"] not in kept_tags:
+            out.names.append(_name(own["release"], "%s, the release tag %s" % (own["release"], what)))
+
+
 def needles(tree, hold):
     """The Needles of what hold (facts.hold of tree) leaves out of tree: empty when nothing is held.
 
-    Names: each fuzz target of a project held whole, as <project>/<harness> and as its Rocq module; for each holding
-    finding, its slug, every `*.patch` name in its directory, its recorded digests and its inputs' SHA-256; for each
-    held statement, its id, its Rocq names without the root, <harness>/<statement> (relative), and, in a file about its
-    fuzz target, <statement> and <statement>_holds (relative).  The evidence: _finding_needles."""
+    Names: each fuzz target of a project held whole, as <project>/<harness> and as its Rocq module; for a project held
+    whole that pins a recipe of its own (one release.yaml does not list: a `release: private` project's draft asset),
+    that recipe's SHA-256 (_digest), its file name, and its release tag when no fact the release keeps names that tag;
+    for each holding finding, its slug, every `*.patch` name in its directory, its recorded digests and its inputs'
+    SHA-256; for each held statement, its id, its Rocq names without the root, <harness>/<statement> (relative), and,
+    in a file about its fuzz target, <statement> and <statement>_holds (relative).  The evidence: _finding_needles."""
     out = Needles([], [], {}, {}, {}, None, None, False)
+    ns = tree.namespace
     for p in sorted(hold.whole):
         proj = tree.projects[p]
         for h in sorted(set(proj.harnesses) | {e["name"] for e in proj.entries()}):
             unit = "%s/%s" % (p, h)
             out.names.append(_name(unit, "%s, a fuzz target of held project %s" % (unit, p)))
             out.names.append(_name(_module(p, h), "%s, the Rocq module of held fuzz target %s"
-                                   % (names.rocq_harness(p, h), unit)))
+                                   % (names.rocq_harness(ns, p, h), unit)))
+    _own_recipe_needles(tree, hold, out)
     for fs in facts.holding(tree).values():
         for f in fs:
             _finding_needles(tree, f, out)
@@ -754,9 +784,9 @@ def needles(tree, hold):
         p, h, st = sid.split("/")
         module = _module(p, h)
         out.names.append(_name(sid, "%s, a statement an open finding of %s holds back" % (sid, p)))
-        for text, full in (("%s.Statements.%s" % (module, st), "%s.Statements.%s" % (names.rocq_harness(p, h), st)),
-                           ("%s.%s" % (module, st), "%s.%s" % (names.rocq_harness(p, h), st)),
-                           ("Proofs.%s.%s" % (module, st), names.rocq_proof(p, h, st))):
+        for text, full in (("%s.Statements.%s" % (module, st), "%s.Statements.%s" % (names.rocq_harness(ns, p, h), st)),
+                           ("%s.%s" % (module, st), "%s.%s" % (names.rocq_harness(ns, p, h), st)),
+                           ("Proofs.%s.%s" % (module, st), names.rocq_proof(ns, p, h, st))):
             out.names.append(_name(text, "%s, the Rocq name of held statement %s" % (full, sid)))
         short = "%s/%s" % (h, st)
         out.names.append(_name(short, "%s, held statement %s without its project" % (short, sid), relative=True))

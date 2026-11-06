@@ -1,0 +1,24 @@
+token	sha256	image
+WIRE_B_PIN	af4534831a4528320c7dc74ca3f64bb96e8232ed2e313f01126d10879f3417d6	fuzz_wire.asan-ubsan, the pinned image: index/binaries.tsv:7525
+WIRE_B_TWIN	51eb4bef24252e4df6e11baa89f653d20d74e38ae684f61bc94f4fb339ac97c3	fuzz_wire.asan-ubsan, the unstripped twin of WIRE_B_PIN (PT_LOAD equal: twins.out)
+GRANT_B_PIN	fde52226dc48de254681156061de9263409c123ca0a0d6c5010ded4e17f602df	fuzz_grant.asan-ubsan, the pinned image: index/binaries.tsv:5591
+GRANT_B_TWIN	5a5ee7c02b4e2a1d1653dc0c256182c9b65c33dde3a7ddc98b9de2afffe7a417	fuzz_grant.asan-ubsan, the unstripped twin of GRANT_B_PIN (PT_LOAD equal: twins.out)
+IDENT_B_PIN	baf1a4d065e02f55521d39f05d8c8d9ed763a0ef798c70cc3eabe5816ffb3f66	fuzz_identity.asan-ubsan, the pinned image: index/binaries.tsv:5595
+IDENT_B_TWIN	43b44d50be8a5e68f626662181c9cc17c0e0fef138e55f3c8bab371987a9c064	fuzz_identity.asan-ubsan, the unstripped twin of IDENT_B_PIN (PT_LOAD equal: twins.out)
+GRANT_B_PIN_PLANTED_CALL	1c85bde94bdbcca27d5050e09db5d83f3e2822e8a2446293b30f1b9202bf4cd1	copy of GRANT_B_PIN with one call re-pointed at file offset 0x421e0 (planted/planted.cmp)
+GRANT_B_TWIN_PLANTED_CALL	4aabaada3a6200563488d5805006e6a6cb78ce1b89fe33e8cc9d9a4f7838ada2	copy of GRANT_B_TWIN with one call re-pointed at file offset 0x421e0 (planted/planted.cmp)
+GRANT_B_PIN_PLANTED_RODATA	d4c374587adca304ba4240181e7eb5b2c0d15d9f9c6f4befc2a817634447a56b	copy of GRANT_B_PIN with one .rodata address re-pointed at file offset 0x850cc (planted/planted.cmp)
+GRANT_B_TWIN_PLANTED_RODATA	7a86001f9ee0a3fa0fd8a2a9f50eded54aa980feafeace2fcb45c4dbf558e20b	copy of GRANT_B_TWIN with one .rodata address re-pointed at file offset 0x850cc (planted/planted.cmp)
+GRANT_B_TWIN_PLANTED_DEBRUIJN	780f7b2d2d3ae152ef2fa39485027a940835a2d59ebeb1d05c66370fecd5fb1e	copy of GRANT_B_TWIN with one byte of the De Bruijn ctz table at file offset 0x432 changed from 0x0e to 0x0f (planted/planted.cmp)
+WIRE_B_TWIN_PLANTED_SLLI3	47b0b091fc6d583f673875cf0b6dcc176719d699d8b388a4228717bf91c69819	copy of WIRE_B_TWIN with the dispatch `slli t3,a7,2` of VSNPrintf+0x1b8 set to `slli t3,a7,3` (planted/planted.cmp)
+WIRE_B_TWIN_PLANTED_CIELIMIT	4cfceedd2ca40789df3166727f16d10b79f628560df695ce9dcf5b966b6042da	copy of WIRE_B_TWIN with parseCIE's table limit `addi s5,zero,46` at +0x234 set to `addi s5,zero,47` (planted/planted.cmp)
+WIRE_B_TWIN_PLANTED_CIEARM	51ec8cacfb76515ebf65874602ad80d58597ca88d08737f1d8d5919530debae8	copy of WIRE_B_TWIN with parseCIE's `addi a0,a0,1` at +0x278 set to `addi s5,zero,10`, a second definition of the table limit (planted/planted.cmp)
+WIRE_B_TWIN_PLANTED_CIEZARM	8798d48136dfcaa3dcfc01b832a094d267a4656865de8359d6b72b6c03746a80	copy of WIRE_B_TWIN with parseCIE's `sb s7,0x31(s0)` at +0x28c set to `addi s5,zero,60`, a second definition of the table limit in a jump-table arm (planted/planted.cmp)
+WIRE_B_TWIN_PLANTED_CIEJUMP	8c2881dfeb1abb8e6bdec6d138467c60d09d8194fed171eaf1f85f43672d5f2a	copy of WIRE_B_TWIN with parseCIE's `sb s7,48(s0)` at +0x248 set to `j +0x1c`, a jump into the dispatch block (planted/planted.cmp)
+GRANT_B_TWIN_PLANTED_CIESLOT	491130284355d024e07dbba3a093bf3538669fce334268f6df1dba4758ce4f8b	copy of GRANT_B_TWIN with parseCIE's table slot 3 at vaddr 0x213a4 re-pointed to the target of slot 0 (planted/planted.cmp)
+WIRE_B_TWIN_PLANTED_ADD	ad0b11d4cbc7b2dd2a67eee368445ef435484e41520c3f0b0121610a3e1c8a52	copy of WIRE_B_TWIN with the four words of plant (a) (planted/planted.cmp)
+GRANT_B_TWIN_PLANTED_ADD	be4fd6693b7ac7cd23f884c79884c977dabc6754bf71657a18016c0c169f25bb	copy of GRANT_B_TWIN with the same four words of plant (a) (planted/planted.cmp)
+WIRE_B_TWIN_PLANTED_UPTR	d36ea4ab0f29b713cc0a58c7f396f4f44f5011bcbe6e4b74f7491cb828913119	copy of WIRE_B_TWIN with the one re-pointed call of plant (b) (planted/planted.cmp)
+WIRE_B_TWIN_PLANTED_DIVU	e67ddc7c2107dde89cd0d61c454ceb81886f4721e95a11fdcba9da26662a6a83	copy of WIRE_B_TWIN with the five words of plant (c) (planted/planted.cmp)
+GRANT_B_TWIN_PLANTED_DIVU	7ab84837f4613c61f6df314dbe9277f3c477e0a3fe5da9a30d356ce7877c1d3b	copy of GRANT_B_TWIN with the same five words of plant (c) (planted/planted.cmp)
+GRANT_B_TWIN_PLANTED_UPTR	6554465e8b0d2cd419377444e36aae238e91b3fabcee69273ffe1675c42290fe	copy of GRANT_B_TWIN with the same call of plant (b) re-pointed to its own copy of that function (planted/planted.cmp)

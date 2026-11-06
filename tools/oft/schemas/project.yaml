@@ -128,6 +128,9 @@ defs:
     fields:
       id: {type: str, pattern: '^[a-z0-9][a-z0-9-]*$'}
       summary: {type: text, max: 400}
+      # the text's file name in the project's patches folder: patches/<project>/ in the old layout,
+      # projects/<project>/patches/ in the per-project one (tools/oft/layout.py)
+      file: {type: str, pattern: '^[A-Za-z0-9][A-Za-z0-9._+-]*\.patch$'}
       upstream: {type: enum, values: [reported, fixed-upstream, not-a-defect]}
       url: {type: url, optional: true}
 
@@ -156,9 +159,10 @@ defs:
       sha256: {type: sha256}
 
   # the binary archive, and the build recipe its binaries were built with: one that release.yaml lists under recipes,
-  # in any release, which every build record of the project cites too. Required unless release.yaml has the shape
-  # before recipes, its one recipe; refused for a port-built project (build.oss_verify), which no recipe built
-  # (rules.py)
+  # in any release (or, for a `release: private` project, a recipe of its own that no public release carries, under a
+  # file name that no listed recipe has, and that another private project's own recipe has only if it is the same
+  # recipe), which every build record of the project cites too. Required unless release.yaml has the shape before
+  # recipes, its one recipe; refused for a port-built project (build.oss_verify), which no recipe built (rules.py)
   bin_asset:
     type: object
     fields:

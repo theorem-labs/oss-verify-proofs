@@ -1,0 +1,476 @@
+verdict	file:line	source	written	reason
+UNPAIRED-SOURCE	B/YB1w.v:68	0x3cf4c		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:68	0x3d0c0		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:70	0x3d250		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:70	0x3d3ec		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:71	0x3d3ec		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:71	0x3d5b8		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:73	0x3d5b8		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:73	0x3d754		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:74	0x3d754		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:74	0x3d79c		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:90	0x424d0		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:90	0x424d4		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:125	0x43bdc		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:125	0x43c98		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:154	0x52024		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:154	0x52264		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:445	0x82074		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:445	0x82434		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:448	0x8260c		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:448	0x82694		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:449	0x82774		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:449	0x831f8		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:450	0x831f8		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:450	0x8326c		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:451	0x8326c		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:451	0x834dc		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:452	0x834dc		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:452	0x835dc		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:453	0x835dc		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:453	0x8363c		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:454	0x8363c		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:454	0x83bfc		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:455	0x83bfc		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:455	0x83fdc		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:456	0x83fdc		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:456	0x840d0		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:457	0x840d0		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:457	0x84e4c		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:458	0x84e4c		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:458	0x85004		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:459	0x85518		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:459	0x85554		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:460	0x85554		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:460	0x855fc		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:461	0x855fc		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:461	0x85a70		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:462	0x85a70		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:462	0x85a90		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:463	0x85a90		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:463	0x85bf0		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:464	0x85bf0		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:464	0x85c00		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:465	0x85c00		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:465	0x85ce4		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:466	0x85ce4		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:466	0x85e78		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:467	0x85e78		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:467	0x85efc		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:468	0x85efc		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:468	0x86640		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+STALE-DONOR-CODE-POINTER	B/YB1w.v:544	0x96790	0x92a78	grant row thunk_95368 = bcmp, dropped (uci links no bcmp); the checker pairs tfib_*_thunk_<hex> by name wildcard with thunk_96f9c
+NO-COUNTERPART	B/YB1w.v:544	0x96794	0x92a80	grant row thunk_95368 = bcmp, dropped (uci links no bcmp); the checker pairs tfib_*_thunk_<hex> by name wildcard with thunk_96f9c
+UNRESOLVED	B/YB1w.v:566	0x98ec4	0x92a8c	end of __set_thread_area = __unmapself start in both images
+UNPAIRED-SOURCE	B/YB1w.v:567	0x96f9c		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:567	0x98eb0		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:567	0x96f9c		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YB1w.v:567	0x98eb8		AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNRESOLVED	B/YB1w.v:604	0x10040	0x10040	program headers at ELF header + 0x40 = 0x10040 in both images
+UNPAIRED-PORTED	B/YB1w.v:75		0x7f56c	AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-PORTED	B/YB1w.v:75		0x7f6b0	AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-PORTED	B/YB1w.v:75		0x7f6b0	AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-PORTED	B/YB1w.v:75		0x7f950	AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-PORTED	B/YB1w.v:75		0x7f950	AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-PORTED	B/YB1w.v:75		0x7fcd0	AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-PORTED	B/YB1w.v:75		0x7fd38	AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-PORTED	B/YB1w.v:75		0x7ffd4	AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-PORTED	B/YB1w.v:75		0x7ffd4	AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-PORTED	B/YB1w.v:75		0x8020c	AB1w function table emitted for fuzz_uci: grant-only rows dropped (bcmp, stack classes 0/2/4/6), uci program functions added
+UNPAIRED-SOURCE	B/YCbq.v:793	0x10000		image bounds stated through B/YImgTop.v IMG_LO / IMG_TOP (port_core YImgTop rule), numerals become names
+UNPAIRED-SOURCE	B/YCbq.v:793	0x5fb000		image bounds stated through B/YImgTop.v IMG_LO / IMG_TOP (port_core YImgTop rule), numerals become names
+UNPAIRED-SOURCE	B/YCe5.v:672	0x10000		image bounds stated through B/YImgTop.v IMG_LO / IMG_TOP (port_core YImgTop rule), numerals become names
+UNPAIRED-SOURCE	B/YCe5.v:672	0x5fb000		image bounds stated through B/YImgTop.v IMG_LO / IMG_TOP (port_core YImgTop rule), numerals become names
+GEOMETRY-CHANGED	B/YCeg.v:132	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YCeg.v:132	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1e.v:231	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1f.v:208	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1g.v:44	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1g.v:52	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1g.v:96	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1g.v:681	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1g.v:682	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1g.v:967	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+NON-ADDRESS-CHANGED	B/YD1o.v:96	0x1445c	0x1374c	quotient (.bss+0x20) / 8 of the moved address (measure-B.out / gates-B.md)
+NON-ADDRESS-CHANGED	B/YD1o.v:96	0xbf5ff	0xbe7ff	quotient (IMG_TOP - 1) / 8 of the moved address (measure-B.out / gates-B.md)
+NON-ADDRESS-CHANGED	B/YD1o.v:101	0xab1a8	0xab0be	quotient (IMG_TOP - TFIB_BSS) / 8 of the moved address (measure-B.out / gates-B.md)
+GEOMETRY-CHANGED	B/YD1v.v:213	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YD1v.v:225	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+NON-ADDRESS-CHANGED	B/YD27.v:68	0x25	0x23	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD27.v:73	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD27.v:93	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD27.v:95	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2h.v:63	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2h.v:68	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YE22.v:35	0x111	0xc1	index of the .got canary cell in lib/B/YF0m.v Tfib_const_abs, 273 -> 193 (overrides-B.tsv row 48, measure-B.py: the donor 273 of 361, image A 273 of 290, image B 193 of 217)
+UNPAIRED-SOURCE	B/YF0l.v:13	0x3cf4c		AF0l class map emitted from fuzz_uci.asan-ubsan __asan_stack_malloc_N symbols: class 1 only (0x3c1b8)
+UNPAIRED-SOURCE	B/YF0l.v:13	0x3d250		AF0l class map emitted from fuzz_uci.asan-ubsan __asan_stack_malloc_N symbols: class 1 only (0x3c1b8)
+UNPAIRED-SOURCE	B/YF0l.v:13	0x3d3ec		AF0l class map emitted from fuzz_uci.asan-ubsan __asan_stack_malloc_N symbols: class 1 only (0x3c1b8)
+UNPAIRED-SOURCE	B/YF0l.v:13	0x3d5b8		AF0l class map emitted from fuzz_uci.asan-ubsan __asan_stack_malloc_N symbols: class 1 only (0x3c1b8)
+KIND-CHANGED	B/YF0l.v:14	0x52024	0x0	absent entry = 0: fuzz_uci.asan-ubsan links no __asan_memset / __interceptor_trampoline_bcmp (override, knock precedent)
+KIND-CHANGED	B/YF0l.v:15	0x424d0	0x0	absent entry = 0: fuzz_uci.asan-ubsan links no __asan_memset / __interceptor_trampoline_bcmp (override, knock precedent)
+UNPAIRED-SOURCE	B/YF0l.v:13	0x0		AF0l class map emitted from fuzz_uci.asan-ubsan __asan_stack_malloc_N symbols: class 1 only (0x3c1b8)
+UNPAIRED-SOURCE	B/YF0l.v:13	0x2		AF0l class map emitted from fuzz_uci.asan-ubsan __asan_stack_malloc_N symbols: class 1 only (0x3c1b8)
+UNPAIRED-SOURCE	B/YF0l.v:13	0x4		AF0l class map emitted from fuzz_uci.asan-ubsan __asan_stack_malloc_N symbols: class 1 only (0x3c1b8)
+UNPAIRED-SOURCE	B/YF0l.v:13	0x6		AF0l class map emitted from fuzz_uci.asan-ubsan __asan_stack_malloc_N symbols: class 1 only (0x3c1b8)
+NON-ADDRESS-CHANGED	B/YFem.v:412	0x61e16	0x603f6	quotient theDepot / 4 of the moved address (measure-B.out / gates-B.md)
+GEOMETRY-CHANGED	B/YFer.v:93	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:98	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:203	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:210	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:212	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:313	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:314	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:319	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFer.v:322	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:137	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:153	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:153	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:166	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:166	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:180	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:296	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:297	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:300	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:301	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFev.v:427	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFex.v:242	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFex.v:276	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNPAIRED-PORTED	B/YFex.v:941		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-PORTED	B/YFex.v:941		0x0	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+GEOMETRY-CHANGED	B/YFey.v:134	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFey.v:173	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFez.v:406	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf0.v:138	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNPAIRED-PORTED	B/YFf0.v:471		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+GEOMETRY-CHANGED	B/YFf1.v:107	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf1.v:141	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf2.v:166	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf2.v:186	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf2.v:220	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf2.v:291	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf3.v:294	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf3.v:308	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf3.v:311	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNPAIRED-PORTED	B/YFf3.v:648		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+GEOMETRY-CHANGED	B/YFf4.v:340	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf4.v:355	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFf4.v:531	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNPAIRED-PORTED	B/YFf4.v:898		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-PORTED	B/YFf4.v:898		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-PORTED	B/YFf4.v:898		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+GEOMETRY-CHANGED	B/YFfc.v:378	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfl.v:204	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfl.v:238	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNPAIRED-PORTED	B/YFfl.v:831		0x8	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-PORTED	B/YFfl.v:831		0x0	sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+GEOMETRY-CHANGED	B/YFfq.v:166	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfq.v:264	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfq.v:284	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+NON-ADDRESS-CHANGED	B/YFfu.v:410	0x14d70	0x14060	quotient internal_alloc_placeholder / 8 of the moved address (measure-B.out / gates-B.md)
+GEOMETRY-CHANGED	B/YFfu.v:608	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfu.v:635	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfy.v:115	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfy.v:167	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfy.v:168	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFfy.v:172	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg0.v:155	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+NON-ADDRESS-CHANGED	B/YFg1.v:295	0x14d70	0x14060	quotient internal_alloc_placeholder / 8 of the moved address (measure-B.out / gates-B.md)
+GEOMETRY-CHANGED	B/YFg1.v:548	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg1.v:601	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg1.v:602	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg1.v:606	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg3.v:284	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg4.v:84	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg4.v:275	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:126	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:211	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:235	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:347	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:364	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:369	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg5.v:507	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:190	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:208	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:213	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:528	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:609	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:614	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg6.v:717	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFg7.v:155	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgi.v:149	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgi.v:298	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgj.v:115	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgj.v:116	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgj.v:116	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgj.v:118	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgl.v:104	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgl.v:105	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgl.v:108	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgl.v:110	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgl.v:149	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgp.v:99	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgp.v:144	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgq.v:94	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgq.v:132	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgq.v:136	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgq.v:138	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgq.v:200	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgr.v:108	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgr.v:153	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgr.v:157	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgr.v:159	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgr.v:223	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgv.v:141	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgv.v:183	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgv.v:271	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgv.v:274	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFgx.v:91	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFha.v:98	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFha.v:99	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFha.v:141	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhc.v:97	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhc.v:140	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhf.v:71	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhl.v:110	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhn.v:245	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhn.v:246	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFic.v:229	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+NON-ADDRESS-CHANGED	B/YFim.v:496	0x3c	0x1	Tfib_const index 60 of nth_error_In replaced by YF0x.cell_lookup_In (B-cell-lookup.patch); the pairing reads 60 vs the 1 of (ANum (TFIB_OOM + 1)) 1
+NON-ADDRESS-CHANGED	B/YFin.v:486	0x3c	0x1	Tfib_const index 60 of nth_error_In replaced by YF0x.cell_lookup_In (B-cell-lookup.patch); the pairing reads 60 vs the 1 of (ANum (TFIB_OOM + 1)) 1
+GEOMETRY-CHANGED	B/YFiy.v:372	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFj1.v:779	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFjc.v:375	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFjf.v:773	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFjm.v:231	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFjm.v:231	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNRESOLVED	B/YFjm.v:325	0x800b32e0	0x800b25d0	shadow of builtin_tls+0xeb8 in both images (grant 0x5d9700, uci 0x5d2e80)
+GEOMETRY-CHANGED	B/YFjp.v:817	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFjp.v:823	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+NON-ADDRESS-CHANGED	B/YFjr.v:621	0x14478	0x13768	quotient (__asan::instance + 0xa8) / 8 of the moved address (measure-B.out / gates-B.md)
+GEOMETRY-CHANGED	B/YFjs.v:445	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFjy.v:1222	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFk0.v:1288	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNRESOLVED	B/YFk1.v:689	0x800b32e0	0x800b25d0	shadow of builtin_tls+0xeb8 in both images (grant 0x5d9700, uci 0x5d2e80)
+GEOMETRY-CHANGED	B/YFk5.v:564	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkc.v:439	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkd.v:559	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFke.v:563	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:937	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1079	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1087	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1208	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1229	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1229	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1230	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1230	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1399	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1399	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1410	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1411	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1449	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkm.v:1449	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1588	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1747	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1875	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1876	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1877	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1878	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1878	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkn.v:1921	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkz.v:665	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFkz.v:666	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+NON-ADDRESS-CHANGED	B/YD1x.v:24	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD1x.v:25	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD22.v:22	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD22.v:22	0x27	0x25	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD27.v:86	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD28.v:104	0x25	0x23	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD28.v:105	0x25	0x23	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD28.v:105	0x25	0x23	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD28.v:105	0x25	0x23	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD28.v:106	0x26	0x24	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD28.v:108	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2d.v:22	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2d.v:23	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2e.v:60	0x23	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2e.v:65	0x25	0x23	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2e.v:65	0x25	0x23	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2e.v:189	0x23	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:57	0x21	0x1f	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:66	0x27	0x25	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:66	0x21	0x1f	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:66	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:84	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:93	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:147	0x21	0x1f	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:166	0x23	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:168	0x23	0x21	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:183	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:195	0x18	0x16	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:195	0x18	0x16	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:195	0x19	0x17	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:195	0x1d	0x1b	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:195	0x1d	0x1b	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:195	0x21	0x1f	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:196	0x18	0x16	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:196	0x18	0x16	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:196	0x19	0x17	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:196	0x19	0x17	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YD2f.v:196	0x21	0x1f	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+NON-ADDRESS-CHANGED	B/YE2t.v:63	0x7fffbae0	0x7fffbac0	driver format shadow window [floor8(shadow(FMT)), floor8(shadow(FMT+len))+8) (measure-B.out)
+UNRESOLVED	B/YE2u.v:63	0x7fffbae8	0x7fffbac8	window end / stdin buf end by role (override, measure-B.out)
+NON-ADDRESS-CHANGED	B/YE2v.v:63	0x7fffb2d0	0x7fffb2c0	driver format shadow window [floor8(shadow(FMT)), floor8(shadow(FMT+len))+8) (measure-B.out)
+KIND-CHANGED	B/YE2v.v:63	0x7fffb2e0	0x7fffb2c8	driver format shadow window (rule / override, measure-B.out)
+KIND-CHANGED	B/YE2w.v:63	0x7fffab00	0x7fffaaf8	driver format shadow window (rule / override, measure-B.out)
+NON-ADDRESS-CHANGED	B/YE2w.v:63	0x7fffab10	0x7fffab00	driver format shadow window [floor8(shadow(FMT)), floor8(shadow(FMT+len))+8) (measure-B.out)
+NON-ADDRESS-CHANGED	B/YE34.v:25	0x18	0x17	icpt_ranges (start, count) word counts of the twin runs (port_core range splitting; uci links fewer interceptors)
+NON-ADDRESS-CHANGED	B/YE34.v:25	0x5e	0x2f	icpt_ranges (start, count) word counts of the twin runs (port_core range splitting; uci links fewer interceptors)
+NON-ADDRESS-CHANGED	B/YE34.v:27	0x3f1	0x361	icpt_ranges (start, count) word counts of the twin runs (port_core range splitting; uci links fewer interceptors)
+KIND-CHANGED	B/YE35.v:63	0x7fffa8f0	0x7fffa8e8	driver format shadow window (rule / override, measure-B.out)
+KIND-CHANGED	B/YE35.v:63	0x7fffa8f8	0x7fffa8f0	driver format shadow window (rule / override, measure-B.out)
+NON-ADDRESS-CHANGED	B/YE3j.v:253	0x1d6f8	0x1d5f7	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:254	0x1d6f8	0x1d5f7	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:256	0x1d6f8	0x1d5f7	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:256	0x1d6f8	0x1d5f7	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:506	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:507	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:507	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:509	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:513	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:513	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:525	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:525	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:525	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:826	0x1d6f8	0x1d5f7	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:827	0x1d6f8	0x1d5f7	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:829	0x1d6f8	0x1d5f7	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:829	0x1d6f8	0x1d5f7	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:1085	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1087	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1118	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1118	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1119	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1119	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1350	0x1d6f8	0x1d5f7	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:1351	0x1d6f8	0x1d5f7	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:1353	0x1d6f8	0x1d5f7	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:1353	0x1d6f8	0x1d5f7	same string + offset in both images ("cli: cannot open %s\n"+17)
+NON-ADDRESS-CHANGED	B/YE3j.v:1600	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1603	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3j.v:1603	0x1d6fa	0x1d5f9	same string + offset in both images ("cli: cannot open %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:253	0x1d70f	0x1d60e	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:254	0x1d70f	0x1d60e	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:256	0x1d70f	0x1d60e	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:256	0x1d70f	0x1d60e	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:506	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:507	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:507	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:509	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:513	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:513	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:525	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:525	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:525	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:826	0x1d70f	0x1d60e	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:827	0x1d70f	0x1d60e	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:829	0x1d70f	0x1d60e	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:829	0x1d70f	0x1d60e	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:1085	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1087	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1118	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1118	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1119	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1119	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1350	0x1d70f	0x1d60e	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:1351	0x1d70f	0x1d60e	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:1353	0x1d70f	0x1d60e	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:1353	0x1d70f	0x1d60e	same string + offset in both images ("cli: read error on %s\n"+19)
+NON-ADDRESS-CHANGED	B/YE3k.v:1600	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1603	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3k.v:1603	0x1d711	0x1d610	same string + offset in both images ("cli: read error on %s\n"+21)
+NON-ADDRESS-CHANGED	B/YE3l.v:178	0x196b2	0x19622	same string + offset in both images ("cli: input >= %u bytes, refuse"+14)
+NON-ADDRESS-CHANGED	B/YE3l.v:181	0x196b2	0x19622	same string + offset in both images ("cli: input >= %u bytes, refuse"+14)
+NON-ADDRESS-CHANGED	B/YE3l.v:181	0x196b2	0x19622	same string + offset in both images ("cli: input >= %u bytes, refuse"+14)
+NON-ADDRESS-CHANGED	B/YE3l.v:310	0x196b4	0x19624	same string + offset in both images ("cli: input >= %u bytes, refuse"+16)
+NON-ADDRESS-CHANGED	B/YE3l.v:313	0x196b4	0x19624	same string + offset in both images ("cli: input >= %u bytes, refuse"+16)
+NON-ADDRESS-CHANGED	B/YE3l.v:313	0x196b4	0x19624	same string + offset in both images ("cli: input >= %u bytes, refuse"+16)
+NON-ADDRESS-CHANGED	B/YE3m.v:885	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:888	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:913	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:913	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:914	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:914	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:951	0x1479d	0x14766	same string + offset in both images ("%d\n"+3)
+NON-ADDRESS-CHANGED	B/YE3m.v:952	0x1479d	0x14766	same string + offset in both images ("%d\n"+3)
+NON-ADDRESS-CHANGED	B/YE3m.v:955	0x1479d	0x14766	same string + offset in both images ("%d\n"+3)
+NON-ADDRESS-CHANGED	B/YE3m.v:1434	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1435	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1435	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1436	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1436	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1438	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1444	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3m.v:1459	0x1479c	0x14765	same string + offset in both images ("%d\n"+2)
+NON-ADDRESS-CHANGED	B/YE3n.v:256	0x15843	0x157d4	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:257	0x15843	0x157d4	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:259	0x15843	0x157d4	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:259	0x15843	0x157d4	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:509	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:510	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:510	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:512	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:516	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:516	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:528	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:528	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:528	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:829	0x15843	0x157d4	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:830	0x15843	0x157d4	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:832	0x15843	0x157d4	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:832	0x15843	0x157d4	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:1106	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1108	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1139	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1139	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1140	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1140	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1371	0x15843	0x157d4	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:1372	0x15843	0x157d4	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:1374	0x15843	0x157d4	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:1374	0x15843	0x157d4	same string + offset in both images ("usage: %s INPUT\n"+7)
+NON-ADDRESS-CHANGED	B/YE3n.v:1621	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1624	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+NON-ADDRESS-CHANGED	B/YE3n.v:1624	0x15845	0x157d6	same string + offset in both images ("usage: %s INPUT\n"+9)
+GEOMETRY-CHANGED	B/YE7d.v:141	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+UNPAIRED-SOURCE	B/YFf0.v:472	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf0.v:472	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf0.v:472	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf0.v:473	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf0.v:473	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf0.v:473	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf3.v:649	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf3.v:649	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf3.v:649	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf3.v:650	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf3.v:650	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf3.v:650	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf4.v:899	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf4.v:899	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf4.v:899	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf4.v:900	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf4.v:900	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+UNPAIRED-SOURCE	B/YFf4.v:900	0x8		sentence rewritten by a B-*.patch (image A core patches re-cut for B: zero-shadow-forallb, cell-lookup, ad1q-shape)
+GEOMETRY-CHANGED	B/YFg4.v:222	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFh4.v:192	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFh6.v:199	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhl.v:144	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhl.v:218	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhl.v:219	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GEOMETRY-CHANGED	B/YFhl.v:319	0x2000	0x2000	allocator constant 8192 unchanged (2^13 kBatchClass size / 2^17 mmap length), not segment geometry
+GENERATOR-FILL	B/YD2e.v:66	0x25	0x23	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+GENERATOR-FILL	B/YD2e.v:66	0x25	0x23	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+GENERATOR-FILL	B/YD2f.v:183	0x24	0x22	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+GENERATOR-FILL	B/YD2f.v:195	0x19	0x17	region count / index of the unit IMG_REGIONS (port_core region-count rule): grant B lib/B/YD2j.v has 33 regions (R_A5a at 24, R_A7b at 28), fuzz_uci B lib/B/YD2j.v 31 (22, 26; no R_A1l / R_A1m): N + c -> N - 2 + c
+GENERATOR-FILL	B/YE3m.v:955	0x1479d	0x14766	GENERATOR-FILL (reported): same string + offset in both images ("%d\n"+3)
+GENERATOR-FILL	B/YE3m.v:1444	0x1479c	0x14765	GENERATOR-FILL (reported): same string + offset in both images ("%d\n"+2)

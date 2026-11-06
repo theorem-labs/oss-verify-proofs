@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cxxopts
 harness: cxxopts_fuzz_test
-rocq: OssFuzzTheorems.cxxopts.cxxopts_fuzz_test
+rocq: OSSVerify.cxxopts.cxxopts_fuzz_test
 origin: upstream
 summary: Builds a cxxopts::Options with up to 1024 fuzzed options of types int/string/vector<string>/float/double,
   optional positional and allow_unrecognised, then options.parse(argc, argv) of up to 1024 fuzzed args;

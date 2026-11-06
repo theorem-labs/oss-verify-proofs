@@ -1,4 +1,4 @@
-(** * OssFuzzTheorems.Core.Images: well-formed images
+(** * OSSVerify.Core.Images: well-formed images
 
     The three computable checks lps asks every consumer to make about an
     image before quantifying over its valid entries

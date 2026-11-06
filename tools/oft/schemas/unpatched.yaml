@@ -1,7 +1,7 @@
-# findings/<project>/unpatched.yaml: the binaries a project's findings run on, built without their patches.  One
-# archive, <project>-unpatched-bin.tar.zst on the internal release findings-<project>, pinned by SHA-256, and every
-# file in it pinned again, as project.yaml and harness.yaml pin the published binaries.  `oft fetch --findings`
-# unpacks it into findings/<project>/bin/<harness>/.
+# projects/<project>/unpatched.yaml (findings/<project>/unpatched.yaml in the old layout): the binaries a project's
+# findings run on, built without their patches.  One archive, <project>-unpatched-bin.tar.zst on the internal release
+# findings-<project>, pinned by SHA-256, and every file in it pinned again, as project.yaml and harness.yaml pin the
+# published binaries.  `oft fetch --findings` unpacks it into projects/<project>/unpatched-bin/<harness>/.
 tag: oss-fuzz-theorems/unpatched/1
 root: {type: ref, name: unpatched}
 defs:

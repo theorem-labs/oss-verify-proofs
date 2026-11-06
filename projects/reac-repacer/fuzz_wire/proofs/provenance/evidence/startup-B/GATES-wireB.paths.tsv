@@ -1,0 +1,213 @@
+line	path as written	base	resolved repo path	sha256_12
+9	proofs/reac-repacer/fuzz_wire/lib/B/	earlier layout of the repository root	projects/reac-repacer/fuzz_wire/proofs/lib/B/	-
+11	proofs/reac-repacer/fuzz_wire/provenance/evidence/startup-B/	earlier layout of the repository root	projects/reac-repacer/fuzz_wire/proofs/provenance/evidence/startup-B/	-
+13	proofs/reac-repacer/fuzz_wire/provenance/evidence/MANIFEST.md	earlier layout of the repository root	projects/reac-repacer/fuzz_wire/proofs/provenance/evidence/MANIFEST.md	- (the top MANIFEST lists this table, so the table cannot carry that file's final sha256)
+14	lib/B	proof directory of this unit at the commit the line names (the trunk base)	proofs/reac-repacer/fuzz_wire/lib/B/ at that commit: absent, as the line says	-
+18	tools/measureB.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/measureB.py	0e057009590c
+18	tables/image-B.facts.txt	this slice provenance/evidence/startup-B/	projects/reac-repacer/fuzz_wire/proofs/provenance/evidence/startup-B/tables/image-B.facts.txt	ef39a5b75af7
+22	bin/fuzz_wire/fuzz_wire.asan-ubsan	none of line 17's bases: the pinned build's result tree, which the line says is not in the published tree	-	af4534831a45 (the pin this line gives)
+75	lib/B/YD1j.v	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B/YD1j.v	3e95a62a1858
+87	tables/SHA256.lib-B.txt	this slice provenance/evidence/startup-B/	projects/reac-repacer/fuzz_wire/proofs/provenance/evidence/startup-B/tables/SHA256.lib-B.txt	c3f476b2a2a2
+91	logs/pass2.B.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/pass2.B.log	d7e2ca50de48
+92	logs/pass1.B.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/pass1.B.log	a2eddaa84b8d
+93	tools/mk_yb05_wire.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/mk_yb05_wire.py	9e5c873ac7d3
+93	collector/YB05.pass2.v	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/collector/YB05.pass2.v	e446b3456ac6
+95	tools/wire_yb13.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/wire_yb13.py	0e90b0c57d16
+95	tables/YB13.slots.tsv	this slice provenance/evidence/startup-B/	projects/reac-repacer/fuzz_wire/proofs/provenance/evidence/startup-B/tables/YB13.slots.tsv	8ee0d55c76b0
+96	tools/wire_ab1hk_drive.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/wire_ab1hk_drive.py	96edf61106ef
+99	logs/cert.B.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/cert.B.log	9878d6e9ee43
+101	acej/run.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/acej/run.sh	12396ce01f35
+103	exitdrv/gen_exitW.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/gen_exitW.py	48590f3a6182
+106	exitdrv/gen_exitW.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/gen_exitW.py	48590f3a6182
+107	exitdrv/gen_exitW.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/gen_exitW.py	48590f3a6182
+122	lib/Reusable	proof directory of this unit at the commit the line names (image A's wire core)	proofs/reac-repacer/fuzz_wire/lib/Reusable/ at that commit	-
+128	logs/gs.wireB.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/gs.wireB.log	ee56af584ed3
+128	logs/gs.sharedref.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/gs.sharedref.log	c4be637e9a8e
+128	lib/B	proof directory of the B core, a branch of this unit	proofs/reac-repacer/fuzz_wire/lib/B/ of the B core (391 files at the commit line 643 names)	-
+137	gates/tools/pac-efa1/	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/pac-efa1/	-
+145	tools/af0mB/	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/af0mB/	-
+146	exitdrv/gen_exitW.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/gen_exitW.py	48590f3a6182
+146	exitdrv/run.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/run.sh	f354098755c9
+146	acej/run.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/acej/run.sh	12396ce01f35
+146	acej/header-B.txt	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/acej/header-B.txt	9f933824399d
+152	base/wire_stmts	quoted command, workspace $DWS	-	-
+157	base/stmts	quoted command, workspace $DWS / <donor ws>	-	-
+157	<donor ws>/base/wire_stmts	quoted command, workspace $DWS / <donor ws>	-	-
+161	ZReplyB/YB05.v	quoted command, workspace $DWS	-	-
+163	ZStartColRB/Pass1.vo	quoted command, workspace $DWS	-	-
+165	ZReplyB/YB05.v	quoted command, workspace $DWS	-	-
+167	ZStartColRB/Pass2.vo	quoted command, workspace $DWS	-	-
+169	ZStartColRB/Cert.vo	quoted command, workspace $DWS	-	-
+173	gates/mk_results.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/mk_results.py	1af80926bba3
+174	gates/mk_results.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/mk_results.py	1af80926bba3
+174	logs/run.v7full.out	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/run.v7full.out	c176e2f85309
+176	gates/run_gates.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/run_gates.sh	b219f000af6e
+177	gates/GD.expect	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/GD.expect	479049294b91
+179	lib/B	proof directory of this unit at the commit the line names (the trunk clone HEAD)	proofs/reac-repacer/fuzz_wire/lib/B/ at that commit	-
+182	logs/run.v7ctl.fail.out	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/run.v7ctl.fail.out	eab01f6c3d7e
+183	logs/run.v7ctl.ok.out	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/run.v7ctl.ok.out	7b59cb38d07e
+184	gates/GD.expect	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/GD.expect	479049294b91
+189	tools/mk_yb05_wire.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/mk_yb05_wire.py	9e5c873ac7d3
+199	exitdrv/gen_exitW.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/gen_exitW.py	48590f3a6182
+202	exitdrv/gen_exitW.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/gen_exitW.py	48590f3a6182
+209	WK/gen	tool output (run_gates.sh RESULT line), workspace WK	-	-
+211	lib/B	proof directory of this unit at the commit the line names (the GD base)	proofs/reac-repacer/fuzz_wire/lib/B/ at that commit	-
+211	logs/SHA256.gdbase.txt	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/SHA256.gdbase.txt	56dc219c9f2e
+230	lib/B/YB05.v	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B/YB05.v	8fc626bb5419
+244	lib/B/YD1y.v	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B/YD1y.v	264017af10bc
+251	lib/B/YE23.v	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B/YE23.v	a876a44d13fa
+256	lib/B/YE37.v	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B/YE37.v	d8ea704b434f
+262	lib/B/YF0m.v	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B/YF0m.v	4a2b11a819c7
+384	gates/run_gates.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/run_gates.sh	b219f000af6e
+384	tables/SHA256.lib-B.txt	this slice provenance/evidence/startup-B/	projects/reac-repacer/fuzz_wire/proofs/provenance/evidence/startup-B/tables/SHA256.lib-B.txt	c3f476b2a2a2
+384	gates/logs/SHA256.tools.txt	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/SHA256.tools.txt	f6401bead458
+384	gates/REPORT.md	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/REPORT.md	aba868b16cdd
+384	logs/run.v5full.out	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/run.v5full.out	9f613810beea
+384	logs/gs.wireB.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/gs.wireB.log	ee56af584ed3
+386	lib/Reusable/DepotCfg.v	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/Reusable/DepotCfg.v	c261e6381248
+386	tools/hdrcheck.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/hdrcheck.py	c82a54e29962
+386	docs/adding-a-proof.md	repository root	docs/adding-a-proof.md	28d54ae73b24
+388	gates/GD.expect	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/GD.expect	479049294b91
+388	gates/mk_results.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/mk_results.py	1af80926bba3
+392	tools/reqdiff.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/reqdiff.py	b89789e36aea
+392	logs/GD.reqdiff.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/GD.reqdiff.log	789d5a614be4
+393	tools/reqdiff.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/reqdiff.py	b89789e36aea
+393	tools/stripcmp.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/stripcmp.py	476ab3345401
+393	logs/GD.reqdiff.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/GD.reqdiff.log	789d5a614be4
+393	logs/GD.stripcmp.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/GD.stripcmp.log	8ff86a9e2b1f
+394	tools/reqdiff.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/reqdiff.py	b89789e36aea
+394	tools/stripcmp.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/stripcmp.py	476ab3345401
+394	logs/GD.reqdiff.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/GD.reqdiff.log	789d5a614be4
+394	logs/GD.stripcmp.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/GD.stripcmp.log	8ff86a9e2b1f
+395	lib/Reusable/DepotCfg.v	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/Reusable/DepotCfg.v	c261e6381248
+395	tools/reqdiff.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/reqdiff.py	b89789e36aea
+395	tools/stripcmp.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/stripcmp.py	476ab3345401
+395	logs/GD.reqdiff.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/GD.reqdiff.log	789d5a614be4
+395	logs/GD.stripcmp.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/GD.stripcmp.log	8ff86a9e2b1f
+398	tools/decl_evidence_wire.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/decl_evidence_wire.py	e5026edaf9f2
+398	logs/G2e.decl_evidence.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G2e.decl_evidence.log	75cde102a59f
+399	logs/G3.pac.table.md	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3.pac.table.md	3c6f0fc87bda
+400	logs/G3b.pac.table.md	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3b.pac.table.md	84b653d4eafa
+402	logs/G3.out	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3.out	619839cc68fa
+402	logs/G3a.pac.wireB.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3a.pac.wireB.log	7f59bbebec98
+402	logs/G3a.pac.table.md	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3a.pac.table.md	16056a7fa187
+402	logs/G3a.pac.cgifAB.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3a.pac.cgifAB.log	f5e5033319cf
+403	tools/pac_moved.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/pac_moved.py	744f3ed66525
+403	logs/G3d.moved.wireB.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3d.moved.wireB.log	33dfcca43193
+404	tools/pac_moved.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/pac_moved.py	744f3ed66525
+404	logs/G3m.moved.wireB.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3m.moved.wireB.log	41258c89fdd9
+404	logs/G3m.moved.cgifAB.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3m.moved.cgifAB.log	0a7e29daf8e2
+405	tools/pac_fill.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/pac_fill.py	4e7410d52be0
+405	tools/pac_fill_n0.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/pac_fill_n0.py	eb38115c5db4
+405	tools/pac_fill_states.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/pac_fill_states.py	ab35d8ee90a2
+405	logs/G3c.*	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3c.fill.cgifAB.log, projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3c.fill.wireB.log, projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3c.filln0.wireB.log, projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3c.fillstates.cgifAB.log, projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3c.fillstates.planted.log, projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3c.fillstates.wireB.log	G3c.fill.cgifAB.log 89de3d79bfa5, G3c.fill.wireB.log b7b516368fcb, G3c.filln0.wireB.log 69512feb95da, G3c.fillstates.cgifAB.log d09a5eb09e32, G3c.fillstates.planted.log 465240c30a1f, G3c.fillstates.wireB.log 6d38325e54db
+406	tools/pac_stale.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/pac_stale.py	c4dd52db3936
+407	tools/symnamed.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/symnamed.py	491e619428d3
+408	logs/G3r.reloc.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G3r.reloc.log	2ee9342e3b95
+408	logs/port_core.B.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/port_core.B.log	0662e4f3875c
+413	lib/A/AF0m.v	proof directory of this unit at the commit the line names (the image-A core)	proofs/reac-repacer/fuzz_wire/lib/A/AF0m.v at that commit	a777805e3f40
+413	logs/G7d.stamp.YF0m.pair.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G7d.stamp.YF0m.pair.log	4f0daabd22af
+415	logs/G8c.keyset30c.wireB.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G8c.keyset30c.wireB.log	dc6afb9c9653
+415	logs/measureB.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/measureB.log	ef39a5b75af7
+416	logs/G7e.stamp30c.YF0m.pair.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G7e.stamp30c.YF0m.pair.log	a14a21d5c378
+417	lib/B/YD1g.v	proof directory of the B core, a branch of this unit	proofs/reac-repacer/fuzz_wire/lib/B/YD1g.v of the B core, git blob 8031d1c2a273 (line 661)	fd73f00ee17f
+417	logs/G9.out	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G9.out	90c06927853e
+417	lib/B/YD1g.v	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B/YD1g.v	e48434681e6f
+417	logs/G9p.ifchk.wireB.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G9p.ifchk.wireB.log	a95c561e541d
+417	logs/G9.out	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G9.out	90c06927853e
+417	logs/G9p.ifchk.{control,nholes49,planted}.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G9p.ifchk.control.log, projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G9p.ifchk.nholes49.log, projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G9p.ifchk.planted.log	G9p.ifchk.control.log 6031d437545a, G9p.ifchk.nholes49.log 78652b49de4a, G9p.ifchk.planted.log 356e24c456f6
+422	logs/G12.collected.log	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/G12.collected.log	86f524986ab1
+422	acej/REPORT.md	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/acej/REPORT.md	1a78f1651d08
+422	exitdrv/REPORT.md	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/REPORT.md	f51e128b2645
+424	tools/placement.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/placement.py	1157805d67fc
+424	lib/B	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B	-
+424	lib/Reusable	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/Reusable	-
+425	tools/idgate.py	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools/idgate.py	9e5f005c6b59
+426	logs/HDR.out	gate directory provenance/startup-gen/B/gates/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/logs/HDR.out	41d5cc089d60
+427	lib/Reusable	proof directory of this unit at the commit the line names (image A's wire core)	proofs/reac-repacer/fuzz_wire/lib/Reusable/ at that commit	-
+427	logs/gs.wireB.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/gs.wireB.log	ee56af584ed3
+427	logs/gs.sharedref.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/gs.sharedref.log	c4be637e9a8e
+434	acej/REPORT.md	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/acej/REPORT.md	1a78f1651d08
+447	proofs/reac-repacer/fuzz_wire/lib/B/YB1v.vo	earlier layout of the repository root (a build product of the .v beside it)	projects/reac-repacer/fuzz_wire/proofs/lib/B/YB1v.vo (built from YB1v.v)	-
+447	.../YD2j.vo	earlier layout of the repository root (a build product of the .v beside it)	projects/reac-repacer/fuzz_wire/proofs/lib/B/YD2j.vo (built from YD2j.v)	-
+447	.../YB12.vo	earlier layout of the repository root (a build product of the .v beside it)	projects/reac-repacer/fuzz_wire/proofs/lib/B/YB12.vo (built from YB12.v)	-
+449-450	./proofs/reac-repacer/fuzz_wire/lib/B/YB12.v	tool output (cb build), <clone>, earlier layout	projects/reac-repacer/fuzz_wire/proofs/lib/B/YB12.v	ae221a104b9a
+452	logs/trunk_missing.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/trunk_missing.log	a01f363cefbb
+453	lib/Reusable	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/Reusable	-
+454	lib/Reusable	proof directory of this unit at the commit the line names (the image-A core)	proofs/reac-repacer/fuzz_wire/lib/Reusable/ at that commit	-
+454	lib/B	proof directory of the B core, a branch of this unit	proofs/reac-repacer/fuzz_wire/lib/B/ of the B core	-
+455	lib/B	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B	-
+462	exitdrv/run.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/run.sh	f354098755c9
+462	tools/finalize.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/finalize.sh	9388f2b4f233
+464	proofs/reac-repacer/fuzz_wire/lib/B/YE37.vo	earlier layout of the repository root (a build product of the .v beside it)	projects/reac-repacer/fuzz_wire/proofs/lib/B/YE37.vo (built from YE37.v)	-
+465	proofs/reac-repacer/fuzz_wire/lib/B/YE37.vo	earlier layout of the repository root (a build product of the .v beside it)	projects/reac-repacer/fuzz_wire/proofs/lib/B/YE37.vo (built from YE37.v)	-
+466	proofs/reac-repacer/fuzz_wire/lib/B/YE37.vo	earlier layout of the repository root (a build product of the .v beside it)	projects/reac-repacer/fuzz_wire/proofs/lib/B/YE37.vo (built from YE37.v)	-
+469	logs/ye37.build.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/ye37.build.log	34ad19ac3dcc
+469	logs/ye37.pa.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/ye37.pa.log	ba04d1e9cccb
+472	lib/B	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B	-
+478	proofs/reac-repacer/fuzz_wire/lib/B/{YB05,YD1y,YE23,YE37}.vo	earlier layout of the repository root (a build product of the .v beside it)	projects/reac-repacer/fuzz_wire/proofs/lib/B/{YB05,YD1y,YE23,YE37}.vo (built from YB05.v, YD1y.v, YE23.v, YE37.v)	-
+482	logs/rolenames/cb.build.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/rolenames/cb.build.log	7c8be5badac9
+492	tools/stage.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/stage.sh	baab71011aa1
+497	tools/hdrcheck.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/hdrcheck.py	c82a54e29962
+498	lib/B	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B	-
+499	tools/stage.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/stage.sh	baab71011aa1
+502	logs/stage.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/stage.log	d5a44b8e82dc
+503	./oft	repository root	./oft	8f6001e414b0
+503	tools/oft/lint.py	repository root	tools/oft/lint.py	90945ebde8b4
+504	logs/lint.oft.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/lint.oft.log	bc83c02760dc
+504	lib/B	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B	-
+506	tools/oft/paths.py	repository root	tools/oft/paths.py	611af773382a
+509	gates/tools	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/tools	-
+516	lib/B	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B	-
+523	tools/mk_yb05_wire.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/mk_yb05_wire.py	9e5c873ac7d3
+525	exitdrv/gen_exitW.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/gen_exitW.py	48590f3a6182
+530	exitdrv/xcheck_portcore.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/xcheck_portcore.py	88c2b024c166
+530	exitdrv/run.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/run.sh	f354098755c9
+532	acej/run.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/acej/run.sh	12396ce01f35
+532	acej/refs.sha256	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/acej/refs.sha256	626f39c687f0
+534	acej/run.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/acej/run.sh	12396ce01f35
+536	gates/run_gates.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/run_gates.sh	b219f000af6e
+541	logs/rolenames/plants.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/rolenames/plants.log	331c1ce2cbb5
+541	tools/textguard.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/textguard.py	f6fc815a3e76
+543	lib/B	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B	-
+545	lib/B	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B	-
+546	exitdrv/gen_exitW.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/gen_exitW.py	48590f3a6182
+548	gates/mk_gdexpect.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/mk_gdexpect.py	fb954878d11c
+549	tools/finalize.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/finalize.sh	9388f2b4f233
+550	tools/stage.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/stage.sh	baab71011aa1
+559	logs/rolenames/compare.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/rolenames/compare.log	d4fc38e804ef
+560	exitdrv/out/	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/out/	-
+562	tools/finalize.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/finalize.sh	9388f2b4f233
+563	lib/B	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B	-
+564	logs/rolenames/stripcmp.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/rolenames/stripcmp.log	c04ab9a01a60
+564	exitdrv/run.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/run.sh	f354098755c9
+567	exitdrv/logs/	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/exitdrv/logs/	-
+567	tools/finalize.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/finalize.sh	9388f2b4f233
+567	logs/finalize.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/finalize.log	5f16782062dd
+574	logs/rolenames/fmtcheck.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/rolenames/fmtcheck.log	57936b60d6f8
+579	gates/GD.expect	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/GD.expect	479049294b91
+579	gates/mk_gdexpect.py	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/gates/mk_gdexpect.py	fb954878d11c
+580	lib/B	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B	-
+582	logs/run.v7full.out	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/run.v7full.out	c176e2f85309
+584	logs/run.v7ctl.{fail,ok}.out	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/run.v7ctl.fail.out, projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/run.v7ctl.ok.out	run.v7ctl.fail.out eab01f6c3d7e, run.v7ctl.ok.out 7b59cb38d07e
+584	logs/run.v6full.out	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/run.v6full.out	485f8c4d9cd0
+586	lib/A/AF0m.v	proof directory of this unit at the commit the line names (the image-A core)	proofs/reac-repacer/fuzz_wire/lib/A/AF0m.v at that commit	a777805e3f40
+589	logs/run.v4full.out	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/run.v4full.out	e5789730ce75
+620	lib/Reusable/DepotCfg.v	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/Reusable/DepotCfg.v	c261e6381248
+623	logs/nsW.YF0m.writercheck.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/nsW.YF0m.writercheck.log	bbbc7e72195b
+625	tools/finalize.sh	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/tools/finalize.sh	9388f2b4f233
+626	logs/finalize.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/finalize.log	5f16782062dd
+626	logs/final/SHA256.lib-B.txt	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/final/SHA256.lib-B.txt	c3f476b2a2a2
+633	A/AD1g.v	tool output (ifchk refusal), its own terms	-	-
+638	lib/B/YD1g.v	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B/YD1g.v	e48434681e6f
+639	lib/B/YD1g.v	proof directory of the B core, a branch of this unit	proofs/reac-repacer/fuzz_wire/lib/B/YD1g.v of the B core, git blob 8031d1c2a273 (line 661)	fd73f00ee17f
+643	lib/B	proof directory of the B core, a branch of this unit at the commit the line names	proofs/reac-repacer/fuzz_wire/lib/B/ at that commit	-
+644	lib/Reusable	proof directory of the B core, a branch of this unit at the commit line 643 names	proofs/reac-repacer/fuzz_wire/lib/Reusable/ at that commit	-
+645	lib/B	proof directory of the B core, a branch of this unit at the commit line 643 names	proofs/reac-repacer/fuzz_wire/lib/B/ at that commit	-
+646	lib/B	proof directory of the B core, a branch of this unit at the commit line 643 names	proofs/reac-repacer/fuzz_wire/lib/B/ at that commit	-
+649	logs/trunk_missing.log	lane directory provenance/startup-gen/B/	projects/reac-repacer/fuzz_wire/proofs/provenance/startup-gen/B/logs/trunk_missing.log	a01f363cefbb
+650	lib/Reusable	proof directory of the B core, a branch of this unit at the commit the line names	proofs/reac-repacer/fuzz_wire/lib/Reusable/ at that commit	-
+650	lib/B	proof directory of the B core, a branch of this unit at the commit the line names	proofs/reac-repacer/fuzz_wire/lib/B/ at that commit	-
+657	lib/B	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B	-
+661	lib/B/YD1g.v	proof directory of the B core, a branch of this unit	proofs/reac-repacer/fuzz_wire/lib/B/YD1g.v of the B core, git blob 8031d1c2a273 (line 661)	fd73f00ee17f
+664	lib/B/YD1g.v	proof directory of this unit projects/reac-repacer/fuzz_wire/proofs/	projects/reac-repacer/fuzz_wire/proofs/lib/B/YD1g.v	e48434681e6f

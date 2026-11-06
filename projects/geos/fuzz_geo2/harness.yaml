@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: geos
 harness: fuzz_geo2
-rocq: OssFuzzTheorems.geos.fuzz_geo2
+rocq: OSSVerify.geos.fuzz_geo2
 origin: upstream
 summary: Input = NUL-terminated WKT then WKB; on two valid geometries computes Intersection, Difference,
   Union, WKB export of g1 and WKT export of g1; all results destroyed unread.

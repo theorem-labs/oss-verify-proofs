@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: proftpd
 harness: fuzzer
-rocq: OssFuzzTheorems.proftpd.fuzzer
+rocq: OSSVerify.proftpd.fuzzer
 origin: upstream
 summary: NUL-terminates the input and calls pr_json_object_from_text on it, then on four fixed strings
   (trailing comma, 4 keys, 4-deep nesting, invalid UTF-8); every returned object is freed unexamined.

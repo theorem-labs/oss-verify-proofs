@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: libreac/fuzz_boxreg/ubsan_agrees
+fingerprint: 0d1fcd6afc02cd3e0070074fe778844dc657daf3968e7960915820c1ec6550a9

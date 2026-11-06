@@ -1,0 +1,44 @@
+--- 4483a8de6e6f:proofs/reac-repacer/fuzz_wire/provenance/evidence/depot/depot_classify.py
++++ depot-B/depot_classify.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""depot_classify.py [--consumer GREPO KREPO] GRANT_LIB KNOCK_LIB CGIF_LIB FILE... -- every difference between fuzz_grant's released kernel text and
++"""depot_classify.py [--consumer GREPO KREPO [--sub B]] GRANT_LIB KNOCK_LIB CGIF_LIB FILE... -- every difference between fuzz_grant's released kernel text and
+ libreac/fuzz_knock's released text of each FILE, classed depot / layout-grow / other.
+ 
+ GRANT_LIB: fuzz_grant's released lib at origin/ossv/recipes 4f87de75d67 with lib/Reusable/* at its root (module text
+@@ -54,7 +54,7 @@
+                        # added by measurement (a build break whose knock fix uses the name): AD3j, knock's depot module
+                        # (A/AFis.v:231, A/AFj6.v:232 `The reference AD3j.tfib_dzone_lo was not found`; knock's fix is
+                        # `Require Import AD3j`)
+-                       r'AD3j|'
++                       r'AD3j|YD3j|'
+                        # by measurement: ly_mapped (A/AFem.v:176 `The variable HNS was not found`; knock's fix is the binder
+                        # `{HNS : ly_mapped ly}`), top_ok_gle (A/AD26.v:275, A/AD29.v:243 `Hlyle ... expected layout_le`;
+                        # knock's fix is top_ok_gle, the grow-then-le reading)
+@@ -284,19 +284,23 @@
+             consumer, sub = True, 'A'
+             GREPO, KREPO = args[1], args[2]
+             args = args[3:]
++        elif args[0] == '--sub':
++            sub = args[1]
++            args = args[2:]
+         else:
+             sys.exit('depot_classify: unknown option %s' % args[0])
+     gl, kl, cl = args[:3]
+     files = args[3:]
++    kd = sub if consumer else 'A'
+     # knock's whole released lib, reduced: where each candidate support name is used
+     klib, kspans = {}, {}
+-    for d in ('Reusable', 'A'):
++    for d in ('Reusable', kd):
+         for f in sorted(os.listdir(os.path.join(kl, d))):
+             if f.endswith('.v'):
+                 klib[d + '/' + f] = drop_empty_requires(reduce(tokens(open(os.path.join(kl, d, f)).read()), []))
+                 kspans[d + '/' + f] = def_spans(klib[d + '/' + f])
+     sw = set()
+-    for d in ('Reusable', 'A'):
++    for d in ('Reusable', kd):
+         for f in sorted(os.listdir(os.path.join(kl, d))):
+             if f.endswith('.v'):
+                 ot = tokens(open(os.path.join(kl, d, f)).read())

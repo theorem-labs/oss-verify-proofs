@@ -1,0 +1,6 @@
+# plugin-hostd's one dependency, mod-host's protocol headers (host-errors.h, mod-host.h, socket.h and what they
+# include), as FreeMixer ships them in mod-host-protocol-devel 0.10.6.f14a230-11.1: mod-host at the upstream commit
+# packaging/mod-host/mod-host.spec of FreeMixer/.github names, with that spec's patches, which the Dockerfile applies.
+# kind	path	arguments: see lay-out-sources
+git	freemixer	https://github.com/FreeMixer/.github	89e5eb4e49255be2cab73429db41ab6ea3bba584
+git	mod-host	https://github.com/mod-audio/mod-host	f14a230bf48b42035406d2b2dca038efa4d2abca

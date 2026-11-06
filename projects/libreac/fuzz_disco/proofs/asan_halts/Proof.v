@@ -1,0 +1,5 @@
+From OSSVerify.libreac.fuzz_disco Require Statements.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib Require Theorems.
+
+Theorem asan_halts_holds : OSSVerify.libreac.fuzz_disco.Statements.asan_halts.
+Proof. exact OSSVerify.Proofs.libreac.fuzz_disco.lib.Theorems.libreac_fuzz_disco_asan_halts. Qed.

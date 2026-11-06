@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: c-ares
 harness: ares_parse_reply_fuzzer
-rocq: OssFuzzTheorems.c_ares.ares_parse_reply_fuzzer
+rocq: OSSVerify.c_ares.ares_parse_reply_fuzzer
 origin: upstream
 summary: ares_dns_parse, then walks every question/RR/key through the getters into a printed buffer, then
   ares_dns_write back to wire format; the written bytes are neither compared with the input nor re-parsed,

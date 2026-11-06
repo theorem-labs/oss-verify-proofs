@@ -1,0 +1,15 @@
+# libdiginet: the DigiNet protocol of the Digidesign Control|24 and ProControl control surfaces, raw Ethernet frames
+# (EtherType 0x885F), for FreeMixer. The fuzz targets drive the readers of every byte a desk sends: the frame, the
+# command stream, the controls in it and the session they drive. Pinned to the merge of FreeMixer/libdiginet#28 on
+# main, the fuzz/ written to the OSS Verify contract.
+repo: https://github.com/FreeMixer/libdiginet#835f336ccb7abac683681c5791a5715041c71e32
+primary_contact: linuxnow@gmail.com
+homepage: https://github.com/FreeMixer/libdiginet
+language: c
+sanitizers: [address, undefined]
+mutants: fuzz/sabotage
+fuzz_targets:
+  - fuzz_frame
+  - fuzz_decode
+  - fuzz_codec
+  - fuzz_transport

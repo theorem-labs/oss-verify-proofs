@@ -1,0 +1,30 @@
+diff --git B/YD1w.v B/YD1w.v
+index 304e28dfd75..f07ee2b3a73 100644
+--- B/YD1w.v
++++ B/YD1w.v
+@@ -3,6 +3,7 @@
+ (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+ (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1w.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_decode's ASan build. *)
+ (* Modified by Theorem Labs, 2026-10: lib_site_x takes the float-state invariant P that the call of LLVMFuzzerTestOneInput keeps (the call returns at some float state fx' with P fx' and the driver goes on at fx'); the return facts are named lib_post. *)
++(* Modified by Theorem Labs, 2026-10: lib_post's journal is lib/A/W_journalG.v's ajournal_gx at the harness's globals G_HARNESS_B (lib/B/TransportGB.v), XO = 0, no out cells: the program contract's journal (lib/B/YCfn.v tfib_lib_post_x), libreac/fuzz_pcap's G form (Reusable/YD1w.v:104 at origin/ossv/recipes 198234fa4d3). *)
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith NArith List Lia Bool.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+@@ -12,6 +13,8 @@ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Impor
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YO05 YO09 YO06 YO01.
+ From Stdlib Require Import Permutation.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import W_journalG.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Import TransportGB.
+ Import ListNotations.
+ Unset Lia Cache. Unset Nia Cache.
+ Open Scope Z_scope.
+@@ -82,7 +85,7 @@ qtight S                                    .
+ Definition lib_post (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (ly : alayout) (S : astate) (W : world tfibsegs)
+ (p n : Z) (l : lleaf) (ly' : alayout) (S' : astate) (W' : world tfibsegs) (regs' : bvmap 5 word) (mem' : word -> option byte)
+ (md' : Model) (k : Z) : Prop :=
+-YCbq.ajournal (SK := tfib_sink_head) tfibsegs B LLVMF_STK (spZ regs) [YI16.sink_token] ly S W mem md [] ly' S' W' mem' md' k /\
++ajournal_gx (SK := tfib_sink_head) tfibsegs B G_HARNESS_B 0 [] LLVMF_STK (spZ regs) [YI16.sink_token] ly S W mem md [] ly' S' W' mem' md' k /\
+ k <= EV_LIB /\
+ aregs_preserved regs regs' /\ YK11.getr regs' 10%bv = w64 0 /\
+ Permutation (ablocks B ly' S') (ablocks B ly S) /\

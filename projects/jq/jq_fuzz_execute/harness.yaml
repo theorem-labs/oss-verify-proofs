@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jq
 harness: jq_fuzz_execute
-rocq: OssFuzzTheorems.jq.jq_fuzz_execute
+rocq: OSSVerify.jq.jq_fuzz_execute
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

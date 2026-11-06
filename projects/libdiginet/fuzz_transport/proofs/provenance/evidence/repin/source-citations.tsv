@@ -1,0 +1,427 @@
+# Line citations of fuzz_transport.c moved to the patched harness (port commit 835f336c + c47f6290).
+# Line numbers: of the tree after the merge of the re-pin base f6acfcb0c1b8 (it removed the Modified-by first lines of many files).
+# old source: projects/libdiginet/fuzz_transport/source/fuzz_transport.c sha256 044738ce0df1780d88ca48c2d17992c68bc339a8e3655b01779a289ffcfb6a06 (1215 lines)
+# patched source: fuzz/fuzz_transport.c of the tree the new pins were built from (build-info source tree sha256 28333193fe20...) sha256 ae837185e62539c8a8fb9deb8f3aa2fbde60b2fe2f7f81110cd06e281761b6e7 (1218 lines)
+# map: old 1-917 stay; old 918-999 +9; old 1000-1007 replaced by new 1009-1010; old >= 1008 +3. Old lines 51-55 (header comment) are re-wrapped; no citation names them.
+# check: column same = each cited endpoint line of the old source is byte-identical to the mapped line of the patched source.
+# Not here: the 19 citations inside the model hunks of io_recv_m (TCb.v) and receive_m (TOps.v), which the model patch rewrites with the patched line numbers.
+file	line	old	new	form	old_source_lines	new_source_lines	check
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	7	:1131	:1134	bare	diginet_session_config_default(&g_cfg);	diginet_session_config_default(&g_cfg);	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	8	:1147	:1150	bare	g_raw = flags >> 3 & 1;	g_raw = flags >> 3 & 1;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	9	:1148	:1151	bare	g_now = 1000000;	g_now = 1000000;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	10	:1149	:1152	bare	g_fail_next = 0;	g_fail_next = 0;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	11	:1150	:1153	bare	g_last_counter = 0;	g_last_counter = 0;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	12	:1151	:1154	bare	memset(&M, 0, sizeof M);	memset(&M, 0, sizeof M);	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	13	:1154	:1157	bare	g_ncmd = g_nq = 0;	g_ncmd = g_nq = 0;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	14	:1155	:1158	bare	g_rx = NULL;	g_rx = NULL;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	15	:1162	:1165	bare	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	18	:992	:1001	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	18	:1071	:1074	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	18	:1180	:1183	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	18	:1191	:1194	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	18	:1198	:1201	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	20	:1084	:1087	bare	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	20	:1105-1109	:1108-1112	bare	g_cmd[serial].st = PENDING; | memcpy(g_cmd[serial].bytes, c.bytes, c.len);	g_cmd[serial].st = PENDING; | memcpy(g_cmd[serial].bytes, c.bytes, c.len);	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	20	:1117	:1120	bare	g_ncmd++;	g_ncmd++;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	21	:1097	:1100	bare	if (g_cmd[g_q[i]].key == c.key)	if (g_cmd[g_q[i]].key == c.key)	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	22	:1112	:1115	bare	g_q[at] = serial;	g_q[at] = serial;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	22	:1114	:1117	bare	g_q[g_nq++] = serial;	g_q[g_nq++] = serial;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	24	:994	:1003	bare	g_rx_send = f.send;	g_rx_send = f.send;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	24	:999	:1008	bare	g_rx_send = f.send;	g_rx_send = f.send;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	26	:994	:1003	bare	g_rx_send = f.send;	g_rx_send = f.send;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	27	:1010-1012	:1013-1015	bare	g_rx_len = got; | g_rx_fail = fails;	g_rx_len = got; | g_rx_fail = fails;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	27	:906-920	:906-929	bare	static int io_recv(void *ctx, uint8_t *buf, size_t cap, int timeout_ms | }	static int io_recv(void *ctx, uint8_t *buf, size_t cap, int timeout_ms | }	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/GI.v	29	:1013	:1016	bare	diginet_session_poll(&g_s, 0);	diginet_session_poll(&g_s, 0);	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/diginet_session_config_default_c.v	15	fuzz_transport.c:1131	fuzz_transport.c:1134	prefixed	diginet_session_config_default(&g_cfg);	diginet_session_config_default(&g_cfg);	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/diginet_session_init_c.v	19	fuzz_transport.c:1162	fuzz_transport.c:1165	prefixed	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/diginet_session_rx_c.v	21	fuzz_transport.c:1018	fuzz_transport.c:1021	prefixed	diginet_session_rx(&g_s, frame, n, g_now);	diginet_session_rx(&g_s, frame, n, g_now);	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/diginet_session_submit_c.v	19	fuzz_transport.c:1067-1078	fuzz_transport.c:1070-1081	prefixed	struct diginet_cmd c; | int rc = diginet_session_submit(&g_s, &c);	struct diginet_cmd c; | int rc = diginet_session_submit(&g_s, &c);	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/io_now_c.v	1	fuzz/fuzz_transport.c:922-926	fuzz/fuzz_transport.c:931-935	prefixed	static uint64_t io_now(void *ctx) | }	static uint64_t io_now(void *ctx) | }	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/io_send_c.v	4	:1149	:1152	bare	g_fail_next = 0;	g_fail_next = 0;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/io_send_c.v	4	:1204	:1207	bare	g_fail_next = 1;	g_fail_next = 1;	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/notice_c.v	1	fuzz/fuzz_transport.c:928-964	fuzz/fuzz_transport.c:937-973	prefixed	static void notice(void *ctx, const struct diginet_notice *n) | }	static void notice(void *ctx, const struct diginet_notice *n) | }	same
+proofs/libdiginet/fuzz_transport/lib/Prog/T/settle_c.v	1	fuzz/fuzz_transport.c:971-982	fuzz/fuzz_transport.c:980-991	prefixed	static void settle(int ticked) | }	static void settle(int ticked) | }	same
+proofs/libdiginet/fuzz_transport/lib/Spec/DgnLink.v	386	fuzz_transport.c:1049-1063	fuzz_transport.c:1052-1066	prefixed	static void op_announce(struct fuzz_in *in) | }	static void op_announce(struct fuzz_in *in) | }	NOT EDITED: donor copy (fuzz_decode lib/Spec/DgnLink.v); its comment keeps fuzz_transport.c:1049-1063, the patched harness line is fuzz_transport.c:1052-1066 (same code)
+proofs/libdiginet/fuzz_transport/lib/Spec/DgnLink.v	390	fuzz_transport.c:1028	fuzz_transport.c:1031	prefixed	size_t n = spec_build_frame(frame, dst, src, send, ack, retry, cmd, 1,	size_t n = spec_build_frame(frame, dst, src, send, ack, retry, cmd, 1,	NOT EDITED: donor copy (fuzz_decode lib/Spec/DgnLink.v); its comment keeps fuzz_transport.c:1028, the patched harness line is fuzz_transport.c:1031 (same code)
+proofs/libdiginet/fuzz_transport/lib/Spec/DgnLink.v	930	fuzz_transport.c:1028	fuzz_transport.c:1031	prefixed	size_t n = spec_build_frame(frame, dst, src, send, ack, retry, cmd, 1,	size_t n = spec_build_frame(frame, dst, src, send, ack, retry, cmd, 1,	NOT EDITED: donor copy (fuzz_decode lib/Spec/DgnLink.v); its comment keeps fuzz_transport.c:1028, the patched harness line is fuzz_transport.c:1031 (same code)
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	658	:971-982	:980-991	bare	static void settle(int ticked) | }	static void settle(int ticked) | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	660	:973	:982	bare	check_ack_settle();	check_ack_settle();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	661	:974	:983	bare	check_state_settle();	check_state_settle();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	662	:975	:984	bare	check_inflight_settle();	check_inflight_settle();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	663	:976	:985	bare	check_keepalive_settle();	check_keepalive_settle();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	664	:977	:986	bare	if (!g_raw) {	if (!g_raw) {	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	665	:978	:987	bare	check_latest_queue();	check_latest_queue();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	666	:979-980	:988-989	bare	if (ticked) | check_latest_drain();	if (ticked) | check_latest_drain();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	669	:823-964	:823-973	bare	static int io_send(void *ctx, const uint8_t *frame, size_t len) | }	static int io_send(void *ctx, const uint8_t *frame, size_t len) | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	766	:922-926	:931-935	bare	static uint64_t io_now(void *ctx) | }	static uint64_t io_now(void *ctx) | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	769	:928-964	:937-973	bare	static void notice(void *ctx, const struct diginet_notice *n) | }	static void notice(void *ctx, const struct diginet_notice *n) | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	769	:933-937	:942-946	bare	if (GOT.n < TRANS_MAX) { | }	if (GOT.n < TRANS_MAX) { | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	770	:938	:947	bare	GOT.n++;	GOT.n++;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	770	:943	:952	bare	GOT.acked++;	GOT.acked++;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	770	:951	:960	bare	GOT.desk++;	GOT.desk++;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	770	:956	:965	bare	GOT.ndata++;	GOT.ndata++;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	770	:959	:968	bare	GOT.foreign++;	GOT.foreign++;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	774	:932	:941	bare	case N_STATE:	case N_STATE:	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	777	:933	:942	bare	if (GOT.n < TRANS_MAX) {	if (GOT.n < TRANS_MAX) {	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	779	:934-936	:943-945	bare	GOT.t[GOT.n].state = n->state; | GOT.t[GOT.n].reason = n->reason;	GOT.t[GOT.n].state = n->state; | GOT.t[GOT.n].reason = n->reason;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	781	:938	:947	bare	GOT.n++;	GOT.n++;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	783	:939-940	:948-949	bare	if (n->state == S_ONLINE) | check_state_online();	if (n->state == S_ONLINE) | check_state_online();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	784	:942	:951	bare	case N_ACKED:	case N_ACKED:	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	785	:943	:952	bare	GOT.acked++;	GOT.acked++;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	786	:944	:953	bare	check_inflight_acked(n);	check_inflight_acked(n);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	787	:946	:955	bare	case N_ACK_LOST:	case N_ACK_LOST:	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	788	:947	:956	bare	check_inflight_lost(n);	check_inflight_lost(n);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	789	:948	:957	bare	M.fly.on = 0;	M.fly.on = 0;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	790	:950	:959	bare	case N_DESK:	case N_DESK:	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	791	:951	:960	bare	GOT.desk++;	GOT.desk++;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	792	:952	:961	bare	check_state_desk(n);	check_state_desk(n);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	793	:954	:963	bare	case N_DATA:	case N_DATA:	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	794	:955	:964	bare	check_state_data(n);	check_state_data(n);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	795	:956	:965	bare	GOT.ndata++;	GOT.ndata++;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	797	:958	:967	bare	case N_FOREIGN:	case N_FOREIGN:	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	798	:959	:968	bare	GOT.foreign++;	GOT.foreign++;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TCb.v	799	:961-962	:970-971	bare	default: | break;	default: | break;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TImg.v	13	:922	:931	bare	static uint64_t io_now(void *ctx)	static uint64_t io_now(void *ctx)	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TImg.v	14	:928	:937	bare	static void notice(void *ctx, const struct diginet_notice *n)	static void notice(void *ctx, const struct diginet_notice *n)	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TImg.v	20	fuzz_transport.c:988	fuzz_transport.c:997	prefixed	uint8_t *frame = fuzz_dup(p, n);	uint8_t *frame = fuzz_dup(p, n);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TImg.v	26	fuzz_transport.c:928-964	fuzz_transport.c:937-973	prefixed	static void notice(void *ctx, const struct diginet_notice *n) | }	static void notice(void *ctx, const struct diginet_notice *n) | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	124	fuzz_transport.c:1024-1030	fuzz_transport.c:1027-1033	prefixed	static void build_and_receive(const uint8_t *dst, const uint8_t *src,  | }	static void build_and_receive(const uint8_t *dst, const uint8_t *src,  | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	134	:1028	:1031	bare	size_t n = spec_build_frame(frame, dst, src, send, ack, retry, cmd, 1,	size_t n = spec_build_frame(frame, dst, src, send, ack, retry, cmd, 1,	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	135	:1029	:1032	bare	receive(frame, n, 0, 0);	receive(frame, n, 0, 0);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	137	fuzz_transport.c:1034-1038	fuzz_transport.c:1037-1041	prefixed	static const uint8_t CMD[7] = { | static const uint8_t *const DST[4] = { HOST, SPEC_BCAST, OTHER, HOST }	static const uint8_t CMD[7] = { | static const uint8_t *const DST[4] = { HOST, SPEC_BCAST, OTHER, HOST }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	143	fuzz_transport.c:1032-1047	fuzz_transport.c:1035-1050	prefixed	static void op_frame(struct fuzz_in *in) | }	static void op_frame(struct fuzz_in *in) | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	147	:1040	:1043	bare	uint8_t sel = fuzz_u8(in);	uint8_t sel = fuzz_u8(in);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	148	:1041	:1044	bare	uint32_t send = fuzz_u16(in), ack = fuzz_u16(in);	uint32_t send = fuzz_u16(in), ack = fuzz_u16(in);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	150	:1042-1043	:1045-1046	bare	if (sel & 0x80) | ack = g_last_counter;	if (sel & 0x80) | ack = g_last_counter;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	152	:1044	:1047	bare	uint16_t retry = fuzz_u8(in) & 3;	uint16_t retry = fuzz_u8(in) & 3;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	154	:1045	:1048	bare	size_t len = fuzz_take(in, fuzz_u16(in) % (SPEC_MAX_BODY + 1), &body);	size_t len = fuzz_take(in, fuzz_u16(in) % (SPEC_MAX_BODY + 1), &body);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	160	:1046	:1049	bare	build_and_receive(DST[sel >> 5 & 3], SRC[sel >> 3 & 3], send, ack, ret	build_and_receive(DST[sel >> 5 & 3], SRC[sel >> 3 & 3], send, ack, ret	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	163	fuzz_transport.c:1051	fuzz_transport.c:1054	prefixed	static const char *const NAME[3] = { "CNTRL|24", "MAINUNIT", "OTHER" }	static const char *const NAME[3] = { "CNTRL|24", "MAINUNIT", "OTHER" }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	168	:1060	:1063	bare	memcpy(body + SPEC_ANN_VERSION, "1.37", 4);	memcpy(body + SPEC_ANN_VERSION, "1.37", 4);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	171	fuzz_transport.c:1049-1063	fuzz_transport.c:1052-1066	prefixed	static void op_announce(struct fuzz_in *in) | }	static void op_announce(struct fuzz_in *in) | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	176	:1052	:1055	bare	uint8_t sel = fuzz_u8(in), mac = fuzz_u8(in) % 16, name = fuzz_u8(in) 	uint8_t sel = fuzz_u8(in), mac = fuzz_u8(in) % 16, name = fuzz_u8(in) 	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	181	:1055	:1058	bare	memset(body, 0, sizeof body);	memset(body, 0, sizeof body);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	182	:1056-1057	:1059-1060	bare	if (mac < 10) | memcpy(body + mac, HOST, SPEC_MAC);	if (mac < 10) | memcpy(body + mac, HOST, SPEC_MAC);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	183	:1058-1059	:1061-1062	bare	else if (mac < 13) | memcpy(body + mac - 10, OTHER, SPEC_MAC);	else if (mac < 13) | memcpy(body + mac - 10, OTHER, SPEC_MAC);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	185	:1060	:1063	bare	memcpy(body + SPEC_ANN_VERSION, "1.37", 4);	memcpy(body + SPEC_ANN_VERSION, "1.37", 4);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	186	:1061	:1064	bare	memcpy(body + SPEC_ANN_NAME, NAME[name], strlen(NAME[name]));	memcpy(body + SPEC_ANN_NAME, NAME[name], strlen(NAME[name]));	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	189	:1062	:1065	bare	build_and_receive(SPEC_BCAST, DESK, 0, 0, 0, sel & 1 ? SPEC_CMD_E1 : S	build_and_receive(SPEC_BCAST, DESK, 0, 0, 0, sel & 1 ? SPEC_CMD_E1 : S	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	197	fuzz_transport.c:1094-1098	fuzz_transport.c:1097-1101	prefixed	int at = -1; | at = (int)i;	int at = -1; | at = (int)i;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	214	fuzz_transport.c:1065-1119	fuzz_transport.c:1068-1122	prefixed	static void op_submit(struct fuzz_in *in) | }	static void op_submit(struct fuzz_in *in) | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	215	:1073	:1076	bare	c.key = SPEC_KEY(fuzz_u8(in) % 9 + 1, fuzz_u8(in));	c.key = SPEC_KEY(fuzz_u8(in) % 9 + 1, fuzz_u8(in));	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	219	:1084	:1087	bare	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	222	:1069	:1072	bare	unsigned before = g_s.queued;	unsigned before = g_s.queued;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	223	:1071	:1074	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	224	:1073	:1076	bare	c.key = SPEC_KEY(fuzz_u8(in) % 9 + 1, fuzz_u8(in));	c.key = SPEC_KEY(fuzz_u8(in) % 9 + 1, fuzz_u8(in));	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	228	:1074	:1077	bare	c.display = fuzz_u8(in) & 1;	c.display = fuzz_u8(in) & 1;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	229	:1075	:1078	bare	if (g_raw) {	if (g_raw) {	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	232	:1076	:1079	bare	c.len = (uint8_t)fuzz_take(in, fuzz_u16(in) % (SPEC_CMD_MAX + 1), &p);	c.len = (uint8_t)fuzz_take(in, fuzz_u16(in) % (SPEC_CMD_MAX + 1), &p);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	233	:1077	:1080	bare	memcpy(c.bytes, p, c.len);	memcpy(c.bytes, p, c.len);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	235	:1078	:1081	bare	int rc = diginet_session_submit(&g_s, &c);	int rc = diginet_session_submit(&g_s, &c);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	236	:1079	:1082	bare	check_refusal_submit(&c, rc, before);	check_refusal_submit(&c, rc, before);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	237	:1080	:1083	bare	settle(0);	settle(0);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	240	:1083	:1086	bare	unsigned serial = g_ncmd;	unsigned serial = g_ncmd;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	243	:1084	:1087	bare	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	245	:1085	:1088	bare	c.len = (uint8_t)(fuzz_u8(in) % 22 + 3);	c.len = (uint8_t)(fuzz_u8(in) % 22 + 3);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	246	:1089	:1092	bare	size_t n = fuzz_take(in, c.len - 3u, &p);	size_t n = fuzz_take(in, c.len - 3u, &p);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	248	:1086-1090	:1089-1093	bare	c.bytes[0] = TAG; | memcpy(c.bytes + 3, p, n);	c.bytes[0] = TAG; | memcpy(c.bytes + 3, p, n);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	249	:1093	:1096	bare	int sys = spec_system_at(c.bytes, c.len) >= 0;	int sys = spec_system_at(c.bytes, c.len) >= 0;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	250	:1094-1098	:1097-1101	bare	int at = -1; | at = (int)i;	int at = -1; | at = (int)i;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	254	:1099	:1102	bare	int want = sys ? SPEC_E_REFUSED : at < 0 && g_nq == QUEUE_MAX ? SPEC_E	int want = sys ? SPEC_E_REFUSED : at < 0 && g_nq == QUEUE_MAX ? SPEC_E	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	258	:1100	:1103	bare	int rc = diginet_session_submit(&g_s, &c);	int rc = diginet_session_submit(&g_s, &c);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	259	:1101	:1104	bare	check_refusal_submit(&c, rc, before);	check_refusal_submit(&c, rc, before);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	260	:1102-1103	:1105-1106	bare	if (!sys) | check_latest_submit(rc, want);	if (!sys) | check_latest_submit(rc, want);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	262	:1104	:1107	bare	if (want == SPEC_OK) {	if (want == SPEC_OK) {	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	266	:1105-1109	:1108-1112	bare	g_cmd[serial].st = PENDING; | memcpy(g_cmd[serial].bytes, c.bytes, c.len);	g_cmd[serial].st = PENDING; | memcpy(g_cmd[serial].bytes, c.bytes, c.len);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	267	:1110	:1113	bare	if (at >= 0) {	if (at >= 0) {	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	269	:1111	:1114	bare	g_cmd[g_q[at]].st = REPLACED;	g_cmd[g_q[at]].st = REPLACED;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	270	:1111-1112	:1114-1115	bare	g_cmd[g_q[at]].st = REPLACED; | g_q[at] = serial;	g_cmd[g_q[at]].st = REPLACED; | g_q[at] = serial;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	273	:1114	:1117	bare	g_q[g_nq++] = serial;	g_q[g_nq++] = serial;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	274	:1114	:1117	bare	g_q[g_nq++] = serial;	g_q[g_nq++] = serial;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	276	:1117	:1120	bare	g_ncmd++;	g_ncmd++;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	277	:1118	:1121	bare	settle(0);	settle(0);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	282	:1123	:1126	bare	static const uint64_t SCALE[4] = { 1, 1000, 100000, 1000000 };	static const uint64_t SCALE[4] = { 1, 1000, 100000, 1000000 };	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	285	fuzz_transport.c:1166-1212	fuzz_transport.c:1169-1215	prefixed	size_t n; | }	size_t n; | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	291	:1167	:1170	bare	switch (fuzz_u8(&in) % 9) {	switch (fuzz_u8(&in) % 9) {	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	293	:1168-1171	:1171-1174	bare	case 0: | break;	case 0: | break;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	297	:1172-1174	:1175-1177	bare	case 1: | break;	case 1: | break;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	300	:1175-1177	:1178-1180	bare	case 2: | break;	case 2: | break;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	303	:1178-1186	:1181-1189	bare	case 3: { | }	case 3: { | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	305	:1179	:1182	bare	uint64_t scale = SCALE[fuzz_u8(&in) % 4];	uint64_t scale = SCALE[fuzz_u8(&in) % 4];	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	306	:1180	:1183	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	308	:1181	:1184	bare	g_now += scale * fuzz_u16(&in);	g_now += scale * fuzz_u16(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	309	:1182	:1185	bare	m_tick();	m_tick();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	310	:1183	:1186	bare	diginet_session_tick(&g_s, g_now);	diginet_session_tick(&g_s, g_now);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	311	:1184	:1187	bare	settle(1);	settle(1);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	313	:1187-1189	:1190-1192	bare	case 4: | break;	case 4: | break;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	316	:1190-1196	:1193-1199	bare	case 5: { | }	case 5: { | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	317	:1191	:1194	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	318	:1192	:1195	bare	int want = m_wake();	int want = m_wake();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	319	:1193	:1196	bare	check_state_wake_code(diginet_session_wake(&g_s, g_now), want);	check_state_wake_code(diginet_session_wake(&g_s, g_now), want);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	321	:1194	:1197	bare	settle(0);	settle(0);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	323	:1197-1202	:1200-1205	bare	case 6: | break;	case 6: | break;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	324	:1198	:1201	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	325	:1199	:1202	bare	m_close();	m_close();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	326	:1200	:1203	bare	diginet_session_close(&g_s, g_now);	diginet_session_close(&g_s, g_now);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	327	:1201	:1204	bare	settle(0);	settle(0);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	329	:1203-1205	:1206-1208	bare	case 7: | break;	case 7: | break;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	331	:1206-1211	:1209-1214	bare	default: { | }	default: { | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	337	fuzz_transport.c:1165	fuzz_transport.c:1168	prefixed	for (int ops = 0; ops < OPS_MAX && in.n; ops++) {	for (int ops = 0; ops < OPS_MAX && in.n; ops++) {	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	350	fuzz_transport.c:1121-1215	fuzz_transport.c:1124-1218	prefixed	int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) | }	int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	351	:1130-1145	:1133-1148	bare	uint8_t flags = fuzz_u8(&in); | g_cfg.max_body = SPEC_CMD_MAX + fuzz_u16(&in) % (SPEC_MAX_BODY - SPEC_	uint8_t flags = fuzz_u8(&in); | g_cfg.max_body = SPEC_CMD_MAX + fuzz_u16(&in) % (SPEC_MAX_BODY - SPEC_	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	351	:1147-1155	:1150-1158	bare	g_raw = flags >> 3 & 1; | g_rx = NULL;	g_raw = flags >> 3 & 1; | g_rx = NULL;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	352	:1124	:1127	bare	struct diginet_io io = { NULL, io_send, io_recv, io_now };	struct diginet_io io = { NULL, io_send, io_recv, io_now };	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	353	:1162-1163	:1165-1166	bare	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK) | abort();	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK) | abort();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	357	:1127-1128	:1130-1131	bare	if (size >= FUZZ_INPUT_MAX) | return 0;	if (size >= FUZZ_INPUT_MAX) | return 0;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	358	:1129	:1132	bare	struct fuzz_in in = fuzz_in(data, size);	struct fuzz_in in = fuzz_in(data, size);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	359	:1130	:1133	bare	uint8_t flags = fuzz_u8(&in);	uint8_t flags = fuzz_u8(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	360	:1131	:1134	bare	diginet_session_config_default(&g_cfg);	diginet_session_config_default(&g_cfg);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	361	:1132	:1135	bare	memcpy(g_cfg.host_mac, HOST, SPEC_MAC);	memcpy(g_cfg.host_mac, HOST, SPEC_MAC);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	362	:1133	:1136	bare	g_cfg.auto_wake = flags & 1;	g_cfg.auto_wake = flags & 1;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	364	:1134	:1137	bare	g_cfg.sum_mode = flags & 2 ? DIGINET_SUM_ZERO : DIGINET_SUM_BODY;	g_cfg.sum_mode = flags & 2 ? DIGINET_SUM_ZERO : DIGINET_SUM_BODY;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	365	:1135	:1138	bare	g_cfg.desk_mac_set = flags >> 2 & 1;	g_cfg.desk_mac_set = flags >> 2 & 1;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	366	:1136	:1139	bare	memcpy(g_cfg.desk_mac, DESK, SPEC_MAC);	memcpy(g_cfg.desk_mac, DESK, SPEC_MAC);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	368	:1137	:1140	bare	g_cfg.max_retries = fuzz_u8(&in) % 8;	g_cfg.max_retries = fuzz_u8(&in) % 8;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	370	:1138	:1141	bare	g_cfg.ack_timeout_ms = 1u + fuzz_u8(&in);	g_cfg.ack_timeout_ms = 1u + fuzz_u8(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	372	:1139	:1142	bare	g_cfg.keepalive_ms = 1u + fuzz_u16(&in);	g_cfg.keepalive_ms = 1u + fuzz_u16(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	374	:1140	:1143	bare	g_cfg.backoff_ms = fuzz_u8(&in);	g_cfg.backoff_ms = fuzz_u8(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	376	:1141	:1144	bare	g_cfg.offline_ms = 1u + fuzz_u16(&in);	g_cfg.offline_ms = 1u + fuzz_u16(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	378	:1142	:1145	bare	g_cfg.wake_timeout_ms = 1u + fuzz_u16(&in);	g_cfg.wake_timeout_ms = 1u + fuzz_u16(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	380	:1143	:1146	bare	g_cfg.display_gap_us = fuzz_u16(&in);	g_cfg.display_gap_us = fuzz_u16(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	382	:1144	:1147	bare	g_cfg.max_cmds = 1u + fuzz_u8(&in) % 255;	g_cfg.max_cmds = 1u + fuzz_u8(&in) % 255;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	385	:1145	:1148	bare	g_cfg.max_body = SPEC_CMD_MAX + fuzz_u16(&in) % (SPEC_MAX_BODY - SPEC_	g_cfg.max_body = SPEC_CMD_MAX + fuzz_u16(&in) % (SPEC_MAX_BODY - SPEC_	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	386	:1147	:1150	bare	g_raw = flags >> 3 & 1;	g_raw = flags >> 3 & 1;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	387	:1148	:1151	bare	g_now = 1000000;	g_now = 1000000;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	388	:1149	:1152	bare	g_fail_next = 0;	g_fail_next = 0;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	389	:1150	:1153	bare	g_last_counter = 0;	g_last_counter = 0;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	390	:1151	:1154	bare	memset(&M, 0, sizeof M);	memset(&M, 0, sizeof M);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	391	:1152	:1155	bare	M.desk_known = g_cfg.desk_mac_set;	M.desk_known = g_cfg.desk_mac_set;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	392	:1153	:1156	bare	memcpy(M.desk, DESK, SPEC_MAC);	memcpy(M.desk, DESK, SPEC_MAC);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	393	:1154	:1157	bare	g_ncmd = g_nq = 0;	g_ncmd = g_nq = 0;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	394	:1155	:1158	bare	g_rx = NULL;	g_rx = NULL;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	396	:1162	:1165	bare	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	397	:1163	:1166	bare	abort();	abort();	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	399	:1165-1213	:1168-1216	bare	for (int ops = 0; ops < OPS_MAX && in.n; ops++) { | }	for (int ops = 0; ops < OPS_MAX && in.n; ops++) { | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TOps.v	400	:1214	:1217	bare	return 0;	return 0;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess.v	26	fuzz_transport.c:928	fuzz_transport.c:937	prefixed	static void notice(void *ctx, const struct diginet_notice *n)	static void notice(void *ctx, const struct diginet_notice *n)	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess.v	39	fuzz_transport.c:922	fuzz_transport.c:931	prefixed	static uint64_t io_now(void *ctx)	static uint64_t io_now(void *ctx)	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess.v	358	fuzz_transport.c:1018	fuzz_transport.c:1021	prefixed	diginet_session_rx(&g_s, frame, n, g_now);	diginet_session_rx(&g_s, frame, n, g_now);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess.v	403	fuzz_transport.c:906-920	fuzz_transport.c:906-929	prefixed	static int io_recv(void *ctx, uint8_t *buf, size_t cap, int timeout_ms | }	static int io_recv(void *ctx, uint8_t *buf, size_t cap, int timeout_ms | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess0.v	6	fuzz_transport.c:1131	fuzz_transport.c:1134	prefixed	diginet_session_config_default(&g_cfg);	diginet_session_config_default(&g_cfg);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess0.v	6	:1162	:1165	bare	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess0.v	6	:1078	:1081	bare	int rc = diginet_session_submit(&g_s, &c);	int rc = diginet_session_submit(&g_s, &c);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess0.v	6	:1100	:1103	bare	int rc = diginet_session_submit(&g_s, &c);	int rc = diginet_session_submit(&g_s, &c);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess0.v	81	fuzz_transport.c:1131	fuzz_transport.c:1134	prefixed	diginet_session_config_default(&g_cfg);	diginet_session_config_default(&g_cfg);	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess0.v	98	fuzz_transport.c:1162	fuzz_transport.c:1165	prefixed	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess0.v	99	fuzz_transport.c:1124	fuzz_transport.c:1127	prefixed	struct diginet_io io = { NULL, io_send, io_recv, io_now };	struct diginet_io io = { NULL, io_send, io_recv, io_now };	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess0.v	100	:1162	:1165	bare	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess0.v	141	fuzz_transport.c:1067	fuzz_transport.c:1070	prefixed	struct diginet_cmd c;	struct diginet_cmd c;	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TSess0.v	142	:1072	:1075	bare	memset(&c, 0, sizeof c);	memset(&c, 0, sizeof c);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	2	fuzz_transport.c:1165	fuzz_transport.c:1168	prefixed	for (int ops = 0; ops < OPS_MAX && in.n; ops++) {	for (int ops = 0; ops < OPS_MAX && in.n; ops++) {	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	5	FT:993-999	FT:1002-1008	prefixed	spec_read_frame(frame, n, &f); | g_rx_send = f.send;	spec_read_frame(frame, n, &f); | g_rx_send = f.send;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	10	FT:1009	FT:1012	prefixed	g_rx = frame;	g_rx = frame;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	20	FT:1121-1163	FT:1124-1166	prefixed	int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) | abort();	int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) | abort();	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	21	FT:1012	FT:1015	prefixed	g_rx_fail = fails;	g_rx_fail = fails;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	50	FT:1127-1162	FT:1130-1165	prefixed	if (size >= FUZZ_INPUT_MAX) | if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	if (size >= FUZZ_INPUT_MAX) | if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	52	FT:1137	FT:1140	prefixed	g_cfg.max_retries = fuzz_u8(&in) % 8;	g_cfg.max_retries = fuzz_u8(&in) % 8;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	53	FT:1138	FT:1141	prefixed	g_cfg.ack_timeout_ms = 1u + fuzz_u8(&in);	g_cfg.ack_timeout_ms = 1u + fuzz_u8(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	54	FT:1139	FT:1142	prefixed	g_cfg.keepalive_ms = 1u + fuzz_u16(&in);	g_cfg.keepalive_ms = 1u + fuzz_u16(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	55	FT:1140	FT:1143	prefixed	g_cfg.backoff_ms = fuzz_u8(&in);	g_cfg.backoff_ms = fuzz_u8(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	56	FT:1141	FT:1144	prefixed	g_cfg.offline_ms = 1u + fuzz_u16(&in);	g_cfg.offline_ms = 1u + fuzz_u16(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	57	FT:1142	FT:1145	prefixed	g_cfg.wake_timeout_ms = 1u + fuzz_u16(&in);	g_cfg.wake_timeout_ms = 1u + fuzz_u16(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	58	FT:1143	FT:1146	prefixed	g_cfg.display_gap_us = fuzz_u16(&in);	g_cfg.display_gap_us = fuzz_u16(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	59	FT:1144	FT:1147	prefixed	g_cfg.max_cmds = 1u + fuzz_u8(&in) % 255;	g_cfg.max_cmds = 1u + fuzz_u8(&in) % 255;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	60	FT:1145	FT:1148	prefixed	g_cfg.max_body = SPEC_CMD_MAX + fuzz_u16(&in) % (SPEC_MAX_BODY - SPEC_	g_cfg.max_body = SPEC_CMD_MAX + fuzz_u16(&in) % (SPEC_MAX_BODY - SPEC_	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	61	FT:1132	FT:1135	prefixed	memcpy(g_cfg.host_mac, HOST, SPEC_MAC);	memcpy(g_cfg.host_mac, HOST, SPEC_MAC);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	62	FT:1136	FT:1139	prefixed	memcpy(g_cfg.desk_mac, DESK, SPEC_MAC);	memcpy(g_cfg.desk_mac, DESK, SPEC_MAC);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	63	FT:1135	FT:1138	prefixed	g_cfg.desk_mac_set = flags >> 2 & 1;	g_cfg.desk_mac_set = flags >> 2 & 1;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	64	FT:1133	FT:1136	prefixed	g_cfg.auto_wake = flags & 1;	g_cfg.auto_wake = flags & 1;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	65	FT:1134	FT:1137	prefixed	g_cfg.sum_mode = flags & 2 ? DIGINET_SUM_ZERO : DIGINET_SUM_BODY;	g_cfg.sum_mode = flags & 2 ? DIGINET_SUM_ZERO : DIGINET_SUM_BODY;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	67	FT:1147	FT:1150	prefixed	g_raw = flags >> 3 & 1;	g_raw = flags >> 3 & 1;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	70	FT:1124	FT:1127	prefixed	struct diginet_io io = { NULL, io_send, io_recv, io_now };	struct diginet_io io = { NULL, io_send, io_recv, io_now };	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	139	FT:1148	FT:1151	prefixed	g_now = 1000000;	g_now = 1000000;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	139	:1181	:1184	bare	g_now += scale * fuzz_u16(&in);	g_now += scale * fuzz_u16(&in);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	157	FT:1104-1116	FT:1107-1119	prefixed	if (want == SPEC_OK) { | }	if (want == SPEC_OK) { | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	167	FT:1086-1091	FT:1089-1094	prefixed	c.bytes[0] = TAG; | 	c.bytes[0] = TAG; | 	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	167	:1093-1099	:1096-1102	bare	int sys = spec_system_at(c.bytes, c.len) >= 0; | int want = sys ? SPEC_E_REFUSED : at < 0 && g_nq == QUEUE_MAX ? SPEC_E	int sys = spec_system_at(c.bytes, c.len) >= 0; | int want = sys ? SPEC_E_REFUSED : at < 0 && g_nq == QUEUE_MAX ? SPEC_E	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	172	FT:1117	FT:1120	prefixed	g_ncmd++;	g_ncmd++;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Agree.v	172	:1165	:1168	bare	for (int ops = 0; ops < OPS_MAX && in.n; ops++) {	for (int ops = 0; ops < OPS_MAX && in.n; ops++) {	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Links.v	108	FT:1024-1063	FT:1027-1066	prefixed	static void build_and_receive(const uint8_t *dst, const uint8_t *src,  | }	static void build_and_receive(const uint8_t *dst, const uint8_t *src,  | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Op3Ok.v	1	FT:1178-1186	FT:1181-1189	prefixed	case 3: { | }	case 3: { | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Op3Ok.v	18	FT:1178-1186	FT:1181-1189	prefixed	case 3: { | }	case 3: { | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/Op3Ok.v	219	FT:1178-1186	FT:1181-1189	prefixed	case 3: { | }	case 3: { | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/QueueFacts.v	136	fuzz_transport.c:1094-1098	fuzz_transport.c:1097-1101	prefixed	int at = -1; | at = (int)i;	int at = -1; | at = (int)i;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SendOk.v	134	FT:993-999	FT:1002-1008	prefixed	spec_read_frame(frame, n, &f); | g_rx_send = f.send;	spec_read_frame(frame, n, &f); | g_rx_send = f.send;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SettleOk.v	1	fuzz_transport.c:971-982	fuzz_transport.c:980-991	prefixed	static void settle(int ticked) | }	static void settle(int ticked) | }	same | the line is gone at the new base, which removed the Modified-by first line (the release lead's ruling 1)
+proofs/libdiginet/fuzz_transport/lib/TSim/SimLib.v	1279	FT:1103	FT:1206-1208	prefixed	check_latest_submit(rc, want);	case 7: | break;	corrected: old 1103 (check_latest_submit) was not op 7; op 7 is old 1203-1205 = new 1206-1208
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitLib.v	2	fuzz_transport.c:1065-1119	fuzz_transport.c:1068-1122	prefixed	static void op_submit(struct fuzz_in *in) | }	static void op_submit(struct fuzz_in *in) | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitLib.v	18	FT:1084	FT:1087	prefixed	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitLib.v	18	:1105-1115	:1108-1118	bare	g_cmd[serial].st = PENDING; | }	g_cmd[serial].st = PENDING; | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitLib.v	18	FT:1114	FT:1117	prefixed	g_q[g_nq++] = serial;	g_q[g_nq++] = serial;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitLib.v	18	:1117	:1120	bare	g_ncmd++;	g_ncmd++;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitOk.v	1	fuzz_transport.c:1065-1119	fuzz_transport.c:1068-1122	prefixed	static void op_submit(struct fuzz_in *in) | }	static void op_submit(struct fuzz_in *in) | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitOk.v	1	FT:1187-1189	FT:1190-1192	prefixed	case 4: | break;	case 4: | break;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitOk.v	3	FT:1071	FT:1074	prefixed	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitOk.v	5	FT:1080	FT:1083	prefixed	settle(0);	settle(0);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitOk.v	5	:1118	:1121	bare	settle(0);	settle(0);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitRaw.v	1	fuzz_transport.c:1065-1080	fuzz_transport.c:1068-1083	prefixed	static void op_submit(struct fuzz_in *in) | settle(0);	static void op_submit(struct fuzz_in *in) | settle(0);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitRaw.v	2	FT:1076-1077	FT:1079-1080	prefixed	c.len = (uint8_t)fuzz_take(in, fuzz_u16(in) % (SPEC_CMD_MAX + 1), &p); | memcpy(c.bytes, p, c.len);	c.len = (uint8_t)fuzz_take(in, fuzz_u16(in) % (SPEC_CMD_MAX + 1), &p); | memcpy(c.bytes, p, c.len);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitRaw.v	220	FT:1076-1077	FT:1079-1080	prefixed	c.len = (uint8_t)fuzz_take(in, fuzz_u16(in) % (SPEC_CMD_MAX + 1), &p); | memcpy(c.bytes, p, c.len);	c.len = (uint8_t)fuzz_take(in, fuzz_u16(in) % (SPEC_CMD_MAX + 1), &p); | memcpy(c.bytes, p, c.len);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitRaw.v	306	FT:1080	FT:1083	prefixed	settle(0);	settle(0);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitRaw.v	315	FT:1071	FT:1074	prefixed	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitRaw.v	324	FT:1073-1076	FT:1076-1079	prefixed	c.key = SPEC_KEY(fuzz_u8(in) % 9 + 1, fuzz_u8(in)); | c.len = (uint8_t)fuzz_take(in, fuzz_u16(in) % (SPEC_CMD_MAX + 1), &p);	c.key = SPEC_KEY(fuzz_u8(in) % 9 + 1, fuzz_u8(in)); | c.len = (uint8_t)fuzz_take(in, fuzz_u16(in) % (SPEC_CMD_MAX + 1), &p);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitRaw.v	334	FT:1076-1077	FT:1079-1080	prefixed	c.len = (uint8_t)fuzz_take(in, fuzz_u16(in) % (SPEC_CMD_MAX + 1), &p); | memcpy(c.bytes, p, c.len);	c.len = (uint8_t)fuzz_take(in, fuzz_u16(in) % (SPEC_CMD_MAX + 1), &p); | memcpy(c.bytes, p, c.len);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitRaw.v	339	FT:1078-1079	FT:1081-1082	prefixed	int rc = diginet_session_submit(&g_s, &c); | check_refusal_submit(&c, rc, before);	int rc = diginet_session_submit(&g_s, &c); | check_refusal_submit(&c, rc, before);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	1	fuzz_transport.c:1065-1119	fuzz_transport.c:1068-1122	prefixed	static void op_submit(struct fuzz_in *in) | }	static void op_submit(struct fuzz_in *in) | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	2	FT:1071	FT:1074	prefixed	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	3	FT:1073-1089	FT:1076-1092	prefixed	c.key = SPEC_KEY(fuzz_u8(in) % 9 + 1, fuzz_u8(in)); | size_t n = fuzz_take(in, c.len - 3u, &p);	c.key = SPEC_KEY(fuzz_u8(in) % 9 + 1, fuzz_u8(in)); | size_t n = fuzz_take(in, c.len - 3u, &p);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	3	FT:1084	FT:1087	prefixed	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	4	FT:1094-1098	FT:1097-1101	prefixed	int at = -1; | at = (int)i;	int at = -1; | at = (int)i;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	4	FT:1100	FT:1103	prefixed	int rc = diginet_session_submit(&g_s, &c);	int rc = diginet_session_submit(&g_s, &c);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	4	FT:1101	FT:1104	prefixed	check_refusal_submit(&c, rc, before);	check_refusal_submit(&c, rc, before);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	5	FT:1103	FT:1106	prefixed	check_latest_submit(rc, want);	check_latest_submit(rc, want);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	5	FT:1104-1116	FT:1107-1119	prefixed	if (want == SPEC_OK) { | }	if (want == SPEC_OK) { | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	5	FT:1117	FT:1120	prefixed	g_ncmd++;	g_ncmd++;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	28	fuzz_transport.c:1086-1093	fuzz_transport.c:1089-1096	prefixed	c.bytes[0] = TAG; | int sys = spec_system_at(c.bytes, c.len) >= 0;	c.bytes[0] = TAG; | int sys = spec_system_at(c.bytes, c.len) >= 0;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	28	:1105-1109	:1108-1112	bare	g_cmd[serial].st = PENDING; | memcpy(g_cmd[serial].bytes, c.bytes, c.len);	g_cmd[serial].st = PENDING; | memcpy(g_cmd[serial].bytes, c.bytes, c.len);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	347	FT:1084	FT:1087	prefixed	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	351	FT:1111	FT:1114	prefixed	g_cmd[g_q[at]].st = REPLACED;	g_cmd[g_q[at]].st = REPLACED;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	352	FT:1112	FT:1115	prefixed	g_q[at] = serial;	g_q[at] = serial;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	352	:1114	:1117	bare	g_q[g_nq++] = serial;	g_q[g_nq++] = serial;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	353	FT:1114	FT:1117	prefixed	g_q[g_nq++] = serial;	g_q[g_nq++] = serial;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	354	FT:1117	FT:1120	prefixed	g_ncmd++;	g_ncmd++;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	404	FT:1072-1090	FT:1075-1093	prefixed	memset(&c, 0, sizeof c); | memcpy(c.bytes + 3, p, n);	memset(&c, 0, sizeof c); | memcpy(c.bytes + 3, p, n);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	432	FT:1086-1090	FT:1089-1093	prefixed	c.bytes[0] = TAG; | memcpy(c.bytes + 3, p, n);	c.bytes[0] = TAG; | memcpy(c.bytes + 3, p, n);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	540	FT:1084	FT:1087	prefixed	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	595	FT:1105-1109	FT:1108-1112	prefixed	g_cmd[serial].st = PENDING; | memcpy(g_cmd[serial].bytes, c.bytes, c.len);	g_cmd[serial].st = PENDING; | memcpy(g_cmd[serial].bytes, c.bytes, c.len);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	616	FT:1111-1112	FT:1114-1115	prefixed	g_cmd[g_q[at]].st = REPLACED; | g_q[at] = serial;	g_cmd[g_q[at]].st = REPLACED; | g_q[at] = serial;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	628	FT:1114	FT:1117	prefixed	g_q[g_nq++] = serial;	g_q[g_nq++] = serial;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	640	FT:1117	FT:1120	prefixed	g_ncmd++;	g_ncmd++;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	651	FT:1094-1098	FT:1097-1101	prefixed	int at = -1; | at = (int)i;	int at = -1; | at = (int)i;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	996	FT:1073-1089	FT:1076-1092	prefixed	c.key = SPEC_KEY(fuzz_u8(in) % 9 + 1, fuzz_u8(in)); | size_t n = fuzz_take(in, c.len - 3u, &p);	c.key = SPEC_KEY(fuzz_u8(in) % 9 + 1, fuzz_u8(in)); | size_t n = fuzz_take(in, c.len - 3u, &p);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/SubmitTag.v	1044	FT:1094-1098	FT:1097-1101	prefixed	int at = -1; | at = (int)i;	int at = -1; | at = (int)i;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/TakeOk.v	51	FT:1086-1091	FT:1089-1094	prefixed	c.bytes[0] = TAG; | 	c.bytes[0] = TAG; | 	same
+proofs/libdiginet/fuzz_transport/lib/TSim/TickFront.v	9	FT:946-948	FT:955-957	prefixed	case N_ACK_LOST: | M.fly.on = 0;	case N_ACK_LOST: | M.fly.on = 0;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/TickFront.v	72	FT:932-940	FT:941-949	prefixed	case N_STATE: | check_state_online();	case N_STATE: | check_state_online();	same
+proofs/libdiginet/fuzz_transport/lib/TSim/TickFront.v	571	FT:946-948	FT:955-957	prefixed	case N_ACK_LOST: | M.fly.on = 0;	case N_ACK_LOST: | M.fly.on = 0;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	7	:1131	:1134	bare	diginet_session_config_default(&g_cfg);	diginet_session_config_default(&g_cfg);	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	8	:1147	:1150	bare	g_raw = flags >> 3 & 1;	g_raw = flags >> 3 & 1;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	9	:1148	:1151	bare	g_now = 1000000;	g_now = 1000000;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	10	:1149	:1152	bare	g_fail_next = 0;	g_fail_next = 0;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	11	:1150	:1153	bare	g_last_counter = 0;	g_last_counter = 0;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	12	:1151	:1154	bare	memset(&M, 0, sizeof M);	memset(&M, 0, sizeof M);	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	13	:1154	:1157	bare	g_ncmd = g_nq = 0;	g_ncmd = g_nq = 0;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	14	:1155	:1158	bare	g_rx = NULL;	g_rx = NULL;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	15	:1162	:1165	bare	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	18	:992	:1001	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	18	:1071	:1074	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	18	:1180	:1183	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	18	:1191	:1194	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	18	:1198	:1201	bare	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	20	:1084	:1087	bare	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	memset(&g_cmd[serial], 0, sizeof g_cmd[serial]);	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	20	:1105-1109	:1108-1112	bare	g_cmd[serial].st = PENDING; | memcpy(g_cmd[serial].bytes, c.bytes, c.len);	g_cmd[serial].st = PENDING; | memcpy(g_cmd[serial].bytes, c.bytes, c.len);	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	20	:1117	:1120	bare	g_ncmd++;	g_ncmd++;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	21	:1097	:1100	bare	if (g_cmd[g_q[i]].key == c.key)	if (g_cmd[g_q[i]].key == c.key)	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	22	:1112	:1115	bare	g_q[at] = serial;	g_q[at] = serial;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	22	:1114	:1117	bare	g_q[g_nq++] = serial;	g_q[g_nq++] = serial;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	24	:994	:1003	bare	g_rx_send = f.send;	g_rx_send = f.send;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	24	:999	:1008	bare	g_rx_send = f.send;	g_rx_send = f.send;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	26	:994	:1003	bare	g_rx_send = f.send;	g_rx_send = f.send;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	27	:1010-1012	:1013-1015	bare	g_rx_len = got; | g_rx_fail = fails;	g_rx_len = got; | g_rx_fail = fails;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	27	:906-920	:906-929	bare	static int io_recv(void *ctx, uint8_t *buf, size_t cap, int timeout_ms | }	static int io_recv(void *ctx, uint8_t *buf, size_t cap, int timeout_ms | }	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/GI.v	29	:1013	:1016	bare	diginet_session_poll(&g_s, 0);	diginet_session_poll(&g_s, 0);	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/diginet_session_config_default_c.v	17	fuzz_transport.c:1131	fuzz_transport.c:1134	prefixed	diginet_session_config_default(&g_cfg);	diginet_session_config_default(&g_cfg);	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/diginet_session_init_c.v	19	fuzz_transport.c:1162	fuzz_transport.c:1165	prefixed	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/diginet_session_rx_c.v	21	fuzz_transport.c:1018	fuzz_transport.c:1021	prefixed	diginet_session_rx(&g_s, frame, n, g_now);	diginet_session_rx(&g_s, frame, n, g_now);	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/diginet_session_submit_c.v	19	fuzz_transport.c:1067-1078	fuzz_transport.c:1070-1081	prefixed	struct diginet_cmd c; | int rc = diginet_session_submit(&g_s, &c);	struct diginet_cmd c; | int rc = diginet_session_submit(&g_s, &c);	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/io_now_c.v	1	fuzz/fuzz_transport.c:922-926	fuzz/fuzz_transport.c:931-935	prefixed	static uint64_t io_now(void *ctx) | }	static uint64_t io_now(void *ctx) | }	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/io_send_c.v	4	:1149	:1152	bare	g_fail_next = 0;	g_fail_next = 0;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/io_send_c.v	4	:1204	:1207	bare	g_fail_next = 1;	g_fail_next = 1;	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/notice_c.v	1	fuzz/fuzz_transport.c:928-964	fuzz/fuzz_transport.c:937-973	prefixed	static void notice(void *ctx, const struct diginet_notice *n) | }	static void notice(void *ctx, const struct diginet_notice *n) | }	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/settle_c.v	1	fuzz/fuzz_transport.c:971-982	fuzz/fuzz_transport.c:980-991	prefixed	static void settle(int ticked) | }	static void settle(int ticked) | }	same
+# Kit-file citations in the WMem.v stack comment (not fuzz_transport.c; the drift predates the re-pin), each checked on this branch:
+# file	line	old	new	form	cited lines now
+proofs/libdiginet/fuzz_transport/lib/Prog/T/WMem.v	51	FrameAPI.v:38-39	FrameAPI.v:40-41	kit citation	FrameAPI.v:40 uijn B = 0x10460 /\ ms_tp B = 0x428b0 /\ | :41 ms_errno_off B = -164 /\ ms_replaced B =
+proofs/libdiginet/fuzz_transport/lib/Prog/T/WMem.v	51	Reusable/YO0d.v:47	Reusable/YO0d.v:48	kit citation	Reusable/YO0d.v:48 Definition errno_addr (B : malloc_syms) : Z := ms_tp B + ms_errno_off B.
+proofs/libdiginet/fuzz_transport/lib/Prog/T/WMem.v	52	FrameAPI.v:35	FrameAPI.v:37	kit citation	FrameAPI.v:37 (forall rc : RunCeil, errno_addr B + 4 <= @alloc_ceiling rc) /\
+proofs/libdiginet/fuzz_transport/lib/Prog/T/WMem.v	53	Reusable/YL0g.v:36	Reusable/YL0g.v:37	kit citation	Reusable/YL0g.v:37 spZ regs mod 16 = 0 /\ alloc_ceiling + stk <= spZ regs /\ sp
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/WMem.v	51	U/FrameAPI.v:38-39	U/FrameAPI.v:40-41	kit citation	U/FrameAPI.v:40 uijn B = 0x10500 /\ ms_tp B = 0x43420 /\ | :41 ms_errno_off B = -164 /\ ms_replaced B =
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/WMem.v	51	U/Reusable/YO0d.v:47	Reusable/YO0d.v:48 via U/Reusable/YO0d.v	kit citation	U/Reusable/YO0d.v (2 lines) re-exports Reusable/YO0d.v; Reusable/YO0d.v:48 Definition errno_addr (B : malloc_syms) : Z := ms_tp B + ms_errno_off B.
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/WMem.v	52	U/FrameAPI.v:35	U/FrameAPI.v:37	kit citation	U/FrameAPI.v:37 (forall rc : RunCeil, errno_addr B + 4 <= @alloc_ceiling rc) /\
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/WMem.v	53	U/Reusable/YL0g.v:36	U/Reusable/YL0g.v:37	kit citation	U/Reusable/YL0g.v:37 spZ regs mod 16 = 0 /\ alloc_ceiling + stk <= spZ regs /\ sp
+# The other .v citations of WMem.v / WMemIdx.v (both builds), checked on this branch: 14 in WMem.v (7 per build), none in WMemIdx.v;
+# the 8 above and the 6 below drifted, FrameAPI / YO0d / YL0g fixed above.
+proofs/libdiginet/fuzz_transport/lib/Prog/T/WMem.v	37	Reusable/YL01.v:24-25	Reusable/YL01.v:25-26	kit citation	Reusable/YL01.v:25-26 ax_blocks_img : forall L A mem md p n i, MR L A mem md -> In (p, n) (user_blocks A) -> ... ~ in_img B (ptr_addr L p + i);
+proofs/libdiginet/fuzz_transport/lib/Prog/T/WMem.v	38	Contract.v:72-73	Contract.v:73-74	kit citation	Contract.v:73-74 Definition fresh_block (res n : Z) : Prop := 4096 <= res /\ res + n <= alloc_ceiling /\ forall i, ... ~ in_img B (res + i).
+proofs/libdiginet/fuzz_transport/lib/Prog/T/WMem.v	125	Prog/memcpy_c.v:33-42	Prog/memcpy_c.v:34-43	kit citation	Prog/memcpy_c.v:34-43 Definition memcpy_contract : Prop := forall ... F (Z_to_bv 64 0x1f910) fc None m (seg_rom rsegs)).
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/WMem.v	37	U/Reusable/YL01.v:24-25	U/Reusable/YL01.v:25-26	kit citation	U/Reusable/YL01.v:25-26 ax_blocks_img (same text as plain)
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/WMem.v	38	U/Contract.v:72-73	U/Contract.v:73-74	kit citation	U/Contract.v:73-74 Definition fresh_block (same text as plain)
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/WMem.v	125	U/Prog/memcpy_c.v:33-42	U/Prog/memcpy_c.v:34-43	kit citation	U/Prog/memcpy_c.v:34-43 Definition memcpy_contract ... F (Z_to_bv 64 0x20440) ...
+# The release lead's rulings 19:07Z / 19:18Z: no hand edit of a donor copy's comment. lib/Spec/DgnLink.v is a copy of libdiginet/fuzz_decode's lib/Spec/DgnLink.v, so its 3 rows above are not edited (330 citations edited in 36 files, not 333 in 37).
+# Citations in files the re-pin base brought in after the dry run (walks of notice, TNotifyFacts.v, TSim/Rx*), moved on the merged tree, same map and check:
+proofs/libdiginet/fuzz_transport/lib/Prog/T/notice.v	1	fuzz/fuzz_transport.c:928-964	fuzz/fuzz_transport.c:937-973	prefixed	static void notice(void *ctx, const struct diginet_notice *n) | }	static void notice(void *ctx, const struct diginet_notice *n) | }	same
+proofs/libdiginet/fuzz_transport/lib/TModel/TNotifyFacts.v	2	fuzz_transport.c:932-944	fuzz_transport.c:941-953	prefixed	case N_STATE: | check_inflight_acked(n);	case N_STATE: | check_inflight_acked(n);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxAck.v	5	FT:942-944	FT:951-953	prefixed	case N_ACKED: | check_inflight_acked(n);	case N_ACKED: | check_inflight_acked(n);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxAck.v	6	FT:932-940	FT:941-949	prefixed	case N_STATE: | check_state_online();	case N_STATE: | check_state_online();	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxAnn0.v	143	FT:932-940	FT:941-949	prefixed	case N_STATE: | check_state_online();	case N_STATE: | check_state_online();	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxAnn0.v	154	FT:950-952	FT:959-961	prefixed	case N_DESK: | check_state_desk(n);	case N_DESK: | check_state_desk(n);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxAnn1.v	8	FT:958-959	FT:967-968	prefixed	case N_FOREIGN: | GOT.foreign++;	case N_FOREIGN: | GOT.foreign++;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxAnn1.v	157	FT:933-938	FT:942-947	prefixed	if (GOT.n < TRANS_MAX) { | GOT.n++;	if (GOT.n < TRANS_MAX) { | GOT.n++;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxAnn1.v	175	FT:959	FT:968	prefixed	GOT.foreign++;	GOT.foreign++;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxAnn1.v	250	FT:932-940	FT:941-949	prefixed	case N_STATE: | check_state_online();	case N_STATE: | check_state_online();	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxAnn1.v	293	FT:932-940	FT:941-949	prefixed	case N_STATE: | check_state_online();	case N_STATE: | check_state_online();	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxAnn1.v	309	FT:950-952	FT:959-961	prefixed	case N_DESK: | check_state_desk(n);	case N_DESK: | check_state_desk(n);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxAnn1.v	418	FT:958-959	FT:967-968	prefixed	case N_FOREIGN: | GOT.foreign++;	case N_FOREIGN: | GOT.foreign++;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxBase.v	1	FT:986-1022	FT:995-1025	prefixed	static void receive(const uint8_t *p, size_t n, int by_poll, unsigned  | }	static void receive(const uint8_t *p, size_t n, int by_poll, unsigned  | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxBase.v	2	FT:1017	FT:1020	prefixed	ticked = m_rx(frame, n);	ticked = m_rx(frame, n);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxBase.v	3	FT:1018	FT:1021	prefixed	diginet_session_rx(&g_s, frame, n, g_now);	diginet_session_rx(&g_s, frame, n, g_now);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxBase.v	3	FT:928	FT:937	prefixed	static void notice(void *ctx, const struct diginet_notice *n)	static void notice(void *ctx, const struct diginet_notice *n)	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxBase.v	12	FT:1009-1012	FT:1012-1015	prefixed	g_rx = frame; | g_rx_fail = fails;	g_rx = frame; | g_rx_fail = fails;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxBase.v	24	FT:1018	FT:1021	prefixed	diginet_session_rx(&g_s, frame, n, g_now);	diginet_session_rx(&g_s, frame, n, g_now);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxBase.v	25	FT:917-918	FT:917-927	prefixed	size_t n = g_rx_len < cap ? g_rx_len : cap; | memcpy(buf, g_rx, n);	size_t n = g_rx_len < cap ? g_rx_len : cap; | memcpy(buf, g_rx, n);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxBase.v	101	FT:988	FT:997	prefixed	uint8_t *frame = fuzz_dup(p, n);	uint8_t *frame = fuzz_dup(p, n);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxBase.v	117	FT:1009-1012	FT:1012-1015	prefixed	g_rx = frame; | g_rx_fail = fails;	g_rx = frame; | g_rx_fail = fails;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxBase.v	120	FT:1020	FT:1023	prefixed	settle(ticked);	settle(ticked);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxCore.v	4	:993	:1002	bare	spec_read_frame(frame, n, &f);	spec_read_frame(frame, n, &f);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxCore.v	4	:1009-1015	:1012-1018	bare	g_rx = frame; | g_rx_fail = 0;	g_rx = frame; | g_rx_fail = 0;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxData.v	58	FT:956	FT:965	prefixed	GOT.ndata++;	GOT.ndata++;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxE3.v	4	FT:928-940	FT:937-949	prefixed	static void notice(void *ctx, const struct diginet_notice *n) | check_state_online();	static void notice(void *ctx, const struct diginet_notice *n) | check_state_online();	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxE3.v	81	FT:928	FT:937	prefixed	static void notice(void *ctx, const struct diginet_notice *n)	static void notice(void *ctx, const struct diginet_notice *n)	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxE3.v	81	FT:939	FT:948	prefixed	if (n->state == S_ONLINE)	if (n->state == S_ONLINE)	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxE3.v	312	FT:933-938	FT:942-947	prefixed	if (GOT.n < TRANS_MAX) { | GOT.n++;	if (GOT.n < TRANS_MAX) { | GOT.n++;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOk.v	1	FT:986-1022	FT:995-1025	prefixed	static void receive(const uint8_t *p, size_t n, int by_poll, unsigned  | }	static void receive(const uint8_t *p, size_t n, int by_poll, unsigned  | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOp.v	1	fuzz_transport.c:1166-1211	fuzz_transport.c:1169-1214	prefixed	size_t n; | }	size_t n; | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOp.v	2	FT:1168-1171	FT:1171-1174	prefixed	case 0: | break;	case 0: | break;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOp.v	2	FT:1032-1047	FT:1035-1050	prefixed	static void op_frame(struct fuzz_in *in) | }	static void op_frame(struct fuzz_in *in) | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOp.v	3	FT:1049-1063	FT:1052-1066	prefixed	static void op_announce(struct fuzz_in *in) | }	static void op_announce(struct fuzz_in *in) | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOp.v	3	FT:1206-1211	FT:1209-1214	prefixed	default: { | }	default: { | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	1	FT:986-1022	FT:995-1025	prefixed	static void receive(const uint8_t *p, size_t n, int by_poll, unsigned  | }	static void receive(const uint8_t *p, size_t n, int by_poll, unsigned  | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	4	FT:1017-1018	FT:1020-1021	prefixed	ticked = m_rx(frame, n); | diginet_session_rx(&g_s, frame, n, g_now);	ticked = m_rx(frame, n); | diginet_session_rx(&g_s, frame, n, g_now);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	6	FT:996-1015	FT:1005-1018	prefixed	size_t got = n > SPEC_MAX_FRAME ? SPEC_MAX_FRAME : n;   /* what recv h | g_rx_fail = 0;	size_t got = n > SPEC_MAX_FRAME ? SPEC_MAX_FRAME : n;   /* what recv h | g_rx_fail = 0;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	62	fuzz_transport.c:1051	fuzz_transport.c:1054	prefixed	static const char *const NAME[3] = { "CNTRL|24", "MAINUNIT", "OTHER" }	static const char *const NAME[3] = { "CNTRL|24", "MAINUNIT", "OTHER" }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	70	fuzz_transport.c:1055-1061	fuzz_transport.c:1058-1064	prefixed	memset(body, 0, sizeof body); | memcpy(body + SPEC_ANN_NAME, NAME[name], strlen(NAME[name]));	memset(body, 0, sizeof body); | memcpy(body + SPEC_ANN_NAME, NAME[name], strlen(NAME[name]));	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	109	FT:993-994	FT:1002-1003	prefixed	spec_read_frame(frame, n, &f); | g_rx_send = f.send;	spec_read_frame(frame, n, &f); | g_rx_send = f.send;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	109	:998-999	:1007-1008	bare	spec_read_frame(frame, got, &f); | g_rx_send = f.send;	spec_read_frame(frame, got, &f); | g_rx_send = f.send;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	111	FT:996	FT:1005	prefixed	size_t got = n > SPEC_MAX_FRAME ? SPEC_MAX_FRAME : n;   /* what recv h	size_t got = n > SPEC_MAX_FRAME ? SPEC_MAX_FRAME : n;   /* what recv h	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	390	FT:906-920	FT:906-929	prefixed	static int io_recv(void *ctx, uint8_t *buf, size_t cap, int timeout_ms | }	static int io_recv(void *ctx, uint8_t *buf, size_t cap, int timeout_ms | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	430	FT:992	FT:1001	prefixed	op_begin();	op_begin();	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	430	FT:993-994	FT:1002-1003	prefixed	spec_read_frame(frame, n, &f); | g_rx_send = f.send;	spec_read_frame(frame, n, &f); | g_rx_send = f.send;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	430	:998-999	:1007-1008	bare	spec_read_frame(frame, got, &f); | g_rx_send = f.send;	spec_read_frame(frame, got, &f); | g_rx_send = f.send;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	449	FT:998-999	FT:1007-1008	prefixed	spec_read_frame(frame, got, &f); | g_rx_send = f.send;	spec_read_frame(frame, got, &f); | g_rx_send = f.send;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	483	FT:1017-1020	FT:1020-1023	prefixed	ticked = m_rx(frame, n); | settle(ticked);	ticked = m_rx(frame, n); | settle(ticked);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	541	FT:996-1015	FT:1005-1018	prefixed	size_t got = n > SPEC_MAX_FRAME ? SPEC_MAX_FRAME : n;   /* what recv h | g_rx_fail = 0;	size_t got = n > SPEC_MAX_FRAME ? SPEC_MAX_FRAME : n;   /* what recv h | g_rx_fail = 0;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	604	FT:1009-1013	FT:1012-1016	prefixed	g_rx = frame; | diginet_session_poll(&g_s, 0);	g_rx = frame; | diginet_session_poll(&g_s, 0);	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	685	FT:1012	FT:1015	prefixed	g_rx_fail = fails;	g_rx_fail = fails;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	817	FT:1024-1063	FT:1027-1066	prefixed	static void build_and_receive(const uint8_t *dst, const uint8_t *src,  | }	static void build_and_receive(const uint8_t *dst, const uint8_t *src,  | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	817	:1166-1211	:1169-1214	bare	size_t n; | }	size_t n; | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	839	FT:1024-1030	FT:1027-1033	prefixed	static void build_and_receive(const uint8_t *dst, const uint8_t *src,  | }	static void build_and_receive(const uint8_t *dst, const uint8_t *src,  | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	856	FT:1032-1047	FT:1035-1050	prefixed	static void op_frame(struct fuzz_in *in) | }	static void op_frame(struct fuzz_in *in) | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	886	FT:1049-1063	FT:1052-1066	prefixed	static void op_announce(struct fuzz_in *in) | }	static void op_announce(struct fuzz_in *in) | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	907	FT:1166-1211	FT:1169-1214	prefixed	size_t n; | }	size_t n; | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	921	FT:1168-1171	FT:1171-1174	prefixed	case 0: | break;	case 0: | break;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	930	FT:1172-1174	FT:1175-1177	prefixed	case 1: | break;	case 1: | break;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	936	FT:1175-1177	FT:1178-1180	prefixed	case 2: | break;	case 2: | break;	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	941	FT:1206-1211	FT:1209-1214	prefixed	default: { | }	default: { | }	same
+proofs/libdiginet/fuzz_transport/lib/U/Prog/T/notice.v	1	fuzz/fuzz_transport.c:928-964	fuzz/fuzz_transport.c:937-973	prefixed	static void notice(void *ctx, const struct diginet_notice *n) | }	static void notice(void *ctx, const struct diginet_notice *n) | }	same
+proofs/libdiginet/fuzz_transport/lib/TSim/RxBase.v	2	FT:1003		not moved	m_rx(frame, got);		NOT MOVED: cites the replaced lines 1000-1007 (the pinned model runs m_rx / m_tick before the poll; the patched harness does it in io_recv)
+proofs/libdiginet/fuzz_transport/lib/TSim/RxOpLib.v	727	FT:1001-1007		not moved	if (!fails) { | }		NOT MOVED: cites the replaced lines 1000-1007 (the pinned model runs m_rx / m_tick before the poll; the patched harness does it in io_recv)

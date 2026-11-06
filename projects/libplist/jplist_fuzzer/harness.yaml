@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libplist
 harness: jplist_fuzzer
-rocq: OssFuzzTheorems.libplist.jplist_fuzzer
+rocq: OSSVerify.libplist.jplist_fuzzer
 origin: upstream
 summary: Calls plist_from_json on the raw input and frees the resulting node; the return code and tree
   are never inspected (no re-serialisation).

@@ -1,0 +1,7 @@
+slots parsed: 8769 (discob_nslots 8769), range 0x80fbc .. 0x898c0
+slot kinds: PAddHi 61, PCall 534, PHi 109, PLdHi 46, PTail 3, PW 8016
+slot checks failing: 0
+pairs (PAddHi/PLdHi): 107, failing the auipc-to-use straight-line or object-in-image checks: 0
+AF_ definitions: 40
+function symbols in the range: 40
+other problems: 0

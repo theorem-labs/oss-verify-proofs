@@ -1,0 +1,393 @@
+--- donor libreac/fuzz_ctrl 2fceb489f4aa lib/A/Rt/StackMalloc1Tbl.v
++++ written (scratch worktree, RECORD_A=TestASyms RECORD_B=TestBSyms) lib/A/Rt/StackMalloc1Tbl.v
+@@ -4,20 +4,21 @@
+ (* Modified by Theorem Labs, 2026-10: copied from <internal branch> proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc4Tbl.v, with its code table from AF0r.v and the frame-ownership lemmas of YF0v.v of the same tree, for stack_malloc_6 at 0x3dac0 of libreac/fuzz_disco's ASan build: class-6 frame constants (256 frames of 4096 bytes, hint at +48, flags at +0x8e00, frames at +0x609000), a 192-byte stack window and the code ranges measured on this image, the probe loop's registers (mask a5, flag pointer a4), the frame address in a0, a region for the 512 shadow bytes of the 64-step fill loop; module names. *)
+ (* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_disco/lib/A/Rt/StackMalloc6Tbl.v (<internal branch> 9a4c15f69ab) to libreac/fuzz_ctrl's ASan build (v1.9.0, <LIBREAC_V190>/asan/fuzz_ctrl): module paths fuzz_disco -> fuzz_ctrl; the core's record name CtrlTSyms for TfibSyms; every address moved by symbol to this binary's own .symtab (elfdis.py), each one listed with how it was measured in <internal path>. No proof step changed. *)
+ (* Modified by Theorem Labs, 2026-10: ported from <worker>'s proofs/libreac/fuzz_ctrl/lib/A/Rt/StackMalloc6Tbl.v (<internal branch> 055c2ebca7f) to __asan_stack_malloc_1 at 0x3d72c of the same image (fuzz_ctrl.asan sha256 aac16e1fe728...): every class-specific number below read by program from the image (smtbl.py 1; the same program reproduces StackMalloc6Tbl.v's class-6 numbers exactly): class-1 frame constants (8192 frames of 128 bytes, hint at +8, flags at +0x5000, frames at +0x109000), the function's 100-instruction range, the probe loop's registers (mask a4, flag pointer a5), the frame address in s1 (not a0) when the frame's first store runs, the shadow address in a1 (not a0) when the shadow's first store runs, a region for the 16 shadow bytes of the two unrolled stores (class 6: the 64-step fill loop over 512 bytes); the callee ranges, the stack window and the rodata cells are class 6's (same callees, same 32-byte own frame, checked by the same program); lemma names unchanged. *)
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
++(* Modified by Theorem Labs, 2026-10: relocated to libdiginet/fuzz_transport's asan image by this unit's provenance/evidence/class1/run.sh (alreloc with the resolve lines of clscmp.py); CtrlTSyms becomes TestASyms. *)
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith NArith List Lia Bool.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import
+ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0k YK0s YK0n YP0n YK1d.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP08 YP03 YP04 YP0g YP01.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YN3v YI04.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG0v.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YG0s YG0q YG0t YCe5.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.A Require Import AB1v AE34 AF0l AF0m AF0x AE2y.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YN32.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0k YK0s YK0n YP0n YK1d.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP08 YP03 YP04 YP0g YP01.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YN3v YI04.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG0v.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YG0s YG0q YG0t YCe5.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import AB1v AE34 AF0l AF0m AF0x AE2y.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YN32.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
+ Import ListNotations.
+ Local Unset Lia Cache. Local Unset Nia Cache.
+ Local Set Warnings "-abstract-large-number".
+@@ -26,11 +27,11 @@
+ #[local] Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+ Section e. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+ Definition CID : Z := 1.
+-Definition FS_ENTRY : Z := 0x3d72c.
+-Definition FS_LOOP : Z := 0x3d7c0.
+-Definition FS_FOUND : Z := 0x3d838.
+-Definition FS_SDFF : Z := 0x3d864.
+-Definition FS_SDSH : Z := 0x3d880.
++Definition FS_ENTRY : Z := 0x3d80c.
++Definition FS_LOOP : Z := 0x3d8a0.
++Definition FS_FOUND : Z := 0x3d918.
++Definition FS_SDFF : Z := 0x3d944.
++Definition FS_SDSH : Z := 0x3d960.
+ Definition FS_WIN : Z := 192.
+ Definition FS_N : Z := 8192.
+ Definition FS_FLOFF : Z := 0x5000.
+@@ -58,7 +59,7 @@
+ Definition T48 : Z := Eval vm_compute in tfib_cell (AT 48).
+ Definition T56 : Z := Eval vm_compute in tfib_cell (AT 56).
+ Definition fs_ranges : list (Z * nat) :=
+-[(0x3d72c, 100%nat); (0x472d8, 31%nat); (0x98800, 9%nat); (0x5c838, 8%nat); (0x55384, 6%nat); (0x998b4, 7%nat); (0x69f4c, 140%nat); (0x3dc3c, 28%nat)].
++[(0x3d80c, 100%nat); (0x47660, 31%nat); (0x9de04, 9%nat); (0x5cbc0, 8%nat); (0x5570c, 6%nat); (0x9eeb8, 7%nat); (0x6a2d4, 140%nat); (0x3dfc4, 28%nat)].
+ Definition tbl_fs : ctable := Eval vm_compute in build_ranges fs_ranges tbl_icpt.
+ Lemma tbl_fs_eq : tbl_fs = build_ranges fs_ranges tbl_icpt. Proof. vm_cast_no_check (eq_refl tbl_fs). Qed.
+ Lemma tbl_fs_ok : table_ok tfibsegs tbl_fs.
+@@ -87,9 +88,9 @@
+ Qed.
+ Definition fsA_rodata : list (Z * Z * list (Z * BinNums.N * Z)) := Eval vm_compute in
+ icpt_rodata ++
+-[cell_region 0xa07b0 16 [(0, 8%N); (8, 8%N)]; cell_region 0xa1870 8 [(0, 8%N)]; cell_region 0x9fac0 8 [(0, 8%N)];
+-cell_region (tfib_cell (ANum 0x9fac0) + 0x89) 1 [(0, 1%N)]; cell_region 0x9fb20 8 [(0, 8%N)]; cell_region (tfib_cell (ANum 0x9fb20)) 4 [(0, 4%N)];
+-cell_region 0xa07c0 8 [(0, 8%N)]; cell_region 0xa80e0 8 [(0, 1%N); (4, 4%N)]; (TP - 88, 8, [(0, 8%N, TSD)]);
++[cell_region 0xa4d70 16 [(0, 8%N); (8, 8%N)]; cell_region 0xa5e30 8 [(0, 8%N)]; cell_region 0xa4080 8 [(0, 8%N)];
++cell_region (tfib_cell (ANum 0xa4080) + 0x89) 1 [(0, 1%N)]; cell_region 0xa40e0 8 [(0, 8%N)]; cell_region (tfib_cell (ANum 0xa40e0)) 4 [(0, 4%N)];
++cell_region 0xa4d80 8 [(0, 8%N)]; cell_region 0xac260 8 [(0, 1%N); (4, 4%N)]; (TP - 88, 8, [(0, 8%N, TSD)]);
+ cell_region (TP - 8) 8 [(0, 8%N)]; cell_region (tfib_cell (ANum (TP - 8)) + 8) 8 [(0, 8%N)]].
+ Lemma fsA_rodata_chk : forall ly, rodata_chk ly fsA_rodata = true.
+ Proof. intros ly. vm_compute. reflexivity. Qed.
+@@ -291,7 +292,7 @@
+ sv F_L4 D_L4 (Z_to_bv 64 (FL + h mod FS_N)).
+ steplb1 F_L8 D_L8 RD.
+ stepbt F_Lc D_Lc.
+-replace (Z_to_bv 64 FS_FOUND) with (251960%bv : bv 64) by (apply bv_eq; reflexivity). apply mst_refl.
++replace (Z_to_bv 64 FS_FOUND) with (252184%bv : bv 64) by (apply bv_eq; reflexivity). apply mst_refl.
+ + split; [gr; rewrite H12; f_equal; lia|]. split; [gr; reflexivity|]. split; [gr; reflexivity|]. split; [gr; reflexivity|].
+ split; [gr; exact H10|]. split; [lia | frame].
+ Qed.
+--- donor libreac/fuzz_ctrl 2fceb489f4aa lib/A/Rt/StackMalloc1.v
++++ written (scratch worktree, RECORD_A=TestASyms RECORD_B=TestBSyms) lib/A/Rt/StackMalloc1.v
+@@ -4,23 +4,24 @@
+ (* Modified by Theorem Labs, 2026-10: copied from <internal branch> proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc4.v, for stack_malloc_6 at 0x3dac0 of libreac/fuzz_disco's ASan build: class-6 frame constants (256 frames of 4096 bytes, 512 shadow bytes, hint at +48, flags at +0x8e00, frames at +0x609000), the probe loop's registers, the frame address in a0, the shadow-fill loop's two registers, image numbers and layout bounds from this image's definitions; the contract stated as libreac/fuzz_disco states it, in its unsized form only (astack_malloc_realizes); module names. *)
+ (* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_disco/lib/A/Rt/StackMalloc6.v (<internal branch> 9a4c15f69ab) to libreac/fuzz_ctrl's ASan build (v1.9.0, <LIBREAC_V190>/asan/fuzz_ctrl): module paths fuzz_disco -> fuzz_ctrl; the core's record name CtrlTSyms for TfibSyms; the line `#[local] Ltac Zify.zify_pre_hook ::= try unfold YImgTop.IMG_TOP, YImgTop.IMG_LO in *.` is dropped: fuzz_disco added it for its core's TFIB_IMG_END := YImgTop.IMG_TOP (Definitions), while fuzz_ctrl's YImgTop has IMG_LO / IMG_TOP as parsing-only Notations and its TFIB_IMG_END is the literal 0x5fe000, so the line cannot be stated (Rocq: Cannot coerce Zpos to an evaluable reference) and has nothing to unfold. Every address is cited from the Tbl file. No lemma, statement or proof step changed. *)
+ (* Modified by Theorem Labs, 2026-10: ported from <worker>'s proofs/libreac/fuzz_ctrl/lib/A/Rt/StackMalloc6.v (<internal branch> 055c2ebca7f) to __asan_stack_malloc_1 at 0x3d72c of the same image, with its table StackMalloc1Tbl.v: class-1 frame constants (8192 frames of 128 bytes, 16 shadow bytes, hint at +8, the hint cell's index 1, flags at +0x5000, frames at +0x109000, frame alignment pos * 2 lines of 64 bytes), the probe loop's mask in a4 (class 6: a5) and flag pointer in a5 (class 6: a4), the frame address in s1 (class 6: a0) at the frame's first store, the shadow address in a1 (class 6: a0, with the fill loop's end in a2) at the shadow's first store; the theorems named ctrl_stack_malloc1*, tfib_stack_malloc1_at; the statement shape of disco_stack_malloc6 with class 1. *)
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
++(* Modified by Theorem Labs, 2026-10: relocated to libdiginet/fuzz_transport's asan image by this unit's provenance/evidence/class1/run.sh (alreloc with the resolve lines of clscmp.py); CtrlTSyms becomes TestASyms. *)
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith NArith List Lia Bool.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import
+ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0k YK0s YK0n YP0n YK1d.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP08 YP03 YP04 YP0g YP01.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YN3v YI04.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG0v.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YG0s YG0t YCe5.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.A Require Import AB1v AE34 AF0l AF0m AF0x AE2y.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YN32 YG0q.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.A.Rt Require Import StackMalloc1Tbl.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Rt Require Import StackMallocRawDef.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.A.Rt Require Import StackRawKept.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0k YK0s YK0n YP0n YK1d.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP08 YP03 YP04 YP0g YP01.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YN3v YI04.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG0v.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YG0s YG0t YCe5.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import AB1v AE34 AF0l AF0m AF0x AE2y.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YN32 YG0q.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Rt Require Import StackMalloc1Tbl.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Rt Require Import StackMallocRawDef.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Rt Require Import StackRawKept.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
+ Import ListNotations.
+ Local Unset Lia Cache. Local Unset Nia Cache.
+ Ltac ceil := try (let H := fresh "CR" in let H2 := fresh "CR" in pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as H; pose proof H as H2; unfold YG0f.ASAN_CEIL in H2).
+@@ -32,7 +33,7 @@
+ Section f.
+ Variable B : asyms.
+ Hypothesis LAWS : AR_laws tfibsegs B.
+-Hypothesis TB : CtrlTSyms B.
++Hypothesis TB : TestASyms B.
+ Theorem tfib_stack_malloc1_at : forall ly S (W : world tfibsegs) regs mem md pos S',
+ ecall_pre tfibsegs B ly S W regs mem md ->
+ count_cid CID (frames S) < fs_frames CID ->
+@@ -521,18 +522,18 @@
+ End f.
+ End d.
+ Section h. Context {rc : YM05.RunCeil}.
+-Theorem ctrl_stack_malloc1_hid_plain : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
++Theorem ctrl_stack_malloc1_hid_plain : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> TestASyms B ->
+ astack_malloc_realizes_hid_plain (fx := fq) tfibsegs B 1.
+ Proof.
+ intros fq B LAWS TB ly S W regs mem md pos S' HPRE Hcnt Hpath. rewrite (ts_code B TB).
+ exact (tfib_stack_malloc1_at (fx := fq) B LAWS TB ly S W regs mem md pos S' HPRE Hcnt Hpath).
+ Qed.
+-Theorem ctrl_stack_malloc1_raw : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
++Theorem ctrl_stack_malloc1_raw : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> TestASyms B ->
+ astack_malloc_realizes_raw (fx := fq) tfibsegs B 1.
+ Proof.
+ intros fq B LAWS TB. exact (astack_malloc_realizes_hid_plain_raw (fx := fq) tfibsegs B 1 (ctrl_stack_malloc1_hid_plain fq B LAWS TB)).
+ Qed.
+-Theorem ctrl_stack_malloc1 : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
++Theorem ctrl_stack_malloc1 : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> TestASyms B ->
+ astack_malloc_realizes (fx := fq) tfibsegs B 1.
+ Proof.
+ intros fq B LAWS TB. exact (astack_malloc_realizes_raw_view (fx := fq) tfibsegs B 1 (ctrl_stack_malloc1_raw fq B LAWS TB)).
+--- donor libreac/fuzz_ctrl 2fceb489f4aa lib/A/Rt/StackRawKept.v
++++ written (scratch worktree, RECORD_A=TestASyms RECORD_B=TestBSyms) lib/A/Rt/StackRawKept.v
+@@ -1,13 +1,14 @@
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
++(* Modified by Theorem Labs, 2026-10: relocated to libdiginet/fuzz_transport's asan image by this unit's provenance/evidence/class1/run.sh (alreloc with the resolve lines of clscmp.py); CtrlTSyms becomes TestASyms. *)
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith List Bool Lia.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import
+ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK11 YK0s YK0i YK15 YK0j YK18 YP09.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK04 YA0i YA0n.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import StackFreeDef StackFreeRaw.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Rt Require Import StackMallocRawDef.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK11 YK0s YK0i YK15 YK0j YK18 YP09.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK04 YA0i YA0n.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import StackFreeDef StackFreeRaw.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Rt Require Import StackMallocRawDef.
+ Import ListNotations.
+ Open Scope Z_scope.
+ Lemma raw_kept_gen : forall (H : word -> bool) (mem mem' : word -> option byte) (P : Z -> Prop),
+--- donor libreac/fuzz_ctrl 2fceb489f4aa lib/B/Rt/StackMalloc1Tbl.v
++++ written (scratch worktree, RECORD_A=TestASyms RECORD_B=TestBSyms) lib/B/Rt/StackMalloc1Tbl.v
+@@ -4,20 +4,21 @@
+ (* Modified by Theorem Labs, 2026-10: copied from <internal branch> proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc4Tbl.v, with its code table from AF0r.v and the frame-ownership lemmas of YF0v.v of the same tree, for stack_malloc_6 at 0x3dac0 of libreac/fuzz_disco's ASan build: class-6 frame constants (256 frames of 4096 bytes, hint at +48, flags at +0x8e00, frames at +0x609000), a 192-byte stack window and the code ranges measured on this image, the probe loop's registers (mask a5, flag pointer a4), the frame address in a0, a region for the 512 shadow bytes of the 64-step fill loop; module names. *)
+ (* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_disco/lib/A/Rt/StackMalloc6Tbl.v (<internal branch> 9a4c15f69ab) to libreac/fuzz_ctrl's ASan+UBSan build (v1.9.0, <LIBREAC_V190>/asan-ubsan/fuzz_ctrl): module paths fuzz_disco -> fuzz_ctrl; the core modules AB1v AE34 AF0l AF0m AF0x AE2y AB1w from lib/Reusable's image-B twins YB1v YE34 YF0l YF0m YF0x YE2y YB1w; the core's record name CtrlTSyms for TfibSyms; every address moved by symbol to this binary's own .symtab (elfdis.py), each one listed with how it was measured in <internal path>. No proof step changed. *)
+ (* Modified by Theorem Labs, 2026-10: ported from <worker>'s proofs/libreac/fuzz_ctrl/lib/B/Rt/StackMalloc6Tbl.v (<internal branch> 055c2ebca7f) to __asan_stack_malloc_1 at 0x3d868 of the same image (fuzz_ctrl.asan-ubsan sha256 12136677c5cf...), with the class-1 text of its image-A twin lib/A/Rt/StackMalloc1Tbl.v (<internal branch> 1cf78f2ca9d) and that file's module paths moved as in the class-6 pair (the image-A core AB1v AE34 AF0l AF0m AF0x AE2y -> lib/Reusable's YB1v YE34 YF0l YF0m YF0x YE2y): every class-specific number below read by program from this image (a12's smtbl.py 1, run on image B by <internal path>; the same run reproduces StackMalloc6Tbl.v's class-6 numbers exactly): class-1 frame constants (8192 frames of 128 bytes, hint at +8, flags at +0x5000, frames at +0x109000), the function's 100-instruction range, the probe loop's registers (mask a4, flag pointer a5), the frame address in s1 (not a0) when the frame's first store runs, the shadow address in a1 (not a0) when the shadow's first store runs, a region for the 16 shadow bytes of the two unrolled stores (class 6: the 64-step fill loop over 512 bytes); the callee ranges and the rodata cells are class 6's (same callees, the same MemToShadow copy at 0x3dd78, same 32-byte own frame, checked by the same program); the stack window FS_WIN is 208 (class 6: 192; kno-7's audit, 15:44Z): the deepest stack store on the walk's call chain is 200 bytes below the entry sp (the 32-byte frame of this function, the 32-byte frame of __interceptor___tls_get_addr, and DTLS_on_tls_get_addr's lowest store at sp+8 in its 144-byte frame, each frame read from the function's first `addi sp,sp,-N` on this image), and 208 covers it, as class 0 and fuzz_grant's AF0t have; lemma names unchanged. *)
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
++(* Modified by Theorem Labs, 2026-10: relocated to libdiginet/fuzz_transport's asan-ubsan image by this unit's provenance/evidence/class1/run.sh (alreloc with the resolve lines of clscmp.py); CtrlTSyms becomes TestBSyms. *)
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith NArith List Lia Bool.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import
+ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0k YK0s YK0n YP0n YK1d.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP08 YP03 YP04 YP0g YP01.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YN3v YI04.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG0v.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YG0s YG0q YG0t YCe5.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YB1v YE34 YF0l YF0m YF0x YE2y.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YN32.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0k YK0s YK0n YP0n YK1d.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP08 YP03 YP04 YP0g YP01.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YN3v YI04.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG0v.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YG0s YG0q YG0t YCe5.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YB1v YE34 YF0l YF0m YF0x YE2y.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YN32.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
+ Import ListNotations.
+ Local Unset Lia Cache. Local Unset Nia Cache.
+ Local Set Warnings "-abstract-large-number".
+@@ -58,7 +59,7 @@
+ Definition T48 : Z := Eval vm_compute in tfib_cell (AT 48).
+ Definition T56 : Z := Eval vm_compute in tfib_cell (AT 56).
+ Definition fs_ranges : list (Z * nat) :=
+-[(0x3d868, 100%nat); (0x47414, 31%nat); (0x99624, 9%nat); (0x5c974, 8%nat); (0x554c0, 6%nat); (0x9a6d8, 7%nat); (0x6a088, 140%nat); (0x3dd78, 28%nat)].
++[(0x3d868, 100%nat); (0x4769c, 31%nat); (0x9da60, 9%nat); (0x5cbfc, 8%nat); (0x55748, 6%nat); (0x9eb14, 7%nat); (0x6a310, 140%nat); (0x3e000, 28%nat)].
+ Definition tbl_fs : ctable := Eval vm_compute in build_ranges fs_ranges tbl_icpt.
+ Lemma tbl_fs_eq : tbl_fs = build_ranges fs_ranges tbl_icpt. Proof. vm_cast_no_check (eq_refl tbl_fs). Qed.
+ Lemma tbl_fs_ok : table_ok tfibsegs tbl_fs.
+@@ -87,9 +88,9 @@
+ Qed.
+ Definition fsA_rodata : list (Z * Z * list (Z * BinNums.N * Z)) := Eval vm_compute in
+ icpt_rodata ++
+-[cell_region 0xa15d0 16 [(0, 8%N); (8, 8%N)]; cell_region 0xa2690 8 [(0, 8%N)]; cell_region 0xa08e0 8 [(0, 8%N)];
+-cell_region (tfib_cell (ANum 0xa08e0) + 0x89) 1 [(0, 1%N)]; cell_region 0xa0940 8 [(0, 8%N)]; cell_region (tfib_cell (ANum 0xa0940)) 4 [(0, 4%N)];
+-cell_region 0xa15e0 8 [(0, 8%N)]; cell_region 0xa8f20 8 [(0, 1%N); (4, 4%N)]; (TP - 88, 8, [(0, 8%N, TSD)]);
++[cell_region 0xa49d0 16 [(0, 8%N); (8, 8%N)]; cell_region 0xa5a90 8 [(0, 8%N)]; cell_region 0xa3ce0 8 [(0, 8%N)];
++cell_region (tfib_cell (ANum 0xa3ce0) + 0x89) 1 [(0, 1%N)]; cell_region 0xa3d40 8 [(0, 8%N)]; cell_region (tfib_cell (ANum 0xa3d40)) 4 [(0, 4%N)];
++cell_region 0xa49e0 8 [(0, 8%N)]; cell_region 0xabee0 8 [(0, 1%N); (4, 4%N)]; (TP - 88, 8, [(0, 8%N, TSD)]);
+ cell_region (TP - 8) 8 [(0, 8%N)]; cell_region (tfib_cell (ANum (TP - 8)) + 8) 8 [(0, 8%N)]].
+ Lemma fsA_rodata_chk : forall ly, rodata_chk ly fsA_rodata = true.
+ Proof. intros ly. vm_compute. reflexivity. Qed.
+--- donor libreac/fuzz_ctrl 2fceb489f4aa lib/B/Rt/StackMalloc1.v
++++ written (scratch worktree, RECORD_A=TestASyms RECORD_B=TestBSyms) lib/B/Rt/StackMalloc1.v
+@@ -4,23 +4,24 @@
+ (* Modified by Theorem Labs, 2026-10: copied from <internal branch> proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc4.v, for stack_malloc_6 at 0x3dac0 of libreac/fuzz_disco's ASan build: class-6 frame constants (256 frames of 4096 bytes, 512 shadow bytes, hint at +48, flags at +0x8e00, frames at +0x609000), the probe loop's registers, the frame address in a0, the shadow-fill loop's two registers, image numbers and layout bounds from this image's definitions; the contract stated as libreac/fuzz_disco states it, in its unsized form only (astack_malloc_realizes); module names. *)
+ (* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_disco/lib/A/Rt/StackMalloc6.v (<internal branch> 9a4c15f69ab) to libreac/fuzz_ctrl's ASan+UBSan build (v1.9.0, <LIBREAC_V190>/asan-ubsan/fuzz_ctrl): module paths fuzz_disco -> fuzz_ctrl, lib.A.Rt -> lib.B.Rt and the core modules from lib/Reusable's image-B twins (AF0x -> YF0x, AE2y -> YE2y, ...); the core's record name CtrlTSyms for TfibSyms; the line `#[local] Ltac Zify.zify_pre_hook ::= try unfold YImgTop.IMG_TOP, YImgTop.IMG_LO in *.` is dropped: fuzz_disco added it for its core's TFIB_IMG_END := YImgTop.IMG_TOP (Definitions), while fuzz_ctrl's YImgTop has IMG_LO / IMG_TOP as parsing-only Notations and its TFIB_IMG_END is the literal 0x5fe000, so the line cannot be stated (Rocq: Cannot coerce Zpos to an evaluable reference) and has nothing to unfold. Every address is cited from the Tbl file. No lemma, statement or proof step changed. *)
+ (* Modified by Theorem Labs, 2026-10: ported from <worker>'s proofs/libreac/fuzz_ctrl/lib/B/Rt/StackMalloc6.v (<internal branch> 055c2ebca7f) to __asan_stack_malloc_1 at 0x3d868 of the same image, with its table StackMalloc1Tbl.v: the class-1 text of its image-A twin lib/A/Rt/StackMalloc1.v (<internal branch> 1cf78f2ca9d) with that file's module paths moved as in the class-6 pair (lib.A.Rt -> lib.B.Rt, AF0x -> YF0x, AE2y -> YE2y, the image-A core AB1v AE34 AF0l AF0m AF0x AE2y -> lib/Reusable's YB1v YE34 YF0l YF0m YF0x YE2y): class-1 frame constants (8192 frames of 128 bytes, 16 shadow bytes, hint at +8, the hint cell's index 1, flags at +0x5000, frames at +0x109000, frame alignment pos * 2 lines of 64 bytes), the probe loop's mask in a4 (class 6: a5) and flag pointer in a5 (class 6: a4), the frame address in s1 (class 6: a0) at the frame's first store, the shadow address in a1 (class 6: a0, with the fill loop's end in a2) at the shadow's first store; the theorems named ctrl_stack_malloc1*, tfib_stack_malloc1_at; the statement shape of disco_stack_malloc6 with class 1. Every address is cited from the Tbl file. *)
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
++(* Modified by Theorem Labs, 2026-10: relocated to libdiginet/fuzz_transport's asan-ubsan image by this unit's provenance/evidence/class1/run.sh (alreloc with the resolve lines of clscmp.py); CtrlTSyms becomes TestBSyms. *)
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith NArith List Lia Bool.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import
+ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0k YK0s YK0n YP0n YK1d.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP08 YP03 YP04 YP0g YP01.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YN3v YI04.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG0v.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YG0s YG0t YCe5.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YB1v YE34 YF0l YF0m YF0x YE2y.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YN32 YG0q.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.B.Rt Require Import StackMalloc1Tbl.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Rt Require Import StackMallocRawDef.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.B.Rt Require Import StackRawKept.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0k YK0s YK0n YP0n YK1d.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP08 YP03 YP04 YP0g YP01.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YN3v YI04.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG0v.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YG0s YG0t YCe5.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YB1v YE34 YF0l YF0m YF0x YE2y.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YN32 YG0q.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B.Rt Require Import StackMalloc1Tbl.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Rt Require Import StackMallocRawDef.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B.Rt Require Import StackRawKept.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
+ Import ListNotations.
+ Local Unset Lia Cache. Local Unset Nia Cache.
+ Ltac ceil := try (let H := fresh "CR" in let H2 := fresh "CR" in pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as H; pose proof H as H2; unfold YG0f.ASAN_CEIL in H2).
+@@ -32,7 +33,7 @@
+ Section f.
+ Variable B : asyms.
+ Hypothesis LAWS : AR_laws tfibsegs B.
+-Hypothesis TB : CtrlTSyms B.
++Hypothesis TB : TestBSyms B.
+ Theorem tfib_stack_malloc1_at : forall ly S (W : world tfibsegs) regs mem md pos S',
+ ecall_pre tfibsegs B ly S W regs mem md ->
+ count_cid CID (frames S) < fs_frames CID ->
+@@ -521,18 +522,18 @@
+ End f.
+ End d.
+ Section h. Context {rc : YM05.RunCeil}.
+-Theorem ctrl_stack_malloc1_hid_plain : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
++Theorem ctrl_stack_malloc1_hid_plain : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> TestBSyms B ->
+ astack_malloc_realizes_hid_plain (fx := fq) tfibsegs B 1.
+ Proof.
+ intros fq B LAWS TB ly S W regs mem md pos S' HPRE Hcnt Hpath. rewrite (ts_code B TB).
+ exact (tfib_stack_malloc1_at (fx := fq) B LAWS TB ly S W regs mem md pos S' HPRE Hcnt Hpath).
+ Qed.
+-Theorem ctrl_stack_malloc1_raw : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
++Theorem ctrl_stack_malloc1_raw : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> TestBSyms B ->
+ astack_malloc_realizes_raw (fx := fq) tfibsegs B 1.
+ Proof.
+ intros fq B LAWS TB. exact (astack_malloc_realizes_hid_plain_raw (fx := fq) tfibsegs B 1 (ctrl_stack_malloc1_hid_plain fq B LAWS TB)).
+ Qed.
+-Theorem ctrl_stack_malloc1 : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> CtrlTSyms B ->
++Theorem ctrl_stack_malloc1 : forall (fq : YK11.FPState) B, AR_laws tfibsegs B -> TestBSyms B ->
+ astack_malloc_realizes (fx := fq) tfibsegs B 1.
+ Proof.
+ intros fq B LAWS TB. exact (astack_malloc_realizes_raw_view (fx := fq) tfibsegs B 1 (ctrl_stack_malloc1_raw fq B LAWS TB)).
+--- donor libreac/fuzz_ctrl 2fceb489f4aa lib/B/Rt/StackRawKept.v
++++ written (scratch worktree, RECORD_A=TestASyms RECORD_B=TestBSyms) lib/B/Rt/StackRawKept.v
+@@ -1,13 +1,14 @@
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
++(* Modified by Theorem Labs, 2026-10: relocated to libdiginet/fuzz_transport's asan-ubsan image by this unit's provenance/evidence/class1/run.sh (alreloc with the resolve lines of clscmp.py); CtrlTSyms becomes TestBSyms. *)
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith List Bool Lia.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import
+ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK11 YK0s YK0i YK15 YK0j YK18 YP09.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK04 YA0i YA0n.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import StackFreeDef StackFreeRaw.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Rt Require Import StackMallocRawDef.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK11 YK0s YK0i YK15 YK0j YK18 YP09.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK04 YA0i YA0n.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import StackFreeDef StackFreeRaw.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Rt Require Import StackMallocRawDef.
+ Import ListNotations.
+ Open Scope Z_scope.
+ Lemma raw_kept_gen : forall (H : word -> bool) (mem mem' : word -> option byte) (P : Z -> Prop),
+--- donor libreac/fuzz_ctrl 2fceb489f4aa lib/Rt/StackMallocRawDef.v
++++ written (scratch worktree, RECORD_A=TestASyms RECORD_B=TestBSyms) lib/Rt/StackMallocRawDef.v
+@@ -1,11 +1,12 @@
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
++(* Modified by Theorem Labs, 2026-10: copied from libreac/fuzz_ctrl for libdiginet/fuzz_transport by this unit's provenance/evidence/class1/run.sh (image-free: module paths only). *)
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith List Bool Lia.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import
+ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK11 YK0s YK0i YK15 YK0j YK18 YP09.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK04 YA0i YA0n.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK11 YK0s YK0i YK15 YK0j YK18 YP09.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK04 YA0i YA0n.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
+ Import ListNotations.
+ Open Scope Z_scope.
+ Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+--- donor libreac/fuzz_ctrl 2fceb489f4aa lib/Reusable/StackFreeDef.v
++++ written (scratch worktree, RECORD_A=TestASyms RECORD_B=TestBSyms) lib/Reusable/StackFreeDef.v
+@@ -3,14 +3,15 @@
+ (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+ (* Modified by Theorem Labs, 2026-10: only the contract of the stack-frame release entry (astack_free_realizes of proofs/cgif/cgif_rgb_fuzzer/lib/YG0e.v), restated over the asan-state definitions of the cgif_file_fuzzer proof as libreac/fuzz_grant holds them; module names. One change: the shadow span the entry marks released is sf_span cid n, not n / 8. For class cid <= 6 the span is the frame's whole shadow, fs_frame_bytes cid / 8 bytes, for any size argument n; for a higher class it is n / 8 bytes, as cgif_rgb_fuzzer states it. *)
+ (* Modified by Theorem Labs, 2026-10: taken by path into libreac/fuzz_ctrl from libreac/fuzz_grant (<internal branch> c3bfa00452c, the shared text of record); only the module prefix fuzz_grant -> fuzz_ctrl changed. *)
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
++(* Modified by Theorem Labs, 2026-10: copied from libreac/fuzz_ctrl for libdiginet/fuzz_transport by this unit's provenance/evidence/class1/run.sh (image-free: module paths only). *)
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith List Bool Lia.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import
+ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK11 YK0s YK0i YK15 YK0j YK18 YP09.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK04 YA0i YA0n.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK11 YK0s YK0i YK15 YK0j YK18 YP09.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK04 YA0i YA0n.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
+ Import ListNotations.
+ Open Scope Z_scope.
+ Definition sf_span (cid n : Z) : Z := if cid <=? 6 then fs_frame_bytes cid / 8 else n / 8.
+--- donor libreac/fuzz_ctrl 2fceb489f4aa lib/Reusable/StackFreeRaw.v
++++ written (scratch worktree, RECORD_A=TestASyms RECORD_B=TestBSyms) lib/Reusable/StackFreeRaw.v
+@@ -1,12 +1,13 @@
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
++(* Modified by Theorem Labs, 2026-10: copied from libreac/fuzz_ctrl for libdiginet/fuzz_transport by this unit's provenance/evidence/class1/run.sh (image-free: module paths only). *)
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith List Bool Lia.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import
+ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK11 YK0s YK0i YK15 YK0j YK18 YP09.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK04 YA0i YA0n.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05.
+-From OssFuzzTheorems.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import StackFreeDef.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK11 YK0s YK0i YK15 YK0j YK18 YP09.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK04 YA0i YA0n.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import StackFreeDef.
+ Import ListNotations.
+ Open Scope Z_scope.
+ Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.

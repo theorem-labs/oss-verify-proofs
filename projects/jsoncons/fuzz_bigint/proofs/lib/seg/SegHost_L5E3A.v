@@ -1,0 +1,771 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.jsoncons.fuzz_bigint.images Require Import Plain.
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import PropExec AxSymExec3 AxSymExec3B AxSymExec3Sound AsanPlanCore LibSym SegRun SegPlan SegPlanAuto SegPlanJoin Src0PlanKit Src0PlanKitIt.
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib.seg Require SegItab_S_079d1e.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+Module LibSegZ_e3a1.
+(* [comment removed for export] *)
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Abbreviation RSEGS := Plain.M.loaded_segments.
+Definition ITR : list (Z * nat) := SegItab_S_079d1e.ITR.
+Definition IT : itab := SegItab_S_079d1e.IT.
+Definition ENDS : list Z := [309576].
+Definition STOPS1 : list Z := [364196; 362788; 364652; 309572; 309252; 309576] ++ ENDS.
+Definition NX0 : nat := 56.
+Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
+Definition L : expr := EVar 4.
+Definition regs0 : list expr := [ELit 0; EVar 1; EVar 2; ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; EVar 8; EVar 9; ELit 16; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
+Definition kn0 : list kentry := [KRange (EVar 2) 1099511627776 140737488355328;
+   KAlign (EVar 2) 16;
+   KWr (SA (EVar 2) (-112)) (ELit 112);
+   KUnk (SA (EVar 2) (-112)) (ELit 112);
+   KRange (EVar 10) 4224 140737488355328;
+   KAlign (EVar 10) 16;
+   KWr (SA (EVar 10) (-128)) (ELit 144);
+   KUnk (SA (EVar 10) (-128)) (ELit 144);
+   KDisj (SA (EVar 2) (-112)) (ELit 112) (SA (EVar 10) (-128)) (ELit 144);
+   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (ELit 0) 65536) (ELit 528384);
+   KImg 65536 390664;
+   KImg 390704 390736;
+   KImg 390752 390760].
+Definition ss0 : sym_state := SS 136304 regs0 [] kn0 NX0.
+Definition F0 : list SGP.region := [(EVar 2, (-112), ELit 112)].
+Definition F0L : list SR.region := [(EVar 2, (-112), 112)].
+Definition BF : nat := 200000.
+(* [comment removed for export] *)
+Definition BR : list SGP.bfact := [].
+(* [comment removed for export] *)
+Definition XSTEP := SGP.xstep_none.
+Definition XSTEP2 := SGP.xstep2_none.
+Definition AUTO := SGA.auto RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF STOPS1 ENDS A0 F0.
+Definition LOADB := SGP.loadbyte IT BR.
+Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
+
+(* [comment removed for export] *)
+Definition ex1 : list SGA.aitem * (Z * sym_state) :=
+  (([SGA.AStep (SR.SBlock [364196; 362788; 364652; 309572; 309252; 309576; 309576])], (93, SS 309576 [ELit 0; ELit 259044; EAlu Instr.ALU_ADD (EVar 2) (ELit (-48)); ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; ELit 144; EVar 9; ELit 16; ELit 144; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31] [] [KWord {| a_base := EVar 2; a_off := -48 |} 8 (ELit 144); KWord {| a_base := EVar 2; a_off := -40 |} 8 (ELit 257240); KWord {| a_base := EVar 2; a_off := -24 |} 8 (EVar 9); KWord {| a_base := EVar 2; a_off := -16 |} 8 (EVar 8); KWord {| a_base := EVar 2; a_off := -8 |} 8 (ELit 136308); KRange (EVar 2) 1099511627776 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -112 |} (ELit 112); KUnk {| a_base := EVar 2; a_off := -112 |} (ELit 64); KUnk {| a_base := EVar 2; a_off := -32 |} (ELit 8); KRange (EVar 10) 4224 140737488355328; KAlign (EVar 10) 16; KWr {| a_base := EVar 10; a_off := -128 |} (ELit 144); KUnk {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 2; a_off := -112 |} (ELit 112) {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KImg 65536 390664; KImg 390704 390736; KImg 390752 390760] 56))).
+Definition s1 : sym_state := snd (snd ex1).
+
+Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
+Definition in_foot (b : expr) (k : Z) (w : Z) : bool :=
+  existsb (fun r : SR.region => let '(rb, rlo, rlen) := r in (expr_eqb rb b && Z.leb rlo k && Z.leb (k + w) (rlo + rlen))%bool) F0L.
+Definition in_kn0 (K : kentry) : bool := existsb (APC.kentry_eqb K) kn0.
+Definition SPV : nat := 2%nat.   (* [comment removed for export] *)
+Definition live (spoff : Z) (b : expr) (k : Z) : bool := (negb (expr_eqb b (EVar SPV)) || Z.leb spoff k)%bool.
+(* [comment removed for export] *)
+Definition cells_of (sF : sym_state) (spoff : Z) : list kentry :=
+  List.filter (fun K => match K with
+     | KWord (SA b k) w _ => live spoff b k && (in_foot b k (Z.of_nat w) || negb (in_kn0 K))
+     | KZero (SA b k) (ELit n) | KFill (SA b k) (ELit n) _ | KBlob (SA b k) (ELit n) _ => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KZero (SA b k) _ | KFill (SA b k) _ _ | KBlob (SA b k) _ _ => live spoff b k && (in_foot b k 1 || negb (in_kn0 K))
+     | KUnk (SA b k) (ELit n) => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KRange _ _ _ | KAlign _ _ => negb (in_kn0 K)      (* [comment removed for export] *)
+     | _ => false end)%bool (s_know sF).
+Definition spoff_of (sF : sym_state) : Z := match nth 2 (s_regs sF) (ELit 0) with EAlu _ (EVar v) (ELit k) => if Nat.eqb v SPV then k else 0 | _ => 0 end.
+
+(* [comment removed for export] *)
+Definition regs_out0 : list expr := Eval vm_compute in (s_regs s1).
+Definition exit_sp_off0 : Z := Eval vm_compute in (spoff_of s1).
+Definition cells0 : list kentry := Eval vm_compute in (cells_of s1 exit_sp_off0).
+Definition nfresh0 : nat := Eval vm_compute in (s_next s1 - NX0)%nat.
+Definition exit_pc0 : Z := Eval vm_compute in (s_pc s1).
+Definition ps0 : SR.post_spec := SR.PS 309576 (map (fun i => (i, nth i regs_out0 (ELit 0))) (seq 1 31)) F0L cells0.
+
+(* [comment removed for export] *)
+Definition SXALL : list sym_state := [].
+Definition mkps (st : sym_state) : SR.post_spec :=
+  SR.PS (s_pc st) (map (fun i => (i, nth i (s_regs st) (ELit 0))) (seq 1 31)) F0L (cells_of st (spoff_of st)).
+Definition PSS : list SR.post_spec := [ps0] ++ map mkps SXALL.
+Definition ps := ps0. Definition regs_out := regs_out0. Definition cells := cells0. Definition nfresh := nfresh0.
+
+Lemma cert : SGP.cert_ok RSEGS SegItab_S_079d1e.IT X_CPY X_SET X_LEN RO_LO RO_HI BF A0 NX0 BR XSTEP SGP.xstep2_none F0 PSS plan 136304 regs0 kn0 = true.
+Proof. vm_cast_no_check (@eq_refl bool true). Qed.
+
+(* [comment removed for export] *)
+Definition seg_sound_ax := src0_plan_sound_it SegItab_S_079d1e.IT SegItab_S_079d1e.IT_sound BF NX0 BR XSTEP F0 PSS plan 136304 regs0 kn0 cert (SGP.xstep_none_ok RSEGS NX0 BR F0).
+End LibSegZ_e3a1.
+
+Module LibSegZ_e3a2.
+(* [comment removed for export] *)
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Abbreviation RSEGS := Plain.M.loaded_segments.
+Definition ITR : list (Z * nat) := SegItab_S_079d1e.ITR.
+Definition IT : itab := SegItab_S_079d1e.IT.
+Definition ENDS : list Z := [136324].
+Definition STOPS1 : list Z := [364196; 362788; 364652; 309572; 309252; 309576] ++ ENDS.
+Definition NX0 : nat := 56.
+Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
+Definition L : expr := EVar 4.
+Definition regs0 : list expr := [ELit 0; EVar 1; EAlu Instr.ALU_ADD (EVar 2) (ELit (-48)); ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; EVar 8; EVar 9; EAlu Instr.ALU_ADD (EVar 10) (ELit (-128)); EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
+Definition kn0 : list kentry := [KRange (EVar 2) 1099511627776 140737488355328;
+   KAlign (EVar 2) 16;
+   KWr (SA (EVar 2) (-112)) (ELit 64);
+   KUnk (SA (EVar 2) (-112)) (ELit 64);
+   KRange (EVar 10) 4224 140737488355328;
+   KAlign (EVar 10) 16;
+   KWr (SA (EVar 10) (-128)) (ELit 144);
+   KUnk (SA (EVar 10) (-128)) (ELit 144);
+   KDisj (SA (EVar 2) (-112)) (ELit 112) (SA (EVar 10) (-128)) (ELit 144);
+   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (ELit 0) 65536) (ELit 528384);
+   KImg 65536 390664;
+   KImg 390704 390736;
+   KImg 390752 390760;
+   KWord (SA (EVar 2) (-40)) 8 (ELit 257240);
+   KWord (SA (EVar 2) (-48)) 8 (ELit 144);
+   KWord (SA (EVar 2) (-8)) 8 (ELit 136308);
+   KWord (SA (EVar 2) (-16)) 8 (EAlu Instr.ALU_ADD (EVar 2) (ELit (960)));
+   KWord (SA (EVar 2) (-24)) 8 (EVar 9)].
+Definition ss0 : sym_state := SS 259044 regs0 [] kn0 NX0.
+Definition F0 : list SGP.region := [(EVar 2, (-112), ELit 64); (EVar 10, (-128), ELit 144)].
+Definition F0L : list SR.region := [(EVar 2, (-112), 64); (EVar 10, (-128), 144)].
+Definition BF : nat := 200000.
+(* [comment removed for export] *)
+Definition BR : list SGP.bfact := [].
+(* [comment removed for export] *)
+Definition XSTEP := SGP.xstep_none.
+Definition XSTEP2 := SGP.xstep2_none.
+Definition AUTO := SGA.auto RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF STOPS1 ENDS A0 F0.
+Definition LOADB := SGP.loadbyte IT BR.
+Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
+
+(* [comment removed for export] *)
+Definition ex1 : list SGA.aitem * (Z * sym_state) :=
+  (([SGA.AStep (SR.SBlock [364196; 362788; 364652; 309572; 309252; 309576; 136324]); SGA.AStep SR.SFill; SGA.AStep (SR.SBlock [364196; 362788; 364652; 309572; 309252; 309576; 136324])], (93, SS 136324 [ELit 0; ELit 136308; EVar 2; ELit 67584; ELit 459832; EVar 57; EVar 58; EVar 59; EVar 10; EVar 9; EVar 2; ELit 74669; EVar 62; EVar 63; EVar 64; EVar 65; EVar 66; EVar 67; EVar 18; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 68; EVar 69; EVar 70; EVar 71] [] [KZero {| a_base := EVar 10; a_off := -128 |} (ELit 144); KRange (EVar 2) 1099511627776 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -112 |} (ELit 64); KUnk {| a_base := EVar 2; a_off := -112 |} (ELit 64); KRange (EVar 10) 4224 140737488355328; KAlign (EVar 10) 16; KWr {| a_base := EVar 10; a_off := -128 |} (ELit 144); KUnk {| a_base := EVar 10; a_off := 16 |} (ELit 0); KDisj {| a_base := EVar 2; a_off := -112 |} (ELit 112) {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KImg 65536 390664; KImg 390704 390736; KImg 390752 390760; KWord {| a_base := EVar 2; a_off := -40 |} 8 (ELit 257240); KWord {| a_base := EVar 2; a_off := -48 |} 8 (ELit 144); KWord {| a_base := EVar 2; a_off := -8 |} 8 (ELit 136308); KWord {| a_base := EVar 2; a_off := -16 |} 8 (EAlu Instr.ALU_ADD (EVar 2) (ELit 960)); KWord {| a_base := EVar 2; a_off := -24 |} 8 (EVar 9)] 72))).
+Definition s1 : sym_state := snd (snd ex1).
+
+Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
+Definition in_foot (b : expr) (k : Z) (w : Z) : bool :=
+  existsb (fun r : SR.region => let '(rb, rlo, rlen) := r in (expr_eqb rb b && Z.leb rlo k && Z.leb (k + w) (rlo + rlen))%bool) F0L.
+Definition in_kn0 (K : kentry) : bool := existsb (APC.kentry_eqb K) kn0.
+Definition SPV : nat := 2%nat.   (* [comment removed for export] *)
+Definition live (spoff : Z) (b : expr) (k : Z) : bool := (negb (expr_eqb b (EVar SPV)) || Z.leb spoff k)%bool.
+(* [comment removed for export] *)
+Definition cells_of (sF : sym_state) (spoff : Z) : list kentry :=
+  List.filter (fun K => match K with
+     | KWord (SA b k) w _ => live spoff b k && (in_foot b k (Z.of_nat w) || negb (in_kn0 K))
+     | KZero (SA b k) (ELit n) | KFill (SA b k) (ELit n) _ | KBlob (SA b k) (ELit n) _ => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KZero (SA b k) _ | KFill (SA b k) _ _ | KBlob (SA b k) _ _ => live spoff b k && (in_foot b k 1 || negb (in_kn0 K))
+     | KUnk (SA b k) (ELit n) => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KRange _ _ _ | KAlign _ _ => negb (in_kn0 K)      (* [comment removed for export] *)
+     | _ => false end)%bool (s_know sF).
+Definition spoff_of (sF : sym_state) : Z := match nth 2 (s_regs sF) (ELit 0) with EAlu _ (EVar v) (ELit k) => if Nat.eqb v SPV then k else 0 | _ => 0 end.
+
+(* [comment removed for export] *)
+Definition regs_out0 : list expr := Eval vm_compute in (s_regs s1).
+Definition exit_sp_off0 : Z := Eval vm_compute in (spoff_of s1).
+Definition cells0 : list kentry := Eval vm_compute in (cells_of s1 exit_sp_off0).
+Definition nfresh0 : nat := Eval vm_compute in (s_next s1 - NX0)%nat.
+Definition exit_pc0 : Z := Eval vm_compute in (s_pc s1).
+Definition ps0 : SR.post_spec := SR.PS 136324 (map (fun i => (i, nth i regs_out0 (ELit 0))) (seq 1 31)) F0L cells0.
+
+(* [comment removed for export] *)
+Definition SXALL : list sym_state := [].
+Definition mkps (st : sym_state) : SR.post_spec :=
+  SR.PS (s_pc st) (map (fun i => (i, nth i (s_regs st) (ELit 0))) (seq 1 31)) F0L (cells_of st (spoff_of st)).
+Definition PSS : list SR.post_spec := [ps0] ++ map mkps SXALL.
+Definition ps := ps0. Definition regs_out := regs_out0. Definition cells := cells0. Definition nfresh := nfresh0.
+
+Lemma cert : SGP.cert_ok RSEGS SegItab_S_079d1e.IT X_CPY X_SET X_LEN RO_LO RO_HI BF A0 NX0 BR XSTEP SGP.xstep2_none F0 PSS plan 259044 regs0 kn0 = true.
+Proof. vm_cast_no_check (@eq_refl bool true). Qed.
+
+(* [comment removed for export] *)
+Definition seg_sound_ax := src0_plan_sound_it SegItab_S_079d1e.IT SegItab_S_079d1e.IT_sound BF NX0 BR XSTEP F0 PSS plan 259044 regs0 kn0 cert (SGP.xstep_none_ok RSEGS NX0 BR F0).
+End LibSegZ_e3a2.
+
+Module LibSegZ_e3c1.
+(* [comment removed for export] *)
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Abbreviation RSEGS := Plain.M.loaded_segments.
+Definition ITR : list (Z * nat) := SegItab_S_079d1e.ITR.
+Definition IT : itab := SegItab_S_079d1e.IT.
+Definition ENDS : list Z := [309572].
+Definition STOPS1 : list Z := [364196; 362788; 364652; 309572; 309252; 309576] ++ ENDS.
+Definition NX0 : nat := 56.
+Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
+Definition L : expr := EVar 4.
+Definition regs0 : list expr := [ELit 0; EVar 1; EAlu Instr.ALU_ADD (EVar 2) (ELit (-16)); ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; EVar 8; EVar 9; EVar 10; EVar 2; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
+Definition kn0 : list kentry := [KRange (EVar 2) 1099511627776 140737488355328;
+   KAlign (EVar 2) 16;
+   KWr (SA (EVar 2) (-144)) (ELit 128);
+   KUnk (SA (EVar 2) (-144)) (ELit 128);
+   KRange (EVar 10) 4224 140737488355328;
+   KAlign (EVar 10) 16;
+   KWr (SA (EVar 10) (-128)) (ELit 144);
+   KUnk (SA (EVar 10) (-128)) (ELit 144);
+   KRange (EVar 38) 4096 140737488355328;
+   KAlign (EVar 38) 16;
+   KWr (SA (EVar 38) 0) (ELit 48);
+   KUnk (SA (EVar 38) 0) (ELit 48);
+   KDisj (SA (EVar 2) (-144)) (ELit 176) (SA (EVar 10) (-128)) (ELit 144);
+   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (EVar 38) 0) (ELit 48);
+   KDisj (SA (EVar 2) (-144)) (ELit 176) (SA (EVar 38) 0) (ELit 48);
+   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (ELit 0) 65536) (ELit 528384);
+   KDisj (SA (EVar 38) 0) (ELit 48) (SA (ELit 0) 65536) (ELit 528384);
+   KImg 65536 390664;
+   KImg 390704 390736;
+   KImg 390752 390760;
+   KWord (SA (EVar 2) (0)) 1 (ELit 49);
+   KWord (SA (EVar 2) (16)) 8 (EVar 38);
+   KWord (SA (EVar 38) (0)) 1 (ELit 97);
+   KWord (SA (EVar 38) (1)) 1 (ELit 115);
+   KWord (SA (EVar 38) (2)) 1 (ELit 115);
+   KWord (SA (EVar 38) (3)) 1 (ELit 101);
+   KWord (SA (EVar 38) (4)) 1 (ELit 114);
+   KWord (SA (EVar 38) (5)) 1 (ELit 116);
+   KWord (SA (EVar 38) (6)) 1 (ELit 105);
+   KWord (SA (EVar 38) (7)) 1 (ELit 111);
+   KWord (SA (EVar 38) (8)) 1 (ELit 110);
+   KWord (SA (EVar 38) (9)) 1 (ELit 32);
+   KWord (SA (EVar 38) (10)) 1 (ELit 39);
+   KWord (SA (EVar 38) (11)) 1 (ELit 110);
+   KWord (SA (EVar 38) (12)) 1 (ELit 32);
+   KWord (SA (EVar 38) (13)) 1 (ELit 60);
+   KWord (SA (EVar 38) (14)) 1 (ELit 32);
+   KWord (SA (EVar 38) (15)) 1 (ELit 109);
+   KWord (SA (EVar 38) (16)) 1 (ELit 97);
+   KWord (SA (EVar 38) (17)) 1 (ELit 120);
+   KWord (SA (EVar 38) (18)) 1 (ELit 95);
+   KWord (SA (EVar 38) (19)) 1 (ELit 115);
+   KWord (SA (EVar 38) (20)) 1 (ELit 105);
+   KWord (SA (EVar 38) (21)) 1 (ELit 122);
+   KWord (SA (EVar 38) (22)) 1 (ELit 101);
+   KWord (SA (EVar 38) (23)) 1 (ELit 39);
+   KWord (SA (EVar 38) (24)) 1 (ELit 32);
+   KWord (SA (EVar 38) (25)) 1 (ELit 102);
+   KWord (SA (EVar 38) (26)) 1 (ELit 97);
+   KWord (SA (EVar 38) (27)) 1 (ELit 105);
+   KWord (SA (EVar 38) (28)) 1 (ELit 108);
+   KWord (SA (EVar 38) (29)) 1 (ELit 101);
+   KWord (SA (EVar 38) (30)) 1 (ELit 100);
+   KWord (SA (EVar 38) (31)) 1 (ELit 32);
+   KWord (SA (EVar 38) (32)) 1 (ELit 97);
+   KWord (SA (EVar 38) (33)) 1 (ELit 116);
+   KWord (SA (EVar 38) (34)) 1 (ELit 32);
+   KWord (SA (EVar 38) (35)) 1 (ELit 32);
+   KWord (SA (EVar 38) (36)) 1 (ELit 60);
+   KWord (SA (EVar 38) (37)) 1 (ELit 62);
+   KWord (SA (EVar 38) (38)) 1 (ELit 32);
+   KWord (SA (EVar 38) (39)) 1 (ELit 58);
+   KWord (SA (EVar 38) (40)) 1 (ELit 48);
+   KWord (SA (EVar 38) (41)) 1 (ELit 0)].
+Definition ss0 : sym_state := SS 136108 regs0 [] kn0 NX0.
+Definition F0 : list SGP.region := [(EVar 2, (-144), ELit 128); (EVar 10, (0), ELit 8)].
+Definition F0L : list SR.region := [(EVar 2, (-144), 128); (EVar 10, (0), 8)].
+Definition BF : nat := 200000.
+(* [comment removed for export] *)
+Definition BR : list SGP.bfact := [].
+(* [comment removed for export] *)
+Definition XSTEP := SGP.xstep_none.
+Definition XSTEP2 := SGP.xstep2_none.
+Definition AUTO := SGA.auto RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF STOPS1 ENDS A0 F0.
+Definition LOADB := SGP.loadbyte IT BR.
+Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
+
+(* [comment removed for export] *)
+Definition ex1 : list SGA.aitem * (Z * sym_state) :=
+  (([SGA.AStep (SR.SBlock [364196; 362788; 364652; 309572; 309252; 309576; 309572])], (93, SS 364652 [ELit 0; ELit 263448; EAlu Instr.ALU_ADD (EVar 2) (ELit (-64)); ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; EVar 10; EVar 38; EVar 38; EVar 2; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31] [] [KWord {| a_base := EVar 10; a_off := 0 |} 8 (ELit 385144); KWord {| a_base := EVar 2; a_off := -56 |} 8 (EVar 19); KWord {| a_base := EVar 2; a_off := -48 |} 8 (EVar 18); KWord {| a_base := EVar 2; a_off := -40 |} 8 (EVar 9); KWord {| a_base := EVar 2; a_off := -32 |} 8 (EVar 8); KWord {| a_base := EVar 2; a_off := -24 |} 8 (ELit 136112); KRange (EVar 2) 1099511627776 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -144 |} (ELit 128); KUnk {| a_base := EVar 2; a_off := -144 |} (ELit 88); KRange (EVar 10) 4224 140737488355328; KAlign (EVar 10) 16; KWr {| a_base := EVar 10; a_off := -128 |} (ELit 144); KUnk {| a_base := EVar 10; a_off := -128 |} (ELit 128); KUnk {| a_base := EVar 10; a_off := 8 |} (ELit 8); KRange (EVar 38) 4096 140737488355328; KAlign (EVar 38) 16; KWr {| a_base := EVar 38; a_off := 0 |} (ELit 48); KUnk {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 2; a_off := -144 |} (ELit 176) {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 2; a_off := -144 |} (ELit 176) {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KDisj {| a_base := EVar 38; a_off := 0 |} (ELit 48) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KImg 65536 390664; KImg 390704 390736; KImg 390752 390760; KWord {| a_base := EVar 2; a_off := 0 |} 1 (ELit 49); KWord {| a_base := EVar 2; a_off := 16 |} 8 (EVar 38); KWord {| a_base := EVar 38; a_off := 0 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 1 |} 1 (ELit 115); KWord {| a_base := EVar 38; a_off := 2 |} 1 (ELit 115); KWord {| a_base := EVar 38; a_off := 3 |} 1 (ELit 101); KWord {| a_base := EVar 38; a_off := 4 |} 1 (ELit 114); KWord {| a_base := EVar 38; a_off := 5 |} 1 (ELit 116); KWord {| a_base := EVar 38; a_off := 6 |} 1 (ELit 105); KWord {| a_base := EVar 38; a_off := 7 |} 1 (ELit 111); KWord {| a_base := EVar 38; a_off := 8 |} 1 (ELit 110); KWord {| a_base := EVar 38; a_off := 9 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 10 |} 1 (ELit 39); KWord {| a_base := EVar 38; a_off := 11 |} 1 (ELit 110); KWord {| a_base := EVar 38; a_off := 12 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 13 |} 1 (ELit 60); KWord {| a_base := EVar 38; a_off := 14 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 15 |} 1 (ELit 109); KWord {| a_base := EVar 38; a_off := 16 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 17 |} 1 (ELit 120); KWord {| a_base := EVar 38; a_off := 18 |} 1 (ELit 95); KWord {| a_base := EVar 38; a_off := 19 |} 1 (ELit 115); KWord {| a_base := EVar 38; a_off := 20 |} 1 (ELit 105); KWord {| a_base := EVar 38; a_off := 21 |} 1 (ELit 122); KWord {| a_base := EVar 38; a_off := 22 |} 1 (ELit 101); KWord {| a_base := EVar 38; a_off := 23 |} 1 (ELit 39); KWord {| a_base := EVar 38; a_off := 24 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 25 |} 1 (ELit 102); KWord {| a_base := EVar 38; a_off := 26 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 27 |} 1 (ELit 105); KWord {| a_base := EVar 38; a_off := 28 |} 1 (ELit 108); KWord {| a_base := EVar 38; a_off := 29 |} 1 (ELit 101); KWord {| a_base := EVar 38; a_off := 30 |} 1 (ELit 100); KWord {| a_base := EVar 38; a_off := 31 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 32 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 33 |} 1 (ELit 116); KWord {| a_base := EVar 38; a_off := 34 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 35 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 36 |} 1 (ELit 60); KWord {| a_base := EVar 38; a_off := 37 |} 1 (ELit 62); KWord {| a_base := EVar 38; a_off := 38 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 39 |} 1 (ELit 58); KWord {| a_base := EVar 38; a_off := 40 |} 1 (ELit 48); KWord {| a_base := EVar 38; a_off := 41 |} 1 (ELit 0)] 56))).
+Definition s1 : sym_state := snd (snd ex1).
+
+(* [comment removed for export] *)
+Definition s2 : sym_state :=
+  (SS 263448 [ELit 0; ELit 263448; EAlu Instr.ALU_ADD (EVar 2) (ELit (-64)); ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; EVar 10; EVar 38; ELit 41; EVar 56; EVar 57; EVar 58; EVar 59; EVar 60; EVar 61; EVar 17; EVar 18; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31] [] [KWord {| a_base := EVar 10; a_off := 0 |} 8 (ELit 385144); KWord {| a_base := EVar 2; a_off := -56 |} 8 (EVar 19); KWord {| a_base := EVar 2; a_off := -48 |} 8 (EVar 18); KWord {| a_base := EVar 2; a_off := -40 |} 8 (EVar 9); KWord {| a_base := EVar 2; a_off := -32 |} 8 (EVar 8); KWord {| a_base := EVar 2; a_off := -24 |} 8 (ELit 136112); KRange (EVar 2) 1099511627776 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -144 |} (ELit 128); KUnk {| a_base := EVar 2; a_off := -144 |} (ELit 88); KRange (EVar 10) 4224 140737488355328; KAlign (EVar 10) 16; KWr {| a_base := EVar 10; a_off := -128 |} (ELit 144); KUnk {| a_base := EVar 10; a_off := -128 |} (ELit 128); KUnk {| a_base := EVar 10; a_off := 8 |} (ELit 8); KRange (EVar 38) 4096 140737488355328; KAlign (EVar 38) 16; KWr {| a_base := EVar 38; a_off := 0 |} (ELit 48); KUnk {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 2; a_off := -144 |} (ELit 176) {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 2; a_off := -144 |} (ELit 176) {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KDisj {| a_base := EVar 38; a_off := 0 |} (ELit 48) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KImg 65536 390664; KImg 390704 390736; KImg 390752 390760; KWord {| a_base := EVar 2; a_off := 0 |} 1 (ELit 49); KWord {| a_base := EVar 2; a_off := 16 |} 8 (EVar 38); KWord {| a_base := EVar 38; a_off := 0 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 1 |} 1 (ELit 115); KWord {| a_base := EVar 38; a_off := 2 |} 1 (ELit 115); KWord {| a_base := EVar 38; a_off := 3 |} 1 (ELit 101); KWord {| a_base := EVar 38; a_off := 4 |} 1 (ELit 114); KWord {| a_base := EVar 38; a_off := 5 |} 1 (ELit 116); KWord {| a_base := EVar 38; a_off := 6 |} 1 (ELit 105); KWord {| a_base := EVar 38; a_off := 7 |} 1 (ELit 111); KWord {| a_base := EVar 38; a_off := 8 |} 1 (ELit 110); KWord {| a_base := EVar 38; a_off := 9 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 10 |} 1 (ELit 39); KWord {| a_base := EVar 38; a_off := 11 |} 1 (ELit 110); KWord {| a_base := EVar 38; a_off := 12 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 13 |} 1 (ELit 60); KWord {| a_base := EVar 38; a_off := 14 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 15 |} 1 (ELit 109); KWord {| a_base := EVar 38; a_off := 16 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 17 |} 1 (ELit 120); KWord {| a_base := EVar 38; a_off := 18 |} 1 (ELit 95); KWord {| a_base := EVar 38; a_off := 19 |} 1 (ELit 115); KWord {| a_base := EVar 38; a_off := 20 |} 1 (ELit 105); KWord {| a_base := EVar 38; a_off := 21 |} 1 (ELit 122); KWord {| a_base := EVar 38; a_off := 22 |} 1 (ELit 101); KWord {| a_base := EVar 38; a_off := 23 |} 1 (ELit 39); KWord {| a_base := EVar 38; a_off := 24 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 25 |} 1 (ELit 102); KWord {| a_base := EVar 38; a_off := 26 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 27 |} 1 (ELit 105); KWord {| a_base := EVar 38; a_off := 28 |} 1 (ELit 108); KWord {| a_base := EVar 38; a_off := 29 |} 1 (ELit 101); KWord {| a_base := EVar 38; a_off := 30 |} 1 (ELit 100); KWord {| a_base := EVar 38; a_off := 31 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 32 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 33 |} 1 (ELit 116); KWord {| a_base := EVar 38; a_off := 34 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 35 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 36 |} 1 (ELit 60); KWord {| a_base := EVar 38; a_off := 37 |} 1 (ELit 62); KWord {| a_base := EVar 38; a_off := 38 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 39 |} 1 (ELit 58); KWord {| a_base := EVar 38; a_off := 40 |} 1 (ELit 48); KWord {| a_base := EVar 38; a_off := 41 |} 1 (ELit 0)] 62).
+
+(* [comment removed for export] *)
+Definition ex3 : list SGA.aitem * (Z * sym_state) :=
+  (([SGA.AStep (SR.SBlock [364196; 362788; 364652; 309572; 309252; 309576; 309572])], (93, SS 309572 [ELit 0; ELit 368844; EAlu Instr.ALU_ADD (EVar 2) (ELit (-80)); ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; ELit 66; EVar 38; ELit 66; EVar 56; EVar 57; EVar 58; EVar 59; EVar 60; EVar 61; EVar 17; ELit 41; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31] [] [KWord {| a_base := EVar 2; a_off := -80 |} 8 (EVar 10); KWord {| a_base := EVar 2; a_off := -72 |} 8 (ELit 263460); KWord {| a_base := EVar 10; a_off := 0 |} 8 (ELit 385144); KWord {| a_base := EVar 2; a_off := -56 |} 8 (EVar 19); KWord {| a_base := EVar 2; a_off := -48 |} 8 (EVar 18); KWord {| a_base := EVar 2; a_off := -40 |} 8 (EVar 9); KWord {| a_base := EVar 2; a_off := -32 |} 8 (EVar 8); KWord {| a_base := EVar 2; a_off := -24 |} 8 (ELit 136112); KRange (EVar 2) 1099511627776 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -144 |} (ELit 128); KUnk {| a_base := EVar 2; a_off := -144 |} (ELit 64); KUnk {| a_base := EVar 2; a_off := -64 |} (ELit 8); KRange (EVar 10) 4224 140737488355328; KAlign (EVar 10) 16; KWr {| a_base := EVar 10; a_off := -128 |} (ELit 144); KUnk {| a_base := EVar 10; a_off := -128 |} (ELit 128); KUnk {| a_base := EVar 10; a_off := 8 |} (ELit 8); KRange (EVar 38) 4096 140737488355328; KAlign (EVar 38) 16; KWr {| a_base := EVar 38; a_off := 0 |} (ELit 48); KUnk {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 2; a_off := -144 |} (ELit 176) {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 2; a_off := -144 |} (ELit 176) {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KDisj {| a_base := EVar 38; a_off := 0 |} (ELit 48) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KImg 65536 390664; KImg 390704 390736; KImg 390752 390760; KWord {| a_base := EVar 2; a_off := 0 |} 1 (ELit 49); KWord {| a_base := EVar 2; a_off := 16 |} 8 (EVar 38); KWord {| a_base := EVar 38; a_off := 0 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 1 |} 1 (ELit 115); KWord {| a_base := EVar 38; a_off := 2 |} 1 (ELit 115); KWord {| a_base := EVar 38; a_off := 3 |} 1 (ELit 101); KWord {| a_base := EVar 38; a_off := 4 |} 1 (ELit 114); KWord {| a_base := EVar 38; a_off := 5 |} 1 (ELit 116); KWord {| a_base := EVar 38; a_off := 6 |} 1 (ELit 105); KWord {| a_base := EVar 38; a_off := 7 |} 1 (ELit 111); KWord {| a_base := EVar 38; a_off := 8 |} 1 (ELit 110); KWord {| a_base := EVar 38; a_off := 9 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 10 |} 1 (ELit 39); KWord {| a_base := EVar 38; a_off := 11 |} 1 (ELit 110); KWord {| a_base := EVar 38; a_off := 12 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 13 |} 1 (ELit 60); KWord {| a_base := EVar 38; a_off := 14 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 15 |} 1 (ELit 109); KWord {| a_base := EVar 38; a_off := 16 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 17 |} 1 (ELit 120); KWord {| a_base := EVar 38; a_off := 18 |} 1 (ELit 95); KWord {| a_base := EVar 38; a_off := 19 |} 1 (ELit 115); KWord {| a_base := EVar 38; a_off := 20 |} 1 (ELit 105); KWord {| a_base := EVar 38; a_off := 21 |} 1 (ELit 122); KWord {| a_base := EVar 38; a_off := 22 |} 1 (ELit 101); KWord {| a_base := EVar 38; a_off := 23 |} 1 (ELit 39); KWord {| a_base := EVar 38; a_off := 24 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 25 |} 1 (ELit 102); KWord {| a_base := EVar 38; a_off := 26 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 27 |} 1 (ELit 105); KWord {| a_base := EVar 38; a_off := 28 |} 1 (ELit 108); KWord {| a_base := EVar 38; a_off := 29 |} 1 (ELit 101); KWord {| a_base := EVar 38; a_off := 30 |} 1 (ELit 100); KWord {| a_base := EVar 38; a_off := 31 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 32 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 33 |} 1 (ELit 116); KWord {| a_base := EVar 38; a_off := 34 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 35 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 36 |} 1 (ELit 60); KWord {| a_base := EVar 38; a_off := 37 |} 1 (ELit 62); KWord {| a_base := EVar 38; a_off := 38 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 39 |} 1 (ELit 58); KWord {| a_base := EVar 38; a_off := 40 |} 1 (ELit 48); KWord {| a_base := EVar 38; a_off := 41 |} 1 (ELit 0)] 62))).
+Definition s3 : sym_state := snd (snd ex3).
+
+Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PStep (SR.SStrlen (41)) (SGA.mkplan (fst ex3) (SGP.PEnd 0))).
+Definition in_foot (b : expr) (k : Z) (w : Z) : bool :=
+  existsb (fun r : SR.region => let '(rb, rlo, rlen) := r in (expr_eqb rb b && Z.leb rlo k && Z.leb (k + w) (rlo + rlen))%bool) F0L.
+Definition in_kn0 (K : kentry) : bool := existsb (APC.kentry_eqb K) kn0.
+Definition SPV : nat := 2%nat.   (* [comment removed for export] *)
+Definition live (spoff : Z) (b : expr) (k : Z) : bool := (negb (expr_eqb b (EVar SPV)) || Z.leb spoff k)%bool.
+(* [comment removed for export] *)
+Definition cells_of (sF : sym_state) (spoff : Z) : list kentry :=
+  List.filter (fun K => match K with
+     | KWord (SA b k) w _ => live spoff b k && (in_foot b k (Z.of_nat w) || negb (in_kn0 K))
+     | KZero (SA b k) (ELit n) | KFill (SA b k) (ELit n) _ | KBlob (SA b k) (ELit n) _ => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KZero (SA b k) _ | KFill (SA b k) _ _ | KBlob (SA b k) _ _ => live spoff b k && (in_foot b k 1 || negb (in_kn0 K))
+     | KUnk (SA b k) (ELit n) => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KRange _ _ _ | KAlign _ _ => negb (in_kn0 K)      (* [comment removed for export] *)
+     | _ => false end)%bool (s_know sF).
+Definition spoff_of (sF : sym_state) : Z := match nth 2 (s_regs sF) (ELit 0) with EAlu _ (EVar v) (ELit k) => if Nat.eqb v SPV then k else 0 | _ => 0 end.
+
+(* [comment removed for export] *)
+Definition regs_out0 : list expr := Eval vm_compute in (s_regs s3).
+Definition exit_sp_off0 : Z := Eval vm_compute in (spoff_of s3).
+Definition cells0 : list kentry := Eval vm_compute in (cells_of s3 exit_sp_off0).
+Definition nfresh0 : nat := Eval vm_compute in (s_next s3 - NX0)%nat.
+Definition exit_pc0 : Z := Eval vm_compute in (s_pc s3).
+Definition ps0 : SR.post_spec := SR.PS 309572 (map (fun i => (i, nth i regs_out0 (ELit 0))) (seq 1 31)) F0L cells0.
+
+(* [comment removed for export] *)
+Definition SXALL : list sym_state := [].
+Definition mkps (st : sym_state) : SR.post_spec :=
+  SR.PS (s_pc st) (map (fun i => (i, nth i (s_regs st) (ELit 0))) (seq 1 31)) F0L (cells_of st (spoff_of st)).
+Definition PSS : list SR.post_spec := [ps0] ++ map mkps SXALL.
+Definition ps := ps0. Definition regs_out := regs_out0. Definition cells := cells0. Definition nfresh := nfresh0.
+
+Lemma cert : SGP.cert_ok RSEGS SegItab_S_079d1e.IT X_CPY X_SET X_LEN RO_LO RO_HI BF A0 NX0 BR XSTEP SGP.xstep2_none F0 PSS plan 136108 regs0 kn0 = true.
+Proof. vm_cast_no_check (@eq_refl bool true). Qed.
+
+(* [comment removed for export] *)
+Definition seg_sound_ax := src0_plan_sound_it SegItab_S_079d1e.IT SegItab_S_079d1e.IT_sound BF NX0 BR XSTEP F0 PSS plan 136108 regs0 kn0 cert (SGP.xstep_none_ok RSEGS NX0 BR F0).
+End LibSegZ_e3c1.
+
+Module LibSegZ_e3c2.
+(* [comment removed for export] *)
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Abbreviation RSEGS := Plain.M.loaded_segments.
+Definition ITR : list (Z * nat) := SegItab_S_079d1e.ITR.
+Definition IT : itab := SegItab_S_079d1e.IT.
+Definition ENDS : list Z := [136360].
+Definition STOPS1 : list Z := [364196; 362788; 364652; 309572; 309252; 309576] ++ ENDS.
+Definition NX0 : nat := 56.
+Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
+Definition L : expr := EVar 4.
+Definition regs0 : list expr := [ELit 0; EVar 1; EAlu Instr.ALU_ADD (EVar 2) (ELit (-80)); ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; EVar 8; EVar 38; EVar 37; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; ELit 41; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
+Definition kn0 : list kentry := [KRange (EVar 2) 1099511627776 140737488355328;
+   KAlign (EVar 2) 16;
+   KWr (SA (EVar 2) (-144)) (ELit 64);
+   KUnk (SA (EVar 2) (-144)) (ELit 64);
+   KRange (EVar 10) 4224 140737488355328;
+   KAlign (EVar 10) 16;
+   KWr (SA (EVar 10) (-128)) (ELit 144);
+   KUnk (SA (EVar 10) (-128)) (ELit 144);
+   KRange (EVar 37) 4096 140737488355328;
+   KAlign (EVar 37) 16;
+   KWr (SA (EVar 37) 0) (ELit 66);
+   KUnk (SA (EVar 37) 0) (ELit 66);
+   KRange (EVar 38) 4096 140737488355328;
+   KAlign (EVar 38) 16;
+   KWr (SA (EVar 38) 0) (ELit 48);
+   KUnk (SA (EVar 38) 0) (ELit 48);
+   KDisj (SA (EVar 2) (-144)) (ELit 144) (SA (EVar 10) (-128)) (ELit 144);
+   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (EVar 37) 0) (ELit 66);
+   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (EVar 38) 0) (ELit 48);
+   KDisj (SA (EVar 2) (-144)) (ELit 144) (SA (EVar 37) 0) (ELit 66);
+   KDisj (SA (EVar 37) 0) (ELit 66) (SA (EVar 38) 0) (ELit 48);
+   KDisj (SA (EVar 2) (-144)) (ELit 144) (SA (EVar 38) 0) (ELit 48);
+   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (ELit 0) 65536) (ELit 528384);
+   KDisj (SA (EVar 37) 0) (ELit 66) (SA (ELit 0) 65536) (ELit 528384);
+   KDisj (SA (EVar 38) 0) (ELit 48) (SA (ELit 0) 65536) (ELit 528384);
+   KImg 65536 390664;
+   KImg 390704 390736;
+   KImg 390752 390760;
+   KWord (SA (EVar 2) (-72)) 8 (ELit 263460);
+   KWord (SA (EVar 2) (-80)) 8 (EVar 10);
+   KWord (SA (EVar 38) (0)) 1 (ELit 97);
+   KWord (SA (EVar 38) (1)) 1 (ELit 115);
+   KWord (SA (EVar 38) (2)) 1 (ELit 115);
+   KWord (SA (EVar 38) (3)) 1 (ELit 101);
+   KWord (SA (EVar 38) (4)) 1 (ELit 114);
+   KWord (SA (EVar 38) (5)) 1 (ELit 116);
+   KWord (SA (EVar 38) (6)) 1 (ELit 105);
+   KWord (SA (EVar 38) (7)) 1 (ELit 111);
+   KWord (SA (EVar 38) (8)) 1 (ELit 110);
+   KWord (SA (EVar 38) (9)) 1 (ELit 32);
+   KWord (SA (EVar 38) (10)) 1 (ELit 39);
+   KWord (SA (EVar 38) (11)) 1 (ELit 110);
+   KWord (SA (EVar 38) (12)) 1 (ELit 32);
+   KWord (SA (EVar 38) (13)) 1 (ELit 60);
+   KWord (SA (EVar 38) (14)) 1 (ELit 32);
+   KWord (SA (EVar 38) (15)) 1 (ELit 109);
+   KWord (SA (EVar 38) (16)) 1 (ELit 97);
+   KWord (SA (EVar 38) (17)) 1 (ELit 120);
+   KWord (SA (EVar 38) (18)) 1 (ELit 95);
+   KWord (SA (EVar 38) (19)) 1 (ELit 115);
+   KWord (SA (EVar 38) (20)) 1 (ELit 105);
+   KWord (SA (EVar 38) (21)) 1 (ELit 122);
+   KWord (SA (EVar 38) (22)) 1 (ELit 101);
+   KWord (SA (EVar 38) (23)) 1 (ELit 39);
+   KWord (SA (EVar 38) (24)) 1 (ELit 32);
+   KWord (SA (EVar 38) (25)) 1 (ELit 102);
+   KWord (SA (EVar 38) (26)) 1 (ELit 97);
+   KWord (SA (EVar 38) (27)) 1 (ELit 105);
+   KWord (SA (EVar 38) (28)) 1 (ELit 108);
+   KWord (SA (EVar 38) (29)) 1 (ELit 101);
+   KWord (SA (EVar 38) (30)) 1 (ELit 100);
+   KWord (SA (EVar 38) (31)) 1 (ELit 32);
+   KWord (SA (EVar 38) (32)) 1 (ELit 97);
+   KWord (SA (EVar 38) (33)) 1 (ELit 116);
+   KWord (SA (EVar 38) (34)) 1 (ELit 32);
+   KWord (SA (EVar 38) (35)) 1 (ELit 32);
+   KWord (SA (EVar 38) (36)) 1 (ELit 60);
+   KWord (SA (EVar 38) (37)) 1 (ELit 62);
+   KWord (SA (EVar 38) (38)) 1 (ELit 32);
+   KWord (SA (EVar 38) (39)) 1 (ELit 58);
+   KWord (SA (EVar 38) (40)) 1 (ELit 48);
+   KWord (SA (EVar 38) (41)) 1 (ELit 0);
+   KWord (SA (EVar 2) (-24)) 8 (ELit 136112);
+   KWord (SA (EVar 2) (-32)) 8 (EVar 10);
+   KWord (SA (EVar 2) (-40)) 8 (EVar 40);
+   KWord (SA (EVar 2) (-48)) 8 (EVar 41);
+   KWord (SA (EVar 2) (-56)) 8 (EVar 42);
+   KWord (SA (EVar 2) (-8)) 8 (ELit 136340);
+   KWord (SA (EVar 2) (-16)) 8 (EVar 10)].
+Definition ss0 : sym_state := SS 368844 regs0 [] kn0 NX0.
+Definition F0 : list SGP.region := [(EVar 2, (-144), ELit 64); (EVar 10, (0), ELit 16); (EVar 37, (0), ELit 66)].
+Definition F0L : list SR.region := [(EVar 2, (-144), 64); (EVar 10, (0), 16); (EVar 37, (0), 66)].
+Definition BF : nat := 200000.
+(* [comment removed for export] *)
+Definition BR : list SGP.bfact := [].
+(* [comment removed for export] *)
+Definition XSTEP := SGP.xstep_none.
+Definition XSTEP2 := SGP.xstep2_none.
+Definition AUTO := SGA.auto RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF STOPS1 ENDS A0 F0.
+Definition LOADB := SGP.loadbyte IT BR.
+Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
+
+(* [comment removed for export] *)
+Definition ex1 : list SGA.aitem * (Z * sym_state) :=
+  (([SGA.AStep (SR.SBlock [364196; 362788; 364652; 309572; 309252; 309576; 136360]); SGA.AStep SR.SCopy; SGA.AStep (SR.SBlock [364196; 362788; 364652; 309572; 309252; 309576; 136360])], (93, SS 136360 [ELit 0; ELit 136340; EVar 2; ELit 67584; ELit 459832; EVar 57; EVar 58; EVar 59; EVar 10; EVar 40; EVar 10; ELit 373232; ELit 253816; EVar 63; EVar 64; EVar 65; EVar 66; EVar 67; EVar 41; EVar 42; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 68; EVar 69; EVar 70; EVar 71] [] [KWord {| a_base := EVar 10; a_off := 0 |} 8 (ELit 373272); KWord {| a_base := EVar 10; a_off := 8 |} 8 (EAlu Instr.ALU_ADD (EVar 37) (ELit 24)); KWord {| a_base := EVar 37; a_off := 24 |} 8 (ELit 8028075845441778529); KWord {| a_base := EVar 37; a_off := 32 |} 8 (ELit 7863351059373564014); KWord {| a_base := EVar 37; a_off := 40 |} 8 (ELit 2838809733452757089); KWord {| a_base := EVar 37; a_off := 48 |} 8 (ELit 2334102023183623712); KWord {| a_base := EVar 37; a_off := 56 |} 8 (ELit 4188416081412519009); KWord {| a_base := EVar 37; a_off := 64 |} 1 (ELit 48); KWord {| a_base := EVar 37; a_off := 65 |} 1 (ELit 0); KWord {| a_base := EVar 37; a_off := 16 |} 4 (ELit 0); KWord {| a_base := EVar 37; a_off := 8 |} 8 (ELit 41); KWord {| a_base := EVar 37; a_off := 0 |} 8 (ELit 41); KRange (EVar 2) 1099511627776 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -144 |} (ELit 64); KUnk {| a_base := EVar 2; a_off := -144 |} (ELit 64); KRange (EVar 10) 4224 140737488355328; KAlign (EVar 10) 16; KWr {| a_base := EVar 10; a_off := -128 |} (ELit 144); KUnk {| a_base := EVar 10; a_off := -128 |} (ELit 128); KRange (EVar 37) 4096 140737488355328; KAlign (EVar 37) 16; KWr {| a_base := EVar 37; a_off := 0 |} (ELit 66); KUnk {| a_base := EVar 37; a_off := 20 |} (ELit 4); KUnk {| a_base := EVar 37; a_off := 66 |} (ELit 0); KRange (EVar 38) 4096 140737488355328; KAlign (EVar 38) 16; KWr {| a_base := EVar 38; a_off := 0 |} (ELit 48); KUnk {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 2; a_off := -144 |} (ELit 144) {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := EVar 37; a_off := 0 |} (ELit 66); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 2; a_off := -144 |} (ELit 144) {| a_base := EVar 37; a_off := 0 |} (ELit 66); KDisj {| a_base := EVar 37; a_off := 0 |} (ELit 66) {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 2; a_off := -144 |} (ELit 144) {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KDisj {| a_base := EVar 37; a_off := 0 |} (ELit 66) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KDisj {| a_base := EVar 38; a_off := 0 |} (ELit 48) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KImg 65536 390664; KImg 390704 390736; KImg 390752 390760; KWord {| a_base := EVar 2; a_off := -72 |} 8 (ELit 263460); KWord {| a_base := EVar 2; a_off := -80 |} 8 (EVar 10); KWord {| a_base := EVar 38; a_off := 0 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 1 |} 1 (ELit 115); KWord {| a_base := EVar 38; a_off := 2 |} 1 (ELit 115); KWord {| a_base := EVar 38; a_off := 3 |} 1 (ELit 101); KWord {| a_base := EVar 38; a_off := 4 |} 1 (ELit 114); KWord {| a_base := EVar 38; a_off := 5 |} 1 (ELit 116); KWord {| a_base := EVar 38; a_off := 6 |} 1 (ELit 105); KWord {| a_base := EVar 38; a_off := 7 |} 1 (ELit 111); KWord {| a_base := EVar 38; a_off := 8 |} 1 (ELit 110); KWord {| a_base := EVar 38; a_off := 9 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 10 |} 1 (ELit 39); KWord {| a_base := EVar 38; a_off := 11 |} 1 (ELit 110); KWord {| a_base := EVar 38; a_off := 12 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 13 |} 1 (ELit 60); KWord {| a_base := EVar 38; a_off := 14 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 15 |} 1 (ELit 109); KWord {| a_base := EVar 38; a_off := 16 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 17 |} 1 (ELit 120); KWord {| a_base := EVar 38; a_off := 18 |} 1 (ELit 95); KWord {| a_base := EVar 38; a_off := 19 |} 1 (ELit 115); KWord {| a_base := EVar 38; a_off := 20 |} 1 (ELit 105); KWord {| a_base := EVar 38; a_off := 21 |} 1 (ELit 122); KWord {| a_base := EVar 38; a_off := 22 |} 1 (ELit 101); KWord {| a_base := EVar 38; a_off := 23 |} 1 (ELit 39); KWord {| a_base := EVar 38; a_off := 24 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 25 |} 1 (ELit 102); KWord {| a_base := EVar 38; a_off := 26 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 27 |} 1 (ELit 105); KWord {| a_base := EVar 38; a_off := 28 |} 1 (ELit 108); KWord {| a_base := EVar 38; a_off := 29 |} 1 (ELit 101); KWord {| a_base := EVar 38; a_off := 30 |} 1 (ELit 100); KWord {| a_base := EVar 38; a_off := 31 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 32 |} 1 (ELit 97); KWord {| a_base := EVar 38; a_off := 33 |} 1 (ELit 116); KWord {| a_base := EVar 38; a_off := 34 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 35 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 36 |} 1 (ELit 60); KWord {| a_base := EVar 38; a_off := 37 |} 1 (ELit 62); KWord {| a_base := EVar 38; a_off := 38 |} 1 (ELit 32); KWord {| a_base := EVar 38; a_off := 39 |} 1 (ELit 58); KWord {| a_base := EVar 38; a_off := 40 |} 1 (ELit 48); KWord {| a_base := EVar 38; a_off := 41 |} 1 (ELit 0); KWord {| a_base := EVar 2; a_off := -24 |} 8 (ELit 136112); KWord {| a_base := EVar 2; a_off := -32 |} 8 (EVar 10); KWord {| a_base := EVar 2; a_off := -40 |} 8 (EVar 40); KWord {| a_base := EVar 2; a_off := -48 |} 8 (EVar 41); KWord {| a_base := EVar 2; a_off := -56 |} 8 (EVar 42); KWord {| a_base := EVar 2; a_off := -8 |} 8 (ELit 136340); KWord {| a_base := EVar 2; a_off := -16 |} 8 (EVar 10)] 72))).
+Definition s1 : sym_state := snd (snd ex1).
+
+Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
+Definition in_foot (b : expr) (k : Z) (w : Z) : bool :=
+  existsb (fun r : SR.region => let '(rb, rlo, rlen) := r in (expr_eqb rb b && Z.leb rlo k && Z.leb (k + w) (rlo + rlen))%bool) F0L.
+Definition in_kn0 (K : kentry) : bool := existsb (APC.kentry_eqb K) kn0.
+Definition SPV : nat := 2%nat.   (* [comment removed for export] *)
+Definition live (spoff : Z) (b : expr) (k : Z) : bool := (negb (expr_eqb b (EVar SPV)) || Z.leb spoff k)%bool.
+(* [comment removed for export] *)
+Definition cells_of (sF : sym_state) (spoff : Z) : list kentry :=
+  List.filter (fun K => match K with
+     | KWord (SA b k) w _ => live spoff b k && (in_foot b k (Z.of_nat w) || negb (in_kn0 K))
+     | KZero (SA b k) (ELit n) | KFill (SA b k) (ELit n) _ | KBlob (SA b k) (ELit n) _ => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KZero (SA b k) _ | KFill (SA b k) _ _ | KBlob (SA b k) _ _ => live spoff b k && (in_foot b k 1 || negb (in_kn0 K))
+     | KUnk (SA b k) (ELit n) => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KRange _ _ _ | KAlign _ _ => negb (in_kn0 K)      (* [comment removed for export] *)
+     | _ => false end)%bool (s_know sF).
+Definition spoff_of (sF : sym_state) : Z := match nth 2 (s_regs sF) (ELit 0) with EAlu _ (EVar v) (ELit k) => if Nat.eqb v SPV then k else 0 | _ => 0 end.
+
+(* [comment removed for export] *)
+Definition regs_out0 : list expr := Eval vm_compute in (s_regs s1).
+Definition exit_sp_off0 : Z := Eval vm_compute in (spoff_of s1).
+Definition cells0 : list kentry := Eval vm_compute in (cells_of s1 exit_sp_off0).
+Definition nfresh0 : nat := Eval vm_compute in (s_next s1 - NX0)%nat.
+Definition exit_pc0 : Z := Eval vm_compute in (s_pc s1).
+Definition ps0 : SR.post_spec := SR.PS 136360 (map (fun i => (i, nth i regs_out0 (ELit 0))) (seq 1 31)) F0L cells0.
+
+(* [comment removed for export] *)
+Definition SXALL : list sym_state := [].
+Definition mkps (st : sym_state) : SR.post_spec :=
+  SR.PS (s_pc st) (map (fun i => (i, nth i (s_regs st) (ELit 0))) (seq 1 31)) F0L (cells_of st (spoff_of st)).
+Definition PSS : list SR.post_spec := [ps0] ++ map mkps SXALL.
+Definition ps := ps0. Definition regs_out := regs_out0. Definition cells := cells0. Definition nfresh := nfresh0.
+
+Lemma cert : SGP.cert_ok RSEGS SegItab_S_079d1e.IT X_CPY X_SET X_LEN RO_LO RO_HI BF A0 NX0 BR XSTEP SGP.xstep2_none F0 PSS plan 368844 regs0 kn0 = true.
+Proof. vm_cast_no_check (@eq_refl bool true). Qed.
+
+(* [comment removed for export] *)
+Definition seg_sound_ax := src0_plan_sound_it SegItab_S_079d1e.IT SegItab_S_079d1e.IT_sound BF NX0 BR XSTEP F0 PSS plan 368844 regs0 kn0 cert (SGP.xstep_none_ok RSEGS NX0 BR F0).
+End LibSegZ_e3c2.
+
+Module LibSegZ_e3s1.
+(* [comment removed for export] *)
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Abbreviation RSEGS := Plain.M.loaded_segments.
+Definition ITR : list (Z * nat) := SegItab_S_079d1e.ITR.
+Definition IT : itab := SegItab_S_079d1e.IT.
+Definition ENDS : list Z := [309572].
+Definition STOPS1 : list Z := [364196; 362788; 364652; 309572; 309252; 309576] ++ ENDS.
+Definition NX0 : nat := 56.
+Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
+Definition L : expr := EVar 4.
+Definition regs0 : list expr := [ELit 0; EVar 1; EVar 2; ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; EVar 8; EVar 9; EVar 2; ELit 74669; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
+Definition kn0 : list kentry := [KRange (EVar 2) 1099511627776 140737488355328;
+   KAlign (EVar 2) 16;
+   KWr (SA (EVar 2) (-128)) (ELit 128);
+   KUnk (SA (EVar 2) (-128)) (ELit 128);
+   KRange (EVar 10) 4224 140737488355328;
+   KAlign (EVar 10) 16;
+   KWr (SA (EVar 10) (-128)) (ELit 144);
+   KUnk (SA (EVar 10) (-128)) (ELit 144);
+   KDisj (SA (EVar 2) (-128)) (ELit 128) (SA (EVar 10) (-128)) (ELit 144);
+   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (ELit 0) 65536) (ELit 528384);
+   KImg 65536 390664;
+   KImg 390704 390736;
+   KImg 390752 390760].
+Definition ss0 : sym_state := SS 136324 regs0 [] kn0 NX0.
+Definition F0 : list SGP.region := [(EVar 2, (-128), ELit 128)].
+Definition F0L : list SR.region := [(EVar 2, (-128), 128)].
+Definition BF : nat := 200000.
+(* [comment removed for export] *)
+Definition BR : list SGP.bfact := [].
+(* [comment removed for export] *)
+Definition XSTEP := SGP.xstep_none.
+Definition XSTEP2 := SGP.xstep2_none.
+Definition AUTO := SGA.auto RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF STOPS1 ENDS A0 F0.
+Definition LOADB := SGP.loadbyte IT BR.
+Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
+
+(* [comment removed for export] *)
+Definition ex1 : list SGA.aitem * (Z * sym_state) :=
+  (([SGA.AStep (SR.SBlock [364196; 362788; 364652; 309572; 309252; 309576; 309572])], (93, SS 364652 [ELit 0; ELit 135944; EAlu Instr.ALU_ADD (EVar 2) (ELit (-48)); ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; ELit 74669; EVar 9; ELit 74669; ELit 74669; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 2; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31] [] [KWord {| a_base := EVar 2; a_off := -48 |} 8 (EVar 20); KWord {| a_base := EVar 2; a_off := -40 |} 8 (EVar 19); KWord {| a_base := EVar 2; a_off := -32 |} 8 (EVar 18); KWord {| a_base := EVar 2; a_off := -24 |} 8 (EVar 9); KWord {| a_base := EVar 2; a_off := -16 |} 8 (EVar 8); KWord {| a_base := EVar 2; a_off := -8 |} 8 (ELit 136328); KRange (EVar 2) 1099511627776 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -128 |} (ELit 128); KUnk {| a_base := EVar 2; a_off := -128 |} (ELit 80); KRange (EVar 10) 4224 140737488355328; KAlign (EVar 10) 16; KWr {| a_base := EVar 10; a_off := -128 |} (ELit 144); KUnk {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 2; a_off := -128 |} (ELit 128) {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KImg 65536 390664; KImg 390704 390736; KImg 390752 390760] 56))).
+Definition s1 : sym_state := snd (snd ex1).
+
+(* [comment removed for export] *)
+Definition s2 : sym_state :=
+  (SS 135944 [ELit 0; ELit 135944; EAlu Instr.ALU_ADD (EVar 2) (ELit (-48)); ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; ELit 74669; EVar 9; ELit 41; EVar 56; EVar 57; EVar 58; EVar 59; EVar 60; EVar 61; EVar 17; EVar 2; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31] [] [KWord {| a_base := EVar 2; a_off := -48 |} 8 (EVar 20); KWord {| a_base := EVar 2; a_off := -40 |} 8 (EVar 19); KWord {| a_base := EVar 2; a_off := -32 |} 8 (EVar 18); KWord {| a_base := EVar 2; a_off := -24 |} 8 (EVar 9); KWord {| a_base := EVar 2; a_off := -16 |} 8 (EVar 8); KWord {| a_base := EVar 2; a_off := -8 |} 8 (ELit 136328); KRange (EVar 2) 1099511627776 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -128 |} (ELit 128); KUnk {| a_base := EVar 2; a_off := -128 |} (ELit 80); KRange (EVar 10) 4224 140737488355328; KAlign (EVar 10) 16; KWr {| a_base := EVar 10; a_off := -128 |} (ELit 144); KUnk {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 2; a_off := -128 |} (ELit 128) {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KImg 65536 390664; KImg 390704 390736; KImg 390752 390760] 62).
+
+(* [comment removed for export] *)
+Definition ex3 : list SGA.aitem * (Z * sym_state) :=
+  (([SGA.AStep (SR.SBlock [364196; 362788; 364652; 309572; 309252; 309576; 309572])], (93, SS 309572 [ELit 0; ELit 368844; EAlu Instr.ALU_ADD (EVar 2) (ELit (-64)); ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; ELit 48; ELit 41; ELit 48; ELit 18446744073709551608; EVar 57; EVar 58; EVar 59; EVar 60; EVar 61; EVar 17; EVar 2; EVar 19; ELit 48; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31] [] [KWord {| a_base := EVar 2; a_off := -64 |} 8 (ELit 74669); KWord {| a_base := EVar 2; a_off := -56 |} 8 (ELit 136012); KWord {| a_base := EVar 2; a_off := -48 |} 8 (EVar 20); KWord {| a_base := EVar 2; a_off := -40 |} 8 (EVar 19); KWord {| a_base := EVar 2; a_off := -32 |} 8 (EVar 18); KWord {| a_base := EVar 2; a_off := -24 |} 8 (EVar 9); KWord {| a_base := EVar 2; a_off := -16 |} 8 (EVar 8); KWord {| a_base := EVar 2; a_off := -8 |} 8 (ELit 136328); KRange (EVar 2) 1099511627776 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -128 |} (ELit 128); KUnk {| a_base := EVar 2; a_off := -128 |} (ELit 64); KRange (EVar 10) 4224 140737488355328; KAlign (EVar 10) 16; KWr {| a_base := EVar 10; a_off := -128 |} (ELit 144); KUnk {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 2; a_off := -128 |} (ELit 128) {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KImg 65536 390664; KImg 390704 390736; KImg 390752 390760] 62))).
+Definition s3 : sym_state := snd (snd ex3).
+
+Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PStep (SR.SStrlen (41)) (SGA.mkplan (fst ex3) (SGP.PEnd 0))).
+Definition in_foot (b : expr) (k : Z) (w : Z) : bool :=
+  existsb (fun r : SR.region => let '(rb, rlo, rlen) := r in (expr_eqb rb b && Z.leb rlo k && Z.leb (k + w) (rlo + rlen))%bool) F0L.
+Definition in_kn0 (K : kentry) : bool := existsb (APC.kentry_eqb K) kn0.
+Definition SPV : nat := 2%nat.   (* [comment removed for export] *)
+Definition live (spoff : Z) (b : expr) (k : Z) : bool := (negb (expr_eqb b (EVar SPV)) || Z.leb spoff k)%bool.
+(* [comment removed for export] *)
+Definition cells_of (sF : sym_state) (spoff : Z) : list kentry :=
+  List.filter (fun K => match K with
+     | KWord (SA b k) w _ => live spoff b k && (in_foot b k (Z.of_nat w) || negb (in_kn0 K))
+     | KZero (SA b k) (ELit n) | KFill (SA b k) (ELit n) _ | KBlob (SA b k) (ELit n) _ => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KZero (SA b k) _ | KFill (SA b k) _ _ | KBlob (SA b k) _ _ => live spoff b k && (in_foot b k 1 || negb (in_kn0 K))
+     | KUnk (SA b k) (ELit n) => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KRange _ _ _ | KAlign _ _ => negb (in_kn0 K)      (* [comment removed for export] *)
+     | _ => false end)%bool (s_know sF).
+Definition spoff_of (sF : sym_state) : Z := match nth 2 (s_regs sF) (ELit 0) with EAlu _ (EVar v) (ELit k) => if Nat.eqb v SPV then k else 0 | _ => 0 end.
+
+(* [comment removed for export] *)
+Definition regs_out0 : list expr := Eval vm_compute in (s_regs s3).
+Definition exit_sp_off0 : Z := Eval vm_compute in (spoff_of s3).
+Definition cells0 : list kentry := Eval vm_compute in (cells_of s3 exit_sp_off0).
+Definition nfresh0 : nat := Eval vm_compute in (s_next s3 - NX0)%nat.
+Definition exit_pc0 : Z := Eval vm_compute in (s_pc s3).
+Definition ps0 : SR.post_spec := SR.PS 309572 (map (fun i => (i, nth i regs_out0 (ELit 0))) (seq 1 31)) F0L cells0.
+
+(* [comment removed for export] *)
+Definition SXALL : list sym_state := [].
+Definition mkps (st : sym_state) : SR.post_spec :=
+  SR.PS (s_pc st) (map (fun i => (i, nth i (s_regs st) (ELit 0))) (seq 1 31)) F0L (cells_of st (spoff_of st)).
+Definition PSS : list SR.post_spec := [ps0] ++ map mkps SXALL.
+Definition ps := ps0. Definition regs_out := regs_out0. Definition cells := cells0. Definition nfresh := nfresh0.
+
+Lemma cert : SGP.cert_ok RSEGS SegItab_S_079d1e.IT X_CPY X_SET X_LEN RO_LO RO_HI BF A0 NX0 BR XSTEP SGP.xstep2_none F0 PSS plan 136324 regs0 kn0 = true.
+Proof. vm_cast_no_check (@eq_refl bool true). Qed.
+
+(* [comment removed for export] *)
+Definition seg_sound_ax := src0_plan_sound_it SegItab_S_079d1e.IT SegItab_S_079d1e.IT_sound BF NX0 BR XSTEP F0 PSS plan 136324 regs0 kn0 cert (SGP.xstep_none_ok RSEGS NX0 BR F0).
+End LibSegZ_e3s1.
+
+Module LibSegZ_e3s2_bh.
+(* [comment removed for export] *)
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Abbreviation RSEGS := Plain.M.loaded_segments.
+Definition ITR : list (Z * nat) := SegItab_S_079d1e.ITR.
+Definition IT : itab := SegItab_S_079d1e.IT.
+Definition ENDS : list Z := [136108].
+Definition STOPS1 : list Z := [364196; 362788; 364652; 309572; 309252; 309576] ++ ENDS.
+Definition NX0 : nat := 56.
+Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
+Definition L : expr := EVar 4.
+Definition regs0 : list expr := [ELit 0; EVar 1; EAlu Instr.ALU_ADD (EVar 2) (ELit (-64)); ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; EVar 8; ELit 41; EVar 38; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 2; EVar 19; ELit 48; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
+Definition kn0 : list kentry := [KRange (EVar 2) 1099511627776 140737488355328;
+   KAlign (EVar 2) 16;
+   KWr (SA (EVar 2) (-128)) (ELit 64);
+   KUnk (SA (EVar 2) (-128)) (ELit 64);
+   KRange (EVar 10) 4224 140737488355328;
+   KAlign (EVar 10) 16;
+   KWr (SA (EVar 10) (-128)) (ELit 144);
+   KUnk (SA (EVar 10) (-128)) (ELit 144);
+   KRange (EVar 38) 593920 140737488355328;
+   KAlign (EVar 38) 16;
+   KWr (SA (EVar 38) 0) (ELit 48);
+   KUnk (SA (EVar 38) 0) (ELit 48);
+   KDisj (SA (EVar 2) (-128)) (ELit 160) (SA (EVar 10) (-128)) (ELit 144);
+   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (EVar 38) 0) (ELit 48);
+   KDisj (SA (EVar 2) (-128)) (ELit 160) (SA (EVar 38) 0) (ELit 48);
+   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (ELit 0) 65536) (ELit 528384);
+   KDisj (SA (EVar 38) 0) (ELit 48) (SA (ELit 0) 65536) (ELit 528384);
+   KImg 65536 390664;
+   KImg 390704 390736;
+   KImg 390752 390760;
+   KWord (SA (EVar 2) (-56)) 8 (ELit 136012);
+   KWord (SA (EVar 2) (-64)) 8 (ELit 74669);
+   KWord (SA (EVar 2) (-8)) 8 (ELit 136328);
+   KWord (SA (EVar 2) (-16)) 8 (EVar 10);
+   KWord (SA (EVar 2) (-24)) 8 (EVar 40);
+   KWord (SA (EVar 2) (-32)) 8 (EVar 41);
+   KWord (SA (EVar 2) (-40)) 8 (EVar 42);
+   KWord (SA (EVar 2) (-48)) 8 (EAlu Instr.ALU_ADD (EVar 2) (ELit (312)));
+   KWr (SA (EVar 2) (-16)) (ELit 8);
+   KWr (SA (EVar 2) (-8)) (ELit 8);
+   KWr (SA (EVar 2) (0)) (ELit 8);
+   KWr (SA (EVar 2) (8)) (ELit 8);
+   KWr (SA (EVar 2) (16)) (ELit 8)].
+Definition ss0 : sym_state := SS 368844 regs0 [] kn0 NX0.
+Definition F0 : list SGP.region := [(EVar 2, (-128), ELit 64); (EVar 2, (-16), ELit 8); (EVar 2, (-8), ELit 8); (EVar 2, (0), ELit 8); (EVar 2, (8), ELit 8); (EVar 2, (16), ELit 8); (EVar 38, (0), ELit 42)].
+Definition F0L : list SR.region := [(EVar 2, (-128), 64); (EVar 2, (-16), 8); (EVar 2, (-8), 8); (EVar 2, (0), 8); (EVar 2, (8), 8); (EVar 2, (16), 8); (EVar 38, (0), 42)].
+Definition BF : nat := 200000.
+(* [comment removed for export] *)
+Definition BR : list SGP.bfact := [].
+(* [comment removed for export] *)
+Definition XSTEP := SGP.xstep_none.
+Definition XSTEP2 := SGP.xstep2_none.
+Definition AUTO := SGA.auto RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF STOPS1 ENDS A0 F0.
+Definition LOADB := SGP.loadbyte IT BR.
+Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
+
+(* [comment removed for export] *)
+Definition ex1 : list SGA.aitem * (Z * sym_state) :=
+  (([SGA.AStep (SR.SBlock [364196; 362788; 364652; 309572; 309252; 309576; 136108]); SGA.AStep SR.SCopy; SGA.AStep (SR.SBlock [364196; 362788; 364652; 309572; 309252; 309576; 136108])], (93, SS 136108 [ELit 0; ELit 136340; EAlu Instr.ALU_ADD (EVar 2) (ELit (-16)); ELit 67584; ELit 459832; EVar 57; EVar 58; EVar 59; EVar 10; EVar 40; EVar 10; EVar 2; EVar 62; EVar 63; EVar 64; EVar 65; EVar 66; EVar 67; EVar 41; EVar 42; EAlu Instr.ALU_ADD (EVar 2) (ELit 312); EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 68; EVar 69; EVar 70; EVar 71] [] [KWord {| a_base := EVar 2; a_off := -16 |} 8 (EVar 10); KWord {| a_base := EVar 2; a_off := -8 |} 8 (ELit 136340); KWord {| a_base := EVar 38; a_off := 41 |} 1 (ELit 0); KWord {| a_base := EVar 38; a_off := 0 |} 8 (ELit 8028075845441778529); KWord {| a_base := EVar 38; a_off := 8 |} 8 (ELit 7863351059373564014); KWord {| a_base := EVar 38; a_off := 16 |} 8 (ELit 2838809733452757089); KWord {| a_base := EVar 38; a_off := 24 |} 8 (ELit 2334102023183623712); KWord {| a_base := EVar 38; a_off := 32 |} 8 (ELit 4188416081412519009); KWord {| a_base := EVar 38; a_off := 40 |} 1 (ELit 48); KWord {| a_base := EVar 2; a_off := 16 |} 8 (EVar 38); KWord {| a_base := EVar 2; a_off := 8 |} 8 (ELit 41); KWord {| a_base := EVar 2; a_off := 0 |} 8 (ELit 49); KRange (EVar 2) 1099511627776 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -128 |} (ELit 64); KUnk {| a_base := EVar 2; a_off := -128 |} (ELit 64); KRange (EVar 10) 4224 140737488355328; KAlign (EVar 10) 16; KWr {| a_base := EVar 10; a_off := -128 |} (ELit 144); KUnk {| a_base := EVar 10; a_off := -128 |} (ELit 144); KRange (EVar 38) 593920 140737488355328; KAlign (EVar 38) 16; KWr {| a_base := EVar 38; a_off := 0 |} (ELit 48); KUnk {| a_base := EVar 38; a_off := 42 |} (ELit 6); KDisj {| a_base := EVar 2; a_off := -128 |} (ELit 160) {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 2; a_off := -128 |} (ELit 160) {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KDisj {| a_base := EVar 38; a_off := 0 |} (ELit 48) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KImg 65536 390664; KImg 390704 390736; KImg 390752 390760; KWord {| a_base := EVar 2; a_off := -56 |} 8 (ELit 136012); KWord {| a_base := EVar 2; a_off := -64 |} 8 (ELit 74669); KWord {| a_base := EVar 2; a_off := -24 |} 8 (EVar 40); KWord {| a_base := EVar 2; a_off := -32 |} 8 (EVar 41); KWord {| a_base := EVar 2; a_off := -40 |} 8 (EVar 42); KWord {| a_base := EVar 2; a_off := -48 |} 8 (EAlu Instr.ALU_ADD (EVar 2) (ELit 312)); KWr {| a_base := EVar 2; a_off := -16 |} (ELit 8); KWr {| a_base := EVar 2; a_off := -8 |} (ELit 8); KWr {| a_base := EVar 2; a_off := 0 |} (ELit 8); KWr {| a_base := EVar 2; a_off := 8 |} (ELit 8); KWr {| a_base := EVar 2; a_off := 16 |} (ELit 8)] 72))).
+Definition s1 : sym_state := snd (snd ex1).
+
+Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
+Definition in_foot (b : expr) (k : Z) (w : Z) : bool :=
+  existsb (fun r : SR.region => let '(rb, rlo, rlen) := r in (expr_eqb rb b && Z.leb rlo k && Z.leb (k + w) (rlo + rlen))%bool) F0L.
+Definition in_kn0 (K : kentry) : bool := existsb (APC.kentry_eqb K) kn0.
+Definition SPV : nat := 2%nat.   (* [comment removed for export] *)
+Definition live (spoff : Z) (b : expr) (k : Z) : bool := (negb (expr_eqb b (EVar SPV)) || Z.leb spoff k)%bool.
+(* [comment removed for export] *)
+Definition cells_of (sF : sym_state) (spoff : Z) : list kentry :=
+  List.filter (fun K => match K with
+     | KWord (SA b k) w _ => live spoff b k && (in_foot b k (Z.of_nat w) || negb (in_kn0 K))
+     | KZero (SA b k) (ELit n) | KFill (SA b k) (ELit n) _ | KBlob (SA b k) (ELit n) _ => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KZero (SA b k) _ | KFill (SA b k) _ _ | KBlob (SA b k) _ _ => live spoff b k && (in_foot b k 1 || negb (in_kn0 K))
+     | KUnk (SA b k) (ELit n) => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KRange _ _ _ | KAlign _ _ => negb (in_kn0 K)      (* [comment removed for export] *)
+     | _ => false end)%bool (s_know sF).
+Definition spoff_of (sF : sym_state) : Z := match nth 2 (s_regs sF) (ELit 0) with EAlu _ (EVar v) (ELit k) => if Nat.eqb v SPV then k else 0 | _ => 0 end.
+
+(* [comment removed for export] *)
+Definition regs_out0 : list expr := Eval vm_compute in (s_regs s1).
+Definition exit_sp_off0 : Z := Eval vm_compute in (spoff_of s1).
+Definition cells0 : list kentry := Eval vm_compute in (cells_of s1 exit_sp_off0).
+Definition nfresh0 : nat := Eval vm_compute in (s_next s1 - NX0)%nat.
+Definition exit_pc0 : Z := Eval vm_compute in (s_pc s1).
+Definition ps0 : SR.post_spec := SR.PS 136108 (map (fun i => (i, nth i regs_out0 (ELit 0))) (seq 1 31)) F0L cells0.
+
+(* [comment removed for export] *)
+Definition SXALL : list sym_state := [].
+Definition mkps (st : sym_state) : SR.post_spec :=
+  SR.PS (s_pc st) (map (fun i => (i, nth i (s_regs st) (ELit 0))) (seq 1 31)) F0L (cells_of st (spoff_of st)).
+Definition PSS : list SR.post_spec := [ps0] ++ map mkps SXALL.
+Definition ps := ps0. Definition regs_out := regs_out0. Definition cells := cells0. Definition nfresh := nfresh0.
+
+Lemma cert : SGP.cert_ok RSEGS SegItab_S_079d1e.IT X_CPY X_SET X_LEN RO_LO RO_HI BF A0 NX0 BR XSTEP SGP.xstep2_none F0 PSS plan 368844 regs0 kn0 = true.
+Proof. vm_cast_no_check (@eq_refl bool true). Qed.
+
+(* [comment removed for export] *)
+Definition seg_sound_ax := src0_plan_sound_it SegItab_S_079d1e.IT SegItab_S_079d1e.IT_sound BF NX0 BR XSTEP F0 PSS plan 368844 regs0 kn0 cert (SGP.xstep_none_ok RSEGS NX0 BR F0).
+End LibSegZ_e3s2_bh.
+
+Module LibSegZ_e3s2_bl.
+(* [comment removed for export] *)
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Abbreviation RSEGS := Plain.M.loaded_segments.
+Definition ITR : list (Z * nat) := SegItab_S_079d1e.ITR.
+Definition IT : itab := SegItab_S_079d1e.IT.
+Definition ENDS : list Z := [136108].
+Definition STOPS1 : list Z := [364196; 362788; 364652; 309572; 309252; 309576] ++ ENDS.
+Definition NX0 : nat := 56.
+Definition v0 (k : Z) : expr := EAlu Instr.ALU_ADD (EVar 0) (ELit k).
+Definition L : expr := EVar 4.
+Definition regs0 : list expr := [ELit 0; EVar 1; EAlu Instr.ALU_ADD (EVar 2) (ELit (-64)); ELit 67584; ELit 459832; EVar 5; EVar 6; EVar 7; EVar 8; ELit 41; EVar 38; EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 2; EVar 19; ELit 48; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
+Definition kn0 : list kentry := [KRange (EVar 2) 1099511627776 140737488355328;
+   KAlign (EVar 2) 16;
+   KWr (SA (EVar 2) (-128)) (ELit 64);
+   KUnk (SA (EVar 2) (-128)) (ELit 64);
+   KRange (EVar 10) 4224 140737488355328;
+   KAlign (EVar 10) 16;
+   KWr (SA (EVar 10) (-128)) (ELit 144);
+   KUnk (SA (EVar 10) (-128)) (ELit 144);
+   KRange (EVar 38) 4096 65488;
+   KAlign (EVar 38) 16;
+   KWr (SA (EVar 38) 0) (ELit 48);
+   KUnk (SA (EVar 38) 0) (ELit 48);
+   KDisj (SA (EVar 2) (-128)) (ELit 160) (SA (EVar 10) (-128)) (ELit 144);
+   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (EVar 38) 0) (ELit 48);
+   KDisj (SA (EVar 2) (-128)) (ELit 160) (SA (EVar 38) 0) (ELit 48);
+   KDisj (SA (EVar 10) (-128)) (ELit 144) (SA (ELit 0) 65536) (ELit 528384);
+   KDisj (SA (EVar 38) 0) (ELit 48) (SA (ELit 0) 65536) (ELit 528384);
+   KImg 65536 390664;
+   KImg 390704 390736;
+   KImg 390752 390760;
+   KWord (SA (EVar 2) (-56)) 8 (ELit 136012);
+   KWord (SA (EVar 2) (-64)) 8 (ELit 74669);
+   KWord (SA (EVar 2) (-8)) 8 (ELit 136328);
+   KWord (SA (EVar 2) (-16)) 8 (EVar 10);
+   KWord (SA (EVar 2) (-24)) 8 (EVar 40);
+   KWord (SA (EVar 2) (-32)) 8 (EVar 41);
+   KWord (SA (EVar 2) (-40)) 8 (EVar 42);
+   KWord (SA (EVar 2) (-48)) 8 (EAlu Instr.ALU_ADD (EVar 2) (ELit (312)));
+   KWr (SA (EVar 2) (-16)) (ELit 8);
+   KWr (SA (EVar 2) (-8)) (ELit 8);
+   KWr (SA (EVar 2) (0)) (ELit 8);
+   KWr (SA (EVar 2) (8)) (ELit 8);
+   KWr (SA (EVar 2) (16)) (ELit 8)].
+Definition ss0 : sym_state := SS 368844 regs0 [] kn0 NX0.
+Definition F0 : list SGP.region := [(EVar 2, (-128), ELit 64); (EVar 2, (-16), ELit 8); (EVar 2, (-8), ELit 8); (EVar 2, (0), ELit 8); (EVar 2, (8), ELit 8); (EVar 2, (16), ELit 8); (EVar 38, (0), ELit 42)].
+Definition F0L : list SR.region := [(EVar 2, (-128), 64); (EVar 2, (-16), 8); (EVar 2, (-8), 8); (EVar 2, (0), 8); (EVar 2, (8), 8); (EVar 2, (16), 8); (EVar 38, (0), 42)].
+Definition BF : nat := 200000.
+(* [comment removed for export] *)
+Definition BR : list SGP.bfact := [].
+(* [comment removed for export] *)
+Definition XSTEP := SGP.xstep_none.
+Definition XSTEP2 := SGP.xstep2_none.
+Definition AUTO := SGA.auto RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF STOPS1 ENDS A0 F0.
+Definition LOADB := SGP.loadbyte IT BR.
+Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
+
+(* [comment removed for export] *)
+Definition ex1 : list SGA.aitem * (Z * sym_state) :=
+  (([SGA.AStep (SR.SBlock [364196; 362788; 364652; 309572; 309252; 309576; 136108]); SGA.AStep SR.SCopy; SGA.AStep (SR.SBlock [364196; 362788; 364652; 309572; 309252; 309576; 136108])], (93, SS 136108 [ELit 0; ELit 136340; EAlu Instr.ALU_ADD (EVar 2) (ELit (-16)); ELit 67584; ELit 459832; EVar 57; EVar 58; EVar 59; EVar 10; EVar 40; EVar 10; EVar 2; EVar 62; EVar 63; EVar 64; EVar 65; EVar 66; EVar 67; EVar 41; EVar 42; EAlu Instr.ALU_ADD (EVar 2) (ELit 312); EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 68; EVar 69; EVar 70; EVar 71] [] [KWord {| a_base := EVar 2; a_off := -16 |} 8 (EVar 10); KWord {| a_base := EVar 2; a_off := -8 |} 8 (ELit 136340); KWord {| a_base := EVar 38; a_off := 41 |} 1 (ELit 0); KWord {| a_base := EVar 38; a_off := 0 |} 8 (ELit 8028075845441778529); KWord {| a_base := EVar 38; a_off := 8 |} 8 (ELit 7863351059373564014); KWord {| a_base := EVar 38; a_off := 16 |} 8 (ELit 2838809733452757089); KWord {| a_base := EVar 38; a_off := 24 |} 8 (ELit 2334102023183623712); KWord {| a_base := EVar 38; a_off := 32 |} 8 (ELit 4188416081412519009); KWord {| a_base := EVar 38; a_off := 40 |} 1 (ELit 48); KWord {| a_base := EVar 2; a_off := 16 |} 8 (EVar 38); KWord {| a_base := EVar 2; a_off := 8 |} 8 (ELit 41); KWord {| a_base := EVar 2; a_off := 0 |} 8 (ELit 49); KRange (EVar 2) 1099511627776 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -128 |} (ELit 64); KUnk {| a_base := EVar 2; a_off := -128 |} (ELit 64); KRange (EVar 10) 4224 140737488355328; KAlign (EVar 10) 16; KWr {| a_base := EVar 10; a_off := -128 |} (ELit 144); KUnk {| a_base := EVar 10; a_off := -128 |} (ELit 144); KRange (EVar 38) 4096 65488; KAlign (EVar 38) 16; KWr {| a_base := EVar 38; a_off := 0 |} (ELit 48); KUnk {| a_base := EVar 38; a_off := 42 |} (ELit 6); KDisj {| a_base := EVar 2; a_off := -128 |} (ELit 160) {| a_base := EVar 10; a_off := -128 |} (ELit 144); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 2; a_off := -128 |} (ELit 160) {| a_base := EVar 38; a_off := 0 |} (ELit 48); KDisj {| a_base := EVar 10; a_off := -128 |} (ELit 144) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KDisj {| a_base := EVar 38; a_off := 0 |} (ELit 48) {| a_base := ELit 0; a_off := 65536 |} (ELit 528384); KImg 65536 390664; KImg 390704 390736; KImg 390752 390760; KWord {| a_base := EVar 2; a_off := -56 |} 8 (ELit 136012); KWord {| a_base := EVar 2; a_off := -64 |} 8 (ELit 74669); KWord {| a_base := EVar 2; a_off := -24 |} 8 (EVar 40); KWord {| a_base := EVar 2; a_off := -32 |} 8 (EVar 41); KWord {| a_base := EVar 2; a_off := -40 |} 8 (EVar 42); KWord {| a_base := EVar 2; a_off := -48 |} 8 (EAlu Instr.ALU_ADD (EVar 2) (ELit 312)); KWr {| a_base := EVar 2; a_off := -16 |} (ELit 8); KWr {| a_base := EVar 2; a_off := -8 |} (ELit 8); KWr {| a_base := EVar 2; a_off := 0 |} (ELit 8); KWr {| a_base := EVar 2; a_off := 8 |} (ELit 8); KWr {| a_base := EVar 2; a_off := 16 |} (ELit 8)] 72))).
+Definition s1 : sym_state := snd (snd ex1).
+
+Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
+Definition in_foot (b : expr) (k : Z) (w : Z) : bool :=
+  existsb (fun r : SR.region => let '(rb, rlo, rlen) := r in (expr_eqb rb b && Z.leb rlo k && Z.leb (k + w) (rlo + rlen))%bool) F0L.
+Definition in_kn0 (K : kentry) : bool := existsb (APC.kentry_eqb K) kn0.
+Definition SPV : nat := 2%nat.   (* [comment removed for export] *)
+Definition live (spoff : Z) (b : expr) (k : Z) : bool := (negb (expr_eqb b (EVar SPV)) || Z.leb spoff k)%bool.
+(* [comment removed for export] *)
+Definition cells_of (sF : sym_state) (spoff : Z) : list kentry :=
+  List.filter (fun K => match K with
+     | KWord (SA b k) w _ => live spoff b k && (in_foot b k (Z.of_nat w) || negb (in_kn0 K))
+     | KZero (SA b k) (ELit n) | KFill (SA b k) (ELit n) _ | KBlob (SA b k) (ELit n) _ => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KZero (SA b k) _ | KFill (SA b k) _ _ | KBlob (SA b k) _ _ => live spoff b k && (in_foot b k 1 || negb (in_kn0 K))
+     | KUnk (SA b k) (ELit n) => live spoff b k && (in_foot b k n || negb (in_kn0 K))
+     | KRange _ _ _ | KAlign _ _ => negb (in_kn0 K)      (* [comment removed for export] *)
+     | _ => false end)%bool (s_know sF).
+Definition spoff_of (sF : sym_state) : Z := match nth 2 (s_regs sF) (ELit 0) with EAlu _ (EVar v) (ELit k) => if Nat.eqb v SPV then k else 0 | _ => 0 end.
+
+(* [comment removed for export] *)
+Definition regs_out0 : list expr := Eval vm_compute in (s_regs s1).
+Definition exit_sp_off0 : Z := Eval vm_compute in (spoff_of s1).
+Definition cells0 : list kentry := Eval vm_compute in (cells_of s1 exit_sp_off0).
+Definition nfresh0 : nat := Eval vm_compute in (s_next s1 - NX0)%nat.
+Definition exit_pc0 : Z := Eval vm_compute in (s_pc s1).
+Definition ps0 : SR.post_spec := SR.PS 136108 (map (fun i => (i, nth i regs_out0 (ELit 0))) (seq 1 31)) F0L cells0.
+
+(* [comment removed for export] *)
+Definition SXALL : list sym_state := [].
+Definition mkps (st : sym_state) : SR.post_spec :=
+  SR.PS (s_pc st) (map (fun i => (i, nth i (s_regs st) (ELit 0))) (seq 1 31)) F0L (cells_of st (spoff_of st)).
+Definition PSS : list SR.post_spec := [ps0] ++ map mkps SXALL.
+Definition ps := ps0. Definition regs_out := regs_out0. Definition cells := cells0. Definition nfresh := nfresh0.
+
+Lemma cert : SGP.cert_ok RSEGS SegItab_S_079d1e.IT X_CPY X_SET X_LEN RO_LO RO_HI BF A0 NX0 BR XSTEP SGP.xstep2_none F0 PSS plan 368844 regs0 kn0 = true.
+Proof. vm_cast_no_check (@eq_refl bool true). Qed.
+
+(* [comment removed for export] *)
+Definition seg_sound_ax := src0_plan_sound_it SegItab_S_079d1e.IT SegItab_S_079d1e.IT_sound BF NX0 BR XSTEP F0 PSS plan 368844 regs0 kn0 cert (SGP.xstep_none_ok RSEGS NX0 BR F0).
+End LibSegZ_e3s2_bl.

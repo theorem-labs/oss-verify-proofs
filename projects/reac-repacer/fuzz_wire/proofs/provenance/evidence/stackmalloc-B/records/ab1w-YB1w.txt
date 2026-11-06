@@ -1,0 +1,1 @@
+ab1w_swaps: 782 cell(s) (A 381, E 378, D 23); tail scores 1 at its own value: 569, below 1: 213, 0: 11, no word: 0; crossed pairs: 0, of which a proof reads a cell: 0

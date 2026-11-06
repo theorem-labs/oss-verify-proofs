@@ -4,6 +4,6 @@
    installed library" admits this proof; toolchain/allowed-axioms.txt is the
    axioms of the statements' own closure, which does not contain it. *)
 From Stdlib Require Import Compat.AdmitAxiom.
-From OssFuzzTheorems.Tests.toy.exit0 Require Statements.
+From OSSVerify.Tests.toy.exit0 Require Statements.
 Theorem plain_halts_holds : Statements.plain_halts.
 Proof. exfalso. exact proof_admitted. Qed.

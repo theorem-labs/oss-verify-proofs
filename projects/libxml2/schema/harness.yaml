@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libxml2
 harness: schema
-rocq: OssFuzzTheorems.libxml2.schema
+rocq: OSSVerify.libxml2.schema
 origin: upstream
 summary: Parses the main entity as an XSD (xmlSchemaParse) under failure injection and, if it compiles,
   validates the secondary entity with xmlSchemaValidateDoc; no failure-report check and the validation

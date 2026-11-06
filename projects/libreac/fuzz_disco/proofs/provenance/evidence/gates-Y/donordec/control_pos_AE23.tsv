@@ -1,0 +1,2 @@
+tree	image	file	line	value	hexv	cgif	cgif_size	target_same	target_at_v	decl	text
+plant	asan	plant/lib/A/plant_AE23.v	1	6264480	0x5f96a0	buf+0x8	1032	0x5fc758	builtin_tls+0x1d718	-	set (E := Ereg regs [Z_to_bv 64 tid; Z_to_bv 64 cval; Z_to_bv 64 6264480; Z_to_bv 64 sew]).

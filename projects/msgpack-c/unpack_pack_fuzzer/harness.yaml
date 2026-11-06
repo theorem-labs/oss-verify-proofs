@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: msgpack-c
 harness: unpack_pack_fuzzer
-rocq: OssFuzzTheorems.msgpack_c.unpack_pack_fuzzer
+rocq: OSSVerify.msgpack_c.unpack_pack_fuzzer
 origin: upstream
 summary: msgpack::unpack with all six unpack_limit fields set to 1000, then msgpack::pack of the unpacked
   object into an sbuffer. The packed bytes are NEVER compared to the input (nor re-unpacked), so this

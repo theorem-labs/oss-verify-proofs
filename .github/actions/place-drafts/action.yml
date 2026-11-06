@@ -1,13 +1,14 @@
-# place-drafts: the draft binaries one check job needs, for pr.yml's and release-check.yml's check jobs.  Each comes
-# from the artifact fetch-drafts (.github/workflows/fetch-drafts.yml) uploaded for it, into ASSETS, where
-# tools/oft/ci/check-units.sh finds it and does not download it.
+# place-drafts: the draft files one check job needs, for pr.yml's and release-check.yml's check jobs (binary archives)
+# and for the jobs of the internal repository's publish-gate.yml (any file the facts pin).  Each comes from the
+# artifact fetch-drafts (.github/workflows/fetch-drafts.yml) uploaded for it, into ASSETS, where
+# tools/oft/ci/check-units.sh, tools/publish/gate-job and publish-gate.yml's assets job find it and do not download it.
 name: place-drafts
 description: >-
-  Download the artifacts of this group's draft archives and put each archive in the assets directory; fail on any that
+  Download the artifacts of this group's draft files and put each file in the assets directory; fail on any that
   is missing.
 inputs:
   drafts:
-    description: this group's draft archives, a JSON list of file names (its plan entry's `drafts`), not empty
+    description: this group's draft files, a JSON list of file names (its plan entry's `drafts`), not empty
     required: true
   assets:
     description: the directory check-units.sh reads as ASSETS
@@ -15,10 +16,10 @@ inputs:
 runs:
   using: composite
   steps:
-    # Only the archives this group's projects pin in a draft, each from its own artifact. The pattern matches every
+    # Only the files this group's projects pin in a draft, each from its own artifact. The pattern matches every
     # attempt's upload: a re-run of failed jobs runs only the fetch-drafts jobs that failed, so an archive may come
     # from an earlier attempt. minimatch reads a set of one, {a}, as the text "{a}", so one name goes without braces.
-    - name: the names of the draft binaries this group needs
+    - name: the names of the draft files this group needs
       id: names
       shell: bash
       env:
@@ -29,12 +30,13 @@ runs:
         mapfile -t files < "$RUNNER_TEMP/draft-files.txt"
         [ "${#files[@]}" -gt 0 ] || { echo "::error::this group's plan entry names no draft file"; exit 1; }
         for file in "${files[@]}"; do
-          [[ "$file" =~ ^[a-z0-9][a-z0-9_-]*-bin\.tar\.zst$ ]] || { echo "::error::not a binary archive's name: '$file'"; exit 1; }
+          # the names fetch-drafts accepts, so no glob character either
+          [[ "$file" =~ ^([a-z0-9][a-z0-9_-]*-(bin|src|port)\.tar\.zst|[a-z0-9][a-z0-9_-]*-src\.MANIFEST\.tsv|recipe(-[0-9]+)?\.tar\.zst)$ ]] || { echo "::error::not the name of a file the facts pin: '$file'"; exit 1; }
         done
         if [ "${#files[@]}" -eq 1 ]; then one_of="${files[0]}"; else one_of="{$(IFS=,; echo "${files[*]}")}"; fi
         echo "pattern=drafts-$GITHUB_RUN_ID-$one_of-*" >> "$GITHUB_OUTPUT"
     # each artifact into a directory of its own, so that two attempts' copies of one file are never written at once
-    - name: those draft binaries, which fetch-drafts checked and this job's read-only token cannot download
+    - name: those draft files, which fetch-drafts checked and this job's read-only token cannot download
       uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
       with:
         pattern: ${{ steps.names.outputs.pattern }}
@@ -42,7 +44,7 @@ runs:
     # A pattern that matches nothing downloads nothing and passes, so each file is looked for, and a missing one fails
     # the job. check-units.sh downloads only the archives that are not in ASSETS, and `oft fetch` checks each one's
     # SHA-256 again.
-    - name: every draft binary this group needs, from the latest attempt that uploaded it
+    - name: every draft file this group needs, from the latest attempt that uploaded it
       shell: bash
       env:
         STAGE: ${{ runner.temp }}/draft-artifacts

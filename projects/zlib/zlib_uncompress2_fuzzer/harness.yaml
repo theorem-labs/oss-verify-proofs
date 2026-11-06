@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zlib
 harness: zlib_uncompress2_fuzzer
-rocq: OssFuzzTheorems.zlib.zlib_uncompress2_fuzzer
+rocq: OSSVerify.zlib.zlib_uncompress2_fuzzer
 origin: oss-fuzz
 summary: uncompress2 of the whole input into a 256 KiB static buffer; return code ignored.
 entry: LLVMFuzzerTestOneInput

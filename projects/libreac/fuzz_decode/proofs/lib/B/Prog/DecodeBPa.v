@@ -1,0 +1,118 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC4a.v for libreac/fuzz_decode's program walk: one listing (decode_listing over dsym), fuzz_decode.asan's image range (lib/Reusable/YImgTop.v IMG_LO .. IMG_TOP) and the listing's 15 objects, and pa_xcalls in place of PAImg2, fixing the addresses of the program functions the listing calls; module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: taken by path from a Theorem Labs lane's copy (a working branch cb6eddd4032, proofs/libreac/fuzz_grant/lib/A/Prog/GrantPa.v) for libreac/fuzz_decode's
+   program walk: module paths and the listing's names changed. *)
+(* Modified by Theorem Labs, 2026-10: image B's twin of this unit's lib/A/Prog/DecodePa.v, in the shape of proofs/libreac/fuzz_boxreg/lib/B/Prog/BoxBPa.v (a working branch 1d92330b7ad): the listing is fuzz_decode.asan-ubsan's decodeb_listing over dbsym (lib/B/Prog/DecodeBList.v, DecodeBSyms.v); pa_obj_img covers its 16 objects (lib/B/Prog/DecodeBAddr.v decodeb_nobj, one more than image A's 15); decodeb_xcalls names the same 11 program functions as image A, at image B's offsets; boxreg's removal of the YI5b / YI5c hints is left out, as in image A's file; module paths changed. *)
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YImgTop.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YK11 YP0m YP09 YP02 YP0l.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.A.Prog Require Import PaTable PaSym.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YCbn.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YK04 YG00 YG0f YG0n YG0d.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.A.Prog Require Import PaRun PaShadow.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.B.Prog Require Import DecodeBSyms DecodeBList.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope bv_scope.
+Open Scope Z_scope.
+Definition A_LIM : nat := 512.
+Lemma A_LIM_text : (A_TEXT < A_LIM)%nat.
+Proof. unfold A_TEXT, A_LIM. lia. Qed.
+Class PAListing (L : ptable dbsym) := mkPAListing {
+pl_tpi : ptree dbsym;
+pl_tpi_eq : ptree_of_list L = pl_tpi;
+pl_tw : ctable;
+pl_tw_eq : tw_of 0 L = pl_tw;
+pl_lim : forallb (pinstr_atoms_ltb A_LIM) L = true;
+pl_len : 4 * Z.of_nat (length L) <= 2 ^ 40;
+pl_slot0 : match plookup (ptree_of_list L) 0 with Some _ => True | None => False end
+}.
+Definition decodeb_tpi : ptree dbsym := ptree_of_list decodeb_listing.
+Definition decodeb_tw : ctable := Eval vm_compute in (tw_of 0 decodeb_listing).
+#[global] Instance PL_decodeb : PAListing decodeb_listing :=
+{| pl_tpi := decodeb_tpi; pl_tpi_eq := eq_refl; pl_tw := decodeb_tw; pl_tw_eq := ltac:(vm_compute; reflexivity);
+pl_lim := ltac:(vm_compute; reflexivity); pl_len := ltac:((first [lazymatch goal with |- _ <> @nil _ => discriminate end | vm_compute; discriminate])); pl_slot0 := ltac:(vm_compute; exact I) |}.
+(* The program functions the listing calls, each with its offset from the listing's base. *)
+Definition decodeb_xcalls : list (dbsym * Z) :=
+[ (DB_check_round_trip, AF_check_round_trip);
+(DB_check_braid, AF_check_braid);
+(DB_reac_frame_is_reac, AF_reac_frame_is_reac);
+(DB_reac_frame_counter, AF_reac_frame_counter);
+(DB_reac_frame_clean_len, AF_reac_frame_clean_len);
+(DB_reac_frame_inspect, AF_reac_frame_inspect);
+(DB_reac_decode, AF_reac_decode);
+(DB_reac_decode_plain_le, AF_reac_decode_plain_le);
+(DB_reac_braid_encode, AF_reac_braid_encode);
+(DB_reac_upstream_channels, AF_reac_upstream_channels);
+(DB_reac_upstream_decode, AF_reac_upstream_decode) ].
+Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Class PAImg (L : ptable dbsym) := mkPAImg {
+pa_segs : list Segment;
+pa_tbl : ctable;
+pa_tbl_ok : table_ok pa_segs pa_tbl;
+pa_val : nat -> Z;
+pa_sigma : dbsym -> Z;
+pa_cert : pi_check dbsym (clookup pa_tbl) pa_val pa_sigma L = true;
+pa_B_ok : 0 <= pa_val A_TEXT /\ pa_val A_TEXT + 2 ^ 40 < 2 ^ 64 /\ pa_val A_TEXT mod 4 = 0;
+pa_val_range : forall a, 0 <= pa_val a < 2 ^ 64;
+pa_wx : wx_segs_nowrap pa_segs;
+pa_segs_low : forall a, in_img pa_segs a -> 0 <= a < kLowMemEnd;
+pa_img_range : forall a, in_img pa_segs a -> IMG_LO <= a < IMG_TOP;
+pa_img_cover : forall ly S md, layout_ok ly -> ALedger pa_segs ly S md -> fst (ly_img ly) <= IMG_LO /\ IMG_TOP <= fst (ly_img ly) + snd (ly_img ly);
+pa_obj_img : forall i, (i < 16)%nat -> IMG_LO <= pa_val (A_OBJ i) /\ pa_val (A_OBJ i) + 8 <= IMG_TOP;
+pa_relro_lo : Z;
+pa_relro_hi : Z;
+pa_relro_img : forall a, pa_relro_lo <= a < pa_relro_hi -> in_img pa_segs a;
+pa_xcalls : forall s k, In (s, k) decodeb_xcalls -> pa_sigma s = pa_val A_TEXT + k
+}.
+Section c.
+Context {L : ptable dbsym} {PI : PAImg L}.
+Lemma pa_fetch_ok : forall pc w, clookup pa_tbl pc = Some w -> fetch_word pa_segs (Z_to_bv 64 pc) = Some (Z_to_bv 32 w).
+Proof. intros pc w H. exact (pa_tbl_ok pc w H). Qed.
+Definition Eimg (E : env) : env :=
+{| ew := fun n => if ((A_TEXT <=? n) && (n <? A_LIM))%nat then Z_to_bv 64 (pa_val n) else ew E n; ed := ed E |}.
+Lemma Eimg_env : forall E, img_env pa_val A_LIM (Eimg E).
+Proof.
+intros E a [H1 H2]. cbn [Eimg ew]. replace ((A_TEXT <=? a) && (a <? A_LIM))%nat%bool with true.
+- rewrite Z_to_bv_unsigned. unfold bv_wrap. apply Z.mod_small. pose proof (pa_val_range a). change (bv_modulus 64) with (2 ^ 64). lia.
+- symmetry. apply andb_true_intro. split; [apply Nat.leb_le; lia | apply Nat.ltb_lt; lia].
+Qed.
+Lemma Eimg_low : forall E n, (n < A_TEXT)%nat -> ew (Eimg E) n = ew E n.
+Proof. intros E n Hn. cbn [Eimg ew]. replace (A_TEXT <=? n)%nat with false by (symmetry; apply Nat.leb_gt; lia). reflexivity. Qed.
+Lemma Eimg_img : forall E n, (A_TEXT <= n < A_LIM)%nat -> ew (Eimg E) n = Z_to_bv 64 (pa_val n).
+Proof.
+intros E n [H1 H2]. cbn [Eimg ew]. replace ((A_TEXT <=? n) && (n <? A_LIM))%nat%bool with true; [reflexivity|].
+symmetry. apply andb_true_intro. split; [apply Nat.leb_le; lia | apply Nat.ltb_lt; lia].
+Qed.
+Lemma pa_sigma_check_round_trip : pa_sigma DB_check_round_trip = pa_val A_TEXT + AF_check_round_trip.
+Proof. apply pa_xcalls. cbn [In decodeb_xcalls]. repeat (first [left; reflexivity | right]). Qed.
+Lemma pa_sigma_check_braid : pa_sigma DB_check_braid = pa_val A_TEXT + AF_check_braid.
+Proof. apply pa_xcalls. cbn [In decodeb_xcalls]. repeat (first [left; reflexivity | right]). Qed.
+Lemma pa_sigma_reac_frame_is_reac : pa_sigma DB_reac_frame_is_reac = pa_val A_TEXT + AF_reac_frame_is_reac.
+Proof. apply pa_xcalls. cbn [In decodeb_xcalls]. repeat (first [left; reflexivity | right]). Qed.
+Lemma pa_sigma_reac_frame_counter : pa_sigma DB_reac_frame_counter = pa_val A_TEXT + AF_reac_frame_counter.
+Proof. apply pa_xcalls. cbn [In decodeb_xcalls]. repeat (first [left; reflexivity | right]). Qed.
+Lemma pa_sigma_reac_frame_clean_len : pa_sigma DB_reac_frame_clean_len = pa_val A_TEXT + AF_reac_frame_clean_len.
+Proof. apply pa_xcalls. cbn [In decodeb_xcalls]. repeat (first [left; reflexivity | right]). Qed.
+Lemma pa_sigma_reac_frame_inspect : pa_sigma DB_reac_frame_inspect = pa_val A_TEXT + AF_reac_frame_inspect.
+Proof. apply pa_xcalls. cbn [In decodeb_xcalls]. repeat (first [left; reflexivity | right]). Qed.
+Lemma pa_sigma_reac_decode : pa_sigma DB_reac_decode = pa_val A_TEXT + AF_reac_decode.
+Proof. apply pa_xcalls. cbn [In decodeb_xcalls]. repeat (first [left; reflexivity | right]). Qed.
+Lemma pa_sigma_reac_decode_plain_le : pa_sigma DB_reac_decode_plain_le = pa_val A_TEXT + AF_reac_decode_plain_le.
+Proof. apply pa_xcalls. cbn [In decodeb_xcalls]. repeat (first [left; reflexivity | right]). Qed.
+Lemma pa_sigma_reac_braid_encode : pa_sigma DB_reac_braid_encode = pa_val A_TEXT + AF_reac_braid_encode.
+Proof. apply pa_xcalls. cbn [In decodeb_xcalls]. repeat (first [left; reflexivity | right]). Qed.
+Lemma pa_sigma_reac_upstream_channels : pa_sigma DB_reac_upstream_channels = pa_val A_TEXT + AF_reac_upstream_channels.
+Proof. apply pa_xcalls. cbn [In decodeb_xcalls]. repeat (first [left; reflexivity | right]). Qed.
+Lemma pa_sigma_reac_upstream_decode : pa_sigma DB_reac_upstream_decode = pa_val A_TEXT + AF_reac_upstream_decode.
+Proof. apply pa_xcalls. cbn [In decodeb_xcalls]. repeat (first [left; reflexivity | right]). Qed.
+End c.
+End b.

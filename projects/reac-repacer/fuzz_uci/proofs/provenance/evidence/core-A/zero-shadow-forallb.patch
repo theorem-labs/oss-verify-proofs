@@ -1,0 +1,104 @@
+--- A/AFex.v
++++ A/AFex.v
+@@ -935,9 +935,11 @@
+ intros HD. apply (DH_iff (ly_stk_lo ly + 8 * i) ltac:(rewrite Hs0; replace (s0 * 4096 + 8 * i) with ((512 * s0 + i) * 8) by lia; apply Z_mod_mult)) in HD.
+ rewrite Hu in HD. pose proof (KX 8 _ eq_refl ltac:(lia)) as DJ. unfold zdisjoint in DJ. cbn [fst snd] in DJ. lia.
+ -
+-rewrite (ts_zsh _ TB) in Hr. unfold Tfib_zero_shadow in Hr.
++rewrite (ts_zsh _ TB) in Hr.
+ assert (R8 : exists lo len, r = (lo, len) /\ lo mod 8 = 0 /\ TFIB_IMG_LO <= lo /\ lo + len <= TFIB_IMG_END).
+-{ destruct Hr as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]]]]; eexists _, _; (split; [reflexivity|]); unfold TFIB_IMG_LO, TFIB_IMG_END; (split; [reflexivity|]); lia. }
++{ assert (CK : forallb (fun r0 : Z * Z => andb (andb (Z.eqb (fst r0 mod 8) 0) (Z.leb TFIB_IMG_LO (fst r0))) (Z.leb (fst r0 + snd r0) TFIB_IMG_END)) Tfib_zero_shadow = true) by (vm_compute; reflexivity).
++pose proof (proj1 (forallb_forall _ _) CK r Hr) as X. apply andb_prop in X as [X X3]. apply andb_prop in X as [X1 X2].
++apply Z.eqb_eq in X1. apply Z.leb_le in X2. apply Z.leb_le in X3. exists (fst r), (snd r). split; [destruct r; reflexivity|]. exact (conj X1 (conj X2 X3)). }
+ destruct R8 as (lo & len & -> & L8 & L1 & L2). cbn [fst snd] in Hi |- *. clear Hr.
+ apply Z.mod_divide in L8 as [c Hc]; [|lia].
+ assert (E8 : shadow_addr lo + i = shadow_addr (lo + 8 * i)).
+--- A/AFf0.v
++++ A/AFf0.v
+@@ -466,12 +466,10 @@
+ rewrite E8. pose proof (Z.mul_div_le (ly_stk_hi ly - ly_stk_lo ly) 8 ltac:(lia)).
+ apply ok_hshadow. apply hs_bounds; ceil; unfold in_app, zone3, kHighMemBeg, kHighMemEnd, ASAN_CEIL in *; lia.
+ -
+-rewrite (ts_zsh _ TB) in Hr. unfold Tfib_zero_shadow in Hr.
+-apply ok_hshadow. unfold shadow_addr, SHADOW_OFF, kLowShadowBeg, kHighMemBeg.
+-destruct Hr as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]]]]; cbn [fst snd] in Hi |- *.
+-all: match goal with |- context [?x / 8] => let v := eval vm_compute in (x / 8) in change (x / 8) with v end.
+-all: match type of Hi with context [?x / 8] => let v := eval vm_compute in (x / 8) in change (x / 8) with v in Hi end.
+-all: lia.
++rewrite (ts_zsh _ TB) in Hr.
++assert (CK : forallb (fun rr : Z * Z => andb (Z.leb kLowShadowBeg (shadow_addr (fst rr))) (Z.leb (shadow_addr (fst rr) + snd rr / 8) kHighMemBeg)) Tfib_zero_shadow = true) by (vm_compute; reflexivity).
++pose proof (proj1 (forallb_forall _ _) CK r Hr) as CKr. apply andb_prop in CKr as [CK1 CK2]. apply Z.leb_le in CK1. apply Z.leb_le in CK2.
++apply ok_hshadow. clear - Hi CK1 CK2. lia.
+ Qed.
+ Lemma vis_keep : forall L, Forall (range_vis B ly rd) L -> Forall (range_vis B ly rd') L.
+ Proof. intros L H. exact (Forall_range_vis_keep B ly rd rd' L VIS H). Qed.
+--- A/AFf3.v
++++ A/AFf3.v
+@@ -643,12 +643,10 @@
+ pose proof (SX 0 8 _ _ eq_refl eq_refl ltac:(lia)) as DJ0. unfold zdisjoint in DJ0. cbn [fst snd] in DJ0. pose proof ext_rounded as (ER & _ & QP & _).
+ set (q := (nn + 7) / 8) in *. clear - HD DJ0 KP1 KP2 RZ NN ER Hi MD QP. unfold kPrimResvSize in *. nia.
+ -
+-rewrite (ts_zsh _ TB) in Hr. unfold Tfib_zero_shadow in Hr.
+-apply ok_lowsh. unfold shadow_addr, SHADOW_OFF, kImgEnd, kLowShadowBeg, kHighShadowBeg.
+-destruct Hr as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]]]]; cbn [fst snd] in Hi |- *.
+-all: match goal with |- context [?x0 / 8] => let v := eval vm_compute in (x0 / 8) in change (x0 / 8) with v end.
+-all: match type of Hi with context [?x0 / 8] => let v := eval vm_compute in (x0 / 8) in change (x0 / 8) with v in Hi end.
+-all: clear - Hi; lia.
++rewrite (ts_zsh _ TB) in Hr.
++assert (CK : forallb (fun rr : Z * Z => andb (Z.leb kLowShadowBeg (shadow_addr (fst rr))) (Z.leb (shadow_addr (fst rr) + snd rr / 8) kHighShadowBeg)) Tfib_zero_shadow = true) by (vm_compute; reflexivity).
++pose proof (proj1 (forallb_forall _ _) CK r Hr) as CKr. apply andb_prop in CKr as [CK1 CK2]. apply Z.leb_le in CK1. apply Z.leb_le in CK2.
++apply ok_lowsh. clear - Hi CK1 CK2. lia.
+ Qed.
+ Lemma vis_keep : forall Lr, Forall (range_vis B ly rd) Lr -> Forall (range_vis B ly rd') Lr.
+ Proof. intros Lr H. exact (Forall_range_vis_keep B ly rd rd' Lr VIS H). Qed.
+--- A/AFf4.v
++++ A/AFf4.v
+@@ -893,12 +893,10 @@
+ intros HD. apply (DH_iff (ly_stk_lo ly + 8 * i0) ltac:(rewrite Hs0; replace (s0 * 4096 + 8 * i0) with ((512 * s0 + i0) * 8) by lia; apply Z_mod_mult)) in HD.
+ clear - HD CE M2 Hi0. lia.
+ -
+-rewrite (ts_zsh _ TB) in Hr. unfold Tfib_zero_shadow in Hr.
+-apply ok_imgsh; unfold shadow_addr, SHADOW_OFF, TFIB_IMG_LO, TFIB_IMG_END;
+-destruct Hr as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]]]]; cbn [fst snd] in Hi0 |- *.
+-all: repeat match goal with |- context [?x0 / 8] => let v := eval vm_compute in (x0 / 8) in change (x0 / 8) with v end.
+-all: match type of Hi0 with context [?x0 / 8] => let v := eval vm_compute in (x0 / 8) in change (x0 / 8) with v in Hi0 end.
+-all: clear - Hi0; lia.
++rewrite (ts_zsh _ TB) in Hr.
++assert (CK : forallb (fun rr : Z * Z => andb (Z.leb (SHADOW_OFF + TFIB_IMG_LO / 8) (shadow_addr (fst rr))) (Z.leb (shadow_addr (fst rr) + snd rr / 8) (SHADOW_OFF + TFIB_IMG_END / 8))) Tfib_zero_shadow = true) by (vm_compute; reflexivity).
++pose proof (proj1 (forallb_forall _ _) CK r0 Hr) as CKr. apply andb_prop in CKr as [CK1 CK2]. apply Z.leb_le in CK1. apply Z.leb_le in CK2.
++apply ok_imgsh. clear - Hi0 CK1 CK2. lia.
+ Qed.
+ Lemma vis_zone : forall (e : aexp) (len : Z), range_vis B ly rd (e, len) ->
+ ((zdisjoint (aeval B ly e, len) (MAP, LEN) /\ 0 <= aeval B ly e /\ aeval B ly e + len <= 2 ^ 64) \/
+--- A/AFfl.v
++++ A/AFfl.v
+@@ -825,9 +825,11 @@
+ intros HD. apply (DH_iff (ly_stk_lo ly + 8 * i) ltac:(rewrite Hs0; replace (s0 * 4096 + 8 * i) with ((512 * s0 + i) * 8) by lia; apply Z_mod_mult)) in HD.
+ rewrite Hu in HD. pose proof (KX 8 _ eq_refl ltac:(lia)) as DJ. unfold zdisjoint in DJ. cbn [fst snd] in DJ. lia.
+ -
+-rewrite (ts_zsh _ TB) in Hr. unfold Tfib_zero_shadow in Hr.
++rewrite (ts_zsh _ TB) in Hr.
+ assert (R8 : exists lo len, r = (lo, len) /\ lo mod 8 = 0 /\ TFIB_IMG_LO <= lo /\ lo + len <= TFIB_IMG_END).
+-{ destruct Hr as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]]]]; eexists _, _; (split; [reflexivity|]); unfold TFIB_IMG_LO, TFIB_IMG_END; (split; [reflexivity|]); lia. }
++{ assert (CK : forallb (fun r0 : Z * Z => andb (andb (Z.eqb (fst r0 mod 8) 0) (Z.leb TFIB_IMG_LO (fst r0))) (Z.leb (fst r0 + snd r0) TFIB_IMG_END)) Tfib_zero_shadow = true) by (vm_compute; reflexivity).
++pose proof (proj1 (forallb_forall _ _) CK r Hr) as X. apply andb_prop in X as [X X3]. apply andb_prop in X as [X1 X2].
++apply Z.eqb_eq in X1. apply Z.leb_le in X2. apply Z.leb_le in X3. exists (fst r), (snd r). split; [destruct r; reflexivity|]. exact (conj X1 (conj X2 X3)). }
+ destruct R8 as (lo & len & -> & L8 & L1 & L2). cbn [fst snd] in Hi |- *. clear Hr.
+ apply Z.mod_divide in L8 as [c Hc]; [|lia].
+ assert (E8 : shadow_addr lo + i = shadow_addr (lo + 8 * i)).
+--- A/AFjy.v
++++ A/AFjy.v
+@@ -1592,8 +1592,10 @@
+ -
+ pose proof (proj1 (Forall_forall _ _) (aso_zshadow _ (am_syms _ _ _ _ MA)) r Hr) as (Z1 & Z2 & Z3 & Z4 & Z5).
+ assert (RI : 0x10000 <= fst r /\ fst r + snd r <= 0x5f4000).
+-{ rewrite (ts_zsh B TS) in Hr. unfold Tfib_zero_shadow in Hr. cbn [In] in Hr. clear - Hr MZ.
+-destruct Hr as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]]]]; cbn [fst snd]; zlia. }
++{ rewrite (ts_zsh B TS) in Hr. clear - Hr MZ.
++assert (CK : forallb (fun rr : Z * Z => andb (Z.leb TFIB_IMG_LO (fst rr)) (Z.leb (fst rr + snd rr) TFIB_IMG_END)) Tfib_zero_shadow = true) by (vm_compute; reflexivity).
++pose proof (proj1 (forallb_forall _ _) CK r Hr) as CKr. apply andb_prop in CKr as [CK1 CK2]. apply Z.leb_le in CK1. apply Z.leb_le in CK2.
++unfold TFIB_IMG_LO, TFIB_IMG_END in CK1, CK2. zlia. }
+ apply Z_lowsh. unfold shadow_addr. unfold kLowMemEnd in Z5.
+ pose proof (Z.div_mod (fst r) 8 ltac:(zlia)) as D1. pose proof (Z.div_mod (snd r) 8 ltac:(zlia)) as D2. pose proof (Z.mod_pos_bound (fst r) 8 ltac:(zlia)) as B1.
+ clear - Hi Z1 Z2 Z3 Z4 Z5 RI D1 D2 B1 MZ. unfold SHADOW_OFF. zlia.

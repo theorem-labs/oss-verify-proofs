@@ -1,0 +1,53 @@
+file (fm lib)	numeral	fm meaning	defining name	verdict	drops with it	measured
+A/Bz/A/I_strncmpw.v	0x41e2c	code ___interceptor_strncmp+0x68	isc_cmp_loop	DROP	the whole file I_strncmpw.v (19 definitions incl. icells_sc), and with it FMrt_pre.v icells_sc_of_ARm, icells_sc_of_ARm_clean	symtab A absent, Y absent
+A/Bz/A/I_strncmpw.v	0x41e54	code ___interceptor_strncmp+0x90	isc_cmp_loop	DROP	the whole file I_strncmpw.v (19 definitions incl. icells_sc), and with it FMrt_pre.v icells_sc_of_ARm, icells_sc_of_ARm_clean	symtab A absent, Y absent
+A/Bz/A/I_strncmpw.v	0x41f74	code ___interceptor_strncmp+0x1b0	isc_chk1	DROP	the whole file I_strncmpw.v (19 definitions incl. icells_sc), and with it FMrt_pre.v icells_sc_of_ARm, icells_sc_of_ARm_clean	symtab A absent, Y absent
+A/Bz/A/I_strncmpw.v	0x41fbc	code ___interceptor_strncmp+0x1f8	isc_rip1	DROP	the whole file I_strncmpw.v (19 definitions incl. icells_sc), and with it FMrt_pre.v icells_sc_of_ARm, icells_sc_of_ARm_clean	symtab A absent, Y absent
+A/Bz/A/I_strncmpw.v	0x421b0	code ___interceptor_strncmp+0x3ec	isc_loop1	DROP	the whole file I_strncmpw.v (19 definitions incl. icells_sc), and with it FMrt_pre.v icells_sc_of_ARm, icells_sc_of_ARm_clean	symtab A absent, Y absent
+A/Bz/A/I_strncmpw.v	0x421c0	code ___interceptor_strncmp+0x3fc	isc_loop1	DROP	the whole file I_strncmpw.v (19 definitions incl. icells_sc), and with it FMrt_pre.v icells_sc_of_ARm, icells_sc_of_ARm_clean	symtab A absent, Y absent
+A/Bz/A/I_strncmpw.v	0x421c8	code ___interceptor_strncmp+0x404	isc_rip1	DROP	the whole file I_strncmpw.v (19 definitions incl. icells_sc), and with it FMrt_pre.v icells_sc_of_ARm, icells_sc_of_ARm_clean	symtab A absent, Y absent
+A/Bz/A/I_tramp.v	0x412d4	code __interceptor_trampoline_strncmp+0x0	tramp_strncmp	DROP	I_tramp.v tramp_strncmp (tramp_memcpy / tramp_memset / tramp_step stay)	symtab A absent, Y absent
+A/Bz/A/I_tramp.v	0x412d8	code __interceptor_trampoline_strncasecmp+0x0	tramp_strncasecmp	DROP	I_tramp.v tramp_strncasecmp (tramp_memcpy / tramp_memset / tramp_step stay)	symtab A absent, Y absent
+A/Bz/A/I_tramp.v	0x41dc4	code ___interceptor_strncmp+0x0	tramp_strncmp	DROP	I_tramp.v tramp_strncmp (tramp_memcpy / tramp_memset / tramp_step stay)	symtab A absent, Y absent
+A/Bz/A/I_tramp.v	0x423a0	code ___interceptor_strncasecmp+0x0	tramp_strncasecmp	DROP	I_tramp.v tramp_strncasecmp (tramp_memcpy / tramp_memset / tramp_step stay)	symtab A absent, Y absent
+A/FMH_Base.v	0x20d40	ro .str.1+0x0 STR_empty	STR_empty	DROP	FMH_Base.v STR_empty	fm bytes b'\x00' (1 B incl NUL): exact hits A ['0x102e0', '0x102e1', '0x102e2', '0x102e3', '0x102e4', '0x102e5', '0x10310', '0x10311', '0x10312', '0x10313', '0x10314', '0x10348', '0x10349',
+A/FMH_Base.v	0x20d60	ro .str.2+0x0 FMT_tw	FMT_tw	DROP	FMH_Base.v FMT_tw; FMH_Rt.v FM_SN_FMTS, FmRt, asnprintf_realizes	fm bytes b'<%s>\n    a lv2:Plugin .\n\x00' (25 B incl NUL): exact hits A 0 Y 0; prefix-only hits A 0
+A/FMH_Base.v	0x20da0	ro .str.3+0x0 FMT_tx	FMT_tx	DROP	FMH_Base.v FMT_tx; FMH_Rt.v FM_SN_FMTS, FmRt, asnprintf_realizes	fm bytes b'<%sX>\n    a lv2:Plugin .\n\x00' (26 B incl NUL): exact hits A 0 Y 0; prefix-only hits A 0
+A/FMH_Base.v	0x20de0	ro .str.4+0x0 FMT_t1	FMT_t1	DROP	FMH_Base.v FMT_t1; FMH_Rt.v FM_SN_FMTS, FmRt, asnprintf_realizes	fm bytes b'@prefix p: <%.*s> .\np:%s\n    a lv2:Plugin .\n\x00' (45 B incl NUL): exact hits A 0 Y 0; prefix-only hits A 0
+A/FMH_Base.v	0x20e40	ro .str.5+0x0 FMT_t2	FMT_t2	DROP	FMH_Base.v FMT_t2; FMH_Rt.v FM_SN_FMTS, FmRt, asnprintf_realizes	fm bytes b'PREFIX p: <%.*s>\np:%s\n    a lv2:Plugin .\n\x00' (42 B incl NUL): exact hits A 0 Y 0; prefix-only hits A 0
+A/FMH_Base.v	0x20ea0	ro .str.6+0x0 FMT_t3	FMT_t3	DROP	FMH_Base.v FMT_t3; FMH_Rt.v FM_SN_FMTS, FmRt, asnprintf_realizes	fm bytes b'@prefix : <%.*s> .\n:%s\n    a lv2:Plugin .\n\x00' (43 B incl NUL): exact hits A 0 Y 0; prefix-only hits A 0
+A/FMH_Base.v	0x20f00	ro .str.7+0x0 FMT_t1x	FMT_t1x	DROP	FMH_Base.v FMT_t1x; FMH_Rt.v FM_SN_FMTS, FmRt, asnprintf_realizes	fm bytes b'@prefix p: <%.*s> .\np:%sX\n    a lv2:Plugin .\n\x00' (46 B incl NUL): exact hits A 0 Y 0; prefix-only hits A 0
+A/FMH_Base.v	0x20fa0	ro .str+0x0 FMT_whole	FMT_whole	DROP	FMH_Base.v FMT_whole; FMH_Rt.v FM_SN_FMTS, FmRt, asnprintf_realizes	fm bytes b'<%s>\x00' (5 B incl NUL): exact hits A 0 Y 0; prefix-only hits A 0
+A/FMH_Base.v	0x412d4	code __interceptor_trampoline_strncmp+0x0 PC_strncmp	PC_strncmp	DROP	FMH_Base.v PC_strncmp; FMH_Rt.v FM_SN_FMTS, FmRt, asnprintf_realizes	symtab A absent, Y absent
+A/FMH_Base.v	0x412d8	code __interceptor_trampoline_strncasecmp+0x0 PC_strncasecmp	PC_strncasecmp	DROP	FMH_Base.v PC_strncasecmp; FMH_Rt.v FM_SN_FMTS, FmRt, asnprintf_realizes	symtab A absent, Y absent
+A/FMH_Base.v	0x412dc	code __interceptor_trampoline_strstr+0x0 PC_strstr	PC_strstr	DROP	FMH_Base.v PC_strstr; FMH_Rt.v FM_SN_FMTS, FmRt, asnprintf_realizes	symtab A absent, Y absent
+A/FMH_Base.v	0x80b20	text check_no_overread+0x0 A_check_no_overread	A_check_no_overread	DROP	FMH_Base.v A_check_no_overread	symtab A absent, Y absent
+A/FMH_Base.v	0x80db4	text check_bounded_alloc+0x0 A_check_bounded_alloc	A_check_bounded_alloc	DROP	FMH_Base.v A_check_bounded_alloc	symtab A absent, Y absent
+A/FMH_Base.v	0x80dd8	text check_as_written+0x0 A_check_as_written	A_check_as_written	DROP	FMH_Base.v A_check_as_written	symtab A absent, Y absent
+A/FMH_Base.v	0x80e14	text check_reject_clean+0x0 A_check_reject_clean	A_check_reject_clean	DROP	FMH_Base.v A_check_reject_clean	symtab A absent, Y absent
+A/FMH_Base.v	0x80e44	text check_reject_clean_starved+0x0	A_check_reject_clean_starved	DROP	FMH_Base.v A_check_reject_clean_starved	symtab A absent, Y absent
+A/FMH_Base.v	0x80ea0	text check_round_trip+0x0 A_check_round_trip	A_check_round_trip	DROP	FMH_Base.v A_check_round_trip	symtab A absent, Y absent
+A/FMH_Base.v	0x81130	text expected+0x0 A_expected	A_expected	DROP	FMH_Base.v A_expected	symtab A absent, Y absent
+A/FMH_Base.v	0x81778	text plain+0x0 A_plain	A_plain	DROP	FMH_Base.v A_plain	symtab A absent, Y absent
+A/FMH_Base.v	0x81880	text as_ruled+0x0 A_as_ruled	A_as_ruled	DROP	FMH_Base.v A_as_ruled	symtab A absent, Y absent
+A/FMH_Base.v	0x8193c	text fuzz_malloc+0x0 A_fuzz_malloc	A_fuzz_malloc	DROP	FMH_Base.v A_fuzz_malloc	symtab A absent, Y absent
+A/FMH_Base.v	0x81a78	text fuzz_free+0x0 A_fuzz_free	A_fuzz_free	DROP	FMH_Base.v A_fuzz_free	symtab A absent, Y absent
+A/FMH_Base.v	0x81b94	text fuzz_alloc_live+0x0 A_fuzz_alloc_live	A_fuzz_alloc_live	DROP	FMH_Base.v A_fuzz_alloc_live	symtab A absent, Y absent
+A/FMH_Base.v	0x81ba0	text fuzz_alloc_peak+0x0 A_fuzz_alloc_peak	A_fuzz_alloc_peak	DROP	FMH_Base.v A_fuzz_alloc_peak	symtab A absent, Y absent
+A/FMH_Base.v	0x81bac	text fuzz_alloc_peak_reset+0x0	A_fuzz_alloc_peak_reset	DROP	FMH_Base.v A_fuzz_alloc_peak_reset	symtab A absent, Y absent
+A/FMH_Base.v	0x81bc0	text fuzz_alloc_fail+0x0 A_fuzz_alloc_fail	A_fuzz_alloc_fail	DROP	FMH_Base.v A_fuzz_alloc_fail	symtab A absent, Y absent
+A/FMH_Base.v	0x81be4	text lv2_locate_manifest_names+0x0 A_names	A_names	DROP	FMH_Base.v A_names	symtab A absent, Y absent
+A/FMH_Base.v	0x81c04	text lv2_locate_manifest_readings+0x0 A_readings	A_readings	DROP	FMH_Base.v A_readings	symtab A absent, Y absent
+A/FMH_Base.v	0x82130	text has_prefixed+0x0 A_has_prefixed	A_has_prefixed	DROP	FMH_Base.v A_has_prefixed	symtab A absent, Y absent
+A/FMH_Base.v	0x822c4	text name_char+0x0 A_name_char	A_name_char	DROP	FMH_Base.v A_name_char	symtab A absent, Y absent
+A/FMH_Base.v	0x88350	code isalnum+0x0 PC_isalnum	PC_isalnum	DROP	FMH_Base.v PC_isalnum; FMH_Rt.v FM_SN_FMTS, FmRt, asnprintf_realizes	symtab A absent, Y absent
+A/FMH_Base.v	0x9df80	rw2 g_fail_at+0x0 G_FAIL	G_FAIL	DROP	FMH_Base.v G_FAIL, fm_glob	symtab A absent, Y absent
+A/FMH_Base.v	0x5d4420	rw2 g_peak+0x0 G_PEAK	G_PEAK	DROP	FMH_Base.v G_PEAK, fm_glob	symtab A absent, Y absent
+A/FMH_Base.v	0x5d4440	rw2 g_count+0x0 G_COUNT	G_COUNT	DROP	FMH_Base.v G_COUNT, fm_glob	symtab A absent, Y absent
+A/FMPstat.v	0x9df80	rw2 g_fail_at+0x0	FM_PSTAT_FP	DROP	FMPstat.v FM_PSTAT_FP, inFP_FM_PSTAT_FP (whole file); FMH_Base.v fm_stat	symtab A absent, Y absent
+A/FMPstat.v	0x9df88	rw2 g_fail_at+0x8	FM_PSTAT_FP	DROP	FMPstat.v FM_PSTAT_FP, inFP_FM_PSTAT_FP (whole file); FMH_Base.v fm_stat	symtab A absent, Y absent
+A/FMPstat.v	0x5d4420	rw2 g_peak+0x0	FM_PSTAT_FP	DROP	FMPstat.v FM_PSTAT_FP, inFP_FM_PSTAT_FP (whole file); FMH_Base.v fm_stat	symtab A absent, Y absent
+A/FMPstat.v	0x5d4428	rw2 g_peak+0x8	FM_PSTAT_FP	DROP	FMPstat.v FM_PSTAT_FP, inFP_FM_PSTAT_FP (whole file); FMH_Base.v fm_stat	symtab A absent, Y absent
+A/FMPstat.v	0x5d4440	rw2 g_count+0x0	FM_PSTAT_FP	DROP	FMPstat.v FM_PSTAT_FP, inFP_FM_PSTAT_FP (whole file); FMH_Base.v fm_stat	symtab A absent, Y absent
+A/FMPstat.v	0x5d4448	rw2 g_count+0x8	FM_PSTAT_FP	DROP	FMPstat.v FM_PSTAT_FP, inFP_FM_PSTAT_FP (whole file); FMH_Base.v fm_stat	symtab A absent, Y absent
+A/RT_IImgA.v	0x20d60	ro .str.2+0x0 = fm FMT_tw, fm program format string fuzz_manifest.c:27	A_exact	DROP	the one record row KV 0x1034b 0x20d60 of A_exact (A_exact itself stays: A_img uses it)	fm bytes b'<%s>\n    a lv2:Plugin .\n\x00' (25 B incl NUL): exact hits A 0 Y 0; prefix-only hits A 0

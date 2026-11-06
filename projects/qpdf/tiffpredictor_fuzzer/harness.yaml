@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: qpdf
 harness: tiffpredictor_fuzzer
-rocq: OssFuzzTheorems.qpdf.tiffpredictor_fuzzer
+rocq: OSSVerify.qpdf.tiffpredictor_fuzzer
 origin: upstream
 summary: Feeds the input through two Pl_TIFFPredictor decoders (16 cols/1 sample/8 bit and 16/2/5) into
   Pl_Discard; decoded bytes discarded.

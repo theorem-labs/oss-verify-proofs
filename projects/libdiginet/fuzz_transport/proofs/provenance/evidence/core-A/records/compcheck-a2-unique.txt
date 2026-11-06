@@ -1,0 +1,392 @@
+0x10	A/AFhy.v:93	lit8 0xa4ce8 0x10; lit4 0x5f3b00 0  ; lit8 0x13e4c0 0;
+0x340	A/AE3c.v:1361	fin regs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x340)) (M i).
+104	A/AE2p.v:43	(56, 8%N, STDERR_BUF); (64, 8%N, 0); (72, 8%N, 0x98f08); (80, 8%N, 0x98f00); (88, 8%N, STDERR_BUF); (96, 8%N, 0); (104, 8%N, 0);
+104	A/AE2p.v:37	(72, 8%N, 0x98f08); (80, 8%N, 0x98f00); (88, 8%N, STDERR_BUF); (96, 8%N, 0); (104, 8%N, 0); (112, 8%N, 0); (120, 8%N, 2);
+104	A/AE3m.v:43	(72, 8%N, 0x9990c); (80, 8%N, 0x98f00); (88, 8%N, STDOUT_BUFA); (96, 8%N, STDOUT_BSZ); (104, 8%N, 0); (112, 8%N, 0); (120, 8%N, 1);
+104	A/AE2z.v:124	Definition SAVEDA : list (sv * Z) := [(SOff 1 0, -8); (SOff 8 0, -16); (SOff 9 0, -24); (SOff 18 0, -32); (SLit 279460, -56); (SOff 12 0, -64); (SOff 
+104	A/AE2s.v:119	Definition SAVEDA : list (sv * Z) := [(SOff 1 0, -8); (SOff 8 0, -16); (SOff 9 0, -24); (SOff 18 0, -32); (SLit 279648, -56); (SOff 12 0, -64); (SOff 
+104	A/AFie.v:59	Definition S_Z1 : sstate := Eval vm_compute in pin (runto 0x36d34 S_Z) 11%bv (SOff aBSL (-104)).
+104	A/AFif.v:46	Definition S_ZJ1 : sstate := Eval vm_compute in pin (runto 0x36d34 S_ZJ) 11%bv (SOff aBSL (-104)).
+131072	A/AD1d.v:40	&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072
+131072	Reusable/YK12.v:293	(Z.of_nat (total_arg_bytes_nat (firstn k ev)) <= 131072)%Z.
+131072	A/AFek.v:35	(aTOT, mkAF 2 131072 0); (aN, mkAF 1 4097 0); (aHASH, u64f); (aS2, mkAF TFIB_DEPOT (TFIB_DEPOT + 4 * 2 ^ 20 - 4) 2);
+131072	A/AFjt.v:715	(forall (W5 : world tfibsegs) (c' : config), let md5 := grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) (cfg_model c1) in
+131072	A/AFjt.v:718	(forall x : word, QSv <= bv_unsigned x < QSv + 131072 -> w_H W5 x = false) ->
+131072	A/AFk0.v:1239	(forall x : word, ~ (QSv <= bv_unsigned x < QSv + 131072) -> w_H W5 x = w_H W3 x) ->
+131072	A/AFjt.v:719	(forall x : word, ~ (QSv <= bv_unsigned x < QSv + 131072) -> w_H W5 x = w_H Wy x) ->
+131072	A/AFkp.v:42	(rCSZ, mkAF 16 131072 4);
+131072	A/AFjt.v:764	- apply (YA09.map_contains_intro _ (w64 QSv) (w64 131072) (w64 Qb) (w64 kPtrArrayResv) INQ);
+131072	A/AD1d.v:282	/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072 = true
+131072	A/AFjt.v:720	AI tfibsegs (w_H W5) (w_A W5) md5 -> amwf md5 -> same_io md0 md5 -> eager_used md5 <= eager_used (cfg_model c1) + 131072 ->
+131072	Reusable/YG00.v:24	Definition kPtrArrayCommit : Z := 131072.
+131072	A/AFjt.v:598	Lemma QR_facts : idx = res -> QSv = Qb + 8 * res /\ QSv mod 131072 = Qb mod 131072 /\ QSv mod 4096 = 0 /\ (4096 <= Qb <= QSv /\ zone3cases Qb kPtrArra
+131072	A/AFjt.v:590	Lemma S_V_facts : ss_pc S_V = 0x64f40 /\ sr_get (ss_regs S_V) 17%bv = SLit 222 /\ sr_get (ss_regs S_V) 10%bv = TQ /\ sr_get (ss_regs S_V) 11%bv = SLit
+131072	A/AFjt.v:695	Lemma pru17 : page_round_up_Z 131072 = 131072. Proof. clear. reflexivity. Qed.
+131072	Reusable/YK17.v:11	Lemma rw_bytes_max_ge17 : (131072 <= rw_bytes_max)%Z.
+131072	A/AFjt.v:599	Qb + kPtrArrayResv <= ASAN_CEIL /\ (forall a, QR a <-> QSv <= a < QSv + 131072).
+131072	A/AFif.v:100	SLit 131072; SLit 3; SLit 50; SLit 18446744073709551615; SLit 0; SLit 222] /\
+131072	A/AFk0.v:981	YK0g.covered (vm_noaccess (m_vmmaps (grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) mdV)) ++ m_vm_lazy (grant_md false (Z_to_bv 64 50) (w64 QSv
+131072	A/AFk0.v:987	apply (YG0j.cov_grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) mdV x).
+131072	A/AFjt.v:762	apply (tfib_region_free_reserved QSv 131072); [clear; zlia | clear - F9 F10 Q5 E1; ceil; unfold ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zli
+131072	A/AFjt.v:799	assert (AL1 : QSv <= QSv + 131072) by (clear; zlia).
+131072	A/AFjt.v:801	assert (AL3 : (QSv + 131072) mod page_size = 0).
+131072	A/AFjt.v:754	assert (CEIL : bv_unsigned (w64 QSv) + page_round_up_Z 131072 <= alloc_ceiling).
+131072	A/AFjt.v:756	assert (CEILT : bv_unsigned (w64 QSv) + page_round_up_Z 131072 <= alloc_top (m_vmmaps mdN)).
+131072	A/AFjt.v:812	assert (FRz : forall x : word, ~ QR (bv_unsigned x) -> zfill (w64 QSv) (w64 131072) mem x = mem x).
+131072	A/AFk0.v:1231	assert (HOUT : forall x : word, ~ (mb <= bv_unsigned x < mb + MSv) -> ~ (SHLO mb <= bv_unsigned x < SHHI mb) -> ~ (false = true /\ QSv <= bv_unsigned 
+131072	A/AFk0.v:1336	assert (HOUT : forall x : word, ~ (mb <= bv_unsigned x < mb + MSv) -> ~ (SHLO mb <= bv_unsigned x < SHHI mb) -> ~ (true = true /\ QSv <= bv_unsigned x
+131072	A/AFk0.v:1318	assert (OUT5' : forall x : word, ~ (QSv <= bv_unsigned x < QSv + 131072) -> w_H W5 x = w_H W3 x) by exact OUT5.
+131072	A/AFjt.v:758	assert (PLACE : region_free (vm_reserved (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true /\
+131072	A/AFjt.v:749	assert (R11 : getr regs 11 = Z_to_bv 64 131072) by (rewrite (Hregs 11%bv), H11; reflexivity).
+131072	A/AFjt.v:767	assert (SL1 : eager_used mdN + A_bytes (w_A Wy) + page_round_up_Z 131072 <= vm_limit (m_vmmaps mdN)) by (rewrite pru17; clear - SL0; zlia).
+131072	A/AFk0.v:986	assert (UQb : bv_unsigned (w64 131072) = 131072) by (unfold w64; apply unsigned_lit_small; zlia).
+131072	A/AFjt.v:744	assert (Un : bv_unsigned (w64 131072) = 131072) by (unfold w64; apply unsigned_lit_small; clear; zlia).
+131072	Reusable/YO01.v:47	destruct (Z.ltb_spec (dlen data) 131072) as [L1|L1]; [replace (dlen data <? 67108864) with true by (symmetry; apply Z.ltb_lt; lia); apply t_eq_refl|].
+131072	A/AFjt.v:814	destruct (Z_lt_le_dec (bv_unsigned x) QSv); [left; zlia|]. right. destruct (Z_lt_le_dec (bv_unsigned x) (QSv + 131072)); [exfalso; apply Hx; apply EQx
+131072	A/AFjt.v:803	destruct (allow_expose tfibsegs Wy md5 QSv (QSv + 131072) AL1 AL2 AL3 (proj1 CG) ltac:(rewrite SH3; clear - EG SL0; zlia)) as (LE5 & A5 & AB5 & VIS5 &
+131072	A/AFjt.v:775	destruct (commit_node3 tfibsegs false regs (Z_to_bv 64 0x64f40) mem (seg_rom tfibsegs) mdN (Z_to_bv 64 50) (w64 QSv) 131072
+131072	A/AFk0.v:1003	eager_used md5 <= eager_used mdV + 131072 ->
+131072	A/AD1f.v:192	eapply (KZ _ 500%nat 1048576 131072 B12 eq_refl HNB ltac:(lia) (proj1 (proj2 kz_facts))). reflexivity.
+131072	A/AFjt.v:759	map_contains (vm_maps (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true).
+131072	A/AFjt.v:822	pose proof (at_N_cont Wy W5 md5 WIN (PSR W5 SH2 (fun m => R m /\ ZQF W5 m)) S_V TQ (w64 QSv) QR (zfill (w64 QSv) (w64 131072) mem) ms E'
+131072	A/AFjt.v:769	pose proof (commit_AI tfibsegs (w_H Wy) (w_A Wy) mdN false (Z_to_bv 64 50) (w64 QSv) 131072 HAI MWF0 nores50 ALQ ltac:(clear; zlia) CEILT PLACE SL1) a
+131072	A/AFjt.v:770	pose proof (commit_eager tfibsegs (w_H Wy) (w_A Wy) mdN false (Z_to_bv 64 50) (w64 QSv) 131072 HAI MWF0 nores50 ALQ ltac:(clear; zlia) CEILT PLACE SL1
+131072	A/AFjt.v:771	pose proof (commit_nonempty false (Z_to_bv 64 50) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) mdN ltac:(rewrite pru17; unfold w64 in Un; rewrite U
+131072	A/AFjt.v:773	pose proof (destroyed_AI tfibsegs (w_H Wy) (w_A Wy) mdN (w64 QSv) 131072 HAI MWF0 ALQ ltac:(clear; zlia) CEILT) as [CD _].
+131072	A/AFjt.v:798	pose proof (grant_piece_shape (w64 QSv) (w64 131072) mdN) as (SH1 & SH2' & SH3 & SH4). cbv zeta in SH1, SH2', SH3, SH4. fold md5 in SH1, SH2', SH3, SH
+131072	Reusable/YO01.v:49	replace (2 * 131072) with 262144 by reflexivity.
+131072	Reusable/YO01.v:46	replace (2 * 65536) with 131072 by reflexivity.
+131072	Reusable/YO01.v:48	replace (67108864 <=? 131072) with false by reflexivity.
+131072	Reusable/YG07.v:247	rewrite Eidx. replace 131072 with (8 * 16384) by reflexivity. rewrite Z.mul_mod_distr_l by lia. rewrite S2. reflexivity. }
+131072	A/AFjt.v:774	rewrite pru17 in CD. fold (w64 131072) in CD.
+131072	A/AFjt.v:772	rewrite pru17 in CG, BUD, EG, NZg. fold (w64 131072) in CG, BUD, EG, NZg.
+131072	A/AFjt.v:778	rewrite pru17 in OUT. fold (w64 131072) in OUT.
+131072	A/AFjt.v:804	set (W5 := wallow tfibsegs Wy QSv (QSv + 131072) AL1 AL2 AL3) in *.
+131072	A/AFjt.v:797	set (md5 := grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) mdN) in *.
+131072	A/AFjt.v:605	split; [exact E1|]. split. { rewrite E1, Hq. replace (Qb + 8 * (q * 16384)) with (Qb + q * 131072) by zlia. rewrite Z.add_mod, Z_mod_mult, Z.add_0_r, 
+131072	A/AFjt.v:717	w_A W5 = (QSv, QSv + 131072) :: w_A Wy ->
+131072	A/AFjy.v:745	w_ABf : A_bytes (w_A Wz) = A_bytes (w_A W) + MSv + (SHHI mb - SHLO mb) + (if grow then 131072 else 0);
+131072	A/AFel.v:267	{ change (2 ^ 16) with 65536. change (2 ^ 17) with 131072 in Ht. destruct (Z_lt_le_dec t 65536); [left; apply Z.div_small; lia | right].
+131072	A/AFk0.v:1064	~ (grow = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H Wz x = w_H W x) ->
+131072	A/AFjz.v:1015	~ (grow = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H Wz x = w_H W x.
+156	A/AE34.v:28	(0x44a08, 156%nat); (0x44c78, 157%nat); (0x455d0, 729%nat); (0x46134, 45%nat); (0x46500, 54%nat);
+157	A/AE34.v:28	(0x44a08, 156%nat); (0x44c78, 157%nat); (0x455d0, 729%nat); (0x46134, 45%nat); (0x46500, 54%nat);
+16	A/AE2y.v:72	(0xa4088, 40, [(0, 8%N, 0xaa1f8); (8, 8%N, 0xac9f8); (16, 8%N, 0xad6e8); (24, 8%N, 0xad6f0); (32, 8%N, 0xad6e0)]);
+16	A/AE2y.v:75	(0xa5ef0, 16, [(0, 8%N, 0x9d210); (8, 8%N, 0x9d614)]);
+16	A/AE2y.v:74	(0xad6e0, 24, [(0, 8%N, 0x7fffffffffff); (8, 8%N, 0); (16, 8%N, 0)]);
+16	A/AE36.v:94	(bv_unsigned (ew E 2) - 16 <= a < bv_unsigned (ew E 2)) \/ a = 0xa9390.
+16	A/AB1b.v:99	(mkst regs' (0x9d314 : word) (MK (kk + 16 * (Z.of_nat q + 1))) rom)
+16	A/AB18.v:237	(mkst regs' (0x9d36c : word) (MK (k + 16 * (Z.of_nat q + 1))) rom)
+16	A/AB18.v:295	(mkst regs' (0x9d36c : word) (MK (n - (n - k) mod 16)) rom)
+16	A/AB1c.v:95	(mkst regs' (0x9d41c : word) (MK (kk + 16 * (Z.of_nat q + 1))) rom)
+16	A/AB1a.v:101	(mkst regs' (0x9d4b0 : word) (MK (kk + 16 * (Z.of_nat q + 1))) rom)
+16	A/AB1d.v:276	(mkst regs' (0x9d5d0 : word) (MK (k + Z.land m 16 + Z.land m 8 + Z.land m 4)) rom)
+16	A/AB1a.v:164	(mkst regs' (0x9d5d0 : word) (MK (kk + Z.land m 16 + Z.land m 8 + Z.land m 4)) rom)
+16	A/AFfw.v:51	(ss_after_stretch SS_ML (ss_mem SS_ML) 102 [11; 12; 13; 14; 15; 16]%bv 0x365a0))))) F_R).
+16	A/AE3l.v:314	(vf_icpt_memcpy B LAWS AMEMCPY W E4 vr_st5 ms5 _ ly S sp0 vr_r05 vr_rest5 98 RA_FX OSP_FX (-330) (SLit 104474) (104474) 16 vr_zs5
+16	A/AB1b.v:125	- eapply (runs_trans TSEGS _ (fun r => mkst r (0x9d2b4 : word) (MK (kk + 16)) rom)
+16	A/AB18.v:261	- eapply (runs_trans TSEGS _ (fun r => mkst r (0x9d33c : word) (MK (k + 16)) rom)
+16	A/AB1c.v:121	- eapply (runs_trans TSEGS _ (fun r => mkst r (0x9d3bc : word) (MK (kk + 16)) rom)
+16	A/AB1a.v:127	- eapply (runs_trans TSEGS _ (fun r => mkst r (0x9d450 : word) (MK (kk + 16)) rom)
+16	A/AFgi.v:280	0xadc00 <= IMv /\ IMv + 16 <= TFIB_IAL_W /\ IMv = 0xadc00 + 8 * (p / 2 ^ 32) /\
+16	A/AFfw.v:48	Definition F_R : facts := Eval vm_compute in (ss_facts (ss_after_stretch SS_P (ss_mem SS_P) 102 [11; 12; 13; 14; 15; 16]%bv 0x365a0)).
+16	A/AFk8.v:36	Definition R3_Q16a : sstate := Eval vm_compute in runto 0x3735c (arm BC_LTU false (SLit 16) (SOff rCL 0) R3_Pn31).
+16	A/AFk8.v:38	Definition R3_Qmida : sstate := Eval vm_compute in runto 0x3739c (arm BC_LTU true (SLit 16) (SOff rCL 0) R3_Pn31).
+16	A/AE2z.v:124	Definition SAVEDA : list (sv * Z) := [(SOff 1 0, -8); (SOff 8 0, -16); (SOff 9 0, -24); (SOff 18 0, -32); (SLit 279460, -56); (SOff 12 0, -64); (SOff 
+16	A/AE2s.v:119	Definition SAVEDA : list (sv * Z) := [(SOff 1 0, -8); (SOff 8 0, -16); (SOff 9 0, -24); (SOff 18 0, -32); (SLit 279648, -56); (SOff 12 0, -64); (SOff 
+16	A/AFig.v:35	Definition Uo_L6hi : sstate := Eval vm_compute in runto 0x3285c (armR BC_GEU false 16 22 Uo_L6h2).
+16	Reusable/YG00.v:20	Definition kChunkHeaderSize : Z := 16.
+16	A/AE6t.v:90	Definition p1_0_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_0_e2 [((16%bv : bv 5), SOff 35 0)] 0x528d0) [((17%bv : bv 5), SOff 36 0
+16	A/AE79.v:90	Definition p1_0_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_0_e2 [((16%bv : bv 5), SOff 35 0)] 0x52b14) [((17%bv : bv 5), SOff 36 0
+16	A/AE6t.v:111	Definition p1_1_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_1_e2 [((16%bv : bv 5), SOff 35 0)] 0x528d0) [((17%bv : bv 5), SOff 36 0
+16	A/AE79.v:111	Definition p1_1_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_1_e2 [((16%bv : bv 5), SOff 35 0)] 0x52b14) [((17%bv : bv 5), SOff 36 0
+16	A/AE6t.v:132	Definition p1_2_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_2_e2 [((16%bv : bv 5), SOff 35 0)] 0x528d0) [((17%bv : bv 5), SOff 36 0
+16	A/AE79.v:132	Definition p1_2_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_2_e2 [((16%bv : bv 5), SOff 35 0)] 0x52b14) [((17%bv : bv 5), SOff 36 0
+16	A/AE6t.v:153	Definition p1_3_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_3_e2 [((16%bv : bv 5), SOff 35 0)] 0x528d0) [((17%bv : bv 5), SOff 36 0
+16	A/AE79.v:153	Definition p1_3_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_3_e2 [((16%bv : bv 5), SOff 35 0)] 0x52b14) [((17%bv : bv 5), SOff 36 0
+16	A/AE6t.v:174	Definition p1_4_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_4_e2 [((16%bv : bv 5), SOff 35 0)] 0x528d0) [((17%bv : bv 5), SOff 36 0
+16	A/AE79.v:174	Definition p1_4_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_4_e2 [((16%bv : bv 5), SOff 35 0)] 0x52b14) [((17%bv : bv 5), SOff 36 0
+16	A/AE6t.v:195	Definition p1_5_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_5_e2 [((16%bv : bv 5), SOff 35 0)] 0x528d0) [((17%bv : bv 5), SOff 36 0
+16	A/AE79.v:195	Definition p1_5_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_5_e2 [((16%bv : bv 5), SOff 35 0)] 0x52b14) [((17%bv : bv 5), SOff 36 0
+16	A/AE6t.v:216	Definition p1_6_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_6_e2 [((16%bv : bv 5), SOff 35 0)] 0x528d0) [((17%bv : bv 5), SOff 36 0
+16	A/AE79.v:216	Definition p1_6_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_6_e2 [((16%bv : bv 5), SOff 35 0)] 0x52b14) [((17%bv : bv 5), SOff 36 0
+16	A/AE6t.v:237	Definition p1_7_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_7_e2 [((16%bv : bv 5), SOff 35 0)] 0x528d0) [((17%bv : bv 5), SOff 36 0
+16	A/AE79.v:237	Definition p1_7_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_7_e2 [((16%bv : bv 5), SOff 35 0)] 0x52b14) [((17%bv : bv 5), SOff 36 0
+16	A/AE6t.v:258	Definition p1_8_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_8_e2 [((16%bv : bv 5), SOff 35 0)] 0x528d0) [((17%bv : bv 5), SOff 36 0
+16	A/AE79.v:258	Definition p1_8_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc p1_8_e2 [((16%bv : bv 5), SOff 35 0)] 0x52b14) [((17%bv : bv 5), SOff 36 0
+16	A/AE6k.v:155	Definition q1_0_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_0_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), 
+16	A/AE30.v:156	Definition q1_0_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_0_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), 
+16	A/AE6k.v:154	Definition q1_0_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_0_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0
+16	A/AE30.v:155	Definition q1_0_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_0_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0
+16	A/AE6k.v:194	Definition q1_1_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_1_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), 
+16	A/AE30.v:195	Definition q1_1_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_1_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), 
+16	A/AE6k.v:193	Definition q1_1_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_1_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0
+16	A/AE30.v:194	Definition q1_1_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_1_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0
+16	A/AE6k.v:233	Definition q1_2_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_2_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), 
+16	A/AE30.v:234	Definition q1_2_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_2_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), 
+16	A/AE6k.v:232	Definition q1_2_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_2_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0
+16	A/AE30.v:233	Definition q1_2_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_2_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0
+16	A/AE6k.v:272	Definition q1_3_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_3_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), 
+16	A/AE30.v:273	Definition q1_3_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_3_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), 
+16	A/AE6k.v:271	Definition q1_3_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_3_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0
+16	A/AE30.v:272	Definition q1_3_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_3_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0
+16	A/AE6k.v:311	Definition q1_4_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_4_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), 
+16	A/AE30.v:312	Definition q1_4_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_4_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), 
+16	A/AE6k.v:310	Definition q1_4_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_4_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0
+16	A/AE30.v:311	Definition q1_4_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_4_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0
+16	A/AE6k.v:350	Definition q1_5_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_5_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), 
+16	A/AE30.v:351	Definition q1_5_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_5_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), 
+16	A/AE6k.v:349	Definition q1_5_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_5_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0
+16	A/AE30.v:350	Definition q1_5_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_5_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0
+16	A/AE6k.v:389	Definition q1_6_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_6_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), 
+16	A/AE30.v:390	Definition q1_6_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_6_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), 
+16	A/AE6k.v:388	Definition q1_6_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_6_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0
+16	A/AE30.v:389	Definition q1_6_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_6_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0
+16	A/AE6k.v:428	Definition q1_7_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_7_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), 
+16	A/AE30.v:429	Definition q1_7_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_7_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), 
+16	A/AE6k.v:427	Definition q1_7_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_7_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0
+16	A/AE30.v:428	Definition q1_7_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_7_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0
+16	A/AE6k.v:467	Definition q1_8_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_8_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), 
+16	A/AE30.v:468	Definition q1_8_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc q1_8_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), 
+16	A/AE6k.v:466	Definition q1_8_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_8_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0
+16	A/AE30.v:467	Definition q1_8_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc q1_8_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0
+16	A/AFi0.v:43	Definition st_Y (ss : sstate) : sstate := arm BC_EQ false (SOff aU (-16)) (SOff aK 0) (runto 0x32a1c ss).
+16	A/AFi0.v:44	Definition st_Z (ss : sstate) : sstate := arm BC_LTU false (SOff aU (-16)) (SOff aK 16) (runto 0x32a24 ss).
+16	A/AB1q.v:13	Definition tfibtbl_rtA_build : ctable := build_table tfibsegs 0x9eeb8 7%nat (build_table tfibsegs 0x9de04 9%nat (build_table tfibsegs 0x936ec 3%nat (b
+16	A/AE6k.v:590	Definition w1_0_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_0_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+16	A/AE30.v:591	Definition w1_0_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_0_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+16	A/AE6k.v:589	Definition w1_0_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_0_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+16	A/AE30.v:590	Definition w1_0_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_0_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+16	A/AE6k.v:611	Definition w1_1_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_1_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+16	A/AE30.v:612	Definition w1_1_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_1_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+16	A/AE6k.v:610	Definition w1_1_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_1_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+16	A/AE30.v:611	Definition w1_1_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_1_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+16	A/AE6k.v:632	Definition w1_2_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_2_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+16	A/AE30.v:633	Definition w1_2_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_2_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+16	A/AE6k.v:631	Definition w1_2_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_2_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+16	A/AE30.v:632	Definition w1_2_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_2_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+16	A/AE6k.v:653	Definition w1_3_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_3_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+16	A/AE30.v:654	Definition w1_3_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_3_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+16	A/AE6k.v:652	Definition w1_3_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_3_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+16	A/AE30.v:653	Definition w1_3_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_3_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+16	A/AE6k.v:674	Definition w1_4_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_4_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+16	A/AE30.v:675	Definition w1_4_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_4_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+16	A/AE6k.v:673	Definition w1_4_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_4_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+16	A/AE30.v:674	Definition w1_4_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_4_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+16	A/AE6k.v:695	Definition w1_5_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_5_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+16	A/AE30.v:696	Definition w1_5_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_5_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+16	A/AE6k.v:694	Definition w1_5_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_5_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+16	A/AE30.v:695	Definition w1_5_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_5_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+16	A/AE6k.v:716	Definition w1_6_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_6_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+16	A/AE30.v:717	Definition w1_6_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_6_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+16	A/AE6k.v:715	Definition w1_6_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_6_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+16	A/AE30.v:716	Definition w1_6_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_6_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+16	A/AE6k.v:737	Definition w1_7_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_7_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+16	A/AE30.v:738	Definition w1_7_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_7_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+16	A/AE6k.v:736	Definition w1_7_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_7_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+16	A/AE30.v:737	Definition w1_7_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_7_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+16	A/AE6k.v:758	Definition w1_8_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_8_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+16	A/AE30.v:759	Definition w1_8_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_8_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+16	A/AE6k.v:757	Definition w1_8_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_8_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+16	A/AE30.v:758	Definition w1_8_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_8_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+16	A/AFfw.v:54	Goal facts_leb F_R (ss_facts (ss_after_stretch SS_ML (ss_mem SS_ML) 102 [11; 12; 13; 14; 15; 16]%bv 0x365a0)) = true. Proof. vm_compute. reflexivity. 
+16	A/AE6k.v:156	Lemma r_q1_0_3 : RUN (set_regs_pc (set_regs_pc q1_0_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0)] 0x52450) = (q1_0_e3, RS_st
+16	A/AE30.v:157	Lemma r_q1_0_3 : RUN (set_regs_pc (set_regs_pc q1_0_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0)] 0x52e20) = (q1_0_e3, RS_st
+16	A/AE6k.v:195	Lemma r_q1_1_3 : RUN (set_regs_pc (set_regs_pc q1_1_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0)] 0x52450) = (q1_1_e3, RS_st
+16	A/AE30.v:196	Lemma r_q1_1_3 : RUN (set_regs_pc (set_regs_pc q1_1_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0)] 0x52e20) = (q1_1_e3, RS_st
+16	A/AE6k.v:234	Lemma r_q1_2_3 : RUN (set_regs_pc (set_regs_pc q1_2_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0)] 0x52450) = (q1_2_e3, RS_st
+16	A/AE30.v:235	Lemma r_q1_2_3 : RUN (set_regs_pc (set_regs_pc q1_2_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0)] 0x52e20) = (q1_2_e3, RS_st
+16	A/AE6k.v:273	Lemma r_q1_3_3 : RUN (set_regs_pc (set_regs_pc q1_3_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0)] 0x52450) = (q1_3_e3, RS_st
+16	A/AE30.v:274	Lemma r_q1_3_3 : RUN (set_regs_pc (set_regs_pc q1_3_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0)] 0x52e20) = (q1_3_e3, RS_st
+16	A/AE6k.v:312	Lemma r_q1_4_3 : RUN (set_regs_pc (set_regs_pc q1_4_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0)] 0x52450) = (q1_4_e3, RS_st
+16	A/AE30.v:313	Lemma r_q1_4_3 : RUN (set_regs_pc (set_regs_pc q1_4_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0)] 0x52e20) = (q1_4_e3, RS_st
+16	A/AE6k.v:351	Lemma r_q1_5_3 : RUN (set_regs_pc (set_regs_pc q1_5_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0)] 0x52450) = (q1_5_e3, RS_st
+16	A/AE30.v:352	Lemma r_q1_5_3 : RUN (set_regs_pc (set_regs_pc q1_5_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0)] 0x52e20) = (q1_5_e3, RS_st
+16	A/AE6k.v:390	Lemma r_q1_6_3 : RUN (set_regs_pc (set_regs_pc q1_6_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0)] 0x52450) = (q1_6_e3, RS_st
+16	A/AE30.v:391	Lemma r_q1_6_3 : RUN (set_regs_pc (set_regs_pc q1_6_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0)] 0x52e20) = (q1_6_e3, RS_st
+16	A/AE6k.v:429	Lemma r_q1_7_3 : RUN (set_regs_pc (set_regs_pc q1_7_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0)] 0x52450) = (q1_7_e3, RS_st
+16	A/AE30.v:430	Lemma r_q1_7_3 : RUN (set_regs_pc (set_regs_pc q1_7_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0)] 0x52e20) = (q1_7_e3, RS_st
+16	A/AE6k.v:468	Lemma r_q1_8_3 : RUN (set_regs_pc (set_regs_pc q1_8_e2 [((15%bv : bv 5), SOff 35 0)] 0x5244c) [((16%bv : bv 5), SOff 36 0)] 0x52450) = (q1_8_e3, RS_st
+16	A/AE30.v:469	Lemma r_q1_8_3 : RUN (set_regs_pc (set_regs_pc q1_8_e2 [((15%bv : bv 5), SOff 35 0)] 0x52e1c) [((16%bv : bv 5), SOff 36 0)] 0x52e20) = (q1_8_e3, RS_st
+16	A/AE6k.v:591	Lemma r_w1_0_3 : RUN (set_regs_pc (set_regs_pc w1_0_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_0_e3, RS_st
+16	A/AE30.v:592	Lemma r_w1_0_3 : RUN (set_regs_pc (set_regs_pc w1_0_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_0_e3, RS_st
+16	A/AE6k.v:612	Lemma r_w1_1_3 : RUN (set_regs_pc (set_regs_pc w1_1_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_1_e3, RS_st
+16	A/AE30.v:613	Lemma r_w1_1_3 : RUN (set_regs_pc (set_regs_pc w1_1_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_1_e3, RS_st
+16	A/AE6k.v:633	Lemma r_w1_2_3 : RUN (set_regs_pc (set_regs_pc w1_2_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_2_e3, RS_st
+16	A/AE30.v:634	Lemma r_w1_2_3 : RUN (set_regs_pc (set_regs_pc w1_2_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_2_e3, RS_st
+16	A/AE6k.v:654	Lemma r_w1_3_3 : RUN (set_regs_pc (set_regs_pc w1_3_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_3_e3, RS_st
+16	A/AE30.v:655	Lemma r_w1_3_3 : RUN (set_regs_pc (set_regs_pc w1_3_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_3_e3, RS_st
+16	A/AE6k.v:675	Lemma r_w1_4_3 : RUN (set_regs_pc (set_regs_pc w1_4_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_4_e3, RS_st
+16	A/AE30.v:676	Lemma r_w1_4_3 : RUN (set_regs_pc (set_regs_pc w1_4_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_4_e3, RS_st
+16	A/AE6k.v:696	Lemma r_w1_5_3 : RUN (set_regs_pc (set_regs_pc w1_5_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_5_e3, RS_st
+16	A/AE30.v:697	Lemma r_w1_5_3 : RUN (set_regs_pc (set_regs_pc w1_5_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_5_e3, RS_st
+16	A/AE6k.v:717	Lemma r_w1_6_3 : RUN (set_regs_pc (set_regs_pc w1_6_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_6_e3, RS_st
+16	A/AE30.v:718	Lemma r_w1_6_3 : RUN (set_regs_pc (set_regs_pc w1_6_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_6_e3, RS_st
+16	A/AE6k.v:738	Lemma r_w1_7_3 : RUN (set_regs_pc (set_regs_pc w1_7_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_7_e3, RS_st
+16	A/AE30.v:739	Lemma r_w1_7_3 : RUN (set_regs_pc (set_regs_pc w1_7_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_7_e3, RS_st
+16	A/AE6k.v:759	Lemma r_w1_8_3 : RUN (set_regs_pc (set_regs_pc w1_8_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_8_e3, RS_st
+16	A/AE30.v:760	Lemma r_w1_8_3 : RUN (set_regs_pc (set_regs_pc w1_8_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_8_e3, RS_st
+16	A/AFl2.v:90	SOff 10 16; SOff aZ 0; SOff aHAV 0; SOff (S aHAV) 0; SLit 0x13c4a0; SOff 10 0; SLit 0; SLit 1; SOff aTOP 0; SOff aT 0; SOff aT 2047; SOff 25 0; SOff 2
+16	A/AFel.v:190	U E (SAlu ALU_ADD (SLit 5826792) (SAlu ALU_SLL (SAlu ALU_SRL (SOff 35%nat 1) (SLit 16)) (SLit 3))) = 5826792.
+16	A/AFel.v:183	U E (SAlu ALU_ADD (SLit 5826792) (SAlu ALU_SLL (SAluw ALU_SRL (SOff 42%nat 0) (SLit 16)) (SLit 3))) = 5826792.
+16	A/AFel.v:261	U E (SLit 1566944) = U E (SAlu ALU_ADD (SAlu ALU_ADD (SLit 1566920) (SAlu ALU_AND (SAlu ALU_SRL (SOff 34%nat 0) (SLit 16)) (SLit (-16)))) (SLit 24)).
+16	A/AE2p.v:36	[(0, 4%N, 5); (4, 4%N, 0); (8, 8%N, 0); (16, 8%N, 0); (24, 8%N, 0x98dbc); (32, 8%N, 0); (40, 8%N, 0); (48, 8%N, 0); (56, 8%N, 0); (64, 8%N, 0);
+16	A/AE2p.v:42	[(0, 4%N, 5); (4, 4%N, 0); (8, 8%N, 0); (16, 8%N, 0); (24, 8%N, 0x98dbc); (32, 8%N, STDERR_BUF); (40, 8%N, STDERR_BUF); (48, 8%N, 0);
+16	A/AE3m.v:48	[(0, 4%N, 5); (4, 4%N, 0); (8, 8%N, 0); (16, 8%N, 0); (24, 8%N, 0x98dbc); (32, 8%N, STDOUT_BUFA + STDOUT_BSZ); (48, 8%N, 0);
+16	A/AFl2.v:110	[SLit 0; SLit 0x5b274; SOff 2 (-144); SOff 3 0; SLit TFIB_TP; SOff 10 2047; SOff 12 0; SOff 7 0; SLit 30; SOff aTOP (-16); SOff 10 0; SOff 11 0; SOff 
+16	A/AFgx.v:71	[YP09.mkChunk 0 (CVal 8 (SOff 46%nat 0)); YP09.mkChunk 8 (CVal 8 (SOff 35%nat 0)); YP09.mkChunk 16 (CVal 8 (SOff 42%nat 0)); YP09.mkChunk 24 (CVal 8 (
+16	A/AE36.v:205	assert (AV : forall a, 0 <= a < 2 ^ 64 -> ~ (sp0 - 16 <= a < sp0) -> a <> 0xa9390 -> aview tfibsegs (w_H W) (ms_mem ms2) a = aview tfibsegs (w_H W) me
+16	A/AE36.v:197	assert (W1 : forall x : word, ~ ((sp0 - 16 <= bv_unsigned x < sp0) \/ bv_unsigned x = 0xa9390) -> ms_mem ms2 x = mem x).
+16	A/AE36.v:201	assert (W1r : forall x : word, ~ ((sp0 - 16 <= bv_unsigned x < sp0) \/ bv_unsigned x = 0xa9390) -> mrestrict (w_H W) (ms_mem ms2) x = mrestrict (w_H W
+16	A/AE3l.v:311	destruct (vf_shadow_xfer B ly S W sp0 mem md (ms_mem ms5) _ FMT_refused 32 104474 16 VI5 Hstk Hra_f Hhull_f
+16	A/AB1d.v:306	eapply (runs_trans TSEGS _ (fun r => mkst r (0x9d548 : word) (MK (k + 16)) rom)
+16	A/AB1a.v:194	eapply (runs_trans TSEGS _ (fun r => mkst r (0x9d548 : word) (MK (kk + 16)) rom)
+16	A/AB17.v:125	eapply (runs_trans TSEGS _ (fun r => mkst r (0x9d5d0 : word) (MK (k + Z.land m 16 + Z.land m 8 + Z.land m 4)) rom)
+16	A/AFgx.v:117	fh_frames : val_mem tfibsegs m0 sp0 8 vs2 /\ val_mem tfibsegs m0 (sp0 + 8) 8 m /\ val_mem tfibsegs m0 (sp0 + 16) 8 cbp /\ val_mem tfibsegs m0 (sp0 + 2
+16	A/AE35.v:62	icpt_rodata ++ [(0xa4080, 8, [(0, 8%N, 0x13e528)]); (0x13e57c, 1, [(0, 1%N, 1)]); (0xa5de8, 16, [(0, 8%N, 0x9cb5c); (8, 8%N, 0x99a4c)])].
+16	A/AB1d.v:109	msteps TSEGS (mkst regs (0x9d4bc : word) (MK k) rom) (mkst regs' (0x9d548 : word) (MK (k + 16)) rom)
+16	A/AFih.v:77	noconds (forget (fst (sym_run_toN_sh tfibsegs tfibtbl_rtD FUEL 0x68040 (arm BC_GEU tk (dia_lhs ss) (SLit 10) ss))) k [16%bv]).
+16	A/AFk8.v:90	ss_pc R3_Pn31 = 0x37340 /\ snd (sym_run_toN_sh tfibsegs tfibtbl_rtA FUEL 0x7ffffff0 (arm BC_EQ false (SOff rCL 0) (SLit 31) R3_P)) = RS_stopped (SR_br
+180	A/AE34.v:27	[ (0x42ce4, 38%nat);  (0x43008, 165%nat); (0x43ab4, 549%nat); (0x44348, 94%nat); (0x444c0, 180%nat);
+20	A/AFel.v:150	(1632472 + ((v * 2 ^ 44) mod 2 ^ 64 / 2 ^ 42) mod 2 ^ 64) mod 2 ^ 64 = 1632472 + 4 * (v mod 2 ^ 20).
+20	A/AFk5.v:472	(ss_after_stretch ss (ss_mem ss) k [12; 13; 20]%bv 0x37180)
+20	A/AE2z.v:124	Definition SAVEDA : list (sv * Z) := [(SOff 1 0, -8); (SOff 8 0, -16); (SOff 9 0, -24); (SOff 18 0, -32); (SLit 279460, -56); (SOff 12 0, -64); (SOff 
+20	A/AE2s.v:119	Definition SAVEDA : list (sv * Z) := [(SOff 1 0, -8); (SOff 8 0, -16); (SOff 9 0, -24); (SOff 18 0, -32); (SLit 279648, -56); (SOff 12 0, -64); (SOff 
+20	A/AFie.v:49	Definition S_P8 : sstate := Eval vm_compute in arm BC_NE false (SAlu ALU_SRL (SOff aNCH 0) (SLit 20)) (SLit 0) (runto 0x36c34 S_P7).
+20	Reusable/YG0f.v:224	Definition d_tab_words : Z := 2 ^ 20.
+20	Reusable/YG00.v:36	Definition kStackSizeLog : Z := 20.
+20	A/AFel.v:161	Lemma s2_of_fin : forall E, U E X_S2 = 1632472 + 4 * ((U E X_FIN) mod 2 ^ 20).
+20	A/AFko.v:448	apply (st_ok_after_stretch tfibsegs k E ss (restrict (w_H W) ms) regs' m1 (ss_mem ss) 0x37180 [12; 13; 20]%bv HS Hrv);
+20	A/AFk5.v:511	apply (st_ok_after_stretch tfibsegs k E ss (restrict (w_H Wx) ms) regs' m1 (ss_mem ss) 0x37180 [12; 13; 20]%bv HS Hrv);
+20	A/AFk8.v:96	ss_pc R3_M5a = 0x6ee8c /\ sr_get (ss_regs R3_M5a) 11%bv = SAlu ALU_ADD (SOff rRB 0) (SOff rMU 0) /\ sr_get (ss_regs R3_M5a) 20%bv = SAlu ALU_ADD (SOff
+206	A/AD28.v:67	= [(SLit 2, SOff 0 (-128), SLit 0x81054); (SLit 2, SOff 0 (-128), SLit 0x81054); (SOff 206 0, SOff 0 (-48), SLit 0x932fc);
+208	A/AD2e.v:70	/\ length PM_piecesCM = 74%nat /\ length (WIN (-208) :: rsPL) = 74%nat.
+208	A/AD2e.v:69	Lemma PM_pieces_eq : concat PM_piecesL = L_mem /\ concat PM_piecesCM = CM_mem /\ length PM_piecesL = 74%nat /\ length (WIN (-208) :: rsPM) = 74%nat
+208	A/AD2f.v:156	[SLit 0; SLit RA_LLVMF; SOff 0 (-208); SLit 67584; SLit 6241008; SOff 167 0; SOff 168 0; SOff 169 0;
+209280	Reusable/YG00.v:538	mcheck (2 * (kBatchBytes * Z.of_nat (length (qc_list g))) <=? qc_bytes g) 209280   ;;
+209280	A/AFeu.v:161	mcheck (2 * (kBatchBytes * Z.of_nat (length (qc_list g))) <=? qc_bytes g) 209280 ;;
+24576	Reusable/YG0f.v:41	Example fs_flags_off_ok : map fs_flags_off [0; 1; 2; 10] = [0; 16384; 24576; 32736] /\
+32	A/AE2y.v:72	(0xa4088, 40, [(0, 8%N, 0xaa1f8); (8, 8%N, 0xac9f8); (16, 8%N, 0xad6e8); (24, 8%N, 0xad6f0); (32, 8%N, 0xad6e0)]);
+32	A/AFjo.v:624	(b = None /\ 0 <= lo /\ hi <= 0x616000) \/ (b = Some 2%nat /\ - ASTACK <= lo /\ hi <= 0) \/ (b = Some 32%nat /\ 0 <= lo /\ hi <= kThreadObjSize) \/
+32	A/AFgi.v:280	0xadc00 <= IMv /\ IMv + 16 <= TFIB_IAL_W /\ IMv = 0xadc00 + 8 * (p / 2 ^ 32) /\
+32	A/AFgi.v:43	Definition IMv : Z := 0xadc00 + 8 * (p / 2 ^ 32).
+32	A/AFgq.v:94	Definition R_CSZ : YP09.region := YP09.mkRegion (Some 32%nat) (t_cache + 1928) (t_cache + 1936) 0 0 [YP09.mkChunk (t_cache + 1928) (CVal 8 (SLit 8192)
+32	A/AE2z.v:124	Definition SAVEDA : list (sv * Z) := [(SOff 1 0, -8); (SOff 8 0, -16); (SOff 9 0, -24); (SOff 18 0, -32); (SLit 279460, -56); (SOff 12 0, -64); (SOff 
+32	A/AE2s.v:119	Definition SAVEDA : list (sv * Z) := [(SOff 1 0, -8); (SOff 8 0, -16); (SOff 9 0, -24); (SOff 18 0, -32); (SLit 279648, -56); (SOff 12 0, -64); (SOff 
+32	A/AE7f.v:28	Definition STRNLEN_STK : Z := ESTACK + 32.
+32	A/AFgv.v:31	Definition dT : nat := 32.   Definition dC : nat := 33.   Definition dMAP : nat := 34. Definition dLEN : nat := 35. Definition dIDX : nat := 36.
+32	A/AB14.v:17	Definition imemcpy_words : list (bv 32) :=
+32	A/AB15.v:17	Definition imemset_words : list (bv 32) :=
+32	A/AB16.v:18	Definition istrncpy_words : list (bv 32) :=
+32	Reusable/YG00.v:14	Definition kRegionSizeLog : Z := 32.
+32	A/AE20.v:16	Definition memisz_words : list (bv 32) :=
+32	A/AE2p.v:36	[(0, 4%N, 5); (4, 4%N, 0); (8, 8%N, 0); (16, 8%N, 0); (24, 8%N, 0x98dbc); (32, 8%N, 0); (40, 8%N, 0); (48, 8%N, 0); (56, 8%N, 0); (64, 8%N, 0);
+32	A/AE2p.v:42	[(0, 4%N, 5); (4, 4%N, 0); (8, 8%N, 0); (16, 8%N, 0); (24, 8%N, 0x98dbc); (32, 8%N, STDERR_BUF); (40, 8%N, STDERR_BUF); (48, 8%N, 0);
+32	A/AE3m.v:48	[(0, 4%N, 5); (4, 4%N, 0); (8, 8%N, 0); (16, 8%N, 0); (24, 8%N, 0x98dbc); (32, 8%N, STDOUT_BUFA + STDOUT_BSZ); (48, 8%N, 0);
+32	A/AFfu.v:410	assert (IM8 : (711680 + 8 * (pa / 2 ^ 32)) mod 8 = 0). { apply Z.mod_divide; [lia|]. exists (88960 + pa / 2 ^ 32). lia. }
+32	A/AE36.v:35	cellr 0xa9390 1 (SOff 32 0) true;
+32	A/AE3l.v:135	destruct (vf_shadow_xfer B ly S W sp0 mem md (ms_mem ms1) _ FMT_refused 32 104458 14 VI1 Hstk Hra_f Hhull_f
+32	A/AE3l.v:179	destruct (vf_shadow_xfer B ly S W sp0 mem md (ms_mem ms2) _ FMT_refused 32 104472 0 VI2 Hstk Hra_f Hhull_f
+32	A/AE3l.v:311	destruct (vf_shadow_xfer B ly S W sp0 mem md (ms_mem ms5) _ FMT_refused 32 104474 16 VI5 Hstk Hra_f Hhull_f
+32	A/AFgv.v:386	getr regs' 2 = w64 (sp0 - 32) /\ getr regs' 1 = w64 0x34a20 /\ getr regs' 10 = w64 map /\ getr regs' 11 = w64 len /\ getr regs' 12 = w64 0 /\
+32	A/AFk5.v:921	replace (Z_to_bv 64 (tfib_popfree_head + 32) : word) with (Z_to_bv 64 0x374dc : word) by reflexivity.
+32	A/AFem.v:343	val_mem tfibsegs m a 4 v -> ew E k = Z_to_bv 64 v -> 0 <= v < 2 ^ 32 -> 0xa3000 <= a -> a + 4 <= 0x616000 -> region_ok tfibsegs E m (cell4 a k).
+3456	A/AFfg.v:231	do_stretch HS 39%nat 0xedc40 3456 0x5ed08 BV2_2 Hsp Hsp64.
+40	A/AE34.v:30	(0x5a3c0, 40%nat);  (0x647f0, 13%nat);  (0x64890, 7%nat);   (0x64af4, 12%nat) ].
+40	A/AE2y.v:72	(0xa4088, 40, [(0, 8%N, 0xaa1f8); (8, 8%N, 0xac9f8); (16, 8%N, 0xad6e8); (24, 8%N, 0xad6f0); (32, 8%N, 0xad6e0)]);
+40	A/AFhy.v:37	Definition aP : nat := 40.   Definition aCNT : nat := 41. Definition aV : nat := 42.   Definition aCSZ : nat := 43.
+40	A/AFgq.v:39	Definition qCNT : nat := 40.
+40	A/AFkp.v:26	Definition rCL : nat := 36.  Definition rP : nat := 37.   Definition rMAX : nat := 38. Definition rN : nat := 39.  Definition rCSZ : nat := 40.
+40	A/AB1q.v:13	Definition tfibtbl_rtA_build : ctable := build_table tfibsegs 0x9eeb8 7%nat (build_table tfibsegs 0x9de04 9%nat (build_table tfibsegs 0x936ec 3%nat (b
+40	A/AFgx.v:32	Definition xLEN : nat := 37. Definition xHW : nat := 38.  Definition xNN : nat := 39.  Definition xJ1 : nat := 40.  Definition xJ2 : nat := 41.
+40	A/AE2p.v:36	[(0, 4%N, 5); (4, 4%N, 0); (8, 8%N, 0); (16, 8%N, 0); (24, 8%N, 0x98dbc); (32, 8%N, 0); (40, 8%N, 0); (48, 8%N, 0); (56, 8%N, 0); (64, 8%N, 0);
+40	A/AE2p.v:42	[(0, 4%N, 5); (4, 4%N, 0); (8, 8%N, 0); (16, 8%N, 0); (24, 8%N, 0x98dbc); (32, 8%N, STDERR_BUF); (40, 8%N, STDERR_BUF); (48, 8%N, 0);
+40	A/AD2l.v:36	as_junk := fun _ => [(ANum 0xa9648, 40)];
+40	A/AFfg.v:204	do_stretch HS 33%nat 0x12ec08 40 0x5ecd8 BV2_0 Hsp Hsp64.
+40	A/AFgs.v:112	flit8 0xa4090 0xac9f8; fatom8 0xac9f8 40%nat;
+400	A/AFju.v:584	&& ((e <=? TFIB_INST + 296) || (TFIB_INST + 400 <=? a))
+400	A/AFju.v:575	(TFIB_INST + 400 <= a < TFIB_INST + o_sec_mutex) \/ (TFIB_INST + o_sec_mutex + 4 <= a < 0xa9648) \/ (0xa9670 <= a < 0x616000).
+400	A/AFjy.v:1246	assert (LOCI : loc_ok (TFIB_INST + o_quar) 400) by (intros a Ha; apply Z_quar; clear - Ha; unfold TFIB_INST, o_quar in *; zlia).
+45	A/AE34.v:28	(0x44a08, 156%nat); (0x44c78, 157%nat); (0x455d0, 729%nat); (0x46134, 45%nat); (0x46500, 54%nat);
+45	A/AFgp.v:36	Definition pCNT : nat := 45.
+45	A/AB1q.v:19	Definition tfibtbl_rtB_build : ctable := build_table tfibsegs 0x73964 145%nat (build_table tfibsegs 0x73284 169%nat (build_table tfibsegs 0x72f9c 23%n
+45	A/AE6k.v:590	Definition w1_0_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_0_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+45	A/AE30.v:591	Definition w1_0_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_0_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+45	A/AE6k.v:589	Definition w1_0_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_0_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+45	A/AE30.v:590	Definition w1_0_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_0_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+45	A/AE6k.v:611	Definition w1_1_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_1_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+45	A/AE30.v:612	Definition w1_1_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_1_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+45	A/AE6k.v:610	Definition w1_1_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_1_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+45	A/AE30.v:611	Definition w1_1_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_1_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+45	A/AE6k.v:632	Definition w1_2_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_2_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+45	A/AE30.v:633	Definition w1_2_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_2_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+45	A/AE6k.v:631	Definition w1_2_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_2_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+45	A/AE30.v:632	Definition w1_2_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_2_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+45	A/AE6k.v:653	Definition w1_3_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_3_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+45	A/AE30.v:654	Definition w1_3_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_3_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+45	A/AE6k.v:652	Definition w1_3_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_3_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+45	A/AE30.v:653	Definition w1_3_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_3_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+45	A/AE6k.v:674	Definition w1_4_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_4_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+45	A/AE30.v:675	Definition w1_4_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_4_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+45	A/AE6k.v:673	Definition w1_4_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_4_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+45	A/AE30.v:674	Definition w1_4_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_4_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+45	A/AE6k.v:695	Definition w1_5_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_5_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+45	A/AE30.v:696	Definition w1_5_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_5_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+45	A/AE6k.v:694	Definition w1_5_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_5_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+45	A/AE30.v:695	Definition w1_5_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_5_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+45	A/AE6k.v:716	Definition w1_6_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_6_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+45	A/AE30.v:717	Definition w1_6_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_6_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+45	A/AE6k.v:715	Definition w1_6_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_6_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+45	A/AE30.v:716	Definition w1_6_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_6_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+45	A/AE6k.v:737	Definition w1_7_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_7_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+45	A/AE30.v:738	Definition w1_7_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_7_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+45	A/AE6k.v:736	Definition w1_7_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_7_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+45	A/AE30.v:737	Definition w1_7_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_7_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+45	A/AE6k.v:758	Definition w1_8_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_8_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), 
+45	A/AE30.v:759	Definition w1_8_e3 : sstate := Eval vm_compute in fst (RUN (set_regs_pc (set_regs_pc w1_8_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), 
+45	A/AE6k.v:757	Definition w1_8_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_8_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0
+45	A/AE30.v:758	Definition w1_8_s3 : sstate := Eval vm_compute in (set_regs_pc (set_regs_pc w1_8_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0
+45	A/AE6k.v:591	Lemma r_w1_0_3 : RUN (set_regs_pc (set_regs_pc w1_0_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_0_e3, RS_st
+45	A/AE30.v:592	Lemma r_w1_0_3 : RUN (set_regs_pc (set_regs_pc w1_0_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_0_e3, RS_st
+45	A/AE6k.v:612	Lemma r_w1_1_3 : RUN (set_regs_pc (set_regs_pc w1_1_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_1_e3, RS_st
+45	A/AE30.v:613	Lemma r_w1_1_3 : RUN (set_regs_pc (set_regs_pc w1_1_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_1_e3, RS_st
+45	A/AE6k.v:633	Lemma r_w1_2_3 : RUN (set_regs_pc (set_regs_pc w1_2_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_2_e3, RS_st
+45	A/AE30.v:634	Lemma r_w1_2_3 : RUN (set_regs_pc (set_regs_pc w1_2_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_2_e3, RS_st
+45	A/AE6k.v:654	Lemma r_w1_3_3 : RUN (set_regs_pc (set_regs_pc w1_3_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_3_e3, RS_st
+45	A/AE30.v:655	Lemma r_w1_3_3 : RUN (set_regs_pc (set_regs_pc w1_3_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_3_e3, RS_st
+45	A/AE6k.v:675	Lemma r_w1_4_3 : RUN (set_regs_pc (set_regs_pc w1_4_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_4_e3, RS_st
+45	A/AE30.v:676	Lemma r_w1_4_3 : RUN (set_regs_pc (set_regs_pc w1_4_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_4_e3, RS_st
+45	A/AE6k.v:696	Lemma r_w1_5_3 : RUN (set_regs_pc (set_regs_pc w1_5_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_5_e3, RS_st
+45	A/AE30.v:697	Lemma r_w1_5_3 : RUN (set_regs_pc (set_regs_pc w1_5_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_5_e3, RS_st
+45	A/AE6k.v:717	Lemma r_w1_6_3 : RUN (set_regs_pc (set_regs_pc w1_6_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_6_e3, RS_st
+45	A/AE30.v:718	Lemma r_w1_6_3 : RUN (set_regs_pc (set_regs_pc w1_6_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_6_e3, RS_st
+45	A/AE6k.v:738	Lemma r_w1_7_3 : RUN (set_regs_pc (set_regs_pc w1_7_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_7_e3, RS_st
+45	A/AE30.v:739	Lemma r_w1_7_3 : RUN (set_regs_pc (set_regs_pc w1_7_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_7_e3, RS_st
+45	A/AE6k.v:759	Lemma r_w1_8_3 : RUN (set_regs_pc (set_regs_pc w1_8_e2 [((15%bv : bv 5), SOff 45 0)] 0x52494) [((16%bv : bv 5), SOff 46 0)] 0x52498) = (w1_8_e3, RS_st
+45	A/AE30.v:760	Lemma r_w1_8_3 : RUN (set_regs_pc (set_regs_pc w1_8_e2 [((15%bv : bv 5), SOff 45 0)] 0x52e64) [((16%bv : bv 5), SOff 46 0)] 0x52e68) = (w1_8_e3, RS_st
+48	A/AD28.v:68	(SLit 2, SOff 0 (-48), SLit 0x932fc); (SLit 2, SOff 0 (-48), SLit 0x932fc)]
+48	A/AD28.v:67	= [(SLit 2, SOff 0 (-128), SLit 0x81054); (SLit 2, SOff 0 (-128), SLit 0x81054); (SOff 206 0, SOff 0 (-48), SLit 0x932fc);
+48	A/AD28.v:35	Definition S_JX : sstate := Eval vm_compute in mkSS 0x932f8 (jregs (-48)) (jmemL (-48) false) None noG.
+48	A/AFif.v:54	Definition T_K : sstate := Eval vm_compute in arm BC_NE false (SAlu ALU_SRL (SOff 10 0) (SLit 48)) (SLit 0) (runto 0x32600 T_J).
+48	A/AFgv.v:34	Definition dJ6 : nat := 47.  Definition dSHB : nat := 48. Definition dSHA : nat := 49. Definition dCNT : nat := 50. Definition dRA : nat := 51.
+48	A/AFgs.v:47	Definition rSZ : nat := 48.
+48	A/AD28.v:40	S_JX = mkSS 0x932f8 (jregs (-48)) (jmemI IMG_XL (-48) false) None noG /\
+48	A/AE2p.v:36	[(0, 4%N, 5); (4, 4%N, 0); (8, 8%N, 0); (16, 8%N, 0); (24, 8%N, 0x98dbc); (32, 8%N, 0); (40, 8%N, 0); (48, 8%N, 0); (56, 8%N, 0); (64, 8%N, 0);
+48	A/AE2p.v:42	[(0, 4%N, 5); (4, 4%N, 0); (8, 8%N, 0); (16, 8%N, 0); (24, 8%N, 0x98dbc); (32, 8%N, STDERR_BUF); (40, 8%N, STDERR_BUF); (48, 8%N, 0);
+48	A/AE3m.v:48	[(0, 4%N, 5); (4, 4%N, 0); (8, 8%N, 0); (16, 8%N, 0); (24, 8%N, 0x98dbc); (32, 8%N, STDOUT_BUFA + STDOUT_BSZ); (48, 8%N, 0);
+48	A/AE2r.v:526	eapply SRr_bind; [exact (icpt_memisz W EE p2Hn_e2 ms7 _ 48 (ss_mem p2Hn_e2) (gu + SB) (ge - gu) (sp0 - 2192) 348320 HS7 eq_refl eq_refl
+48	A/AE32.v:527	eapply SRr_bind; [exact (icpt_memisz W EE p2Hn_e2 ms7 _ 48 (ss_mem p2Hn_e2) (gu + SB) (ge - gu) (sp0 - 2208) 348320 HS7 eq_refl eq_refl
+48	A/AE2r.v:456	eapply SRr_bind; [exact (icpt_memisz W EE p2Hz_e1 ms6 _ 48 (ss_mem p2Hz_e1) (gu + SB) (ge - gu) (sp0 - 2192) 348320 HS6 eq_refl eq_refl
+48	A/AE32.v:457	eapply SRr_bind; [exact (icpt_memisz W EE p2Hz_e1 ms6 _ 48 (ss_mem p2Hz_e1) (gu + SB) (ge - gu) (sp0 - 2208) 348320 HS6 eq_refl eq_refl
+48	A/AE2r.v:340	eapply SRr_bind; [exact (icpt_memisz W EE p2Ln_e2 ms7 _ 48 (ss_mem p2Ln_e2) (gu + SB) (ge - gu) (sp0 - 2192) 348320 HS7 eq_refl eq_refl
+48	A/AE32.v:341	eapply SRr_bind; [exact (icpt_memisz W EE p2Ln_e2 ms7 _ 48 (ss_mem p2Ln_e2) (gu + SB) (ge - gu) (sp0 - 2208) 348320 HS7 eq_refl eq_refl
+48	A/AE2r.v:270	eapply SRr_bind; [exact (icpt_memisz W EE p2Lz_e1 ms6 _ 48 (ss_mem p2Lz_e1) (gu + SB) (ge - gu) (sp0 - 2192) 348320 HS6 eq_refl eq_refl
+48	A/AE32.v:271	eapply SRr_bind; [exact (icpt_memisz W EE p2Lz_e1 ms6 _ 48 (ss_mem p2Lz_e1) (gu + SB) (ge - gu) (sp0 - 2208) 348320 HS6 eq_refl eq_refl
+48	A/AFgv.v:131	flit8 0xa4090 0xac9f8; fatom8 0xac9f8 48%nat;
+48	A/AD27.v:678	pose proof (st_ok_J IMG_XL E regs (jregs (-48)) (-48) 0x932f8 usp false (w_H W) mem (or_intror eq_refl) HR E0 Ulo ltac:(right; split; reflexivity) (me
+832	A/AD2d.v:132	- intros a Ha. unfold STDOUT_LO, STDOUT_HI in Ha. apply (img_cells_view I E H m rs 689664 832 HI HM Hsub); [vm_compute; tauto | lia].
+832	A/AD28.v:295	split; [unfold stdout_img | ]; eapply (img_at_of_cimg E H m 689664 832); try exact Hr; unfold STDOUT_LO, STDOUT_HI, F_STDERR_LO, F_STDERR_HI; lia.
+832	A/AD28.v:294	unfold R_A3 in Hr. change 690496 with (689664 + 832) in Hr.
+90	A/AB1q.v:13	Definition tfibtbl_rtA_build : ctable := build_table tfibsegs 0x9eeb8 7%nat (build_table tfibsegs 0x9de04 9%nat (build_table tfibsegs 0x936ec 3%nat (b
+976	A/AE3h.v:1245	Definition OSP_FX : Z := -976.
+976	A/AE3m.v:1071	assert (HFD : FMT_d = 83996) by reflexivity. assert (HPO : PAD_OFF = -736) by reflexivity. assert (HOX : OSP_FX = -976) by reflexivity.

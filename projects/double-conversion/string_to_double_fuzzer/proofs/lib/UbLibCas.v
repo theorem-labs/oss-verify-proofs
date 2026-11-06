@@ -1,0 +1,273 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+From Stdlib Require Import ZArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
+From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Import ImgU.
+From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Import
+  PropExec CatExec CatSim SeqExec StepTac WalkTac LibAtomic Ub_code_98000_99000 Ub_code_99000_9a000     .
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Open Scope bv_scope.
+
+#[local] Abbreviation RSEGS := ImgU.M.loaded_segments.
+
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+Section FPW_1. Context {fx : PropExec.FPState}.
+
+Lemma lw_bytes : forall old, (0 <= old < 2 ^ 32)%Z ->
+  bytes_le_to_Z (word_to_le_bytes 4 (Z_to_bv 64 old)) = bv_unsigned (Z_to_bv 64 old).
+Proof.
+  intros old Hold. rewrite bytes_le_N. rewrite (u_Z2bv old) by lia.
+  apply Z.mod_small. change (2 ^ (8 * Z.of_nat 4))%Z with (2 ^ 32)%Z. lia.
+Qed.
+
+Lemma v_lw_small : forall z, (0 <= z < 2147483648)%Z -> v_lw (Z_to_bv 64 z) = Z_to_bv 64 z.
+Proof.
+  intros z Hz. unfold v_lw. f_equal. rewrite (u_Z2bv z) by lia.
+  apply (bv_swrap_small 32). change (bv_half_modulus 32) with 2147483648%Z. lia.
+Qed.
+
+(* [comment removed for export] *)
+Lemma sextw_lw : forall v : word, v_addiw (v_lw v) 0 = v_lw v.
+Proof.
+  intros v. unfold v_addiw, v_lw. f_equal. rewrite Z.add_0_r, Z_to_bv_unsigned.
+  rewrite <- (bv_swrap_wrap 32 (bv_wrap 64 _)).
+  rewrite (bv_wrap_bv_wrap 32 64) by (compute; discriminate || lia).
+  rewrite bv_swrap_wrap. apply bv_swrap_small. apply bv_swrap_in_range. discriminate.
+Qed.
+
+(* [comment removed for export] *)
+Lemma w2b4_low32 : forall x y : word,
+  (bv_unsigned x mod 2 ^ 32 = bv_unsigned y mod 2 ^ 32)%Z -> word_to_le_bytes 4 x = word_to_le_bytes 4 y.
+Proof.
+  intros x y H. unfold word_to_le_bytes.
+  rewrite <- (Z_to_le_bytes_wrap 4 32 (bv_unsigned x)) by (cbn; lia).
+  rewrite <- (Z_to_le_bytes_wrap 4 32 (bv_unsigned y)) by (cbn; lia).
+  unfold bv_wrap. change (bv_modulus 32) with (2 ^ 32)%Z. rewrite H. reflexivity.
+Qed.
+
+Lemma u_v_lw_mod32 : forall v : word, (bv_unsigned (v_lw v) mod 2 ^ 32 = bv_unsigned v mod 2 ^ 32)%Z.
+Proof.
+  intros v. unfold v_lw. rewrite Z_to_bv_unsigned.
+  change (bv_wrap 64 (bv_swrap 32 (bv_unsigned v)) mod 2 ^ 32)%Z with (bv_wrap 32 (bv_wrap 64 (bv_swrap 32 (bv_unsigned v)))).
+  rewrite (bv_wrap_bv_wrap 32 64) by (compute; discriminate || lia).
+  unfold bv_swrap. unfold bv_wrap.
+  rewrite Zminus_mod_idemp_l.
+  replace (bv_unsigned v + bv_half_modulus 32 - bv_half_modulus 32)%Z with (bv_unsigned v) by lia.
+  reflexivity.
+Qed.
+
+Lemma lor_mod32 : forall a b, (0 <= a)%Z -> (0 <= b)%Z ->
+  (Z.lor a b mod 2 ^ 32 = Z.lor (a mod 2 ^ 32) (b mod 2 ^ 32) mod 2 ^ 32)%Z.
+Proof.
+  intros a b Ha Hb. apply Z.bits_inj'. intros i Hi.
+  destruct (Z.lt_ge_cases i 32) as [Hl|Hh].
+  - rewrite !Z.mod_pow2_bits_low by lia. rewrite !Z.lor_spec. rewrite !Z.mod_pow2_bits_low by lia. reflexivity.
+  - rewrite !Z.mod_pow2_bits_high by lia. reflexivity.
+Qed.
+
+Lemma land_mod32 : forall a b, (0 <= a)%Z -> (0 <= b)%Z ->
+  (Z.land a b mod 2 ^ 32 = Z.land (a mod 2 ^ 32) (b mod 2 ^ 32) mod 2 ^ 32)%Z.
+Proof.
+  intros a b Ha Hb. apply Z.bits_inj'. intros i Hi.
+  destruct (Z.lt_ge_cases i 32) as [Hl|Hh].
+  - rewrite !Z.mod_pow2_bits_low by lia. rewrite !Z.land_spec. rewrite !Z.mod_pow2_bits_low by lia. reflexivity.
+  - rewrite !Z.mod_pow2_bits_high by lia. reflexivity.
+Qed.
+
+Lemma lor_lt32 : forall a b, (0 <= a < 2 ^ 32)%Z -> (0 <= b < 2 ^ 32)%Z -> (0 <= Z.lor a b < 2 ^ 32)%Z.
+Proof.
+  intros a b Ha Hb. split; [apply Z.lor_nonneg; lia|].
+  apply Z_bounded_by_bits; [lia | apply Z.lor_nonneg; lia |].
+  intros k Hk. rewrite Z.lor_spec. rewrite (Z_testbit_high 32 a k) by lia. rewrite (Z_testbit_high 32 b k) by lia. reflexivity.
+Qed.
+
+Lemma land_lt32 : forall a b, (0 <= a < 2 ^ 32)%Z -> (0 <= b)%Z -> (0 <= Z.land a b < 2 ^ 32)%Z.
+Proof.
+  intros a b Ha Hb. split; [apply Z.land_nonneg; lia|].
+  apply Z_bounded_by_bits; [lia | apply Z.land_nonneg; lia |].
+  intros k Hk. rewrite Z.land_spec. rewrite (Z_testbit_high 32 a k) by lia. reflexivity.
+Qed.
+
+Lemma u_v_or : forall x y : word, bv_unsigned (v_or x y) = Z.lor (bv_unsigned x) (bv_unsigned y).
+Proof.
+  intros x y. pose proof (Z_lor_range _ _ (u64_range x) (u64_range y)). unfold v_or. apply u_Z2bv; lia.
+Qed.
+
+Lemma u_v_and : forall x y : word, bv_unsigned (v_and x y) = Z.land (bv_unsigned x) (bv_unsigned y).
+Proof.
+  intros x y. pose proof (u64_range y). pose proof (Z_land_range _ (bv_unsigned y) (u64_range x) ltac:(lia)). unfold v_and. apply u_Z2bv; lia.
+Qed.
+
+Lemma w2b4_or_sext : forall (v bits : word),
+  word_to_le_bytes 4 (v_or (v_lw v) bits) = word_to_le_bytes 4 (v_or v bits).
+Proof.
+  intros v bits. apply w2b4_low32. rewrite !u_v_or.
+  pose proof (u64_range (v_lw v)). pose proof (u64_range v). pose proof (u64_range bits).
+  rewrite (lor_mod32 (bv_unsigned (v_lw v))) by lia. rewrite (lor_mod32 (bv_unsigned v)) by lia.
+  rewrite u_v_lw_mod32. reflexivity.
+Qed.
+
+Lemma w2b4_and_sext : forall (v mask : word),
+  word_to_le_bytes 4 (v_and (v_lw v) mask) = word_to_le_bytes 4 (v_and v mask).
+Proof.
+  intros v mask. apply w2b4_low32. rewrite !u_v_and.
+  pose proof (u64_range (v_lw v)). pose proof (u64_range v). pose proof (u64_range mask).
+  rewrite (land_mod32 (bv_unsigned (v_lw v))) by lia. rewrite (land_mod32 (bv_unsigned v)) by lia.
+  rewrite u_v_lw_mod32. reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+Lemma cell32_or : forall old (bits : word), (0 <= old < 2 ^ 32)%Z ->
+  word_to_le_bytes 4 (v_or (Z_to_bv 64 old) bits)
+  = word_to_le_bytes 4 (Z_to_bv 64 (Z.lor old (bv_unsigned bits mod 2 ^ 32))).
+Proof.
+  intros old bits Hold. pose proof (u64_range bits).
+  pose proof (Z.mod_pos_bound (bv_unsigned bits) (2 ^ 32) ltac:(lia)).
+  pose proof (lor_lt32 old (bv_unsigned bits mod 2 ^ 32) Hold ltac:(lia)) as R.
+  apply w2b4_low32. rewrite u_v_or. rewrite !u_Z2bv by lia.
+  rewrite (lor_mod32 old) by lia. rewrite (Z.mod_small old) by lia.
+  rewrite (Z.mod_small (Z.lor old _)) by lia. reflexivity.
+Qed.
+
+Lemma cell32_and : forall old (mask : word), (0 <= old < 2 ^ 32)%Z ->
+  word_to_le_bytes 4 (v_and (Z_to_bv 64 old) mask)
+  = word_to_le_bytes 4 (Z_to_bv 64 (Z.land old (bv_unsigned mask))).
+Proof.
+  intros old mask Hold. pose proof (u64_range mask).
+  pose proof (land_lt32 old (bv_unsigned mask) Hold ltac:(lia)) as R.
+  apply w2b4_low32. rewrite u_v_and. rewrite !u_Z2bv by lia. reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+Theorem cas_or_98ef8 : forall regs mem rom (a bits : word) (old : Z),
+  getr regs 14 = a -> (bv_unsigned a mod 4 = 0)%Z ->
+  rdn RSEGS mem a 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 old)) -> (0 <= old < 2 ^ 32)%Z ->
+  getr regs 11 = bits ->
+  store_ok RSEGS mem a 4%nat = true ->
+  exists regs',
+    msteps RSEGS (mkst regs (0x990b0 : word) mem rom)
+                 (mkst regs' (0x990d0 : word) (wbytes mem a (word_to_le_bytes 4 (v_or (Z_to_bv 64 old) bits))) rom)
+    /\ getr regs' 10 = v_lw (Z_to_bv 64 old)
+    /\ getr regs' 12 = v_or (v_lw (Z_to_bv 64 old)) bits
+    /\ getr regs' 13 = v_lw (Z_to_bv 64 old)
+    /\ getr regs' 15 = Z_to_bv 64 0
+    /\ (forall r : reg, r <> 10 -> r <> 12 -> r <> 13 -> r <> 15 -> getr regs' r = getr regs r).
+Proof.
+  intros regs mem rom a bits old Ha Hal Hrd Hold Hbits Hok.
+  eexists. split.
+  - (* [comment removed for export] *)
+    eapply mst_step; [reflexivity
+      | eapply step_lw with (bs := word_to_le_bytes 4 (Z_to_bv 64 old)) (v := Z_to_bv 64 old);
+        [ exact F_990b0 | reflexivity | exact D_990b0
+        | gres; imm_norm; rewrite v_addi_0, Ha; exact Hrd
+        | apply lw_bytes; exact Hold ]
+      | ].
+    step_simpl; vnorm.
+    (* [comment removed for export] *)
+    stepn F_990b4 D_990b4. rewrite Hbits.
+    (* [comment removed for export] *)
+    eapply mst_step; [reflexivity
+      | eapply step_lr_w with (bs := word_to_le_bytes 4 (Z_to_bv 64 old)) (v := Z_to_bv 64 old);
+        [ exact F_990b8 | reflexivity | exact D_990b8
+        | gres; rewrite Ha; exact Hal
+        | gres; rewrite Ha; exact Hrd
+        | apply lw_bytes; exact Hold ]
+      | ].
+    reduce_bv_eqb_ifs; norm_pc_r; vnorm.
+    (* [comment removed for export] *)
+    eapply mst_step; [reflexivity
+      | eapply step_bne_ft_r; [exact F_990bc | reflexivity | exact D_990bc | gres; apply c_eq_refl ] | ].
+    norm_pc_r.
+    (* [comment removed for export] *)
+    eapply mst_step; [reflexivity
+      | eapply step_sc_w_ok; [exact F_990c0 | reflexivity | exact D_990c0
+        | gres; rewrite Ha; exact Hal | gres; rewrite Ha; reflexivity | gres; rewrite Ha; exact Hok ] | ].
+    step_simpl; vnorm.
+    (* [comment removed for export] *)
+    stepb_ft F_990c4 D_990c4 ltac:(cond_compute).
+    (* [comment removed for export] *)
+    stepiwv F_990c8 D_990c8 (v_lw (Z_to_bv 64 old)) ltac:(gres; imm_norm; apply sextw_lw).
+    (* [comment removed for export] *)
+    stepb_ft F_990cc D_990cc ltac:(apply c_eq_refl).
+    rewrite Ha, w2b4_or_sext.
+    apply mst_refl.
+  - repeat split; gres; try reflexivity.
+    intros r H10 H12 H13 H15. rewrite !getr_other by assumption. reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+Theorem cas_and_996d8 : forall regs mem rom (a mask : word) (old : Z),
+  getr regs 12 = a -> (bv_unsigned a mod 4 = 0)%Z ->
+  rdn RSEGS mem a 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 old)) -> (0 <= old < 2 ^ 32)%Z ->
+  getr regs 13 = mask ->
+  store_ok RSEGS mem a 4%nat = true ->
+  exists regs',
+    msteps RSEGS (mkst regs (0x99890 : word) mem rom)
+                 (mkst regs' (0x998b0 : word) (wbytes mem a (word_to_le_bytes 4 (v_and (Z_to_bv 64 old) mask))) rom)
+    /\ getr regs' 14 = v_lw (Z_to_bv 64 old)
+    /\ getr regs' 15 = v_and (v_lw (Z_to_bv 64 old)) mask
+    /\ getr regs' 16 = v_lw (Z_to_bv 64 old)
+    /\ getr regs' 17 = Z_to_bv 64 0
+    /\ (forall r : reg, r <> 14 -> r <> 15 -> r <> 16 -> r <> 17 -> getr regs' r = getr regs r).
+Proof.
+  intros regs mem rom a mask old Ha Hal Hrd Hold Hmask Hok.
+  eexists. split.
+  - (* [comment removed for export] *)
+    eapply mst_step; [reflexivity
+      | eapply step_lw with (bs := word_to_le_bytes 4 (Z_to_bv 64 old)) (v := Z_to_bv 64 old);
+        [ exact F_99890 | reflexivity | exact D_99890
+        | gres; imm_norm; rewrite v_addi_0, Ha; exact Hrd
+        | apply lw_bytes; exact Hold ]
+      | ].
+    step_simpl; vnorm.
+    (* [comment removed for export] *)
+    stepn F_99894 D_99894. rewrite Hmask.
+    (* [comment removed for export] *)
+    eapply mst_step; [reflexivity
+      | eapply step_lr_w with (bs := word_to_le_bytes 4 (Z_to_bv 64 old)) (v := Z_to_bv 64 old);
+        [ exact F_99898 | reflexivity | exact D_99898
+        | gres; rewrite Ha; exact Hal
+        | gres; rewrite Ha; exact Hrd
+        | apply lw_bytes; exact Hold ]
+      | ].
+    reduce_bv_eqb_ifs; norm_pc_r; vnorm.
+    (* [comment removed for export] *)
+    eapply mst_step; [reflexivity
+      | eapply step_bne_ft_r; [exact F_9989c | reflexivity | exact D_9989c | gres; apply c_eq_refl ] | ].
+    norm_pc_r.
+    (* [comment removed for export] *)
+    eapply mst_step; [reflexivity
+      | eapply step_sc_w_ok; [exact F_998a0 | reflexivity | exact D_998a0
+        | gres; rewrite Ha; exact Hal | gres; rewrite Ha; reflexivity | gres; rewrite Ha; exact Hok ] | ].
+    step_simpl; vnorm.
+    (* [comment removed for export] *)
+    stepb_ft F_998a4 D_998a4 ltac:(cond_compute).
+    (* [comment removed for export] *)
+    stepiwv F_998a8 D_998a8 (v_lw (Z_to_bv 64 old)) ltac:(gres; imm_norm; apply sextw_lw).
+    (* [comment removed for export] *)
+    stepb_ft F_998ac D_998ac ltac:(apply c_eq_refl).
+    rewrite Ha, w2b4_and_sext.
+    apply mst_refl.
+  - repeat split; gres; try reflexivity.
+    intros r H14 H15 H16 H17. rewrite !getr_other by assumption. reflexivity.
+Qed.
+
+End FPW_1.

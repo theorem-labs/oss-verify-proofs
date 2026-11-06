@@ -1,0 +1,15 @@
+rows 14: {'TABLE-REL4-JUMP': 10, 'TABLE-ABS8-PTR': 1, 'TABLE-REL4-STR': 2, 'INITIALIZER': 1}
+  _ZNK6__asan18AddressDescription5PrintEPKc 0x14 TABLE-REL4-JUMP 5 entries, function-relative targets equal
+  _ZN6__asan12ErrorGenericC1Ejmmmmbm 0x224 TABLE-REL4-JUMP 82 entries, function-relative targets equal
+  _ZN6__asan9Decorator10ShadowByteEh 0x14 TABLE-REL4-JUMP 83 entries, function-relative targets equal
+  _ZN6__asan16ErrorDescription5PrintEv 0x1c TABLE-REL4-JUMP 25 entries, function-relative targets equal
+  _ZN6__asanL23force_interface_symbolsEv 0x20 TABLE-REL4-JUMP 52 entries, function-relative targets equal
+  _ZN11__sanitizer19GetHandleSignalModeEi 0x24 TABLE-ABS8-PTR 8 pointers, each naming the same thing ({'_ZN11__sanitizer21common_flags_dont_useE+0x64': 1, '_ZN11__sanitizer21common_flags_dont_useE+0x68': 1, '_ZN11__sanitizer21common_flags_dont_useE+0x60': 1, '_ZN11__sanitizer21common_flags_d
+  _ZN11__sanitizer8OpenFileEPKcNS_14FileAccessModeEPi 0x60 TABLE-REL4-STR 3 entries (jtcheck's reading: rel4 offsets to C strings), all settled: value 0 (not a string on either side; entry bytes equal) ; value 577 (not a string on either side; entry bytes equal) ; value 66 (not a string on either side; 
+  _ZNK11__sanitizer13SignalContext8DescribeEv 0x1c TABLE-REL4-STR 8 entries (jtcheck's reading: rel4 offsets to C strings), all settled: b'ILL\x00' ; b'TRAP\x00' ; b'ABRT\x00' ; b'BUS\x00' ; b'FPE\x00' ; b'UNKNOWN SIGNAL\x00' ; b'UNKNOWN SIGNAL\x00' ; b'SEGV\x00'
+  _ZN9libunwind17LocalAddressSpace11getEncodedPERmmhm 0x28 TABLE-REL4-JUMP 13 entries, function-relative targets equal
+  _ZN9libunwind17LocalAddressSpace11getEncodedPERmmhm 0x1a8 TABLE-REL4-JUMP 6 entries, function-relative targets equal
+  _ZN9libunwind14EHHeaderParserINS_17LocalAddressSpaceEE17getT 0x24 TABLE-REL4-JUMP 12 entries, function-relative targets equal
+  sysconf 0xdc TABLE-REL4-JUMP 13 entries, function-relative targets equal
+  __synccall 0x54 INITIALIZER 152 bytes: {'pointer handler+0x0 | handler+0x0': 1, 'equal': 18}
+  __strftime_fmt_1 0x44 TABLE-REL4-JUMP 86 entries, function-relative targets equal

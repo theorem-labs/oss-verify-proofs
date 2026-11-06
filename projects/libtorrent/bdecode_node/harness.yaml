@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libtorrent
 harness: bdecode_node
-rocq: OssFuzzTheorems.libtorrent.bdecode_node
+rocq: OSSVerify.libtorrent.bdecode_node
 origin: upstream
 summary: lt::bdecode of the input with an error_code; the returned node and ec are discarded.
 entry: LLVMFuzzerTestOneInput

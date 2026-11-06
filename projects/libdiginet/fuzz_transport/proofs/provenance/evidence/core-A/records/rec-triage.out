@@ -1,0 +1,6 @@
+465 flagged rows + 7 GENERATOR-FILL: 472 explained, 0 UNEXPLAINED -> gate-205a90-triage-rows.tsv
+1 UNMEASURED-NAME rows (reported, measured by nothing): 1 explained, 0 UNEXPLAINED
+per class {'DIFFERENT-SYMBOL': 15, 'GEOMETRY-CHANGED': 10, 'KIND-CHANGED': 9, 'NON-ADDRESS-CHANGED': 175, 'SAME-VALUE-DIFFERENT-OBJECT': 20, 'STALE-DONOR-CODE-POINTER': 3, 'UNPAIRED-PORTED': 149, 'UNPAIRED-SOURCE': 68, 'UNRESOLVED': 16}; FLAGGED line matches
+classification of the flagged + GENERATOR-FILL rows: OK-explained 437, TOOL-LIMIT 35, REAL 0, UNEXPLAINED 0
+reasons {'DS-AB1W-LABEL': 3, 'FMTWIN': 10, 'G-6128': 9, 'GF-FMTPTR': 2, 'K-CZONE': 9, 'K-TLS': 2, 'N-AD1o-TOP': 1, 'N-CELLPATCH': 2, 'N-DEPOT': 1, 'N-FMTPTR': 113, 'N-IAL': 2, 'N-IMGSPAN': 1, 'N-INST': 1, 'N-REGCNT': 50, 'N-TOT': 2, 'P-AF0L': 1, 'P-BSSZR': 20, 'P-GHUNK': 10, 'P-LINEPAIR': 4, 'P-SMCLASS': 2, 'P-TRANSPROG': 126, 'PATCH-DEADARM': 3, 'PATCH-ZS': 27, 'S-GRANTPROG': 44, 'SDCP-SIZE': 3, 'SV-HWCAP': 2, 'SV-MMAP': 18, 'U-PHDR': 1, 'U-RODATA-HI': 1, 'U-TLSSH': 2, 'UM-AB1W-LABEL': 1}
+region layout (N, R_A5a, R_A7b): donor (33, 24, 28), unit (54, 44, 49) (LIB/A/AD2j.v), N-REGCNT rows 50: recomputed

@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: libreac/fuzz_identity/ubsan_agrees
+fingerprint: b369e804870b3dcf18af1e91931fecbb72e5c50ac52a188987a8e118db8af44f

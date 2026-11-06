@@ -1,0 +1,3 @@
+0x109000	FS_FROFF of class 1, the offset of the class's frames in the fake stack (StackMalloc1Tbl.v; model constant)
+1085440	0x109000 in decimal (StackMalloc1Tbl.v; model constant)
+1048576	1 << kStackSizeLog (StackMalloc1Tbl.v; model constant)

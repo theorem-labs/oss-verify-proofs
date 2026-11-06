@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_msgpack_encoder
-rocq: OssFuzzTheorems.jsoncons.fuzz_msgpack_encoder
+rocq: OSSVerify.jsoncons.fuzz_msgpack_encoder
 origin: upstream
 summary: msgpack_stream_reader drives a msgpack_bytes_encoder (decode -> re-encode); bytes discarded;
   ec ignored.

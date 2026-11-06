@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: rabbitmq-c
 harness: fuzz_codec
-rocq: OssFuzzTheorems.rabbitmq_c.fuzz_codec
+rocq: OSSVerify.rabbitmq_c.fuzz_codec
 origin: upstream
 summary: 'Despite the header comment (''Round-trips the AMQP codecs''), nothing is compared: first byte
   %3 selects method/properties/table; the payload is decoded, and on AMQP_STATUS_OK re-encoded into a

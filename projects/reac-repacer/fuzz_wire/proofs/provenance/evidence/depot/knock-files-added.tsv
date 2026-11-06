@@ -1,0 +1,19 @@
+file	reason
+A/AFip.v	build #22 (build-20261030T165025Z): A/AFip.v:287 "The term DPOST has type Z -> (word -> option byte) -> Prop while it is expected to have type alayout -> world tfibsegs -> Model -> Z -> (word -> option byte) -> Prop"
+A/AFit.v	build #22 (build-20261030T165025Z): A/AFit.v:274 "The term DPOST has type Z -> (word -> option byte) -> Prop while it is expected to have type alayout -> world tfibsegs -> Model -> Z -> (word -> option byte) -> Prop"
+A/AFiv.v	build #22 (build-20261030T165025Z): A/AFiv.v:264 "The term DPOST has type Z -> (word -> option byte) -> Prop while it is expected to have type alayout -> world tfibsegs -> Model -> Z -> (word -> option byte) -> Prop"
+A/AFiw.v	build #22 (build-20261030T165025Z): A/AFiw.v:289 "The term DPOST has type Z -> (word -> option byte) -> Prop while it is expected to have type alayout -> world tfibsegs -> Model -> Z -> (word -> option byte) -> Prop"
+A/AFiy.v	build #22 (build-20261030T165025Z): A/AFiy.v:371 "The term DPOST has type Z -> (word -> option byte) -> Prop while it is expected to have type alayout -> world tfibsegs -> Model -> Z -> (word -> option byte) -> Prop"
+A/AFiz.v	DPT member (class review 2, item 1): its Section Variable DPOST is grant's 2-ary type, knock's text declares the widened type; not yet reached by a build
+A/AFj0.v	DPT member (class review 2, item 1): its Section Variable DPOST is grant's 2-ary type, knock's text declares the widened type; not yet reached by a build
+A/AFj3.v	build #22 (build-20261030T165025Z): A/AFj3.v:277 "The term DPOST has type Z -> (word -> option byte) -> Prop while it is expected to have type alayout -> world tfibsegs -> Model -> Z -> (word -> option byte) -> Prop"
+A/AFj7.v	build #22 (build-20261030T165025Z): A/AFj7.v:272 "The term DPOST has type Z -> (word -> option byte) -> Prop while it is expected to have type alayout -> world tfibsegs -> Model -> Z -> (word -> option byte) -> Prop"
+A/AFj9.v	build #22 (build-20261030T165025Z): A/AFj9.v:262 "The term DPOST has type Z -> (word -> option byte) -> Prop while it is expected to have type alayout -> world tfibsegs -> Model -> Z -> (word -> option byte) -> Prop"
+A/AFja.v	build #22 (build-20261030T165025Z): A/AFja.v:287 "The term DPOST has type Z -> (word -> option byte) -> Prop while it is expected to have type alayout -> world tfibsegs -> Model -> Z -> (word -> option byte) -> Prop"
+A/AFjc.v	build #22 (build-20261030T165025Z): A/AFjc.v:374 "The term DPOST has type Z -> (word -> option byte) -> Prop while it is expected to have type alayout -> world tfibsegs -> Model -> Z -> (word -> option byte) -> Prop"
+A/AFjd.v	DPT member (class review 2, item 1): its Section Variable DPOST is grant's 2-ary type, knock's text declares the widened type; not yet reached by a build
+A/AFje.v	DPT member (class review 2, item 1): its Section Variable DPOST is grant's 2-ary type, knock's text declares the widened type; not yet reached by a build
+A/AD1f.v	build #23 (build-20261030T190117Z): A/AD1d.v:280 kz_facts "Unable to apply lemma": kz_chk (depot form, taken) no longer checks slots 501 / 500; knock's AD1d kz_facts states slot 424 only and knock's AD1f.v:192 uses it so
+A/AD1e.v	measured on the round-24 tree (no build yet): A/AD1e.v:72 gets AD1g.uNB / uSB / uGV, which the AD1g depot form (taken) no longer defines; knock AD1e has none of them
+A/AD1p.v	build #25 (build-20261030T202444Z): A/AD1p.v:109 "The term ch has type acs while it is expected to have type env" (AD1g.ly0 arity follow: knock AD1p passes no ch)
+A/AFfs.v	build #27 (build-20261030T215826Z): A/AFfs.v:54 "Incorrect number of goals (expected 7 tactics)": afree_mid (depot form) takes HND : st_depot S <> []; knock's AFfs proves HND and passes it (knock-diff-sweep.tsv: the only non-knock file with depot-named differences)

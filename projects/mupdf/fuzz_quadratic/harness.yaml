@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: mupdf
 harness: fuzz_quadratic
-rocq: OssFuzzTheorems.mupdf.fuzz_quadratic
+rocq: OSSVerify.mupdf.fuzz_quadratic
 origin: upstream
 summary: 'cmark-gfm quadratic-behaviour fuzzer: a 10-byte config prefix (splitpoint, repeatlen) expands
   the input by repeating a slice up to 512 KiB, parses it with the autolink/strikethrough/table/tagfilter

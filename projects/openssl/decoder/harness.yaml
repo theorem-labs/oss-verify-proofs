@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: decoder
-rocq: OssFuzzTheorems.openssl.decoder
+rocq: OSSVerify.openssl.decoder
 origin: upstream
 summary: OSSL_DECODER_from_data into an EVP_PKEY, print public/private/params, EVP_PKEY_dup + EVP_PKEY_eq(pkey,
   dup) with the result IGNORED, then param/public/private/pairwise checks with results ignored.

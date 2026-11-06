@@ -1,0 +1,21 @@
+# kit 4bbd3a74be89, strictcmp2 16982e3ef42b: one line per pair (EQUAL = bytecmp verdict EQUAL / EQUAL-mod-pcrel and target-differ 0)
+EQUAL	__asan_stack_malloc_1	GA:UA	EQUAL-mod-pcrel	target-differ 0
+EQUAL	__interceptor_trampoline___tls_get_addr	GA:UA	EQUAL-mod-pcrel	target-differ 0
+EQUAL	___interceptor___tls_get_addr	GA:UA	EQUAL-mod-pcrel	target-differ 0
+EQUAL	_ZN6__asan18TryAsanInitFromRtlEv	GA:UA	EQUAL-mod-pcrel	target-differ 0
+EQUAL	__tls_get_addr	GA:UA	EQUAL	target-differ 0
+EQUAL	_ZN6__asan16GetCurrentThreadEv	GA:UA	EQUAL	target-differ 0
+EQUAL	_ZN6__asan10AsanTSDGetEv	GA:UA	EQUAL-mod-pcrel	target-differ 0
+EQUAL	__pthread_getspecific	GA:UA	EQUAL	target-differ 0
+EQUAL	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	GA:UA	EQUAL-mod-pcrel	target-differ 0
+NOT EQUAL	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE	GA:UA	EQUAL-mod-pcrel	target-differ 1
+EQUAL	_ZN6__asan9FakeStack2GCEm	GA:UA	EQUAL-mod-pcrel	target-differ 0
+EQUAL	_ZN6__asan10AsanThread32AsyncSignalSafeLazyInitFakeStackEv	GA:UA	EQUAL-mod-pcrel	target-differ 0
+EQUAL	_ZN6__asanL11MemToShadowEm@stack_malloc_1+0x144	GA:UA	EQUAL-mod-pcrel	target-differ 0
+EQUAL	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE+0x358[8]	GA:UA	EQUAL	target-differ 0
+control 1	CAUGHT	an instruction word: `or` for the `and` at FS_LOOP
+control 2	CAUGHT	a re-pointed call: the donor's own jal word at the GetCurrentThread call
+control 3	CAUGHT	the donor's own `addi s0, a0, 0` at +0x10 (auipc pair to asan_inited)
+control 4	CAUGHT	the module id of the .got tls_index stack_malloc_1 +0x18 takes, 1 -> 2
+control 5	CAUGHT	the same .got cell holding __asan_stack_malloc_1's address
+control 6	CAUGHT	one byte of the C string AsanTSDGet +0x2c takes ("((tsd_key_inited)) != (0)", t -> T)

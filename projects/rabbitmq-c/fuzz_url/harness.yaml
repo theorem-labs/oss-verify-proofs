@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: rabbitmq-c
 harness: fuzz_url
-rocq: OssFuzzTheorems.rabbitmq_c.fuzz_url
+rocq: OSSVerify.rabbitmq_c.fuzz_url
 origin: upstream
 summary: NUL-terminates a copy of the input and calls amqp_parse_url(); the return code and the parsed
   amqp_connection_info are ignored.

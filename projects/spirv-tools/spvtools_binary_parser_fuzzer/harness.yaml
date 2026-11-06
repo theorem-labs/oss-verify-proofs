@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spirv-tools
 harness: spvtools_binary_parser_fuzzer
-rocq: OssFuzzTheorems.spirv_tools.spvtools_binary_parser_fuzzer
+rocq: OSSVerify.spirv_tools.spvtools_binary_parser_fuzzer
 origin: upstream
 summary: Packs the input into little-endian 32-bit words and calls spvBinaryParse with null header/instruction
   callbacks; the return code is ignored.

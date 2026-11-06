@@ -1,0 +1,22 @@
+# port_core 0e4e065eab9f, the run of record (run.sh with overrides-smB.tsv and B-smB.patch): exit status 3
+# versions.txt
+port_core.py	0e4e065eab9f9a6707caa60a74f2c4da6ea9459e6eab49da05a318dd5586042c
+resolve_code.py	81803218fe79932a07aa3422ff95e35208212d3b870871543062ba6beb67e6a5
+gen_traces.py	a78026af1ae206cc68df7256ad677ca595768d16ceedd89936dd82bd9ee7c80d
+adapted.patch	27bb43cc14368b9f1743d7a558a25ac5e8e82eded2dd94bb226c21c26d51a275
+symbol gate	5033540ba83bdad174e9b1aa3cc21ffeda3469736e4dd0390f58db9008890546
+# the summary lines of its log
+port_core: versions: port_core.py 0e4e065eab9f, resolve_code.py 81803218fe79, gen_traces.py a78026af1ae2, adapted.patch 27bb43cc1436, symbol gate 5033540ba83b
+port_core: staged 5 files (0 kept from the target), 4 with moved addresses; 79 ok, 4 values written over remap's (fixed.tsv), 2 hand values from --override; 51 for review (review.tsv); refused 2 (code-no-counterpart 2); decimals in the image (decimals.tsv): excluded 66, kept 2, mapped 2; 0 uses of names the shipped kernel lacks (kernel-name-missing); core adaptations applied to 0 files (); 0 name rows to check (names.tsv); 0 target-changed files named by staged files (differs.tsv)
+port_core: FAIL rows: image-end 0, range 0, name-clash 0, kept-file-other-image 0, forbidden-module 0, kit-file-staged 0, dropped-name-used 0, files with refused markers 0; shadow windows recomputed 0; class map 0 (0=0x3c524, 1=0x3c698); function table: dropped 0 donor pairs, added 0 target functions; deleted 0 refused definitions with every use ()
+port_core: cell gate cellcheck: FAIL: # not applicable: 0 cells
+port_core: replace-pair / inverted-bound FAIL rows 0; patches applied 1, failed 0; adapted-hunk 0, comment-edited 0, czone-bound 0, decode-check 0, kept-donor-address 0, kernel-name-missing 0, label-moved 0, override-ambiguous 0, override-lost 0, partner-left 0, relation 0, rename 1, row-address 0, slot-differs 0
+port_core: hashes recomputed 0; derived names written 0; relation results recomputed 0; region counts recomputed 0; zero-shadow range restatements refused 0; Required modules found nowhere 0 (required.tsv require-unresolved); cgif listings not staged 0; CZONE bound check against None (None); decode check: statements 14 {'ok': 14}
+port_core: symbol gate (gate.tsv):  -- PASS
+# its FAIL rows (check.tsv), each judged in GATES.md section 1
+B/Rt/YF0s.v	0	GrantSyms	WireSyms	FAIL rename-new-undeclared (WireSyms is used in 2 staged files and declared by none, staged or kept)			
+B/Rt/YF0r.v	38	0x109000	0x109000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x62480 is 0x103e80 in the target, written 0x109000)	bss	-	read+0x71d54
+B/Rt/YF0r.v	357	0x109000	0x109000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x62480 is 0x103e80 in the target, written 0x109000)	bss	-	read+0x71d54
+B/Rt/YF0r.v	366	0x109000	0x109000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x62480 is 0x103e80 in the target, written 0x109000)	bss	-	read+0x71d54
+# required.tsv (values with no rule and no --override row)
+file	line	old	why	(an --override row for each, or the run refuses to apply)

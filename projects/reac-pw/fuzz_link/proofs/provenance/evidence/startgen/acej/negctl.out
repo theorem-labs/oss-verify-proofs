@@ -1,0 +1,15 @@
+original PASS
+neg1 ([0x5420c; 0x83758; 0x820c8] removed from Tfib_universe): rc=1
+   MISSING   0x83754 jal   LLVMFuzzerTestOneInput+0xf80 -> free (trampoline): [0x5420c; 0x83758; 0x820c8] not in Tfib_universe
+   RULE FAILED: TRACES_LLVMFuzzerTestOneInput has 1 trace(s) not in Tfib_universe: [0x5420c; 0x83758; 0x820c8]
+   sites 24: COVERED 18, EXCLUDED 5, MISSING 1; rules failed 1; Tfib_universe 31 traces
+   RESULT: FAIL
+neg2 ([0x5436c; 0x96ab8] removed from TRACES_fmemopen, Tfib_universe): rc=1
+   MISSING   0x96ab4 jal   fmemopen+0x98 -> malloc (trampoline): [0x5436c; 0x96ab8] not in TRACES_fmemopen; no trace starts with [0x5436c; 0x96ab8]
+   sites 24: COVERED 18, EXCLUDED 5, MISSING 1; rules failed 0; Tfib_universe 31 traces
+   RESULT: FAIL
+neg3 ([0x5436c; 0x87ff0] removed from TRACES_text_of, Tfib_universe): rc=1
+   MISSING   0x87fec jal   text_of+0x22c -> malloc (trampoline): [0x5436c; 0x87ff0] not in TRACES_text_of; no trace starts with [0x5436c; 0x87ff0]
+   sites 24: COVERED 18, EXCLUDED 5, MISSING 1; rules failed 0; Tfib_universe 31 traces
+   RESULT: FAIL
+NEGATIVE CONTROLS: every copy FAILS

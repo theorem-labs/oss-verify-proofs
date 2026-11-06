@@ -1,0 +1,99 @@
+file	line	numeral	why it stays
+Prog/T/TContract.v	115	0x213c8	not a pc or symbol start
+Prog/T/TContract.v	116	0x21000	not a pc or symbol start
+Prog/T/TContract.v	116	0x22000	not a pc or symbol start
+Prog/T/WMem.v	22	0x22000	not a pc or symbol start
+Prog/T/WMem.v	22	0x42000	data, not a symbol start (o g_q+0xaa8)
+Prog/T/WMem.v	51	0x428b0	data, not a symbol start (o builtin_tls+0xc8)
+Prog/T/WMem.v	69	0x42000	data, not a symbol start (o g_q+0xaa8)
+Prog/T/WMem.v	71	0x42008	data, not a symbol start (o g_q+0xab0)
+Prog/T/WMem.v	73	0x41010	data, not a symbol start (o g_cmd+0x9ab8)
+Prog/T/WMem.v	159	0x42004	data, not a symbol start (o g_q+0xaac)
+Prog/T/WMem.v	266	0x42004	data, not a symbol start (o g_q+0xaac)
+Prog/T/WMemIdx.v	12	0x41010	data, not a symbol start (o g_cmd+0x9ab8)
+Prog/T/WMemIdx.v	43	0x42000	data, not a symbol start (o g_q+0xaa8)
+Prog/T/check_ack_frame.v	3	0x42024	auipc line: only its pc moves
+Prog/T/check_ack_settle.v	2	0x41d80	auipc line: only its pc moves
+Prog/T/check_inflight_acked.v	101	0x1540c	auipc line: only its pc moves
+Prog/T/check_inflight_acked.v	101	0x15410	auipc line: only its pc moves
+Prog/T/check_inflight_acked.v	101	0x15414	auipc line: only its pc moves
+Prog/T/check_inflight_lost.v	2	0x15448	auipc line: only its pc moves
+Prog/T/check_inflight_lost.v	7	0x15468	auipc line: only its pc moves
+Prog/T/check_inflight_lost.v	87	0x15448	auipc line: only its pc moves
+Prog/T/check_inflight_lost.v	101	0x15464	auipc line: only its pc moves
+Prog/T/check_inflight_lost.v	101	0x15468	auipc line: only its pc moves
+Prog/T/check_inflight_new.v	3	0x15160	auipc line: only its pc moves
+Prog/T/check_inflight_new.v	6	0x1517c	auipc line: only its pc moves
+Prog/T/check_inflight_new.v	6	0x15180	auipc line: only its pc moves
+Prog/T/check_inflight_new.v	6	0x15184	auipc line: only its pc moves
+Prog/T/check_inflight_settle.v	82	0x42558	auipc line: only its pc moves
+Prog/T/check_keepalive_due.v	2	0x151f4	auipc line: only its pc moves
+Prog/T/check_keepalive_due.v	5	0x15210	auipc line: only its pc moves
+Prog/T/check_keepalive_due.v	5	0x15214	auipc line: only its pc moves
+Prog/T/check_keepalive_due.v	5	0x15218	auipc line: only its pc moves
+Prog/T/check_keepalive_settle.v	2	0x15f54	auipc line: only its pc moves
+Prog/T/check_keepalive_settle.v	4	0x15f64	auipc line: only its pc moves
+Prog/T/check_keepalive_settle.v	87	0x15f54	auipc line: only its pc moves
+Prog/T/check_keepalive_settle.v	95	0x15f64	auipc line: only its pc moves
+Prog/T/check_latest_control.v	3	0x32054	auipc line: only its pc moves
+Prog/T/check_latest_control.v	4	0x327e4	data, not a symbol start (o M+0x54)
+Prog/T/check_latest_display.v	2	0x153a8	auipc line: only its pc moves
+Prog/T/check_latest_display.v	5	0x153b8	auipc line: only its pc moves
+Prog/T/check_latest_display.v	67	0x153a8	auipc line: only its pc moves
+Prog/T/check_latest_display.v	83	0x153b8	auipc line: only its pc moves
+Prog/T/check_state_wake.v	2	0x32138	auipc line: only its pc moves
+Prog/T/check_state_wake.v	3	0x327a8	data, not a symbol start (o M+0x18)
+Prog/T/diginet_session_rx.v	946	0x166b8	auipc line: only its pc moves
+Prog/T/io_now.v	1	0x42578	auipc line: only its pc moves
+Prog/T/io_send_c.v	3	0x14948	pc io_recv+0x24 inside a function that is DIFFERENT 0x3 (SIZE 116 vs 172)
+Prog/T/io_send_c.v	3	0x14ad8	pc receive+0x1c inside a function that is DIFFERENT 0x3 (SIZE 620 vs 556)
+Prog/T/io_send_c.v	3	0x14ae0	pc receive+0x24 inside a function that is DIFFERENT 0x3 (SIZE 620 vs 556)
+Prog/T/notice.v	3	0x10428	not a pc or symbol start
+TModel/TWorld.v	1	0x10050	not a pc or symbol start
+TModel/TWorld.v	2	0x33310	data, not a symbol start (o g_s+0x510)
+U/Prog/T/TContract.v	115	0x21f10	not a pc or symbol start
+U/Prog/T/TContract.v	116	0x21000	not a pc or symbol start
+U/Prog/T/TContract.v	116	0x23000	not a pc or symbol start
+U/Prog/T/WMem.v	22	0x23000	not a pc or symbol start
+U/Prog/T/WMem.v	22	0x41000	data, not a symbol start (o g_cmd+0x8f28)
+U/Prog/T/WMem.v	51	0x43430	data, not a symbol start (o builtin_tls+0xc8)
+U/Prog/T/WMem.v	69	0x43000	data, not a symbol start (o g_q+0xf28)
+U/Prog/T/WMem.v	71	0x43008	data, not a symbol start (o g_q+0xf30)
+U/Prog/T/WMem.v	73	0x42010	data, not a symbol start (o g_cmd+0x9f38)
+U/Prog/T/WMem.v	159	0x43004	data, not a symbol start (o g_q+0xf2c)
+U/Prog/T/WMem.v	266	0x43004	data, not a symbol start (o g_q+0xf2c)
+U/Prog/T/WMemIdx.v	12	0x42010	data, not a symbol start (o g_cmd+0x9f38)
+U/Prog/T/WMemIdx.v	43	0x43000	data, not a symbol start (o g_q+0xf28)
+U/Prog/T/check_ack_frame.v	5	0x43464	auipc line: only its pc moves
+U/Prog/T/check_ack_settle.v	2	0x4346c	auipc line: only its pc moves
+U/Prog/T/check_inflight_acked.v	106	0x15954	auipc line: only its pc moves
+U/Prog/T/check_inflight_acked.v	106	0x15958	auipc line: only its pc moves
+U/Prog/T/check_inflight_acked.v	106	0x1595c	auipc line: only its pc moves
+U/Prog/T/check_inflight_lost.v	2	0x1599c	auipc line: only its pc moves
+U/Prog/T/check_inflight_lost.v	8	0x159c4	auipc line: only its pc moves
+U/Prog/T/check_inflight_lost.v	92	0x1599c	auipc line: only its pc moves
+U/Prog/T/check_inflight_lost.v	109	0x159c0	auipc line: only its pc moves
+U/Prog/T/check_inflight_lost.v	109	0x159c4	auipc line: only its pc moves
+U/Prog/T/check_inflight_new.v	2	0x155d4	auipc line: only its pc moves
+U/Prog/T/check_inflight_new.v	5	0x155f0	auipc line: only its pc moves
+U/Prog/T/check_inflight_new.v	5	0x155f4	auipc line: only its pc moves
+U/Prog/T/check_inflight_new.v	5	0x155f8	auipc line: only its pc moves
+U/Prog/T/check_inflight_settle.v	83	0x430d8	auipc line: only its pc moves
+U/Prog/T/check_keepalive_due.v	2	0x156e4	auipc line: only its pc moves
+U/Prog/T/check_keepalive_due.v	5	0x15700	auipc line: only its pc moves
+U/Prog/T/check_keepalive_due.v	5	0x15704	auipc line: only its pc moves
+U/Prog/T/check_keepalive_due.v	5	0x15708	auipc line: only its pc moves
+U/Prog/T/check_keepalive_settle.v	2	0x1664c	auipc line: only its pc moves
+U/Prog/T/check_keepalive_settle.v	4	0x1665c	auipc line: only its pc moves
+U/Prog/T/check_keepalive_settle.v	88	0x1664c	auipc line: only its pc moves
+U/Prog/T/check_keepalive_settle.v	96	0x1665c	auipc line: only its pc moves
+U/Prog/T/check_latest_control.v	5	0x334a0	auipc line: only its pc moves
+U/Prog/T/check_latest_control.v	6	0x33364	data, not a symbol start (o M+0x54)
+U/Prog/T/check_latest_display.v	2	0x158e8	auipc line: only its pc moves
+U/Prog/T/check_latest_display.v	5	0x158f8	auipc line: only its pc moves
+U/Prog/T/check_latest_display.v	67	0x158e8	auipc line: only its pc moves
+U/Prog/T/check_latest_display.v	83	0x158f8	auipc line: only its pc moves
+U/Prog/T/check_state_wake.v	2	0x335b0	auipc line: only its pc moves
+U/Prog/T/check_state_wake.v	3	0x33328	data, not a symbol start (o M+0x18)
+U/Prog/T/io_now.v	1	0x430f8	auipc line: only its pc moves
+U/Prog/T/notice.v	4	0x10438	not a pc or symbol start

@@ -1,0 +1,4 @@
+unit	file	line	old	new	evidence
+plugin-hostd/fuzz_command	lib/B/YD2j.v	4	[0x5e3710, 0x5e3740)	[0x5e3290, 0x5e32c0)	R_A5a write window [0x5e3290, 0x5e32c0) of this file, image fuzz_command.asan-ubsan bbe55d24d096
+plugin-hostd/fuzz_command	lib/B/YE3i.v	4	0x246a4	0x246e4	.rodata end 0x246e4 (section header), image fuzz_command.asan-ubsan bbe55d24d096; this line is word for word line 4 of lib/A/AE3i.v (the A file's modification line, copied with the file; it holds the A image's value), and line 5 states this file's value
+plugin-hostd/fuzz_command	lib/B/YE3i.v	4	0x32340	0x3238c	.eh_frame end 0x3238c (section header), image fuzz_command.asan-ubsan bbe55d24d096; this line is word for word line 4 of lib/A/AE3i.v (the A file's modification line, copied with the file; it holds the A image's value), and line 5 states this file's value

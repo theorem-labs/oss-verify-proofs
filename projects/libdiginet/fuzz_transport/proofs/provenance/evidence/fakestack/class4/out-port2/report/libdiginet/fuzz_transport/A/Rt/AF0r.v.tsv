@@ -1,0 +1,49 @@
+# alreloc per-numeral report: libreac/fuzz_grant lib/A/Rt/AF0r.v at e10f488c53fc -> libdiginet/fuzz_transport asan lib/A/Rt/AF0r.v: dry run
+# source image <LIBREAC_V190>/x/unstripped/fuzz_grant/fuzz_grant.asan; unit image <WORK>/target/unstripped/fuzz_transport/fuzz_transport.asan
+file:line	old	new	rule	old in source image	new in unit image
+A/Rt/AF0r.v:4	0x3cf18	0x3cf18	resolve (identity)	__asan_stack_malloc_1	_ZN6__asan9FakeStack6CreateEm+0x74
+A/Rt/AF0r.v:27	0x3cf18	0x3d80c	FUNC entry	__asan_stack_malloc_1	__asan_stack_malloc_1
+A/Rt/AF0r.v:28	0x3cfac	0x3d8a0	same-code function	__asan_stack_malloc_1+0x94	__asan_stack_malloc_1+0x94
+A/Rt/AF0r.v:29	0x3d024	0x3d918	same-code function	__asan_stack_malloc_1+0x10c	__asan_stack_malloc_1+0x10c
+A/Rt/AF0r.v:30	0x3d050	0x3d944	same-code function	__asan_stack_malloc_1+0x138	__asan_stack_malloc_1+0x138
+A/Rt/AF0r.v:31	0x3d06c	0x3d960	same-code function	__asan_stack_malloc_1+0x154	__asan_stack_malloc_1+0x154
+A/Rt/AF0r.v:36	0x109000	0x109000	resolve (identity)	_ZN11__sanitizerL26internal_alloc_placeholderE+0x632c0	_ZN11__sanitizerL26internal_alloc_placeholderE+0x5b400
+A/Rt/AF0r.v:38	0x5d7ad0	0x5f3af0	symbol	builtin_tls+0xc8	builtin_tls+0xc8
+A/Rt/AF0r.v:39	0x5f8e78	0x614e98	OBJECT start	__pthread_tsd_main	__pthread_tsd_main
+A/Rt/AF0r.v:41	0x3cda4	0x3d698	FUNC entry	__asan_stack_malloc_0	__asan_stack_malloc_0
+A/Rt/AF0r.v:41	0x3cf18	0x3d80c	FUNC entry	__asan_stack_malloc_1	__asan_stack_malloc_1
+A/Rt/AF0r.v:41	0x3d0a8	0x3d99c	FUNC entry	__asan_stack_malloc_2	__asan_stack_malloc_2
+A/Rt/AF0r.v:41	0x3d244	0x3db38	FUNC entry	__asan_stack_malloc_4	__asan_stack_malloc_4
+A/Rt/AF0r.v:41	0x61ccc	0x62880	same-code function	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE+0x358	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE+0x358
+A/Rt/AF0r.v:41	0x46aac	0x47660	FUNC entry	__interceptor___tls_get_addr	__interceptor___tls_get_addr
+A/Rt/AF0r.v:41	0x96620	0x9de04	FUNC entry	__tls_get_addr	__tls_get_addr
+A/Rt/AF0r.v:42	0x5c00c	0x5cbc0	FUNC entry	_ZN6__asan16GetCurrentThreadEv	_ZN6__asan16GetCurrentThreadEv
+A/Rt/AF0r.v:42	0x54b58	0x5570c	FUNC entry	_ZN6__asan10AsanTSDGetEv	_ZN6__asan10AsanTSDGetEv
+A/Rt/AF0r.v:42	0x976d4	0x9eeb8	FUNC entry	tss_get	tss_get
+A/Rt/AF0r.v:42	0x69720	0x6a2d4	FUNC entry	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm
+A/Rt/AF0r.v:42	0x3d410	0x3dfc4	resolve	_ZN6__asanL11MemToShadowEm	_ZN6__asanL11MemToShadowEm
+A/Rt/AF0r.v:71	0x9d550	0xa4d70	resolve	.got+0xd40	.got+0xd40
+A/Rt/AF0r.v:71	0x9e610	0xa5e30	OBJECT start	_ZN14__interception19real___tls_get_addrE	_ZN14__interception19real___tls_get_addrE
+A/Rt/AF0r.v:71	0x96620	0x9de04	FUNC entry	__tls_get_addr	__tls_get_addr
+A/Rt/AF0r.v:71	0x9c860	0xa4080	resolve	.got+0x50	.got+0x50
+A/Rt/AF0r.v:71	0x136668	0x13e528	OBJECT start	_ZN11__sanitizer21common_flags_dont_useE	_ZN11__sanitizer21common_flags_dont_useE
+A/Rt/AF0r.v:72	0x1366f1	0x13e5b1	symbol	_ZN11__sanitizer21common_flags_dont_useE+0x89	_ZN11__sanitizer21common_flags_dont_useE+0x89
+A/Rt/AF0r.v:72	0x9c8c0	0xa40e0	resolve	.got+0xb0	.got+0xb0
+A/Rt/AF0r.v:72	0x1345d8	0x13c498	OBJECT start	_ZN11__sanitizer17current_verbosityE	_ZN11__sanitizer17current_verbosityE
+A/Rt/AF0r.v:72	0x1345d8	0x13c498	OBJECT start	_ZN11__sanitizer17current_verbosityE	_ZN11__sanitizer17current_verbosityE
+A/Rt/AF0r.v:72	0x9d560	0xa4d80	resolve	.got+0xd50	.got+0xd50
+A/Rt/AF0r.v:73	0xa43a0	0xac260	OBJECT start	_ZN6__asanL14tsd_key_initedE	_ZN6__asanL14tsd_key_initedE
+A/Rt/AF0r.v:73	0x5d7af0	0x5f3b10	symbol	builtin_tls+0xe8	builtin_tls+0xe8
+A/Rt/AF0r.v:73	0x5d7af8	0x5f3b18	symbol	builtin_tls+0xf0	builtin_tls+0xf0
+A/Rt/AF0r.v:73	0x5d82d0	0x5f42f0	symbol	builtin_tls+0x8c8	builtin_tls+0x8c8
+A/Rt/AF0r.v:81	0x5d8208	0x5f4228	symbol	builtin_tls+0x800	builtin_tls+0x800
+A/Rt/AF0r.v:81	0x5d82e4	0x5f4304	symbol	builtin_tls+0x8dc	builtin_tls+0x8dc
+A/Rt/AF0r.v:207	0x0007c283	0x0007c283	not an address (instruction word (the word of a fetch_word fact)) (identity)	_ZN6__lsan10LeakReport14ReportTopLeaksEm+0xef	_ZN6__lsanL13CheckForLeaksEv+0x4a3
+A/Rt/AF0r.v:208	0x0007c283	0x0007c283	not an address (instruction word (a decode_any argument)) (identity)	_ZN6__lsan10LeakReport14ReportTopLeaksEm+0xef	_ZN6__lsanL13CheckForLeaksEv+0x4a3
+A/Rt/AF0r.v:213	0x00160613	0x00160613	not an address (instruction word (the word of a fetch_word fact)) (identity)	_ZN11__sanitizerL9useCountsE+0x29c13	_ZN11__sanitizerL9useCountsE+0x21d53
+A/Rt/AF0r.v:214	0x00160613	0x00160613	not an address (instruction word (a decode_any argument)) (identity)	_ZN11__sanitizerL9useCountsE+0x29c13	_ZN11__sanitizerL9useCountsE+0x21d53
+A/Rt/AF0r.v:274	249892	252184	same-code function	__asan_stack_malloc_1+0x10c	__asan_stack_malloc_1+0x10c
+A/Rt/AF0r.v:355	1085440	1085440	resolve (identity)	_ZN11__sanitizerL26internal_alloc_placeholderE+0x632c0	_ZN11__sanitizerL26internal_alloc_placeholderE+0x5b400
+A/Rt/AF0r.v:364	1085440	1085440	resolve (identity)	_ZN11__sanitizerL26internal_alloc_placeholderE+0x632c0	_ZN11__sanitizerL26internal_alloc_placeholderE+0x5b400
+A/Rt/AF0r.v:373	2147450880	2147450880	SIZES_KEEP	-	-
+A/Rt/AF0r.v:442	1048576	1048576	SIZES_KEEP	_ZN11__sanitizerL26internal_alloc_placeholderE+0x5a2c0	_ZN11__sanitizerL26internal_alloc_placeholderE+0x52400

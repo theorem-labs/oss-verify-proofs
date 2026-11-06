@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: bilateral_fuzzer
-rocq: OssFuzzTheorems.leptonica.bilateral_fuzzer
+rocq: OSSVerify.leptonica.bilateral_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixBilateral and pixBlockBilateralExact; outputs destroyed unchecked.
 entry: LLVMFuzzerTestOneInput

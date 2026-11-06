@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: opencensus-cpp
 harness: grpc_tags_bin_fuzzer
-rocq: OssFuzzTheorems.opencensus_cpp.grpc_tags_bin_fuzzer
+rocq: OSSVerify.opencensus_cpp.grpc_tags_bin_fuzzer
 origin: upstream
 summary: FromGrpcTagsBinHeader into a TagMap; result and map discarded.
 entry: LLVMFuzzerTestOneInput

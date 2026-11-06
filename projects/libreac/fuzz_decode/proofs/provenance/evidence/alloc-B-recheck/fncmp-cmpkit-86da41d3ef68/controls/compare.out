@@ -1,0 +1,8 @@
+negctl.py: negctl.out vs controls/repin-negctl.out: IDENTICAL
+suite.py SUMMARY.tsv: rows 473 / 473 registered; rows whose seven verdict columns differ: 0; rows whose evidence differs after the path normalization: 3
+  Q1 paircl-NEW: the evidence is cut at 600 characters in both runs; normalized, they first differ inside a directory path the cut left unnormalizable: ..ETS NOT PRINTED (all in <work>/workers/<agent>/alloc | ..ETS NOT PRINTED (all in <work>/workers/<agent>/falseeq/
+  V1 paircl-NEW: the evidence is cut at 600 characters in both runs; normalized, the shorter is a prefix of the longer (the cut falls later in the run whose paths are shorter): ..r 0x7978c 0x79888 DIFFERENT-target target-diff 5 ( | ..r 0x7978c 0x79888 DIFFERENT-target target-diff 5 (words-only EQU
+  V2 paircl-NEW: the evidence is cut at 600 characters in both runs; normalized, the shorter is a prefix of the longer (the cut falls later in the run whose paths are shorter): ..S2_PKvPNS_18Buffer 0x7978c 0x79888 DIFFERENT-targe | ..S2_PKvPNS_18Buffer 0x7978c 0x79888 DIFFERENT-target target-diff 
+suite.py planted.sha256: 106 lines; IDENTICAL after the path normalization
+suite.py raw outputs: 905 files here, 905 registered; only here 0, only registered 0; differing after the path normalization: 0
+kit-version (NEW) cells: 236: {'caught': 196, 'equal-listed': 20, 'EQUAL': 6, 'noteq-both': 5, 'refused': 4, 'caught-tsv': 1, 'equal-listed (own row; 2 other members reported)': 1, 'equal-listed (own row; 1 other members reported)': 1, 'equal-listed (own row; 221 other members reported)': 1, 'equal-listed (own row; 103 other members reported)': 1}

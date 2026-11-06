@@ -1,0 +1,14 @@
+hyplist.py WORK: 492 stage-out files paired with 492 stage files; 184441 numerals outside comments and strings
+class	SAME	DIFFERS	DIFFERS-FORM	NEW	total
+section-hyp	5314	109	0	0	5423
+record-field	1185	21	0	0	1206
+inductive	2	0	0	0	2
+lemma-premise	13583	109	0	6	13698
+fact-ctor	6556	99	0	0	6655
+state-spec	806	363	0	0	1169
+def-in-hyp	11586	830	0	4	12420
+ALL	39032	1531	0	10	40573
+not listed (census): in proof bodies 97589, in lemma conclusions 28509, in other vernacular 4164, in other definitions and computed (Eval) states 13606; listed + not listed = 184441 of 184441
+not listed, by place and decision: computed-state DIFFERS 634, computed-state SAME 5829, conclusion DIFFERS 1295, conclusion SAME 27214, definition DIFFERS 1388, definition NEW 126, definition SAME 5629, in-proof DIFFERS 1708, in-proof NEW 11, in-proof SAME 95870, other DIFFERS 245, other SAME 3919 (rows not SAME: unlisted-differs.tsv)
+def-in-hyp rows by depth: 1: 8210, 2: 2326, 3: 697, 4: 493, 5: 206, 6: 122, 7: 101, 8: 77, 9: 55, 10: 42, 11: 36, 12: 20, 13: 5, 14: 7, 15: 9, 16: 5, 17: 3, 18: 1, 19: 1, 20: 1, 21: 1, 22: 1, 23: 1
+names used in a hypothesis position with more than one definer (all followed): 50 D E0 H KEPTA Kv LY MEQ0 MEQI NPv R8v S' SKv SREGS SS0 SSLOTv TOP WIN WINF WINT ajournal at_CD at_CONT at_EXIT at_L0 at_OE at_RETD at_RETK at_RETP cbyte code covered envp expr_vars_lt ivs_wf kHighMemBeg msize_bytes n off_img pair_eqb r rom same_io sp0 sr_vars_lt top_ok tr uE usp w64 x

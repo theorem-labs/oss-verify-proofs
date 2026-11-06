@@ -1,0 +1,5 @@
+[libreac/fuzz_disco] Reusable/YF0r.v:44 0x3dd1c 0x3e000
+[libreac/fuzz_disco] Reusable/YF0r.v:73 0xa08a0 0xa3ce0
+[libreac/fuzz_disco] Reusable/YF0r.v:73 0xa1590 0xa49d0
+[libreac/fuzz_disco] Reusable/YF0r.v:74 0xa0900 0xa3d40
+[libreac/fuzz_disco] Reusable/YF0r.v:74 0xa15a0 0xa49e0

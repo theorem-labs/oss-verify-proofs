@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: crow
 harness: json_fuzzer
-rocq: OssFuzzTheorems.crow.json_fuzzer
+rocq: OSSVerify.crow.json_fuzzer
 origin: upstream
 summary: crow::json::load of the input; if it parses, walks top-level keys or list items calling .t();
   catch (...) swallows every exception. The dump-back roundtrip is commented out.

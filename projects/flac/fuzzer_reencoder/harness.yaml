@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: flac
 harness: fuzzer_reencoder
-rocq: OssFuzzTheorems.flac.fuzzer_reencoder
+rocq: OSSVerify.flac.fuzzer_reencoder
 origin: upstream
 summary: Decodes the fuzz stream and re-encodes each decoded frame (copying all metadata blocks); the
   re-encoded stream is never decoded or compared with the first decode, and verify-mode results are discarded.

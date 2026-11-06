@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openh264
 harness: decoder_fuzzer
-rocq: OssFuzzTheorems.openh264.decoder_fuzzer
+rocq: OSSVerify.openh264.decoder_fuzzer
 origin: oss-fuzz
 summary: Splits the input at Annex-B start codes and feeds each NAL slice to ISVCDecoder::DecodeFrameNoDelay
   (ERROR_CON_SLICE_COPY, AVC); decoded frames and return codes ignored.

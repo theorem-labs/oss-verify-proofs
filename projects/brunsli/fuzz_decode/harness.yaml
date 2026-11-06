@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: brunsli
 harness: fuzz_decode
-rocq: OssFuzzTheorems.brunsli.fuzz_decode
+rocq: OSSVerify.brunsli.fuzz_decode
 origin: upstream
 summary: BrunsliDecodeJpeg, and on BRUNSLI_OK, WriteJpeg to a discarding sink. Status of the write is
   not checked; no re-encode.

@@ -1,0 +1,21 @@
+file	line	old	new	how
+Prog/codec_cells.v	61	0x1f3f8	0x21420	sym personalities+0x0
+Prog/diginet_body_check.v	481	0x13b84	0x17c38	sym diginet_body_check+0x0
+Prog/diginet_frame_build.v	583	0x13990	0x179bc	sym diginet_frame_build+0xe4
+Prog/diginet_frame_build_w_c.v	8	0x13908	0x17934	sym diginet_frame_build+0x5c
+Prog/diginet_frame_parse.v	452	0x1384c	0x17878	sym diginet_frame_parse+0x15c
+U/Prog/codec_img.v	163	0x103a1	0x10339	str 'CNTRL|24'
+U/Prog/diginet_announce_parse.v	10	0x13f2c	0x18548	sym diginet_announce_parse+0x28
+U/Prog/diginet_body_check.v	17	0x140ac	0x18750	sym diginet_body_check+0x84
+U/Prog/diginet_body_check_w.v	78	0x14028	0x186cc	sym diginet_body_check+0x0
+U/Prog/diginet_body_check_w_c.v	16	0x1416c	0x18810	sym diginet_body_check+0x144
+U/Prog/diginet_frame_build.v	483	0x13cbc	0x182d8	sym diginet_frame_build+0x78
+U/Prog/diginet_frame_build.v	646	0x13e84	0x184a0	sym diginet_frame_build+0x240
+U/Prog/diginet_frame_build_c.v	43	0x13e2c	0x18448	sym diginet_frame_build+0x1e8
+U/Prog/diginet_frame_build_w.v	253	0x13d20	0x1833c	sym diginet_frame_build+0xdc
+U/Prog/diginet_frame_build_w_c.v	19	0x13cbc	0x182d8	sym diginet_frame_build+0x78
+U/Prog/diginet_frame_parse.v	372	0x13a98	0x180b4	sym diginet_frame_parse+0x80
+U/Prog/diginet_frame_parse_c.v	32	0x13b58	0x18174	sym diginet_frame_parse+0x140
+U/Prog/diginet_msg_next.v	336	0x14318	0x189bc	sym diginet_msg_next+0x178
+U/Prog/diginet_msg_next_w_c.v	12	0x141a4	0x18848	sym diginet_msg_next+0x4
+U/Prog/diginet_sum16.v	121	0x13950	0x17f6c	sym diginet_sum16+0xc

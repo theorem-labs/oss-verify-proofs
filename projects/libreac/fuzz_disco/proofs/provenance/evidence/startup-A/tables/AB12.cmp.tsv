@@ -1,0 +1,4 @@
+# AB12.v (sha256 e35bcb8cdd3a14ccf886a55dc99e55e5debb800e1fe9ceb02474ed474d636e36) vs shipped AB12.v (sha256 1f0067365dcd8980162bb7fabe1a089e1f337cad0f10ae3efafe721c440a527e): 2 differing hunk(s)
+hunk	out_lines	shipped_lines	out_sha256	shipped_sha256	numerals_only_in_out	numerals_only_in_shipped
+1	-	1-6	-	d729fa4e75e625e2	-	2026,2026,2026,2026,112615,112639,112639,0x30eac,0x6dffc,0x9eea8
+2	15-15	21-21	e6ed922d95011e06	534b0a1f7e429352	0x6eca0	-

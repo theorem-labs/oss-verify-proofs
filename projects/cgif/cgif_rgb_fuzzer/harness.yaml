@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cgif
 harness: cgif_rgb_fuzzer
-rocq: OssFuzzTheorems.cgif.cgif_rgb_fuzzer
+rocq: OSSVerify.cgif.cgif_rgb_fuzzer
 origin: upstream
 summary: Input decoded as CGIFrgb_Config + up to 16 RGB/RGBA frames (<=100x100); cgif_rgb_newgif/addframe/close
   with a discarding write callback; return codes ignored.

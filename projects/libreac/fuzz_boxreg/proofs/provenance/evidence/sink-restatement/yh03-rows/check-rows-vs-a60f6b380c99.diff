@@ -1,0 +1,10 @@
+## plain: yh03check rows of a60f6b380c99 (provenance/evidence/yh03/check-e5d7cbda4e27.after.plain.rows) vs this commit, file:line field dropped
+69d68
+< stdio_read	ABSENT	A=0x16888 (__stdio_exit_needed+0xcc)	E=0x16a2c (__stdio_write+0x0)
+71d69
+< stdio_seek	OK	A=0x16bbc (__stdio_seek+0x0)	E=0x16bc4 (__stdout_write+0x0) want __stdio_seek=0x16bbc..0x16bc4
+## ubsan: yh03check rows of a60f6b380c99 (provenance/evidence/yh03/check-e5d7cbda4e27.after.ubsan.rows) vs this commit, file:line field dropped
+69d68
+< stdio_read	ABSENT	A=0x16c88 (__stdio_exit_needed+0xcc)	E=0x16e2c (__stdio_write+0x0)
+71d69
+< stdio_seek	OK	A=0x16fbc (__stdio_seek+0x0)	E=0x16fc4 (__stdout_write+0x0) want __stdio_seek=0x16fbc..0x16fc4

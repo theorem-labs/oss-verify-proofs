@@ -1,0 +1,35 @@
+__asan_shadow_memory_dynamic_address+0x0                               0x9f0f8/8    base row already
+.got slot holding &__asan_shadow_memory_dynamic_address+0x0            0x97128/8    base row already
+_ZN6__asanL11asan_initedE+0x0                                          0x9fdd8/1    base row already
+_ZN6__asan21replace_intrin_cachedE+0x0                                 0x9fdd9/1    base row already
+.got slot holding &_ZN6__asan21replace_intrin_cachedE+0x0              0x97c90/8    base row already
+__asan_option_detect_stack_use_after_return+0x0                        0x9f100/4    base row already
+.got slot holding &__asan_option_detect_stack_use_after_return+0x0     0x97180/8    base row already
+_ZN6__asanL17can_poison_memoryE+0x0                                    0x9e95c/1    base row already
+_ZN6__asan11kHighMemEndE+0x0                                           0x9fde0/8    base row already
+.got slot holding &_ZN6__asan11kHighMemEndE+0x0                        0x97140/8    base row already
+_ZN6__asan10kMidMemBegE+0x0                                            0x9fde8/8    base row already
+.got slot holding &_ZN6__asan10kMidMemBegE+0x0                         0x97130/8    base row already
+_ZN6__asan10kMidMemEndE+0x0                                            0x9fdf0/8    base row already
+.got slot holding &_ZN6__asan10kMidMemEndE+0x0                         0x97138/8    base row already
+_ZN14__interception11real_memcpyE+0x0                                  0x98f80/8    base row already
+_ZN14__interception11real_memsetE+0x0                                  0x98f88/8    base row already
+.got slot holding &_ZN14__interception11real_memsetE+0x0               0x97148/8    base row already
+.got slot holding &REAC_MODE_44K1+0x0                                  -            DROP: decode program global; fuzz_uci has no REAC_MODE_* symbol: []
+.got slot holding &REAC_MODE_96K+0x0                                   -            DROP: decode program global; fuzz_uci has no REAC_MODE_* symbol: []
+.got slot holding &REAC_MODE_48K+0x0                                   -            DROP: decode program global; fuzz_uci has no REAC_MODE_* symbol: []
+shadow of asan_globals descriptor 0 (A beg 0x20d40 size 0xc) + byte 0  -            not passed by decode B (NO - shadow byte: image A carries it in )
+shadow of asan_globals descriptor 0 (A beg 0x20d40 size 0xc) + byte 1  -            not passed by decode B (NO - shadow byte: image A carries it in )
+shadow of asan_globals descriptor 2 (A beg 0x20d80 size 0xc) + byte 0  -            not passed by decode B (NO - shadow byte: image A carries it in )
+shadow of asan_globals descriptor 2 (A beg 0x20d80 size 0xc) + byte 1  -            not passed by decode B (NO - shadow byte: image A carries it in )
+shadow of asan_globals descriptor 1 (A beg 0x20d60 size 0xc) + byte 0  -            not passed by decode B (NO - shadow byte: image A carries it in )
+shadow of asan_globals descriptor 1 (A beg 0x20d60 size 0xc) + byte 1  -            not passed by decode B (NO - shadow byte: image A carries it in )
+.rodata+0x58                                                           -            DROP: decode .rodata constant 8fe3388ee3388ee3 (read only by decode program code); occurrences in fuzz_uci .rodata: 0
+_ZN11__sanitizer21common_flags_dont_useE+0xf0                          0x130d18/8   base row already
+_ZN6__asanL8instanceE+0x28                                             0x9bac0/4    ADD
+_ZN11__sanitizer21common_flags_dont_useE+0xb4                          0x130cdc/4   ADD
+_ZN6__asanL19malloc_context_sizeE+0x0                                  0x9fdfc/4    base row already
+_ZN11__sanitizer21common_flags_dont_useE+0x24                          0x130c4c/4   ADD
+slot+0x0                                                               -            DROP: musl __atexit cell, withdrawn (GATES-decB Part 5)
+head+0x0                                                               -            DROP: musl __atexit cell, withdrawn (GATES-decB Part 5)
+ADD --add 0x9bac0/4 --add 0x130cdc/4 --add 0x130c4c/4

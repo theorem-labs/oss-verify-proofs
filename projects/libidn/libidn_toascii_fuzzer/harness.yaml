@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libidn
 harness: libidn_toascii_fuzzer
-rocq: OssFuzzTheorems.libidn.libidn_toascii_fuzzer
+rocq: OSSVerify.libidn.libidn_toascii_fuzzer
 origin: upstream
 summary: idna_to_ascii_4i/_4z on the input as UCS-4 (4-byte-aligned sizes) and idna_to_ascii_8z/_lz on
   it as a C string, each with flags 0 and ALLOW_UNASSIGNED|USE_STD3_ASCII_RULES; outputs freed unchecked.

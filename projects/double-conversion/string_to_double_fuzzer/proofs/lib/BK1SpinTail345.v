@@ -1,0 +1,21 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List.
+From LinuxProcessSemantics.Riscv Require Import Instr.
+From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Import AxSymExec3.
+From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Import AsanPlan ArgFragsBoth.
+From Corelib Require Import PrimString.
+From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Import AsanStateCodec AsanPlanCodec.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations. Import AX2. Import AP.
+Open Scope Z_scope.
+
+Definition k1spintail345_tospin1 : plan := dec_plan (PE [] [] [] [] [] []) "#0,$40,#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,$40,#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,$="%pstring.
+
+Definition k1spintail345_tospin2 : plan := dec_plan (PE [] [] [] [] [] []) "#0,$40,#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,$40,#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,$="%pstring.
+
+Definition k1spintail345_tospin3 : plan := dec_plan (PE [] [] [] [] [] []) "#0,$40,#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,$40,#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,$="%pstring.
+
+Definition k1spintail345_tospin4 : plan := dec_plan (PE [] [] [] [] [] []) "#0,$40,#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;344#>,15#!#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,1#8;4=4%4#8;4:<,1,10#0,$="%pstring.
+
+Definition k1spintail345 : plan := PBump 39 (PZones (eaddz (escale 4096 (EVar 15)) 131072) (PCase2 (EVar 15) 4095 k1spintail345_tospin1 (PCase2 (EVar 15) 65535 k1spintail345_tospin2 (PCase2 (EVar 15) 522231 k1spintail345_tospin3 k1spintail345_tospin4)))).

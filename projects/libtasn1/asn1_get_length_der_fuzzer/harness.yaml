@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libtasn1
 harness: asn1_get_length_der_fuzzer
-rocq: OssFuzzTheorems.libtasn1.asn1_get_length_der_fuzzer
+rocq: OSSVerify.libtasn1.asn1_get_length_der_fuzzer
 origin: upstream
 summary: asn1_get_length_der on inputs <= 512 bytes; returned length and ret_len ignored.
 entry: LLVMFuzzerTestOneInput

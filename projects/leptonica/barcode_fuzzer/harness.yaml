@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: barcode_fuzzer
-rocq: OssFuzzTheorems.leptonica.barcode_fuzzer
+rocq: OSSVerify.leptonica.barcode_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixProcessBarcodes (locate, width-extract and decode any barcode); the decoded
   strings are discarded.

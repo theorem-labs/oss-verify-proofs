@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssh
 harness: agent_fuzz
-rocq: OssFuzzTheorems.openssh.agent_fuzz
+rocq: OSSVerify.openssh.agent_fuzz
 origin: upstream
 summary: test_one() queues the input on the agent socket and calls ssh-agent.c process_message() up to
   256 times; replies and return codes are ignored.

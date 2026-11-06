@@ -1,0 +1,12 @@
+token	sha256	image
+UCI_B_PIN	a1b86e424adde6f65d345459822690a6c21e9e606446b91b4ad25e9f3ef6e7fc	fuzz_uci.asan-ubsan, the pinned image: index/binaries.tsv:7521
+UCI_B_TWIN	8d07ffcf594874884207465cc34ff9f3b1062f21f6d9b3622e0771fa76490b16	fuzz_uci.asan-ubsan, the unstripped twin of UCI_B_PIN (PT_LOAD equal: twins.out)
+GRANT_B_PIN	fde52226dc48de254681156061de9263409c123ca0a0d6c5010ded4e17f602df	fuzz_grant.asan-ubsan, the pinned image: index/binaries.tsv:5591
+GRANT_B_TWIN	5a5ee7c02b4e2a1d1653dc0c256182c9b65c33dde3a7ddc98b9de2afffe7a417	fuzz_grant.asan-ubsan, the unstripped twin of GRANT_B_PIN (PT_LOAD equal: twins.out)
+IDENT_B_PIN	baf1a4d065e02f55521d39f05d8c8d9ed763a0ef798c70cc3eabe5816ffb3f66	fuzz_identity.asan-ubsan, the pinned image: index/binaries.tsv:5595
+IDENT_B_TWIN	43b44d50be8a5e68f626662181c9cc17c0e0fef138e55f3c8bab371987a9c064	fuzz_identity.asan-ubsan, the unstripped twin of IDENT_B_PIN (PT_LOAD equal: twins.out)
+GRANT_B_PIN_PLANTED_CALL	1c85bde94bdbcca27d5050e09db5d83f3e2822e8a2446293b30f1b9202bf4cd1	copy of GRANT_B_PIN with one call re-pointed at file offset 0x421e0 (planted/planted.cmp)
+GRANT_B_TWIN_PLANTED_CALL	4aabaada3a6200563488d5805006e6a6cb78ce1b89fe33e8cc9d9a4f7838ada2	copy of GRANT_B_TWIN with one call re-pointed at file offset 0x421e0 (planted/planted.cmp)
+GRANT_B_PIN_PLANTED_RODATA	d4c374587adca304ba4240181e7eb5b2c0d15d9f9c6f4befc2a817634447a56b	copy of GRANT_B_PIN with one .rodata address re-pointed at file offset 0x850cc (planted/planted.cmp)
+GRANT_B_TWIN_PLANTED_RODATA	7a86001f9ee0a3fa0fd8a2a9f50eded54aa980feafeace2fcb45c4dbf558e20b	copy of GRANT_B_TWIN with one .rodata address re-pointed at file offset 0x850cc (planted/planted.cmp)
+GRANT_B_TWIN_PLANTED_DEBRUIJN	780f7b2d2d3ae152ef2fa39485027a940835a2d59ebeb1d05c66370fecd5fb1e	copy of GRANT_B_TWIN with one byte of the De Bruijn ctz table at file offset 0x432 changed from 0x0e to 0x0f (planted/planted.cmp)

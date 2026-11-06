@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tpm2
 harness: tpm2_execute_command_fuzzer
-rocq: OssFuzzTheorems.tpm2.tpm2_execute_command_fuzzer
+rocq: OSSVerify.tpm2.tpm2_execute_command_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

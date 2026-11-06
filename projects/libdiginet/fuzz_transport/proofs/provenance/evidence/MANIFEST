@@ -1,0 +1,5 @@
+# provenance/evidence/: <path> <kind> <sha256> <role>, paths relative to this directory; each subdirectory's
+# MANIFEST names its own files. Both files are written by mkmanifest.py.
+MANIFEST.md index f1e067d2e4a30975654968fdb0f9a6d9fda6ba669feccae03a209e48fc6b1c48 the index: each subdirectory's MANIFEST as a table, then the sha256 of every file here but MANIFEST.md and MANIFEST
+mkmanifest.py script 097069adacf40a334a820c44099128cf80d229e9550af1fa2fa9d245853b6916 writes MANIFEST.md and MANIFEST from the subdirectories' MANIFESTs; run from provenance/evidence/
+untime-removed.tsv file 833b1401af0b3a4b3dffb458ab73ff165c0dd3786734a1656b5f3477474715f4 the unit's index of removed `timeout` markers, one row per marker: file, first line, line count, sha256 of the marker's text (core-B/cutuntime-B.sh, core-B/README.md)

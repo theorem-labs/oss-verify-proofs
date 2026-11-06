@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: harfbuzz
 harness: hb-repacker-fuzzer
-rocq: OssFuzzTheorems.harfbuzz.hb_repacker_fuzzer
+rocq: OSSVerify.harfbuzz.hb_repacker_fuzzer
 origin: upstream
 summary: Decodes a table tag, an object list (blobs) and a link list from the input into hb_subset_serialize_object_t
   graph nodes and calls hb_subset_serialize_or_fail (the repacker); the packed blob is destroyed unread,

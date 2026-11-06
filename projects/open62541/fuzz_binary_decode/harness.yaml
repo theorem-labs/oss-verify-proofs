@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: open62541
 harness: fuzz_binary_decode
-rocq: OssFuzzTheorems.open62541.fuzz_binary_decode
+rocq: OSSVerify.open62541.fuzz_binary_decode
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an API contract: UA_copy of any value UA_decodeBinary
   accepted (random type index over all UA_TYPES) compares UA_ORDER_EQ to the original under UA_order (full

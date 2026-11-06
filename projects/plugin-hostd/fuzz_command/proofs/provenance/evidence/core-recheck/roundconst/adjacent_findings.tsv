@@ -1,0 +1,10 @@
+unit	file	line	name	old	new	evidence	read_by
+plugin-hostd/fuzz_command	lib/Reusable/YH03.v	126	src0_A_bcmp	0x209dc	0x20410	.symtab of fuzz_command.plain twin fbe3a48ad296: bcmp [0x20410, 0x20414); 0x209dc is inside memset [0x20914, 0x20a0c)	- (by-use grep over the unit: no use outside lib/Reusable/YH03.v and lib/U/Reusable/YH03.v)
+plugin-hostd/fuzz_command	lib/Reusable/YH03.v	126	src0_E_bcmp	0x209e0	0x20414	bcmp [0x20410, 0x20414) (.symtab of fbe3a48ad296)	-
+plugin-hostd/fuzz_command	lib/Reusable/YH03.v	127	src0_A_memcmp	0x209e0	0x204e0	memcmp [0x204e0, 0x20510) (.symtab of fbe3a48ad296); 0x209e0 is inside memset	-
+plugin-hostd/fuzz_command	lib/Reusable/YH03.v	129	src0_E_memset	0x1d6b4	0x20a0c	memset [0x20914, 0x20a0c) (.symtab of fbe3a48ad296); 0x1d6b4 is cgif_file_fuzzer.plain's memset end (twin 6ab540c43108: memset [0x1d5bc, 0x1d6b4))	-
+plugin-hostd/fuzz_command	lib/Reusable/YH03.v	130	src0_A_strchr / src0_E_strchr	0x1d6b4 / 0x1d6f0	no strchr in fuzz_command.plain	fuzz_command.plain .symtab has no strchr; 0x1d6b4..0x1d6f0 is cgif_file_fuzzer.plain's strchr (twin 6ab540c43108)	-
+plugin-hostd/fuzz_command	lib/Reusable/YH03.v	131	src0_A_strchrnul / src0_E_strchrnul	0x1d6f0 / 0x1d7d0	0x20c84 / 0x20d64	__strchrnul [0x20c84, 0x20d64) (.symtab of fbe3a48ad296); the old values are cgif_file_fuzzer.plain's	-
+plugin-hostd/fuzz_command	lib/Reusable/YH03.v	132	src0_A_strlen / src0_E_strlen	0x1d7d0 / 0x20f0c	0x20dbc / 0x20e4c	strlen [0x20dbc, 0x20e4c) (.symtab of fbe3a48ad296); 0x1d7d0 is cgif_file_fuzzer.plain's strlen start, 0x20f0c is fuzz_command.plain's strnlen start	-
+plugin-hostd/fuzz_command	lib/Reusable/YH03.v	133	src0_E_strnlen	0x20414	0x20f50	strnlen [0x20f0c, 0x20f50) (.symtab of fbe3a48ad296); 0x20414 is memchr's start	-
+plugin-hostd/fuzz_command	lib/Reusable/YH03.v	134	src0_E_memchr	0x210d8	0x204e0	memchr [0x20414, 0x204e0) (.symtab of fbe3a48ad296)	-

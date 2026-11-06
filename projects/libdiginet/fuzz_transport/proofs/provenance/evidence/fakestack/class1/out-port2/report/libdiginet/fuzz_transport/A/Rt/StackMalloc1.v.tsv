@@ -1,0 +1,8 @@
+# alreloc per-numeral report: libreac/fuzz_ctrl lib/A/Rt/StackMalloc1.v at 2fceb489f4aa -> libdiginet/fuzz_transport asan lib/A/Rt/StackMalloc1.v: dry run
+# source image <LIBREAC_V190>/x/unstripped/fuzz_ctrl/fuzz_ctrl.asan; unit image <WORK>/target/unstripped/fuzz_transport/fuzz_transport.asan
+file:line	old	new	rule	old in source image	new in unit image
+A/Rt/StackMalloc1.v:4	0x3dac0	0x3dac0	resolve (identity)	__asan_stack_malloc_6+0x68	__asan_stack_malloc_2+0x124
+A/Rt/StackMalloc1.v:4	0x609000	0x609000	resolve (identity)	-	builtin_tls+0x155d8
+A/Rt/StackMalloc1.v:5	0x5fe000	0x5fe000	resolve (identity)	-	builtin_tls+0xa5d8
+A/Rt/StackMalloc1.v:6	0x3d72c	0x3d72c	resolve (identity)	__asan_stack_malloc_1	__asan_stack_malloc_0+0x94
+A/Rt/StackMalloc1.v:6	0x109000	0x109000	resolve (identity)	_ZN11__sanitizerL26internal_alloc_placeholderE+0x5f580	_ZN11__sanitizerL26internal_alloc_placeholderE+0x5b400

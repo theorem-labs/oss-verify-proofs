@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjxl
 harness: color_encoding_fuzzer
-rocq: OssFuzzTheorems.libjxl.color_encoding_fuzzer
+rocq: OSSVerify.libjxl.color_encoding_fuzzer
 origin: upstream
 summary: ParseDescription of the input as a colour-description string; result ignored.
 entry: DoTestOneInput

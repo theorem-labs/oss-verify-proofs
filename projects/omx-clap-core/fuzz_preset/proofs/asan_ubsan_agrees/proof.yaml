@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: omx-clap-core/fuzz_preset/asan_ubsan_agrees
+fingerprint: 9433860d01313b228fc59eed48fec04114abb962a51a634a175824af2521a364

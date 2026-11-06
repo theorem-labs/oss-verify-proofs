@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: exiv2
 harness: fuzz-preview
-rocq: OssFuzzTheorems.exiv2.fuzz_preview
+rocq: OSSVerify.exiv2.fuzz_preview
 origin: upstream
 summary: readMetadata, then PreviewManager::getPreviewProperties and formatting each preview's mime type/size
   into a string stream; nothing compared.

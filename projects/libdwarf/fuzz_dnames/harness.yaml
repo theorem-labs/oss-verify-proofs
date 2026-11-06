@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_dnames
-rocq: OssFuzzTheorems.libdwarf.fuzz_dnames
+rocq: OSSVerify.libdwarf.fuzz_dnames
 origin: upstream
 summary: '.debug_names: dwarf_dnames_header, abbrevtable, sizes, offsets, cu_table, bucket and name at
   fixed indices; results unused.'

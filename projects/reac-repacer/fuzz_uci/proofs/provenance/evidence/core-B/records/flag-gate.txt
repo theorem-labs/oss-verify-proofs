@@ -1,0 +1,16 @@
+# record run
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 469 rows in 8 classes: GEOMETRY-CHANGED=170 KIND-CHANGED=6 NO-COUNTERPART=1 NON-ADDRESS-CHANGED=173 STALE-DONOR-CODE-POINTER=1 UNPAIRED-PORTED=19 UNPAIRED-SOURCE=94 UNRESOLVED=5
+checker <file> rc=4 (sha256 efa19b81e92b)
+# control: YF0l.v pc_wrap_memcpy planted as 0x86980 (abort)
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 11 rows in 3 classes: KIND-CHANGED=2 STALE-DONOR-CODE-POINTER=1 UNPAIRED-SOURCE=8
+checker <file> rc=4 (sha256 efa19b81e92b)
+# control: YF0l.v pc_wrap_memcpy planted as 0x50674 (pc_asan_memcpy, a value of the same sentence)
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 10 rows in 3 classes: KIND-CHANGED=1 STALE-DONOR-CODE-POINTER=1 UNPAIRED-SOURCE=8
+checker <file> rc=4 (sha256 efa19b81e92b)
+# control: the same file unplanted
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 10 rows in 2 classes: KIND-CHANGED=2 UNPAIRED-SOURCE=8
+checker <file> rc=4 (sha256 efa19b81e92b)

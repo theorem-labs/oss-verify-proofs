@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: yara
 harness: tlsh_fuzzer
-rocq: OssFuzzTheorems.yara.tlsh_fuzzer
+rocq: OSSVerify.yara.tlsh_fuzzer
 origin: upstream
 summary: 'TLSH: tlsh_update on the first half, tlsh_final on the second, tlsh_get_hash(true/false), reset,
   free; all results ignored.'

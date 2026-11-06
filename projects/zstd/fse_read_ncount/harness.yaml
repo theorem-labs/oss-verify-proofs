@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zstd
 harness: fse_read_ncount
-rocq: OssFuzzTheorems.zstd.fse_read_ncount
+rocq: OSSVerify.zstd.fse_read_ncount
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, a round trip: Build a random valid FSE normalized
   count (sum = 1<<tableLog), FSE_writeNCount it, append random trailing bytes, FSE_readNCount: must succeed,

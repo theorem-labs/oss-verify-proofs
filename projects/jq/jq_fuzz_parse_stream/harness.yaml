@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jq
 harness: jq_fuzz_parse_stream
-rocq: OssFuzzTheorems.jq.jq_fuzz_parse_stream
+rocq: OSSVerify.jq.jq_fuzz_parse_stream
 origin: upstream
 summary: Streaming jv_parser over the input; every value is freed unchecked until the parser returns an
   invalid value.

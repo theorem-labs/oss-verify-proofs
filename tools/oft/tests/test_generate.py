@@ -1,11 +1,16 @@
 """oft generate: deterministic, complete, and checked; and the schemas under it."""
+import glob
 import io
 import os
+import re
 import shutil
+import subprocess
+import sys
 import unittest
 
-from oft import facts, generate, rocq, schema, shapes, yamlio
-from oft.tests.helpers import tree
+from oft import facts, generate, layout, names, paths, port, rocq, schema, shapes, symbols, yamlio
+from oft.tests.helpers import NEW_NAMESPACE, rename_namespace, tree
+from oft.tests.test_layout import old_layout_tree
 
 
 class Rendering(unittest.TestCase):
@@ -258,6 +263,22 @@ class StatementText(unittest.TestCase):
         self.assertIn("blocked by the model: the binary runs RISC-V vector instructions", r)
         self.assertIn("Some statements are blocked by the model", r)
 
+    def test_the_identity_and_descriptor_range_features(self):
+        """close_range, getresuid and getresgid, setgroups as root, capget, getppid and getsid each have a feature name
+        of their own, narrower than process-control (prctl) and fd-flags (F_GETFD, F_SETFD); each renders its own words."""
+        for name, words in (("descriptor-ranges", "closes ranges of descriptors"),
+                            ("credentials", "calls getresuid or getresgid, or setgroups as root"),
+                            ("capabilities", "calls capget"),
+                            ("process-relations", "asks for its parent process or its session")):
+            with self.subTest(name=name), tree() as t:
+                y = t.yaml("projects/zlib/checksum_fuzzer/harness.yaml")
+                y["statements"]["plain_halts"].update(status="model-gap", gap=[name])
+                t.put_yaml("projects/zlib/checksum_fuzzer/harness.yaml", y)
+                self.assertEqual(t.generate(), 0, t.last_output)
+                self.assertEqual([str(f) for f in t.lint()], [])
+                r = t.read("projects/zlib/checksum_fuzzer/README.md")
+                self.assertIn("blocked by the model: the binary %s |" % words, r)
+
     def test_fingerprints_ignore_docstrings_but_not_bytes(self):
         with tree() as t:
             before = {s.id: s.fingerprint for s in facts.load(t.root).statements()}
@@ -445,12 +466,15 @@ class Code(unittest.TestCase):
         self.assertEqual(rocq.code("a \t\r\n b"), "a b")
 
     def test_a_carriage_return_in_a_string_is_code(self):
+        def code(t, rel):
+            return facts.code_sha256(t.path(rel), names.NAMESPACE_DEFAULT)
+
         with tree(render=False) as t:
             t.write("lf.v", 'Definition s := "a\nb".\n')
             t.write("crlf.v", 'Definition s := "a\r\nb".\r\n')
-            self.assertNotEqual(facts.code_sha256(t.path("lf.v")), facts.code_sha256(t.path("crlf.v")))
+            self.assertNotEqual(code(t, "lf.v"), code(t, "crlf.v"))
             t.write("crlf.v", 'Definition s := "a\nb".\r\n')
-            self.assertEqual(facts.code_sha256(t.path("lf.v")), facts.code_sha256(t.path("crlf.v")))
+            self.assertEqual(code(t, "lf.v"), code(t, "crlf.v"))
 
     def test_strings_are_code(self):
         self.assertEqual(rocq.code('Definition s := "(*  ""x""  *)".'), 'Definition s := "(*  ""x""  *)".')
@@ -519,6 +543,103 @@ class Fingerprints(unittest.TestCase):
             t.write(dist, t.read(dist) + 'Definition s := "a\rb".\n')
             self.assertEqual(t.generate(), 0, t.last_output)
             self.assertEqual(t.generate(check=True), 0, t.last_output)
+
+
+class Namespace(unittest.TestCase):
+    """release.yaml's `namespace` and `opam_stem` name the theories and the opam packages (OSSV-162).  A fingerprint
+    reads the namespace as facts.FINGERPRINT_NAMESPACE, so a release that renames it states the same statements."""
+
+    # a theory that names the namespace, as theories/Shapes.v does (`From <namespace>.Core Require Import Images.`)
+    THEORY = "(** * The core *)\nFrom %s.Core Require Import Images.\nDefinition halts (x : nat) : Prop := x = 0.\n"
+    # what a generated file holds when it names the old namespace or an old package
+    OLD = ("OssFuzzTheorems", "rocq-oss-fuzz-theorems")
+
+    def test_a_release_naming_a_namespace_renders_it_everywhere(self):
+        with tree(render=False) as t:
+            rename_namespace(t)
+            out = generate.render_all(facts.load(t.root))
+            gen = {p: text for p, text in out.items()
+                   if p == "dune-project" or p.endswith(("Statements.v", "Images.v", "Characterise.v", "/dune", ".opam"))}
+            self.assertTrue(gen)
+            self.assertEqual([p for p, text in gen.items() if any(o in text for o in self.OLD)], [])
+            self.assertIn("From OSSVerify.Core Require Import Shapes.", out["projects/zlib/checksum_fuzzer/Statements.v"])
+            self.assertIn("(see Vocabulary in OSSVerify.Core.Shapes)",
+                          " ".join(out["projects/zlib/checksum_fuzzer/Statements.v"].split()))
+            self.assertIn("From OSSVerify.Core Require Import Images.", out["projects/zlib/checksum_fuzzer/Images.v"])
+            self.assertIn("(theories Stdlib stdpp ReadFile Flocq LinuxProcessSemantics OSSVerify.Core)",
+                          out["projects/zlib/checksum_fuzzer/dune"])
+            self.assertIn("projects/zlib/rocq-oss-verify-zlib.opam", out)
+            self.assertNotIn("projects/zlib/rocq-oss-fuzz-theorems-zlib.opam", out)
+            for line in ("(name oss-verify)", "(name rocq-oss-verify-core)", "(name rocq-oss-verify)",
+                         "(depends rocq-oss-verify-core)", "(name rocq-oss-verify-zlib-proofs)"):
+                self.assertIn(line, out["dune-project"])
+            # the tree renders, checks against its rendering and lints clean under its new names
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual(t.generate(check=True), 0, t.last_output)
+            self.assertEqual([str(f) for f in t.lint()], [])
+            # a proof and a proof library: their dune files name the theories and the package in the new names
+            st = next(s for s in facts.load(t.root).statements() if s.id == "zlib/checksum_fuzzer/plain_halts")
+            t.write("proofs/zlib/checksum_fuzzer/lib/Base.v", "Definition one := 1.\n")
+            t.put_yaml("proofs/zlib/checksum_fuzzer/plain_halts/proof.yaml", {
+                "schema": "oss-fuzz-theorems/proof/1", "proves": st.id, "fingerprint": st.fingerprint})
+            t.write("proofs/zlib/checksum_fuzzer/plain_halts/Proof.v", "Theorem plain_halts_holds : True. Proof. exact I. Qed.\n")
+            out = generate.render_all(facts.load(t.root))
+            proof, lib = (out["proofs/zlib/checksum_fuzzer/%s/dune" % d] for d in ("plain_halts", "lib"))
+            for line in ("(name OSSVerify.Proofs.zlib.checksum_fuzzer.plain_halts)", "(package rocq-oss-verify-zlib-proofs)",
+                         "OSSVerify.Core", " OSSVerify.zlib.checksum_fuzzer ", "OSSVerify.Proofs.zlib.checksum_fuzzer.lib"):
+                self.assertIn(line, proof + " ")
+            for line in ("(name OSSVerify.Proofs.zlib.checksum_fuzzer.lib)", "(package rocq-oss-verify-zlib-proofs)",
+                         "OSSVerify.Core"):
+                self.assertIn(line, lib)
+            self.assertEqual([p for p, text in out.items() if p.endswith("/dune") and any(o in text for o in self.OLD)],
+                             [])
+
+    def test_no_namespace_renders_as_before(self):
+        """A release.yaml that names neither (every tree up to v2026.10.2) renders today's names, and one that names
+        the defaults renders every file byte for byte as one that names none."""
+        with tree() as t:
+            self.assertEqual(t.generate(check=True), 0, t.last_output)
+            before = generate.render_all(facts.load(t.root))
+            self.assertIn("From OssFuzzTheorems.Core Require Import Shapes.",
+                          before["projects/zlib/checksum_fuzzer/Statements.v"])
+            self.assertIn("projects/zlib/rocq-oss-fuzz-theorems-zlib.opam", before)
+            for line in ("(name oss-fuzz-theorems)", "(name rocq-oss-fuzz-theorems-core)",
+                         "(depends rocq-oss-fuzz-theorems-core)"):
+                self.assertIn(line, before["dune-project"])
+            rename_namespace(t, names.NAMESPACE_DEFAULT, names.OPAM_STEM_DEFAULT)
+            self.assertEqual(generate.render_all(facts.load(t.root)), before)
+            self.assertEqual(t.generate(check=True), 0, t.last_output)
+
+    def fingerprints(self, t):
+        """The fingerprint of every statement that has one (a withheld statement has none)."""
+        return {s.id: s.fingerprint for s in facts.load(t.root).statements() if s.fingerprint}
+
+    def theories(self, t, namespace):
+        for rel in facts.THEORIES:
+            t.write(rel, self.THEORY % namespace)
+
+    def test_a_renamed_release_keeps_every_fingerprint(self):
+        with tree(render=False) as a, tree(render=False) as b:
+            self.theories(a, names.NAMESPACE_DEFAULT)
+            self.theories(b, NEW_NAMESPACE)
+            rename_namespace(b)
+            self.assertNotEqual(a.read("theories/Shapes.v"), b.read("theories/Shapes.v"))
+            want = self.fingerprints(a)
+            self.assertTrue(want)
+            self.assertEqual(self.fingerprints(b), want)
+            # a theory edit that is not the namespace still moves every one
+            b.write("theories/Shapes.v", b.read("theories/Shapes.v").replace("x = 0", "x = 1"))
+            got = self.fingerprints(b)
+            self.assertEqual(sorted(got), sorted(want))
+            self.assertTrue(all(got[k] != want[k] for k in want))
+
+    def test_only_a_dotted_prefix_is_read_as_the_fingerprint_namespace(self):
+        f = facts.in_fingerprint_namespace
+        self.assertEqual(f("From OSSVerify.Core Require Images.", NEW_NAMESPACE),
+                         "From OssFuzzTheorems.Core Require Images.")
+        for text in ("OSSVerify", "x.OSSVerify.y", "NotOSSVerify.Core", "OSSVerify_core.x", "OSSVerify'.x"):
+            self.assertEqual(f(text, NEW_NAMESPACE), text)
+        self.assertEqual(f("OssFuzzTheorems.Core", names.NAMESPACE_DEFAULT), "OssFuzzTheorems.Core")
 
 
 class Schemas(unittest.TestCase):
@@ -939,3 +1060,433 @@ class ProofLibrary(unittest.TestCase):
             self.assertIn(" OssFuzzTheorems.zlib.checksum_fuzzer OssFuzzTheorems.Proofs.zlib.checksum_fuzzer.lib)",
                           t.read("proofs/zlib/checksum_fuzzer/plain_halts/dune"))
             self.assertEqual(t.generate(check=True), 0, t.last_output)
+
+
+SYMBOL_FACT = "projects/zlib/checksum_fuzzer/symbols/plain.tsv"
+SYMBOLS_V = "projects/zlib/checksum_fuzzer/Symbols.v"
+# Symbols.v of the fixture's stand-in symbol fact: zlib/checksum_fuzzer's plain build, three functions (_start of size
+# 0), a data object and two sections
+FIXTURE_SYMBOLS_V = (
+    "(** * zlib / checksum_fuzzer: the functions, data objects and sections of one build\n"
+    "\n"
+    "    Each module below names the functions and data objects of one build of this\n"
+    "    fuzz target, as the build's symbol fact [symbols/<build>.tsv] lists them:\n"
+    "    [s_<name>] is the address of the function or object <name> and\n"
+    "    [Size.s_<name>] its size in bytes, with each character of <name> other than\n"
+    "    a letter, a digit or [_] written [_].  Its module [Sec] names each allocated\n"
+    "    section of the build in the same way, less the leading [.] of the section's\n"
+    "    name: [Sec.s_got] is the address of .got and [Sec.Size.s_got] its size, so\n"
+    "    that data no symbol names, such as a GOT slot, is a section's address and an\n"
+    "    offset.  [oft symbols] reads the fact from the build's unstripped twin and\n"
+    "    from the binary that harness.yaml pins by SHA-256, and refuses any other\n"
+    "    binary.  A contract names a function, an object or a section as\n"
+    "    [Symbols.<Build>.s_<name>] or [Symbols.<Build>.Sec.s_<name>], never by its\n"
+    "    address, so that a rebuild that moves it changes this file and not the\n"
+    "    contract.  A name that two or more functions or objects, or two or more\n"
+    "    sections, of a build share has no identifier in that build's module. *)\n"
+    "From Stdlib Require Import ZArith.\n"
+    "\n"
+    "Module Plain.\n"
+    "Definition s__start : Z := 0x11260.\n"
+    "Definition s_LLVMFuzzerTestOneInput : Z := 0x11270.\n"
+    "Definition s_crc32_z_llvm_42 : Z := 0x112dc.\n"
+    "Definition s_crc_table : Z := 0x13000.\n"
+    "\n"
+    "Module Size.\n"
+    "Definition s__start : Z := 0.\n"
+    "Definition s_LLVMFuzzerTestOneInput : Z := 108.\n"
+    "Definition s_crc32_z_llvm_42 : Z := 40.\n"
+    "Definition s_crc_table : Z := 1024.\n"
+    "End Size.\n"
+    "\n"
+    "Module Sec.\n"
+    "Definition s_got : Z := 0x14000.\n"
+    "Definition s_bss : Z := 0x15000.\n"
+    "\n"
+    "Module Size.\n"
+    "Definition s_got : Z := 16.\n"
+    "Definition s_bss : Z := 64.\n"
+    "End Size.\n"
+    "End Sec.\n"
+    "End Plain.\n")
+
+
+def put_symbol_fact(t, build, rows):
+    """Write zlib/checksum_fuzzer's symbol fact of build, of the binary harness.yaml pins, with rows (name, kind,
+    address, size), stand-in hashes (masked bytes - but for a function) and no source lines."""
+    pin = t.yaml("projects/zlib/checksum_fuzzer/harness.yaml")["builds"][build]["sha256"]
+    symbols.write(t.path(layout.symbol_fact("zlib", "checksum_fuzzer", build)),
+                  [symbols.Sym(n, k, a, s, "1f" * 32, "2e" * 32 if k == "func" else "-", "-") for n, k, a, s in rows],
+                  pin)
+
+
+class SymbolsModule(unittest.TestCase):
+    """Symbols.v: the functions and data objects of a fuzz target by name, a module for each build with a symbol fact,
+    so that a contract names them and not their addresses."""
+
+    def test_a_harness_with_a_symbol_fact_gets_symbols_v(self):
+        with tree() as t:
+            self.assertEqual(t.read(SYMBOLS_V), FIXTURE_SYMBOLS_V)
+            h = facts.load(t.root).projects["zlib"].harnesses["checksum_fuzzer"]
+            self.assertEqual(generate.symbols_v(h), FIXTURE_SYMBOLS_V)
+            self.assertTrue(paths.is_gen(SYMBOLS_V))
+            # and no placeholder takes it as a harness's name
+            self.assertEqual(paths.classify("projects/zlib/Symbols.v/README.md"), [])
+
+    def test_a_harness_without_one_gets_none(self):
+        with tree() as t:
+            h = facts.load(t.root).projects["json"].harnesses["fuzzer-parse_bjdata"]
+            self.assertTrue(h.builds())
+            self.assertIsNone(generate.symbols_v(h))
+            self.assertFalse(os.path.exists(t.path(h.dir, "Symbols.v")))
+
+    def test_a_name_two_functions_or_objects_share_is_left_out(self):
+        """One identifier cannot name two functions or objects (musl's static dummy, which several of its files
+        define; a static function and a static object of two files): such a name gets none in that build's module,
+        which says so; a build where one function alone has it keeps it."""
+        with tree() as t:
+            put_symbol_fact(t, "plain", [("LLVMFuzzerTestOneInput", "func", 0x11270, 108),
+                                         ("dummy", "func", 0x112dc, 4), ("dummy", "object", 0x13000, 4)])
+            put_symbol_fact(t, "asan", [("dummy", "func", 0x20000, 4), ("x.y", "func", 0x20004, 8),
+                                        ("z", "func", 0x2000c, 8), ("x.y", "func", 0x20014, 8),
+                                        ("z", "func", 0x2001c, 8)])
+            self.assertEqual(t.generate(), 0, t.last_output)
+            text = t.read(SYMBOLS_V)
+            self.assertTrue(text.startswith(
+                "(** * zlib / checksum_fuzzer: the functions, data objects and sections of two builds\n"), text)
+            self.assertEqual(text[text.index("Module Plain."):text.index("End Plain.")], (
+                "Module Plain.\n"
+                "(** Two or more functions or objects of this build are named [dummy], so this\n"
+                "    module defines no identifier for it. *)\n"
+                "Definition s_LLVMFuzzerTestOneInput : Z := 0x11270.\n"
+                "\n"
+                "Module Size.\n"
+                "Definition s_LLVMFuzzerTestOneInput : Z := 108.\n"
+                "End Size.\n"))
+            self.assertEqual(text[text.index("Module Asan."):], (
+                "Module Asan.\n"
+                "(** Two or more functions or objects of this build have each of the names [x.y]\n"
+                "    and [z], so this module defines no identifier for them. *)\n"
+                "Definition s_dummy : Z := 0x20000.\n"
+                "\n"
+                "Module Size.\n"
+                "Definition s_dummy : Z := 4.\n"
+                "End Size.\n"
+                "End Asan.\n"))
+        self.assertEqual(names.rocq_idents(["a", "dummy", "b.c", "dummy"]), {"a": "s_a", "b.c": "s_b_c"})
+
+    def test_a_size_never_clashes_with_an_address(self):
+        """musl's static old_tz and old_tz_size (__tz.c), in every ASan build of libreac: the size of old_tz and the
+        address of old_tz_size are both s_old_tz_size, the one in Size and the other not, so both names are kept."""
+        with tree() as t:
+            put_symbol_fact(t, "plain", [("old_tz", "object", 0x13000, 8), ("old_tz_size", "object", 0x13008, 8)])
+            self.assertEqual(t.generate(), 0, t.last_output)
+            text = t.read(SYMBOLS_V)
+            self.assertEqual(text[text.index("Module Plain."):], (
+                "Module Plain.\n"
+                "Definition s_old_tz : Z := 0x13000.\n"
+                "Definition s_old_tz_size : Z := 0x13008.\n"
+                "\n"
+                "Module Size.\n"
+                "Definition s_old_tz : Z := 8.\n"
+                "Definition s_old_tz_size : Z := 8.\n"
+                "End Size.\n"
+                "End Plain.\n"))
+
+    def test_sections_have_a_namespace_of_their_own(self):
+        """A section is named in the build's module Sec, less the leading . of its name: the section .got and a
+        function got are both s_got, in two modules; a name two sections share is left out of Sec, which says so."""
+        with tree() as t:
+            put_symbol_fact(t, "plain", [("got", "func", 0x11270, 8), (".got", "section", 0x14000, 16),
+                                         (".data", "section", 0x15000, 8), (".data", "section", 0x16000, 8)])
+            self.assertEqual(t.generate(), 0, t.last_output)
+            text = t.read(SYMBOLS_V)
+            self.assertEqual(text[text.index("Module Plain."):], (
+                "Module Plain.\n"
+                "Definition s_got : Z := 0x11270.\n"
+                "\n"
+                "Module Size.\n"
+                "Definition s_got : Z := 8.\n"
+                "End Size.\n"
+                "\n"
+                "Module Sec.\n"
+                "(** Two or more sections of this build are named [.data], so this module defines\n"
+                "    no identifier for it. *)\n"
+                "Definition s_got : Z := 0x14000.\n"
+                "\n"
+                "Module Size.\n"
+                "Definition s_got : Z := 16.\n"
+                "End Size.\n"
+                "End Sec.\n"
+                "End Plain.\n"))
+
+    def test_two_names_one_identifier_is_refused(self):
+        """Two names that give one identifier of Symbols.v are an error of the facts, which names both, whether they
+        are functions or objects, or two sections: no rendering could define the identifier twice."""
+        for rows, clash in (([("crc32.z", "func", 0x11270, 8), ("crc32_z", "func", 0x11278, 8)],
+                             "'crc32.z' and 'crc32_z' both give s_crc32_z"),
+                            ([("crc32.z", "func", 0x11270, 8), ("crc32_z", "object", 0x13000, 8)],
+                             "'crc32.z' and 'crc32_z' both give s_crc32_z"),
+                            ([(".got", "section", 0x14000, 8), ("got", "section", 0x14008, 8)],
+                             "'.got' and 'got' both give s_got")):
+            with self.subTest(rows=rows), tree() as t:
+                put_symbol_fact(t, "plain", rows)
+                self.assertEqual(t.generate(), 1, t.last_output)
+                errors = [line for line in t.last_output.splitlines() if line.startswith("error: ")]
+                self.assertEqual(len(errors), 1, t.last_output)
+                self.assertTrue(errors[0].startswith("error: %s: " % SYMBOL_FACT), errors)
+                self.assertIn(clash, errors[0])
+                self.assertIn("nothing rendered", t.last_output)
+                self.assertRaisesRegex(ValueError, re.escape(clash), names.symbol_idents,
+                                       [symbols.Sym(n, k, a, s, "-", "-", "-") for n, k, a, s in rows])
+
+    def test_oft_checks_rules_leave_the_symbol_facts_alone(self):
+        """The rule is not in rules.check, which `oft check` runs: symbols.py is not the checker
+        (keys.NOT_THE_CHECKER), so a check opens it for no fuzz target, not even one whose symbol fact has a clash."""
+        with tree() as t:
+            put_symbol_fact(t, "plain", [("crc32.z", "func", 0x11270, 8), ("crc32_z", "func", 0x11278, 8)])
+            tools = os.path.dirname(os.path.dirname(os.path.abspath(generate.__file__)))
+            done = subprocess.run([sys.executable, "-c", "import sys; from oft import facts, rules; "
+                                   "e = rules.check(facts.load(sys.argv[1])); "
+                                   "print([x for x in e if 'symbols' in x], 'oft.symbols' in sys.modules)", t.root],
+                                  capture_output=True, text=True, env=dict(os.environ, PYTHONPATH=tools))
+            self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "[] False\n", ""))
+
+    def test_generate_check_reports_a_stale_symbols_v(self):
+        with tree() as t:
+            t.write(SYMBOL_FACT, t.read(SYMBOL_FACT).replace("0x11270", "0x11274"))
+            self.assertEqual(t.generate(check=True), 1)
+            self.assertIn("%s: differs from its rendering" % SYMBOLS_V, t.last_output)
+            os.remove(t.path(SYMBOL_FACT))
+            self.assertEqual(t.generate(check=True), 1)
+            self.assertIn("%s: generated file that the facts no longer produce; remove it" % SYMBOLS_V, t.last_output)
+
+
+class SharedFiles(unittest.TestCase):
+    """The shared generated files (paths.SHARED): the ones `oft generate` renders from the whole tree, which the
+    line's render writes after each merge instead of a pull request."""
+
+    def run_generate(self, root, **kw):
+        buf = io.StringIO()
+        rc = generate.run(root, out=buf, **kw)
+        return rc, buf.getvalue()
+
+    def test_every_shared_pattern_is_a_gen_row(self):
+        for p in paths.SHARED:
+            self.assertIn(("gen", p), paths.TABLE)
+
+    def test_is_shared(self):
+        for rel in ("README.md", "index/STATUS.md", "index/PROOFS.md", "index/statements.tsv", "index/binaries.tsv",
+                    "analyses/known-issues.md", "analyses/harness-checks/checks.tsv", "projects/zlib/README.md"):
+            self.assertTrue(paths.is_shared(rel), rel)
+        for rel in ("dune-project", "projects/zlib/checksum_fuzzer/README.md",
+                    "projects/zlib/rocq-oss-fuzz-theorems-zlib.opam",
+                    "proofs/zlib/checksum_fuzzer/plain_halts/dune", "proofs/zlib/checksum_fuzzer/lib/dune",
+                    "index/x/statements.tsv", "docs/statements.md"):
+            self.assertFalse(paths.is_shared(rel), rel)
+
+    def test_skip_shared_ignores_a_stale_shared_file(self):
+        with tree() as t:
+            t.write("index/statements.tsv", "stale\n")
+            rc, out = self.run_generate(t.root, check=True, shared=False)
+            self.assertEqual(rc, 0, out)
+            rc, out = self.run_generate(t.root, check=True)
+            self.assertEqual(rc, 1, out)
+            self.assertIn("index/statements.tsv", out)
+
+    def test_skip_shared_still_checks_a_target_file(self):
+        with tree() as t:
+            t.write("projects/zlib/checksum_fuzzer/README.md", "stale\n")
+            rc, out = self.run_generate(t.root, check=True, shared=False)
+            self.assertEqual(rc, 1, out)
+            self.assertIn("projects/zlib/checksum_fuzzer/README.md", out)
+
+    def test_shared_only_writes_only_shared_files(self):
+        with tree() as t:
+            good = t.read("index/statements.tsv")
+            t.write("index/statements.tsv", "stale\n")
+            t.write("projects/zlib/checksum_fuzzer/README.md", "stale\n")
+            rc, out = self.run_generate(t.root, shared=True)
+            self.assertEqual(rc, 0, out)
+            self.assertEqual(t.read("index/statements.tsv"), good)
+            self.assertEqual(t.read("projects/zlib/checksum_fuzzer/README.md"), "stale\n")
+
+    def test_skip_shared_writes_no_shared_file(self):
+        with tree() as t:
+            t.write("index/statements.tsv", "stale\n")
+            rc, out = self.run_generate(t.root, shared=False)
+            self.assertEqual(rc, 0, out)
+            self.assertEqual(t.read("index/statements.tsv"), "stale\n")
+            self.assertIn("are left to the line's render", out)
+
+    def test_shared_only_deletes_a_shared_file_the_facts_no_longer_produce(self):
+        with tree() as t:
+            t.write("index/gone.tsv", "x\n")
+            rc, out = self.run_generate(t.root, check=True, shared=True)
+            self.assertEqual(rc, 1, out)
+            self.assertIn("index/gone.tsv", out)
+            rc, out = self.run_generate(t.root, shared=True)
+            self.assertEqual(rc, 0, out)
+            self.assertFalse(os.path.lexists(t.path("index/gone.tsv")), out)
+            self.assertIn("removed index/gone.tsv", out)
+
+    def test_the_summary_line_keeps_its_form(self):
+        with tree() as t:
+            for scope in (False, True):
+                rc, out = self.run_generate(t.root, check=True, shared=scope)
+                self.assertEqual(rc, 0, out)
+                last = out.rstrip("\n").rsplit("\n", 1)[-1]
+                self.assertRegex(last, r"\Aoft generate --check: \d+ files, 0 problem\(s\)\Z")
+
+    def test_the_shared_files_do_not_read_proof_libraries(self):
+        with tree() as t:
+            t.write("proofs/zlib/checksum_fuzzer/lib/Helper.v", "Definition one := 1.\n")
+            self.assertEqual(t.generate(), 0, t.last_output)
+            shared = [rel for rel in generate.existing_generated(t.root) if paths.is_shared(rel)]
+            self.assertTrue(shared)
+            want = {rel: t.read(rel) for rel in shared}
+            copy = t.path("..", "sparse")
+            shutil.copytree(t.root, copy)
+            for p in glob.glob(os.path.join(copy, "proofs", "*", "*", "lib")):
+                shutil.rmtree(p)
+            for rel in shared:
+                with open(os.path.join(copy, rel), "w") as f:
+                    f.write("stale\n")
+            rc, out = self.run_generate(copy, shared=True)
+            self.assertEqual(rc, 0, out)
+            for rel in shared:
+                with open(os.path.join(copy, rel), encoding="utf-8") as f:
+                    self.assertEqual(f.read(), want[rel], rel)
+
+
+class DuneProject(unittest.TestCase):
+    """dune-project depends on the facts alone: a project's first proof no longer adds its proofs package, so two
+    programs' first proof pull requests do not conflict in it."""
+
+    def packages(self, text):
+        return re.findall(r"\(name (rocq-oss-fuzz-theorems[\w-]*)\)", text)
+
+    def test_every_statements_package_has_a_proofs_package(self):
+        with tree() as t:
+            text = t.read("dune-project")
+            names_ = [n for n in self.packages(text)
+                      if n not in ("rocq-oss-fuzz-theorems", "rocq-oss-fuzz-theorems-core")
+                      and not n.endswith("-proofs")]
+            self.assertTrue(names_)
+            stanzas = {}
+            for block in text.split("\n\n"):
+                m = re.search(r"\(name (rocq-oss-fuzz-theorems[\w-]*)\)", block)
+                if m:
+                    stanzas[m.group(1)] = block
+            for n in names_:
+                self.assertIn(n + "-proofs", stanzas, n)
+                self.assertIn("(allow_empty)", stanzas[n + "-proofs"], n)
+
+    def test_a_first_proof_changes_no_byte_of_dune_project(self):
+        with tree() as t:
+            before = t.read("dune-project")
+            st = next(s for s in facts.load(t.root).statements() if s.id == "zlib/checksum_fuzzer/plain_halts")
+            t.put_yaml("proofs/zlib/checksum_fuzzer/plain_halts/proof.yaml", {
+                "schema": "oss-fuzz-theorems/proof/1", "proves": st.id, "fingerprint": st.fingerprint})
+            t.write("proofs/zlib/checksum_fuzzer/plain_halts/Proof.v",
+                    "Theorem plain_halts_holds : True. Proof. exact I. Qed.\n")
+            self.assertEqual(t.generate(), 0, t.last_output)
+            self.assertEqual(t.read("dune-project"), before)
+# The barrier: generated in each per-project proofs and counterexamples folder, byte for byte the text
+# measured in the checker image (dune 3.23, Rocq 9.2) on the ported ossv/recipes tree.
+BARRIER = ("; generated by oft generate; do not edit.\n"
+           "; The statement theory of the folder above takes every subfolder (include_subdirs qualified).  What this "
+           "folder\n; holds is not part of it: each proof and the proof library have their own dune file, and dune "
+           "3.23 fails on a\n; theory nested in another's subfolders.\n(include_subdirs no)\n")
+
+
+def ported_pair(a, b):
+    """a and b the same old-layout tree, rendered; b then ported to the per-project layout and rendered again."""
+    for t in (a, b):
+        old_layout_tree(t)
+        assert t.generate() == 0, t.last_output
+    assert port.port_worktree(b.root, out=io.StringIO()) == 0
+    assert b.generate() == 0, b.last_output
+
+
+class Layout(unittest.TestCase):
+    def test_a_ported_tree_renders_every_file_of_a_statement_folder_as_before(self):
+        """D4: Statements.v, Images.v, Characterise.v, Distribution.v, dune and images/dune of every harness are
+        byte-equal before and after the move; only README.md and files outside projects/<p>/<h>/ may differ."""
+        with tree() as a, tree() as b:
+            ported_pair(a, b)
+            for h in facts.load(a.root).harnesses():
+                for f in ("Statements.v", "Images.v", "Characterise.v", "Distribution.v", "dune", "images/dune"):
+                    rel = os.path.join(h.dir, f)
+                    self.assertEqual(os.path.isfile(a.path(rel)), os.path.isfile(b.path(rel)), rel)
+                    if os.path.isfile(a.path(rel)):
+                        self.assertEqual(a.read(rel), b.read(rel), rel)
+
+    def test_a_ported_tree_renders_a_barrier_in_each_proofs_and_counterexamples_folder(self):
+        self.assertEqual(generate.barrier_dune(), BARRIER)
+        with tree() as a, tree() as b:
+            ported_pair(a, b)
+            for d in ("projects/zlib/checksum_fuzzer/proofs", "projects/zlib/api-driver/proofs",
+                      "projects/json/fuzzer-parse_bjdata/counterexamples"):
+                self.assertEqual(b.read(d + "/dune"), BARRIER, d)
+            self.assertFalse(os.path.exists(b.path("projects/zlib/checksum_fuzzer/findings/dune")))
+            self.assertEqual(b.read("projects/zlib/checksum_fuzzer/proofs/lib/dune"),
+                             a.read("proofs/zlib/checksum_fuzzer/lib/dune"))
+            self.assertEqual(b.read("projects/zlib/checksum_fuzzer/proofs/plain_halts/dune"),
+                             a.read("proofs/zlib/checksum_fuzzer/plain_halts/dune"))
+            self.assertFalse([f for f in b.files() if f.split("/")[0] in layout.OLD_TOPS])
+            self.assertEqual(b.generate(check=True), 0, b.last_output)
+            self.assertFalse([f for f in a.files() if f.endswith("/dune") and f.startswith("projects/")
+                              and f.split("/")[3:4] in (["proofs"], ["counterexamples"])])
+
+    def test_the_old_layout_renders_its_own_folders(self):
+        with tree() as t:
+            old_layout_tree(t)
+            self.assertEqual(t.generate(), 0, t.last_output)
+            readme = t.read("README.md")
+            self.assertIn("Each proof has a build record in `proofs/<project>/<harness>/provenance/`.", readme)
+            self.assertIn("| `proofs/<project>/<harness>/<statement>/` | the proof of one statement", readme)
+            self.assertIn("| `counterexamples/` | inputs that make a binary break a statement", readme)
+            self.assertIn("generated by oft generate from project.yaml, */harness.yaml, proofs/, counterexamples/ and "
+                          "notes/zlib.md;",
+                          t.read("projects/zlib/README.md"))
+
+    def test_the_new_layout_renders_its_own_folders(self):
+        with tree() as a, tree() as b:
+            ported_pair(a, b)
+            readme = b.read("README.md")
+            self.assertIn("Each proof has a build record in `projects/<project>/<harness>/proofs/provenance/`.", readme)
+            self.assertIn("| `projects/<project>/<harness>/proofs/<statement>/` | the proof of one statement", readme)
+            self.assertIn("| `projects/<project>/<harness>/counterexamples/` | inputs that make a binary break a "
+                          "statement", readme)
+            self.assertNotIn("`proofs/<project>", readme)
+            self.assertIn("generated by oft generate from project.yaml, */harness.yaml, */proofs/, */counterexamples/ "
+                          "and notes/zlib.md;",
+                          b.read("projects/zlib/README.md"))
+
+    def test_the_proving_paragraph_names_no_folder(self):
+        with tree() as t:
+            text = t.read("projects/zlib/checksum_fuzzer/Statements.v")
+            self.assertIn("A proof is a directory named after the statement, in this fuzz target's\n    proofs folder "
+                          "(docs/proving.md says where it is), whose Proof.v ends, for\n    example, in\n", text)
+            self.assertNotIn("proofs/zlib", text)
+
+    def test_harness_page_links_its_proofs_relatively(self):
+        with tree() as a, tree() as b:
+            ported_pair(a, b)
+            self.assertIn("[proved](../../../proofs/zlib/checksum_fuzzer/plain_halts/)",
+                          a.read("projects/zlib/checksum_fuzzer/README.md"))
+            self.assertIn("[proved](proofs/plain_halts/)", b.read("projects/zlib/checksum_fuzzer/README.md"))
+            self.assertIn("(../../proofs/zlib/checksum_fuzzer/plain_halts)", a.read("projects/zlib/README.md"))
+            self.assertIn("(checksum_fuzzer/proofs/plain_halts)", b.read("projects/zlib/README.md"))
+
+    def test_index_rows_name_the_proofs_folder_of_each_layout(self):
+        with tree() as a, tree() as b:
+            ported_pair(a, b)
+            self.assertIn("[build record](../proofs/zlib/checksum_fuzzer/provenance/PROVENANCE.md) | "
+                          "[proofs/zlib/checksum_fuzzer/](../proofs/zlib/checksum_fuzzer/)", a.read("index/PROOFS.md"))
+            self.assertIn("[build record](../projects/zlib/checksum_fuzzer/proofs/provenance/PROVENANCE.md) | "
+                          "[projects/zlib/checksum_fuzzer/proofs/](../projects/zlib/checksum_fuzzer/proofs/)",
+                          b.read("index/PROOFS.md"))
+            self.assertIn("\tprojects/zlib/checksum_fuzzer/proofs/plain_halts\t"
+                          "projects/zlib/checksum_fuzzer/proofs/provenance/PROVENANCE.md", b.read("index/proofs.tsv"))

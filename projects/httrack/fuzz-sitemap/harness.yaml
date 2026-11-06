@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: httrack
 harness: fuzz-sitemap
-rocq: OssFuzzTheorems.httrack.fuzz_sitemap
+rocq: OSSVerify.httrack.fuzz_sitemap
 origin: upstream
 summary: hts_sitemap_scan over an exact-size heap copy with a URL cap from byte 0; the callback counts
   URLs but the count is never checked against the cap.

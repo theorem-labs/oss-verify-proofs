@@ -1,0 +1,132 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/cjson/cjson_read_fuzzer/lib/RL/G/G_printf_core.v, with its module paths and module names changed; 73 of its 114 lines of code are new or changed and 951 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/CJ/RL/GXA/G_vfprintf_snf_closed.v at 2d2ff01bb6f2; module paths changed (the same text as proofs/plugin-hostd/fuzz_reply/lib/CJ/RL/GXA/G_vfprintf_snf_closed.v at 2d2ff01bb6f2, module paths aside). *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.Lib Require Import SFModel Arr ITree Nodes PropExec MState Mem Exec Frame Cells Step.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.Reloc Require Import RStep.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.Spec Require Import Prelim Monad FmtFp StrFun.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.P Require Import SFW1_lemmas.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G Require Import G_memset G_memcpy G_fwritex G_pad G_fmt_fp_lib G_pop_arg GRoTab.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G Require ProgAt3.
+Import OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.ProgAt3.ProgAt2.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.GX Require Import Printf_model Printf_zfacts G_pop_arg_x.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.GX Require G_printf_core_common.
+Import OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.GX.G_printf_core_common.G_printf_iface.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.GX Require Import G_towrite G_vfprintf_snf.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.GXA Require Import AsanFacts SetCall StrnlenCall CopyCall VfprintfCall.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.GXA Require G_printf_core_common.
+Import OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.GXA.G_printf_core_common.G_printf_iface.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.GXA Require Import G_sn_write G_fwritex_w G_fwritex_room G_printf_core.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.GXA Require Import G_vfprintf_snf G_printf_snfsink.
+Import ListNotations.
+Open Scope Z_scope.
+
+Section Img.
+  Context {IMG : RImg}.
+  Local Notation GLRN a b := (RelNear (sym a) (sym b)) (only parsing).
+  Local Notation GLRS a := (RelSym (sym a)) (only parsing).
+  (* vfprintf and __towrite *)
+  Context {CODE_vfprintf : CodeAtT img_segs (sym 0x7f000400) (PROGAT_CODE_vfprintf IMG)}.
+  Context {RB_vfprintf : RelCode (sym 0x7f000400) 432}.
+  Context {RN_printf_core : GLRN 0x7f000400 0x18704}.
+  Context {RN_lockfile : GLRN 0x7f000400 0x7f000700}.
+  Context {RN_towrite : GLRN 0x7f000400 0x17f40}.
+  Context {RN_unlockfile : GLRN 0x7f000400 0x7f000800}.
+  Context {RN_stack_chk_fail : GLRN 0x7f000400 0x15f04}.
+  Context {CODE_towrite : CodeAtT img_segs (sym 0x17f40) (PROGAT_CODE_towrite IMG)}.
+  Context {RB_towrite : RelCode (sym 0x17f40) 84}.
+  (* the string-buffer write callback and __fwritex *)
+  Context {CODE_sn_write : CodeAtT img_segs (sym 0x7f000300) (PROGAT_CODE_sn_write IMG)}.
+  Context {RS_snw : RelSym (sym K_SN_WRITE)}.
+  Context {RB_snw : RelCode (sym K_SN_WRITE) 220}.
+  Context {RN_snw_memcpy : GLRN 0x7f000300 0x21334}.
+  Context {CODE_fwritex : CodeAtT img_segs (sym 0x17d50) (PROGAT_CODE_fwritex IMG)}.
+  Context {RB_fwritex : RelCode (sym 0x17d50) 312}.
+  Context {RN_fwritex_memcpy : GLRN 0x17d50 0x21334}.
+  (* printf_core *)
+  Context {CODE_printf_core : CodeAtT img_segs (sym 0x18704) (printf_core_prog_at IMG)}.
+  Context {RB_printf_core : RelCode (sym 0x18704) 3632}.
+  Context {RO_10884 : RoB img_segs (sym 0x10884) ROT_0x10884}.
+  Context {RN_B_fwritex_18704 : GLRN 0x18704 0x17d50}.
+  Context {RN_B_pop_arg_18704 : GLRN 0x18704 0x19534}.
+  Context {RN_B_fmt_fp_18704 : GLRN 0x18704 0x1973c}.
+  Context {RN_B_errno_location_18704 : GLRN 0x18704 0x15f44}.
+  Context {RN_B_strerror_18704 : GLRN 0x18704 0x1ae04}.
+  Context {RN_B_strnlen_18704 : GLRN 0x18704 0x21920}.
+  Context {RN_B_wctomb_18704 : GLRN 0x18704 0x1ae48}.
+  Context {RN_B_pad_18704 : GLRN 0x18704 0x19668}.
+  Context {RN_B_memset_18704 : GLRN 0x18704 0x21738}.
+  Context {RN_B_stack_chk_fail_18704 : GLRN 0x18704 0x15f04}.
+  Context {RS_K_109cc : GLRS 0x109cc}.
+  Context {RS_K_10884 : GLRS 0x10884}.
+  Context {RS_K_1029e : GLRS 0x1029e}.
+  Context {RS_K_103b3 : GLRS 0x103b3}.
+  Context {RS_K_10964 : GLRS 0x10964}.
+  Context {RS_K_10b9c : GLRS 0x10b9c}.
+  Context {RO_states0 : RoB img_segs (sym 0x109cc) (zb STATES0)}.
+  Context {RO_pfx : RoB img_segs (sym 0x1029e) (zb [45; 43; 32; 32; 32; 48; 88; 48; 120]%Z)}.
+  Context {RQ_pfx_lo : ZFact (0x10000 <= sym 0x1029e)%Z}.
+  Context {RQ_pfx_got : ZFact (sym 0x1029e + 9 <= sym 0x22e18)%Z}.
+  Context {RO_xdigits : RoB img_segs (sym 0x10b9c) (zb XDIGITS)}.
+  Context {RO_states : RoB img_segs (sym 0x109cc) (zb STATES)}.
+  (* globals *)
+  Context {RS_got_ssp : GLRS 0x22e18}.
+  Context {RS_34288 : GLRS 0x34288}.
+  Context {RS_35000 : GLRS 0x35000}.
+  Context {RL0_0 : ZFact (sym 0x22e18 + 8 <= sym 0x34288)}.
+  Context {RL0_1 : ZFact (sym 0x34288 + 8 <= sym 0x35000)}.
+  Context {RL1_0 : ZFact (sym 0x22e18 + 240 <= sym 0x34288)}.
+  (* callee contracts *)
+  Variable copy_ready : mem -> Z -> Z -> Z -> Z -> Prop.
+  Context (SPEC_memcpy : memcpy_stack_contract copy_ready).
+  Variable set_ready : mem -> Z -> Z -> Z -> Prop.
+  Context {SPEC_memset : memset_stack_contract set_ready}.
+  Variable strn_ready : mem -> Z -> Z -> Z -> list byte -> Prop.
+  Context {SPEC_strnlen : strnlen_stack_contract strn_ready}.
+  Context {SPEC_pop_arg : pop_arg_contract}.
+  Context {SPEC_pop_arg_x : pop_arg_x_contract}.
+  Variable INV : mem -> Prop.
+
+Lemma snf_sn_write_ok : sn_write_contract copy_ready.
+Proof.
+  assert (RB_sn_write : RelCode (sym 0x7f000300) 220) by exact RB_snw.
+  eapply sn_write_contract_ok. exact SPEC_memcpy.
+Qed.
+
+Lemma snf_fwritex_room_ok : fwritex_room_stmt copy_ready.
+Proof. eapply fwritex_room_ok. exact SPEC_memcpy. Qed.
+
+Lemma snf_fwritex_w_ok : fwritex_w_stmt copy_ready.
+Proof.
+  assert (RB_sn_write : RelCode (sym 0x7f000300) 220) by exact RB_snw.
+  pose proof snf_sn_write_ok as SNW.
+  eapply fwritex_w_ok; eassumption.
+Qed.
+
+Lemma snf_printf_core_ok : printf_core_a_all set_ready strn_ready.
+Proof. unfold printf_core_a_all. exact printf_core_a_proof. Qed.
+
+Theorem vfprintf_snf_a_closed : vfprintf_snf_a_stmt (snf_out_ready copy_ready) set_ready strn_ready copy_ready INV.
+Proof.
+  pose proof snf_sn_write_ok as SNW. pose proof snf_fwritex_room_ok as FROOM. pose proof snf_fwritex_w_ok as FW.
+  eapply vfprintf_snf_a_proof;
+    first [ exact snf_printf_core_ok | exact printf_core1_a_proof
+          | do 18 intro; eapply snf_sink_frame; eassumption | do 18 intro; eapply snf_sink_flags; eassumption
+          | do 18 intro; eapply snf_out_a; eassumption | do 18 intro; eapply snf_flush_a_ok; eassumption | eassumption ].
+Qed.
+
+Theorem vfprintf_snf_a_guarded_closed :
+  vfprintf_guarded_stmt (vf_ready_a (snf_out_ready copy_ready) set_ready strn_ready copy_ready INV).
+Proof.
+  pose proof snf_sn_write_ok as SNW. pose proof snf_fwritex_room_ok as FROOM. pose proof snf_fwritex_w_ok as FW.
+  eapply vfprintf_snf_a_guarded;
+    first [ exact snf_printf_core_ok | exact printf_core1_a_proof
+          | do 18 intro; eapply snf_sink_frame; eassumption | do 18 intro; eapply snf_sink_flags; eassumption
+          | do 18 intro; eapply snf_out_a; eassumption | do 18 intro; eapply snf_flush_a_ok; eassumption | eassumption ].
+Qed.
+
+End Img.

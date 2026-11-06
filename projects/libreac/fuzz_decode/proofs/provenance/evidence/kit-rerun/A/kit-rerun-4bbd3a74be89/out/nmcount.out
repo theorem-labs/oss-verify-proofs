@@ -1,0 +1,11 @@
+# C donor twin DONOR_TWIN ce511d541cda
+# A decode twin DECODE_A_TWIN 4cb0a852e826
+symtab entries of the name | C | A | addresses C | addresses A | by-NAME verdict | by-ADDRESS verdict (record addresses)
+_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedS | 1 | 1 | 0x31550 | 0x3124c | EQUAL-mod-pcrel (81, 0, 0) diffs 1 | EQUAL-mod-pcrel (81, 0, 0) diffs 1
+_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocato | 1 | 1 | 0x359e4 | 0x357c0 | EQUAL-mod-pcrel (16, 0, 0) diffs 0 | EQUAL-mod-pcrel (16, 0, 0) diffs 0
+_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20Size | 1 | 1 | 0x36134 | 0x35f10 | EQUAL (0, 0, 0) diffs 0 | EQUAL (0, 0, 0) diffs 0
+_ZN6__asan12PoisonShadowEmmh                               | 1 | 1 | 0x53800 | 0x53040 | EQUAL-mod-pcrel (61, 0, 0) diffs 0 | EQUAL-mod-pcrel (61, 0, 0) diffs 0
+_ZN11__sanitizer13internal_mmapEPvmiiiy                    | 1 | 1 | 0x64198 | 0x63d3c | EQUAL (0, 0, 0) diffs 0 | EQUAL (0, 0, 0) diffs 0
+_ZN11__sanitizer13StackDepotPutENS_10StackTraceE           | 1 | 1 | 0x724e0 | 0x72084 | EQUAL-mod-pcrel (2, 0, 0) diffs 0 | EQUAL-mod-pcrel (2, 0, 0) diffs 0
+memset                                                     | 1 | 1 | 0x9790c | 0x92474 | EQUAL (0, 0, 0) diffs 0 | EQUAL (0, 0, 0) diffs 0
+name lookup == the addresses of record for all 7 pairs, and every by-NAME verdict equals its by-ADDRESS verdict

@@ -1,0 +1,8 @@
+plant: <plantdir>/planted.asan-ubsan byte at 0x10439 (file offset 0x439): 0x11 -> 0xee
+  <cgif-B-twin> sha256 ce511d541cdabbe3
+  <plantdir>/untouched.asan-ubsan sha256 ce511d541cdabbe3
+  <plantdir>/planted.asan-ubsan sha256 ab4ed0faf1666ae6
+[untouched] settlement Allocate +0xdc: EQUAL (64 B 00010207030d0813; targets 0x10428 | 0x10440)
+[untouched] strictcmp3.py Allocate: verdict DIFFERENT-target pcrel/real/unmeasured 81/0/0 target-differ [('0xdc', '(.rodata)', '(.rodata)', 'data-differs', (b'\x00\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\x11\x1a&\x0f.\x1d0', b'\x00\x01\x02\x07\x03\r\
+[planted] settlement Allocate +0xdc: DIFFERS (64 B 00010207030d0813; targets 0x10428 | 0x10440)
+[planted] strictcmp3.py Allocate: verdict DIFFERENT-target pcrel/real/unmeasured 81/0/0 target-differ [('0xdc', '(.rodata)', '(.rodata)', 'data-differs', (b'\x00\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\xee\x1a&\x0f.\x1d0', b'\x00\x01\x02\x07\x03\r\

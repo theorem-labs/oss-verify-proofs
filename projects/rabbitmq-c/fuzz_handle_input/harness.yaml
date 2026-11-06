@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: rabbitmq-c
 harness: fuzz_handle_input
-rocq: OssFuzzTheorems.rabbitmq_c.fuzz_handle_input
+rocq: OSSVerify.rabbitmq_c.fuzz_handle_input
 origin: upstream
 summary: Feeds the input to amqp_handle_input() frame by frame (up to 4096 iterations), advancing by the
   consumed count; stops on res <= 0. No result checked beyond the loop control.

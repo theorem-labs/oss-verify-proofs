@@ -1,0 +1,9 @@
+# the 372 files of the run of record (stage-out)
+TOOL <file> sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
+SUMMARY: 372 files read of 372 given; ESCAPES 136; PLAIN 1002; UNMEASURED 0; KERNEL 0; levels TACTIC 830, OPTION 308; HINTS 1 (report only, tactic-level)
+# the 247 of them written from this run, as committed (post-steps applied)
+TOOL <file> sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
+SUMMARY: 247 files read of 247 given; ESCAPES 96; PLAIN 572; UNMEASURED 0; KERNEL 0; levels TACTIC 534, OPTION 134; HINTS 1 (report only, tactic-level)
+# fuzz_grant's released counterparts of the 372 (recipes 4f87de75d67)
+TOOL <file> sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
+SUMMARY: 372 files read of 372 given; ESCAPES 136; PLAIN 1002; UNMEASURED 0; KERNEL 0; levels TACTIC 830, OPTION 308; HINTS 1 (report only, tactic-level)

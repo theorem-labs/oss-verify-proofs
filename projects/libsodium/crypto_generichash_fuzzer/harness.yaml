@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libsodium
 harness: crypto_generichash_fuzzer
-rocq: OssFuzzTheorems.libsodium.crypto_generichash_fuzzer
+rocq: OSSVerify.libsodium.crypto_generichash_fuzzer
 origin: oss-fuzz
 summary: Computes BLAKE2b with the one-shot crypto_generichash and again with init/update(two halves)/final
   into the SAME buffer `out`; the two digests are never compared (a ready-made one-shot vs streaming differential

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: yyjson
 harness: yyjson_merge_patch_fuzzer
-rocq: OssFuzzTheorems.yyjson.yyjson_merge_patch_fuzzer
+rocq: OSSVerify.yyjson.yyjson_merge_patch_fuzzer
 origin: upstream
 summary: Same split as the patch fuzzer, applying an RFC 7386 JSON Merge Patch with yyjson_merge_patch
   and yyjson_mut_merge_patch; results written and discarded, never compared.

@@ -1,0 +1,11 @@
+# kit KIT_PARENT/cmpkit-4bbd3a74be89 strictcmp2 sha256 16982e3ef42b
+# C DONOR_TWIN ce511d541cda
+# A DECODE_A_TWIN 4cb0a852e826
+BASELINE  [_ZN6__asan9Allocator8AllocateEmmPN11__sa]: EQUAL-mod-pcrel pcrel/real/unmeas (81, 0, 0) targets (2, 0, 20); differences 1: [('0xdc', '(.rodata)', '(.rodata)', 'data-differs')]
+BASELINE memset  [memset]: EQUAL pcrel/real/unmeas (0, 0, 0) targets (0, 0, 0); differences 0: []
+PLANT 1 jal at +0x50: 0x5819c -> 0x581b4 [_ZN6__asan9Allocator8AllocateEmmPN11__sa]: EQUAL-mod-pcrel pcrel/real/unmeas (81, 0, 0) targets (2, 0, 20); differences 2: [('0x50', '_ZN6__asan10AsanInitedEv+0x0', '__asan_report_load1+0x0', 'names'), ('0xdc', '(.rodata)', '(.rodata)', 'data-differs')]
+  PLANT 1: verdict EQUAL-mod-pcrel (baseline EQUAL-mod-pcrel), new difference words ['0x50'] -> CAUGHT
+PLANT 2 ld at +0xc4: target 0x103c8 -> 0x103d0 [_ZN6__asan9Allocator8AllocateEmmPN11__sa]: EQUAL-mod-pcrel pcrel/real/unmeas (81, 0, 0) targets (1, 0, 20); differences 2: [('0xc4', '(.rodata)', '(.rodata)', 'data-differs'), ('0xdc', '(.rodata)', '(.rodata)', 'data-differs')]
+  PLANT 2: verdict EQUAL-mod-pcrel (baseline EQUAL-mod-pcrel), new difference words ['0xc4'] -> CAUGHT
+PLANT 3 memset word at +0xc: addi 00300713 -> andi 00307713 [memset]: DIFFERENT pcrel/real/unmeas (0, 1, 0) targets (0, 0, 0); differences 0: []
+  PLANT 3: verdict DIFFERENT (baseline EQUAL), new difference words [] -> CAUGHT

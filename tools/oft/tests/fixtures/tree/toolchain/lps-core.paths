@@ -1,0 +1,5 @@
+# A stand-in for the tests of tools/oft: the files of the model the checker image is built from, one git pathspec
+# per line.
+dune-project
+theories
+:(exclude)theories/Common

@@ -1,0 +1,122 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List Lia Bool.
+From stdpp.bitvector Require Import definitions.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.jsoncons.fuzz_bigint.images Require Import Ubsan.
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import PropExec CatExec CatSim SeqExec StoreOk Hoare ShapeAlg SpinAlg HeapIface
+     AxSymExec3 AxSymExec3B AxSymExec3Sound AxSymRun3 SegRun SegPlan AsanPlanCore AsanPlan AsanPlanSound Ub0PlanKit AsanPlanSoundSums Ub0Sums
+     BigLinkBase BigLinkGlueUb0 BigLinkInlBaseU BigLinkDivBaseU BigLinkMulAlg BigLinkMul BigLinkMulU L5Defs L5Words L5ReduceU L5ReduceGU
+     L5Core L5CoreKit L5CoreKitU L5CoreSpecsU L5AReserveU L5ReserveU L5ResizePU L5ResizeU L5Mul10W L5Mul10PU L5Mul10T2U L5Mul10TU L5Mul10KU.
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require BigModel BigFactsBase BigFactsDigits.
+Import -(notations) BigFactsBase BigFactsDigits.
+Import ListNotations. Import AX2. Import AX2B. Import AX2S.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Require OSSVerify.Proofs.jsoncons.fuzz_bigint.lib.L5FastLia. Local Ltac lia := L5FastLia.plia.
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+
+Module L5MULU.
+Import L5CSU.
+Import L5MULPU.
+Import L5MULW.
+Import L5MULKU.
+
+Abbreviation reg i := (Z_to_bv 5 (Z.of_nat i)).
+Abbreviation st fx R pc M := (@mkst fx R (Z_to_bv 64 pc) M (seg_rom Ubsan.M.loaded_segments)).
+Section SCFG_1.
+Context {SCFG_P : ScfgP}.
+
+
+Section WithHeap.
+Variable L : heap_layout.
+Variable HI : heap_iface.
+Hypothesis LY : layout L.
+Hypothesis HIok : heap_iface_ok L SCFG HI.
+
+Theorem mul10_ok : mul10_spec L HI.
+Proof.
+  unfold mul10_spec. intros fx R M model K LB cr o sp r b ws HH MOK HK0 H10 H11 Hlen CAP CR H1 RA H2 H4 STK OB OL NEG Ao Olo Ohi WO BLK KONT.
+  pose proof MOK as (Mh & Ml & Mm). pose proof STK as (A16 & SLO & SHI & STOP & DEF). unfold MUL10_SCR, RESIZE_SCR, RESERVE_SCR, ARESERVE_SCR, OPNEW_SCR, HEAP_STACK in SLO, DEF.
+  pose proof RA as [Hr He].
+  assert (LBhi: forall bb, In bb LB -> fst bb + snd bb <= hl_ceil L).
+  { intros bb Hb. pose proof (proj1 (hio_wf L SCFG HI HIok LB cr M _ HH) bb Hb) as ((Q0 & Q1 & Q2 & Q3 & Q4) & _). exact Q4. }
+  assert (LBwf: forall q c, In (q, 8 * c) LB -> (4096 <= q /\ (q + 8 * c <= 0x10000 \/ 0x92000 <= q)) /\ q + 8 * c <= hl_ceil L /\ L5.defined M q (8 * c)).
+  { intros q c Hin. pose proof (proj1 (hio_wf L SCFG HI HIok LB cr M _ HH) _ Hin) as ((Q0 & Q1 & Q2 & Q3 & Q4) & QD & _). cbn [fst snd] in Q0, Q1, Q4, QD.
+    rewrite (ly_img_lo L LY), (ly_img_hi L LY) in Q1. split. split. exact Q0. exact Q1. split. exact Q4. exact QD. }
+  assert (WR96: BGU.writable M (sp - 96) 96).
+  { change (L5.writable RSEGS M (sp - 96) 96). eapply L5.writable_sub. apply (L5C.writable_of_defined RSEGS). exact DEF. lia. lia. lia. lia. }
+  destruct b as [fb len sto]. pose proof OB as (O0 & Hfb & O8 & OST). destruct OL as (Lws & Rws & Vws).
+  cbn [L5.bo_fb L5.bo_len L5.bo_st L5.bo_dyn L5.bo_cap L5.bo_data L5.bo_neg] in *.
+  pose proof (words_ok_of_Forall ws Rws) as WOK. pose proof (val_bound ws WOK) as VB. rewrite Lws in VB.
+  set (V := val ws) in *.
+  assert (Hlen27: Z.of_nat len <= 2 ^ 27).
+  { destruct sto as [v0 v1|cap q]. destruct OST as (_ & _ & _ & Hl2 & _). lia. destruct OST as (_ & _ & _ & Hlc & Hc & _). lia. }
+  (* [comment removed for export] *)
+  assert (X0: exists d x0, (L5.bo_dyn (L5.BO fb len sto) = true -> BGU.u64_at M (o + 24) d /\ 4096 <= d /\ d + 8 <= sp - 96 /\ d mod 8 = 0)
+                         /\ (L5.bo_dyn (L5.BO fb len sto) = false -> d = o + 16) /\ BGU.u64_at M d x0 /\ 0 <= x0 < 2 ^ 64 /\ ((1 <= len)%nat -> x0 = nth 0 ws 0)).
+  { unfold L5.bo_dyn. cbn [L5.bo_fb]. destruct sto as [v0 v1|cap q].
+    - destruct OST as (B0 & O16 & O24 & Hl2 & R0 & R1). exists (o + 16), v0. rewrite B0. split. intros; discriminate. split. reflexivity.
+      split. exact O16. split. lia. intros H1l. rewrite Vws. destruct len as [|len']. lia. reflexivity.
+    - destruct OST as (B0 & O16 & O24 & Hlc & Hc & Aq & Qlo & Qhi). destruct (LBwf q cap (BLK cap q eq_refl)) as (QR & QB & QD). rewrite B0.
+      destruct ws as [|w0 wr].
+      + destruct (L5KU.limbs_of_defined M q 1 ltac:(eapply L5.defined_sub; [exact QD|lia|lia]) ltac:(lia) ltac:(lia)) as (ws1 & L1 & R1 & LA).
+        destruct ws1 as [|x0 [|]]; cbn in L1; try lia. exists q, x0. split. intros _. repeat split; try lia. exact O24. split. intros; discriminate.
+        split. { pose proof (LA 0%nat ltac:(cbn; lia)) as X. rewrite Z.mul_0_r, Z.add_0_r in X. exact X. } split. { inversion R1. lia. } cbn in Lws. lia.
+      + exists q, w0. split. intros _. repeat split; try lia. exact O24. split. intros; discriminate.
+        split. { pose proof (Vws 0%nat ltac:(cbn; lia)) as X. rewrite Z.mul_0_r, Z.add_0_r in X. exact X. } split. { inversion Rws. lia. } reflexivity. }
+  destruct X0 as (d & x0 & HDd & HId & OX & Hx0 & X0nth).
+  pose proof (bv_unsigned_in_range _ (getr R (reg 1))) as RG1. pose proof (bv_unsigned_in_range _ (getr R (reg 8))) as RG8.
+  pose proof (bv_unsigned_in_range _ (getr R (reg 9))) as RG9. pose proof (bv_unsigned_in_range _ (getr R (reg 18))) as RG18.
+  pose proof (bv_unsigned_in_range _ (getr R (reg 19))) as RG19. pose proof (bv_unsigned_in_range _ (getr R (reg 20))) as RG20.
+  pose proof (bv_unsigned_in_range _ (getr R (reg 21))) as RG21. pose proof (bv_unsigned_in_range _ (getr R (reg 22))) as RG22.
+  pose proof (bv_unsigned_in_range _ (getr R (reg 23))) as RG23. pose proof (bv_unsigned_in_range _ (getr R (reg 24))) as RG24.
+  change (bv_modulus 64) with (2 ^ 64) in RG1, RG8, RG9, RG18, RG19, RG20, RG21, RG22, RG23, RG24.
+  assert (E1 : bv_unsigned (getr R (reg 1)) = r). { rewrite <- L5K.rl1, H1. apply BGU.unsigned_lit. lia. }
+  destruct (p1_run (Z.testbit fb 0) fx R M o sp fb (Z.of_nat len) d x0 H10 H11 ltac:(lia) Ao H2 A16 ltac:(lia) ltac:(lia) WR96 Olo ltac:(lia)
+              O0 Hfb eq_refl O8 ltac:(lia) HDd HId OX Hx0)
+    as (fx1 & R1 & M1 & MS1 & K1 & R1_1 & R1_2 & R1_8 & R1_9 & R1_10 & R1_11 & R1_19 & R1_20 & C8 & C16 & C24 & C32 & C40 & C48 & C56 & C64 & C72 & C80 & FR1 & GR1).
+  assert (FR1z: forall a, 0 <= a < 2 ^ 64 -> ~ (sp - 96 <= a < sp) -> M1 (Z_to_bv 64 a) = M (Z_to_bv 64 a)).
+  { intros a Ha Hna. apply FR1. rewrite BGU.unsigned_lit by lia. exact Hna. }
+  unfold cfg. eapply (L5.cps_of_msteps RSEGS). exact Mh. exact Ml. exact MS1.
+  eapply (L5RSZU.resize_ok L HI LY HIok fx1 R1 M1 model K LB cr o (sp - 96) RET1 (S len) (L5.BO fb len sto) ws).
+  - eapply (L5C.hi_heap_client L SCFG HI LB cr M M1). exact HIok. exact HH. exact (ly_ro L LY). rewrite (ly_img_hi L LY); lia. lia.
+    intros a Ha. destruct (Z_lt_le_dec a (sp - 96)) as [Hlt|Hge]. left. apply FR1z; lia.
+    destruct (Z_lt_le_dec a sp) as [Hlt'|Hge']. right; left. lia. left. apply FR1z; lia. exact GR1.
+  - exact MOK.
+  - exact HK0.
+  - exact R1_10.
+  - rewrite Nat2Z.inj_succ, <- Z.add_1_r. exact R1_11.
+  - lia.
+  - cbn [L5.bo_dyn L5.bo_cap L5.bo_fb L5.bo_st]. intros Hd. specialize (CAP Hd). lia.
+  - intros H3 Hd. unfold L5.bo_dyn in Hd. cbn [L5.bo_fb] in Hd. destruct sto as [v0 v1|cap q]. 2:{ exfalso. destruct OST as (B0 & _). rewrite B0 in Hd. discriminate. }
+    destruct OST as (_ & _ & _ & Hl2 & _). assert (L2: len = 2%nat) by lia. rewrite L2. change (8 * round_up (Z.of_nat 3)) with 64. apply CR. exact Hd. exact L2.
+  - exact R1_1.
+  - split. unfold RET1. lia. reflexivity.
+  - exact R1_2.
+  - rewrite <- H4. apply (K1 4%nat). apply L5K.In_of_mem. reflexivity.
+  - split. { replace (sp - 96) with (sp + (-6) * 16) by lia. rewrite Z_mod_plus_full. exact A16. }
+    unfold RESIZE_SCR, RESERVE_SCR, ARESERVE_SCR, OPNEW_SCR, HEAP_STACK. split. lia. split. lia. split. lia.
+    intros i Hi. apply GR1. replace (sp - 96 - (64 + (48 + (64 + (16 + 8224)))) + i) with (sp - (96 + (64 + (48 + (64 + (16 + 8224))))) + i) by lia. apply DEF. lia.
+  - eapply (L5C.big_at_agree RSEGS M M1). intros i Hi. apply FR1z; lia. lia. lia. exact OB.
+  - split. exact Lws. split. exact Rws. cbn [L5.bo_st L5.bo_len]. destruct sto as [v0 v1|cap q]. exact Vws.
+    destruct (LBwf q cap (BLK cap q eq_refl)) as (QR & QB & QD).
+    eapply (L5C.limbs_at_agree RSEGS M M1). intros i Hi. apply FR1z; lia. lia. lia. exact Vws.
+  - exact Ao.
+  - lia.
+  - exact Ohi.
+  - change (L5.writable RSEGS M1 o 32). eapply L5.writable_grows. exact GR1. exact WO.
+  - exact BLK.
+  - (* [comment removed for export] *)
+    intros fx2 R2 M2 model2 g LB' cr' POST MBV HH2.
+    apply (L5MULKU.mul10_after_resize L HI LY HIok fx R M model K LB cr o sp r fb len sto ws Hlen RA H2 Lws Rws NEG Ao Olo Ohi WO BLK KONT Mh Ml A16 SLO SHI STOP DEF Hr He LBhi LBwf WR96 Hfb OST WOK VB Hlen27 x0 Hx0 X0nth RG1 RG8 RG9 RG18 RG19 RG20 RG21 RG22 RG23 RG24 E1 R1 M1 K1 R1_2 R1_8 R1_9 R1_19 R1_20 C8 C16 C24 C32 C40 C48 C56 C64 C72 C80 GR1 FR1z fx2 R2 M2 model2 g LB' cr' POST MBV HH2).
+Qed.
+
+
+End WithHeap.
+End SCFG_1.
+
+End L5MULU.

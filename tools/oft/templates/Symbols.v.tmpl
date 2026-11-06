@@ -1,0 +1,39 @@
+Template for projects/<project>/<harness>/Symbols.v, rendered for a fuzz target with a symbol fact (symbols/<build>.tsv).
+
+@@ file
+(** * $project / $harness: the functions, data objects and sections of $count build$s
+
+$header *)
+From Stdlib Require Import ZArith.
+
+$modules
+@@ header
+Each module below names the functions and data objects of one build of this fuzz target, as the build's symbol fact [symbols/<build>.tsv] lists them: [s_<name>] is the address of the function or object <name> and [Size.s_<name>] its size in bytes, with each character of <name> other than a letter, a digit or [_] written [_].  Its module [Sec] names each allocated section of the build in the same way, less the leading [.] of the section's name: [Sec.s_got] is the address of .got and [Sec.Size.s_got] its size, so that data no symbol names, such as a GOT slot, is a section's address and an offset.  [oft symbols] reads the fact from the build's unstripped twin and from the binary that harness.yaml pins by SHA-256, and refuses any other binary.  A contract names a function, an object or a section as [Symbols.<Build>.s_<name>] or [Symbols.<Build>.Sec.s_<name>], never by its address, so that a rebuild that moves it changes this file and not the contract.  A name that two or more functions or objects, or two or more sections, of a build share has no identifier in that build's module.
+
+@@ module
+Module $module.
+$left_out$addresses
+
+Module Size.
+$sizes
+End Size.
+${sections}End $module.
+@@ sections
+
+Module Sec.
+$left_out$addresses
+
+Module Size.
+$sizes
+End Size.
+End Sec.
+@@ left_out
+(** $text *)
+@@ left_out_one
+Two or more $what of this build are named $names, so this module defines no identifier for it.
+@@ left_out_many
+Two or more $what of this build have each of the names $names, so this module defines no identifier for them.
+@@ address
+Definition $ident : Z := $address.
+@@ size
+Definition $ident : Z := $size.

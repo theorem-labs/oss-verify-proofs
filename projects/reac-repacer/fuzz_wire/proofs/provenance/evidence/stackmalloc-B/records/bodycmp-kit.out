@@ -1,0 +1,10 @@
+# kit id (sha256 of SHA256SUMS) 86da41d3ef68; sha256sum -c rc=0
+ambiscan.py: OK
+bytecmp-1480ca2faea0.py: OK
+closure_strict3.py: OK
+drvcmp.py: OK
+jtcheck.py: OK
+luiscan.py: OK
+paircl.py: OK
+repin_check.py: OK
+strictcmp3.py: OK

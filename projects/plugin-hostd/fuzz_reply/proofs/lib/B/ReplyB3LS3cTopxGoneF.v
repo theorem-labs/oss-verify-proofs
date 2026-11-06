@@ -1,0 +1,298 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: group RI-gone of the image-A top (W_LLVMFuzzerTestOneInput_top_x.v, the rows
+   RI_gone_pairs / RI_gone_read / RI_gone_step / RI_gone_end) at RINV := fr_RINV (ReplyRINV.v).  Proves no function
+   walk (model-rule obligations only).
+   Part 1 (over ReplyRINV.v's copies of the gone model, verbatim the same text as gone_base.v's):
+   - RI_gone_pairs_holds: fr_RINV's pairing hj of the table with the open sources is a gn_pairs witness.  The size
+     bounds gn_pair_ok asks come from fr_RINV's cost bound (fr_cost <= c_n < 2 ^ 26: a pending stream and a key count
+     are parts of one entry's cost) and from fr_pair_ok's ecap_ok.
+   - RI_gone_read_holds: a slot k that reads (gn_reads m k = 1) holds the source of an open entry j; that entry's
+     gn_pair_ok source is at slot k (fr_RINV's distinct fds, RI_fds_holds), so after relay_instance_gone slot k holds
+     rig_post's source for entry j, which rig_rel's dr_rel leaves drained (pending list empty, offset 0).
+   - RI_gone_read_sat: one state meets all of RI_gone_read's premises (and RI_gone_pairs's).
+   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts (bb9dae5d905, a1a3591c77c),
+     which were false at the instance; machine-checked counter-instances, not proofs of the rows.
+   Part 2 (over W_LLVMFuzzerTestOneInput_gone_base.v's own model): RI_gone_pairs_plug / RI_gone_read_plug restate
+   part 1 at gone_base's GN_RI_pairs / GN_RI_read; then the step and end rows.
+   - The table-order loop (gn_run) as an invariant (rg_inv): every entry's slot, once processed, holds what
+     check_no_loss and check_shape_ends left of what relay_instance_gone left there; when gone = 0, `at` is the
+     entry's position in the stream relay_instance_gone sent (rg_acc_pos), which is the entries' drained lines and
+     then their ended keys' end lines (rg_rel_dec, rg_strm).
+   - RI_gone_step_holds(_c): GN_RI_step of a working branch a39b599f92e (copied verbatim as
+     GN_RI_step_d) at MT := ameter_triv, RINV := fr_RINV, MMAX := WR_MMAX, LS := fr_LS3 B / fr_LS3c B.  The LS-side
+     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v at b25d82fcf04); mo_ok is True at
+     ameter_triv; the rest is RINV-side (rg_step_rinv_side).
+   - RI_gone_end_holds_q5(_c): GN_RI_end of a39b599f92e (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
+     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and a39b599f92e's gn_cnl_ok
+     does not carry `hl_cap (hs_held h) <= hl_cap H'` from which ReplyLS3cTopxGoneH.v's gxh_req5 derives it.
+   - GN_RI_step_r3 (Section rg3): the record of round 3 (aa34c06e82c): without re_U NUL-free the step row is false.
+   Local helpers rg_lines_nz / rg_upds_in / rg_W_read_lines_nz state what a Theorem Labs lane's ReplyRINV_a12.v
+   (lines_nul_free / upds_nul_free) states; they stay local. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyRINV_gone.v, with its module paths and module names changed; 116 of its 202 lines of code are new or changed and 2837 lines of the source are left out. *)
+(* Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3cTopxGoneF.v (sha256
+   2f2017090641; internal record) at d9e8f914caaf (the same blob as at 1318828167d3), for
+   row G-BLS3-port (the gone half): A's lemmas under A's names and statements over lib/B's records, with these swaps:
+   - the Require header is lib/B/ReplyB3LS3cTopxGone.v's plus ReplyB3LS3cTopxGone (lib/A ReplyLS3cTopxDefs /
+     ReplyLS3cTopxGone -> lib/B ReplyB3LS3cTopxDefs / ReplyB3LS3cTopxGone; the rest as that file maps it);
+   - gn_op: A COPIES it (A :64-66, from 6a2e02357a4's gone_base); here it is NOT copied: it is
+     lib/B/W_LLVMFuzzerTestOneInput_gone_base.v's gn_op (:376-377, re-exported by ReplyB3LS3cTopxDefs), the same text
+     (`in_byte cx (lm_k m) mod 10 = 5 /\ lm_O m = [] /\ 0 <= t < OPS_MAX /\ 0 <= lm_k m < c_n cx`); so are gn_pairs,
+     gn_after_rig, gn_rig_ok, gn_run, gn_pre, gn_e0 and gn_cnl_ok;
+   - fr_LS3 B -> fr_LS3 B CALL_ROOM_B, fr_LS3c B -> fr_LS3c B CALL_ROOM_B: the Section takes CALL_ROOM_B after B and
+     {SK : YI16.sink_head} in its Context, as ReplyB3LS3cTopxGone.v's Sections acct / meter3; gx6_step_room and
+     gx6_step_room_c take ReplyB3LS3cTopxGone.v gx_step_room's premise `YCfn_cf.CALL_ROOM_B <= CALL_ROOM_B` first (its
+     proof reads the room's value), the others take none;
+   - MMAX := WR_MMAX -> fr_MMAX (lib/A/CfParamsReply.v, as ReplyB3LS3cTopxGone.v); cnl_room / cnl_cost are lib/B
+     W_contract.v's (cnl_cost takes the meter first, as A's);
+   - KF-COUNT (the meter pattern of a Theorem Labs lane, A #6): A's MT := ameter_triv -> Section fin's Context
+     {MT : ameter_ops}, implicit (read off the rules' mo_le premise, which no proof reads).  ReplyB3LS3cTopxGone.v's
+     gx_end_LS3 / gx_end_LS3c / gx_step_room stay at ameter_triv, where that premise is True, so they get I (pattern
+     step 2).  A's four meter lemmas gx6_step_cnl_meter_LS3(c) / gx6_step_cshe_meter_LS3(c) (each only a mo_ok,
+     proved by `exact I`) are not stated: no B file reads them, and GN_RI_step's two meter conjuncts are the B
+     instance's, from its count clause (A's ReplyLS3cTopxGoneF.v deletes them the same way).
+   THE TEXTS AGAINST B's gone_base.  A's lemmas state 6a2e02357a4's GN_RI_step / GN_RI_end premises (RINV, gn_op, the
+   relay entries' Forall, then LS ...) with REQ1-REQ3 after the per-entry premise and REQ4 / REQ5 last.  B's gone_base
+   texts (GN_RI_step :552-580, GN_RI_end :581-593) have the same premises but no REQ, and GN_RI_end has
+   `(lm_gn m = 0 \/ lm_gn m = 1)` after the per-entry premise; each lemma here keeps A's premise list, so a B arm
+   instantiating GN_RI_end supplies REQ1-REQ3 / REQ5 and drops the lm_gn premise it does not read.
+   A's header follows. *)
+(* The gone arm's LS / meter conjuncts against the FINAL gone rules: GN_RI_step / GN_RI_end of W8's walk commit
+   6a2e02357a4, at LS := fr_LS3 B / fr_LS3c B, RINV := fr_RINV, MT := ameter_triv, MMAX := WR_MMAX (= CfParamsReply.fr_MMAX).
+   proves no function (kind: invariant lemma).
+   6a2e02357a4 adds, after RINV, `gn_op cx t m` and the per-entry premise (re_U NUL-free; each key NUL-free with
+   14 <= |key| <= APARTIAL).  Of ReplyLS3cTopxGone.v's named hypotheses gx_xpre / gx_xstep / gx_xend these discharge
+   lm_O m = [] (gn_op) and, of dr3_epre, re_U NUL-free and 14 <= |key|.  What remains is stated here as premises in
+   the exact text W8 would add (REQ1-REQ3 after the per-entry premise, at the operation's start; REQ4 at the end of
+   GN_RI_step, at the loop's state; REQ5 at the end of GN_RI_end, held vectors not shrinking). *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP0g YP01 YP0i YCbn YP0b YP0a.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YN3v YI04 YI00.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK04 YA0i YA0n YA0o YCbm YA0q.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YP0d YP0c YC80 YC81 YO0a YN1e.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YO09.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import YB1v.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YI16 YE00.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import YE01 YE2k.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YC5d YCbp.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require YCfn.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib Require Import ZTraceSpec.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import
+W_syms W_listing W_place W_tbl W_kit W_pl W_img W_journal.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import HarnessRep RelayRep.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_rep W_contract W_sites W_frame W_op_add.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require ReplyGuardB.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_LLVMFuzzerTestOneInput_cut.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_LLVMFuzzerTestOneInput_drain_defs.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_LLVMFuzzerTestOneInput_write.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import CheckRep.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import RelayKeys RelayModel ListRep.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require
+  drain_b_c gestures_end_b_c gesture_end_c relay_remove_b_c relay_instance_gone_b_c RelayCap SlotReads SlotInv
+  SlotDrain3Aux SlotPass2Aux relay_remove_b_aux send_line_b_c.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import CfParamsReply.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require YCfn_cf.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import ReplyLSB ReplyRINVB ReplyLSBArms.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import ReplyLSBDrainPre.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import
+ReplyB3Base ReplyB3LS3 ReplyB3LS3Arms ReplyB3LSCntL ReplyB3LS3c.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import ReplyB3LS3cTopxDefs ReplyB3LS3cTopxGone.
+(* gn_pairs is gone_base's (ReplyLSBArms's copy goes, s5-r1d's cutover) *)
+Local Notation gn_pairs := W_LLVMFuzzerTestOneInput_gone_base.gn_pairs.
+Import ListNotations.
+Local Unset Lia Cache. Local Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope Z_scope.
+Local Notation MMAX := fr_MMAX.
+
+Section fin.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
+Variable B : asyms.
+(* the call room of fr_LS3 (ReplyB3LS3.v, as ReplyLSB.fr_LS takes it) *)
+Variable CALL_ROOM_B : Z.
+(* the meter (KF-COUNT): a Variable, implicit, read off the rules' mo_le premise *)
+Context {MT : ameter_ops}.
+
+(* A :68 *)
+Lemma gx_nth_some_in : forall (l : list (option hsrc)) j h, nth j l None = Some h -> In (Some h) l.
+Proof.
+  induction l as [|o l IH]; intros [|j] h H; cbn in H; try discriminate.
+  - left. exact H.
+  - right. exact (IH j h H).
+Qed.
+
+(* gx_xpre from 6a2e02357a4's two new premises (gn_op, the per-entry premise), gn_pairs, and REQ1-REQ3 (A :75) *)
+Lemma gx_xpre_of6 : forall cx t m hs,
+  gn_op cx t m ->
+  Forall (fun e => ~ In (Z_to_bv 8 0) (re_U e) /\
+    Forall (fun k => ~ In (Z_to_bv 8 0) (gestures_end_b_c.key_text k) /\
+      14 <= Z.of_nat (length (gestures_end_b_c.key_text k)) <= APARTIAL) (re_keys e)) (lm_es m) ->
+  0 <= lm_cap m ->
+  Forall (fun e => Z.of_nat (length (re_U e)) <= APARTIAL /\ (re_cap e = 0 \/ re_cap e = 8192 \/ re_cap e = 16384) /\
+    ((re_hp e = 0 /\ re_keys e = []) \/ (re_hp e <> 0 /\ 8 * re_nheld e <= re_kh e /\ 8 <= re_kh e))) (lm_es m) ->
+  Forall (fun o => match o with
+    | Some h0 => ((hl_recs (hs_pending h0) = [] /\ hs_off h0 = 0) \/
+                  (exists r rs, hl_recs (hs_pending h0) = r :: rs /\ 0 <= hs_off h0 < Z.of_nat (length (snd r)))) /\
+                 Forall (fun r => (1 <= length (snd r))%nat) (hl_recs (hs_pending h0))
+    | None => True end) (lm_hs m) ->
+  gn_pairs m hs -> gx_xpre m hs.
+Proof.
+  intros cx t m hs (_ & HO & _) HE Hcap HE6 HS6 (_ & HP & _).
+  split; [exact HO|]. split; [exact Hcap|].
+  apply Forall_forall. intros [e [h j]] Hin Heof. cbn [fst snd] in *.
+  pose proof (in_combine_l _ _ _ _ Hin) as He.
+  rewrite Forall_forall in HE, HE6, HS6, HP.
+  destruct (HE e He) as (HU & HK).
+  destruct (HE6 e He) as (HUl & Hcp & Hkh).
+  destruct (HP (e, (h, j)) Hin Heof) as (_ & Hnth & _). cbn [fst snd] in Hnth.
+  pose proof (HS6 (Some h) (gx_nth_some_in _ _ _ Hnth)) as Hh. cbn beta iota in Hh.
+  split; [|split].
+  - unfold dr3_epre. split; [exact Hcp|]. split; [exact HUl|]. split; [exact HU|]. split.
+    + intros Hhp. destruct Hkh as [(Hhp0 & _) | (_ & _ & H8)]; [contradiction | exact H8].
+    + rewrite Forall_forall in HK |- *. intros k Hk. destruct (HK k Hk) as (_ & H14 & _). exact H14.
+  - unfold ls3_kh. destruct Hkh as [H0 | (Hhp & Hn & _)]; [left; exact H0 | right; split; assumption].
+  - exact Hh.
+Qed.
+
+(* ================================================================== E1: GN_RI_end's `LS cx (t + 1) mc lyx Sx` *)
+(* 6a2e02357a4's GN_RI_end premises, with REQ1-REQ3 after the per-entry premise and REQ5 last (A :108-139) *)
+Lemma gx6_end_LS3 : forall cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A (lyx : alayout) (Sx : astate) cst,
+  fr_RINV cx t m -> gn_op cx t m ->
+  Forall (fun e => ~ In (Z_to_bv 8 0) (re_U e) /\
+    Forall (fun k => ~ In (Z_to_bv 8 0) (gestures_end_b_c.key_text k) /\
+      14 <= Z.of_nat (length (gestures_end_b_c.key_text k)) <= APARTIAL) (re_keys e)) (lm_es m) ->
+  (* REQ1 *) 0 <= lm_cap m ->
+  (* REQ2 *)
+  Forall (fun e => Z.of_nat (length (re_U e)) <= APARTIAL /\ (re_cap e = 0 \/ re_cap e = 8192 \/ re_cap e = 16384) /\
+    ((re_hp e = 0 /\ re_keys e = []) \/ (re_hp e <> 0 /\ 8 * re_nheld e <= re_kh e /\ 8 <= re_kh e))) (lm_es m) ->
+  (* REQ3 *)
+  Forall (fun o => match o with
+    | Some h0 => ((hl_recs (hs_pending h0) = [] /\ hs_off h0 = 0) \/
+                  (exists r rs, hl_recs (hs_pending h0) = r :: rs /\ 0 <= hs_off h0 < Z.of_nat (length (snd r)))) /\
+                 Forall (fun r => (1 <= length (snd r))%nat) (hl_recs (hs_pending h0))
+    | None => True end) (lm_hs m) ->
+  fr_LS3 B CALL_ROOM_B cx t m ly S -> gn_pairs m hs -> gn_after_rig cx m hs qs c2 O2 cap2 out2 m1 ->
+  gn_rig_ok cx m hs qs c2 O2 cap2 ->
+  gn_run (gn_pre cx m) m1 mc A (length (lm_es m1)) 0%nat -> mo_le MT S Sx cst ->
+  (forall rest, Permutation (ablocks B ly S) (input_blks cx ++ model_blks m ++ rest) ->
+     Permutation (ablocks B lyx Sx) (input_blks cx ++ model_blks mc ++ rest)) ->
+  (* REQ5 *)
+  (forall j hj hj', nth j (lm_hs m) None = Some hj -> nth j (lm_hs mc) None = Some hj' ->
+     hl_cap (hs_held hj) <= hl_cap (hs_held hj')) ->
+  fr_LS3 B CALL_ROOM_B cx (t + 1) mc lyx Sx.
+Proof.
+  intros cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A lyx Sx cst HRI Hop HE Hcap HE6 HS6 HLS Hpairs Hafter Hrok Hrun
+    _ Hfr Hns.
+  exact (gx_end_LS3 B CALL_ROOM_B cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A lyx Sx cst HRI HLS Hpairs Hafter Hrok
+    Hrun I Hfr (conj (gx_xpre_of6 cx t m hs Hop HE Hcap HE6 HS6 Hpairs) Hns)).
+Qed.
+(* A :140 *)
+Lemma gx6_end_LS3c : forall cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A (lyx : alayout) (Sx : astate) cst,
+  fr_RINV cx t m -> gn_op cx t m ->
+  Forall (fun e => ~ In (Z_to_bv 8 0) (re_U e) /\
+    Forall (fun k => ~ In (Z_to_bv 8 0) (gestures_end_b_c.key_text k) /\
+      14 <= Z.of_nat (length (gestures_end_b_c.key_text k)) <= APARTIAL) (re_keys e)) (lm_es m) ->
+  (* REQ1 *) 0 <= lm_cap m ->
+  (* REQ2 *)
+  Forall (fun e => Z.of_nat (length (re_U e)) <= APARTIAL /\ (re_cap e = 0 \/ re_cap e = 8192 \/ re_cap e = 16384) /\
+    ((re_hp e = 0 /\ re_keys e = []) \/ (re_hp e <> 0 /\ 8 * re_nheld e <= re_kh e /\ 8 <= re_kh e))) (lm_es m) ->
+  (* REQ3 *)
+  Forall (fun o => match o with
+    | Some h0 => ((hl_recs (hs_pending h0) = [] /\ hs_off h0 = 0) \/
+                  (exists r rs, hl_recs (hs_pending h0) = r :: rs /\ 0 <= hs_off h0 < Z.of_nat (length (snd r)))) /\
+                 Forall (fun r => (1 <= length (snd r))%nat) (hl_recs (hs_pending h0))
+    | None => True end) (lm_hs m) ->
+  fr_LS3c B CALL_ROOM_B cx t m ly S -> gn_pairs m hs -> gn_after_rig cx m hs qs c2 O2 cap2 out2 m1 ->
+  gn_rig_ok cx m hs qs c2 O2 cap2 ->
+  gn_run (gn_pre cx m) m1 mc A (length (lm_es m1)) 0%nat -> mo_le MT S Sx cst ->
+  (forall rest, Permutation (ablocks B ly S) (input_blks cx ++ model_blks m ++ rest) ->
+     Permutation (ablocks B lyx Sx) (input_blks cx ++ model_blks mc ++ rest)) ->
+  (* REQ5 *)
+  (forall j hj hj', nth j (lm_hs m) None = Some hj -> nth j (lm_hs mc) None = Some hj' ->
+     hl_cap (hs_held hj) <= hl_cap (hs_held hj')) ->
+  fr_LS3c B CALL_ROOM_B cx (t + 1) mc lyx Sx.
+Proof.
+  intros cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A lyx Sx cst HRI Hop HE Hcap HE6 HS6 HLS Hpairs Hafter Hrok Hrun
+    _ Hfr Hns.
+  exact (gx_end_LS3c B CALL_ROOM_B cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A lyx Sx cst HRI HLS Hpairs Hafter Hrok
+    Hrun I Hfr (conj (gx_xpre_of6 cx t m hs Hop HE Hcap HE6 HS6 Hpairs) Hns)).
+Qed.
+
+(* ================================================================== S1: GN_RI_step's cnl_room on blocks_bytes Sx *)
+(* 6a2e02357a4's GN_RI_step premises, with REQ1-REQ3 after the per-entry premise and REQ4 last (A :171-203); B: the
+   room premise of ReplyB3LS3cTopxGone.v gx_step_room first *)
+Lemma gx6_step_room : YCfn_cf.CALL_ROOM_B <= CALL_ROOM_B ->
+  forall cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A i k h (lyx : alayout) (Sx : astate) cst,
+  fr_RINV cx t m -> gn_op cx t m ->
+  Forall (fun e => ~ In (Z_to_bv 8 0) (re_U e) /\
+    Forall (fun k => ~ In (Z_to_bv 8 0) (gestures_end_b_c.key_text k) /\
+      14 <= Z.of_nat (length (gestures_end_b_c.key_text k)) <= APARTIAL) (re_keys e)) (lm_es m) ->
+  (* REQ1 *) 0 <= lm_cap m ->
+  (* REQ2 *)
+  Forall (fun e => Z.of_nat (length (re_U e)) <= APARTIAL /\ (re_cap e = 0 \/ re_cap e = 8192 \/ re_cap e = 16384) /\
+    ((re_hp e = 0 /\ re_keys e = []) \/ (re_hp e <> 0 /\ 8 * re_nheld e <= re_kh e /\ 8 <= re_kh e))) (lm_es m) ->
+  (* REQ3 *)
+  Forall (fun o => match o with
+    | Some h0 => ((hl_recs (hs_pending h0) = [] /\ hs_off h0 = 0) \/
+                  (exists r rs, hl_recs (hs_pending h0) = r :: rs /\ 0 <= hs_off h0 < Z.of_nat (length (snd r)))) /\
+                 Forall (fun r => (1 <= length (snd r))%nat) (hl_recs (hs_pending h0))
+    | None => True end) (lm_hs m) ->
+  fr_LS3 B CALL_ROOM_B cx t m ly S -> gn_pairs m hs -> gn_after_rig cx m hs qs c2 O2 cap2 out2 m1 ->
+  gn_rig_ok cx m hs qs c2 O2 cap2 ->
+  gn_run (gn_pre cx m) m1 mc A i k -> mo_le MT S Sx cst ->
+  (forall rest, Permutation (ablocks B ly S) (input_blks cx ++ model_blks m ++ rest) ->
+     Permutation (ablocks B lyx Sx) (input_blks cx ++ model_blks mc ++ rest)) ->
+  (i < length (lm_es m1))%nat -> (k < 4)%nat ->
+  nth k (lm_hs mc) None = Some h -> hs_fd h = re_fd (nth i (lm_es m1) gn_e0) ->
+  (* REQ4 *)
+  (forall j hj, nth j (lm_hs mc) None = Some hj -> hl_n (hs_held hj) <= hl_cap (hs_held hj)) ->
+  cnl_room MMAX (blocks_bytes Sx) (texts (hs_held h)) (hl_cap (hs_held h)) (hl_recs (hs_expected h)).
+Proof.
+  intros HCRB cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A i k h lyx Sx cst HRI Hop HE Hcap HE6 HS6 HLS Hpairs Hafter
+    Hrok Hrun _ Hfr Hi Hk Hh Hfd Hcnt.
+  exact (gx_step_room B CALL_ROOM_B HCRB cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A i k h lyx Sx cst HRI HLS Hpairs
+    Hafter Hrok Hrun I Hfr Hi Hk Hh Hfd (conj (gx_xpre_of6 cx t m hs Hop HE Hcap HE6 HS6 Hpairs) Hcnt)).
+Qed.
+(* A :204 *)
+Lemma gx6_step_room_c : YCfn_cf.CALL_ROOM_B <= CALL_ROOM_B ->
+  forall cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A i k h (lyx : alayout) (Sx : astate) cst,
+  fr_RINV cx t m -> gn_op cx t m ->
+  Forall (fun e => ~ In (Z_to_bv 8 0) (re_U e) /\
+    Forall (fun k => ~ In (Z_to_bv 8 0) (gestures_end_b_c.key_text k) /\
+      14 <= Z.of_nat (length (gestures_end_b_c.key_text k)) <= APARTIAL) (re_keys e)) (lm_es m) ->
+  (* REQ1 *) 0 <= lm_cap m ->
+  (* REQ2 *)
+  Forall (fun e => Z.of_nat (length (re_U e)) <= APARTIAL /\ (re_cap e = 0 \/ re_cap e = 8192 \/ re_cap e = 16384) /\
+    ((re_hp e = 0 /\ re_keys e = []) \/ (re_hp e <> 0 /\ 8 * re_nheld e <= re_kh e /\ 8 <= re_kh e))) (lm_es m) ->
+  (* REQ3 *)
+  Forall (fun o => match o with
+    | Some h0 => ((hl_recs (hs_pending h0) = [] /\ hs_off h0 = 0) \/
+                  (exists r rs, hl_recs (hs_pending h0) = r :: rs /\ 0 <= hs_off h0 < Z.of_nat (length (snd r)))) /\
+                 Forall (fun r => (1 <= length (snd r))%nat) (hl_recs (hs_pending h0))
+    | None => True end) (lm_hs m) ->
+  fr_LS3c B CALL_ROOM_B cx t m ly S -> gn_pairs m hs -> gn_after_rig cx m hs qs c2 O2 cap2 out2 m1 ->
+  gn_rig_ok cx m hs qs c2 O2 cap2 ->
+  gn_run (gn_pre cx m) m1 mc A i k -> mo_le MT S Sx cst ->
+  (forall rest, Permutation (ablocks B ly S) (input_blks cx ++ model_blks m ++ rest) ->
+     Permutation (ablocks B lyx Sx) (input_blks cx ++ model_blks mc ++ rest)) ->
+  (i < length (lm_es m1))%nat -> (k < 4)%nat ->
+  nth k (lm_hs mc) None = Some h -> hs_fd h = re_fd (nth i (lm_es m1) gn_e0) ->
+  (* REQ4 *)
+  (forall j hj, nth j (lm_hs mc) None = Some hj -> hl_n (hs_held hj) <= hl_cap (hs_held hj)) ->
+  cnl_room MMAX (blocks_bytes Sx) (texts (hs_held h)) (hl_cap (hs_held h)) (hl_recs (hs_expected h)).
+Proof.
+  intros HCRB cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A i k h lyx Sx cst HRI Hop HE Hcap HE6 HS6 (HLS & _).
+  exact (gx6_step_room HCRB cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A i k h lyx Sx cst HRI Hop HE Hcap HE6 HS6 HLS).
+Qed.
+End fin.

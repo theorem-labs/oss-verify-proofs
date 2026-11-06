@@ -1,0 +1,4 @@
+# U = UCI_B_TWIN sha256 8d07ffcf5948
+# P = GRANT_B_TWIN_PLANTED_RODATA sha256 7a86001f9ee0
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(rodata-str-eq,jumptab-eq,const-eq)	target-differ
+__intscan	U:P	0x8f7d0	0x95c04	1496	1496	EQUAL-mod-pcrel	14	0	0	(1, 0, 2)	0

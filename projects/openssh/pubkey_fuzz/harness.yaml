@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssh
 harness: pubkey_fuzz
-rocq: OssFuzzTheorems.openssh.pubkey_fuzz
+rocq: OSSVerify.openssh.pubkey_fuzz
 origin: upstream
 summary: sshkey_from_blob() on the input; result only decides whether to free.
 entry: LLVMFuzzerTestOneInput

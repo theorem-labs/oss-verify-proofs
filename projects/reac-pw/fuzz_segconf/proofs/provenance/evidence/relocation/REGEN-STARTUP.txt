@@ -1,0 +1,51 @@
+GENERATED START-UP FILES REGENERATED IN COMMIT 8. The scripts, the generator versions and the controls are in the unit's
+internal record, commit 28b9fcfd2c90, directories records/startup-tools/gen_ad2/ and records/startup-tools/af0m/ (each has a
+README.md with every sha256 and the exact option strings of the run):
+  af0m/run.sh (af0m.py f8201f503394, unchanged; the recipe's af0m2 arguments), gen_ad2/run-ad2.sh, gen_ad2/regen.sh
+  (ab12 / ad2 / ad1k / ae3i, the four recipe steps that read lib/A/AF0m.v; run with TSEGS=own), gen_ad2/regen-ab0103.sh
+  (hsform hs / js).
+INPUTS CHANGED: AF0m's read list = the frozen list (1cc3b618fcce) + `0x10338/8` (sha256 1c189cb4473e); gen_ad2's --tsegs =
+  the unit's own lib/A/AB1h.v, where the recipe passed a stub built from cgif's AB1h.
+CONTROLS (frozen tools, pins stamp, the committed inputs and the recipe's caller text):
+  1. af0m1 and af0m2 with the frozen read list reproduce the committed AF0m.v byte for byte; af0m2 with the new list
+     reproduces this commit's AF0m.v byte for byte.
+  2. frozen gen_ad2.py 3665ff2a7926 + pins stamp reproduces the committed AD2i.v AND AD2j.v byte for byte.
+  3. regen.sh control: AB12 AD2i AD2j AD1k AE3i all equal to the committed files; regen-ab0103.sh control: AB01 AB03 equal.
+  4. gen_ad2.py 777dbd4017ec (argH0 rule only) with the frozen-list AF0m: AD2j identical; AD2i differs in exactly the two
+     argH_range sites.
+  5. the driver-window and program-static rules on fuzz_command's released AD2j (its own AD1y / AF0m / AD1r): all 33
+     windows and all chunks unchanged, no refusal. Regenerated with them, AB12 AD1k AE3i are byte-identical to the
+     adae64fe770f run, AD2i differs in its header line only, and AD2j in its header line, the two windows and the one
+     chunk over longl.
+  6. the whole generator on fuzz_command's own inputs (its AB1h as --tsegs) against its RELEASED files: AD2i equal but
+     the decided de-class and a comment; AD2j claims the same bytes with the same kinds and values, the same windows,
+     the same RELRO split, but for 12 bytes (8 padding bytes before its asan_globals - segconf has none there - and
+     its 4 program-global ODR indicators, which the generator states as the value 1 the start-up wrote) and a finer
+     region partition at owned cells. The frame accepts both.
+GENERATOR: gen_ad2.py sha256 8e0a1d365e8328c64afe185e9961afe0055955c175da747bf0dc2e491d5f5f07 = the set's 3665ff2a7926 + three rules.
+  argh0_shape() (version 777dbd4017ec655b77b4a2aec950c9bc04fe12edcf31aac5e0d4f8e35792c70e): when the unit's own
+  Reusable/YA02.v states `Definition argH0` from `argH0_core E a`, defines `Definition argH0_core` with cgif's 2 ranges and
+  `Lemma argH0_of_core`, both argH_range opening steps `unfold argH0. cbn beta.` become `apply YA02.argH0_of_core. unfold
+  YA02.argH0_core. cbv zeta. cbn beta.` (fuzz_command's released AD2i form) and argH_range2's two-range step is kept;
+  REFUSES (exit) if argH0 is bridged but argH0_core or argH0_of_core is missing, if argH0_core has another number of
+  ranges, or if the template is already rewritten or carries the widened step.
+  drv_windows() (--drv-ivs lib/A/AD1y.v): a region's write window := the region intersected with DRV_IVS, which the
+  generator reads from the frame's own AD1y.v. Before, the template's window was placed on anchor symbols: cgif's R_A5a
+  window is its whole region, and on this image it covered LLVMFuzzerTestOneInput.longl, the ODR byte, libunwind's FDE
+  cache and builtin_tls's head. REFUSES a region that meets two intervals, and a start-up value cell outside DRV_IVS
+  that is in none of the musl start-up objects the frame models (fuzz_command's AD2j) and in no ODR indicator.
+  Here: R_A5a_1 [0x5de650, 0x5de6f9) -> [0x5de650, 0x5de680) (target_run.initialized .. oft_aligned_copy.empty), and
+  R_A5a_2 [0x5de720, 0x5def94) -> no window. The start-up's writes there (oft_in_callback = 0, the ODR byte = 1,
+  builtin_tls's first 36 bytes) stay value chunks. lib/A/AD1y.v's drv_win_ok now holds with DRV_IVS untouched.
+  prog_static_cut() (--gi-ivs lib/A/AD1r.v): CImg bytes inside the program's statics (AF0m's TFIB_PROG_STATIC) are
+  kept only inside the frame's GI_IVS (names resolved from lib/A/Prog/*.v): the frame accepts a hand-off image chunk
+  over the program's statics only there, since the program writes the rest between runs. Here R_A5a_1's `CImg 164`
+  @0x5de655 -> `CImg 43` @0x5de655 + `CImg 1` @0x5de6f8 (A_LONGL + 120, the byte GI_segA states); lib/A/AD1r.v's
+  L_mem_gi now holds. REFUSES a GI interval outside the program's statics, one no chunk covers, and a value cell in
+  the program's statics outside GI_IVS.
+  --tsegs lib/A/AB1h.v: AD2i's rw bound is 0xa1000 (the unit's own tfib_rw_window; the stub gave 0xa4000) and AD2j
+  splits a run at the RELRO page 0xa1000 (119 regions; R_A1cu .. R_A1cz -> R_A2b .. R_A2g, R_A1da + R_A2 -> R_A2h,
+  R_A2a new; AD1k follows).
+  Self-test known answers for all three rules run on every invocation.
+CALLER TEXT: the regenerated files name the start-up tool set of record by its commit, d9aa42da992; AB05 AB1m (not
+  regenerated) keep their text.

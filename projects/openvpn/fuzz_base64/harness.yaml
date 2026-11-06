@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openvpn
 harness: fuzz_base64
-rocq: OssFuzzTheorems.openvpn.fuzz_base64
+rocq: OSSVerify.openvpn.fuzz_base64
 origin: oss-fuzz
 summary: openvpn_base64_encode(data) and openvpn_base64_decode(data as string) are called independently;
   neither result is inspected and the encode output is never decoded or compared (no round trip).

@@ -1,0 +1,147 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List Lia Bool Permutation.
+From stdpp Require Import gmap.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Fpu Sem.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.Lib Require Import Tac Image ZBridge SysStep ITree Nodes Decode Arr FP MonadX StoreFast.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.Malloc Require Import MallocBlocks Malloc_iface.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.MallocP Require Import RMallocRep RMallocTree RMalloc_iface.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.Spec Require Import Prelim STree Malloc Monad Stdio SjModel PjModel Target Prog PjImpl.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.Sj Require Import SjS1Out SjAlloc SjTape SjTapeList SjTapeTile SjPjSer.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.P Require Import Layout Exit Printf_wfile Sj_iface Sj_kit Sj_new Sj_h_kit F_memcpy F_memmove_t2.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.P Require Import Pj_defs Pj_kit Pj_grow Pj_ser_defs Pj_ser_kit Pj_ser_calls.
+Import ListNotations.
+Import ITree.Exc.
+Open Scope Z_scope.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.Lib Require Import Ceiling.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.P Require Import Rnd.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+Local Ltac transport_after_call segs m m' MU WM ::= transport_after_call_fast segs m m' MU WM.
+Local Ltac solve_store ::= first [ pj_solve_store0 | pj_store_wr ].
+Local Ltac std_lia__ := lia.
+Local Ltac lia := first [std_lia__ | try (pose proof alloc_ceiling_range as CEIL_RANGE__); std_lia__].
+
+Section WithCeiling0. Context {CE__ : Ceiling} {RN__ : RunRnd}.
+Section Proofs.
+  Hypothesis HM : rmalloc_stmt.
+  Hypothesis HF : rfree_stmt.
+
+  Lemma null_proof : null_stmt.
+  Proof.
+    unfold null_stmt, atom_stmt.
+    intros E Q esc spill isobj st s m F fc i dp A xra xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xs3 xs4 xs8 xt3 xt4 xt5 xt6 OK HSM FRM ACC BUD HK.
+    destruct st as [buf size cap blk fuel]. cbn [sb_size] in ACC.
+    ser_env OK.
+
+    assert (TAIL : forall (st5 : sbst) (s5 : PState) (m5 : mem) (yra yt0 yt1 yt2 ya1 ya2 ya3 ya4 ya5 ya6 ya7 ys4 yt3 yt4 yt5 yt6 : word),
+      SERM E esc spill isobj st5 s5 m5 -> sb_size st5 = size -> size + 4 <= sb_cap st5 ->
+      evt psegs (sgoal E Q (sb_ch st5) s5)
+          (LST E 0x404f8 i dp (Z_to_bv 64 125) yra yt0 yt1 yt2 (Z_to_bv 64 size) ya1 ya2 ya3 ya4 ya5 ya6 ya7 (Z_to_bv 64 (size + 4)) ys4 xs8 yt3 yt4 yt5 yt6 F fc m5)).
+    { intros st5 s5 m5 yra yt0 yt1 yt2 ya1 ya2 ya3 ya4 ya5 ya6 ya7 ys4 yt3 yt4 yt5 yt6 HSM5 ESZ ROOM.
+      destruct st5 as [buf5 size5 cap5 blk5 fuel5]. cbn [sb_size sb_cap] in ESZ, ROOM. subst size5.
+      ser_open HSM5 OK.
+
+      step. zstep. step. step. pj_store_done. step. step. pj_store_done. step. step. pj_store_done. step. step. pj_store_done.
+
+      step.
+      ser_close HSM6 OK.
+      eapply (HK (mkSb buf5 (size + 4) cap5 blk5 fuel5) _ _ _ _ spill); [exact HSM6| exact FRM| cbn [sb_size]; lia| right; reflexivity]. }
+    ser_open HSM OK.
+
+    step. step. zstep. step.
+    if_cases K; zify_cond K.
+    - rewrite ?unsigned_lit in K by lia.
+      ser_close HSM2 OK.
+      eapply TAIL; [exact HSM2| reflexivity| cbn [sb_cap]; lia].
+    - rewrite ?unsigned_lit in K by lia.
+
+      zstep. pjnorm. step. step.
+      assert (GROWN : forall (z : Z) (ya0 : word), z = Z.max (2 * cap) (size + 4) ->
+        evt psegs (sgoal E Q (sb_ch (mkSb buf size cap blk fuel)) s)
+          (LST E 0x404ec i dp (Z_to_bv 64 125) xra xt0 xt1 xt2 ya0 (Z_to_bv 64 z) xa2 xa3 xa4 xa5 xa6 xa7 (Z_to_bv 64 (size + 4)) xs4 xs8 xt3 xt4 xt5 xt6 F fc m)).
+      { intros z ya0 EZ.
+
+        step. step.
+        ser_close HSM3 OK.
+        eapply (ser_grow HM HF) with (z := z) (rpc := 0x404f4); [exact OK| exact HSM3| | lia| reflexivity|].
+        { rewrite EZ. eapply (ser_req_ok E _ _ _ _ _ _ (size + 4) OK HSM3); cbn [sb_cap]; lia. }
+        intros s' m' b NEW yt0 yt1 yt2 za0 za1 za2 za3 za4 za5 za6 za7 yt3 yt4 yt5 yt6 HSM4.
+        ser_open HSM4 OK.
+
+        step.
+        ser_close HSM5 OK.
+        eapply TAIL; [exact HSM5| reflexivity|].
+        unfold sb_grown. cbn [sb_cap]. rewrite EZ. lia. }
+      if_cases K2; zify_cond K2.
+      + pjnorm_in K2. eapply (GROWN (size + 4)). lia.
+      + pjnorm_in K2.   step. eapply (GROWN (2 * cap)). lia.
+  Qed.
+
+  Lemma false_proof : false_stmt.
+  Proof.
+    unfold false_stmt, atom_stmt.
+    intros E Q esc spill isobj st s m F fc i dp A xra xt0 xt1 xt2 xa0 xa1 xa2 xa3 xa4 xa5 xa6 xa7 xs3 xs4 xs8 xt3 xt4 xt5 xt6 OK HSM FRM ACC BUD HK.
+    destruct st as [buf size cap blk fuel]. cbn [sb_size] in ACC.
+    ser_env OK.
+
+    assert (TAIL : forall (st5 : sbst) (s5 : PState) (m5 : mem) (spill5 : word) (yra yt0 yt1 yt2 ya1 ya2 ya3 ya4 ya5 ya6 ya7 ys4 yt3 yt4 yt5 yt6 : word),
+      SERM E esc spill5 isobj st5 s5 m5 -> sb_size st5 = size -> size + 5 <= sb_cap st5 ->
+      evt psegs (sgoal E Q (sb_ch st5) s5)
+          (LST E 0x40360 i dp (Z_to_bv 64 125) yra yt0 yt1 yt2 (Z_to_bv 64 size) ya1 ya2 ya3 ya4 ya5 ya6 ya7 (Z_to_bv 64 (size + 5)) ys4 xs8 yt3 yt4 yt5 yt6 F fc m5)).
+    { intros st5 s5 m5 spill5 yra yt0 yt1 yt2 ya1 ya2 ya3 ya4 ya5 ya6 ya7 ys4 yt3 yt4 yt5 yt6 HSM5 ESZ ROOM.
+      destruct st5 as [buf5 size5 cap5 blk5 fuel5]. cbn [sb_size sb_cap] in ESZ, ROOM. subst size5.
+      assert (PU5 : sb_pure E (mkSb buf5 size cap5 blk5 fuel5)) by (apply HSM5).
+      pose proof (sb_pure_ranges E _ OK PU5) as (_ & _ & _ & _ & RIMG). cbn [sb_buf sb_cap] in RIMG.
+      ser_open HSM5 OK.
+
+      step. zstep. step. step. step. step.
+      ser_close HSM6 OK.
+      eapply (ser_copy E Q esc spill5 isobj (mkSb buf5 size cap5 blk5 fuel5) s5) with (fpc := 0xca58c) (Src := 0x10298) (n := 5) (rpc := 0x40378);
+        [left; reflexivity | exact OK | exact HSM6 | | lia | cbn [sb_size sb_cap]; lia | lia | lia | cbn [sb_buf sb_size]; lia | lia | reflexivity | ].
+      { destruct (Sj_num_kit.image_readable_b psegs m5 5 0x10298 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(cbn; lia)) as (tb & TBL & TB).
+        exists tb. split; [exact TB| rewrite TBL; reflexivity]. }
+      intros m7 zt0 zt1 zt2 za1 za2 za3 za4 za5 za6 za7 zt3 zt4 zt5 zt6 HSM7.
+      ser_open HSM7 OK.
+
+      step. step.
+      ser_close HSM8 OK.
+      eapply (HK (mkSb buf5 (size + 5) cap5 blk5 fuel5)); [exact HSM8| exact FRM| cbn [sb_size]; lia| right; reflexivity]. }
+    ser_open HSM OK.
+
+    step. step. zstep. step.
+    if_cases K; zify_cond K.
+    - rewrite ?unsigned_lit in K by lia.
+      ser_close HSM2 OK.
+      eapply TAIL; [exact HSM2| reflexivity| cbn [sb_cap]; lia].
+    - rewrite ?unsigned_lit in K by lia.
+
+      zstep. pjnorm. step. step.
+      assert (GROWN : forall (z : Z) (ya0 : word), z = Z.max (2 * cap) (size + 5) ->
+        evt psegs (sgoal E Q (sb_ch (mkSb buf size cap blk fuel)) s)
+          (LST E 0x40354 i dp (Z_to_bv 64 125) xra xt0 xt1 xt2 ya0 (Z_to_bv 64 z) xa2 xa3 xa4 xa5 xa6 xa7 (Z_to_bv 64 (size + 5)) xs4 xs8 xt3 xt4 xt5 xt6 F fc m)).
+      { intros z ya0 EZ.
+
+        step. step.
+        ser_close HSM3 OK.
+        eapply (ser_grow HM HF) with (z := z) (rpc := 0x4035c); [exact OK| exact HSM3| | lia| reflexivity|].
+        { rewrite EZ. eapply (ser_req_ok E _ _ _ _ _ _ (size + 5) OK HSM3); cbn [sb_cap]; lia. }
+        intros s' m' b NEW yt0 yt1 yt2 za0 za1 za2 za3 za4 za5 za6 za7 yt3 yt4 yt5 yt6 HSM4.
+        ser_open HSM4 OK.
+
+        step.
+        ser_close HSM5 OK.
+        eapply TAIL; [exact HSM5| reflexivity|].
+        unfold sb_grown. cbn [sb_cap]. rewrite EZ. lia. }
+      if_cases K2; zify_cond K2.
+      + pjnorm_in K2. eapply (GROWN (size + 5)). lia.
+      + pjnorm_in K2.   step. eapply (GROWN (2 * cap)). lia.
+  Qed.
+
+End Proofs.
+End WithCeiling0.

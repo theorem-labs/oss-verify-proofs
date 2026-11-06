@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: pupnp
 harness: FuzzIxml
-rocq: OssFuzzTheorems.pupnp.FuzzIxml
+rocq: OSSVerify.pupnp.FuzzIxml
 origin: upstream
 summary: writes the input (10..5120 bytes) to /tmp/libfuzzer.<pid>, ixmlLoadDocumentEx parses it, ixmlPrintDocument
   serialises it, then frees; the printed text is not compared to anything.
@@ -135,6 +135,11 @@ checks:
   what: if a document parsed, ixmlPrintDocument must return a non-empty string, else CheckXML returns
     1 (and LLVMFuzzerTestOneInput returns it); trivially true because ixmlPrintDocument always emits the
     <?xml version="1.0"?> prolog (ixml/src/ixml.c:404), so only an allocation failure could make it NULL
+rejects:
+- where: source/FuzzIxml.c:41-43
+  what: An input shorter than 10 bytes or longer than 5120 is returned 1 without being parsed
+- where: source/FuzzIxml.c:18-21
+  what: An input ixmlLoadDocumentEx does not parse is returned its nonzero IXML error code
 distribution:
   file: Distribution.v
   argv0: FuzzIxml
@@ -227,8 +232,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   plain_halts_may_fail:
     kind: halts
     builds:
@@ -245,8 +252,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -255,8 +264,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts_may_fail:
     kind: halts
     builds:
@@ -273,5 +284,7 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2

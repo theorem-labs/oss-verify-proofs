@@ -1,0 +1,283 @@
+schema: oss-fuzz-theorems/harness/1
+project: omx-dsp
+harness: fuzz_laws
+rocq: OSSVerify.omx_dsp.fuzz_laws
+origin: upstream
+summary: Reads up to 64 calls, each picked by a selector byte. Its arguments are raw float words where a law takes any value,
+  two-byte values mapped onto a law's travel, selector bytes (block lengths, pan leg, rate) and single bits (mutes). The calls
+  cover the clamps and unit knob, dB to linear and back in both forms, the pan and balance laws, the fader coefficient, the
+  linear ramp, the wet/dry mix and cross-fade, and the one-pole constructors, rescale and step. Each result is checked against
+  its law, and the contract ledger is read after each call.
+entry: LLVMFuzzerTestOneInput
+source:
+  files:
+  - source/fuzz_laws.c
+  - source/fuzz.h
+  from:
+    repository: https://github.com/FreeMixer/omx-dsp
+    commit: a0ee1dfeefff63c25bf37e95d31683ec12c0f690
+    path: fuzz/fuzz_laws.c
+  modified: false
+  licence: GPL-3.0-or-later
+library:
+  repository: https://github.com/FreeMixer/omx-dsp
+  commit: a0ee1dfeefff63c25bf37e95d31683ec12c0f690
+  version: 0.27.0
+  licence: GPL-3.0-or-later
+modifications:
+- Linked against libomxdsp.a, which build.sh compiles from omx-dsp's five src/*.c files with -DOMX_CONTRACTS and -ffp-contract=off;
+  the laws are inline in the headers. The Makefile's own fuzz build uses native clang with libFuzzer, which this build replaces
+  with the standard driver.
+- omx-contract's headers are pinned to the tag v3.4.0 (1169c701), where the library's Makefile uses whichever omx-contract
+  is installed, at or above its packaging floor of 3.1.0.
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on
+  its input.
+- A small driver reads the input file, calls the fuzz target one to four times and prints each return value.
+builds:
+  plain:
+    file: fuzz_laws.plain
+    bytes: 65016
+    sha256: d7cf9c425e1d22cd2b367f5dd56ea3b8c0603bc4bd97a63e95f6f502bebc4ba5
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  ubsan:
+    file: fuzz_laws.ubsan
+    bytes: 66256
+    sha256: cb1fbd20dc7dc5dae0a510ecdb2e231baa703faf3bca7515bb937adda9e71349
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  asan:
+    file: fuzz_laws.asan
+    bytes: 593832
+    sha256: 42d4e244479d266364745144844c628a5a1d3954f04a60e2a80ec504693cef49
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+  asan-ubsan:
+    file: fuzz_laws.asan-ubsan
+    bytes: 595016
+    sha256: c3bfcf7ab56d5123de8080b1b1cda42b9f10e0482438eec451007f55913420b9
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+licence: NOASSERTION
+checks:
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_laws.c:61-103
+  what: omx_clampf, omx_clamp_or and omx_unit land inside their travel for any word. A word already inside comes back unchanged,
+    and a non-finite word given to omx_clamp_or reads as the declared default.
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_laws.c:109-162
+  what: dB to linear is never negative and, inside +-150 dB, finite and positive, in both the libm and polynomial forms. Linear
+    to dB keeps its floor and stays finite for any finite word; the polynomial form stays finite.
+- kind: roundtrip
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_laws.c:125-132
+  what: Inside +-150 dB, converting dB to linear and back gives the original dB to within 0.01 dB.
+- kind: algebraic
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_laws.c:168-174
+  what: 'The pan law is constant power: the squares of the two legs add up to 1 (to 1e-5) on [-1, 1].'
+- kind: invariant
+  strength: partial
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_laws.c:178-211
+  what: 'The balance law never boosts: both legs are in [0, 1] and one of them is 1, at any pan word. The fader coefficient
+    is finite and not negative, and 0 when the strip or the DCA is muted, for a fader level on a 16-bit grid of [-200, 60]
+    dB and send and DCA gains capped at 1e6.'
+- kind: invariant
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_laws.c:226-250
+  what: A ramp starts at the applied value (0 when that is not finite), never leaves the span of its two ends, and ends on
+    its target.
+- kind: invariant
+  strength: partial
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_laws.c:260-281
+  what: For samples on a 16-bit grid of [-8, 8], the wet/dry mix lies between the dry and wet samples, to 1e-5. For bodies
+    on a 16-bit grid of [-4, 4], each cross-fade sample lies between the outgoing and incoming bodies, to 1e-5.
+- kind: invariant
+  strength: partial
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_laws.c:288-320
+  what: The time and corner constructors give a pole in [0, 1) for any finite argument, and a rescaled pole stays in [0, 1].
+    For a state and an input on a 16-bit grid of [-4, 4], one filter step lies between the input and the state (to 1e-5),
+    and the step returns the new state.
+- kind: self-validation
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz.h:160-168
+  what: After each call, no contract of the library is recorded as broken, except the crossover token bands-partition-unity,
+    which this harness never reaches.
+failure_handlers: unknown
+statements:
+  plain_halts:
+    kind: halts
+    builds:
+    - plain
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  plain_halts_may_fail:
+    kind: halts
+    builds:
+    - plain
+    reading: may-fail
+    exits: any
+    status: open
+    binds_checks: false
+  ubsan_halts:
+    kind: halts
+    builds:
+    - ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  ubsan_halts_may_fail:
+    kind: halts
+    builds:
+    - ubsan
+    reading: may-fail
+    exits: any
+    status: open
+    binds_checks: false
+  asan_halts:
+    kind: halts
+    builds:
+    - asan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_ubsan_halts:
+    kind: halts
+    builds:
+    - asan-ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open
+  ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - ubsan
+    reading: alloc-forced-only
+    budgets: standard
+    status: open
+  asan_ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan-ubsan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open

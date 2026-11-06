@@ -1,0 +1,2277 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Theorem Labs, 2026-10: the ARx-GENERIC twins of lib/A/W_contract.v's AR-stated contracts (a Theorem Labs lane's step 1 of
+   route (b), 2026-10-29). W_contract.v is NOT edited: this file sits beside it, and every walk that cites W_contract.v
+   builds unchanged.
+   Owner text: W_contract.v at c863da405d4 (= kitin 26ea4631217): W4's gm_post errno-view conjunct (45476a00e76), W3's
+   Section w3n cnl_spec and errno conjuncts (7ef745aee81), W3's Section w3e check_shape_ends contract, W7's sl_post /
+   dr_spec, W1's ldrop_spec; the other Sections as kitin carries them.
+   Sections w5 / w5g follow W5's 3c567e39015 (CTX), mirrored by W2 at the commit that adds this line.
+   - Each definition NAME of W_contract.v whose text names AR, afn_pre, ecall_pre, ajournal or ajournal_gx (directly,
+     or through W_shadow_pin.v's ashp) has its twin NAME_x here, in W_contract.v's Section nesting, over a Section
+     relation `ARx` (its third argument the head set Hp) and the program statics `PST` of YCbqG.ajournal_x. The pre is
+     YCbqG.afn_pre_x / FCiface.ecall_pre_x, the journal W_journal_x.ajournal_gx_x / YCbqG.ajournal_x (Hp after S, Hp'
+     after S'; a post whose allocator state is the one it was called with - aleaf_post, aleafx_post, hp_post, nl_post,
+     lfind_post - keeps Hp there too). Every premise and conjunct of the owner text is kept; PST and ARx follow B among
+     the Section variables, so a twin's arguments are the original's with PST ARx after B (only ARx where PST is unused:
+     astrlen_realizes_x, gx_prog_x, sl_line_ok_x; ashp_x takes ARx alone).
+   - The three Lemmas aj_strlen_at, azs_range_addressable and gx_prog_sub have twins with W_contract.v's proofs: cgif's
+     al_* laws become AR_laws_x's alx_*, YCbq's journal lemmas YCbqG's _x ones, and YCbq.v:1914 ecall_pre_at (which has
+     no generic twin) is proved inline over ajournal_x.
+   - The AR-free names of W_contract.v (the STK constants, costs, footprints, models, azs, apres_kept, gx_rt, ...) are
+     cited from W_contract.v, not copied.
+   - THE STACK EXCEPTION: dr_spec_x, rr_spec_x and rig_spec_x (pre and post journal) take DRAIN_STK_x, RR_STK_x and
+     RIG_STK_x, 128 bytes above W_contract.v's DRAIN_STK, RR_STK and RIG_STK (the strndup interceptor's inner malloc
+     below the drain's frame).  These three generic contracts are therefore not equivalent to W_contract.v's: Section
+     br has no dr / rr / rig post or spec bridge, Section br0 has no <post>_x_AR0, NAME_x_AR0 or <post>_x_of_AR0 for
+     them, and dr_spec_x_of_AR0 / rr_spec_x_of_AR0 / rig_spec_x_of_AR0 widen the AR journal to the larger budget
+     (ajournal_gx_widen_x).
+   - ashp_x is W_shadow_pin.v:79 ashp over ARx. No W_shadow_pin_x exists and sl_line_ok / cshe_spec state their
+     literal's shadow with ashp, so its twin is stated here (Section sp).
+   - The BRIDGES (Section br) take ARx := W_journal_x.ARi (cgif's AR, Hp ignored) and PST := [], and prove each generic
+     definition equivalent to W_contract.v's (through W_journal_x.ajournal_gx_x_AR and YCe5x.ajournal_x_YCbq); each
+     lemma twin gives W_contract.v's statement at that instance from `LX : AR_laws_x SEGS B (ARi SEGS B) 0`.
+   - The ARi0 BRIDGES (Section br0, a Theorem Labs lane's HP0 ruling) take ARx := W_journal_x.ARi0 (AR /\ Hp = []) and
+     PST := []: for every spec and realizes-contract NAME_x, `NAME_x_AR0 : NAME_x B [] (ARi0 SEGS B) .. -> NAME B ..`
+     (one direction: the AR walk is re-derived from the generic one), with the post bridges <post>_x_AR0 and the
+     premise lemmas ashp_x_ARi0_of, sl_line_ok_x_ARi0_of, gx_prog_x_ARi0_of, ecall_pre_x_ARi0_of_AR.
+     The other direction, for callee hypotheses: `NAME_x_of_AR0 : NAME B .. -> NAME_x B [] (ARi0 SEGS B) ..` for every
+     spec, _g form and astrlen_realizes (the pre's ARi0 gives Hp = []; the AR post gives the generic post with every
+     ghost list []), with <post>_x_of_AR0 and ashp_of_x_ARi0, sl_line_ok_of_x_ARi0, gx_prog_of_x_ARi0, ecall_pre_of_x_ARi0.
+   No other statement difference is forced by ARx. *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation Setoid.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP0g YP01 YP0i YCbn YP0b YP0a.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YN3v YI04.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK04 YA0i YA0n YA0o YCbm YA0q.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YP0d YP0c YC80 YC81.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_syms W_listing W_kit W_journal W_rep.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YC5d YI00 YN0h.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import HarnessRep ListRep.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require next_line_c.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require CheckRep.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_shadow_pin.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import HarnessRep RelayRep gestures_end_b_c.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require send_line_c send_line_b_c.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import RelayModel RelayKeys.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require RelayRunT drain_b_c.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require gesture_end_c relay_remove_b_c relay_instance_gone_b_c.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import CheckRep.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require gesture_end_b_c RelayRunF.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YCbqG FCiface.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YCe5x.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_journal_x W_contract.
+(* the count names (tr_peakP, zb, acnt, ...): ReplyCnt.v, the one definition; and the
+   plain model's request traces the data-dependent peaks are stated over *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import ReplyCnt.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require ListTr HarnessTr RelayRunF.
+Import ListNotations.
+Local Unset Lia Cache. Local Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope bv_scope.
+Open Scope Z_scope.
+
+Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Section b.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+#[local] Notation VAL := (@pa_val _ fr_prog_listing PI).
+
+(* W_shadow_pin.v:79 ashp over ARx (no W_shadow_pin_x exists; sl_line_ok_x and cshe_spec_x name it) *)
+Section sp.
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Definition ashp_x (a n : Z) : Prop :=
+forall ly S Hp (W : world SEGS) mem md, ARx ly S Hp W mem md ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF a n /\ (0 < n -> shadow_hull_vis (aview SEGS (w_H W) mem) a n).
+End sp.
+
+Section c.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Context {hl : Z}.
+Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
+(* W_contract.v:128 aleaf_post *)
+Definition aleaf_post_x (STK : Z) (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS)
+(mem : word -> option byte) (md : Model) (Pa0 : word -> Prop) : world SEGS -> config -> Prop :=
+fun W' c' => exists regs' mem' md',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_x SEGS B PST ARx STK (spZ regs) [] ly S Hp W mem md [] ly S Hp W' mem' md' 0 /\
+aregs_preserved regs regs' /\ Pa0 (getr regs' 10) /\
+(forall a, apresent (w_H W) mem a -> apresent (w_H W') mem' a) /\
+(* errno's view is kept (a Theorem Labs lane's ARM_gone reads errno-dependent state after check_shape_done /
+   check_no_loss_read / check_shape_event): a leaf writes only its frame, and errno is an image byte *)
+(forall j, 0 <= j < 4 -> aview SEGS (w_H W') mem' (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j)).
+(* W_contract.v:141 aleafx_post *)
+Definition aleafx_post_x (STK : Z) (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS)
+(mem : word -> option byte) (md : Model) (Pa0 : word -> Prop) : world SEGS -> config -> Prop :=
+fun W' c' => exists regs' mem' md',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx [] 0 [] STK (spZ regs) [] ly S Hp W mem md [] ly S Hp W' mem' md' 0 /\
+aregs_preserved regs regs' /\ (forall a, apresent (w_H W) mem a -> apresent (w_H W') mem' a) /\
+(* every byte outside this function's own frame is kept: same view, still writable (W8's SEG_LATCH needs it
+   of check_bounded - it reads errno, the key slack and its globals again after the call; W_rep.v:209) *)
+(forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - STK <= a < spZ regs) -> abyte_kept W mem W' mem' a) /\
+Pa0 (getr regs' 10).
+(* W_contract.v:156 csd_spec *)
+Definition csd_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch n,
+afn_pre_x SEGS B ARx CSD_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 n -> 0 <= n < 2 ^ 64 ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_nout) 8 n ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (aleaf_post_x CSD_STK regs ly S Hp W mem md (fun a => a = w64 n)).
+(* W_contract.v:169 hp_post *)
+Definition hp_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(s n p lp : Z) : world SEGS -> config -> Prop :=
+fun W' c' => exists regs' mem' md',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_x SEGS B PST ARx HP_STK (spZ regs) [] ly S Hp W mem md [] ly S Hp W' mem' md' 0 /\
+aregs_preserved regs regs' /\
+(forall a, apresent (w_H W) mem a -> apresent (w_H W') mem' a) /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - HP_STK <= a < spZ regs) ->
+ aview SEGS (w_H W') mem' a = aview SEGS (w_H W) mem a) /\
+((lp <= n /\ hp_prefix_of W mem s p lp /\ getr regs' 10 = w64 1) \/
+ ((lp <= n -> ~ hp_prefix_of W mem s p lp) /\ getr regs' 10 = w64 0)).
+(* W_contract.v:184 hp_spec *)
+Definition hp_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch s n p lp,
+afn_pre_x SEGS B ARx HP_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 s -> getr regs 11 = w64 n -> getr regs 12 = w64 p ->
+0 <= n < 2 ^ 64 -> 0 <= lp -> lp + 1 < 2 ^ 32 -> 0 < p -> p + lp + 1 <= 2 ^ 63 -> 0 <= s -> s + lp <= 2 ^ 63 ->
+first_byte SEGS W mem p (lp + 1) 0 lp ->
+hp_vis W mem p (lp + 1) -> hp_off regs p (lp + 8) -> amem_range p (lp + 1) -> amem_range p 8 ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF p (lp + 1) ->
+shadow_hull_vis (aview SEGS (w_H W) mem) p (lp + 1) ->
+(forall a, p + lp < a < p + lp - (p + lp) mod 8 + 8 -> aview SEGS (w_H W) mem a <> None) ->
+rom_view SEGS W mem ->
+(lp <= n -> hp_vis W mem s lp /\ hp_off regs s lp /\ amem_range s lp /\
+ range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF s lp /\ (0 < lp -> shadow_hull_vis (aview SEGS (w_H W) mem) s lp) /\
+ range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF p lp /\ (0 < lp -> shadow_hull_vis (aview SEGS (w_H W) mem) p lp)) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (hp_post_x regs ly S Hp W mem md s n p lp).
+(* W_contract.v:211 cb_spec *)
+Definition cb_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch n P N,
+afn_pre_x SEGS B ARx CB_STK ly S Hp W regs mem md ch ->
+- 2 ^ 31 <= n < 2 ^ 31 ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_nsrc) 4 (n mod 2 ^ 32) ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_src) 8 P -> 0 <= P < 2 ^ 64 ->
+(0 < n -> In (P, N) (ablocks B ly S) /\ 56 * n <= req_size N) ->
+(forall j, 0 <= j < n -> cb_entry_ok W mem P j) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (aleafx_post_x CB_STK regs ly S Hp W mem md (fun _ => True)).
+(* W_contract.v:223 astrlen_realizes *)
+Definition astrlen_realizes_x (pc : Z) : Prop :=
+forall ly S Hp W regs mem md x k,
+ecall_pre_x SEGS B ARx ly S Hp W regs mem md ->
+ly_stk_lo ly + 2 * ESTACK <= spZ regs -> (forall a, spZ regs - 2 * ESTACK <= a < spZ regs -> apresent (w_H W) mem a) ->
+getr regs 10 = w64 x -> 0 < x ->
+0 <= k -> k + 1 < 2 ^ 32 -> x + k + 1 <= 2 ^ 63 ->
+first_byte SEGS W mem x (k + 1) 0 k ->
+src_ok SEGS W regs mem x (k + 1) -> (forall a, x <= a <= x + k -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs)) ->
+amem_range x (k + 1) -> amem_range x 8 ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF x (k + 1) ->
+shadow_hull_vis (aview SEGS (w_H W) mem) x (k + 1) ->
+(forall a, x + k < a < x + k - (x + k) mod 8 + 8 -> aview SEGS (w_H W) mem a <> None) ->
+rom_view SEGS W mem ->
+SRr SEGS W (cfg_at SEGS pc regs mem md)
+(fun W' c' => W' = W /\ exists regs' mem' md',
+c' = cfg_at SEGS (raZ regs) regs' mem' md' /\
+ARx ly S Hp W mem' md' /\ aregs_preserved regs regs' /\ same_but_materialized md md' /\
+getr regs' 10 = w64 k /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs) -> aview SEGS (w_H W) mem' a = aview SEGS (w_H W) mem a) /\
+(forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
+(* W_contract.v:246 aj_strlen_at *)
+Lemma aj_strlen_at_x : forall pc, astrlen_realizes_x pc ->
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k x kk (o : Z) raw,
+ajournal_x SEGS B PST ARx STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+getr regsT 10 = w64 x -> 0 < x ->
+0 <= kk -> kk + 1 < 2 ^ 32 -> x + kk + 1 <= 2 ^ 63 ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> 2 * ESTACK - o <= STK ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) -> getr regsT 1 = raw -> YK0s.ret_ok raw ->
+first_byte SEGS W memT x (kk + 1) 0 kk ->
+src_ok SEGS W regsT memT x (kk + 1) ->
+(forall a, x <= a <= x + kk -> ~ (sp0 + o - 2 * ESTACK <= a < sp0 + o)) ->
+amem_range x (kk + 1) -> amem_range x 8 ->
+range_addressable (aview SEGS (w_H W) memT) SHADOW_OFF x (kk + 1) ->
+shadow_hull_vis (aview SEGS (w_H W) memT) x (kk + 1) ->
+(forall a, x + kk < a < x + kk - (x + kk) mod 8 + 8 -> aview SEGS (w_H W) memT a <> None) ->
+rom_view SEGS W memT ->
+SRr SEGS W (mkCfg (mkst regsT (Z_to_bv 64 pc) memT (seg_rom SEGS)) mdc)
+(fun W2 c2 => W2 = W /\ exists regs2 mem2 md2,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom SEGS)) md2 /\
+ajournal_x SEGS B PST ARx STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W mem2 md2 k /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 kk /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ (sp0 + o - 2 * ESTACK <= a < sp0 + o) -> aview SEGS (w_H W) mem2 a = aview SEGS (w_H W) memT a) /\
+(forall a, apresent (w_H W) memT a -> apresent (w_H W) mem2 a)).
+Proof.
+intros pc AM W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k x kk o raw
+HJ Ha0 Hx0 Hk0 Hk32 Hxk Hsp' Hal Hneg Hbud Hgp Htp Hra Hraw Hfb Hsx Hbx Hmx Hm8 Hrx Hhx Htail Hrom.
+pose proof HJ as (HAR & Hly & Hsecs & Hwle & Hio & Hfrs & Hnev & Hk & _ & _ & _ & _ & _ & Hpres & Hstatic & F5 & HQT).
+pose proof Hstatic as (Hal16 & Hstk0 & Hceil & Hslo & Hshi & H47 & Hbot & Htop2 & Htop).
+assert (ESTACK = 4096) as Hes by reflexivity.
+pose proof Hly as (_ & _ & _ & _ & _ & _ & _ & _ & Etop & Eslo & Eshi & _).
+(* YCbq.v:1914 ecall_pre_at, over ajournal_x *)
+assert (HPRE : ecall_pre_x SEGS B ARx lyc Sc Hpc W regsT memT mdc).
+{ split; [exact HAR|]. split; [rewrite Hra; exact Hraw|].
+  split; [rewrite Hsp', Z.add_mod, Hal16, Hal by zlia; reflexivity|].
+  split; [rewrite Eslo, Hsp'; zlia|]. split; [rewrite Eshi, Hsp'; zlia|].
+  split; [intros a Ha; apply Hpres; rewrite Hsp' in Ha; zlia|]. split; [exact Hgp | exact Htp]. }
+assert (Hlo2 : ly_stk_lo lyc + 2 * ESTACK <= spZ regsT) by (rewrite Eslo, Hsp'; zlia).
+assert (Hpres2E : forall a, spZ regsT - 2 * ESTACK <= a < spZ regsT -> apresent (w_H W) memT a)
+by (intros a Ha; apply Hpres; rewrite Hsp' in Ha; zlia).
+eapply SRr_mono.
+{ exact (AM lyc Sc Hpc W regsT memT mdc x kk HPRE Hlo2 Hpres2E Ha0 Hx0 Hk0 Hk32 Hxk Hfb Hsx
+ltac:(rewrite Hsp'; exact Hbx) Hmx Hm8 Hrx Hhx Htail Hrom). }
+cbv beta. intros W2 c2 _ (-> & regs2 & mem2 & md2 & -> & HAR2 & HP & Hsame & Hres & Hfr & Hpres2).
+rewrite Hsp' in Hfr.
+split; [reflexivity|]. exists regs2, mem2, md2.
+split; [unfold cfg_at, raZ; rewrite Hra; unfold w64; rewrite Z_to_bv_bv_unsigned; reflexivity|].
+split.
+{ eapply (ajournal_x_after_write SEGS B PST ARx LAWS pa_segs_low STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k
+mem2 md2 (fun a => sp0 + o - 2 * ESTACK <= a < sp0 + o) Sc Hpc own HJ).
+- intros a Ha Hna. apply (Hfr a Ha). exact Hna.
+- exact Hpres2.
+- exact Hsame.
+- intros a Ha; left; left; zlia.
+- exact HAR2.
+- reflexivity. - reflexivity. - zlia. - exact Hfrs. - exact HQT. }
+split; [exact HP|]. split; [exact Hres|]. split; [exact Hfr | exact Hpres2].
+Qed.
+End c.
+
+(* ---- THE ROOM ROUND (an internal record v3): what an allocating spec charges and how far it can grow the live
+   counts.  MT_rk counts the allocator calls of a meter cost (a malloc 1, a free 1, a realloc mo_malloc + mo_free = 2):
+   X_rk args := Z.to_nat (X_cost MT_rk args) is the room budget a spec's pre asks (the instance ignores it).  A spec's
+   peak pk P is the max over all prefixes of its run of the running net count of live P-requests it added, realloc's
+   transient included (a Theorem Labs lane's check, FROM-C-ASAN.md 00:2xZ); tr_peakP is that peak over a plain request trace. *)
+Definition MT_rk : ameter_ops :=
+  {| mo_ok := fun _ _ => True; mo_le := fun _ _ _ => True; mo_malloc := fun _ => 1; mo_free := 1 |}.
+(* zb and tr_peakP are ReplyCnt.v's (the room kit's text word for word, ReplyCnt.tr_peakP_w) *)
+Lemma tr_peakP_false : forall X (tr : list (RelayRunT.rev X)), tr_peakP (fun _ => false) tr = 0.
+Proof.
+  intros X tr. induction tr as [|ev r IH]; [reflexivity|].
+  destruct ev; cbn [tr_peakP zb]; rewrite IH; reflexivity.
+Qed.
+(* list_push's peak: the grown vector (new before old), then the text's block *)
+Definition lp_peak (l : hlist) (n : Z) : (Z -> bool) -> nat :=
+  fun P => ((if P (lp_vbytes l) && lp_grow l then 1 else 0) + (if P (n + 1)%Z then 1 else 0))%nat.
+(* relay_add's peak: the new table, when there was none *)
+Definition ra_peak (T : Z) : (Z -> bool) -> nat :=
+  fun P => if P ATABLE && (T =? 0) then 1%nat else 0%nat.
+(* THE COUNT PEAKS of the composite specs, one name each so that a constant change is a one-place edit (the audit,
+   2026-10-30; each constant is proved over the spec's own request trace in lib/A/W_tr_cnt.v, the allocator side's
+   condition).  A peak is tr_peakP's: the max over all prefixes of the running net count, a realloc's new block counted
+   before its old one is freed. *)
+(* frees only (list_free, source_reset, list_drop, check_shape_ends) *)
+Definition lf_pk : (Z -> bool) -> nat := fun _ => 0%nat.
+Definition sr_pk : (Z -> bool) -> nat := fun _ => 0%nat.
+Definition ldrop_pk : (Z -> bool) -> nat := fun _ => 0%nat.
+Definition cshe_pk : (Z -> bool) -> nat := fun _ => 0%nat.
+(* THE RULE (decision (A), 2026-10-30): a spec's constant K covers its own request trace (tr_peakP <= K, a
+   lemma in W_tr_cnt.v) AND, at each inner callee call, the net count added so far plus that callee's OWN premise
+   constant (the callee's premise is fixed text, so a walk cannot use the callee's smaller actual peak; the
+   distinguishing condition: a caller making two or more calls to a callee with its own constant, after an earlier
+   call left a class at entry + 1).  One g_out chain (each growth replaces g_out) keeps the running count <= 1, and a
+   realloc's transient adds 1:
+   - send_line: its rounds call only the realloc rule, the trace peak is 2;
+   - relay_event: one send_line at entry, 0 + 2;
+   - gesture_end: the second send at entry + 1 (the first may malloc g_out), plus send_line's 2 = 3;
+   - gestures_end: each key's gesture_end at entry + 1, plus 3 = 4;
+   - relay_finish: each entry's gestures_end at entry + 1, plus 4 = 5. *)
+Definition sl_pk : (Z -> bool) -> nat := fun _ => 2%nat.
+Definition re_pk : (Z -> bool) -> nat := fun _ => 2%nat.
+Definition ge_pk : (Z -> bool) -> nat := fun _ => 3%nat.
+Definition gse_pk : (Z -> bool) -> nat := fun _ => 4%nat.
+Definition rf_pk : (Z -> bool) -> nat := fun _ => 5%nat.
+(* gesture_model: the begin arm is list_push of a key prefix of any length (its class need not be the line's), the end
+   arm one free: size-independent form *)
+Definition gm_pk (H : hlist) : (Z -> bool) -> nat := fun P => ((if P (lp_vbytes H) && lp_grow H then 1 else 0) + 1)%nat.
+(* check_no_loss: DATA-DEPENDENT: a begin record's key copy can sit in a class its freed line does
+   not, so a class count grows by one per such record; the peak is its request trace's own, the plain model's
+   check_no_loss_tr over the held list and the expected records (addresses play no part in the sizes) *)
+Definition cnl_tr (E H : hlist) : list ListTr.tev :=
+  HarnessTr.check_no_loss_tr 0 (ListTr.sh_of (fun _ => RelayRunF.adr0) H) (map (ListTr.shr (fun _ => RelayRunF.adr0)) (hl_recs E)).
+(* DATA-DEPENDENT peaks: the own trace's peak plus the largest premise constant of an inner callee (THE RULE above):
+   check_no_loss calls gesture_model (gm_pk <= 2); drain calls send_line (2) and list_push (lp_peak <= 2);
+   relay_remove calls gestures_end (4) and drain's rounds; relay_instance_gone calls drain (its own trace peak + 2,
+   inside rig's trace) and gesture_end (3) *)
+Definition cnl_pk (E H : hlist) : (Z -> bool) -> nat := fun P => (Z.to_nat (tr_peakP P (cnl_tr E H)) + 2)%nat.
+Definition dr_pk (c : ctl) (mx no cap : Z) (e : rentry) (h : hsrc) : (Z -> bool) -> nat :=
+  fun P => (Z.to_nat (tr_peakP P (dr_tr c mx no cap e h)) + 2)%nat.
+Definition rr_pk {X : Type} (tr : list (RelayRunT.rev X)) : (Z -> bool) -> nat := fun P => (Z.to_nat (tr_peakP P tr) + 4)%nat.
+Definition rig_pk {X : Type} (tr : list (RelayRunT.rev X)) : (Z -> bool) -> nat := fun P => (Z.to_nat (tr_peakP P tr) + 3)%nat.
+Section w2.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Variable MT : ameter_ops.
+Variable RP : roomp.
+Variable G : list (Z * Z).
+(* W_contract.v:332 lf_post *)
+Definition lf_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(LA : Z) (l : hlist) (lines : bool) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' kk,
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx G 0 [] LF_STK (spZ regs) (blk_FP (list_blks l)) ly S Hp W mem md [] ly' S' Hp' W' mem' md' kk /\
+aregs_preserved regs regs' /\
+alist_at B ly' S' W' mem' LA empty_list lines /\
+(forall rest, Permutation (ablocks B ly S) (list_blks l ++ rest) -> Permutation (ablocks B ly' S') rest) /\
+apres_kept B W mem W' mem' /\
+(forall i, 0 <= i < 4 -> aview SEGS (w_H W') mem' (as_errno B + i) = aview SEGS (w_H W) mem (as_errno B + i)) /\
+frames S' = frames S /\
+mo_le MT S S' (lf_cost MT l) /\ rp_RM RP S' kr.
+(* W_contract.v:344 lf_spec *)
+Definition lf_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch LA (l : hlist) (lines : bool),
+afn_pre_x SEGS B ARx LF_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 LA ->
+LA mod 8 = 0 ->
+alist_at B ly S W mem LA l lines ->
+(forall a, LA <= a < LA + 16 -> inG G a) -> azs B LA 16 ->
+rom_view SEGS W mem ->
+mo_ok MT S (lf_cost MT l) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (lf_cost MT_rk l) + kr) ->
+cnt_ok_pk RP lf_pk (ablocks B ly S) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (lf_post_x regs ly S Hp W mem md LA l lines kr).
+Variable MMAX : Z.
+(* W_contract.v:372 lp_post *)
+Definition lp_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(LA : Z) (l : hlist) (lines : bool) (x : list byte) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' kk (l' : hlist) (d : Z),
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx G 0 [] LP_STK (spZ regs) (lp_FP l) ly S Hp W mem md [] ly' S' Hp' W' mem' md' kk /\
+aregs_preserved regs regs' /\
+alist_at B ly' S' W' mem' LA l' lines /\
+hl_recs l' = hl_recs l ++ [(d, x)] /\ hl_cap l' = grow_cap (hl_n l) (hl_cap l) /\
+(lp_grow l = false -> hl_v l' = hl_v l) /\
+(forall rest,
+ Permutation (ablocks B ly S) ((if lp_grow l && negb (hl_cap l =? 0) then [(hl_v l, AREC * hl_cap l)] else []) ++ rest) ->
+ Permutation (ablocks B ly' S')
+   ((d, Z.of_nat (length x) + 1) :: (if lp_grow l then [(hl_v l', AREC * hl_cap l')] else []) ++ rest)) /\
+apres_kept B W mem W' mem' /\
+(forall i, 0 <= i < 4 -> aview SEGS (w_H W') mem' (as_errno B + i) = aview SEGS (w_H W) mem (as_errno B + i)) /\
+frames S' = frames S /\
+mo_le MT S S' (lp_cost MT l (Z.of_nat (length x))) /\ rp_RM RP S' kr.
+(* W_contract.v:389 lp_spec *)
+Definition lp_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch LA SRC (l : hlist) (lines : bool) (x : list byte) q k,
+afn_pre_x SEGS B ARx LP_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 LA -> getr regs 11 = w64 SRC -> getr regs 12 = w64 (Z.of_nat (length x)) ->
+LA mod 8 = 0 ->
+alist_at B ly S W mem LA l lines ->
+(forall a, LA <= a < LA + 16 -> inG G a) -> azs B LA 16 ->
+(lp_grow l = true -> lp_vbytes l < MMAX) -> Z.of_nat (length x) < 2 ^ 16 ->
+blocks_bytes S + tr_peak (lp_tr l (Z.of_nat (length x))) <= LIVE_MAX ->
+In (q, k) (ablocks B ly S) -> q <> hl_v l -> q <= SRC -> SRC + Z.of_nat (length x) <= q + req_size k ->
+garr8 SEGS (mrestrict (w_H W) mem) SRC (bzs x) ->
+(lines = true -> ~ In (Z_to_bv 8 0) x /\ Z.of_nat (length x) <= APARTIAL) ->
+(lines = false -> (1 <= length x)%nat) ->
+mo_ok MT S (lp_cost MT l (Z.of_nat (length x))) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (lp_cost MT_rk l (Z.of_nat (length x))) + kr) ->
+cnt_ok_pk RP (lp_peak l (Z.of_nat (length x))) (ablocks B ly S) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (lp_post_x regs ly S Hp W mem md LA l lines x kr).
+(* W_contract.v:417 sr_post *)
+Definition sr_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(HA : Z) (o : option hsrc) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' kk,
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx G 0 [] SR_STK (spZ regs) (blk_FP (sr_blks o)) ly S Hp W mem md [] ly' S' Hp' W' mem' md' kk /\
+aregs_preserved regs regs' /\
+asrc_closed W' mem' HA /\
+(forall rest, Permutation (ablocks B ly S) (sr_blks o ++ rest) -> Permutation (ablocks B ly' S') rest) /\
+apres_kept B W mem W' mem' /\
+(forall i, 0 <= i < 4 -> aview SEGS (w_H W') mem' (as_errno B + i) = aview SEGS (w_H W) mem (as_errno B + i)) /\
+frames S' = frames S /\
+mo_le MT S S' (sr_cost MT o) /\ rp_RM RP S' kr.
+(* W_contract.v:429 sr_spec *)
+Definition sr_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch HA (o : option hsrc),
+afn_pre_x SEGS B ARx SR_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 HA ->
+HA mod 8 = 0 ->
+match o with Some h => asrc_at B ly S W mem HA h | None => asrc_closed W mem HA end ->
+(forall a, HA <= a < HA + ASRC -> inG G a) -> azs B HA ASRC ->
+rom_view SEGS W mem ->
+mo_ok MT S (sr_cost MT o) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (sr_cost MT_rk o) + kr) ->
+cnt_ok_pk RP sr_pk (ablocks B ly S) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (sr_post_x regs ly S Hp W mem md HA o kr).
+Section w2h.
+Context {hl : Z}.
+Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
+(* W_contract.v:443 azs_range_addressable, from the zero-shadow law (field alx_zshadow) *)
+Lemma azs_range_addressable_x : forall ly S Hp W mem md a n,
+ARx ly S Hp W mem md -> azs B a n ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF a n.
+Proof.
+intros ly S Hp W mem md a n HAR (r & Hin & H8 & Hlo & Hhi) y Hy.
+assert (Hz : zero_shadow (aview SEGS (w_H W) mem) SHADOW_OFF (fst r) (snd r)).
+{ apply (alx_zshadow _ _ _ LAWS ly S Hp W mem md r HAR). unfold zero_shadow_ranges. right. exact Hin. }
+exists 0. split; [|left; reflexivity].
+replace y with (fst r + (y - fst r)) by lia. rewrite shadow_of_addr_aligned_off by exact H8.
+apply Hz. split; [apply Z.div_pos; lia|]. apply Z.div_lt_upper_bound; lia.
+Qed.
+End w2h.
+End w2.
+Section cnlr.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+(* W_contract.v:483 cnlr_spec *)
+Definition cnlr_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch p v,
+afn_pre_x SEGS B ARx CNLR_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 p ->
+p mod 16 = 0 -> 0x10000 <= p -> p + 28 <= 0x5fb000 -> azs B p 28 ->
+(* apart from the two cells the shadow check reads: the GOT slot of the shadow base and the cell itself *)
+(p + 28 <= VAL (A_OBJ 0) \/ VAL (A_OBJ 0) + 8 <= p) -> (p + 28 <= VAL (A_OBJ 32) \/ VAL (A_OBJ 32) + 8 <= p) ->
+val_mem SEGS (mrestrict (w_H W) mem) (p + 24) 4 v ->
+0 <= v < 2 ^ 32 -> (v = 0 \/ 2 ^ 31 <= v) ->
+(* check_no_loss_read returns nothing: it leaves a0 holding the word it read, so the post claims
+   nothing about a0. *)
+SRr SEGS W (cfg_at SEGS pc regs mem md) (aleaf_post_x B PST ARx CNLR_STK regs ly S Hp W mem md (fun _ => True)).
+End cnlr.
+Section w2g.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Variable MT : ameter_ops.
+Variable RP : roomp.
+Variable MMAX : Z.
+(* W_contract.v:515 gx_prog *)
+Definition gx_prog_x (G : list (Z * Z)) : Prop :=
+gx_ok SEGS B G /\ gx_rt B G /\ rom_out SEGS B G /\
+(forall a, inG G a -> seg_rom SEGS (Z_to_bv 64 a) <> None) /\
+(forall a, inG G a -> forall m, writable_at SEGS m a) /\
+(forall ly S Hp W mem md a n, ARx ly S Hp W mem md -> 0 < n ->
+ (forall x, a <= x < a + n -> inG G x) -> shadow_hull_vis (aview SEGS (w_H W) mem) a n).
+(* W_contract.v:521 gx_prog_sub *)
+Lemma gx_prog_sub_x : forall G1 G2, (forall a, inG G1 a -> inG G2 a) -> gx_prog_x G2 -> gx_prog_x G1.
+Proof.
+intros G1 G2 Hs (H1 & H2 & H3 & H4 & H5 & H6).
+split; [exact (gx_ok_sub SEGS B G1 G2 Hs H1)|].
+split; [exact (gx_rt_sub B G1 G2 Hs H2)|].
+split; [intros a Ha; destruct (H3 a Ha) as (Hn & Ho & He & Hk);
+        split; [intros Hin; exact (Hn (Hs a Hin)) | exact (conj Ho (conj He Hk))]|].
+split; [intros a Ha; exact (H4 a (Hs a Ha))|].
+split; [intros a Ha; exact (H5 a (Hs a Ha))|].
+intros ly S Hp W mem md a n HAR Hn Hx. exact (H6 ly S Hp W mem md a n HAR Hn (fun x Hx' => Hs x (Hx x Hx'))).
+Qed.
+(* W_contract.v:532 lf_spec_g *)
+Definition lf_spec_g_x (pc : Z) : Prop := forall G, gx_prog_x G -> lf_spec_x B PST ARx MT RP G pc.
+(* W_contract.v:533 sr_spec_g *)
+Definition sr_spec_g_x (pc : Z) : Prop := forall G, gx_prog_x G -> sr_spec_x B PST ARx MT RP G pc.
+(* W_contract.v:534 lp_spec_g *)
+Definition lp_spec_g_x (pc : Z) : Prop := forall G, gx_ok SEGS B G -> gx_rt B G -> lp_spec_x B PST ARx MT RP G MMAX pc.
+End w2g.
+Section w1n.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+(* W_contract.v:558 nl_post *)
+Definition nl_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(XO PA PL PN A O OUT : Z) (ob : list byte) : world SEGS -> config -> Prop :=
+fun W' c' => exists regs' mem' md',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx [] XO (nl_cells PA PL PN) NL_STK (spZ regs) [] ly S Hp W mem md [] ly S Hp W' mem' md' 0 /\
+aregs_preserved regs regs' /\ W' = W /\
+(* every present byte stays present (callers store to their globals after the call: check_no_loss's
+   inlined list_drop), as lfind_post; stronger than W2's apres_kept *)
+(forall a, apresent (w_H W) mem a -> apresent (w_H W') mem' a) /\
+(* nothing outside its stack window and the three cells changes (memchr writes only its scratch) *)
+(forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - NL_STK <= a < spZ regs + XO) ->
+  ~ inFP (nl_cells PA PL PN) a -> aview SEGS (w_H W') mem' a = aview SEGS (w_H W) mem a) /\
+val_mem SEGS (mrestrict (w_H W') mem') (VAL A_g_nout) 8 O /\
+val_mem SEGS (mrestrict (w_H W') mem') (VAL A_g_out) 8 OUT /\
+ob_at W' mem' OUT ob /\
+((A = O /\ getr regs' 10 = w64 0 /\
+  forall a, inFP (nl_cells PA PL PN) a -> aview SEGS (w_H W') mem' a = aview SEGS (w_H W) mem a) \/
+ (exists ln, A < O /\ next_line_c.first_line ob A ln /\ getr regs' 10 = w64 1 /\
+  val_mem SEGS (mrestrict (w_H W') mem') PA 8 (A + Z.of_nat (length ln) + 1) /\
+  val_mem SEGS (mrestrict (w_H W') mem') PL 8 (OUT + A) /\
+  val_mem SEGS (mrestrict (w_H W') mem') PN 8 (Z.of_nat (length ln)))).
+(* W_contract.v:579 nl_spec *)
+Definition nl_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch XO PA PL PN A O OUT ob,
+afn_pre_x SEGS B ARx NL_STK ly S Hp W regs mem md ch ->
+0 <= XO -> XO mod 16 = 0 -> spZ regs + XO <= ly_top ly ->
+(forall a, spZ regs <= a < spZ regs + XO -> apresent (w_H W) mem a) ->
+getr regs 10 = w64 PA -> getr regs 11 = w64 PL -> getr regs 12 = w64 PN ->
+PA mod 8 = 0 -> PL mod 8 = 0 -> PN mod 8 = 0 ->
+spZ regs <= PA -> PA + 8 <= spZ regs + XO -> spZ regs <= PL -> PL + 8 <= spZ regs + XO ->
+spZ regs <= PN -> PN + 8 <= spZ regs + XO ->
+(PA + 8 <= PL \/ PL + 8 <= PA) -> (PA + 8 <= PN \/ PN + 8 <= PA) -> (PL + 8 <= PN \/ PN + 8 <= PL) ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF PA 8 ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF PL 8 ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF PN 8 ->
+val_mem SEGS (mrestrict (w_H W) mem) PA 8 A ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_nout) 8 O ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_out) 8 OUT ->
+Z.of_nat (length ob) = O -> ob_at W mem OUT ob ->
+0 <= A <= O ->
+(* O < 2^32: the length bound of the shared memchr text (lib/Rt/MemchrDef.v amemchr_realizesM: n < 2^32); the
+   stream one operation sends is at most 33,488,385 bytes, g_capout <= OUT_MAX (ACfn_cf.v) *)
+(0 < O -> 0 < OUT /\ OUT + O <= 2 ^ 63 /\ O < 2 ^ 32 /\
+  (forall a, OUT <= a < OUT + O -> ~ (spZ regs - NL_STK <= a < spZ regs + XO))) ->
+(A < O -> In (Z_to_bv 8 0) (skipn (Z.to_nat A) ob) /\ amem_range OUT (O + 8) /\
+  range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF OUT O /\ shadow_hull_vis (aview SEGS (w_H W) mem) OUT O /\
+  rom_view SEGS W mem) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (nl_post_x regs ly S Hp W mem md XO PA PL PN A O OUT ob).
+End w1n.
+Section w3.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+(* W_contract.v:620 cse_spec *)
+Definition cse_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch EV e gone O OUT ob,
+afn_pre_x SEGS B ARx CSE_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 EV ->
+~ In (Z_to_bv 8 0) e -> ob_at W mem EV (e ++ [Z_to_bv 8 0]) ->
+0 < EV -> EV < alloc_ceiling -> EV + Z.of_nat (length e) + 1 <= 2 ^ 63 -> Z.of_nat (length e) + 1 < 2 ^ 32 ->
+(forall a, EV <= a <= EV + Z.of_nat (length e) -> ~ (spZ regs - CSE_STK <= a < spZ regs)) ->
+amem_range EV (Z.of_nat (length e) + 1) -> amem_range EV 8 ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF EV (Z.of_nat (length e) + 1) ->
+shadow_hull_vis (aview SEGS (w_H W) mem) EV (Z.of_nat (length e) + 1) ->
+(forall a, EV + Z.of_nat (length e) < a < EV + Z.of_nat (length e) - (EV + Z.of_nat (length e)) mod 8 + 8 ->
+  aview SEGS (w_H W) mem a <> None /\ ~ (spZ regs - CSE_STK <= a < spZ regs)) ->
+rom_view SEGS W mem ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_gone) 1 gone -> (gone = 0 \/ gone = 1) ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_nout) 8 O ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_out) 8 OUT ->
+Z.of_nat (length ob) = O -> ob_at W mem OUT ob ->
+(0 < O -> 0 < OUT /\ OUT + O + 8 <= 2 ^ 63 /\ O < 2 ^ 32 /\ amem_range OUT (O + 8) /\
+  range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF OUT O /\ shadow_hull_vis (aview SEGS (w_H W) mem) OUT O /\
+  (forall a, OUT <= a < OUT + O -> aview SEGS (w_H W) mem a <> None /\ ~ (spZ regs - CSE_STK <= a < spZ regs))) ->
+((gone = 1 /\ O = 0) \/ (gone = 0 /\ ob = e ++ [Z_to_bv 8 0])) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (aleaf_post_x B PST ARx CSE_STK regs ly S Hp W mem md (fun _ => True)).
+End w3.
+Section w1.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Variable MT : ameter_ops.
+Variable RP : roomp.
+Variable G : list (Z * Z).
+(* W_contract.v:662 lfind_post *)
+Definition lfind_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(l : HarnessRep.hlist) (sb : list byte) : world SEGS -> config -> Prop :=
+fun W' c' => W' = W /\ exists regs' mem' md',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx G 0 [] LFIND_STK (spZ regs) [] ly S Hp W mem md [] ly S Hp W' mem' md' 0 /\
+aregs_preserved regs regs' /\
+(forall a, apresent (w_H W) mem a -> apresent (w_H W') mem' a) /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - LFIND_STK <= a < spZ regs) ->
+ aview SEGS (w_H W') mem' a = aview SEGS (w_H W) mem a) /\
+((exists j, lfind_match l sb j /\ getr regs' 10 = w64 (Z.of_nat j)) \/
+ ((forall k, (k < length (HarnessRep.hl_recs l))%nat -> snd (nth k (HarnessRep.hl_recs l) (0, [])) <> sb) /\
+  getr regs' 10 = Z_to_bv 64 (-1))).
+(* W_contract.v:674 lfind_spec *)
+Definition lfind_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch LA l lines src sb,
+afn_pre_x SEGS B ARx LFIND_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 LA -> getr regs 11 = w64 src -> getr regs 12 = w64 (Z.of_nat (length sb)) ->
+alist_at B ly S W mem LA l lines ->
+(* the list head is a global (or a field of one): 8-aligned, addressable shadow, off this frame *)
+LA mod 8 = 0 -> 4096 <= LA -> LA + 16 <= kLowMemEnd ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF LA 16 ->
+(forall a, LA <= a < LA + 16 -> ~ (spZ regs - LFIND_STK <= a < spZ regs)) ->
+(* the bytes bcmp reads at a1 *)
+0 <= src -> src + Z.of_nat (length sb) <= 2 ^ 63 -> Z.of_nat (length sb) < 2 ^ 32 ->
+(forall i, 0 <= i < Z.of_nat (length sb) ->
+ aview SEGS (w_H W) mem (src + i) = Some (bv_unsigned (nth (Z.to_nat i) sb (Z_to_bv 8 0)))) ->
+(forall a, src <= a < src + Z.of_nat (length sb) -> ~ (spZ regs - LFIND_STK <= a < spZ regs)) ->
+amem_range src (Z.of_nat (length sb)) ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF src (Z.of_nat (length sb)) ->
+(0 < Z.of_nat (length sb) -> shadow_hull_vis (aview SEGS (w_H W) mem) src (Z.of_nat (length sb))) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (lfind_post_x regs ly S Hp W mem md l sb).
+(* W_contract.v:702 ldrop_post *)
+Definition ldrop_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(LA : Z) (l : HarnessRep.hlist) (lines : bool) (i : nat) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx G 0 [] LDROP_STK (spZ regs)
+[(HarnessRep.hl_v l, HarnessRep.hl_v l + AREC * HarnessRep.hl_cap l);
+ (fst (nth i (HarnessRep.hl_recs l) (0, [])),
+  fst (nth i (HarnessRep.hl_recs l) (0, [])) + req_size (Z.of_nat (length (snd (nth i (HarnessRep.hl_recs l) (0, [])))) + 1))]
+ly S Hp W mem md [] ly' S' Hp' W' mem' md' 1 /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+(* errno's view is kept, so a caller keeps its own errno clause across the call (the same conjunct as lib/B's
+   ldrop_post, where list_free calls list_drop) *)
+(forall j, 0 <= j < 4 -> aview SEGS (w_H W') mem' (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j)) /\
+alist_at B ly' S' W' mem' LA (ldrop_list l i) lines /\
+(* the text of record i is the one block that went *)
+(exists b1 b2, ablocks B ly S = b1 ++ (fst (nth i (HarnessRep.hl_recs l) (0, [])),
+ Z.of_nat (length (snd (nth i (HarnessRep.hl_recs l) (0, [])))) + 1) :: b2 /\ ablocks B ly' S' = b1 ++ b2) /\
+mo_le MT S S' (mo_free MT) /\ rp_RM RP S' kr.
+(* W_contract.v:721 ldrop_spec *)
+Definition ldrop_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch LA l lines i,
+afn_pre_x SEGS B ARx LDROP_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 LA -> getr regs 11 = w64 (Z.of_nat i) ->
+alist_at B ly S W mem LA l lines ->
+(i < length (HarnessRep.hl_recs l))%nat ->
+LA mod 8 = 0 -> 4096 <= LA ->
+(* the memmove intrinsic takes n < 2^32; the harness's largest list moves at most 2^29 - 16 bytes *)
+AREC * (HarnessRep.hl_n l - 1 - Z.of_nat i) < 2 ^ 32 ->
+azs B LA 16 ->
+(forall a, LA <= a < LA + 16 -> inG G a /\ ~ (spZ regs - LDROP_STK <= a < spZ regs)) ->
+(forall a, HarnessRep.hl_v l <= a < HarnessRep.hl_v l + AREC * HarnessRep.hl_cap l -> ~ (spZ regs - LDROP_STK <= a < spZ regs)) ->
+mo_ok MT S (mo_free MT) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (mo_free MT_rk) + kr) ->
+cnt_ok_pk RP ldrop_pk (ablocks B ly S) ->
+(* the __asan_memmove intrinsic's prologue reads .rodata (0x103d0) *)
+rom_view SEGS W mem ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (ldrop_post_x regs ly S Hp W mem md LA l lines i kr).
+End w1.
+Section w1g.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+(* W_contract.v:742 lfind_spec_g *)
+Definition lfind_spec_g_x (pc : Z) : Prop := forall G, gx_ok SEGS B G -> gx_rt B G -> lfind_spec_x B PST ARx G pc.
+End w1g.
+End b.
+End a.
+
+Section s7.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Variable MT : ameter_ops.
+Variable RP : roomp.
+Variable MMAX : Z.
+Variable RG : rep_globals.
+(* W_contract.v:898 sl_line_ok *)
+Definition sl_line_ok_x (ly : alayout) (S : astate) (out line len : Z) : Prop :=
+len = 0 \/
+(exists q m, In (q, m) (ablocks B ly S) /\ q <> out /\ q <= line /\ line + len <= q + req_size m) \/
+((forall a, line <= a < line + len -> in_img SEGS a) /\ ashp_x ARx line len /\
+ (forall a, line <= a < line + len -> ~ Exists (in_zr a) (as_owned_static B))).
+(* W_contract.v:903 sl_post *)
+Definition sl_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(c : ctl) (O : list byte) (mx no cap out : Z) (Bl : list byte) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' k out',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx (G_SL B RG) 0 [] SL_STK (spZ regs) (ablocks_fp (aout_blks cap out)) ly S Hp W mem md [] ly' S' Hp' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+mo_le MT S S' (sl_cost MT c mx no cap (Z.of_nat (length Bl))) /\
+rp_RM RP S' kr /\
+(exists rest, Permutation (ablocks B ly S) (aout_blks cap out ++ rest) /\
+ Permutation (ablocks B ly' S') (aout_blks (sl_cap c mx no cap (Z.of_nat (length Bl))) out' ++ rest)) /\
+aout_at B RG ly' S' W' mem' (sl_ctl c (Z.of_nat (length Bl))) (sl_O c O Bl) mx
+  (sl_no c no (Z.of_nat (length Bl))) (sl_cap c mx no cap (Z.of_nat (length Bl))) out' /\
+(* an OFF send returns before it touches g_out (send_line_c.v), so g_out's block is the old one; without this an
+   off send's post admits another block of the same size (rg_out is in G_SL, so no journal keeps the cell) -
+   found by DrLinea at drain's DLS rebuild, whose DMEM needs out1 = dxout cx when dlive cx = false *)
+(sl_live c (Z.of_nat (length Bl)) = false -> out' = out).
+(* W_contract.v:919 sl_spec *)
+Definition sl_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch c O mx no cap out line Bl,
+afn_pre_x SEGS B ARx SL_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 line -> getr regs 11 = w64 (Z.of_nat (length Bl)) ->
+aout_at B RG ly S W mem c O mx no cap out ->
+rom_view SEGS W mem ->
+garr8 SEGS (arm W mem) line (bzs Bl) -> 0 <= line -> line + Z.of_nat (length Bl) < 2 ^ 63 ->
+sl_line_ok_x ly S out line (Z.of_nat (length Bl)) ->
+(* W7's premise (a working branch 14d97d478bb): the line is no byte of G_SL, so send_line's own writes to
+   its globals cannot move it.  Taken verbatim so that the union merge converges. *)
+(forall a, line <= a < line + Z.of_nat (length Bl) -> ~ inG (G_SL B RG) a) ->
+sl_maxr c mx no cap (Z.of_nat (length Bl)) < MMAX ->
+blocks_bytes S + tr_peak (sl_tr c mx no cap (Z.of_nat (length Bl))) <= LIVE_MAX ->
+mo_ok MT S (sl_cost MT c mx no cap (Z.of_nat (length Bl))) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (sl_cost MT_rk c mx no cap (Z.of_nat (length Bl))) + kr) ->
+cnt_ok_pk RP sl_pk (ablocks B ly S) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (sl_post_x regs ly S Hp W mem md c O mx no cap out Bl kr).
+(* The drain's stack budget over ARx: W_contract.v's DRAIN_STK (16848) plus 128 bytes, the stack the strndup
+   interceptor's inner malloc uses below the drain's frame (the interceptor reaches Allocate, whose entry asks
+   ly_bot < sp).  At DRAIN_STK the journal's room at the drain's strndup call (return address 0x838e4) gives
+   ly_bot + D < sp only for D <= 4224, and the malloc body needs about 4304; DRAIN_STK_x = 16976 gives D = 4352.
+   128 is that need rounded up to a 16-byte multiple.  W_contract.v's DRAIN_STK is unchanged. *)
+Definition DRAIN_STK_x : Z := DRAIN_STK + 128.
+(* W_contract.v:986 dr_post *)
+Definition dr_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(SA HA : Z) (e : rentry) (h : hsrc) (c : ctl) (O : list byte) (mx no cap out : Z) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' k (e' : rentry) (h' : hsrc) (out' ev' : Z) (LB : list byte) rest,
+let fin := dr_fin c mx no cap e h in
+let live := dr_live c h in
+let cap' := if live then drain_b_c.ds_ocap fin else cap in
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx (G_DR B RG) 0 [] DRAIN_STK_x (spZ regs) (dr_fp SA e h cap out) ly S Hp W mem md [] ly' S' Hp' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+mo_le MT S S' (dr_cost MT c mx no cap e h) /\
+rp_RM RP S' kr /\
+Permutation (ablocks B ly S) (aentry_blks e ++ asrc_blks h ++ aout_blks cap out ++ rest) /\
+Permutation (ablocks B ly' S') (aentry_blks e' ++ asrc_blks h' ++ aout_blks cap' out' ++ rest) /\
+(* the relay's entry *)
+garr8 SEGS (arm W' mem') SA (bzs (entry_bytes e')) /\ awr W' mem' SA AENT /\ aentry_ok B ly' S' W' mem' e' /\
+re_fd e' = re_fd e /\ re_eof e' = (if hs_closed h =? 1 then 1 else re_eof e) /\ 0 < re_cap e' /\
+re_cap e' = drain_b_c.ds_cap fin /\ bzs (re_U e') = drain_b_c.ds_u fin /\
+re_skip e' = (if drain_b_c.ds_skip fin then 1 else 0) /\
+drain_b_c.keys_texts (re_keys e') = drain_b_c.ds_H fin /\ drain_b_c.ent_ka e' = drain_b_c.ds_ka fin /\
+((re_hp e' = re_hp e /\ re_kh e' = re_kh e) \/ re_kh e' <= 2 ^ 30) /\
+NoDup (drain_b_c.keys_texts (re_keys e')) /\
+same_set (drain_b_c.keys_texts (re_keys e')) (upds (drain_b_c.keys_texts (re_keys e)) (dr_lines h)) /\
+(* the harness's source j, and the other three slots of g_s *)
+asrc_at B ly' S' W' mem' HA h' /\
+(forall a, rg_s RG <= a < rg_s RG + 4 * ASRC -> ~ (HA <= a < HA + ASRC) -> abyte_kept W mem W' mem' a) /\
+hl_cap (hs_expected h') = drain_b_c.ds_ecap fin /\
+hl_cap (hs_expected h') <= Z.max 8 (Z.max (hl_cap (hs_expected h)) (2 * hl_n (hs_expected h'))) /\
+hs_fd h' = hs_fd h /\ hs_closed h' = hs_closed h /\ hs_eintr h' = 0 /\
+hl_recs (hs_pending h') = [] /\ hs_off h' = 0 /\
+hl_v (hs_pending h') = hl_v (hs_pending h) /\ hl_cap (hs_pending h') = hl_cap (hs_pending h) /\
+hs_partial h' = hs_partial h /\
+hs_state h' = feed (hs_state h) (bzs (pending_stream h)) /\
+map snd (hl_recs (hs_expected h')) = map snd (hl_recs (hs_expected h)) ++ map (map (Z_to_bv 8)) (dr_lines h) /\
+firstn (length (hl_recs (hs_expected h))) (hl_recs (hs_expected h')) = hl_recs (hs_expected h) /\
+hs_held h' = hs_held h /\
+re_skip e' = hs_overlong h' /\ (re_skip e' = 0 -> bzs (re_U e') = bzs (hs_W h')) /\
+(* the controller's stream: every complete line sent, NUL-terminated, in order *)
+bzs LB = with_nul (dr_lines h) /\
+aout_at B RG ly' S' W' mem' (dr_ctl c h ev') (if live then O ++ LB else O) mx (if live then no + dr_tot h else no) cap' out'.
+(* W_contract.v:1025 dr_spec *)
+Definition dr_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch (G SA : Z) (e : rentry) (j : nat) (h : hsrc) (c : ctl) (O : list byte) (mx no cap out : Z),
+let HA := rg_s RG + ASRC * Z.of_nat j in
+afn_pre_x SEGS B ARx DRAIN_STK_x ly S Hp W regs mem md ch ->
+getr regs 10 = w64 SA ->
+In (G, ATABLE) (ablocks B ly S) -> G <= SA -> SA + AENT <= G + ATABLE ->
+(* W7's e6b5f95b285 premise, as in W_contract.v's dr_spec (twin kept in step by W8Entry-2) *)
+SA mod 8 = 0 ->
+garr8 SEGS (arm W mem) SA (bzs (entry_bytes e)) -> awr W mem SA AENT -> aentry_ok B ly S W mem e ->
+(j < 4)%nat -> asrc_at B ly S W mem HA h -> aothers_at RG W mem j (re_fd e) ->
+hs_fd h = re_fd e -> re_skip e = hs_overlong h -> (re_skip e = 0 -> bzs (re_U e) = bzs (hs_W h)) ->
+aout_at B RG ly S W mem c O mx no cap out ->
+rom_view SEGS W mem ->
+(exists rest, Permutation (ablocks B ly S) ((G, ATABLE) :: aentry_blks e ++ asrc_blks h ++ aout_blks cap out ++ rest)) ->
+Z.of_nat (length (pending_stream h)) < 2 ^ 26 -> hl_cap (hs_expected h) < 2 ^ 26 ->
+re_nheld e + Z.of_nat (length (pending_stream h)) < 2 ^ 26 ->
+tr_max (dr_tr c mx no cap e h) < MMAX ->
+blocks_bytes S + tr_peak (dr_tr c mx no cap e h) <= LIVE_MAX ->
+mo_ok MT S (dr_cost MT c mx no cap e h) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (dr_cost MT_rk c mx no cap e h) + kr) ->
+cnt_ok_pk RP (dr_pk c mx no cap e h) (ablocks B ly S) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (dr_post_x regs ly S Hp W mem md SA HA e h c O mx no cap out kr).
+End s7.
+
+Section w5.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Variable MT : ameter_ops.
+Variable RP : roomp.
+Variable MMAX : Z.
+Variable G : list (Z * Z).
+Variable RG : rep_globals.
+Variable CTX : list (list Z).
+(* W_contract.v:1078 re_post *)
+Definition re_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(c : ctl) (O : list byte) (mx no cap out : Z) (e : list byte) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' k out',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx G 0 [] RE_STK (spZ regs) (ablocks_fp (aout_blks cap out)) ly S Hp W mem md [] ly' S' Hp' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+mo_le MT S S' (sl_cost MT c mx no cap (re_len e)) /\
+rp_RM RP S' kr /\
+(exists rest, Permutation (ablocks B ly S) (aout_blks cap out ++ rest) /\
+ Permutation (ablocks B ly' S') (aout_blks (sl_cap c mx no cap (re_len e)) out' ++ rest)) /\
+aout_at B RG ly' S' W' mem' (sl_ctl c (re_len e)) (sl_O c O (e ++ [Z_to_bv 8 0])) mx
+  (sl_no c no (re_len e)) (sl_cap c mx no cap (re_len e)) out' /\
+alock_at RG W' mem' false.
+(* W_contract.v:1091 re_spec *)
+Definition re_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch c O mx no cap out line (e : list byte) q m,
+afn_pre_x SEGS B ARx RE_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 line ->
+garr8 SEGS (arm W mem) line (bzs (e ++ [Z_to_bv 8 0])) -> ~ In (Z_to_bv 8 0) e ->
+In (q, m) (ablocks B ly S) -> q <> out -> q <= line ->
+line + re_len e <= q + req_size m ->
+(forall a, line + Z.of_nat (length e) < a < line + Z.of_nat (length e) - (line + Z.of_nat (length e)) mod 8 + 8 ->
+ aview SEGS (w_H W) mem a <> None) ->
+aout_at B RG ly S W mem c O mx no cap out ->
+alock_at RG W mem false -> rom_view SEGS W mem ->
+(forall a, rg_lock RG <= a < rg_lock RG + 12 -> inG G a) -> (forall a, inG (G_SL B RG) a -> inG G a) ->
+(forall a, rg_lock RG <= a < rg_lock RG + 12 -> ~ (as_errno B <= a < as_errno B + 4)) ->
+sl_maxr c mx no cap (re_len e) < MMAX ->
+blocks_bytes S + tr_peak (sl_tr c mx no cap (re_len e)) <= LIVE_MAX ->
+mo_ok MT S (sl_cost MT c mx no cap (re_len e)) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (sl_cost MT_rk c mx no cap (re_len e)) + kr) ->
+cnt_ok_pk RP re_pk (ablocks B ly S) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (re_post_x regs ly S Hp W mem md c O mx no cap out e kr).
+(* W_contract.v:1133 ra_post *)
+Definition ra_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(fd T : Z) (es : list rentry) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' k,
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx G 0 [] RA_STK (spZ regs) (ra_FP T es) ly S Hp W mem md [] ly' S' Hp' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\ frames S' = frames S /\ mo_le MT S S' (ra_cost MT T) /\
+rp_RM RP S' kr /\
+alock_at RG W' mem' false /\
+((fd < 0 /\ getr regs' 10 = w64 (-1) /\ ablocks B ly' S' = ablocks B ly S) \/
+ (0 <= fd /\ getr regs' 10 = w64 0 /\ exists T',
+   arelay_at B RG ly' S' W' mem' T' (es ++ [ra_new fd]) /\
+   ((T = 0 /\ Permutation (ablocks B ly' S') ((T', ATABLE) :: ablocks B ly S)) \/
+    (T <> 0 /\ T' = T /\ ablocks B ly' S' = ablocks B ly S)))) /\
+(* errno's four bytes are KEPT: relay_add reaches no send_line (no EINTR round), its allocator site's rule and
+   the lock / unlock / memset contracts keep them, and RA_G excludes them by ra_spec's premise.  (Unlike re_post
+   and rf_post, which carry errno's VALUE through aout_at, because send_line can change it there.) *)
+(forall i, 0 <= i < 4 -> aview SEGS (w_H W') mem' (as_errno B + i) = aview SEGS (w_H W) mem (as_errno B + i)).
+(* W_contract.v:1153 ra_spec *)
+Definition ra_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch fd T es,
+afn_pre_x SEGS B ARx RA_STK ly S Hp W regs mem md ch -> spZ regs mod 32 = 0 ->
+count_cid 0 (frames S) < fs_frames 0 ->
+getr regs 10 = Z_to_bv 64 fd -> - 2 ^ 31 <= fd < 2 ^ 31 ->
+alock_at RG W mem false -> awake_at RG W mem -> rom_view SEGS W mem ->
+ra_rel B RG ly S W mem T es ->
+(0 <= fd -> (length es < 4)%nat /\ ~ In fd (map re_fd es)) ->
+(forall a, inG (RA_G RG) a -> inG G a) ->
+(forall a, inG (RA_G RG) a -> ~ (as_errno B <= a < as_errno B + 4)) ->
+(0 <= fd -> T = 0 -> blocks_bytes S + ATABLE <= LIVE_MAX) ->
+(0 <= fd -> T = 0 -> spZ regs + 16 < ly_top ly /\ In (pc + 332 :: raZ regs :: spine ch) CTX) ->
+mo_ok MT S (ra_cost MT T) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (ra_cost MT_rk T) + kr) ->
+cnt_ok_pk RP (ra_peak T) (ablocks B ly S) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (ra_post_x regs ly S Hp W mem md fd T es kr).
+End w5.
+Section w5g.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Variable MT : ameter_ops.
+Variable RP : roomp.
+Variable RG : rep_globals.
+Variable CTX : list (list Z).
+(* W_contract.v:1139 ra_spec_g *)
+Definition ra_spec_g_x (pc : Z) : Prop := forall G, gx_ok SEGS B G -> gx_rt B G -> ra_spec_x B PST ARx MT RP G RG CTX pc.
+End w5g.
+
+Section s6.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Variable MT : ameter_ops.
+Variable RP : roomp.
+Variable MMAX : Z.
+Variable RG : rep_globals.
+(* the free interceptor's caller-context table (W_journal.v Section hc, the _c rules; K0_SITES' CTX_AFREE: free and
+   free(NULL) enter the same interceptor pc0, so ONE table serves AFREE and AFREEN) (W_contract.v:1205-1207, mirrored) *)
+Variable CTX_AFREE : list (list Z).
+#[local] Notation VAL := (@pa_val _ fr_prog_listing PI).
+(* relay_remove's and relay_instance_gone's stack budgets over ARx: W_contract.v's RR_STK (RR_FRAME + DRAIN_STK) and
+   RIG_STK (RIG_FRAME + DRAIN_STK) with DRAIN_STK_x's 128 bytes for the drain they call. *)
+Definition RR_STK_x : Z := RR_STK + 128.
+Definition RIG_STK_x : Z := RIG_STK + 128.
+(* W_contract.v:1327 rr_post *)
+Definition rr_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+    (G0 FD : Z) (es : list rentry) (j : nat) (h : hsrc) (c : ctl) (O : list byte) (mx cap out : Z)
+    (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' k,
+  c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+  ajournal_gx_x SEGS B PST ARx (G_RR B RG) 0 [] RR_STK_x (spZ regs) (rr_fp G0 FD es h cap out) ly S Hp W mem md [] ly' S' Hp' W' mem' md' k /\
+  aregs_preserved regs regs' /\ apres_kept B W mem W' mem' /\
+  mo_le MT S S' (tr_cost MT (rr_tr c mx (Z.of_nat (length O)) cap FD es h)) /\
+  rp_RM RP S' kr /\
+  alock_at RG W' mem' false /\ awake_at RG W' mem' /\
+  (forall a, rg_s RG <= a < rg_s RG + 4 * ASRC ->
+   (rr_drains FD es = true -> ~ (rg_s RG + ASRC * Z.of_nat j <= a < rg_s RG + ASRC * Z.of_nat j + ASRC)) ->
+   abyte_kept W mem W' mem' a) /\
+  ((FD < 0 \/ forall e, In e es -> re_fd e <> FD) ->
+   arelay_at B RG ly' S' W' mem' G0 es /\ aout_at B RG ly' S' W' mem' c O mx (Z.of_nat (length O)) cap out /\
+   Permutation (ablocks B ly' S') (ablocks B ly S)) /\
+  (forall i, (i < length es)%nat -> 0 <= FD -> re_fd (nth i es relay_remove_b_c.no_entry) = FD ->
+   rr_found B RG ly S W mem ly' S' W' mem' G0 es i j h c O mx cap out).
+(* W_contract.v:1344 rr_spec *)
+Definition rr_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch (G0 FD : Z) (es : list rentry) (j : nat) (h : hsrc) (c : ctl) (O : list byte) (mx cap out : Z),
+let tr := rr_tr c mx (Z.of_nat (length O)) cap FD es h in
+afn_pre_x SEGS B ARx RR_STK_x ly S Hp W regs mem md ch -> spZ regs mod 32 = 0 -> count_cid 0 (frames S) < fs_frames 0 -> rg_place B RG ->
+getr regs 10 = w64 FD -> - 2 ^ 31 <= FD < 2 ^ 31 ->
+alock_at RG W mem false -> awake_at RG W mem ->
+arelay_at B RG ly S W mem G0 es ->
+aout_at B RG ly S W mem c O mx (Z.of_nat (length O)) cap out -> rom_view SEGS W mem ->
+(forall i, (i < length es)%nat -> re_fd (nth i es relay_remove_b_c.no_entry) = FD ->
+ re_eof (nth i es relay_remove_b_c.no_entry) = 0 -> dr_src_ok B RG ly S W mem (nth i es relay_remove_b_c.no_entry) h j) ->
+(exists rest, Permutation (ablocks B ly S)
+  ((G0, ATABLE) :: concat (map aentry_blks es) ++ (if rr_drains FD es then asrc_blks h else []) ++ aout_blks cap out ++ rest)) ->
+tr_max tr < MMAX -> blocks_bytes S + tr_peak tr <= LIVE_MAX -> mo_ok MT S (tr_cost MT tr) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (tr_cost MT_rk tr) + kr) ->
+cnt_ok_pk RP (rr_pk tr) (ablocks B ly S) ->
+(* the free at relay_remove + 0x1b0 (0x83f94, ra 0x83f98) is called with s0 = this entry's sp (a frame pointer), so
+   its caller context is the return there, then this entry's return and chain (W5's ra_spec / rf_spec shape; a Theorem Labs lane
+   21:28Z).  K0's CTX_AFREE holds [0x83f98; 0x846c4(; 0x821e8)] and [0x83f98; 0x849e0(; 0x821e8)], the two call sites
+   in LLVMFuzzerTestOneInput.  IMAGE A ONLY: image B's relay_remove keeps no frame pointer (its context is the closed
+   singleton [0x84360]). (W_contract.v:1357-1362, mirrored) *)
+spZ regs + 16 < ly_top ly -> In (pc + 436 :: raZ regs :: spine ch) CTX_AFREE ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (rr_post_x regs ly S Hp W mem md G0 FD es j h c O mx cap out kr).
+(* W_contract.v:1417 rig_post *)
+Definition rig_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+    (G0 ID : Z) (es : list rentry) (hs : list (hsrc * nat)) (c : ctl) (O : list byte) (mx cap out : Z)
+    (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' k (qs : list (rentry * hsrc)) (c2 : ctl) (O2 : list byte) (cap2 out2 : Z) rest,
+  c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+  ajournal_gx_x SEGS B PST ARx (G_RIG B RG) 0 [] RIG_STK_x (spZ regs) (rig_fp G0 es hs cap out) ly S Hp W mem md [] ly' S' Hp' W' mem' md' k /\
+  aregs_preserved regs regs' /\ apres_kept B W mem W' mem' /\
+  mo_le MT S S' (tr_cost MT (rig_tr c mx (Z.of_nat (length O)) cap ID es hs)) /\
+  rp_RM RP S' kr /\
+  alock_at RG W' mem' false /\
+  rig_rel (relay_instance_gone_b_c.instance_prefix ID) mx c O cap (combine es hs) qs c2 O2 cap2 /\
+  length qs = length es /\
+  arelay_at B RG ly' S' W' mem' G0 (map fst qs) /\
+  aout_at B RG ly' S' W' mem' c2 O2 mx (Z.of_nat (length O2)) cap2 out2 /\
+  (forall i, (i < length es)%nat -> re_eof (nth i es relay_remove_b_c.no_entry) = 0 ->
+   asrc_at B ly' S' W' mem' (rg_s RG + ASRC * Z.of_nat (snd (nth i hs relay_instance_gone_b_c.no_hj)))
+     (snd (nth i qs (relay_remove_b_c.no_entry, fst relay_instance_gone_b_c.no_hj)))) /\
+  (forall a, rg_s RG <= a < rg_s RG + 4 * ASRC ->
+   (forall j, In j (rig_slots (combine es hs)) -> ~ (rg_s RG + ASRC * Z.of_nat j <= a < rg_s RG + ASRC * Z.of_nat j + ASRC)) ->
+   abyte_kept W mem W' mem' a) /\
+  Permutation (ablocks B ly S)
+    ((G0, ATABLE) :: concat (map aentry_blks es) ++ rig_srcs (combine es hs) ++ aout_blks cap out ++ rest) /\
+  Permutation (ablocks B ly' S')
+    ((G0, ATABLE) :: concat (map aentry_blks (map fst qs)) ++
+     concat (map (fun p => if re_eof (fst (fst p)) =? 0 then asrc_blks (snd (snd p)) else []) (combine (combine es hs) qs)) ++
+     aout_blks cap2 out2 ++ rest).
+(* W_contract.v:1466 rig_spec *)
+Definition rig_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch (G0 ID : Z) (es : list rentry) (hs : list (hsrc * nat)) (c : ctl) (O : list byte) (mx cap out : Z),
+let tr := rig_tr c mx (Z.of_nat (length O)) cap ID es hs in
+afn_pre_x SEGS B ARx RIG_STK_x ly S Hp W regs mem md ch -> spZ regs mod 32 = 0 -> count_cid 1 (frames S) < fs_frames 1 -> rg_place B RG ->
+getr regs 10 = w64 ID -> - 2 ^ 31 <= ID < 2 ^ 31 ->
+alock_at RG W mem false ->
+arelay_at B RG ly S W mem G0 es ->
+aout_at B RG ly S W mem c O mx (Z.of_nat (length O)) cap out -> rom_view SEGS W mem ->
+length hs = length es ->
+Forall (fun p => re_eof (fst p) = 0 -> dr_src_ok B RG ly S W mem (fst p) (fst (snd p)) (snd (snd p))) (combine es hs) ->
+NoDup (rig_slots (combine es hs)) ->
+(exists rest, Permutation (ablocks B ly S)
+  ((G0, ATABLE) :: concat (map aentry_blks es) ++ rig_srcs (combine es hs) ++ aout_blks cap out ++ rest)) ->
+tr_max tr < MMAX -> blocks_bytes S + tr_peak tr <= LIVE_MAX -> mo_ok MT S (tr_cost MT tr) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (tr_cost MT_rk tr) + kr) ->
+cnt_ok_pk RP (rig_pk tr) (ablocks B ly S) ->
+(* the free at relay_instance_gone + 0x288 (0x82eb4, ra 0x82eb8), s0 = this entry's sp: caller context as rr_spec's;
+   K0's CTX_AFREE holds [0x82eb8; 0x8483c(; 0x821e8)] (W_contract.v:1480-1482, mirrored) *)
+spZ regs + 16 < ly_top ly -> In (pc + 652 :: raZ regs :: spine ch) CTX_AFREE ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (rig_post_x regs ly S Hp W mem md G0 ID es hs c O mx cap out kr).
+End s6.
+
+Section w4.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+#[local] Notation VAL := (@pa_val _ fr_prog_listing PI).
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Variable MT : ameter_ops.
+Variable RP : roomp.
+Variable MMAX : Z.
+Variable RG : rep_globals.
+(* W_contract.v:1527 ge_post *)
+Definition ge_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(c : ctl) (O : list byte) (mx no cap out : Z) (x : list byte) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' k out',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx (G_SL B RG) 0 [] GE_STK (spZ regs) (ablocks_fp (aout_blks cap out)) ly S Hp W mem md [] ly' S' Hp' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+mo_le MT S S' (ge_cost MT c mx no cap (Z.of_nat (length x))) /\
+rp_RM RP S' kr /\
+(exists rest, Permutation (ablocks B ly S) (aout_blks cap out ++ rest) /\
+ Permutation (ablocks B ly' S') (aout_blks (ge_cap c mx no cap (Z.of_nat (length x))) out' ++ rest)) /\
+aout_at B RG ly' S' W' mem' (ge_ctl c (Z.of_nat (length x))) (ge_O c O x) mx
+  (ge_no c no (Z.of_nat (length x))) (ge_cap c mx no cap (Z.of_nat (length x))) out'.
+(* W_contract.v:1542 ge_spec *)
+Definition ge_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch c O mx no cap out Hk (x : list byte) q m,
+afn_pre_x SEGS B ARx GE_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 Hk ->
+aout_at B RG ly S W mem c O mx no cap out ->
+garr8 SEGS (arm W mem) Hk (bzs (x ++ [Z_to_bv 8 0])) -> ~ In (Z_to_bv 8 0) x ->
+14 <= Z.of_nat (length x) <= APARTIAL ->
+In (q, m) (ablocks B ly S) -> q <> out -> q <= Hk -> Hk + Z.of_nat (length x) + 1 <= q + req_size m ->
+garr8 SEGS (arm W mem) (VAL A_lit_end5) (bzs END5) -> rom_view SEGS W mem ->
+ge_room MMAX (blocks_bytes S) c mx no cap (Z.of_nat (length x)) ->
+mo_ok MT S (ge_cost MT c mx no cap (Z.of_nat (length x))) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (ge_cost MT_rk c mx no cap (Z.of_nat (length x))) + kr) ->
+cnt_ok_pk RP ge_pk (ablocks B ly S) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (ge_post_x regs ly S Hp W mem md c O mx no cap out x kr).
+(* W_contract.v:1609 gse_post *)
+Definition gse_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(SA TB : Z) (e : rentry) (c : ctl) (O : list byte) (mx no cap out : Z) (rest : list (Z * Z)) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' k out',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx (G_SL B RG) 0 [] GSE_STK (spZ regs) ((SA + 40, SA + 52) :: ablocks_fp (gse_blks e ++ aout_blks cap out))
+  ly S Hp W mem md [] ly' S' Hp' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+mo_le MT S S' (gse_cost MT c mx no cap (gse_keys e)) /\
+rp_RM RP S' kr /\
+Permutation (ablocks B ly' S') ((TB, ATABLE) :: aout_blks (gse_cap (gse_run c O mx no cap (gse_keys e))) out' ++ rest) /\
+aout_at B RG ly' S' W' mem' (gse_c (gse_run c O mx no cap (gse_keys e))) (gse_O (gse_run c O mx no cap (gse_keys e))) mx
+  (gse_no (gse_run c O mx no cap (gse_keys e))) (gse_cap (gse_run c O mx no cap (gse_keys e))) out' /\
+garr8 SEGS (arm W' mem') SA (bzs (entry_bytes (entry_cleared e))) /\ awr W' mem' SA AENT.
+(* W_contract.v:1624 gse_spec *)
+Definition gse_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch SA TB e c O mx no cap out rest,
+afn_pre_x SEGS B ARx GSE_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 SA ->
+In (TB, ATABLE) (ablocks B ly S) -> TB <= SA -> SA + AENT <= TB + ATABLE -> SA mod 8 = 0 ->
+garr8 SEGS (arm W mem) SA (bzs (entry_bytes e)) -> awr W mem SA AENT -> aheld_ok B ly S W mem e ->
+aout_at B RG ly S W mem c O mx no cap out ->
+Permutation (ablocks B ly S) ((TB, ATABLE) :: gse_blks e ++ aout_blks cap out ++ rest) ->
+garr8 SEGS (arm W mem) (VAL A_lit_end5) (bzs END5) -> rom_view SEGS W mem ->
+gse_room MMAX (blocks_bytes S) c mx no cap (gse_keys e) ->
+mo_ok MT S (gse_cost MT c mx no cap (gse_keys e)) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (gse_cost MT_rk c mx no cap (gse_keys e)) + kr) ->
+cnt_ok_pk RP gse_pk (ablocks B ly S) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (gse_post_x regs ly S Hp W mem md SA TB e c O mx no cap out rest kr).
+Variable G : list (Z * Z).
+(* W_contract.v:1658 gm_post *)
+Definition gm_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(HA : Z) (H : hlist) (ln : list byte) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' kk (H' : hlist),
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx G 0 [] GM_STK (spZ regs) (blk_FP (list_blks H)) ly S Hp W mem md [] ly' S' Hp' W' mem' md' kk /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+(* errno's view is kept: gesture_model's own stores hit only its frame, and every callee keeps errno (bcmp and
+   list_find keep all bytes outside their windows, lp_post and ldrop_post carry the same conjunct); check_no_loss's
+   cnl_post needs it across this call (W3Checks-2, 14:4xZ) *)
+(forall j, 0 <= j < 4 -> aview SEGS (w_H W') mem' (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j)) /\
+alist_at B ly' S' W' mem' (HA + 80) H' true /\ NoDup (texts H') /\ texts H' = RelayModel.upd (texts H) (bzs ln) /\
+hl_cap H' = (if hl_n H <? hl_n H' then grow_cap (hl_n H) (hl_cap H) else hl_cap H) /\
+(forall rest, Permutation (ablocks B ly S) (list_blks H ++ rest) -> Permutation (ablocks B ly' S') (list_blks H' ++ rest)) /\
+frames S' = frames S /\
+mo_le MT S S' (gm_cost MT H ln) /\ rp_RM RP S' kr.
+(* W_contract.v:1674 gm_spec *)
+Definition gm_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch HA LINE (ln : list byte) H q k,
+afn_pre_x SEGS B ARx GM_STK ly S Hp W regs mem md ch ->
+getr regs 10 = w64 HA -> getr regs 11 = w64 LINE -> getr regs 12 = w64 (Z.of_nat (length ln)) ->
+alist_at B ly S W mem (HA + 80) H true -> NoDup (texts H) ->
+(forall a, HA + 80 <= a < HA + 96 -> inG G a) -> azs B (HA + 80) 16 ->
+(HA + 80) mod 8 = 0 ->
+garr8 SEGS (arm W mem) LINE (bzs ln) -> ~ In (Z_to_bv 8 0) ln -> Z.of_nat (length ln) <= APARTIAL ->
+In (q, k) (ablocks B ly S) -> ~ In (q, k) (list_blks H) -> q <= LINE -> LINE + Z.of_nat (length ln) <= q + req_size k ->
+garr8 SEGS (arm W mem) (VAL A_lit_gesture) RelayModel.K_GESTURE ->
+garr8 SEGS (arm W mem) (VAL A_lit_begin) RelayModel.W_BEGIN ->
+garr8 SEGS (arm W mem) (VAL A_lit_end) RelayModel.W_END -> rom_view SEGS W mem ->
+(lp_grow H = true -> lp_vbytes H < MMAX) -> AREC * hl_cap H < 2 ^ 32 ->
+blocks_bytes S + (if lp_grow H then lp_vbytes H else 0) + (Z.of_nat (length ln) + 1) <= LIVE_MAX ->
+mo_ok MT S (gm_cost MT H ln) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (gm_cost MT_rk H ln) + kr) ->
+cnt_ok_pk RP (gm_pk H) (ablocks B ly S) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (gm_post_x regs ly S Hp W mem md HA H ln kr).
+End w4.
+Section w4g.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Variable MT : ameter_ops.
+Variable RP : roomp.
+Variable MMAX : Z.
+(* W_contract.v:1700 gm_spec_g *)
+Definition gm_spec_g_x (pc : Z) : Prop :=
+forall G, gx_ok SEGS B G -> gx_rt B G -> rom_out SEGS B G -> gm_spec_x B PST ARx MT RP MMAX G pc.
+End w4g.
+
+Section w5f.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+#[local] Notation VAL := (@pa_val _ fr_prog_listing PI).
+Section rfs.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Variable MT : ameter_ops.
+Variable RP : roomp.
+Variable MMAX : Z.
+Variable G : list (Z * Z).
+Variable RG : rep_globals.
+Variable GTU GL : Z.
+(* the allocator rules' caller-context table (W5's 3c567e39015, as W_contract.v Section rfs) *)
+Variable CTX : list (list Z).
+(* W_contract.v:1770 rf_post *)
+Definition rf_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(T : Z) (es : list rentry) (c : ctl) (O : list byte) (mx no cap out : Z) (rest : list (Z * Z)) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' k out',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx G 0 [] RF_STK (spZ regs) (rf_FP T es cap out) ly S Hp W mem md [] ly' S' Hp' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+frames S' = frames S /\
+mo_le MT S S' (rf_cost MT c O mx no cap es) /\
+rp_RM RP S' kr /\
+Permutation (ablocks B ly' S') (rf_tblk T ++ aout_blks (gse_cap (rf_run c O mx no cap es)) out' ++ rest) /\
+aout_at B RG ly' S' W' mem' (rf_ctl (gse_c (rf_run c O mx no cap es))) (gse_O (rf_run c O mx no cap es)) mx
+  (gse_no (rf_run c O mx no cap es)) (gse_cap (rf_run c O mx no cap es)) out' /\
+alock_at RG W' mem' false /\
+ra_rel B RG ly' S' W' mem' T [] /\
+val_mem SEGS (arm W' mem') GL 4 (2 ^ 32 - 1) /\ awr W' mem' GL 4.
+(* W_contract.v:1785 rf_spec *)
+Definition rf_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch T es c O mx no cap out rest,
+afn_pre_x SEGS B ARx RF_STK ly S Hp W regs mem md ch -> spZ regs mod 32 = 0 ->
+count_cid 0 (frames S) < fs_frames 0 ->
+val_mem SEGS (arm W mem) GTU 1 0 ->
+alock_at RG W mem false ->
+ra_rel B RG ly S W mem T es ->
+(exists lst, val_mem SEGS (arm W mem) GL 4 lst) -> awr W mem GL 4 ->
+aout_at B RG ly S W mem c O mx no cap out ->
+Permutation (ablocks B ly S) (rf_tblk T ++ rf_eblks es ++ aout_blks cap out ++ rest) ->
+garr8 SEGS (arm W mem) (VAL A_lit_end5) (bzs END5) -> rom_view SEGS W mem ->
+(forall a, inG (RF_G RG GL) a -> inG G a) -> (forall a, inG (G_SL B RG) a -> inG G a) ->
+(forall a, inG (RF_G RG GL) a -> ~ (as_errno B <= a < as_errno B + 4)) ->
+rf_room MMAX (blocks_bytes S) c O mx no cap es ->
+spZ regs + 16 < ly_top ly -> In (pc + 392 :: raZ regs :: spine ch) CTX ->
+mo_ok MT S (rf_cost MT c O mx no cap es) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (rf_cost MT_rk c O mx no cap es) + kr) ->
+cnt_ok_pk RP rf_pk (ablocks B ly S) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (rf_post_x regs ly S Hp W mem md T es c O mx no cap out rest kr).
+End rfs.
+End w5f.
+
+Section w3e.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+#[local] Notation VAL := (@pa_val _ fr_prog_listing PI).
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Variable MT : ameter_ops.
+Variable RP : roomp.
+Variable G : list (Z * Z).
+(* W_contract.v:1846 cshe_post *)
+Definition cshe_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(XO AT HA : Z) (h : hsrc) (P : list byte) (A0 gone : Z) (ob : list byte) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' kk (H' : hlist) (ds : list (Z * list byte)) (c : Z),
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx G XO [(AT, AT + 8)] CSHE_STK (spZ regs) (blk_FP (list_blks (hs_held h)))
+  ly S Hp W mem md [] ly' S' Hp' W' mem' md' kk /\
+aregs_preserved regs regs' /\
+(* errno's view is kept (gm_post's / ldrop_post's conjunct; ARM_gone reads errno-dependent state after the call) *)
+(forall j, 0 <= j < 4 -> aview SEGS (w_H W') mem' (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j)) /\
+asrc_at B ly' S' W' mem' HA (CheckRep.set_held h H') /\
+hl_v H' = hl_v (hs_held h) /\ hl_cap H' = hl_cap (hs_held h) /\
+NoDup (CheckRep.texts H') /\
+((gone <> 0 /\
+  hl_recs H' = filter (fun r => negb (CheckRep.prefixb P (snd r))) (hl_recs (hs_held h)) /\
+  ds = filter (fun r => CheckRep.prefixb P (snd r)) (hl_recs (hs_held h)) /\ c = 0) \/
+ (gone = 0 /\
+  CheckRep.ends_run P (hl_recs (hs_held h)) (skipn (Z.to_nat A0) ob)
+    (CheckRep.want_of P (hl_recs (hs_held h))) = Some (hl_recs H', ds, c))) /\
+0 <= c /\
+val_mem SEGS (mrestrict (w_H W') mem') AT 8 (A0 + c) /\
+val_mem SEGS (mrestrict (w_H W') mem') (VAL A_g_gone) 1 gone /\
+(forall rest, Permutation (ablocks B ly S) (cshe_ds_blks ds ++ rest) -> Permutation (ablocks B ly' S') rest) /\
+frames S' = frames S /\
+mo_le MT S S' (cshe_cost MT (hs_held h)) /\ rp_RM RP S' kr.
+(* W_contract.v:1871 cshe_spec *)
+Definition cshe_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch XO AT HA (j : nat) PF h P A0 gone O OUT ob,
+let H := hs_held h in
+let PLEN := Z.of_nat (length P) in
+afn_pre_x SEGS B ARx CSHE_STK ly S Hp W regs mem md ch ->
+(* the journal's out-cell window: the caller's `at` is a real-stack cell inside [sp, sp + XO) *)
+0 <= XO -> XO mod 16 = 0 -> spZ regs + XO <= ly_top ly ->
+(forall a, spZ regs <= a < spZ regs + XO -> apresent (w_H W) mem a) ->
+(* the arguments *)
+getr regs 10 = w64 HA -> getr regs 11 = w64 PF -> getr regs 12 = w64 AT ->
+(* the source: one of g_s[0..3], a program global this function writes (held.n) *)
+asrc_at B ly S W mem HA h ->
+HA mod 8 = 0 -> 4096 <= HA -> HA + ASRC <= kLowMemEnd ->
+(forall a, HA + 64 <= a < HA + 96 -> inG G a) -> azs B (HA + 64) 32 ->
+HA = VAL (A_OBJ 22) + ASRC * Z.of_nat j -> (j < 4)%nat ->
+(forall a, HA <= a < HA + ASRC -> ~ (spZ regs - CSHE_STK <= a < spZ regs + XO)) ->
+(forall a, HA <= a < HA + ASRC -> cshe_home B ly S a) ->
+NoDup (CheckRep.texts H) ->
+hl_n H < 2 ^ 26 ->
+(* the held records and the vector are off this frame, and survive the frees of the others *)
+(forall a, hl_v H <= a < hl_v H + AREC * hl_cap H -> ~ (spZ regs - CSHE_STK <= a < spZ regs + XO)) ->
+(forall r, In r (hl_recs H) -> forall a, fst r <= a < fst r + Z.of_nat (length (snd r)) + 1 ->
+  ~ (spZ regs - CSHE_STK <= a < spZ regs + XO)) ->
+(* the out cell *)
+AT mod 8 = 0 -> spZ regs <= AT -> AT + 8 <= spZ regs + XO ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF AT 8 ->
+val_mem SEGS (mrestrict (w_H W) mem) AT 8 A0 ->
+(* the prefix string P, NUL-terminated, with the slack strlen's word read may touch *)
+~ In (Z_to_bv 8 0) P -> PLEN + 1 < 2 ^ 32 -> 0 < PF -> PF + PLEN + 8 <= 2 ^ 63 ->
+(forall i, 0 <= i < PLEN -> aview SEGS (w_H W) mem (PF + i) = Some (bv_unsigned (nth (Z.to_nat i) P (Z_to_bv 8 0)))) ->
+aview SEGS (w_H W) mem (PF + PLEN) = Some 0 ->
+(forall a, PF <= a < PF + PLEN + 8 -> aview SEGS (w_H W) mem a <> None /\
+  ~ (spZ regs - CSHE_STK <= a < spZ regs + XO)) ->
+amem_range PF (PLEN + 1) -> amem_range PF 8 ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF PF (PLEN + 1) ->
+shadow_hull_vis (aview SEGS (w_H W) mem) PF (PLEN + 1) ->
+(* WHERE P LIVES (W3m a5be88b5cb2, W_contract.v:1828-1838, mirrored): two homes, one per kind of call site. The
+   remove arm and the exit pass the literal at 0x20ee0; the gone arm passes the fake frame's prefix[48], which
+   snprintf writes (a Theorem Labs lane and a Theorem Labs lane):
+   - a read-only literal: in_rom + ROMNS + rom_view keep its bytes, and its shadow is a const cell (ashp_x);
+   - a local in one of S's fake frames: the journal's frame clause keeps both its bytes and the frame's shadow
+     bytes, so the entry's range_addressable / shadow_hull_vis above hold again after a free. *)
+((forall a, PF <= a < PF + PLEN + 8 -> in_rom SEGS a) /\ ashp_x ARx PF (PLEN + 1) \/
+ exists cid pos, In (cid, pos) (frames S) /\ forall a, PF <= a < PF + PLEN + 8 -> in_zr a (frame_rng ly (cid, pos))) ->
+(* loop 3's bcmp compares the line's last four bytes with " end" (.str.4, 0x20f00 = VAL A_lit_end5): its bytes,
+   as gesture_end's ge_spec states them (W_contract.v) *)
+garr8 SEGS (arm W mem) (VAL A_lit_end5) (bzs END5) -> rom_view SEGS W mem ->
+(* the globals and the controller's stream, as cse_spec states them *)
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_gone) 1 gone -> 0 <= gone < 256 ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_nout) 8 O ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_out) 8 OUT ->
+(* the stream as cnl_spec states it: g_out is a live heap block apart from the source's blocks, so the inlined
+   frees keep it, and its shadow facts follow from the block (YCbq.v range_addressable_of_block /
+   shadow_hull_vis_of_block); O < 2 ^ 32 is next_line's memchr bound (nl_spec) *)
+ob_at W mem OUT ob -> Z.of_nat (length ob) = O -> O <= 2 ^ 40 -> (0 < O -> O < 2 ^ 32) -> amem_range OUT (O + 8) ->
+(ob = [] \/ exists CO, O <= CO /\ In (OUT, CO) (ablocks B ly S) /\ ~ In OUT (hs_blocks h)) ->
+0 <= A0 <= O ->
+(* the functional pre of the plain contract *)
+(gone = 0 -> CheckRep.ends_run P (hl_recs H) (skipn (Z.to_nat A0) ob) (CheckRep.want_of P (hl_recs H)) <> None) ->
+(* the allocator's budget: at most one free per held record *)
+mo_ok MT S (cshe_cost MT H) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (cshe_cost MT_rk H) + kr) ->
+cnt_ok_pk RP cshe_pk (ablocks B ly S) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (cshe_post_x regs ly S Hp W mem md XO AT HA h P A0 gone ob kr).
+End w3e.
+
+Section w3n.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+#[local] Notation VAL := (@pa_val _ fr_prog_listing PI).
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Variable MT : ameter_ops.
+Variable RP : roomp.
+Variable G : list (Z * Z).
+Variable MMAX : Z.
+(* W_contract.v:2012 cnl_post *)
+Definition cnl_post_x (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
+(XO HA AT : Z) (h : hsrc) (E H : hlist) (gone A0 NO OUT : Z) (ob : list byte) (kr : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' Hp' regs' mem' md' kk (E' H' : hlist),
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx_x SEGS B PST ARx G XO [(AT, AT + 8)] CNL_STK (spZ regs) (blk_FP (list_blks E ++ list_blks H))
+  ly S Hp W mem md [] ly' S' Hp' W' mem' md' kk /\
+aregs_preserved regs regs' /\ apres_kept B W mem W' mem' /\
+(* errno's view is kept, after apres_kept as in gm_post (W4 45476a00e76): the free keeps it (aj_free_gx), the
+   memmove writes only its destination, gesture_model / next_line / bcmp keep it; ARM_gone reads it after the call *)
+(forall j, 0 <= j < 4 -> aview SEGS (w_H W') mem' (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j)) /\
+asrc_at B ly' S' W' mem' HA (set_exp_held h E' H') /\
+hl_recs E' = [] /\ hl_v E' = hl_v E /\ hl_cap E' = hl_cap E /\
+NoDup (texts H') /\ texts H' = RelayModel.upds (texts H) (texts E) /\
+hl_cap H' <= Z.max 8 (Z.max (hl_cap H) (2 * (hl_n H + Z.of_nat (count_begin (texts E))))) /\
+val_mem SEGS (arm W' mem') AT 8 (if gone =? 0 then A0 + Z.of_nat (length (bstream E)) else A0) /\
+val_mem SEGS (arm W' mem') (VAL A_g_gone) 1 gone /\
+val_mem SEGS (arm W' mem') (VAL A_g_nout) 8 NO /\ val_mem SEGS (arm W' mem') (VAL A_g_out) 8 OUT /\
+ob_at W' mem' OUT ob /\
+(forall rest, Permutation (ablocks B ly S) (list_blks E ++ list_blks H ++ rest) ->
+ Permutation (ablocks B ly' S') (list_blks E' ++ list_blks H' ++ rest)) /\
+frames S' = frames S /\
+mo_le MT S S' (cnl_cost MT E H) /\ rp_RM RP S' kr /\
+(* W_contract.v:2034-2037: the held list's capacity never shrinks; appended last *)
+hl_cap H <= hl_cap H' /\
+(* W_contract.v:2038-2041: the EXACT capacity law, appended last *)
+hl_cap H' = cnl_cap (texts H) (hl_cap H) (hl_recs E).
+(* W_contract.v:2043 cnl_spec *)
+Definition cnl_spec_x (pc : Z) : Prop :=
+forall W ly S Hp regs mem md ch XO HA (j : nat) AT (h : hsrc) gone A0 NO OUT (ob : list byte),
+afn_pre_x SEGS B ARx CNL_STK ly S Hp W regs mem md ch ->
+0 <= XO -> XO mod 16 = 0 -> spZ regs + XO <= ly_top ly ->
+(forall a, spZ regs <= a < spZ regs + XO -> apresent (w_H W) mem a) ->
+getr regs 10 = w64 HA -> getr regs 11 = w64 AT ->
+HA = VAL A_g_s + ASRC * Z.of_nat j -> (j < 4)%nat ->
+AT mod 8 = 0 -> spZ regs <= AT -> AT + 8 <= spZ regs + XO ->
+asrc_at B ly S W mem HA h ->
+(forall a, HA + 64 <= a < HA + 96 -> inG G a) -> azs B (HA + 64) 32 ->
+NoDup (texts (hs_held h)) ->
+hl_n (hs_expected h) < 2 ^ 26 ->
+hl_n (hs_held h) + Z.of_nat (count_begin (texts (hs_expected h))) < 2 ^ 22 ->
+val_mem SEGS (arm W mem) AT 8 A0 -> 0 <= A0 <= NO ->
+val_mem SEGS (arm W mem) (VAL A_g_gone) 1 gone -> 0 <= gone < 256 ->
+val_mem SEGS (arm W mem) (VAL A_g_nout) 8 NO -> val_mem SEGS (arm W mem) (VAL A_g_out) 8 OUT ->
+ob_at W mem OUT ob -> Z.of_nat (length ob) = NO -> NO <= 2 ^ 40 ->
+(* next_line's memchr bound (nl_spec, W_contract.v: `0 < O -> ... O < 2 ^ 32`); W8's aout_at is its source *)
+(0 < NO -> NO < 2 ^ 32) -> amem_range OUT (NO + 8) ->
+(ob = [] \/ exists CO, NO <= CO /\ In (OUT, CO) (ablocks B ly S) /\ ~ In OUT (hs_blocks h)) ->
+(gone = 0 -> exists rest, skipn (Z.to_nat A0) ob = bstream (hs_expected h) ++ rest) ->
+rom_view SEGS W mem ->
+garr8 SEGS (arm W mem) (VAL A_lit_gesture) RelayModel.K_GESTURE ->
+garr8 SEGS (arm W mem) (VAL A_lit_begin) RelayModel.W_BEGIN ->
+garr8 SEGS (arm W mem) (VAL A_lit_end) RelayModel.W_END ->
+cnl_room MMAX (blocks_bytes S) (texts (hs_held h)) (hl_cap (hs_held h)) (hl_recs (hs_expected h)) ->
+mo_ok MT S (cnl_cost MT (hs_expected h) (hs_held h)) ->
+forall kr : nat,
+rp_RM RP S (Z.to_nat (cnl_cost MT_rk (hs_expected h) (hs_held h)) + kr) ->
+cnt_ok_pk RP (cnl_pk (hs_expected h) (hs_held h)) (ablocks B ly S) ->
+(* list_drop's memmove inside gesture_model needs the held vector's bytes to fit an unsigned word *)
+AREC * capb (hs_held h) (hs_expected h) < 2 ^ 32 ->
+(* the caller's stack is readable from sp up to ly_top (W3m a5be88b5cb2, W_contract.v:1976-1980, mirrored; LAST, as
+   in the owner's text) *)
+(forall a, spZ regs <= a < ly_top ly -> aview SEGS (w_H W) mem a <> None) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md)
+  (cnl_post_x regs ly S Hp W mem md XO HA AT h (hs_expected h) (hs_held h) gone A0 NO OUT ob kr).
+End w3n.
+
+(* THE BRIDGES. At ARx := W_journal_x.ARi (cgif's AR, Hp ignored) and PST := [], each generic definition of this file is
+   equivalent to W_contract.v's (to W_shadow_pin.v's for ashp_x), and each lemma twin gives W_contract.v's statement. *)
+Section br.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+Variable B : asyms.
+Lemma ashp_x_AR : forall a n, ashp_x (ARi SEGS B) a n <-> ashp B a n.
+Proof.
+intros a n. unfold ashp_x, ashp, ARi. split.
+- intros H ly S W mem md HAR. exact (H ly S [] W mem md HAR).
+- intros H ly S Hp W mem md HAR. exact (H ly S W mem md HAR).
+Qed.
+Lemma sl_line_ok_x_AR : forall ly S out line len, sl_line_ok_x B (ARi SEGS B) ly S out line len <-> sl_line_ok B ly S out line len.
+Proof. intros. unfold sl_line_ok_x, sl_line_ok. rewrite ashp_x_AR. split; intros HH; exact HH. Qed.
+Lemma gx_prog_x_AR : forall G, gx_prog_x B (ARi SEGS B) G <-> gx_prog B G.
+Proof.
+intros G. unfold gx_prog_x, gx_prog, ARi. split; intros (H1 & H2 & H3 & H4 & H5 & H6);
+refine (conj H1 (conj H2 (conj H3 (conj H4 (conj H5 _))))).
+- intros ly S W mem md a n HAR. exact (H6 ly S [] W mem md a n HAR).
+- intros ly S Hp W mem md a n HAR. exact (H6 ly S W mem md a n HAR).
+Qed.
+Lemma astrlen_realizes_x_AR : forall pc, astrlen_realizes_x B (ARi SEGS B) pc <-> astrlen_realizes B pc.
+Proof.
+intros pc. unfold astrlen_realizes_x, astrlen_realizes. split.
+- intros H ly S. exact (H ly S []).
+- intros H ly S Hp. exact (H ly S).
+Qed.
+
+(* cshe_spec's P-placement premise (W3m a5be88b5cb2) carries ashp inside a disjunction *)
+Lemma ashp_disj_x_AR : forall (P E : Prop) a n, (P /\ ashp_x (ARi SEGS B) a n \/ E) <-> (P /\ ashp B a n \/ E).
+Proof. intros P E a n. rewrite ashp_x_AR. tauto. Qed.
+(* a spec premise that is not convertible at ARi (sl_line_ok_x, ashp_x): turned by its bridge *)
+(* the room round's premises at the AR bridges' RP_AR: the room is True, the counts are 0 under bounds 8 *)
+Local Ltac room_AR_pk :=
+  cbv beta; cbv [lf_pk sr_pk ldrop_pk cshe_pk sl_pk re_pk ge_pk gse_pk rf_pk gm_pk cnl_pk dr_pk rr_pk rig_pk lp_peak ra_peak];
+  cbv beta; try rewrite tr_peakP_false; cbn; lia.
+Local Ltac br_go H :=
+  lazymatch type of H with
+  | forall _ : nat, rp_RM RP_AR _ _ -> _ => specialize (H 0%nat); br_go H
+  | rp_RM RP_AR _ _ -> _ => specialize (H (rp_RM_AR _ _)); br_go H
+  | cnt_ok_pk RP_AR ?pk ?l -> _ =>
+    let Hc := fresh "Hc" in assert (Hc : cnt_ok_pk RP_AR pk l) by (apply cnt_ok_pk_AR; room_AR_pk);
+    specialize (H Hc); clear Hc; br_go H
+  | _ =>
+  lazymatch goal with
+  | |- forall _ : nat, rp_RM _ _ _ -> _ => let k := fresh "k" in intro k; br_go H
+  | |- forall _, _ =>
+    let x := fresh "x" in intro x;
+    lazymatch type of x with
+    | rp_RM _ _ _ => clear x; br_go H
+    | cnt_ok_pk _ _ _ => clear x; br_go H
+    | _ =>
+    first [ specialize (H x)
+          | apply sl_line_ok_x_AR in x; specialize (H x)
+          | apply ashp_x_AR in x; specialize (H x)
+          | apply ashp_disj_x_AR in x; specialize (H x) ];
+    br_go H
+    end
+  | |- _ => idtac
+  end
+  end.
+(* a spec: the twin at Hp := [] gives the original, the original gives the twin at every Hp; PB is the post's bridge *)
+Local Ltac spec_br PB :=
+  split; intros H;
+  [ intros W ly S; specialize (H W ly S []); cbv zeta in H |- *; br_go H;
+    eapply SRr_mono; [exact H | cbv beta; intros W2 c2 _ HQ; apply PB in HQ; exact HQ]
+  | intros W ly S Hp; specialize (H W ly S); cbv zeta in H |- *; br_go H;
+    eapply SRr_mono; [exact H | cbv beta; intros W2 c2 _ HQ; apply PB; exact HQ] ].
+(* a post: the journal at ARi, [] is the original's; the existential Hp' of a post that moves the state is then idle *)
+Local Ltac post_br :=
+  cbv zeta;
+  repeat setoid_rewrite rp_RM_AR_iff; repeat setoid_rewrite room_True_l; repeat setoid_rewrite room_True_r;
+  repeat setoid_rewrite (@ajournal_gx_x_AR fx rc SK);
+  try unfold ARi;
+  repeat setoid_rewrite (@YCe5x.ajournal_x_YCbq fx rc SK);
+  first [ split; intros HH; exact HH
+        | split; [ intros (lyq & Sq & Hpq & HH); exists lyq, Sq; exact HH
+                 | intros (lyq & Sq & HH); exists lyq, Sq, []; exact HH ] ].
+
+
+Lemma aleaf_post_x_AR : forall STK regs ly S Hp W mem md Pa0 W' c',
+aleaf_post_x B [] (ARi SEGS B) STK regs ly S Hp W mem md Pa0 W' c' <->
+aleaf_post B STK regs ly S W mem md Pa0 W' c'.
+Proof. intros. unfold aleaf_post_x, aleaf_post. post_br. Qed.
+Lemma aleafx_post_x_AR : forall STK regs ly S Hp W mem md Pa0 W' c',
+aleafx_post_x B [] (ARi SEGS B) STK regs ly S Hp W mem md Pa0 W' c' <->
+aleafx_post B STK regs ly S W mem md Pa0 W' c'.
+Proof. intros. unfold aleafx_post_x, aleafx_post. post_br. Qed.
+Lemma hp_post_x_AR : forall regs ly S Hp W mem md s n p lp W' c',
+hp_post_x B [] (ARi SEGS B) regs ly S Hp W mem md s n p lp W' c' <->
+hp_post B regs ly S W mem md s n p lp W' c'.
+Proof. intros. unfold hp_post_x, hp_post. post_br. Qed.
+Lemma lf_post_x_AR : forall MT G regs ly S Hp W mem md LA l lines kr W' c',
+lf_post_x B [] (ARi SEGS B) MT RP_AR G regs ly S Hp W mem md LA l lines kr W' c' <->
+lf_post B MT G regs ly S W mem md LA l lines W' c'.
+Proof. intros. unfold lf_post_x, lf_post. post_br. Qed.
+Lemma lp_post_x_AR : forall MT G regs ly S Hp W mem md LA l lines x kr W' c',
+lp_post_x B [] (ARi SEGS B) MT RP_AR G regs ly S Hp W mem md LA l lines x kr W' c' <->
+lp_post B MT G regs ly S W mem md LA l lines x W' c'.
+Proof. intros. unfold lp_post_x, lp_post. post_br. Qed.
+Lemma sr_post_x_AR : forall MT G regs ly S Hp W mem md HA o kr W' c',
+sr_post_x B [] (ARi SEGS B) MT RP_AR G regs ly S Hp W mem md HA o kr W' c' <->
+sr_post B MT G regs ly S W mem md HA o W' c'.
+Proof. intros. unfold sr_post_x, sr_post. post_br. Qed.
+Lemma nl_post_x_AR : forall regs ly S Hp W mem md XO PA PL PN A O OUT ob W' c',
+nl_post_x B [] (ARi SEGS B) regs ly S Hp W mem md XO PA PL PN A O OUT ob W' c' <->
+nl_post B regs ly S W mem md XO PA PL PN A O OUT ob W' c'.
+Proof. intros. unfold nl_post_x, nl_post. post_br. Qed.
+Lemma lfind_post_x_AR : forall G regs ly S Hp W mem md l sb W' c',
+lfind_post_x B [] (ARi SEGS B) G regs ly S Hp W mem md l sb W' c' <->
+lfind_post B G regs ly S W mem md l sb W' c'.
+Proof. intros. unfold lfind_post_x, lfind_post. post_br. Qed.
+Lemma ldrop_post_x_AR : forall MT G regs ly S Hp W mem md LA l lines i kr W' c',
+ldrop_post_x B [] (ARi SEGS B) MT RP_AR G regs ly S Hp W mem md LA l lines i kr W' c' <->
+ldrop_post B MT G regs ly S W mem md LA l lines i W' c'.
+Proof. intros. unfold ldrop_post_x, ldrop_post. post_br. Qed.
+Lemma sl_post_x_AR : forall MT RG regs ly S Hp W mem md c O mx no cap out Bl kr W' c',
+sl_post_x B [] (ARi SEGS B) MT RP_AR RG regs ly S Hp W mem md c O mx no cap out Bl kr W' c' <->
+sl_post B MT RG regs ly S W mem md c O mx no cap out Bl W' c'.
+Proof. intros. unfold sl_post_x, sl_post. post_br. Qed.
+Lemma re_post_x_AR : forall MT G RG regs ly S Hp W mem md c O mx no cap out e kr W' c',
+re_post_x B [] (ARi SEGS B) MT RP_AR G RG regs ly S Hp W mem md c O mx no cap out e kr W' c' <->
+re_post B MT G RG regs ly S W mem md c O mx no cap out e W' c'.
+Proof. intros. unfold re_post_x, re_post. post_br. Qed.
+Lemma ra_post_x_AR : forall MT G RG regs ly S Hp W mem md fd T es kr W' c',
+ra_post_x B [] (ARi SEGS B) MT RP_AR G RG regs ly S Hp W mem md fd T es kr W' c' <->
+ra_post B MT G RG regs ly S W mem md fd T es W' c'.
+Proof. intros. unfold ra_post_x, ra_post. post_br. Qed.
+Lemma ge_post_x_AR : forall MT RG regs ly S Hp W mem md c O mx no cap out x kr W' c',
+ge_post_x B [] (ARi SEGS B) MT RP_AR RG regs ly S Hp W mem md c O mx no cap out x kr W' c' <->
+ge_post B MT RG regs ly S W mem md c O mx no cap out x W' c'.
+Proof. intros. unfold ge_post_x, ge_post. post_br. Qed.
+Lemma gse_post_x_AR : forall MT RG regs ly S Hp W mem md SA TB e c O mx no cap out rest kr W' c',
+gse_post_x B [] (ARi SEGS B) MT RP_AR RG regs ly S Hp W mem md SA TB e c O mx no cap out rest kr W' c' <->
+gse_post B MT RG regs ly S W mem md SA TB e c O mx no cap out rest W' c'.
+Proof. intros. unfold gse_post_x, gse_post. post_br. Qed.
+Lemma gm_post_x_AR : forall MT G regs ly S Hp W mem md HA H ln kr W' c',
+gm_post_x B [] (ARi SEGS B) MT RP_AR G regs ly S Hp W mem md HA H ln kr W' c' <->
+gm_post B MT G regs ly S W mem md HA H ln W' c'.
+Proof. intros. unfold gm_post_x, gm_post. post_br. Qed.
+Lemma rf_post_x_AR : forall MT G RG GL regs ly S Hp W mem md T es c O mx no cap out rest kr W' c',
+rf_post_x B [] (ARi SEGS B) MT RP_AR G RG GL regs ly S Hp W mem md T es c O mx no cap out rest kr W' c' <->
+rf_post B MT G RG GL regs ly S W mem md T es c O mx no cap out rest W' c'.
+Proof. intros. unfold rf_post_x, rf_post. post_br. Qed.
+Lemma cshe_post_x_AR : forall MT G regs ly S Hp W mem md XO AT HA h P A0 gone ob kr W' c',
+cshe_post_x B [] (ARi SEGS B) MT RP_AR G regs ly S Hp W mem md XO AT HA h P A0 gone ob kr W' c' <->
+cshe_post B MT G regs ly S W mem md XO AT HA h P A0 gone ob W' c'.
+Proof. intros. unfold cshe_post_x, cshe_post. post_br. Qed.
+Lemma cnl_post_x_AR : forall MT G regs ly S Hp W mem md XO HA AT h E H gone A0 NO OUT ob kr W' c',
+cnl_post_x B [] (ARi SEGS B) MT RP_AR G regs ly S Hp W mem md XO HA AT h E H gone A0 NO OUT ob kr W' c' <->
+cnl_post B MT G regs ly S W mem md XO HA AT h E H gone A0 NO OUT ob W' c'.
+Proof. intros. unfold cnl_post_x, cnl_post. post_br. Qed.
+Lemma csd_spec_x_AR : forall pc, csd_spec_x B [] (ARi SEGS B) pc <-> csd_spec B pc.
+Proof. intros. unfold csd_spec_x, csd_spec. spec_br aleaf_post_x_AR. Qed.
+Lemma hp_spec_x_AR : forall pc, hp_spec_x B [] (ARi SEGS B) pc <-> hp_spec B pc.
+Proof. intros. unfold hp_spec_x, hp_spec. spec_br hp_post_x_AR. Qed.
+Lemma cb_spec_x_AR : forall pc, cb_spec_x B [] (ARi SEGS B) pc <-> cb_spec B pc.
+Proof. intros. unfold cb_spec_x, cb_spec. spec_br aleafx_post_x_AR. Qed.
+Lemma lf_spec_x_AR : forall MT G pc, lf_spec_x B [] (ARi SEGS B) MT RP_AR G pc <-> lf_spec B MT G pc.
+Proof. intros. unfold lf_spec_x, lf_spec. spec_br lf_post_x_AR. Qed.
+Lemma lp_spec_x_AR : forall MT G MMAX pc, lp_spec_x B [] (ARi SEGS B) MT RP_AR G MMAX pc <-> lp_spec B MT G MMAX pc.
+Proof. intros. unfold lp_spec_x, lp_spec. spec_br lp_post_x_AR. Qed.
+Lemma sr_spec_x_AR : forall MT G pc, sr_spec_x B [] (ARi SEGS B) MT RP_AR G pc <-> sr_spec B MT G pc.
+Proof. intros. unfold sr_spec_x, sr_spec. spec_br sr_post_x_AR. Qed.
+Lemma cnlr_spec_x_AR : forall pc, cnlr_spec_x B [] (ARi SEGS B) pc <-> cnlr_spec B pc.
+Proof. intros. unfold cnlr_spec_x, cnlr_spec. spec_br aleaf_post_x_AR. Qed.
+Lemma nl_spec_x_AR : forall pc, nl_spec_x B [] (ARi SEGS B) pc <-> nl_spec B pc.
+Proof. intros. unfold nl_spec_x, nl_spec. spec_br nl_post_x_AR. Qed.
+Lemma cse_spec_x_AR : forall pc, cse_spec_x B [] (ARi SEGS B) pc <-> cse_spec B pc.
+Proof. intros. unfold cse_spec_x, cse_spec. spec_br aleaf_post_x_AR. Qed.
+Lemma lfind_spec_x_AR : forall G pc, lfind_spec_x B [] (ARi SEGS B) G pc <-> lfind_spec B G pc.
+Proof. intros. unfold lfind_spec_x, lfind_spec. spec_br lfind_post_x_AR. Qed.
+Lemma ldrop_spec_x_AR : forall MT G pc, ldrop_spec_x B [] (ARi SEGS B) MT RP_AR G pc <-> ldrop_spec B MT G pc.
+Proof. intros. unfold ldrop_spec_x, ldrop_spec. spec_br ldrop_post_x_AR. Qed.
+Lemma sl_spec_x_AR : forall MT MMAX RG pc, sl_spec_x B [] (ARi SEGS B) MT RP_AR MMAX RG pc <-> sl_spec B MT MMAX RG pc.
+Proof. intros. unfold sl_spec_x, sl_spec. spec_br sl_post_x_AR. Qed.
+Lemma re_spec_x_AR : forall MT MMAX G RG pc, re_spec_x B [] (ARi SEGS B) MT RP_AR MMAX G RG pc <-> re_spec B MT MMAX G RG pc.
+Proof. intros. unfold re_spec_x, re_spec. spec_br re_post_x_AR. Qed.
+Lemma ra_spec_x_AR : forall MT G RG CTX pc, ra_spec_x B [] (ARi SEGS B) MT RP_AR G RG CTX pc <-> ra_spec B MT G RG CTX pc.
+Proof. intros. unfold ra_spec_x, ra_spec. spec_br ra_post_x_AR. Qed.
+Lemma ge_spec_x_AR : forall MT MMAX RG pc, ge_spec_x B [] (ARi SEGS B) MT RP_AR MMAX RG pc <-> ge_spec B MT MMAX RG pc.
+Proof. intros. unfold ge_spec_x, ge_spec. spec_br ge_post_x_AR. Qed.
+Lemma gse_spec_x_AR : forall MT MMAX RG pc, gse_spec_x B [] (ARi SEGS B) MT RP_AR MMAX RG pc <-> gse_spec B MT MMAX RG pc.
+Proof. intros. unfold gse_spec_x, gse_spec. spec_br gse_post_x_AR. Qed.
+Lemma gm_spec_x_AR : forall MT MMAX G pc, gm_spec_x B [] (ARi SEGS B) MT RP_AR MMAX G pc <-> gm_spec B MT MMAX G pc.
+Proof. intros. unfold gm_spec_x, gm_spec. spec_br gm_post_x_AR. Qed.
+Lemma rf_spec_x_AR : forall MT MMAX G RG GTU GL CTX pc, rf_spec_x B [] (ARi SEGS B) MT RP_AR MMAX G RG GTU GL CTX pc <-> rf_spec B MT MMAX G RG GTU GL CTX pc.
+Proof. intros. unfold rf_spec_x, rf_spec. spec_br rf_post_x_AR. Qed.
+Lemma cshe_spec_x_AR : forall MT G pc, cshe_spec_x B [] (ARi SEGS B) MT RP_AR G pc <-> cshe_spec B MT G pc.
+Proof. intros. unfold cshe_spec_x, cshe_spec. spec_br cshe_post_x_AR. Qed.
+Lemma cnl_spec_x_AR : forall MT G MMAX pc, cnl_spec_x B [] (ARi SEGS B) MT RP_AR G MMAX pc <-> cnl_spec B MT G MMAX pc.
+Proof. intros. unfold cnl_spec_x, cnl_spec. spec_br cnl_post_x_AR. Qed.
+Lemma lf_spec_g_x_AR : forall MT pc, lf_spec_g_x B [] (ARi SEGS B) MT RP_AR pc <-> lf_spec_g B MT pc.
+Proof.
+intros MT pc. unfold lf_spec_g_x, lf_spec_g. split; intros H G HG;
+apply lf_spec_x_AR; apply H; apply gx_prog_x_AR; exact HG.
+Qed.
+Lemma sr_spec_g_x_AR : forall MT pc, sr_spec_g_x B [] (ARi SEGS B) MT RP_AR pc <-> sr_spec_g B MT pc.
+Proof.
+intros MT pc. unfold sr_spec_g_x, sr_spec_g. split; intros H G HG;
+apply sr_spec_x_AR; apply H; apply gx_prog_x_AR; exact HG.
+Qed.
+Lemma lp_spec_g_x_AR : forall MT MMAX pc, lp_spec_g_x B [] (ARi SEGS B) MT RP_AR MMAX pc <-> lp_spec_g B MT MMAX pc.
+Proof.
+intros MT MMAX pc. unfold lp_spec_g_x, lp_spec_g. split; intros H G H1 H2; apply lp_spec_x_AR; exact (H G H1 H2).
+Qed.
+Lemma lfind_spec_g_x_AR : forall pc, lfind_spec_g_x B [] (ARi SEGS B) pc <-> lfind_spec_g B pc.
+Proof.
+intros pc. unfold lfind_spec_g_x, lfind_spec_g. split; intros H G H1 H2; apply lfind_spec_x_AR; exact (H G H1 H2).
+Qed.
+Lemma ra_spec_g_x_AR : forall MT RG CTX pc, ra_spec_g_x B [] (ARi SEGS B) MT RP_AR RG CTX pc <-> ra_spec_g B MT RG CTX pc.
+Proof.
+intros MT RG CTX pc. unfold ra_spec_g_x, ra_spec_g. split; intros H G H1 H2; apply ra_spec_x_AR; exact (H G H1 H2).
+Qed.
+Lemma gm_spec_g_x_AR : forall MT MMAX pc, gm_spec_g_x B [] (ARi SEGS B) MT RP_AR MMAX pc <-> gm_spec_g B MT MMAX pc.
+Proof.
+intros MT MMAX pc. unfold gm_spec_g_x, gm_spec_g. split; intros H G H1 H2 H3; apply gm_spec_x_AR; exact (H G H1 H2 H3).
+Qed.
+
+(* THE LEMMA CHECKS: at ARi, with the laws LX (YCbqG.v:1677 AR_laws_x_of_AR builds them from AR_laws), each lemma twin
+   gives W_contract.v's statement. *)
+Hypothesis LX : AR_laws_x SEGS B (ARi SEGS B) 0.
+Lemma gx_prog_sub_AR : forall G1 G2, (forall a, inG G1 a -> inG G2 a) -> gx_prog B G2 -> gx_prog B G1.
+Proof.
+intros G1 G2 Hs H2. apply gx_prog_x_AR. apply (gx_prog_sub_x B (ARi SEGS B) G1 G2 Hs). apply gx_prog_x_AR. exact H2.
+Qed.
+Lemma azs_range_addressable_AR : forall ly S W mem md a n,
+AR SEGS B ly S W mem md -> azs B a n -> range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF a n.
+Proof. intros ly S W mem md a n HAR Hz. exact (azs_range_addressable_x B (ARi SEGS B) LX ly S [] W mem md a n HAR Hz). Qed.
+
+Lemma aj_strlen_at_AR : forall pc, astrlen_realizes B pc ->
+forall W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k x kk (o : Z) raw,
+ajournal SEGS B STK sp0 FP ly S W0 mem md own lyc Sc W memT mdc k ->
+getr regsT 10 = w64 x -> 0 < x ->
+0 <= kk -> kk + 1 < 2 ^ 32 -> x + kk + 1 <= 2 ^ 63 ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> 2 * ESTACK - o <= STK ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) -> getr regsT 1 = raw -> YK0s.ret_ok raw ->
+first_byte SEGS W memT x (kk + 1) 0 kk ->
+src_ok SEGS W regsT memT x (kk + 1) ->
+(forall a, x <= a <= x + kk -> ~ (sp0 + o - 2 * ESTACK <= a < sp0 + o)) ->
+amem_range x (kk + 1) -> amem_range x 8 ->
+range_addressable (aview SEGS (w_H W) memT) SHADOW_OFF x (kk + 1) ->
+shadow_hull_vis (aview SEGS (w_H W) memT) x (kk + 1) ->
+(forall a, x + kk < a < x + kk - (x + kk) mod 8 + 8 -> aview SEGS (w_H W) memT a <> None) ->
+rom_view SEGS W memT ->
+SRr SEGS W (mkCfg (mkst regsT (Z_to_bv 64 pc) memT (seg_rom SEGS)) mdc)
+(fun W2 c2 => W2 = W /\ exists regs2 mem2 md2,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom SEGS)) md2 /\
+ajournal SEGS B STK sp0 FP ly S W0 mem md own lyc Sc W mem2 md2 k /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 kk /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ (sp0 + o - 2 * ESTACK <= a < sp0 + o) -> aview SEGS (w_H W) mem2 a = aview SEGS (w_H W) memT a) /\
+(forall a, apresent (w_H W) memT a -> apresent (w_H W) mem2 a)).
+Proof.
+intros pc AM W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k x kk o raw HJ. intros.
+eapply SRr_mono.
+{ apply (aj_strlen_at_x B [] (ARi SEGS B) LX pc (proj2 (astrlen_realizes_x_AR pc) AM)
+    W regsT memT STK sp0 FP ly S [] W0 mem md own lyc Sc [] mdc k x kk o raw
+    (proj2 (@YCe5x.ajournal_x_YCbq _ _ _ SEGS B STK sp0 FP ly S [] W0 mem md own lyc Sc [] W memT mdc k) HJ));
+  assumption. }
+cbv beta. intros W2 c2 _ (E & regs2 & mem2 & md2 & Ec & HJ2 & R). split; [exact E|]. exists regs2, mem2, md2.
+split; [exact Ec|]. split; [|exact R].
+exact (proj1 (@YCe5x.ajournal_x_YCbq _ _ _ SEGS B STK sp0 FP ly S [] W0 mem md own lyc Sc [] W mem2 md2 k) HJ2).
+Qed.
+End br.
+
+(* THE ARi0 BRIDGES (a Theorem Labs lane's HP0 ruling): at ARx := W_journal_x.ARi0 (cgif's AR /\ Hp = []) and PST := [], each
+   generic spec gives W_contract.v's spec (one direction: the AR walk is re-derived from the generic one). The entry
+   takes Hp := []; the post's journal at ARi0 gives the AR journal (W_journal_x.ajournal_gx_x_ARi0_AR /
+   ajournal_x_ARi0_YCbq), and its existential Hp' is dropped. *)
+Section br0.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+Variable B : asyms.
+(* premises that name AR, in their ARi0 form *)
+Lemma ashp_x_ARi0_of : forall a n, ashp B a n -> ashp_x (ARi0 SEGS B) a n.
+Proof. intros a n H ly S Hp W mem md (HAR & _). exact (H ly S W mem md HAR). Qed.
+Lemma sl_line_ok_x_ARi0_of : forall ly S out line len,
+sl_line_ok B ly S out line len -> sl_line_ok_x B (ARi0 SEGS B) ly S out line len.
+Proof.
+intros ly S out line len. unfold sl_line_ok, sl_line_ok_x. intros [H|[H|(H1 & H2 & H3)]];
+[left; exact H | right; left; exact H | right; right; split; [exact H1 | split; [apply ashp_x_ARi0_of; exact H2 | exact H3]]].
+Qed.
+Lemma gx_prog_x_ARi0_of : forall G, gx_prog B G -> gx_prog_x B (ARi0 SEGS B) G.
+Proof.
+intros G (H1 & H2 & H3 & H4 & H5 & H6). refine (conj H1 (conj H2 (conj H3 (conj H4 (conj H5 _))))).
+intros ly S Hp W mem md a n (HAR & _). exact (H6 ly S W mem md a n HAR).
+Qed.
+Lemma ecall_pre_x_ARi0_of_AR : forall ly S W regs mem md,
+ecall_pre SEGS B ly S W regs mem md -> ecall_pre_x SEGS B (ARi0 SEGS B) ly S [] W regs mem md.
+Proof. intros ly S W regs mem md (H1 & Hr). exact (conj (conj H1 eq_refl) Hr). Qed.
+(* the other direction (callee hypotheses): a premise at ARi0 gives the AR one *)
+Lemma ashp_of_x_ARi0 : forall a n, ashp_x (ARi0 SEGS B) a n -> ashp B a n.
+Proof. intros a n H ly S W mem md HAR. exact (H ly S [] W mem md (conj HAR eq_refl)). Qed.
+Lemma sl_line_ok_of_x_ARi0 : forall ly S out line len,
+sl_line_ok_x B (ARi0 SEGS B) ly S out line len -> sl_line_ok B ly S out line len.
+Proof.
+intros ly S out line len. unfold sl_line_ok, sl_line_ok_x. intros [H|[H|(H1 & H2 & H3)]];
+[left; exact H | right; left; exact H | right; right; split; [exact H1 | split; [apply ashp_of_x_ARi0; exact H2 | exact H3]]].
+Qed.
+Lemma gx_prog_of_x_ARi0 : forall G, gx_prog_x B (ARi0 SEGS B) G -> gx_prog B G.
+Proof.
+intros G (H1 & H2 & H3 & H4 & H5 & H6). refine (conj H1 (conj H2 (conj H3 (conj H4 (conj H5 _))))).
+intros ly S W mem md a n HAR. exact (H6 ly S [] W mem md a n (conj HAR eq_refl)).
+Qed.
+Lemma ecall_pre_of_x_ARi0 : forall ly S Hp W regs mem md,
+ecall_pre_x SEGS B (ARi0 SEGS B) ly S Hp W regs mem md -> ecall_pre SEGS B ly S W regs mem md.
+Proof. intros ly S Hp W regs mem md ((H1 & _) & Hr). exact (conj H1 Hr). Qed.
+(* a post: destruct the generic post's right spine, turn its journal into the AR one, rebuild the AR post *)
+Local Ltac hspine HH :=
+  lazymatch type of HH with
+  | @ex _ _ => let x := fresh "x" in destruct HH as [x HH]; hspine HH
+  | _ /\ _ => let y := fresh "y" in destruct HH as [y HH]; hspine HH
+  | _ => idtac
+  end.
+Local Ltac gspine :=
+  lazymatch goal with
+  | |- rp_RM RP_AR _ _ /\ _ => split; [exact I | gspine]
+  | |- rp_RM RP_AR _ _ => exact I
+  | |- @ex _ _ => eexists; gspine
+  | |- _ /\ _ => split; [eassumption | gspine]
+  | |- _ => eassumption
+  end.
+Local Ltac post0 :=
+  cbv zeta; intros HH; hspine HH;
+  repeat match goal with Hj : context [@ajournal_gx_x] |- _ => apply ajournal_gx_x_ARi0_AR in Hj end;
+  repeat match goal with Hj : context [@YCbqG.ajournal_x] |- _ => apply ajournal_x_ARi0_YCbq in Hj end;
+  gspine.
+(* cshe_spec's P-placement premise carries ashp inside a disjunction (W3m a5be88b5cb2), both directions *)
+Lemma ashp_disj_x_ARi0_of : forall (P E : Prop) a n, (P /\ ashp B a n \/ E) -> (P /\ ashp_x (ARi0 SEGS B) a n \/ E).
+Proof. intros P E a n [[HP HA] | HE]; [left; split; [exact HP | apply ashp_x_ARi0_of; exact HA] | right; exact HE]. Qed.
+Lemma ashp_disj_of_x_ARi0 : forall (P E : Prop) a n, (P /\ ashp_x (ARi0 SEGS B) a n \/ E) -> (P /\ ashp B a n \/ E).
+Proof. intros P E a n [[HP HA] | HE]; [left; split; [exact HP | apply ashp_of_x_ARi0; exact HA] | right; exact HE]. Qed.
+(* a spec: the generic spec at Hp := [] gives the original; a premise naming AR is turned into its ARi0 form *)
+(* the room round's premises at the AR bridges' RP_AR: the room is True, the counts are 0 under bounds 8 *)
+Local Ltac room_AR_pk0 :=
+  cbv beta; cbv [lf_pk sr_pk ldrop_pk cshe_pk sl_pk re_pk ge_pk gse_pk rf_pk gm_pk cnl_pk dr_pk rr_pk rig_pk lp_peak ra_peak];
+  cbv beta; try rewrite tr_peakP_false; cbn; lia.
+Local Ltac go0 H :=
+  lazymatch type of H with
+  | forall _ : nat, rp_RM RP_AR _ _ -> _ => specialize (H 0%nat); go0 H
+  | rp_RM RP_AR _ _ -> _ => specialize (H (rp_RM_AR _ _)); go0 H
+  | cnt_ok_pk RP_AR ?pk ?l -> _ =>
+    let Hc := fresh "Hc" in assert (Hc : cnt_ok_pk RP_AR pk l) by (apply cnt_ok_pk_AR; room_AR_pk0);
+    specialize (H Hc); clear Hc; go0 H
+  | _ =>
+  lazymatch goal with
+  | |- forall _, _ =>
+    let x := fresh "x" in intro x;
+    match type of x with
+    | context [@YCbq.afn_pre] => apply afn_pre_x_ARi0_of_AR in x
+    | context [@sl_line_ok] => apply sl_line_ok_x_ARi0_of in x
+    | context [@ashp] => first [ apply ashp_x_ARi0_of in x | apply ashp_disj_x_ARi0_of in x ]
+    | _ => idtac
+    end;
+    specialize (H x); go0 H
+  | |- _ => idtac
+  end
+  end.
+Local Ltac spec0 PB :=
+  intros H W ly S; specialize (H W ly S []); cbv zeta in H |- *; go0 H;
+  eapply SRr_mono; [exact H | cbv beta; intros W2 c2 _ HQ; apply PB in HQ; exact HQ].
+(* the other direction: the AR post gives the generic post at ARi0, every ghost list [] *)
+Local Ltac post1 :=
+  cbv zeta; intros HH; hspine HH;
+  repeat match goal with Hj : context [@W_journal.ajournal_gx] |- _ => apply ajournal_gx_AR_x_ARi0 with (Hp := []) in Hj end;
+  repeat match goal with Hj : context [@YCbq.ajournal] |- _ => apply ajournal_x_YCbq_ARi0 with (Hp := []) in Hj end;
+  gspine.
+(* the other direction: the AR spec gives the generic spec at ARi0; the pre's ARi0 gives Hp = [] and the AR pre *)
+Local Ltac go1 H :=
+  lazymatch goal with
+  | |- forall _ : nat, rp_RM _ _ _ -> _ => let k := fresh "k" in intro k; go1 H
+  | |- forall _, _ =>
+    let x := fresh "x" in intro x;
+    lazymatch type of x with
+    | rp_RM _ _ _ => clear x; go1 H
+    | cnt_ok_pk _ _ _ => clear x; go1 H
+    | _ =>
+    lazymatch type of x with
+    | context [@afn_pre_x] =>
+      let E := fresh "E" in pose proof (proj2 (proj1 x)) as E; apply afn_pre_x_ARi0_to_AR in x;
+      lazymatch type of E with ?v = _ => subst v end
+    | context [@sl_line_ok_x] => apply sl_line_ok_of_x_ARi0 in x
+    | context [@ashp_x] => first [ apply ashp_of_x_ARi0 in x | apply ashp_disj_of_x_ARi0 in x ]
+    | _ => idtac
+    end;
+    specialize (H x); go1 H
+    end
+  | |- _ => idtac
+  end.
+Local Ltac spec1 PB :=
+  intros H W ly S Hp; cbv zeta in H |- *; specialize (H W ly S); go1 H;
+  eapply SRr_mono; [exact H | cbv beta; intros W2 c2 _ HQ; apply PB; exact HQ].
+
+Lemma aleafx_post_x_AR0 : forall STK regs ly S Hp W mem md Pa0 W' c',
+aleafx_post_x B [] (ARi0 SEGS B) STK regs ly S Hp W mem md Pa0 W' c' ->
+aleafx_post B STK regs ly S W mem md Pa0 W' c'.
+Proof. intros STK regs ly S Hp W mem md Pa0 W' c'. unfold aleafx_post_x, aleafx_post. post0. Qed.
+Lemma cb_spec_x_AR0 : forall pc, cb_spec_x B [] (ARi0 SEGS B) pc -> cb_spec B pc.
+Proof. intros pc. unfold cb_spec_x, cb_spec. spec0 aleafx_post_x_AR0. Qed.
+Lemma astrlen_realizes_x_AR0 : forall pc, astrlen_realizes_x B (ARi0 SEGS B) pc -> astrlen_realizes B pc.
+Proof.
+intros pc H ly S W regs mem md x k HPRE. intros.
+eapply SRr_mono.
+{ apply (H ly S [] W regs mem md x k (ecall_pre_x_ARi0_of_AR ly S W regs mem md HPRE)); assumption. }
+cbv beta. intros W2 c2 _ (E & regs2 & mem2 & md2 & Ec & (HAR & _) & R). split; [exact E|]. exists regs2, mem2, md2.
+split; [exact Ec|]. split; [exact HAR | exact R].
+Qed.
+
+Lemma aleaf_post_x_AR0 : forall STK regs ly S Hp W mem md Pa0 W' c',
+aleaf_post_x B [] (ARi0 SEGS B) STK regs ly S Hp W mem md Pa0 W' c' ->
+aleaf_post B STK regs ly S W mem md Pa0 W' c'.
+Proof. intros STK regs ly S Hp W mem md Pa0 W' c'. unfold aleaf_post_x, aleaf_post. post0. Qed.
+Lemma hp_post_x_AR0 : forall regs ly S Hp W mem md s n p lp W' c',
+hp_post_x B [] (ARi0 SEGS B) regs ly S Hp W mem md s n p lp W' c' ->
+hp_post B regs ly S W mem md s n p lp W' c'.
+Proof. intros regs ly S Hp W mem md s n p lp W' c'. unfold hp_post_x, hp_post. post0. Qed.
+Lemma lf_post_x_AR0 : forall MT G regs ly S Hp W mem md LA l lines kr W' c',
+lf_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S Hp W mem md LA l lines kr W' c' ->
+lf_post B MT G regs ly S W mem md LA l lines W' c'.
+Proof. intros MT G regs ly S Hp W mem md LA l lines kr W' c'. unfold lf_post_x, lf_post. post0. Qed.
+Lemma lp_post_x_AR0 : forall MT G regs ly S Hp W mem md LA l lines x kr W' c',
+lp_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S Hp W mem md LA l lines x kr W' c' ->
+lp_post B MT G regs ly S W mem md LA l lines x W' c'.
+Proof. intros MT G regs ly S Hp W mem md LA l lines x kr W' c'. unfold lp_post_x, lp_post. post0. Qed.
+Lemma sr_post_x_AR0 : forall MT G regs ly S Hp W mem md HA o kr W' c',
+sr_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S Hp W mem md HA o kr W' c' ->
+sr_post B MT G regs ly S W mem md HA o W' c'.
+Proof. intros MT G regs ly S Hp W mem md HA o kr W' c'. unfold sr_post_x, sr_post. post0. Qed.
+Lemma nl_post_x_AR0 : forall regs ly S Hp W mem md XO PA PL PN A O OUT ob W' c',
+nl_post_x B [] (ARi0 SEGS B) regs ly S Hp W mem md XO PA PL PN A O OUT ob W' c' ->
+nl_post B regs ly S W mem md XO PA PL PN A O OUT ob W' c'.
+Proof. intros regs ly S Hp W mem md XO PA PL PN A O OUT ob W' c'. unfold nl_post_x, nl_post. post0. Qed.
+Lemma lfind_post_x_AR0 : forall G regs ly S Hp W mem md l sb W' c',
+lfind_post_x B [] (ARi0 SEGS B) G regs ly S Hp W mem md l sb W' c' ->
+lfind_post B G regs ly S W mem md l sb W' c'.
+Proof. intros G regs ly S Hp W mem md l sb W' c'. unfold lfind_post_x, lfind_post. post0. Qed.
+Lemma ldrop_post_x_AR0 : forall MT G regs ly S Hp W mem md LA l lines i kr W' c',
+ldrop_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S Hp W mem md LA l lines i kr W' c' ->
+ldrop_post B MT G regs ly S W mem md LA l lines i W' c'.
+Proof. intros MT G regs ly S Hp W mem md LA l lines i kr W' c'. unfold ldrop_post_x, ldrop_post. post0. Qed.
+Lemma sl_post_x_AR0 : forall MT RG regs ly S Hp W mem md c O mx no cap out Bl kr W' c',
+sl_post_x B [] (ARi0 SEGS B) MT RP_AR RG regs ly S Hp W mem md c O mx no cap out Bl kr W' c' ->
+sl_post B MT RG regs ly S W mem md c O mx no cap out Bl W' c'.
+Proof. intros MT RG regs ly S Hp W mem md c O mx no cap out Bl kr W' c'. unfold sl_post_x, sl_post. post0. Qed.
+Lemma re_post_x_AR0 : forall MT G RG regs ly S Hp W mem md c O mx no cap out e kr W' c',
+re_post_x B [] (ARi0 SEGS B) MT RP_AR G RG regs ly S Hp W mem md c O mx no cap out e kr W' c' ->
+re_post B MT G RG regs ly S W mem md c O mx no cap out e W' c'.
+Proof. intros MT G RG regs ly S Hp W mem md c O mx no cap out e kr W' c'. unfold re_post_x, re_post. post0. Qed.
+Lemma ra_post_x_AR0 : forall MT G RG regs ly S Hp W mem md fd T es kr W' c',
+ra_post_x B [] (ARi0 SEGS B) MT RP_AR G RG regs ly S Hp W mem md fd T es kr W' c' ->
+ra_post B MT G RG regs ly S W mem md fd T es W' c'.
+Proof. intros MT G RG regs ly S Hp W mem md fd T es kr W' c'. unfold ra_post_x, ra_post. post0. Qed.
+Lemma ge_post_x_AR0 : forall MT RG regs ly S Hp W mem md c O mx no cap out x kr W' c',
+ge_post_x B [] (ARi0 SEGS B) MT RP_AR RG regs ly S Hp W mem md c O mx no cap out x kr W' c' ->
+ge_post B MT RG regs ly S W mem md c O mx no cap out x W' c'.
+Proof. intros MT RG regs ly S Hp W mem md c O mx no cap out x kr W' c'. unfold ge_post_x, ge_post. post0. Qed.
+Lemma gse_post_x_AR0 : forall MT RG regs ly S Hp W mem md SA TB e c O mx no cap out rest kr W' c',
+gse_post_x B [] (ARi0 SEGS B) MT RP_AR RG regs ly S Hp W mem md SA TB e c O mx no cap out rest kr W' c' ->
+gse_post B MT RG regs ly S W mem md SA TB e c O mx no cap out rest W' c'.
+Proof. intros MT RG regs ly S Hp W mem md SA TB e c O mx no cap out rest kr W' c'. unfold gse_post_x, gse_post. post0. Qed.
+Lemma gm_post_x_AR0 : forall MT G regs ly S Hp W mem md HA H ln kr W' c',
+gm_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S Hp W mem md HA H ln kr W' c' ->
+gm_post B MT G regs ly S W mem md HA H ln W' c'.
+Proof. intros MT G regs ly S Hp W mem md HA H ln kr W' c'. unfold gm_post_x, gm_post. post0. Qed.
+Lemma rf_post_x_AR0 : forall MT G RG GL regs ly S Hp W mem md T es c O mx no cap out rest kr W' c',
+rf_post_x B [] (ARi0 SEGS B) MT RP_AR G RG GL regs ly S Hp W mem md T es c O mx no cap out rest kr W' c' ->
+rf_post B MT G RG GL regs ly S W mem md T es c O mx no cap out rest W' c'.
+Proof. intros MT G RG GL regs ly S Hp W mem md T es c O mx no cap out rest kr W' c'. unfold rf_post_x, rf_post. post0. Qed.
+Lemma cshe_post_x_AR0 : forall MT G regs ly S Hp W mem md XO AT HA h P A0 gone ob kr W' c',
+cshe_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S Hp W mem md XO AT HA h P A0 gone ob kr W' c' ->
+cshe_post B MT G regs ly S W mem md XO AT HA h P A0 gone ob W' c'.
+Proof. intros MT G regs ly S Hp W mem md XO AT HA h P A0 gone ob kr W' c'. unfold cshe_post_x, cshe_post. post0. Qed.
+Lemma cnl_post_x_AR0 : forall MT G regs ly S Hp W mem md XO HA AT h E H gone A0 NO OUT ob kr W' c',
+cnl_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S Hp W mem md XO HA AT h E H gone A0 NO OUT ob kr W' c' ->
+cnl_post B MT G regs ly S W mem md XO HA AT h E H gone A0 NO OUT ob W' c'.
+Proof. intros MT G regs ly S Hp W mem md XO HA AT h E H gone A0 NO OUT ob kr W' c'. unfold cnl_post_x, cnl_post. post0. Qed.
+Lemma csd_spec_x_AR0 : forall pc, csd_spec_x B [] (ARi0 SEGS B) pc -> csd_spec B pc.
+Proof. intros pc. unfold csd_spec_x, csd_spec. spec0 aleaf_post_x_AR0. Qed.
+Lemma hp_spec_x_AR0 : forall pc, hp_spec_x B [] (ARi0 SEGS B) pc -> hp_spec B pc.
+Proof. intros pc. unfold hp_spec_x, hp_spec. spec0 hp_post_x_AR0. Qed.
+Lemma lf_spec_x_AR0 : forall MT G pc, lf_spec_x B [] (ARi0 SEGS B) MT RP_AR G pc -> lf_spec B MT G pc.
+Proof. intros MT G pc. unfold lf_spec_x, lf_spec. spec0 lf_post_x_AR0. Qed.
+Lemma lp_spec_x_AR0 : forall MT G MMAX pc, lp_spec_x B [] (ARi0 SEGS B) MT RP_AR G MMAX pc -> lp_spec B MT G MMAX pc.
+Proof. intros MT G MMAX pc. unfold lp_spec_x, lp_spec. spec0 lp_post_x_AR0. Qed.
+Lemma sr_spec_x_AR0 : forall MT G pc, sr_spec_x B [] (ARi0 SEGS B) MT RP_AR G pc -> sr_spec B MT G pc.
+Proof. intros MT G pc. unfold sr_spec_x, sr_spec. spec0 sr_post_x_AR0. Qed.
+Lemma cnlr_spec_x_AR0 : forall pc, cnlr_spec_x B [] (ARi0 SEGS B) pc -> cnlr_spec B pc.
+Proof. intros pc. unfold cnlr_spec_x, cnlr_spec. spec0 aleaf_post_x_AR0. Qed.
+Lemma nl_spec_x_AR0 : forall pc, nl_spec_x B [] (ARi0 SEGS B) pc -> nl_spec B pc.
+Proof. intros pc. unfold nl_spec_x, nl_spec. spec0 nl_post_x_AR0. Qed.
+Lemma cse_spec_x_AR0 : forall pc, cse_spec_x B [] (ARi0 SEGS B) pc -> cse_spec B pc.
+Proof. intros pc. unfold cse_spec_x, cse_spec. spec0 aleaf_post_x_AR0. Qed.
+Lemma lfind_spec_x_AR0 : forall G pc, lfind_spec_x B [] (ARi0 SEGS B) G pc -> lfind_spec B G pc.
+Proof. intros G pc. unfold lfind_spec_x, lfind_spec. spec0 lfind_post_x_AR0. Qed.
+Lemma ldrop_spec_x_AR0 : forall MT G pc, ldrop_spec_x B [] (ARi0 SEGS B) MT RP_AR G pc -> ldrop_spec B MT G pc.
+Proof. intros MT G pc. unfold ldrop_spec_x, ldrop_spec. spec0 ldrop_post_x_AR0. Qed.
+Lemma sl_spec_x_AR0 : forall MT MMAX RG pc, sl_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX RG pc -> sl_spec B MT MMAX RG pc.
+Proof. intros MT MMAX RG pc. unfold sl_spec_x, sl_spec. spec0 sl_post_x_AR0. Qed.
+Lemma re_spec_x_AR0 : forall MT MMAX G RG pc, re_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX G RG pc -> re_spec B MT MMAX G RG pc.
+Proof. intros MT MMAX G RG pc. unfold re_spec_x, re_spec. spec0 re_post_x_AR0. Qed.
+Lemma ra_spec_x_AR0 : forall MT G RG CTX pc, ra_spec_x B [] (ARi0 SEGS B) MT RP_AR G RG CTX pc -> ra_spec B MT G RG CTX pc.
+Proof. intros MT G RG CTX pc. unfold ra_spec_x, ra_spec. spec0 ra_post_x_AR0. Qed.
+Lemma ge_spec_x_AR0 : forall MT MMAX RG pc, ge_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX RG pc -> ge_spec B MT MMAX RG pc.
+Proof. intros MT MMAX RG pc. unfold ge_spec_x, ge_spec. spec0 ge_post_x_AR0. Qed.
+Lemma gse_spec_x_AR0 : forall MT MMAX RG pc, gse_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX RG pc -> gse_spec B MT MMAX RG pc.
+Proof. intros MT MMAX RG pc. unfold gse_spec_x, gse_spec. spec0 gse_post_x_AR0. Qed.
+Lemma gm_spec_x_AR0 : forall MT MMAX G pc, gm_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX G pc -> gm_spec B MT MMAX G pc.
+Proof. intros MT MMAX G pc. unfold gm_spec_x, gm_spec. spec0 gm_post_x_AR0. Qed.
+Lemma rf_spec_x_AR0 : forall MT MMAX G RG GTU GL CTX pc, rf_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX G RG GTU GL CTX pc -> rf_spec B MT MMAX G RG GTU GL CTX pc.
+Proof. intros MT MMAX G RG GTU GL CTX pc. unfold rf_spec_x, rf_spec. spec0 rf_post_x_AR0. Qed.
+Lemma cshe_spec_x_AR0 : forall MT G pc, cshe_spec_x B [] (ARi0 SEGS B) MT RP_AR G pc -> cshe_spec B MT G pc.
+Proof. intros MT G pc. unfold cshe_spec_x, cshe_spec. spec0 cshe_post_x_AR0. Qed.
+Lemma cnl_spec_x_AR0 : forall MT G MMAX pc, cnl_spec_x B [] (ARi0 SEGS B) MT RP_AR G MMAX pc -> cnl_spec B MT G MMAX pc.
+Proof. intros MT G MMAX pc. unfold cnl_spec_x, cnl_spec. spec0 cnl_post_x_AR0. Qed.
+Lemma lf_spec_g_x_AR0 : forall MT pc, lf_spec_g_x B [] (ARi0 SEGS B) MT RP_AR pc -> lf_spec_g B MT pc.
+Proof. intros MT pc. unfold lf_spec_g_x, lf_spec_g. intros H G HG. apply lf_spec_x_AR0. apply H. apply gx_prog_x_ARi0_of. exact HG. Qed.
+Lemma sr_spec_g_x_AR0 : forall MT pc, sr_spec_g_x B [] (ARi0 SEGS B) MT RP_AR pc -> sr_spec_g B MT pc.
+Proof. intros MT pc. unfold sr_spec_g_x, sr_spec_g. intros H G HG. apply sr_spec_x_AR0. apply H. apply gx_prog_x_ARi0_of. exact HG. Qed.
+Lemma lp_spec_g_x_AR0 : forall MT MMAX pc, lp_spec_g_x B [] (ARi0 SEGS B) MT RP_AR MMAX pc -> lp_spec_g B MT MMAX pc.
+Proof. intros MT MMAX pc. unfold lp_spec_g_x, lp_spec_g. intros H G H1 H2. apply lp_spec_x_AR0. exact (H G H1 H2). Qed.
+Lemma lfind_spec_g_x_AR0 : forall pc, lfind_spec_g_x B [] (ARi0 SEGS B) pc -> lfind_spec_g B pc.
+Proof. intros pc. unfold lfind_spec_g_x, lfind_spec_g. intros H G H1 H2. apply lfind_spec_x_AR0. exact (H G H1 H2). Qed.
+Lemma ra_spec_g_x_AR0 : forall MT RG CTX pc, ra_spec_g_x B [] (ARi0 SEGS B) MT RP_AR RG CTX pc -> ra_spec_g B MT RG CTX pc.
+Proof. intros MT RG CTX pc. unfold ra_spec_g_x, ra_spec_g. intros H G H1 H2. apply ra_spec_x_AR0. exact (H G H1 H2). Qed.
+Lemma gm_spec_g_x_AR0 : forall MT MMAX pc, gm_spec_g_x B [] (ARi0 SEGS B) MT RP_AR MMAX pc -> gm_spec_g B MT MMAX pc.
+Proof. intros MT MMAX pc. unfold gm_spec_g_x, gm_spec_g. intros H G H1 H2 H3. apply gm_spec_x_AR0. exact (H G H1 H2 H3). Qed.
+Lemma lf_post_x_of_AR0 : forall MT G regs ly S W mem md LA l lines kr W' c',
+lf_post B MT G regs ly S W mem md LA l lines W' c' ->
+lf_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S [] W mem md LA l lines kr W' c'.
+Proof. intros MT G regs ly S W mem md LA l lines kr W' c'. unfold lf_post, lf_post_x. post1. Qed.
+Lemma sr_post_x_of_AR0 : forall MT G regs ly S W mem md HA o kr W' c',
+sr_post B MT G regs ly S W mem md HA o W' c' ->
+sr_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S [] W mem md HA o kr W' c'.
+Proof. intros MT G regs ly S W mem md HA o kr W' c'. unfold sr_post, sr_post_x. post1. Qed.
+Lemma ra_post_x_of_AR0 : forall MT G RG regs ly S W mem md fd T es kr W' c',
+ra_post B MT G RG regs ly S W mem md fd T es W' c' ->
+ra_post_x B [] (ARi0 SEGS B) MT RP_AR G RG regs ly S [] W mem md fd T es kr W' c'.
+Proof. intros MT G RG regs ly S W mem md fd T es kr W' c'. unfold ra_post, ra_post_x. post1. Qed.
+Lemma lf_spec_x_of_AR0 : forall MT G pc, lf_spec B MT G pc -> lf_spec_x B [] (ARi0 SEGS B) MT RP_AR G pc.
+Proof. intros MT G pc. unfold lf_spec, lf_spec_x. spec1 lf_post_x_of_AR0. Qed.
+Lemma sr_spec_x_of_AR0 : forall MT G pc, sr_spec B MT G pc -> sr_spec_x B [] (ARi0 SEGS B) MT RP_AR G pc.
+Proof. intros MT G pc. unfold sr_spec, sr_spec_x. spec1 sr_post_x_of_AR0. Qed.
+Lemma ra_spec_x_of_AR0 : forall MT G RG CTX pc, ra_spec B MT G RG CTX pc -> ra_spec_x B [] (ARi0 SEGS B) MT RP_AR G RG CTX pc.
+Proof. intros MT G RG CTX pc. unfold ra_spec, ra_spec_x. spec1 ra_post_x_of_AR0. Qed.
+Lemma lf_spec_g_x_of_AR0 : forall MT pc, lf_spec_g B MT pc -> lf_spec_g_x B [] (ARi0 SEGS B) MT RP_AR pc.
+Proof. intros MT pc. unfold lf_spec_g, lf_spec_g_x. intros H G HG. apply lf_spec_x_of_AR0. apply H. apply gx_prog_of_x_ARi0. exact HG. Qed.
+Lemma sr_spec_g_x_of_AR0 : forall MT pc, sr_spec_g B MT pc -> sr_spec_g_x B [] (ARi0 SEGS B) MT RP_AR pc.
+Proof. intros MT pc. unfold sr_spec_g, sr_spec_g_x. intros H G HG. apply sr_spec_x_of_AR0. apply H. apply gx_prog_of_x_ARi0. exact HG. Qed.
+Lemma ra_spec_g_x_of_AR0 : forall MT RG CTX pc, ra_spec_g B MT RG CTX pc -> ra_spec_g_x B [] (ARi0 SEGS B) MT RP_AR RG CTX pc.
+Proof. intros MT RG CTX pc. unfold ra_spec_g, ra_spec_g_x. intros H G H1 H2. apply ra_spec_x_of_AR0. exact (H G H1 H2). Qed.
+Lemma aleaf_post_x_of_AR0 : forall STK regs ly S W mem md Pa0 W' c',
+aleaf_post B STK regs ly S W mem md Pa0 W' c' ->
+aleaf_post_x B [] (ARi0 SEGS B) STK regs ly S [] W mem md Pa0 W' c'.
+Proof. intros STK regs ly S W mem md Pa0 W' c'. unfold aleaf_post, aleaf_post_x. post1. Qed.
+Lemma aleafx_post_x_of_AR0 : forall STK regs ly S W mem md Pa0 W' c',
+aleafx_post B STK regs ly S W mem md Pa0 W' c' ->
+aleafx_post_x B [] (ARi0 SEGS B) STK regs ly S [] W mem md Pa0 W' c'.
+Proof. intros STK regs ly S W mem md Pa0 W' c'. unfold aleafx_post, aleafx_post_x. post1. Qed.
+Lemma hp_post_x_of_AR0 : forall regs ly S W mem md s n p lp W' c',
+hp_post B regs ly S W mem md s n p lp W' c' ->
+hp_post_x B [] (ARi0 SEGS B) regs ly S [] W mem md s n p lp W' c'.
+Proof. intros regs ly S W mem md s n p lp W' c'. unfold hp_post, hp_post_x. post1. Qed.
+Lemma lp_post_x_of_AR0 : forall MT G regs ly S W mem md LA l lines x kr W' c',
+lp_post B MT G regs ly S W mem md LA l lines x W' c' ->
+lp_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S [] W mem md LA l lines x kr W' c'.
+Proof. intros MT G regs ly S W mem md LA l lines x kr W' c'. unfold lp_post, lp_post_x. post1. Qed.
+Lemma nl_post_x_of_AR0 : forall regs ly S W mem md XO PA PL PN A O OUT ob W' c',
+nl_post B regs ly S W mem md XO PA PL PN A O OUT ob W' c' ->
+nl_post_x B [] (ARi0 SEGS B) regs ly S [] W mem md XO PA PL PN A O OUT ob W' c'.
+Proof. intros regs ly S W mem md XO PA PL PN A O OUT ob W' c'. unfold nl_post, nl_post_x. post1. Qed.
+Lemma lfind_post_x_of_AR0 : forall G regs ly S W mem md l sb W' c',
+lfind_post B G regs ly S W mem md l sb W' c' ->
+lfind_post_x B [] (ARi0 SEGS B) G regs ly S [] W mem md l sb W' c'.
+Proof. intros G regs ly S W mem md l sb W' c'. unfold lfind_post, lfind_post_x. post1. Qed.
+Lemma ldrop_post_x_of_AR0 : forall MT G regs ly S W mem md LA l lines i kr W' c',
+ldrop_post B MT G regs ly S W mem md LA l lines i W' c' ->
+ldrop_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S [] W mem md LA l lines i kr W' c'.
+Proof. intros MT G regs ly S W mem md LA l lines i kr W' c'. unfold ldrop_post, ldrop_post_x. post1. Qed.
+Lemma sl_post_x_of_AR0 : forall MT RG regs ly S W mem md c O mx no cap out Bl kr W' c',
+sl_post B MT RG regs ly S W mem md c O mx no cap out Bl W' c' ->
+sl_post_x B [] (ARi0 SEGS B) MT RP_AR RG regs ly S [] W mem md c O mx no cap out Bl kr W' c'.
+Proof. intros MT RG regs ly S W mem md c O mx no cap out Bl kr W' c'. unfold sl_post, sl_post_x. post1. Qed.
+Lemma re_post_x_of_AR0 : forall MT G RG regs ly S W mem md c O mx no cap out e kr W' c',
+re_post B MT G RG regs ly S W mem md c O mx no cap out e W' c' ->
+re_post_x B [] (ARi0 SEGS B) MT RP_AR G RG regs ly S [] W mem md c O mx no cap out e kr W' c'.
+Proof. intros MT G RG regs ly S W mem md c O mx no cap out e kr W' c'. unfold re_post, re_post_x. post1. Qed.
+Lemma ge_post_x_of_AR0 : forall MT RG regs ly S W mem md c O mx no cap out x kr W' c',
+ge_post B MT RG regs ly S W mem md c O mx no cap out x W' c' ->
+ge_post_x B [] (ARi0 SEGS B) MT RP_AR RG regs ly S [] W mem md c O mx no cap out x kr W' c'.
+Proof. intros MT RG regs ly S W mem md c O mx no cap out x kr W' c'. unfold ge_post, ge_post_x. post1. Qed.
+Lemma gse_post_x_of_AR0 : forall MT RG regs ly S W mem md SA TB e c O mx no cap out rest kr W' c',
+gse_post B MT RG regs ly S W mem md SA TB e c O mx no cap out rest W' c' ->
+gse_post_x B [] (ARi0 SEGS B) MT RP_AR RG regs ly S [] W mem md SA TB e c O mx no cap out rest kr W' c'.
+Proof. intros MT RG regs ly S W mem md SA TB e c O mx no cap out rest kr W' c'. unfold gse_post, gse_post_x. post1. Qed.
+Lemma gm_post_x_of_AR0 : forall MT G regs ly S W mem md HA H ln kr W' c',
+gm_post B MT G regs ly S W mem md HA H ln W' c' ->
+gm_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S [] W mem md HA H ln kr W' c'.
+Proof. intros MT G regs ly S W mem md HA H ln kr W' c'. unfold gm_post, gm_post_x. post1. Qed.
+Lemma rf_post_x_of_AR0 : forall MT G RG GL regs ly S W mem md T es c O mx no cap out rest kr W' c',
+rf_post B MT G RG GL regs ly S W mem md T es c O mx no cap out rest W' c' ->
+rf_post_x B [] (ARi0 SEGS B) MT RP_AR G RG GL regs ly S [] W mem md T es c O mx no cap out rest kr W' c'.
+Proof. intros MT G RG GL regs ly S W mem md T es c O mx no cap out rest kr W' c'. unfold rf_post, rf_post_x. post1. Qed.
+Lemma cshe_post_x_of_AR0 : forall MT G regs ly S W mem md XO AT HA h P A0 gone ob kr W' c',
+cshe_post B MT G regs ly S W mem md XO AT HA h P A0 gone ob W' c' ->
+cshe_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S [] W mem md XO AT HA h P A0 gone ob kr W' c'.
+Proof. intros MT G regs ly S W mem md XO AT HA h P A0 gone ob kr W' c'. unfold cshe_post, cshe_post_x. post1. Qed.
+Lemma cnl_post_x_of_AR0 : forall MT G regs ly S W mem md XO HA AT h E H gone A0 NO OUT ob kr W' c',
+cnl_post B MT G regs ly S W mem md XO HA AT h E H gone A0 NO OUT ob W' c' ->
+cnl_post_x B [] (ARi0 SEGS B) MT RP_AR G regs ly S [] W mem md XO HA AT h E H gone A0 NO OUT ob kr W' c'.
+Proof. intros MT G regs ly S W mem md XO HA AT h E H gone A0 NO OUT ob kr W' c'. unfold cnl_post, cnl_post_x. post1. Qed.
+Lemma ge_spec_x_of_AR0 : forall MT MMAX RG pc, ge_spec B MT MMAX RG pc -> ge_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX RG pc.
+Proof. intros MT MMAX RG pc. unfold ge_spec, ge_spec_x. spec1 ge_post_x_of_AR0. Qed.
+Lemma gse_spec_x_of_AR0 : forall MT MMAX RG pc, gse_spec B MT MMAX RG pc -> gse_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX RG pc.
+Proof. intros MT MMAX RG pc. unfold gse_spec, gse_spec_x. spec1 gse_post_x_of_AR0. Qed.
+Lemma gm_spec_x_of_AR0 : forall MT MMAX G pc, gm_spec B MT MMAX G pc -> gm_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX G pc.
+Proof. intros MT MMAX G pc. unfold gm_spec, gm_spec_x. spec1 gm_post_x_of_AR0. Qed.
+Lemma sl_spec_x_of_AR0 : forall MT MMAX RG pc, sl_spec B MT MMAX RG pc -> sl_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX RG pc.
+Proof. intros MT MMAX RG pc. unfold sl_spec, sl_spec_x. spec1 sl_post_x_of_AR0. Qed.
+Lemma lfind_spec_x_of_AR0 : forall G pc, lfind_spec B G pc -> lfind_spec_x B [] (ARi0 SEGS B) G pc.
+Proof. intros G pc. unfold lfind_spec, lfind_spec_x. spec1 lfind_post_x_of_AR0. Qed.
+Lemma lp_spec_x_of_AR0 : forall MT G MMAX pc, lp_spec B MT G MMAX pc -> lp_spec_x B [] (ARi0 SEGS B) MT RP_AR G MMAX pc.
+Proof. intros MT G MMAX pc. unfold lp_spec, lp_spec_x. spec1 lp_post_x_of_AR0. Qed.
+Lemma ldrop_spec_x_of_AR0 : forall MT G pc, ldrop_spec B MT G pc -> ldrop_spec_x B [] (ARi0 SEGS B) MT RP_AR G pc.
+Proof. intros MT G pc. unfold ldrop_spec, ldrop_spec_x. spec1 ldrop_post_x_of_AR0. Qed.
+Lemma csd_spec_x_of_AR0 : forall pc, csd_spec B pc -> csd_spec_x B [] (ARi0 SEGS B) pc.
+Proof. intros pc. unfold csd_spec, csd_spec_x. spec1 aleaf_post_x_of_AR0. Qed.
+Lemma hp_spec_x_of_AR0 : forall pc, hp_spec B pc -> hp_spec_x B [] (ARi0 SEGS B) pc.
+Proof. intros pc. unfold hp_spec, hp_spec_x. spec1 hp_post_x_of_AR0. Qed.
+Lemma cnlr_spec_x_of_AR0 : forall pc, cnlr_spec B pc -> cnlr_spec_x B [] (ARi0 SEGS B) pc.
+Proof. intros pc. unfold cnlr_spec, cnlr_spec_x. spec1 aleaf_post_x_of_AR0. Qed.
+Lemma nl_spec_x_of_AR0 : forall pc, nl_spec B pc -> nl_spec_x B [] (ARi0 SEGS B) pc.
+Proof. intros pc. unfold nl_spec, nl_spec_x. spec1 nl_post_x_of_AR0. Qed.
+Lemma cse_spec_x_of_AR0 : forall pc, cse_spec B pc -> cse_spec_x B [] (ARi0 SEGS B) pc.
+Proof. intros pc. unfold cse_spec, cse_spec_x. spec1 aleaf_post_x_of_AR0. Qed.
+(* THE STACK-WIDENED BRIDGES (DRAIN_STK_x, RR_STK_x, RIG_STK_x).  The AR spec runs at W_contract.v's smaller budget
+   STK; the generic spec's pre at STK2 = STK + 128 gives the AR pre (afn_pre_lower_x), and the AR post's journal is
+   widened to STK2 (ajournal_gx_widen_x): it keeps every byte the STK journal keeps, and each byte of the extra window
+   [sp - STK2, sp - STK) is present at the end - outside the callee's globals G by the journal's frame clause and the
+   pre's presence, inside G by the post's own clauses (a G byte of the stack window is no image byte: rg_place puts
+   relay_remove's and relay_instance_gone's own globals in the image, and the post's aout_at, asrc_at and kept g_s
+   bytes cover the rest). *)
+Lemma stk_noimg_x : forall a, alloc_ceiling <= a -> ~ in_img SEGS a.
+Proof.
+intros a Ha Hi. pose proof (pa_segs_low a Hi) as L. pose proof asan_consts as (C1 & _ & _ & _ & C5). lia.
+Qed.
+Lemma apresent_of_wr_x : forall (H : word -> bool) (m : word -> option byte) a,
+  alloc_ceiling <= a < 2 ^ 64 -> writable_at SEGS (mrestrict H m) a -> apresent H m a.
+Proof.
+intros H m a Ha Hw. pose proof asan_consts as (C1 & _). unfold apresent. unfold writable_at, wview, mrestrict in Hw.
+rewrite unsigned_lit_small in Hw by lia.
+erewrite YCbq.find_segment_none in Hw; [|apply stk_noimg_x; lia].
+destruct (H (Z_to_bv 64 a)) eqn:E; try rewrite E in Hw; [exfalso; apply Hw; reflexivity|].
+split; [reflexivity|]. destruct (m (Z_to_bv 64 a)) as [b|] eqn:Eb; [exists b; reflexivity|].
+try rewrite Eb in Hw. exfalso. apply Hw. reflexivity.
+Qed.
+Lemma apresent_of_aview_x : forall (H : word -> bool) (m : word -> option byte) a,
+  alloc_ceiling <= a < 2 ^ 64 -> aview SEGS H m a <> None -> apresent H m a.
+Proof.
+intros H m a Ha Hv. pose proof asan_consts as (C1 & _). unfold aview, mbyte, mrestrict in Hv.
+erewrite YCbq.seg_rom_none in Hv; [| lia | apply stk_noimg_x; lia].
+unfold apresent. revert Hv.
+destruct (H (Z_to_bv 64 a)); [cbn; intros Hv; exfalso; apply Hv; reflexivity|].
+intros Hv. split; [reflexivity|]. destruct (m (Z_to_bv 64 a)) as [b|]; [exists b; reflexivity|].
+exfalso. apply Hv. reflexivity.
+Qed.
+Lemma awr_apresent_x : forall (W : world SEGS) mem p n a,
+  awr W mem p n -> p <= a < p + n -> alloc_ceiling <= a < 2 ^ 64 -> apresent (w_H W) mem a.
+Proof.
+intros W mem p n a Hw Hr Ha. apply apresent_of_wr_x; [exact Ha|].
+pose proof (Hw (a - p) ltac:(lia)) as Hx. replace (p + (a - p)) with a in Hx by lia. exact Hx.
+Qed.
+(* the send_line globals G_SL: aout_at shows each of their bytes writable *)
+Lemma gsl_apresent_x : forall RG ly S (W : world SEGS) mem c O mx no cap out a,
+  aout_at B RG ly S W mem c O mx no cap out -> inG (G_SL B RG) a -> alloc_ceiling <= a < 2 ^ 64 ->
+  apresent (w_H W) mem a.
+Proof.
+intros RG ly S W mem c O mx no cap out a HO Hg Ha.
+destruct HO as (_ & _ & _ & Wn & _ & Wc & _ & Wo & _ & _ & _ & Wb & _ & _ & _ & We & _ & Wr & _).
+unfold G_SL, inG in Hg. rewrite !Exists_cons, Exists_nil in Hg. unfold in_zr in Hg. cbn [fst snd] in Hg.
+destruct Hg as [Hg|[Hg|[Hg|[Hg|[Hg|[Hg|[]]]]]]].
+- exact (awr_apresent_x _ _ _ _ _ Wb Hg Ha).
+- exact (awr_apresent_x _ _ _ _ _ We Hg Ha).
+- exact (awr_apresent_x _ _ _ _ _ Wn Hg Ha).
+- exact (awr_apresent_x _ _ _ _ _ Wc Hg Ha).
+- exact (awr_apresent_x _ _ _ _ _ Wo Hg Ha).
+- exact (awr_apresent_x _ _ _ _ _ Wr Hg Ha).
+Qed.
+Lemma afn_pre_lower_x : forall STK STK2 ly S W regs mem md ch,
+  afn_pre SEGS B STK2 ly S W regs mem md ch -> 0 <= STK <= STK2 -> afn_pre SEGS B STK ly S W regs mem md ch.
+Proof.
+intros STK STK2 ly S W regs mem md ch (H1 & H2 & H3 & H4 & H5 & Hs & Hp & H8 & H9) Hle.
+pose proof Hs as (S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8 & S9).
+refine (conj H1 (conj H2 (conj H3 (conj H4 (conj H5 (conj _ (conj _ (conj H8 H9)))))))).
+- unfold astk_ok. refine (conj S1 _). repeat split; lia.
+- intros a Ha. apply Hp. lia.
+Qed.
+Lemma ajournal_gx_widen_x : forall G STK STK2 sp0 FP ly S W mem md own ly' S' W' mem' md' k,
+  @ajournal_gx _ SK SEGS B G 0 [] STK sp0 FP ly S W mem md own ly' S' W' mem' md' k ->
+  STK <= STK2 -> astk_ok STK2 ly sp0 ->
+  (forall a, sp0 - STK2 <= a < sp0 -> apresent (w_H W) mem a) ->
+  (forall a, sp0 - STK2 <= a < sp0 -> inG G a -> apresent (w_H W') mem' a) ->
+  @ajournal_gx _ SK SEGS B G 0 [] STK2 sp0 FP ly S W mem md own ly' S' W' mem' md' k.
+Proof.
+intros G STK STK2 sp0 FP ly S W mem md own ly' S' W' mem' md' k (H0 & H1 & (memS & HJ & Hag) & Hout) Hle Hstk2
+  Hpre HG.
+pose proof asan_consts as (C1 & _).
+pose proof Hstk2 as (S1 & S2 & S3 & S4 & S5 & S6 & _).
+split; [lia|]. split; [exact H1|]. split; [|exact Hout].
+exists memS. split; [|exact Hag]. rewrite !Z.add_0_r in HJ |- *.
+destruct HJ as (J1 & J2 & J3 & J4 & J5 & J6 & J7 & J8 & J9 & J10 & J11 & J12 & J13 & J14 & J15 & J16 & J17).
+refine (conj J1 (conj J2 (conj J3 (conj J4 (conj J5 (conj J6 (conj J7 (conj J8 (conj _ (conj J10 (conj J11
+  (conj J12 (conj J13 (conj _ (conj Hstk2 (conj J16 J17)))))))))))))))).
+- intros a Ha Hn. apply J9; [exact Ha | lia].
+- intros a Ha. destruct (Z_lt_le_dec a (sp0 - STK)) as [Hlo|Hhi]; [|apply J14; lia].
+  destruct (inGb G (bv_unsigned (Z_to_bv 64 a))) eqn:EG.
+  + apply HG; [lia|]. rewrite unsigned_lit_small in EG by lia. apply inGb_spec. exact EG.
+  + apply apresent_of_aview_x; [lia|]. rewrite (J9 a ltac:(lia) ltac:(lia)).
+    erewrite aview_gagree; [| exact Hag | exact EG].
+    apply YCbq.aview_some_of_apresent. apply Hpre. lia.
+Qed.
+(* the G bytes of the extra window at the end, from each post *)
+Lemma dr_G_present_x : forall RG STK2 lyE sp0 (W : world SEGS) mem ly' S' W' mem' HA h' ly2 S2 c O mx no cap out a,
+  astk_ok STK2 lyE sp0 ->
+  (forall a, sp0 - STK2 <= a < sp0 -> apresent (w_H W) mem a) ->
+  asrc_at B ly' S' W' mem' HA h' ->
+  (forall a, rg_s RG <= a < rg_s RG + 4 * ASRC -> ~ (HA <= a < HA + ASRC) -> abyte_kept W mem W' mem' a) ->
+  aout_at B RG ly2 S2 W' mem' c O mx no cap out ->
+  sp0 - STK2 <= a < sp0 -> inG (G_DR B RG) a -> apresent (w_H W') mem' a.
+Proof.
+intros RG STK2 lyE sp0 W mem ly' S' W' mem' HA h' ly2 S2 c O mx no cap out a Hstk Hpres Hsrc Hkept Hout Ha Hg.
+pose proof asan_consts as (C1 & _). pose proof Hstk as (_ & _ & S3 & S4 & S5 & S6 & _).
+assert (HB : alloc_ceiling <= a < 2 ^ 64) by lia.
+unfold G_DR, inG in Hg. rewrite Exists_cons in Hg. destruct Hg as [Hg|Hg].
+- unfold in_zr in Hg. cbn [fst snd] in Hg.
+  assert (KW : ~ (HA <= a < HA + ASRC) -> apresent (w_H W') mem' a).
+  { intros Hn. destruct (Hkept a Hg Hn) as (_ & Kw). unfold arm in Kw.
+    apply apresent_of_wr_x; [exact HB|]. apply Kw. apply YCbq.apresent_writable. apply Hpres. exact Ha. }
+  destruct (Z_lt_le_dec a HA) as [Hl|Hl]; [apply KW; lia|].
+  destruct (Z_lt_le_dec a (HA + ASRC)) as [Hh|Hh]; [|apply KW; lia].
+  pose proof Hsrc as (_ & _ & _ & _ & Wa & _). exact (awr_apresent_x _ _ _ _ a Wa ltac:(lia) HB).
+- exact (gsl_apresent_x _ _ _ _ _ _ _ _ _ _ _ _ Hout Hg HB).
+Qed.
+Lemma rr_G_present_x : forall RG STK2 lyE sp0 ly S (W : world SEGS) mem ly' S' W' mem' G0 FD es j h c O mx cap out a,
+  astk_ok STK2 lyE sp0 -> rg_place B RG ->
+  ((FD < 0 \/ forall e, In e es -> re_fd e <> FD) ->
+   arelay_at B RG ly' S' W' mem' G0 es /\ aout_at B RG ly' S' W' mem' c O mx (Z.of_nat (length O)) cap out /\
+   Permutation (ablocks B ly' S') (ablocks B ly S)) ->
+  (forall i, (i < length es)%nat -> 0 <= FD -> re_fd (nth i es relay_remove_b_c.no_entry) = FD ->
+   rr_found B RG ly S W mem ly' S' W' mem' G0 es i j h c O mx cap out) ->
+  sp0 - STK2 <= a < sp0 -> inG (G_RR B RG) a -> apresent (w_H W') mem' a.
+Proof.
+intros RG STK2 lyE sp0 ly S W mem ly' S' W' mem' G0 FD es j h c O mx cap out a Hstk HRGP Hnf Hf Ha Hg.
+pose proof asan_consts as (C1 & _). pose proof Hstk as (_ & _ & S3 & S4 & S5 & S6 & _).
+assert (HB : alloc_ceiling <= a < 2 ^ 64) by lia.
+pose proof HRGP as (_ & _ & _ & _ & _ & _ & RGIMG & _).
+unfold G_RR, G_DR, inG in Hg. rewrite !Exists_cons in Hg. unfold in_zr in Hg. cbn [fst snd] in Hg.
+destruct Hg as [Hg|[Hg|[Hg|Hg]]].
+- exfalso. apply (stk_noimg_x a (proj1 HB)). exact (proj1 (RGIMG a ltac:(unfold rg_rng; lia))).
+- exfalso. apply (stk_noimg_x a (proj1 HB)). exact (proj1 (RGIMG a ltac:(unfold rg_rng; lia))).
+- exfalso. apply (stk_noimg_x a (proj1 HB)). exact (proj1 (RGIMG a ltac:(unfold rg_rng; lia))).
+- destruct (Z_lt_le_dec FD 0) as [Hn|Hn].
+  { destruct (Hnf (or_introl Hn)) as (_ & HO & _). exact (gsl_apresent_x _ _ _ _ _ _ _ _ _ _ _ _ HO Hg HB). }
+  destruct (existsb (fun e => re_fd e =? FD) es) eqn:Ex.
+  + apply existsb_exists in Ex. destruct Ex as (e & Hin & He). apply Z.eqb_eq in He.
+    destruct (In_nth es e relay_remove_b_c.no_entry Hin) as (i & Hi & Hni).
+    pose proof (Hf i Hi Hn ltac:(rewrite Hni; exact He)) as HF. unfold rr_found in HF. cbv zeta in HF.
+    destruct HF as (e1 & h1 & ev & LB & c2 & O2 & cap2 & out2 & rest & _ & _ & _ & HO & _).
+    exact (gsl_apresent_x _ _ _ _ _ _ _ _ _ _ _ _ HO Hg HB).
+  + assert (HN : forall e, In e es -> re_fd e <> FD).
+    { intros e Hin He. assert (Ht : existsb (fun e => re_fd e =? FD) es = true)
+        by (apply existsb_exists; exists e; split; [exact Hin | apply Z.eqb_eq; exact He]).
+      congruence. }
+    destruct (Hnf (or_intror HN)) as (_ & HO & _). exact (gsl_apresent_x _ _ _ _ _ _ _ _ _ _ _ _ HO Hg HB).
+Qed.
+Lemma rig_G_present_x : forall RG STK2 lyE sp0 (W' : world SEGS) mem' ly2 S2 c O mx no cap out a,
+  astk_ok STK2 lyE sp0 -> rg_place B RG -> aout_at B RG ly2 S2 W' mem' c O mx no cap out ->
+  sp0 - STK2 <= a < sp0 -> inG (G_RIG B RG) a -> apresent (w_H W') mem' a.
+Proof.
+intros RG STK2 lyE sp0 W' mem' ly2 S2 c O mx no cap out a Hstk HRGP Hout Ha Hg.
+pose proof asan_consts as (C1 & _). pose proof Hstk as (_ & _ & S3 & S4 & S5 & S6 & _).
+assert (HB : alloc_ceiling <= a < 2 ^ 64) by lia.
+pose proof HRGP as (_ & _ & _ & _ & _ & _ & RGIMG & _).
+unfold G_RIG, G_DR, inG in Hg. rewrite !Exists_cons in Hg. unfold in_zr in Hg. cbn [fst snd] in Hg.
+destruct Hg as [Hg|[Hg|Hg]].
+- exfalso. apply (stk_noimg_x a (proj1 HB)). exact (proj1 (RGIMG a ltac:(unfold rg_rng; lia))).
+- exfalso. apply (stk_noimg_x a (proj1 HB)). exact (proj1 (RGIMG a ltac:(unfold rg_rng; lia))).
+- exact (gsl_apresent_x _ _ _ _ _ _ _ _ _ _ _ _ Hout Hg HB).
+Qed.
+(* the AR post gives the generic post at the larger budget, from the pre's window *)
+Lemma dr_post_x_of_AR0_stk : forall MT RG regs ly S W mem md SA HA e h c O mx no cap out kr W' c',
+  astk_ok DRAIN_STK_x ly (spZ regs) ->
+  (forall a, spZ regs - DRAIN_STK_x <= a < spZ regs -> apresent (w_H W) mem a) ->
+  dr_post B MT RG regs ly S W mem md SA HA e h c O mx no cap out W' c' ->
+  dr_post_x B [] (ARi0 SEGS B) MT RP_AR RG regs ly S [] W mem md SA HA e h c O mx no cap out kr W' c'.
+Proof.
+intros MT RG regs ly S W mem md SA HA e h c O mx no cap out kr W' c' Hstk Hpres.
+unfold dr_post, dr_post_x. cbv zeta. intros HH. hspine HH.
+match goal with Hj : context [@W_journal.ajournal_gx] |- _ =>
+  pose proof (ajournal_gx_widen_x _ _ DRAIN_STK_x _ _ _ _ _ _ _ _ _ _ _ _ _ _ Hj ltac:(unfold DRAIN_STK_x; lia)
+    Hstk Hpres) as Hw; clear Hj end.
+specialize (Hw ltac:(intros a Ha Hg; eapply dr_G_present_x;
+  [exact Hstk | exact Hpres | eassumption | eassumption | eassumption | exact Ha | exact Hg])).
+apply ajournal_gx_AR_x_ARi0 with (Hp := []) in Hw.
+gspine.
+Qed.
+Lemma rr_post_x_of_AR0_stk : forall MT RG regs ly S W mem md G0 FD es j h c O mx cap out kr W' c',
+  astk_ok RR_STK_x ly (spZ regs) ->
+  (forall a, spZ regs - RR_STK_x <= a < spZ regs -> apresent (w_H W) mem a) ->
+  rg_place B RG ->
+  rr_post B MT RG regs ly S W mem md G0 FD es j h c O mx cap out W' c' ->
+  rr_post_x B [] (ARi0 SEGS B) MT RP_AR RG regs ly S [] W mem md G0 FD es j h c O mx cap out kr W' c'.
+Proof.
+intros MT RG regs ly S W mem md G0 FD es j h c O mx cap out kr W' c' Hstk Hpres HRGP.
+unfold rr_post, rr_post_x. cbv zeta. intros HH. hspine HH.
+match goal with Hj : context [@W_journal.ajournal_gx] |- _ =>
+  pose proof (ajournal_gx_widen_x _ _ RR_STK_x _ _ _ _ _ _ _ _ _ _ _ _ _ _ Hj ltac:(unfold RR_STK_x; lia)
+    Hstk Hpres) as Hw; clear Hj end.
+specialize (Hw ltac:(intros a Ha Hg; eapply rr_G_present_x;
+  [exact Hstk | exact HRGP | eassumption | eassumption | exact Ha | exact Hg])).
+apply ajournal_gx_AR_x_ARi0 with (Hp := []) in Hw.
+gspine.
+Qed.
+Lemma rig_post_x_of_AR0_stk : forall MT RG regs ly S W mem md G0 ID es hs c O mx cap out kr W' c',
+  astk_ok RIG_STK_x ly (spZ regs) ->
+  (forall a, spZ regs - RIG_STK_x <= a < spZ regs -> apresent (w_H W) mem a) ->
+  rg_place B RG ->
+  rig_post B MT RG regs ly S W mem md G0 ID es hs c O mx cap out W' c' ->
+  rig_post_x B [] (ARi0 SEGS B) MT RP_AR RG regs ly S [] W mem md G0 ID es hs c O mx cap out kr W' c'.
+Proof.
+intros MT RG regs ly S W mem md G0 ID es hs c O mx cap out kr W' c' Hstk Hpres HRGP.
+unfold rig_post, rig_post_x. cbv zeta. intros HH. hspine HH.
+match goal with Hj : context [@W_journal.ajournal_gx] |- _ =>
+  pose proof (ajournal_gx_widen_x _ _ RIG_STK_x _ _ _ _ _ _ _ _ _ _ _ _ _ _ Hj ltac:(unfold RIG_STK_x; lia)
+    Hstk Hpres) as Hw; clear Hj end.
+specialize (Hw ltac:(intros a Ha Hg; eapply rig_G_present_x;
+  [exact Hstk | exact HRGP | eassumption | exact Ha | exact Hg])).
+apply ajournal_gx_AR_x_ARi0 with (Hp := []) in Hw.
+gspine.
+Qed.
+Lemma dr_spec_x_of_AR0 : forall MT MMAX RG pc, dr_spec B MT MMAX RG pc -> dr_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX RG pc.
+Proof.
+intros MT MMAX RG pc H W ly S Hp regs mem md ch G SA e j h c O mx no cap out.
+specialize (H W ly S regs mem md ch G SA e j h c O mx no cap out). cbv zeta in H |- *.
+intros HPRE. pose proof (proj2 (proj1 HPRE)) as EHp. subst Hp. apply afn_pre_x_ARi0_to_AR in HPRE.
+pose proof HPRE as (_ & _ & _ & _ & _ & Hstk & Hpres & _).
+specialize (H (afn_pre_lower_x DRAIN_STK _ _ _ _ _ _ _ _ HPRE
+  ltac:(unfold DRAIN_STK_x, DRAIN_STK, DRAIN_FRAME, SL_STK, SL_FRAME, ASTACK; lia))).
+go1 H.
+eapply SRr_mono; [exact H|]. cbv beta. intros W2 c2 _ HQ.
+eapply dr_post_x_of_AR0_stk; [exact Hstk | exact Hpres | exact HQ].
+Qed.
+Lemma re_spec_x_of_AR0 : forall MT MMAX G RG pc, re_spec B MT MMAX G RG pc -> re_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX G RG pc.
+Proof. intros MT MMAX G RG pc. unfold re_spec, re_spec_x. spec1 re_post_x_of_AR0. Qed.
+Lemma rr_spec_x_of_AR0 : forall MT MMAX RG CTX_AFREE pc,
+  rr_spec B MT MMAX RG CTX_AFREE pc -> rr_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX RG CTX_AFREE pc.
+Proof.
+intros MT MMAX RG CTX_AFREE pc H W ly S Hp regs mem md ch G0 FD es j h c O mx cap out.
+specialize (H W ly S regs mem md ch G0 FD es j h c O mx cap out). cbv zeta in H |- *.
+intros HPRE. pose proof (proj2 (proj1 HPRE)) as EHp. subst Hp. apply afn_pre_x_ARi0_to_AR in HPRE.
+pose proof HPRE as (_ & _ & _ & _ & _ & Hstk & Hpres & _).
+specialize (H (afn_pre_lower_x RR_STK _ _ _ _ _ _ _ _ HPRE
+  ltac:(unfold RR_STK_x, RR_STK, RR_FRAME, DRAIN_STK, DRAIN_FRAME, SL_STK, SL_FRAME, ASTACK; lia))).
+go1 H.
+eapply SRr_mono; [exact H|]. cbv beta. intros W2 c2 _ HQ.
+eapply rr_post_x_of_AR0_stk; [exact Hstk | exact Hpres | eassumption | exact HQ].
+Qed.
+Lemma rig_spec_x_of_AR0 : forall MT MMAX RG CTX_AFREE pc,
+  rig_spec B MT MMAX RG CTX_AFREE pc -> rig_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX RG CTX_AFREE pc.
+Proof.
+intros MT MMAX RG CTX_AFREE pc H W ly S Hp regs mem md ch G0 ID es hs c O mx cap out.
+specialize (H W ly S regs mem md ch G0 ID es hs c O mx cap out). cbv zeta in H |- *.
+intros HPRE. pose proof (proj2 (proj1 HPRE)) as EHp. subst Hp. apply afn_pre_x_ARi0_to_AR in HPRE.
+pose proof HPRE as (_ & _ & _ & _ & _ & Hstk & Hpres & _).
+specialize (H (afn_pre_lower_x RIG_STK _ _ _ _ _ _ _ _ HPRE
+  ltac:(unfold RIG_STK_x, RIG_STK, RIG_FRAME, DRAIN_STK, DRAIN_FRAME, SL_STK, SL_FRAME, ASTACK; lia))).
+go1 H.
+eapply SRr_mono; [exact H|]. cbv beta. intros W2 c2 _ HQ.
+eapply rig_post_x_of_AR0_stk; [exact Hstk | exact Hpres | eassumption | exact HQ].
+Qed.
+Lemma rf_spec_x_of_AR0 : forall MT MMAX G RG GTU GL CTX pc, rf_spec B MT MMAX G RG GTU GL CTX pc -> rf_spec_x B [] (ARi0 SEGS B) MT RP_AR MMAX G RG GTU GL CTX pc.
+Proof. intros MT MMAX G RG GTU GL CTX pc. unfold rf_spec, rf_spec_x. spec1 rf_post_x_of_AR0. Qed.
+Lemma cshe_spec_x_of_AR0 : forall MT G pc, cshe_spec B MT G pc -> cshe_spec_x B [] (ARi0 SEGS B) MT RP_AR G pc.
+Proof. intros MT G pc. unfold cshe_spec, cshe_spec_x. spec1 cshe_post_x_of_AR0. Qed.
+Lemma cnl_spec_x_of_AR0 : forall MT G MMAX pc, cnl_spec B MT G MMAX pc -> cnl_spec_x B [] (ARi0 SEGS B) MT RP_AR G MMAX pc.
+Proof. intros MT G MMAX pc. unfold cnl_spec, cnl_spec_x. spec1 cnl_post_x_of_AR0. Qed.
+Lemma cb_spec_x_of_AR0 : forall pc, cb_spec B pc -> cb_spec_x B [] (ARi0 SEGS B) pc.
+Proof. intros pc. unfold cb_spec, cb_spec_x. spec1 aleafx_post_x_of_AR0. Qed.
+Lemma gm_spec_g_x_of_AR0 : forall MT MMAX pc, gm_spec_g B MT MMAX pc -> gm_spec_g_x B [] (ARi0 SEGS B) MT RP_AR MMAX pc.
+Proof. intros MT MMAX pc. unfold gm_spec_g, gm_spec_g_x. intros H G H1 H2 H3. apply gm_spec_x_of_AR0. exact (H G H1 H2 H3). Qed.
+Lemma lfind_spec_g_x_of_AR0 : forall pc, lfind_spec_g B pc -> lfind_spec_g_x B [] (ARi0 SEGS B) pc.
+Proof. intros pc. unfold lfind_spec_g, lfind_spec_g_x. intros H G H1 H2. apply lfind_spec_x_of_AR0. exact (H G H1 H2). Qed.
+Lemma lp_spec_g_x_of_AR0 : forall MT MMAX pc, lp_spec_g B MT MMAX pc -> lp_spec_g_x B [] (ARi0 SEGS B) MT RP_AR MMAX pc.
+Proof. intros MT MMAX pc. unfold lp_spec_g, lp_spec_g_x. intros H G H1 H2. apply lp_spec_x_of_AR0. exact (H G H1 H2). Qed.
+Lemma astrlen_realizes_x_of_AR0 : forall pc, astrlen_realizes B pc -> astrlen_realizes_x B (ARi0 SEGS B) pc.
+Proof.
+intros pc H ly S Hp W regs mem md x k HPRE. intros.
+pose proof (proj2 (proj1 HPRE)) as EHp. subst Hp.
+eapply SRr_mono.
+{ apply (H ly S W regs mem md x k (ecall_pre_of_x_ARi0 ly S [] W regs mem md HPRE)); assumption. }
+cbv beta. intros W2 c2 _ (E & regs2 & mem2 & md2 & Ec & HAR & R). split; [exact E|]. exists regs2, mem2, md2.
+split; [exact Ec|]. split; [exact (conj HAR eq_refl) | exact R].
+Qed.
+End br0.

@@ -1,0 +1,12 @@
+B/YD3a.v:37: From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import AWalkFw0 YF0m YF0x YB1w.  ->  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB1v YF0m YF0x YB1w.
+B/YD3a.v:226: From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import AWalkFw0 YF0l YF0m YF0x YFl0 YB1q YB1w YB1h YFel YFeq YFl3.  ->  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB1v YF0l YF0m YF0x YFl0 YB1q YB1w YB1h YFel YFeq YFl3.
+B/YD3b.v:41: From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import AWalkFw0 YF0m YF0x YB1w.  ->  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB1v YF0m YF0x YB1w.
+B/YD3c.v:49: From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import AWalkFw0 YB1q YB1w YF0m YF0x YFl0 YFek YFel YFl3.  ->  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB1v YB1q YB1w YF0m YF0x YFl0 YFek YFel YFl3.
+B/YD3d.v:13: From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import AWalkFw0 YB1w.  ->  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB1v YB1w.
+B/YD3g.v:35: From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import AWalkFw0 YF0m YF0x YB1w.  ->  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB1v YF0m YF0x YB1w.
+B/YD3h.v:18: From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import AWalkFw0 YF0x YB1w.  ->  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB1v YF0x YB1w.
+B/YD3i.v:65: From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import AWalkFw0.  ->  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB1v.
+B/YD3j.v:156: From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import AWalkFw0 YF0m YF0x YB1w YFl0.  ->  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB1v YF0m YF0x YB1w YFl0.
+B/YD3k.v:76: From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import AWalkFw0 YB1q YB1h YB1w YF0l YF0m YF0x YFl0 YFl3 YFek YFel.  ->  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB1v YB1q YB1h YB1w YF0l YF0m YF0x YFl0 YFl3 YFek YFel.
+B/YFk0g.v:17: From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import AWalkFw0 YF0m YF0x YB1w YFl0.  ->  From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YB1v YF0m YF0x YB1w YFl0.
+closure_awalk: 11 Require line(s) changed

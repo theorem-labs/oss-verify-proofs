@@ -1,0 +1,146 @@
+# lui + lui -> one base: the 8 functions the records compare, in all 4 images (donor twin, symtwin, decode A twin, decode B twin)
+# cmpkit 86da41d3ef68; python 3.12.3, pyelftools 0.33, capstone 5.0.7; luicomb.py 69fe2b13fadd, plantlui.py 1352999653f1, luicomb-run.sh 2826820888ff
+# image img/unstripped/cgif_file_fuzzer.asan-ubsan sha256 ce511d541cda
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x16c	lh a0, 0x629(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x188	lh a0, 0x62b(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x21c	ld a0, 0x621(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x25c	ld a2, 0x621(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2c8	lbu a0, -0xf(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2e0	sb a0, -0xf(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2e4	sh a1, -0xe(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2e8	sw s1, -0xc(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x300	sb a0, 1(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x308	ld a0, 0(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x328	lr.w.aq a4, (a2)	base a2	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	amo
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x33c	sc.w a5, a5, (a2)	base a2	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	amo
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x368	sb zero, 0x3d8(s6)	base s6	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x3b8	sd a0, 8(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x3dc	ld a0, 0x20(s6)	base s6	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x418	ld a0, 0x40(s6)	base s6	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x548	sb a1, 0(a0)	base a0	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x698	ld a1, 0(a0)	base a0	luis 6 [+0x15c +0x174 +0x5b8 +0x5bc +0x5c0 +0x5c4]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x6a0	sd a1, 0(a0)	base a0	luis 6 [+0x15c +0x174 +0x5b8 +0x5bc +0x5c0 +0x5c4]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x6e4	lbu a1, 1(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x6fc	sb a0, 1(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x704	sb a1, 0(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+TOTAL	cgif_file_fuzzer.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	bases with >=2 lui 22	bases with 1 lui 0	base sites 91
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1ac	lw a2, 0(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1c0	sw a2, 0(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	store
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1c8	ld a2, 8(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1d4	lwu a4, 0x10(a4)	base a4	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x2b4	lw a2, 0(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+TOTAL	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	bases with >=2 lui 5	bases with 1 lui 0	base sites 21
+TOTAL	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEEE6RefillEPNS7_8PerClassEPS6_m	bases with >=2 lui 0	bases with 1 lui 0	base sites 11
+TOTAL	cgif_file_fuzzer.asan-ubsan	_ZN6__asan12PoisonShadowEmmh	bases with >=2 lui 0	bases with 1 lui 0	base sites 66
+TOTAL	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer13internal_mmapEPvmiiiy	bases with >=2 lui 0	bases with 1 lui 0	base sites 0
+TOTAL	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	bases with >=2 lui 0	bases with 1 lui 0	base sites 0
+TOTAL	cgif_file_fuzzer.asan-ubsan	memset	bases with >=2 lui 0	bases with 1 lui 0	base sites 26
+TOTAL	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer9TryMemCpyEPvPKvm	bases with >=2 lui 0	bases with 1 lui 0	base sites 27
+# image img/unstripped/cgif_file_fuzzer.asan-ubsan.symtwin sha256 3f110c1db582
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x16c	lh a0, 0x629(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x188	lh a0, 0x62b(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x21c	ld a0, 0x621(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x25c	ld a2, 0x621(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2c8	lbu a0, -0xf(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2e0	sb a0, -0xf(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2e4	sh a1, -0xe(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2e8	sw s1, -0xc(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x300	sb a0, 1(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x308	ld a0, 0(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x328	lr.w.aq a4, (a2)	base a2	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	amo
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x33c	sc.w a5, a5, (a2)	base a2	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	amo
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x368	sb zero, 0x3d8(s6)	base s6	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x3b8	sd a0, 8(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x3dc	ld a0, 0x20(s6)	base s6	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x418	ld a0, 0x40(s6)	base s6	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x548	sb a1, 0(a0)	base a0	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x698	ld a1, 0(a0)	base a0	luis 6 [+0x15c +0x174 +0x5b8 +0x5bc +0x5c0 +0x5c4]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x6a0	sd a1, 0(a0)	base a0	luis 6 [+0x15c +0x174 +0x5b8 +0x5bc +0x5c0 +0x5c4]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x6e4	lbu a1, 1(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x6fc	sb a0, 1(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x704	sb a1, 0(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+TOTAL	cgif_file_fuzzer.asan-ubsan.symtwin	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	bases with >=2 lui 22	bases with 1 lui 0	base sites 91
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1ac	lw a2, 0(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1c0	sw a2, 0(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	store
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1c8	ld a2, 8(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1d4	lwu a4, 0x10(a4)	base a4	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x2b4	lw a2, 0(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+TOTAL	cgif_file_fuzzer.asan-ubsan.symtwin	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	bases with >=2 lui 5	bases with 1 lui 0	base sites 21
+TOTAL	cgif_file_fuzzer.asan-ubsan.symtwin	_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEEE6RefillEPNS7_8PerClassEPS6_m	bases with >=2 lui 0	bases with 1 lui 0	base sites 11
+TOTAL	cgif_file_fuzzer.asan-ubsan.symtwin	_ZN6__asan12PoisonShadowEmmh	bases with >=2 lui 0	bases with 1 lui 0	base sites 66
+TOTAL	cgif_file_fuzzer.asan-ubsan.symtwin	_ZN11__sanitizer13internal_mmapEPvmiiiy	bases with >=2 lui 0	bases with 1 lui 0	base sites 0
+TOTAL	cgif_file_fuzzer.asan-ubsan.symtwin	_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	bases with >=2 lui 0	bases with 1 lui 0	base sites 0
+TOTAL	cgif_file_fuzzer.asan-ubsan.symtwin	memset	bases with >=2 lui 0	bases with 1 lui 0	base sites 26
+TOTAL	cgif_file_fuzzer.asan-ubsan.symtwin	_ZN11__sanitizer9TryMemCpyEPvPKvm	bases with >=2 lui 0	bases with 1 lui 0	base sites 27
+# image img/unstripped/fuzz_decode.asan sha256 4cb0a852e826
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x16c	lh a0, 0x629(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x188	lh a0, 0x62b(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x21c	ld a0, 0x621(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x25c	ld a2, 0x621(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2c8	lbu a0, -0xf(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2e0	sb a0, -0xf(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2e4	sh a1, -0xe(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2e8	sw s1, -0xc(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x300	sb a0, 1(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x308	ld a0, 0(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x328	lr.w.aq a4, (a2)	base a2	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	amo
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x33c	sc.w a5, a5, (a2)	base a2	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	amo
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x368	sb zero, 0x3d8(s6)	base s6	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x3b8	sd a0, 8(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x3dc	ld a0, 0x20(s6)	base s6	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x418	ld a0, 0x40(s6)	base s6	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x548	sb a1, 0(a0)	base a0	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x698	ld a1, 0(a0)	base a0	luis 6 [+0x15c +0x174 +0x5b8 +0x5bc +0x5c0 +0x5c4]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x6a0	sd a1, 0(a0)	base a0	luis 6 [+0x15c +0x174 +0x5b8 +0x5bc +0x5c0 +0x5c4]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x6e4	lbu a1, 1(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x6fc	sb a0, 1(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x704	sb a1, 0(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+TOTAL	fuzz_decode.asan	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	bases with >=2 lui 22	bases with 1 lui 0	base sites 91
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1ac	lw a2, 0(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1c0	sw a2, 0(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	store
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1c8	ld a2, 8(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1d4	lwu a4, 0x10(a4)	base a4	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x2b4	lw a2, 0(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+TOTAL	fuzz_decode.asan	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	bases with >=2 lui 5	bases with 1 lui 0	base sites 21
+TOTAL	fuzz_decode.asan	_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEEE6RefillEPNS7_8PerClassEPS6_m	bases with >=2 lui 0	bases with 1 lui 0	base sites 11
+TOTAL	fuzz_decode.asan	_ZN6__asan12PoisonShadowEmmh	bases with >=2 lui 0	bases with 1 lui 0	base sites 66
+TOTAL	fuzz_decode.asan	_ZN11__sanitizer13internal_mmapEPvmiiiy	bases with >=2 lui 0	bases with 1 lui 0	base sites 0
+TOTAL	fuzz_decode.asan	_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	bases with >=2 lui 0	bases with 1 lui 0	base sites 0
+TOTAL	fuzz_decode.asan	memset	bases with >=2 lui 0	bases with 1 lui 0	base sites 26
+TOTAL	fuzz_decode.asan	_ZN11__sanitizer9TryMemCpyEPvPKvm	bases with >=2 lui 0	bases with 1 lui 0	base sites 27
+# image img/unstripped/fuzz_decode.asan-ubsan sha256 6744989bb2e6
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x16c	lh a0, 0x629(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x188	lh a0, 0x62b(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x21c	ld a0, 0x621(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x25c	ld a2, 0x621(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2c8	lbu a0, -0xf(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2e0	sb a0, -0xf(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2e4	sh a1, -0xe(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x2e8	sw s1, -0xc(s4)	base s4	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x300	sb a0, 1(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x308	ld a0, 0(s10)	base s10	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x328	lr.w.aq a4, (a2)	base a2	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	amo
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x33c	sc.w a5, a5, (a2)	base a2	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	amo
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x368	sb zero, 0x3d8(s6)	base s6	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x3b8	sd a0, 8(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x3dc	ld a0, 0x20(s6)	base s6	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x418	ld a0, 0x40(s6)	base s6	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x548	sb a1, 0(a0)	base a0	luis 3 [+0x15c +0x174 +0x498]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x698	ld a1, 0(a0)	base a0	luis 6 [+0x15c +0x174 +0x5b8 +0x5bc +0x5c0 +0x5c4]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x6a0	sd a1, 0(a0)	base a0	luis 6 [+0x15c +0x174 +0x5b8 +0x5bc +0x5c0 +0x5c4]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x6e4	lbu a1, 1(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	load
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x6fc	sb a0, 1(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+SITE	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	+0x704	sb a1, 0(s5)	base s5	luis 2 [+0x15c +0x174]	value unknown	ea -	store
+TOTAL	fuzz_decode.asan-ubsan	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	bases with >=2 lui 22	bases with 1 lui 0	base sites 91
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1ac	lw a2, 0(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1c0	sw a2, 0(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	store
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1c8	ld a2, 8(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x1d4	lwu a4, 0x10(a4)	base a4	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+SITE	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	+0x2b4	lw a2, 0(s1)	base s1	luis 4 [+0xbc +0xc0 +0xc4 +0xc8]	value unknown	ea -	load
+TOTAL	fuzz_decode.asan-ubsan	_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEENS_33LargeMmapAllocatorPtrArrayDynamicEE8AllocateEPNS_30SizeClassAllocator64LocalCacheIS6_EEmm	bases with >=2 lui 5	bases with 1 lui 0	base sites 21
+TOTAL	fuzz_decode.asan-ubsan	_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEEE6RefillEPNS7_8PerClassEPS6_m	bases with >=2 lui 0	bases with 1 lui 0	base sites 11
+TOTAL	fuzz_decode.asan-ubsan	_ZN6__asan12PoisonShadowEmmh	bases with >=2 lui 0	bases with 1 lui 0	base sites 66
+TOTAL	fuzz_decode.asan-ubsan	_ZN11__sanitizer13internal_mmapEPvmiiiy	bases with >=2 lui 0	bases with 1 lui 0	base sites 0
+TOTAL	fuzz_decode.asan-ubsan	_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	bases with >=2 lui 0	bases with 1 lui 0	base sites 0
+TOTAL	fuzz_decode.asan-ubsan	memset	bases with >=2 lui 0	bases with 1 lui 0	base sites 26
+TOTAL	fuzz_decode.asan-ubsan	_ZN11__sanitizer9TryMemCpyEPvPKvm	bases with >=2 lui 0	bases with 1 lui 0	base sites 27

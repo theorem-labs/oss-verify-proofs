@@ -1,0 +1,5 @@
+# files paired 5; numerals 2350; "kernel" = of those, inside a fail-loud vm_compute / fetch_word fact
+UNPAIRED-PORTED	4	FLAG
+UNPAIRED-SOURCE	4	kernel 4	FLAG
+UNRESOLVED	2	kernel 2	FLAG
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)

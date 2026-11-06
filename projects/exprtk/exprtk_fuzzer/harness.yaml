@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: exprtk
 harness: exprtk_fuzzer
-rocq: OssFuzzTheorems.exprtk.exprtk_fuzzer
+rocq: OSSVerify.exprtk.exprtk_fuzzer
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

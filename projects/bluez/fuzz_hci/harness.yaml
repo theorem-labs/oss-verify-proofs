@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: bluez
 harness: fuzz_hci
-rocq: OssFuzzTheorems.bluez.fuzz_hci
+rocq: OSSVerify.bluez.fuzz_hci
 origin: oss-fuzz
 summary: Copies up to 8 input bytes into a NUL-terminated buffer that nothing reads (the lmp_featurestostr
   and hci_commandstostr calls are commented out), then calls bt_compidtostr on a 16-bit id and ignores

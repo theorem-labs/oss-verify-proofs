@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nanopb
 harness: fuzztest_io_errors
-rocq: OssFuzzTheorems.nanopb.fuzztest_io_errors
+rocq: OSSVerify.nanopb.fuzztest_io_errors
 origin: upstream
 summary: 'Checks 7 properties (listed below); the first, an API contract: if the first pb_decode succeeded,
   the roundtrip decode must succeed, the re-encode must succeed unless the only error is "stream full",

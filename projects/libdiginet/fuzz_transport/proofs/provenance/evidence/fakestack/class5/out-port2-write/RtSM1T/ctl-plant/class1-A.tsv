@@ -1,0 +1,14 @@
+file	donor_range	words	function	offset	paired_by	target_range	donor_fn	target_fn	fn_bytes	verdict	pcrel	real	unmeasured	targets_differ	whole_fn (pcrel, real, unmeasured) differ	note
+RtSM1T	0x3f908	93	__asan_stack_malloc_0	+0x0	name	0x3d698	0x3f908	0x3d698	372	EQUAL-mod-pcrel	6	0	0	0	EQUAL-mod-pcrel (6, 0, 0) 0	
+RtSM1T	0x3fa7c	100	__asan_stack_malloc_1	+0x0	name	0x3d80c	0x3fa7c	0x3d80c	400	DIFFERENT	6	1	0	0	DIFFERENT (6, 1, 0) 0	
+RtSM1T	0x3fdb8	115	__asan_stack_malloc_4	+0x0	name	0x3db38	0x3fdb8	0x3db38	460	EQUAL-mod-pcrel	7	0	0	0	EQUAL-mod-pcrel (7, 0, 0) 0	
+RtSM1T	0x3ff84	131	__asan_stack_malloc_5	+0x0	name	0x3dd04	0x3ff84	0x3dd04	524	EQUAL-mod-pcrel	7	0	0	0	EQUAL-mod-pcrel (7, 0, 0) 0	
+RtSM1T	0x67b00	2	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE	+0x358	name	0x62880	0x677a8	0x62528	4772	EQUAL	0	0	0	0	EQUAL-mod-pcrel (370, 0, 0) 1	function: 0x1218 data-differs
+RtSM1T	0x4b040	31	__interceptor___tls_get_addr	+0x0	name	0x47660	0x4b040	0x47660	124	EQUAL-mod-pcrel	5	0	0	0	EQUAL-mod-pcrel (5, 0, 0) 0	
+RtSM1T	0x9fbb8	9	__tls_get_addr	+0x0	name	0x9de04	0x9fbb8	0x9de04	36	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+RtSM1T	0x61e40	8	_ZN6__asan16GetCurrentThreadEv	+0x0	name	0x5cbc0	0x61e40	0x5cbc0	32	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+RtSM1T	0x5a98c	6	_ZN6__asan10AsanTSDGetEv	+0x0	name	0x5570c	0x5a98c	0x5570c	64	EQUAL-mod-pcrel	3	0	0	0	EQUAL-mod-pcrel (7, 0, 0) 0	
+RtSM1T	0xa0c6c	7	__pthread_getspecific	+0x0	name	0x9eeb8	0xa0c6c	0x9eeb8	28	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+RtSM1T	0x6f554	140	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	+0x0	name	0x6a2d4	0x6f554	0x6a2d4	848	EQUAL-mod-pcrel	18	0	0	0	EQUAL-mod-pcrel (32, 0, 0) 0	
+RtSM1T	0x40410	28	_ZN6__asanL11MemToShadowEm	+0x0	call	0x3dfc4	0x40410	0x3dfc4	316	EQUAL-mod-pcrel	4	0	0	1	EQUAL-mod-pcrel (10, 0, 0) 0	range: 0x6c unmeasured
+RtSM1T	0x59824	233	_ZN6__asan12PoisonShadowEmmh	+0x0	name	0x545a4	0x59824	0x545a4	1276	EQUAL-mod-pcrel	31	0	0	1	EQUAL-mod-pcrel (54, 0, 0) 0	range: 0x3a0 unmeasured

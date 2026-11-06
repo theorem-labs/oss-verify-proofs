@@ -1,0 +1,45 @@
+# cb build of the image-A F rows (S11 step 3): `MEM=24g JOBS=12 cb build <the S11 clone>` of the seven
+# walk files and the four cg statement files, at clone HEAD c192374cbe73 (the merge of 53717b3a628c) + the seven walk
+# files (committed with this file). Log build-20261031T063242Z.log, sha256
+# bf85ce9753cb5cdd823efdbb11499b5c77135600396c72f9a5da76b576516646; its count, pin, target and timing lines:
+
+cb-cache: mode=dune source=default dir=<the VM's dune cache> targets=11 compiled=11 from_cache=0 missing=0 failed=0 inconsistent=0
+cb: pins of libdiginet/fuzz_transport: each file of the workspace's projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts f6acfcb0c1b8 (facts of base f6acfcb0c1, BASE.tsv)
+cb: pin libdiginet/fuzz_transport fuzz_transport.asan e89be137db17 PINNED (asan pins e89be137db17 at facts f6acfcb0c1b8)
+cb: pin libdiginet/fuzz_transport fuzz_transport.asan-ubsan 41113a03c82f PINNED (asan-ubsan pins 41113a03c82f at facts f6acfcb0c1b8)
+cb: pin libdiginet/fuzz_transport fuzz_transport.plain bb20ce415827 PINNED (plain pins bb20ce415827 at facts f6acfcb0c1b8)
+cb: pin libdiginet/fuzz_transport fuzz_transport.ubsan af7b86991906 PINNED (ubsan pins af7b86991906 at facts f6acfcb0c1b8)
+cb: pins libdiginet/fuzz_transport at facts f6acfcb0c1b8: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts f6acfcb0c1b8
+cb-dune: vo check: 63 .vo read, 390 Require digests compared with this build's .vo, 359 with the checker image's .vo (22 of its libraries read under the checker image's COQLIB 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable), 0.0 s
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_mac_is_digidesign_F.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_mac_is_digidesign.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_mac_is_digidesign_cg.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_is_keepalive_F.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_is_keepalive.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_is_keepalive_cg.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_announce_parse_F.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_announce_parse.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_announce_parse_cg.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_cursor_init_F.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_cursor_init_cg.vo compiled
+cb: dune: 11 targets: 11 compiled, 0 restored from the cache, 0 missing; 0 failed compiles; 12 more compiled (dependencies outside the targets); 0 inconsistent .vo (vo check)
+rc=0 wall=49
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_mac_is_digidesign_c.vo (real: 0.63, user: 0.39, sys: 0.24, mem: 442108 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_is_keepalive_c.vo (real: 0.64, user: 0.41, sys: 0.23, mem: 451236 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_mac_is_digidesign_F_c.vo (real: 0.63, user: 0.43, sys: 0.20, mem: 445872 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_is_keepalive_F_c.vo (real: 0.64, user: 0.43, sys: 0.21, mem: 464288 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_cursor_init_c.vo (real: 0.66, user: 0.41, sys: 0.25, mem: 451132 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_announce_parse_c.vo (real: 0.68, user: 0.44, sys: 0.24, mem: 472212 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_mac_is_digidesign_cg.vo (real: 0.88, user: 0.61, sys: 0.27, mem: 533368 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_is_keepalive_cg.vo (real: 0.88, user: 0.61, sys: 0.26, mem: 533284 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_cursor_init_F_c.vo (real: 0.62, user: 0.44, sys: 0.18, mem: 453484 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_announce_parse_F_c.vo (real: 0.64, user: 0.43, sys: 0.21, mem: 487144 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_cursor_init_cg.vo (real: 1.04, user: 0.78, sys: 0.26, mem: 537724 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_announce_parse_cg.vo (real: 1.29, user: 1.03, sys: 0.26, mem: 540164 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_cursor_init_F.vo (real: 12.74, user: 12.44, sys: 0.31, mem: 708356 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_is_keepalive_F.vo (real: 21.53, user: 21.15, sys: 0.37, mem: 890272 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_frame_is_keepalive.vo (real: 1.18, user: 0.96, sys: 0.23, mem: 536064 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_mac_is_digidesign_F.vo (real: 31.36, user: 30.91, sys: 0.45, mem: 993700 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_mac_is_digidesign.vo (real: 0.79, user: 0.55, sys: 0.23, mem: 533376 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_announce_parse_F.vo (real: 40.33, user: 39.89, sys: 0.44, mem: 903508 ko)
+proofs/libdiginet/fuzz_transport/lib/A/Prog/diginet_announce_parse.vo (real: 1.15, user: 0.95, sys: 0.20, mem: 535336 ko)

@@ -1,11 +1,14 @@
 """oft revisions: each statement against the previous release, both fingerprinted by today's tools."""
+import contextlib
 import io
 import os
 import shutil
 import unittest
 from unittest import mock
 
-from oft import facts, revisions, shapes
+import yaml
+
+from oft import facts, revisions, shapes, yamlio
 from oft.tests.helpers import recount, tree
 
 HARNESS = "projects/zlib/checksum_fuzzer/harness.yaml"
@@ -76,6 +79,38 @@ def rebuild(t, sha, revision, names=UBSAN):
         y["statements"][name]["revision"] = revision
     t.put_yaml(HARNESS, y)
     assert t.generate() == 0, t.last_output
+
+
+HARNESSES = (HARNESS, "projects/zlib/api-driver/harness.yaml", "projects/json/fuzzer-parse_bjdata/harness.yaml")
+SHAPES_CODE = "\nDefinition a_new_definition := 0.\n"   # a change to the code of Shapes.v: every fingerprint moves
+
+
+def block(t, rels=HARNESSES):
+    """Write each harness.yaml of rels in block style, as every harness.yaml of the repository is (the fixture's are in
+    flow style)."""
+    for rel in rels:
+        t.put_yaml(rel, t.yaml(rel))
+
+
+def with_revisions(data, revisions_by_name):
+    """data, a harness.yaml's, with each named statement's revision set, right after its status, or no revision for
+    revision 1."""
+    for name, revision in revisions_by_name.items():
+        st = {}
+        for k, v in data["statements"][name].items():
+            if k != "revision":
+                st[k] = v
+            if k == "status" and revision != 1:
+                st["revision"] = revision
+        data["statements"][name] = st
+    return data
+
+
+def new_model(t):
+    """Give t another LPS commit: every statement's meaning may have changed, and no fingerprint did."""
+    r = t.yaml("release.yaml")
+    r["semantics"]["commit"] = "0" * 40
+    t.put_yaml("release.yaml", r)
 
 
 class Revisions(unittest.TestCase):
@@ -302,7 +337,7 @@ class Revisions(unittest.TestCase):
         self.assertIn("nothing compared", out)
 
     def test_two_releases_of_one_day_are_named_newest_first_and_compared_with_the_newest(self):
-        """internal #80's final review, finding 8.  rc.1 and rc.2 are of one day, rc.2 changed the meaning of the ubsan
+        """rc.1 and rc.2 are of one day, rc.2 changed the meaning of the ubsan
         statements (revision 2), the release after them held them back, and this tree changes their meaning again but
         keeps revision 2.  Named newest first, they are compared with rc.2 and need revision 3; named oldest first, or
         the same release twice, nothing is compared."""
@@ -330,6 +365,313 @@ class Revisions(unittest.TestCase):
         self.assertEqual((rc, rows), (1, {}))
         self.assertIn("error: previous: " + HARNESS, out)
         self.assertIn("nothing compared", out)
+
+    def test_write_revisions_sets_the_expected_revision(self):
+        """A statement whose meaning changed goes from revision 1 to 2, whether its fingerprint changed (a rebuild) or
+        the model did (a new LPS commit); a statement whose meaning is the same goes back to its previous revision,
+        here 1, which is no `revision:` line; a new statement stays at revision 1 with no line.  Nothing else in
+        harness.yaml changes."""
+        new = "zlib/checksum_fuzzer/asan_ubsan_halts"
+        for case in ("changed", "model-changed"):
+            with self.subTest(case=case), tree() as prev, tree() as cur:
+                y = prev.yaml(HARNESS)
+                del y["statements"][new.rsplit("/", 1)[1]]
+                prev.put_yaml(HARNESS, y)
+                self.assertEqual(prev.generate(), 0, prev.last_output)
+                block(cur)
+                y = cur.yaml(HARNESS)
+                y["statements"]["plain_halts"]["revision"] = 2
+                if case == "changed":
+                    y["builds"]["ubsan"]["sha256"] = "0" * 63 + "a"
+                else:
+                    new_model(cur)
+                cur.put_yaml(HARNESS, y)
+                self.assertEqual(cur.generate(), 0, cur.last_output)
+                before = {rel: cur.yaml(rel) for rel in HARNESSES}
+                rc, out, rows = run(cur, prev, write_revisions=True)
+                self.assertEqual(rc, 0, out)
+                bumped = sorted(k for k, r in rows.items() if r[3] == case)
+                want = {sid: 2 for sid in bumped}
+                if case == "changed":
+                    self.assertEqual(bumped, ["zlib/checksum_fuzzer/" + n for n in sorted(UBSAN)])
+                    self.assertEqual(rows[PROVED][:4], ["1", "2", "1", "same"])
+                    self.assertIn("written: %s: revision 1, was 2: its meaning is the same as in the previous release"
+                                  % PROVED, out)
+                    want[PROVED] = 1
+                else:
+                    self.assertEqual(sorted(k for k, r in rows.items() if r[3] not in (case, "new")), [WITHHELD])
+                    self.assertEqual(rows[PROVED][:4], ["1", "2", "2", "model-changed"])
+                self.assertEqual(rows[new][:4], ["-", "1", "1", "new"])
+                written = [sid for sid, r in want.items() if rows[sid][1] != str(r)]
+                self.assertIn("%d with a wrong revision" % len(written), out)
+                self.assertIn("%d revisions written" % len(written), out)
+                for rel in HARNESSES:
+                    names = {sid.rsplit("/", 1)[1]: r for sid, r in want.items()
+                             if rel == "projects/%s/harness.yaml" % sid.rsplit("/", 1)[0]}
+                    self.assertEqual(raw(cur, rel), yamlio.dump(with_revisions(before[rel], names)), rel)
+                rc, out, _rows = run(cur, prev)
+                self.assertEqual(rc, 0, out)
+                self.assertIn("0 with a wrong revision", out)
+                # without --write-revisions the summary line ends as it did before the flag existed
+                self.assertTrue(out.splitlines()[-1].endswith("pins to rewrite (--write-pins)"), out)
+
+    def test_write_revisions_never_lowers_a_new_statement_s_revision(self):
+        """Review of #429 by the CI/CD lead, N1.  A statement released at revision 2, held back by the previous release
+        and back here at revision 2, is new unless --earlier names the release that has it: --write-revisions does
+        not write it down to 1, it writes nothing and fails, and with that release named the statement is the same."""
+        sid = "zlib/checksum_fuzzer/ubsan_halts"
+        with tree() as older, tree() as prev, tree() as cur:
+            dated(older, "2026.10.0", "2026-10-01")
+            rebuild(older, "0" * 63 + "a", 2)
+            hold_back(prev)
+            rebuild(cur, "0" * 63 + "a", 2)
+            before = {rel: raw(cur, rel) for rel in HARNESSES}
+            rc, out, rows = run(cur, prev, write_revisions=True)
+            self.assertEqual(rc, 1, out)
+            self.assertEqual(rows[sid][1:4], ["2", "1", "new"])
+            self.assertIn("error: %s: revision 2, expected 1: it is new" % sid, out)
+            self.assertIn("error: zlib/checksum_fuzzer/ubsan_agrees: revision 2, and it is new (and 2 more new "
+                          "statements like it): --write-revisions never lowers a new statement's revision; if a "
+                          "release before the previous one has it, name that release with --earlier; if no release "
+                          "has it, remove its revision: line: no revision written", out)
+            self.assertNotIn("written: ", out)
+            self.assertEqual({rel: raw(cur, rel) for rel in HARNESSES}, before)
+            rc, out, rows = run(cur, prev, earlier=[older.root], write_revisions=True)
+            self.assertEqual(rc, 0, out)
+            self.assertEqual(rows[sid][:4], ["2", "2", "2", "same"])
+            self.assertIn("0 revisions written", out)
+
+    def test_write_revisions_says_to_render_again_as_the_tree_s_own_tools_do(self):
+        """Review of #429 by the CI/CD lead, N2.  index/statements.tsv lists each revision, so after a write the run
+        names the render that comes next: with --skip-shared when the tree's own tools offer it (the shared
+        files are rendered after the merge), read as port-branch reads it (port.offers_skip_shared; review of #438): an
+        option line of their `generate --help`, not the flag named in prose.  Nothing written, nothing to render."""
+        usage = "usage: oft generate [-h] [--check]%s\n\noptions:\n  -h, --help     show this help message and exit\n"
+        helps = (("no tools", None, "./oft generate"),
+                 ("an option line", usage % " [--skip-shared]" + "  --check        compare instead of writing\n"
+                  "  --skip-shared  leave the shared generated files to the line's render\n",
+                  "./oft generate --skip-shared"),
+                 ("prose only", usage % "" + "  --check        compare instead of writing (--skip-shared is not "
+                  "taken here)\n", "./oft generate"))
+        for name, help_text, command in helps:
+            with self.subTest(name), tree() as prev, tree() as cur:
+                y = cur.yaml(HARNESS)
+                y["builds"]["ubsan"]["sha256"] = "0" * 63 + "a"
+                cur.put_yaml(HARNESS, y)
+                self.assertEqual(cur.generate(), 0, cur.last_output)
+                if help_text is not None:
+                    cur.write("tools/oft/__init__.py", "")
+                    cur.write("tools/oft/__main__.py", "import sys\nsys.stdout.write(%r)\n" % help_text)
+                rc, out, _rows = run(cur, prev, write_revisions=True)
+                self.assertEqual(rc, 0, out)
+                self.assertIn("\noft revisions: harness.yaml changed: now run %s\noft revisions: " % command, out)
+                rc, out, _rows = run(cur, prev, write_revisions=True)
+                self.assertEqual(rc, 0, out)
+                self.assertNotIn("now run", out)
+
+    def test_write_revisions_refuses_a_tree_that_is_not_a_release(self):
+        """Review of #429 by the CI/CD lead, N5.  A release is what `oft release-tree` makes, and it removes every file
+        of release_tree.INTERNAL: a previous or earlier checkout that holds one is a commit of this repository, and
+        the revisions it gives are not a release's.  --write-revisions compares nothing then; --repin-changed alone
+        still runs against such a commit (plan C4)."""
+        with tree() as older, tree() as prev, tree() as cur:
+            dated(older, "2026.10.0", "2026-10-01")
+            block(cur)
+            new_model(cur)
+            before = {rel: raw(cur, rel) for rel in HARNESSES}
+            # Task 5A runs --write-revisions alone; a run that also re-pins is refused all the same
+            for t, rel, name, kw in ((prev, "review.md", "previous", {"write_revisions": True}),
+                                     (older, ".github/CODEOWNERS", "earlier",
+                                      {"earlier": [older.root], "write_revisions": True, "repin_changed": True})):
+                with self.subTest(name=name):
+                    t.write(rel, "only in this repository\n")
+                    rc, out, rows = run(cur, prev, **kw)
+                    self.assertEqual((rc, rows), (1, {}), out)
+                    self.assertIn("error: %s %s is not a release: it holds %s, which `oft release-tree` removes from "
+                                  "every release" % (name, t.root, rel), out)
+                    self.assertIn("oft revisions: --write-revisions needs checkouts of releases: nothing compared", out)
+                    self.assertEqual({rel: raw(cur, rel) for rel in HARNESSES}, before)
+                    os.remove(t.path(rel))
+            prev.write("review.md", "only in this repository\n")
+            rc, out, _rows = run(cur, prev, repin_changed=True)
+            self.assertEqual(rc, 1, out)   # every revision is wrong against prev, and only the pins count here
+            self.assertIn("0 pins rewritten", out)
+
+    def test_the_cli_passes_both_flags(self):
+        """Review of #429 by the CI/CD lead, N3: `oft revisions` hands --write-revisions and --repin-changed on."""
+        from oft import __main__ as cli
+        with tree() as prev, tree() as cur:
+            old = fingerprints(prev)
+            for t in (prev, cur):
+                prove(t, PROVED, old[PROVED])
+            block(cur)
+            cur.write("theories/Shapes.v", SHAPES_CODE, "a")
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                rc = cli.main(["--root", cur.root, "revisions", prev.root, "--write-revisions", "--repin-changed"])
+            self.assertEqual(rc, 0, out.getvalue())
+            self.assertIn("1 pins rewritten; ", out.getvalue())
+            self.assertEqual(cur.yaml("proofs/%s/proof.yaml" % PROVED)["fingerprint"], fingerprints(cur)[PROVED])
+            self.assertEqual(cur.yaml(HARNESS)["statements"]["plain_halts"]["revision"], 2)
+
+    def test_write_revisions_keeps_comments_and_line_ends(self):
+        with tree() as prev, tree() as cur:
+            y = cur.yaml(HARNESS)
+            y["builds"]["ubsan"]["sha256"] = "0" * 63 + "a"
+            cur.put_yaml(HARNESS, y)
+            self.assertEqual(cur.generate(), 0, cur.last_output)
+
+            def spelled(text):
+                """text with a comment on ubsan_halts's status line, the line a revision goes after, and CRLF ends."""
+                i = text.index("    status: open\n", text.index("  ubsan_halts:\n"))
+                text = text[:i] + "    status: open  # the ubsan build\n" + text[i + len("    status: open\n"):]
+                return text.replace("\n", "\r\n")
+
+            cur.write(HARNESS, spelled(yamlio.dump(y)))
+            rc, out, _rows = run(cur, prev, write_revisions=True)
+            self.assertEqual(rc, 0, out)
+            self.assertEqual(raw(cur, HARNESS), spelled(yamlio.dump(with_revisions(y, {n: 2 for n in UBSAN}))))
+
+    def test_write_revisions_is_idempotent(self):
+        with tree() as prev, tree() as cur:
+            block(cur)
+            new_model(cur)
+            rc, out, _rows = run(cur, prev, write_revisions=True)
+            self.assertEqual(rc, 0, out)
+            written = {rel: raw(cur, rel) for rel in HARNESSES}
+            rc, out, _rows = run(cur, prev, write_revisions=True)
+            self.assertEqual(rc, 0, out)
+            self.assertIn("0 with a wrong revision", out)
+            self.assertIn("0 revisions written", out)
+            self.assertNotIn("written: ", out)
+            self.assertEqual({rel: raw(cur, rel) for rel in HARNESSES}, written)
+
+    def test_write_revisions_after_a_model_change_needs_nothing_more_after_a_code_change(self):
+        """The W2 sitting: the LPS pin PR bumps every statement for its new LPS commit, then the statements PR changes
+        the code of Shapes.v.  Each change alone needs the previous release's revision plus one, so the second run
+        writes nothing."""
+        with tree() as prev, tree() as cur:
+            block(cur)
+            new_model(cur)
+            rc, out, _rows = run(cur, prev, write_revisions=True)
+            self.assertEqual(rc, 0, out)
+            cur.write("theories/Shapes.v", SHAPES_CODE, "a")
+            bumped = {rel: raw(cur, rel) for rel in HARNESSES}
+            rc, out, rows = run(cur, prev, write_revisions=True)
+            self.assertEqual(rc, 0, out)
+            self.assertEqual(sorted(k for k, r in rows.items() if r[3] != "changed"), [WITHHELD])
+            self.assertEqual(rows[PROVED][:4], ["1", "2", "2", "changed"])
+            self.assertIn("0 with a wrong revision", out)
+            self.assertIn("0 revisions written", out)
+            self.assertEqual({rel: raw(cur, rel) for rel in HARNESSES}, bumped)
+
+    def test_write_revisions_writes_no_file_when_one_cannot_be_written(self):
+        """A statement written as a flow mapping has no `status:` line to put a revision after: no file is written,
+        though the other harnesses' could be."""
+        with tree() as prev, tree() as cur:
+            block(cur, HARNESSES[1:])
+            new_model(cur)
+            before = {rel: raw(cur, rel) for rel in HARNESSES}
+            rc, out, _rows = run(cur, prev, write_revisions=True)
+            self.assertEqual(rc, 1, out)
+            self.assertIn("checksum_fuzzer/harness.yaml: statement asan_agreement_decidable is not a block mapping: "
+                          "no revision written", out)
+            self.assertEqual({rel: raw(cur, rel) for rel in HARNESSES}, before)
+
+    def test_write_revisions_keeps_a_comment_on_an_edited_line_and_replaces_a_revision(self):
+        """A revision line is added after a `status:` line that has a comment, and the value of an existing
+        `revision:` is replaced, its comment kept (review of #429, finding 2)."""
+        with tree() as prev, tree() as cur:
+            y = prev.yaml(HARNESS)
+            y["statements"]["ubsan_agrees"]["revision"] = 2
+            prev.put_yaml(HARNESS, y)
+            self.assertEqual(prev.generate(), 0, prev.last_output)
+            y = cur.yaml(HARNESS)
+            y["builds"]["ubsan"]["sha256"] = "0" * 63 + "a"
+            y["statements"]["ubsan_agrees"]["revision"] = 2
+            cur.put_yaml(HARNESS, y)
+            self.assertEqual(cur.generate(), 0, cur.last_output)
+            text = yamlio.dump(y)
+            i = text.index("    status: open\n", text.index("  ubsan_halts:\n"))
+            text = text[:i] + "    status: open  # c\n" + text[i + len("    status: open\n"):]
+            cur.write(HARNESS, text.replace("    revision: 2\n", "    revision: 2  # r\n"))
+            rc, out, _rows = run(cur, prev, write_revisions=True)
+            self.assertEqual(rc, 0, out)
+            self.assertIn("    status: open  # c\n    revision: 2\n", raw(cur, HARNESS))
+            self.assertIn("    revision: 3  # r\n", raw(cur, HARNESS))
+
+    def test_write_revisions_refuses_a_status_that_is_not_one_line(self):
+        with tree() as prev, tree() as cur:
+            block(cur)
+            new_model(cur)
+            cur.write(HARNESS, raw(cur, HARNESS).replace("    status: open\n", "    status:\n      open\n", 1))
+            before = {rel: raw(cur, rel) for rel in HARNESSES}
+            rc, out, _rows = run(cur, prev, write_revisions=True)
+            self.assertEqual(rc, 1, out)
+            self.assertIn("its status is not one line of its own: no revision written", out)
+            self.assertEqual({rel: raw(cur, rel) for rel in HARNESSES}, before)
+
+    def test_no_pin_is_written_when_a_revision_cannot_be(self):
+        """Pins and revisions are all computed before any file is written (review of #429, finding 3)."""
+        with tree() as prev, tree() as cur:
+            old = fingerprints(prev, "oss-fuzz-theorems/statement/0")
+            y = cur.yaml(HARNESS)
+            y["builds"]["ubsan"]["sha256"] = "0" * 63 + "a"
+            cur.put_yaml(HARNESS, y)
+            self.assertEqual(cur.generate(), 0, cur.last_output)
+            cur.write(HARNESS, yaml.safe_dump(y, default_flow_style=True, sort_keys=False, width=100000))
+            for t in (prev, cur):
+                prove(t, PROVED, old[PROVED])
+            pin = raw(cur, "proofs/%s/proof.yaml" % PROVED)
+            rc, out, rows = run(cur, prev, write_pins=True, write_revisions=True)
+            self.assertEqual(rows[PROVED][4], "carried-forward", out)
+            self.assertEqual(rc, 1, out)
+            self.assertIn("is not a block mapping: nothing written", out)
+            self.assertNotIn("written: ", out)
+            self.assertIn("error: zlib/checksum_fuzzer/ubsan_halts: revision 1, expected 2", out)
+            self.assertEqual(raw(cur, "proofs/%s/proof.yaml" % PROVED), pin)
+
+    def test_repin_changed_rewrites_only_pins_that_held_the_old_fingerprint(self):
+        """A change of the code of Shapes.v changes every fingerprint, and its proofs are re-checked by the next corpus
+        run: --repin-changed sets the pin of a re-checked proof that held its statement's fingerprint in PREVIOUS, and
+        no other.  --write-pins alone sets none of them."""
+        other = "zlib/checksum_fuzzer/ubsan_halts"
+        with tree() as prev, tree() as cur:
+            old = fingerprints(prev)
+            for t in (prev, cur):
+                prove(t, PROVED, old[PROVED])
+                prove(t, other, "0" * 64)
+            cur.write("theories/Shapes.v", SHAPES_CODE, "a")
+            before = {sid: raw(cur, "proofs/%s/proof.yaml" % sid) for sid in (PROVED, other)}
+            rc, out, rows = run(cur, prev, write_pins=True)
+            self.assertEqual(rc, 1, out)   # every revision is wrong: the code of Shapes.v changed
+            self.assertEqual((rows[PROVED][3:], rows[other][3:]), (["changed", "re-check"], ["changed", "re-check"]))
+            self.assertIn("0 pins rewritten", out)
+            self.assertEqual({sid: raw(cur, "proofs/%s/proof.yaml" % sid) for sid in (PROVED, other)}, before)
+            rc, out, rows = run(cur, prev, repin_changed=True)
+            self.assertEqual(rc, 1, out)
+            self.assertIn("1 pins rewritten", out)
+            self.assertEqual(raw(cur, "proofs/%s/proof.yaml" % PROVED),
+                             before[PROVED].replace(old[PROVED], fingerprints(cur)[PROVED]))
+            self.assertEqual(raw(cur, "proofs/%s/proof.yaml" % other), before[other])
+
+    def test_repin_changed_rewrites_a_new_proof_pinned_to_the_previous_fingerprint(self):
+        """A proof branch made before the change, merged with the base that has it, and compared with the base before
+        it: PREVIOUS has none of its proofs, so they are new, and --repin-changed sets the pin of each one that holds
+        its statement's fingerprint in PREVIOUS.  A pin that is neither fingerprint is never rewritten."""
+        other = "zlib/checksum_fuzzer/ubsan_halts"
+        with tree() as prev, tree() as cur:
+            old = fingerprints(prev)
+            prove(cur, PROVED, old[PROVED])
+            prove(cur, other, "0" * 64)
+            cur.write("theories/Shapes.v", SHAPES_CODE, "a")
+            before = {sid: raw(cur, "proofs/%s/proof.yaml" % sid) for sid in (PROVED, other)}
+            rc, out, rows = run(cur, prev, repin_changed=True)
+            self.assertEqual(rc, 1, out)
+            self.assertEqual((rows[PROVED][3:], rows[other][3:]), (["changed", "new"], ["changed", "new"]))
+            self.assertIn("1 pins rewritten", out)
+            self.assertEqual(raw(cur, "proofs/%s/proof.yaml" % PROVED),
+                             before[PROVED].replace(old[PROVED], fingerprints(cur)[PROVED]))
+            self.assertEqual(raw(cur, "proofs/%s/proof.yaml" % other), before[other])
 
 
 if __name__ == "__main__":

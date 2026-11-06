@@ -5,4 +5,4 @@
  (deps (:elf ../exit1.plain))
  (action
   (run elf-snapshot %{elf} Plain.v --prefix Plain --module-name M
-       --namespace OssFuzzTheorems.Tests.toy.exit1.images)))
+       --namespace OSSVerify.Tests.toy.exit1.images)))

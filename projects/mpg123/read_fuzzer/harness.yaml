@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: mpg123
 harness: read_fuzzer
-rocq: OssFuzzTheorems.mpg123.read_fuzzer
+rocq: OSSVerify.mpg123.read_fuzzer
 origin: oss-fuzz
 summary: Writes the input to a mkstemp file, mpg123_open + mpg123_read loop (<=10000 frames, <=1 MiB stream)
   into a 2*size buffer; decoded bytes discarded. abort() only on temp-file setup failure.

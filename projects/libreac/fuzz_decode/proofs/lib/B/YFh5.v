@@ -1,0 +1,302 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFh5.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_decode's ASan build. *)
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s YO0d.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import
+YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP0g YP01 YP0i YP0j.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YN3v YI04.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d YG0s.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.B Require Import YB1v YB1q YB1t YF0l YF0m YF0x YFl0 YFl1.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YO0a. From OSSVerify.Proofs.libreac.fuzz_decode.lib.B Require Import YB1w YFeq YFew YFgq.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YM05.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Ltac ceil := try (let H := fresh "CR" in let H2 := fresh "CR" in pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as H; pose proof H as H2; unfold YG0f.ASAN_CEIL in H2).
+Local Set Warnings "-abstract-large-number".
+Open Scope Z_scope.
+Set Printing Depth 100. Set Printing Width 200.
+Ltac numconst := ceil; unfold zone3, TFIB_IMG_LO, kLowShadowBeg, kHighMemBeg, kHighMemEnd, ASAN_CEIL, kThreadObjSize, kSpaceSize, kPrimResvSize, kNodesBlockSize, kStoreBlockSize, t_qc, t_cache, t_cache_stats, t_unwinding, t_stats, ASTACK, QSTACK, RSTACK, TFIB_IMG_END, kBatchBytes, kBatchSlots, SHADOW_OFF, TFIB_TP, TFIB_TSD in *.
+Definition qT : nat := 32.
+Definition qSB : nat := 33.
+Definition qU : nat := 34.
+Definition qN : nat := 35.
+Definition qQSZ : nat := 36.
+Definition qQF : nat := 37.
+Definition qQL : nat := 38.
+Definition qQB : nat := 39.
+Definition qCNT : nat := 40.
+Definition qCP : nat := 41.
+Definition qJST : nat := 42.
+Definition qNB : nat := 43.
+Definition qCSL : nat := 44.
+Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Section WK.
+Variables (W : world tfibsegs) (ly : alayout).
+Variables (regs0 : bvmap 5 word) (mem0 : word -> option byte) (md0 : Model).
+Variables (u nn : Z) (q : qcache) (cnt coff jst : Z).
+Variable mat0 : list word.
+Let sp0 : Z := bv_unsigned (getr regs0 2).
+Let T : Z := ly_T ly.
+Let SB : Z := ly_space ly.
+Let m0 := mrestrict (w_H W) mem0.
+Let H0 := w_H W.
+Let cfg0 : config := mkCfg (mkst regs0 (w64 0x35628) mem0 (seg_rom tfibsegs)) (with_vm_backing (m_vm_lazy md0) mat0 md0).
+Hypothesis FH : free_hyps W ly regs0 mem0 u nn q cnt coff jst.
+Local Notation QSZv := (YFgq.QSZv q).
+Local Notation QFv := (YFgq.QFv ly q).
+Local Notation QLv := (YFgq.QLv ly q).
+Local Notation QBv := (YFgq.QBv q).
+Local Notation CPv := (YFgq.CPv coff).
+Local Notation NBv := (YFgq.NBv ly coff).
+Local Notation CSLv := (YFgq.CSLv ly cnt).
+Local Notation XW := (YFgq.XW ly u nn q cnt coff jst).
+Local Notation E0 := (YFgq.E0 ly regs0 u nn q cnt coff jst).
+Local Notation Er := (YFgq.Er ly regs0 u nn q cnt coff jst).
+Local Notation E2 := (YFgq.E2 ly regs0 u nn q cnt coff jst).
+Local Notation E1 := (YFgq.E1 ly regs0 u nn q cnt coff jst).
+Local Notation E8 := (YFgq.E8 ly regs0 u nn q cnt coff jst).
+Local Notation EqT := (YFgq.EqT ly regs0 u nn q cnt coff jst).
+Local Notation EqSB := (YFgq.EqSB ly regs0 u nn q cnt coff jst).
+Local Notation EqU := (YFgq.EqU ly regs0 u nn q cnt coff jst).
+Local Notation EqN := (YFgq.EqN ly regs0 u nn q cnt coff jst).
+Local Notation EqQSZ := (YFgq.EqQSZ ly regs0 u nn q cnt coff jst).
+Local Notation EqQF := (YFgq.EqQF ly regs0 u nn q cnt coff jst).
+Local Notation EqQL := (YFgq.EqQL ly regs0 u nn q cnt coff jst).
+Local Notation EqQB := (YFgq.EqQB ly regs0 u nn q cnt coff jst).
+Local Notation EqCNT := (YFgq.EqCNT ly regs0 u nn q cnt coff jst).
+Local Notation EqCP := (YFgq.EqCP ly regs0 u nn q cnt coff jst).
+Local Notation EqJST := (YFgq.EqJST ly regs0 u nn q cnt coff jst).
+Local Notation EqNB := (YFgq.EqNB ly regs0 u nn q cnt coff jst).
+Local Notation EqCSL := (YFgq.EqCSL ly regs0 u nn q cnt coff jst).
+Local Notation R_ROOT := YFgq.R_ROOT.
+Local Notation R_CNT := YFgq.R_CNT.
+Local Notation R_JST := YFgq.R_JST.
+Local Notation REG0 := YFgq.REG0.
+Local Notation R_LAST := YFgq.R_LAST.
+Local Notation R_CSZ := YFgq.R_CSZ.
+Local Notation R_SLOT := YFgq.R_SLOT.
+Local Notation R_NB := YFgq.R_NB.
+Local Notation FFQ := YFgq.FFQ.
+Local Notation SR0 := YFgq.SR0.
+Local Notation SS0 := YFgq.SS0.
+Local Notation LYB := (YFgq.LYB W ly regs0 mem0 u nn q cnt coff jst FH).
+Local Notation derived_ranges := (YFgq.derived_ranges W ly regs0 mem0 u nn q cnt coff jst FH).
+Local Notation hit_ranges := (YFgq.hit_ranges W ly regs0 mem0 u nn q cnt coff jst FH).
+Local Notation WINT := (YFgq.WINT ly).
+Local Notation WINA := (YFgq.WINA ly q cnt coff).
+Local Notation WIN := (YFgq.WIN ly regs0 q cnt coff).
+Local Notation win_sub := YFgq.win_sub.
+Local Notation win_sub_sound := (YFgq.win_sub_sound ly regs0).
+Local Notation WSK0 := YFgq.WSK0.
+Local Notation WSKN := YFgq.WSKN.
+Local Notation WSKL := YFgq.WSKL.
+Local Notation WSKNL := YFgq.WSKNL.
+Local Notation sk_ok := (YFgq.sk_ok ly regs0 q cnt coff).
+Local Notation WSK0_ok := (YFgq.WSK0_ok W ly regs0 mem0 u nn q cnt coff jst FH).
+Local Notation WSKN_ok := (YFgq.WSKN_ok W ly regs0 mem0 u nn q cnt coff jst FH).
+Local Notation WSKL_ok := (YFgq.WSKL_ok W ly regs0 mem0 u nn q cnt coff jst FH).
+Local Notation WSKNL_ok := (YFgq.WSKNL_ok W ly regs0 mem0 u nn q cnt coff jst FH).
+Local Notation windows_WIN := (YFgq.windows_WIN ly regs0 q cnt coff).
+Local Notation WIN_zone := (YFgq.WIN_zone W ly regs0 mem0 u nn q cnt coff jst FH).
+Local Notation WIN_off := (YFgq.WIN_off W ly regs0 mem0 u nn q cnt coff jst FH).
+Local Notation MEQ := (YFgq.MEQ ly regs0 mem0 q cnt coff).
+Local Notation MEQ_frame := (YFgq.MEQ_frame ly regs0 mem0 q cnt coff).
+Local Notation MEQ_0 := (YFgq.MEQ_0 ly regs0 mem0 q cnt coff).
+Local Notation WIN0 := (YFgq.WIN0 ly regs0).
+Local Notation WIN0_WIN := (YFgq.WIN0_WIN ly regs0 q cnt coff).
+Local Notation sk_ok0 := (YFgq.sk_ok0 ly regs0).
+Local Notation WSK0_ok0 := (YFgq.WSK0_ok0 W ly regs0 mem0 u nn q cnt coff jst FH).
+Local Notation MEQ0 := (YFgq.MEQ0 ly regs0 mem0).
+Local Notation MEQ0_frame := (YFgq.MEQ0_frame ly regs0 mem0).
+Local Notation MEQ0_0 := (YFgq.MEQ0_0 ly regs0 mem0).
+Local Notation WINS := (YFgq.WINS regs0).
+Local Notation WINS_WIN0 := (YFgq.WINS_WIN0 ly regs0).
+Local Notation WSKS := YFgq.WSKS.
+Local Notation sk_okS := (YFgq.sk_okS regs0).
+Local Notation WSKS_okS := (YFgq.WSKS_okS ly regs0 u nn q cnt coff jst).
+Local Notation MEQS := (YFgq.MEQS regs0 mem0).
+Local Notation MEQS_frame := (YFgq.MEQS_frame ly regs0 mem0).
+Local Notation MEQS_0 := (YFgq.MEQS_0 regs0 mem0).
+Local Notation MEQS_MEQ0 := (YFgq.MEQS_MEQ0 ly regs0 mem0).
+Local Notation MEQ0_MEQ := (YFgq.MEQ0_MEQ ly regs0 mem0 q cnt coff).
+Local Notation all_disjoint_of_forall := YFgq.all_disjoint_of_forall.
+Local Notation kept_of_frame := (YFgq.kept_of_frame W ly regs0).
+Local Notation aview_eq_mbyte := YFgq.aview_eq_mbyte.
+Local Notation kept_of_aview := (YFgq.kept_of_aview W).
+Local Notation SKEL_TAIL := YFgq.SKEL_TAIL.
+Ltac open_FH := pose proof FH as FH_; destruct FH_ as [LY Htp Hra Hra4096 Hsp Hsp_al Hpres Hu IMG Hnn Hq Hnb Hlast Hcnt Hhit Hjst SEED].
+Local Notation off_T := (YFgq.off_T W ly regs0 mem0 u nn q cnt coff jst FH).
+Ltac off_by tac :=
+first [ apply off_img_high; tac | apply off_T; unfold kThreadObjSize, t_qc, t_cache, t_cache_stats; tac | unfold off_img; unfold TFIB_IMG_LO; unfold zone3, TFIB_IMG_LO, kLowShadowBeg, TFIB_IMG_END; tac ].
+Ltac meq0_acc SKOK :=
+match goal with
+| M : MEQ0 ?ma, HFx : frame_of ?E ?rs ?ma ?mb |- _ =>
+let M2 := fresh "MQ" in
+pose proof (MEQ0_frame E _ rs ma mb SKOK ltac:(vm_compute; reflexivity) HFx M) as M2;
+clear M HFx; try match goal with HFr : frame_of E rs (mrestrict _ ma) (mrestrict _ mb) |- _ => clear HFr end; rename M2 into M
+end.
+Definition R_LAST0 : YP09.region := YP09.mkRegion (Some 38%nat) 0 24 0 0 [YP09.mkChunk 16 (CVal 8 (SLit kBatchSlots))].
+Definition at_CALLR (W' : world tfibsegs) (c' : config) : Prop :=
+W' = W /\ exists regs1 mem1 mat,
+c' = mkCfg (mkst regs1 (w64 0x35f5c) mem1 (seg_rom tfibsegs)) (with_vm_backing (m_vm_lazy md0) mat md0) /\
+getr regs1 1 = w64 0x3577c /\ getr regs1 2 = w64 (sp0 - 64) /\ getr regs1 3 = getr regs0 3 /\ getr regs1 4 = getr regs0 4 /\
+getr regs1 10 = w64 (T + t_cache) /\ getr regs1 11 = w64 (T + t_cache + 1920) /\ getr regs1 12 = w64 0x9dcd8 /\ getr regs1 13 = w64 24 /\
+getr regs1 8 = w64 (T + t_cache + 1920) /\ getr regs1 9 = w64 (T + t_cache) /\ getr regs1 18 = w64 (u - 16) /\ getr regs1 19 = w64 (T + t_qc) /\
+getr regs1 20 = getr regs0 12 /\ getr regs1 21 = w64 nn /\
+(forall r : bv 5, In r [22; 23; 24; 25; 26; 27]%bv -> getr regs1 r = getr regs0 r) /\
+MEQ0 mem1 /\
+(forall a, sp0 - 64 <= a < sp0 -> apresent (w_H W) mem1 a) /\
+let m := mrestrict (w_H W) mem1 in
+val_mem tfibsegs m (T + t_qc) 8 QSZv /\ val_mem tfibsegs m (T + t_qc + 8) 8 QFv /\ val_mem tfibsegs m (T + t_qc + 16) 8 QLv /\ val_mem tfibsegs m (T + t_qc + 24) 8 QBv /\
+val_mem tfibsegs m (T + t_cache + 1920) 4 cnt /\ val_mem tfibsegs m (T + t_cache_stats + 16) 8 jst /\
+val_mem tfibsegs m (sp0 - 8) 8 (bv_unsigned (getr regs0 1)) /\ val_mem tfibsegs m (sp0 - 16) 8 (bv_unsigned (getr regs0 8)) /\
+val_mem tfibsegs m (sp0 - 24) 8 (bv_unsigned (getr regs0 9)) /\ val_mem tfibsegs m (sp0 - 32) 8 (bv_unsigned (getr regs0 18)) /\
+val_mem tfibsegs m (sp0 - 40) 8 (bv_unsigned (getr regs0 19)) /\ val_mem tfibsegs m (sp0 - 48) 8 (bv_unsigned (getr regs0 20)) /\
+val_mem tfibsegs m (sp0 - 56) 8 (bv_unsigned (getr regs0 21)).
+Ltac reg_lit HS r := let Q := fresh "Q" in rreg HS r Q; rewrite Q; reflexivity.
+Ltac reg_atom HS r EQ := let Q := fresh "Q" in rreg HS r Q; rewrite Q; cbn [sv_denot]; rewrite EQ; unfold w64; rewrite ?Zbv_add_unsigned; first [ reflexivity | f_equal; numconst; zlia ].
+Ltac reg_entry HS r k := let Q := fresh "Q" in rreg HS r Q; rewrite Q; first [ apply Er; reflexivity | cbn [sv_denot]; rewrite (Er k r eq_refl), Z.add_0_r; apply Z_to_bv_bv_unsigned ].
+Ltac frame_val HS i j k r BV2 := memv HS i j; [rewrite BV2; zlia | cbn [sv_denot]; rewrite (Er k r eq_refl); f_equal; zlia | apply u64_range].
+Lemma segR1 : cnt = 0 -> SRr tfibsegs W cfg0 at_CALLR.
+Proof.
+intros Hc. open_FH. pose proof Hwx_tfa as Hwx. pose proof SEED as HS. destruct Hsp as [Hlo Hhi]. pose proof LYB as LB. pose proof derived_ranges as DR.
+assert (Usp : 0 <= sp0 < 2 ^ 64) by (unfold sp0; apply u64_range).
+pose proof MEQ0_0 as MQ.
+assert (HE0 : forall k, (k < aHAVf)%nat -> ew E0 k = ew E0 k) by (intros; reflexivity).
+pose proof (WSK0_ok0 E0 HE0) as SK0.
+assert (R36 : rho_of E0 36%nat = QSZv) by (unfold rho_of; rewrite EqQSZ; unfold w64; apply unsigned_lit_small; clear - DR; zlia).
+assert (R40 : rho_of E0 40%nat = cnt) by (unfold rho_of; rewrite EqCNT; unfold w64; apply unsigned_lit_small; clear - DR; zlia).
+assert (R32 : rho_of E0 32%nat = T) by (unfold rho_of; rewrite EqT; unfold w64; apply unsigned_lit_small; clear - LB; numconst; zlia).
+assert (BV32 : bv_unsigned (ew E0 32) = T) by exact R32.
+assert (BV38 : bv_unsigned (ew E0 38) = QLv) by (rewrite EqQL; unfold w64; apply unsigned_lit_small; clear - DR; numconst; zlia).
+assert (BV2 : bv_unsigned (ew E0 2) = sp0) by (rewrite E2; reflexivity).
+assert (VMQ : forall m a (n : nat) v, MEQ0 m -> (forall i, 0 <= i < Z.of_nat n -> ~ WIN0 (a + i) /\ 0 <= a + i < 2 ^ 64) ->
+val_mem tfibsegs m0 a n v -> val_mem tfibsegs (mrestrict (w_H W) m) a n v).
+{ intros m a n v HM Hn Hv. eapply val_mem_frame; [|exact Hv]. intros k Hk. destruct (Hn (Z.of_nat k) ltac:(zlia)) as [N1 N2].
+apply HM. rewrite unsigned_lit_small by exact N2. exact N1. }
+assert (PRQ : forall m a, MEQ0 m -> ~ WIN0 a -> 0 <= a < 2 ^ 64 -> apresent (w_H W) mem0 a -> apresent (w_H W) m a).
+{ intros m a HM Hn Ha Hp. apply (apresent_same (w_H W) mem0); [|exact Hp]. apply HM. rewrite unsigned_lit_small by exact Ha. exact Hn. }
+assert (NW0 : forall a, ~ (sp0 - 64 <= a < sp0) -> ~ (T + t_qc <= a < T + t_qc + 32) -> ~ (T + t_cache + 1920 <= a < T + t_cache + 1924) ->
+~ (T + t_cache_stats + 16 <= a < T + t_cache_stats + 24) -> ~ WIN0 a).
+{ intros a N0 N1 N2 N3 [X|X]; [exact (N0 X)|]. unfold YFgq.WINT in X. clear - X N1 N2 N3. zlia. }
+srr_run_sh tfibtbl_rtF_ok HS. meq0_acc SK0.
+srr_branch_sh tfibtbl_rtF_ok HS.
+{
+unfold YP06.add_cond in HS; cbn [ss_pc ss_regs ss_mem ss_resv ss_facts f_atoms f_conds f_alias] in HS.
+srr_run_sh tfibtbl_rtF_ok HS. meq0_acc SK0.
+srr_branch_sh tfibtbl_rtF_ok HS.
+2:{ exfalso. rewrite branch_eq_U in Hc1. apply Z.eqb_neq in Hc1. revert Hc1. rewrite !U_zev by reflexivity. cbn [zev zalu_raw].
+rewrite R40. rewrite ?zcanon_id by (clear - DR; unfold M64; zlia). clear - Hc. zlia. }
+unfold YP06.add_cond in HS; cbn [ss_pc ss_regs ss_mem ss_resv ss_facts f_atoms f_conds f_alias] in HS.
+srr_run_to_sh tfibtbl_rtF_ok HS 0x35f5c. meq0_acc SK0.
+lazymatch type of HS with st_ok _ _ _ (restrict _ ?msx) => rename msx into msR end.
+pose proof (st_ok_restrict_mkst tfibsegs (w_H W) E0 _ _ HS eq_refl) as HshR. cbn [ss_pc] in HshR.
+apply SRr_ret. split; [reflexivity|].
+eexists (ms_regs msR), (ms_mem msR), _.
+split. { rewrite HshR at 1. reflexivity. }
+split. { reg_lit HS (1%bv : bv 5). }
+split. { rreg HS (2%bv : bv 5) Q2. rewrite Q2. cbn [sv_denot]. rewrite E2. unfold w64. f_equal; unfold sp0; zlia. }
+split. { reg_entry HS (3%bv : bv 5) 3%nat. }
+split. { rreg HS (4%bv : bv 5) Q4. rewrite Q4, Htp. reflexivity. }
+split. { reg_atom HS (10%bv : bv 5) constr:(EqT). }
+split. { reg_atom HS (11%bv : bv 5) constr:(EqT). }
+split. { reg_lit HS (12%bv : bv 5). }
+split. { reg_lit HS (13%bv : bv 5). }
+split. { reg_atom HS (8%bv : bv 5) constr:(EqT). }
+split. { reg_atom HS (9%bv : bv 5) constr:(EqT). }
+split. { reg_atom HS (18%bv : bv 5) constr:(EqU). }
+split. { reg_atom HS (19%bv : bv 5) constr:(EqT). }
+split. { reg_entry HS (20%bv : bv 5) 12%nat. }
+split. { reg_atom HS (21%bv : bv 5) constr:(EqN). }
+split. { intros r Hr. cbn [In] in Hr. destruct Hr as [<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]];
+[reg_entry HS (22%bv : bv 5) 22%nat | reg_entry HS (23%bv : bv 5) 23%nat | reg_entry HS (24%bv : bv 5) 24%nat
+| reg_entry HS (25%bv : bv 5) 25%nat | reg_entry HS (26%bv : bv 5) 26%nat | reg_entry HS (27%bv : bv 5) 27%nat]. }
+split. { exact MQ. }
+split. { intros a Ha. eapply (st_ok_window_apresent_off (w_H W) E0 _ _ 0 _ a HS); [reflexivity | cbn [base_val YP09.r_base YP09.r_wlo YP09.r_whi]; rewrite BV2; clear - Ha; zlia | off_by ltac:(revert Ha; numconst; intros Ha; zlia) ]. }
+cbv zeta.
+split. { memv HS 1%nat 0%nat; [rewrite BV32; numconst; zlia | cbn [sv_denot]; rewrite EqQSZ; unfold w64; rewrite Zbv_add_unsigned; f_equal; zlia | clear - DR; numconst; zlia]. }
+split. { memv HS 1%nat 1%nat; [rewrite BV32; numconst; zlia | cbn [sv_denot]; rewrite EqQF; unfold w64; rewrite Zbv_add_unsigned; f_equal; zlia | clear - DR; numconst; zlia]. }
+split. { memv HS 1%nat 2%nat; [rewrite BV32; numconst; zlia | cbn [sv_denot]; rewrite EqQL; unfold w64; rewrite Zbv_add_unsigned; f_equal; zlia | clear - DR; numconst; zlia]. }
+split. { memv HS 1%nat 3%nat; [rewrite BV32; numconst; zlia | cbn [sv_denot]; rewrite EqQB; unfold w64; rewrite Zbv_add_unsigned; f_equal; zlia | clear - DR; numconst; zlia]. }
+split. { memv HS 2%nat 0%nat; [rewrite BV32; numconst; zlia | cbn [sv_denot]; rewrite EqCNT; unfold w64; rewrite Zbv_add_unsigned; f_equal; zlia | clear - DR; numconst; zlia]. }
+split. { memv HS 3%nat 0%nat; [rewrite BV32; numconst; zlia | cbn [sv_denot]; rewrite EqJST; unfold w64; rewrite Zbv_add_unsigned; f_equal; zlia | clear - DR; numconst; zlia]. }
+split. { frame_val HS 0%nat 6%nat 1%nat (1%bv : bv 5) BV2. }
+split. { frame_val HS 0%nat 5%nat 8%nat (8%bv : bv 5) BV2. }
+split. { frame_val HS 0%nat 4%nat 9%nat (9%bv : bv 5) BV2. }
+split. { frame_val HS 0%nat 3%nat 18%nat (18%bv : bv 5) BV2. }
+split. { frame_val HS 0%nat 2%nat 19%nat (19%bv : bv 5) BV2. }
+split. { frame_val HS 0%nat 1%nat 20%nat (20%bv : bv 5) BV2. }
+frame_val HS 0%nat 0%nat 21%nat (21%bv : bv 5) BV2. }
+{
+assert (HQF : qc_list q <> []).
+{ rewrite branch_eq_U in Hc0. apply Z.eqb_neq in Hc0. revert Hc0. rewrite !U_zev by reflexivity. cbn [zev zalu_raw].
+rewrite R36. rewrite ?zcanon_id by (clear - DR; unfold M64; zlia). unfold YFgq.QSZv. destruct (qc_list q); cbn [length]; [zlia | intros _; discriminate]. }
+destruct (rev (qc_list q)) as [|lastb initr] eqn:HR0; [exfalso; apply HQF; rewrite <- (rev_involutive (qc_list q)), HR0; reflexivity|].
+destruct (Hlast lastb initr eq_refl) as (L1 & L2 & L3 & L4 & L5).
+unfold YP06.add_cond in HS; cbn [ss_pc ss_regs ss_mem ss_resv ss_facts f_atoms f_conds f_alias] in HS.
+apply (st_ok_add_region _ _ _ R_LAST0) in HS;
+[ | reflexivity
+| unfold R_LAST0, YP09.region_ok; cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks base_val ms_mem restrict]; rewrite BV38;
+split; [clear - L1 LB; numconst; zlia|]; split; [clear - L1 L2 LB; numconst; zlia|];
+split; [intros o Ho; zlia|];
+apply Forall_cons; [|apply Forall_nil];
+eapply chunk_ok_val; [reflexivity | unfold kBatchSlots; cbn; zlia | cbn; zlia |];
+apply (VMQ _ _ 8%nat); [exact MQ | intros i Hi; split; [apply NW0; clear - Hi L1 L2 LB Hlo Hhi; numconst; zlia | clear - Hi L1 L2 LB; numconst; zlia] | exact L4]
+| unfold R_LAST0; cbn [YP09.all_disjoint ss_mem]; unfold YP09.extent_disjoint; cbn [YP09.r_base YP09.r_lo YP09.r_hi base_val]; rewrite ?BV32, ?BV38, ?BV2;
+clear - LB DR L1 L2 Hlo Hhi; numconst; repeat split; zlia ].
+cbn [ss_pc ss_regs ss_mem ss_resv ss_facts] in HS.
+srr_run_sh tfibtbl_rtF_ok HS. meq0_acc SK0.
+srr_branch_sh tfibtbl_rtF_ok HS.
+2:{ exfalso. rewrite branch_eq_U in Hc1. apply Z.eqb_neq in Hc1. revert Hc1. rewrite !U_zev by reflexivity. cbn [zev zalu_raw].
+rewrite R40. rewrite ?zcanon_id by (clear - DR; unfold M64; zlia). clear - Hc. zlia. }
+unfold YP06.add_cond in HS; cbn [ss_pc ss_regs ss_mem ss_resv ss_facts f_atoms f_conds f_alias] in HS.
+srr_run_to_sh tfibtbl_rtF_ok HS 0x35f5c. meq0_acc SK0.
+lazymatch type of HS with st_ok _ _ _ (restrict _ ?msx) => rename msx into msR end.
+pose proof (st_ok_restrict_mkst tfibsegs (w_H W) E0 _ _ HS eq_refl) as HshR. cbn [ss_pc] in HshR.
+apply SRr_ret. split; [reflexivity|].
+eexists (ms_regs msR), (ms_mem msR), _.
+split. { rewrite HshR at 1. reflexivity. }
+split. { reg_lit HS (1%bv : bv 5). }
+split. { rreg HS (2%bv : bv 5) Q2. rewrite Q2. cbn [sv_denot]. rewrite E2. unfold w64. f_equal; unfold sp0; zlia. }
+split. { reg_entry HS (3%bv : bv 5) 3%nat. }
+split. { rreg HS (4%bv : bv 5) Q4. rewrite Q4, Htp. reflexivity. }
+split. { reg_atom HS (10%bv : bv 5) constr:(EqT). }
+split. { reg_atom HS (11%bv : bv 5) constr:(EqT). }
+split. { reg_lit HS (12%bv : bv 5). }
+split. { reg_lit HS (13%bv : bv 5). }
+split. { reg_atom HS (8%bv : bv 5) constr:(EqT). }
+split. { reg_atom HS (9%bv : bv 5) constr:(EqT). }
+split. { reg_atom HS (18%bv : bv 5) constr:(EqU). }
+split. { reg_atom HS (19%bv : bv 5) constr:(EqT). }
+split. { reg_entry HS (20%bv : bv 5) 12%nat. }
+split. { reg_atom HS (21%bv : bv 5) constr:(EqN). }
+split. { intros r Hr. cbn [In] in Hr. destruct Hr as [<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]];
+[reg_entry HS (22%bv : bv 5) 22%nat | reg_entry HS (23%bv : bv 5) 23%nat | reg_entry HS (24%bv : bv 5) 24%nat
+| reg_entry HS (25%bv : bv 5) 25%nat | reg_entry HS (26%bv : bv 5) 26%nat | reg_entry HS (27%bv : bv 5) 27%nat]. }
+split. { exact MQ. }
+split. { intros a Ha. eapply (st_ok_window_apresent_off (w_H W) E0 _ _ 1 _ a HS); [reflexivity | cbn [base_val YP09.r_base YP09.r_wlo YP09.r_whi]; rewrite BV2; clear - Ha; zlia | off_by ltac:(revert Ha; numconst; intros Ha; zlia) ]. }
+cbv zeta.
+split. { memv HS 2%nat 0%nat; [rewrite BV32; numconst; zlia | cbn [sv_denot]; rewrite EqQSZ; unfold w64; rewrite Zbv_add_unsigned; f_equal; zlia | clear - DR; numconst; zlia]. }
+split. { memv HS 2%nat 1%nat; [rewrite BV32; numconst; zlia | cbn [sv_denot]; rewrite EqQF; unfold w64; rewrite Zbv_add_unsigned; f_equal; zlia | clear - DR; numconst; zlia]. }
+split. { memv HS 2%nat 2%nat; [rewrite BV32; numconst; zlia | cbn [sv_denot]; rewrite EqQL; unfold w64; rewrite Zbv_add_unsigned; f_equal; zlia | clear - DR; numconst; zlia]. }
+split. { memv HS 2%nat 3%nat; [rewrite BV32; numconst; zlia | cbn [sv_denot]; rewrite EqQB; unfold w64; rewrite Zbv_add_unsigned; f_equal; zlia | clear - DR; numconst; zlia]. }
+split. { memv HS 3%nat 0%nat; [rewrite BV32; numconst; zlia | cbn [sv_denot]; rewrite EqCNT; unfold w64; rewrite Zbv_add_unsigned; f_equal; zlia | clear - DR; numconst; zlia]. }
+split. { memv HS 4%nat 0%nat; [rewrite BV32; numconst; zlia | cbn [sv_denot]; rewrite EqJST; unfold w64; rewrite Zbv_add_unsigned; f_equal; zlia | clear - DR; numconst; zlia]. }
+split. { frame_val HS 1%nat 6%nat 1%nat (1%bv : bv 5) BV2. }
+split. { frame_val HS 1%nat 5%nat 8%nat (8%bv : bv 5) BV2. }
+split. { frame_val HS 1%nat 4%nat 9%nat (9%bv : bv 5) BV2. }
+split. { frame_val HS 1%nat 3%nat 18%nat (18%bv : bv 5) BV2. }
+split. { frame_val HS 1%nat 2%nat 19%nat (19%bv : bv 5) BV2. }
+split. { frame_val HS 1%nat 1%nat 20%nat (20%bv : bv 5) BV2. }
+frame_val HS 1%nat 0%nat 21%nat (21%bv : bv 5) BV2. }
+Qed.
+End WK.
+End b.

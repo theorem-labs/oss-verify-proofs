@@ -1,0 +1,185 @@
+# PLANTED CONTROLS for luitrace.py: AGENT TIME (static base), TIME (plant X5), TIME (srai, jalr,
+# FP move) and TIME (spill, fpjoin -- REVIEW_DIR/myplants2.py). PASS = the planted load base is
+# reported by the trace (MEMBASE) AND by the may-static check; it must not be cleared as a runtime base.
+# No pinned image is written: each plant goes into its own COPY.
+
+============================================================================================================
+## PLANT static-base  (Allocator::Allocate +0x560)
+
+# plant static-base into a COPY: DECODE_A_TWIN -> planted-static-base.asan
+# _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb @0x3124c size 0x988, planted at +0x560 (vaddr 0x317ac, file offset 0x207ac)
+#   +0x560  fff80337  lui t1, 0xfff80       (was 00b705b3)
+#   +0x564  01035313  srli t1, t1, 0x10     (was 00010737)
+#   +0x568  00000397  auipc t2, 0x0         (was 0017071b)
+#   +0x56c  01038393  addi t2, t2, 0x10     (was 00160613)
+#   +0x570  0063fe33  and t3, t2, t1        (was 009686b3)
+#   +0x574  000e3e83  ld t4, 0(t3)          (was 00c53023)
+
+$ python3 luitrace.py planted-static-base.asan <Allocate>      # the planted lui and its uses inside the plant
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x560	t1	0xfffffffffff80000	b	ALU,MEMBASE
+	USE	+0x564	srli t1, t1, 0x10	ALU	reg=t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x570	and t3, t2, t1	ALU	reg=t2,t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x574	ld t4, 0(t3)	MEMBASE	reg=t3	val=0x317c0	ea=0x317c0	sec=.text	sym=_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb+0x574
+#   (3 uses in total for this lui; the lines above are the ones inside the plant)
+
+$ python3 luitrace.py static planted-static-base.asan <Allocate>   # may-static at the planted site
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x574	ld t4, 0(t3)	base=t3
+
+============================================================================================================
+## PLANT x5-logical  (Allocator::Allocate +0x560)
+
+# plant x5-logical into a COPY: DECODE_A_TWIN -> planted-x5-logical.asan
+# _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb @0x3124c size 0x988, planted at +0x560 (vaddr 0x317ac, file offset 0x207ac)
+#   +0x560  00040337  lui t1, 0x40          (was 00b705b3)
+#   +0x564  10036313  ori t1, t1, 0x100     (was 00010737)
+#   +0x568  000343b3  xor t2, t1, zero      (was 0017071b)
+#   +0x56c  ff83fe13  andi t3, t2, -8       (was 00160613)
+#   +0x570  000e3e83  ld t4, 0(t3)          (was 009686b3)
+
+$ python3 luitrace.py planted-x5-logical.asan <Allocate>      # the planted lui and its uses inside the plant
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x560	t1	0x40000	b	ALU,MEMBASE
+	USE	+0x564	ori t1, t1, 0x100	ALU	reg=t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x568	xor t2, t1, zero	ALU	reg=t1,zero	val=?	ea=-	sec=-	sym=-
+	USE	+0x56c	andi t3, t2, -8	ALU	reg=t2	val=?	ea=-	sec=-	sym=-
+	USE	+0x570	ld t4, 0(t3)	MEMBASE	reg=t3	val=0x40100	ea=0x40100	sec=.text	sym=__asan_after_dynamic_init+0x2bc
+#   (4 uses in total for this lui; the lines above are the ones inside the plant)
+
+$ python3 luitrace.py static planted-x5-logical.asan <Allocate>   # may-static at the planted site
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x570	ld t4, 0(t3)	base=t3
+
+============================================================================================================
+## PLANT srai  (Allocator::Allocate +0x560)
+
+# plant srai into a COPY: DECODE_A_TWIN -> planted-srai.asan
+# _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb @0x3124c size 0x988, planted at +0x560 (vaddr 0x317ac, file offset 0x207ac)
+#   +0x560  fff80337  lui t1, 0xfff80       (was 00b705b3)
+#   +0x564  41035313  srai t1, t1, 0x10     (was 00010737)
+#   +0x568  00000397  auipc t2, 0x0         (was 0017071b)
+#   +0x56c  01038393  addi t2, t2, 0x10     (was 00160613)
+#   +0x570  0063fe33  and t3, t2, t1        (was 009686b3)
+#   +0x574  000e3e83  ld t4, 0(t3)          (was 00c53023)
+
+$ python3 luitrace.py planted-srai.asan <Allocate>      # the planted lui and its uses inside the plant
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x560	t1	0xfffffffffff80000	b	ALU,MEMBASE
+	USE	+0x564	srai t1, t1, 0x10	ALU	reg=t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x570	and t3, t2, t1	ALU	reg=t2,t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x574	ld t4, 0(t3)	MEMBASE	reg=t3	val=?	ea=-	sec=-	sym=-
+#   (3 uses in total for this lui; the lines above are the ones inside the plant)
+
+$ python3 luitrace.py static planted-srai.asan <Allocate>   # may-static at the planted site
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x574	ld t4, 0(t3)	base=t3
+
+============================================================================================================
+## PLANT jalr  (Allocator::Allocate +0x6d8)
+
+# plant jalr into a COPY: DECODE_A_TWIN -> planted-jalr.asan
+# _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb @0x3124c size 0x988, planted at +0x6d8 (vaddr 0x31924, file offset 0x20924)
+#   +0x6d8  00040db7  lui s11, 0x40         (was 000a0513)
+#   +0x6dc  000680e7  jalr a3               (was 000680e7)
+#   +0x6e0  000dbe83  ld t4, 0(s11)         (was 4594d0ef)
+
+$ python3 luitrace.py planted-jalr.asan <Allocate>      # the planted lui and its uses inside the plant
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x6d8	s11	0x40000	b	ALU,BRANCH,CALLARG,JUMPBASE,MEMBASE,RELOAD,RETVAL,STOREDATA
+	USE	+0x6e0	ld t4, 0(s11)	MEMBASE	reg=s11	val=0x40000	ea=0x40000	sec=.text	sym=__asan_after_dynamic_init+0x1bc
+	USE	+0x6e0	ld t4, 0(s11)	RELOAD	reg=s11	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e4	lbu a1, 1(s5)	RELOAD	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e8	negw a0, a0	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6ec	andi a0, a0, 0xc	ALU	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6f0	andi a1, a1, 0xf3	ALU	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6f4	or a0, a1, a0	ALU	reg=a1,a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	JUMPBASE	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a0	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a1	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a3	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a2	val=?	ea=-	sec=-	sym=-
+	USE	+0x6e4	lbu a1, 1(s5)	MEMBASE	reg=s5	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a4	val=?	ea=-	sec=-	sym=-
+	USE	+0x6dc	jalr a3	CALLARG	reg=a6	val=?	ea=-	sec=-	sym=-
+#   (429 uses in total for this lui; the lines above are the ones inside the plant)
+
+$ python3 luitrace.py static planted-jalr.asan <Allocate>   # may-static at the planted site
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x6e0	ld t4, 0(s11)	base=s11
+
+============================================================================================================
+## PLANT fp  (Allocator::Allocate +0x560)
+
+# plant fp into a COPY: DECODE_A_TWIN -> planted-fp.asan
+# _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb @0x3124c size 0x988, planted at +0x560 (vaddr 0x317ac, file offset 0x207ac)
+#   +0x560  00040337  lui t1, 0x40          (was 00b705b3)
+#   +0x564  f2030053  fmv.d.x ft0, t1       (was 00010737)
+#   +0x568  e20003d3  fmv.x.d t2, ft0       (was 0017071b)
+#   +0x56c  0003be83  ld t4, 0(t2)          (was 00160613)
+
+$ python3 luitrace.py planted-fp.asan <Allocate>      # the planted lui and its uses inside the plant
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x560	t1	0x40000	b	ALU,MEMBASE
+	USE	+0x564	fmv.d.x ft0, t1	ALU	reg=t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x568	fmv.x.d t2, ft0	ALU	reg=ft0	val=?	ea=-	sec=-	sym=-
+	USE	+0x56c	ld t4, 0(t2)	MEMBASE	reg=t2	val=?	ea=-	sec=-	sym=-
+#   (3 uses in total for this lui; the lines above are the ones inside the plant)
+
+$ python3 luitrace.py static planted-fp.asan <Allocate>   # may-static at the planted site
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x56c	ld t4, 0(t2)	base=t2
+
+============================================================================================================
+## PLANT spill  (Allocator::Allocate +0x560)
+
+# plant spill into a COPY: DECODE_A_TWIN -> planted-spill.asan
+# _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb @0x3124c size 0x988, planted at +0x560 (vaddr 0x317ac, file offset 0x207ac)
+#   +0x560  00040337  lui t1, 0x40          (was 00b705b3)
+#   +0x564  00613023  sd t1, 0(sp)          (was 00010737)
+#   +0x568  00013383  ld t2, 0(sp)          (was 0017071b)
+#   +0x56c  0003be83  ld t4, 0(t2)          (was 00160613)
+
+$ python3 luitrace.py planted-spill.asan <Allocate>      # the planted lui and its uses inside the plant
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x560	t1	0x40000	b	MEMBASE,RELOAD,STOREDATA
+	USE	+0x564	sd t1, 0(sp)	STOREDATA	reg=t1	val=0x40000	ea=-	sec=-	sym=-
+	USE	+0x568	ld t2, 0(sp)	RELOAD	reg=sp	val=?	ea=-	sec=-	sym=-
+	USE	+0x56c	ld t4, 0(t2)	MEMBASE	reg=t2	val=?	ea=-	sec=-	sym=-
+#   (3 uses in total for this lui; the lines above are the ones inside the plant)
+
+$ python3 luitrace.py static planted-spill.asan <Allocate>   # may-static at the planted site
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x56c	ld t4, 0(t2)	base=t2
+
+============================================================================================================
+## PLANT fpjoin  (Allocator::Allocate +0x560)
+
+# plant fpjoin into a COPY: DECODE_A_TWIN -> planted-fpjoin.asan
+# _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb @0x3124c size 0x988, planted at +0x560 (vaddr 0x317ac, file offset 0x207ac)
+#   +0x560  00040337  lui t1, 0x40          (was 00b705b3)
+#   +0x564  f2030053  fmv.d.x ft0, t1       (was 00010737)
+#   +0x568  00051263  bnez a0, 4            (was 0017071b)
+#   +0x56c  e20003d3  fmv.x.d t2, ft0       (was 00160613)
+#   +0x570  0003be83  ld t4, 0(t2)          (was 009686b3)
+
+$ python3 luitrace.py planted-fpjoin.asan <Allocate>      # the planted lui and its uses inside the plant
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x560	t1	0x40000	b	ALU,MEMBASE
+	USE	+0x564	fmv.d.x ft0, t1	ALU	reg=t1	val=?	ea=-	sec=-	sym=-
+	USE	+0x56c	fmv.x.d t2, ft0	ALU	reg=ft0	val=?	ea=-	sec=-	sym=-
+	USE	+0x570	ld t4, 0(t2)	MEMBASE	reg=t2	val=?	ea=-	sec=-	sym=-
+#   (3 uses in total for this lui; the lines above are the ones inside the plant)
+
+$ python3 luitrace.py static planted-fpjoin.asan <Allocate>   # may-static at the planted site
+MAY-STATIC	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1	+0x570	ld t4, 0(t2)	base=t2
+
+============================================================================================================
+## RESULT: all seven plants flagged by BOTH checks -- PASS
+
+============================================================================================================
+## UNPLANTED BASELINE, the same function and the same script
+
+$ python3 luitrace.py DECODE_A_TWIN <Allocate>
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x120	a0	0x1000	a	ALU,BRANCH
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x134	a0	0x4000	a	ALU,BRANCH
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x148	a0	0x8000	a	ALU,BRANCH
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x15c	a0	0x10000	b	ALU,BRANCH,CALLARG,JUMPBASE,MEMBASE,RELOAD,RETVAL,STOREDATA
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x174	s4	0x10000	b	ALU,BRANCH,CALLARG,JUMPBASE,MEMBASE,RELOAD,RETVAL,STOREDATA
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x498	a0	0xfffffffffff80000	b	ALU,BRANCH,CALLARG,MEMBASE
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x564	a4	0x10000	b	ALU,BRANCH,CALLARG
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x5b8	a2	0x55555000	b	ALU,CALLARG,MEMBASE
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x5bc	a3	0x33333000	b	ALU,CALLARG,MEMBASE
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x5c0	a4	0xf0f1000	b	ALU,CALLARG,MEMBASE
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x5c4	a5	0x1010000	b	ALU,CALLARG,MEMBASE
+LUI	_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta	0x3124c	+0x8b4	a0	0xfffffffffff80000	b	ALU,CALLARG
+# 12 lui rows, the decode A side of out/luitrace-pair-86da41d3ef68.out. No base use of the unplanted
+# images is may-static: out/luitrace-maystatic.out, 28 may-static sites per image (all auipc+ld GOT
+# loads), and its last line reports the intersection with the 42 lui-reached base sites as 0.

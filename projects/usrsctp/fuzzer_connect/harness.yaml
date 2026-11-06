@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: usrsctp
 harness: fuzzer_connect
-rocq: OssFuzzTheorems.usrsctp.fuzzer_connect
+rocq: OSSVerify.usrsctp.fuzzer_connect
 origin: upstream
 summary: Client socket, connect, optionally injects canned INIT-ACK / COOKIE-ACK / DATA per data[0] bits,
   then injects data[1..] as one SCTP packet behind a canned common header; nothing about the processing

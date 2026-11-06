@@ -6,22 +6,22 @@
  (deps (:elf %{project_root}/projects/lxc/bin/fuzz-lxc-config-read/fuzz-lxc-config-read.plain))
  (action
   (run elf-snapshot %{elf} Plain.v --prefix Plain --module-name M
-       --namespace OssFuzzTheorems.lxc.fuzz_lxc_config_read.images)))
+       --namespace OSSVerify.lxc.fuzz_lxc_config_read.images)))
 (rule
  (targets Ubsan.v Ubsan_seg_000.hex Ubsan_seg_001.hex Ubsan_seg_002.hex Ubsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/lxc/bin/fuzz-lxc-config-read/fuzz-lxc-config-read.ubsan))
  (action
   (run elf-snapshot %{elf} Ubsan.v --prefix Ubsan --module-name M
-       --namespace OssFuzzTheorems.lxc.fuzz_lxc_config_read.images)))
+       --namespace OSSVerify.lxc.fuzz_lxc_config_read.images)))
 (rule
  (targets Asan.v Asan_seg_000.hex Asan_seg_001.hex Asan_seg_002.hex Asan_seg_003.hex)
  (deps (:elf %{project_root}/projects/lxc/bin/fuzz-lxc-config-read/fuzz-lxc-config-read.asan))
  (action
   (run elf-snapshot %{elf} Asan.v --prefix Asan --module-name M
-       --namespace OssFuzzTheorems.lxc.fuzz_lxc_config_read.images)))
+       --namespace OSSVerify.lxc.fuzz_lxc_config_read.images)))
 (rule
  (targets AsanUbsan.v AsanUbsan_seg_000.hex AsanUbsan_seg_001.hex AsanUbsan_seg_002.hex AsanUbsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/lxc/bin/fuzz-lxc-config-read/fuzz-lxc-config-read.asan-ubsan))
  (action
   (run elf-snapshot %{elf} AsanUbsan.v --prefix AsanUbsan --module-name M
-       --namespace OssFuzzTheorems.lxc.fuzz_lxc_config_read.images)))
+       --namespace OSSVerify.lxc.fuzz_lxc_config_read.images)))

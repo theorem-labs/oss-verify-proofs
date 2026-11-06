@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wolfssl
 harness: pem_cert
-rocq: OssFuzzTheorems.wolfssl.pem_cert
+rocq: OSSVerify.wolfssl.pem_cert
 origin: upstream
 summary: wolfSSL_CTX_load_verify_buffer of the input as PEM into a TLS 1.2 server CTX; return value ignored.
 entry: LLVMFuzzerTestOneInput

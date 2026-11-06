@@ -1,0 +1,16 @@
+# kit 4bbd3a74be89: strictcmp2.tcmp called directly on each of the 13 pairs; per pair: the number of differing or unmeasured targets and each of them, the acceptances by kind (each C-string acceptance is also a CSTR row of pairs.out / pairs-by-address.out), and whether the list equals the one the record prints
+__asan_stack_malloc_1	verdict EQUAL-mod-pcrel	differing-or-unmeasured 0	acceptances {'tlsindex': 1}	printed list identical: True
+__interceptor_trampoline___tls_get_addr	verdict EQUAL-mod-pcrel	differing-or-unmeasured 0	acceptances {}	printed list identical: True
+___interceptor___tls_get_addr	verdict EQUAL-mod-pcrel	differing-or-unmeasured 0	acceptances {}	printed list identical: True
+_ZN6__asan18TryAsanInitFromRtlEv	verdict EQUAL-mod-pcrel	differing-or-unmeasured 0	acceptances {}	printed list identical: True
+__tls_get_addr	verdict EQUAL	differing-or-unmeasured 0	acceptances {}	printed list identical: True
+_ZN6__asan16GetCurrentThreadEv	verdict EQUAL	differing-or-unmeasured 0	acceptances {}	printed list identical: True
+_ZN6__asan10AsanTSDGetEv	verdict EQUAL-mod-pcrel	differing-or-unmeasured 0	acceptances {'cstr': 2}	printed list identical: True
+__pthread_getspecific	verdict EQUAL	differing-or-unmeasured 0	acceptances {}	printed list identical: True
+_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	verdict EQUAL-mod-pcrel	differing-or-unmeasured 0	acceptances {'cstr': 10, 'gotval': 1}	printed list identical: True
+_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE	verdict EQUAL-mod-pcrel	differing-or-unmeasured 1	acceptances {'cstr': 178}	printed list identical: True
+  differs: ('0x1218', '(.rodata)', '(.rodata)', 'data-differs', (b"\x00'\x00HINT: if you don't ca", b"\x00'\x00HINT: if you don't ca"))
+_ZN6__asan9FakeStack2GCEm	verdict EQUAL-mod-pcrel	differing-or-unmeasured 0	acceptances {'cstr': 2, 'full': 1}	printed list identical: True
+_ZN6__asan10AsanThread32AsyncSignalSafeLazyInitFakeStackEv	verdict EQUAL-mod-pcrel	differing-or-unmeasured 0	acceptances {'cstr': 6, 'full': 2}	printed list identical: True
+_ZN6__asanL11MemToShadowEm@stack_malloc_1+0x144	verdict EQUAL-mod-pcrel	differing-or-unmeasured 0	acceptances {'cstr': 2}	printed list identical: True
+_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE+0x358[8]	verdict EQUAL	differing-or-unmeasured 0	acceptances {}	printed list identical: True

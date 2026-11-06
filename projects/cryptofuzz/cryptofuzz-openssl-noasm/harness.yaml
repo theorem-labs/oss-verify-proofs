@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cryptofuzz
 harness: cryptofuzz-openssl-noasm
-rocq: OssFuzzTheorems.cryptofuzz.cryptofuzz_openssl_noasm
+rocq: OSSVerify.cryptofuzz.cryptofuzz_openssl_noasm
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

@@ -1,0 +1,5 @@
+--- a/zlib.h
++++ b/zlib.h
+@@ -1 +1 @@
+-a stand-in line
++another stand-in line

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libwebsockets
 harness: fuzz-gif
-rocq: OssFuzzTheorems.libwebsockets.fuzz_gif
+rocq: OSSVerify.libwebsockets.fuzz_gif
 origin: upstream
 summary: First byte selects hold_at_metadata; the rest is fed to the stateful GIF decoder (lws_gif_emit_next_line)
   line by line until OK/FATAL/stall, then lws_gif_restart and a second full pass; return codes only steer

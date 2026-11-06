@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: gpac
 harness: fuzz_m2ts_probe
-rocq: OssFuzzTheorems.gpac.fuzz_m2ts_probe
+rocq: OSSVerify.gpac.fuzz_m2ts_probe
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

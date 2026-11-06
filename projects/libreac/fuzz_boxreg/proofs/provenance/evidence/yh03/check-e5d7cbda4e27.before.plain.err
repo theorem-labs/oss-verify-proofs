@@ -1,0 +1,10 @@
+# self-test: 208 known answers OK (yh03regen 151 + yh03check 57)
+# section bounds: proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v: 14 of 14 section cells equal the image's section headers
+# build: proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v: plain (the pinned binary's sha256 76a5b76842fc is builds.plain of projects/libreac/fuzz_boxreg/harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 0 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+# unit identity: proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v: the image's 4 PT_LOADs equal the plain pin 76a5b76842fc (<pinned>/fuzz_boxreg.plain; ELF section-header fields and build-id masked)
+# COPIED: not checked for proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v (pass --other-side THE_OTHER_BUILDS_YH03.v and --proofs THE_UNITS_PROOFS_DIR)
+# rows checked: 128; rows not OK: 51
+# D cells by symbol: 41 (OK 41, BAD 0); by the code of the function they name: OK-BY-LOAD 1, UNMEASURED 0; OK-GOT0 0 (GOT[0] of the pinned binary); NOSYM 45 (no symbol of the name, not checked); string cells 22 (checked only by yh03regen --elf, with an unstripped image)
+# REFUSED: 1 problem(s) (per cell: exit 2; every other row and the summary are printed)
+REFUSED:
+proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v:196: src0_D_got_DYNAMIC_reserved = 0x1ed90 is not OK-GOT0: the value is not .got's start (the cell is GOT[0], the word at .got's start); the pinned binary 76a5b76842fc: .got sh_addr 0x1d260, the 8 bytes there 00 00 00 00 00 00 00 00 = 0x0, OK-GOT0 wants 0 (the pinned binary has no .dynamic)

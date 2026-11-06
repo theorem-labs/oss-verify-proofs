@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: simdjson
 harness: fuzz_element
-rocq: OssFuzzTheorems.simdjson.fuzz_element
+rocq: OSSVerify.simdjson.fuzz_element
 origin: upstream
 summary: parse strings[1], then one of 31 dom::element accessors selected by the first byte (type, get_*,
   is_*, is<T>, get<T>, tie, casts, at_pointer, at, at_key, at_key_case_insensitive, dump_raw_tape); every

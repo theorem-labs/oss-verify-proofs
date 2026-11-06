@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: quic-server
-rocq: OssFuzzTheorems.openssl.quic_server
+rocq: OSSVerify.openssl.quic_server
 origin: upstream
 summary: QUIC server (SSL_accept_connection, read/echo, stream juggling) over datagram memory BIOs with
   fake time.

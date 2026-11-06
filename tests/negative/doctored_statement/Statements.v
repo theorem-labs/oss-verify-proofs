@@ -4,7 +4,7 @@
    against it, and then checks Proof.v against the REAL statements, as CI
    does with statements built from the base branch.  Rocq must refuse to
    load a proof compiled against a different statements library. *)
-From OssFuzzTheorems.Core Require Import Shapes.
-From OssFuzzTheorems.Tests.toy.exit0 Require Images.
+From OSSVerify.Core Require Import Shapes.
+From OSSVerify.Tests.toy.exit0 Require Images.
 Definition plain_halts : Prop := True.
 Definition plain_halts_may_fail : Prop := halts_may_fail Exits.any Images.plain.

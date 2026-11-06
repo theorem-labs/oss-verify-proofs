@@ -1,0 +1,58 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* [comment removed for export] *)
+
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
+From OSSVerify.leptonica.bilateral_fuzzer.images Require Import Plain.
+From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common Require Import PropExec CatExec CatSim StepTac Hoare ShapeAlg AllocIface PureModel VmLedger StoreOk MemSplit RefMemcpyLib StartupTac WalkTac.
+From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common.Mallocng Require Import AllocBase AllocCalloc AllocSure.
+From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common.Leptonica Require Import SumWalkTac SumSpecs WalksLib W2Lib LibAtomic LeptDefs LeptStructs LeptArith.
+From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.O2 Require Import O2LeptStderr O2LeptBase O2LeptErr O2LeptCmap.
+From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common.Leptonica Require Import LeptRoom.
+From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common Require LiaFast.   (* [comment removed for export] *)
+Local Ltac Stdlib.micromega.Lia.lia ::= first [ solve [LiaFast.flia2] | Zify.zify; xlia zchecker ].
+From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common.Reloc Require Import Reloc.
+From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common.Leptonica Require Import RelocLept.
+From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common.Leptonica.OL Require LeptPixDestroy.
+From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.O2 Require Import O2Reloc O2RelocCode O2RelocSites O2RelocImg O2RelocOL.
+From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.O2 Require Import O2RelocMusl O2LeptEnv O2LeptG.
+From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib Require KReplay.
+Ltac2 kr_t_O2LeptPixDestroy () := "C59OSSVerify5KrLib2O27O2LeptG8o2_pinsGC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng9AllocSure:asr_callocC1?~~~~~~~~~~~~~~~I69OSSVerify5KrLib6Common9Leptonica8LeptDefs4lctx00C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng;AllocCalloc8aic_baseC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng9AllocBase2ASC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00I47Corelib4Init9Datatypes6option00K47Corelib7Numbers7BinNums8positive01C4ELinuxProcessSemantics5Riscv7Prelude5bvmapC79OSSVerify5KrLib6Common9Leptonica2OL8LeptBase3LLGC1?~~~~~~~~~~~~~~~I69OSSVerify5KrLib6Common9Leptonica8LeptDefs3Cok00C1?~~~~~~~~~~~~~~~I69OSSVerify5KrLib6Common9Leptonica8LeptDefs1W00C1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums1Z02C45stdpp9bitvector;definitions4BvWfC45stdpp9bitvector;definitions7Z_to_bvC56Stdlib6ZArith6BinInt1Z6moduloC69OSSVerify5KrLib6Common9Leptonica8LeptDefs5c_topC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z3subC56Stdlib6ZArith6BinInt1Z3addC56Stdlib6ZArith6BinInt1Z2leC59OSSVerify5KrLib6Common5Hoare6ret_okC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common5Reloc5Reloc8rl_deltaC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common5Reloc5Reloc2rlC1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes4list00C69OSSVerify5KrLib6Common5Reloc5Reloc7rl_segsC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes3nat02C59OSSVerify5KrLib6Common8PropExec3rdnC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem6BvBase=Z_to_le_bytesK47Corelib4Init9Datatypes6option01I47Corelib4Init5Logic2eq00C69OSSVerify5KrLib6Common9Leptonica;LeptStructs5PIXatC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9Leptonica;LeptStructs4p_rcC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9Leptonica;LeptStructs6p_textC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9Leptonica;LeptStructs6p_cmapC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9Leptonica8LeptDefs4c_A0C1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes6option02C69OSSVerify5KrLib6Common9Leptonica;LeptStructs6p_dataC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z2ltC47Corelib4Init5Logic3notC69OSSVerify5KrLib6Common9Leptonica;LeptStructs5c_arrC1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic3and00I47Corelib4Init5Logic2or00C69OSSVerify5KrLib6Common9Leptonica;LeptStructs6CMAPatC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem5State;with_vmmapsC69OSSVerify5KrLib6Common9Leptonica8LeptDefs7cs_keptC1?~~~~~~~~~~~~~~~C79OSSVerify5KrLib6Common9Leptonica2OL>LeptPixDestroy9pixd_postC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9Leptonica8LeptDefs5POSTMC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem5State8m_vmmapsC69OSSVerify5KrLib6Common9Leptonica8LeptRoom6roomtrC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common:AllocIface6al_romC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec4mkstC1?~~~~~~~~~~~~~~~K4ELinuxProcessSemantics?LinuxProcessSem3Run6config01I59OSSVerify5KrLib6Common8ShapeAlg8realizes00C1?~~~~~~~~~~~~~~~C45stdpp9bitvector;definitions;bv_unsignedC45stdpp9bitvector;definitions5bv_eqK45stdpp9bitvector;definitions2bv01K47Corelib4Init5Logic2eq01c59OSSVerify5KrLib2O2@O2LeptPixDestroy9pixd_postC1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic6eq_indC79OSSVerify5KrLib6Common9Leptonica2OL>LeptPixDestroy<pixDestroy_WC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec4getrC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng9AllocBase4liveC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O27O2Reloc8o2_relocC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O2<O2RelocSites8o2_sitesC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O29O2RelocOL:o2_code_olC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O29O2RelocOL;o2_sites_olC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O29O2RelocOL7o2_leptC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O29O2RelocOL9o2_img_olC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O2:O2RelocImg7o2_dataC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O2;O2RelocMusl5o2_rwC1?~~~~~~~~~~~~~~~I47Corelib7Numbers7BinNums1Z00K47Corelib7Numbers7BinNums1Z01K47Corelib7Numbers7BinNums8positive03I4ELinuxProcessSemantics?LinuxProcessSem5State5Model00I69OSSVerify5KrLib6Common9Leptonica;LeptStructs4pixv00C1?~~~~~~~~~~~~~~~I69OSSVerify5KrLib6Common9Leptonica;LeptStructs5cmapv00C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8ShapeAlg4TSetC1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic4True01C69OSSVerify5KrLib6Common9Leptonica8LeptDefs4LSTKC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common:AllocIface;ALLOC_STACKC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes3nat01I4ELinuxProcessSemantics?LinuxProcessSem5State6VmMaps00I47Corelib7Numbers7BinNums1N00C59OSSVerify5KrLib2O2:O2LeptBase4LL16C1?~~~~~~~~~~~~~~~C69OSSVerify6KrSpec8ProblemsTSrc_leptonica_bilateral_fuzzer_repro1M?loaded_segmentsC1@~~~~~~~~~~~~~~~~".
+Import ListNotations.
+Open Scope bv_scope.
+
+Section PixDestroy.
+Context {fx : FPState} {AL : AllocLayout} {CL : CallocLayout} {ASR : AllocSure}.
+Context {PINS : @LeptPins AL LL16} {P16 : O2Pins}.
+#[local] Notation "'u'" := bv_unsigned (only parsing).
+Definition pixd_post (A A' : AS) (pix data cm arr : Z) : Prop :=
+  live A' (Z_to_bv 64 pix) = None /\
+  (data <> 0%Z -> live A' (Z_to_bv 64 data) = None) /\
+  (cm <> 0%Z -> live A' (Z_to_bv 64 cm) = None /\ live A' (Z_to_bv 64 arr) = None) /\
+  (forall q, q <> Z_to_bv 64 pix -> (data <> 0%Z -> q <> Z_to_bv 64 data) -> (cm <> 0%Z -> q <> Z_to_bv 64 cm /\ q <> Z_to_bv 64 arr) ->
+             live A' q = live A q).
+Theorem pixDestroy_W : forall C A m md regs (s pp pix cm karr R : Z) (v : pixv) (cv : cmapv) (ret : word) (S : TSet),
+  Cok C -> W C A m md ->
+  getr regs 2 = Z_to_bv 64 s -> (s mod 16 = 0)%Z -> (c_top C - LSTK + 64 + ALLOC_STACK <= s)%Z -> (s <= pp)%Z -> (pp + 8 <= c_top C)%Z ->
+  getr regs 1 = ret -> ret_ok ret -> getr regs 4 = Z_to_bv 64 0x49840 ->
+  getr regs 10 = Z_to_bv 64 pp -> rdn SEGS m (Z_to_bv 64 pp) 8 = Some (Z_to_le_bytes 8 pix) ->
+  PIXat m pix v -> p_rc v = 1%Z -> p_text v = 0%Z -> p_cmap v = cm ->
+  live A (Z_to_bv 64 pix) = Some 64%Z -> live (c_A0 C) (Z_to_bv 64 pix) = None ->
+  (p_data v = 0%Z \/ (live A (Z_to_bv 64 (p_data v)) = Some R /\ live (c_A0 C) (Z_to_bv 64 (p_data v)) = None /\ (0 < R)%Z /\
+                      p_data v <> pix /\ (cm <> 0%Z -> p_data v <> cm /\ p_data v <> c_arr cv))) ->
+  (cm = 0%Z \/ (CMAPat m cm cv /\ live A (Z_to_bv 64 cm) = Some 24%Z /\ live A (Z_to_bv 64 (c_arr cv)) = Some karr /\
+                live (c_A0 C) (Z_to_bv 64 cm) = None /\ live (c_A0 C) (Z_to_bv 64 (c_arr cv)) = None /\
+                cm <> c_arr cv /\ cm <> pix /\ c_arr cv <> pix /\ (0 < karr)%Z)) ->
+  (forall A' m' vm' regs', W C A' m' (with_vmmaps vm' md) -> cs_kept regs regs' ->
+     pixd_post A A' pix (p_data v) cm (c_arr cv) ->
+     POSTM C (c_A0 C) (pp + 8) m m' -> rdn SEGS m' (Z_to_bv 64 pp) 8 = Some (Z_to_le_bytes 8 0) ->
+     roomtr A (m_vmmaps md) A' vm' 0 0 ->
+     realizes SEGS (mkCfg (mkst regs' ret m' al_rom) (with_vmmaps vm' md)) S) ->
+  realizes SEGS (mkCfg (mkst regs (0x19428 : word) m al_rom) md) S.
+Proof.
+ltac2:(KReplay.run1 (kr_t_O2LeptPixDestroy ()) ["PixDestroy"] "h01Ah12A'h21Ch31Hh41Rh51Sh62b1h72b2h82cmh92cvh:4karrh;1mh<2m'h=2mdh>1nh?3pixh@2pphA4regshB5regs'hC3rethD1shE1vhF3vm'hG3RLThH1bp%0p;3p;2p;1p;5p;8p;4p;9p;6p;>g0000j3yTg000hj3eTg0021j3_Tg0036j3wTg004?j2nTg005@j17Tg005ej1KTg006Cj1;Tg006fj1ITg007Hj1=Tg007mj2\Tg008Yj2vTg009^j5YTg00:bj8CTg00;dj11Tg00<Bj2FTg00<ej24Tg00=Kj2gTg00=kj4ZTg00>oj2bTg00?Lj2HTg00?ij2LTg00@Ej1`Tg00A=j2RTg00B=j2QTg00C7j1^Tg00CWj1]Tg00DVj19Tg00E5j4DTg00Emj2PTg00Fjj2?Tg00GLj32Tg00Gfj3[Tg00Hmj1uTg00J3j1tTg00K;j1pTg00LCj4GTg00MFj1oTg00Mhj1JTg00O0j2WTg00OLj1<Tg00Oej1VTg00PlR0j2NTg00QGj2UTg00Qaj3mTg00Rij2TTg00Scj2lTg00Til9kTg00V:l9STg00W>j1iTg00X5l9hTg00Y:j1jTg00Z7j5OTg00[0j2MTg00[ej3ETg00\dj2ATg00]Nj3fTg00^2j3XTg00^Uj2dTg00^oj6cTg00`1j6qTg00`Ml>rTg00aaj2sTg00bZj4aTf5R1g00c]R2g00dUg00eRg00fNg00gKR3g00hDg00i?g00j9f4R4f3R5f2R6f1R7f0R8M>rp=x%78#7p=0AX567,s4=218p=8g00k2R9g00kPR:728p=B%=8#=p=>%=8#7p=3%78#=p=6A2978p=5P4P5P6P7Ca=218p=:1N78,N6p=@p,2fxR;p,2ALR<p,2CLR=p,3ASRR>p,4PINSp,3P169y<=ExAe<=>R?9_<=R@Aw<=?RA,n<RBg00knRC#7RD#7RE#7RF#7RG#0RH#KRI#;RJ%KF#;RK#I[RLg00lSRM%=DRN#KRO/\JRPg00mIRQg00nQRRg00oZRSP<P=P?1v23R3f>RTDYP<P=P?P3f?RUPTf=RVf<RWGCPJPWPO%1DRDg010SRX1FODdf;,4IS00E8%1G,gW#BRGP<P=P?fBRYCZg010o'b%1HRH'Hg0122'H/LVRZ1LTVR[%1FR\,HTP<P=P?fDR]CZ'LR^PJfAR_PO%1CR`PX1FO`df8RaE8f9#`RbPJfCRcPO%1ERdPX1FOdd%>E#3#3#6#6,R2%=N#>#6#>#3#>#3#0#1'QE8PJP]PO%7N#1RNPX1FONd14IYS01E8%^KRK#IRE%]2RefGRf14IcS02g0134#9#9#9#9#9#9#9#9RgCD1PgY,?KRh32fHRi?[cURjf@#u/5`Rk%t_#BRl%pYfERY'5Rm%I9RnP<PAfMRo14If1?9HE:RHPnP<PAP<P=P?fORpCG14Ii%o9RqE:Rr%JYRs#BPnP<PAPp14IsRtfFRu,?9E:PnP<PAP<P=P?fPRvCGPtPqE:1W:ufIRt,5s#<%Bi#<%JuRu/5t#<%VYRs,5u#<'N[3@3@'URu%BtAmptYPnP<PAPv14ItRw%3CRx#0#1,?9E:PnP<PAPv14IsRy1?9iE:PnP<PAP<P=P?fQRzCGR{PwPqE:PnP<PAP{PyPqE:15ts#<fJRq,5t#<15sq#<1W:i3@3@3@3@'URig013SRqP<P=P?P3fVS03P5P6fSRs,T7RtGC1ls7RyP<P=P>fWR{P1Pz%JoRoPvfL#VRAM9kP<P=P?P3fYR3P<P=P?P3CGRn1Hs\RsP{P1M9SPef6R\fTRw,4IR|PgCD1Pg:,?KRK52EP<P=P>fZfX#iPaP\P:P:M9hR:P;P\PpPa%j<R>DOf7/T3'MR}fNR~5Ee[[[[[[^BP]F^<L^1BP;Pp%=x#6#6,R2%>F#>#0#0#3#6#0#1'QPzP>DO/Mv=EeY[[[[[[[[[[[[[[[[[[[[[]5^CJ]9]E^49^:9^89^?9^@9^D9]A]=];]0]2g014JRe%;8RF%;7R2P0%;6?2781A561A57'5R0[1A671A68'5%;5?267[Rx%;4?256\0Af678P8n2001000000120000000W7W6W>Px^72^6F^>eP8PI%3C#6#6#0#0#3#3#0#1Re,4IRFAXIeXR21d9e1AIF1AI2'5dO4b3A2JF2PJPFP<P=P?g014hRFPTDYP<P=P?PFPUPTPVPWGCPJPWPOPDPXQ00E8PJP_POP`PXPaE8PJPcPOPdPX%0C#3#6#3#0#6#0#0#0#1,4IE8PJP]POPNPXQ01E8g015_RXPfQ02PgCD=2EhP<P=P?PFQ03P5P6PtGCP{P1PzPoPvPAEcP<P=P?PFP3PnPsP{P1M9SPXP\P|PgCD=2EKAEX}~\:[[[\y[^BP^Fq^<L^1BP;PpPwPzP>DO/Mv=EXY[\i\u\r\H\m\l\k\j[[[\b[\^\[\Z\G[[[^5S^CJ^9R^EQ^49^:9^89^?9^@9^D9^AP^=M^;L^0B^2@XHJP7P2P8Eqb3bGo"). Qed.
+
+End PixDestroy.
+
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).      (* [comment removed for export] *)

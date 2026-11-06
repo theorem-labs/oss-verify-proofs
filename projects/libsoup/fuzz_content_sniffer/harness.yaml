@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libsoup
 harness: fuzz_content_sniffer
-rocq: OssFuzzTheorems.libsoup.fuzz_content_sniffer
+rocq: OSSVerify.libsoup.fuzz_content_sniffer
 origin: upstream
 summary: soup_content_sniffer_sniff over the input bytes under seven declared Content-Types; the sniffed
   type is freed unexamined.

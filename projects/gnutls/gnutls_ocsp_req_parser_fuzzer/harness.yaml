@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: gnutls
 harness: gnutls_ocsp_req_parser_fuzzer
-rocq: OssFuzzTheorems.gnutls.gnutls_ocsp_req_parser_fuzzer
+rocq: OSSVerify.gnutls.gnutls_ocsp_req_parser_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

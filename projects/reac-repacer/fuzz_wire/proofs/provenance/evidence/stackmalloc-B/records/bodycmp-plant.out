@@ -1,0 +1,9 @@
+# planted __asan_stack_malloc_0+0x4 (0x3c528): 0x00113c23 -> 0x00013c23
+# planted __asan_stack_malloc_1+0x4 (0x3c69c): 0x00113c23 -> 0x00013c23
+# plant image sha256 42527e7fe564; caught 2 of 2
+# W = plant-wireB.elf(42527e7fe564) sha256 42527e7fe564
+# G = fuzz_grant.asan-ubsan twin(5a5ee7c02b4e) sha256 5a5ee7c02b4e
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes/NAME-ONLY acceptances	C-string acceptances (also one CSTR row each)	differing targets printed (in target-differ, this row)	words-only
+__asan_stack_malloc_0	W:G	0x3c524	0x3cf4c	372	372	DIFFERENT	8	1	0	(0, 1, 0)	0	tlsindex+0x1c[0x99558|0x9e3b0]=_ZN6__asanL14fake_stack_tlsE+0x0@tls		printed 0 of 0 targets	DIFFERENT
+__asan_stack_malloc_1	W:G	0x3c698	0x3d0c0	400	400	DIFFERENT	8	1	0	(0, 1, 0)	0	tlsindex+0x1c[0x99558|0x9e3b0]=_ZN6__asanL14fake_stack_tlsE+0x0@tls		printed 0 of 0 targets	DIFFERENT

@@ -1,0 +1,7 @@
+[reac-pw/fuzz_pin] AU/Rt/StackMalloc0.v:4 0x3cf80 0x3cf80
+[reac-pw/fuzz_pin] AU/Rt/StackMalloc0Tbl.v:4 0x3cf80 0x3cf80
+[reac-pw/fuzz_pin] AU/Rt/StackMalloc0Tbl.v:70 0x99160 0xa3ce0
+[reac-pw/fuzz_pin] AU/Rt/StackMalloc0Tbl.v:70 0x99e50 0xa49d0
+[reac-pw/fuzz_pin] AU/Rt/StackMalloc0Tbl.v:71 0x991c0 0xa3d40
+[reac-pw/fuzz_pin] AU/Rt/StackMalloc0Tbl.v:71 0x99e60 0xa49e0
+[reac-pw/fuzz_pin] AU/Rt/StackMallocTbl.v:30 0x3cbe8 0x3e000

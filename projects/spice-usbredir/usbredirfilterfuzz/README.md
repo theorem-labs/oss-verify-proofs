@@ -3,7 +3,7 @@
 
 spice-usbredir's own fuzz target `usbredirfilterfuzz` ([source](source/usbredirfilterfuzz.cc), unmodified), one of the targets OSS-Fuzz builds, over usbredir (gitlab.freedesktop.org/spice/usbredir at f4406c50).
 
-usbredirfilter_string_to_rules with fuzzed token/rule separators, then usbredirfilter_verify, usbredirfilter_print to /dev/null, usbredirfilter_rules_to_string and usbredirfilter_check against fuzzed device/interface descriptors; every result discarded.
+usbredirfilter_string_to_rules with fuzzed token/rule separators. A rule string that it refuses, or that gives no rules, returns 1. Otherwise usbredirfilter_verify, usbredirfilter_print to /dev/null, usbredirfilter_rules_to_string and usbredirfilter_check against fuzzed device/interface descriptors, with each result discarded.
 
 ## How this program differs from what OSS-Fuzz runs
 - Linked against usbredir at commit f4406c50.
@@ -13,17 +13,20 @@ usbredirfilter_string_to_rules with fuzzed token/rule separators, then usbredirf
 ## What the harness checks
 The harness makes no check of its own beyond not crashing, so a statement about it says only that the code it calls never crashes, hangs or trips a sanitizer.
 
+The harness turns some inputs away by returning a value other than 0 or -1, which the driver reports as status 78, so its halts statements allow 78 as well:
+- An input whose rule string usbredirfilter_string_to_rules refuses, or turns into no rules, is returned 1 ([lines 59-66](source/usbredirfilterfuzz.cc#L59-L66)).
+
 ## Statements ([Statements.v](Statements.v), [Characterise.v](Characterise.v), [Distribution.v](Distribution.v))
 
 | statement | in one line | status |
 |---|---|---|
-| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
-| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
-| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
-| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
-| `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires; abort read as SIGABRT | open |
-| `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires; abort read as SIGABRT | open |
-| `asan_ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan+UBSan never fires; abort read as SIGABRT | open |
+| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0, 2 or 78 | open |
+| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0, 2 or 78 | open |
+| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0, 2 or 78 | open |
+| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0, 2 or 78 | open |
+| `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires; abort read as SIGABRT | suspected false: The fuzz target calls abort() when fopen("/dev/null", "wb") fails (source/usbredirfilterfuzz.cc:41-44), and musl's fopen calls openat before it allocates (musl f21a9653, src/stdio/fopen.c:21-26). In LPS f1006fe8, openat is a file-system call (Run.v:1363) that may fail at random under both readings, because alloc-forced-only restricts only memory requests (Run.v:1315-1316; Shapes.v:79, :88-90), and the open of /dev/null may fail with ENOMEM, EACCES, EMFILE or ENFILE (Sys/Fs/Open.v:946-959, :268-273). The statement forbids death by SIGABRT (Shapes.v:182-195). |
+| `ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; UBSan never fires; abort read as SIGABRT | suspected false: The fuzz target calls abort() when fopen("/dev/null", "wb") fails (source/usbredirfilterfuzz.cc:41-44), and musl's fopen calls openat before it allocates (musl f21a9653, src/stdio/fopen.c:21-26). In LPS f1006fe8, openat is a file-system call (Run.v:1363) that may fail at random under both readings, because alloc-forced-only restricts only memory requests (Run.v:1315-1316; Shapes.v:79, :88-90), and the open of /dev/null may fail with ENOMEM, EACCES, EMFILE or ENFILE (Sys/Fs/Open.v:946-959, :268-273). The statement forbids death by SIGABRT (Shapes.v:182-195). |
+| `asan_ubsan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan+UBSan never fires; abort read as SIGABRT | suspected false: The fuzz target calls abort() when fopen("/dev/null", "wb") fails (source/usbredirfilterfuzz.cc:41-44), and musl's fopen calls openat before it allocates (musl f21a9653, src/stdio/fopen.c:21-26). In LPS f1006fe8, openat is a file-system call (Run.v:1363) that may fail at random under both readings, because alloc-forced-only restricts only memory requests (Run.v:1315-1316; Shapes.v:79, :88-90), and the open of /dev/null may fail with ENOMEM, EACCES, EMFILE or ENFILE (Sys/Fs/Open.v:946-959, :268-273). The statement forbids death by SIGABRT (Shapes.v:182-195). |
 | `asan_disagrees_at_most` | P[plain and ASan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
 | `ubsan_disagrees_at_most` | P[plain and UBSan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |
 | `asan_ubsan_disagrees_at_most` | P[plain and ASan+UBSan disagree] <= b under [Distribution.v](Distribution.v) | open (best proved b: none) |

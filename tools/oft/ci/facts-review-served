@@ -66,7 +66,8 @@ What the tool reports, measured on its version 2.1.310, the one facts-review.yml
   Support/ClaudeCode on macOS) and, under WSL, Windows' (/mnt/c/Program Files/ClaudeCode, and the ClaudeCode policy
   keys of the Windows registry). Remote managed settings that the organization's admin signs (the tool applies routing
   names only from a verified copy) are not read. It runs on Linux (WSL too) and macOS only: elsewhere the tool's
-  folders are others, and run refuses.
+  folders are others, and run refuses. REVIEW_MANAGED_SETTINGS, when it names a folder, is the one folder of managed
+  settings run reads, for the tests (MANAGED_HERE, below); the agent is not given it.
 """
 import collections
 import glob
@@ -79,19 +80,30 @@ import sys
 import urllib.parse
 
 # The providers a review may ask for, each with the name the tool gives it in `.modelUsage[*].provider` and the host
-# of its own API. An allow list: a provider the tool names otherwise, a new one included, is never taken for the one
-# asked for.
-TOOL_PROVIDER = {"anthropic": ("firstParty", "api.anthropic.com")}
+# of its API. An allow list: a provider the tool names otherwise, a new one included, is never taken for the one
+# asked for. `ossv-gateway` is the OSS Verify model gateway (Dispatch issue INFRA-481), which facts-review.yml's
+# review job asks for: a LiteLLM proxy that Theorem runs on its tailnet, which the tool reports as "firstParty" since
+# it speaks Anthropic's API. Its host is not written here: a tailnet's names stay out of this repository's text
+# (oft lint, private-data), so it is REVIEW_GATEWAY_URL's, which must be exactly https://<host>, and the tool's
+# ANTHROPIC_BASE_URL must be that URL (endpoint). The workflow sets REVIEW_GATEWAY_URL from the repository variable
+# OSSV_MODEL_GATEWAY_URL. Its turns are the gateway's word for which model answered; `anthropic` is Anthropic's own
+# API, for a person's run.
+GATEWAY = "ossv-gateway"
+TOOL_PROVIDER = {"anthropic": ("firstParty", "api.anthropic.com"),
+                 GATEWAY: ("firstParty", None)}
 # The tool's own variables (ANTHROPIC_*, CLAUDE_CODE_*, _CLAUDE_CODE_*), in its environment or a settings file's `env`:
 # only these may be set, besides an ANTHROPIC_BASE_URL of the provider's own API. Each names a credential, or a knob
 # that moves no request and picks no model. An allow list: the tool reads well over a hundred such names, and several
 # (a base URL, a socket, a gateway, a host's credentials file, request fields, headers, settings sources) send its
 # requests elsewhere or let another model answer; a name not on this list, a new one included, is refused.
-TOOL_VARIABLES = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_IDENTITY_TOKEN",
-                  "ANTHROPIC_IDENTITY_TOKEN_FILE", "ANTHROPIC_FEDERATION_RULE_ID", "ANTHROPIC_ORGANIZATION_ID",
-                  "ANTHROPIC_SERVICE_ACCOUNT_ID", "ANTHROPIC_WORKSPACE_ID", "ANTHROPIC_SCOPE",
-                  "CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CODE_ENABLE_TELEMETRY", "CLAUDE_CODE_MAX_OUTPUT_TOKENS")
+TOOL_VARIABLES = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
+                  "CLAUDE_CODE_ENABLE_TELEMETRY", "CLAUDE_CODE_MAX_OUTPUT_TOKENS")
 TOOL_PREFIXES = ("ANTHROPIC_", "CLAUDE_CODE_", "_CLAUDE_CODE_")
+DEFAULT_HOST = "api.anthropic.com"   # where the tool sends its requests when nothing names another
+# The one model variable allowed, with the one value allowed: the model gateway serves Claude Code's small helper model
+# by its bare id alone (agent-infra#1703), so facts-review.yml names it. It picks the helper's model, never the review's,
+# and a turn that model answered still stops the agent (run) and keeps the review from being posted (check).
+HELPER_MODEL = ("ANTHROPIC_DEFAULT_HAIKU_MODEL", "claude-haiku-4-5")
 # Other variables that let another party answer as the provider's API: the TLS settings that would let a proxy do it.
 ELSEWHERE = ("NODE_TLS_REJECT_UNAUTHORIZED", "NODE_EXTRA_CA_CERTS", "SSL_CERT_FILE", "SSL_CERT_DIR")
 # Variables that move the folder of the Anthropic profile the tool reads, when an `env` it applies as it starts (a
@@ -104,6 +116,12 @@ GLOBAL_CONFIG_NAMES = ("", "-staging-oauth", "-local-oauth", "-custom-oauth")
 # under WSL also Windows', whose registry keys (SOFTWARE\Policies\ClaudeCode, value Settings) it reads through REG.
 MANAGED = {"darwin": "/Library/Application Support/ClaudeCode", "linux": "/etc/claude-code",
            "wsl": "/mnt/c/Program Files/ClaudeCode"}
+# The variable that, when it names a folder, makes that folder the one folder of managed settings run reads, in place
+# of the platform's and, under WSL, Windows' folder and registry keys. The tests set it to a folder of their own, so
+# that none reads the machine's managed settings. The tool reads the platform's folder whatever
+# this says, so a review run with it set checks a folder the tool does not read: it is for the tests alone, and run
+# does not hand it on to the agent.
+MANAGED_HERE = "REVIEW_MANAGED_SETTINGS"
 REG = "/mnt/c/Windows/System32/reg.exe"
 REG_TIMEOUT = 10   # seconds for one reg.exe query; one that takes longer refuses
 PLATFORM = sys.platform
@@ -164,13 +182,29 @@ def add_settings(sources, settings, unreadable="unreadable-settings"):
     return True
 
 
+def gateway_host():
+    """The model gateway's host, from REVIEW_GATEWAY_URL, which must be https://<host> with no port, path, query or
+    user: a ValueError otherwise."""
+    value = os.environ.get("REVIEW_GATEWAY_URL", "")
+    try:
+        url = urllib.parse.urlsplit(value)
+        port = url.port
+    except ValueError:
+        url, port = None, None
+    if url is None or url.scheme != "https" or not url.hostname or port is not None or "@" in url.netloc \
+            or url.path not in ("", "/") or url.query or url.fragment or not NAME.fullmatch(url.hostname):
+        raise ValueError(f"asked for {GATEWAY}, but REVIEW_GATEWAY_URL is not https://<host>")
+    return url.hostname
+
+
 def asked_for(asked):
     """(provider, model, the tool's name for the provider, the provider's host) of `<provider>/<model>`."""
     provider, _, model = asked.partition("/")
     if provider not in TOOL_PROVIDER or not NAME.fullmatch(model) or model == "none":
         raise ValueError(f"asked for {clean(asked)}: not <provider>/<model> with a provider of "
                          f"{', '.join(sorted(TOOL_PROVIDER))}")
-    return (provider, model) + TOOL_PROVIDER[provider]
+    tool_name, host = TOOL_PROVIDER[provider]
+    return provider, model, tool_name, host if provider != GATEWAY else gateway_host()
 
 
 def is_model(name, model):
@@ -232,9 +266,9 @@ def endpoint(host):
     `unreadable-settings` or `unreadable-profile`. The global config is whichever of these the tool takes, so all are
     read: .config.json in the config home (CLAUDE_CONFIG_DIR, else ~/.claude), and .claude<s>.json, for each <s> of
     GLOBAL_CONFIG_NAMES, in CLAUDE_CONFIG_DIR, else the home directory. An empty file holds no `env`. Managed settings
-    are read from the platform's folder (MANAGED), and under WSL from Windows' folder and registry keys too: one it
-    cannot read is `unreadable-settings` or `unreadable-registry`. On a platform other than Linux or macOS it is
-    `unsupported-platform`."""
+    are read from the platform's folder (MANAGED), and under WSL from Windows' folder and registry keys too, or from
+    the one folder MANAGED_HERE names: one it cannot read is `unreadable-settings` or `unreadable-registry`. On a
+    platform other than Linux or macOS it is `unsupported-platform`."""
     sources = [os.environ]
     home = os.environ.get("HOME", "")
     config = [os.path.join(home, ".claude"), os.environ.get("CLAUDE_CONFIG_DIR")]
@@ -244,7 +278,8 @@ def endpoint(host):
         # Elsewhere (Windows, Cygwin, MSYS) the tool's folders are others than these: nothing here shows them.
         return "unsupported-platform"
     wsl = PLATFORM == "linux" and under_wsl()
-    managed = [MANAGED[PLATFORM]] + [MANAGED["wsl"]] * wsl
+    here = os.environ.get(MANAGED_HERE)
+    managed = [here] if here else [MANAGED[PLATFORM]] + [MANAGED["wsl"]] * wsl
     managed_files = [os.path.join(d, "managed-settings.json") for d in managed] + \
         [p for d in managed for p in sorted(glob.glob(os.path.join(glob.escape(d), "managed-settings.d", "*.json")))]
     for path in [os.path.join(d, "settings.json") for d in config if d] + globals_ + [".claude/settings.json",
@@ -261,7 +296,7 @@ def endpoint(host):
         if not add_settings(sources, settings):
             return "unreadable-settings"
     try:
-        for text in registry_settings() if wsl else ():
+        for text in registry_settings() if wsl and not here else ():
             if not add_settings(sources, json.loads(text), "unreadable-registry"):
                 return "unreadable-registry"
     except (ValueError, RecursionError):
@@ -276,11 +311,17 @@ def endpoint(host):
         for name, value in env.items():
             if name == "ANTHROPIC_BASE_URL":
                 found.add(base_url(value, host) or host)
+            elif (name, value) == HELPER_MODEL:
+                continue
             elif name.startswith(TOOL_PREFIXES) and name not in TOOL_VARIABLES or name in ELSEWHERE \
                     or name.upper() in PROXIES or name in OTHER_MODEL_SETTINGS \
                     or name in ("unreadable-settings", "unreadable-registry") \
                     or number > 0 and name in PROFILE_PLACES:
                 found.add(clean(name))
+    # The tool's own default is Anthropic's API: a provider whose host is another must be named by a base URL, or the
+    # requests go to Anthropic's API, which is then where the record says they went.
+    if host != DEFAULT_HOST and host not in found:
+        found.add(DEFAULT_HOST)
     found.discard(host)
     return "+".join(sorted(found)) or host
 
@@ -415,7 +456,9 @@ def read(command, stream, model, seen):
     not of `model`, or at a line that is not a JSON object: (the agent's status, why it was stopped)."""
     answered, stopped, agent = seen["answered"], None, None
     try:
-        agent = subprocess.Popen(command, stdout=subprocess.PIPE, start_new_session=True)
+        # The agent's environment is this process's, without MANAGED_HERE, which is this script's alone.
+        agent = subprocess.Popen(command, stdout=subprocess.PIPE, start_new_session=True,
+                                 env={k: v for k, v in os.environ.items() if k != MANAGED_HERE})
         for number, line in enumerate(agent.stdout, 1):
             stream.write(line)
             stream.flush()

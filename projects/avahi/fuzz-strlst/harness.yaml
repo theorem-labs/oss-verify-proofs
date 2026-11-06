@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: avahi
 harness: fuzz-strlst
-rocq: OssFuzzTheorems.avahi.fuzz_strlst
+rocq: OSSVerify.avahi.fuzz_strlst
 origin: upstream
 summary: 'Checks 5 properties (listed below); the first, a round trip: parse -> serialize -> parse: avahi_string_list_equal(original,
   reparsed) (element sizes and bytes, in order). A re-parse FAILURE is not flagged (goto finish).'

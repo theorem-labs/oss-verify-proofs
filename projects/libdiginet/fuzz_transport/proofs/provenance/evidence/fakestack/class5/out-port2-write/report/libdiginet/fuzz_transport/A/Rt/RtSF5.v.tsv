@@ -1,0 +1,38 @@
+# alreloc per-numeral report: plugin-hostd/fuzz_command lib/A/Rt/RtSF5.v at 781f46bc05cd -> libdiginet/fuzz_transport asan lib/A/Rt/RtSF5.v: written
+# source image <AGENTS>/pau-pipeline/plugin-hostd/unstripped/fuzz_command/fuzz_command.asan; unit image <WORK>/target/unstripped/fuzz_transport/fuzz_transport.asan
+file:line	old	new	rule	old in source image	new in unit image
+A/Rt/RtSF5.v:4	0x40190	0x40190	resolve (identity)	__asan_stack_free_5	__asan_register_globals+0x958
+A/Rt/RtSF5.v:4	0x10340	0x10340	resolve (identity)	.rodata+0x60	.rodata+0x60
+A/Rt/RtSF5.v:32	0x40190	0x3df10	FUNC entry	__asan_stack_free_5	__asan_stack_free_5
+A/Rt/RtSF5.v:33	0x40410	0x3dfc4	resolve	_ZN6__asanL11MemToShadowEm	_ZN6__asanL11MemToShadowEm
+A/Rt/RtSF5.v:33	0xa63f0	0xa4090	resolve	.got+0x60	.got+0x60
+A/Rt/RtSF5.v:34	0x10340	0x10338	resolve	.rodata+0x60	.rodata+0x58
+A/Rt/RtSF5.v:35	0x401b4	0x3df34	range start (same-code function, A .. B)	__asan_stack_free_5+0x24	__asan_stack_free_5+0x24
+A/Rt/RtSF5.v:35	0x40230	0x3dfb0	range end (end 0x40230 -> 0x3dfb0, last byte in __asan_stack_free_5+0x9f)	end 0x40230, last byte __asan_stack_free_5+0x9f	end 0x3dfb0, last byte __asan_stack_free_5+0x9f
+A/Rt/RtSF5.v:35	0x40240	0x3dfc0	same-code function	__asan_stack_free_5+0xb0	__asan_stack_free_5+0xb0
+A/Rt/RtSF5.v:40	0x40190	0x3df10	FUNC entry	__asan_stack_free_5	__asan_stack_free_5
+A/Rt/RtSF5.v:41	0x401b4	0x3df34	same-code function	__asan_stack_free_5+0x24	__asan_stack_free_5+0x24
+A/Rt/RtSF5.v:42	0x40240	0x3dfc0	same-code function	__asan_stack_free_5+0xb0	__asan_stack_free_5+0xb0
+A/Rt/RtSF5.v:46	0x40190	0x3df10	FUNC entry	__asan_stack_free_5	__asan_stack_free_5
+A/Rt/RtSF5.v:46	0x40410	0x3dfc4	resolve	_ZN6__asanL11MemToShadowEm	_ZN6__asanL11MemToShadowEm
+A/Rt/RtSF5.v:52	0xa63e8	0xa4088	resolve	.got+0x58	.got+0x58
+A/Rt/RtSF5.v:52	0xae8b8	0xaa1f8	OBJECT start	_ZN6__asan28asan_flags_dont_use_directlyE	_ZN6__asan28asan_flags_dont_use_directlyE
+A/Rt/RtSF5.v:52	0xb10b8	0xac9f8	OBJECT start	__asan_shadow_memory_dynamic_address	__asan_shadow_memory_dynamic_address
+A/Rt/RtSF5.v:52	0xb1da8	0xad6e8	OBJECT start	_ZN6__asan10kMidMemBegE	_ZN6__asan10kMidMemBegE
+A/Rt/RtSF5.v:52	0xb1db0	0xad6f0	OBJECT start	_ZN6__asan10kMidMemEndE	_ZN6__asan10kMidMemEndE
+A/Rt/RtSF5.v:52	0xb1da0	0xad6e0	OBJECT start	_ZN6__asan11kHighMemEndE	_ZN6__asan11kHighMemEndE
+A/Rt/RtSF5.v:53	0xb10b8	0xac9f8	OBJECT start	__asan_shadow_memory_dynamic_address	__asan_shadow_memory_dynamic_address
+A/Rt/RtSF5.v:53	0x7fff8000	0x7fff8000	SIZES_KEEP	-	-
+A/Rt/RtSF5.v:53	0xb1da0	0xad6e0	OBJECT start	_ZN6__asan11kHighMemEndE	_ZN6__asan11kHighMemEndE
+A/Rt/RtSF5.v:54	0x10340	0x10338	resolve	.rodata+0x60	.rodata+0x58
+A/Rt/RtSF5.v:192	17594333495296	17594333495296	SIZES_KEEP	-	-
+A/Rt/RtSF5.v:192	6316032	6381568	derived image bound	-	-
+A/Rt/RtSF5.v:198	5279744	5279744	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x376068	_ZN11__sanitizerL8theDepotE+0x37a728
+A/Rt/RtSF5.v:199	1048576	1048576	SIZES_KEEP	_ZN11__sanitizerL26internal_alloc_placeholderE+0x4dd40	_ZN11__sanitizerL26internal_alloc_placeholderE+0x52400
+A/Rt/RtSF5.v:205	6316032	6381568	derived image bound	-	-
+A/Rt/RtSF5.v:215	6316032	6381568	derived image bound	-	-
+A/Rt/RtSF5.v:215	789504	797696	derived image bound	_ZN11__sanitizerL26internal_alloc_placeholderE+0xe940	_ZN11__sanitizerL26internal_alloc_placeholderE+0x15000
+A/Rt/RtSF5.v:217	17594333495296	17594333495296	SIZES_KEEP	-	-
+A/Rt/RtSF5.v:219	6316032	6381568	derived image bound	-	-
+A/Rt/RtSF5.v:219	789504	797696	derived image bound	_ZN11__sanitizerL26internal_alloc_placeholderE+0xe940	_ZN11__sanitizerL26internal_alloc_placeholderE+0x15000
+A/Rt/RtSF5.v:387	0x40190	0x3df10	FUNC entry	__asan_stack_free_5	__asan_stack_free_5

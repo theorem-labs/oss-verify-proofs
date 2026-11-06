@@ -1,0 +1,5 @@
+[libreac/fuzz_disco] A/AF0r.v:47 0x3dca4 0x3dfc4
+[libreac/fuzz_disco] A/AF0r.v:76 0xa0500 0xa4080
+[libreac/fuzz_disco] A/AF0r.v:76 0xa11f0 0xa4d70
+[libreac/fuzz_disco] A/AF0r.v:77 0xa0560 0xa40e0
+[libreac/fuzz_disco] A/AF0r.v:77 0xa1200 0xa4d80

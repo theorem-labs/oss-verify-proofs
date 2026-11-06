@@ -1,0 +1,7 @@
+# EXTRACT of the paircl run on the ADD-planted images: its header and every line that names the planted
+# function _ZN6__asan9Allocator22FindHeapChunkByAddressEm (the rest of the run is the unplanted run of this record).
+# X out/plants/plant-add-X.elf sha256 f6a69170e8c8; Y out/plants/plant-add-Ypin.elf sha256 4e91ed7ebb46; YU out/plants/plant-add-Ytwin.elf sha256 4480095e0bb2; root __asan_memmove X 0x51310 Y 0x51bf0 size 880; every differing target: out/plants/paircl-targets-add.tsv
+closure 944 functions paired; EQUAL 212; EQUAL-mod-pcrel (targets paired) 624; other 108; pairing conflicts 0
+   _ZN6__asan9Allocator22FindHeapChunkByAddressEm 0x30954 0x30948 DIFFERENT-target target-diff 1 (words-only EQUAL-mod-pcrel) ; printed 1 of 1 targets
+CSTR	_ZN6__asan9Allocator22FindHeapChunkByAddressEm	X:Y	0x144	0x14f7e	0x14fc0	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f616c6c6f6361746f722e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_allocator.cpp\x00'
+CSTR	_ZN6__asan9Allocator22FindHeapChunkByAddressEm	X:Y	0x148	0x1f775	0x1f7c3	71	28284173616e4368756e6b566965772872696768745f6368756e6b292e41646472497341744c65667428616464722c20312c2026725f6f666673657429292920213d2028302900	b'((AsanChunkView(right_chunk).AddrIsAtLeft(addr, 1, &r_offset))) != (0)\x00'

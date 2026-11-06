@@ -1,0 +1,15 @@
+donor line	in cgif_file_fuzzer A/AE3i.v c8557374ad2e?	verbatim text
+4	no	(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE3i.v, with its module paths changed and its addresses moved to libreac/fuzz_pcap's ASan build. *)
+24	no	(* [IMG_RO_LO, IMG_RO_HI) is the whole read-only PT_LOAD of fuzz_pcap.asan (sha256 b7a91d9b1fb0...): p_vaddr 0x10000,
+25	no	   p_memsz 0x1ef70, so it ends at 0x2ef70.  Its sections are .note.gnu.build-id [0x102a8, 0x102cc), .rodata
+26	no	   [0x102e0, 0x2266c), .eh_frame_hdr [0x2266c, 0x246e8) and .eh_frame [0x246e8, 0x2ef70); IMG_RO_HI is the end of
+27	no	   .eh_frame.  elf_snapshot maps the segment page-rounded, as tfibsegs' first segment [0x10000, 0x2f000), whose tail
+28	no	   [0x2ef70, 0x2f000) holds file bytes of .text; img_ro_seg0 below checks that segment against IMG_RO_LO / IMG_RO_HI.
+29	no	   The relocation wrote 0x2ee40 here: the donor's 0x2f1ac, which sits 0x130 below cgif's read-only PT_LOAD end 0x2f2dc,
+30	no	   moved with that gap.  0x2ee40 is no boundary of fuzz_pcap.asan (it is 0x20 bytes into the .eh_frame FDE at 0x2ee20),
+31	no	   so the bound is restated to the segment end (2026-10-29).  The last chunk of img_ro_chunks ends at IMG_RO_HI and
+32	no	   grows with it; no AF0m Tfib_owned_static row lies in [0x2134a, 0x2ef70). *)
+36	no	(* [IMG_RO_LO, IMG_RO_HI) minus every A/AF0m.v Tfib_owned_static row inside it, as consecutive chunks
+37	no	   (the donor's rule, cgif A/AE3i.v:24-39 against cgif's Tfib_owned_static). Regenerated for fuzz_pcap
+38	no	   from this unit's Tfib_owned_static; img_ro_complement_ok below checks it by computation. The last chunk,
+39	no	   [0x2134a, IMG_RO_HI), is the end of .rodata after the last owned row (0x21348, 2), then .eh_frame_hdr and .eh_frame. *)

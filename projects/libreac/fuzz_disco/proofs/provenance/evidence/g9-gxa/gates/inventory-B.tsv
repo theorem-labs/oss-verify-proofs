@@ -1,0 +1,150 @@
+lib/B file	class	numerals changed	B blob	A donor blob	twin at 63064ea86fe	twin at 4c529cf6485	A value	B value	symbol + offset in image A	lines
+lib/B/Bz/A/D_kit.v	copy (module path only)	0	52035e7905e	0f0d4170d8f	52035e7905e same	-	-	-	-	-
+lib/B/Bz/A/F_memset.v	relocate	2	6e80db69bc7	49c5e3247c9	6e80db69bc7 same	-	0x99b74	0x99f14	memset[1/1]+0x0	16,44
+lib/B/Bz/A/I_amemcpy.v	relocate	6	0bca8762a8d	c1459f47fa5	0241abc595f differs	-	0x99770	0x99b10	memcpy[1/1]+0x0	51
+lib/B/Bz/A/I_amemcpy.v	relocate	6	0bca8762a8d	c1459f47fa5	0241abc595f differs	-	0x52090	0x52108	__asan_memcpy[1/1]+0x0	87
+lib/B/Bz/A/I_amemcpy.v	relocate	6	0bca8762a8d	c1459f47fa5	0241abc595f differs	-	0x5218c	0x52204	__asan_memcpy[1/1]+0xfc	165,165,189,189
+lib/B/Bz/A/I_amemcpyw.v	relocate	8	ad77a4a6c8c	1cbc10dfb39	33a07681eb9 differs	-	0x520ec	0x52164	__asan_memcpy[1/1]+0x5c	97,213
+lib/B/Bz/A/I_amemcpyw.v	relocate	8	ad77a4a6c8c	1cbc10dfb39	33a07681eb9 differs	-	0x52090	0x52108	__asan_memcpy[1/1]+0x0	104
+lib/B/Bz/A/I_amemcpyw.v	relocate	8	ad77a4a6c8c	1cbc10dfb39	33a07681eb9 differs	-	0x52414	0x5248c	__asan_memcpy[1/1]+0x384	142
+lib/B/Bz/A/I_amemcpyw.v	relocate	8	ad77a4a6c8c	1cbc10dfb39	33a07681eb9 differs	-	0x52404	0x5247c	__asan_memcpy[1/1]+0x374	144
+lib/B/Bz/A/I_amemcpyw.v	relocate	8	ad77a4a6c8c	1cbc10dfb39	33a07681eb9 differs	-	0x52138	0x521b0	__asan_memcpy[1/1]+0xa8	178,209
+lib/B/Bz/A/I_amemcpyw.v	relocate	8	ad77a4a6c8c	1cbc10dfb39	33a07681eb9 differs	-	0x5241c	0x52494	__asan_memcpy[1/1]+0x38c	182
+lib/B/Bz/A/I_amemcpyw2.v	relocate	6	65e24b71e5f	39b50ab56ab	0ee08ba6384 differs	-	0x524b8	0x52530	__asan_memcpy[1/1]+0x428	29
+lib/B/Bz/A/I_amemcpyw2.v	relocate	6	65e24b71e5f	39b50ab56ab	0ee08ba6384 differs	-	0x524a8	0x52520	__asan_memcpy[1/1]+0x418	31
+lib/B/Bz/A/I_amemcpyw2.v	relocate	6	65e24b71e5f	39b50ab56ab	0ee08ba6384 differs	-	0x52180	0x521f8	__asan_memcpy[1/1]+0xf0	64,94
+lib/B/Bz/A/I_amemcpyw2.v	relocate	6	65e24b71e5f	39b50ab56ab	0ee08ba6384 differs	-	0x524c0	0x52538	__asan_memcpy[1/1]+0x430	68
+lib/B/Bz/A/I_amemcpyw2.v	relocate	6	65e24b71e5f	39b50ab56ab	0ee08ba6384 differs	-	0x52138	0x521b0	__asan_memcpy[1/1]+0xa8	98
+lib/B/Bz/A/I_consts.v	relocate	1	b26104f0fe2	05ec62a2cc2	b26104f0fe2 same	-	0x54c0c	0x54c84	__asan_region_is_poisoned[1/1]+0x0	17
+lib/B/Bz/A/I_imemset.v	relocate	11	8b77765827f	98f3e78f81a	8b77765827f same	-	0x52944	0x529bc	__interceptor_memset[1/1]+0x1d8	56
+lib/B/Bz/A/I_imemset.v	relocate	11	8b77765827f	98f3e78f81a	8b77765827f same	-	0x52934	0x529ac	__interceptor_memset[1/1]+0x1c8	58
+lib/B/Bz/A/I_imemset.v	relocate	11	8b77765827f	98f3e78f81a	8b77765827f same	-	0x52800	0x52878	__interceptor_memset[1/1]+0x94	108,139
+lib/B/Bz/A/I_imemset.v	relocate	11	8b77765827f	98f3e78f81a	8b77765827f same	-	0x5294c	0x529c4	__interceptor_memset[1/1]+0x1e0	112
+lib/B/Bz/A/I_imemset.v	relocate	11	8b77765827f	98f3e78f81a	8b77765827f same	-	0x527a8	0x52820	__interceptor_memset[1/1]+0x3c	143
+lib/B/Bz/A/I_imemset.v	relocate	11	8b77765827f	98f3e78f81a	8b77765827f same	-	0x5276c	0x527e4	__interceptor_memset[1/1]+0x0	231
+lib/B/Bz/A/I_imemset.v	relocate	11	8b77765827f	98f3e78f81a	8b77765827f same	-	0x5280c	0x52884	__interceptor_memset[1/1]+0xa0	276,276,289,289
+lib/B/Bz/A/I_memcpy.v	relocate	5	bd7151abc74	98aca49afb8	bff7917deb4 differs	-	0x52a5c	0x52ad4	__interceptor_memcpy[1/1]+0x0	47
+lib/B/Bz/A/I_memcpy.v	relocate	5	bd7151abc74	98aca49afb8	bff7917deb4 differs	-	0x52b5c	0x52bd4	__interceptor_memcpy[1/1]+0x100	125,125,149,149
+lib/B/Bz/A/I_memcpyw.v	relocate	16	bc4486a6ebb	89f3d212757	bc4486a6ebb same	-	0xa0510	0xa08b0	got slot -> __asan_shadow_memory_dynamic_address	93
+lib/B/Bz/A/I_memcpyw.v	relocate	16	bc4486a6ebb	89f3d212757	bc4486a6ebb same	-	0xa90b8	0xa9478	__asan_shadow_memory_dynamic_address[1/1]+0x0	93,96
+lib/B/Bz/A/I_memcpyw.v	relocate	16	bc4486a6ebb	89f3d212757	bc4486a6ebb same	-	0xa1078	0xa1418	got slot -> _ZN6__asan21replace_intrin_cachedE	94
+lib/B/Bz/A/I_memcpyw.v	relocate	16	bc4486a6ebb	89f3d212757	bc4486a6ebb same	-	0xa9d99	0xaa159	_ZN6__asan21replace_intrin_cachedE[1/1]+0x0	94,97
+lib/B/Bz/A/I_memcpyw.v	relocate	16	bc4486a6ebb	89f3d212757	bc4486a6ebb same	-	0xa2370	0xa2710	_ZN14__interception11real_memcpyE[1/1]+0x0	95
+lib/B/Bz/A/I_memcpyw.v	relocate	16	bc4486a6ebb	89f3d212757	bc4486a6ebb same	-	0x99770	0x99b10	memcpy[1/1]+0x0	95
+lib/B/Bz/A/I_memcpyw.v	relocate	16	bc4486a6ebb	89f3d212757	bc4486a6ebb same	-	0x52abc	0x52b34	__interceptor_memcpy[1/1]+0x60	108,222
+lib/B/Bz/A/I_memcpyw.v	relocate	16	bc4486a6ebb	89f3d212757	bc4486a6ebb same	-	0x52a5c	0x52ad4	__interceptor_memcpy[1/1]+0x0	115
+lib/B/Bz/A/I_memcpyw.v	relocate	16	bc4486a6ebb	89f3d212757	bc4486a6ebb same	-	0x52dec	0x52e64	__interceptor_memcpy[1/1]+0x390	152
+lib/B/Bz/A/I_memcpyw.v	relocate	16	bc4486a6ebb	89f3d212757	bc4486a6ebb same	-	0x52ddc	0x52e54	__interceptor_memcpy[1/1]+0x380	154
+lib/B/Bz/A/I_memcpyw.v	relocate	16	bc4486a6ebb	89f3d212757	bc4486a6ebb same	-	0x52b08	0x52b80	__interceptor_memcpy[1/1]+0xac	187,218
+lib/B/Bz/A/I_memcpyw.v	relocate	16	bc4486a6ebb	89f3d212757	bc4486a6ebb same	-	0x52df4	0x52e6c	__interceptor_memcpy[1/1]+0x398	191
+lib/B/Bz/A/I_memcpyw2.v	relocate	6	e65ecf4515c	6d5ea8b6f0b	e65ecf4515c same	-	0x52eec	0x52f64	__interceptor_memcpy[1/1]+0x490	28
+lib/B/Bz/A/I_memcpyw2.v	relocate	6	e65ecf4515c	6d5ea8b6f0b	e65ecf4515c same	-	0x52edc	0x52f54	__interceptor_memcpy[1/1]+0x480	30
+lib/B/Bz/A/I_memcpyw2.v	relocate	6	e65ecf4515c	6d5ea8b6f0b	e65ecf4515c same	-	0x52b50	0x52bc8	__interceptor_memcpy[1/1]+0xf4	63,94
+lib/B/Bz/A/I_memcpyw2.v	relocate	6	e65ecf4515c	6d5ea8b6f0b	e65ecf4515c same	-	0x52ef4	0x52f6c	__interceptor_memcpy[1/1]+0x498	67
+lib/B/Bz/A/I_memcpyw2.v	relocate	6	e65ecf4515c	6d5ea8b6f0b	e65ecf4515c same	-	0x52b08	0x52b80	__interceptor_memcpy[1/1]+0xac	98
+lib/B/Bz/A/I_memsetw.v	relocate	8	391a6b27e35	475a1fa82b9	391a6b27e35 same	-	0xa0510	0xa08b0	got slot -> __asan_shadow_memory_dynamic_address	17
+lib/B/Bz/A/I_memsetw.v	relocate	8	391a6b27e35	475a1fa82b9	391a6b27e35 same	-	0xa90b8	0xa9478	__asan_shadow_memory_dynamic_address[1/1]+0x0	17,20
+lib/B/Bz/A/I_memsetw.v	relocate	8	391a6b27e35	475a1fa82b9	391a6b27e35 same	-	0xa1078	0xa1418	got slot -> _ZN6__asan21replace_intrin_cachedE	18
+lib/B/Bz/A/I_memsetw.v	relocate	8	391a6b27e35	475a1fa82b9	391a6b27e35 same	-	0xa9d99	0xaa159	_ZN6__asan21replace_intrin_cachedE[1/1]+0x0	18,21
+lib/B/Bz/A/I_memsetw.v	relocate	8	391a6b27e35	475a1fa82b9	391a6b27e35 same	-	0xa2378	0xa2718	_ZN14__interception11real_memsetE[1/1]+0x0	19
+lib/B/Bz/A/I_memsetw.v	relocate	8	391a6b27e35	475a1fa82b9	391a6b27e35 same	-	0x99b74	0x99f14	memset[1/1]+0x0	19
+lib/B/Bz/A/I_qck.v	copy (module path only)	0	d8598bc321b	1a9658d9128	d8598bc321b same	-	-	-	-	-
+lib/B/Bz/A/R_cache_defs.v	copy (module path only)	0	ba85777d5a4	187f4c9c138	ba85777d5a4 same	-	-	-	-	-
+lib/B/Bz/A/R_isPoisoned.v	relocate	8	0716c190d44	349caf31243	134b6c46ff3 differs	-	692408	693368	__asan_shadow_memory_dynamic_address[1/1]+0x0	132,185,219,273
+lib/B/Bz/A/R_isPoisoned.v	relocate	8	0716c190d44	349caf31243	134b6c46ff3 differs	-	0x54d70	0x54de8	__asan_region_is_poisoned[1/1]+0x164	133
+lib/B/Bz/A/R_isPoisoned.v	relocate	8	0716c190d44	349caf31243	134b6c46ff3 differs	-	0x54d1c	0x54d94	__asan_region_is_poisoned[1/1]+0x110	187
+lib/B/Bz/A/R_isPoisoned.v	relocate	8	0716c190d44	349caf31243	134b6c46ff3 differs	-	0x54ce0	0x54d58	__asan_region_is_poisoned[1/1]+0xd4	220
+lib/B/Bz/A/R_isPoisoned.v	relocate	8	0716c190d44	349caf31243	134b6c46ff3 differs	-	0x54c98	0x54d10	__asan_region_is_poisoned[1/1]+0x8c	274
+lib/B/Bz/A/R_m2s.v	relocate	10	643309a49c2	e05b9d3a6bd	643309a49c2 same	-	0xa0510	0xa08b0	got slot -> __asan_shadow_memory_dynamic_address	20
+lib/B/Bz/A/R_m2s.v	relocate	10	643309a49c2	e05b9d3a6bd	643309a49c2 same	-	0xa90b8	0xa9478	__asan_shadow_memory_dynamic_address[1/1]+0x0	20,21
+lib/B/Bz/A/R_m2s.v	relocate	10	643309a49c2	e05b9d3a6bd	643309a49c2 same	-	0xa9da8	0xaa168	_ZN6__asan10kMidMemBegE[1/1]+0x0	20
+lib/B/Bz/A/R_m2s.v	relocate	10	643309a49c2	e05b9d3a6bd	643309a49c2 same	-	0xa9db0	0xaa170	_ZN6__asan10kMidMemEndE[1/1]+0x0	20
+lib/B/Bz/A/R_m2s.v	relocate	10	643309a49c2	e05b9d3a6bd	643309a49c2 same	-	0xa9da0	0xaa160	_ZN6__asan11kHighMemEndE[1/1]+0x0	20,22
+lib/B/Bz/A/R_m2s.v	relocate	10	643309a49c2	e05b9d3a6bd	643309a49c2 same	-	0x54780	0x547f8	_ZN6__asanL11MemToShadowEm[4/5]+0x0	35
+lib/B/Bz/A/R_m2s.v	relocate	10	643309a49c2	e05b9d3a6bd	643309a49c2 same	-	0x53138	0x531b0	_ZN6__asanL11MemToShadowEm[3/5]+0x0	74
+lib/B/Bz/A/R_m2s.v	relocate	10	643309a49c2	e05b9d3a6bd	643309a49c2 same	-	0x5d66c	0x5d6e4	_ZN6__asanL11MemToShadowEm[5/5]+0x0	111
+lib/B/Bz/A/R_memiszero.v	relocate	7	ae9163ecd4c	f4e553b1c92	ae9163ecd4c same	-	0x6494c	0x649c4	_ZN11__sanitizer11mem_is_zeroEPKcm[1/1]+0x0	66
+lib/B/Bz/A/R_memiszero.v	relocate	7	ae9163ecd4c	f4e553b1c92	ae9163ecd4c same	-	0x649d8	0x64a50	_ZN11__sanitizer11mem_is_zeroEPKcm[1/1]+0x8c	117
+lib/B/Bz/A/R_memiszero.v	relocate	7	ae9163ecd4c	f4e553b1c92	ae9163ecd4c same	-	0x649c4	0x64a3c	_ZN11__sanitizer11mem_is_zeroEPKcm[1/1]+0x78	135
+lib/B/Bz/A/R_memiszero.v	relocate	7	ae9163ecd4c	f4e553b1c92	ae9163ecd4c same	-	0x649b8	0x64a30	_ZN11__sanitizer11mem_is_zeroEPKcm[1/1]+0x6c	155
+lib/B/Bz/A/R_memiszero.v	relocate	7	ae9163ecd4c	f4e553b1c92	ae9163ecd4c same	-	0x649a8	0x64a20	_ZN11__sanitizer11mem_is_zeroEPKcm[1/1]+0x5c	180
+lib/B/Bz/A/R_memiszero.v	relocate	7	ae9163ecd4c	f4e553b1c92	ae9163ecd4c same	-	0x649a4	0x64a1c	_ZN11__sanitizer11mem_is_zeroEPKcm[1/1]+0x58	200
+lib/B/Bz/A/R_memiszero.v	relocate	7	ae9163ecd4c	f4e553b1c92	ae9163ecd4c same	-	0x6498c	0x64a04	_ZN11__sanitizer11mem_is_zeroEPKcm[1/1]+0x40	221
+lib/B/Bz/A/R_prim_defs.v	copy (module path only)	0	2e93325974c	5cfd099e513	2e93325974c same	-	-	-	-	-
+lib/B/Bz/A/R_small.v	relocate	3	6937907e8bd	3648b5032de	6937907e8bd same	-	0x59190	0x59208	_ZN6__asan10AsanInitedEv[1/1]+0x0	21,29
+lib/B/Bz/A/R_small.v	relocate	3	6937907e8bd	3648b5032de	6937907e8bd same	-	0xa9d98	0xaa158	_ZN6__asanL11asan_initedE[1/1]+0x0	25
+lib/B/Bz/A/R_thread.v	copy (module path only)	0	89a8babcce9	cb5467a7947	89a8babcce9 same	-	-	-	-	-
+lib/B/Bz/A/Shadow.v	copy (module path only)	0	cf32579ca3c	ed7189ee333	cf32579ca3c same	-	-	-	-	-
+lib/B/Bz/A/X_atexit.v	copy (module path only)	0	80ab4ca644b	d422c77132f	80ab4ca644b same	-	-	-	-	-
+lib/B/Bz/BvWfKernel.v	copy (module path only)	0	54a49635f96	54a49635f96	54a49635f96 same	-	-	-	-	-
+lib/B/Bz/Common/PlacementSearch.v	copy (module path only)	0	ce8892cba12	ffb06bb3fb2	ce8892cba12 same	-	-	-	-	-
+lib/B/Bz/Common/PropExec.v	copy (module path only)	0	9b1b6f99872	6df6ddd1205	9b1b6f99872 same	-	-	-	-	-
+lib/B/Bz/Lib/Arr.v	copy (module path only)	0	0857d6b3d8a	ef2088e44f6	0857d6b3d8a same	-	-	-	-	-
+lib/B/Bz/Lib/Bytes.v	copy (module path only)	0	64240cb0875	595c301a927	64240cb0875 same	-	-	-	-	-
+lib/B/Bz/Lib/Ceiling.v	copy (module path only)	0	d7bcce9cf33	452ba8569a9	d7bcce9cf33 same	-	-	-	-	-
+lib/B/Bz/Lib/Cells.v	copy (module path only)	0	b9580dc2a92	5475b26312a	b9580dc2a92 same	-	-	-	-	-
+lib/B/Bz/Lib/Exec.v	copy (module path only)	0	2d9c0429d77	925ffbca857	2d9c0429d77 same	-	-	-	-	-
+lib/B/Bz/Lib/FP.v	copy (module path only)	0	76b438e0541	8fa7b78a96a	76b438e0541 same	-	-	-	-	-
+lib/B/Bz/Lib/Frame.v	copy (module path only)	0	5a3ecebcf1d	305de85c4d7	5a3ecebcf1d same	-	-	-	-	-
+lib/B/Bz/Lib/Image.v	copy (module path only)	0	f979cc0ce7a	b72934539d1	f979cc0ce7a same	-	-	-	-	-
+lib/B/Bz/Lib/ImageA.v	image-module	0	434f3fd3601	b494cd1b05f	434f3fd3601 same	-	-	-	-	-
+lib/B/Bz/Lib/LiaTuning.v	copy (module path only)	0	a8361d57dbd	4ee9d2dffda	a8361d57dbd same	-	-	-	-	-
+lib/B/Bz/Lib/MState.v	copy (module path only)	0	e596fcf568e	f3288d93015	e596fcf568e same	-	-	-	-	-
+lib/B/Bz/Lib/Mem.v	copy (module path only)	0	8f6a98588dd	6aa9b84fd1e	8f6a98588dd same	-	-	-	-	-
+lib/B/Bz/Lib/PropExec.v	copy (module path only)	0	4cb17277631	8f1105e014c	4cb17277631 same	-	-	-	-	-
+lib/B/Bz/Lib/Step.v	copy (module path only)	0	6a4f6fd80d6	62fbe14e90e	6a4f6fd80d6 same	-	-	-	-	-
+lib/B/Bz/Lib/StepFast.v	copy (module path only)	0	41ed78494f5	d2d05762b7d	41ed78494f5 same	-	-	-	-	-
+lib/B/Bz/Lib/StoreFast.v	copy (module path only)	0	197d4fac24b	a4a0a40fdce	197d4fac24b same	-	-	-	-	-
+lib/B/Bz/Lib/SysStep.v	copy (module path only)	0	0e9428529df	dfcffb87979	0e9428529df same	-	-	-	-	-
+lib/B/Bz/Lib/Tac.v	copy (module path only)	0	467008909e6	2c84d3e5e31	467008909e6 same	-	-	-	-	-
+lib/B/Bz/Lib/Walk.v	copy (module path only)	0	0d520d57814	2dbfc429cef	0d520d57814 same	-	-	-	-	-
+lib/B/Bz/Lib/ZBridge.v	copy (module path only)	0	e7897a6b3e2	d4f3501f190	e7897a6b3e2 same	-	-	-	-	-
+lib/B/Bz/P/Startup_glue.v	copy (module path only)	0	3c6f1bc4296	01f005a2daa	3c6f1bc4296 same	-	-	-	-	-
+lib/B/Bz/P/Str_merge.v	copy (module path only)	0	1862d94b012	84d9460748c	1862d94b012 same	-	-	-	-	-
+lib/B/Bz/P/Str_tac.v	copy (module path only)	0	7ee14eb5e70	ebbd32c12ff	7ee14eb5e70 same	-	-	-	-	-
+lib/B/Bz/Spec/StrFun.v	copy (module path only)	0	20e4f902234	e4dd2de9553	20e4f902234 same	-	-	-	-	-
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x99b30	0x99ed0	memcpy[1/1]+0x3c0	150
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x99b04	0x99ea4	memcpy[1/1]+0x394	177
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x99afc	0x99e9c	memcpy[1/1]+0x38c	191
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x99ab0	0x99e50	memcpy[1/1]+0x340	205
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x997d8	0x99b78	memcpy[1/1]+0x68	221
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x99aa8	0x99e48	memcpy[1/1]+0x338	235
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x997d0	0x99b70	memcpy[1/1]+0x60	249
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x99a1c	0x99dbc	memcpy[1/1]+0x2ac	263
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x998ec	0x99c8c	memcpy[1/1]+0x17c	287
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x998cc	0x99c6c	memcpy[1/1]+0x15c	302
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x9989c	0x99c3c	memcpy[1/1]+0x12c	315
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x99890	0x99c30	memcpy[1/1]+0x120	332
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x99814	0x99bb4	memcpy[1/1]+0xa4	348
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x997f8	0x99b98	memcpy[1/1]+0x88	373
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x9991c	0x99cbc	memcpy[1/1]+0x1ac	391
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x99908	0x99ca8	memcpy[1/1]+0x198	416
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x999b0	0x99d50	memcpy[1/1]+0x240	433
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x9998c	0x99d2c	memcpy[1/1]+0x21c	458
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x997e4	0x99b84	memcpy[1/1]+0x74	475
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x997c0	0x99b60	memcpy[1/1]+0x50	490
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x997b8	0x99b58	memcpy[1/1]+0x48	504
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x99788	0x99b28	memcpy[1/1]+0x18	517
+lib/B/Prog/memcpy.v	relocate	24	91c0580d13c	d23d8f2c4ea	91c0580d13c same	-	0x99770	0x99b10	memcpy[1/1]+0x0	533,560
+lib/B/Prog/memcpy_c.v	relocate	2	9468e7ea399	ab8e9d3298e	9468e7ea399 same	-	0x99770	0x99b10	memcpy[1/1]+0x0	18,42
+lib/B/Prog/memcpy_same.v	relocate	11	1e77226f274	75e996b1c69	1e77226f274 same	-	0x99b30	0x99ed0	memcpy[1/1]+0x3c0	190
+lib/B/Prog/memcpy_same.v	relocate	11	1e77226f274	75e996b1c69	1e77226f274 same	-	0x997d8	0x99b78	memcpy[1/1]+0x68	216
+lib/B/Prog/memcpy_same.v	relocate	11	1e77226f274	75e996b1c69	1e77226f274 same	-	0x997d0	0x99b70	memcpy[1/1]+0x60	229
+lib/B/Prog/memcpy_same.v	relocate	11	1e77226f274	75e996b1c69	1e77226f274 same	-	0x997c0	0x99b60	memcpy[1/1]+0x50	241
+lib/B/Prog/memcpy_same.v	relocate	11	1e77226f274	75e996b1c69	1e77226f274 same	-	0x998ec	0x99c8c	memcpy[1/1]+0x17c	253
+lib/B/Prog/memcpy_same.v	relocate	11	1e77226f274	75e996b1c69	1e77226f274 same	-	0x998cc	0x99c6c	memcpy[1/1]+0x15c	268
+lib/B/Prog/memcpy_same.v	relocate	11	1e77226f274	75e996b1c69	1e77226f274 same	-	0x9989c	0x99c3c	memcpy[1/1]+0x12c	281
+lib/B/Prog/memcpy_same.v	relocate	11	1e77226f274	75e996b1c69	1e77226f274 same	-	0x99890	0x99c30	memcpy[1/1]+0x120	298
+lib/B/Prog/memcpy_same.v	relocate	11	1e77226f274	75e996b1c69	1e77226f274 same	-	0x997b8	0x99b58	memcpy[1/1]+0x48	310
+lib/B/Prog/memcpy_same.v	relocate	11	1e77226f274	75e996b1c69	1e77226f274 same	-	0x99788	0x99b28	memcpy[1/1]+0x18	325
+lib/B/Prog/memcpy_same.v	relocate	11	1e77226f274	75e996b1c69	1e77226f274 same	-	0x99770	0x99b10	memcpy[1/1]+0x0	343
+lib/B/Prog/memcpy_same_c.v	relocate	1	e8dd81bc577	b96ea3e973d	e8dd81bc577 same	-	0x99770	0x99b10	memcpy[1/1]+0x0	18
+lib/B/Prog/memset.v	copy (module path only)	0	899a06f601b	1353c2d2179	899a06f601b same	899a06f601b same	-	-	-	-
+lib/B/Prog/memset_c.v	relocate	1	d4625c793b8	3c1dd1997fa	d4625c793b8 same	-	0x99b74	0x99f14	memset[1/1]+0x0	8
+lib/B/RT_mem_bz.v	copy (module path) + comment numerals	2	2259cfb753b	aa8640d33e6	-	-	0x99770	0x99b10	memcpy[1/1]+0x0	2
+lib/B/RT_mem_bz.v	copy (module path) + comment numerals	2	2259cfb753b	aa8640d33e6	-	-	0x99b74	0x99f14	memset[1/1]+0x0	2
+lib/B/R_memset.v	relocate	4	5cee3ceb817	1c94fdadbfc	5cee3ceb817 same	5cee3ceb817 same	0x99b74	0x99f14	memset[1/1]+0x0	112,224,310
+lib/B/R_memset.v	relocate	4	5cee3ceb817	1c94fdadbfc	5cee3ceb817 same	5cee3ceb817 same	0x99c4c	0x99fec	memset[1/1]+0xd8	198
+lib/B/Spec/StrFun.v	copy (no lib.A import; blob = lib/A/Spec/StrFun.v)	0	93703a37886	93703a37886	93703a37886 same	93703a37886 same	-	-	-	-
+lib/B/Strw/STRW_tac.v	copy (module path only)	0	465a98a854c	17ae7f0e564	465a98a854c same	-	-	-	-	-
+lib/B/Strw/STRWaj3.v	copy (module path only)	0	6424d565755	d31e00c0d21	6424d565755 same	6424d565755 same	-	-	-	-

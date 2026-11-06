@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openjph
 harness: ojph_expand_fuzz_target
-rocq: OssFuzzTheorems.openjph.ojph_expand_fuzz_target
+rocq: OSSVerify.openjph.ojph_expand_fuzz_target
 origin: upstream
 summary: Two option bytes (planar/interleaved, resolutions to skip), resilient read_headers, size/decomposition/precinct
   guards, create(), then pull every line with a 10 s wall-clock budget; pulled samples never inspected;

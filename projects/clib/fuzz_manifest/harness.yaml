@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: clib
 harness: fuzz_manifest
-rocq: OssFuzzTheorems.clib.fuzz_manifest
+rocq: OSSVerify.clib.fuzz_manifest
 origin: upstream
 summary: Writes the input to ./libfuzzer.json and calls clib_package_load_from_manifest (parson JSON parse
   + package struct fill); the package is freed unexamined.

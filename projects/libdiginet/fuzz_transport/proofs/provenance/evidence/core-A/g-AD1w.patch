@@ -1,0 +1,20 @@
+--- A/AD1w.v
++++ A/AD1w.v
+@@ -10,6 +10,7 @@
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import AB1v AF0m AD2j AD2i AD1t AD20 AD1v AD2h AD2f.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK00 YI00 YI16.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import AE2k AD1u.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import W_journalG.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YO05 YO09 YO06 YO01.
+ From Stdlib Require Import Permutation.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
+@@ -94,7 +95,8 @@
+ wle W W' -> AI tfibsegs (w_H W') (w_A W') (cfg_model c') ->
+ (exists ly' S' regs' mem' md' k,
+ c' = cfg_at tfibsegs RA_LLVMF regs' mem' md' /\
+-YCbq.ajournal tfibsegs B LLVMF_STK (spZ regs) [YI16.sink_token] ly S W mem md [] ly' S' W' mem' md' k /\ k <= EV_LIB /\
++(* the call's journal: W_journalG.v's ajournal_gx at the harness globals' hull DRV_G (A/AD2f.v), no out window *)
++ajournal_gx tfibsegs B DRV_G 0 [] LLVMF_STK (spZ regs) [YI16.sink_token] ly S W mem md [] ly' S' W' mem' md' k /\ k <= EV_LIB /\
+ aregs_preserved regs regs' /\ getr regs' 10%bv = w64 0 /\
+ Permutation (ablocks B ly' S') (ablocks B ly S) /\
+ (forall fd, fd_lookup (m_fds md') fd = fd_lookup (m_fds md) fd) /\

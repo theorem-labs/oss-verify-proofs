@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: curl
 harness: fuzz_fnmatch
-rocq: OssFuzzTheorems.curl.fuzz_fnmatch
+rocq: OSSVerify.curl.fuzz_fnmatch
 origin: upstream
 summary: Splits the input into two NUL-terminated strings (pattern, contents) and calls Curl_fnmatch(NULL,
   pattern, contents); the return code is discarded ((void)fnrc).

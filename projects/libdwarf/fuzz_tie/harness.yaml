@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_tie
-rocq: OssFuzzTheorems.libdwarf.fuzz_tie
+rocq: OSSVerify.libdwarf.fuzz_tie
 origin: upstream
 summary: dwarf_init_b then dwarf_set_tied_dbg(dbg, NULL).
 entry: LLVMFuzzerTestOneInput

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: args
 harness: parse_args_fuzzer
-rocq: OssFuzzTheorems.args.parse_args_fuzzer
+rocq: OSSVerify.args.parse_args_fuzzer
 origin: upstream
 summary: ArgumentParser with help/test/param flags parses 1-10 FuzzedDataProvider strings; catch (...)
   swallows every exception; parse outcome never inspected.

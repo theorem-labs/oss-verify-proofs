@@ -1,0 +1,13 @@
+plants.out: 3 planted controls
+  PLANT-A-VERDICT CAUGHT: DIFFERS
+  PLANT-C-VERDICT CAUGHT: DIFFERS
+  PLANT-B-VERDICT REFUSED: NOT CERTIFIED
+  ctl-settle-debruijn-untouched.tsv: ROW SETTLED-EQUAL
+  ctl-settle-debruijn-planted.tsv: ROW NOT SETTLED
+  ctl-settle-slli3-planted.tsv: 0x1c0 REFUSED: not settled as a table (refused)
+  ctl-handtable-bound.out: NOT SETTLED (the bound differs between X and Y)
+  ctl-handtable-zarm.out: NOT SETTLED (X: slot 47 targets 0x83cb0, not a word of the function)
+  ctl-handtable-jump.out: NOT SETTLED (X: the block word +0x264 has predecessors ['+0x248', '+0x260'])
+  ctl-handtable-entries.out: NOT SETTLED (X: slot 47 targets 0x83cb0, not a word of the function)
+  ctl-handtable-slot.out: DIFFERS (1 entries)
+GATE wire-b-alloc-plants VERDICT: PASS head 75cd74cdfee5b2ed1165fe5fbe48ef157f89a474 inputs plants.py 237bb0a60df5 (plants.out); settle.py 4eeeae293912 (ctl-settle-*.tsv); handtable.py 95e3bc23db39 (ctl-handtable-*.out)

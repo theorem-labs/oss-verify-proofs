@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjpeg-turbo
 harness: compress16_lossless_fuzzer
-rocq: OssFuzzTheorems.libjpeg_turbo.compress16_lossless_fuzzer
+rocq: OSSVerify.libjpeg_turbo.compress16_lossless_fuzzer
 origin: upstream
 summary: Lossless tj3Compress16 (precision 13-16) on a loaded or raw image; output only summed, never
   decoded, so losslessness is not checked. The "sum > bound" test after touching output bytes only prevents

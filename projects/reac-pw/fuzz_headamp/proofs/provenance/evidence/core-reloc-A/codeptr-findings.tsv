@@ -1,0 +1,172 @@
+# codeptr (start-up set 2026-10-30d, codeptr.py sha 12348302dfd2) over the 386 headamp A files, --stale-image fuzz_role.asan, --stale-dir = the role source files: every finding read
+# summary: 169 findings; 159 STALE (value = the role file literal) all among them; 41 files hold no address literal (UNMEASURED)
+file	value	reading	context
+AB13.v	0x20000	kept by both tools (role value = port_core value)	replace ((65536 <=? x) && (x + 1 <=? 65536 + 131072))%bool with false by (s || replace ((65536 <=? x) && (x + 1 <=? 65536 + 131072))%bool with false by (s
+AB13.v	0x55c000	model constant (donor twins agree, class5.tsv)	Lemma tfib_hex3 : scanN Asan_seg_bytes_003 64 0 5619712 = true. || 3 : Z.to_N (Uint63.to_Z (PrimString.length Asan_seg_bytes_003) / 2) = 5619712%N.
+AB1g.v	0x10101	model constant (donor twins agree, class5.tsv)	Lemma D_11d4cc : decode_any W_11d4cc = Some (Lui 11 65793, 4%Z).
+AB1g.v	0x300713	instruction word	Definition W_11d490 : bv 32 := 0x00300713.
+AB1g.v	0x36f693	instruction word	Definition W_11d4d0 : bv 32 := 0x0036f693.
+AB1g.v	0x459713	instruction word	Definition W_11d4d4 : bv 32 := 0x00459713.
+AB1g.v	0x45f793	instruction word	Definition W_11d524 : bv 32 := 0x0045f793.
+AB1h.v	0x20000	kept by both tools (role value = port_core value)	b_res_eq : segments_reserved TSEGS = [(Z_to_bv 64 0x10000, Z_to_bv 64 0x20000); (Z_to_bv 64 0x30000,
+AB1h.v	0x158593	instruction word	 tfib_Fp1 : fetch_word TSEGS (Z_to_bv 64 (x_pnscan TFIB - 4)) = Some (0x00158593%bv : bv 32). || Lemma tfib_Ep : is_ecall (0x00b53023%bv : bv 32) = false /\ is_ecall (0x00158593%bv : bv 32) = false
+AB1h.v	0x55c000	kept by both tools (role value = port_core value)	to_bv 64 0x9b000, Z_to_bv 64 0x3000); (Z_to_bv 64 0x9e000, Z_to_bv 64 0x55c000)]. || Lemma tfib_hex3 : scanN Asan_seg_bytes_003 64 0 5619712 = true.
+AB1k.v	0x155593	instruction word	Lemma F_000 : fetch_word tfibsegs (Z_to_bv 64 0x656e0) = Some (0x00155593%bv : bv 32). || Lemma D_000 : decode_any (0x00155593%bv : bv 32) = Some 
+AB1k.v	0x155793	instruction word	Lemma F_074 : fetch_word tfibsegs (Z_to_bv 64 0x65754) = Some (0x00155793%bv : bv 32). || Lemma D_074 : decode_any (0x00155793%bv : bv 32) = Some 
+AB1k.v	0x255513	instruction word	Lemma F_084 : fetch_word tfibsegs (Z_to_bv 64 0x65764) = Some (0x00255513%bv : bv 32). || Lemma D_084 : decode_any (0x00255513%bv : bv 32) = Some 
+AB1k.v	0x255793	instruction word	Lemma F_028 : fetch_word tfibsegs (Z_to_bv 64 0x65708) = Some (0x00255793%bv : bv 32). || Lemma D_028 : decode_any (0x00255793%bv : bv 32) = Some 
+AB1k.v	0x455593	instruction word	Lemma F_090 : fetch_word tfibsegs (Z_to_bv 64 0x65770) = Some (0x00455593%bv : bv 32). || Lemma D_090 : decode_any (0x00455593%bv : bv 32) = Some 
+AB1k.v	0x455793	instruction word	Lemma F_050 : fetch_word tfibsegs (Z_to_bv 64 0x65730) = Some (0x00455793%bv : bv 32). || Lemma D_050 : decode_any (0x00455793%bv : bv 32) = Some 
+AB1r.v	0xa2603	instruction word	Definition W_52d28 : bv 32 := 0x000a2603.
+AB1r.v	0x468693	instruction word	Definition W_52d30 : bv 32 := 0x00468693.
+AB1r.v	0x4a0a13	instruction word	Definition W_52d34 : bv 32 := 0x004a0a13.
+AB1s.v	0xb2583	instruction word	Definition W_509d4 : bv 32 := 0x000b2583.
+AB1s.v	0x4b0b13	instruction word	Definition W_509d8 : bv 32 := 0x004b0b13.
+AB1s.v	0x4c8c93	instruction word	Definition W_509e0 : bv 32 := 0x004c8c93.
+AB1u.v	0x28693	instruction word	Definition W_11d43c : bv 32 := 0x00028693.
+AB1u.v	0x28a63	instruction word	Definition W_11d0b4 : bv 32 := 0x00028a63.
+AB1u.v	0x100793	instruction word	Definition W_11d090 : bv 32 := 0x00100793.
+AB1u.v	0x158593	instruction word	Definition W_11d0a0 : bv 32 := 0x00158593.
+AB1u.v	0x158713	instruction word	Definition W_11d08c : bv 32 := 0x00158713.
+AB1u.v	0x15c783	instruction word	Definition W_11d330 : bv 32 := 0x0015c783. || Definition W_11d3c4 : bv 32 := 0x0015c783.
+AB1u.v	0x167613	instruction word	Definition W_11d448 : bv 32 := 0x00167613. || Definition W_11d470 : bv 32 := 0x00167613.
+AB1u.v	0x168693	instruction word	Definition W_11d0ac : bv 32 := 0x00168693. || Definition W_11d21c : bv 32 := 0x00168693.
+AB1u.v	0x170713	instruction word	Definition W_11d0b8 : bv 32 := 0x00170713.
+AB1u.v	0x200813	instruction word	Definition W_11d100 : bv 32 := 0x00200813.
+AB1u.v	0x258593	instruction word	Definition W_11d45c : bv 32 := 0x00258593.
+AB1u.v	0x25c803	instruction word	Definition W_11d334 : bv 32 := 0x0025c803. || Definition W_11d3c8 : bv 32 := 0x0025c803.
+AB1w.v	0x65c98	identifier text: an old address inside the name tfib_A/E_MmapFixedNoAccess_3_insn_arg_shim_0x65c98 (AB1w only, the name as role has it); its values 0x665a4 / 0x665b0 = MmapFixedOrDie (12 bytes) start / end in headamp, as role's 0x6596c / 0x65978	
+AB1w.v	0x55c000	kept by both tools (role value = port_core value)	Definition tfib_at_rw_len : Z := 0x55c000.
+AD1d.v	0x20000	model constant (donor twins agree, class5.tsv)	&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072 || /\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072 = true
+AD1d.v	0x100000	model constant (donor twins agree, class5.tsv)	[ (epg 518, ELit 4096); (epg 501, ELit 8388608); (epg 500, ELit 1048576); (epg 424, ELit 11571 || (kn_zero ch (EMd M_MUL (ELit 512) (EVar 501)) 2147450880 1048576
+AD1d.v	0x161200	model constant (donor twins agree, class5.tsv)	&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 424)) 2147450880 1446400)%bool. || /\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 424)) 2147450880 1446400 = true.  (* 1442240 ->
+AD1d.v	0x38e000	model constant (donor twins agree, class5.tsv)	 (epg 275, ELit 65536); (epg 274, ELit 4096); RINFO_P; (epg 254, ELit 3727360); (epg 109, ELit 65536
+AD1e.v	0x100000	model constant (donor twins agree, class5.tsv)	*   eapply (PG 500%nat 1048576 (wzp (dNB E)) eq_refl 
+AD1e.v	0x38e000	model constant (donor twins agree, class5.tsv)	change (d254 E) with (dmm E (mk e254 3727360 KRW)). apply (extra_of || *   eapply (PG 254%nat 3727360 (wzp (d254 E)) eq_refl
+AD1f.v	0x20000	model constant (donor twins agree, class5.tsv)	eapply (KZ _ 500%nat 1048576 131072 B12 eq_refl HNB ltac:(l
+AD1f.v	0x100000	model constant (donor twins agree, class5.tsv)	eapply (KZ _ 501%nat 8388608 1048576 B12 eq_refl HSBv ltac: || eapply (KZ _ 500%nat 1048576 131072 B12 eq_refl HNB
+AD1f.v	0x161200	model constant (donor twins agree, class5.tsv)	eapply (KZ _ 424%nat 11571200 1446400 B12 eq_refl HFv ltac:(
+AD1f.v	0x38e000	model constant (donor twins agree, class5.tsv)	eapply (PG 254%nat 3727360 (wzp (d254 E)) eq_refl
+AD1g.v	0x100000	model constant (donor twins agree, class5.tsv)	EAD3 : list amap := [ mk eGV 4096 KRW; mk eSB 8388608 KRWLAZY; mk eNB 1048576 KRW ]. || finition dF := dm eF 11571200 KRW.           Definition dNB := dm eNB 1048576 KRW.       Definition 
+AD1g.v	0x38e000	model constant (donor twins agree, class5.tsv)	mk eP 137439023104 KRW; mk e254 3727360 KRW; mk e109 65536 KRW || Definition dC := dm eC 65536 KRW.    Definition d254 := dm e254 3727360 KRW. Definition d109 :
+AD1o.v	0x20000	kept by both tools (role value = port_core value)	 s), Z.of_N (seg_size s), seg_writable s)) tfibsegs) 0 = Some (65536, 131072, false)) by (vm_compute
+AD1v.v	0x1ffff	model constant (donor twins agree, class5.tsv)	 (length p) + 1 < kHighMemEnd -> ~ In NUL p -> Z.of_nat (length p) <= 131071 ->
+AD1v.v	0x3fffff	model constant (donor twins agree, class5.tsv)	sp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E' 8) <= 4194303 -> || sp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E' 8) <= 4194303 ->
+AD1w.v	0x3fffff	model constant (donor twins agree, class5.tsv)	sp <= sp_window_hi -> usp mod 16 = 0 -> 1 <= bv_unsigned (ew E' 8) <= 4194303 ->
+AD1x.v	0x1ffff	model constant (donor twins agree, class5.tsv)	Z.of_nat (length str) <= 131071 -> ~ In NUL str ->
+AD1x.v	0x3fffff	model constant (donor twins agree, class5.tsv)	1 <= bv_unsigned (ew E 8) <= 4194303 ->
+AD1y.v	0x3fffff	model constant (donor twins agree, class5.tsv)	atom_lookup (f_atoms (ss_facts ss)) 8%nat = Some (mkAF 1 4194303 0) -> 1 <= bv_unsigned ||  ss)) 8%nat = Some (mkAF 1 4194303 0) -> 1 <= bv_unsigned (ew E 8) <= 4194303.
+AD27.v	0x1ffff	model constant (donor twins agree, class5.tsv)	 (length p) + 1 < kHighMemEnd -> ~ In NUL p -> Z.of_nat (length p) <= 131071 ->
+AD27.v	0x3fffff	model constant (donor twins agree, class5.tsv)	/\ atom_lookup (f_atoms (ss_facts S_COf)) 8%nat = Some (mkAF 1 4194303 0) /\ forallb drv_win_ || S_checks : atom_lookup (f_atoms (ss_facts S_US)) 8%nat = Some (mkAF 1 4194303 0) /\ ss_mem S_US <> [
+AD2k.v	0x38e000	model constant (donor twins agree, class5.tsv)	&& kn_mem (KZero (SA e254 0) (ELit 3727360)) ch
+AE30.v	0x200000	model constant (donor twins agree, class5.tsv)	assert (Hrange : 0 <= fst (fst e) /\ fst (fst e) + snd (fst e) <= 0x200000).
+AE37.v	0x21480	kept by both tools (role value = port_core value)	(2368, 8%N, 0x21480); (2376, 8%N, 0x8); (2
+AE37.v	0x214a0	kept by both tools (role value = port_core value)	(2432, 8%N, 0x214a0); (2440, 8%N, 0x4); (2
+AE37.v	0x214c0	kept by both tools (role value = port_core value)	(2496, 8%N, 0x214c0); (2504, 8%N, 0x5); (2
+AE37.v	0x214e0	kept by both tools (role value = port_core value)	04, 8%N, 0x21460); (2312, 8%N, 0xe); (2320, 8%N, 0x20);   (2336, 8%N, 0x214e0); || 68, 8%N, 0x21480); (2376, 8%N, 0x8); (2384, 8%N, 0x20);   (2400, 8%N, 0x214e0);
+AE38.v	0x158593	instruction word	Lemma F_00c : fetch_word tfibsegs (Z_to_bv 64 (A_ISL + 0xc)) = Some (0x00158593%bv : bv 32). Proof. || Lemma D_00c : decode_any (0x00158593%bv : bv 32) = Some 
+AE39.v	0x20000	kept by both tools (role value = port_core value)	 s), Z.of_N (seg_size s), seg_writable s)) tfibsegs) 0 = Some (65536, 131072, false)) by (vm_compute
+AE3a.v	0x100813	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x18)) = Some (0x00100813%bv : bv 32). || Lemma DM_018 : decode_any (0x00100813%bv : bv 32) = Some 
+AE3a.v	0x150513	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x28)) = Some (0x00150513%bv : bv 32). || Lemma DM_028 : decode_any (0x00150513%bv : bv 32) = Some 
+AE3a.v	0x150793	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x14)) = Some (0x00150793%bv : bv 32). || Lemma DM_014 : decode_any (0x00150793%bv : bv 32) = Some 
+AE3a.v	0x168793	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x68)) = Some (0x00168793%bv : bv 32). || Lemma DM_068 : decode_any (0x00168793%bv : bv 32) = Some 
+AE3a.v	0x178793	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memchr + 0x3c)) = Some (0x00178793%bv : bv 32). || Lemma DM_03c : decode_any (0x00178793%bv : bv 32) = Some 
+AE3a.v	0x1ffff0	model constant (donor twins agree, class5.tsv)	Lemma DM_0c8 : decode_any (0xff1ff06f%bv : bv 32) = Some (Jal 0 2097136, 4%Z).
+AE3b.v	0x150513	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcmp + 0x14)) = Some (0x00150513%bv : bv 32). || Lemma D_014 : decode_any (0x00150513%bv : bv 32) = Some 
+AE3b.v	0x158593	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcmp + 0x18)) = Some (0x00158593%bv : bv 32). || Lemma D_018 : decode_any (0x00158593%bv : bv 32) = Some 
+AE3c.v	0x28693	instruction word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3bc)) = Some (0x00028693%bv : bv 32). || Lemma D_3bc : decode_any (0x00028693%bv : bv 32) = Some 
+AE3c.v	0x28a63	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x34)) = Some (0x00028a63%bv : bv 32). || Lemma D_034 : decode_any (0x00028a63%bv : bv 32) = Some 
+AE3c.v	0x100793	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x10)) = Some (0x00100793%bv : bv 32). || Lemma D_010 : decode_any (0x00100793%bv : bv 32) = Some 
+AE3c.v	0x158593	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x20)) = Some (0x00158593%bv : bv 32). || Lemma D_020 : decode_any (0x00158593%bv : bv 32) = Some 
+AE3c.v	0x158713	instruction word	: fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0xc)) = Some (0x00158713%bv : bv 32). || Lemma D_00c : decode_any (0x00158713%bv : bv 32) = Some 
+AE3c.v	0x15c783	instruction word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2b0)) = Some (0x0015c783%bv : bv 32). || Lemma D_2b0 : decode_any (0x0015c783%bv : bv 32) = Some 
+AE3c.v	0x167613	instruction word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3c8)) = Some (0x00167613%bv : bv 32). || Lemma D_3c8 : decode_any (0x00167613%bv : bv 32) = Some 
+AE3c.v	0x168693	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2c)) = Some (0x00168693%bv : bv 32). || Lemma D_02c : decode_any (0x00168693%bv : bv 32) = Some 
+AE3c.v	0x170713	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x38)) = Some (0x00170713%bv : bv 32). || Lemma D_038 : decode_any (0x00170713%bv : bv 32) = Some 
+AE3c.v	0x200813	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x80)) = Some (0x00200813%bv : bv 32). || Lemma D_080 : decode_any (0x00200813%bv : bv 32) = Some 
+AE3c.v	0x258593	instruction word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x3dc)) = Some (0x00258593%bv : bv 32). || Lemma D_3dc : decode_any (0x00258593%bv : bv 32) = Some 
+AE3c.v	0x25c803	instruction word	fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memcpy + 0x2b4)) = Some (0x0025c803%bv : bv 32). || Lemma D_2b4 : decode_any (0x0025c803%bv : bv 32) = Some 
+AE3d.v	0x10101	model constant (donor twins agree, class5.tsv)	Lemma D_048 : decode_any (0x101015b7%bv : bv 32) = Some (Lui 11 65793, 4%Z).
+AE3d.v	0x300713	instruction word	: fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memset + 0xc)) = Some (0x00300713%bv : bv 32). || Lemma D_00c : decode_any (0x00300713%bv : bv 32) = Some 
+AE3d.v	0x36f693	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memset + 0x4c)) = Some (0x0036f693%bv : bv 32). || Lemma D_04c : decode_any (0x0036f693%bv : bv 32) = Some 
+AE3d.v	0x459713	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memset + 0x50)) = Some (0x00459713%bv : bv 32). || Lemma D_050 : decode_any (0x00459713%bv : bv 32) = Some 
+AE3d.v	0x45f793	instruction word	 fetch_word tfibsegs (Z_to_bv 64 (tfib_A_musl_memset + 0xa0)) = Some (0x0045f793%bv : bv 32). || Lemma D_0a0 : decode_any (0x0045f793%bv : bv 32) = Some 
+AE3e.v	0xa0593	instruction word	Lemma F_17bf4 : fetch_word tfibsegs (0x91290%bv : word) = Some (0x000a0593%bv : bv 32). || Lemma D_17bf4 : decode_any (0x000a0593%bv : bv 32) = Some 
+AE3e.v	0xa0993	instruction word	Lemma F_17c24 : fetch_word tfibsegs (0x912c0%bv : word) = Some (0x000a0993%bv : bv 32). || Lemma D_17c24 : decode_any (0x000a0993%bv : bv 32) = Some 
+AE3e.v	0xa3703	instruction word	Lemma F_17c40 : fetch_word tfibsegs (0x912dc%bv : word) = Some (0x000a3703%bv : bv 32). || Lemma D_17c40 : decode_any (0x000a3703%bv : bv 32) = Some 
+AE3e.v	0xfffff	model constant (donor twins agree, class5.tsv)	c_ltu (Z_to_bv 64 n) (v_addiw (v_lui (Z.shiftl (bv_signed (1048575%bv : bv 20)) 12)) (bv_ || Lemma D_15a34 : decode_any (0xfffff5b7%bv : bv 32) = Some (Lui 11 1048575, 4%Z).
+AE3e.v	0x15859b	instruction word	Lemma F_15a38 : fetch_word tfibsegs (0x8c8d4%bv : word) = Some (0x0015859b%bv : bv 32). || Lemma D_15a38 : decode_any (0x0015859b%bv : bv 32) = Some 
+AE3e.v	0x1fb614	kept by both tools (role value = port_core value)	Lemma D_17c20 : decode_any (0xe14fb0ef%bv : bv 32) = Some (Jal 1 2078228, 4%Z).
+AE3e.v	0x1fb69c	kept by both tools (role value = port_core value)	Lemma D_17b98 : decode_any (0xe9cfb0ef%bv : bv 32) = Some (Jal 1 2078364, 4%Z).
+AE3e.v	0x1fff94	model constant (donor twins agree, class5.tsv)	Lemma D_17c60 : decode_any (0xf95ff06f%bv : bv 32) = Some (Jal 0 2097044, 4%Z).
+AE3e.v	0x461a13	instruction word	Lemma F_17c38 : fetch_word tfibsegs (0x912d4%bv : word) = Some (0x00461a13%bv : bv 32). || Lemma D_17c38 : decode_any (0x00461a13%bv : bv 32) = Some 
+AE6k.v	0x200000	model constant (donor twins agree, class5.tsv)	assert (Hrange : 0 <= fst (fst e) /\ fst (fst e) + snd (fst e) <= 0x200000).
+AE6x.v	0x20000	kept by both tools (role value = port_core value)	 s), Z.of_N (seg_size s), seg_writable s)) tfibsegs) 0 = Some (65536, 131072, false)) by (vm_compute
+AFek.v	0x20000	model constant (donor twins agree, class5.tsv)	(aTOT, mkAF 2 131072 0); (aN, mkAF 1 4097 0)
+AFel.v	0x20000	model constant (donor twins agree, class5.tsv)	{ change (2 ^ 16) with 65536. change (2 ^ 17) with 131072 in Ht. destruct (Z_lt_l
+AFel.v	0x100000	model constant (donor twins agree, class5.tsv)	 change (2 ^ 64) with 18446744073709551616 in *. change (2 ^ 20) with 1048576. || pose proof (Z.mod_pos_bound v 1048576 ltac:(lia)) as R. pose
+AFem.v	0x1f05e	kept by both tools (role value = port_core value)	Lemma TOT_range : 2 <= TOT <= 127070. || 1 <= nD <= 4097 /\ 2 <= TOT <= 127070 /\ 0 <= HSH < 2 ^ 64 /\
+AFem.v	0x61b26	derived: 400166 = headamp theDepot 0x186c98 / 4 (decision row A/AFem.v:413)	change (2 ^ 2) with 4. apply Z.mod_divide; [lia|]. exists (400166 + bkt). numconst. lia. 
+AFem.v	0x100000	model constant (donor twins agree, class5.tsv)	4096 <= NB /\ NB + 0x100000 <= 140737479966720 /\ || (NB + 0x100000 <= SB \/ SB + 0x80000
+AFet.v	0x186a0	model constant (donor twins agree, class5.tsv)	destruct (pop_batches 100000 (transfer_g X) []) as [ || assert (LEN : (length (qc_list (transfer_g X)) < 100000)%nat).
+AFeu.v	0x186a0	model constant (donor twins agree, class5.tsv)	let '(g', popped) := pop_batches 100000%nat g [] in || do_recycle 100000%nat popped.
+AFeu.v	0x33180	model constant (donor twins agree, class5.tsv)	ck (2 * (kBatchBytes * Z.of_nat (length (qc_list g))) <=? qc_bytes g) 209280 ;;
+AFf4.v	0x160000	model constant (donor twins agree, class5.tsv)	change ((11571200 - (4096 + 32768)) / 8) with 1441792. lia. }
+AFf9.v	0x3fffc0	model constant (donor twins agree, class5.tsv)	try ((apply Z.mod_divide; [lia|]); first [exists (4194240 + q); lia | exists q'; ||  [lia|]); first [exists (4194240 + q); lia | exists q'; lia | exists (4194240 + q + q'); lia]).
+AFfg.v	0x40000	model constant (donor twins agree, class5.tsv)	do_stretch HS 36%nat 0xa5fc8 262144 0x5e64c BV2_1 Hsp Hsp64
+AFfg.v	0x40248	model constant (donor twins agree, class5.tsv)	do_stretch HS 42%nat 0xe6d80 262728 0x5e67c BV2_3 Hsp Hsp64
+AFft.v	0x35830	model constant (donor twins agree, class5.tsv)	| [] => ISpin 219184
+AFfu.v	0x80000	model constant (donor twins agree, class5.tsv)	apply Z.mod_divide; [lia|]. exists (c * 8 + 24 * 524288 + c'). lia. } || apply Z.mod_divide; [lia|]. exists (c * 8 + 24 * 524288 + c'). lia.
+AFfy.v	0x31294	model constant (donor twins agree, class5.tsv)	match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;; || match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;
+AFfy.v	0x312a0	model constant (donor twins agree, class5.tsv)	| None => fail (FCheck 201376) || | None => fail (FCheck 201376)
+AFfz.v	0x31294	model constant (donor twins agree, class5.tsv)	match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;
+AFfz.v	0x312a0	model constant (donor twins agree, class5.tsv)	| None => fail (FCheck 201376)
+AFg2.v	0x31294	model constant (donor twins agree, class5.tsv)	match ck_state k0 with CAllocated => true | CQuarantined => false end 201364;;
+AFg2.v	0x312a0	model constant (donor twins agree, class5.tsv)	| None => fail (FCheck 201376)
+AFgi.v	0x100000	model constant (donor twins agree, class5.tsv)	flit8 0xa1a70 0x10000000; flit8 0xa1a80 0x100000;
+AFgm.v	0x100000	model constant (donor twins agree, class5.tsv)	flit8 0xa1a70 0x10000000; flit8 0xa1a80 0x100000;
+AFgn.v	0x100000	model constant (donor twins agree, class5.tsv)	flit8 0xa1a70 0x10000000; flit8 0xa1a80 0x100000;
+AFhd.v	0x186a0	model constant (donor twins agree, class5.tsv)	o_len : zlen rest < 100000; || rc_len : zlen t < 100000;
+AFi3.v	0x31614	model constant (donor twins agree, class5.tsv)	malloc n trace s = (tick ;; mcheck (n <? kMaxAllowedMalloc - kPage) 202260   ;; refill_tree (chunk
+AFi3.v	0x6dd44	model constant (donor twins agree, class5.tsv)	if aGranted z then ret tt else spin 449860
+AFi9.v	0x12000	model constant (donor twins agree, class5.tsv)	(aMS, mkAF 73728 (MALLOC_MAX + 2 * 4096)  || [ (aMAP, mkAF TFIB_IMG_END (CEIL_MAX - 73728) 12)    ;
+AFi9.v	0xfffff	model constant (donor twins agree, class5.tsv)	(aNCH, mkAF 0 1048575 0);
+AFi9.v	0x100000	model constant (donor twins agree, class5.tsv)	(aRES, mkAF 0 1048576 14);
+AFia.v	0x20000	kept by both tools (role value = port_core value)	= [(65536, 131072); (196608, 438272); (63
+AFia.v	0x55c000	kept by both tools (role value = port_core value)	= [(65536, 131072); (196608, 438272); (634880, 12288); (647168, 5619712)]) by (vm_compute; ref
+AFif.v	0x20000	model constant (donor twins agree, class5.tsv)	SLit 131072; SLit 3; SLit 50; SLit 
+AFjm.v	0x12000	model constant (donor twins agree, class5.tsv)	NDv = R8v + 4096 /\ 73728 <= MSv <= MALLOC_MAX + 8
+AFjt.v	0x20000	model constant (donor twins agree, class5.tsv)	 sr_get (ss_regs S_V) 10%bv = TQ /\ sr_get (ss_regs S_V) 11%bv = SLit 131072 /\ || Lemma QR_facts : idx = res -> QSv = Qb + 8 * res /\ QSv mod 131072 = Qb mod 131072 /\ QSv 
+AFjy.v	0x20000	model constant (donor twins agree, class5.tsv)	w_A Wz) = A_bytes (w_A W) + MSv + (SHHI mb - SHLO mb) + (if grow then 131072 else 0);
+AFjz.v	0x20000	model constant (donor twins agree, class5.tsv)	~ (grow = true /\ QSv <= bv_unsigned x < QSv + 131072) -> w_H Wz x = w_H W x. || * destruct (zr_dec QSv (QSv + 131072) a) as [D3|D3].
+AFk0.v	0x20000	model constant (donor twins agree, class5.tsv)	(vm_noaccess (m_vmmaps (grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) mdV)) ++ m_vm_lazy (gr || 72) mdV)) ++ m_vm_lazy (grant_md false (Z_to_bv 64 50) (w64 QSv) (w64 131072) mdV)) x
+AFk0.v	0x31614	model constant (donor twins agree, class5.tsv)	malloc n tr s = (tick ;; mcheck (n <? kMaxAllowedMalloc - kPage) 202260 ;; ob <- sec_alloc n ;;
+AFk0.v	0x35f78	model constant (donor twins agree, class5.tsv)	mcheck (Z.of_nat (length (st_sec_arr s)) <? kMaxNumChunks) 221048 ;;
+AFk0.v	0x5f844	model constant (donor twins agree, class5.tsv)	served (st_sec_reserved s0 + kPtrArrayEntriesPerCommit) s0) else spin 391236
+AFk0.v	0x6dd44	model constant (donor twins agree, class5.tsv)	er k) (8 * (ck_n k / 8))) ;; if aGranted z then YG00.ret tt else spin 449860 else YG00.ret tt) ;; || (if aGranted z' then YG00.ret tt else spin 449860)) ;;
+AFk0.v	0x706dc	model constant (donor twins agree, class5.tsv)	+ depot_frames s' + Z.of_nat (length tr) + 1 <? kStoreFramesPerBlock) 460508 ;;
+AFk0.v	0x729f0	model constant (donor twins agree, class5.tsv)	mcheck (depot_ids s' + 1 <? kDepotIdsPerBlock) 469488 ;;
+AFk5.v	0x7fff8	model constant (donor twins agree, class5.tsv)	apply Z.mod_divide; [lia|]. exists (524280 + 2 * q). unfold SHBv. 
+AFk5.v	0xe0000	model constant (donor twins agree, class5.tsv)	write Hqs; apply Z.mod_divide; [lia|]; exists (qs * 16 + c * 2 ^ 20 + 917504); lia).
+AFk6.v	0x40000	model constant (donor twins agree, class5.tsv)	(rMU2, mkAF 262144 3758358528 18); || (rMF2, mkAF 262144 (2 ^ 29 + 262144) 18);
+AFk8.v	0x3fff8	model constant (donor twins agree, class5.tsv)	v = SAlu ALU_ADD (SAlu ALU_SUB (SAlu ALU_ADD (SAlu ALU_SRL (SOff rADR 262136) (SLit 3)) (SLit 1)) (S
+AFk8.v	0x40000	model constant (donor twins agree, class5.tsv)	 : sstate := Eval vm_compute in pin (runto 0x369d4 R3_M2) 19%bv (SLit 262144). || state := Eval vm_compute in runto 0x6e7e8 (arm BC_GEU false (SOff rMU 262144) (SLit 3758096385) R3_M
+AFk8.v	0x104022	model constant (donor twins agree, class5.tsv)	sr_get (ss_regs R3_NR) 13%bv = SLit 0x104022 /\ sr_get (ss_regs R3
+AFk9.v	0x40000	model constant (donor twins agree, class5.tsv)	: sstate := Eval vm_compute in pin (runto 0x34664 R3_Fe2) 18%bv (SLit 262144). || SAlu ALU_ADD (SAlu ALU_ADD (SMd M_MUL (SOff rAU 0) (SLit (-1))) (SLit 262144)) (SOff rMU 0)) (SOff r
+AFk9.v	0x104022	model constant (donor twins agree, class5.tsv)	= [(SOff rFADR 0, SLit 262144, SLit 0, SLit 0x104022, SLit 184467440737095 || 09551615, SLit 0, SLit 222); (SOff rFADR 0, SLit 262144, SLit 0, SLit 0x104022, SLit 184467440737095
+AFkb.v	0x40000	model constant (donor twins agree, class5.tsv)	r3_pin HR (19%bv : bv 5) (SLit 262144). ||  M64; zlia). change (zcanon (-1)) with (2 ^ 64 - 1). change (zcanon (-262144)) with (2 ^ 64 - 2 ^ 18
+AFkc.v	0x3fff8	model constant (donor twins agree, class5.tsv)	rewrite !Z.add_0_r. rewrite (zcanon_id (adr + 262136)), (zcanon_id adr) by ( || replace ((adr + 262136) / 8) with (adr / 8 + 3
+AFkc.v	0x40000	model constant (donor twins agree, class5.tsv)	F4 F5 F6 F7 F8 S4 S5 HcR. numconst. unfold kUserMapSize in *. change (262144 / 8) with 32768 in *. t
+AFkd.v	0x3fff8	model constant (donor twins agree, class5.tsv)	rewrite !Z.add_0_r. rewrite (zcanon_id (fadr + 262136)), (zcanon_id fadr) by  || replace ((fadr + 262136) / 8) with (fadr / 8 + 
+AFkd.v	0x40000	model constant (donor twins agree, class5.tsv)	assert (M2' : exists q, mf = q * 262144) by (apply Z.mod_divide ||  (2 ^ 2) with 4. change (zcanon 262143) with 262143. change (zcanon (-262144)) with (2 ^ 64 - 2 ^ 18
+AFke.v	0x3fff8	model constant (donor twins agree, class5.tsv)	rewrite !Z.add_0_r. rewrite (zcanon_id (fadr + 262136)), (zcanon_id fadr) by  || replace ((fadr + 262136) / 8) with (fadr / 8 + 
+AFke.v	0x40000	model constant (donor twins agree, class5.tsv)	change (zcanon 262144) with 262144. || change (zcanon 262144) with 262144.
+AFkh.v	0x40000	model constant (donor twins agree, class5.tsv)	r3_arm HR BC_LTU false (SOff rMU 262144) (SOff rAUg 0).     { a || rtA tfibtbl_rtA_ok 0x368d4 (runto 0x368d4 (arm BC_LTU false (SOff rMU 262144) (SOff rAUg 0) R3_Tge3)
+AFki.v	0x40000	model constant (donor twins agree, class5.tsv)	r3_arm HR BC_LTU false (SOff rMU 262144) (SOff rAUg 0).     { a || rtA tfibtbl_rtA_ok 0x368d4 (runto 0x368d4 (arm BC_LTU false (SOff rMU 262144) (SOff rAUg 0) R3_Tgg3)
+AFkk.v	0x40000	model constant (donor twins agree, class5.tsv)	F| | | |]. all: clear - M0 M1 M2; first [zlia | replace (2 ^ 18) with 262144 by reflexivity; exact M || | | |]. all: clear - U0 U1 U2 U3; first [zlia | replace (2 ^ 18) with 262144 by reflexivity; exa
+AFkm.v	0x40000	model constant (donor twins agree, class5.tsv)	change (262144 / 8) with 32768 in *. || yMapSize, kFreeArrayMax, kHighShadowBeg, kHighShadowEnd in *; change (262144 / 8) with 32768 in *; t
+AFkn.v	0x40000	model constant (donor twins agree, class5.tsv)	sr_get (ss_regs ss) 11%bv = SLit 262144 -> sr_get (ss_regs ss)  || assert (R11 : getr regs 11 = Z_to_bv 64 262144) by (rewrite (Hregs 11%
+AFkn.v	0x104022	model constant (donor twins agree, class5.tsv)	Definition FLR : word := Z_to_bv 64 0x104022. || (ss_regs R3_NR) 12%bv = SLit 0 /\ sr_get (ss_regs R3_NR) 13%bv = SLit 0x104022 /\
+AFko.v	0xe0000	model constant (donor twins agree, class5.tsv)	write Hqs; apply Z.mod_divide; [lia|]; exists (qs * 16 + c * 2 ^ 20 + 917504); lia).
+AFkp.v	0x20000	model constant (donor twins agree, class5.tsv)	(rCSZ, mkAF 16 131072 4);
+AFkx.v	0x40000	model constant (donor twins agree, class5.tsv)	F| | | |]. all: clear - M0 M1 M2; first [zlia | replace (2 ^ 18) with 262144 by reflexivity; exact M || | | |]. all: clear - U0 U1 U2 U3; first [zlia | replace (2 ^ 18) with 262144 by reflexivity; exa

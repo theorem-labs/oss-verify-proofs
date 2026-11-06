@@ -1,0 +1,27 @@
+image fuzz_disco.asan-ubsan sha256 cee6f04ad3d4928e242405689ae058bb9e8b6533000c90bde984a2f0d5ff5146
+states YB01.v (HS_tfib, 50)
+TFIB_MAIN 0x80b1c  TIDV 43  CANV 60  CANARY_ATOM 41
+img 0x10000..0x5fe000  rw window 0xa0000..0x5fe000  .data 0xa25a8  asan_globals 0xa5160  .bss 0xa5dc0..0x5fdcf0
+sregs_main SLit 0; SLit 588792; SOff 0 (-48); SLit 67584; SLit 6145040; SOff 14 0; SOff 15 0; SOff 16 0; SOff 0 8; SOff 3 0; SOff 3 0; SOff 0 8; SOff 4 0; SOff 22 0; SOff 23 0; SOff 24 0; SOff 25 0; SOff 26 0; SLit 527132; SOff 4 0; SLit 0; SLit 0; SLit 0; SLit 0; SLit 0; SLit 0; SLit 0; SLit 0; SOff 37 0; SOff 38 0; SOff 39 0; SOff 40 0
+kept owned .got cell (canary address): ['0xa1538']
+regions 81: R_A1a[1] R_A1b[1] R_A1c[1] R_A1d[1] R_A1e[1] R_A1f[1] R_A1g[1] R_A1h[1] R_A1i[1] R_A1j[1] R_A1k[1] R_A1l[1] R_A1m[1] R_A1n[1] R_A1o[1] R_A1p[1] R_A1q[1] R_A1r[1] R_A1s[1] R_A1t[1] R_A1u[1] R_A1v[1] R_A1w[1] R_A1x[1] R_A1y[1] R_A1z[1] R_A1aa[1] R_A1ab[1] R_A1ac[1] R_A1ad[1] R_A1ae[1] R_A1af[1] R_A1ag[1] R_A1ah[1] R_A1ai[1] R_A1aj[1] R_A1ak[1] R_A1al[1] R_A1am[1] R_A1an[1] R_A1ao[1] R_A1ap[1] R_A1aq[1] R_A1ar[1] R_A1as[1] R_A1at[1] R_A1au[1] R_A1av[1] R_A1aw[1] R_A1ax[1] R_A1ay[1] R_A1az[1] R_A1ba[1] R_A1bb[1] R_A1bc[1] R_A1bd[1] R_A1be[1] R_A1bf[1] R_A1bg[1] R_A1bh[1] R_A2a[1] R_A2b[1] R_A2c[1] R_A2d[1] R_A2e[1] R_A2f[1] R_A2g[1] R_A2h[2] R_A2i[1] R_A3[1] R_A4[2] R_RS[0] R_A5a[8] R_A5b[4] R_A6[5] R_A7a[1] R_A7b[24] R_A7c[2] R_A8[1] R_A9a[7] R_A9b[1]
+PRECHECK ok: every chunk justified in all 50 states (Python reading of cjust/wjust/rjust)
+GATE ok: 81 regions: lo <= hi, ordered, disjoint; chunks ordered, disjoint, inside their region; inside the page-extended PT_LOADs; 4 with gaps, each where the donor's region of that name has one
+TWIN R_A3 lo = oft_arg0: 675360 vs 675360 ok
+TWIN R_A3 hi = __start_asan_globals: 676192 vs 676192 ok
+TWIN R_A4 lo = __do_init.__initialized: 679368 vs 679368 ok
+TWIN R_A4 hi = __do_fini.__finalized: 679440 vs 679440 ok
+TWIN R_RS lo = read_stage: 6077136 vs 6077136 ok
+TWIN R_A5a lo = target_run.initialized: 6142672 vs 6142672 ok
+TWIN R_A7b lo = __thread_list_lock: 6276120 vs 6276120 ok
+TWIN R_A7b wlo = finished_atexit: 6276192 vs 6276192 ok
+TWIN R_A7b whi = exit.exit_lock: 6276736 vs 6276736 ok
+TWIN R_A8 lo = __malloc_replaced: 6277824 vs 6277824 ok
+TWIN R_A9a lo = tl_lock_count: 6280048 vs 6280048 ok
+TWIN R_A9a hi = __pthread_tsd_main: 6281144 vs 6281144 ok
+TWIN TFIB_MAIN pc = main: 527132 vs 527132 ok
+TWIN R_RS size = read_stage: 65536 vs 65536 ok
+TWIN R_A5a tid cell = builtin_tls+32: 6144872 vs 6144872 ok
+TWIN R_A7b canary cell = __stack_chk_guard: [6276176] vs 6276176 ok
+TWIN R_A2* kept .got cell value = __stack_chk_guard: 6276176 vs 6276176 ok
+wrote YD2i.v, YD2j.v

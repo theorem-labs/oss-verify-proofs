@@ -8,13 +8,15 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
 from oft import yamlio
-from oft.tests.helpers import REPO
+from oft.tests.helpers import REPO, add_git_config, child_environment
 from oft.tests.test_facts_review_gate import API, FAKE_GH, HAVE_WORKFLOW, NO_WORKFLOW, WORKFLOW
 
 CI = os.path.join(REPO, "tools", "oft", "ci")
@@ -79,8 +81,9 @@ def patch_name(path):
 
 
 class Scripts(unittest.TestCase):
-    """A directory of stand-in commands at the front of PATH, a home directory, and an environment with no GitHub
-    token and no git configuration of the person running the tests."""
+    """A directory of stand-in commands at the front of PATH, a home directory, and an environment of named variables
+    only (helpers.child_environment): no GitHub token, no agent settings or credentials and no git configuration of
+    the person running the tests."""
 
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory(prefix="oft-facts-review-")
@@ -89,19 +92,24 @@ class Scripts(unittest.TestCase):
         self.home = os.path.join(self.dir, "home")
         os.mkdir(self.bin)
         os.mkdir(self.home)
-        self.env = {k: v for k, v in os.environ.items()
-                    if k not in ("GH_TOKEN", "GITHUB_TOKEN")
-                    and not k.startswith(("GIT_", "ANTHROPIC_", AGENT.upper() + "_"))}
-        self.env.update(PATH=self.bin + os.pathsep + os.environ["PATH"], HOME=self.home, PR="7", REPO="acme/proofs")
+        self.env = child_environment(self.home, PATH=self.bin + os.pathsep + os.environ["PATH"], PR="7",
+                                     REPO="acme/proofs")
 
     def tearDown(self):
         self._tmp.cleanup()
 
+    def real(self, name):
+        """The command a stand-in for <name> runs when it does not fail: this interpreter for python3, the first <name>
+        on PATH otherwise. A version manager's python3 on PATH (mise's shim, on one machine) that has no version for
+        the stand-in's home looks python3 up on PATH again, finds the stand-in, and stops there."""
+        real = sys.executable if name == "python3" else shutil.which(name, path=os.environ["PATH"])
+        self.assertIsNotNone(real, f"no {name} on PATH")
+        return shlex.quote(real)
+
     def fail_when(self, name, condition, status, once=False):
         """Put a <name> on PATH that answers <status>, an error, when the bash test <condition> holds of its arguments
         (on its first such call only, with `once`), and runs the real <name> otherwise."""
-        real = shutil.which(name, path=os.environ["PATH"])
-        self.assertIsNotNone(real, f"no {name} on PATH")
+        real = self.real(name)
         done = os.path.join(self.dir, f"{name}.failed")
         guard = f' && [ ! -e {done} ]' if once else ""
         tool(self.bin, name, "#!/usr/bin/env bash\n"
@@ -110,8 +118,7 @@ class Scripts(unittest.TestCase):
 
     def record_argv(self, name):
         """Put a <name> on PATH that appends its arguments to <home>/<name>.argv, then runs the real <name>."""
-        real = shutil.which(name, path=os.environ["PATH"])
-        self.assertIsNotNone(real, f"no {name} on PATH")
+        real = self.real(name)
         tool(self.bin, name, "#!/usr/bin/env bash\n"
              f'printf "%s\\0" "$@" >> {os.path.join(self.home, name + ".argv")}\n'
              f'exec {real} "$@"\n')
@@ -139,9 +146,8 @@ class GatherTest(Scripts):
             os.makedirs(d)
         with open(os.path.join(self.checkout, "docs", "facts.md"), "w") as f:
             f.write(self.DOCS["docs/facts.md"])
-        self.env.update(GIT_ID, FAKE_GH=self.api, RUNNER_TEMP=runner, GIT_CONFIG_COUNT="1",
-                        GIT_CONFIG_KEY_0=f"url.file://{self.served}.insteadOf",
-                        GIT_CONFIG_VALUE_0="https://github.com/acme/proofs")
+        self.env.update(GIT_ID, FAKE_GH=self.api, RUNNER_TEMP=runner)
+        add_git_config(self.env, (f"url.file://{self.served}.insteadOf", "https://github.com/acme/proofs"))
         self.git("init", "-q", self.served)
         self.git("-C", self.served, "config", "uploadpack.allowFilter", "true")
         self.git("-C", self.served, "config", "uploadpack.allowAnySHA1InWant", "true")
@@ -216,6 +222,49 @@ class GatherTest(Scripts):
         self.assertEqual(re.findall(r"^diff --git a/(\S+)", diff, re.M), [prov + "manifest.yaml"])
         self.assertIn("+sha256: new", diff)
 
+    def test_gather_takes_the_new_layout_provenance(self):
+        """In the new layout (tools/oft/layout.py) a fuzz target's build record is projects/<p>/<h>/proofs/provenance/:
+        the review reads it where the skill and review.md name it, proofs/<p>/<h>/provenance/ of head/, without its
+        licence texts and zips, as in the old layout."""
+        prov = "projects/zlib/fz/proofs/provenance/"
+        r, out = self.gather(dict(self.ZLIB, **{prov + "PROVENANCE.yaml": "record: 1\n",
+                                                prov + "port/manifest.yaml": "sha256: x\n",
+                                                prov + "LICENSES/zlib.txt": "licence\n", prov + "seeds.zip": "zip\n"}))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        record = os.path.join(out, "head", "proofs", "zlib", "fz", "provenance")
+        self.assertEqual(sorted(os.path.relpath(os.path.join(d, f), record)
+                                for d, _, fs in os.walk(record) for f in fs),
+                         ["PROVENANCE.yaml", os.path.join("port", "manifest.yaml")])
+        self.assertEqual(read(os.path.join(record, "port", "manifest.yaml")), "sha256: x\n")
+
+    def test_the_rest_of_what_a_change_brings_in_the_new_layout_is_not_gathered(self):
+        """The new layout keeps a fuzz target's proofs, counterexamples and findings, and the project's unpatched.yaml,
+        under projects/<p>/: the review reads them no more than in the old layout, and the gather fetches none of them
+        (a proof library can be most of a project's bytes).  The project's public patch text, a fact in either layout,
+        is gathered there as patches/<p>/ is."""
+        change = ["projects/zlib/fz/proofs/plain_halts/Proof.v", "projects/zlib/fz/proofs/lib/A.v",
+                  "projects/zlib/fz/proofs/dune", "projects/zlib/fz/counterexamples/plain_halts/expect.yaml",
+                  "projects/zlib/fz/findings/a-bug/finding.yaml", "projects/zlib/fz/findings/series",
+                  "projects/zlib/unpatched.yaml"]
+        r, out = self.gather(dict(self.ZLIB, **{f: "x\n" for f in change + ["projects/zlib/patches/a.patch"]}))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        head = os.path.join(out, "head")
+        self.assertEqual(sorted(os.path.relpath(os.path.join(d, f), head).replace(os.sep, "/")
+                                for d, _, fs in os.walk(os.path.join(head, "projects")) for f in fs),
+                         sorted(list(self.ZLIB) + ["projects/zlib/patches/a.patch"]))
+        self.assertFalse(os.path.exists(os.path.join(head, "proofs")))
+
+    def test_the_diff_since_the_last_review_holds_the_new_layout_provenance(self):
+        prov = "projects/zlib/fz/proofs/provenance/port/"
+        self.since_last_review(self.commit(dict(self.ZLIB, **{prov + "manifest.yaml": "sha256: old\n"})))
+        r, out = self.gather({prov + "manifest.yaml": "sha256: new\n", prov + "LICENSES/zlib.txt": "licence\n",
+                              prov + "seeds.zip": "zip\n", "projects/zlib/fz/proofs/plain_halts/Proof.v": "Proof.\n",
+                              "release.yaml": "release: 2\n"})
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        diff = read(os.path.join(out, "since-last-review.diff"))
+        self.assertEqual(re.findall(r"^diff --git a/(\S+)", diff, re.M), [prov + "manifest.yaml"])
+        self.assertIn("+sha256: new", diff)
+
     def test_a_last_review_whose_commit_cannot_be_fetched_gives_no_diff(self):
         """No diff, not an error line in its place, and missing.txt says why."""
         self.since_last_review("f" * 40)
@@ -244,7 +293,7 @@ class GatherTest(Scripts):
         self.assertEqual(read(os.path.join(out, "targets.txt")), "")
 
     def test_each_path_has_a_diff_of_its_own(self):
-        """R104-03: projects/a__b/c/harness.yaml and projects/a/b__c/harness.yaml once wrote the same file, the second
+        """projects/a__b/c/harness.yaml and projects/a/b__c/harness.yaml once wrote the same file, the second
         diff over the first; and a path git quotes (here, one with a " or a \\) ran into the diff before it."""
         files = {"projects/a__b/c/harness.yaml": "first: 1\n", "projects/a/b__c/harness.yaml": "second: 2\n",
                  'projects/a/b__c/source/q"x.c': "quoted\n", "projects/a/b__c/source/back\\slash.c": "escaped\n",
@@ -262,19 +311,19 @@ class GatherTest(Scripts):
         self.assertIn("projects/a__b: no project.yaml at the head commit", read(os.path.join(out, "missing.txt")))
 
     def test_a_failed_listing_of_a_path_stops_it(self):
-        """R104-04: an ls-tree that failed read as "the path is not at the head", and the project was skipped."""
+        """An ls-tree that failed read as "the path is not at the head", and the project was skipped."""
         self.fail_when("git", '[[ " $* " == *" ls-tree "* && " $* " != *" -r "* ]]', 128)
         r, _ = self.gather(self.ZLIB)
         self.assertStopped(r, "git ls-tree could not list projects/zlib")
 
     def test_a_failed_listing_of_the_fuzz_targets_stops_it(self):
-        """R104-04: the fuzz targets of a new project were listed with `|| true`, so a failure was no fuzz targets."""
+        """The fuzz targets of a new project were listed with `|| true`, so a failure was no fuzz targets."""
         self.fail_when("git", '[[ " $* " == *" ls-tree -r "* ]]', 128)
         r, _ = self.gather(self.ZLIB)
         self.assertStopped(r, "git ls-tree could not list the fuzz targets of projects/zlib")
 
     def test_a_failed_sort_of_the_fuzz_targets_stops_it(self):
-        """R104-04: over 60 fuzz targets, their names were sorted in a process substitution whose failure was lost."""
+        """Over 60 fuzz targets, their names were sorted in a process substitution whose failure was lost."""
         files = {"projects/big/project.yaml": "library: {}\n"}
         files.update({f"projects/big/t{i:02}/harness.yaml": f"t: {i}\n" for i in range(61)})
         self.fail_when("sort", "true", 2, once=True)
@@ -282,7 +331,7 @@ class GatherTest(Scripts):
         self.assertStopped(r, "sort: injected failure")
 
     def test_a_failed_rewrite_of_the_docs_list_stops_it(self):
-        """R104-04: diff's status 1 (the docs differ) let a sed that failed after it through."""
+        """diff's status 1 (the docs differ) let a sed that failed after it through."""
         self.fail_when("sed", "true", 2)
         r, _ = self.gather(dict(self.ZLIB, **{"docs/facts.md": "the head's facts doc\n"}))
         self.assertStopped(r, "sed could not write docs-changed.txt")
@@ -293,7 +342,7 @@ class GatherTest(Scripts):
         self.assertStopped(r, "diff -rq could not compare docs/ with head/docs/ (status 2)")
 
     def test_a_project_yaml_the_pull_request_wrote_wrong_is_reviewed(self):
-        """R104-04: every exception in reading project.yaml read as "no oss_fuzz and no library", with nothing said.
+        """Every exception in reading project.yaml read as "no oss_fuzz and no library", with nothing said.
         A project.yaml the pull request wrote wrong is data: missing.txt says why nothing was fetched, and the review
         goes on, so it can say what is wrong. A value that is a tree (an alias tree of a few hundred bytes stands for
         megabytes once written out, and bash then took minutes over each cut of it), a merge key (whose copies can
@@ -357,8 +406,7 @@ class GatherTest(Scripts):
         self.git("-C", oss, "add", "-A")
         self.git("-C", oss, "commit", "-q", "-m", "zlib")
         blob = self.git("-C", oss, "rev-parse", "HEAD:projects/zlib/build.sh")
-        self.env.update(GIT_CONFIG_COUNT="2", GIT_CONFIG_KEY_1=f"url.file://{oss}.insteadOf",
-                        GIT_CONFIG_VALUE_1="https://github.com/google/oss-fuzz")
+        add_git_config(self.env, (f"url.file://{oss}.insteadOf", "https://github.com/google/oss-fuzz"))
         r, out = self.gather(dict(self.ZLIB, **{"projects/zlib/project.yaml":
                                                  f"oss_fuzz:\n  path: projects/zlib\n  commit: {blob}\n"}))
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
@@ -379,13 +427,13 @@ class GatherTest(Scripts):
                       read(os.path.join(out, "missing.txt")))
 
     def test_a_project_yaml_it_cannot_read_stops_it(self):
-        """R104-04: a reader that failed is not a project without oss_fuzz or library: it stops the gather."""
+        """A reader that failed is not a project without oss_fuzz or library: it stops the gather."""
         self.fail_when("python3", '[[ "${@: -1}" == */project.yaml ]]', 1)
         r, _ = self.gather(self.ZLIB)
         self.assertStopped(r, "could not read projects/zlib/project.yaml")
 
     def test_a_long_path_has_a_diff_name_the_disk_takes(self):
-        """R104-03's names are longer than the path; one over the 255 bytes a file name may have stopped the gather
+        """A diff's name is longer than its path; one over the 255 bytes a file name may have stopped the gather
         with a traceback. Over 200 bytes the name is shortened, still one name per path."""
         deep = "projects/zlib/fz/source/" + "/".join(["a_directory_name"] * 12)
         files = dict(self.ZLIB, **{deep + "/one.c": "one\n", deep + "/two.c": "two\n"})
@@ -520,7 +568,7 @@ class RunTest(Scripts):
                          "No findings.\n\n| fuzz target | A |\n| --- | --- |\n| zlib/fz | ok |\n")
 
     def test_a_result_that_is_not_a_review_stops_it(self):
-        """R104-05: only .is_error was checked, so these were each posted as a review (the reviewer's five first)."""
+        """Only .is_error was checked, so these were each posted as a review (the reviewer's five first)."""
         good = {"type": "result", "subtype": "success", "is_error": False}
         answers = ["{}", '{"is_error":false,"result":null}', '{"is_error":false,"result":""}',
                    '{"is_error":false,"result":"   "}', '{"is_error":false,"result":17}',
@@ -568,7 +616,7 @@ class RunTest(Scripts):
                          "another tool option widens what the agent can do")
 
     def test_no_credential_is_an_argument(self):
-        """R104-07: the runner passed each ANTHROPIC_* variable and each of the agent's own to env as NAME=value,
+        """The runner passed each ANTHROPIC_* variable and each of the agent's own to env as NAME=value,
         where any process on the machine can read it. The agent still gets them, and nothing else of the caller's."""
         self.record_argv("env")
         self.record_argv("python3")
@@ -587,7 +635,7 @@ class RunTest(Scripts):
                          set(), "the agent got more of the environment than it needs")
 
     def test_a_review_over_the_limit_is_cut_with_a_note(self):
-        """R104-08: one limit, review.md's 30,000 characters, counted as characters, and a cut always says so."""
+        """One limit, review.md's 30,000 characters, counted as characters, and a cut always says so."""
         for length in (LIMIT, LIMIT + 1, 3 * LIMIT):
             with self.subTest(length=length):
                 text = ("é" * 99 + "\n") * (length // 100) + "é" * (length % 100)
@@ -640,7 +688,7 @@ class CommentTest(Scripts):
         self.assertIn("held what looks like a credential", r.stdout)
 
     def test_a_failed_credential_search_posts_nothing(self):
-        """R104-06: grep's status 2, an error, read as "no credential", and the text was posted."""
+        """grep's status 2, an error, read as "no credential", and the text was posted."""
         self.fail_when("grep", "true", 2)
         for review in (f"No findings. {TOKEN}\n", "No findings.\n"):
             with self.subTest(review=review):
@@ -650,7 +698,7 @@ class CommentTest(Scripts):
                 self.assertIn("could not search the review for credentials", r.stderr)
 
     def test_it_does_not_cut_the_review_again(self):
-        """R104-08: facts-review-run is the one place the review is cut; this script once cut it at 40,000 characters
+        """facts-review-run is the one place the review is cut; this script once cut it at 40,000 characters
         and said the rest was in the review job's log, which never held it."""
         review = "No findings.\n" + "x" * (LIMIT + 20000) + "\nthe last line\n"
         r = self.comment(review)
@@ -659,7 +707,7 @@ class CommentTest(Scripts):
         self.assertNotIn("log", r.stdout)
 
     def test_a_review_it_cannot_read_posts_nothing(self):
-        """R104-04's class: the review file was read with `|| true`, so a read that failed posted "did not review"
+        """The review file was read with `|| true`, so a read that failed posted "did not review"
         with no cause, and one that failed part-way posted part of the review as the whole."""
         r = subprocess.run(["bash", COMMENT, os.path.join(self.dir, "no-such-review.md")], env=self.env,
                            capture_output=True, text=True)
@@ -690,42 +738,18 @@ class ReviewJobTest(Scripts):
         os.mkdir(self.runner)
 
     def step(self, name, env, cwd=None):
-        """Runs the step named `name`, with the expressions it holds that these tests need put in."""
+        """Runs the step named `name`, with the expressions it holds that these tests need put in.  Each run has a
+        script file of its own: a guard on a developer's machine holds a running script read-only until some time after
+        its run ends."""
         step = next(s for s in self.steps if s.get("name") == name)
-        script = os.path.join(self.dir, "step.sh")
-        with open(script, "w") as f:
+        fd, script = tempfile.mkstemp(prefix="step-", suffix=".sh", dir=self.dir)
+        with os.fdopen(fd, "w") as f:
             f.write(step["run"].replace("${{ github.repository_id }}", "1425069221"))
         return subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", script], cwd=cwd or self.dir,
                               env=dict(self.env, RUNNER_TEMP=self.runner, **env), capture_output=True, text=True)
 
-    def test_the_request_token_is_not_an_argument(self):
-        """R104-07: the identity token request put its bearer token in curl's -H argument. It goes on standard
-        input."""
-        tool(self.bin, "curl", "#!/usr/bin/env bash\n"
-             'printf "%s\\0" "$@" > "$HOME/curl.argv"\n'
-             'for a in "$@"; do [ "$a" = @- ] && cat > "$HOME/curl.headers"; done\n'
-             "echo '{\"value\": \"the-identity-token\"}'\n")
-        r = self.step("get the GitHub identity token for Anthropic",
-                      {"ACTIONS_ID_TOKEN_REQUEST_TOKEN": SECRET,
-                       "ACTIONS_ID_TOKEN_REQUEST_URL": "https://token.example.invalid/?api-version=2.0"})
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        self.assertNotIn(SECRET, read(os.path.join(self.home, "curl.argv")))
-        self.assertEqual(read(os.path.join(self.home, "curl.headers")), f"Authorization: Bearer {SECRET}\n")
-        self.assertEqual(read(os.path.join(self.runner, "oidc", "jwt")), "the-identity-token\n")
-
-    def test_an_answer_with_no_identity_token_stops_the_step(self):
-        """jq -r .value wrote the text null for an answer with no value, and the review went on with null as its
-        token."""
-        tool(self.bin, "curl", "#!/usr/bin/env bash\ncat > /dev/null\necho '{}'\n")
-        r = self.step("get the GitHub identity token for Anthropic",
-                      {"ACTIONS_ID_TOKEN_REQUEST_TOKEN": SECRET,
-                       "ACTIONS_ID_TOKEN_REQUEST_URL": "https://token.example.invalid/?api-version=2.0"})
-        self.assertNotEqual(r.returncode, 0, r.stdout + r.stderr)
-        self.assertIn("GitHub gave no identity token", r.stdout + r.stderr)
-        self.assertEqual(read(os.path.join(self.runner, "oidc", "jwt")), "")
-
     def test_a_review_under_the_limit_is_posted_whole(self):
-        """R104-08: the review step cut the comment at 60,000 bytes, with no note, before the comment script counted
+        """The review step cut the comment at 60,000 bytes, with no note, before the comment script counted
         characters: a review of 25,000 characters of three bytes each lost its end, coverage table and all."""
         checkout = os.path.join(self.dir, "checkout")
         review = os.path.join(checkout, ".review")
@@ -739,8 +763,7 @@ class ReviewJobTest(Scripts):
             json.dump({"type": "result", "subtype": "success", "is_error": False, "result": text}, f)
         tool(self.bin, AGENT, "#!/usr/bin/env bash\n" + STREAM_ANSWER)
         output = os.path.join(self.dir, "output")
-        r = self.step("review", {"PR": "7", "GITHUB_OUTPUT": output,
-                                 "ANTHROPIC_IDENTITY_TOKEN_FILE": os.path.join(self.runner, "jwt")}, cwd=checkout)
+        r = self.step("review", {"PR": "7", "GITHUB_OUTPUT": output}, cwd=checkout)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         written = read(output, "rb").decode(errors="replace")   # a cut in bytes can split a character
         delimiter = re.search(r"^comment<<(\S+)$", written, re.M).group(1)
@@ -775,7 +798,7 @@ class ReviewJobTest(Scripts):
 
     def test_a_failed_read_of_what_was_reviewed_stops_the_gather_step(self):
         """Its grep ended in `|| true`, so a grep that failed (2) dropped the comment's "of commit ... against ..."
-        and the step went on, the shape #135 fixed in the gate."""
+        and the step went on, the shape the gate had and no longer has."""
         self.fail_when("grep", '[[ "$*" == *reviewed.txt* ]]', 2)
         r, _ = self.gather_step(f"head={'a' * 40}\nbase_ref=main\n")
         self.assertNotEqual(r.returncode, 0, r.stdout + r.stderr)
@@ -795,14 +818,32 @@ class WorkflowTest(unittest.TestCase):
                          {"contents": "read", "pull-requests": "read", "id-token": "write"})
         self.assertEqual(self.jobs["comment"]["permissions"], {"contents": "read", "pull-requests": "write"})
 
-    def test_the_identity_token_goes_to_the_repositories_with_a_federation_rule(self):
-        """The ids the token step lets through are the ids the review step names a federation rule for."""
+    def test_the_review_reaches_the_model_gateway_only(self):
+        """The review signs in to the OSS Verify model gateway with oss-verify-ci's Google identity token, over the
+        tailnet, and asks facts-review-served for the provider ossv-gateway, which takes that one base URL alone."""
         steps = {s.get("name"): s for s in self.jobs["review"]["steps"]}
-        allowed = re.search(r"^\s*([0-9|]+)\) ;;$", steps["get the GitHub identity token for Anthropic"]["run"], re.M)
-        rules = re.findall(r"github\.repository_id == '(\d+)' && 'fdrl_\w+'",
-                           steps["review"]["env"]["ANTHROPIC_FEDERATION_RULE_ID"])
-        self.assertEqual(sorted(allowed.group(1).split("|")), sorted(rules))
-        self.assertEqual(len(rules), 2)
+        gateway = steps["get the model gateway's identity token"]
+        self.assertEqual(gateway["id"], "gateway")
+        self.assertEqual({k: gateway["with"][k] for k in ("token_format", "id_token_audience",
+                                                          "id_token_include_email")},
+                         {"token_format": "id_token", "id_token_audience": "model-gateway-gce",
+                          "id_token_include_email": True})
+        join = steps["join Theorem's tailnet, to reach the model gateway"]["with"]
+        self.assertEqual(join["tags"], "tag:ossv-ci")
+        self.assertEqual(join["audience"], "${{ env.TAILNET_AUDIENCE }}")
+        self.assertEqual(self.jobs["review"]["env"]["TAILNET_AUDIENCE"], "theorem.dev/tailnet/ossv-ci-facts-review")
+        env = steps["review"]["env"]
+        self.assertEqual(env["ANTHROPIC_BASE_URL"], "${{ env.REVIEW_GATEWAY_URL }}")
+        # The URL is the repository variable's, for the review job and the comment job's check alike: a tailnet's
+        # names stay out of this repository's text (oft lint).
+        self.assertEqual(yamlio.load_file(WORKFLOW)["env"]["REVIEW_GATEWAY_URL"], "${{ vars.OSSV_MODEL_GATEWAY_URL }}")
+        self.assertEqual(env["ANTHROPIC_AUTH_TOKEN"], "${{ steps.gateway.outputs.id_token }}")
+        self.assertEqual(env["REVIEW_PROVIDER"], "ossv-gateway")
+        self.assertEqual(env["ANTHROPIC_DEFAULT_HAIKU_MODEL"], "claude-haiku-4-5")
+        self.assertFalse([k for k in env if "FEDERATION" in k or "IDENTITY" in k], env)
+        names = list(steps)
+        self.assertLess(names.index("get the model gateway's identity token"), names.index("review"))
+        self.assertLess(names.index("review"), names.index("leave the tailnet"))
 
 
 @unittest.skipUnless(os.path.exists(CODEOWNERS) and os.path.exists(REVIEW_MD),
@@ -812,21 +853,24 @@ class CodeOwnersTest(unittest.TestCase):
         """review.md says what the facts review checks, and CODEOWNERS who may change it: only a human may change
         either, so they are owned by the two people who own the reviewer's rules, whose approval main's branch rule
         requires (no team has a grant on this repository). Their lines are the last two, since GitHub takes the last
-        line that matches. The release's approvals, allowed axioms and theories keep the same two owners;
-        no other path has an owner."""
+        line that matches. The release's approvals, allowed axioms and theories keep the same two owners, and so do the
+        publishing workflows and the publishing tools (tools/publish/) where the checkout has them: the job that holds
+        the publishing App's key runs them from main. No other path has an owner."""
         patterns = [line.split("#", 1)[0].split() for line in read(CODEOWNERS).splitlines()]
         patterns = [" ".join(p) for p in patterns if p]
         owned = [p for p in patterns if len(p.split()) > 1]
         admins = owned[-1].split(None, 1)[1]
         self.assertEqual(len(admins.split()), 2, "two owners")
         release = [f"/approvals.yaml {admins}", f"/toolchain/allowed-axioms.txt {admins}", f"/theories/ {admins}"]
+        if os.path.isdir(os.path.join(REPO, "tools", "publish")):
+            release += [f"/.github/workflows/publish*.yml {admins}", f"/tools/publish/ {admins}"]
         last = [f"/review.md {admins}", f"/.github/CODEOWNERS {admins}"]
         self.assertEqual(owned, release + last)
         self.assertEqual(patterns[-2:], last)
 
     def test_the_review_criteria_are_listed_with_the_facts(self):
-        """R104-02: the docs review.md reads as main's are its criteria, so CODEOWNERS lists them as files that need
-        judgement, with the same owners as the facts (none since main's #212), as it lists the skill. GitHub takes the
+        """The docs review.md reads as main's are its criteria, so CODEOWNERS lists them as files that need
+        judgement, with the same owners as the facts (none), as it lists the skill. GitHub takes the
         last line whose pattern matches a path, so that line is checked."""
         skill = read(REVIEW_MD)
         start = skill.index("**The docs are main's**")
@@ -841,6 +885,15 @@ class CodeOwnersTest(unittest.TestCase):
         for path in docs + review:
             with self.subTest(path=path):
                 self.assertEqual(owners_of(codeowners, path), facts_owners)
+
+    def test_lint_exceptions_are_listed_with_the_tools(self):
+        """Each entry of tools/oft/lint-exceptions.yaml is a reviewed decision, so CODEOWNERS lists the file, with the
+        owners its other lines give the tools' files (none: a pattern with no owner documents the file)."""
+        codeowners = read(CODEOWNERS)
+        self.assertIn("/tools/oft/lint-exceptions.yaml", [line.split("#", 1)[0].strip()
+                                                          for line in codeowners.splitlines()])
+        self.assertEqual(owners_of(codeowners, "tools/oft/lint-exceptions.yaml"),
+                         owners_of(codeowners, "tools/oft/requirements.txt"))
 
     def test_a_later_line_decides(self):
         """The check above reads CODEOWNERS as GitHub does: a broader line after a doc's own line takes it over."""
@@ -875,14 +928,14 @@ class SkillTest(unittest.TestCase):
     """The two rules the skill and review.md tell the agent that the scripts carry out: they must say the same."""
 
     def test_the_comment_limit_is_review_mds(self):
-        """R104-08: one limit, in characters. review.md gives it to the agent; facts-review-run cuts there."""
+        """One limit, in characters. review.md gives it to the agent; facts-review-run cuts there."""
         stated = re.search(r"at most ([\d,]+) characters", read(REVIEW_MD))
         self.assertIsNotNone(stated, "review.md states no limit on the comment")
         self.assertEqual(int(stated.group(1).replace(",", "")), LIMIT)
         self.assertEqual(re.findall(r"^limit=(\d+)", read(RUN), re.M), [str(LIMIT)])
 
     def test_the_patch_name_in_the_skill_is_gathers(self):
-        """R104-03: the skill's example of a name in patches/ is the name gather gives that path."""
+        """The skill's example of a name in patches/ is the name gather gives that path."""
         example = re.search(r"\(`(projects%2F[^`]+\.diff)`\)", read(SKILL)).group(1)
         path = example.removesuffix(".diff").replace("%2F", "/")
         self.assertEqual(patch_name(path), example)

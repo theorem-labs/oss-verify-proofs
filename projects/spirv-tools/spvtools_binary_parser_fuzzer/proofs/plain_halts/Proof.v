@@ -1,0 +1,5 @@
+From OSSVerify.spirv_tools.spvtools_binary_parser_fuzzer Require Statements.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Theorems.
+
+Theorem plain_halts_holds : OSSVerify.spirv_tools.spvtools_binary_parser_fuzzer.Statements.plain_halts.
+Proof. exact OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Theorems.halts_allowed_spirv_tools_spvtools_binary_parser_fuzzer_halts_plain. Qed.

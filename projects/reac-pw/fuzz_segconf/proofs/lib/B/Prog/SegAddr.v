@@ -1,0 +1,297 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* The addresses fuzz_segconf's image gives the listing's names, objects and
+   auipc values. The PAImg instance checks them against the image. *)
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Prog Require Import SegSyms.
+From Stdlib Require Import ZArith List.
+Import ListNotations.
+Open Scope Z_scope.
+Definition seg_text : Z := 0x84dc0.
+Definition seg_sigma (s : ssym) : Z :=
+match s with
+| SS___asan_stack_malloc_3 => 0x3e90c
+| SS___interceptor_trampoline_malloc => 0x56cc0
+| SS___interceptor_trampoline_calloc => 0x56cc4
+| SS_reac_segconf_init => 0x87e14
+| SS___interceptor_trampoline_memchr => 0x43ac8
+| SS___asan_memcpy => 0x5596c
+| SS___interceptor_trampoline_snprintf => 0x43af0
+| SS___asan_memset => 0x55e08
+| SS_m_file => 0x86140
+| SS_reac_segconf_parse_file => 0x87e38
+| SS_m_refuse => 0x8782c
+| SS_reac_segconf_parse => 0x89784
+| SS___interceptor_trampoline_free => 0x56cbc
+| SS___asan_report_load1 => 0x5cf10
+| SS_check_segments => 0x86f58
+| SS_reac_segconf_role => 0x89be0
+| SS_check_role => 0x870f8
+| SS_reac_segconf_model => 0x89e04
+| SS_check_model => 0x8718c
+| SS_reac_segconf_ignored => 0x89b78
+| SS_check_ignore => 0x87210
+| SS_reac_segconf_role_file => 0x89cbc
+| SS_reac_segconf_ignore_file => 0x89d60
+| SS_check_provenance => 0x87278
+| SS___asan_report_load4 => 0x5d050
+| SS_check_refusals => 0x8736c
+| SS_check_address => 0x8746c
+| SS_check_knock_refused => 0x874c0
+| SS___interceptor_trampoline_strlen => 0x43a98
+| SS_m_find => 0x874f4
+| SS_check_absent => 0x875f0
+| SS___interceptor_trampoline_strrchr => 0x43ab8
+| SS___interceptor_trampoline_strcmp => 0x43aa0
+| SS_reac_segconf_declared => 0x89e7c
+| SS_check_declared => 0x87664
+| SS___asan_set_shadow_f5 => 0x58b70
+| SS___asan_handle_no_return => 0x5df0c
+| SS_abort => 0x910c4
+| SS___asan_report_store2 => 0x5d2d0
+| SS___asan_report_store4 => 0x5d370
+| SS___asan_report_store1 => 0x5d230
+| SS___asan_stack_malloc_1 => 0x3e77c
+| SS___interceptor_trampoline_strchr => 0x43ab4
+| SS_strip => 0x879cc
+| SS_ieq => 0x87b70
+| SS_fold => 0x87c94
+| SS___interceptor_trampoline_bcmp => 0x43ac4
+| SS_fuzz_catalogue_row => 0x8a7d8
+| SS___asan_report_load8 => 0x5d0f0
+| SS___interceptor_trampoline_strncmp => 0x43aa4
+| SS___interceptor_trampoline_strstr => 0x43ab0
+| SS_reac_segconf_find => 0x89a84
+| SS___asan_report_load2 => 0x5cfb0
+| SS___asan_report_store8 => 0x5d410
+| SS___asan_init => 0x5e074
+| SS___asan_version_mismatch_check_v8 => 0x5e108
+| SS___asan_register_elf_globals => 0x419d4
+| SS___asan_unregister_elf_globals => 0x41a40
+| SS___asan_stack_malloc_5 => 0x3eab8
+| SS___asan_set_shadow_f8 => 0x58b88
+| SS___asan_set_shadow_00 => 0x58a68
+| SS___interceptor_trampoline_strspn => 0x43abc
+| SS_refuse => 0x892f8
+| SS_trim => 0x89640
+| SS___interceptor_trampoline_strncasecmp => 0x43aac
+| SS___interceptor_trampoline_strcasecmp => 0x43aa8
+| SS_reac_box_catalogue_by_token => 0x8a8f4
+| SS_reac_box_catalogue => 0x8a8a0
+| SS___asan_stack_free_5 => 0x3ecc4
+| SS___asan_stack_malloc_0 => 0x3e608
+| SS___interceptor_trampoline_vsnprintf => 0x43ae8
+| SS_cross_check => 0x897cc
+| SS_reac_declared_vlan_split => 0x8a218
+| SS_reac_declared_vlan_add => 0x8a514
+| SS___interceptor_trampoline_strtol => 0x43b44
+| SS_name_ok => 0x8a408
+| SS_isalnum => 0x9094c
+| SS___interceptor_trampoline_strncpy => 0x43b40
+end.
+Definition seg_objs : list Z := [
+0xa3210;
+0xa3268;
+0x16fd5;
+0x84dc0;
+0x103c8;
+0x20fe0;
+0x5dee40;
+0x21020;
+0x21040;
+0x21060;
+0x1d8fe;
+0x86140;
+0xac7b8;
+0x210a0;
+0x21080;
+0xa2040;
+0x21100;
+0x21120;
+0x211e0;
+0x21220;
+0x21240;
+0x21260;
+0x21280;
+0x212a0;
+0x212c0;
+0x212e0;
+0x21300;
+0x210c0;
+0x210e0;
+0xa3e88;
+0xa3e90;
+0xa9100;
+0x11b81;
+0x87e38;
+0x21360;
+0x21340;
+0x21380;
+0x213a0;
+0x21440;
+0x21400;
+0x216a0;
+0x214a0;
+0x214c0;
+0x21760;
+0x21800;
+0x218e0;
+0x21960;
+0x21a40;
+0x21700;
+0x21560;
+0x21b80;
+0x21ba0;
+0x21bc0;
+0x21be0;
+0x21900;
+0x21ae0;
+0x21b00;
+0x21b20;
+0x21b40;
+0x21b60;
+0x21780;
+0x21980;
+0x21840;
+0x21860;
+0x21820;
+0x21880;
+0x21520;
+0x215c0;
+0x21620;
+0x1b05f;
+0x892f8;
+0x21aa0;
+0x21ac0;
+0x21ca0;
+0x21c00;
+0x1773a;
+0x89e7c;
+0xa20a0].
+Definition seg_his : list Z := [
+0xa2e0c;
+0xa2e10;
+0x16e74;
+0x84e78;
+0xff7c;
+0x21274;
+0x5df294;
+0x20890;
+0x20948;
+0x20960;
+0x209f8;
+0x20a34;
+0xa3190;
+0xa3194;
+0x1d1f0;
+0x861f4;
+0x2128c;
+0x21294;
+0xa2330;
+0x21548;
+0x21714;
+0x21744;
+0x21844;
+0x218cc;
+0x20950;
+0x2196c;
+0x21988;
+0x219a4;
+0x219e8;
+0x21a00;
+0x20a64;
+0x21a80;
+0xa2f98;
+0xa3108;
+0xa319c;
+0xa3220;
+0xa329c;
+0xa3384;
+0x214cc;
+0xa352c;
+0xa36ac;
+0xa3850;
+0x218c0;
+0x2090c;
+0xa39e0;
+0xa2b90;
+0xa2c9c;
+0xa3dbc;
+0xa3dc0;
+0xa8dcc;
+0xa3dec;
+0xa3df0;
+0xa8dfc;
+0xa2e88;
+0xa2e8c;
+0x11ee8;
+0x87eec;
+0x210b0;
+0x210b8;
+0x211a0;
+0x211a4;
+0x213ec;
+0x214a0;
+0x214ac;
+0x214f0;
+0x21508;
+0x21578;
+0x2158c;
+0x215a0;
+0x215b4;
+0x215c8;
+0x215e4;
+0x217c0;
+0x217e0;
+0x217fc;
+0x21850;
+0x21868;
+0x218a4;
+0x218e4;
+0x218fc;
+0x21914;
+0x2192c;
+0x21944;
+0x21960;
+0x219f4;
+0x21a2c;
+0x21b1c;
+0x21b28;
+0x21b94;
+0x21bd0;
+0x21c88;
+0x21d58;
+0x20db4;
+0x20e3c;
+0x20e94;
+0x20ee4;
+0x20f3c;
+0xa3348;
+0xa334c;
+0x1b3b4;
+0x893b8;
+0x214a4;
+0x214b4;
+0x214d0;
+0xa3654;
+0x21798;
+0xa3814;
+0x21858;
+0xa2ac0;
+0xa2b84;
+0xa2bf4;
+0xa2cc8;
+0xa2d6c;
+0xa2ed0;
+0xa2ed4;
+0x17f2c;
+0x89f30;
+0xa3260;
+0xa342c;
+0xa3578;
+0xa3804;
+0xa2810;
+0xa38b4;
+0xa18d8].
+Definition seg_obj (i : nat) : Z := nth i seg_objs 0.
+Definition seg_hi (j : nat) : Z := nth j seg_his 0.
+Definition seg_nobj : nat := length seg_objs.
+Definition seg_nhi : nat := length seg_his.

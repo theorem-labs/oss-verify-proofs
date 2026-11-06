@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libpcap
 harness: fuzz_pcap
-rocq: OssFuzzTheorems.libpcap.fuzz_pcap
+rocq: OSSVerify.libpcap.fuzz_pcap
 origin: upstream
 summary: Writes the input to a /tmp file, pcap_open_offline, reads every packet with pcap_next_ex and
   calls pcap_stats; lengths printed to /dev/null only.

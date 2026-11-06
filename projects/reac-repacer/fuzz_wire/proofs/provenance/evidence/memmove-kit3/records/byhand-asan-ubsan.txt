@@ -1,0 +1,22 @@
+== _ZN6__asan9Decorator10ShadowByteEh+0x34  X 0x1f9bd  Y 0x1fa0b  consumer X: 2b558593 00054503 04050063 0440006f fffc9597
+   CSTR-ANY EQUAL  X 9 bytes b'\x1b[1m\x1b[34m' | Y 9 bytes b'\x1b[1m\x1b[34m'
+== _ZN6__asan9Decorator10ShadowByteEh+0x48  X 0x1d71c  Y 0x1d754  consumer X: 00058593 00054503 02050663 0300006f fffcc597
+   CSTR-ANY EQUAL  X 9 bytes b'\x1b[1m\x1b[35m' | Y 9 bytes b'\x1b[1m\x1b[35m'
+== _ZN6__asan9Decorator10ShadowByteEh+0x5c  X 0x201ab  Y 0x201fd  consumer X: a7b58593 00054503 00050c63 01c0006f fffbc597
+   CSTR-ANY EQUAL  X 9 bytes b'\x1b[1m\x1b[33m' | Y 9 bytes b'\x1b[1m\x1b[33m'
+== _ZN6__asan9Decorator10ShadowByteEh+0x70  X 0x1090b  Y 0x10903  consumer X: 1c758593 00054503 00051663 fffbf517 71350593
+   CSTR-ANY EQUAL  X 9 bytes b'\x1b[1m\x1b[36m' | Y 9 bytes b'\x1b[1m\x1b[36m'
+== _ZN6__asan9Decorator10ShadowByteEh+0x80  X 0x13e67  Y 0x13e7d  consumer X: 71350593 00058513 00008067 fffc4597 65c58593
+   CSTR-ANY EQUAL  X 0 bytes b'' | Y 0 bytes b''
+== _ZN6__asan9Decorator10ShadowByteEh+0x90  X 0x18dc0  Y 0x18dec  consumer X: 65c58593 00054503 fe0502e3 fe9ff06f
+   CSTR-ANY EQUAL  X 8 bytes b'\x1b[1m\x1b[0m' | Y 8 bytes b'\x1b[1m\x1b[0m'
+== _ZN9libunwind10CFI_ParserINS_17LocalAddressSpaceEE8parseCIEERS1_mPNS2_8CIE_InfoE+0x23c  X 0x20c94  Y 0x20d74  consumer X: 5d450b13 00100b93 00c0006f 03740823 001a0a13
+   CSTR-ANY DIFFER  X 3 bytes b'd\x1a\x06' | Y 3 bytes b'\xf4\x1d\x06'
+   JT32-rel  47 entries equal by function offset; stop: entry 47 leaves the function: X out Y out; consumer bound constants [255, 122, 46]
+== _ZNK11__sanitizer13SignalContext8DescribeEv+0x1c  X 0x209ac  Y 0x20a00  consumer X: d5458593 00a58533 00052503 00a58533 00008067
+   CSTR-ANY DIFFER  X 35 bytes b'\xcd\xca\xff\xffy\xa2\xff\xffDS\xff\xffq\x8b\xff\xff\x8f\xf8\xff\xffNS\xff\xffNS\xff\xffIS\xff\xff\x90V\x04' | Y 35 bytes b'\xb1\xca\xff\xffX\xa2\xff\xff=S\xff\xffI\x8b\xff\xff\x8d\xf8\xff\xffGS\xff\xffGS\xff\xffBS\xff\xff\xcca\x04'
+   STRTAB32-rel  8 entries are equal C strings (NUL included): ILL, TRAP, ABRT, BUS, FPE, UNKNOWN SIGNAL, UNKNOWN SIGNAL, SEGV; stop: entry 8 is not a printable C string on X; consumer bound constants [7]
+== __strftime_fmt_1+0x530  X 0x13e67  Y 0x13e7d  consumer X: 3bf50513 0c00006f 00c00713 06078263 05c0006f
+   CSTR-ANY EQUAL  X 0 bytes b'' | Y 0 bytes b''
+== __strftime_fmt_1+0x54c  X 0x13e67  Y 0x13e7d  consumer X: 3a350513 0a40006f 76d90713 000a0793 00098613
+   CSTR-ANY EQUAL  X 0 bytes b'' | Y 0 bytes b''

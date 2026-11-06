@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_write_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_write_fuzzer
+rocq: OSSVerify.libarchive.libarchive_write_fuzzer
 origin: upstream
 summary: Writes up to 10 fuzz entries (file/dir/symlink, ids, mtime, <= 1 KiB data) in one of 8 formats
   (pax_restricted, gnutar, ustar, cpio newc, zip, 7zip, xar, pax) through one of gzip/bzip2/xz/zstd/none

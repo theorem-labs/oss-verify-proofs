@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libsodium
 harness: crypto_sign_fuzzer
-rocq: OssFuzzTheorems.libsodium.crypto_sign_fuzzer
+rocq: OSSVerify.libsodium.crypto_sign_fuzzer
 origin: oss-fuzz
 summary: 'Checks 3 properties (listed below); the first, a self-validation: An Ed25519 detached signature
   just made over the input message with an input-seeded key must verify under the matching public key.'

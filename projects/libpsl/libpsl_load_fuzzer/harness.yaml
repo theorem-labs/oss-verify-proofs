@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libpsl
 harness: libpsl_load_fuzzer
-rocq: OssFuzzTheorems.libpsl.libpsl_load_fuzzer
+rocq: OSSVerify.libpsl.libpsl_load_fuzzer
 origin: upstream
 summary: Loads the input as a public-suffix list via fmemopen+psl_load_fp, queries psl_is_public_suffix(psl,
   ".ü.com"), frees it, and loads /dev/null; no result is checked.

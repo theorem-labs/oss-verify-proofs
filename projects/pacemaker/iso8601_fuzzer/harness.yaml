@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: pacemaker
 harness: iso8601_fuzzer
-rocq: OssFuzzTheorems.pacemaker.iso8601_fuzzer
+rocq: OSSVerify.pacemaker.iso8601_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

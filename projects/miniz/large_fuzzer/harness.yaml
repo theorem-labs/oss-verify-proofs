@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: miniz
 harness: large_fuzzer
-rocq: OssFuzzTheorems.miniz.large_fuzzer
+rocq: OSSVerify.miniz.large_fuzzer
 origin: upstream
 summary: 'Checks 3 properties (listed below); the first, an invariant: deflate(Z_NO_FLUSH) with ample
   output space must consume all input (''deflate not greedy'' -> exit 1).'

@@ -1,0 +1,8 @@
+# gate 2: the funnel UNEXPLAINED decimal values of lib/A, triaged by hand (all disco-own or sizes; 0 donor-stale).
+# triage_unexplained.py refuses if the funnel holds an UNEXPLAINED value that is not listed here.
+# value	hex	files	reason
+1446400	0x161200	AB01,AD1d,AD1f	the length of a shadow zero-fill (kn_zero ch (..) .. 1446400); coincides with cgif useCounts+0x29340, disco has no object there
+678584	0xa5ab8	AB01,AB03	an a_off inside disco's allocator instance, in collected start-up states; coincides with cgif ScopedInErrorReport::current_error_
+678592	0xa5ac0	AB01,AB03	an a_off inside disco's allocator instance (next word), in collected start-up states; coincides with cgif ScopedInErrorReport::current_error_
+2101549	0x20112d	AB01,AB03	a collected value inside disco's theDepot
+262728	0x40248	AFfg	the length operand of do_stretch, next to hex pcs; coincides with cgif __asan_after_dynamic_init

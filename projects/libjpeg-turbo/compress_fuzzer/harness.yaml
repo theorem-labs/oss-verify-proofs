@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjpeg-turbo
 harness: compress_fuzzer
-rocq: OssFuzzTheorems.libjpeg_turbo.compress_fuzzer
+rocq: OSSVerify.libjpeg_turbo.compress_fuzzer
 origin: upstream
 summary: tj3Compress8 on a BMP/PPM/GIF/TGA image loaded from the input (or raw bytes after a 2-byte size
   header) under 7 option sets (colorspace, subsampling, DCT, quality, progressive, arithmetic, restart

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: httrack
 harness: fuzz-cachendx
-rocq: OssFuzzTheorems.httrack.fuzz_cachendx
+rocq: OSSVerify.httrack.fuzz_cachendx
 origin: upstream
 summary: 'Legacy cache-index scan: two cache_brstr header fields then a loop of cache_binput host/file/pos
   triples and sscanf; nothing compared.'

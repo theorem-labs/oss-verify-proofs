@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libtasn1
 harness: libtasn1_array2tree_fuzzer
-rocq: OssFuzzTheorems.libtasn1.libtasn1_array2tree_fuzzer
+rocq: OSSVerify.libtasn1.libtasn1_array2tree_fuzzer
 origin: upstream
 summary: Builds an asn1_static_node table from fixed-size fuzz records and calls asn1_array2tree; the
   tree is freed on success, nothing checked.

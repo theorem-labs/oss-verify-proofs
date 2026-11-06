@@ -1,0 +1,2 @@
+verdict	kernel_checked	image	src_file	src_line	dst_file	dst_line	sentence	idx	kind	src_value	dst_value	src_class	src_res	dst_res	note	reason	measurement	result	finding_kind	new_value	read_by
+-	-	B	YH03.v	-	YH03.v	-	-	-	-	-	-	-	-	-	379 flagged rows of run RU in lib/Reusable/YH03.v	YH03-PROCEDURE-OF-RECORD	lib/Reusable/YH03.v (pre-port, plain build) is covered by the YH03 procedure of record (yh03check fb3bfbc1eea8 + yh03regen 1254e5c96a44, a separate check of this unit); its rows are not triaged here	OK-out-of-scope	-	-	-

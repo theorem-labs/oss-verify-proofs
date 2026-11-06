@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libtasn1
 harness: libtasn1_parser2tree_fuzzer
-rocq: OssFuzzTheorems.libtasn1.libtasn1_parser2tree_fuzzer
+rocq: OSSVerify.libtasn1.libtasn1_parser2tree_fuzzer
 origin: upstream
 summary: Interposes fopen() so asn1_parser2tree("pkix.asn") reads the fuzz input as ASN.1 module source
   (fmemopen); the definitions tree is freed on success, nothing checked.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_msgpack
-rocq: OssFuzzTheorems.jsoncons.fuzz_msgpack
+rocq: OSSVerify.jsoncons.fuzz_msgpack
 origin: upstream
 summary: msgpack::decode_msgpack<json> from an istringstream; value discarded; ser_error swallowed.
 entry: LLVMFuzzerTestOneInput

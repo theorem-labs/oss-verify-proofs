@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: jpegiostub_fuzzer
-rocq: OssFuzzTheorems.leptonica.jpegiostub_fuzzer
+rocq: OSSVerify.leptonica.jpegiostub_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixSetChromaSampling(pix, 0).
 entry: LLVMFuzzerTestOneInput

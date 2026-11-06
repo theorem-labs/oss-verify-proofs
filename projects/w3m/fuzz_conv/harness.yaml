@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: w3m
 harness: fuzz_conv
-rocq: OssFuzzTheorems.w3m.fuzz_conv
+rocq: OSSVerify.w3m.fuzz_conv
 origin: upstream
 summary: input split at NULs into <from-charset> \0 <to-charset> \0 <text>; charsets guessed by name,
   then wc_Str_conv_with_detect converts the text; result freed unread (no to->from roundtrip).

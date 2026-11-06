@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: dtlsclient
-rocq: OssFuzzTheorems.openssl.dtlsclient
+rocq: OSSVerify.openssl.dtlsclient
 origin: upstream
 summary: DTLS client handshake over memory BIOs, SSL_read loop; nothing compared.
 entry: FuzzerTestOneInput

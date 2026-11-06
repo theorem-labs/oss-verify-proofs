@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: s2opc
 harness: decode_fuzzer
-rocq: OssFuzzTheorems.s2opc.decode_fuzzer
+rocq: OSSVerify.s2opc.decode_fuzzer
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an API contract: For a fuzz-selected OPC UA encodeable
   type (6 type groups, byte 0/1 select group/type), if Decode of the input succeeds then Encode of the

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: rabbitmq-c
 harness: fuzz_server
-rocq: OssFuzzTheorems.rabbitmq_c.fuzz_server
+rocq: OSSVerify.rabbitmq_c.fuzz_server
 origin: upstream
 summary: In-memory socket class serves the input as broker bytes; amqp_login() runs the full client handshake
   (Start/Tune/Open). The returned amqp_rpc_reply_t is ignored.

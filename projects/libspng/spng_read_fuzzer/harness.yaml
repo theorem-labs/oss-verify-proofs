@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libspng
 harness: spng_read_fuzzer
-rocq: OssFuzzTheorems.libspng.spng_read_fuzzer
+rocq: OSSVerify.libspng.spng_read_fuzzer
 origin: upstream
 summary: 'Checks 3 properties (listed below); the first, an invariant: Every tEXt/zTXt/iTXt entry spng_get_text
   returns has non-NULL text, language_tag and translated_keyword, a non-empty keyword, and a NUL within

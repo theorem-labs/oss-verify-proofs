@@ -1,0 +1,10 @@
+# kit cmpkit-4bbd3a74be89 strictcmp2 16982e3ef42b
+# C DONOR_TWIN ce511d541cda
+# A DECODE_A_TWIN 4cb0a852e826
+# headers 47 at 88154566652a
+numerals listed by those headers (numdiff rows of those files): 532 {'comment': 37, 'code': 375, 'data': 96, 'extent': 16, 'non-address': 8}
+(a) used by a proof term and RIGHT: 495
+(b) used by a proof term and WRONG: 0
+(c) not read by any term (comment only): 37
+numerals in a function whose NAME has several copies in decode A: 0 []
+

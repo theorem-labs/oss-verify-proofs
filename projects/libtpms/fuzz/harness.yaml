@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libtpms
 harness: fuzz
-rocq: OssFuzzTheorems.libtpms.fuzz
+rocq: OSSVerify.libtpms.fuzz
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an API contract: TPMLIB_Process must return TPM_SUCCESS
   (transport-level) for any fuzz command after Startup; TPM-level errors travel in the response buffer,

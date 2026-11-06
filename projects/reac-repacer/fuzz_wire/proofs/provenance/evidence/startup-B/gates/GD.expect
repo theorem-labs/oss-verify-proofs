@@ -1,0 +1,35 @@
+# GD.expect -- what gate GD (run_gates.sh) expects of the 19 lib/B files against a BASE commit. GD reads this file, and
+# the WANT of every GD step on the 19 comes from it; nothing about GD's expected result is kept anywhere else.
+# Written by gates/mk_gdexpect.py from the trunk clone (base..HEAD); do not edit by hand.
+#   base <full commit sha>   the commit whose proofs/reac-repacer/fuzz_wire/lib/B/<name>.v each file is compared with
+#   <name> equal             byte-equal to the base
+#   <name> <class> <commit>[,<commit>...] lines <n>[,<n>...] <reason>
+#                            the file differs from the base: <class> is the kind of change, the commits are exactly the
+#                            commits of the trunk clone (base..HEAD) that change the file, the lines are exactly the lines
+#                            that differ (same line count in both), and the reason says why the change is wanted
+#     comment                comment-stripped EQUAL (stripcmp); not Require-only (reqdiff refuses a comment by design)
+#     require                Require sentences only (reqdiff); comment-stripped different
+#     code                   a code change: comment-stripped different and not Require-only; nothing in GD can show it
+#                            is right, so the reason names the check that does (a build, a gate)
+# The base is the last delivered head before the current changes: b4dc8707252a, the commit that released the push
+# hold (G9p passes against the B core's re-guarded YD1g).
+base b4dc8707252afd0001c6461acc83580493ed3ccf
+YB01 equal
+YB03 equal
+YB05 comment 508c442d799a lines 4 the tool-name change: from tools/mk_yb05_wire.py, the notice (line 4) names the relocation tools by role and sha256 (4d51ec1c0069, 2d846496640d)
+YB12 equal
+YB13 equal
+YB1h equal
+YB1k equal
+YB1l equal
+YB1m equal
+YB1v equal
+YCej equal
+YD1k equal
+YD1y comment 508c442d799a lines 4,5 the tool-name change: from exitdrv/gen_exitW.py, line 4 (the notice) names the data map by role (map tool sha256 4d51ec1c0069) and line 5 (the Read-from line) names the generator gen_exitW.py by name and sha256 (comment-formats row CL7b)
+YD2i equal
+YD2j equal
+YE23 comment 508c442d799a lines 4,5 the tool-name change: from exitdrv/gen_exitW.py, line 4 (the notice) names the data map by role (map tool sha256 4d51ec1c0069) and line 5 (the Read-from line) names the generator gen_exitW.py by name and sha256 (comment-formats row CL7b)
+YE37 code 60d72c428ca2,508c442d799a lines 4,5,179 the exit-driver writer's n = 0 proof: gen_exitW.py b38434be6f64 writes `]].` where `].` left the YE37.v:179 bracket list unclosed (the B core build stopped there); YE37.vo compiles in the B core with it (Build section); lines 4 and 5: the tool-name change: from exitdrv/gen_exitW.py, line 4 (the notice) names the data map by role (map tool sha256 4d51ec1c0069) and line 5 (the Read-from line) names the generator gen_exitW.py by name and sha256 (comment-formats row CL7b)
+YE3i equal
+YF0m comment 6dc5bac61e92,e2923fd9582d lines 3,4,5 NOTICE lines only: nsW.py cd059cec21be keeps the record rename out of the provenance notice (line 4), and af0m f8201f503394 of the start-up set at commit f141794333162b writes the notice heads with their month and names itself (lines 3-5)

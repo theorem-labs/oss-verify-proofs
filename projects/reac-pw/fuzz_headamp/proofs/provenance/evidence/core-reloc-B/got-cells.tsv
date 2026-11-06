@@ -1,0 +1,219 @@
+# every .got numeral of the 386 lib/AU files (whichever tool wrote it): the symbol/value the A .got word at the lib/A value serves = the one the B .got word at the lib/AU value serves; fuzz_headamp.asan .got [0x9c310,0x9d068) and fuzz_headamp.asan-ubsan .got [0x9c790,0x9d4e8) are slot-for-slot equal (427 slots, B = A + 0x480, every slot checked)
+lib/A file	line	A value	B value	slot / what it serves (A / B)	verdict
+A/AB1w.v	15	0x9c310	0x9c790	.got start	ok
+A/AB1w.v	16	0x9c310	0x9c790	.got start	ok
+A/AB1w.v	16	0x9d068	0x9d4e8	.got end	ok
+A/AB1w.v	571	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AB1w.v	572	0x9c368	0x9c7e8	slot ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',)) / ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	ok
+A/AB1w.v	573	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/AB1w.v	574	0x9c378	0x9c7f8	slot ('sym', ('_ZN6__asan10kMidMemBegE',)) / ('sym', ('_ZN6__asan10kMidMemBegE',))	ok
+A/AB1w.v	575	0x9c380	0x9c800	slot ('sym', ('_ZN6__asan10kMidMemEndE',)) / ('sym', ('_ZN6__asan10kMidMemEndE',))	ok
+A/AB1w.v	576	0x9c388	0x9c808	slot ('sym', ('_ZN6__asan11kHighMemEndE',)) / ('sym', ('_ZN6__asan11kHighMemEndE',))	ok
+A/AB1w.v	577	0x9ced8	0x9d358	slot ('sym', ('_ZN6__asan21replace_intrin_cachedE',)) / ('sym', ('_ZN6__asan21replace_intrin_cachedE',))	ok
+A/AB1w.v	578	0x9d000	0x9d480	slot ('sym', ('___environ', '__environ', '_environ', 'environ')) / ('sym', ('___environ', '__environ', '_environ', 'environ'))	ok
+A/ACeg.v	21	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/ACeg.v	23	0x9c3c8	0x9c848	slot ('sym', ('__asan_option_detect_stack_use_after_return',)) / ('sym', ('__asan_option_detect_stack_use_after_return',))	ok
+A/ACeg.v	48	0x9d068	0x9d4e8	.got end	ok
+A/ACeh.v	22	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/ACeh.v	24	0x9c3c8	0x9c848	slot ('sym', ('__asan_option_detect_stack_use_after_return',)) / ('sym', ('__asan_option_detect_stack_use_after_return',))	ok
+A/ACeh.v	60	0x9d068	0x9d4e8	.got end	ok
+A/AD1j.v	114	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AD1r.v	218	0x9d068	0x9d4e8	.got end	ok
+A/AD2d.v	73	0x9d068	0x9d4e8	.got end	ok
+A/AD2d.v	135	0x9d068	0x9d4e8	.got end	ok
+A/AD2l.v	52	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/AD2l.v	53	0x9c3c8	0x9c848	slot ('sym', ('__asan_option_detect_stack_use_after_return',)) / ('sym', ('__asan_option_detect_stack_use_after_return',))	ok
+A/AE22.v	18	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AE23.v	43	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE23.v	43	0x9c348	0x9c7c8	slot ('val', 0) / ('val', 0)	ok
+A/AE23.v	45	0x9d028	0x9d4a8	slot ('sym', ('_ZL7preinit', '__fini_array_end')) / ('sym', ('_ZL7preinit', '__fini_array_end'))	ok
+A/AE23.v	45	0x9d030	0x9d4b0	slot ('sym', ('__fini_array_start', '__init_array_end')) / ('sym', ('__fini_array_start', '__init_array_end'))	ok
+A/AE23.v	46	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE23.v	46	0x9c348	0x9c7c8	slot ('val', 0) / ('val', 0)	ok
+A/AE23.v	54	0x9d028	0x9d4a8	slot ('sym', ('_ZL7preinit', '__fini_array_end')) / ('sym', ('_ZL7preinit', '__fini_array_end'))	ok
+A/AE23.v	54	0x9d030	0x9d4b0	slot ('sym', ('__fini_array_start', '__init_array_end')) / ('sym', ('__fini_array_start', '__init_array_end'))	ok
+A/AE23.v	55	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE23.v	55	0x9c348	0x9c7c8	slot ('val', 0) / ('val', 0)	ok
+A/AE23.v	66	0x9d028	0x9d4a8	slot ('sym', ('_ZL7preinit', '__fini_array_end')) / ('sym', ('_ZL7preinit', '__fini_array_end'))	ok
+A/AE23.v	66	0x9d038	0x9d4b8	slot ('sym', ('__daylight', 'daylight')) / ('sym', ('__daylight', 'daylight'))	ok
+A/AE23.v	66	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE23.v	66	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AE23.v	85	0x9d028	0x9d4a8	slot ('sym', ('_ZL7preinit', '__fini_array_end')) / ('sym', ('_ZL7preinit', '__fini_array_end'))	ok
+A/AE23.v	85	0x9d038	0x9d4b8	slot ('sym', ('__daylight', 'daylight')) / ('sym', ('__daylight', 'daylight'))	ok
+A/AE23.v	85	0x9d028	0x9d4a8	slot ('sym', ('_ZL7preinit', '__fini_array_end')) / ('sym', ('_ZL7preinit', '__fini_array_end'))	ok
+A/AE23.v	85	0x9d028	0x9d4a8	slot ('sym', ('_ZL7preinit', '__fini_array_end')) / ('sym', ('_ZL7preinit', '__fini_array_end'))	ok
+A/AE23.v	85	0x9d028	0x9d4a8	slot ('sym', ('_ZL7preinit', '__fini_array_end')) / ('sym', ('_ZL7preinit', '__fini_array_end'))	ok
+A/AE23.v	85	0x9d030	0x9d4b0	slot ('sym', ('__fini_array_start', '__init_array_end')) / ('sym', ('__fini_array_start', '__init_array_end'))	ok
+A/AE23.v	87	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE23.v	87	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AE23.v	87	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE23.v	87	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE23.v	87	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE23.v	87	0x9c348	0x9c7c8	slot ('val', 0) / ('val', 0)	ok
+A/AE23.v	114	0x9d028	0x9d4a8	slot ('sym', ('_ZL7preinit', '__fini_array_end')) / ('sym', ('_ZL7preinit', '__fini_array_end'))	ok
+A/AE23.v	114	0x9d038	0x9d4b8	slot ('sym', ('__daylight', 'daylight')) / ('sym', ('__daylight', 'daylight'))	ok
+A/AE23.v	114	0x9d028	0x9d4a8	slot ('sym', ('_ZL7preinit', '__fini_array_end')) / ('sym', ('_ZL7preinit', '__fini_array_end'))	ok
+A/AE23.v	114	0x9d028	0x9d4a8	slot ('sym', ('_ZL7preinit', '__fini_array_end')) / ('sym', ('_ZL7preinit', '__fini_array_end'))	ok
+A/AE23.v	114	0x9d028	0x9d4a8	slot ('sym', ('_ZL7preinit', '__fini_array_end')) / ('sym', ('_ZL7preinit', '__fini_array_end'))	ok
+A/AE23.v	114	0x9d030	0x9d4b0	slot ('sym', ('__fini_array_start', '__init_array_end')) / ('sym', ('__fini_array_start', '__init_array_end'))	ok
+A/AE23.v	116	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE23.v	116	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AE23.v	116	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE23.v	116	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE23.v	116	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE23.v	116	0x9c348	0x9c7c8	slot ('val', 0) / ('val', 0)	ok
+A/AE23.v	832	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AE23.v	1030	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AE23.v	1228	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AE23.v	1428	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AE2k.v	23	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AE2k.v	25	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/AE2k.v	35	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AE2p.v	33	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AE2t.v	62	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AE2t.v	402	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AE2u.v	62	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AE2u.v	402	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AE2v.v	62	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AE2v.v	159	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AE2w.v	62	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AE2w.v	402	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AE2x.v	157	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AE2y.v	71	0x9ced8	0x9d358	slot ('sym', ('_ZN6__asan21replace_intrin_cachedE',)) / ('sym', ('_ZN6__asan21replace_intrin_cachedE',))	ok
+A/AE2y.v	73	0x9c368	0x9c7e8	slot ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',)) / ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	ok
+A/AE35.v	62	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AE36.v	37	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE36.v	37	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AE36.v	37	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE36.v	37	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE36.v	37	0x9c340	0x9c7c0	slot ('sym', ('__cxa_finalize',)) / ('sym', ('__cxa_finalize',))	ok
+A/AE36.v	37	0x9c348	0x9c7c8	slot ('val', 0) / ('val', 0)	ok
+A/AE37.v	34	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AE37.v	36	0x9cfe8	0x9d468	slot ('sym', ('__start_asan_globals',)) / ('sym', ('__start_asan_globals',))	ok
+A/AE7e.v	105	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AFek.v	53	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AFem.v	381	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AFeq.v	150	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFf9.v	196	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AFf9.v	197	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/AFf9.v	198	0x9c378	0x9c7f8	slot ('sym', ('_ZN6__asan10kMidMemBegE',)) / ('sym', ('_ZN6__asan10kMidMemBegE',))	ok
+A/AFf9.v	198	0x9c380	0x9c800	slot ('sym', ('_ZN6__asan10kMidMemEndE',)) / ('sym', ('_ZN6__asan10kMidMemEndE',))	ok
+A/AFf9.v	198	0x9c388	0x9c808	slot ('sym', ('_ZN6__asan11kHighMemEndE',)) / ('sym', ('_ZN6__asan11kHighMemEndE',))	ok
+A/AFf9.v	200	0x9c390	0x9c810	slot ('sym', ('_ZN14__interception11real_memsetE',)) / ('sym', ('_ZN14__interception11real_memsetE',))	ok
+A/AFf9.v	201	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFf9.v	201	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFfc.v	297	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AFfc.v	298	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/AFfc.v	299	0x9c378	0x9c7f8	slot ('sym', ('_ZN6__asan10kMidMemBegE',)) / ('sym', ('_ZN6__asan10kMidMemBegE',))	ok
+A/AFfc.v	299	0x9c380	0x9c800	slot ('sym', ('_ZN6__asan10kMidMemEndE',)) / ('sym', ('_ZN6__asan10kMidMemEndE',))	ok
+A/AFfc.v	299	0x9c388	0x9c808	slot ('sym', ('_ZN6__asan11kHighMemEndE',)) / ('sym', ('_ZN6__asan11kHighMemEndE',))	ok
+A/AFfc.v	301	0x9c390	0x9c810	slot ('sym', ('_ZN14__interception11real_memsetE',)) / ('sym', ('_ZN14__interception11real_memsetE',))	ok
+A/AFfc.v	302	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFfc.v	302	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFff.v	128	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFfg.v	123	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFfi.v	210	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFfo.v	51	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFgi.v	101	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AFgi.v	103	0x9c368	0x9c7e8	slot ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',)) / ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	ok
+A/AFgi.v	104	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/AFgi.v	105	0x9c378	0x9c7f8	slot ('sym', ('_ZN6__asan10kMidMemBegE',)) / ('sym', ('_ZN6__asan10kMidMemBegE',))	ok
+A/AFgi.v	105	0x9c380	0x9c800	slot ('sym', ('_ZN6__asan10kMidMemEndE',)) / ('sym', ('_ZN6__asan10kMidMemEndE',))	ok
+A/AFgi.v	105	0x9c388	0x9c808	slot ('sym', ('_ZN6__asan11kHighMemEndE',)) / ('sym', ('_ZN6__asan11kHighMemEndE',))	ok
+A/AFgi.v	107	0x9c390	0x9c810	slot ('sym', ('_ZN14__interception11real_memsetE',)) / ('sym', ('_ZN14__interception11real_memsetE',))	ok
+A/AFgi.v	108	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFgk.v	111	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFgm.v	89	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AFgm.v	91	0x9c368	0x9c7e8	slot ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',)) / ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	ok
+A/AFgm.v	92	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/AFgm.v	93	0x9c378	0x9c7f8	slot ('sym', ('_ZN6__asan10kMidMemBegE',)) / ('sym', ('_ZN6__asan10kMidMemBegE',))	ok
+A/AFgm.v	93	0x9c380	0x9c800	slot ('sym', ('_ZN6__asan10kMidMemEndE',)) / ('sym', ('_ZN6__asan10kMidMemEndE',))	ok
+A/AFgm.v	93	0x9c388	0x9c808	slot ('sym', ('_ZN6__asan11kHighMemEndE',)) / ('sym', ('_ZN6__asan11kHighMemEndE',))	ok
+A/AFgm.v	95	0x9c390	0x9c810	slot ('sym', ('_ZN14__interception11real_memsetE',)) / ('sym', ('_ZN14__interception11real_memsetE',))	ok
+A/AFgm.v	96	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFgn.v	64	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AFgn.v	66	0x9c368	0x9c7e8	slot ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',)) / ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	ok
+A/AFgn.v	67	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/AFgn.v	68	0x9c378	0x9c7f8	slot ('sym', ('_ZN6__asan10kMidMemBegE',)) / ('sym', ('_ZN6__asan10kMidMemBegE',))	ok
+A/AFgn.v	68	0x9c380	0x9c800	slot ('sym', ('_ZN6__asan10kMidMemEndE',)) / ('sym', ('_ZN6__asan10kMidMemEndE',))	ok
+A/AFgn.v	68	0x9c388	0x9c808	slot ('sym', ('_ZN6__asan11kHighMemEndE',)) / ('sym', ('_ZN6__asan11kHighMemEndE',))	ok
+A/AFgn.v	70	0x9c390	0x9c810	slot ('sym', ('_ZN14__interception11real_memsetE',)) / ('sym', ('_ZN14__interception11real_memsetE',))	ok
+A/AFgn.v	71	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFgo.v	65	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFgq.v	92	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFgq.v	92	0x9c3b8	0x9c838	slot ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',)) / ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',))	ok
+A/AFgr.v	106	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFgr.v	106	0x9c3b8	0x9c838	slot ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',)) / ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',))	ok
+A/AFgs.v	110	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AFgs.v	112	0x9c368	0x9c7e8	slot ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',)) / ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	ok
+A/AFgs.v	113	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/AFgs.v	114	0x9c378	0x9c7f8	slot ('sym', ('_ZN6__asan10kMidMemBegE',)) / ('sym', ('_ZN6__asan10kMidMemBegE',))	ok
+A/AFgs.v	114	0x9c380	0x9c800	slot ('sym', ('_ZN6__asan10kMidMemEndE',)) / ('sym', ('_ZN6__asan10kMidMemEndE',))	ok
+A/AFgs.v	114	0x9c388	0x9c808	slot ('sym', ('_ZN6__asan11kHighMemEndE',)) / ('sym', ('_ZN6__asan11kHighMemEndE',))	ok
+A/AFgs.v	116	0x9c390	0x9c810	slot ('sym', ('_ZN14__interception11real_memsetE',)) / ('sym', ('_ZN14__interception11real_memsetE',))	ok
+A/AFgv.v	130	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AFgv.v	132	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/AFgv.v	133	0x9c378	0x9c7f8	slot ('sym', ('_ZN6__asan10kMidMemBegE',)) / ('sym', ('_ZN6__asan10kMidMemBegE',))	ok
+A/AFgv.v	133	0x9c380	0x9c800	slot ('sym', ('_ZN6__asan10kMidMemEndE',)) / ('sym', ('_ZN6__asan10kMidMemEndE',))	ok
+A/AFgv.v	133	0x9c388	0x9c808	slot ('sym', ('_ZN6__asan11kHighMemEndE',)) / ('sym', ('_ZN6__asan11kHighMemEndE',))	ok
+A/AFgv.v	135	0x9c390	0x9c810	slot ('sym', ('_ZN14__interception11real_memsetE',)) / ('sym', ('_ZN14__interception11real_memsetE',))	ok
+A/AFgv.v	136	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFgv.v	136	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFgz.v	410	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFhy.v	86	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AFhy.v	90	0x9c368	0x9c7e8	slot ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',)) / ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	ok
+A/AFhy.v	90	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/AFhy.v	90	0x9c378	0x9c7f8	slot ('sym', ('_ZN6__asan10kMidMemBegE',)) / ('sym', ('_ZN6__asan10kMidMemBegE',))	ok
+A/AFhy.v	90	0x9c380	0x9c800	slot ('sym', ('_ZN6__asan10kMidMemEndE',)) / ('sym', ('_ZN6__asan10kMidMemEndE',))	ok
+A/AFhy.v	90	0x9c388	0x9c808	slot ('sym', ('_ZN6__asan11kHighMemEndE',)) / ('sym', ('_ZN6__asan11kHighMemEndE',))	ok
+A/AFhy.v	91	0x9c390	0x9c810	slot ('sym', ('_ZN14__interception11real_memsetE',)) / ('sym', ('_ZN14__interception11real_memsetE',))	ok
+A/AFhy.v	91	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFhy.v	94	0x9cfc8	0x9d448	slot ('val', 16) / ('val', 16)	ok
+A/AFi1.v	58	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AFi1.v	62	0x9c368	0x9c7e8	slot ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',)) / ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	ok
+A/AFi1.v	62	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/AFi1.v	62	0x9c378	0x9c7f8	slot ('sym', ('_ZN6__asan10kMidMemBegE',)) / ('sym', ('_ZN6__asan10kMidMemBegE',))	ok
+A/AFi1.v	62	0x9c380	0x9c800	slot ('sym', ('_ZN6__asan10kMidMemEndE',)) / ('sym', ('_ZN6__asan10kMidMemEndE',))	ok
+A/AFi1.v	62	0x9c388	0x9c808	slot ('sym', ('_ZN6__asan11kHighMemEndE',)) / ('sym', ('_ZN6__asan11kHighMemEndE',))	ok
+A/AFi1.v	63	0x9c390	0x9c810	slot ('sym', ('_ZN14__interception11real_memsetE',)) / ('sym', ('_ZN14__interception11real_memsetE',))	ok
+A/AFi1.v	63	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFi1.v	66	0x9cfc8	0x9d448	slot ('val', 16) / ('val', 16)	ok
+A/AFi9.v	96	0x9c358	0x9c7d8	slot ('sym', ('_ZN11__sanitizer22SecondaryAllocatorNameE',)) / ('sym', ('_ZN11__sanitizer22SecondaryAllocatorNameE',))	ok
+A/AFih.v	72	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFii.v	21	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AFii.v	27	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFii.v	28	0x9c3b8	0x9c838	slot ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',)) / ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',))	ok
+A/AFk1.v	660	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AFk1.v	759	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AFk1.v	759	0x9d000	0x9d480	slot ('sym', ('___environ', '__environ', '_environ', 'environ')) / ('sym', ('___environ', '__environ', '_environ', 'environ'))	ok
+A/AFk1.v	760	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFk1.v	760	0x9c3c0	0x9c840	slot ('sym', ('_ZN11__sanitizer17current_verbosityE',)) / ('sym', ('_ZN11__sanitizer17current_verbosityE',))	ok
+A/AFk1.v	797	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFk1.v	798	0x9c3b8	0x9c838	slot ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',)) / ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',))	ok
+A/AFk1.v	842	0x9c3b8	0x9c838	slot ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',)) / ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',))	ok
+A/AFk1.v	842	0x9c3c0	0x9c840	slot ('sym', ('_ZN11__sanitizer17current_verbosityE',)) / ('sym', ('_ZN11__sanitizer17current_verbosityE',))	ok
+A/AFk1.v	844	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFk1.v	844	0x9c3b8	0x9c838	slot ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',)) / ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',))	ok
+A/AFk1.v	857	0x9cff8	0x9d478	slot ('sym', ('__stack_chk_guard',)) / ('sym', ('__stack_chk_guard',))	ok
+A/AFk1.v	857	0x9d000	0x9d480	slot ('sym', ('___environ', '__environ', '_environ', 'environ')) / ('sym', ('___environ', '__environ', '_environ', 'environ'))	ok
+A/AFk2.v	617	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFk2.v	617	0x9c3b8	0x9c838	slot ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',)) / ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',))	ok
+A/AFk2.v	687	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFk2.v	727	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFk2.v	727	0x9c3b8	0x9c838	slot ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',)) / ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',))	ok
+A/AFk6.v	42	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFk6.v	42	0x9c3b8	0x9c838	slot ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',)) / ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',))	ok
+A/AFkk.v	571	0x9c3b0	0x9c830	slot ('val', 1) / ('val', 1)	ok
+A/AFkk.v	572	0x9c3b8	0x9c838	slot ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',)) / ('sym', ('_ZN11__sanitizer25sealed_report_in_progressE',))	ok
+A/AFkp.v	58	0x9c360	0x9c7e0	slot ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',)) / ('sym', ('_ZN11__sanitizer21common_flags_dont_useE',))	ok
+A/AFkp.v	63	0x9c368	0x9c7e8	slot ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',)) / ('sym', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	ok
+A/AFkp.v	63	0x9c370	0x9c7f0	slot ('sym', ('__asan_shadow_memory_dynamic_address',)) / ('sym', ('__asan_shadow_memory_dynamic_address',))	ok
+A/AFkp.v	63	0x9c378	0x9c7f8	slot ('sym', ('_ZN6__asan10kMidMemBegE',)) / ('sym', ('_ZN6__asan10kMidMemBegE',))	ok
+A/AFkp.v	63	0x9c380	0x9c800	slot ('sym', ('_ZN6__asan10kMidMemEndE',)) / ('sym', ('_ZN6__asan10kMidMemEndE',))	ok
+A/AFkp.v	63	0x9c388	0x9c808	slot ('sym', ('_ZN6__asan11kHighMemEndE',)) / ('sym', ('_ZN6__asan11kHighMemEndE',))	ok
+A/AFkp.v	64	0x9c390	0x9c810	slot ('sym', ('_ZN14__interception11real_memsetE',)) / ('sym', ('_ZN14__interception11real_memsetE',))	ok
+A/AFkp.v	64	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFl0.v	39	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFl2.v	64	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFl4.v	48	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok
+A/AFl4.v	162	0x9c350	0x9c7d0	slot ('sym', ('_ZN11__sanitizer14PageSizeCachedE',)) / ('sym', ('_ZN11__sanitizer14PageSizeCachedE',))	ok

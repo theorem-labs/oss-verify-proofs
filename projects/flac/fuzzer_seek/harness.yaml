@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: flac
 harness: fuzzer_seek
-rocq: OssFuzzTheorems.flac.fuzzer_seek
+rocq: OSSVerify.flac.fuzzer_seek
 origin: upstream
 summary: 'File-backed decoder (ogg or native) driven by up to 15 command bytes: process/skip/seek (short
   and 64-bit)/reset/flush/link operations, find_total_samples, get_link_lengths; results only steer retries.'

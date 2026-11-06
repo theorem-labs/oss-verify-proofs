@@ -1,0 +1,180 @@
+log: build-20261030T152040Z.log
+
+cb-cache: mode=dune source=default targets=5 compiled=5 from_cache=0 missing=0 failed=0
+cb: pin reac-repacer/fuzz_uci fuzz_uci.asan 6ea017c24525 PINNED (asan pins 6ea017c24525 at facts 25e3d17bdb50)
+cb: pin reac-repacer/fuzz_uci fuzz_uci.asan-ubsan a1b86e424add PINNED (asan-ubsan pins a1b86e424add at facts 25e3d17bdb50)
+cb: pin reac-repacer/fuzz_uci fuzz_uci.plain a6119aa7f1f2 PINNED (plain pins a6119aa7f1f2 at facts 25e3d17bdb50)
+cb: pin reac-repacer/fuzz_uci fuzz_uci.ubsan fa87ac3037db PINNED (ubsan pins fa87ac3037db at facts 25e3d17bdb50)
+cb: target proofs/reac-repacer/fuzz_uci/lib/B/UciBClose.vo compiled
+cb: target proofs/reac-repacer/fuzz_uci/lib/B/YB05.vo compiled
+cb: target proofs/reac-repacer/fuzz_uci/lib/B/YD1y.vo compiled
+cb: target proofs/reac-repacer/fuzz_uci/lib/B/YE23.vo compiled
+cb: target proofs/reac-repacer/fuzz_uci/lib/B/YE37.vo compiled
+cb: dune: 5 targets: 5 compiled, 0 restored from the cache, 0 missing; 0 failed compiles; 39 more compiled (dependencies outside the targets)
+rc=0 wall=1498
+
+uci_B_TFIB_T_of_parts : UBT.TFIB_T
+
+uci_B_TFIB_T_of_parts is not universe polymorphic
+Arguments uci_B_TFIB_T_of_parts sp brk mbase rnd inp _ _ _ _ _
+uci_B_TFIB_T_of_parts is opaque
+Expands to: Constant
+            OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.B.UciBClose.asan_ubsan.uci_B_TFIB_T_of_parts
+Declared in
+library OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.B.UciBClose, line 461, characters 8-29
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+Classical_Prop.classic : ∀ P : Prop, P ∨ ¬ P
+PrimArray.array : Type → Type
+uci_asan_ubsan_agrees_of_parts : USt.asan_ubsan_agrees
+
+uci_asan_ubsan_agrees_of_parts is not universe polymorphic
+Arguments uci_asan_ubsan_agrees_of_parts en_plain en_san inp _ _ _ _
+uci_asan_ubsan_agrees_of_parts is opaque
+Expands to: Constant
+            OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.B.UciBClose.asan_ubsan.uci_asan_ubsan_agrees_of_parts
+Declared in
+library OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.B.UciBClose, line 469, characters 8-38
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+Classical_Prop.classic : ∀ P : Prop, P ∨ ¬ P
+PrimArray.array : Type → Type
+uci_asan_ubsan_halts_of_parts : USt.asan_ubsan_halts
+
+uci_asan_ubsan_halts_of_parts is not universe polymorphic
+Arguments uci_asan_ubsan_halts_of_parts en inp _ _ _
+uci_asan_ubsan_halts_of_parts is opaque
+Expands to: Constant
+            OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.B.UciBClose.asan_ubsan.uci_asan_ubsan_halts_of_parts
+Declared in
+library OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.B.UciBClose, line 471, characters 8-37
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+Classical_Prop.classic : ∀ P : Prop, P ∨ ¬ P
+PrimArray.array : Type → Type
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+Classical_Prop.classic : ∀ P : Prop, P ∨ ¬ P
+PrimArray.array : Type → Type
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+PrimArray.array : Type → Type
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+PrimArray.array : Type → Type
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+PrimArray.array : Type → Type
+Closed under the global context
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+PrimArray.array : Type → Type

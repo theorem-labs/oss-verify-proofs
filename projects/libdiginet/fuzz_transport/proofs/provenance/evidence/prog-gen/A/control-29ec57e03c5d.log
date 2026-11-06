@@ -1,0 +1,14 @@
+# Control: the generator of 4de1596fe3b9, run as that commit ran it, on the OLD asan pin
+# (run.sh and palist.py byte-equal to 4de1596fe3b9; the run.sh pin line names the old pin).
+utc 2026-10-30T18:52:34Z
+palist.py sha256 4d8dcc54f4c027562a3387b8a111f6b76deef4e8b0acf7d9abef5e0731b4a2a7
+run.sh (as at 4de1596fe3b9) sha256 5b1e0cac4e7a1a2bc60ff2a0b8ac19d539f971933f08d7ea609fe87bb2a7eb00
+image  fuzz_transport.asan (old pin)            sha256 29ec57e03c5d06cc1c7060d8aa33823e846d253b9b9ba1dfd8f5c94027f83254
+twin   fuzz_transport.asan unstripped (old)     sha256 1080629324209cf0c00ac5ff0ecf3f718dd78174ac12c684ed181b6bd5f03854
+.text of image and twin: addr 0x310c8 size 0x71880 equal True
+command: sh run.sh <image> <twin>
+rc 0
+DgnTransportSyms.v  output sha256 c3f1446cb76f231111dfcdb33e92ab8d02ed1a262291acd5e7cc6a49a354ff79  committed at 4de1596fe3b9 sha256 c3f1446cb76f231111dfcdb33e92ab8d02ed1a262291acd5e7cc6a49a354ff79  BYTE-EQUAL
+DgnTransportAddr.v  output sha256 dca0a038f205448d7a73522cb8baac332ba1f0668978effb14746f7d87e75f19  committed at 4de1596fe3b9 sha256 dca0a038f205448d7a73522cb8baac332ba1f0668978effb14746f7d87e75f19  BYTE-EQUAL
+DgnTransportList.v  output sha256 36475cef6cdfb9e42f82aa63b4ecc20e436e865efe663ddff7835afc55a3dde4  committed at 4de1596fe3b9 sha256 36475cef6cdfb9e42f82aa63b4ecc20e436e865efe663ddff7835afc55a3dde4  BYTE-EQUAL
+verdict: the control reproduces the committed files byte for byte

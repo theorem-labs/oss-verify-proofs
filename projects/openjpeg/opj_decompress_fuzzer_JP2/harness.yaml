@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openjpeg
 harness: opj_decompress_fuzzer_JP2
-rocq: OssFuzzTheorems.openjpeg.opj_decompress_fuzzer_JP2
+rocq: OSSVerify.openjpeg.opj_decompress_fuzzer_JP2
 origin: upstream
 summary: Accepts only a JP2 file whose bytes 4..7 are the 'jP ' box; opj_read_header, then opj_set_decode_area
   clamped to 1024x1024 and opj_decode from a memory stream; the decoded image is never inspected.

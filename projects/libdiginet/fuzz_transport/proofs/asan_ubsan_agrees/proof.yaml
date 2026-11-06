@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: libdiginet/fuzz_transport/asan_ubsan_agrees
+fingerprint: 7d204978dc118a80644d76f628792f316650bc1537533cc16dd7217a010d35eb

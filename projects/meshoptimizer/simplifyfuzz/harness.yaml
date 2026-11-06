@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: meshoptimizer
 harness: simplifyfuzz
-rocq: OssFuzzTheorems.meshoptimizer.simplifyfuzz
+rocq: OSSVerify.meshoptimizer.simplifyfuzz
 origin: upstream
 summary: Same vertex/index construction; runs meshopt_simplify with 6 option sets, simplifyWithAttributes
   and (last) simplifyWithUpdate; returned index counts and result buffers are discarded.

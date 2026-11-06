@@ -1,0 +1,575 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From Stdlib Require Import ZArith NArith List Bool.
+From stdpp Require Import gmap.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Spec Require Import STree.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+
+Local Open Scope Z_scope.
+Local Open Scope stree_scope.
+
+Inductive aundef :=
+| UBadAnswer
+| UBadPtr
+| USpin
+| UCheck (tag : Z)
+| UUnmodeled.
+
+Inductive aev : Type :=
+| ASetTid (addr : Z)
+| ABrk (addr : Z)
+| AMmap (addr len prot flags : Z)
+| AMunmap (addr len : Z)
+| AMprotect (addr len prot : Z)
+| AMadvise (addr len : Z)
+| AMmapT (len : Z)
+| AUndef (why : aundef).
+
+Definition AM (R : Type) := stree aev Z R.
+Definition aret {R} (r : R) : AM R := SRet r.
+Definition aundef_ {R} (w : aundef) (k : AM R) : AM R := SVis (AUndef w) (fun _ => k).
+
+Definition PROT_NONE : Z := 0.
+Definition PROT_RW : Z := 3.
+Definition F_ANON : Z := 34.
+Definition F_FIXED : Z := 50.
+Definition F_NORES : Z := 16418.
+Definition F_FIXNORES : Z := 16434.
+Definition PG : Z := 4096.
+Definition TWO64 : Z := 2^64.
+Definition ENOSYS : Z := 38.
+
+Definition ALLOC_TOP_MIN : Z := 0x7fff7f800000.
+Definition STACK_MAX : Z := 2^23.
+Definition atop_of_sp (sp0 : Z) : Z := sp0 - STACK_MAX.
+
+Definition is_err (r : Z) : bool := (TWO64 - 4096 <? r).
+Definition rup (x a : Z) : Z := ((x + a - 1) / a) * a.
+Definition rdn (x a : Z) : Z := (x / a) * a.
+
+Definition mmap_answer_ok (atop len r : Z) : bool :=
+  is_err r || ((0 <? r) && (r mod PG =? 0) && (r + rup len PG <=? atop) && (r <? TWO64)).
+Definition fixed_answer_ok (a r : Z) : bool := is_err r || (r =? a).
+Definition brk0_answer_ok (r : Z) : bool := (0 <? r) && (r <? TWO64).
+
+Definition SHADOW_OFF : Z := 0x7fff8000.
+Definition K_SPACE_SIZE : Z := 2^37.
+Definition K_SPACE_EXTRA : Z := 0x1000.
+Definition K_ALIGN : Z := 0x10000.
+Definition K_REGION : Z := 2^32.
+Definition K_FREEARR_OFF : Z := 0xE0000000.
+Definition K_FREEARR_MAX : Z := 0x20000000.
+Definition K_USER_MAP : Z := 0x40000.
+Definition K_FREEARR_MAP : Z := 0x40000.
+Definition K_MAX_SIZE : Z := 0x10000.
+Definition K_NUM_CLASSES : Z := 32.
+Definition K_BATCH_CLASS : Z := 24.
+Definition K_PTRARR_RESERVE : Z := 0x800000.
+Definition K_PTRARR_COMMIT : Z := 0x20000.
+Definition K_CHUNKS_BLOCK : Z := 16384.
+Definition Q_MAX : Z := 0x10000000.
+Definition Q_MIN : Z := 241591905.
+Definition Q_CACHE : Z := 0x100000.
+Definition Q_BATCH : Z := 1021.
+Definition Q_BATCH_BYTES : Z := 8192.
+Definition CLEAR_SHADOW_MMAP_THRESHOLD : Z := 0xffffffffffffffff.
+Definition FAKESTACK_BYTES : Z := 0xb09000.
+Definition STACK_SIZE : Z := 0x800000.
+Definition LOW_SHADOW_ADDR : Z := 0x7fff7000.
+Definition LOW_SHADOW_LEN : Z := 0x10000000.
+Definition HIGH_SHADOW_ADDR : Z := 0x2008fff7000.
+Definition HIGH_SHADOW_LEN : Z := 0xdfff0001000.
+Definition GAP_ADDR : Z := 0x8fff7000.
+Definition GAP_LEN : Z := 0x20000000000.
+
+Definition size_of_class (c : Z) : Z :=
+  if c <=? 16 then 32 * c
+  else if c =? 31 then 64
+  else let t := Z.shiftl 512 (Z.shiftr (c - 16) 1) in
+       if Z.odd (c - 16) then t + Z.shiftr t 1 else t.
+
+Definition class_id (s : Z) : Z :=
+  if s <=? 512 then Z.shiftr (s + 31) 5
+  else let l := Z.log2 s in
+       let hbits := Z.land (Z.shiftr s (l - 1)) 1 in
+       let lbits := Z.land s (Z.shiftl 1 (l - 1) - 1) in
+       16 + Z.shiftl (l - 9) 1 + hbits + (if lbits =? 0 then 0 else 1).
+
+Definition max_cached (c : Z) : Z := 2 * Z.max 1 (Z.min 8 (1024 / size_of_class c)).
+
+Definition rz_log (n : Z) : Z :=
+  if n <=? 48 then 0 else if n <=? 96 then 1 else if n <=? 448 then 2 else if n <=? 3968 then 3
+  else if n <=? 16128 then 4 else if n <=? 32256 then 5 else if n <=? 64512 then 6 else 7.
+Definition rz_size (n : Z) : Z := Z.shiftl 16 (rz_log n).
+
+Definition rounded_size (n : Z) : Z := rup (Z.max n 8) 8.
+Definition needed0 (n : Z) : Z := rounded_size n + rz_size n.
+Definition is_primary (n : Z) : bool := needed0 n <=? K_MAX_SIZE.
+Definition needed_size (n : Z) : Z := if is_primary n then needed0 n else needed0 n + rz_size n.
+
+Definition sec_map_size (n : Z) : Z := rup (needed_size n) PG + PG.
+
+Definition rounded_size16 (n : Z) : Z := rup (Z.max n 8) 16.
+Definition needed16 (n : Z) : Z := rounded_size16 n + 16 + rz_size n.
+Definition is_primary16 (n : Z) : bool := needed16 n <=? K_MAX_SIZE.
+
+Definition ALIGNED_NMAX : Z := 4096.
+Definition prim_cls_ok (c n : Z) : Prop :=
+  c = class_id (needed_size n) \/ (c = class_id (needed16 n) /\ 16 <= n <= ALIGNED_NMAX /\ n mod 16 = 0).
+
+Record aclass := mkAClass {
+  c_mapped_user : Z;
+  c_allocated_user : Z;
+  c_num_freed : Z;
+  c_mapped_free_array : Z;
+  c_count : Z
+}.
+Definition aclass0 : aclass := mkAClass 0 0 0 0 0.
+
+Inductive achunk :=
+| CPrim (c : Z) (n : Z)
+| CSec (map_beg map_size : Z) (n : Z).
+Definition chunk_size (ch : achunk) : Z := match ch with CPrim _ n => n | CSec _ _ n => n end.
+
+Record abatch := mkABatch { b_count : Z; b_size : Z; b_chunks : list achunk }.
+
+Definition aptr : Type := N.
+
+Record astate := mkAState {
+  a_space_beg : Z;
+  a_ptr_array : Z;
+  a_nres : Z;
+  a_nsec : Z;
+  a_cinit : bool;
+  a_cls : gmap Z aclass;
+  a_live : gmap N achunk;
+  a_next : N;
+  a_qloc : list abatch;
+  a_qloc_bytes : Z;
+  a_qglob : list abatch;
+  a_qglob_bytes : Z;
+  a_exh : list Z;
+  a_emb : Z * Z * Z
+}.
+
+Definition ainit (space_beg ptr_array : Z) : astate :=
+  mkAState space_beg ptr_array 0 0 false ∅ ∅ 0%N [] 0 [] 0 [] (0, 0, 0).
+
+Definition set_nres v st := mkAState (a_space_beg st) (a_ptr_array st) v (a_nsec st) (a_cinit st) (a_cls st) (a_live st) (a_next st) (a_qloc st) (a_qloc_bytes st) (a_qglob st) (a_qglob_bytes st) (a_exh st) (a_emb st).
+Definition set_nsec v st := mkAState (a_space_beg st) (a_ptr_array st) (a_nres st) v (a_cinit st) (a_cls st) (a_live st) (a_next st) (a_qloc st) (a_qloc_bytes st) (a_qglob st) (a_qglob_bytes st) (a_exh st) (a_emb st).
+Definition set_cinit v st := mkAState (a_space_beg st) (a_ptr_array st) (a_nres st) (a_nsec st) v (a_cls st) (a_live st) (a_next st) (a_qloc st) (a_qloc_bytes st) (a_qglob st) (a_qglob_bytes st) (a_exh st) (a_emb st).
+Definition set_cls v st := mkAState (a_space_beg st) (a_ptr_array st) (a_nres st) (a_nsec st) (a_cinit st) v (a_live st) (a_next st) (a_qloc st) (a_qloc_bytes st) (a_qglob st) (a_qglob_bytes st) (a_exh st) (a_emb st).
+Definition set_live v st := mkAState (a_space_beg st) (a_ptr_array st) (a_nres st) (a_nsec st) (a_cinit st) (a_cls st) v (a_next st) (a_qloc st) (a_qloc_bytes st) (a_qglob st) (a_qglob_bytes st) (a_exh st) (a_emb st).
+Definition set_next v st := mkAState (a_space_beg st) (a_ptr_array st) (a_nres st) (a_nsec st) (a_cinit st) (a_cls st) (a_live st) v (a_qloc st) (a_qloc_bytes st) (a_qglob st) (a_qglob_bytes st) (a_exh st) (a_emb st).
+Definition set_qloc l b st := mkAState (a_space_beg st) (a_ptr_array st) (a_nres st) (a_nsec st) (a_cinit st) (a_cls st) (a_live st) (a_next st) l b (a_qglob st) (a_qglob_bytes st) (a_exh st) (a_emb st).
+Definition set_qglob l b st := mkAState (a_space_beg st) (a_ptr_array st) (a_nres st) (a_nsec st) (a_cinit st) (a_cls st) (a_live st) (a_next st) (a_qloc st) (a_qloc_bytes st) l b (a_exh st) (a_emb st).
+
+Definition set_exh v st := mkAState (a_space_beg st) (a_ptr_array st) (a_nres st) (a_nsec st) (a_cinit st) (a_cls st) (a_live st) (a_next st) (a_qloc st) (a_qloc_bytes st) (a_qglob st) (a_qglob_bytes st) v (a_emb st).
+Definition set_emb v st := mkAState (a_space_beg st) (a_ptr_array st) (a_nres st) (a_nsec st) (a_cinit st) (a_cls st) (a_live st) (a_next st) (a_qloc st) (a_qloc_bytes st) (a_qglob st) (a_qglob_bytes st) (a_exh st) v.
+
+Definition exh_mem (c : Z) (st : astate) : bool := existsb (Z.eqb c) (a_exh st).
+Definition exh_set (c : Z) (st : astate) : astate := set_exh (c :: a_exh st) st.
+Definition exh_clear (c : Z) (st : astate) : astate := set_exh (List.filter (fun x => negb (x =? c)) (a_exh st)) st.
+
+Definition get_cls (st : astate) (c : Z) : aclass := default aclass0 ((a_cls st) !! c).
+Definition put_cls (c : Z) (r : aclass) (st : astate) : astate := set_cls (<[c := r]> (a_cls st)) st.
+Definition cls_set_count v r := mkAClass (c_mapped_user r) (c_allocated_user r) (c_num_freed r) (c_mapped_free_array r) v.
+Definition cls_set_num_freed v r := mkAClass (c_mapped_user r) (c_allocated_user r) v (c_mapped_free_array r) (c_count r).
+Definition cls_set_mapped_free_array v r := mkAClass (c_mapped_user r) (c_allocated_user r) (c_num_freed r) v (c_count r).
+Definition cls_set_mapped_user v r := mkAClass v (c_allocated_user r) (c_num_freed r) (c_mapped_free_array r) (c_count r).
+Definition cls_set_allocated_user v r := mkAClass (c_mapped_user r) v (c_num_freed r) (c_mapped_free_array r) (c_count r).
+
+Definition max_count (st : astate) (c : Z) : Z := if a_cinit st then max_cached c else 0.
+Definition region_beg (st : astate) (c : Z) : Z := a_space_beg st + c * K_REGION.
+
+Definition chunk_alloc_beg (ch : achunk) : Z := match ch with CSec mb _ _ => mb + PG | CPrim _ _ => 0 end.
+Definition chunk_user_beg (ch : achunk) : Z := match ch with CSec mb _ n => mb + PG + rz_size n | CPrim _ _ => 0 end.
+Definition aptr_addr (st : astate) (p : aptr) : Z :=
+  match (a_live st) !! p with Some ch => chunk_user_beg ch | None => 0 end.
+
+Definition poison0 {R} (addr size : Z) (k : AM R) : AM R := k.
+
+Definition flush_beg (addr : Z) : Z := rup (SHADOW_OFF + Z.shiftr addr 3) PG.
+Definition flush_end (addr size : Z) : Z := rdn (SHADOW_OFF + Z.shiftr (addr + size) 3) PG.
+Definition flush_shadow {R} (addr size : Z) (k : AM R) : AM R :=
+  let pb := flush_beg addr in
+  let pe := flush_end addr size in
+  if pb <? pe then SVis (AMadvise pb (pe - pb)) (fun r => if r =? 0 then k else aundef_ UBadAnswer k) else k.
+
+Definition ev {R} (e : aev) (k : Z -> AM R) : AM R := SVis e k.
+
+Definition must_map {R} (atop len prot flags : Z) (k : Z -> AM R) : AM R :=
+  ev (AMmap 0 len prot flags) (fun r =>
+    if negb (mmap_answer_ok atop len r) then aundef_ UBadAnswer (k 0)
+    else if is_err r then aundef_ USpin (k 0) else k r).
+Definition must_map_fixed {R} (addr len prot flags : Z) (k : AM R) : AM R :=
+  ev (AMmap addr len prot flags) (fun r =>
+    if negb (fixed_answer_ok addr r) then aundef_ UBadAnswer k
+    else if is_err r then aundef_ USpin k else k).
+
+Definition musl_startup_malloc {R} (atop : Z) (k : AM R) : AM R :=
+  ev (ABrk 0) (fun b0 =>
+    if negb (brk0_answer_ok b0) then aundef_ UBadAnswer k else
+    let cur := rup b0 PG in
+    let new := cur + 2 * PG in
+    ev (ABrk new) (fun r =>
+      let group := ev (AMmap 0 PG PROT_RW F_ANON) (fun _ => k) in
+      if r =? new then
+        ev (AMmap cur PG PROT_NONE F_FIXED) (fun _ => group)
+      else if r =? b0 then
+        ev (AMmap 0 (2 * PG) PROT_NONE F_ANON) (fun p =>
+          if negb (mmap_answer_ok atop (2 * PG) p) then aundef_ UBadAnswer k
+          else if is_err p then k
+          else ev (AMprotect (p + PG) PG PROT_RW) (fun r2 =>
+                 if (r2 =? 0) || (r2 =? TWO64 - ENOSYS) then group else k))
+      else aundef_ UBadAnswer k)).
+
+Definition astartup (tid_addr sp0 : Z) : AM astate :=
+  let must_map {R} := @must_map R (atop_of_sp sp0) in
+  ev (ASetTid tid_addr) (fun _ =>
+  must_map 0x10000 PROT_RW F_ANON (fun _ =>
+  must_map 0x38e000 PROT_RW F_ANON (fun _ =>
+  must_map_fixed LOW_SHADOW_ADDR LOW_SHADOW_LEN PROT_RW F_FIXNORES (
+  must_map_fixed HIGH_SHADOW_ADDR HIGH_SHADOW_LEN PROT_RW F_FIXNORES (
+  must_map_fixed GAP_ADDR GAP_LEN PROT_NONE F_FIXNORES (
+  must_map (K_SPACE_SIZE + K_SPACE_EXTRA + K_ALIGN) PROT_NONE F_NORES (fun b6 =>
+  let space_beg := b6 + K_ALIGN - Z.land b6 (K_ALIGN - 1) in
+  must_map_fixed (space_beg + K_SPACE_SIZE) 0x1000 PROT_RW F_FIXED (
+  must_map K_PTRARR_RESERVE PROT_NONE F_NORES (fun b8 =>
+  must_map 0x1000 PROT_RW F_ANON (fun _ =>
+  must_map 0x10000 PROT_RW F_ANON (fun _ =>
+  must_map 0x1000 PROT_RW F_ANON (fun _ =>
+  must_map 0x1000 PROT_RW F_ANON (fun _ =>
+  must_map 0x1000 PROT_RW F_ANON (fun v =>
+  ev (AMunmap v 0x1000) (fun _ =>
+  let top := rup (sp0 - 0xa0) PG in
+  poison0 (top - STACK_SIZE) STACK_SIZE (
+  must_map FAKESTACK_BYTES PROT_RW F_ANON (fun _ =>
+  musl_startup_malloc (atop_of_sp sp0) (
+  must_map 0x100000 PROT_RW F_ANON (fun _ =>
+  must_map 0x800000 PROT_RW F_NORES (fun _ =>
+  must_map 0x1000 PROT_RW F_ANON (fun _ =>
+  must_map 0x1000 PROT_RW F_ANON (fun _ =>
+  aret (ainit space_beg b8))))))))))))))))))))))).
+
+Definition ensure_free_array {R} (st : astate) (c num_freed : Z) (k : astate -> bool -> AM R) : AM R :=
+  let r := get_cls st c in
+  let needed := num_freed * 4 in
+  if needed <=? c_mapped_free_array r then k st true else
+  let new_mapped := rup needed K_FREEARR_MAP in
+  if K_FREEARR_MAX <? new_mapped then aundef_ (UCheck 751) (k st false) else
+  let cur_end := region_beg st c + K_FREEARR_OFF + c_mapped_free_array r in
+  ev (AMmap cur_end (new_mapped - c_mapped_free_array r) PROT_RW F_FIXED) (fun a =>
+    if negb (fixed_answer_ok cur_end a) then aundef_ UBadAnswer (k st false)
+    else if is_err a then k st false
+    else k (put_cls c (cls_set_mapped_free_array new_mapped r) st) true).
+
+Definition populate_free_array_g {R} (exh : astate -> (astate -> AM R) -> AM R) (clr : astate -> astate)
+    (st : astate) (c requested : Z) (k : astate -> bool -> AM R) : AM R :=
+  let size := size_of_class c in
+  let r := get_cls st c in
+  let total_user := c_allocated_user r + requested * size in
+  let after_map (st1 : astate) : AM R :=
+    let r1 := get_cls st1 c in
+    let new_cnt := (c_mapped_user r1 - c_allocated_user r1) / size in
+    let total_freed := c_num_freed r1 + new_cnt in
+    ensure_free_array st1 c total_freed (fun st2 ok =>
+      if negb ok then k st2 false else
+      let r2 := get_cls st2 c in
+      k (clr (put_cls c (cls_set_allocated_user (c_allocated_user r2 + new_cnt * size) (cls_set_num_freed total_freed r2)) st2)) true) in
+  if total_user <=? c_mapped_user r then after_map st else
+  let ums := rup (total_user - c_mapped_user r) K_USER_MAP in
+  if K_FREEARR_OFF <? c_mapped_user r + ums then exh st (fun st' => k st' false)
+  else
+  let beg := region_beg st c + c_mapped_user r in
+  ev (AMmap beg ums PROT_RW F_FIXED) (fun a =>
+    if negb (fixed_answer_ok beg a) then aundef_ UBadAnswer (k st false)
+    else if is_err a then k st false
+    else after_map (put_cls c (cls_set_mapped_user (c_mapped_user r + ums) r) st)).
+Definition populate_free_array {R} : astate -> Z -> Z -> (astate -> bool -> AM R) -> AM R :=
+  populate_free_array_g (fun st k' => aundef_ (UCheck 705) (k' st)) (fun st => st).
+
+Definition init_cache (st : astate) : astate := if a_cinit st then st else set_cinit true st.
+
+Definition cache_alloc_g {R} (pop : astate -> Z -> Z -> (astate -> bool -> AM R) -> AM R) (st : astate) (c : Z) (k : astate -> bool -> AM R) : AM R :=
+  let r := get_cls st c in
+  if 0 <? c_count r then k (put_cls c (cls_set_count (c_count r - 1) r) st) true else
+  let st1 := init_cache st in
+  let n := max_count st1 c / 2 in
+  let r1 := get_cls st1 c in
+  let take (st2 : astate) : AM R :=
+    let r2 := get_cls st2 c in
+    if c_num_freed r2 <? n then aundef_ (UCheck 229) (k st2 false)
+    else k (put_cls c (cls_set_count (n - 1) (cls_set_num_freed (c_num_freed r2 - n) r2)) st2) true in
+  if n <=? c_num_freed r1 then take st1
+  else pop st1 c (n - c_num_freed r1) (fun st2 ok => if ok then take st2 else k st2 false).
+Definition cache_alloc {R} : astate -> Z -> (astate -> bool -> AM R) -> AM R := cache_alloc_g populate_free_array.
+
+Definition cache_dealloc {R} (st : astate) (c : Z) (k : astate -> AM R) : AM R :=
+  let st1 := init_cache st in
+  let r := get_cls st1 c in
+  let mc := max_count st1 c in
+  if c_count r =? mc then
+    let cnt := mc / 2 in
+    ensure_free_array st1 c (c_num_freed r + cnt) (fun st2 ok =>
+      if negb ok then aundef_ USpin (k st2) else
+      let r2 := get_cls st2 c in
+      k (put_cls c (cls_set_count (c_count r2 - cnt + 1) (cls_set_num_freed (c_num_freed r2 + cnt) r2)) st2))
+  else k (put_cls c (cls_set_count (c_count r + 1) r) st1).
+
+Definition K_HIGH_MEM : Z := 0x10007fff8000.
+Definition iv_clear (a n : Z) (iv : Z * Z) : bool := (a + n <=? fst iv) || (snd iv <=? a).
+Definition avoids_all (a n : Z) (l : list (Z * Z)) : bool := forallb (iv_clear a n) l.
+
+Definition sec_iv (ch : achunk) : list (Z * Z) :=
+  match ch with CSec mb ms _ => [(mb, mb + ms)] | CPrim _ _ => [] end.
+
+Definition achunks (st : astate) : list achunk :=
+  map snd (map_to_list (a_live st)) ++ flat_map b_chunks (a_qloc st ++ a_qglob st).
+
+Definition emb_iv (st : astate) : list (Z * Z) := let '(d, cap, _) := a_emb st in if cap =? 0 then [] else [(d, d + cap)].
+Definition asec_ranges (st : astate) : list (Z * Z) := flat_map sec_iv (achunks st) ++ emb_iv st.
+
+Definition EMB_INIT : Z := 0x10000.
+Definition emb_realloc {R} (ATOP : Z) (RESV : list (Z * Z)) (st : astate) (want : Z) (k : astate -> AM R) : AM R :=
+  let '(d, cap, sz) := a_emb st in
+  let ncap := rup want PG in
+  ev (AMmap 0 ncap PROT_RW F_ANON) (fun mb =>
+    if negb (mmap_answer_ok ATOP ncap mb) then aundef_ UBadAnswer (k st)
+    else if is_err mb then aundef_ USpin (k st)
+    else if negb (avoids_all mb ncap (RESV ++ asec_ranges st)) then aundef_ UBadAnswer (k st)
+    else
+    let st1 := set_emb (mb, ncap, sz) st in
+    if cap =? 0 then k st1 else
+    ev (AMunmap d cap) (fun r =>
+      if r =? 0 then k st1
+      else if is_err r then aundef_ USpin (k st1)
+      else aundef_ UBadAnswer (k st1))).
+Definition emb_set_size (ns : Z) (st : astate) : astate := let '(d, cap, _) := a_emb st in set_emb (d, cap, ns) st.
+Definition emb_append {R} (ATOP : Z) (RESV : list (Z * Z)) (st : astate) (len : Z) (k : astate -> AM R) : AM R :=
+  let go (st1 : astate) : AM R :=
+    let '(_, cap, sz) := a_emb st1 in
+    let ns := sz + len in
+    if cap <? ns then emb_realloc ATOP RESV st1 ns (fun st2 => k (emb_set_size ns st2))
+    else k (emb_set_size ns st1) in
+  let '(_, cap0, _) := a_emb st in
+  if cap0 =? 0 then emb_realloc ATOP RESV st EMB_INIT go else go st.
+
+Definition ndigits (z : Z) : Z := if z <? 10 then 1 else if z <? 100 then 2 else if z <? 1000 then 3 else if z <? 10000 then 4 else 5.
+Definition EXH_LEN1 : Z := 33.
+Definition exh_len2 (c : Z) : Z := 60 + ndigits c + ndigits (size_of_class c).
+Definition exh_report {R} (ATOP : Z) (RESV : list (Z * Z)) (c : Z) (st : astate) (k : astate -> AM R) : AM R :=
+  if exh_mem c st then k st
+  else emb_append ATOP RESV (exh_set c st) EXH_LEN1 (fun st1 => emb_append ATOP RESV st1 (exh_len2 c) k).
+
+Definition populate_free_array_x {R} (ATOP : Z) (RESV : list (Z * Z)) : astate -> Z -> Z -> (astate -> bool -> AM R) -> AM R :=
+  fun st c => if c =? K_BATCH_CLASS then populate_free_array st c
+              else populate_free_array_g (exh_report ATOP RESV c) (exh_clear c) st c.
+Definition cache_alloc_x {R} (ATOP : Z) (RESV : list (Z * Z)) : astate -> Z -> (astate -> bool -> AM R) -> AM R :=
+  cache_alloc_g (populate_free_array_x ATOP RESV).
+
+Definition large_alloc {R} (ATOP : Z) (RESV : list (Z * Z)) (st : astate) (n : Z) (k : astate -> option achunk -> AM R) : AM R :=
+  let map_size := sec_map_size n in
+  ev (AMmapT map_size) (fun mb =>
+    if negb (mmap_answer_ok ATOP map_size mb) then aundef_ UBadAnswer (k st None)
+    else if is_err mb then k st None
+    else if negb (avoids_all mb map_size (RESV ++ asec_ranges st)) then aundef_ UBadAnswer (k st None)
+    else
+    let ch := CSec mb map_size n in
+    let st1 := set_nsec (a_nsec st + 1) st in
+    if a_nsec st =? a_nres st then
+      let a := a_ptr_array st + 8 * a_nres st in
+      if K_PTRARR_RESERVE <? 8 * (a_nres st + K_CHUNKS_BLOCK) then aundef_ (UCheck 42) (k st None) else
+      ev (AMmap a K_PTRARR_COMMIT PROT_RW F_FIXED) (fun r =>
+        if negb (fixed_answer_ok a r) then aundef_ UBadAnswer (k st None)
+        else if is_err r then aundef_ USpin (k st None)
+        else k (set_nres (a_nres st + K_CHUNKS_BLOCK) st1) (Some ch))
+    else k st1 (Some ch)).
+
+Definition large_dealloc {R} (st : astate) (map_beg map_size : Z) (k : astate -> AM R) : AM R :=
+  let st1 := set_nsec (a_nsec st - 1) st in
+  poison0 map_beg map_size (
+   flush_shadow map_beg map_size (
+    ev (AMunmap map_beg map_size) (fun r =>
+      if r =? 0 then k st1
+      else if is_err r then aundef_ USpin (k st1)
+      else aundef_ UBadAnswer (k st1)))).
+
+Definition amalloc (ATOP : Z) (RESV : list (Z * Z)) (st : astate) (n : Z) : AM (astate * option aptr) :=
+  if (2^40 <? n) || (2^40 <? needed_size n) then aret (st, None)
+  else
+  let finish (st1 : astate) (ch : achunk) : AM (astate * option aptr) :=
+    let id := a_next st1 in
+    let st2 := set_next (N.succ id) (set_live (<[id := ch]> (a_live st1)) st1) in
+
+    match ch with
+    | CPrim _ _ => aret (st2, Some id)
+    | CSec _ _ _ => poison0 (chunk_user_beg ch) (Z.land n (Z.lnot 7)) (aret (st2, Some id))
+    end in
+  if is_primary n then
+    let c := class_id (needed_size n) in
+    cache_alloc_x ATOP RESV st c (fun st1 ok => if ok then finish st1 (CPrim c n) else aret (st1, None))
+  else
+    large_alloc ATOP RESV st n (fun st1 och => match och with Some ch => finish st1 ch | None => aret (st1, None) end).
+
+Definition aaligned16x (ATOP : Z) (RESV : list (Z * Z)) (st : astate) (n : Z) : AM (astate * option aptr) :=
+  let c := class_id (needed16 n) in
+  cache_alloc_x ATOP RESV st c (fun st1 (ok : bool) =>
+      if ok then aret (set_next (N.succ (a_next st1)) (set_live (<[ a_next st1 := CPrim c n ]> (a_live st1)) st1), Some (a_next st1))
+      else aret (st1, None)).
+
+Definition QCH := achunk.
+
+Definition recycle_chunk {R} (st : astate) (ch : achunk) (k : astate -> AM R) : AM R :=
+  match ch with
+  | CPrim c _ => cache_dealloc st c k
+  | CSec mb ms _ => large_dealloc st mb ms k
+  end.
+
+Fixpoint recycle_chunks {R} (st : astate) (l : list achunk) (k : astate -> AM R) {struct l} : AM R :=
+  match l with
+  | [] => k st
+  | ch :: l' => recycle_chunk st ch (fun st1 => recycle_chunks st1 l' k)
+  end.
+
+Fixpoint do_recycle {R} (st : astate) (bs : list abatch) (k : astate -> AM R) {struct bs} : AM R :=
+  match bs with
+  | [] => k st
+  | b :: bs' => recycle_chunks st (rev (b_chunks b)) (fun st1 => cache_dealloc st1 K_BATCH_CLASS (fun st2 => do_recycle st2 bs' k))
+  end.
+
+Fixpoint merge_batches (cur : abatch) (rest : list abatch) {struct rest} : list abatch * list abatch * Z :=
+  match rest with
+  | [] => ([cur], [], 0)
+  | nx :: rest' =>
+      if b_count cur + b_count nx <=? Q_BATCH then
+        let cur' := mkABatch (b_count cur + b_count nx) (b_size cur + (b_size nx - Q_BATCH_BYTES)) (b_chunks nx ++ b_chunks cur) in
+        let '(l, ex, exb) := merge_batches cur' rest' in
+        (l, mkABatch 0 Q_BATCH_BYTES [] :: ex, exb + Q_BATCH_BYTES)
+      else
+        let '(l, ex, exb) := merge_batches nx rest' in
+        (cur :: l, ex, exb)
+  end.
+
+Fixpoint dequeue_while (l : list abatch) (bytes min_size : Z) {struct l} : list abatch * list abatch * Z :=
+  match l with
+  | [] => ([], [], bytes)
+  | b :: l' => if min_size <? bytes
+               then let '(taken, rest, bytes') := dequeue_while l' (bytes - b_size b) min_size in (b :: taken, rest, bytes')
+               else ([], l, bytes)
+  end.
+
+Definition recycle {R} (st : astate) (min_size : Z) (k : astate -> AM R) : AM R :=
+  let cache_size := a_qglob_bytes st in
+  let overhead := Q_BATCH_BYTES * Z.of_nat (length (a_qglob st)) in
+  if cache_size <? overhead then aundef_ (UCheck 159) (k st) else
+  let '(gl, extracted, exb) :=
+    (if (overhead <? cache_size) && (cache_size * 100 <? overhead * 200)
+     then match a_qglob st with
+          | [] => ([], [], 0)
+          | b :: rest => merge_batches b rest
+          end
+     else (a_qglob st, [], 0)) in
+  let bytes1 := cache_size - exb in
+  let '(taken, rest, bytes2) := dequeue_while gl bytes1 min_size in
+  if (min_size <? bytes2) then aundef_ (UCheck 0) (k st)
+  else do_recycle (set_qglob rest bytes2 st) (extracted ++ taken) k.
+
+Definition drain {R} (st : astate) (k : astate -> AM R) : AM R :=
+  let st1 := set_qglob (a_qglob st ++ a_qloc st) (a_qglob_bytes st + a_qloc_bytes st) (set_qloc [] 0 st) in
+  if Q_MAX <? a_qglob_bytes st1 then recycle st1 Q_MIN k else k st1.
+
+Definition enqueue {R} (st : astate) (ch : achunk) (k : astate -> AM R) : AM R :=
+  let n := chunk_size ch in
+  let new_batch (st0 : astate) : AM R :=
+    cache_alloc st0 K_BATCH_CLASS (fun st1 ok =>
+      if negb ok then aundef_ USpin (k st1)
+      else k (set_qloc (a_qloc st1 ++ [mkABatch 1 (n + Q_BATCH_BYTES) [ch]]) (a_qloc_bytes st1 + n + Q_BATCH_BYTES) st1)) in
+  match rev (a_qloc st) with
+  | [] => new_batch st
+  | b :: rl =>
+      if b_count b =? Q_BATCH then new_batch st
+      else k (set_qloc (rev (mkABatch (b_count b + 1) (b_size b + n) (ch :: b_chunks b) :: rl)) (a_qloc_bytes st + n) st)
+  end.
+
+Definition afree (st : astate) (p : option aptr) : AM astate :=
+  match p with
+  | None => aret st
+  | Some id =>
+    match (a_live st) !! id with
+    | None => aundef_ UBadPtr (aret st)
+    | Some ch =>
+      let st1 := set_live (delete id (a_live st)) st in
+      let after (st2 : astate) : AM astate :=
+        if Q_CACHE <? a_qloc_bytes st2 then drain st2 (fun st3 => aret st3) else aret st2 in
+      if chunk_size ch <=? Q_MAX then enqueue st1 ch after
+      else recycle_chunk st1 ch after
+    end
+  end.
+
+Definition aannotate (st : astate) (p : aptr) (cap old new : Z) : AM astate :=
+  match (a_live st) !! p with
+  | None => aundef_ UBadPtr (aret st)
+  | Some ch =>
+    if negb ((0 <=? old) && (old <=? cap) && (0 <=? new) && (new <=? cap)) then aundef_ UBadPtr (aret st)
+    else if 2^40 <? cap then aundef_ (UCheck 438) (aret st)
+    else if old =? new then aret st
+    else if negb (Z.land cap 7 =? 0) && (rdn cap 8 <? Z.min old new) then aundef_ UUnmodeled (aret st)
+    else if old <? new then
+      match ch with
+      | CPrim _ _ => aret st
+      | CSec _ _ _ => let beg := chunk_user_beg ch in
+                      let a := rdn old 8 in let b1 := rdn new 8 in
+                      if a <? b1 then poison0 (beg + a) (b1 - a) (aret st) else aret st
+      end
+    else aret st
+  end.
+
+Definition cls_mapped_bytes (r : aclass) : Z := c_mapped_user r + c_mapped_free_array r.
+Definition batches_bytes (l : list abatch) : Z := fold_right (fun b acc => b_size b + acc) 0 l.
+
+Section Examples.
+
+  Definition toy_oracle (cur : Z) (e : aev) : Z * Z :=
+    match e with
+    | ASetTid _ => (1234, cur)
+    | ABrk a => if a =? 0 then (0x6a6000, cur) else (a, cur)
+    | AMmap a len _ _ => if a =? 0 then (cur, cur + rup len PG) else (a, cur)
+    | AMunmap _ _ => (0, cur)
+    | AMadvise _ _ => (0, cur)
+    | AMmapT len => (cur, cur + rup len PG)
+    | AMprotect _ _ _ => (0, cur)
+    | AUndef _ => (0, cur)
+    end.
+  Definition run {R} (t : AM R) (cur : Z) := srun toy_oracle cur t.
+
+  Definition st0 := snd (run (astartup 0x6a3f48 0x7fffc0000000) 0x2aaaaaaab000).
+  Example startup_events :
+    length (fst (fst (run (astartup 0x6a3f48 0x7fffc0000000) 0x2aaaaaaab000))) = 24%nat.
+  Proof. vm_compute. reflexivity. Qed.
+  Example startup_spacebeg : a_space_beg st0 = 0x2aaaaae50000 /\ a_ptr_array st0 = 0x2acaaae5a000.
+  Proof. vm_compute. split; reflexivity. Qed.
+
+  Example malloc_65536_events :
+    map fst (fst (fst (run (amalloc ALLOC_TOP_MIN [] st0 65536) 0x2acaaca7a000)))
+    = [AMmapT 0x12000; AMmap 0x2acaaae5a000 0x20000 PROT_RW F_FIXED].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Definition st1 := fst (snd (run (amalloc ALLOC_TOP_MIN [] st0 65536) 0x2acaaca7a000)).
+  Example malloc_20_events :
+    map fst (fst (fst (run (amalloc ALLOC_TOP_MIN [] st1 20) 0))) =
+    [AMmap (0x2aaaaae50000 + 2 * 2^32) 0x40000 PROT_RW F_FIXED; AMmap (0x2aaaaae50000 + 2 * 2^32 + 0xE0000000) 0x40000 PROT_RW F_FIXED].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Definition st2p := snd (run (amalloc ALLOC_TOP_MIN [] st1 20) 0).
+  Example first_free_events :
+    map fst (fst (fst (run (afree (fst st2p) (snd st2p)) 0))) =
+    [AMmap (0x2aaaaae50000 + 24 * 2^32) 0x40000 PROT_RW F_FIXED; AMmap (0x2aaaaae50000 + 24 * 2^32 + 0xE0000000) 0x40000 PROT_RW F_FIXED].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example sizes : (class_id (needed_size 20), size_of_class 24, class_id 8192, needed_size 65536, sec_map_size 65536, is_primary 64512, is_primary 64513)
+                  = (2, 8192, 24, 69632, 0x12000, true, false).
+  Proof. vm_compute. reflexivity. Qed.
+End Examples.

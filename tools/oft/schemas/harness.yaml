@@ -3,7 +3,7 @@
 # Statements.v, Characterise.v, Images.v, images/dune and the harness README
 # are rendered from this file by `oft generate`; nothing else feeds them.
 # Proved, refuted and counterexample statuses are never written here: they
-# are derived from proofs/ and counterexamples/.
+# are derived from the fuzz target's proofs and counterexamples.
 tag: oss-fuzz-theorems/harness/1
 root: {type: ref, name: harness}
 defs:
@@ -13,7 +13,9 @@ defs:
       schema: {type: const, value: oss-fuzz-theorems/harness/1}
       project: {type: project-name}
       harness: {type: harness-name}
-      rocq: {type: str, pattern: '^OssFuzzTheorems(\.[A-Za-z_][A-Za-z0-9_]*)+$'}   # derived; lint checks it
+      # <namespace>.<project>.<harness>, the namespace release.yaml's (facts.Tree.namespace); derived, and the rules
+      # hold it to that name
+      rocq: {type: str, pattern: '^[A-Z][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$'}
       origin: {type: enum, values: [oss-fuzz, upstream, this-repository, oss-verify]}
       summary: {type: text, max: 600}
       entry: {type: str, pattern: '^[A-Za-z_][A-Za-z0-9_]*$'}

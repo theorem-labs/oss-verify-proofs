@@ -1,0 +1,443 @@
+# Rule 24 lookup for class 3 on image B (fuzz_transport.asan-ubsan): every released donor of the class-3 contract.
+# The released set: origin/ossv/recipes 9b0ac6f0e6780f75e0353041e71b055f15384ff0, path-scoped per unit, one git grep at a time.
+# Pass 1: the class-3 statement of this unit's form (astack_malloc_realizes <segs> <B> 3), the five projects of this proof family.
+# one git grep per unit: git grep -n -E 'astack_malloc_realizes [A-Za-z_]+ [A-Za-z_]+ 3\b' origin/ossv/recipes -- projects/<p>/<u>/proofs/lib
+## projects/libreac/fuzz_boxreg: 8 lines
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/BoxClose.v:212:Lemma H_RT_SM3_A : forall (rc : YM05.RunCeil) (fx : YK11.FPState), astack_malloc_realizes box_segs BA 3.
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/BoxLibX.v:315:Hypothesis ASM3 : forall fx : YK11.FPState, astack_malloc_realizes box_segs B 3.
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/BoxLxEntry.v:186:Hypothesis ASM3 : astack_malloc_realizes SEGS B 3.
+projects/libreac/fuzz_boxreg/proofs/lib/A/Rt/StackMalloc3.v:517:Corollary stack_malloc3_contract : forall B, AR_laws tfibsegs B -> BoxregSyms B -> astack_malloc_realizes tfibsegs B 3.
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBClose.v:255:Lemma H_RT_SM3_B : forall (rc : YM05.RunCeil) (fx : YK11.FPState), astack_malloc_realizes boxb_segs BB 3.
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBLibX.v:178:Hypothesis ASM3 : forall `{fx : YK11.FPState}, astack_malloc_realizes boxb_segs B 3.
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBLxDefs.v:184:  lh_asm3 : astack_malloc_realizes SEGS B 3;
+projects/libreac/fuzz_boxreg/proofs/lib/B/Rt/StackMalloc3.v:517:Corollary stack_malloc3_contract : forall B, AR_laws tfibsegs B -> BoxregSyms B -> astack_malloc_realizes tfibsegs B 3.
+## projects/libreac/fuzz_ctrl: 0 lines
+## projects/libreac/fuzz_decode: 0 lines
+## projects/libreac/fuzz_disco: 2 lines
+projects/libreac/fuzz_disco/proofs/lib/A/Rt/StackMalloc3.v:516:Corollary stack_malloc3_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 3.
+projects/libreac/fuzz_disco/proofs/lib/Y/Rt/StackMalloc3.v:516:Corollary stack_malloc3_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 3.
+## projects/libreac/fuzz_grant: 0 lines
+## projects/libreac/fuzz_identity: 7 lines
+projects/libreac/fuzz_identity/proofs/lib/A/Prog/reac_box_name.v:143:Hypothesis ASM3 : astack_malloc_realizes SEGS B 3.
+projects/libreac/fuzz_identity/proofs/lib/A/Prog/reac_box_name_seg1.v:95:Hypothesis ASM3 : astack_malloc_realizes SEGS B 3.
+projects/libreac/fuzz_identity/proofs/lib/A/Prog/reac_box_name_walk.v:48:Hypothesis ASM3 : astack_malloc_realizes SEGS B 3.
+projects/libreac/fuzz_identity/proofs/lib/A/Rt/StackMalloc3.v:517:Corollary stack_malloc3_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 3.
+projects/libreac/fuzz_identity/proofs/lib/B/Prog/reac_box_name.v:138:Hypothesis ASM3 : astack_malloc_realizes SEGS B 3.
+projects/libreac/fuzz_identity/proofs/lib/B/Prog/reac_box_name_seg_entry.v:78:Hypothesis ASM3 : astack_malloc_realizes SEGS B 3.
+projects/libreac/fuzz_identity/proofs/lib/B/Rt/StackMalloc3.v:520:Corollary stack_malloc3_contract : forall B, AR_laws tfibsegs B -> TfibSyms B -> astack_malloc_realizes tfibsegs B 3.
+## projects/libreac/fuzz_knock: 0 lines
+## projects/libreac/fuzz_pcap: 0 lines
+## projects/libreac/fuzz_scene: 0 lines
+## projects/libdiginet/fuzz_codec: 0 lines
+## projects/libdiginet/fuzz_decode: 0 lines
+## projects/libdiginet/fuzz_frame: 0 lines
+## projects/plugin-hostd/fuzz_command: 4 lines
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtClosed.v:49:Theorem cmd_stack_malloc3_contract_closed : astack_malloc_realizes tfibsegs B 3.
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtSM3.v:516:Corollary cmd_stack_malloc3_contract : forall B, AR_laws tfibsegs B -> CmdBSyms B -> astack_malloc_realizes tfibsegs B 3.
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtClosed.v:51:Theorem cmd_stack_malloc3_contract_closed : astack_malloc_realizes tfibsegs B 3.
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtSM3.v:517:Corollary cmd_stack_malloc3_contract : forall B, AR_laws tfibsegs B -> CmdBSyms B -> astack_malloc_realizes tfibsegs B 3.
+## projects/plugin-hostd/fuzz_reply: 0 lines
+## projects/reac-pw/fuzz_headamp: 0 lines
+## projects/reac-pw/fuzz_link: 0 lines
+## projects/reac-pw/fuzz_pin: 0 lines
+## projects/reac-pw/fuzz_qdisc: 0 lines
+## projects/reac-pw/fuzz_rate: 0 lines
+## projects/reac-pw/fuzz_role: 0 lines
+## projects/reac-pw/fuzz_segconf: 0 lines
+## projects/reac-repacer/fuzz_egress: 0 lines
+## projects/reac-repacer/fuzz_lock: 0 lines
+## projects/reac-repacer/fuzz_uci: 0 lines
+## projects/reac-repacer/fuzz_wire: 0 lines
+
+# second pass (a statement split over lines, or named only by the runtime entry): one git grep per unit:
+# git grep -l -E 'stack_malloc_?3\b|astack_malloc_realizes(_x)?\b.*\b3\.$' origin/ossv/recipes -- projects/<p>/<u>/proofs/lib
+## projects/libreac/fuzz_boxreg: 33 files
+projects/libreac/fuzz_boxreg/proofs/lib/A/AB1w.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/BoxAddr.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/BoxB.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/BoxClose.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/BoxFrame.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/BoxFrameImg.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/BoxLibX.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/BoxList.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/BoxLxDefs.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/BoxLxEntry.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/BoxSyms.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/RangeFree.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/ReacBoxregAdd.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Prog/ReacBoxregFind.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Rt/StackMalloc3.v
+projects/libreac/fuzz_boxreg/proofs/lib/A/Rt/StackMalloc3Tbl.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/AB1w.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBAddr.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBB.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBClose.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBFrame.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBLibX.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBList.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBLxDefs.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBLxEntry.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBLxEntryDefs.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBRangeFree.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBReacBoxregAdd.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBReacBoxregFind.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBReadMac.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Prog/BoxBSyms.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Rt/StackMalloc3.v
+projects/libreac/fuzz_boxreg/proofs/lib/B/Rt/StackMalloc3Tbl.v
+## projects/libreac/fuzz_ctrl: 0 files
+## projects/libreac/fuzz_decode: 0 files
+## projects/libreac/fuzz_disco: 28 files
+projects/libreac/fuzz_disco/proofs/lib/A/AB1w.v
+projects/libreac/fuzz_disco/proofs/lib/A/Prog/DiscoAddr.v
+projects/libreac/fuzz_disco/proofs/lib/A/Prog/DiscoFrame.v
+projects/libreac/fuzz_disco/proofs/lib/A/Prog/DiscoLibX.v
+projects/libreac/fuzz_disco/proofs/lib/A/Prog/DiscoList.v
+projects/libreac/fuzz_disco/proofs/lib/A/Prog/DiscoSyms.v
+projects/libreac/fuzz_disco/proofs/lib/A/Prog/ReacBoxName.v
+projects/libreac/fuzz_disco/proofs/lib/A/Prog/ReacBoxNamePb.v
+projects/libreac/fuzz_disco/proofs/lib/A/Prog/ReacBoxNameSeg1.v
+projects/libreac/fuzz_disco/proofs/lib/A/Prog/TjTop.v
+projects/libreac/fuzz_disco/proofs/lib/A/Rt/StackMalloc3.v
+projects/libreac/fuzz_disco/proofs/lib/A/Rt/StackMalloc3Tbl.v
+projects/libreac/fuzz_disco/proofs/lib/Reusable/YB1w.v
+projects/libreac/fuzz_disco/proofs/lib/Reusable/YC44.v
+projects/libreac/fuzz_disco/proofs/lib/Reusable/YI0w.v
+projects/libreac/fuzz_disco/proofs/lib/Reusable/YI0z.v
+projects/libreac/fuzz_disco/proofs/lib/Reusable/YI12.v
+projects/libreac/fuzz_disco/proofs/lib/Y/Prog/DiscoArm3Field.v
+projects/libreac/fuzz_disco/proofs/lib/Y/Prog/DiscoArm3FieldPFC.v
+projects/libreac/fuzz_disco/proofs/lib/Y/Prog/DiscoArm3FieldPFX.v
+projects/libreac/fuzz_disco/proofs/lib/Y/Prog/DiscoArm3Top.v
+projects/libreac/fuzz_disco/proofs/lib/Y/Prog/DiscoYLibX.v
+projects/libreac/fuzz_disco/proofs/lib/Y/Prog/ReacBoxName.v
+projects/libreac/fuzz_disco/proofs/lib/Y/Prog/ReacBoxNameSeg1.v
+projects/libreac/fuzz_disco/proofs/lib/Y/Prog/ReacBoxNameTop.v
+projects/libreac/fuzz_disco/proofs/lib/Y/Prog/TjWalk.v
+projects/libreac/fuzz_disco/proofs/lib/Y/Rt/StackMalloc3.v
+projects/libreac/fuzz_disco/proofs/lib/Y/Rt/StackMalloc3Tbl.v
+## projects/libreac/fuzz_grant: 0 files
+## projects/libreac/fuzz_identity: 22 files
+projects/libreac/fuzz_identity/proofs/lib/A/AB1w.v
+projects/libreac/fuzz_identity/proofs/lib/A/Prog/IdentAddr.v
+projects/libreac/fuzz_identity/proofs/lib/A/Prog/IdentEntryLink.v
+projects/libreac/fuzz_identity/proofs/lib/A/Prog/IdentFrame.v
+projects/libreac/fuzz_identity/proofs/lib/A/Prog/IdentList.v
+projects/libreac/fuzz_identity/proofs/lib/A/Prog/IdentSyms.v
+projects/libreac/fuzz_identity/proofs/lib/A/Prog/reac_box_name.v
+projects/libreac/fuzz_identity/proofs/lib/A/Prog/reac_box_name_seg1.v
+projects/libreac/fuzz_identity/proofs/lib/A/Prog/reac_box_name_walk.v
+projects/libreac/fuzz_identity/proofs/lib/A/Rt/StackMalloc3.v
+projects/libreac/fuzz_identity/proofs/lib/A/Rt/StackMalloc3Tbl.v
+projects/libreac/fuzz_identity/proofs/lib/B/Prog/IdentBAddr.v
+projects/libreac/fuzz_identity/proofs/lib/B/Prog/IdentBFrame.v
+projects/libreac/fuzz_identity/proofs/lib/B/Prog/IdentBList.v
+projects/libreac/fuzz_identity/proofs/lib/B/Prog/IdentBSyms.v
+projects/libreac/fuzz_identity/proofs/lib/B/Prog/IdentEntryLink.v
+projects/libreac/fuzz_identity/proofs/lib/B/Prog/reac_box_name.v
+projects/libreac/fuzz_identity/proofs/lib/B/Prog/reac_box_name_inv.v
+projects/libreac/fuzz_identity/proofs/lib/B/Prog/reac_box_name_seg_entry.v
+projects/libreac/fuzz_identity/proofs/lib/B/Rt/StackMalloc3.v
+projects/libreac/fuzz_identity/proofs/lib/B/Rt/StackMalloc3Tbl.v
+projects/libreac/fuzz_identity/proofs/lib/ReusableB/YB1w.v
+## projects/libreac/fuzz_knock: 0 files
+## projects/libreac/fuzz_pcap: 0 files
+## projects/libreac/fuzz_scene: 0 files
+## projects/libdiginet/fuzz_codec: 0 files
+## projects/libdiginet/fuzz_decode: 0 files
+## projects/libdiginet/fuzz_frame: 0 files
+## projects/plugin-hostd/fuzz_command: 31 files
+projects/plugin-hostd/fuzz_command/proofs/lib/A/AB1w.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Prog/CmdAddr.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Prog/CmdList.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Prog/CmdProgClosed.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Prog/CmdSyms.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Prog/PaLibF.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Prog/chain_words.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Prog/chain_words_c.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Prog/chain_words_d.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Prog/chain_words_exact.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Prog/chain_words_s1.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtClosed.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtSM3.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtSM3T.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtSM5.v
+projects/plugin-hostd/fuzz_command/proofs/lib/A/Rt/RtSM5T.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Prog/CmdAddr.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Prog/CmdList.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Prog/CmdProgClosed.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Prog/CmdSyms.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Prog/PaLibF.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Prog/chain_words.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Prog/chain_words_c.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Prog/chain_words_d.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Prog/chain_words_s1.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtClosed.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtSM3.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtSM3T.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtSM5.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/Rt/RtSM5T.v
+projects/plugin-hostd/fuzz_command/proofs/lib/B/YB1w.v
+## projects/plugin-hostd/fuzz_reply: 0 files
+## projects/reac-pw/fuzz_headamp: 0 files
+## projects/reac-pw/fuzz_link: 0 files
+## projects/reac-pw/fuzz_pin: 0 files
+## projects/reac-pw/fuzz_qdisc: 0 files
+## projects/reac-pw/fuzz_rate: 0 files
+## projects/reac-pw/fuzz_role: 0 files
+## projects/reac-pw/fuzz_segconf: 0 files
+## projects/reac-repacer/fuzz_egress: 0 files
+## projects/reac-repacer/fuzz_lock: 0 files
+## projects/reac-repacer/fuzz_uci: 0 files
+## projects/reac-repacer/fuzz_wire: 0 files
+
+# third pass: every other released unit (projects outside libreac, libdiginet, plugin-hostd, reac-pw, reac-repacer), one git grep per unit:
+# git grep -l -E 'stack_malloc_?3\b|astack_malloc_realizes' origin/ossv/recipes -- projects/<p>/<u>/proofs/lib
+## projects/boost-beast/http_request: 4 files
+## projects/boost-json/fuzz_parse: 6 files
+## projects/bzip2/bzip2_compress_target: 5 files
+## projects/cgif/cgif_file_fuzzer: 30 files
+## projects/cgif/cgif_rgb_fuzzer: 32 files
+## projects/cjson/cjson_read_fuzzer: 0 files
+## projects/coturn/FuzzStunClient: 0 files
+## projects/double-conversion/string_to_double_fuzzer: 0 files
+## projects/fast_float/from_chars: 0 files
+## projects/glaze/binary_reflection: 0 files
+## projects/json-c/json_object_fuzzer: 2 files
+## projects/jsoncons/fuzz_bigint: 0 files
+## projects/jsoncons/fuzz_bson_parser_max: 0 files
+## projects/jsoncons/fuzz_json_cursor: 0 files
+## projects/jsoncons/fuzz_json_encoder: 0 files
+## projects/jsoncons/fuzz_msgpack_encoder: 0 files
+## projects/jsoncons/fuzz_ubjson_encoder: 0 files
+## projects/jsoncons/fuzz_ubjson_parser_max: 0 files
+## projects/leptonica/bilateral_fuzzer: 0 files
+## projects/leptonica/colorfill_fuzzer: 0 files
+## projects/leptonica/edge_fuzzer: 0 files
+## projects/leptonica/fhmtgen_fuzzer: 0 files
+## projects/leptonica/graymorph_fuzzer: 0 files
+## projects/leptonica/grayquant_fuzzer: 18 files
+## projects/leptonica/jpegiostub_fuzzer: 0 files
+## projects/leptonica/kernel_fuzzer: 0 files
+## projects/leptonica/paintcmap_fuzzer: 0 files
+## projects/leptonica/pix1_fuzzer: 0 files
+## projects/leptonica/pix_orient_fuzzer: 4 files
+## projects/libpcap/fuzz_pcap: 0 files
+## projects/mbedtls/fuzz_pkcs7: 0 files
+## projects/msgpack-c/unpack_pack_fuzzer: 0 files
+## projects/omx-clap-core/fuzz_manifest: 4 files
+## projects/omx-clap-core/fuzz_preset: 77 files
+## projects/omx-clap-core/fuzz_state: 71 files
+## projects/openssl/bignum: 4 files
+## projects/openssl/bndiv: 0 files
+## projects/openssl/ct: 8 files
+## projects/openssl/echconfiglist_parser: 0 files
+## projects/openssl/hashtable: 0 files
+## projects/openssl/pem: 0 files
+## projects/openssl/punycode: 0 files
+## projects/pupnp/FuzzHttp: 0 files
+## projects/simdjson/fuzz_atpointer: 0 files
+## projects/simdjson/fuzz_dump: 8 files
+## projects/simdjson/fuzz_dump_raw_tape: 8 files
+## projects/simdjson/fuzz_element: 0 files
+## projects/simdjson/fuzz_implementations: 6 files
+## projects/simdjson/fuzz_minifyimpl: 0 files
+## projects/simdjson/fuzz_ondemand: 12 files
+## projects/simdjson/fuzz_parser: 0 files
+## projects/simdjson/fuzz_print_json: 12 files
+## projects/simdjson/fuzz_utf8: 0 files
+## projects/skcms/iccprofile_info: 0 files
+## projects/speex/speex_decode_fuzzer_float: 0 files
+## projects/spirv-tools/spvtools_binary_parser_fuzzer: 0 files
+## projects/tinyobjloader/fuzz_tobj_c: 0 files
+## projects/varnish/esi_parse_fuzzer: 0 files
+## projects/yajl-ruby/json_fuzzer: 0 files
+## projects/zlib/checksum_fuzzer: 0 files
+## projects/zstd/fse_read_ncount: 0 files
+## projects/zstd/huf_decompress: 0 files
+## projects/zstd/simple_decompress: 0 files
+## projects/zstd/zstd_frame_info: 0 files
+
+# third pass, narrowed: the units the broad pattern hit, one git grep per unit, class-3 statements and class-3 walk names:
+# git grep -n -E 'astack_malloc_realizes(_x)? [A-Za-z_]+ [A-Za-z_]+ ([A-Za-z_]+ )?3\b|stack_malloc_?3\b' origin/ossv/recipes -- <unit>/proofs/lib
+## projects/boost-beast/http_request: 9 lines
+projects/boost-beast/http_request/proofs/lib/As/AS_InstLaws1.v:16:     N5_stack_malloc0 N5_stack_malloc1 N5_stack_malloc2 N5_stack_malloc3 N5_stack_malloc4 N5_stack_malloc7 N5_stack_free7
+projects/boost-beast/http_request/proofs/lib/As/AS_InstLaws1.v:121:    ltac2:(KReplay.run [|constr:(@Corelib.Init.Logic.conj); constr:(@OssFuzzTheorems.Proofs.boost_beast.http_request.lib.As.AsIface5.stack_malloc_0_stmt); constr:(HCEIL); co
+projects/boost-beast/http_request/proofs/lib/As/N5_stack_malloc3.v:124:    ltac2:(KReplay.run [|constr:(@Corelib.Init.Datatypes.nat); constr:(@Corelib.Init.Datatypes.nat_ind); constr:(@stdpp.bitvector.definitions.bv); constr:(@Corelib.Numbe
+projects/boost-beast/http_request/proofs/lib/As/N5_stack_malloc3.v:152:    ltac2:(KReplay.run [|constr:(@OssFuzzTheorems.Proofs.boost_beast.http_request.lib.As.AsIface.as_FSB); constr:(H); constr:(@Corelib.Numbers.BinNums.Z); constr:(@Corel
+projects/boost-beast/http_request/proofs/lib/As/N5_stack_malloc3.v:161:    ltac2:(KReplay.run [|constr:(@stdpp.bitvector.definitions.bv); constr:(@Corelib.Numbers.BinNums.Npos); constr:(@Corelib.Numbers.BinNums.xO); constr:(@Corelib.Numbers
+projects/boost-beast/http_request/proofs/lib/Bo/AS_InstLaws1.v:16:From OssFuzzTheorems.Proofs.boost_beast.http_request.lib.Bo Require Import AllocRep AllocRepFacts AllocRepX SecLazy AsDepotInv AsDepotHash AG_Malloc2 AG_MallocLarge3 AG_Mallo
+projects/boost-beast/http_request/proofs/lib/Bo/N5_stack_malloc3.v:125:    ltac2:(KReplay.run [|constr:(@Corelib.Init.Datatypes.nat); constr:(@Corelib.Init.Datatypes.nat_ind); constr:(@stdpp.bitvector.definitions.bv); constr:(@Corelib.Numbe
+projects/boost-beast/http_request/proofs/lib/Bo/N5_stack_malloc3.v:153:    ltac2:(KReplay.run [|constr:(@OssFuzzTheorems.Proofs.boost_beast.http_request.lib.Bo.AsIface.as_FSB); constr:(H); constr:(@Corelib.Numbers.BinNums.Z); constr:(@Corel
+projects/boost-beast/http_request/proofs/lib/Bo/N5_stack_malloc3.v:162:    ltac2:(KReplay.run [|constr:(@stdpp.bitvector.definitions.bv); constr:(@Corelib.Numbers.BinNums.Npos); constr:(@Corelib.Numbers.BinNums.xO); constr:(@Corelib.Numbers
+## projects/boost-json/fuzz_parse: 14 lines
+projects/boost-json/fuzz_parse/proofs/lib/As/AS_InstLaws1.v:12:     AS_InstDefs AS_InstTR N5_stack_malloc0 N5_stack_malloc1 N5_stack_malloc2 N5_stack_malloc3 N5_stack_malloc4
+projects/boost-json/fuzz_parse/proofs/lib/As/AS_InstLaws1.v:118:  Lemma inst_stack_malloc_3 : ltac2:(zQ "20!ih3!jt6@2$1?5HCEIL@2$0?5HCEIL?1p"). Proof. exact (stack_malloc_3_ok (KHp p) RFS_is). Qed.
+projects/boost-json/fuzz_parse/proofs/lib/As/AS_InstanceKit.v:74:    split; [exact (inst_stack_malloc_0 (kip k))|]. split; [exact (inst_stack_malloc_2 (kip k))|]. split; [exact (inst_stack_malloc_3 (kip k))|].
+projects/boost-json/fuzz_parse/proofs/lib/As/N5_stack_malloc3.v:20:Ltac2 kr_t_N5_stack_malloc3 () := KReplay.lz_vm "#%{WC8?OssFuzzTheorems6Proofs:boost_json:fuzz_parse3lib2As7AsIface6fframeC46Stdlib5Lists4List2hdC47Core!s>+7ListDef3mapC4ELi
+projects/boost-json/fuzz_parse/proofs/lib/As/N5_stack_malloc3.v:40:ltac2:(KReplay.run1z (kr_t_N5_stack_malloc3 ()) ["LOOP3"] "#%EAp'0h04__x1h14__p1h23Hc0h37__arithh44__ffh58__varmaph65__with77__sat12h8!s0&3h94cstrh:!s7&4h;1zh<4__x2h=5heq_ph
+projects/boost-json/fuzz_parse/proofs/lib/As/N5_stack_malloc3.v:63:ltac2:(KReplay.run1z (kr_t_N5_stack_malloc3 ()) ["FOUND3"] "#7#bp'0p'1p'2h04__x1h14__p1h24__p2h34__x2h44__x3h54__p3h64__x4h77__arithh84__ffh98__varmaph:5__with;7__sat12h<!s0
+projects/boost-json/fuzz_parse/proofs/lib/As/N5_stack_malloc3.v:72:ltac2:(KReplay.run1z (kr_t_N5_stack_malloc3 ()) ["SM3"] "#1L:p'0p'1p'2h04__x1h14__x2h22H0h34LEN0h47__arithh57__sat15h6!s0&6h7!s0&7h8!s0&8h94cstrh:5cstr0h;!s?&4h<4__ffh=8__va
+projects/boost-json/fuzz_parse/proofs/lib/Bs/AS_InstLaws1.v:13:     AS_InstDefs AS_InstTR N5_stack_malloc0 N5_stack_malloc1 N5_stack_malloc2 N5_stack_malloc3 N5_stack_malloc4
+projects/boost-json/fuzz_parse/proofs/lib/Bs/AS_InstLaws1.v:119:  Lemma inst_stack_malloc_3 : ltac2:(zQ "20!ih3!jt6@2$1?5HCEIL@2$0?5HCEIL?1p"). Proof. exact (stack_malloc_3_ok (KHp p) RFS_is). Qed.
+projects/boost-json/fuzz_parse/proofs/lib/Bs/AS_InstanceKit.v:73:    split; [exact (inst_stack_malloc_0 (kip k))|]. split; [exact (inst_stack_malloc_2 (kip k))|]. split; [exact (inst_stack_malloc_3 (kip k))|].
+projects/boost-json/fuzz_parse/proofs/lib/Bs/N5_stack_malloc3.v:21:Ltac2 kr_t_N5_stack_malloc3 () := KReplay.lz_vm "#%{WC8?OssFuzzTheorems6Proofs:boost_json:fuzz_parse3lib2Bs7AsIface6fframeC46Stdlib5Lists4List2hdC47Core!s>+7ListDef3mapC4ELi
+projects/boost-json/fuzz_parse/proofs/lib/Bs/N5_stack_malloc3.v:41:ltac2:(KReplay.run1z (kr_t_N5_stack_malloc3 ()) ["LOOP3"] "#%EAp'0h04__x1h14__p1h23Hc0h37__arithh44__ffh58__varmaph65__with77__sat12h8!s0&3h94cstrh:!s7&4h;1zh<4__x2h=5heq_ph
+## projects/bzip2/bzip2_compress_target: 8 lines
+projects/bzip2/bzip2_compress_target/proofs/lib/K/A/RT_contracts.v:20:           rta_stack_malloc_0 rta_stack_malloc_2 rta_stack_malloc_3 rta_stack_malloc_6 rta_stack_malloc_7
+projects/bzip2/bzip2_compress_target/proofs/lib/K/A/RT_contracts.v:37:           rta_stack_malloc_0 rta_stack_malloc_2 rta_stack_malloc_3 rta_stack_malloc_6 rta_stack_malloc_7
+projects/bzip2/bzip2_compress_target/proofs/lib/K/A/RT_iface.v:562:  rc_stack_malloc_3 : stack_malloc_contract 3;
+projects/bzip2/bzip2_compress_target/proofs/lib/K/A/RT_iface.v:1298:  rc_stack_malloc_3 : stack_malloc_contract 3;
+projects/bzip2/bzip2_compress_target/proofs/lib/K/A/RT_stackmalloc2.v:26:Theorem rta_stack_malloc_3 : stack_malloc_contract RTA 3.
+projects/bzip2/bzip2_compress_target/proofs/lib/K/A/RT_stackmalloc2.v:171:Theorem rta_stack_malloc_3 : stack_malloc_contract RTA 3.
+projects/bzip2/bzip2_compress_target/proofs/lib/L2/A0_b2bc_top.v:47:    pose proof (@A0_cb_L2t.compressBlock_cps BZP AC RT AF (rc_stack_malloc_3 RT RC) SSH MSET BS SM AF_PRIM) as CB.
+projects/bzip2/bzip2_compress_target/proofs/lib/L2B/B0_b2bc_top.v:39:    pose proof (@B0_cb_L2t.compressBlock_cps BZP AC RT AF (rc_stack_malloc_3 RT RC) SSH BS SM AF_PRIM) as CB.
+## projects/cgif/cgif_file_fuzzer: 0 lines
+## projects/cgif/cgif_rgb_fuzzer: 0 lines
+## projects/json-c/json_object_fuzzer: 2 lines
+projects/json-c/json_object_fuzzer/proofs/lib/QBzu.v:282:+ eapply (@QClx.ai_stack_malloc_3 (Band_RC guard)) with (RE := toRA RE); eassumption.
+projects/json-c/json_object_fuzzer/proofs/lib/QClx.v:55:Definition ai_stack_malloc_3 : astack_mallocA_stmt asegs a_alayout (ARUN aC) 3 fsmalloc3_entry :=
+## projects/leptonica/grayquant_fuzzer: 18 lines
+projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/Gq_rmc_n0.v:69:  { pose proof (gp_stack_malloc_3 RT GP) as SM3; unfold stack_malloc_contract' in SM3; eapply SM3 with (lo := lo); rt_side idtac. }
+projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/Gq_rmc_n16.v:69:  { pose proof (gp_stack_malloc_3 RT GP) as SM3; unfold stack_malloc_contract' in SM3; eapply SM3 with (lo := lo); rt_side idtac. }
+projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/Gq_rmc_y0.v:273:  { pose proof (gp_stack_malloc_3 RT GP) as SM3; unfold stack_malloc_contract' in SM3; eapply SM3 with (lo := lo); rt_side idtac. }
+projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/Gq_rmc_y16.v:273:  { pose proof (gp_stack_malloc_3 RT GP) as SM3; unfold stack_malloc_contract' in SM3; eapply SM3 with (lo := lo); rt_side idtac. }
+projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/RT_contracts.v:17:           rta_stack_malloc_0 rta_stack_malloc_1 rta_stack_malloc_2 rta_stack_malloc_3 rta_stack_malloc_6 rta_set_shadow rta_art_facts).
+projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/RT_gaps_iface.v:200:  gp_stack_malloc_3 : stack_malloc_contract' 3;
+projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/RT_gaps_proof.v:43:Proof. intros k [<-|[<-|[<-|[<-|[<-|[]]]]]]; [exact rta_stack_malloc_0 | exact rta_stack_malloc_1 | exact rta_stack_malloc_2 | exact rta_stack_malloc_3 | exact rta_sta
+projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/RT_iface.v:534:  rc_stack_malloc_3 : stack_malloc_contract 3;
+projects/leptonica/grayquant_fuzzer/proofs/lib/K5/A15/RT_stackmalloc.v:759:Theorem rta_stack_malloc_3 : stack_malloc_contract RTA 3.
+projects/leptonica/grayquant_fuzzer/proofs/lib/K5/B15/Gq_rmc_n0.v:70:  { pose proof (gp_stack_malloc_3 RT GP) as SM3; unfold stack_malloc_contract' in SM3; eapply SM3 with (lo := lo); rt_side idtac. }
+projects/leptonica/grayquant_fuzzer/proofs/lib/K5/B15/Gq_rmc_n16.v:70:  { pose proof (gp_stack_malloc_3 RT GP) as SM3; unfold stack_malloc_contract' in SM3; eapply SM3 with (lo := lo); rt_side idtac. }
+projects/leptonica/grayquant_fuzzer/proofs/lib/K5/B15/Gq_rmc_y0.v:304:  { pose proof (gp_stack_malloc_3 RT GP) as SM3; unfold stack_malloc_contract' in SM3; eapply SM3 with (lo := lo); rt_side idtac. }
+## projects/leptonica/pix_orient_fuzzer: 4 lines
+projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/A23/RT23_iface.v:131:  r23_stack_malloc_3 : stack_malloc_x_contractF 3%nat;
+projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/A23/RT_stackmalloc347.v:61:Theorem rta_stack_malloc_3 : stack_malloc_x_contract RTA 3.
+projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/B23/RT23_iface.v:131:  r23_stack_malloc_3 : stack_malloc_x_contractF 3%nat;
+projects/leptonica/pix_orient_fuzzer/proofs/lib/K5/B23/RT_stackmalloc347.v:61:Theorem rta_stack_malloc_3 : stack_malloc_x_contract RTA 3.
+## projects/omx-clap-core/fuzz_manifest: 0 lines
+## projects/omx-clap-core/fuzz_preset: 43 lines
+projects/omx-clap-core/fuzz_preset/proofs/lib/A/AB1w.v:167:Definition tfib_A___asan_stack_malloc_3 : Z := 0x3de4c.  Definition tfib_E___asan_stack_malloc_3 : Z := 0x3dff8.
+projects/omx-clap-core/fuzz_preset/proofs/lib/A/FCimg.v:23:(* class 3: __asan_stack_malloc_3 [0x3de4c,0x3dff8) 107 words; donor proofs/cgif/cgif_file_fuzzer/lib/A/AF0t.v on 7093581aab040cfd.. FDE [0x3ca34,0x3cbd0) 103 words *)
+projects/omx-clap-core/fuzz_preset/proofs/lib/A/FCm3r.v:4:(* Modified by Theorem Labs, 2026-10: the class-3 walk of omx-clap-core/fuzz_preset's __asan_stack_malloc_3, adapted from
+projects/omx-clap-core/fuzz_preset/proofs/lib/A/FCm3s.v:5:   __asan_stack_malloc_3, adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AF0u.v (class 2) over the walk lib/A/FCm3r.v.
+projects/omx-clap-core/fuzz_preset/proofs/lib/A/FCm3s.v:558:Corollary stack_malloc3_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 3.
+projects/omx-clap-core/fuzz_preset/proofs/lib/A/Listing_prog.v:244:PCall AS___asan_stack_malloc_3 (1%bv : reg);
+projects/omx-clap-core/fuzz_preset/proofs/lib/A/Listing_prog.v:1230:PCall AS___asan_stack_malloc_3 (1%bv : reg);
+projects/omx-clap-core/fuzz_preset/proofs/lib/A/PAImg_leaves.v:110:| AS___asan_stack_malloc_3 => 0x3de4c
+projects/omx-clap-core/fuzz_preset/proofs/lib/A/PAImg_prog.v:111:| AS___asan_stack_malloc_3 => 0x3de4c
+projects/omx-clap-core/fuzz_preset/proofs/lib/A/PRH_FnCheck.v:141:   - Fake-stack frames: check_no_overread and check_round_trip take __asan_stack_malloc_3 and set_shadow_f5,
+projects/omx-clap-core/fuzz_preset/proofs/lib/A/Prog/Cno102A_Base.v:34:   (`__asan_stack_malloc_3 (0x140)` at 0x81974; the real-stack fallback 0x81988-0x819a0 is REFUTED in CA0: the UAR cell
+projects/omx-clap-core/fuzz_preset/proofs/lib/A/Prog/Cno102A_Base.v:121:(* LENGTH: the class of the fake frame (__asan_stack_malloc_3) and the struct / slot offsets *)
+## projects/omx-clap-core/fuzz_state: 69 lines
+projects/omx-clap-core/fuzz_state/proofs/lib/A/AB1w.v:173:Definition tfib_A___asan_stack_malloc_3 : Z := 0x3d788.  Definition tfib_E___asan_stack_malloc_3 : Z := 0x3d934.
+projects/omx-clap-core/fuzz_state/proofs/lib/A/FCimg.v:23:(* class 3: __asan_stack_malloc_3 [0x3d788,0x3d934) 107 words; donor proofs/cgif/cgif_file_fuzzer/lib/A/AF0t.v on 7093581aab040cfd.. FDE [0x3ca34,0x3cbd0) 103 words *)
+projects/omx-clap-core/fuzz_state/proofs/lib/A/FCm3r.v:4:(* Modified by Theorem Labs, 2026-10: the class-3 walk of omx-clap-core/fuzz_preset's __asan_stack_malloc_3, adapted from
+projects/omx-clap-core/fuzz_state/proofs/lib/A/FCm3r.v:15:(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_preset (<internal branch> b120217aa206) to omx-clap-core/fuzz_state's ASan image A as the cla
+projects/omx-clap-core/fuzz_state/proofs/lib/A/FCm3s.v:5:   __asan_stack_malloc_3, adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AF0u.v (class 2) over the walk lib/A/FCm3r.v.
+projects/omx-clap-core/fuzz_state/proofs/lib/A/FCm3s.v:527:Corollary stack_malloc3_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 3.
+projects/omx-clap-core/fuzz_state/proofs/lib/A/FSClose.v:46:       A15 H_stack_malloc_3      lemma fs_stack_malloc_3 <- FSxU.stack_malloc3_contractU_x (A/FSxU.v:39)
+projects/omx-clap-core/fuzz_state/proofs/lib/A/FSClose.v:49:       A18 H_pc_stack_malloc_3   lemma pc_stack_malloc_3_B, the same
+projects/omx-clap-core/fuzz_state/proofs/lib/A/FSClose.v:169:Lemma pc_stack_malloc_3_B : pc_stack_malloc (as_code TfibB) 3 = PC_stack_malloc_3.
+projects/omx-clap-core/fuzz_state/proofs/lib/A/FSClose.v:238:Lemma fs_stack_malloc_3 : forall (rc : YM05.RunCeil) (fx : YK11.FPState), FSupoisonU.astack_malloc_realizesU tfibsegs B 3.
+projects/omx-clap-core/fuzz_state/proofs/lib/A/FSClose.v:482:    (conj pc_stack_malloc_3_B (fs_stack_malloc_3 rc fx)) ENV (fs_pj_free0 rc fx) (fs_pj_string rc fx)
+projects/omx-clap-core/fuzz_state/proofs/lib/A/FSH_Base.v:101:Definition PC_stack_malloc_3 : Z := 0x3d788.  (* sym __asan_stack_malloc_3 *)
+## projects/openssl/bignum: 4 lines
+projects/openssl/bignum/proofs/lib/BgA/RT_closed2.v:11:Proof. exact (rt_contracts2_of RTA rta_contracts_all rta_stack_malloc_1 rta_stack_malloc_3). Qed.
+projects/openssl/bignum/proofs/lib/BgA/RT_stackmalloc2.v:59:Theorem rta_stack_malloc_3 : stack_malloc_contract_g RTA 3.
+projects/openssl/bignum/proofs/lib/BgB/RT_closed2.v:11:Proof. exact (rt_contracts2_of RTA rta_contracts_all rta_stack_malloc_1 rta_stack_malloc_3). Qed.
+projects/openssl/bignum/proofs/lib/BgB/RT_stackmalloc2.v:59:Theorem rta_stack_malloc_3 : stack_malloc_contract_g RTA 3.
+## projects/openssl/ct: 8 lines
+projects/openssl/ct/proofs/lib/CtA/RT_contracts.v:18:           rta_stack_malloc_0 rta_stack_malloc_1 rta_stack_malloc_2 rta_stack_malloc_3 rta_stack_malloc_4 rta_set_shadow rta_art_facts).
+projects/openssl/ct/proofs/lib/CtA/RT_iface.v:714:  rc_stack_malloc_3 : stack_malloc_contract 3;
+projects/openssl/ct/proofs/lib/CtA/RT_stackmalloc.v:728:Theorem rta_stack_malloc_3 : stack_malloc_contract RTA 3.
+projects/openssl/ct/proofs/lib/CtB/RT_contracts.v:19:           rta_stack_malloc_0 rta_stack_malloc_1 rta_stack_malloc_2 rta_stack_malloc_3 rta_stack_malloc_4 rta_set_shadow rta_art_facts).
+projects/openssl/ct/proofs/lib/CtB/RT_iface.v:716:  rc_stack_malloc_3 : stack_malloc_contract 3;
+projects/openssl/ct/proofs/lib/CtB/RT_stackmalloc.v:729:Theorem rta_stack_malloc_3 : stack_malloc_contract RTA 3.
+projects/openssl/ct/proofs/lib/CtKitA/RT_iface2.v:60:    | exact (rc_stack_malloc_3 RT RC) | exact (rc_stack_malloc_4 RT RC) | lia].
+projects/openssl/ct/proofs/lib/CtKitB/RT_iface2.v:60:    | exact (rc_stack_malloc_3 RT RC) | exact (rc_stack_malloc_4 RT RC) | lia].
+## projects/simdjson/fuzz_dump: 14 lines
+projects/simdjson/fuzz_dump/proofs/lib/A/Dmp_clientA.v:33:Proof. exact (rta_stack_malloc_3 smgc3_proof). Qed.
+projects/simdjson/fuzz_dump/proofs/lib/A/RT_iface2.v:19:Definition e_stack_malloc_3 : Z := 0x64ad8.
+projects/simdjson/fuzz_dump/proofs/lib/A/RT_iface2.v:106:                                         t3 t4 t5 t6 F fc e_stack_malloc_3 m)))
+projects/simdjson/fuzz_dump/proofs/lib/A/RT_smgc.v:289:                    F fc e_stack_malloc_3 m)).
+projects/simdjson/fuzz_dump/proofs/lib/A/RT_stackmalloc3.v:29:                                         t3 t4 t5 t6 F fc e_stack_malloc_3 m)))
+projects/simdjson/fuzz_dump/proofs/lib/A/RT_stackmalloc3.v:39:Theorem rta_stack_malloc_3 : stack_malloc3_contract RTA.
+projects/simdjson/fuzz_dump/proofs/lib/A/RT_stackmalloc3.v:56:                    F fc e_stack_malloc_3 m)).
+projects/simdjson/fuzz_dump/proofs/lib/B/Dmp_clientA.v:28:Proof. exact (rta_stack_malloc_3 smgc3_proof). Qed.
+projects/simdjson/fuzz_dump/proofs/lib/B/RT_iface2.v:19:Definition e_stack_malloc_3 : Z := 0x64948.
+projects/simdjson/fuzz_dump/proofs/lib/B/RT_iface2.v:106:                                         t3 t4 t5 t6 F fc e_stack_malloc_3 m)))
+projects/simdjson/fuzz_dump/proofs/lib/B/RT_smgc.v:287:                    F fc e_stack_malloc_3 m)).
+projects/simdjson/fuzz_dump/proofs/lib/B/RT_stackmalloc3.v:27:                                         t3 t4 t5 t6 F fc e_stack_malloc_3 m)))
+## projects/simdjson/fuzz_dump_raw_tape: 14 lines
+projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/Drt_recordA.v:15:Proof. exact (rta_stack_malloc_3 smgc3_proof). Qed.
+projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/RT_iface2.v:19:Definition e_stack_malloc_3 : Z := 0x651a8.
+projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/RT_iface2.v:103:                                         t3 t4 t5 t6 F fc e_stack_malloc_3 m)))
+projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/RT_smgc.v:340:                    F fc e_stack_malloc_3 m)).
+projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/RT_stackmalloc3.v:29:                                         t3 t4 t5 t6 F fc e_stack_malloc_3 m)))
+projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/RT_stackmalloc3.v:39:Theorem rta_stack_malloc_3 : stack_malloc3_contract RTA.
+projects/simdjson/fuzz_dump_raw_tape/proofs/lib/A/RT_stackmalloc3.v:56:                    F fc e_stack_malloc_3 m)).
+projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/Drt_recordA.v:14:Proof. exact (rta_stack_malloc_3 smgc3_proof). Qed.
+projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/RT_iface2.v:19:Definition e_stack_malloc_3 : Z := 0x64f6c.
+projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/RT_iface2.v:103:                                         t3 t4 t5 t6 F fc e_stack_malloc_3 m)))
+projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/RT_smgc.v:338:                    F fc e_stack_malloc_3 m)).
+projects/simdjson/fuzz_dump_raw_tape/proofs/lib/B/RT_stackmalloc3.v:27:                                         t3 t4 t5 t6 F fc e_stack_malloc_3 m)))
+## projects/simdjson/fuzz_implementations: 12 lines
+projects/simdjson/fuzz_implementations/proofs/lib/A/RT_iface2.v:19:Definition e_stack_malloc_3 : Z := 0x6a63c.
+projects/simdjson/fuzz_implementations/proofs/lib/A/RT_iface2.v:106:                                         t3 t4 t5 t6 F fc e_stack_malloc_3 m)))
+projects/simdjson/fuzz_implementations/proofs/lib/A/RT_smgc.v:289:                    F fc e_stack_malloc_3 m)).
+projects/simdjson/fuzz_implementations/proofs/lib/A/RT_stackmalloc3.v:29:                                         t3 t4 t5 t6 F fc e_stack_malloc_3 m)))
+projects/simdjson/fuzz_implementations/proofs/lib/A/RT_stackmalloc3.v:39:Theorem rta_stack_malloc_3 : stack_malloc3_contract RTA.
+projects/simdjson/fuzz_implementations/proofs/lib/A/RT_stackmalloc3.v:56:                    F fc e_stack_malloc_3 m)).
+projects/simdjson/fuzz_implementations/proofs/lib/B/RT_iface2.v:19:Definition e_stack_malloc_3 : Z := 0x6a7f8.
+projects/simdjson/fuzz_implementations/proofs/lib/B/RT_iface2.v:106:                                         t3 t4 t5 t6 F fc e_stack_malloc_3 m)))
+projects/simdjson/fuzz_implementations/proofs/lib/B/RT_smgc.v:287:                    F fc e_stack_malloc_3 m)).
+projects/simdjson/fuzz_implementations/proofs/lib/B/RT_stackmalloc3.v:27:                                         t3 t4 t5 t6 F fc e_stack_malloc_3 m)))
+projects/simdjson/fuzz_implementations/proofs/lib/B/RT_stackmalloc3.v:37:Theorem rta_stack_malloc_3 : stack_malloc3_contract RTA.
+projects/simdjson/fuzz_implementations/proofs/lib/B/RT_stackmalloc3.v:54:                    F fc e_stack_malloc_3 m)).
+## projects/simdjson/fuzz_ondemand: 12 lines
+projects/simdjson/fuzz_ondemand/proofs/lib/A/RT_contracts.v:15:           rta_stack_malloc_3 rta_stack_malloc_4 rta_stack_malloc_5 rta_stack_free_5 rta_set_shadow rta_art_facts).
+projects/simdjson/fuzz_ondemand/proofs/lib/A/RT_iface.v:456:  rc_stack_malloc_3 : stack_malloc_contract 3;
+projects/simdjson/fuzz_ondemand/proofs/lib/A/RT_rtf.v:121:  - exact (sm_f 3%nat (rc_stack_malloc_3 RT RC)).
+projects/simdjson/fuzz_ondemand/proofs/lib/A/RT_stackmalloc.v:623:Theorem rta_stack_malloc_3 : stack_malloc_contract RTA 3.
+projects/simdjson/fuzz_ondemand/proofs/lib/A/Sj_num_akit.v:173:  { destruct HKK as [->|[->| ->]]; [exact (rf_stack_malloc_3 RT RTF)| exact (rf_stack_malloc_4 RT RTF)| exact (rf_stack_malloc_5 RT RTF)]. }
+projects/simdjson/fuzz_ondemand/proofs/lib/A/Sj_rtf.v:177:  rf_stack_malloc_3 : stack_malloc_contract_f 3;
+projects/simdjson/fuzz_ondemand/proofs/lib/B/RT_contracts.v:14:           rta_stack_malloc_3 rta_stack_malloc_4 rta_stack_malloc_5 rta_stack_free_5 rta_set_shadow rta_art_facts).
+projects/simdjson/fuzz_ondemand/proofs/lib/B/RT_iface.v:457:  rc_stack_malloc_3 : stack_malloc_contract 3;
+projects/simdjson/fuzz_ondemand/proofs/lib/B/RT_rtf.v:122:  - exact (sm_f 3%nat (rc_stack_malloc_3 RT RC)).
+projects/simdjson/fuzz_ondemand/proofs/lib/B/RT_stackmalloc.v:622:Theorem rta_stack_malloc_3 : stack_malloc_contract RTA 3.
+projects/simdjson/fuzz_ondemand/proofs/lib/B/Sj_num_akit.v:174:  { destruct HKK as [->|[->| ->]]; [exact (rf_stack_malloc_3 RT RTF)| exact (rf_stack_malloc_4 RT RTF)| exact (rf_stack_malloc_5 RT RTF)]. }
+projects/simdjson/fuzz_ondemand/proofs/lib/B/Sj_rtf.v:178:  rf_stack_malloc_3 : stack_malloc_contract_f 3;
+## projects/simdjson/fuzz_print_json: 12 lines
+projects/simdjson/fuzz_print_json/proofs/lib/A/RT_contracts.v:15:           rta_stack_malloc_3 rta_stack_malloc_4 rta_stack_malloc_5 rta_stack_free_5 rta_set_shadow rta_art_facts).
+projects/simdjson/fuzz_print_json/proofs/lib/A/RT_iface.v:456:  rc_stack_malloc_3 : stack_malloc_contract 3;
+projects/simdjson/fuzz_print_json/proofs/lib/A/RT_rtf.v:121:  - exact (sm_f 3%nat (rc_stack_malloc_3 RT RC)).
+projects/simdjson/fuzz_print_json/proofs/lib/A/RT_stackmalloc.v:631:Theorem rta_stack_malloc_3 : stack_malloc_contract RTA 3.
+projects/simdjson/fuzz_print_json/proofs/lib/A/Sj_num_akit.v:173:  { destruct HKK as [->|[->| ->]]; [exact (rf_stack_malloc_3 RT RTF)| exact (rf_stack_malloc_4 RT RTF)| exact (rf_stack_malloc_5 RT RTF)]. }
+projects/simdjson/fuzz_print_json/proofs/lib/A/Sj_rtf.v:177:  rf_stack_malloc_3 : stack_malloc_contract_f 3;
+projects/simdjson/fuzz_print_json/proofs/lib/B/RT_contracts.v:14:           rta_stack_malloc_3 rta_stack_malloc_4 rta_stack_malloc_5 rta_stack_free_5 rta_set_shadow rta_art_facts).
+projects/simdjson/fuzz_print_json/proofs/lib/B/RT_iface.v:457:  rc_stack_malloc_3 : stack_malloc_contract 3;
+projects/simdjson/fuzz_print_json/proofs/lib/B/RT_rtf.v:122:  - exact (sm_f 3%nat (rc_stack_malloc_3 RT RC)).
+projects/simdjson/fuzz_print_json/proofs/lib/B/RT_stackmalloc.v:630:Theorem rta_stack_malloc_3 : stack_malloc_contract RTA 3.
+projects/simdjson/fuzz_print_json/proofs/lib/B/Sj_num_akit.v:174:  { destruct HKK as [->|[->| ->]]; [exact (rf_stack_malloc_3 RT RTF)| exact (rf_stack_malloc_4 RT RTF)| exact (rf_stack_malloc_5 RT RTF)]. }
+projects/simdjson/fuzz_print_json/proofs/lib/B/Sj_rtf.v:178:  rf_stack_malloc_3 : stack_malloc_contract_f 3;
+
+# Pass 4: the two units of pass 3 whose class-3 statement is of this unit's form, by image:
+## projects/omx-clap-core/fuzz_preset
+projects/omx-clap-core/fuzz_preset/proofs/lib/A/FCm3s.v:558:Corollary stack_malloc3_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 3.
+projects/omx-clap-core/fuzz_preset/proofs/lib/AU/FCm3s.v:560:Corollary stack_malloc3_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 3.
+## projects/omx-clap-core/fuzz_state
+projects/omx-clap-core/fuzz_state/proofs/lib/A/FCm3s.v:527:Corollary stack_malloc3_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 3.
+projects/omx-clap-core/fuzz_state/proofs/lib/B/FCm3s.v:528:Corollary stack_malloc3_contract_x : forall B ARx, fs_iface tfibsegs B ARx -> TfibSyms B -> astack_malloc_realizes_x tfibsegs B ARx 3.
+
+# Result: six image-B donors of this form (lib dir of the asan-ubsan image, release ref = last commit touching the files
+# before the move 48907dc7e8ca, so proofs/<unit>/lib/... exists there and the ref's projects/<unit>/harness.yaml pins the image):
+#   plugin-hostd/fuzz_command  B/Rt/RtSM3T.v + RtSM3.v (+ RtSMxA.v, shared with class 5)   781f46bc05cd (merge of the release 6b559e1f0184; same blobs)
+#   libreac/fuzz_boxreg        B/Rt/StackMalloc3Tbl.v + StackMalloc3.v                     ee71d1fd3fcf (release)
+#   libreac/fuzz_identity      B/Rt/StackMalloc3Tbl.v + StackMalloc3.v                     cffeac4df63e (release)
+#   libreac/fuzz_disco         Y/Rt/StackMalloc3Tbl.v + StackMalloc3.v                     b5cf457a8820 (release; it releases no asan_ubsan theorem)
+#   omx-clap-core/fuzz_state   B/FCimg.v + FCm3r.v + FCm3s.v                               d0e2eea9a341 (release)
+#   omx-clap-core/fuzz_preset  AU/FCimgB.v + FCm3r.v + FCm3s.v                             4cda83dac850 (the port re-pin with its proofs)
+# The other class-3 walks pass 3 lists state another predicate (stack_malloc_contract RTA 3, stack_malloc3_contract RTA,
+# N5_stack_malloc3, stack_malloc_x_contract RTA 3, stack_malloc_contract_g RTA 3, astack_mallocA_stmt): other frameworks, not
+# astack_malloc_realizes, so not donors of this unit's hypothesis.

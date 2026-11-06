@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_cbor_encoder
-rocq: OssFuzzTheorems.jsoncons.fuzz_cbor_encoder
+rocq: OSSVerify.jsoncons.fuzz_cbor_encoder
 origin: upstream
 summary: cbor_stream_reader drives a cbor_bytes_encoder (decode -> re-encode); re-encoded bytes discarded;
   ec ignored.

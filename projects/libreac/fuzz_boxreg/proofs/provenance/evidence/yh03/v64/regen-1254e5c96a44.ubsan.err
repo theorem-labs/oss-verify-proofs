@@ -1,0 +1,9 @@
+# self-test: 163 known answers OK
+# section bounds: proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v: 18 of 18 section cells equal the image's section headers
+# build: proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v: ubsan (the pinned binary's sha256 d63ba804708e is builds.ubsan of projects/libreac/fuzz_boxreg/harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 15 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+# unit identity: proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v: the image's 4 PT_LOADs equal the ubsan pin d63ba804708e (<pinned>/fuzz_boxreg.ubsan; ELF section-header fields and build-id masked)
+# unit identity: proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v (--elf <pinned>/fuzz_boxreg.ubsan): the image's 4 PT_LOADs equal the ubsan pin d63ba804708e (<pinned>/fuzz_boxreg.ubsan; ELF section-header fields and build-id masked)
+# not checked by any rule: proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v: src0_debruijn_len, src0_vmlock
+# UNCHECKED string cells (no slug), value not 0: 2, kept as written: str (no reader); str_2 (no reader)
+# OMITTED: 25 of the 25 ABSENT cell(s) (the image links no function of the name): LZW_GenerateStream, cgif_addframe, cgif_close, cgif_newgif, cgif_raw_addframe, cgif_raw_close, cgif_raw_newgif, cgif_writecb, cmpPixel, create_byte_list, create_byte_list_block, fclose, fdopen, flushFrame, fmodeflags, fopen, freeCGIF, freeFrame, ofl_add, read_frameconfig, strchr, strchrnul, strlen, unlink, unlist_locked_file
+# proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v: {'KEEP-SIZE0': 2, 'KEEP': 152, 'KEEP-SPAN': 3, 'OMITTED': 25, 'NOSYM': 45, 'KEEP-BY-LOAD': 1, 'KEEP-GOT0': 1, 'INTERIOR-OWN': 1, 'UNCHECKED': 2}

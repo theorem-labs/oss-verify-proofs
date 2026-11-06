@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: expat
 harness: xml_parsebuffer_fuzzer_UTF-8
-rocq: OssFuzzTheorems.expat.xml_parsebuffer_fuzzer_UTF_8
+rocq: OSSVerify.expat.xml_parsebuffer_fuzzer_UTF_8
 origin: upstream
 summary: Same four-parser scheme as xml_parse_fuzzer but through XML_GetBuffer + memcpy + XML_ParseBuffer
   (non-final then final); statuses discarded; empty input returns early.

@@ -1,0 +1,603 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Copyright 2026 Theorem Labs *)
+(* C3 (a Theorem Labs lane's option (a): tr_peak everywhere), THE LEMMA KIT the producers of the peak-form contracts use.
+   W_contract.v defines the measure tr_peak and the net change tr_net (a Theorem Labs lane's ReplyTrPeak.v:120-135, word for
+   word) and states the room premises of lp_spec / sl_spec / dr_spec / re_spec / rr_spec / rig_spec / ge_room /
+   gse_room over them.  This file holds what a walk needs to discharge or use those premises.  It is taken BY PATH from
+   a Theorem Labs lane's working branch (reviewers B1cReviewTrPeak and B1cReviewTrPeakC: SOUND); no
+   other file of that branch is taken.  Provenance:
+   - lib/A/ReplyTrPeak.v at a974170418e (byte-identical at cf21c8546ba): :136-165 (tr_pos, tr_room, tr_olds_ok,
+     tr_sizes_ok), :167-342 (Section peak), :345-402 (Section rules), word for word except two names: tr_sizes_ok is
+     tr_sizes_nonneg here (W_drain_tr.v:116 has a tr_sizes_ok over dtrace), and its bsum_nil (lib/A/ReplyLS.v:123) is
+     restated as tp_bsum_nil;
+   - lib/A/ReplyTrPeakC.v at cf21c8546ba: :60-112 (sizes), :114-126 (composition), :128-167 (moves, free(NULL)),
+     :217-242 (sl_ / lp_ / ge_peak_callee), word for word; :182-189 gse_tr, word for word; and at W_contract.v's names
+     (ge_room / gse_room ARE its ge_room_p / gse_room_p :179-197 word for word, sl_spec's room its sl_room_p :171-173,
+     lp_spec's its lp_room_p :176-177): :200-208 as gse_room_of_peak, :210-216 as ge_room_first (W_ge_room.v:163 has a
+     sum-form ge_room_sends), :244-246 as ge_room_room, :248-262 as ge_room_second, :264-270 as sl_room / lp_room.
+   NEW here: lp_tr_peak_le and sl_tr_peak_le_alloc (the sum forms a caller already holds give the peak forms), and
+   sl_run_net / send_line_tr_net / ge_live5 / ge_tr_net (gesture_end's net change, gse_room's threading; ge_live5 is
+   W_ge_room.v:121 sl_live_ctl5's proof, restated so that the kit does not Require the gestures family).
+   The cycle rule: ReplyTrPeak.v Requires the arm files and _write.v Requires W_list_push, so a producer cannot Require
+   ReplyTrPeak.v; this file Requires only W_contract.v and what it Requires. *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP0g YP01 YP0i YCbn YP0b YP0a.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YN3v YI04.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK04 YA0i YA0n YA0o YCbm YA0q.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YP0d YP0c YC80 YC81.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_syms W_listing W_kit W_journal W_rep.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YC5d YI00 YN0h.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import HarnessRep ListRep RelayRep.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require
+  RelayRunT ListTr RelayRunF send_line_c send_line_b_c gesture_end_b_c.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YO0i.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_contract.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope Z_scope.
+
+(* ================================================================== the measures (ReplyTrPeak.v:136-165) *)
+Definition tr_pos {P : Type} (tr : list (RelayRunT.rev P)) : Z :=
+fold_right (fun ev acc =>
+  match ev with
+  | RelayRunT.RMalloc n => Z.max 0 n
+  | RelayRunT.RFree k _ => Z.max 0 (- k)
+  | RelayRunT.RRealloc k n _ => Z.max 0 (n - k)
+  end + acc) 0 tr.
+(* every request finds room on top of the live bytes bb at its point: the allocator rules' live-bytes premises in
+   order, the live bytes moving as the rules' posts move them *)
+Fixpoint tr_room {P : Type} (bb : Z) (tr : list (RelayRunT.rev P)) : Prop :=
+  match tr with
+  | [] => True
+  | RelayRunT.RMalloc n :: r => bb + n <= LIVE_MAX /\ tr_room (bb + n) r
+  | RelayRunT.RFree k _ :: r => tr_room (bb - k) r
+  | RelayRunT.RRealloc k n _ :: r => bb + n <= LIVE_MAX /\ tr_room (bb - k + n) r
+  end.
+(* the sizes a trace frees (a free's size, a realloc's old size) are not negative *)
+Definition tr_olds_ok {P : Type} (tr : list (RelayRunT.rev P)) : Prop :=
+  Forall (fun ev => match ev with
+    | RelayRunT.RMalloc _ => True
+    | RelayRunT.RFree k _ => 0 <= k
+    | RelayRunT.RRealloc k _ _ => 0 <= k
+    end) tr.
+(* every size in a trace is not negative *)
+Definition tr_sizes_nonneg {P : Type} (tr : list (RelayRunT.rev P)) : Prop :=
+  Forall (fun ev => match ev with
+    | RelayRunT.RMalloc n => 0 <= n
+    | RelayRunT.RFree k _ => 0 <= k
+    | RelayRunT.RRealloc k n _ => 0 <= k /\ 0 <= n
+    end) tr.
+
+Section peak.
+Context {P : Type}.
+Local Notation rv := (RelayRunT.rev P).
+
+Lemma tr_peak_nil : tr_peak (@nil rv) = 0.
+Proof. reflexivity. Qed.
+Lemma tr_peak_malloc : forall n (r : list rv), tr_peak (RelayRunT.RMalloc n :: r) = Z.max 0 (n + tr_peak r).
+Proof. reflexivity. Qed.
+Lemma tr_peak_free : forall k x (r : list rv), tr_peak (RelayRunT.RFree k x :: r) = Z.max 0 (tr_peak r - k).
+Proof. reflexivity. Qed.
+Lemma tr_peak_realloc : forall k n x (r : list rv),
+  tr_peak (RelayRunT.RRealloc k n x :: r) = Z.max 0 (Z.max n (n - k + tr_peak r)).
+Proof. reflexivity. Qed.
+Lemma tr_net_cons : forall (ev : rv) r, tr_net (ev :: r) =
+  match ev with RelayRunT.RMalloc n => n | RelayRunT.RFree k _ => - k | RelayRunT.RRealloc k n _ => n - k end +
+  tr_net r.
+Proof. reflexivity. Qed.
+Lemma tr_pos_cons : forall (ev : rv) r, tr_pos (ev :: r) =
+  match ev with
+  | RelayRunT.RMalloc n => Z.max 0 n | RelayRunT.RFree k _ => Z.max 0 (- k) | RelayRunT.RRealloc k n _ => Z.max 0 (n - k)
+  end + tr_pos r.
+Proof. reflexivity. Qed.
+Lemma tr_alloc_cons' : forall (ev : rv) r, tr_alloc (ev :: r) =
+  match ev with RelayRunT.RMalloc n => n | RelayRunT.RFree _ _ => 0 | RelayRunT.RRealloc _ n _ => n end + tr_alloc r.
+Proof. reflexivity. Qed.
+Lemma tr_max_cons' : forall (ev : rv) r, tr_max (ev :: r) =
+  match ev with
+  | RelayRunT.RMalloc n => Z.max n (tr_max r) | RelayRunT.RFree _ _ => tr_max r
+  | RelayRunT.RRealloc _ n _ => Z.max n (tr_max r)
+  end.
+Proof. reflexivity. Qed.
+Lemma tr_pos_nil : tr_pos (@nil rv) = 0.
+Proof. reflexivity. Qed.
+Lemma tr_pos_malloc : forall n (r : list rv), tr_pos (RelayRunT.RMalloc n :: r) = Z.max 0 n + tr_pos r.
+Proof. reflexivity. Qed.
+Lemma tr_pos_free : forall k x (r : list rv), tr_pos (RelayRunT.RFree k x :: r) = Z.max 0 (- k) + tr_pos r.
+Proof. reflexivity. Qed.
+Lemma tr_pos_realloc : forall k n x (r : list rv), tr_pos (RelayRunT.RRealloc k n x :: r) = Z.max 0 (n - k) + tr_pos r.
+Proof. reflexivity. Qed.
+Lemma tr_max_nil : tr_max (@nil rv) = 0.
+Proof. reflexivity. Qed.
+Lemma tr_max_malloc : forall n (r : list rv), tr_max (RelayRunT.RMalloc n :: r) = Z.max n (tr_max r).
+Proof. reflexivity. Qed.
+Lemma tr_max_realloc : forall k n x (r : list rv), tr_max (RelayRunT.RRealloc k n x :: r) = Z.max n (tr_max r).
+Proof. reflexivity. Qed.
+Lemma tr_alloc_nil : tr_alloc (@nil rv) = 0.
+Proof. reflexivity. Qed.
+Lemma tr_alloc_malloc : forall n (r : list rv), tr_alloc (RelayRunT.RMalloc n :: r) = n + tr_alloc r.
+Proof. reflexivity. Qed.
+Lemma tr_alloc_realloc : forall k n x (r : list rv), tr_alloc (RelayRunT.RRealloc k n x :: r) = n + tr_alloc r.
+Proof. reflexivity. Qed.
+
+Lemma tr_peak_nonneg : forall (tr : list rv), 0 <= tr_peak tr.
+Proof.
+  intros tr. destruct tr as [|ev r]; [rewrite tr_peak_nil; lia|].
+  destruct ev; [rewrite tr_peak_malloc | rewrite tr_peak_free | rewrite tr_peak_realloc]; lia.
+Qed.
+Lemma tr_pos_nonneg : forall (tr : list rv), 0 <= tr_pos tr.
+Proof. induction tr as [|ev r IH]; [cbn; lia|]. rewrite tr_pos_cons. destruct ev; lia. Qed.
+Lemma tr_max_nonneg' : forall (tr : list rv), 0 <= tr_max tr.
+Proof. induction tr as [|ev r IH]; [cbn; lia|]. rewrite tr_max_cons'. destruct ev; lia. Qed.
+
+Lemma tr_net_app : forall (a b : list rv), tr_net (a ++ b) = tr_net a + tr_net b.
+Proof.
+  induction a as [|ev a IH]; intros b; [cbn [app]; change (tr_net (@nil rv)) with 0; lia|].
+  rewrite <- app_comm_cons, !tr_net_cons, IH. lia.
+Qed.
+Lemma tr_pos_app : forall (a b : list rv), tr_pos (a ++ b) = tr_pos a + tr_pos b.
+Proof.
+  induction a as [|ev a IH]; intros b; [cbn [app]; change (tr_pos (@nil rv)) with 0; lia|].
+  rewrite <- app_comm_cons, !tr_pos_cons, IH. lia.
+Qed.
+Lemma tr_alloc_app' : forall (a b : list rv), tr_alloc (a ++ b) = tr_alloc a + tr_alloc b.
+Proof.
+  induction a as [|ev a IH]; intros b; [cbn [app]; change (tr_alloc (@nil rv)) with 0; lia|].
+  rewrite <- app_comm_cons, !tr_alloc_cons', IH. lia.
+Qed.
+Lemma tr_max_app' : forall (a b : list rv), tr_max (a ++ b) = Z.max (tr_max a) (tr_max b).
+Proof.
+  intros a b. pose proof (tr_max_nonneg' b) as Hb.
+  induction a as [|ev a IH]; [cbn [app]; change (tr_max (@nil rv)) with 0; lia|].
+  rewrite <- app_comm_cons, !tr_max_cons'. destruct ev; lia.
+Qed.
+
+(* composition: the peak of a then b is a's, or a's net change and b's peak *)
+Lemma tr_peak_app : forall (a b : list rv), tr_peak (a ++ b) = Z.max (tr_peak a) (tr_net a + tr_peak b).
+Proof.
+  intros a b. pose proof (tr_peak_nonneg b) as Hb.
+  induction a as [|ev a IH]; [cbn [app]; rewrite tr_peak_nil; change (tr_net (@nil rv)) with 0; lia|].
+  pose proof (tr_peak_nonneg a) as Ha. pose proof (tr_peak_nonneg (a ++ b)) as Hab.
+  rewrite <- app_comm_cons, tr_net_cons.
+  destruct ev; [rewrite !tr_peak_malloc | rewrite !tr_peak_free | rewrite !tr_peak_realloc]; rewrite IH; lia.
+Qed.
+(* a caller's split: a callee's window w after the requests a, before the requests b *)
+Lemma tr_peak_mid : forall (a w b : list rv), tr_net a + tr_peak w <= tr_peak (a ++ w ++ b).
+Proof.
+  intros a w b. rewrite (tr_peak_app a (w ++ b)), (tr_peak_app w b). lia.
+Qed.
+Lemma tr_peak_prefix : forall (a b : list rv), tr_peak a <= tr_peak (a ++ b).
+Proof. intros a b. rewrite tr_peak_app. lia. Qed.
+Lemma tr_net_le_peak : forall (a b : list rv), tr_net a <= tr_peak (a ++ b).
+Proof. intros a b. rewrite tr_peak_app. pose proof (tr_peak_nonneg b). lia. Qed.
+
+(* ---- the per-event invariant bb + tr_peak (rest) <= L, one request at a time *)
+Lemma tr_peak_step_malloc : forall bb L n (r : list rv), bb + tr_peak (RelayRunT.RMalloc n :: r) <= L ->
+  bb + n <= L /\ (bb + n) + tr_peak r <= L.
+Proof. intros bb L n r H. rewrite tr_peak_malloc in H. pose proof (tr_peak_nonneg r). lia. Qed.
+Lemma tr_peak_step_free : forall bb L k x (r : list rv), bb + tr_peak (RelayRunT.RFree k x :: r) <= L ->
+  (bb - k) + tr_peak r <= L.
+Proof. intros bb L k x r H. rewrite tr_peak_free in H. lia. Qed.
+Lemma tr_peak_step_realloc : forall bb L k n x (r : list rv), bb + tr_peak (RelayRunT.RRealloc k n x :: r) <= L ->
+  bb + n <= L /\ (bb - k + n) + tr_peak r <= L.
+Proof. intros bb L k n x r H. rewrite tr_peak_realloc in H. lia. Qed.
+
+(* soundness: the peak premise gives every request's premise, in order *)
+Lemma tr_peak_room : forall (tr : list rv) bb, bb + tr_peak tr <= LIVE_MAX -> tr_room bb tr.
+Proof.
+  induction tr as [|ev r IH]; intros bb H; [exact I|].
+  destruct ev as [n|k x|k n x]; cbn [tr_room].
+  - destruct (tr_peak_step_malloc bb LIVE_MAX n r H) as [H1 H2]. split; [exact H1 | apply IH; exact H2].
+  - apply IH. exact (tr_peak_step_free bb LIVE_MAX k x r H).
+  - destruct (tr_peak_step_realloc bb LIVE_MAX k n x r H) as [H1 H2]. split; [exact H1 | apply IH; exact H2].
+Qed.
+(* exactness: it asks nothing more than the requests' premises *)
+Lemma tr_room_peak : forall (tr : list rv) bb, tr_olds_ok tr -> bb <= LIVE_MAX -> tr_room bb tr ->
+  bb + tr_peak tr <= LIVE_MAX.
+Proof.
+  induction tr as [|ev r IH]; intros bb HO Hb HR; [rewrite tr_peak_nil; lia|].
+  inversion HO as [|? ? Hev HO']; subst.
+  destruct ev as [n|k x|k n x]; cbn [tr_room] in HR.
+  - destruct HR as [H1 H2]. specialize (IH (bb + n) HO' H1 H2). rewrite tr_peak_malloc. lia.
+  - cbn in Hev. specialize (IH (bb - k) HO' ltac:(lia) HR). rewrite tr_peak_free. lia.
+  - cbn in Hev. destruct HR as [H1 H2]. specialize (IH (bb - k + n) HO' ltac:(lia) H2). rewrite tr_peak_realloc. lia.
+Qed.
+Lemma tr_peak_iff_room : forall (tr : list rv) bb, tr_olds_ok tr -> bb <= LIVE_MAX ->
+  (bb + tr_peak tr <= LIVE_MAX <-> tr_room bb tr).
+Proof. intros tr bb HO Hb. split; [apply tr_peak_room | apply tr_room_peak; assumption]. Qed.
+(* tr_room is RelayRunT.room_from at the live-bytes instance (malloc +n, free -k, realloc -k +n, room bb + n <= LIVE_MAX) *)
+Lemma tr_room_from : forall (pdef : P) (qs : list P) (tr : list rv) bb j,
+  RelayRunT.room_from Z P pdef (fun b n => b + n) (fun b k _ => b - k) (fun b k n _ _ => b - k + n)
+    (fun b n => b + n <= LIVE_MAX) qs bb j tr <-> tr_room bb tr.
+Proof.
+  intros pdef qs tr. induction tr as [|ev r IH]; intros bb j; [cbn; tauto|].
+  destruct ev; cbn [RelayRunT.room_from tr_room]; rewrite IH; tauto.
+Qed.
+
+(* sanity: the peak is never above the sum (traces with nonnegative sizes), so the new premise is weaker *)
+Lemma tr_alloc_nonneg_ok : forall (tr : list rv), tr_sizes_nonneg tr -> 0 <= tr_alloc tr.
+Proof.
+  induction tr as [|ev r IH]; intros HS; [cbn; lia|]. inversion HS as [|? ? Hev HS']; subst.
+  rewrite tr_alloc_cons'. specialize (IH HS'). destruct ev; cbn in Hev; lia.
+Qed.
+Lemma tr_peak_le_alloc : forall (tr : list rv), tr_sizes_nonneg tr -> tr_peak tr <= tr_alloc tr.
+Proof.
+  induction tr as [|ev r IH]; intros HS; [cbn; lia|]. inversion HS as [|? ? Hev HS']; subst.
+  specialize (IH HS'). pose proof (tr_alloc_nonneg_ok r HS'). rewrite tr_alloc_cons'.
+  destruct ev; cbn in Hev; [rewrite tr_peak_malloc | rewrite tr_peak_free | rewrite tr_peak_realloc]; lia.
+Qed.
+(* the bound the instance proofs use: the peak is at most the summed positive growth and the largest request *)
+Lemma tr_peak_le_pos : forall (tr : list rv), tr_peak tr <= tr_pos tr + tr_max tr.
+Proof.
+  induction tr as [|ev r IH]; [cbn; lia|].
+  pose proof (tr_pos_nonneg r). pose proof (tr_max_nonneg' r). rewrite tr_pos_cons, tr_max_cons'.
+  destruct ev; [rewrite tr_peak_malloc | rewrite tr_peak_free | rewrite tr_peak_realloc]; lia.
+Qed.
+
+(* (b): a callee's window w whose own sum is within its peak and largest request gets its sum-form room from the
+   caller's `B + tr_peak tr + tr_max tr <= L`, at live bytes bb <= B + (net of the requests before it) *)
+Lemma tr_window : forall (a w b : list rv) B0 bb L, bb <= B0 + tr_net a ->
+  B0 + tr_peak (a ++ w ++ b) + tr_max (a ++ w ++ b) <= L -> tr_alloc w <= tr_peak w + tr_max w ->
+  bb + tr_alloc w <= L.
+Proof.
+  intros a w b B0 bb L Hb HL Hw. pose proof (tr_peak_mid a w b) as M.
+  rewrite !tr_max_app' in HL. pose proof (tr_max_nonneg' a). pose proof (tr_max_nonneg' b). lia.
+Qed.
+End peak.
+
+(* ================================================================== the rules' posts keep the invariant *)
+Section rules.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Variable B : asyms.
+Context {P : Type}.
+Local Notation rv := (RelayRunT.rev P).
+
+(* ReplyLS.v:123 bsum_nil, under this kit's name (ReplyLS.v is not below this file) *)
+Lemma tp_bsum_nil : bsum [] = 0.
+Proof. reflexivity. Qed.
+Lemma tp_bb_app : forall ly S ly2 S2 l, ablocks B ly2 S2 = ablocks B ly S ++ l -> blocks_bytes S2 = blocks_bytes S + bsum l.
+Proof. intros ly S ly2 S2 l E. rewrite (blocks_bytes_bsum B ly2 S2), (blocks_bytes_bsum B ly S), E, bsum_app. lia. Qed.
+
+(* malloc: amalloc_cf_rule's premise :779 and post :790 *)
+Lemma tr_peak_after_malloc : forall ly S ly2 S2 res n (r : list rv),
+  blocks_bytes S + tr_peak (RelayRunT.RMalloc n :: r) <= LIVE_MAX ->
+  ablocks B ly2 S2 = ablocks B ly S ++ [(res, n)] ->
+  blocks_bytes S + n <= LIVE_MAX /\ blocks_bytes S2 + tr_peak r <= LIVE_MAX.
+Proof.
+  intros ly S ly2 S2 res n r H E. rewrite (tp_bb_app ly S ly2 S2 _ E), bsum_cons, tp_bsum_nil. cbn [snd].
+  destruct (tr_peak_step_malloc _ _ n r H). split; lia.
+Qed.
+(* strndup: astrndup_cf_rule's premise :879 and post :892, the request RMalloc (n + 1) *)
+Lemma tr_peak_after_strndup : forall ly S ly2 S2 res n (r : list rv),
+  blocks_bytes S + tr_peak (RelayRunT.RMalloc (n + 1) :: r) <= LIVE_MAX ->
+  ablocks B ly2 S2 = ablocks B ly S ++ [(res, n + 1)] ->
+  blocks_bytes S + (n + 1) <= LIVE_MAX /\ blocks_bytes S2 + tr_peak r <= LIVE_MAX.
+Proof. intros ly S ly2 S2 res n r. apply tr_peak_after_malloc. Qed.
+(* free: afree_cf_rule's post :812 (no premise on the live bytes) *)
+Lemma tr_peak_after_free : forall ly S ly2 S2 pa n x (r : list rv),
+  blocks_bytes S + tr_peak (RelayRunT.RFree n x :: r) <= LIVE_MAX ->
+  (exists l1 l2, ablocks B ly S = l1 ++ (pa, n) :: l2 /\ ablocks B ly2 S2 = l1 ++ l2) ->
+  blocks_bytes S2 + tr_peak r <= LIVE_MAX.
+Proof.
+  intros ly S ly2 S2 pa n x r H (l1 & l2 & E1 & E2).
+  pose proof (tr_peak_step_free _ _ n x r H) as H1.
+  rewrite (blocks_bytes_bsum B ly S), E1, bsum_app, bsum_cons in H1. cbn [snd] in H1.
+  rewrite (blocks_bytes_bsum B ly2 S2), E2, bsum_app. lia.
+Qed.
+(* realloc (NULL, n): arealloc_cf_rule's premise :850 and post :863, the request RMalloc n *)
+Lemma tr_peak_after_realloc0 : forall ly S ly2 S2 res n (r : list rv),
+  blocks_bytes S + tr_peak (RelayRunT.RMalloc n :: r) <= LIVE_MAX ->
+  Permutation (ablocks B ly2 S2) ((res, n) :: ablocks B ly S) ->
+  blocks_bytes S + n <= LIVE_MAX /\ blocks_bytes S2 + tr_peak r <= LIVE_MAX.
+Proof.
+  intros ly S ly2 S2 res n r H HP. destruct (tr_peak_step_malloc _ _ n r H) as [H1 H2]. split; [exact H1|].
+  rewrite (blocks_bytes_bsum B ly2 S2), (bsum_perm _ _ HP), bsum_cons. cbn [snd].
+  rewrite (blocks_bytes_bsum B ly S) in H2. lia.
+Qed.
+(* realloc (p, n) of the live block (p, n0): arealloc_cf_rule's premise :850 (n on top, the old block still live)
+   and post :864 *)
+Lemma tr_peak_after_realloc : forall ly S ly2 S2 p n0 res n x (r : list rv),
+  blocks_bytes S + tr_peak (RelayRunT.RRealloc n0 n x :: r) <= LIVE_MAX ->
+  (exists l1 l2, ablocks B ly S = l1 ++ (p, n0) :: l2 /\ Permutation (ablocks B ly2 S2) ((res, n) :: l1 ++ l2)) ->
+  blocks_bytes S + n <= LIVE_MAX /\ blocks_bytes S2 + tr_peak r <= LIVE_MAX.
+Proof.
+  intros ly S ly2 S2 p n0 res n x r H (l1 & l2 & E1 & HP).
+  destruct (tr_peak_step_realloc _ _ n0 n x r H) as [H1 H2]. split; [exact H1|].
+  rewrite (blocks_bytes_bsum B ly S), E1, bsum_app, bsum_cons in H2. cbn [snd] in H2.
+  rewrite (blocks_bytes_bsum B ly2 S2), (bsum_perm _ _ HP), bsum_cons, bsum_app. cbn [snd]. lia.
+Qed.
+End rules.
+
+(* ================================================================== ReplyTrPeakC.v: sizes, composition, moves *)
+(* ================================================================== sizes only *)
+Definition ev_sz {A : Type} (ev : RelayRunT.rev A) : Z * Z * Z :=
+  match ev with
+  | RelayRunT.RMalloc n => (0, 0, n)
+  | RelayRunT.RFree k _ => (1, k, 0)
+  | RelayRunT.RRealloc k n _ => (2, k, n)
+  end.
+Definition tr_sz {A : Type} (tr : list (RelayRunT.rev A)) : list (Z * Z * Z) := map ev_sz tr.
+
+Section sz.
+Context {A A' : Type}.
+Lemma tr_sz_app : forall (a b : list (RelayRunT.rev A)), tr_sz (a ++ b) = tr_sz a ++ tr_sz b.
+Proof. intros a b. unfold tr_sz. apply map_app. Qed.
+Lemma tr_sz_measures : forall (t1 : list (RelayRunT.rev A)) (t2 : list (RelayRunT.rev A')), tr_sz t1 = tr_sz t2 ->
+  tr_peak t1 = tr_peak t2 /\ tr_net t1 = tr_net t2 /\ tr_max t1 = tr_max t2 /\ tr_alloc t1 = tr_alloc t2.
+Proof.
+  induction t1 as [|e1 r1 IH]; intros [|e2 r2] H; cbn in H; try discriminate H.
+  - repeat split; reflexivity.
+  - injection H as He Hr. destruct (IH r2 Hr) as (P1 & N1 & M1 & A1).
+    destruct e1, e2; cbn in He; try discriminate He; injection He as ?; subst;
+      cbn [tr_peak tr_net tr_max tr_alloc fold_right] in *;
+      unfold tr_peak, tr_net, tr_max, tr_alloc in *; cbn [fold_right];
+      rewrite ?P1, ?N1, ?M1, ?A1; repeat split; lia.
+Qed.
+End sz.
+
+(* send_line's requests do not depend on the addresses it is started at *)
+Lemma sl_run_sz : forall f mx no cap rem j o j' o',
+  tr_sz (fst (send_line_b_c.sl_run f mx no cap rem j o)) = tr_sz (fst (send_line_b_c.sl_run f mx no cap rem j' o')).
+Proof.
+  induction f as [|f IH]; intros mx no cap rem j o j' o'; [reflexivity|].
+  cbn [send_line_b_c.sl_run].
+  destruct (rem <=? 0); [reflexivity|].
+  destruct (cap <? no + _); [|apply IH].
+  cbn [fst]. unfold tr_sz in *. cbn [map]. f_equal.
+  - destruct (cap =? 0); reflexivity.
+  - apply IH.
+Qed.
+Lemma send_line_tr_sz : forall live mx no cap len j o j' o',
+  tr_sz (send_line_b_c.send_line_tr live mx no cap len j o) = tr_sz (send_line_b_c.send_line_tr live mx no cap len j' o').
+Proof. intros. unfold send_line_b_c.send_line_tr. destruct live; [apply sl_run_sz | reflexivity]. Qed.
+Lemma gesture_end_tr_sz : forall live mx no cap XL j o j' o',
+  tr_sz (gesture_end_b_c.gesture_end_tr live mx no cap XL j o) =
+  tr_sz (gesture_end_b_c.gesture_end_tr live mx no cap XL j' o').
+Proof.
+  intros. unfold gesture_end_b_c.gesture_end_tr. rewrite !tr_sz_app. f_equal; apply send_line_tr_sz.
+Qed.
+Lemma list_push_tra_sz : forall v v' N CAP n,
+  tr_sz (ListTr.list_push_tra v N CAP n) = tr_sz (ListTr.list_push_tra v' N CAP n).
+Proof.
+  intros. unfold ListTr.list_push_tra. rewrite !tr_sz_app. f_equal.
+  destruct (N =? CAP); [destruct (CAP =? 0)|]; reflexivity.
+Qed.
+
+(* ================================================================== (1) the composition *)
+Section comp.
+Context {P : Type}.
+Local Notation rv := (RelayRunT.rev P).
+(* a callee whose trace w runs after the prefix a of the caller's trace: its start live bytes bi are at most the
+   caller's start bb plus a's net change (the allocator rules' posts move the live bytes exactly, step lemmas of
+   ReplyTrPeak.v), so the caller's peak premise gives the callee's *)
+Lemma tr_peak_callee : forall (a w b : list rv) bb bi L,
+  bi <= bb + tr_net a -> bb + tr_peak (a ++ w ++ b) <= L -> bi + tr_peak w <= L.
+Proof. intros a w b bb bi L H1 H2. pose proof (tr_peak_mid a w b). lia. Qed.
+Lemma tr_max_callee : forall (a w b : list rv) M, tr_max (a ++ w ++ b) < M -> tr_max w < M.
+Proof. intros a w b M H. rewrite !tr_max_app' in H. lia. Qed.
+End comp.
+
+(* the exact moves of the live bytes, one rule each (W_journal.v posts: malloc :790, free :812, realloc0 :863,
+   realloc :864, strndup :892, free(NULL) :833) *)
+Section moves.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Variable B : asyms.
+Lemma bb_after_malloc : forall ly S ly2 S2 res n,
+  ablocks B ly2 S2 = ablocks B ly S ++ [(res, n)] -> blocks_bytes S2 = blocks_bytes S + n.
+Proof. intros. rewrite (tp_bb_app B ly S ly2 S2 [(res, n)] H). cbn [bsum fold_right map snd]. unfold bsum. cbn. lia. Qed.
+Lemma bb_after_free : forall ly S ly2 S2 pa n,
+  (exists l1 l2, ablocks B ly S = l1 ++ (pa, n) :: l2 /\ ablocks B ly2 S2 = l1 ++ l2) ->
+  blocks_bytes S2 = blocks_bytes S - n.
+Proof.
+  intros ly S ly2 S2 pa n (l1 & l2 & E1 & E2).
+  rewrite (blocks_bytes_bsum B ly2 S2), (blocks_bytes_bsum B ly S), E1, E2, !bsum_app, bsum_cons. cbn [snd]. lia.
+Qed.
+Lemma bb_after_realloc0 : forall ly S ly2 S2 res n,
+  Permutation (ablocks B ly2 S2) ((res, n) :: ablocks B ly S) -> blocks_bytes S2 = blocks_bytes S + n.
+Proof.
+  intros. rewrite (blocks_bytes_bsum B ly2 S2), (bsum_perm _ _ H), bsum_cons, <- (blocks_bytes_bsum B ly S).
+  cbn [snd]. lia.
+Qed.
+Lemma bb_after_realloc : forall ly S ly2 S2 p n0 res n,
+  (exists l1 l2, ablocks B ly S = l1 ++ (p, n0) :: l2 /\ Permutation (ablocks B ly2 S2) ((res, n) :: l1 ++ l2)) ->
+  blocks_bytes S2 = blocks_bytes S - n0 + n.
+Proof.
+  intros ly S ly2 S2 p n0 res n (l1 & l2 & E1 & HP).
+  rewrite (blocks_bytes_bsum B ly2 S2), (bsum_perm _ _ HP), (blocks_bytes_bsum B ly S), E1, bsum_cons, !bsum_app,
+    bsum_cons. cbn [snd]. lia.
+Qed.
+(* (2) free(NULL): the blocks are kept, so the live bytes and the premise are *)
+Lemma bb_after_free_null : forall ly S ly2 S2,
+  Permutation (ablocks B ly2 S2) (ablocks B ly S) -> blocks_bytes S2 = blocks_bytes S.
+Proof. intros. rewrite (blocks_bytes_bsum B ly2 S2), (bsum_perm _ _ H), <- (blocks_bytes_bsum B ly S). reflexivity. Qed.
+Lemma tr_peak_after_free_null : forall {P : Type} ly S ly2 S2 (r : list (RelayRunT.rev P)),
+  blocks_bytes S + tr_peak r <= LIVE_MAX -> Permutation (ablocks B ly2 S2) (ablocks B ly S) ->
+  blocks_bytes S2 + tr_peak r <= LIVE_MAX.
+Proof. intros P ly S ly2 S2 r H HP. rewrite (bb_after_free_null ly S ly2 S2 HP). exact H. Qed.
+End moves.
+Lemma tr_peak_free0 : forall {P : Type} x (r : list (RelayRunT.rev P)), tr_peak (RelayRunT.RFree 0 x :: r) = tr_peak r.
+Proof. intros P x r. rewrite tr_peak_free. pose proof (tr_peak_nonneg r). lia. Qed.
+
+(* a callee send_line / list_push / gesture_end inside a caller's trace, at any addresses: the caller's peak gives the
+   callee's peak premise at its canonical trace *)
+Lemma sl_peak_callee : forall (a b : list (RelayRunT.rev YO0i.sptr)) bb bi live mx no cap len j o L,
+  bi <= bb + tr_net a ->
+  bb + tr_peak (a ++ send_line_b_c.send_line_tr live mx no cap len j o ++ b) <= L ->
+  bi + tr_peak (send_line_b_c.send_line_tr live mx no cap len 0 RelayRunF.adr0) <= L.
+Proof.
+  intros. destruct (tr_sz_measures _ _ (send_line_tr_sz live mx no cap len j o 0 RelayRunF.adr0)) as (E & _).
+  rewrite <- E. exact (tr_peak_callee a _ b bb bi L H H0).
+Qed.
+Lemma lp_peak_callee : forall (a b : list (RelayRunT.rev YO0i.sptr)) bb bi v N CAP n L,
+  bi <= bb + tr_net a ->
+  bb + tr_peak (a ++ ListTr.list_push_tra v N CAP n ++ b) <= L ->
+  bi + tr_peak (ListTr.list_push_tra RelayRunF.adr0 N CAP n) <= L.
+Proof.
+  intros. destruct (tr_sz_measures _ _ (list_push_tra_sz v RelayRunF.adr0 N CAP n)) as (E & _).
+  rewrite <- E. exact (tr_peak_callee a _ b bb bi L H H0).
+Qed.
+Lemma ge_peak_callee : forall (a b : list (RelayRunT.rev YO0i.sptr)) bb bi live mx no cap XL j o L,
+  bi <= bb + tr_net a ->
+  bb + tr_peak (a ++ gesture_end_b_c.gesture_end_tr live mx no cap XL j o ++ b) <= L ->
+  bi + tr_peak (gesture_end_b_c.gesture_end_tr live mx no cap XL 0 RelayRunF.adr0) <= L.
+Proof.
+  intros. destruct (tr_sz_measures _ _ (gesture_end_tr_sz live mx no cap XL j o 0 RelayRunF.adr0)) as (E & _).
+  rewrite <- E. exact (tr_peak_callee a _ b bb bi L H H0).
+Qed.
+
+(* ================================================================== the callee rooms, at W_contract.v's names *)
+(* gestures_end's key run: each key's gesture_end, then free (key) (relay.c:132-142); ReplyTrPeakC.v:182-189 *)
+Fixpoint gse_tr (c : ctl) (mx no cap : Z) (xs : list (list byte)) : list (RelayRunT.rev YO0i.sptr) :=
+  match xs with
+  | [] => []
+  | x :: xs' => ge_tr c mx no cap (Z.of_nat (length x)) ++
+      RelayRunT.RFree (Z.of_nat (length x) + 1) RelayRunF.adr0 ::
+      gse_tr (ge_ctl c (Z.of_nat (length x))) mx (ge_no c no (Z.of_nat (length x)))
+        (ge_cap c mx no cap (Z.of_nat (length x))) xs'
+  end.
+(* one peak over the whole key run gives gse_room, key by key (ReplyTrPeakC.v:200 gse_room_p_of_peak) *)
+Lemma gse_room_of_peak : forall MMAX xs bb c mx no cap,
+  tr_max (gse_tr c mx no cap xs) < MMAX -> bb + tr_peak (gse_tr c mx no cap xs) <= LIVE_MAX ->
+  gse_room MMAX bb c mx no cap xs.
+Proof.
+  intros MMAX xs. induction xs as [|x xs IH]; intros bb c mx no cap HM HP; [exact I|].
+  cbn [gse_tr] in HM, HP. cbn [gse_room]. unfold ge_room.
+  rewrite tr_max_app', tr_max_cons' in HM. rewrite tr_peak_app, tr_peak_free in HP.
+  split; [split; lia|]. apply IH; lia.
+Qed.
+(* gesture_end's first send, from ge_room at its start (ReplyTrPeakC.v:210 ge_room_p_sends) *)
+Lemma ge_room_first : forall MMAX bb c mx no cap XL,
+  ge_room MMAX bb c mx no cap XL -> bb + tr_peak (sl_tr c mx no cap XL) <= LIVE_MAX.
+Proof.
+  intros MMAX bb c mx no cap XL (_ & HP). unfold ge_tr, gesture_end_b_c.gesture_end_tr in HP. unfold sl_tr.
+  rewrite tr_peak_app in HP. lia.
+Qed.
+(* every request of gesture_end, in order (ReplyTrPeakC.v:244 ge_room_p_room) *)
+Lemma ge_room_room : forall MMAX bb c mx no cap XL,
+  ge_room MMAX bb c mx no cap XL -> tr_room bb (ge_tr c mx no cap XL).
+Proof. intros MMAX bb c mx no cap XL (_ & HP). exact (tr_peak_room _ bb HP). Qed.
+(* the second send's own peak premise, at the live bytes after the first send (ReplyTrPeakC.v:248 ge_room_p_second) *)
+Lemma ge_room_second : forall MMAX bb c mx no cap XL,
+  ge_room MMAX bb c mx no cap XL ->
+  let live := sl_live c XL in
+  let t1 := send_line_b_c.send_line_tr live mx no cap XL 0 RelayRunF.adr0 in
+  (bb + tr_net t1) + tr_peak (send_line_b_c.send_line_tr live mx (no + XL)
+     (send_line_b_c.send_line_cap live mx no cap XL) 5 0 RelayRunF.adr0) <= LIVE_MAX.
+Proof.
+  intros MMAX bb c mx no cap XL (_ & HP). cbv zeta. unfold ge_tr, gesture_end_b_c.gesture_end_tr in HP.
+  pose proof (sl_peak_callee (send_line_b_c.send_line_tr (sl_live c XL) mx no cap XL 0 RelayRunF.adr0) []
+    bb (bb + tr_net (send_line_b_c.send_line_tr (sl_live c XL) mx no cap XL 0 RelayRunF.adr0))
+    (sl_live c XL) mx (no + XL) (send_line_b_c.send_line_cap (sl_live c XL) mx no cap XL) 5
+    (0 + RelayRunF.nretF (send_line_b_c.send_line_tr (sl_live c XL) mx no cap XL 0 RelayRunF.adr0))
+    (send_line_b_c.send_line_out (sl_live c XL) mx no cap XL 0 RelayRunF.adr0) LIVE_MAX ltac:(lia)) as H.
+  rewrite app_nil_r in H. exact (H HP).
+Qed.
+(* sl_spec's / lp_spec's room gives every request's live-bytes premise in order (ReplyTrPeakC.v:264-270) *)
+Lemma sl_room : forall bb c mx no cap len,
+  bb + tr_peak (sl_tr c mx no cap len) <= LIVE_MAX -> tr_room bb (sl_tr c mx no cap len).
+Proof. intros bb c mx no cap len H. exact (tr_peak_room _ bb H). Qed.
+Lemma lp_room : forall bb l n, bb + tr_peak (lp_tr l n) <= LIVE_MAX -> tr_room bb (lp_tr l n).
+Proof. intros bb l n H. exact (tr_peak_room _ bb H). Qed.
+
+(* ================================================================== the sum forms a caller already holds *)
+(* list_push: its trace's peak is within the sum lp_spec stated before C3 (ReplyTrPeak.v:504 tr_lp_window's case split) *)
+Lemma lp_tr_peak_le : forall l n, 0 <= hl_cap l -> 0 <= n ->
+  tr_peak (lp_tr l n) <= (if lp_grow l then lp_vbytes l else 0) + (n + 1).
+Proof.
+  intros l n Hc Hn. unfold lp_tr, lp_grow, lp_vbytes, ListTr.list_push_tra, grow_cap, AREC.
+  destruct (Z.eqb_spec (hl_n l) (hl_cap l)) as [E|E]; [destruct (Z.eqb_spec (hl_cap l) 0) as [E0|E0]|];
+    cbv beta iota; cbn [app tr_peak fold_right]; lia.
+Qed.
+(* send_line: one round chain's peak is within its summed requests (requests happen only above cap >= 0) *)
+Lemma sl_run_peak_le_alloc : forall f mx no cap rem j o, 0 <= cap ->
+  tr_peak (fst (send_line_b_c.sl_run f mx no cap rem j o)) <= sl_alloc_run f mx no cap rem /\
+  0 <= sl_alloc_run f mx no cap rem.
+Proof.
+  induction f as [|f IH]; intros mx no cap rem j o Hc; cbn [send_line_b_c.sl_run sl_alloc_run].
+  - cbn [fst tr_peak fold_right]. lia.
+  - destruct (rem <=? 0); [cbn [fst tr_peak fold_right]; lia|].
+    match goal with |- context [if ?b then mx else rem] => generalize (if b then mx else rem); intros n end.
+    destruct (Z.ltb_spec cap (no + n)) as [Hl|Hl]; cbv beta iota; [|apply IH; exact Hc].
+    cbn [fst].
+    destruct (IH mx (no + n) ((no + n) * 2) (rem - n) (S j) (RelayRunT.Ret j) ltac:(lia)) as [I1 I2].
+    pose proof (tr_peak_nonneg (fst (send_line_b_c.sl_run f mx (no + n) ((no + n) * 2) (rem - n) (S j)
+      (RelayRunT.Ret j)))).
+    destruct (Z.eqb_spec cap 0); cbv beta iota; [rewrite tr_peak_malloc | rewrite tr_peak_realloc]; lia.
+Qed.
+Lemma sl_tr_peak_le_alloc : forall c mx no cap len, 0 <= cap ->
+  tr_peak (sl_tr c mx no cap len) <= sl_alloc c mx no cap len.
+Proof.
+  intros c mx no cap len Hc. unfold sl_tr, sl_alloc, send_line_b_c.send_line_tr.
+  destruct (sl_live c len); [exact (proj1 (sl_run_peak_le_alloc _ mx no cap len 0 RelayRunF.adr0 Hc)) |].
+  cbn [tr_peak fold_right]. lia.
+Qed.
+
+(* ================================================================== gesture_end's net change (gse_room's threading) *)
+(* one round chain moves the live bytes by its final capacity less its start capacity: each growth replaces g_out *)
+Lemma sl_run_net : forall f mx no cap rem j o,
+  tr_net (fst (send_line_b_c.sl_run f mx no cap rem j o)) = fst (snd (send_line_b_c.sl_run f mx no cap rem j o)) - cap.
+Proof.
+  induction f as [|f IH]; intros mx no cap rem j o; cbn [send_line_b_c.sl_run].
+  - cbn [fst snd tr_net fold_right]. lia.
+  - destruct (rem <=? 0); [cbn [fst snd tr_net fold_right]; lia|].
+    match goal with |- context [if ?b then mx else rem] => generalize (if b then mx else rem); intros n end.
+    destruct (Z.ltb_spec cap (no + n)) as [Hl|Hl]; cbv beta iota; [|apply IH].
+    cbn [fst snd]. rewrite tr_net_cons, IH.
+    destruct (Z.eqb_spec cap 0); cbv beta iota; lia.
+Qed.
+Lemma send_line_tr_net : forall live mx no cap len j o,
+  tr_net (send_line_b_c.send_line_tr live mx no cap len j o) = send_line_b_c.send_line_cap live mx no cap len - cap.
+Proof.
+  intros live mx no cap len j o. unfold send_line_b_c.send_line_tr, send_line_b_c.send_line_cap.
+  destruct live; [|cbn [tr_net fold_right]; lia].
+  rewrite sl_run_net. pose proof (sl_run_net (Z.to_nat len) mx no cap len 0 RelayRunF.adr0) as E.
+  destruct (tr_sz_measures _ _ (sl_run_sz (Z.to_nat len) mx no cap len j o 0 RelayRunF.adr0)) as (_ & N & _).
+  rewrite sl_run_net in N. lia.
+Qed.
+(* after a send of XL <> 0 bytes, " end\0" is live exactly when that send was (W_ge_room.v:121 sl_live_ctl5, the same
+   proof; restated here so that the kit does not Require the gestures family) *)
+Lemma ge_live5 : forall c XL, XL <> 0 -> sl_live (sl_ctl c XL) 5 = sl_live c XL.
+Proof.
+intros [cl br dd ei ev] XL HXL. unfold sl_live, sl_ctl, send_line_c.send_live, send_line_c.send_off.
+cbn [ct_cl ct_br ct_dd ct_ei ct_ev].
+replace (XL =? 0) with false by (symmetry; apply Z.eqb_neq; exact HXL).
+destruct (cl <? 0); [reflexivity|].
+destruct (Z.eqb_spec br 1) as [-> | Hb]; [reflexivity|].
+destruct (Z.eqb_spec dd 0) as [-> | Hd]; [reflexivity|].
+cbn [orb negb andb]. destruct (dd =? 1); reflexivity.
+Qed.
+Lemma ge_tr_net : forall c mx no cap XL, XL <> 0 ->
+  tr_net (ge_tr c mx no cap XL) = ge_cap c mx no cap XL - cap.
+Proof.
+  intros c mx no cap XL HXL. unfold ge_tr, gesture_end_b_c.gesture_end_tr, ge_cap, sl_cap, sl_no.
+  rewrite tr_net_app, !send_line_tr_net.
+  rewrite (ge_live5 c XL HXL).
+  destruct (sl_live c XL); [lia|].
+  cbn [send_line_b_c.send_line_cap]. lia.
+Qed.
+(* gesture_end's second send (" end\0" at send_line's ctl / no / cap after the first), in sl_spec's own terms: its
+   peak premise at the live bytes after the first send, which moved them by sl_cap - cap (ge_room_second, with
+   send_line_tr_net and ge_live5) *)
+Lemma ge_room_second_sl : forall MMAX bb c mx no cap XL, XL <> 0 ->
+  ge_room MMAX bb c mx no cap XL ->
+  (bb + (sl_cap c mx no cap XL - cap)) +
+    tr_peak (sl_tr (sl_ctl c XL) mx (sl_no c no XL) (sl_cap c mx no cap XL) 5) <= LIVE_MAX.
+Proof.
+  intros MMAX bb c mx no cap XL HXL HR. pose proof (ge_room_second MMAX bb c mx no cap XL HR) as H. cbv zeta in H.
+  rewrite send_line_tr_net in H. unfold sl_tr, sl_cap, sl_no. rewrite (ge_live5 c XL HXL).
+  destruct (sl_live c XL); [exact H|].
+  cbn [send_line_b_c.send_line_tr send_line_b_c.send_line_cap tr_peak fold_right] in H |- *. lia.
+Qed.

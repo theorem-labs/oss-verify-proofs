@@ -1,0 +1,103 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType.
+From LinuxProcessSemantics.Riscv Require Import Instr.
+From OSSVerify.simdjson.fuzz_parser.images Require Import Asan.
+From OSSVerify.Proofs.simdjson.fuzz_parser.lib.AS Require Import AxSymExec3 AsanPlanCore.
+From OSSVerify.Proofs.simdjson.fuzz_parser.lib.Seg Require Import SegExplore SegTmpl SegGhost SegProg.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations. Import AX2.
+Open Scope Z_scope.
+
+Definition SG : list Segment := Asan.M.loaded_segments.
+Definition SLOWAS_IT : itab := APC.mk_itab_ranges SG [(0xc0ae4, 2318%nat)].
+Definition V (n : nat) : expr := EVar n.
+Definition add (a b : expr) : expr := EAlu ALU_ADD a b.
+Definition sub (a b : expr) : expr := EAlu ALU_SUB a b.
+Definition mul (k : Z) (a : expr) : expr := EMd M_MUL (ELit k) a.
+Definition vRA := V 0.
+Definition vSP16 := V 1.
+Definition vGP := V 2.
+Definition vTP := V 3.
+Definition vS0 := V 4.
+Definition vS1 := V 5.
+Definition vS2 := V 6.
+Definition vS3 := V 7.
+Definition vS4 := V 8.
+Definition vS5 := V 9.
+Definition vS6 := V 10.
+Definition vS7 := V 11.
+Definition vS8 := V 12.
+Definition vS9 := V 13.
+Definition vS10 := V 14.
+Definition vS11 := V 15.
+Definition vF8 := V 16.
+Definition vFO := V 17.
+Definition vN := V 18.
+Definition vFG := V 19.
+Definition vV8 := V 20.
+Definition vSP := mul 16 vSP16.
+Definition vF := add (mul 8 vF8) vFO.
+Definition vV := mul 8 vV8.
+Definition spo (k : Z) : expr := add vSP (ELit k).
+
+(* [comment removed for export] *)
+Definition T0_regs : list expr :=
+  [ELit 0; vRA; (mul 16 vSP16); vGP; vTP; (V 21); (V 22); (V 23);
+   vS0; vS1; (vF); (add vF vN); (vV); (ELit 53); (ELit 0xa0000002e); (ELit 1);
+   (V 24); (V 25); vS2; vS3; vS4; vS5; vS6; vS7;
+   vS8; vS9; vS10; vS11; (V 26); (V 27); (V 28); (V 29)].
+Definition T0_kn : list kentry :=
+  [KRange vTP 0x642e70 0x642e70;
+   KRange vSP16 8795556151599 0x80000000000;
+   KWr (SA vSP (-4848)) (ELit 4848);
+   KUnk (SA vSP (-4848)) (ELit 4848);
+   KZero (SA (mul 2 vSP16) 2147450274) (ELit 606);
+   KDisj (SA vSP (-4848)) (ELit 4848) (SA vF 0) vN;
+   KDisj (SA vSP (-4848)) (ELit 4848) (SA vV 0) (ELit 8);
+   KRange vN 1 1048576;
+   KRange vF8 0xcca00 0xfffffefffff;
+   KRange vFO 0 7;
+   KRange (add vF vN) 0x665000 0x7fffff800000;
+   KDisj (SA (ELit 0) 0x7fff7000) (ELit 0x100000001000) (SA vF 0) vN;
+   KUnk (SA vF 0) vN;
+   KRange vFG 1 0x200000;
+   KRange (sub (mul 8 vFG) (add vFO vN)) 48 55;
+   KZero (SA vF8 2147450880) vFG;
+   KRange vV8 0xfffc0000000 0xffffffffffe;
+   KRange (sub vV vSP) 8 8;
+   KWr (SA vV 0) (ELit 8);
+   KZero (SA vV8 2147450880) (ELit 1);
+   KDisj (SA vV 0) (ELit 8) (SA vF 0) vN;
+   KImg 0x10000 0x42c40;
+   KZero (SA (ELit 0) 2147471480) (ELit 1324);
+   KZero (SA (ELit 0) 2147472808) (ELit 80);
+   KWord (SA (ELit 0) 0x107300) 8 (ELit 0x10faf8);
+   KWord (SA (ELit 0) 0x10faf8) 8 (ELit 2147450880);
+   KWord (SA (ELit 0) 0x107358) 8 (ELit 0x10fb00);
+   KWord (SA (ELit 0) 0x10fb00) 4 (ELit 1);
+   KWord (SA (ELit 0) 0x10b978) 4 (ELit 8388608)].
+Definition T0 : ST.tmpl := ST.TM 0xc0ae4 T0_regs T0_kn 30%nat (ELit 4096) 0%nat.
+
+(* [comment removed for export] *)
+Definition XR_regs : list expr :=
+  [ELit 0; vRA; (mul 16 vSP16); vGP; vTP; (V 23); (V 24); (V 25);
+   vS0; vS1; ((V 21)); ((V 22)); (V 26); (V 27); (V 28); (V 29);
+   (V 30); (V 31); vS2; vS3; vS4; vS5; vS6; vS7;
+   vS8; vS9; vS10; vS11; (V 32); (V 33); (V 34); (V 35)].
+Definition XR_kn : list kentry :=
+  [KUnk (SA vV 0) (ELit 8);
+   KImg 0x10000 0x42c40;
+   KZero (SA (ELit 0) 2147471480) (ELit 1324);
+   KZero (SA (ELit 0) 2147472808) (ELit 80);
+   KWord (SA (ELit 0) 0x107300) 8 (ELit 0x10faf8);
+   KWord (SA (ELit 0) 0x10faf8) 8 (ELit 2147450880);
+   KWord (SA (ELit 0) 0x107358) 8 (ELit 0x10fb00);
+   KWord (SA (ELit 0) 0x10fb00) 4 (ELit 1);
+   KWord (SA (ELit 0) 0x10b978) 4 (ELit 8388608)].
+Definition XR : ST.tmpl := ST.TM 0xc2be8 XR_regs XR_kn 36%nat (ELit 0) 0%nat.
+
+Definition SLOWAS : SP.prog := SP.PGH 21 [T0] [XR] [(vSP, -4848, ELit 4848); (vV, 0, ELit 8)] [] [] (Some [(vSP, -4848, ELit 4848); (mul 2 vSP16, 2147450274, ELit 606); (vF, 0, vN); (vF8, 2147450880, vFG); (vV, 0, ELit 8); (vV8, 2147450880, ELit 1); (ELit 0, 0x10000, ELit 0x655000); (ELit 0, 164800, ELit 10592); (ELit 0, 175424, ELit 640); (ELit 0, 2147471480, ELit 1324); (ELit 0, 2147472808, ELit 80); (ELit 0, 0x107300, ELit 8); (ELit 0, 0x10faf8, ELit 8); (ELit 0, 0x107358, ELit 8); (ELit 0, 0x10fb00, ELit 4)]) (Some (vSP)) [(vF, 0, vN); (vF8, 2147450880, vFG)] [].

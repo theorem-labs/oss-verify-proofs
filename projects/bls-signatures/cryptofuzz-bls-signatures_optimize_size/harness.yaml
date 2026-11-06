@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: bls-signatures
 harness: cryptofuzz-bls-signatures_optimize_size
-rocq: OssFuzzTheorems.bls_signatures.cryptofuzz_bls_signatures_optimize_size
+rocq: OSSVerify.bls_signatures.cryptofuzz_bls_signatures_optimize_size
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

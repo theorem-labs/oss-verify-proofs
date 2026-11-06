@@ -1,0 +1,49 @@
+cell	value	claim (from its name)	measured on fuzz_wire.asan	verdict	readers	note	next series
+tfib_rodata_lo	0x102d0	.rodata start	0x102d0	TRUE	0		-
+tfib_text_lo	0x2ff7c	.text start	0x2ff7c	TRUE	0		-
+tfib_init_array_lo	0x98250	.init_array start	0x98250	TRUE	0		-
+tfib_init_array_hi	0x98270	.init_array end	0x98270	TRUE	0		-
+tfib_fini_array_lo	0x98270	.fini_array start	0x98270	TRUE	0		-
+tfib_fini_array_hi	0x98280	.fini_array end	0x98280	TRUE	0		-
+tfib_preinit_array_lo	0x98280	.preinit_array start	0x98280	TRUE	0		-
+tfib_preinit_array_hi	0x98288	.preinit_array end	0x98288	TRUE	0		-
+tfib_data_rel_ro_lo	0x98288	.data.rel.ro start	0x98288	TRUE	0		-
+tfib_data_rel_ro_hi	0x98788	.data.rel.ro end	0x98788	TRUE	0		-
+tfib_got_lo	0x98788	.got start	0x98788	TRUE	0		-
+tfib_got_hi	0x994e0	.got end	0x994e0	TRUE	0		-
+tfib_data_lo	0x9a4e0	.data start	0x9a4e0	TRUE	0		-
+tfib_data_hi	0x9d098	.data end	0x9d098	TRUE	0		-
+tfib_bss_lo	0x9d0c0	.bss start	0x9d0c0	TRUE	0		-
+tfib_bss_hi	0x5f4ff0	.bss end	0x5f4ff0	TRUE	0		-
+tfib_tbss_lo	0x97250	.tbss start	0x97250	TRUE	0		-
+tfib_tbss_hi	0x97264	.tbss end	0x97264	TRUE	0		-
+tfib_img_lo	IMG_LO	the first PT_LOAD page (IMG_LO)	0x10000	TRUE	0	by name: IMG_LO	-
+tfib_img_hi	IMG_TOP	the image top (IMG_TOP)	0x5f5000	TRUE	0	by name: IMG_TOP	-
+tfib_entry	0x2ff7c	e_entry	0x2ff7c	TRUE	0		-
+tfib_gp	0x10800	__global_pointer$	0x10800	TRUE	0		-
+tfib_at_img_lo	0x10000	the first PT_LOAD page (IMG_LO)	0x10000	TRUE	0	AB12 img_lo := 0x10000	-
+tfib_at_img_hi	0x5f5000	the image top (IMG_TOP)	0x5f5000	TRUE	0	AB12 img_hi := 0x5f5000	-
+tfib_at_n_res	4%nat	the atable field n_res	4	TRUE	0	AB12 n_res := 4	-
+tfib_at_shadow_off	0x7fff8000	the value of __asan_shadow_memory_dynamic_address (0xa0778) after start-up	0x7fff8000	TRUE	0	A/AB01.v hand-off states: KWord at 0xa0778 holds 0x7fff8000 | AB12 shadow_off := 0x7fff8000	-
+tfib_at_a_entry	0x2ff7c	e_entry	0x2ff7c	TRUE	0	AB12 a_entry := 0x2ff7c	-
+tfib_at_rw_lo	0x9a000	writable PT_LOAD page-down start	0x9a000	TRUE	0	AB12 rw_lo := 0x9a000	-
+tfib_at_rw_len	0x55b000	writable PT_LOAD page-rounded length	0x55b000	TRUE	0	AB12 rw_len := 0x55b000	-
+tfib_at_ph_addr_z	0x10040	program headers address (PT_LOAD 0 vaddr + e_phoff)	0x10040	TRUE	0	AB12 ph_addr_z := 0x10040	-
+tfib_at_ph_ent_z	56	e_phentsize	56	TRUE	0	AB12 ph_ent_z := 56	-
+tfib_at_ph_num_z	11	e_phnum	11	TRUE	0	AB12 ph_num_z := 11	-
+tfib_at_x_imemset	0x63330	start of __sanitizer_internal_memset	0x63330	TRUE	0	AB12 x_imemset := 0x63330	-
+tfib_at_x_imemcpy	0x632b4	start of __sanitizer_internal_memcpy	0x632b4	TRUE	0	AB12 x_imemcpy := 0x632b4	-
+tfib_at_x_memset	0x91f18	start of memset	0x91f18	TRUE	0	AB12 x_memset := 0x91f18	-
+tfib_at_x_memcpy	0x91b14	start of memcpy	0x91b14	TRUE	0	AB12 x_memcpy := 0x91b14	-
+tfib_at_x_memiszero	0x63860	start of _ZN11__sanitizer11mem_is_zeroEPKcm	0x63860	TRUE	0	AB12 x_memiszero := 0x63860	-
+tfib_at_x_istrncpy	0x6375c	start of _ZN11__sanitizer16internal_strncpyEPcPKcm	0x6375c	TRUE	0	AB12 x_istrncpy := 0x6375c	-
+tfib_at_x_sealed	0x11806	the atable field x_sealed	0x11806	TRUE	0	AB12 x_sealed := 0x11806	-
+tfib_at_x_popfree	0x36368	the atable field x_popfree	0x36368	TRUE	0	AB12 x_popfree := 0x36368	-
+tfib_at_x_sniff	0	0 = no sniff routine in the image	0	TRUE	0	symbols with "sniff": none | AB12 x_sniff := 0	-
+tfib_at_sniff_tab	0	0 = no sniff routine in the image	0	TRUE	0	symbols with "sniff": none | AB12 sniff_tab := 0	-
+tfib_at_sniff_cell	0	0 = no sniff routine in the image	0	TRUE	0	symbols with "sniff": none | AB12 sniff_cell := 0	-
+tfib_at_x_envscan	0x87918	an address in the scan routine the atable record names	0x87918	TRUE	0	AB12 x_envscan := 0x87918 | __init_libc+0x38	-
+tfib_at_x_envscan_k	0x87924	an address in the scan routine the atable record names	0x87924	TRUE	0	AB12 x_envscan_k := 0x87924 | __init_libc+0x44	-
+tfib_at_x_pnscan	0x879dc	an address in the scan routine the atable record names	0x879dc	TRUE	0	AB12 x_pnscan := 0x879dc | __init_libc+0xfc	-
+tfib_at_x_pnscan_k	0x879e8	an address in the scan routine the atable record names	0x879e8	TRUE	0	AB12 x_pnscan_k := 0x879e8 | __init_libc+0x108	-
+tfib_at_stops_more	12 entries	the image's self-loop stops	13 in .text (A/AB12.v stops_more: 13, the same set)	FALSE	0	lacks 0x6dbb4 (_ZN11__sanitizerL23SealedRepairReservationEmm+0xc0)	remove: incomplete (12 of 13), unread

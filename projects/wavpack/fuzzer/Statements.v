@@ -16,7 +16,7 @@
     wrong argument count, a missing or unreadable FILE, a FILE shorter than its
     header, or one of 64 MiB or more, it exits with status 2 without calling the
     harness.  Every statement quantifies over all of these cases and over every
-    other process input (see Vocabulary in OssFuzzTheorems.Core.Shapes).
+    other process input (see Vocabulary in OSSVerify.Core.Shapes).
 
     WHAT THE HARNESS CHECKS.  Opens the input as a WavPack stream (tags,
     wrapper, DSD-as-PCM, OPEN_NO_CHECKSUM, 4 worker threads), calls ~25 getters,
@@ -31,26 +31,29 @@
     harness README, not here: this file changes only when a statement does. *)
 
 From Stdlib Require Import QArith.
-From OssFuzzTheorems.Core Require Import Shapes.
-From OssFuzzTheorems.wavpack.fuzzer Require Images Distribution.
+From OSSVerify.Core Require Import Shapes.
+From OSSVerify.wavpack.fuzzer Require Images Distribution.
 
 (** ** Halting *)
 
 (** On every input on which the plain build is never refused memory for
     exceeding 16 GiB, and when the environment refuses nothing it is not forced
-    to, every execution of the plain build exits with status 0 or 2.  It never
-    crashes, fails an assertion, hangs, or leaves the model.
+    to, every execution of the plain build exits with status 0, 2 or 78.  It
+    never crashes, fails an assertion, hangs, or leaves the model.  Status 78 is
+    the driver's report that a call of the fuzz target returned a value other
+    than 0 or -1, which this fuzz target does to turn an input away
+    (source/fuzzer.cc:148-153).
 
     Not claimed: anything about what the program writes; anything about other
     compilers, architectures or WavPack commits. *)
 Definition plain_halts : Prop :=
-  halts_within_budget Budgets.Standard.lim_source Exits.ok_or_refused Images.plain.
+  halts_within_budget Budgets.Standard.lim_source (cons (stdpp.bitvector.definitions.Z_to_bv _ 78%Z) Exits.ok_or_refused) Images.plain.
 
 (** As [plain_halts], for the UBSan build.  A failed UBSan check traps, so a
     proof also shows that no check UBSan makes in this build fails on any such
     input. *)
 Definition ubsan_halts : Prop :=
-  halts_within_budget Budgets.Standard.lim_source Exits.ok_or_refused Images.ubsan.
+  halts_within_budget Budgets.Standard.lim_source (cons (stdpp.bitvector.definitions.Z_to_bv _ 78%Z) Exits.ok_or_refused) Images.ubsan.
 
 (** As [plain_halts], for the ASan build.  An ASan report aborts, so a proof
     also shows that ASan detects no memory error, in the code it instruments, on
@@ -58,14 +61,14 @@ Definition ubsan_halts : Prop :=
     uninstrumented).  The runtime's own address-space reservations are not
     charged to the budget. *)
 Definition asan_halts : Prop :=
-  halts_within_budget Budgets.Standard.lim_source Exits.ok_or_refused Images.asan.
+  halts_within_budget Budgets.Standard.lim_source (cons (stdpp.bitvector.definitions.Z_to_bv _ 78%Z) Exits.ok_or_refused) Images.asan.
 
 (** As [plain_halts], for the ASan+UBSan build.  An ASan report aborts and a
     failed UBSan check traps, so a proof also shows that neither sanitizer
     fires, in the code they instrument, on any such input (the harness README
     lists the code this build links uninstrumented). *)
 Definition asan_ubsan_halts : Prop :=
-  halts_within_budget Budgets.Standard.lim_source Exits.ok_or_refused Images.asan_ubsan.
+  halts_within_budget Budgets.Standard.lim_source (cons (stdpp.bitvector.definitions.Z_to_bv _ 78%Z) Exits.ok_or_refused) Images.asan_ubsan.
 
 (** ** Agreement of each sanitizer build with the plain build *)
 
@@ -136,8 +139,9 @@ Definition asan_ubsan_agreement_decidable : Prop :=
 
 (** ** Proving a statement
 
-    A proof is a directory proofs/wavpack/fuzzer/<statement>/ whose Proof.v
-    ends, for example, in
+    A proof is a directory named after the statement, in this fuzz target's
+    proofs folder (docs/proving.md says where it is), whose Proof.v ends, for
+    example, in
       Theorem plain_halts_holds : Statements.plain_halts.
     A bound proof names its bound:
       Theorem asan_disagrees_at_most_holds : Statements.asan_disagrees_at_most (1 # 1000).

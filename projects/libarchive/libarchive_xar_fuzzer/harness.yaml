@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_xar_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_xar_fuzzer
+rocq: OSSVerify.libarchive.libarchive_xar_fuzzer
 origin: upstream
 summary: Reads the input as a XAR archive (+ all filters); per entry calls pathname(_w), size, mtime,
   mode, filetype, uid, gid and drains archive_read_data. Every return value is discarded.

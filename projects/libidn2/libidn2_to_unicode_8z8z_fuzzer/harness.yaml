@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libidn2
 harness: libidn2_to_unicode_8z8z_fuzzer
-rocq: OssFuzzTheorems.libidn2.libidn2_to_unicode_8z8z_fuzzer
+rocq: OSSVerify.libidn2.libidn2_to_unicode_8z8z_fuzzer
 origin: upstream
 summary: idn2_check_version(input) (exercises gnulib strverscmp), idn2_to_unicode_lzlz, idn2_to_unicode_44i
   for aligned sizes, strerror tables and NULL-argument combinations when size == 0; outputs freed unchecked.

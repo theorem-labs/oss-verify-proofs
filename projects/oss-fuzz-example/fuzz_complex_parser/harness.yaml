@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: oss-fuzz-example
 harness: fuzz_complex_parser
-rocq: OssFuzzTheorems.oss_fuzz_example.fuzz_complex_parser
+rocq: OSSVerify.oss_fuzz_example.fuzz_complex_parser
 origin: upstream
 summary: copies the input to a NUL-terminated string and calls parse_complex_format(); return value ignored.
 entry: LLVMFuzzerTestOneInput

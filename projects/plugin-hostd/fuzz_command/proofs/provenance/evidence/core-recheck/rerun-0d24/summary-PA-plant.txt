@@ -1,0 +1,41 @@
+INPUTS USED by port_addr_check.py --src $DONOR/A --dst $PLANT/A-plant --src-image A=$IMG/cgif.A.pin:$IMG/cgif.A.twin --dst-image A=$IMG/cmd.A.pin:$IMG/cmd.A.twin --donors-from $BIN --cache cache --paired-only --summary --fail-on-flags --out full.tsv --include AB1v.v --include ACeg.v --include AE6k.v --include AE7d.v --dst-include AB1v.v --dst-include ACeg.v --dst-include AE6k.v --dst-include AE7d.v
+  image src A  $IMG/cgif.A.pin  sha256 7093581aab04  589640 bytes  symbols: symtab of cgif.A.twin 488e39500746
+  image dst A  $IMG/cmd.A.pin  sha256 c0661b96b5bd  634904 bytes  symbols: symtab of cmd.A.twin 68db792d5fa7
+  ref src  $DONOR/A  -> local path
+  ref dst  $PLANT/A-plant  -> local path
+  count symbols of src A: 1996
+  count symbols of dst A: 2256
+  count src files read: 728
+  count src files after --include: 4
+  count dst files read: 1316
+  count dst files after --dst-include: 4
+  count files paired: 4
+  count numerals: 4981
+  count files recognised or declared generated (GENERATED-SKIPPED): 0
+  count constructors whose declared field roles were read from the ported tree: 32
+  count constructors whose declared field roles were read from the source tree: 7
+  count stale-donor candidates dropped instead of judged: 1
+  count file pairs whose build came from rule (i'): 4
+  count file pairs whose build came from rule (i): 4
+  count named-symbol cells UNMEASURED (the run reads the file against another build): 0
+  control fill_pass known answer (selftest_fill, run before anything is read): RAN  pass
+  control donor-vs-donor: NOT RUN  a separate run of this tool with one image on both sides; see the tool's documentation file
+  DECLARED ABSENT / DEFAULT USED  a decidable stale-donor candidate: the value is in executable code (the code-pointer rule judges it)  count 1  the candidate is not reported
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-SOURCE  count 2  reported as its own row, never silently
+  note file pairing: normalised RELATIVE PATH after --map / --rename, then the identity of the first hex in the file name; never the basename alone. There is no donor-text carry filter, so no candidate is dropped for being absent from a same-named donor file (the tool author's note)
+# files paired 4; numerals 4981; "kernel" = of those, inside a fail-loud vm_compute / fetch_word fact
+IMAGE-EXTENT-SAME	4	kernel 1
+NON-ADDRESS-SAME	4808	kernel 4106
+SAME-GEOMETRY	3
+SAME-SYMBOL	157	kernel 146
+DIFFERENT-SYMBOL	2	kernel 2	FLAG
+GEOMETRY-CHANGED	1	kernel 1	FLAG
+SAME-VALUE-DIFFERENT-OBJECT	1	kernel 1	FLAG
+SLID-TO-NEIGHBOUR	1	FLAG
+STALE-DONOR-CODE-POINTER	1	kernel 1	FLAG
+STALE-DONOR-DATA-POINTER	1	kernel 1	FLAG
+UNPAIRED-SOURCE	2	kernel 2	FLAG
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+UNMEASURED named-symbol 0 / 0 cells	UNMEASURED-NAME 0 rows	UNPAIRED-FILE-UNMEASURED 0 rows
+# image A $IMG/cgif.A.pin 7093581aab04 symbols: symtab
+# image A $IMG/cmd.A.pin c0661b96b5bd symbols: symtab

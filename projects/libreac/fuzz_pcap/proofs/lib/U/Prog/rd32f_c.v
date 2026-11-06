@@ -1,0 +1,24 @@
+From OSSVerify.libreac.fuzz_pcap Require Symbols.
+From Stdlib Require Import ZArith List.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Lib Require Import PropExec MState Mem Cells Exec Step Frame.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.U Require Import Img0.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.U.Prog Require Import StdioModel rd_u32_c.
+Import ListNotations.
+Open Scope Z_scope.
+
+(* rd32 of fuzz/fuzz_pcap.c:72-77 (rd32@fuzz_pcap.md (sha256 48adc6117b81; internal record)), a function of its own in the ubsan build
+   at 0x131a8. Its value is rd_val of rd_u32_c (the same byte order rule as the reader's rd_u32). *)
+Definition RD32F : Z := Eval compute in Symbols.Ubsan.s_rd32.
+
+Definition rd32f_contract : Prop :=
+  forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+         (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c0 c1 c2 c3 : byte),
+    bv_unsigned a0 <> 0 ->
+    bytes_at rsegs m (bv_unsigned a0) [c0; c1; c2; c3] ->
+    evt rsegs
+      (fun ms' => exists a1' a2' a3' a4' a5' : word,
+         ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (wz (bv_swrap 32 (rd_val a1 c0 c1 c2 c3))) a1' a2' a3' a4' a5' a6 a7
+                       s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (ret_pc ra) fc None m (seg_rom rsegs))
+      (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+          F (Z_to_bv 64 RD32F) fc None m (seg_rom rsegs)).

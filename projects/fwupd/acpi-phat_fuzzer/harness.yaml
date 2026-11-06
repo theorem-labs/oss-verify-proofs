@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: fwupd
 harness: acpi-phat_fuzzer
-rocq: OssFuzzTheorems.fwupd.acpi_phat_fuzzer
+rocq: OSSVerify.fwupd.acpi_phat_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

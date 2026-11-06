@@ -1,0 +1,188 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Theorem Labs, 2026-10: the ARx-GENERIC twin of lib/A/W_kit.v's one AR-stated lemma, blk_off_imgP (W_kit.v:375)
+   (a Theorem Labs lane's step 1 of route (b), 2026-10-29). W_kit.v is NOT edited.
+   cgif's proof reads two facts out of AR's own conjuncts: the ledger's image cover (W_kit.v:52 pa_img_cover over
+   ALedger) and a block's size bound (chunk_facts). A generic ARx has neither, so both are Section hypotheses here, stated
+   over ARx: IMGC (ly_img covers the image's band) and BLKN (a live block's size is non-negative). Section br discharges
+   both at cgif's AR (Hp ignored) from exactly the facts cgif's proof uses, and checks the generic lemma against
+   W_kit.v's statement there. The cf instance discharges them from its ledger (YGcfPlace's alc_img, the chunk bound). *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0j YK0s.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP01 YP00 YP0i YCbn YP0b YP0a.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YN3v YI04 YG0s YP07.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK04 YA0i YA0n YA0o YCbm YA0q.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YP0d YP0c YC80.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YCbqG.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_syms W_kit.
+Import ListNotations.
+Local Unset Lia Cache. Local Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope bv_scope.
+Open Scope Z_scope.
+
+Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Section d.
+Context {SK : YI16.sink_head}.
+Section g.
+Context {L : ptable wsym} {PL : PAListing L} {PI : PAImg L}.
+Variable B : asyms.
+Variable ARx : alayout -> astate -> list Z -> world pa_segs -> (word -> option byte) -> Model -> Prop.
+Context {hl : Z}.
+Hypothesis LAWS : AR_laws_x pa_segs B ARx hl.
+(* the generic counterparts of W_kit.v:52 pa_img_cover and of chunk_facts' size bound *)
+Hypothesis IMGC : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
+fst (ly_img ly) <= 0x10000 /\ 0x5fb000 <= fst (ly_img ly) + snd (ly_img ly).
+Hypothesis BLKN : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n.
+(* W_kit.v:375 blk_off_imgP *)
+Lemma blk_off_imgP_x : forall ly S Hp (W : world pa_segs) mem md p n,
+ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> off_img p (req_size n).
+Proof.
+intros ly S Hp W mem md p n HAR Hin. unfold off_img.
+destruct (IMGC ly S Hp W mem md HAR) as [C1 C2].
+pose proof (req_size_pos n (BLKN ly S Hp W mem md p n HAR Hin)) as [Q _].
+destruct (Z.le_gt_cases (p + req_size n) 0x10000) as [|H1]; [left; lia|].
+destruct (Z.le_gt_cases 0x5fb000 p) as [|H2]; [right; lia|]. exfalso.
+assert (Hc : ~ in_zr (Z.max p 0x10000) (ly_img ly)).
+{ refine (proj1 (alx_client_img _ _ _ LAWS ly S Hp W mem md (Z.max p 0x10000) HAR _)).
+  left. exists p, n. split; [exact Hin | lia]. }
+apply Hc. unfold in_zr. lia.
+Qed.
+End g.
+
+(* THE BRIDGE at cgif's AR with Hp ignored: IMGC and BLKN from the facts W_kit.v's proof reads, and the generic lemma
+   at that instance gives W_kit.v's statement. LX is the AR instance of the laws (YCbqG.v:1677 AR_laws_x_of_AR builds
+   it from AR_laws and three facts the consumer has). *)
+Section br.
+Context {L : ptable wsym} {PL : PAListing L} {PI : PAImg L}.
+Variable B : asyms.
+Hypothesis LX : AR_laws_x pa_segs B (fun ly S (_ : list Z) W mem md => AR pa_segs B ly S W mem md) 0.
+Lemma AR_imgc : forall ly S (Hp : list Z) (W : world pa_segs) mem md, AR pa_segs B ly S W mem md ->
+fst (ly_img ly) <= 0x10000 /\ 0x5fb000 <= fst (ly_img ly) + snd (ly_img ly).
+Proof. intros ly S Hp W mem md (_ & LG & _). exact (pa_img_cover ly S md LG). Qed.
+Lemma AR_blkn : forall ly S (Hp : list Z) (W : world pa_segs) mem md p n, AR pa_segs B ly S W mem md ->
+In (p, n) (ablocks B ly S) -> 0 <= n.
+Proof.
+intros ly S Hp W mem md p n (M & _ & _) Hin. apply In_ablocks in Hin as (k & Hk & Hst & Hu & Hn).
+pose proof (chunk_facts B ly S _ k M Hk) as (_ & _ & _ & _ & _ & _ & G7 & _). rewrite Hn in G7. lia.
+Qed.
+Lemma blk_off_imgP_AR : forall ly S (W : world pa_segs) mem md p n,
+AR pa_segs B ly S W mem md -> In (p, n) (ablocks B ly S) -> off_img p (req_size n).
+Proof.
+intros ly S W mem md p n HAR Hin.
+exact (blk_off_imgP_x B (fun ly S (_ : list Z) W mem md => AR pa_segs B ly S W mem md)
+  LX AR_imgc AR_blkn ly S [] W mem md p n HAR Hin).
+Qed.
+End br.
+End d.
+End b.
+(* W_kit.v:491 paj_run_tok and :507 paj_run_to_tok for a RUN / RUNTO over W_journal_x's generic chain
+   (paj_run_x_x / paj_run_to_x_x): the same text, with the two ghost lists Hp / Hpc of the generic journal among the
+   inferred arguments (16 holes in place of 14). paj_tables, paj_after_run_tok, srr_obls and psrr_branch_tok are
+   W_kit.v's, unchanged. *)
+Ltac paj_run_tok_x RUN HS HJ SHOK Bspan :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of SHOK with
+| sh_ok _ ?Bx ?SH _ _ =>
+lazymatch paj_tables RUN with (?tpi, ?tw) =>
+let K := eval vm_compute in (run_K A_LIM Bx SH ss) in
+let r := eval vm_compute in (sym_runN_pi_tok tpi tw K Bx Bspan SH FUEL ss) in
+lazymatch r with
+| (?st', ?rs) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_runN_pi_tok tpi tw K Bx Bspan SH FUEL ss = (st', rs)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_tok_x: no hypothesis  img_env _ _ E" end in
+eapply (RUN W FUEL E K Bx Bspan SH ss st' rs ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ltac:(unfold A_LIM; cbn; lia) HEI HS SHOK
+ltac:(vm_compute; reflexivity) Hrun HJ);
+[ clear Hrun; cbn [sh_obls]; srr_obls
+| clear Hrun
+| clear Hrun HS HJ SHOK; try match type of ms with machine_state => clear ms | _ => idtac end;
+paj_after_run_tok HS HJ SHOK ]
+end end
+end
+| _ => fail "paj_run_tok_x: HS must be  st_ok_pi segs val E ss (restrict (w_H W) ms)"
+end.
+Ltac paj_run_to_tok_x RUNTO HS HJ SHOK Bspan stop :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of SHOK with
+| sh_ok _ ?Bx ?SH _ _ =>
+lazymatch paj_tables RUNTO with (?tpi, ?tw) =>
+let K := eval vm_compute in (run_K A_LIM Bx SH ss) in
+let r := eval vm_compute in (sym_run_toN_pi_tok tpi tw K Bx Bspan SH FUEL stop ss) in
+lazymatch r with
+| (?st', ?rs) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_run_toN_pi_tok tpi tw K Bx Bspan SH FUEL stop ss = (st', rs)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_to_tok_x: no hypothesis  img_env _ _ E" end in
+eapply (RUNTO W FUEL stop E K Bx Bspan SH ss st' rs ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ltac:(unfold A_LIM; cbn; lia) HEI HS SHOK
+ltac:(vm_compute; reflexivity) Hrun HJ);
+[ clear Hrun; cbn [sh_obls]; srr_obls
+| clear Hrun
+| clear Hrun HS HJ SHOK; try match type of ms with machine_state => clear ms | _ => idtac end;
+paj_after_run_tok HS HJ SHOK ]
+end end
+end
+| _ => fail "paj_run_to_tok_x: HS must be  st_ok_pi segs val E ss (restrict (w_H W) ms)"
+end.
+(* route R (a Theorem Labs lane WalkB2, 2026-10-30): the run tactics at a world relation R. RUN := paj_run_x_xG R G HG XO OUT and
+   RUNTO := paj_run_to_x_xG R G HG XO OUT (W_journal_x.v Section g, concluding SRrG pa_segs R); the goal is
+   SRrG pa_segs R W (mkCfg ms mdc) Q, and the continuation is run_post_pi_tok_AJX_xG R .. (the same binders as the
+   strict run_post). The text is paj_run_tok_x / paj_run_to_tok_x's: the G run lemmas have the strict ones' argument
+   list (16 inferred holes after ms), and paj_tables / paj_after_run_tok / srr_obls read no relation. *)
+Ltac paj_run_tok_xR RUN HS HJ SHOK Bspan :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of SHOK with
+| sh_ok _ ?Bx ?SH _ _ =>
+lazymatch paj_tables RUN with (?tpi, ?tw) =>
+let K := eval vm_compute in (run_K A_LIM Bx SH ss) in
+let r := eval vm_compute in (sym_runN_pi_tok tpi tw K Bx Bspan SH FUEL ss) in
+lazymatch r with
+| (?st', ?rs) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_runN_pi_tok tpi tw K Bx Bspan SH FUEL ss = (st', rs)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_tok_xR: no hypothesis  img_env _ _ E" end in
+eapply (RUN W FUEL E K Bx Bspan SH ss st' rs ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ltac:(unfold A_LIM; cbn; lia) HEI HS SHOK
+ltac:(vm_compute; reflexivity) Hrun HJ);
+[ clear Hrun; cbn [sh_obls]; srr_obls
+| clear Hrun
+| clear Hrun HS HJ SHOK; try match type of ms with machine_state => clear ms | _ => idtac end;
+paj_after_run_tok HS HJ SHOK ]
+end end
+end
+| _ => fail "paj_run_tok_xR: HS must be  st_ok_pi segs val E ss (restrict (w_H W) ms)"
+end.
+Ltac paj_run_to_tok_xR RUNTO HS HJ SHOK Bspan stop :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of SHOK with
+| sh_ok _ ?Bx ?SH _ _ =>
+lazymatch paj_tables RUNTO with (?tpi, ?tw) =>
+let K := eval vm_compute in (run_K A_LIM Bx SH ss) in
+let r := eval vm_compute in (sym_run_toN_pi_tok tpi tw K Bx Bspan SH FUEL stop ss) in
+lazymatch r with
+| (?st', ?rs) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_run_toN_pi_tok tpi tw K Bx Bspan SH FUEL stop ss = (st', rs)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_to_tok_xR: no hypothesis  img_env _ _ E" end in
+eapply (RUNTO W FUEL stop E K Bx Bspan SH ss st' rs ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ltac:(unfold A_LIM; cbn; lia) HEI HS SHOK
+ltac:(vm_compute; reflexivity) Hrun HJ);
+[ clear Hrun; cbn [sh_obls]; srr_obls
+| clear Hrun
+| clear Hrun HS HJ SHOK; try match type of ms with machine_state => clear ms | _ => idtac end;
+paj_after_run_tok HS HJ SHOK ]
+end end
+end
+| _ => fail "paj_run_to_tok_xR: HS must be  st_ok_pi segs val E ss (restrict (w_H W) ms)"
+end.

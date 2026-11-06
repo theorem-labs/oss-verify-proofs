@@ -1,0 +1,27 @@
+# images: target fuzz_transport.asan .got [0xa4030, 0xa4d88) (427 words): PT_DYNAMIC 0, .dynamic none, .rela.dyn none, .got.plt none; donor fuzz_grant.asan .got [0x9c810, 0x9d568) (427 words): PT_DYNAMIC 0, .dynamic none, .rela.dyn none, .got.plt none
+E. whole .got: 427 words, 0 hold a different symbol + offset (or value) at the same offset
+A. core numerals in the target .got: 167 {'GOT-SAME': 167}; 20 distinct cells
+   cell 0xa4030 (.got+0x0) holds value 0x0  x2
+   cell 0xa4060 (.got+0x30) holds __cxa_finalize+0x0  x4
+   cell 0xa4068 (.got+0x38) holds value 0x0  x1
+   cell 0xa4070 (.got+0x40) holds _ZN11__sanitizer14PageSizeCachedE+0x0  x22
+   cell 0xa4078 (.got+0x48) holds _ZN11__sanitizer22SecondaryAllocatorNameE+0x0  x1
+   cell 0xa4080 (.got+0x50) holds _ZN11__sanitizer21common_flags_dont_useE+0x0  x22
+   cell 0xa4088 (.got+0x58) holds _ZN6__asan28asan_flags_dont_use_directlyE+0x0  x9
+   cell 0xa4090 (.got+0x60) holds __asan_shadow_memory_dynamic_address+0x0  x14
+   cell 0xa4098 (.got+0x68) holds _ZN6__asan10kMidMemBegE+0x0  x11
+   cell 0xa40a0 (.got+0x70) holds _ZN6__asan10kMidMemEndE+0x0  x11
+   cell 0xa40a8 (.got+0x78) holds _ZN6__asan11kHighMemEndE+0x0  x11
+   cell 0xa40b0 (.got+0x80) holds _ZN14__interception11real_memsetE+0x0  x10
+   cell 0xa40d0 (.got+0xa0) holds value 0x1  x15
+   cell 0xa40d8 (.got+0xa8) holds _ZN11__sanitizer25sealed_report_in_progressE+0x0  x10
+   cell 0xa40e0 (.got+0xb0) holds _ZN11__sanitizer17current_verbosityE+0x0  x2
+   cell 0xa40e8 (.got+0xb8) holds __asan_option_detect_stack_use_after_return+0x0  x2
+   cell 0xa4bf8 (.got+0xbc8) holds _ZN6__asan21replace_intrin_cachedE+0x0  x2
+   cell 0xa4ce8 (.got+0xcb8) holds value 0x10  x2
+   cell 0xa4d18 (.got+0xce8) holds __stack_chk_guard+0x0  x13
+   cell 0xa4d20 (.got+0xcf0) holds environ+0x0  x3
+B. .got cell values the text states (lit8 / mkChunk CVal 8 / val_mem 8): 60 {"stated value = the cell's 8 bytes": 60}
+C. check.tsv rows: got-value SAME 182, got-word SAME 165
+D. OK-GOT0: target GOT[0] = .got start 0xa4030, its word 0x0 (OK-GOT0 wants 0x0: OK); donor GOT[0] = 0x9c810, word 0x0 (wants 0x0: OK); core numerals naming GOT[0] (= 0xa4030): 2 (A/AB1w.v:16 A/AB1w.v:17), each GOT-SAME: True
+result: .got words wrong: 0 (A 0, B 0, C 0, D 0, E 0)

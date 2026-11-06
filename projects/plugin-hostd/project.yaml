@@ -1,0 +1,50 @@
+schema: oss-fuzz-theorems/project/1
+project: plugin-hostd
+description: 'A daemon that hosts CLAP and LV2 audio plugins out of process, each in a worker of its own, behind mod-host''s
+  command protocol: its command parser and dispatcher, and the relay of its workers'' feedback to the controller.'
+homepage: https://github.com/FreeMixer/plugin-hostd
+language: c
+status: available
+enrolled: true
+library:
+  name: plugin-hostd
+  repository: https://github.com/FreeMixer/plugin-hostd
+  commit: 65cd2b02e8306f7e5f98fa0adfd0b3f8c1df6a5c
+  version: 0.10.0
+  licence: GPL-3.0-or-later
+harnesses:
+- name: fuzz_command
+  status: included
+  origin: upstream
+- name: fuzz_reply
+  status: included
+  origin: upstream
+build:
+  system: custom
+  clang: 20.1.8
+  builder: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  oss_verify:
+    repository: theorem-labs/oss-verify
+    commit: 2840abf10963080bf3ef5a52a2af576aef8d1f8f
+    path: projects/plugin-hostd
+assets:
+  bin:
+    release: v2026.11.1
+    file: plugin-hostd-bin.tar.zst
+    bytes: 454656
+    sha256: fb8b0dd0514cfb4b8db16263c1ace523392b554de2841f5c8416bd4d0e4831ae
+  src:
+    release: v2026.11.1-src
+    file: plugin-hostd-src.tar.zst
+    bytes: 482647
+    sha256: 3570e9034e765e01cf05b7ec4c511be9103b7899daa1465d1d22073c84d29717
+  src_manifest:
+    release: v2026.11.1-src
+    file: plugin-hostd-src.MANIFEST.tsv
+    bytes: 1727
+    sha256: 8d873dd4ab7069864c0be5bd30ca85a558f346b14f2b36f374fff0a55f53884a
+  port:
+    release: v2026.11.1-src
+    file: plugin-hostd-port.tar.zst
+    bytes: 208092
+    sha256: 37e218a4d2192cb48b9ff58eba9fbef9a47f6b23bc3153facc148264d9c08a0c

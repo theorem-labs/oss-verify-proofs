@@ -1,0 +1,175 @@
+twin <TWIN> (sha256 e217cb0a84f1); pin <PIN> (41113a03c82f): ALLOC section headers IDENTICAL
+  .note.gnu.build-id SHT_NOTE           [  0x102a8,   0x102cc) size 0x24
+  .rodata          SHT_PROGBITS       [  0x102e0,   0x22aec) size 0x1280c
+  .eh_frame_hdr    SHT_PROGBITS       [  0x22aec,   0x24d48) size 0x225c
+  .eh_frame        SHT_PROGBITS       [  0x24d48,   0x3012c) size 0xb3e4
+  .text            SHT_PROGBITS       [  0x3112c,   0xa25a4) size 0x71478
+  .tbss            SHT_NOBITS         [  0xa25a8,   0xa25bc) size 0x14
+  .init_array      SHT_INIT_ARRAY     [  0xa35a8,   0xa35c8) size 0x20
+  .fini_array      SHT_FINI_ARRAY     [  0xa35c8,   0xa35d8) size 0x10
+  .preinit_array   SHT_PREINIT_ARRAY  [  0xa35d8,   0xa35e0) size 0x8
+  .data.rel.ro     SHT_PROGBITS       [  0xa35e0,   0xa3c90) size 0x6b0
+  .got             SHT_PROGBITS       [  0xa3c90,   0xa49e8) size 0xd58
+  .relro_padding   SHT_NOBITS         [  0xa49e8,   0xa5000) size 0x618
+  .data            SHT_PROGBITS       [  0xa59e8,   0xa85a0) size 0x2bb8
+  asan_globals     SHT_PROGBITS       [  0xa85a0,   0xa8fa0) size 0xa00
+  .bss             SHT_NOBITS         [  0xa8fc0,  0x615050) size 0x56c090
+COMMENTS: cell/pair comments checked 10; naming another image 3; wrong numbers 0; fixed (proposed) 5; file notices checked 7 (naming another image 3); deletions in the patch 0
+  B/YB1w.v:1-1 file notice              covers -; image: none named; numbers: n/a (no address in it); kept
+  B/YB1w.v:2-2 file notice              covers -; image: none named; numbers: n/a (no address in it); kept
+  B/YB1w.v:3-3 file notice              covers -; image: none named; numbers: n/a (no address in it); kept
+  B/YB1w.v:4-4 file notice              covers -; image: ANOTHER: cgif, cgif_file_fuzzer, libreac/fuzz_decode, sha256 1c29845fe605; numbers: n/a (no address in it); kept
+  B/YB1w.v:5-5 file notice              covers -; image: ANOTHER: cgif, fuzz_decode.asan-ubsan; numbers: n/a (no address in it); kept
+  B/YB1w.v:6-6 cell/pair comment (Modified-by notice line) covers tfib_img_hi, tfib_img_lo; image: none named; numbers: n/a (no address in it); PROPOSED (this image, registered form; ok: 0x10000=cell value/PT_LOAD[0] p_vaddr, 0x616000=cell value/last PT_LOAD end page-rounded (IMG_TOP)) -- NOT PATCHED (a Modified-by notice line: the licence-lines tool owns it; Main 2026-10-31). Finding: names the donor's file Reusable/YImgTop.v; YB1w.v reads lib.B YImgTop (B/YImgTop.v: Notation IMG_LO 0x10000, IMG_TOP 0x616000; twin: PT_LOAD[0] p_vaddr 0x10000, last PT_LOAD end 0x615050 page-rounded 0x616000: EQUAL); the donor read lib.Reusable YImgTop; donor text, byte-equal in 88154566652a:proofs/libreac/fuzz_decode/lib/B/YB1w.v
+  B/YB1w.v:7-7 file notice              covers -; image: this image by name, no sha256; ANOTHER: libreac/fuzz_decode; numbers: n/a (no address in it); kept
+  B/YB1w.v:23-24 cell/pair comment        covers tfib_img_hi, tfib_img_lo; image: ANOTHER: 'decode:' tag (libreac/fuzz_decode's own note); numbers: n/a (no address in it); PROPOSED (this image, registered form; ok: 0x10000=cell value/PT_LOAD[0] p_vaddr, 0x616000=cell value/last PT_LOAD end page-rounded (IMG_TOP), 0xa8fc0=.bss sh_addr, 0x56c090=.bss sh_size, 0x615050=.bss end/last PT_LOAD end) -- 'decode:' is libreac/fuzz_decode's note; 'YImgTop COMPUTES' is false here (B/YImgTop.v states numerals); YB1w.v reads lib.B YImgTop (B/YImgTop.v: Notation IMG_LO 0x10000, IMG_TOP 0x616000; twin: PT_LOAD[0] p_vaddr 0x10000, last PT_LOAD end 0x615050 page-rounded 0x616000: EQUAL); the donor read lib.Reusable YImgTop; donor text, byte-equal in 88154566652a:proofs/libreac/fuzz_decode/lib/B/YB1w.v
+  B/YB12.v:1-1 file header of the cell  covers TFIB_TEXT_LO; image: this image by name, no sha256; ANOTHER: cgif_file_fuzzer; numbers: n/a (no address in it); kept
+  B/YB12.v:2-2 file header of the cell  covers TFIB_TEXT_LO; image: this image (sha256 41113a03c82f/e217cb0a84f1); numbers: n/a (no address in it); kept
+  B/Prog/DgnTransportBAddr.v:1-1 file notice              covers -; image: none named; numbers: n/a (no address in it); kept
+  B/Prog/DgnTransportBAddr.v:2-6 cell/pair comment        covers transportb_hi (auipc table; parameterised, not a cell); image: this image by name, no sha256; numbers: n/a (no address in it); PROPOSED (this image, registered form; n/a (no address in it)) -- names this image by name only (palist.py --img fuzz_transport.asan-ubsan; prog-gen/B/run.sh refuses any image but sha256 41113a03c82f): registered form only, no wrong fact
+  B/Prog/DgnTransportBCg.v:1-47 cell/pair comment        covers TRANS_RHI, TRANS_RLO; image: this image by name, no sha256; ANOTHER: fuzz_frame; numbers: n/a (no address in it); counts 22 globals / 15 .rodata / 7 .data.rel.ro: TRANS_RO_GLOBALS has 22, 15 in .rodata, 7 in .data.rel.ro on the twin: ok; PROPOSED (this image, registered form; ANOTHER: fuzz_frame; n/a (no address in it)) -- the file's image statement names this image by name only: registered form; hand-written kit (no generator)
+  B/Prog/DgnTransportBCg.v:140-140 cell/pair comment        covers TRANS_RHI, TRANS_RLO; image: none named; numbers: n/a (no address in it); PROPOSED (this image, registered form; ok: 0xa35e0=cell value/.preinit_array end/.data.rel.ro sh_addr, 0xa3c90=.data.rel.ro end/.got sh_addr, 0xd58=.got sh_size, 0xa49e8=cell value/.got end/.relro_padding sh_addr) -- the cells' own comment names no image and no number: registered form and the twin's section header numbers added; its section names are right (see the verdicts)
+  B/Prog/DgnTransportBCg.v:144-145 cell/pair comment        covers TRANS_RHI, TRANS_RLO; image: none named; numbers: n/a (no address in it); kept
+  B/Prog/DgnTransportBCg.v:150-151 cell/pair comment        covers TRANS_RHI, TRANS_RLO; image: none named; numbers: n/a (no address in it); kept
+  B/Prog/DgnTransportBCg.v:197-199 cell/pair comment        covers TRANS_RHI, TRANS_RLO; image: none named; numbers: n/a (no address in it); kept
+scope: 2d48500794db lib/B/; 2d48500794db lib/Reusable/; a83315552115 lib/B/Prog/
+ENUMERATED 78 (_hi/_lo Z cells)  SECTION 25 (hi 12, lo 13)  NO-SECTION 53  EXCLUDED 44 (not Z cells)
+CHECKED 25  FALSE 0 (hi 0)  MATCH-ABUTS 14 (hi 8)  MATCH-PADDED 11 (hi 4)  UNEVALUATED 0  TO-DELETE 0  valid=True
+merge drift (a83315552115 lib/B, lib/Reusable vs 2d48500794db): none
+  MATCH-ABUTS  TRANS_RLO                lib/B/Prog/DgnTransportBCg.v:141 = 0xa35e0; .data.rel.ro sh_addr = 0xa35e0; prev .preinit_array 0xa35e0; .preinit_array ends at it: abuts, unproven by value; readers 4 (a833 4); not relocated (no donor file (lib/B/Prog kit); git log -1 856d47a0aad 2026-10-31 proofs: libdiginet fuzz_transport kit: empty-range carries 
+  MATCH-ABUTS  TRANS_RHI                lib/B/Prog/DgnTransportBCg.v:142 = 0xa49e8; .got end = 0xa49e8; next .relro_padding 0xa49e8; .relro_padding starts at it: abuts, unproven by value; readers 4 (a833 4); not relocated (no donor file (lib/B/Prog kit); git log -1 856d47a0aad 2026-10-31 proofs: libdiginet fuzz_transport kit: empty-range carries 
+  MATCH-PADDED TFIB_TEXT_LO             lib/B/YB12.v:18 = 0x3112c; .text sh_addr = 0x3112c; prev .eh_frame 0x3012c; no section ends at it; readers 0 (a833 0); not relocated (donor value 0x30054; (* Generated for libdiginet/fuzz_transport's asan-ubsan image by atable.py (frozen e88affcf0526, start-u
+  MATCH-PADDED tfib_rodata_lo           lib/B/YB1w.v:12 = 0x102e0; .rodata sh_addr = 0x102e0; prev .note.gnu.build-id 0x102cc; no section ends at it; readers 0 (a833 0); donor text (byte-equal 88154566652a:proofs/libreac/fuzz_decode/lib/B/YB1w.v:11)
+  MATCH-ABUTS  tfib_rodata_hi           lib/B/YB1w.v:12 = 0x22aec; .rodata end = 0x22aec; next .eh_frame_hdr 0x22aec; .eh_frame_hdr starts at it: abuts, unproven by value; readers 0 (a833 0); port_core alreloc (run-r14/fixed.tsv B/YB1w.v:11 donor 0x226cc remap 0x226cc new 0x22aec new_sym 0x22aec; check.tsv says "bound sec:.rodata.
+  MATCH-PADDED tfib_text_lo             lib/B/YB1w.v:13 = 0x3112c; .text sh_addr = 0x3112c; prev .eh_frame 0x3012c; no section ends at it; readers 0 (a833 0); port_core remap (run-r14/check.tsv B/YB1w.v:12 0x30054 -> 0x3112c "bound sec:.text.lo" class geometry; no fixed.tsv row)
+  MATCH-PADDED tfib_text_hi             lib/B/YB1w.v:13 = 0xa25a4; .text end = 0xa25a4; next .tbss 0xa25a8; no section starts at it; readers 0 (a833 0); port_core alreloc (run-r14/fixed.tsv B/YB1w.v:12 donor 0x97d50 remap 0x97d50 new 0xa25a4 new_sym -; check.tsv says "bound sec:.text.hi" clas
+  MATCH-PADDED tfib_init_array_lo       lib/B/YB1w.v:14 = 0xa35a8; .init_array sh_addr = 0xa35a8; prev .tbss 0xa25bc; no section ends at it; readers 0 (a833 0); port_core remap (run-r14/check.tsv B/YB1w.v:13 0x98d50 -> 0xa35a8 "bound sec:.init_array.lo" class data; no fixed.tsv row)
+  MATCH-ABUTS  tfib_init_array_hi       lib/B/YB1w.v:14 = 0xa35c8; .init_array end = 0xa35c8; next .fini_array 0xa35c8; .fini_array starts at it: abuts, unproven by value; readers 0 (a833 0); port_core alreloc (run-r14/fixed.tsv B/YB1w.v:13 donor 0x98d70 remap 0x98d70 new 0xa35c8 new_sym read+0x1058; check.tsv says "bound sec:.ini
+  MATCH-ABUTS  tfib_fini_array_lo       lib/B/YB1w.v:15 = 0xa35c8; .fini_array sh_addr = 0xa35c8; prev .init_array 0xa35c8; .init_array ends at it: abuts, unproven by value; readers 0 (a833 0); port_core alreloc (run-r14/fixed.tsv B/YB1w.v:14 donor 0x98d70 remap 0x98d70 new 0xa35c8 new_sym read+0x1058; check.tsv says "bound sec:.fin
+  MATCH-ABUTS  tfib_fini_array_hi       lib/B/YB1w.v:15 = 0xa35d8; .fini_array end = 0xa35d8; next .preinit_array 0xa35d8; .preinit_array starts at it: abuts, unproven by value; readers 0 (a833 0); port_core alreloc (run-r14/fixed.tsv B/YB1w.v:14 donor 0x98d80 remap 0x98d80 new 0xa35d8 new_sym read+0x1068; check.tsv says "bound sec:.fin
+  MATCH-ABUTS  tfib_preinit_array_lo    lib/B/YB1w.v:16 = 0xa35d8; .preinit_array sh_addr = 0xa35d8; prev .fini_array 0xa35d8; .fini_array ends at it: abuts, unproven by value; readers 0 (a833 0); port_core alreloc (run-r14/fixed.tsv B/YB1w.v:15 donor 0x98d80 remap 0x98d80 new 0xa35d8 new_sym read+0x1068; check.tsv says "bound sec:.pre
+  MATCH-ABUTS  tfib_preinit_array_hi    lib/B/YB1w.v:16 = 0xa35e0; .preinit_array end = 0xa35e0; next .data.rel.ro 0xa35e0; .data.rel.ro starts at it: abuts, unproven by value; readers 0 (a833 0); port_core alreloc (run-r14/fixed.tsv B/YB1w.v:15 donor 0x98d88 remap 0x98d88 new 0xa35e0 new_sym read+0x1070; check.tsv says "bound sec:.pre
+  MATCH-ABUTS  tfib_data_rel_ro_lo      lib/B/YB1w.v:17 = 0xa35e0; .data.rel.ro sh_addr = 0xa35e0; prev .preinit_array 0xa35e0; .preinit_array ends at it: abuts, unproven by value; readers 0 (a833 0); port_core alreloc (run-r14/fixed.tsv B/YB1w.v:16 donor 0x98d88 remap 0x98d88 new 0xa35e0 new_sym read+0x1070; check.tsv says "bound sec:.dat
+  MATCH-ABUTS  tfib_data_rel_ro_hi      lib/B/YB1w.v:17 = 0xa3c90; .data.rel.ro end = 0xa3c90; next .got 0xa3c90; .got starts at it: abuts, unproven by value; readers 0 (a833 0); port_core remap (run-r14/check.tsv B/YB1w.v:16 0x99288 -> 0xa3c90 "bound sec:.data.rel.ro.hi" class data; no fixed.tsv row)
+  MATCH-ABUTS  tfib_got_lo              lib/B/YB1w.v:18 = 0xa3c90; .got sh_addr = 0xa3c90; prev .data.rel.ro 0xa3c90; .data.rel.ro ends at it: abuts, unproven by value; readers 0 (a833 0); port_core remap (run-r14/check.tsv B/YB1w.v:17 0x99288 -> 0xa3c90 "bound sec:.got.lo" class data; no fixed.tsv row)
+  MATCH-ABUTS  tfib_got_hi              lib/B/YB1w.v:18 = 0xa49e8; .got end = 0xa49e8; next .relro_padding 0xa49e8; .relro_padding starts at it: abuts, unproven by value; readers 0 (a833 0); port_core alreloc (run-r14/fixed.tsv B/YB1w.v:17 donor 0x99ff8 remap 0x99ff8 new 0xa49e8 new_sym read+0x2478; check.tsv says "bound sec:.got
+  MATCH-PADDED tfib_data_lo             lib/B/YB1w.v:19 = 0xa59e8; .data sh_addr = 0xa59e8; prev .relro_padding 0xa5000; no section ends at it; readers 0 (a833 0); port_core remap (run-r14/check.tsv B/YB1w.v:18 0x9aff8 -> 0xa59e8 "bound sec:.data.lo" class data; no fixed.tsv row)
+  MATCH-ABUTS  tfib_data_hi             lib/B/YB1w.v:19 = 0xa85a0; .data end = 0xa85a0; next asan_globals 0xa85a0; asan_globals starts at it: abuts, unproven by value; readers 0 (a833 0); port_core remap (run-r14/check.tsv B/YB1w.v:18 0x9dbb0 -> 0xa85a0 "bound sec:.data.hi" class data; no fixed.tsv row)
+  MATCH-ABUTS  tfib_asan_globals_lo     lib/B/YB1w.v:20 = 0xa85a0; asan_globals sh_addr = 0xa85a0; prev .data 0xa85a0; .data ends at it: abuts, unproven by value; readers 0 (a833 0); port_core remap (run-r14/check.tsv B/YB1w.v:19 0x9dbb0 -> 0xa85a0 "bound sec:asan_globals.lo" class data; no fixed.tsv row)
+  MATCH-PADDED tfib_asan_globals_hi     lib/B/YB1w.v:20 = 0xa8fa0; asan_globals end = 0xa8fa0; next .bss 0xa8fc0; no section starts at it; readers 0 (a833 0); port_core remap (run-r14/check.tsv B/YB1w.v:19 0x9dc70 -> 0xa8fa0 "geometry (remap section-end, from the headers: one past the end of an OLD
+  MATCH-PADDED tfib_bss_lo              lib/B/YB1w.v:21 = 0xa8fc0; .bss sh_addr = 0xa8fc0; prev asan_globals 0xa8fa0; no section ends at it; readers 0 (a833 0); port_core remap (run-r14/check.tsv B/YB1w.v:20 0x9dc80 -> 0xa8fc0 "bound sec:.bss.lo" class bss; no fixed.tsv row)
+  MATCH-PADDED tfib_bss_hi              lib/B/YB1w.v:21 = 0x615050; .bss end = 0x615050; no next ALLOC section; no section starts at it; readers 0 (a833 0); port_core remap (run-r14/check.tsv B/YB1w.v:20 0x5f5bb8 -> 0x615050 "geometry (remap section-end, from the headers: one past the end of an O
+  MATCH-PADDED tfib_tbss_lo             lib/B/YB1w.v:22 = 0xa25a8; .tbss sh_addr = 0xa25a8; prev .text 0xa25a4; no section ends at it; readers 0 (a833 0); port_core alreloc (run-r14/fixed.tsv B/YB1w.v:21 donor 0x97d50 remap 0x97d50 new 0xa25a8 new_sym read+0x38; check.tsv says "bound sec:.tbss.
+  MATCH-PADDED tfib_tbss_hi             lib/B/YB1w.v:22 = 0xa25bc; .tbss end = 0xa25bc; next .init_array 0xa35a8; no section starts at it; readers 0 (a833 0); port_core remap (run-r14/check.tsv B/YB1w.v:21 0x97d64 -> 0xa25bc "geometry (remap section-end, from the headers: one past the end of an OLD
+NO-SECTION cells:
+  G_HARNESS_B_LO         lib/B/TransportGB.v:41 = 0x5ded00  (Definition)
+  G_HARNESS_B_HI         lib/B/TransportGB.v:42 = 0x5f2e10  (Definition)
+  img_lo                 lib/B/YB12.v:10 = 0x10000  (field)
+  img_hi                 lib/B/YB12.v:10 = 0x616000  (field)
+  rw_lo                  lib/B/YB12.v:11 = 0xa5000  (field)
+  tfib_img_lo            lib/B/YB1w.v:25 = 0x10000  (Definition)
+  tfib_img_hi            lib/B/YB1w.v:25 = 0x616000  (Definition)
+  tfib_at_img_lo         lib/B/YB1w.v:518 = 0x10000  (Definition)
+  tfib_at_img_hi         lib/B/YB1w.v:519 = 0x616000  (Definition)
+  tfib_at_rw_lo          lib/B/YB1w.v:523 = 0xa5000  (Definition)
+  TFIB_IMG_LO            lib/B/YCeg.v:89 = 0x10000  (Definition)
+  F_STDERR_LO            lib/B/YD1x.v:16 = 0xa82a8  (Definition)
+  F_STDERR_HI            lib/B/YD1x.v:16 = 0xa8390  (Definition)
+  RS_LO                  lib/B/YD20.v:45 = 0x5cecd0  (Definition)
+  RS_HI                  lib/B/YD20.v:46 = 0x5decd0  (Definition)
+  STDOUT_LO              lib/B/YD2f.v:153 = 0xa8398  (Definition)
+  STDOUT_HI              lib/B/YD2f.v:153 = 0xa8480  (Definition)
+  SOBUF_LO               lib/B/YD2f.v:154 = 0x613e78  (Definition)
+  SOBUF_HI               lib/B/YD2f.v:154 = 0x614288  (Definition)
+  SH_LO                  lib/B/YE2t.v:64 = 0x7fffbb00  (Definition)
+  SH_HI                  lib/B/YE2t.v:64 = 0x7fffbb10  (Definition)
+  SH_LO                  lib/B/YE2u.v:64 = 0x7fffbb08  (Definition)
+  SH_HI                  lib/B/YE2u.v:64 = 0x7fffbb10  (Definition)
+  SH_LO                  lib/B/YE2v.v:64 = 0x7fffb2f8  (Definition)
+  SH_HI                  lib/B/YE2v.v:64 = 0x7fffb300  (Definition)
+  SH_LO                  lib/B/YE2w.v:64 = 0x7fffab08  (Definition)
+  SH_HI                  lib/B/YE2w.v:64 = 0x7fffab10  (Definition)
+  SH_LO                  lib/B/YE35.v:64 = 0x7fffa8f8  (Definition)
+  SH_HI                  lib/B/YE35.v:64 = 0x7fffa900  (Definition)
+  MC_LO                  lib/B/YE39.v:28 = tfib_D_const_HIGHS_0x8080808080808080  (Definition)
+  MC_HI                  lib/B/YE39.v:29 = tfib_D_const_ONES_0x0101010101010100 + 8  (Definition)
+  IMG_RO_LO              lib/B/YE3i.v:22 = 0x10000  (Definition)
+  IMG_RO_HI              lib/B/YE3i.v:23 = 0x3012c  (Definition)
+  TFIB_IAL_LO            lib/B/YF0m.v:17 = 0xad880  (Definition)
+  TFIB_IAL_HI            lib/B/YF0m.v:17 = 0x12e8b0  (Definition)
+  TFIB_IMG_LO            lib/B/YF0x.v:44 = 0x10000  (Definition)
+  IMG_LO                 lib/B/YImgTop.v:4 = 0x10000  (Notation)
+  STACK_LO               lib/Reusable/YA01.v:15 = -8388608  (Definition)
+  BAND_LO                lib/Reusable/YA0g.v:93 = 0x7fff7000  (Definition)
+  LSH_HI                 lib/Reusable/YA0g.v:94 = 0x8fff7000  (Definition)
+  HSH_LO                 lib/Reusable/YA0g.v:95 = 0x2008fff7000  (Definition)
+  BAND_HI                lib/Reusable/YA0g.v:96 = 0x10007fff8000  (Definition)
+  IMG_LO                 lib/Reusable/YImgTop.v:24 = img_lo_of Asan.M.loaded_segments  (Definition)
+  RS_LO                  lib/Reusable/YL0k.v:189 = src0_D_read_stage  (Definition)
+  RS_HI                  lib/Reusable/YL0k.v:190 = src0_D_read_stage + 65536  (Definition)
+  TDCAN_LO               lib/Reusable/YL0k.v:191 = src0_tp - 16  (Definition)
+  TDCAN_HI               lib/Reusable/YL0k.v:192 = src0_tp - 8  (Definition)
+  ROM_LO                 lib/Reusable/YL0v.v:337 = src0_D_const_HIGHS_0x8080808080808080  (Definition)
+  ROM_HI                 lib/Reusable/YL0v.v:338 = src0_D_const_ONES_0x0101010101010100 + 8  (Definition)
+  SP_LO                  lib/Reusable/YP08.v:282 = 0x7fff80000000  (Definition)
+  SP_HI                  lib/Reusable/YP08.v:283 = 0x800000000000  (Definition)
+  pa_relro_lo            lib/B/Prog/DgnTransportBImg.v:126 = 0x0  (field)
+  pa_relro_hi            lib/B/Prog/DgnTransportBImg.v:127 = 0x0  (field)
+EXCLUDED (not parameterless Z cells):
+  2d48500794db lib/B/YFga.v:113 kept_of_frame_hi  untyped non-numeral (Notation alias)
+  2d48500794db lib/B/YFgb.v:101 kept_of_frame_hi  untyped non-numeral (Notation alias)
+  2d48500794db lib/B/YFgc.v:113 kept_of_frame_hi  untyped non-numeral (Notation alias)
+  2d48500794db lib/B/YFgd.v:101 kept_of_frame_hi  untyped non-numeral (Notation alias)
+  2d48500794db lib/B/YFge.v:113 kept_of_frame_hi  untyped non-numeral (Notation alias)
+  2d48500794db lib/B/YFgf.v:101 kept_of_frame_hi  untyped non-numeral (Notation alias)
+  2d48500794db lib/B/YFgk.v:103 R_STK_HI  type YP09.region
+  2d48500794db lib/B/YFgk.v:104 R_STK_LO  type YP09.region
+  2d48500794db lib/B/YFgy.v:99 R_STK_HI  untyped non-numeral (Notation alias)
+  2d48500794db lib/B/YFgy.v:100 R_STK_LO  untyped non-numeral (Notation alias)
+  2d48500794db lib/B/YFgz.v:99 R_STK_HI  untyped non-numeral (Notation alias)
+  2d48500794db lib/B/YFgz.v:100 R_STK_LO  untyped non-numeral (Notation alias)
+  2d48500794db lib/B/YFh1.v:78 kept_of_frame_hi  untyped non-numeral (Notation alias)
+  2d48500794db lib/B/YFho.v:12 nd_lo  parameterised: (k
+  2d48500794db lib/B/YFho.v:13 nd_hi  parameterised: (k
+  2d48500794db lib/B/YFhy.v:45 rz_lo  parameterised: (k
+  2d48500794db lib/B/YFhy.v:46 rz_hi  parameterised: (k
+  2d48500794db lib/B/YFhz.v:60 CL_lo  type sv
+  2d48500794db lib/B/YFhz.v:61 CL_hi  type sv
+  2d48500794db lib/B/YFi0.v:67 CL2_lo  type sv
+  2d48500794db lib/B/YFi0.v:68 CL2_hi  type sv
+  2d48500794db lib/Reusable/YA0e.v:125 sh_lo  parameterised: (E
+  2d48500794db lib/Reusable/YA0e.v:126 sh_hi  parameterised: (E
+  2d48500794db lib/Reusable/YI04.v:1029 trim_lo  parameterised: (r
+  2d48500794db lib/Reusable/YImgTop.v:18 seg_lo  parameterised: (s
+  2d48500794db lib/Reusable/YImgTop.v:19 seg_hi  parameterised: (s
+  2d48500794db lib/Reusable/YK0c.v:1096 end_hi  parameterised: (kn
+  2d48500794db lib/Reusable/YK0u.v:102 win_lo  parameterised: (sp0
+  2d48500794db lib/Reusable/YL07.v:300 anch_lo  parameterised: (G
+  2d48500794db lib/Reusable/YN2b.v:18 reg_lo  parameterised: (rg
+  2d48500794db lib/Reusable/YN2b.v:20 iv_lo  parameterised: (e
+  2d48500794db lib/Reusable/YO0d.v:84 vml_lo  parameterised: (B
+  2d48500794db lib/Reusable/YP05.v:220 zone_lo  parameterised: (E
+  2d48500794db lib/Reusable/YP05.v:221 zone_hi  parameterised: (E
+  2d48500794db lib/Reusable/YP0e.v:32 itv_meet_hi  parameterised: (a
+  2d48500794db lib/Reusable/YP0f.v:25 itv_lo  parameterised: (i
+  2d48500794db lib/Reusable/YP0f.v:26 itv_hi  parameterised: (i
+  a83315552115 lib/B/Prog/DgnTransportBAddr.v:212 transportb_hi  parameterised: (j
+  a83315552115 lib/B/Prog/YC1g.v:38 cval_atom_bound_lo  parameterised: (lim
+  a83315552115 lib/B/Prog/YC1g.v:39 atom_lo  parameterised: (lim n
+  a83315552115 lib/B/Prog/YC1g.v:40 region_atom_bound_lo  parameterised: (lim
+  a83315552115 lib/B/Prog/YC1g.v:43 facts_atom_bound_lo  parameterised: (lim
+  a83315552115 lib/B/Prog/YC1g.v:47 ss_atom_bound_lo  parameterised: (lim
+  a83315552115 lib/B/Prog/YC1g.v:52 run_K_lo  parameterised: (floor
+OTHER CELLS WHOSE VALUE IS A SECTION BOUND (not named _hi/_lo; 10; symbols at the value from the twin):
+  2d48500794db lib/B/YB01.v:21 a_off = 0xa5000  (.relro_padding end; symbols: -)
+  2d48500794db lib/B/YB01.v:21 a_off = 0xa8fc0  (.bss sh_addr; symbols: ___asan_globals_registered)
+  2d48500794db lib/B/YB03.v:17 a_off = 0xa5000  (.relro_padding end; symbols: -)
+  2d48500794db lib/B/YB12.v:11 a_entry = 0x3112c  (.text sh_addr; symbols: $x, _start)
+  2d48500794db lib/B/YB1w.v:26 tfib_entry = 0x3112c  (.text sh_addr; symbols: $x, _start)
+  2d48500794db lib/B/YB1w.v:27 tfib_A_start = 0x3112c  (.text sh_addr; symbols: $x, _start)
+  2d48500794db lib/B/YB1w.v:491 tfib_E_musl_read = 0xa25a4  (.text end; symbols: -)
+  2d48500794db lib/B/YB1w.v:494 tfib_D_init_array_0_3 = 0xa35a8  (.init_array sh_addr; symbols: $d, __init_array_start)
+  2d48500794db lib/B/YB1w.v:495 tfib_D_fini_array_0_1 = 0xa35c8  (.fini_array sh_addr .init_array end; symbols: $d, __fini_array_start, __init_array_end)
+  2d48500794db lib/B/YB1w.v:522 tfib_at_a_entry = 0x3112c  (.text sh_addr; symbols: $x, _start)
+ADDRESS FILE: DgnTransportBAddr.v defines no _hi/_lo cell (transportb_hi is the auipc table, a function of j); transportb_text = 0x812a0: symbols $x, LLVMFuzzerTestOneInput; section bound: none
+YB12.v TFIB_TEXT_LO + 4 * TFIB_TEXT_N = 0xa25a4; .text end 0xa25a4: EQUAL

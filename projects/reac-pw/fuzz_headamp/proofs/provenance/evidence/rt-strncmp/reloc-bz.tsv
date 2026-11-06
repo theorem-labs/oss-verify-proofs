@@ -1,0 +1,79 @@
+file:line	old	new	rule	old in fuzz_command.asan	new in fuzz_headamp.asan	decision
+lib/A/Bz/A/I_strncmp.v:77	0x46108	0x4283c	same-code function	__interceptor_strncmp+0x1b0	__interceptor_strncmp+0x1b0	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmp.v:122	0x45f58	0x4268c	FUNC entry	__interceptor_strncmp	__interceptor_strncmp	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmp.v:148	0x5f640	0x59d1c	FUNC entry	_ZN6__asan18TryAsanInitFromRtlEv	_ZN6__asan18TryAsanInitFromRtlEv	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmp.v:152	0x45fc0	0x426f4	same-code function	__interceptor_strncmp+0x68	__interceptor_strncmp+0x68	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmp.v:210	0x45f58	0x4268c	FUNC entry	__interceptor_strncmp	__interceptor_strncmp	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmp.v:232	0x5f640	0x59d1c	FUNC entry	_ZN6__asan18TryAsanInitFromRtlEv	_ZN6__asan18TryAsanInitFromRtlEv	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmp.v:265	0x45f58	0x4268c	FUNC entry	__interceptor_strncmp	__interceptor_strncmp	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:26	0xa63e0	0x9c360	.got slot of the same target	.got+0x50	.got+0x50	.got cell: headamp word at this cell = the same target as the donor word (read in fuzz_headamp.asan)
+lib/A/Bz/A/I_strncmpw.v:26	0x142be8	0x1368e8	OBJECT start	_ZN11__sanitizer21common_flags_dont_useE	_ZN11__sanitizer21common_flags_dont_useE	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:27	0xa63f0	0x9c370	.got slot of the same target	.got+0x60	.got+0x60	.got cell: headamp word at this cell = the same target as the donor word (read in fuzz_headamp.asan)
+lib/A/Bz/A/I_strncmpw.v:27	0xb10b8	0xa4db8	OBJECT start	__asan_shadow_memory_dynamic_address	__asan_shadow_memory_dynamic_address	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:28	0xb10b8	0xa4db8	OBJECT start	__asan_shadow_memory_dynamic_address	__asan_shadow_memory_dynamic_address	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:28	0x7fff8000	0x7fff8000	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw.v:29	0xb1d98	0xa5a98	OBJECT start	_ZN6__asanL11asan_initedE	_ZN6__asanL11asan_initedE	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:30	0x142cdd	0x1369dd	symbol	_ZN11__sanitizer21common_flags_dont_useE+0xf5	_ZN11__sanitizer21common_flags_dont_useE+0xf5	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:163	0x45fe8	0x4271c	same-code function	__interceptor_strncmp+0x90	__interceptor_strncmp+0x90	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:167	0x45fc0	0x426f4	same-code function	__interceptor_strncmp+0x68	__interceptor_strncmp+0x68	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:232	0x46354	0x42a88	same-code function	__interceptor_strncmp+0x3fc	__interceptor_strncmp+0x3fc	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:234	0x46344	0x42a78	same-code function	__interceptor_strncmp+0x3ec	__interceptor_strncmp+0x3ec	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:266	0x46150	0x42884	same-code function	__interceptor_strncmp+0x1f8	__interceptor_strncmp+0x1f8	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:270	0x4635c	0x42a90	same-code function	__interceptor_strncmp+0x404	__interceptor_strncmp+0x404	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:295	0x46150	0x42884	same-code function	__interceptor_strncmp+0x1f8	__interceptor_strncmp+0x1f8	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:299	0x46108	0x4283c	same-code function	__interceptor_strncmp+0x1b0	__interceptor_strncmp+0x1b0	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw.v:318	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw.v:318	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw.v:321	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw.v:322	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw.v:330	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw.v:330	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw.v:331	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw.v:331	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw.v:333	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw.v:344	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw.v:344	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw2.v:26	0x4641c	0x42b50	same-code function	__interceptor_strncmp+0x4c4	__interceptor_strncmp+0x4c4	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw2.v:28	0x4640c	0x42b40	same-code function	__interceptor_strncmp+0x4b4	__interceptor_strncmp+0x4b4	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw2.v:60	0x461a8	0x428dc	same-code function	__interceptor_strncmp+0x250	__interceptor_strncmp+0x250	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw2.v:64	0x46424	0x42b58	same-code function	__interceptor_strncmp+0x4cc	__interceptor_strncmp+0x4cc	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw2.v:89	0x461a8	0x428dc	same-code function	__interceptor_strncmp+0x250	__interceptor_strncmp+0x250	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw2.v:93	0x46160	0x42894	same-code function	__interceptor_strncmp+0x208	__interceptor_strncmp+0x208	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw2.v:112	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw2.v:112	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw2.v:115	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw2.v:116	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw2.v:124	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw2.v:124	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw2.v:125	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw2.v:125	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw2.v:127	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw2.v:138	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw2.v:138	2147450880	2147450880	SIZES_KEEP	-	-	class-5 model constant, byte-identical to the donor
+lib/A/Bz/A/I_strncmpw3.v:38	0x45fa8	0x426dc	same-code function	__interceptor_strncmp+0x50	__interceptor_strncmp+0x50	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw3.v:45	0x45f58	0x4268c	FUNC entry	__interceptor_strncmp	__interceptor_strncmp	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_strncmpw3.v:72	0x46160	0x42894	same-code function	__interceptor_strncmp+0x208	__interceptor_strncmp+0x208	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:24	0x45130	0x41b98	FUNC entry	__wrap_strlen	__wrap_strlen	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:24	0x451e8	0x41c2c	FUNC entry	__interceptor_strlen	__interceptor_strlen	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:25	0x45134	0x41b9c	FUNC entry	__wrap_strnlen	__wrap_strnlen	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:25	0x4547c	0x41ec0	FUNC entry	__interceptor_strnlen	__interceptor_strnlen	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:26	0x45158	0x41bb0	FUNC entry	__wrap_memchr	__wrap_memchr	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:26	0x47b30	0x43898	FUNC entry	__interceptor_memchr	__interceptor_memchr	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:27	0x5762c	0x51d08	FUNC entry	__wrap_memcpy	__wrap_memcpy	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:27	0x57ffc	0x526d8	FUNC entry	__interceptor_memcpy	__interceptor_memcpy	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:28	0x45154	0x45154	resolve (identity)	__wrap_bcmp	_ZL13printf_commonPvPKcS_+0x710	hand: symbol absent in fuzz_headamp.asan; the lemma is removed from the file
+lib/A/Bz/A/I_tramp.v:28	0x47a74	0x47a74	resolve (identity)	__interceptor_bcmp	__interceptor_strtol+0x1c	hand: symbol absent in fuzz_headamp.asan; the lemma is removed from the file
+lib/A/Bz/A/I_tramp.v:29	0x45140	0x41ba4	FUNC entry	__wrap_strncmp	__wrap_strncmp	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:29	0x45f58	0x4268c	FUNC entry	__interceptor_strncmp	__interceptor_strncmp	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:30	0x45150	0x41bac	FUNC entry	__wrap_memcmp	__wrap_memcmp	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:30	0x479b8	0x437dc	FUNC entry	__interceptor_memcmp	__interceptor_memcmp	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:31	0x57628	0x51d04	FUNC entry	__wrap_memset	__wrap_memset	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:31	0x57d0c	0x523e8	FUNC entry	__interceptor_memset	__interceptor_memset	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:32	0x451d8	0x451d8	resolve (identity)	__wrap_strcpy	_ZL13printf_commonPvPKcS_+0x794	hand: symbol absent in fuzz_headamp.asan; the lemma is removed from the file
+lib/A/Bz/A/I_tramp.v:32	0x4c760	0x4c760	resolve (identity)	__interceptor_strcpy	_ZL16ioctl_table_fillv+0x3d50	hand: symbol absent in fuzz_headamp.asan; the lemma is removed from the file
+lib/A/Bz/A/I_tramp.v:33	0x451d4	0x451d4	resolve (identity)	__wrap_strcat	_ZL13printf_commonPvPKcS_+0x790	hand: symbol absent in fuzz_headamp.asan; the lemma is removed from the file
+lib/A/Bz/A/I_tramp.v:33	0x4c060	0x4c060	resolve (identity)	__interceptor_strcat	_ZL16ioctl_table_fillv+0x3650	hand: symbol absent in fuzz_headamp.asan; the lemma is removed from the file
+lib/A/Bz/A/I_tramp.v:34	0x451e0	0x41c28	FUNC entry	__wrap_strtol	__wrap_strtol	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:34	0x4d048	0x47a58	FUNC entry	__interceptor_strtol	__interceptor_strtol	checked: new = headamp .symtab address of the same symbol + offset
+lib/A/Bz/A/I_tramp.v:35	0x451e4	0x451e4	resolve (identity)	__wrap_atoi	_ZL13printf_commonPvPKcS_+0x7a0	hand: symbol absent in fuzz_headamp.asan; the lemma is removed from the file
+lib/A/Bz/A/I_tramp.v:35	0x4d10c	0x4d10c	resolve (identity)	__interceptor_atoi	_ZL16ioctl_table_fillv+0x46fc	hand: symbol absent in fuzz_headamp.asan; the lemma is removed from the file

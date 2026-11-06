@@ -1,0 +1,194 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0z.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: made from proofs/reac-pw/fuzz_qdisc/lib/Reusable/YL0z.v; 44 of its 188 lines of code are new or changed and 60 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: copied from proofs/reac-pw/fuzz_qdisc/lib/Reusable/YL0z_mf.v, with its module paths changed. *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require Import YK11 YK0o YK0h YK0i YK14 YK1b YK1a YK15 YK0k YK0n YK0p YP0n YM06 YM02.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP08 YP03 YP0f YP04 YN3v.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require Import YO0i YO0f YO0x YO0d YO0e YO05
+YO0p YO0j YO0m YO0l YO0n YO0k YO0o YO09 YO06.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require Import YH00 YH01 YH03 YH02 YN3e.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require Import YN03 YL07 YL01 YL08 YL0d YL0e YL0f YL02 YL0a YL00 YL04 YL0c YL09 YL05 YL0g YL0k YL0o YL0m YL0u YL0r YL0s.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require Import YI06 YI16 YI14 YI5b YI5c YL0i YL06 YL03 YL0l YL0t GIWalk.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require Import YL11 YL10 YL16 YL17 YL18 YL19 YL12 YL13 YL14 YL15.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require Import YM05.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require Import YL0z YO0d_mf YL0e_mf YL0d_mf YL06_mf YL0l_mf YL0u_mf YL10_mf YL11_mf YL12_mf YL13_mf YL14_mf YL15_mf YL16_mf YL17_mf YL18_mf YL19_mf.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable.R Require Import Cfg.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Open Scope bv_scope.
+Open Scope Z_scope.
+Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}.
+Context {AM : AllocMode}.
+Section c.
+Variable API : AllocAPI src0_msyms.
+Hypothesis AX : AllocExtra src0_msyms (aa_MR API).
+Hypothesis HAM : amf = true.
+Hypothesis Hmal : forall fx' : FPState, malloc_realizes (fx:=fx') (AM:=AM) src0_msyms (aa_MR API).
+Hypothesis Hfre : forall fx' : FPState, free_realizes (fx:=fx') (AM:=AM) src0_msyms (aa_MR API).
+Variable GI : nat -> list (Z * Z) -> (word -> option byte) -> Prop.
+Variable RI : list byte -> nat -> list (Z * Z) -> astate -> Prop.
+Variable OUT : list byte -> list byte.
+Hypothesis GIL : G_local_T src0segs src0_G GI.
+Hypothesis GI0 : forall mem, G_img src0segs src0_G mem -> GI 0%nat [] mem.
+Hypothesis LIBX : lib_contract_x_R_all src0_msyms API RI src0_G src0_R GI OUT LIBPC RA_LIB EMPTY LIB_STACK.
+Hypothesis FRM : frm_zero fp_csr.
+Variables (sp tid : word) (a0 path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
+Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp [a0; path] (in_envp inp) tid rnd) G.
+Hypothesis Hvfs : valid_fs (in_fs inp).
+Hypothesis Hsp47 : bv_unsigned sp <= 2 ^ 47.
+Lemma run_from_QX_mf : forall cap0 L' A' b0 E ms md (K : dleaf * astate -> TSet),
+user_blocks A' = [(b0, cap0)] -> 65536 <= cap0 <= 67108864 ->
+WF A' -> bounded A' -> st_init_done A' = true ->
+6 + config_len data <= dlen data -> dlen data < cap0 ->
+run_env E data (ptr_addr L' b0) -> env_top E ->
+st_ok src0segs E (if config_len data =? 0 then sQ0 else sQ1) ms ->
+aa_MR API L' A' (ms_mem ms) md -> md_invX (in_fs inp) md ->
+blk_data src0_msyms (ms_mem ms) (ptr_addr L' b0) data ->
+leaves (run_RI RI (payload data)) (driver_tail data (RdLoaded b0 cap0) A') ->
+(forall r, t_eq (K r) (leaf_shapeX data (in_fs inp) r)) ->
+realizes src0segs (mkCfg ms md) (tset_mf (driver_tail data (RdLoaded b0 cap0) A') K).
+Proof using AX HAM Hmal Hfre GIL GI0 LIBX FRM HSA0 Hvfs Hsp47.
+intros cap0 L' A' b0 E ms md K Hub Hcap0 HW HB Hid Hok HLc HE HT HS HMR Hmd HD HL HK.
+pose proof (config_len_bound data) as Hclb.
+destruct (Z.eq_dec (payload_len data) 0) as [Hpl0 | Hplnz].
+-
+pose proof (res_of_tail_none (run_RI RI (payload data)) data b0 cap0 A' HL Hok Hpl0) as HRb. cbn [run_RI fst snd] in HRb.
+rewrite (driver_tail_run_eq data b0 cap0 A') by (unfold HDR_MIN; lia).
+change (tset_mf (ret (DL_run b0 cap0 None) A') K) with (K (DL_run b0 cap0 None, A')).
+apply (rz_conseq _ _ (leaf_shapeX data (in_fs inp) (DL_run b0 cap0 None, A')) _); [| apply t_eq_sym; apply HK].
+destruct (Z.eqb_spec (config_len data) 0) as [Hz | Hz].
++ assert (Hc : calls data = 1%nat) by (unfold calls, cfg_byte; rewrite (proj2 (Z.eqb_eq _ _) Hz); reflexivity).
+exact (src0_runX_0E1_mf API AX Hfre GI RI OUT GI0 LIBX FRM data (in_fs inp) cap0 L' A' b0 Hub Hcap0 HW HB Hid Hok HLc Hz Hc Hpl0 E ms _ HE HT HS HMR Hmd HRb).
++ pose proof (calls_bound data) as Hcb.
+destruct (calls data) as [|[|[|[|[|n]]]]] eqn:Hc; try lia.
+* exact (src0_runX_1E1_mf API AX Hfre GI RI OUT GI0 LIBX FRM data (in_fs inp) cap0 L' A' b0 Hub Hcap0 HW HB Hid Hok HLc Hz Hc Hpl0 E ms _ HE HT HS HMR Hmd HRb).
+* exact (src0_runX_1E2_mf API AX Hfre GI RI OUT GIL GI0 LIBX FRM data (in_fs inp) cap0 L' A' b0 Hub Hcap0 HW HB Hid Hok HLc Hz Hc Hpl0 E ms _ HE HT HS HMR Hmd HRb).
+* exact (src0_runX_1E3_mf API AX Hfre GI RI OUT GIL GI0 LIBX FRM data (in_fs inp) cap0 L' A' b0 Hub Hcap0 HW HB Hid Hok HLc Hz Hc Hpl0 E ms _ HE HT HS HMR Hmd HRb).
+* exact (src0_runX_1E4_mf API AX Hfre GI RI OUT GIL GI0 LIBX FRM data (in_fs inp) cap0 L' A' b0 Hub Hcap0 HW HB Hid Hok HLc Hz Hc Hpl0 E ms _ HE HT HS HMR Hmd HRb).
+-
+assert (Hpl : 0 < payload_len data) by (unfold payload_len, HDR_MIN in *; lia).
+assert (Heq := driver_tail_loaded_eq data b0 cap0 A'
+ltac:(apply Z.ltb_ge; unfold HDR_MIN; lia) ltac:(apply Z.ltb_ge; unfold HDR_MIN; lia) ltac:(apply Z.eqb_neq; exact Hplnz)).
+eapply rz_conseq; [| apply t_eq_sym; apply (tset_mf_bind_eq _ _ _ _ _ Heq)].
+pose proof (res_of_tail_some (run_RI RI (payload data)) data b0 cap0 A' HL Hok Hplnz) as HRb.
+assert (HRb' : forall tr q A2, cpath (malloc (payload_len data) A') tr (Some q, A2) -> RI (payload data) 0%nat [] A2)
+by (intros tr q A2 Hp; exact (HRb tr (Some q, A2) Hp)).
+assert (HK' : forall r : option sptr * astate,
+t_eq (tset_mf (payload_k b0 cap0 (fst r) (snd r)) K) (leaf_shapeX data (in_fs inp) (payload_leaf b0 cap0 r))).
+{ intros [[q|] s']; cbn [payload_k payload_leaf fst snd]; apply HK. }
+destruct (Z.eqb_spec (config_len data) 0) as [Hz | Hz].
++ assert (Hc : calls data = 1%nat) by (unfold calls, cfg_byte; rewrite (proj2 (Z.eqb_eq _ _) Hz); reflexivity).
+exact (src0_runX_0M1_mf API AX HAM Hmal Hfre GI RI OUT GI0 LIBX FRM data (in_fs inp) cap0 L' A' b0 Hub Hcap0 HW HB Hid Hok HLc Hz Hc Hpl E ms _ HE HT HS HMR Hmd HD HRb' _ HK').
++ pose proof (calls_bound data) as Hcb.
+destruct (calls data) as [|[|[|[|[|n]]]]] eqn:Hc; try lia.
+* exact (src0_runX_1M1_mf API AX HAM Hmal Hfre GI RI OUT GI0 LIBX FRM data (in_fs inp) cap0 L' A' b0 Hub Hcap0 HW HB Hid Hok HLc Hz Hc Hpl E ms _ HE HT HS HMR Hmd HD HRb' _ HK').
+* exact (src0_runX_1M2_mf API AX HAM Hmal Hfre GI RI OUT GIL GI0 LIBX FRM data (in_fs inp) cap0 L' A' b0 Hub Hcap0 HW HB Hid Hok HLc Hz Hc Hpl E ms _ HE HT HS HMR Hmd HD HRb' _ HK').
+* exact (src0_runX_1M3_mf API AX HAM Hmal Hfre GI RI OUT GIL GI0 LIBX FRM data (in_fs inp) cap0 L' A' b0 Hub Hcap0 HW HB Hid Hok HLc Hz Hc Hpl E ms _ HE HT HS HMR Hmd HD HRb' _ HK').
+* exact (src0_runX_1M4_mf API AX HAM Hmal Hfre GI RI OUT GIL GI0 LIBX FRM data (in_fs inp) cap0 L' A' b0 Hub Hcap0 HW HB Hid Hok HLc Hz Hc Hpl E ms _ HE HT HS HMR Hmd HD HRb' _ HK').
+Qed.
+Lemma post_from_h1X_mf : forall cap0 L' A' b0 E ms md (K : dleaf * astate -> TSet),
+user_blocks A' = [(b0, cap0)] -> 65536 <= cap0 <= 67108864 ->
+WF A' -> bounded A' -> st_init_done A' = true ->
+6 + config_len data <= dlen data -> dlen data < cap0 ->
+hdr_env E data (ptr_addr L' b0) -> hdr_anch E -> env_top E ->
+st_ok src0segs E ss_h1 ms -> aa_MR API L' A' (ms_mem ms) md -> md_invX (in_fs inp) md ->
+blk_data src0_msyms (ms_mem ms) (ptr_addr L' b0) data ->
+leaves (run_RI RI (payload data)) (driver_tail data (RdLoaded b0 cap0) A') ->
+(forall r, t_eq (K r) (leaf_shapeX data (in_fs inp) r)) ->
+realizes src0segs (mkCfg ms md) (tset_mf (driver_tail data (RdLoaded b0 cap0) A') K).
+Proof using AX HAM Hmal Hfre GIL GI0 LIBX FRM HSA0 Hvfs Hsp47.
+intros cap0 L' A' b0 E ms md K Hub Hcap0 HW HB Hid Hok HLc HE HAN HT HS HMR Hmd HD HL HK.
+assert (Hin : In (b0, cap0) (user_blocks A')) by (rewrite Hub; left; reflexivity).
+pose proof (mr_blocks _ _ (aa_laws API) L' A' (ms_mem ms) md b0 cap0 0 HMR Hin ltac:(lia)) as (_ & Hq1 & Hq2 & _).
+assert (Hac : alloc_ceiling < 2 ^ 47) by (pose proof YM05.alloc_ceiling_val; lia).
+pose proof (config_len_bound data) as Hclb.
+apply (src0_to_P API AX data cap0 L' A' b0 E md Hub Hcap0 HE HAN ms _ Hok HLc HS HMR HD).
+intros ms3 HS3 HMR3 HD3. clear HS HMR HD.
+destruct HE as (HEd & HE13 & HE26).
+assert (HRE : run_env (E_P E data (ptr_addr L' b0 + 2 + config_len data)) data (ptr_addr L' b0)).
+{ unfold run_env. split; [| split; [| split; [| split]]].
+- rewrite E_P_ed by lia. exact HEd.
+- rewrite E_P_old by lia. exact HE13.
+- rewrite E_P_old by lia. exact HE26.
+- apply E_P_46. lia.
+- apply (hdr_anch_ext E _ HAN). intros n Hn. apply E_P_old. lia. }
+assert (HTE : env_top (E_P E data (ptr_addr L' b0 + 2 + config_len data))) by (unfold env_top; rewrite E_P_old by lia; exact HT).
+apply (src0_P_to_QX API AX data cap0 L' A' b0 md Hub Hok HLc _ ms3 _ HRE HS3 HMR3 HD3).
+intros ms4 HS4 HMR4 HD4. clear HS3 HMR3 HD3.
+exact (run_from_QX_mf cap0 L' A' b0 _ ms4 md K Hub Hcap0 HW HB Hid Hok HLc HRE HTE HS4 HMR4 Hmd HD4 HL HK).
+Qed.
+Lemma post_from_h0X_mf : forall cap0 L' A' b0 E ms md (K : dleaf * astate -> TSet),
+user_blocks A' = [(b0, cap0)] -> 65536 <= cap0 <= 67108864 ->
+WF A' -> bounded A' -> st_init_done A' = true ->
+dlen data < cap0 ->
+hdr_env E data (ptr_addr L' b0) -> hdr_anch E -> env_top E ->
+st_ok src0segs E ss_h0 ms -> aa_MR API L' A' (ms_mem ms) md -> md_invX (in_fs inp) md ->
+blk_data src0_msyms (ms_mem ms) (ptr_addr L' b0) data ->
+leaves (run_RI RI (payload data)) (driver_tail data (RdLoaded b0 cap0) A') ->
+(forall r, t_eq (K r) (leaf_shapeX data (in_fs inp) r)) ->
+realizes src0segs (mkCfg ms md) (tset_mf (driver_tail data (RdLoaded b0 cap0) A') K).
+Proof using AX HAM Hmal Hfre GIL GI0 LIBX FRM HSA0 Hvfs Hsp47.
+intros cap0 L' A' b0 E ms md K Hub Hcap0 HW HB Hid HLc HE HAN HT HS HMR Hmd0 HD HL HK.
+pose proof (md_invX_inv _ _ Hmd0 : md_ok inp md) as Hmd.
+pose proof (config_len_bound data) as Hclb.
+assert (Hnn : 0 <= dlen data) by (unfold dlen; lia).
+destruct (Z_lt_le_dec (dlen data) 6) as [Hshort | Hhdr].
+-
+rewrite (driver_tail_short_eq data b0 cap0 A') by (unfold HDR_MIN; exact Hshort).
+change (tset_mf (ret DL_short A') K) with (K (DL_short, A')).
+apply (rz_conseq _ _ (leaf_shapeX data (in_fs inp) (DL_short, A')) _); [| apply t_eq_sym; apply HK].
+cbn [leaf_shapeX leaf_shape fst].
+exact (src0_short_tail_mf API AX Hfre inp data cap0 L' A' b0 Hub Hcap0 HW HB Hid E ms md HE HAN ltac:(lia) HS HMR Hmd).
+-
+apply (src0_to_h1_mf API AX data cap0 L' A' b0 Hub Hcap0 HLc E ms md _ HE HAN Hhdr HS HMR HD).
+intros ms2 HS2 HMR2 HD2. clear HS HMR HD.
+destruct (Z_lt_le_dec (dlen data) (6 + config_len data)) as [Hov | Hok].
++
+rewrite (driver_tail_overrun_eq data b0 cap0 A') by (unfold HDR_MIN; lia).
+change (tset_mf (ret DL_overrun A') K) with (K (DL_overrun, A')).
+apply (rz_conseq _ _ (leaf_shapeX data (in_fs inp) (DL_overrun, A')) _); [| apply t_eq_sym; apply HK].
+cbn [leaf_shapeX leaf_shape fst].
+exact (src0_overrun_tail_mf API AX Hfre inp data cap0 L' A' b0 Hub Hcap0 HLc HW HB Hid E ms2 md HE HAN Hhdr Hov HS2 HMR2 Hmd).
++ exact (post_from_h1X_mf cap0 L' A' b0 E ms2 md K Hub Hcap0 HW HB Hid Hok HLc HE HAN HT HS2 HMR2 Hmd0 HD2 HL HK).
+Qed.
+Theorem src0_postX_mf : forall K : dleaf * astate -> TSet,
+(forall r, t_eq (K r) (leaf_shapeX data (in_fs inp) r)) ->
+POST_mf API sp tid a0 path inp data rnd (run_RI RI (payload data)) K.
+Proof using AX HAM Hmal Hfre GIL GI0 LIBX FRM HSA0 Hvfs Hsp47.
+intros K HK. unfold POST_mf. cbv zeta beta.
+intros cap' bufp' A' Lc' J' g' len0 w ms' md' HLc Hcap Hlen0 Hub HW HB Hid HS Hw HL0 HMR Hmd0 HD HL.
+pose proof (md_invX_of_post inp md' Hvfs Hmd0) as Hmd.
+unfold MAX_INPUT in Hcap. subst len0.
+destruct (mr_model _ _ (aa_laws API) _ _ _ _ HMR) as (Hh & Hlz & _).
+assert (Hin : In (bufp', cap') (user_blocks A')) by (rewrite Hub; left; reflexivity).
+pose proof (mr_blocks _ _ (aa_laws API) Lc' A' (ms_mem ms') md' bufp' cap' 0 HMR Hin ltac:(lia)) as (_ & Hq1 & Hq2 & _).
+assert (Hac : alloc_ceiling < 2 ^ 47) by (pose proof YM05.alloc_ceiling_val; lia).
+lazymatch type of HS with st_ok _ ?E0 _ _ => set (E := E0) in HS end.
+assert (HE : hdr_env E data (ptr_addr Lc' bufp')).
+{ subst E. unfold hdr_env. split; [| split].
+- rewrite ed_ewset. apply ed_lp2.
+- rewrite ew_ewset_other by lia. unfold E_lp. rewrite ew_ewset_other, ew_ewset_other, ew_ewset_other, ew_ewset_same by lia.
+apply u64_of_Z. lia.
+- rewrite ew_ewset_other by lia. unfold E_lp. rewrite ew_ewset_other, ew_ewset_same by lia.
+apply u64_of_Z. unfold dlen in HLc. lia. }
+assert (HAN : hdr_anch E).
+{ intros G HGa. subst E. apply (anch_lp sp tid a0 path inp data rnd HSA0 J' (ptr_addr Lc' bufp') g' (Z.of_nat (length data)) cap' _ G); [| exact HGa].
+apply (ext29_ewset data); [lia | apply ext29_refl]. }
+drv_run_with src0tbl_ok HS HF.
+lazymatch type of HS with st_ok _ _ _ ?msx => change (st_ok src0segs E ss_h0 msx) in HS end.
+lazymatch type of HF with frame_of _ ?rs0 ?m0 ?m1 =>
+pose proof (blk_data_after_frame src0_msyms (aa_MR API) (aa_laws API) AX Lc' A' m0 m1 _ E (ss_facts ss_h0) src0_keep rs0 bufp' cap' (ptr_addr Lc' bufp') data HMR
+ltac:(destruct HS as (_ & _ & _ & _ & _ & _ & _ & _ & HG0); exact HG0) ltac:(drv_anch) ltac:(vm_compute; reflexivity) HF Hin ltac:(lia) ltac:(unfold dlen in HLc; lia)) as HD';
+specialize (HD' HD); clear HD; rename HD' into HD end.
+drv_mr (MR_after_frame src0_msyms (aa_MR API) (aa_laws API) AX) src0_keep E HS HF HMR.
+lazymatch type of HS with st_ok _ _ _ ?msx =>
+assert (HT : env_top E) by (subst E; unfold env_top; rewrite ew_ewset_other by lia; rewrite ew_lp; cbn; exact Hsp47);
+exact (post_from_h0X_mf cap' Lc' A' bufp' E msx md' K Hub ltac:(lia) HW HB Hid HLc HE HAN HT HS HMR Hmd HD HL HK) end.
+Qed.
+End c.
+End b.

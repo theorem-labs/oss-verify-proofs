@@ -1,0 +1,6 @@
+# written by scrub_input.py: every removed span is shown as <redacted>; nothing else differs
+--- original (sha256 437ed1cfc104428d7d6506a8c04ce705ab43ebd260883cad635cf259a7cac067)
++++ pass2b.log (sha256 5592b5596ceccd1e4c58af1bd0376fbc48f9bacbaa772b8869a3fb31607a7dbc)
+@@ -1,1 +1,1 @@
+-rjob: <redacted>, 2492 files, extra -Q base/decode_stmts OssFuzzTheorems.libreac.fuzz_decode, jobs 32, targets: proofs/cgif/cgif_file_fuzzer/lib/ZStartColRB/Pass2.vo
++rjob: RJOB, 2492 files, extra -Q base/decode_stmts OssFuzzTheorems.libreac.fuzz_decode, jobs 32, targets: proofs/cgif/cgif_file_fuzzer/lib/ZStartColRB/Pass2.vo

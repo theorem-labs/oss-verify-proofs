@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libidn2
 harness: libidn2_register_fuzzer
-rocq: OssFuzzTheorems.libidn2.libidn2_register_fuzzer
+rocq: OSSVerify.libidn2.libidn2_register_fuzzer
 origin: upstream
 summary: idn2_register_ul on the input as a U-label, then on "xn--"+input as an A-label (plus NULL-argument
   combinations when size == 0); outputs freed unchecked.

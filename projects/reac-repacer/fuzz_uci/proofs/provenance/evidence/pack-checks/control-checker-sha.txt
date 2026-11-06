@@ -1,0 +1,3 @@
+Planted control: the sha256 field of close-B/env.example.sh zeroed (scratch commit on a14c209e0066cff0514840dba723c117d3ff3473)
+proofs/reac-repacer/fuzz_uci/provenance/evidence/close-B/env.example.sh: proofs/reac-repacer/fuzz_uci/provenance/evidence/MANIFEST says sha256 000000000000, the file's is 143fbaee2df5
+rc=1

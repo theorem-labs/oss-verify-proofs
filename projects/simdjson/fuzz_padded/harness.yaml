@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: simdjson
 harness: fuzz_padded
-rocq: OssFuzzTheorems.simdjson.fuzz_padded
+rocq: OSSVerify.simdjson.fuzz_padded
 origin: upstream
 summary: padded_string construction with fuzzed sizes (s1, s2 up to SIZE_MAX), move-assign, swap, data(),
   string_view conversion; allocation failures surface as exceptions/crashes only.

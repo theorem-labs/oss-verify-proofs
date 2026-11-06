@@ -1,0 +1,4 @@
+B1	want IMAGE 0x110004	got IMAGE 0x110004	OK
+B2	want RUNTIME -	got RUNTIME r11: no constant / image address on this path in plant	OK
+B3	want ABS 0x100000	got ABS 0x100000	OK
+B4	want IMAGE 0x110018	got IMAGE 0x110018	OK

@@ -1,0 +1,53 @@
+file	line (knock relocated text)	lemma / hypothesis	text
+AFem.v	87	pairwise_cons_inv	Class depot_ne (S : astate) : Prop := depot_ne_pf : st_depot S <> [].
+AFem.v	1020	depot_cells_hold	Lemma depot_cells_hold `{HNS : ly_mapped ly} `{HNE : depot_ne S} : forall m S', INV m -> st_regions S' = st_regions S -> st_depot S' <> [] ->
+AFem.v	1218	ins_ne	Lemma ins_ne : st_depot S_ins <> [].
+AFex.v	86	HND	Hypothesis HND : st_depot S <> [].
+AFex.v	151	sd_depot_ne	Lemma sd_depot_ne : st_depot sd <> [].
+AFex.v	154	S'_depot_ne	Lemma S'_depot_ne : st_depot S' <> [].
+AFfl.v	87	HND	Hypothesis HND : st_depot S <> [].
+AFfl.v	137	sd_depot_ne	Lemma sd_depot_ne : st_depot sd <> [].
+AFfl.v	140	S'_depot_ne	Lemma S'_depot_ne : st_depot S' <> [].
+AFfu.v	717	afree_common	tfib_ialloc_spec -> tfib_unwind_spec -> tfib_depot_spec B -> ly_tsd ly = TFIB_TSD -> st_depot S <> [] ->
+AFfy.v	148	DFP_RANGE	Lemma DFP_RANGE : st_depot S <> [] -> forall a, depot_footprint B ly a -> 0 <= a < 2 ^ 64.
+AFfy.v	156	DFP_OUT	Lemma DFP_OUT : st_depot S <> [] -> forall a, depot_footprint B ly a -> ~ AFgi.WIN ly regs pa lastb a /\ ~ AFgi.IZONE a /\ AFgi.DZONE ly a.
+AFfy.v	223	FINH	Lemma FINH : st_depot S <> [] -> fin_hyp.
+AFfy.v	465	afree_common_arm	Theorem afree_common_arm : st_depot S <> [] ->
+AFfz.v	424	afree_drn_arm	Theorem afree_drn_arm : st_depot S <> [] ->
+AFfz.v	558	afree_drn	ly_tsd ly = TFIB_TSD -> st_depot S <> [] ->
+AFg1.v	576	DFP_RANGE	Lemma DFP_RANGE : st_depot S <> [] -> forall a, depot_footprint B ly a -> 0 <= a < 2 ^ 64.
+AFg1.v	584	DFP_OUT	Lemma DFP_OUT : st_depot S <> [] -> forall a, depot_footprint B ly a -> ~ AFgm.WIN ly regs pa a /\ ~ AFgm.IZONE a /\ AFgm.DZONE ly a.
+AFg1.v	639	ENQ_PRE	Lemma ENQ_PRE : st_depot S <> [] -> forall z (msD : machine_state) mem4 msE matE E5,
+AFg2.v	280	afree_mid_arm	Theorem afree_mid_arm : st_depot S <> [] ->
+AFg2.v	415	afree_mid	tfib_ialloc_spec -> tfib_unwind_spec -> tfib_depot_spec B -> tfib_enqueue_spec_nb B (need_new_batch (st_qthread S)) -> ly_tsd ly = TFIB_TSD -> st_depot S <> [] 
+AFix.v	368	depot_mem_ok_agree	Lemma depot_mem_ok_agree : forall S' (rd rd' : reader), st_depot S' <> [] -> depot_ids S' <= 4098 ->
+AFix.v	391	depot_ok_ext	Lemma depot_ok_ext : forall S1 S2 (rd : reader), st_depot S1 <> [] -> st_depot S1 = st_depot S2 -> depot_ok B ly rd S1 -> depot_ok B ly rd S2.
+AFix.v	396	depot_at0	Lemma depot_at0 : st_depot S <> [] -> depot_mem_ok B ly S rd0.
+AFj1.v	374	DEPD	Hypothesis DEPD : st_depot S <> [] -> depot_mem_ok B ly (depot_after z tr S) rdD.
+AFj1.v	857	depot_after_ne	Lemma depot_after_ne : st_depot S <> [] -> st_depot (depot_after z tr S) <> [].
+AFj1.v	859	depot_final	Lemma depot_final : st_depot S <> [] -> depot_mem_ok B ly (depot_after z tr S) rd'.
+AFj1.v	867	cells_depot	Lemma cells_depot : st_depot S <> [] -> Forall (cell_holds B ly rd') (depot_cells ly (SF z)).
+AFj1.v	903	cells_final	Lemma cells_final : st_depot S <> [] -> Forall (cell_holds B ly rd') (acells B ly (SF z)).
+AFj1.v	1120	areas_NE	Lemma areas_NE : st_depot S <> [] -> Forall (range_vis B ly rd') (aareas (SF z)).
+AFj1.v	1131	AR_transport	Lemma AR_transport : st_depot S <> [] -> AR tfibsegs B ly (SF z) W mem' (with_vm_backing (m_vm_lazy md0) mat md0).
+AFjb.v	366	depot_mem_ok_agree	Lemma depot_mem_ok_agree : forall S' (rd rd' : reader), st_depot S' <> [] -> depot_ids S' <= 4098 ->
+AFjb.v	389	depot_ok_ext	Lemma depot_ok_ext : forall S1 S2 (rd : reader), st_depot S1 <> [] -> st_depot S1 = st_depot S2 -> depot_ok B ly rd S1 -> depot_ok B ly rd S2.
+AFjb.v	394	depot_at0	Lemma depot_at0 : st_depot S <> [] -> depot_mem_ok B ly S rd0.
+AFjf.v	88	depot_abytes_ne	Lemma depot_abytes_ne : forall s, st_depot s <> [] -> depot_abytes s = kNodesBlockSize + kStoreBlockSize.
+AFjf.v	421	NE_after	Lemma NE_after : st_depot S <> [] -> st_depot (depot_after z tr S) <> [].
+AFjf.v	886	depot_final	Lemma depot_final : st_depot S <> [] -> depot_mem_ok B ly (depot_after z tr S) rdD -> depot_mem_ok B ly (depot_after z tr S) rd'.
+AFjf.v	895	cells_depot	Lemma cells_depot : st_depot S <> [] -> depot_mem_ok B ly (depot_after z tr S) rdD -> Forall (cell_holds B ly rd') (depot_cells ly (SF z)).
+AFjf.v	927	cells_final	Lemma cells_final : st_depot S <> [] -> depot_mem_ok B ly (depot_after z tr S) rdD -> Forall (cell_holds B ly rd') (acells B ly (SF z)).
+AFjf.v	1147	vis_areas	Lemma vis_areas : st_depot S <> [] -> Forall (range_vis B ly rd') (aareas (SF z)).
+AFjf.v	1201	AR_transport	Lemma AR_transport : st_depot S <> [] -> depot_mem_ok B ly (depot_after z tr S) rdD ->
+AFju.v	692	depot_mem_ok_agree	Lemma depot_mem_ok_agree : forall S' (rd rd' : reader), st_depot S' <> [] -> depot_ids S' <= 4098 ->
+AFju.v	728	depot_at0	Lemma depot_at0 : st_depot S <> [] -> depot_mem_ok B ly S rd0.
+AFjy.v	818	NE_after	Lemma NE_after : st_depot S <> [] -> st_depot (depot_after z tr S) <> [].
+AFjy.v	883	NE_ly	Lemma NE_ly : st_depot S <> [] -> ly' = ly.
+AFjy.v	1445	depot_final	Lemma depot_final : st_depot S <> [] -> depot_mem_ok B ly (depot_after z tr S) rd'.
+AFjy.v	1455	cells_depot	Lemma cells_depot : st_depot S <> [] -> Forall (cell_holds B ly rd') (depot_cells ly SF).
+AFjy.v	1514	cells_final	Lemma cells_final : st_depot S <> [] -> Forall (cell_holds B lyF rd') (acells B lyF SF).
+AFjy.v	1885	vis_areas	Lemma vis_areas : st_depot S <> [] -> Forall (range_vis B lyF rd') (aareas SF).
+AFjy.v	1951	depot_okF	Lemma depot_okF : forall s1 s2 (rd : reader), st_depot s1 = st_depot s2 -> st_depot s1 <> [] -> depot_ok B ly rd s1 -> depot_ok B lyF rd s2.
+AFjy.v	1957	ARm_final	Lemma ARm_final : st_depot S <> [] -> ARm B lyF SF rd'.
+AFl0.v	74	tfib_depot_spec	Forall (cell_holds B ly rd) (as_const B ly) -> depot_mem_ok B ly S rd -> st_depot S <> [] ->

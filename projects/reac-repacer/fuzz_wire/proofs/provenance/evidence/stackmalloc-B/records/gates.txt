@@ -1,0 +1,15 @@
+bodycmp rc=2 bodycmp-smB: kit 86da41d3ef68; pairs 10; function rows clean 9 of 10, judged 1; range rows clean 9 of 10 (partial 1); plants caught 2 of 2; not clean: none
+numerals rc=0 numerals-smB: 116 rows; verdicts {'OK': 114, 'DROPPED': 2}; by role {('PATCH', 'OK'): 4, ('IMG', 'OK'): 16, ('DATA', 'OK'): 26, ('MODEL', 'OK'): 11, ('CODE', 'OK'): 27, ('TLS', 'OK'): 8, ('GOT', 'OK'): 8, ('WORD', 'OK'): 6, ('INSN', 'OK'): 8, ('CODE', 'DROPPED'): 2}; unaligned donor lines 0
+numerals plant (TP 0x5d3790 -> 0x5d3798 in B/Rt/StackMalloc0Tbl.v) rc=1 numerals-smB: 116 rows; verdicts {'OK': 113, 'WRONG': 1, 'DROPPED': 2}; by role {('PATCH', 'OK'): 4, ('IMG', 'OK'): 16, ('DATA', 'OK'): 26, ('MODEL', 'OK'): 11, ('CODE', 'OK'): 27, ('TLS', 'WRONG'): 1, ('GOT', 'OK'): 8, ('WORD', 'OK'): 6, ('TLS', 'OK'): 7, ('INSN', 'OK'): 8, ('CODE', 'DROPPED'): 2}; unaligned donor lines 0; WRONG rows: B/Rt/StackMalloc0Tbl.v:36 0x5d3798 
+size_moves rc=0 size_moves: 10 move(s) of a power-of-two / page-aligned donor value; 3 block(s) / line(s) not paired (listed in size-moves.tsv.unpaired)
+size_moves_classify rc=0 size_moves_classify: 10 move(s); verdicts {'RIGHT': 10}; judged value equals {'measured': 10}; role kinds {'image boundary': 10}; in final tree 10; final value differs from the run value 0
+port_addr_check rc=4 FLAGGED 13 rows in 4 classes: GEOMETRY-CHANGED=3 UNPAIRED-PORTED=4 UNPAIRED-SOURCE=4 UNRESOLVED=2 
+triage rc=0 triage-smB: 13 rows not passing, 13 explained, 0 UNEXPLAINED
+port_addr_check plant (FS_ENTRY 0x3c524 -> 0x3cf4c) rc=4 FLAGGED 14 rows in 5 classes: GEOMETRY-CHANGED=3 STALE-DONOR-CODE-POINTER=1 UNPAIRED-PORTED=4 UNPAIRED-SOURCE=4 UNRESOLVED=2
+triage plant rc=1 triage-smB: 14 rows not passing, 13 explained, 1 UNEXPLAINED
+ab1w_swaps B/Rt/StackMalloc0.v rc=0 ab1w_swaps: 0 cell(s) (A 0, E 0, D 0); tail scores 1 at its own value: 0, below 1: 0, 0: 0, no word: 0; crossed pairs: 0, of which a proof reads a cell: 0
+ab1w_swaps B/Rt/StackMalloc0Tbl.v rc=0 ab1w_swaps: 0 cell(s) (A 0, E 0, D 0); tail scores 1 at its own value: 0, below 1: 0, 0: 0, no word: 0; crossed pairs: 0, of which a proof reads a cell: 0
+ab1w_swaps B/Rt/YF0r.v rc=0 ab1w_swaps: 0 cell(s) (A 0, E 0, D 0); tail scores 1 at its own value: 0, below 1: 0, 0: 0, no word: 0; crossed pairs: 0, of which a proof reads a cell: 0
+ab1w_swaps B/Rt/YF0s.v rc=0 ab1w_swaps: 0 cell(s) (A 0, E 0, D 0); tail scores 1 at its own value: 0, below 1: 0, 0: 0, no word: 0; crossed pairs: 0, of which a proof reads a cell: 0
+ab1w_swaps Reusable/YF0v.v rc=0 ab1w_swaps: 0 cell(s) (A 0, E 0, D 0); tail scores 1 at its own value: 0, below 1: 0, 0: 0, no word: 0; crossed pairs: 0, of which a proof reads a cell: 0
+ab1w_swaps B/YB1w.v rc=0 ab1w_swaps: 782 cell(s) (A 381, E 378, D 23); tail scores 1 at its own value: 569, below 1: 213, 0: 11, no word: 0; crossed pairs: 0, of which a proof reads a cell: 0

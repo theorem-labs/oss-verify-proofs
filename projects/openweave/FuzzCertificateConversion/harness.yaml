@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openweave
 harness: FuzzCertificateConversion
-rocq: OssFuzzTheorems.openweave.FuzzCertificateConversion
+rocq: OSSVerify.openweave.FuzzCertificateConversion
 origin: upstream
 summary: detects the input certificate format and converts it to each of X509 PEM/DER and Weave base64/raw
   (PEM->DER, base64 decode, X509<->Weave, DER->PEM, base64 encode); conversion failures just exit the

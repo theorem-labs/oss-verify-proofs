@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: kamailio
 harness: fuzz_basex
-rocq: OssFuzzTheorems.kamailio.fuzz_basex
+rocq: OSSVerify.kamailio.fuzz_basex
 origin: upstream
 summary: data[0] % 5 selects base16 / base64 / q_base64 / base58 / base64url; the rest is encoded and,
   when encoding succeeds, the encoding is decoded into a fresh buffer, which is freed WITHOUT being compared

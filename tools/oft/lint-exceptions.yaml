@@ -2,38 +2,630 @@
 # finding inside an upstream source copy, such as a host path in its authors'
 # comments, or inside a build record's copy of the port's project.yaml, or an
 # e-mail address in another file of that record's copy of the port's project
-# files (port/projects/<project>/), such as its author's copyright line.
+# files (port/projects/<project>/), such as its author's copyright line, or a
+# key or token under dev/stream/, which the rule still reads there (lint.py,
+# internal_only), such as the stand-in in a test of the stream's own secret
+# scanner.
 # Each entry: {path, rule, key, count, reason}; the key is the one the finding
 # names.  An entry that clears fewer occurrences than its count is itself a
 # finding.  A `proofs` entry also names the line and the exact message, its key
-# is the notation's string literal, and its count is 1.
+# is the notation's string literal, and its count is 1.  No entry clears a
+# finding of a file's licence lines.
+# A `licence-pending` entry, {unit, rule, due, series, reason}, lists a fuzz
+# target whose licence lines its own series applies: lint reports the unit's
+# licence findings as pending and does not fail on them.  Its series is the
+# number of that series' pull request, or `pending`.  The series removes the
+# entry: an entry is a finding when its unit has Rocq files and no licence
+# finding left; it may wait for a unit whose proofs have not come yet.  After
+# its due date it fails a pull request that touches its unit or adds or
+# changes the entry, and a lint with no change to judge, and warns any other
+# pull request; deleting another entry trips none.  A pull
+# request that changes proof files adds no entry, a pull request of the tools
+# adds one and its review judges it, and a release carries none.
 schema: oss-fuzz-theorems/lint-exceptions/1
 exceptions:
-  - path: projects/xmlsec/xmlsec_enc_fuzzer/source/xmlsec_enc_target.c
-    rule: private-data
-    key: 8bcac7908eb95041
-    count: 1
-    reason: >-
-      xmlsec's own fuzz harness (apps/oss-fuzz/xmlsec_enc_target.c at e4b8614f,
-      git blob 05ce8219) embeds the public RSA test key of xmlsec's test suite
-      (tests/merlin-xmlenc-five/rsapriv.pem), as its comment says.
-  - path: projects/perfetto/end_to_end_shared_memory_fuzzer/source/end_to_end_shared_memory_fuzzer.cc
-    rule: private-data
-    key: b459ea2c66e1747d
-    count: 1
-    reason: >-
-      perfetto's own fuzz harness (test/end_to_end_shared_memory_fuzzer.cc at
-      40b52992, git blob fa2b5e90) names the Android device directory where its
-      test daemons create their socket, under an Android-only #if.
-  - path: proofs/jsoncons/fuzz_msgpack_encoder/lib/LeanFeed2.v
-    rule: proofs
-    line: 4
-    message: >-
-      a notation token with a '"', or a '(' after anything but '.', '`' or ':',
-      is not allowed in a proof
-    key: "\"'LF2CBN(' t ')'\""
-    count: 1
-    reason: >-
-      Released in v2026.10.1. Every use of LF2CBN( in this library is followed
-      by a space and an identifier, and git grep 'LF2CBN(\*' finds nothing, so
-      no comment opener and no hidden command can form.
+- path: projects/xmlsec/xmlsec_enc_fuzzer/source/xmlsec_enc_target.c
+  rule: private-data
+  key: 8bcac7908eb95041
+  count: 1
+  reason: xmlsec's own fuzz harness (apps/oss-fuzz/xmlsec_enc_target.c at e4b8614f, git blob 05ce8219)
+    embeds the public RSA test key of xmlsec's test suite (tests/merlin-xmlenc-five/rsapriv.pem), as its
+    comment says.
+- path: projects/perfetto/end_to_end_shared_memory_fuzzer/source/end_to_end_shared_memory_fuzzer.cc
+  rule: private-data
+  key: b459ea2c66e1747d
+  count: 1
+  reason: 'perfetto''s own fuzz harness (test/end_to_end_shared_memory_fuzzer.cc at 40b52992, git blob
+    fa2b5e90) names the Android device directory where its test daemons create their socket, under an
+    Android-only #if.'
+- path: proofs/jsoncons/fuzz_msgpack_encoder/lib/LeanFeed2.v
+  rule: proofs
+  line: 4
+  message: a notation token with a '"', or a '(' after anything but '.', '`' or ':', is not allowed in
+    a proof
+  key: '"''LF2CBN('' t '')''"'
+  count: 1
+  reason: Released in v2026.10.1. Every use of LF2CBN( in this library is followed by a space and an identifier,
+    and git grep 'LF2CBN(\*' finds nothing, so no comment opener and no hidden command can form.
+- path: proofs/libreac/fuzz_boxreg/provenance/port/projects/libreac/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_boxreg/provenance/port/projects/libreac/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_boxreg/provenance/port/projects/libreac/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/libreac/fuzz_ctrl/provenance/port/projects/libreac/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_ctrl/provenance/port/projects/libreac/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_ctrl/provenance/port/projects/libreac/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/libreac/fuzz_decode/provenance/port/projects/libreac/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_decode/provenance/port/projects/libreac/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_decode/provenance/port/projects/libreac/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/libreac/fuzz_disco/provenance/port/projects/libreac/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_disco/provenance/port/projects/libreac/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_disco/provenance/port/projects/libreac/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/libreac/fuzz_grant/provenance/port/projects/libreac/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_grant/provenance/port/projects/libreac/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_grant/provenance/port/projects/libreac/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/libreac/fuzz_identity/provenance/port/projects/libreac/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_identity/provenance/port/projects/libreac/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_identity/provenance/port/projects/libreac/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/libreac/fuzz_knock/provenance/port/projects/libreac/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_knock/provenance/port/projects/libreac/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_knock/provenance/port/projects/libreac/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/libreac/fuzz_pcap/provenance/port/projects/libreac/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_pcap/provenance/port/projects/libreac/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_pcap/provenance/port/projects/libreac/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/libreac/fuzz_scene/provenance/port/projects/libreac/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_scene/provenance/port/projects/libreac/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/libreac/fuzz_scene/provenance/port/projects/libreac/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/omx-clap-core/fuzz_manifest/provenance/port/projects/omx-clap-core/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/omx-clap-core/fuzz_manifest/provenance/port/projects/omx-clap-core/alloc.c
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the harness author's address in the copyright line of the port's changed alloc.c, copied as
+    it is into the build record
+- path: proofs/omx-clap-core/fuzz_manifest/provenance/port/projects/omx-clap-core/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/omx-clap-core/fuzz_manifest/provenance/port/projects/omx-clap-core/fuzz_preset.c
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the harness author's address in the copyright line of the port's changed fuzz_preset.c, copied
+    as it is into the build record
+- path: proofs/omx-clap-core/fuzz_manifest/provenance/port/projects/omx-clap-core/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/omx-clap-core/fuzz_preset/provenance/port/projects/omx-clap-core/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/omx-clap-core/fuzz_preset/provenance/port/projects/omx-clap-core/alloc.c
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the harness author's address in the copyright line of the port's changed alloc.c, copied as
+    it is into the build record
+- path: proofs/omx-clap-core/fuzz_preset/provenance/port/projects/omx-clap-core/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/omx-clap-core/fuzz_preset/provenance/port/projects/omx-clap-core/fuzz_preset.c
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the harness author's address in the copyright line of the port's changed fuzz_preset.c, copied
+    as it is into the build record
+- path: proofs/omx-clap-core/fuzz_preset/provenance/port/projects/omx-clap-core/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/omx-clap-core/fuzz_state/provenance/port/projects/omx-clap-core/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/omx-clap-core/fuzz_state/provenance/port/projects/omx-clap-core/alloc.c
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the harness author's address in the copyright line of the port's changed alloc.c, copied as
+    it is into the build record
+- path: proofs/omx-clap-core/fuzz_state/provenance/port/projects/omx-clap-core/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/omx-clap-core/fuzz_state/provenance/port/projects/omx-clap-core/fuzz_preset.c
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the harness author's address in the copyright line of the port's changed fuzz_preset.c, copied
+    as it is into the build record
+- path: proofs/omx-clap-core/fuzz_state/provenance/port/projects/omx-clap-core/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/plugin-hostd/fuzz_command/provenance/port/projects/plugin-hostd/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/plugin-hostd/fuzz_command/provenance/port/projects/plugin-hostd/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/plugin-hostd/fuzz_command/provenance/port/projects/plugin-hostd/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/plugin-hostd/fuzz_reply/provenance/port/projects/plugin-hostd/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/plugin-hostd/fuzz_reply/provenance/port/projects/plugin-hostd/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/plugin-hostd/fuzz_reply/provenance/port/projects/plugin-hostd/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/libdiginet/fuzz_codec/provenance/port/projects/libdiginet/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/libdiginet/fuzz_codec/provenance/port/projects/libdiginet/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/libdiginet/fuzz_codec/provenance/port/projects/libdiginet/fuzz_transport.c
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's fuzz_transport.c, copied as it is into the build
+    record
+- path: proofs/libdiginet/fuzz_codec/provenance/port/projects/libdiginet/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/libdiginet/fuzz_decode/provenance/port/projects/libdiginet/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/libdiginet/fuzz_decode/provenance/port/projects/libdiginet/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/libdiginet/fuzz_decode/provenance/port/projects/libdiginet/fuzz_transport.c
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's fuzz_transport.c, copied as it is into the build
+    record
+- path: proofs/libdiginet/fuzz_decode/provenance/port/projects/libdiginet/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/libdiginet/fuzz_frame/provenance/port/projects/libdiginet/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/libdiginet/fuzz_frame/provenance/port/projects/libdiginet/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/libdiginet/fuzz_frame/provenance/port/projects/libdiginet/fuzz_transport.c
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's fuzz_transport.c, copied as it is into the build
+    record
+- path: proofs/libdiginet/fuzz_frame/provenance/port/projects/libdiginet/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/libdiginet/fuzz_transport/provenance/port/projects/libdiginet/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/libdiginet/fuzz_transport/provenance/port/projects/libdiginet/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/libdiginet/fuzz_transport/provenance/port/projects/libdiginet/fuzz_transport.c
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's fuzz_transport.c, copied as it is into the build
+    record
+- path: proofs/libdiginet/fuzz_transport/provenance/port/projects/libdiginet/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/reac-pw/fuzz_headamp/provenance/port/projects/reac-pw/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_headamp/provenance/port/projects/reac-pw/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_headamp/provenance/port/projects/reac-pw/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/reac-pw/fuzz_link/provenance/port/projects/reac-pw/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_link/provenance/port/projects/reac-pw/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_link/provenance/port/projects/reac-pw/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/reac-pw/fuzz_pin/provenance/port/projects/reac-pw/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_pin/provenance/port/projects/reac-pw/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_pin/provenance/port/projects/reac-pw/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/reac-pw/fuzz_qdisc/provenance/port/projects/reac-pw/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_qdisc/provenance/port/projects/reac-pw/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_qdisc/provenance/port/projects/reac-pw/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/reac-pw/fuzz_rate/provenance/port/projects/reac-pw/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_rate/provenance/port/projects/reac-pw/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_rate/provenance/port/projects/reac-pw/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/reac-pw/fuzz_role/provenance/port/projects/reac-pw/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_role/provenance/port/projects/reac-pw/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_role/provenance/port/projects/reac-pw/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/reac-pw/fuzz_segconf/provenance/port/projects/reac-pw/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_segconf/provenance/port/projects/reac-pw/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/reac-pw/fuzz_segconf/provenance/port/projects/reac-pw/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/reac-repacer/fuzz_egress/provenance/port/projects/reac-repacer/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/reac-repacer/fuzz_egress/provenance/port/projects/reac-repacer/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/reac-repacer/fuzz_egress/provenance/port/projects/reac-repacer/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/reac-repacer/fuzz_lock/provenance/port/projects/reac-repacer/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/reac-repacer/fuzz_lock/provenance/port/projects/reac-repacer/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/reac-repacer/fuzz_lock/provenance/port/projects/reac-repacer/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/reac-repacer/fuzz_uci/provenance/port/projects/reac-repacer/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/reac-repacer/fuzz_uci/provenance/port/projects/reac-repacer/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/reac-repacer/fuzz_uci/provenance/port/projects/reac-repacer/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record
+- path: proofs/reac-repacer/fuzz_wire/provenance/port/projects/reac-repacer/Dockerfile
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's Dockerfile copyright line, copied as it is into
+    the build record
+- path: proofs/reac-repacer/fuzz_wire/provenance/port/projects/reac-repacer/build.sh
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the enrollment author's address in the port's build.sh copyright line, copied as it is into
+    the build record
+- path: proofs/reac-repacer/fuzz_wire/provenance/port/projects/reac-repacer/project.yaml
+  rule: private-data
+  key: 903e818207c85212
+  count: 1
+  reason: the maintainer's address that the enrollment gives as primary_contact, in the port's project.yaml
+    copied as it is into the build record

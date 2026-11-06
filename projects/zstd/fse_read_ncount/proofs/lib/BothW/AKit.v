@@ -1,0 +1,171 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.LibA Require Import StepF.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import Arr.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.BothW Require Import BImg ABase.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Common Require Import RunDraw.
+Import ListNotations.
+(* [comment removed for export] *)
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.LiaTuning.lia_orc_old ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.LiaTuning.lia_k12.   (* [comment removed for export] *)
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Step.slia ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.slia_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.flia ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.flia_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.zrange ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.zrange_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.zrange_nonneg ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.zrange_nonneg_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Step.solve_load ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.solve_load_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.ZBridge.word_eq_tac ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.word_eq_tac_k12.
+Local Ltac OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.simpl_arr_sizes ::= OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib.Tac.simpl_arr_sizes_k12.
+(* [comment removed for export] *)
+
+Open Scope Z_scope.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+Section CANSEC1. Context {rc : runConstT}.
+#[using="Type"] Lemma sx32_lit : forall e, -2^31 <= e < 2^31 -> sx32 (Z_to_bv 64 e) = Z_to_bv 64 e.
+Proof.
+intros e He. unfold sx32. apply Z_to_bv_eqm. rewrite unsigned_lit_wrap. unfold bv_swrap, bv_wrap, bv_half_modulus, bv_modulus.
+change (2 ^ Z.of_N 32) with 4294967296. change (2^64) with 18446744073709551616.
+replace (Z.of_N (32 - 1)) with 31 by reflexivity. change (2^31) with 2147483648 in *.
+Z.div_mod_to_equations. nia.
+Qed.
+#[using="Type"] Lemma zx32_lit : forall e, 0 <= e < 2^32 -> zx32 (Z_to_bv 64 e) = Z_to_bv 64 e.
+Proof. intros e He. unfold zx32. Local Ltac2 Set LiaHints.tbl := fun () => "0020=21445642817.364881173569.3000004008S2HeS2He".
+rewrite unsigned_lit by lia. rewrite Z.mod_small by lia. reflexivity. Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma sx16_lit : forall e, -2^15 <= e < 2^15 -> sx16 (Z_to_bv 64 e) = Z_to_bv 64 e.
+Proof.
+intros e He. unfold sx16. apply Z_to_bv_eqm. rewrite unsigned_lit_wrap. unfold bv_swrap, bv_wrap, bv_half_modulus, bv_modulus.
+change (2 ^ Z.of_N 16) with 65536. change (2^64) with 18446744073709551616.
+replace (Z.of_N (16 - 1)) with 15 by reflexivity. change (2^15) with 32768 in *.
+Z.div_mod_to_equations. nia.
+Qed.
+#[using="Type"] Lemma zx16_lit : forall e, 0 <= e < 2^16 -> zx16 (Z_to_bv 64 e) = Z_to_bv 64 e.
+Proof. intros e He. unfold zx16. Local Ltac2 Set LiaHints.tbl := fun () => "0020=64881173569.368437817665.3000004008S2HeS2He".
+rewrite unsigned_lit by lia. rewrite Z.mod_small by lia. reflexivity. Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma zxb_lit : forall e, 0 <= e < 2^8 -> zxb (Z_to_bv 8 e) = Z_to_bv 64 e.
+Proof.
+intros e He. unfold zxb. rewrite Z_to_bv_unsigned, bv_wrap_small; [reflexivity|].
+change (bv_modulus 8) with 256. change (2^8) with 256 in He. clear -He. Local Ltac2 Set LiaHints.tbl := fun () => "0010=59404269944.2000004S2He".
+lia.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma sxb_lit : forall e, 0 <= e < 2^7 -> sxb (Z_to_bv 8 e) = Z_to_bv 64 e.
+Proof.
+intros e He. unfold sxb. rewrite Z_to_bv_signed, bv_swrap_small; [reflexivity|].
+change (bv_half_modulus 8) with 128. change (2^7) with 128 in He. clear -He. Local Ltac2 Set LiaHints.tbl := fun () => "0010=45363432394.2000004S2He".
+lia.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma zx32_small : forall w : word, bv_unsigned w < 2^32 -> zx32 w = w.
+Proof.
+intros w Hw. unfold zx32. pose proof (bv_unsigned_in_range 64 w) as R.
+Local Ltac2 Set LiaHints.tbl := fun () => "0010=56422812956.4000006S2Hw1R".
+rewrite Z.mod_small by lia. apply Z_to_bv_bv_unsigned.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+End CANSEC1.
+Ltac lits :=
+repeat match goal with
+| |- context [sx32 (Z_to_bv 64 ?e)] => rewrite (sx32_lit e) by lia
+| |- context [zx32 (Z_to_bv 64 ?e)] => rewrite (zx32_lit e) by lia
+| |- context [sx16 (Z_to_bv 64 ?e)] => rewrite (sx16_lit e) by lia
+| |- context [zx16 (Z_to_bv 64 ?e)] => rewrite (zx16_lit e) by lia
+| |- context [zxb (Z_to_bv 8 ?e)] => rewrite (zxb_lit e) by lia
+| |- context [sxb (Z_to_bv 8 ?e)] => rewrite (sxb_lit e) by lia
+end.
+Ltac lstep := step; lits.
+Ltac if_lit :=
+lazymatch goal with
+| |- evtF _ _ _ (MS _ _ (if ?c then _ else _) _ _ _ _) =>
+let v := eval vm_compute in c in
+replace c with v by (vm_compute; reflexivity); cbv iota
+end.
+Section CANSEC2. Context {rc : runConstT}.
+#[using="Type"] Lemma land_ones_l : forall y, 0 <= y < 2^64 -> Z.land 18446744073709551615 y = y.
+Proof. intros. rewrite Z.land_comm. change 18446744073709551615 with (Z.ones 64). Local Ltac2 Set LiaHints.tbl := fun () => "0020=31338480102.335495549846.3000003004S1HS".
+rewrite Z.land_ones by lia. apply Z.mod_small. lia. Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma land_ones_r : forall y, 0 <= y < 2^64 -> Z.land y 18446744073709551615 = y.
+Proof. intros. rewrite Z.land_comm. apply land_ones_l. assumption. Qed.
+#[using="Type"] Lemma sel_mask_true : forall (c : bool) x, c = true -> 0 <= x < 2^64 ->
+Z.land ((0 - Z.b2z c) mod 18446744073709551616) x = x.
+Proof. intros c x -> Hx. cbn [Z.b2z]. replace ((0 - 1) mod 18446744073709551616) with 18446744073709551615 by reflexivity. apply land_ones_l. exact Hx. Qed.
+#[using="Type"] Lemma bytes_at_read8 : forall m a (v : word),
+bytes_at bsegs m a (le8 v) -> ov_read_bytes bsegs m (wa a) 8 = Some (le8 v).
+Proof.
+intros m a v H.
+assert (L : length (le8 v) = 8%nat) by apply length_le8.
+Local Ltac2 Set LiaHints.tbl := fun () => "0010=47741258581.6000003S1L".
+pose proof (bytes_at_ov_read bsegs m a (le8 v) 0 8 H ltac:(rewrite L; lia)) as R.
+rewrite Z.add_0_r in R. rewrite R. f_equal.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma bytes_at_agree : forall m m' a bs,
+bytes_at bsegs m a bs -> (forall i, a <= i < a + Z.of_nat (length bs) -> m' (wa i) = m (wa i)) ->
+bytes_at bsegs m' a bs.
+Proof.
+intros m m' a bs (H0 & H1 & HB) HM. split; [exact H0|]. split; [exact H1|].
+intros i Hi. rewrite <- (HB i Hi). unfold mrd. Local Ltac2 Set LiaHints.tbl := fun () => "0010>53024458931.11000004S2Hi".
+rewrite HM by lia. reflexivity.
+Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma nth_error_upd_other : forall {X} (l : list X) k i x, i <> k -> nth_error (upd l k x) i = nth_error l i.
+Proof.
+induction l as [|y l IH]; intros [|k] [|i] x Hne; cbn; try reflexivity; try congruence.
+apply IH. congruence.
+Qed.
+#[using="Type"] Lemma nth_error_upd_here : forall {X} (l : list X) k x, (k < length l)%nat -> nth_error (upd l k x) k = Some x.
+Proof. Local Ltac2 Set LiaHints.tbl := fun () => "0050=1301109370.7 20317036517.420317036517.55022875109.8 53818806475.800000100500900:00>FS2HkS2HkFS2Hk".
+induction l as [|y l IH]; intros [|k] x Hk; cbn in *; try lia; auto. apply IH. lia. Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma skipn_upd_here : forall {X} (l : list X) k x, (k < length l)%nat -> skipn k (upd l k x) = x :: skipn (S k) l.
+Proof. Local Ltac2 Set LiaHints.tbl := fun () => "0050=31588438221.431588438221.548179087118.753818806475.862491566721.800000400800900=00>S2HkS2HkFS2HkF".
+induction l as [|y l IH]; intros [|k] x Hk; cbn in *; try lia; auto. apply IH. lia. Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma skipn_S_nth : forall {X} (l : list X) k x, nth_error l k = Some x -> skipn k l = x :: skipn (S k) l.
+Proof.
+induction l as [|y l IH]; intros [|k] x H; cbn in *; try discriminate.
+- injection H as ->. reflexivity.
+- apply IH. exact H.
+Qed.
+End CANSEC2.
+Tactic Notation "callp" uconstr(SPEC) :=
+eapply evtF_cut;
+[ eapply SPEC
+| let ms' := fresh "ms'" in let PO := fresh "PO" in
+intros ms' PO; cbv beta in PO;
+repeat (lazymatch type of PO with
+| @ex _ _ => let x := fresh "x" in destruct PO as [x PO]
+end);
+subst ms';
+try (lazymatch goal with
+| |- evtF _ _ _ (MS _ _ (ret_pc (Z_to_bv 64 ?n)) _ _ _ _) =>
+replace (ret_pc (Z_to_bv 64 n)) with (Z_to_bv 64 n) by (symmetry; apply ret_pc_even; [ lia | reflexivity ])
+end) ];
+try (lazymatch goal with |- rng _ _ _ => solve_rng end).
+Section CANSEC3. Context {rc : runConstT}.
+Inductive boxed (P : Prop) : Prop := Box (p : P).
+End CANSEC3.
+Ltac box H := apply Box in H.
+Ltac unbox H := destruct H as [H].
+Section CANSEC4. Context {rc : runConstT}.
+#[using="Type"] Lemma amo_alignedD_intro : forall a : Z, 0 <= a < 2^64 -> a mod 8 = 0 -> amo_aligned AD (Z_to_bv 64 a) = true.
+Proof. intros a Ha Hm. unfold amo_aligned, amo_bytes. Local Ltac2 Set LiaHints.tbl := fun () => "0010=56765665761.4000004S2Ha".
+rewrite unsigned_lit by lia. rewrite Hm. reflexivity. Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+#[using="Type"] Lemma amo_alignedW_intro : forall a : Z, 0 <= a < 2^64 -> a mod 4 = 0 -> amo_aligned AW (Z_to_bv 64 a) = true.
+Proof. intros a Ha Hm. unfold amo_aligned, amo_bytes. Local Ltac2 Set LiaHints.tbl := fun () => "0010=56765665761.4000004S2Ha".
+rewrite unsigned_lit by lia. rewrite Hm. reflexivity. Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+End CANSEC4.
+Ltac amo_align AMO :=
+try (rewrite AMO; cbv beta iota delta [negb]);
+try (rewrite Z.eqb_refl; cbv iota).
+Ltac amo_stepA AMO :=
+lazymatch goal with
+| |- evtF ?segs ?RNG ?Q (MS ?R ?F (Z_to_bv 64 ?pc) ?fc ?rv ?m ?ro) =>
+let fw := eval vm_compute in (fetch_word segs (Z_to_bv 64 pc)) in
+lazymatch fw with Some ?w =>
+let d := eval vm_compute in (decode_any w) in
+lazymatch d with Some (?i, ?sz) =>
+eapply (evtF_step_acc segs RNG);
+[ reflexivity
+| rewrite (stepF_gen segs R F (Z_to_bv 64 pc) fc rv m ro w i sz) by (vm_compute; reflexivity);
+exec_cbv; simp_is_x0; simp_regs; amo_align AMO; exec_cbv; amo_align AMO; simp_is_x0; simp_regs; vnorm_for i;
+try solve_load; try solve_store; reflexivity
+| solve_accs
+| simp_regs; vnorm_for i; mem_after_store_opt ]
+end end
+end.
+Ltac word_range w H := pose proof (bv_unsigned_in_range 64 w) as H; unfold bv_modulus in H; cbn in H.

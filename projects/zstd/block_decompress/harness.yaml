@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zstd
 harness: block_decompress
-rocq: OssFuzzTheorems.zstd.block_decompress
+rocq: OSSVerify.zstd.block_decompress
 origin: upstream
 summary: ZSTD_decompressBegin + ZSTD_decompressBlock of the raw input into a FUZZ_malloc_rand buffer;
   result ignored.

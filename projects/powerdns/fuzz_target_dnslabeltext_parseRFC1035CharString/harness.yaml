@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: powerdns
 harness: fuzz_target_dnslabeltext_parseRFC1035CharString
-rocq: OssFuzzTheorems.powerdns.fuzz_target_dnslabeltext_parseRFC1035CharString
+rocq: OSSVerify.powerdns.fuzz_target_dnslabeltext_parseRFC1035CharString
 origin: upstream
 summary: parseRFC1035CharString(input, val) (the ragel-generated TXT character-string unescaper); output
   and return value discarded; not even exceptions are caught.

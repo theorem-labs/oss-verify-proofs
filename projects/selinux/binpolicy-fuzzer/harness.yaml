@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: selinux
 harness: binpolicy-fuzzer
-rocq: OssFuzzTheorems.selinux.binpolicy_fuzzer
+rocq: OSSVerify.selinux.binpolicy_fuzzer
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an invariant: A kernel policy that policydb_read
   accepted must still pass policydb_validate after policydb_optimize (optimisation preserves validity).'

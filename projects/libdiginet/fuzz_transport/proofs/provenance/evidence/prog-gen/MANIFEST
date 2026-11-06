@@ -1,0 +1,16 @@
+# MANIFEST of provenance/evidence/prog-gen/ (libdiginet/fuzz_transport: the generators of the program listings
+# lib/A/Prog/DgnTransport{Syms,Addr,List}.v and lib/B/Prog/DgnTransportB{Syms,Addr,List}.v).
+# One line per file of this directory: <path relative to this directory> <kind> <sha256 of the file as committed> <role>.
+# It names every file of the slice but itself.
+# This directory was provenance/prog-gen/ until the release (the release's lint allows provenance/evidence/, not
+# provenance/prog-gen/); records written before cite the old place.
+A/run.sh script 96ba24e81b0711ab7a493deec95678ecd68d624d49dc8f9ee7335aad59193b51 regenerates lib/A/Prog/DgnTransportSyms.v, DgnTransportAddr.v and DgnTransportList.v from the pinned fuzz_transport.asan (e89be137db17) and its unstripped twin, with A/palist.py
+A/palist.py script 4d8dcc54f4c027562a3387b8a111f6b76deef4e8b0acf7d9abef5e0731b4a2a7 the position-abstract listing of a RISC-V program-code range, in the form of libreac/fuzz_decode's released DecodeList.v / DecodeSyms.v / DecodeAddr.v
+A/semdiff.py script 286f8c19066b5f889800efaaa7da8556a15544b99932a6605bbad4212b5384a6 the semantic diff of two palist.py listings (old pin and new pin), per function of the listed range
+A/control-29ec57e03c5d.log log 1c34666faee4e4756e9a82cd58cd4f1e62930e3141ccb70e67f41cf44128863a the control: the generator of 4de1596fe3b9 run as that commit ran it, on the old asan pin
+A/run-e89be137db17.log log 5c2f4db6f26ab5cdf71b6f4bfd94ddf7dcd4cf914ea0cd7b1c3c0649a65bf175 the regeneration on the new asan pin e89be137db17 (run.sh: only its pin line changed)
+A/semdiff-29ec57e03c5d-e89be137db17.txt measurement 011477cb9ca002d57320cc2d6298ca39cc2d595d141234f8f4a89cbd14969c75 A/semdiff.py's output: the old-pin listing against the new-pin listing
+B/run.sh script 8b96fc39cba34f134506da36f43a4dfc460430d3e5cc7c09b6274ae67180d06c regenerates lib/B/Prog/DgnTransportBSyms.v, DgnTransportBAddr.v and DgnTransportBList.v from the pinned fuzz_transport.asan-ubsan (41113a03c82f) and its unstripped twin, with B/palist.py
+B/palist.py script 2c974342a1de97c62f436e969cfcc7ef804d911e1eaaf7e589aaa56170bf9c31 palist.py with the image-B form (listing modules of lib.B.Prog, PaTable of lib.A.Prog)
+B/control.sh script aae28566a1ac707380557895ed5849a670e7000d34bcaa799b1bbfd8a2cfa4b4 the control of the image-B form: on libreac/fuzz_decode's pinned fuzz_decode.asan-ubsan it must give that unit's released DecodeBSyms.v, DecodeBAddr.v and DecodeBList.v byte for byte
+B/SHA256SUMS record 435a9087138848fd978e7c9b94b59916f6f41f5a8528e0637c345c57fcb5e14c sha256 of the three files B/run.sh writes (sha256sum -c from the unit directory)

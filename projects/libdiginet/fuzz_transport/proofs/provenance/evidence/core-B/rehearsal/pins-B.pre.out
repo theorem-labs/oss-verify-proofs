@@ -1,0 +1,59 @@
+== 1. pins
+  libdiginet fuzz_transport.asan-ubsan sha256 41113a03c82f; harness.yaml asan-ubsan pin at refs/remotes/origin/ossv/recipes: 04463dc8ecfe: DIFFERS
+  libreac fuzz_decode.asan-ubsan sha256 5d05689fd5b1; harness.yaml asan-ubsan pin at 88154566652a: 5d05689fd5b1: EQUAL
+  libdiginet fuzz_transport.asan (--known-elf / --kernel-image) sha256 e89be137db17; harness.yaml asan pin at refs/remotes/origin/ossv/recipes: 29ec57e03c5d: DIFFERS
+  libreac fuzz_decode.asan (--known-elf / --kernel-image) sha256 5973b76807d8; harness.yaml asan pin at 88154566652a: 5973b76807d8: EQUAL
+== 2. unstripped twin against the pin (PT_LOAD)
+  libdiginet fuzz_transport: pin 41113a03c82f twin e217cb0a84f1: 4 PT_LOAD, headers equal True; 25 bytes differ, all in e_shoff / e_shnum / e_shstrndx / build-id: True
+  libreac fuzz_decode: pin 5d05689fd5b1 twin 6744989bb2e6: 4 PT_LOAD, headers equal True; 25 bytes differ, all in e_shoff / e_shnum / e_shstrndx / build-id: True
+  fuzz_grant: pin fde52226dc48 twin 5a5ee7c02b4e: 4 PT_LOAD, headers equal True; 25 bytes differ, all in e_shoff / e_shnum / e_shstrndx / build-id: True
+== 3. --old-prog rule
+  libreac fuzz_decode.asan-ubsan (the donor): 800b0:823c8
+  CONTROL fuzz_grant.asan-ubsan (reac-repacer image-B runs pass 80a3c:86640): 80a3c:86640
+  CONTROL fuzz_grant.asan (the image-A runs pass 806b0:857dc): 806b0:857dc
+== 4. --old-syms
+  mksyms.py over the donor twin == libreac-fuzz_decode.asan-ubsan.syms.txt: True (2148 symbols)
+  CONTROL: over fuzz_grant's asan-ubsan twin == fuzz_uci image B's fuzz_grant.asan-ubsan.syms.txt, byte for byte: True (2168 symbols)
+== 5. call sites of the walked runtime entries (.text)
+  libdiginet fuzz_transport: __asan_memset 0x52888: 27 call sites in ['LLVMFuzzerTestOneInput', 'build_and_receive', 'diginet_frame_build', 'diginet_session_config_default', 'diginet_session_init', 'diginet_session_tick', 'on_ack', 'on_announce', 'on_data', 'receive', 'send_data', 'set_state', 'spec_read_frame']
+  libdiginet fuzz_transport: __asan_memcpy 0x523ec: 32 call sites in ['LLVMFuzzerTestOneInput', 'build_and_receive', 'diginet_frame_build', 'diginet_frame_parse', 'diginet_session_init', 'diginet_session_rx', 'diginet_session_submit', 'diginet_session_wake', 'io_recv', 'io_send', 'm_rx', 'receive', 'send_control', 'take']
+  libdiginet fuzz_transport: __interceptor_trampoline_bcmp 0x42d34: 22 call sites in ['check_inflight_retry', 'check_latest_queue', 'check_latest_sent', 'check_sent_frame', 'check_state_data', 'check_state_desk', 'desk_named', 'diginet_session_rx', 'host_offset', 'm_rx', 'on_announce']
+  libdiginet fuzz_transport: __interceptor_trampoline_memchr 0x42d38: 1 call sites in ['strnlen']
+  libdiginet fuzz_transport: __interceptor_trampoline_strlen 0x42d20: 7 call sites in ['LLVMFuzzerTestOneInput', '__strftime_fmt_1', 'do_tzset', 'strchrnul', 'strncat']
+  libdiginet fuzz_transport: __interceptor_trampoline_strcmp 0x42d28: 8 call sites in ['__mo_lookup', '__vdsosym', 'diginet_personality_from_name', 'do_tzset']
+  libdiginet fuzz_transport: __asan_set_shadow_f8 0x553cc: 7 call sites in ['_ZN6__asanL23force_interface_symbolsEv', 'build_and_receive', 'diginet_session_poll', 'diginet_session_tick']
+  libdiginet fuzz_transport: __asan_stack_malloc_0 0x3d6f4: 1 call sites in ['send_data']
+  libdiginet fuzz_transport: __asan_stack_malloc_1 0x3d868: 2 call sites in ['diginet_session_rx', 'diginet_session_wake']
+  libdiginet fuzz_transport: __asan_stack_malloc_2 0x3d9f8: 6 call sites in ['LLVMFuzzerTestOneInput', 'diginet_body_check', 'on_ack', 'on_data', 'send_control', 'set_state']
+  libdiginet fuzz_transport: __asan_stack_malloc_3 0x3db94: 1 call sites in ['on_announce']
+  libdiginet fuzz_transport: __asan_stack_malloc_4 absent: 0 call sites in []
+  libdiginet fuzz_transport: __asan_stack_malloc_5 0x3dd40: 3 call sites in ['build_and_receive', 'diginet_session_poll', 'diginet_session_tick']
+  libdiginet fuzz_transport: __asan_stack_free_5 0x3df4c: 3 call sites in ['build_and_receive', 'diginet_session_poll', 'diginet_session_tick']
+  libreac fuzz_decode: __asan_memset 0x510f8: 3 call sites in ['LLVMFuzzerTestOneInput']
+  libreac fuzz_decode: __asan_memcpy 0x50c5c: 1 call sites in ['LLVMFuzzerTestOneInput']
+  libreac fuzz_decode: __interceptor_trampoline_bcmp 0x415a4: 2 call sites in ['LLVMFuzzerTestOneInput', 'check_round_trip']
+  libreac fuzz_decode: __interceptor_trampoline_memchr 0x415a8: 1 call sites in ['strnlen']
+  libreac fuzz_decode: __interceptor_trampoline_strlen 0x41590: 6 call sites in ['__strftime_fmt_1', 'do_tzset', 'strchrnul', 'strncat']
+  libreac fuzz_decode: __interceptor_trampoline_strcmp 0x41598: 7 call sites in ['__mo_lookup', '__vdsosym', 'do_tzset']
+  libreac fuzz_decode: __asan_set_shadow_f8 0x53e78: 1 call sites in ['_ZN6__asanL23force_interface_symbolsEv']
+  libreac fuzz_decode: __asan_stack_malloc_0 0x3c6fc: 1 call sites in ['LLVMFuzzerTestOneInput']
+  libreac fuzz_decode: __asan_stack_malloc_1 absent: 0 call sites in []
+  libreac fuzz_decode: __asan_stack_malloc_2 absent: 0 call sites in []
+  libreac fuzz_decode: __asan_stack_malloc_3 absent: 0 call sites in []
+  libreac fuzz_decode: __asan_stack_malloc_4 absent: 0 call sites in []
+  libreac fuzz_decode: __asan_stack_malloc_5 absent: 0 call sites in []
+  libreac fuzz_decode: __asan_stack_free_5 absent: 0 call sites in []
+  fuzz_grant: __asan_memset 0x52024: 10 call sites in ['LLVMFuzzerTestOneInput', 'ctrl_lay_block', 'name_field', 'reac_box_model_block', 'reac_ctrl_build_grant_sweep', 'reac_ctrl_parse', 'reac_headamp_tx_init']
+  fuzz_grant: __asan_memcpy 0x51b88: 18 call sites in ['build_dt1_single', 'check_groupa', 'ctrl_lay_block', 'reac_box_model_block', 'reac_ctrl_build_grant_sweep', 'reac_ctrl_identity_poll_block', 'reac_ctrl_parse']
+  fuzz_grant: __interceptor_trampoline_bcmp 0x424d0: 6 call sites in ['LLVMFuzzerTestOneInput', 'reac_ctrl_parse']
+  fuzz_grant: __interceptor_trampoline_memchr 0x424d4: 1 call sites in ['strnlen']
+  fuzz_grant: __interceptor_trampoline_strlen 0x424bc: 6 call sites in ['__strftime_fmt_1', 'do_tzset', 'strchrnul', 'strncat']
+  fuzz_grant: __interceptor_trampoline_strcmp 0x424c4: 7 call sites in ['__mo_lookup', '__vdsosym', 'do_tzset']
+  fuzz_grant: __asan_set_shadow_f8 0x54b68: 6 call sites in ['_ZN6__asanL23force_interface_symbolsEv', 'reac_ctrl_build_grant_sweep']
+  fuzz_grant: __asan_stack_malloc_0 0x3cf4c: 2 call sites in ['reac_box_model_block', 'reac_ctrl_stamp_headamp']
+  fuzz_grant: __asan_stack_malloc_1 0x3d0c0: 2 call sites in ['ctrl_lay_block', 'reac_ctrl_parse']
+  fuzz_grant: __asan_stack_malloc_2 0x3d250: 2 call sites in ['check_groupa', 'reac_grant_build_sweep']
+  fuzz_grant: __asan_stack_malloc_3 absent: 0 call sites in []
+  fuzz_grant: __asan_stack_malloc_4 0x3d3ec: 1 call sites in ['LLVMFuzzerTestOneInput']
+  fuzz_grant: __asan_stack_malloc_5 absent: 0 call sites in []
+  fuzz_grant: __asan_stack_free_5 absent: 0 call sites in []

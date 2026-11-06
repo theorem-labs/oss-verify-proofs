@@ -1,0 +1,7 @@
+# control 1: an instruction word: `or` for the `and` at FS_LOOP; UA copy with b368e600 written at 0x3c24c (file bytes)
+# GA = <P>/unstripped/fuzz_grant/fuzz_grant.asan sha256 57c26f993615
+# UA = <out>/plant-1 sha256 8011e56cccf2
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes acceptances	C-string acceptances (also one CSTR row each)
+__asan_stack_malloc_1	GA:UA	0x3cf18	0x3c1b8	400	400	DIFFERENT	9	1	0	(0, 1, 0)	0	tlsindex+0x1c[0x9d550|0x97d00]=_ZN6__asanL14fake_stack_tlsE+0x0@tls	
+rc=0

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: fmt
 harness: named-arg-fuzzer
-rocq: OssFuzzTheorems.fmt.named_arg_fuzzer
+rocq: OSSVerify.fmt.named_arg_fuzzer
 origin: upstream
 summary: format_to(fuzz format, fmt::arg(fuzz name, fuzz value)) for 13 types; std::exception swallowed.
 entry: LLVMFuzzerTestOneInput

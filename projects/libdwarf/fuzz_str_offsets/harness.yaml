@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_str_offsets
-rocq: OssFuzzTheorems.libdwarf.fuzz_str_offsets
+rocq: OSSVerify.libdwarf.fuzz_str_offsets
 origin: upstream
 summary: '.debug_str_offsets: open table access, walk every table and every value by index, then statistics;
   results unused.'

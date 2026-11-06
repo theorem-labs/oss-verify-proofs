@@ -6,22 +6,22 @@
  (deps (:elf %{project_root}/projects/binutils/bin/fuzz_disassemble/fuzz_disassemble.plain))
  (action
   (run elf-snapshot %{elf} Plain.v --prefix Plain --module-name M
-       --namespace OssFuzzTheorems.binutils.fuzz_disassemble.images)))
+       --namespace OSSVerify.binutils.fuzz_disassemble.images)))
 (rule
  (targets Ubsan.v Ubsan_seg_000.hex Ubsan_seg_001.hex Ubsan_seg_002_chunk_000.hex Ubsan_seg_002_chunk_001.hex Ubsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/binutils/bin/fuzz_disassemble/fuzz_disassemble.ubsan))
  (action
   (run elf-snapshot %{elf} Ubsan.v --prefix Ubsan --module-name M
-       --namespace OssFuzzTheorems.binutils.fuzz_disassemble.images)))
+       --namespace OSSVerify.binutils.fuzz_disassemble.images)))
 (rule
  (targets Asan.v Asan_seg_000.hex Asan_seg_001.hex Asan_seg_002_chunk_000.hex Asan_seg_002_chunk_001.hex Asan_seg_003_chunk_000.hex Asan_seg_003_chunk_001.hex)
  (deps (:elf %{project_root}/projects/binutils/bin/fuzz_disassemble/fuzz_disassemble.asan))
  (action
   (run elf-snapshot %{elf} Asan.v --prefix Asan --module-name M
-       --namespace OssFuzzTheorems.binutils.fuzz_disassemble.images)))
+       --namespace OSSVerify.binutils.fuzz_disassemble.images)))
 (rule
  (targets AsanUbsan.v AsanUbsan_seg_000.hex AsanUbsan_seg_001.hex AsanUbsan_seg_002_chunk_000.hex AsanUbsan_seg_002_chunk_001.hex AsanUbsan_seg_003_chunk_000.hex AsanUbsan_seg_003_chunk_001.hex)
  (deps (:elf %{project_root}/projects/binutils/bin/fuzz_disassemble/fuzz_disassemble.asan-ubsan))
  (action
   (run elf-snapshot %{elf} AsanUbsan.v --prefix AsanUbsan --module-name M
-       --namespace OssFuzzTheorems.binutils.fuzz_disassemble.images)))
+       --namespace OSSVerify.binutils.fuzz_disassemble.images)))

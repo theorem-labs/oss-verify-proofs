@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zip
 harness: fuzz_stream
-rocq: OssFuzzTheorems.zip.fuzz_stream
+rocq: OSSVerify.zip.fuzz_stream
 origin: upstream
 summary: 'Checks one property, a round trip: Compress-then-extract length round trip: the input is written
   as entry "test" of a new in-memory zip (default compression), the archive is reopened and the entry

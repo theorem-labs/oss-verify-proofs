@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libpng-proto
 harness: libpng_transformations_fuzzer
-rocq: OssFuzzTheorems.libpng_proto.libpng_transformations_fuzzer
+rocq: OSSVerify.libpng_proto.libpng_transformations_fuzzer
 origin: upstream
 summary: Sequential read with quantize/invert_alpha/swap_alpha/packing/alpha_mode transforms, up to 100
   rows; rows never inspected.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_findfuncbypc
-rocq: OssFuzzTheorems.libdwarf.fuzz_findfuncbypc
+rocq: OSSVerify.libdwarf.fuzz_findfuncbypc
 origin: upstream
 summary: 'Port of the findfuncbypc example: dwarf_init_path, walks CUs and DIEs looking for the subprogram
   containing pc 0x1000, then reads its line table; the found name/line are never compared or used.'

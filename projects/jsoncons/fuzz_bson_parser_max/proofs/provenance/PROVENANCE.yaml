@@ -1,0 +1,295 @@
+schema: oss-verify-proofs build record v1
+entry_point:
+  project: jsoncons
+  harness: fuzz_bson_parser_max
+  function: LLVMFuzzerTestOneInput
+  records:
+  - projects/jsoncons/project.yaml
+  - projects/jsoncons/fuzz_bson_parser_max/harness.yaml
+release:
+  repository: https://github.com/theorem-labs/oss-verify-proofs
+  binaries_release: v2026.10.0
+  sources_release: v2026.10.0-src
+upstream:
+  name: jsoncons
+  repository: https://github.com/danielaparker/jsoncons
+  commit: af497a1c1ea9043f4ad8d799617b7d00d6676153
+  licence: BSL-1.0 AND Apache-2.0
+  licence_evidence: the licence components below
+  licence_in_release_records: BSL-1.0
+oss_fuzz:
+  repository: https://github.com/google/oss-fuzz
+  commit: bd2ce21991a94a362b92fb1bf25f86d5a1a60842
+  path: projects/jsoncons
+harness:
+  origin: upstream
+  source:
+    files:
+    - source/fuzz_bson_parser_max.cpp
+    from:
+      repository: https://github.com/danielaparker/jsoncons
+      commit: af497a1c1ea9043f4ad8d799617b7d00d6676153
+      path: fuzzers/fuzz_bson_parser_max.cpp
+    modified: false
+    licence: BSL-1.0
+  modifications:
+  - Linked against jsoncons at commit af497a1c.
+  - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends
+    only on its input.
+  - A small driver reads the input file, calls the harness one to four times and prints each return value.
+recipe:
+  asset:
+    release: v2026.10.0-src
+    file: recipe.tar.zst
+    bytes: 938459
+    sha256: 0339bf3221b15cd39513d46abe99062bac9cce874ed7ba5947753f75b6219ae5
+  target: jsoncons-fuzz_bson_parser_max
+  overlay: null
+  files: 'recipe/ (recipe/MANIFEST.tsv: every file with its sha256 in recipe.tar.zst; rows of kind upstream are
+    laid down from the -src asset; recipe/UPSTREAM-CARRIED.tsv gives the origin and licence of upstream text in
+    files of kind ours+upstream)'
+  patches: []
+  build_system: custom
+  how_to_rebuild: 'as docs/reproducing.md: with recipe/ as /work, unpack the project''s -src asset where its MANIFEST
+    says, apply recipe/series.tsv in order, and run recipe/tools/build-body.sh in the builder image, with the environment
+    of recipe/tools/build-env.tsv and the network off'
+toolchain:
+  clang: 20.1.8
+  builder_image: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  images:
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:c7c5abdc2676e121ca7532b553a83148b384001a553b6ffea63b1911848fd711
+  static_asan:
+    repository: https://github.com/theorem-labs/static-asan
+    commit: b05061352064fa2be1813ac5429149f3de5f057d
+    note: 'the published source of the compiler image''s static AddressSanitizer: its toolchain/ and patches/ are
+      those the image was built from, with comments and patch descriptions edited for publication (toolchain-src.tar.zst
+      holds this commit). Building it gives the image''s libclang_rt.builtins.a and musl libc.a byte for byte; its
+      libclang_rt.asan.a and asan_cxx.a differ from the image''s only in DWARF line tables, which --strip-all removes
+      from the binaries'
+    image_runtime_md5:
+      libclang_rt.asan.a: 91ba024da5ddacd96dc1c7588e5763b3
+      libclang_rt.asan_cxx.a: 2c6e776abd494934481b3f47ff030052
+      libclang_rt.builtins.a: 1f3d379aa7d4de2dcf11254b8f493a29
+      libc.a: 485eb64c0b7397bfea554a9cdf8e352c
+binaries:
+- build: plain
+  file: fuzz_bson_parser_max.plain
+  bytes: 673008
+  sha256: 3a0131e6ff1f9a8e9a55c2ec1ee6362c6adae8ea14343b0ea55a0bf93a082006
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc++.a
+  - libc.a
+  - libunwind.a
+- build: asan
+  file: fuzz_bson_parser_max.asan
+  bytes: 1210264
+  sha256: 3337dbc01245e0fd00073070830e9b9c3dd1df2e1852c9cba988b820fc8268fa
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.asan.a
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc++.a
+  - libc.a
+  - libunwind.a
+- build: ubsan
+  file: fuzz_bson_parser_max.ubsan
+  bytes: 678616
+  sha256: 71d51e937cd8fceb540fc83770085cefb945d31f970c00b4461bc9189d177d09
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc++.a
+  - libc.a
+  - libunwind.a
+- build: asan-ubsan
+  file: fuzz_bson_parser_max.asan-ubsan
+  bytes: 1219640
+  sha256: 62407b025dd28b7036fcbb29d2eb100b437055c2d0cf4483b45c5ffe809c712c
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.asan.a
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc++.a
+  - libc.a
+  - libunwind.a
+binary_asset:
+  release: v2026.10.0
+  file: jsoncons-bin.tar.zst
+  bytes: 6347690
+  sha256: 1da3f2b27444a225bec812b759b487a760c3aefcda2e00d87e59c40263103c81
+source_asset:
+  src:
+    release: v2026.10.0-src
+    file: jsoncons-src.tar.zst
+    bytes: 1042135
+    sha256: a21022254afd98db675050c0cdde1477aeecbd1713031ccce940cd8b0ddc0960
+  src_manifest:
+    release: v2026.10.0-src
+    file: jsoncons-src.MANIFEST.tsv
+    bytes: 3447
+    sha256: 6c3344d72a6cff0c03bb89b783fb1456c7db098aa35730369815bf26d4d16de1
+rebuild:
+- 'rebuilt from this recipe and the source assets on a separate machine: plain identical, asan identical, ubsan
+  identical, asan-ubsan identical'
+link_inputs:
+  asan:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.asan.a: 66
+      libclang_rt.builtins.a: 14
+      crt1.o: object
+      libc++.a: 25
+      libc.a: 238
+      libunwind.a: 5
+      liboft.a: 1
+      wrap_getenv.o: object
+      wrap_getpid.o: object
+      cli.o: object
+      plugin.o: object
+  asan-ubsan:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.asan.a: 66
+      libclang_rt.builtins.a: 14
+      crt1.o: object
+      libc++.a: 25
+      libc.a: 238
+      libunwind.a: 5
+      liboft.a: 1
+      wrap_getenv.o: object
+      wrap_getpid.o: object
+      cli.o: object
+      plugin.o: object
+  plain:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.builtins.a: 14
+      crt1.o: object
+      libc++.a: 25
+      libc.a: 188
+      libunwind.a: 4
+      liboft.a: 1
+      wrap_getenv.o: object
+      cli.o: object
+      plugin.o: object
+  ubsan:
+    linked_output_sha256_equals_binary: true
+    inputs:
+      clang_rt.crtbegin.o: object
+      libclang_rt.builtins.a: 14
+      crt1.o: object
+      libc++.a: 25
+      libc.a: 188
+      libunwind.a: 4
+      liboft.a: 1
+      wrap_getenv.o: object
+      cli.o: object
+      plugin.o: object
+proofs:
+  origin: final-anthropic-opensource-formal-verification-proofs-package-2026-10-21 (sha256 4c6c152f61ce538e439b9d2adef439f4dbe1a2d446767d84ac7c3946d7c6687a),
+    libraries/jsoncons/proofs/submission-6
+  licence: Apache-2.0 OR MIT
+  texts:
+  - LICENSES/anthropic-proofs-LICENSE
+  - LICENSES/anthropic-proofs-LICENSE-MIT
+  - LICENSES/anthropic-proofs-NOTICE
+  texts_location: the repository's top directory
+  modified: each changed file carries one line under its licence header saying so
+  written_here:
+  - asan_agreement_decidable
+  - asan_disagrees_at_most
+  - asan_ubsan_agrees
+  - ubsan_agrees
+flags:
+  note: as written in the recipe; a library's own build system adds its flags after these (e.g. CMake Release appends
+    -O3 -DNDEBUG), see the pin and recipes.sh
+  lines:
+  - 'recipe/tools/build-body.sh:58: OFT_NO_BUILTIN_ALLOC="-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc
+    -fno-builtin-reallocarray -fno-builtin-free -fno-builtin-aligned_alloc -fno-builtin-posix_memalign -fno-builtin-memalign
+    -fno-builtin-valloc -fno-builtin-strdup -fno-builtin-strndup"'
+  - 'recipe/tools/build-body.sh:59: BASE_CFLAGS="-march=rv64g -mabi=lp64d -Os -g -ffunction-sections -fdata-sections
+    -fno-stack-protector -fno-plt -Wdate-time $OFT_NO_BUILTIN_ALLOC"'
+  - 'recipe/tools/build-body.sh:65: SAN=""'
+  - 'recipe/tools/build-body.sh:560: SAN="-fsanitize=address"'
+  - 'recipe/tools/build-body.sh:577: SAN="-fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize-trap=all
+    -fno-sanitize=function"'
+  - 'recipe/tools/build-body.sh:586: SAN="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-trap=all -fno-sanitize=function"'
+  - 'recipe/tools/build-body.sh:590: SAN=""'
+  - 'recipe/tools/build-body.sh:618: CFLAGS="$BASE_CFLAGS $SAN -fmacro-prefix-map=$LIBROOT/=/work/build/lib/FLAVOUR/"'
+  - 'recipe/tools/build-body.sh:431: ''clang --config=/opt/asan-static/musl.cfg'''
+  - 'recipe/tools/build-body.sh:441: ''clang++ --config=/opt/asan-static/musl.cfg -stdlib=libc++'''
+  - 'recipe/tools/build-body.sh:478: SEALED_CFG=/opt/asan-static/asan-musl-sealed.cfg'
+  - 'recipe/tools/build-body.sh:1019: SILENT_LD=""'
+  - 'recipe/tools/build-body.sh:1021: SILENT_LD="-Wl,--defsym=__sanitizer_silent_reports=1"'
+  - 'recipe/tools/build-body.sh:1027: SILENT_LD=""'
+  - 'recipe/tools/build-body.sh:1049: "$CC" $BASE_CFLAGS -static -no-pie -Wl,--gc-sections ${OFT_STRIP--Wl,--strip-all}
+    \'
+  - 'recipe/tools/build-body.sh:1054: "$CC" $BASE_CFLAGS -static -no-pie -Wl,--gc-sections ${OFT_STRIP--Wl,--strip-all}
+    \'
+  - 'recipe/targets/jsoncons-fuzz_bson_parser_max/pin:41: LIB_CFLAGS=""'
+licence:
+  components:
+  - component: jsoncons
+    files: header-only library (include/jsoncons/, include/jsoncons_ext/bson/); harness fuzzers/fuzz_bson_parser_max.cpp
+    licence: BSL-1.0
+    evidence: 'header-only library: the link record of this build shows only the harness object from the library
+      build; LICENSE:1-4 of the repository (Daniel Parker, Boost Software License 1.0) and the headers'' own notices
+      (e.g. include/jsoncons_ext/bson/bson.hpp:1-3); the harness has no licence header, so the repository licence
+      covers it [inferred]; include/jsoncons/utility/unicode_traits.hpp (BSL-1.0, lines 1-3) includes code derived
+      from Unicode, Inc.''s ConvertUTF, which Unicode grants the right to use freely in products (lines 7-14; LICENSES/jsoncons-unicode-ConvertUTF-notice.txt);
+      its trailing_bytes_for_utf8 table (line 174) occurs in all four binaries; detail/grisu3.hpp and the RFC 7049
+      decode_half of config/compiler_support.hpp are not in these binaries (grisu3''s tables are absent; no such
+      decoder in the disassembly)'
+    texts:
+    - LICENSES/jsoncons-LICENSE
+    - LICENSES/jsoncons-unicode-ConvertUTF-notice.txt
+  - component: MongoDB libbson decimal128 and ObjectId code, in jsoncons include/jsoncons_ext/bson/
+    files: include/jsoncons_ext/bson/bson_decimal128.hpp, include/jsoncons_ext/bson/bson_oid.hpp (header-only; called
+      from include/jsoncons_ext/bson/bson_parser.hpp:607 and 624-625)
+    licence: Apache-2.0
+    evidence: 'bson_decimal128.hpp:4-28 and bson_oid.hpp:4-28: based on mongo-c-driver''s libbson, Copyright 2015
+      MongoDB, Inc., Apache License 2.0 (LICENSES/jsoncons-bson-MongoDB-notice.txt); in the binaries: bson_oid.hpp''s
+      hex_char_pairs table (lines 182-206) and decimal128_to_chars''s "Infinity" (bson_decimal128.hpp:336) occur
+      in all four'
+    texts:
+    - LICENSES/Apache-2.0.txt
+    - LICENSES/jsoncons-bson-MongoDB-notice.txt
+  - component: musl libc (static)
+    files: '-'
+    licence: MIT
+    evidence: musl COPYRIGHT; linked in every build
+    texts:
+    - LICENSES/musl-COPYRIGHT
+  - component: 'LLVM runtimes: compiler-rt builtins; in ASan builds the sanitizer runtime and libunwind; libc++/libc++abi
+      in C++ programs'
+    files: '-'
+    licence: Apache-2.0 WITH LLVM-exception
+    evidence: LICENSE.TXT of compiler-rt, libunwind, libc++ and libc++abi at llvmorg-20.1.8 (87f0227c)
+    texts:
+    - LICENSES/llvm-compiler-rt-LICENSE.TXT
+    - LICENSES/llvm-libunwind-LICENSE.TXT
+    - LICENSES/llvm-libcxx-LICENSE.TXT
+    - LICENSES/llvm-libcxxabi-LICENSE.TXT
+  - component: static-asan patches compiled into the ASan runtime and musl
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of theorem-labs/static-asan at b0506135 (MIT for Theorem Labs work; the LLVM and musl code
+      it patches keeps its own licence)
+    texts:
+    - LICENSES/static-asan-LICENSE
+  - component: Theorem Labs file-input driver and build recipe (recipe/src/, recipe/targets/*/plugin.c)
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of this repository (MIT, Theorem Labs, PBC)
+    texts:
+    - LICENSES/oss-fuzz-theorems-LICENSE

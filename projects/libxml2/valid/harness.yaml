@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libxml2
 harness: valid
-rocq: OssFuzzTheorems.libxml2.valid
+rocq: OSSVerify.libxml2.valid
 origin: upstream
 summary: 'Checks one property, an API contract: OOM/IO reporting contract for DTD-validating xmlCtxtReadMemory,
   a non-validating parse followed by xmlCtxtValidateDocument, and a DTD-validating push parse in 128-byte

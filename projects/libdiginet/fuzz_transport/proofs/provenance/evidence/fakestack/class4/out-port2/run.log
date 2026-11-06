@@ -1,0 +1,38 @@
+== class 4 image A (asan): donor libreac/fuzz_grant at e10f488c53fc pin c2c7559b29bd, target pin e89be137db17
+twins A: proved (2 pairs)
+donor: pinned sha256 c2c7559b29bd, twin sha256 57c26f993615, allocated sections equal (build-id note excepted): True
+target: pinned sha256 e89be137db17, twin sha256 86efc3a80314, allocated sections equal (build-id note excepted): True
+libreac/fuzz_grant ref e10f488c53fc image A class 4: 12 of 12 ranges paired and compared; pc-relative words 62 (walked), 416 (whole functions)
+25 resolve lines: 9 move a value (0x3d410 -> 0x3dfc4, 0x9c860 -> 0xa4080, 0x9c8c0 -> 0xa40e0, 0x9d550 -> 0xa4d70, 0x9d560 -> 0xa4d80), 0 name the image of a header range, the rest keep the value
+PASS
+control self A: PASS, 0 values moved
+planted: __asan_stack_malloc_4 + 0x94: 0x00e678b3 -> 0x00e668b3
+planted: __asan_stack_malloc_4 + 0x94: 0x00e678b3 -> 0x00e668b3
+control plant A: caught (1 FAIL lines)
+  A/Rt/StackMalloc4Tbl.v: 0 derived, 0 direct, 0 engine, 0 via-maps, 20 symbol, 0 section, 0 gap, 9 resolved, 0 KEPT-ADDR, 0 UNMAPPED
+  A/Rt/StackMalloc4.v: 7 derived, 0 direct, 0 engine, 0 via-maps, 6 symbol, 0 section, 0 gap, 7 resolved, 0 KEPT-ADDR, 0 UNMAPPED
+  A/Rt/AF0r.v: 0 derived, 0 direct, 0 engine, 0 via-maps, 31 symbol, 0 section, 0 gap, 9 resolved, 0 KEPT-ADDR, 0 UNMAPPED
+alreloc: 3 files checked (dry); 0 UNMAPPED or unreviewed CONFLICT, 0 KEPT-ADDR (image-range numerals left unchanged) -- review each
+alreloc: per-numeral report: 103 numerals in 3 files under <OUT>/report/libdiginet/fuzz_transport (one .tsv per file)
+  A/Rt/AF0r.v:38 0x5d7ad0 -> 0x5f3af0 MOVED [symbol] (builtin_tls+0xc8 on both sides): confirm it is an address
+  A/Rt/AF0r.v:72 0x1366f1 -> 0x13e5b1 MOVED [symbol] (_ZN11__sanitizer21common_flags_dont_useE+0x89 on both sides): confirm it is an address
+  A/Rt/AF0r.v:73 0x5d7af0 -> 0x5f3b10 MOVED [symbol] (builtin_tls+0xe8 on both sides): confirm it is an address
+  A/Rt/AF0r.v:73 0x5d7af8 -> 0x5f3b18 MOVED [symbol] (builtin_tls+0xf0 on both sides): confirm it is an address
+  A/Rt/AF0r.v:73 0x5d82d0 -> 0x5f42f0 MOVED [symbol] (builtin_tls+0x8c8 on both sides): confirm it is an address
+  A/Rt/AF0r.v:81 0x5d8208 -> 0x5f4228 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  A/Rt/AF0r.v:81 0x5d82e4 -> 0x5f4304 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  A/Rt/StackMalloc4.v:116 0x5d8208 -> 0x5f4228 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  A/Rt/StackMalloc4.v:117 0x5d8208 -> 0x5f4228 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  A/Rt/StackMalloc4.v:118 0x5d82e4 -> 0x5f4304 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  A/Rt/StackMalloc4.v:119 0x5d82e4 -> 0x5f4304 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  A/Rt/StackMalloc4.v:184 0x5d8208 -> 0x5f4228 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  A/Rt/StackMalloc4.v:185 0x5d82e4 -> 0x5f4304 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:39 0x5d7ad0 -> 0x5f3af0 MOVED [symbol] (builtin_tls+0xc8 on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:68 0x1366f1 -> 0x13e5b1 MOVED [symbol] (_ZN11__sanitizer21common_flags_dont_useE+0x89 on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:69 0x5d7af0 -> 0x5f3b10 MOVED [symbol] (builtin_tls+0xe8 on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:69 0x5d7af8 -> 0x5f3b18 MOVED [symbol] (builtin_tls+0xf0 on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:69 0x5d82d0 -> 0x5f42f0 MOVED [symbol] (builtin_tls+0x8c8 on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:77 0x5d8208 -> 0x5f4228 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  A/Rt/StackMalloc4Tbl.v:77 0x5d82e4 -> 0x5f4304 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+PASS: 0 wrong rows
+rc=0

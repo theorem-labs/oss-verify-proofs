@@ -1,0 +1,9 @@
+callee	integer argument registers	prototype	source
+__fwritex	a0-a2	size_t __fwritex(const unsigned char *restrict s, size_t l, FILE *restrict f)	musl source text, src/stdio/fwrite.c line 4 (musl git commit 7813e9119eb5, VERSION 1.2.6)
+pop_arg	a0-a2	static void pop_arg(union arg *arg, int type, va_list *ap)	musl source text, src/stdio/vfprintf.c line 109 (musl git commit 7813e9119eb5, VERSION 1.2.6)
+__errno_location	none	int *__errno_location(void)	musl source text, src/errno/__errno_location.c line 4, with weak_alias(__errno_location, ___errno_location) at line 9 (musl git commit 7813e9119eb5, VERSION 1.2.6)
+__stack_chk_fail	none	void __stack_chk_fail(void)	musl source text, src/env/__stack_chk_fail.c line 24, with weak_alias(__stack_chk_fail, __stack_chk_fail_local) at line 31 (musl git commit 7813e9119eb5, VERSION 1.2.6)
+___interceptor_memset	a0-a2	INTERCEPTOR(void *, memset, void *dst, int v, usize size)	compiler-rt source text, lib/sanitizer_common/sanitizer_common_interceptors_memintrinsics.inc line 85 (read at llvmorg-20.1.8; the .comment of the three twins is Alpine clang version 20.1.8)
+___interceptor_strnlen	a0-a1	INTERCEPTOR(SIZE_T, strnlen, const char *s, SIZE_T maxlen)	compiler-rt source text, lib/sanitizer_common/sanitizer_common_interceptors.inc line 434 (read at llvmorg-20.1.8)
+___interceptor_wctomb	a0-a1	INTERCEPTOR(int, wctomb, char *dest, wchar_t src)	compiler-rt source text, lib/sanitizer_common/sanitizer_common_interceptors.inc line 3915 (read at llvmorg-20.1.8)
+__floatsitf	a0	COMPILER_RT_ABI fp_t __floatsitf(si_int a)	compiler-rt source text, lib/builtins/floatsitf.c line 19 (read at llvmorg-20.1.8)

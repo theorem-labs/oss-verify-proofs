@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: bzip2
 harness: bzip2_fd
-rocq: OssFuzzTheorems.bzip2.bzip2_fd
+rocq: OSSVerify.bzip2.bzip2_fd
 origin: oss-fuzz
 summary: BZ2_bzWrite the input to a temp file, then BZ2_bzRead it back through BZ2_bzdopen; the bytes
   read are discarded, never compared with the input (a missed round-trip opportunity).

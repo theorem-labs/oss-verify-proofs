@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lz4
 harness: decompress_fuzzer
-rocq: OssFuzzTheorems.lz4.decompress_fuzzer
+rocq: OSSVerify.lz4.decompress_fuzzer
 origin: upstream
 summary: Runs 11 block-decoder variants over the input (decompress_safe_usingDict with no dict, small/large
   external dict, small/large prefix; decompress_safe_partial and the five partial_usingDict variants)

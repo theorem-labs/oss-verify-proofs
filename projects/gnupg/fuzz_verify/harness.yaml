@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: gnupg
 harness: fuzz_verify
-rocq: OssFuzzTheorems.gnupg.fuzz_verify
+rocq: OSSVerify.gnupg.fuzz_verify
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

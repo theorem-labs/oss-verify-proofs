@@ -1,0 +1,166 @@
+schema: oss-verify-proofs build record v1
+entry_point:
+  project: plugin-hostd
+  harness: fuzz_reply
+  function: LLVMFuzzerTestOneInput
+  records:
+  - projects/plugin-hostd/project.yaml
+  - projects/plugin-hostd/fuzz_reply/harness.yaml
+upstream:
+  name: plugin-hostd
+  repository: https://github.com/FreeMixer/plugin-hostd
+  commit: 65cd2b02e8306f7e5f98fa0adfd0b3f8c1df6a5c
+  licence: GPL-3.0-or-later
+  patch_count: 0
+  licence_evidence: COPYING (the GPL version 3 text), the SPDX-License-Identifier line of each src/, include/ and fuzz/ file,
+    and the License line of packaging/plugin-hostd.spec at 65cd2b02
+oss_fuzz: null
+harness:
+  origin: upstream
+  source:
+    files:
+    - source/fuzz_reply.c
+    - source/fuzz.h
+    from:
+      repository: https://github.com/FreeMixer/plugin-hostd
+      commit: 65cd2b02e8306f7e5f98fa0adfd0b3f8c1df6a5c
+      path: fuzz/fuzz_reply.c
+    modified: false
+    licence: GPL-3.0-or-later
+port:
+  repository: theorem-labs/oss-verify
+  commit: 2840abf10963080bf3ef5a52a2af576aef8d1f8f
+  path: projects/plugin-hostd
+  tools:
+    commit: 6aab4a04e1c104101e4f5e15bbbf210f05e15f11
+    paths:
+    - infra/
+    - tools/
+    built: 89c6050ca8af3152140df36324c2319e9dfcd432
+    how: 'the build ran oss-verify''s main''s tools/ and infra/ at this commit on projects/plugin-hostd/ at the port''s commit:
+      tools/enroll/port-commit makes the commit built (oss_verifier.commit in port/manifest.yaml) of the two'
+  asset:
+    file: plugin-hostd-port.tar.zst
+    bytes: 208092
+    sha256: 37e218a4d2192cb48b9ff58eba9fbef9a47f6b23bc3153facc148264d9c08a0c
+  files: port/projects/plugin-hostd/ (the port's files for the project at the commit, less its seed corpora and other binary
+    or derived files, which the port archive carries) and port/manifest.yaml (the manifest of tools/check --twice, less its
+    host keys)
+  patches: []
+  build_system: build.sh (clang, ar; plugin-hostd's Makefile is not used)
+  how_to_rebuild: 'as docs/reproducing.md: unpack plugin-hostd-port.tar.zst and, from it, run tools/check --no-shell --lock
+    <projects/plugin-hostd/fuzz_reply/harness.yaml of this repository> plugin-hostd; it builds plugin-hostd at the commit
+    the lock names, on the builder image project.yaml names, and compares each binary'
+toolchain:
+  clang: 20.1.8
+  builder_image: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  images:
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  static_asan:
+    repository: https://github.com/theorem-labs/static-asan
+    commit: b05061352064fa2be1813ac5429149f3de5f057d
+    note: the builder image's static AddressSanitizer, as in the rc.2 records
+binaries:
+- build: plain
+  file: fuzz_reply.plain
+  bytes: 58480
+  sha256: 3f53043e4f872b0ebf394fb67bd1a5dae5131fa08a7208ebfe67e2552ae9f680
+- build: ubsan
+  file: fuzz_reply.ubsan
+  bytes: 60760
+  sha256: c5ef8ec8636eaa18f5181ba119a118e211db05b5053cf7cd88581f5d561b3bc5
+- build: asan
+  file: fuzz_reply.asan
+  bytes: 589816
+  sha256: 42c58610e125e0b47770217f7175ffe2f23ed5ee1399b3e81539eff364611d5a
+- build: asan-ubsan
+  file: fuzz_reply.asan-ubsan
+  bytes: 591224
+  sha256: 10ffb5f9202ae2bdb01b7a49df9866843a6a6a0e0c50bc67cdba6ce2f6d3cf2c
+binary_asset:
+  file: plugin-hostd-bin.tar.zst
+  bytes: 454656
+  sha256: fb8b0dd0514cfb4b8db16263c1ace523392b554de2841f5c8416bd4d0e4831ae
+source_asset:
+  src:
+    file: plugin-hostd-src.tar.zst
+    bytes: 482647
+    sha256: 3570e9034e765e01cf05b7ec4c511be9103b7899daa1465d1d22073c84d29717
+  src_manifest:
+    file: plugin-hostd-src.MANIFEST.tsv
+    bytes: 1727
+    sha256: 8d873dd4ab7069864c0be5bd30ca85a558f346b14f2b36f374fff0a55f53884a
+rebuild:
+- 'the port''s projects/plugin-hostd/ at 2840abf1 with tools/ and infra/ of oss-verify''s main at 6aab4a04 (the commit 89c6050c
+  port-commit makes of them; oss_verifier.modified: false), tools/check --twice plugin-hostd on the builder image: all 8 binaries
+  of the 2 harnesses identical in the second build (port/manifest.yaml, rebuild.result identical), with these SHA-256s'
+- plugin-hostd-bin.tar.zst and the source assets packed by tools/enroll/assets.py from those files; every member of plugin-hostd-src.tar.zst
+  is a git blob of an upstream tree its MANIFEST names
+licence:
+  components:
+  - component: plugin-hostd
+    files: src/verbs.c (into libplugin-hostd.a) and the harness's recorder fuzz/recorder.c for fuzz_command; src/relay.c,
+      included by fuzz/fuzz_reply.c; the headers include/plugin-hostd/protocol.h, src/*.h and fuzz/*.h; and, in fuzz_command
+      only, mod-host's protocol headers host-errors.h, mod-host.h, socket.h and utils.h (mod-host commit f14a230b with the
+      patches of FreeMixer's mod-host.spec)
+    licence: GPL-3.0-or-later
+    evidence: COPYING (the GPL version 3 text), the SPDX-License-Identifier line of each src/, include/ and fuzz/ file, and
+      the License line of packaging/plugin-hostd.spec at 65cd2b02
+    texts:
+    - LICENSES/plugin-hostd-COPYING
+  - component: mod-host's command protocol headers, as FreeMixer ships them (mod-host with the patches of FreeMixer's mod-host.spec)
+    files: src/host-errors.h, src/mod-host.h, src/socket.h and src/utils.h, compiled into fuzz_command only
+    licence: GPL-3.0-or-later
+    evidence: COPYING (the GPL version 3 text) and the licence notice at the top of each of the four headers (version 3 of
+      the GPL or any later version) at f14a230b
+    texts:
+    - LICENSES/mod-host-COPYING
+  - component: musl libc (static)
+    files: '-'
+    licence: MIT
+    evidence: musl COPYRIGHT; linked in every build
+    texts:
+    - LICENSES/musl-COPYRIGHT
+  - component: 'LLVM runtimes: compiler-rt builtins; in ASan builds the sanitizer runtime and libunwind'
+    files: '-'
+    licence: Apache-2.0 WITH LLVM-exception
+    evidence: LICENSE.TXT of compiler-rt and libunwind at llvmorg-20.1.8 (87f0227c), as in the rc.2 records
+    texts:
+    - LICENSES/llvm-compiler-rt-LICENSE.TXT
+    - LICENSES/llvm-libunwind-LICENSE.TXT
+  - component: static-asan patches compiled into the ASan runtime and musl
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of theorem-labs/static-asan at b0506135 (MIT for Theorem Labs work; the LLVM and musl code it patches
+      keeps its own licence)
+    texts:
+    - LICENSES/static-asan-LICENSE
+  - component: 'the OSS Verify port''s driver (infra/base-builder/driver/: cli.c, adapter.c and the headers they include,
+      and the seals wrap_getenv.c, wrap_mkstemp.c and wrap_getpid.c), linked into every build'
+    files: '-'
+    licence: MIT OR Apache-2.0
+    evidence: the SPDX-License-Identifier line of each of those files at theorem-labs/oss-verify 6aab4a0
+    texts:
+    - LICENSES/oss-verify-MIT.txt
+    - LICENSES/oss-verify-LICENSE
+  not_in_binaries: []
+  source_bundle:
+  - file: plugin-hostd-src.tar.zst
+    sha256: 3570e9034e765e01cf05b7ec4c511be9103b7899daa1465d1d22073c84d29717
+  - file: plugin-hostd-src.MANIFEST.tsv
+    sha256: 8d873dd4ab7069864c0be5bd30ca85a558f346b14f2b36f374fff0a55f53884a
+  - file: plugin-hostd-port.tar.zst
+    sha256: 37e218a4d2192cb48b9ff58eba9fbef9a47f6b23bc3153facc148264d9c08a0c
+proofs:
+  texts:
+  - LICENSES/anthropic-proofs-LICENSE
+  - LICENSES/anthropic-proofs-LICENSE-MIT
+  - LICENSES/anthropic-proofs-NOTICE
+  texts_location: the repository's top directory
+  licence: Apache-2.0 OR MIT for the 4607 Rocq files of this folder that carry that tag, each with Anthropic's copyright line;
+    MIT, the repository's licence (LICENSE), for the 4 tagged MIT; the other 1237 carry no licence line
+  modified: 'The licence lines of 1026 of its files were written in this repository in 2026-11, by the licence change of the
+    release series: an SPDX tag, and Anthropic''s copyright line above the tag where the file carries Anthropic''s text. In
+    2026-11, 1037 more of its files took the licence lines of the Anthropic-licensed file each was made from, in this fuzz target
+    or another (docs/adding-a-proof.md, requirement 7), and one line `Modified by Theorem Labs, 2026-11` that names that file
+    and says how the file was changed from it'

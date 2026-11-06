@@ -1,0 +1,44 @@
+image TIMG/unstripped/fuzz_transport.asan sha256 86efc3a80314981197619c115e313dbde50e8b86a6c5fefad4e5cc420250c792
+global 0x21000 size 32 with redzone 64 shadow end 0x7fffc208 LLVMFuzzerTestOneInput.SCALE
+global 0x21040 size 6 with redzone 32 shadow end 0x7fffc20c HOST
+global 0x21060 size 6 with redzone 32 shadow end 0x7fffc210 DESK
+global 0x21080 size 6 with redzone 32 shadow end 0x7fffc214 SPEC_BCAST
+global 0x210a0 size 3 with redzone 32 shadow end 0x7fffc218 SPEC_OUI
+global 0x210c0 size 9 with redzone 32 shadow end 0x7fffc21c .str
+global 0x210e0 size 9 with redzone 32 shadow end 0x7fffc220 .str.2
+global 0x21100 size 7 with redzone 32 shadow end 0x7fffc224 op_frame.CMD
+global 0x21120 size 6 with redzone 32 shadow end 0x7fffc228 DESK2
+global 0x21140 size 6 with redzone 32 shadow end 0x7fffc22c NOTDD
+global 0x21160 size 6 with redzone 32 shadow end 0x7fffc230 OTHER
+global 0x21180 size 6 with redzone 32 shadow end 0x7fffc234 .str.4
+global 0x211c0 size 6 with redzone 32 shadow end 0x7fffc23c BROADCAST
+global 0x21200 size 9 with redzone 32 shadow end 0x7fffc244 .str
+global 0x21220 size 9 with redzone 32 shadow end 0x7fffc248 .str.1
+global 0xa3d60 size 32 with redzone 64 shadow end 0x8000c7b4 __const.LLVMFuzzerTestOneInput.io
+global 0xa3da0 size 16 with redzone 32 shadow end 0x8000c7b8 SPEC_C24
+global 0xa3dc0 size 16 with redzone 32 shadow end 0x8000c7bc SPEC_PC
+global 0xa3de0 size 32 with redzone 64 shadow end 0x8000c7c4 op_frame.SRC
+global 0xa3e20 size 32 with redzone 64 shadow end 0x8000c7cc op_frame.DST
+global 0xa3e60 size 24 with redzone 64 shadow end 0x8000c7d4 op_announce.NAME
+global 0xa3ea0 size 48 with redzone 96 shadow end 0x8000c7e0 personalities
+global 0x5df080 size 60 with redzone 96 shadow end 0x800b3e1c g_cfg
+global 0x5df0e0 size 4 with redzone 32 shadow end 0x800b3e20 g_raw
+global 0x5df100 size 8 with redzone 32 shadow end 0x800b3e24 g_now
+global 0x5df120 size 1 with redzone 32 shadow end 0x800b3e28 g_fail_next
+global 0x5df140 size 4 with redzone 32 shadow end 0x800b3e2c g_last_counter
+global 0x5df160 size 1648 with redzone 2048 shadow end 0x800b3f2c M
+global 0x5df960 size 4 with redzone 32 shadow end 0x800b3f30 g_nq
+global 0x5df980 size 4 with redzone 32 shadow end 0x800b3f34 g_ncmd
+global 0x5df9a0 size 8 with redzone 32 shadow end 0x800b3f38 g_rx
+global 0x5df9c0 size 18264 with redzone 22816 shadow end 0x800b4a5c g_s
+global 0x5e52e0 size 224 with redzone 256 shadow end 0x800b4a7c GOT
+global 0x5e53e0 size 4 with redzone 32 shadow end 0x800b4a80 g_rx_send
+global 0x5e5400 size 40960 with redzone 51200 shadow end 0x800b6380 g_cmd
+global 0x5f1c00 size 4096 with redzone 5120 shadow end 0x800b6600 g_q
+global 0x5f3000 size 4 with redzone 32 shadow end 0x800b6604 g_rx_fail
+global 0x5f3020 size 4 with redzone 32 shadow end 0x800b6608 g_rx_times
+global 0x5f3040 size 8 with redzone 32 shadow end 0x800b660c g_rx_len
+global 0x5f3060 size 304 with redzone 384 shadow end 0x800b663c OW
+descriptors 40; highest shadow end of a registered global 0x800b663c
+image top (last PT_LOAD end, page-rounded) 0x616000; shadow_of(image top) = 0x800bac00
+bound 0x800bac00 covers the globals: True

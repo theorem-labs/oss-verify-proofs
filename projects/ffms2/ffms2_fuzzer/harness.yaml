@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ffms2
 harness: ffms2_fuzzer
-rocq: OssFuzzTheorems.ffms2.ffms2_fuzzer
+rocq: OSSVerify.ffms2.ffms2_fuzzer
 origin: oss-fuzz
 summary: Writes the input to /tmp/libfuzzer.<pid>, creates an indexer and indexes it (FFMS_IEH_ABORT),
   asks for the first video track; the index and track number are discarded and no frame is decoded.

@@ -1,0 +1,7 @@
+# self-test: 208 known answers OK (yh03regen 151 + yh03check 57)
+# section bounds: proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v: 14 of 14 section cells equal the image's section headers
+# build: proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v: ubsan (the pinned binary's sha256 d63ba804708e is builds.ubsan of projects/libreac/fuzz_boxreg/harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 15 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+# unit identity: proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v: the image's 4 PT_LOADs equal the ubsan pin d63ba804708e (<pinned>/fuzz_boxreg.ubsan; ELF section-header fields and build-id masked)
+# COPIED: not checked for proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v (pass --other-side THE_OTHER_BUILDS_YH03.v and --proofs THE_UNITS_PROOFS_DIR)
+# rows checked: 128; rows not OK: 26
+# D cells by symbol: 41 (OK 41, BAD 0); by the code of the function they name: OK-BY-LOAD 1, UNMEASURED 0; OK-GOT0 1 (GOT[0] of the pinned binary); NOSYM 45 (no symbol of the name, not checked); string cells 22 (checked only by yh03regen --elf, with an unstripped image)

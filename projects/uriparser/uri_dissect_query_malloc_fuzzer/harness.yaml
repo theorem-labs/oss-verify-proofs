@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: uriparser
 harness: uri_dissect_query_malloc_fuzzer
-rocq: OssFuzzTheorems.uriparser.uri_dissect_query_malloc_fuzzer
+rocq: OSSVerify.uriparser.uri_dissect_query_malloc_fuzzer
 origin: upstream
 summary: DissectQueryMalloc splits the input query into key/value pairs, then ComposeQueryCharsRequired
   + ComposeQuery rebuild a query string; the composed string, `written` and the ComposeQuery return code

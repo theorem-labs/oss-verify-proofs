@@ -1,0 +1,149 @@
+(* The addresses fuzz_identity.asan-ubsan gives the listing's names, objects and
+   auipc values. IdentBImg.v checks them against the image. *)
+(* Object 31 (0xa52b8) is __asan_shadow_memory_dynamic_address: no slot builds it. *)
+From OSSVerify.Proofs.libreac.fuzz_identity.lib.A.Prog Require Import PaTable.
+From OSSVerify.Proofs.libreac.fuzz_identity.lib.B.Prog Require Import IdentBSyms.
+From Stdlib Require Import ZArith List.
+Import ListNotations.
+Open Scope Z_scope.
+Definition identb_text : Z := 0x80774.
+Definition identb_sigma (s : ibsym) : Z :=
+match s with
+| IB___asan_stack_malloc_4 => 0x3d308
+| IB_reac_identity_init => 0x83a84
+| IB_reac_identity_ingest => 0x83aa8
+| IB_reac_identity_fw_str => 0x8406c
+| IB_reac_identity_reac_ver_str => 0x842a0
+| IB_reac_box_catalogue_defect => 0x83944
+| IB_reac_box_family_of => 0x82c20
+| IB___asan_memset => 0x51d5c
+| IB___interceptor_trampoline_malloc => 0x52c14
+| IB___asan_memcpy => 0x518c0
+| IB_buf_of => 0x82800
+| IB___interceptor_trampoline_free => 0x52c10
+| IB___interceptor_trampoline_bcmp => 0x42208
+| IB_put_dec => 0x828ac
+| IB___interceptor_trampoline_memchr => 0x4220c
+| IB_check_str => 0x82830
+| IB___asan_report_load1 => 0x589d8
+| IB_reac_box_family_stem => 0x82d14
+| IB_reac_box_name => 0x82d74
+| IB___interceptor_trampoline_strlen => 0x421f4
+| IB___interceptor_trampoline_strcmp => 0x421fc
+| IB_reac_box_catalogue => 0x83a30
+| IB___asan_set_shadow_f5 => 0x54888
+| IB___asan_set_shadow_00 => 0x54780
+| IB___asan_handle_no_return => 0x599d4
+| IB_abort => 0x8ae24
+| IB___asan_report_store1 => 0x58cf8
+| IB___asan_report_load4 => 0x58b18
+| IB___asan_report_load_n => 0x59018
+| IB___asan_report_load8 => 0x58bb8
+| IB___asan_stack_malloc_0 => 0x3cfe8
+| IB___asan_init => 0x59b3c
+| IB___asan_version_mismatch_check_v8 => 0x59bd0
+| IB___asan_register_elf_globals => 0x40130
+| IB___asan_unregister_elf_globals => 0x4019c
+| IB___asan_stack_malloc_3 => 0x3d15c
+| IB_sb_dec => 0x835d0
+| IB_sb_ch => 0x83838
+| IB___asan_report_store4 => 0x58e38
+| IB___asan_report_store8 => 0x58ed8
+| IB___asan_report_store_n => 0x590b8
+| IB___asan_report_store2 => 0x58d98
+| IB_write_uint => 0x84460
+end.
+Definition identb_obj (i : nat) : Z :=
+match i with
+| 0%nat => 0x9c6e8
+| 1%nat => 0x9c690
+| 2%nat => 0x13d2c
+| 3%nat => 0x80774
+| 4%nat => 0x20f80
+| 5%nat => 0x10370
+| 6%nat => 0x21000
+| 7%nat => 0x9b460
+| 8%nat => 0x210c0
+| 9%nat => 0x20fa0
+| 10%nat => 0x20fc0
+| 11%nat => 0x20fe0
+| 12%nat => 0x176f4
+| 13%nat => 0x828ac
+| 14%nat => 0x9d308
+| 15%nat => 0x9d310
+| 16%nat => 0xa1c00
+| 17%nat => 0x21100
+| 18%nat => 0x9b4a0
+| 19%nat => 0x211c0
+| 20%nat => 0x1ba0b
+| 21%nat => 0x82d74
+| 22%nat => 0x9b4e0
+| 23%nat => 0x211e0
+| 24%nat => 0x21200
+| 25%nat => 0x21220
+| 26%nat => 0x1597c
+| 27%nat => 0x835d0
+| 28%nat => 0x9b520
+| 29%nat => 0x1602f
+| 30%nat => 0x84460
+| 31%nat => 0xa52b8
+| _ => 0
+end.
+Definition identb_hi (j : nat) : Z :=
+match j with
+| 0%nat => 0x9c7c0
+| 1%nat => 0x9c7c4
+| 2%nat => 0x13828
+| 3%nat => 0x8082c
+| 4%nat => 0x20a98
+| 5%nat => 0x10b2c
+| 6%nat => 0x21784
+| 7%nat => 0x9bbd4
+| 8%nat => 0x20c30
+| 9%nat => 0x20ec8
+| 10%nat => 0x20f68
+| 11%nat => 0x2100c
+| 12%nat => 0x9c850
+| 13%nat => 0x9c8ec
+| 14%nat => 0x9c8f0
+| 15%nat => 0x17954
+| 16%nat => 0x82958
+| 17%nat => 0x9cbc8
+| 18%nat => 0x9cbcc
+| 19%nat => 0xa1bd8
+| 20%nat => 0x9cbf8
+| 21%nat => 0x9cbfc
+| 22%nat => 0xa1c08
+| 23%nat => 0x9cc4c
+| 24%nat => 0x20c78
+| 25%nat => 0x9cd28
+| 26%nat => 0x9ad38
+| 27%nat => 0x20d5c
+| 28%nat => 0x9cdd0
+| 29%nat => 0x9cdd4
+| 30%nat => 0x1be44
+| 31%nat => 0x82e48
+| 32%nat => 0x9af9c
+| 33%nat => 0x20fc0
+| 34%nat => 0x212e0
+| 35%nat => 0x2133c
+| 36%nat => 0x21398
+| 37%nat => 0x9c61c
+| 38%nat => 0x9c620
+| 39%nat => 0x15688
+| 40%nat => 0x8368c
+| 41%nat => 0x9c848
+| 42%nat => 0x9c95c
+| 43%nat => 0x9ca44
+| 44%nat => 0x9ba68
+| 45%nat => 0x9cac0
+| 46%nat => 0x9c084
+| 47%nat => 0x9c2dc
+| 48%nat => 0x9c490
+| 49%nat => 0x9c494
+| 50%nat => 0x164f8
+| 51%nat => 0x844fc
+| _ => 0
+end.
+Definition identb_nobj : nat := 32%nat.
+Definition identb_nhi : nat := 52%nat.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: avahi
 harness: fuzz-domain
-rocq: OssFuzzTheorems.avahi.fuzz_domain
+rocq: OSSVerify.avahi.fuzz_domain
 origin: upstream
 summary: 'Checks 3 properties (listed below); the first, an invariant: normalization preserves identity:
   for a valid domain name s, avahi_domain_equal(s, normalize(s)) (label-wise unescape + case-insensitive

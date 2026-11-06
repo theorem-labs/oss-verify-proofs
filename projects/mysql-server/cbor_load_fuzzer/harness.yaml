@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: mysql-server
 harness: cbor_load_fuzzer
-rocq: OssFuzzTheorems.mysql_server.cbor_load_fuzzer
+rocq: OSSVerify.mysql_server.cbor_load_fuzzer
 origin: upstream
 summary: cbor_load of the input; on success cbor_describe, cbor_serialize_alloc and cbor_copy are run
   and their results discarded (the serialized bytes are freed unread).

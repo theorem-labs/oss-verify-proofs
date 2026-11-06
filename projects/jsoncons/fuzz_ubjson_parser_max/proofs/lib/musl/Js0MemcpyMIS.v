@@ -1,0 +1,299 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
+From Stdlib Require Import ZArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
+From OSSVerify.jsoncons.fuzz_ubjson_parser_max.images Require Import Plain.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import
+PropExec CatExec CatSim SeqExec StepTac Hoare StoreOk WalkTac MmapSim RefMemcpyLib Js0MemcpyBase Js0MemcpyAL.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import SecKit.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import OtfKit.
+From OSSVerify.jsoncons.fuzz_ubjson_parser_max.images Require Plain.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
+Ltac2 tcn__musl_Js0MemcpyMIS () := ([""; "Corelib.Init.Logic."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.Riscv.Prelude."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CatSim."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Hoare."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.RefMemcpyLib."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.musl.Js0MemcpyBase."; "OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.Plain.M."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["1I"; "1and"; "1eq"; "1ex"; "1or"; "2Z"; "3bvmap"; "4msteps"; "5at_"; "6getr"; "6mkst"; "7keeps"; "8memk"; "9loaded_segments"; ":add"; ":land"]; [":le"; ":lt"; ":pow"; "0a2"; "0bs"; "0dst"; "0fx"; "0k"; "0m"; "0mem0"; "0n"; "0regs"; "0regs'"; "0ret"; "0rom"; "0src"]; [";BV"; ";Z_to_bv"; ";bv"]]).
+Local Ltac oF' pc := oF constr:(OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.Plain.M.loaded_segments) pc.
+Local Ltac oD' pc := oD constr:(OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.Plain.M.loaded_segments) pc.
+Local Ltac oE' pc := oE constr:(OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.Plain.M.loaded_segments) pc.
+Local Ltac oW' pc := oW constr:(OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.Plain.M.loaded_segments) pc.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Open Scope bv_scope.
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+Section FPX_1. Context {fx : PropExec.FPState}.
+Section MIS.
+Variable mem0 : word -> option byte.
+Variables dst src : word.
+Variable n : Z.
+Variable bs : list byte.
+Variable rom : word -> option byte.
+Hypothesis HOK : mcH mem0 dst src n bs.
+#[local] Notation MK := (memk mem0 dst bs).
+#[local] Notation SB := (sb_ bs).
+#[local] Notation B := (b_ bs).
+Let Hn0 : (0 <= n < 2 ^ 64)%Z := Hn _ _ _ _ _ HOK.
+Let Hnws : (bv_unsigned src + n < 2 ^ 64)%Z := Hnws _ _ _ _ _ HOK.
+Let Hnwd : (bv_unsigned dst + n < 2 ^ 64)%Z := Hnwd _ _ _ _ _ HOK.
+Ltac mlw F D jj :=
+chain_step; [reflexivity
+| eapply (mc_lw _ _ _ _ _ HOK) with (j := jj);
+[exact F | reflexivity | exact D | gres; rwH; rewrite ?at_addi; reflexivity | imm_norm; lia | lia | lia | lia]
+| step_simpl]; vnorm.
+Ltac mlbu F D jj :=
+chain_step; [reflexivity
+| eapply (mc_lbu _ _ _ _ _ HOK) with (j := jj);
+[exact F | reflexivity | exact D | gres; rwH; rewrite ?at_addi; reflexivity | imm_norm; lia | lia | lia | lia]
+| step_simpl]; vnorm.
+Ltac mk_at kk := match goal with |- msteps _ (mkst _ _ (MK ?a) _) _ =>
+first [constr_eq a kk | replace (MK a) with (MK kk) by (f_equal; lia)] end.
+Ltac msw F D kk valtac :=
+mk_at kk;
+chain_step; [reflexivity
+| eapply (mc_sw _ _ _ _ _ HOK) with (k := kk);
+[exact F | reflexivity | exact D | gres; rwH; rewrite ?at_addi; reflexivity | imm_norm; lia
+| gres; rwH; reflexivity | valtac | lia | lia]
+| step_simpl].
+Ltac msb F D kk valtac :=
+mk_at kk;
+chain_step; [reflexivity
+| eapply (mc_sb _ _ _ _ _ HOK) with (k := kk);
+[exact F | reflexivity | exact D | gres; rwH; rewrite ?at_addi; reflexivity | imm_norm; lia
+| gres; rwH; reflexivity | valtac | lia | lia]
+| step_simpl].
+Ltac cond :=
+rwH; unfold c_eq, c_ltu, bv_eqb, bv_ltu; rewrite ?u_andi by lia; imm_norm; unorm;
+first [apply Z.eqb_eq | apply Z.eqb_neq | apply Z.ltb_lt | apply Z.ltb_ge];
+rewrite ?land_3 by lia; lia.
+Ltac mk_eq := match goal with |- context [mkst _ _ (MK ?a) _] =>
+match goal with |- msteps _ _ (mkst _ _ (MK ?b) _) => replace (MK a) with (MK b) by (f_equal; lia) end end.
+Ltac post := repeat split; gres; rwH; rewrite ?at_addi; try (f_equal; lia); try reflexivity; try solve_keeps.
+Ltac sbp := apply sb_val_plain.
+Section SE.
+Local Abbreviation SEC_T_b4_blk := (ltac2:(TCodec.tc2 tcn__musl_Js0MemcpyMIS "S5&6y5'Q2yR0%211%5241'5'2&9r4(Q0+1(0%33<21%6251r3%93<21r5+;%93B17%<231&8vO%2218%A3D41r6+=%A3J1?%D231vE%921E%H3K31r7+<%H3Q11F%K231%M3Q01K&@z%221>&>+4%22:1vJ%7221'3'1'7&=&:vFr;+eUWD%Q;3QB1Q9/01QB&<vIvDr9%443N21vN%<5;:721r1+eUY0%QF3QM1QD/01QM%J28I%<4;Q6:1%C5B6318%F3E81%QN28QIr:%R13R421%R12;QF%QE2QD8%R43R721%R42>QA%QH2Q@;%R73R:21%R72AQ=r8%R:3R=21&;%12Q0E%Q6231%Q7271%Q82;1%Q92?1%Q:2C1qQJRD1%Q=2RE1p0Q?1p0QE1p0QI1p0QO1p0R71p0R@1pQ8RM1pQ@RL1pQLRO1pQHRO1")) (only parsing).
+Variable regs : ltac:(sec_ty2 constr:(SEC_T_b4_blk) 0%nat 0%nat).
+Variable ret : ltac:(sec_ty2 constr:(SEC_T_b4_blk) 1%nat 0%nat).
+Variable k : ltac:(sec_ty2 constr:(SEC_T_b4_blk) 2%nat 0%nat).
+Variable a2 : ltac:(sec_ty2 constr:(SEC_T_b4_blk) 3%nat 0%nat).
+Lemma b4_blk : ltac:(sec_stmt2 constr:(SEC_T_b4_blk) 4%nat 0%nat).
+Proof.
+intros H1 H11 H13 H12 Hk Hk4.
+eexists. split.
+- mlbu (ltac:(oF' 0xa94f4%Z)) (ltac:(oD' 0xa94f4%Z)) k. mlbu (ltac:(oF' 0xa94f8%Z)) (ltac:(oD' 0xa94f8%Z)) (k+1)%Z. mlbu (ltac:(oF' 0xa94fc%Z)) (ltac:(oD' 0xa94fc%Z)) (k+2)%Z. mlbu (ltac:(oF' 0xa9500%Z)) (ltac:(oD' 0xa9500%Z)) (k+3)%Z.
+stepn (ltac:(oF' 0xa9504%Z)) (ltac:(oD' 0xa9504%Z)).
+stepn (ltac:(oF' 0xa9508%Z)) (ltac:(oD' 0xa9508%Z)).
+msb (ltac:(oF' 0xa950c%Z)) (ltac:(oD' 0xa950c%Z)) k ltac:(sbp). msb (ltac:(oF' 0xa9510%Z)) (ltac:(oD' 0xa9510%Z)) (k+1)%Z ltac:(sbp).
+msb (ltac:(oF' 0xa9514%Z)) (ltac:(oD' 0xa9514%Z)) (k+2)%Z ltac:(sbp). msb (ltac:(oF' 0xa9518%Z)) (ltac:(oD' 0xa9518%Z)) (k+3)%Z ltac:(sbp).
+stepn (ltac:(oF' 0xa951c%Z)) (ltac:(oD' 0xa951c%Z)).
+mk_eq. apply mst_refl.
+- post.
+Qed.
+End SE.
+Section SE.
+Local Abbreviation SEC_T_b8_blk := (ltac2:(TCodec.tc2 tcn__musl_Js0MemcpyMIS "S5&6y5'Q2yR0%211%5241'5'2&9r4(Q0+1(0%33<21%6251r3%93<21r5+;%93B17%<231&8vO%2218%A3D41r6+=%A3J1?%D231vE%921E%H3K31r7+<%H3Q11F%K231%M3Q01K&@z%221>&>+8%22:1vJ%7221'3'1'7&=&:vFr;+eUU0%Q;3QB1Q9/01QB&<vIvDr9%443N21vN%<5;:721r1+eUW<%QF3QM1QD/01QM%J28I%<4;Q6:1%C5B6318%F3E81%QN28QIr:%R13R421%R12;QF%QE2QD8%R43R721%R42>QA%QH2Q@;%R73R:21%R72AQ=r8%R:3R=21&;%12Q0E%Q6231%Q7271%Q82;1%Q92?1%Q:2C1qQJRD1%Q=2RE1p0Q?1p0QE1p0QI1p0QO1p0R71p0R@1pQ8RM1pQ@RL1pQLRO1pQHRO1")) (only parsing).
+Variable regs : ltac:(sec_ty2 constr:(SEC_T_b8_blk) 0%nat 0%nat).
+Variable ret : ltac:(sec_ty2 constr:(SEC_T_b8_blk) 1%nat 0%nat).
+Variable k : ltac:(sec_ty2 constr:(SEC_T_b8_blk) 2%nat 0%nat).
+Variable a2 : ltac:(sec_ty2 constr:(SEC_T_b8_blk) 3%nat 0%nat).
+Lemma b8_blk : ltac:(sec_stmt2 constr:(SEC_T_b8_blk) 4%nat 0%nat).
+Proof.
+intros H1 H11 H13 H12 Hk Hk8.
+eexists. split.
+- mlbu (ltac:(oF' 0xa94a0%Z)) (ltac:(oD' 0xa94a0%Z)) k. mlbu (ltac:(oF' 0xa94a4%Z)) (ltac:(oD' 0xa94a4%Z)) (k+1)%Z. mlbu (ltac:(oF' 0xa94a8%Z)) (ltac:(oD' 0xa94a8%Z)) (k+2)%Z. mlbu (ltac:(oF' 0xa94ac%Z)) (ltac:(oD' 0xa94ac%Z)) (k+3)%Z.
+mlbu (ltac:(oF' 0xa94b0%Z)) (ltac:(oD' 0xa94b0%Z)) (k+4)%Z. mlbu (ltac:(oF' 0xa94b4%Z)) (ltac:(oD' 0xa94b4%Z)) (k+5)%Z. mlbu (ltac:(oF' 0xa94b8%Z)) (ltac:(oD' 0xa94b8%Z)) (k+6)%Z. mlbu (ltac:(oF' 0xa94bc%Z)) (ltac:(oD' 0xa94bc%Z)) (k+7)%Z.
+stepn (ltac:(oF' 0xa94c0%Z)) (ltac:(oD' 0xa94c0%Z)).
+msb (ltac:(oF' 0xa94c4%Z)) (ltac:(oD' 0xa94c4%Z)) k ltac:(sbp). msb (ltac:(oF' 0xa94c8%Z)) (ltac:(oD' 0xa94c8%Z)) (k+1)%Z ltac:(sbp).
+msb (ltac:(oF' 0xa94cc%Z)) (ltac:(oD' 0xa94cc%Z)) (k+2)%Z ltac:(sbp). msb (ltac:(oF' 0xa94d0%Z)) (ltac:(oD' 0xa94d0%Z)) (k+3)%Z ltac:(sbp).
+stepn (ltac:(oF' 0xa94d4%Z)) (ltac:(oD' 0xa94d4%Z)).
+msb (ltac:(oF' 0xa94d8%Z)) (ltac:(oD' 0xa94d8%Z)) (k+4)%Z ltac:(sbp). msb (ltac:(oF' 0xa94dc%Z)) (ltac:(oD' 0xa94dc%Z)) (k+5)%Z ltac:(sbp).
+msb (ltac:(oF' 0xa94e0%Z)) (ltac:(oD' 0xa94e0%Z)) (k+6)%Z ltac:(sbp). msb (ltac:(oF' 0xa94e4%Z)) (ltac:(oD' 0xa94e4%Z)) (k+7)%Z ltac:(sbp).
+stepn (ltac:(oF' 0xa94e8%Z)) (ltac:(oD' 0xa94e8%Z)).
+mk_eq. apply mst_refl.
+- post.
+Qed.
+End SE.
+Section SE.
+Local Abbreviation SEC_T_b16_blk := (ltac2:(TCodec.tc2 tcn__musl_Js0MemcpyMIS "S5&6y5'Q2yR0%211%5241'5'2&9r4(Q0+1(0%33<21%6251r3%93<21r5+;%93B17%<231&8vO%2218%A3D41r6+=%A3J1?%D231vE%921E%H3K31r7+<%H3Q11F%K231%M3Q01K&@z%221>&>+@%22:1vJ%7221'3'1'7&=&:vFr;+eUP<%Q;3QB1Q9/01QB&<vIvDr9%443N21vN%<5;:721r1+eUTH%QF3QM1QD/01QM%J28I%<4;Q6:1%C5B6318%F3E81%QN28QIr:%R13R421%R12;QF%QE2QD8%R43R721%R42>QA%QH2Q@;%R73R:21%R72AQ=r8%R:3R=21&;%12Q0E%Q6231%Q7271%Q82;1%Q92?1%Q:2C1qQJRD1%Q=2RE1p0Q?1p0QE1p0QI1p0QO1p0R71p0R@1pQ8RM1pQ@RL1pQLRO1pQHRO1")) (only parsing).
+Variable regs : ltac:(sec_ty2 constr:(SEC_T_b16_blk) 0%nat 0%nat).
+Variable ret : ltac:(sec_ty2 constr:(SEC_T_b16_blk) 1%nat 0%nat).
+Variable k : ltac:(sec_ty2 constr:(SEC_T_b16_blk) 2%nat 0%nat).
+Variable a2 : ltac:(sec_ty2 constr:(SEC_T_b16_blk) 3%nat 0%nat).
+Lemma b16_blk : ltac:(sec_stmt2 constr:(SEC_T_b16_blk) 4%nat 0%nat).
+Proof.
+intros H1 H11 H13 H12 Hk Hk16.
+eexists. split.
+- mlbu (ltac:(oF' 0xa940c%Z)) (ltac:(oD' 0xa940c%Z)) k. mlbu (ltac:(oF' 0xa9410%Z)) (ltac:(oD' 0xa9410%Z)) (k+1)%Z. mlbu (ltac:(oF' 0xa9414%Z)) (ltac:(oD' 0xa9414%Z)) (k+2)%Z. mlbu (ltac:(oF' 0xa9418%Z)) (ltac:(oD' 0xa9418%Z)) (k+3)%Z.
+mlbu (ltac:(oF' 0xa941c%Z)) (ltac:(oD' 0xa941c%Z)) (k+4)%Z. mlbu (ltac:(oF' 0xa9420%Z)) (ltac:(oD' 0xa9420%Z)) (k+5)%Z. mlbu (ltac:(oF' 0xa9424%Z)) (ltac:(oD' 0xa9424%Z)) (k+6)%Z. mlbu (ltac:(oF' 0xa9428%Z)) (ltac:(oD' 0xa9428%Z)) (k+7)%Z.
+msb (ltac:(oF' 0xa942c%Z)) (ltac:(oD' 0xa942c%Z)) k ltac:(sbp). msb (ltac:(oF' 0xa9430%Z)) (ltac:(oD' 0xa9430%Z)) (k+1)%Z ltac:(sbp).
+msb (ltac:(oF' 0xa9434%Z)) (ltac:(oD' 0xa9434%Z)) (k+2)%Z ltac:(sbp). msb (ltac:(oF' 0xa9438%Z)) (ltac:(oD' 0xa9438%Z)) (k+3)%Z ltac:(sbp).
+mlbu (ltac:(oF' 0xa943c%Z)) (ltac:(oD' 0xa943c%Z)) (k+8)%Z. mlbu (ltac:(oF' 0xa9440%Z)) (ltac:(oD' 0xa9440%Z)) (k+9)%Z. mlbu (ltac:(oF' 0xa9444%Z)) (ltac:(oD' 0xa9444%Z)) (k+10)%Z. mlbu (ltac:(oF' 0xa9448%Z)) (ltac:(oD' 0xa9448%Z)) (k+11)%Z.
+msb (ltac:(oF' 0xa944c%Z)) (ltac:(oD' 0xa944c%Z)) (k+4)%Z ltac:(sbp). msb (ltac:(oF' 0xa9450%Z)) (ltac:(oD' 0xa9450%Z)) (k+5)%Z ltac:(sbp).
+msb (ltac:(oF' 0xa9454%Z)) (ltac:(oD' 0xa9454%Z)) (k+6)%Z ltac:(sbp). msb (ltac:(oF' 0xa9458%Z)) (ltac:(oD' 0xa9458%Z)) (k+7)%Z ltac:(sbp).
+mlbu (ltac:(oF' 0xa945c%Z)) (ltac:(oD' 0xa945c%Z)) (k+12)%Z. mlbu (ltac:(oF' 0xa9460%Z)) (ltac:(oD' 0xa9460%Z)) (k+13)%Z. mlbu (ltac:(oF' 0xa9464%Z)) (ltac:(oD' 0xa9464%Z)) (k+14)%Z. mlbu (ltac:(oF' 0xa9468%Z)) (ltac:(oD' 0xa9468%Z)) (k+15)%Z.
+stepn (ltac:(oF' 0xa946c%Z)) (ltac:(oD' 0xa946c%Z)).
+msb (ltac:(oF' 0xa9470%Z)) (ltac:(oD' 0xa9470%Z)) (k+8)%Z ltac:(sbp). msb (ltac:(oF' 0xa9474%Z)) (ltac:(oD' 0xa9474%Z)) (k+9)%Z ltac:(sbp).
+msb (ltac:(oF' 0xa9478%Z)) (ltac:(oD' 0xa9478%Z)) (k+10)%Z ltac:(sbp). msb (ltac:(oF' 0xa947c%Z)) (ltac:(oD' 0xa947c%Z)) (k+11)%Z ltac:(sbp).
+stepn (ltac:(oF' 0xa9480%Z)) (ltac:(oD' 0xa9480%Z)).
+msb (ltac:(oF' 0xa9484%Z)) (ltac:(oD' 0xa9484%Z)) (k+12)%Z ltac:(sbp). msb (ltac:(oF' 0xa9488%Z)) (ltac:(oD' 0xa9488%Z)) (k+13)%Z ltac:(sbp).
+msb (ltac:(oF' 0xa948c%Z)) (ltac:(oD' 0xa948c%Z)) (k+14)%Z ltac:(sbp). msb (ltac:(oF' 0xa9490%Z)) (ltac:(oD' 0xa9490%Z)) (k+15)%Z ltac:(sbp).
+stepn (ltac:(oF' 0xa9494%Z)) (ltac:(oD' 0xa9494%Z)).
+mk_eq. apply mst_refl.
+- post.
+Qed.
+End SE.
+Section SE.
+Local Abbreviation SEC_T_t4_run := (ltac2:(TCodec.tc2 tcn__musl_Js0MemcpyMIS "SJ&6y5'Q2yR0%211%5241'5'2&9r4(Q0+1(0%33<21%6251r3%93<21r5+;%93B17%<231&8vO%2218%A3D41r6+=%A3J1?%D231vE%921E%H3K31r7+<%H3Q11F%K231&Q1%12Q2L%O3Q231'1&@z%221I&A&B+2+R0%3221%52O1%:271%:29B'4&?+4%22F1%Q@3QA1>%QA3QB23&>r8%2216vJ%E221%G261%<281'3'7&=&:vFr<+eT^8%QM3R41QK/01R4&<vIvDr:%443Q@21vN%<5;:721r1+eUY0%R83R?1R6/01R?r9%Q121Q0%M2:1%>4=QJ<1%E5D851:%H3G:1%RB2:R=r;%RE3RH21%RE2=R:%R92R88%RH3RK21%RH2@R5%R<2R4;%RK3RN21%RK2CR1%R02S1@%RN3S121&;%12Q2G%R1231%R2271%R32;1%R42?1%R52C1qQJS81%Q>2S91p0Q@1p0QN1p0R01p0R<1p0RD1p0RL1p0S51pQBS@1pQ@SA1pQLSD1pQHSD1")) (only parsing).
+Variable regs : ltac:(sec_ty2 constr:(SEC_T_t4_run) 0%nat 0%nat).
+Variable ret : ltac:(sec_ty2 constr:(SEC_T_t4_run) 1%nat 0%nat).
+Variable k : ltac:(sec_ty2 constr:(SEC_T_t4_run) 2%nat 0%nat).
+Variable m : ltac:(sec_ty2 constr:(SEC_T_t4_run) 3%nat 0%nat).
+Lemma t4_run : ltac:(sec_stmt2 constr:(SEC_T_t4_run) 4%nat 0%nat).
+Proof.
+intros H1 H11 H13 H12 Hm Hk [HL|[HL H4]].
+- eexists. split.
++ stepn (ltac:(oF' 0xa91c8%Z)) (ltac:(oD' 0xa91c8%Z)).
+stepb_ft (ltac:(oF' 0xa91cc%Z)) (ltac:(oD' 0xa91cc%Z)) ltac:(cond).
+stepn (ltac:(oF' 0xa91d0%Z)) (ltac:(oD' 0xa91d0%Z)).
+mk_eq. apply mst_refl.
++ post.
+- eapply (runs_trans RSEGS _ (fun r => mkst r (0xa94f4 : word) (MK k) rom)
+(fun r => getr r 1 = ret /\ getr r 11 = at_ src k /\ getr r 13 = at_ dst k /\ getr r 12 = Z_to_bv 64 m /\ keeps regs r)).
++ eexists. split.
+* stepn (ltac:(oF' 0xa91c8%Z)) (ltac:(oD' 0xa91c8%Z)).
+stepb_tk (ltac:(oF' 0xa91cc%Z)) (ltac:(oD' 0xa91cc%Z)) ltac:(cond).
+apply mst_refl.
+* cbv beta. post.
++ cbv beta. intros r1 (R1 & R11 & R13 & R12 & K1).
+destruct (b4_blk r1 ret k _ R1 R11 R13 R12 ltac:(lia) ltac:(lia)) as (r2 & RUN & P).
+exists r2. rewrite HL. split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
+Qed.
+End SE.
+Lemma b8_tail : ltac2:(TCodec.tc2 tcn__musl_Js0MemcpyMIS "SJ&6y5'Q2yR0%211%5241'5'2&9r4(Q0+1(0%33<21%6251r3%93<21r5+;%93B17%<231&8vO%2218%A3D41r6+=%A3J1?%D231vE%921E%H3K31r7+<%H3Q11F%K231&Q1%12Q2L%O3Q231'1&@z%221I&A&B+2+R0%3221%52O1%:271%:29B'4&?+4%22F1%Q@3QA1>%QA3QB23&>r8%2216vJ%E221%G261%<281'3'7&=&:vFr<+eUW<%QM3R41QK/01R4&<vIvDr:%443Q@21vN%<5;:721r1+eUY0%R83R?1R6/01R?r9%Q121Q0%M2:1%>4=QJ<1%E5D851:%H3G:1%RB2:R=r;%RE3RH21%RE2=R:%R92R88%RH3RK21%RH2@R5%R<2R4;%RK3RN21%RK2CR1%R02S1@%RN3S121&;%12Q2G%R1231%R2271%R32;1%R42?1%R52C1qQJS81%Q>2S91p0Q@1p0QN1p0R01p0R<1p0RD1p0RL1p0S51pQBS@1pQ@SA1pQLSD1pQHSD1").
+Proof.
+intros regs ret k m H1 H11 H13 H12 Hm Hk [HL|[HL H4]].
+- eexists. split.
++ stepn (ltac:(oF' 0xa94ec%Z)) (ltac:(oD' 0xa94ec%Z)).
+stepb_tk (ltac:(oF' 0xa94f0%Z)) (ltac:(oD' 0xa94f0%Z)) ltac:(cond).
+mk_eq. apply mst_refl.
++ post.
+- eapply (runs_trans RSEGS _ (fun r => mkst r (0xa94f4 : word) (MK k) rom)
+(fun r => getr r 1 = ret /\ getr r 11 = at_ src k /\ getr r 13 = at_ dst k /\ getr r 12 = Z_to_bv 64 m /\ keeps regs r)).
++ eexists. split.
+* stepn (ltac:(oF' 0xa94ec%Z)) (ltac:(oD' 0xa94ec%Z)).
+stepb_ft (ltac:(oF' 0xa94f0%Z)) (ltac:(oD' 0xa94f0%Z)) ltac:(cond).
+apply mst_refl.
+* cbv beta. post.
++ cbv beta. intros r1 (R1 & R11 & R13 & R12 & K1).
+destruct (b4_blk r1 ret k _ R1 R11 R13 R12 ltac:(lia) ltac:(lia)) as (r2 & RUN & P).
+exists r2. rewrite HL. split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
+Qed.
+Lemma t8_run : ltac2:(TCodec.tc2 tcn__musl_Js0MemcpyMIS "T7&6y5'Q2yR0%211%5241'5'2&9r4(Q0+1(0%33<21%6251r3%93<21r5+;%93B17%<231&8vO%2218%A3D41r6+=%A3J1?%D231vE%921E%H3K31r7+<%H3Q11F%K231&Q1%12Q2L%O3Q231'1&@z%221I&A&B+2+R0%3221%52O1%:271%:29B'4&?+8%22F1%Q@3QA1>%QA3QB23%6221r8+4%8221%QF3QG1D%QG3QH23%<221&>r:r9%?21>%4231%A23:%6221vJ%Q0221'3'7&=&:vFr>+eT^0%R63R=1R4/01R=&<vIvDr<%443QI21vN%<5;:721r1+eUY0%RA3RH1R?/01RHr;%Q:21Q9%O2:1%Q<23Q5%Q1221%@4?R5>1%G5F:71<%J3I<1%RM2<RHr=%S03S321%S02?RE%RD2RC8%S33S621%S32BR@%RG2R?;%S63S921%S62ER<%R;2S<B%S93S<21&;%12Q4I%R<231%R=271%R>2;1%R?2?1%R@2C1qQJSC1%Q@2SD1p0QB1p0QL1p0R31p0R;1p0R=1p0RI1p0S11p0S91p0SB1pQBSM1pQ@SN1pQLT11pQHT11").
+Proof.
+intros regs ret k m H1 H11 H13 H12 Hm Hk HL8 HL4 Hkn.
+assert (0 <= Z.land m 4)%Z by (apply Z.land_nonneg; lia).
+destruct HL8 as [HL8|HL8].
+-
+eapply (runs_trans RSEGS _ (fun r => mkst r (0xa91c8 : word) (MK k) rom)
+(fun r => getr r 1 = ret /\ getr r 11 = at_ src k /\ getr r 13 = at_ dst k /\ getr r 12 = Z_to_bv 64 m /\ keeps regs r)).
++ eexists. split.
+* stepn (ltac:(oF' 0xa91c0%Z)) (ltac:(oD' 0xa91c0%Z)).
+stepb_ft (ltac:(oF' 0xa91c4%Z)) (ltac:(oD' 0xa91c4%Z)) ltac:(cond).
+apply mst_refl.
+* cbv beta. post.
++ cbv beta. intros r1 (R1 & R11 & R13 & R12 & K1).
+destruct (t4_run r1 ret k m R1 R11 R13 R12 Hm Hk ltac:(lia)) as (r2 & RUN & P).
+exists r2. rewrite HL8, Z.add_0_r. split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
+-
+eapply (runs_trans RSEGS _ (fun r => mkst r (0xa94a0 : word) (MK k) rom)
+(fun r => getr r 1 = ret /\ getr r 11 = at_ src k /\ getr r 13 = at_ dst k /\ getr r 12 = Z_to_bv 64 m /\ keeps regs r)).
++ eexists. split.
+* stepn (ltac:(oF' 0xa91c0%Z)) (ltac:(oD' 0xa91c0%Z)).
+stepb_tk (ltac:(oF' 0xa91c4%Z)) (ltac:(oD' 0xa91c4%Z)) ltac:(cond).
+apply mst_refl.
+* cbv beta. post.
++ cbv beta. intros r1 (R1 & R11 & R13 & R12 & K1).
+eapply (runs_trans RSEGS _ (fun r => mkst r (0xa94ec : word) (MK (k + 8)) rom)
+(fun r => getr r 1 = ret /\ getr r 11 = at_ src (k + 8) /\ getr r 13 = at_ dst (k + 8) /\ getr r 12 = Z_to_bv 64 m /\ keeps regs r)).
+* destruct (b8_blk r1 ret k _ R1 R11 R13 R12 ltac:(lia) ltac:(lia)) as (r2 & RUN & P).
+exists r2. split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
+* cbv beta. intros r2 (S1 & S11 & S13 & S12 & K2).
+destruct (b8_tail r2 ret (k + 8)%Z m S1 S11 S13 S12 Hm ltac:(lia) ltac:(lia)) as (r3 & RUN & P).
+exists r3. rewrite HL8. replace (k + 8 + Z.land m 4)%Z with (k + 8 + Z.land m 4)%Z by lia.
+split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
+Qed.
+Lemma b16_tail : ltac2:(TCodec.tc2 tcn__musl_Js0MemcpyMIS "T7&6y5'Q2yR0%211%5241'5'2&9r4(Q0+1(0%33<21%6251r3%93<21r5+;%93B17%<231&8vO%2218%A3D41r6+=%A3J1?%D231vE%921E%H3K31r7+<%H3Q11F%K231&Q1%12Q2L%O3Q231'1&@z%221I&A&B+2+R0%3221%52O1%:271%:29B'4&?+8%22F1%Q@3QA1>%QA3QB23%6221r8+4%8221%QF3QG1D%QG3QH23%<221&>r:r9%?21>%4231%A23:%6221vJ%Q0221'3'7&=&:vFr>+eUTH%R63R=1R4/01R=&<vIvDr<%443QI21vN%<5;:721r1+eUY0%RA3RH1R?/01RHr;%Q:21Q9%O2:1%Q<23Q5%Q1221%@4?R5>1%G5F:71<%J3I<1%RM2<RHr=%S03S321%S02?RE%RD2RC8%S33S621%S32BR@%RG2R?;%S63S921%S62ER<%R;2S<B%S93S<21&;%12Q4I%R<231%R=271%R>2;1%R?2?1%R@2C1qQJSC1%Q@2SD1p0QB1p0QL1p0R31p0R;1p0R=1p0RI1p0S11p0S91p0SB1pQBSM1pQ@SN1pQLT11pQHT11").
+Proof.
+intros regs ret k m H1 H11 H13 H12 Hm Hk HL8 HL4 Hkn.
+assert (0 <= Z.land m 4)%Z by (apply Z.land_nonneg; lia).
+destruct HL8 as [HL8|HL8].
+- eapply (runs_trans RSEGS _ (fun r => mkst r (0xa91c8 : word) (MK k) rom)
+(fun r => getr r 1 = ret /\ getr r 11 = at_ src k /\ getr r 13 = at_ dst k /\ getr r 12 = Z_to_bv 64 m /\ keeps regs r)).
++ eexists. split.
+* stepn (ltac:(oF' 0xa9498%Z)) (ltac:(oD' 0xa9498%Z)).
+stepb_tk (ltac:(oF' 0xa949c%Z)) (ltac:(oD' 0xa949c%Z)) ltac:(cond).
+apply mst_refl.
+* cbv beta. post.
++ cbv beta. intros r1 (R1 & R11 & R13 & R12 & K1).
+destruct (t4_run r1 ret k m R1 R11 R13 R12 Hm Hk ltac:(lia)) as (r2 & RUN & P).
+exists r2. rewrite HL8, Z.add_0_r. split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
+- eapply (runs_trans RSEGS _ (fun r => mkst r (0xa94a0 : word) (MK k) rom)
+(fun r => getr r 1 = ret /\ getr r 11 = at_ src k /\ getr r 13 = at_ dst k /\ getr r 12 = Z_to_bv 64 m /\ keeps regs r)).
++ eexists. split.
+* stepn (ltac:(oF' 0xa9498%Z)) (ltac:(oD' 0xa9498%Z)).
+stepb_ft (ltac:(oF' 0xa949c%Z)) (ltac:(oD' 0xa949c%Z)) ltac:(cond).
+apply mst_refl.
+* cbv beta. post.
++ cbv beta. intros r1 (R1 & R11 & R13 & R12 & K1).
+eapply (runs_trans RSEGS _ (fun r => mkst r (0xa94ec : word) (MK (k + 8)) rom)
+(fun r => getr r 1 = ret /\ getr r 11 = at_ src (k + 8) /\ getr r 13 = at_ dst (k + 8) /\ getr r 12 = Z_to_bv 64 m /\ keeps regs r)).
+* destruct (b8_blk r1 ret k _ R1 R11 R13 R12 ltac:(lia) ltac:(lia)) as (r2 & RUN & P).
+exists r2. split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
+* cbv beta. intros r2 (S1 & S11 & S13 & S12 & K2).
+destruct (b8_tail r2 ret (k + 8)%Z m S1 S11 S13 S12 Hm ltac:(lia) ltac:(lia)) as (r3 & RUN & P).
+exists r3. rewrite HL8. split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
+Qed.
+Section SE.
+Local Abbreviation SEC_T_t16_run := (ltac2:(TCodec.tc2 tcn__musl_Js0MemcpyMIS "SL&6y5'Q2yR0%211%5241'5'2&9r4(Q0+1(0%33<21%6251r3%93<21r5+;%93B17%<231&8vO%2218%A3D41r6+=%A3J1?%D231vE%921E%H3K31r7+<%H3Q11F%K231&Q1%12Q2L%O3Q231'1&@z%221I&A+Q0%22L1%7241%726?&>r8&?+@%22D1%5241+8%52G1%8231+4%82J1%;231vJ%E221'3'7&=&:vFr<+eT]H%QK3R21QI/01R2&<vIvDr:%443Q>21vN%<5;:721r1+eUY0%R63R=1R4/01R=r9%Q121Q0%Q42:1%Q323O%Q6221%Q525N%Q8221%B4AQL@1%I5H<91>%L3K>1%RD2>R?r;%RG3RJ21%RG2AR<%R;2R:8%RJ3RM21%RJ2DR7%R>2R6;%RM3S021%RM2GR3%R22S3D%S03S321&;%12Q6K%R3231%R4271%R52;1%R62?1%R72C1qQJS:1%QB2S;1p0QD1p0R31p0R51p0R>1p0RF1p0RN1p0S71pQBSB1pQ@SC1pQLSF1pQHSF1")) (only parsing).
+Variable regs : ltac:(sec_ty2 constr:(SEC_T_t16_run) 0%nat 0%nat).
+Variable ret : ltac:(sec_ty2 constr:(SEC_T_t16_run) 1%nat 0%nat).
+Variable k : ltac:(sec_ty2 constr:(SEC_T_t16_run) 2%nat 0%nat).
+Variable m : ltac:(sec_ty2 constr:(SEC_T_t16_run) 3%nat 0%nat).
+Lemma t16_run : ltac:(sec_stmt2 constr:(SEC_T_t16_run) 4%nat 0%nat).
+Proof.
+intros H1 H11 H13 H12 Hm Hk Hkn.
+destruct (bits_lt32 m Hm) as (B16 & B8 & B4 & B2 & B1 & Bsum).
+assert (0 <= Z.land m 8)%Z by (apply Z.land_nonneg; lia). assert (0 <= Z.land m 4)%Z by (apply Z.land_nonneg; lia).
+assert (0 <= Z.land m 2)%Z by (apply Z.land_nonneg; lia). assert (0 <= Z.land m 1)%Z by (apply Z.land_nonneg; lia).
+destruct B16 as [HL16|HL16].
+-
+eapply (runs_trans RSEGS _ (fun r => mkst r (0xa91c0 : word) (MK k) rom)
+(fun r => getr r 1 = ret /\ getr r 11 = at_ src k /\ getr r 13 = at_ dst k /\ getr r 12 = Z_to_bv 64 m /\ keeps regs r)).
++ eexists. split.
+* stepn (ltac:(oF' 0xa91b8%Z)) (ltac:(oD' 0xa91b8%Z)).
+stepb_ft (ltac:(oF' 0xa91bc%Z)) (ltac:(oD' 0xa91bc%Z)) ltac:(cond).
+apply mst_refl.
+* cbv beta. post.
++ cbv beta. intros r1 (R1 & R11 & R13 & R12 & K1).
+destruct (t8_run r1 ret k m R1 R11 R13 R12 ltac:(lia) Hk B8 B4 ltac:(lia)) as (r2 & RUN & P).
+exists r2. rewrite HL16, Z.add_0_r. split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
+-
+eapply (runs_trans RSEGS _ (fun r => mkst r (0xa940c : word) (MK k) rom)
+(fun r => getr r 1 = ret /\ getr r 11 = at_ src k /\ getr r 13 = at_ dst k /\ getr r 12 = Z_to_bv 64 m /\ keeps regs r)).
++ eexists. split.
+* stepn (ltac:(oF' 0xa91b8%Z)) (ltac:(oD' 0xa91b8%Z)).
+stepb_tk (ltac:(oF' 0xa91bc%Z)) (ltac:(oD' 0xa91bc%Z)) ltac:(cond).
+apply mst_refl.
+* cbv beta. post.
++ cbv beta. intros r1 (R1 & R11 & R13 & R12 & K1).
+eapply (runs_trans RSEGS _ (fun r => mkst r (0xa9498 : word) (MK (k + 16)) rom)
+(fun r => getr r 1 = ret /\ getr r 11 = at_ src (k + 16) /\ getr r 13 = at_ dst (k + 16) /\ getr r 12 = Z_to_bv 64 m /\ keeps regs r)).
+* destruct (b16_blk r1 ret k _ R1 R11 R13 R12 ltac:(lia) ltac:(lia)) as (r2 & RUN & P).
+exists r2. split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
+* cbv beta. intros r2 (S1 & S11 & S13 & S12 & K2).
+destruct (b16_tail r2 ret (k + 16)%Z m S1 S11 S13 S12 ltac:(lia) ltac:(lia) B8 B4 ltac:(lia)) as (r3 & RUN & P).
+exists r3. rewrite HL16. split; [exact RUN|]. decompose [and] P. post. eapply keeps_trans; eassumption.
+Qed.
+End SE.
+End MIS.
+End FPX_1.
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

@@ -1,0 +1,40 @@
+line	numeral	class	evidence	verdict
+1	2026	licence year	Modified-by line	OK
+2	2026	licence year	Modified-by line	OK
+13	b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a	image sha256 (comment)	headamp twin / pin sha256 (measure.out)	OK
+14	f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47	image sha256 (comment)	headamp twin / pin sha256 (measure.out)	OK
+15	0x85cb8	instruction address	__fe_getround+0x14 = 0x85cb8, the auipc (capstone `auipc a1, 0xfff9c`)	OK
+15	0xfff9c	instruction immediate	headamp's own auipc at 0x85cb8: `auipc a1, 0xfff9c`	OK
+15	-0x7c0	instruction immediate	headamp's own addi at 0x85cbc: `addi a1, a1, -0x7c0`	OK
+15	0x214f8	address (.rodata table)	auipc+addi pair at 0x85cb8 forms 0x214f8; 12 bytes 03 00 00 00 01 00 00 00 02 00 00 00	OK
+15	12	routine size / byte count (comment)	__fe_raise_inexact / table bytes (measure.out: same size in headamp)	OK
+16	03 00 00 00 01 00 00 00 02 00 00 00	table bytes (comment)	bytes at 0x214f8 (measure.out)	OK
+16	0x10610	address (plain image table, comment)	headamp plain __fe_getround pair forms 0x10610 (= lib/CJ/RL/I/IImgP.v N_exact 0x1145c)	OK
+16	0x85248	address (FUNC entry)	__extendsftf2 0x85248 size 348	OK
+16	348	routine size / byte count (comment)	__extendsftf2 (measure.out: same size in headamp)	OK
+17	0x853a4	address (FUNC entry)	__floatditf 0x853a4 size 292	OK
+17	292	routine size / byte count (comment)	__floatditf (measure.out: same size in headamp)	OK
+19	0x1145c	class-5 model constant (CJ library key)	key of lib/CJ/RL/G (byte-identical to the donor's IImgA.v and to headamp's IImgP.v)	OK
+19	0x214f8	address (.rodata table)	auipc+addi pair at 0x85cb8 forms 0x214f8; 12 bytes 03 00 00 00 01 00 00 00 02 00 00 00	OK
+20	0x200dc	class-5 model constant (CJ library key)	key of lib/CJ/RL/G (byte-identical to the donor's IImgA.v and to headamp's IImgP.v)	OK
+20	0x85248	address (FUNC entry)	__extendsftf2 0x85248 size 348	OK
+21	0x7f000900	class-5 model constant (CJ library key)	key of lib/CJ/RL/G (byte-identical to the donor's IImgA.v and to headamp's IImgP.v)	OK
+21	0x853a4	address (FUNC entry)	__floatditf 0x853a4 size 292	OK
+22	0x84f34	address (FUNC entry)	__lttf2 = __letf2 = __cmptf2 0x84f34 size 200	OK
+22	200	routine size / byte count (comment)	__lttf2 (measure.out: same size in headamp)	OK
+22	0x84ffc	address (FUNC entry)	__getf2 = __gttf2 0x84ffc size 188	OK
+22	188	routine size / byte count (comment)	__getf2 (measure.out: same size in headamp)	OK
+22	0x854c8	address (FUNC entry)	__subtf3 0x854c8 size 16	OK
+22	16	routine size / byte count (comment)	__subtf3 (measure.out: same size in headamp)	OK
+23	0x854d8	address (FUNC entry)	__addtf3 0x854d8 size 1996	OK
+23	1996	routine size / byte count (comment)	__addtf3 (measure.out: same size in headamp)	OK
+23	0x85ca4	address (FUNC entry)	__fe_getround 0x85ca4 size 48	OK
+23	48	routine size / byte count (comment)	__fe_getround (measure.out: same size in headamp)	OK
+23	0x85cd4	address (FUNC entry)	__fe_raise_inexact 0x85cd4 size 12	OK
+23	12	routine size / byte count (comment)	__fe_raise_inexact / table bytes (measure.out: same size in headamp)	OK
+25	0x1b24c	class-5 model constant (CJ library key)	key of lib/CJ/RL/G (byte-identical to the donor's IImgA.v and to headamp's IImgP.v)	OK
+25	0x1b3d0	class-5 model constant (CJ library key)	key of lib/CJ/RL/G (byte-identical to the donor's IImgA.v and to headamp's IImgP.v)	OK
+25	433384	interval offset (hand)	__lttf2 0x84f34 - key 0x1b24c = 433384; __getf2 0x84ffc - key 0x1b314 = 433384	OK
+26	0x1bc70	class-5 model constant (CJ library key)	key of lib/CJ/RL/G (byte-identical to the donor's IImgA.v and to headamp's IImgP.v)	OK
+26	0x1c488	class-5 model constant (CJ library key)	key of lib/CJ/RL/G (byte-identical to the donor's IImgA.v and to headamp's IImgP.v)	OK
+26	432216	interval offset (hand)	__subtf3 0x854c8 - key 0x1bc70 = 432216; __addtf3 - 0x1bc80, __fe_getround - 0x1c44c, __fe_raise_inexact - 0x1c47c all = 432216	OK

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_string_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_string_fuzzer
+rocq: OSSVerify.libarchive.libarchive_string_fuzzer
 origin: upstream
 summary: First byte selects one of 10 string paths (set/get pathname, symlink, hardlink, uname, gname
   in MBS/WCS/UTF-8; copy_*; update_*_utf8; fflags text; ACL from_text in three types; mbstowcs + *_w setters)

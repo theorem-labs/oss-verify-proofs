@@ -1,0 +1,2 @@
+targets 35 (luiconst-targets.tsv): {'NOT-AN-ADDRESS': 32, 'OFFSET-SAME-SYMBOL': 2, 'REVIEW': 1}
+  REVIEW __lsan_register_root_region 0x1dc 0xfffff

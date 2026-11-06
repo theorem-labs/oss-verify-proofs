@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: readstat
 harness: fuzz_grammar_por_double
-rocq: OssFuzzTheorems.readstat.fuzz_grammar_por_double
+rocq: OSSVerify.readstat.fuzz_grammar_por_double
 origin: upstream
 summary: readstat_por_parse_double() (base-30 POR number grammar) of the input; result ignored.
 entry: LLVMFuzzerTestOneInput

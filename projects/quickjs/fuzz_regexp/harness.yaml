@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: quickjs
 harness: fuzz_regexp
-rocq: OssFuzzTheorems.quickjs.fuzz_regexp
+rocq: OSSVerify.quickjs.fuzz_regexp
 origin: upstream
 summary: Splits the input at the first NUL into pattern and subject, lre_compile(pattern) and lre_exec(subject)
   with a 100-tick timeout; the match result and capture count are discarded.

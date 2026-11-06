@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ogre
 harness: stream_fuzz
-rocq: OssFuzzTheorems.ogre.stream_fuzz
+rocq: OSSVerify.ogre.stream_fuzz
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: fwupd
 harness: synaptics-cape_fuzzer
-rocq: OssFuzzTheorems.fwupd.synaptics_cape_fuzzer
+rocq: OSSVerify.fwupd.synaptics_cape_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

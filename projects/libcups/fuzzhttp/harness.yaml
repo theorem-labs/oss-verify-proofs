@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libcups
 harness: fuzzhttp
-rocq: OssFuzzTheorems.libcups.fuzzhttp
+rocq: OSSVerify.libcups.fuzzhttp
 origin: upstream
 summary: NUL-terminated input through httpSeparateURI; on success httpAssembleURI rebuilds a URI from
   the parts, but the rebuilt string is never compared with the input (the comment says round-trip, nothing

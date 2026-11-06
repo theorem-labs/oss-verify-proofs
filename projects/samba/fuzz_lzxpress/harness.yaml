@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: samba
 harness: fuzz_lzxpress
-rocq: OssFuzzTheorems.samba.fuzz_lzxpress
+rocq: OSSVerify.samba.fuzz_lzxpress
 origin: upstream
 summary: lzxpress_decompress of the input into a 1 MiB buffer; return value ignored.
 entry: LLVMFuzzerTestOneInput

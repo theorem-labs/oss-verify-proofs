@@ -1,0 +1,34 @@
+$ python3 kit/luiscan.py --all --fns __asan_stack_malloc_1,__interceptor_trampoline___tls_get_addr,___interceptor___tls_get_addr,_ZN6__asan18TryAsanInitFromRtlEv,__tls_get_addr,_ZN6__asan16GetCurrentThreadEv,_ZN6__asan10AsanTSDGetEv,__pthread_getspecific,_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm,_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE,_ZN6__asan9FakeStack2GCEm,_ZN6__asan10AsanThread32AsyncSignalSafeLazyInitFakeStackEv,_ZN6__asanL11MemToShadowEm{asan_fake_stack.cpp} fuzz_grant.asan fuzz_uci.asan
+ROW	image	function	addr	size	luis	insec	inload	memfed	memfed_out	luiconst	unmeasured	exposure
+# image fuzz_grant.asan sha256 57c26f993615
+ROW	fuzz_grant.asan	__asan_stack_malloc_1	0x3cf18	400	1	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan	__interceptor_trampoline___tls_get_addr	0x4218c	4	0	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan	___interceptor___tls_get_addr	0x46aac	124	0	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan	_ZN6__asan18TryAsanInitFromRtlEv	0x5980c	160	2	0	1	0	0	0	0	0
+ROW	fuzz_grant.asan	__tls_get_addr	0x96620	36	0	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan	_ZN6__asan16GetCurrentThreadEv	0x5c00c	32	0	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan	_ZN6__asan10AsanTSDGetEv	0x54b58	64	0	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan	__pthread_getspecific	0x976d4	28	0	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	0x69720	848	2	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE	0x61974	4772	0	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan	_ZN6__asan9FakeStack2GCEm	0x3c958	744	1	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan	_ZN6__asan10AsanThread32AsyncSignalSafeLazyInitFakeStackEv	0x5c280	560	4	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan	_ZN6__asanL11MemToShadowEm{asan_fake_stack.cpp}	0x3d410	316	0	0	0	0	0	0	0	0
+TOTAL	fuzz_grant.asan	functions 13	with-lui 5	with-exposure 0	luis 10	insec 0	inload 1	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+# image fuzz_uci.asan sha256 56822e263d76
+ROW	fuzz_uci.asan	__asan_stack_malloc_1	0x3c1b8	400	1	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan	__interceptor_trampoline___tls_get_addr	0x410c0	4	0	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan	___interceptor___tls_get_addr	0x45924	124	0	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan	_ZN6__asan18TryAsanInitFromRtlEv	0x58444	160	2	0	1	0	0	0	0	0
+ROW	fuzz_uci.asan	__tls_get_addr	0x90f44	36	0	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan	_ZN6__asan16GetCurrentThreadEv	0x5ac44	32	0	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan	_ZN6__asan10AsanTSDGetEv	0x53790	64	0	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan	__pthread_getspecific	0x91ff8	28	0	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	0x68358	848	2	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE	0x605ac	4772	0	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan	_ZN6__asan9FakeStack2GCEm	0x3bd6c	744	1	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan	_ZN6__asan10AsanThread32AsyncSignalSafeLazyInitFakeStackEv	0x5aeb8	560	4	0	0	0	0	0	0	0
+ROW	fuzz_uci.asan	_ZN6__asanL11MemToShadowEm{asan_fake_stack.cpp}	0x3c348	316	0	0	0	0	0	0	0	0
+TOTAL	fuzz_uci.asan	functions 13	with-lui 5	with-exposure 0	luis 10	insec 0	inload 1	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	all	functions 26	with-lui 10	with-exposure 0	luis 20	insec 0	inload 2	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+rc=0

@@ -1,0 +1,73 @@
+# --override rows for reac-repacer/fuzz_uci image B (asan-ubsan), DONOR = fuzz_grant released lib/B (recipes 4f87de75d67,
+# normalised by mkdon.sh), port_core 0e4e065eab9f. file<TAB>donor-line<TAB>old<TAB>new[<TAB>OCCURRENCE].
+# Every value is measured on the pinned images (fuzz_uci.asan-ubsan a1b86e424add, twin 8d07ffcf5948; control = the same rule
+# on fuzz_grant.asan-ubsan fde52226dc48 / twin 5a5ee7c02b4e gives the donor's own value): measure-B.py, measure-B.out.
+# __stdout_FILE.buf (FILE+88, pointer read from the image): grant 0x5f9020 = 6262816 (control), uci 0x5f27a0 = 6236064
+B/YD1j.v	112	6262816	6236064
+B/YD1j.v	120	6262816	6236064	1,2
+B/YD1j.v	133	6262816	6236064
+B/YD1o.v	198	0x5f9020	0x5f27a0
+B/YD1o.v	250	0x5f9020	0x5f27a0
+B/YD1o.v	286	0x5f9020	0x5f27a0
+B/YE3m.v	34	0x5f9020	0x5f27a0
+B/YE3m.v	559	6262816	6236064
+B/YE3m.v	1069	6262816	6236064
+# BUFEND := STDOUT_BUFA + STDOUT_BSZ (1024): grant 6263840 (control), uci 6237088
+B/YE3m.v	1071	6263840	6237088
+# __stderr_FILE.buf (FILE+88): grant 0x5f9018 (control), uci 0x5f2798
+B/YD2f.v	146	0x5f9018	0x5f2798
+B/YE2p.v	31	0x5f9018	0x5f2798
+# __stdin_FILE.buf (FILE+88): grant 0x5f9428 (control), uci 0x5f2ba8
+B/YD2f.v	146	0x5f9428	0x5f2ba8
+# driver format shadow windows SH = [floor8(shadow(FMT)), floor8(shadow(FMT + len)) + 8), len = the file's hull_zero length;
+# FMT = the file's relocated string (same bytes in both images); control: the rule gives grant's windows
+# 'cli: cannot open %s\n' (21) uci 0x1d5e6
+B/YE2t.v	63	0x7fffbad8	0x7fffbab8
+B/YE2t.v	63	0x7fffbae0	0x7fffbac0
+# 'cli: read error on %s\n' (23) uci 0x1d5fb
+B/YE2u.v	63	0x7fffbad8	0x7fffbab8
+B/YE2u.v	63	0x7fffbae8	0x7fffbac8
+# 'usage: %s INPUT\n' (17) uci 0x157cd
+B/YE2w.v	63	0x7fffab00	0x7fffaaf8
+B/YE2w.v	63	0x7fffab10	0x7fffab00
+# '%d\n' (4) uci 0x14763
+B/YE35.v	63	0x7fffa8f0	0x7fffa8e8
+B/YE35.v	63	0x7fffa8f8	0x7fffa8f0
+# fuzz_uci.asan-ubsan links neither __asan_memset nor __interceptor_trampoline_bcmp (no symbol in the twin): absent entry = 0
+# (the same 0 as this unit's image-A lib/A/AF0l.v:13-14 and libreac/fuzz_knock's A/AF0l.v:4); no code at 0 (image starts 0x10000)
+B/YF0l.v	14	0x52024	0
+B/YF0l.v	15	0x424d0	0
+# YD1g static_img_chk: image start 0x10000 = first PT_LOAD of fuzz_uci.asan-ubsan
+B/YD1g.v	1276	0x10000	0x10000	1,2
+# zero-shadow range (TFIB_BSS, IMG_TOP - TFIB_BSS): TFIB_BSS = __stop_asan_globals (grant 0xa22c0 = 664256, control; uci 0x9ba10 =
+# 637456), IMG_TOP = page-up end of the last PT_LOAD (grant 0x5fb000 = 6270976, control; uci 0x5f4000 = 6242304).
+# Equal to this unit's lib/B/YF0m.v Tfib_zero_shadow last range (0x9ba10, 0x5f4000 - 0x9ba10) (checked after the merge).
+B/YD1o.v	82	0xa22c0	0x9ba10	1,2
+B/YD1o.v	82	0x5fb000	0x5f4000
+B/YD1o.v	85	0xa22c0	0x9ba10	1,2
+B/YD1o.v	85	0x5fb000	0x5f4000
+B/YD1o.v	92	0xa22c0	0x9ba10	1,2
+B/YD1o.v	92	0x5fb000	0x5f4000
+B/YD1o.v	99	0xa22c0	0x9ba10	1,2
+B/YD1o.v	100	0xa22c0	0x9ba10
+B/YD1o.v	101	664256	637456	1,2
+B/YD1o.v	101	6270976	6242304
+B/YD25.v	531	0xa22c0	0x9ba10	1,2
+B/YD25.v	531	0x5fb000	0x5f4000
+B/YD25.v	534	0xa22c0	0x9ba10	1,2
+B/YD25.v	534	0x5fb000	0x5f4000
+B/YD25.v	541	0xa22c0	0x9ba10	1,2
+B/YD25.v	541	0x5fb000	0x5f4000
+B/YD25.v	548	0xa22c0	0x9ba10	1,2
+# .bss + 0x20 = __do_init.__object + 16: grant 0xa22e0 (control), uci 0x9ba60
+B/YD1o.v	88	0xa22e0	0x9ba60
+B/YD1o.v	94	0xa22e0	0x9ba60
+B/YD1o.v	96	0xa22e0	0x9ba60
+# quotients of the rows above: 0x9ba60 / 8 = 79692; 637456 / 8 = 79682; (6242304 - 637456) / 8 = 700606 (grant 83036, 83032, 700840)
+B/YD1o.v	96	83036	79692
+B/YD1o.v	101	83032	79682
+B/YD1o.v	101	700840	700606
+# index of the .got canary cell z8 (ANum A_GOT_CANARY) V_GOT_CANARY in the unit's lib/B/YF0m.v Tfib_const_abs: 193 of 217
+# (cell z8 (ANum 0x97db0) 0x5f20d0); control: the same rule gives 273 of 361 in fuzz_grant's released lib/B/YF0m.v (the
+# donor's value) and 273 of 290 in this unit's lib/A/AF0m.v (image A's AE22.v:37). The build refused 273 (no cell there).
+B/YE22.v	35	273	193

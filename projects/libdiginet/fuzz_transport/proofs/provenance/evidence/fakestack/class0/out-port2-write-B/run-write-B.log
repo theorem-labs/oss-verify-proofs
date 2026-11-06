@@ -1,0 +1,20 @@
+== class 0 image B (asan-ubsan): donor libreac/fuzz_ctrl at e10f488c53fc pin 12136677c5cf, target pin 41113a03c82f
+twins B: proved (2 pairs)
+donor: pinned sha256 12136677c5cf, twin sha256 ee07e2c38d94, allocated sections equal (build-id note excepted): True
+target: pinned sha256 41113a03c82f, twin sha256 e217cb0a84f1, allocated sections equal (build-id note excepted): True
+libreac/fuzz_ctrl ref e10f488c53fc image B class 0: 8 of 8 ranges paired and compared; pc-relative words 40 (walked), 54 (whole functions)
+14 resolve lines: 6 move a value (0x3dd78 -> 0x3e000, 0xa08e0 -> 0xa3ce0, 0xa0940 -> 0xa3d40, 0xa15d0 -> 0xa49d0, 0xa15e0 -> 0xa49e0), 0 name the image of a header range, the rest keep the value
+PASS
+control self B: PASS, 0 values moved
+planted: __asan_stack_malloc_0 + 0x84: 0x00d67833 -> 0x00d66833
+planted: __asan_stack_malloc_0 + 0x84: 0x00d67833 -> 0x00d66833
+control plant B: caught (1 FAIL lines)
+  B/Rt/StackMalloc0Tbl.v: 0 derived, 0 direct, 0 engine, 0 via-maps, 15 symbol, 0 section, 0 gap, 12 resolved, 0 KEPT-ADDR, 0 UNMAPPED
+  B/Rt/StackMalloc0.v: 0 derived, 0 direct, 0 engine, 0 via-maps, 0 symbol, 0 section, 0 gap, 3 resolved, 0 KEPT-ADDR, 0 UNMAPPED
+  B/Rt/StackRawKept.v: 0 derived, 0 direct, 0 engine, 0 via-maps, 0 symbol, 0 section, 0 gap, 0 resolved, 0 KEPT-ADDR, 0 UNMAPPED
+alreloc: 3 files written; 0 UNMAPPED or unreviewed CONFLICT, 0 KEPT-ADDR (image-range numerals left unchanged) -- review each
+alreloc: per-numeral report: 37 numerals in 3 files under <OUT>/report/libdiginet/fuzz_transport (one .tsv per file)
+PASS: 0 wrong rows
+B/Rt/StackMalloc0Tbl.v: header 6 lines restored from the donor, 0 CtrlTSyms renamed, notice added
+B/Rt/StackMalloc0.v: header 6 lines restored from the donor, 4 CtrlTSyms renamed, notice added
+B/Rt/StackRawKept.v: header 0 lines restored from the donor, 0 CtrlTSyms renamed, notice added

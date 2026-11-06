@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_stack_frame_access
-rocq: OssFuzzTheorems.libdwarf.fuzz_stack_frame_access
+rocq: OSSVerify.libdwarf.fuzz_stack_frame_access
 origin: upstream
 summary: dwarf_get_fde_for_die on the first CU DIE; result unused.
 entry: LLVMFuzzerTestOneInput

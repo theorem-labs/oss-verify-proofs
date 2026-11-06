@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: cms
-rocq: OssFuzzTheorems.openssl.cms
+rocq: OSSVerify.openssl.cms
 origin: upstream
 summary: d2i_CMS_bio then i2d_CMS_bio to a null BIO; re-encoding not compared.
 entry: FuzzerTestOneInput

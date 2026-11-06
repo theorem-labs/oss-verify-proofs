@@ -1,6 +1,7 @@
 """oft ledger: the findings ledger over a change's history, in git repositories made for each test."""
 import contextlib
 import copy
+import io
 import os
 import shutil
 import subprocess
@@ -9,8 +10,8 @@ import tempfile
 import unittest
 from unittest import mock
 
-from oft import ledger, names, schema, yamlio
-from oft.tests.helpers import FINDINGS, FIXTURE
+from oft import ledger, names, port, schema, yamlio
+from oft.tests.helpers import FINDINGS, FIXTURE, REPO
 
 KEY = "zlib/checksum_fuzzer/stand-in-abort"
 DIR = "findings/" + KEY
@@ -20,6 +21,10 @@ HARNESS = "projects/zlib/checksum_fuzzer/harness.yaml"
 SECOND = "zlib/checksum_fuzzer/second"
 # a record's files, in the order the ledger reports them
 RECORD = ("0001-stand-in.patch", "control.bin", "finding.yaml", "input.bin")
+# the same record and pins in the per-project layout, where ./oft port-layout moves them
+NEW_DIR = "projects/zlib/checksum_fuzzer/findings/stand-in-abort"
+NEW_YAML = NEW_DIR + "/finding.yaml"
+NEW_UNPATCHED = "projects/zlib/unpatched.yaml"
 
 GIT = ["git", "-c", "user.name=oft-tests", "-c", "user.email=oft-tests" + "@" + "example.invalid",
        "-c", "commit.gpgsign=false", "-c", "init.defaultBranch=main"]
@@ -29,9 +34,10 @@ GIT_ENV = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1"
 class Repo:
     """A git repository in a temporary directory.  Its first commit, tagged base, holds the fixture's harness.yaml of
     zlib/checksum_fuzzer, which a record is judged with, and the fixture's findings/ (one patched record,
-    findings/zlib/checksum_fuzzer/stand-in-abort, and the unpatched pins), or no findings/."""
+    findings/zlib/checksum_fuzzer/stand-in-abort, and the unpatched pins), or the same moved to the per-project layout
+    (ported), or no findings."""
 
-    def __init__(self, findings=True):
+    def __init__(self, findings=True, ported=False):
         self._tmp = tempfile.TemporaryDirectory(prefix="oft-ledger-")
         self.root = os.path.join(self._tmp.name, "repo")
         os.mkdir(self.root)
@@ -40,8 +46,16 @@ class Repo:
         shutil.copyfile(os.path.join(FIXTURE, HARNESS), self.path(HARNESS))
         if findings:
             self.add_findings()
+            if ported:
+                self.port()
         self.base = self.commit("base")
         self.git("tag", "base")
+
+    def port(self):
+        """Move the working tree to the per-project layout, as ./oft port-layout does."""
+        out = io.StringIO()
+        if port.port_worktree(self.root, out=out) != 0:
+            raise AssertionError(out.getvalue())
 
     def close(self):
         self._tmp.cleanup()
@@ -90,8 +104,8 @@ class Repo:
 
 
 @contextlib.contextmanager
-def repo(findings=True):
-    r = Repo(findings)
+def repo(findings=True, ported=False):
+    r = Repo(findings, ported)
     try:
         yield r
     finally:
@@ -250,6 +264,43 @@ class Deletion(unittest.TestCase):
             self.assertEqual(r.ledger(), [])
             self.assertEqual(r.ledger(tip=gone), deleted(KEY, r.base))
 
+    def test_pr_yml_ledger_step_reads_the_whole_history_of_a_push_with_no_base(self):
+        """pr.yml's ledger step, as the lint job runs it in a clone one commit deep: for a push with no base to
+        compare with (routed false: before all zeros, or a base that cannot be fetched) its base is the pushed commit
+        itself, so BASE..TIP would hold nothing; the step judges the tip's whole history instead, and a record that
+        history deleted is a finding, while a clean history passes.  A routed run with the same BASE judges nothing,
+        as the base step's fallback alone would."""
+        path = os.path.join(REPO, ".github", "workflows", "pr.yml")
+        if not os.path.exists(path):
+            self.skipTest("no .github/workflows/pr.yml beside tools/oft")
+        step = next(s for s in yamlio.load_file(path)["jobs"]["lint"]["steps"]
+                    if s.get("name") == "the findings ledger over the change's history, by the base's rules")
+        never_deleted = "a finding is never deleted"
+        for deletes, routed, rc in ((True, "false", 1), (True, "true", 0), (False, "false", 0)):
+            with self.subTest(deletes=deletes, routed=routed), repo() as r, tempfile.TemporaryDirectory() as d:
+                if deletes:
+                    r.remove(DIR)
+                head = r.commit("the record goes" if deletes else "one more")
+                remote = os.path.join(d, "remote.git")
+                subprocess.run(GIT + ["clone", "-q", "--bare", r.root, remote], env=GIT_ENV, check=True)
+                subprocess.run(GIT + ["clone", "-q", "--depth=1", "file://" + remote, os.path.join(d, "head")],
+                               env=GIT_ENV, check=True)
+                os.makedirs(os.path.join(d, "base"))
+                os.symlink(os.path.dirname(os.path.dirname(os.path.abspath(ledger.__file__))),
+                           os.path.join(d, "base", "tools"))
+                os.mkdir(os.path.join(d, "bin"))
+                with open(os.path.join(d, "bin", "python"), "w") as f:
+                    f.write('#!/bin/sh\nexec "%s" "$@"\n' % sys.executable)
+                os.chmod(os.path.join(d, "bin", "python"), 0o755)
+                env = dict(GIT_ENV, PATH=os.path.join(d, "bin") + os.pathsep + os.environ["PATH"], BASE=head,
+                           ROUTED=routed, PYTHONDONTWRITEBYTECODE="1")
+                run = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", step["run"]],
+                                     cwd=d, env=env, capture_output=True, text=True)
+                said = run.stdout + run.stderr
+                self.assertEqual(run.returncode, rc, said)
+                self.assertEqual(never_deleted in said, rc == 1, said)
+                self.assertEqual("reads the tip's whole history" in said, routed == "false", said)
+
     def test_a_record_s_patch_is_one_of_its_files(self):
         with repo() as r:
             r.remove(DIR + "/0001-stand-in.patch")
@@ -289,7 +340,7 @@ class Drafts(unittest.TestCase):
     decides it, so no other file and no change to the tools makes a draft."""
 
     def test_a_draft_corrected_before_its_anchor_is_clean(self):
-        """The final gate's case at b5dac6d61e, its runs recorded in the draft: one statement too few, an input.bin
+        """The final gate's case, its runs recorded in the draft: one statement too few, an input.bin
         shorter than its driver header and a patch file name, then corrected."""
         with repo(findings=False) as r:
             r.add_findings()
@@ -630,7 +681,7 @@ class Evidence(unittest.TestCase):
                 self.assertEqual(r.ledger(), [])
 
     def test_the_adversarial_gate_s_runner_fixtures(self):
-        """The adversarial gate's three fixtures at 4e04590e0d, each with the record in the base.  1: a release moves
+        """The adversarial gate's three fixtures, each with the record in the base.  1: a release moves
         the base to runner 2 and records the runs again; a push on runner 2 that changes them again is refused.  2: the
         anchor commit had runner 2, set back to 1 before the merge; a push that records the runs again on runner 1 is
         refused.  3: from the same anchor, the release that moves the base from runner 1 to 2 and records the runs
@@ -677,7 +728,7 @@ class Evidence(unittest.TestCase):
         return anchor
 
     def test_a_push_from_a_branch_that_lags_main_is_judged_against_what_it_has(self):
-        """The adversarial gate's four push fixtures at ce17e78dbe: BASE is main's head, which the branch never merged.
+        """The adversarial gate's four push fixtures: BASE is main's head, which the branch never merged.
         The ledger takes the runner and the runs from git merge-base BASE TIP, the newest commit of main the branch
         has: 1, main moves to runner 2 and the branch, still on runner 1, prunes; 2, the same with main also recording
         the runs again; 3, main moves to runner 2 and the branch changes the control's runs; 4, main grows the record's
@@ -729,7 +780,7 @@ class Evidence(unittest.TestCase):
         return anchor
 
     def test_a_push_from_a_branch_a_merge_commit_released_is_judged_against_what_it_has(self):
-        """The adversarial gate's four merge-commit fixtures at d026d80fd4: the merge base is q, and the merge commit
+        """The adversarial gate's four merge-commit fixtures: the merge base is q, and the merge commit
         that brought q into main also holds main's M1, which the branch never had, so the ledger reads the newest
         commit of main's first-parent line the branch has.  1, M1 moves main to runner 2 and the branch, still on
         runner 1, prunes; 2, the same with M1 also recording the runs again; 3, M1 moves main to runner 2 and the
@@ -776,7 +827,7 @@ class Evidence(unittest.TestCase):
             self.assertEqual(r.ledger(), runs_changed(anchor, builds=("plain", "asan", "asan-ubsan"), which=("control",)))
 
     def test_a_release_that_rewords_the_finding_still_vouches_for_its_runs(self):
-        """The adversarial gate's three cases at f7c98e5509: the branch records the control's runs again on runner 2 at
+        """The adversarial gate's three cases: the branch records the control's runs again on runner 2 at
         q, and a release merges q into main keeping q's runner and runs, but the finding's summary changes: in the
         release's merge commit, or on main before it.  A finding's text may change, so the merge commit still vouches
         for q's runs, and the branch's later push is refused: 1 and 2, it changes the control's runs again; 3, it
@@ -1107,6 +1158,101 @@ class Anchors(unittest.TestCase):
                 side = r.commit("the same slug, other runs of its asan builds")
                 merge = r.git("commit-tree", side + "^{tree}", "-p", proof, "-p", side, "-m", "merge")
                 self.assert_two_anchors(r.ledger(tip=merge), proof, side, "recorded runs")
+
+
+class Layouts(unittest.TestCase):
+    """A record is the same record in the old layout, findings/<project>/<harness>/<slug>/, and in the per-project
+    one, projects/<project>/<harness>/findings/<slug>/, and a project's unpatched pins are the same pins at
+    findings/<project>/unpatched.yaml and projects/<project>/unpatched.yaml: the move ./oft port-layout makes deletes
+    and renames nothing."""
+
+    def test_a_record_moved_by_port_layout_is_the_same_record(self):
+        """The record and its pins anchored in the old layout, in the base or on the branch, then a commit that is
+        port-layout's move: no finding.  The move anchors nothing again: the record's input.bin and its pins changed
+        in the very commit that moves them are refused, and so is their deletion after the move, by the paths the
+        history had them at."""
+        for anchored in ("in the base", "on the branch"):
+            with self.subTest(anchored=anchored), repo(findings=anchored == "in the base") as r:
+                if anchored == "on the branch":
+                    r.add_findings()
+                    r.commit("the finding, with its runs")
+                r.port()
+                r.commit("./oft port-layout")
+                self.assertEqual(r.git("ls-tree", "--name-only", "HEAD"), "projects", "the move is made")
+                self.assertEqual(r.ledger(), [])
+        with repo() as r:
+            r.port()
+            shutil.copyfile(r.path(NEW_DIR, "control.bin"), r.path(NEW_DIR, "input.bin"))
+            r.edit(NEW_UNPATCHED, lambda y: y["harnesses"]["checksum_fuzzer"]["asan"].update(sha256="8" * 64))
+            r.commit("ported, with its input rewritten and repinned")
+            self.assertEqual(r.ledger(), [
+                "paths %s/input.bin: a finding's input.bin is never changed: %s/input.bin, since %s"
+                % (NEW_DIR, NEW_DIR, r.base[:10]),
+                "paths %s: a finding's unpatched pins are never changed: %s harnesses.checksum_fuzzer.asan, since %s"
+                % (NEW_UNPATCHED, NEW_UNPATCHED, r.base[:10])])
+        with repo() as r:
+            r.port()
+            r.commit("./oft port-layout")
+            r.remove(NEW_DIR)
+            r.remove(NEW_UNPATCHED)
+            r.commit("the record and its pins go")
+            self.assertEqual(r.ledger(), deleted(KEY, r.base) + [
+                "paths %s: a finding's unpatched pins are never deleted: %s, which %s had"
+                % (UNPATCHED, UNPATCHED, r.base[:10])])
+
+    def test_a_record_in_both_layouts_is_refused(self):
+        """A commit of BASE..TIP that holds a record, or a project's unpatched.yaml, in both layouts is refused, and
+        stays refused when a later commit drops one of the two: which of them is the record is not known.  Such a
+        commit in the base is the base's, not the change's."""
+        for what, old, new in (("the record", DIR, NEW_DIR), ("the pins", UNPATCHED, NEW_UNPATCHED)):
+            with self.subTest(what=what), repo() as r:
+                (shutil.copytree if what == "the record" else shutil.copyfile)(r.path(old), r.path(new))
+                both = r.commit(what + ", copied into the per-project layout")
+                refused = ["paths %s: in both layouts at %s" % (new, both[:10])]
+                self.assertEqual(r.ledger(), refused)
+                r.remove(old)
+                r.commit("the old copy goes")
+                self.assertEqual(r.ledger(), refused)
+                r.git("tag", "-f", "base", both)
+                self.assertEqual(r.ledger(), [])
+
+    def test_a_per_project_history_is_held_to_the_same_rules(self):
+        """A history in the per-project layout alone, from a base that holds the record and its pins there: each rule
+        holds them by their per-project paths, and the runs of a record from the base are read from the base there."""
+        with repo(ported=True) as r:
+            r.remove(NEW_DIR)
+            r.remove(NEW_UNPATCHED)
+            r.commit("the record and its pins go")
+            self.assertEqual(r.ledger(), ["paths %s/%s: a finding is never deleted: %s/%s, which %s had"
+                                          % (NEW_DIR, n, NEW_DIR, n, r.base[:10]) for n in RECORD] + [
+                "paths %s: a finding's unpatched pins are never deleted: %s, which %s had"
+                % (NEW_UNPATCHED, NEW_UNPATCHED, r.base[:10])])
+            r.git("checkout", "base", "--", "projects")
+            r.commit("and back")
+            self.assertEqual(r.ledger(), [])
+        with repo(ported=True) as r:
+            shutil.copyfile(r.path(NEW_DIR, "control.bin"), r.path(NEW_DIR, "input.bin"))
+            r.edit(NEW_YAML, lambda y: y.update(state="open", input={b: dict(run) for b, run in y["control"].items()}))
+            r.edit(NEW_UNPATCHED, lambda y: y["harnesses"]["checksum_fuzzer"]["asan"].update(sha256="8" * 64))
+            r.commit("its input and its input's runs those of the control, open again, and repinned")
+            self.assertEqual(r.ledger(), [
+                "paths %s: a finding's state never returns to open: %s was patched at %s"
+                % (NEW_YAML, NEW_YAML, r.base[:10]),
+                "paths %s/input.bin: a finding's input.bin is never changed: %s/input.bin, since %s"
+                % (NEW_DIR, NEW_DIR, r.base[:10])] + [
+                "paths %s: a finding's recorded runs are never changed: %s input.%s, since %s"
+                % (NEW_YAML, NEW_YAML, b, r.base[:10]) for b in ("asan", "asan-ubsan")] + [
+                "paths %s: a finding's unpatched pins are never changed: %s harnesses.checksum_fuzzer.asan, since %s"
+                % (NEW_UNPATCHED, NEW_UNPATCHED, r.base[:10])])
+        with repo(findings=False) as r:
+            r.add_findings()
+            r.port()
+            set_runner(r, "1")
+            retag_base(r, "base: the record, in the per-project layout, run in runner 1")
+            set_runner(r, "2")
+            r.edit(NEW_YAML, lambda y: [run.update(stdout_sha256="0" * 64) for run in y["control"].values()])
+            r.commit("runner 2, and the control's runs, which it prints otherwise, recorded again")
+            self.assertEqual(r.ledger(), [])
 
 
 class Errors(unittest.TestCase):

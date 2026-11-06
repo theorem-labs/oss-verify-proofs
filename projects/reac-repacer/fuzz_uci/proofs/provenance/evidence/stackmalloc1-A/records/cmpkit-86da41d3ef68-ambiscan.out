@@ -1,0 +1,6 @@
+$ python3 kit/ambiscan.py fuzz_grant.asan fuzz_uci.asan old
+# X = fuzz_grant.asan sha256 57c26f993615
+# Y = fuzz_uci.asan sha256 56822e263d76
+# AMBIG	file	line	name	image	copies	addr/size/STT_FILE/qname ; ...	Img.fsym takes	how the line was read
+TOTAL	files read 12	by-name compares seen (distinct names) 12	ambiguous hits 0	distinct ambiguous names 0	lines with a function token 230	resolved items NAME{FILE}/0xADDR (distinct) 0	files skipped 0
+rc=0

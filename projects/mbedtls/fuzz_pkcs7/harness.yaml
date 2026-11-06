@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: mbedtls
 harness: fuzz_pkcs7
-rocq: OssFuzzTheorems.mbedtls.fuzz_pkcs7
+rocq: OSSVerify.mbedtls.fuzz_pkcs7
 origin: upstream
 summary: mbedtls_pkcs7_parse_der on the input, then free; the return code is ignored.
 entry: LLVMFuzzerTestOneInput

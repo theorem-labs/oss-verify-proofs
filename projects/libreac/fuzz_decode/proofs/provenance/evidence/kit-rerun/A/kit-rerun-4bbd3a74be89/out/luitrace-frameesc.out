@@ -1,0 +1,58 @@
+FRAME	fuzz_decode.asan	__asan_register_globals	s0 = frame origin +0	slot s0-4304
+SLOT-STORE	+0x3ec	sd a1, -0xd0(a2)
+SLOT-LOAD	+0x868	ld a4, -0xd0(a4)
+CALLARG	+0x90	a0	s0-2160	_ZN6__asan20GetMallocContextSizeEv+0x0
+CALLARG	+0x90	a1	s0-2176	_ZN6__asan20GetMallocContextSizeEv+0x0
+CALLARG	+0x90	a2	s0-4096	_ZN6__asan20GetMallocContextSizeEv+0x0
+CALLARG	+0x128	a0	s0-2176	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x128	a2	s0+0	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x13c	a0	s0-2160	_ZN11__sanitizer13StackDepotPutENS_10StackTraceE+0x0
+CALLARG	+0x234	a5	s0-4096	_ZN11__sanitizer26GetGlobalLowLevelAllocatorEv+0x0
+CALLARG	+0x2e0	a1	s0-2200	__sanitizer_internal_memcpy+0x0
+CALLARG	+0x2e0	a5	s0-4096	__sanitizer_internal_memcpy+0x0
+CALLARG	+0x324	a0	s0-4248	_ZN11__sanitizer10StackTrace12GetCurrentPcEv+0x0
+CALLARG	+0x324	a1	s0-4264	_ZN11__sanitizer10StackTrace12GetCurrentPcEv+0x0
+CALLARG	+0x354	a0	s0-4264	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x354	a2	s0+0	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x364	a0	s0-4264	_ZNK11__sanitizer10StackTrace5PrintEv+0x0
+CALLARG	+0x430	a1	s0-4096	_ZN6__asan10AsanInitedEv+0x0
+CALLARG	+0x430	a2	s0-4096	_ZN6__asan10AsanInitedEv+0x0
+CALLARG	+0x800	a1	s0-4264	_ZN11__sanitizer12DenseMapBaseINS_8DenseMapImNS_13IntrusiveListIN6__asan14GlobalListNodeEEENS_12DenseMapInfoImEENS_6detail12DenseMapPairImS5_EEEEmS5_S7_SA_E16FindAndConstructERKm+0x0
+CALLARG	+0xdec	a5	s0-4096	_ZN11__sanitizer19RoundUpToPowerOfTwoEm+0x0
+CALLARG	+0xe18	a5	s0-4096	_ZN11__sanitizer11CheckFailedEPKciS1_yy+0x0
+PTR-STORE	+0x88	sd a0, 0x14(s11)	s0-2160
+PTR-STORE	+0xac	sd s0, 9(s5)	s0+0
+PTR-STORE	+0xf8	sd a1, 9(s5)	ANY
+PTR-STORE	+0x2b4	sd s2, -0xe0(a0)	s0-2217
+PTR-STORE	+0x31c	sd a0, 0(a1)	s0-4248
+PTR-STORE	+0x338	sd s0, 9(s2)	s0+0
+TOTAL	fuzz_decode.asan	slot stores 1	slot loads 1	ANY accesses 0	call pointers 19 (ANY 0)	lowest s0-4264	slot s0-4304	slot below every pointer: yes
+FRAME	cgif_file_fuzzer.asan-ubsan	__asan_register_globals	s0 = frame origin +0	slot s0-4304
+SLOT-STORE	+0x3ec	sd a1, -0xd0(a2)
+SLOT-LOAD	+0x868	ld a4, -0xd0(a4)
+CALLARG	+0x90	a0	s0-2160	_ZN6__asan20GetMallocContextSizeEv+0x0
+CALLARG	+0x90	a1	s0-2176	_ZN6__asan20GetMallocContextSizeEv+0x0
+CALLARG	+0x90	a2	s0-4096	_ZN6__asan20GetMallocContextSizeEv+0x0
+CALLARG	+0x128	a0	s0-2176	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x128	a2	s0+0	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x13c	a0	s0-2160	_ZN11__sanitizer13StackDepotPutENS_10StackTraceE+0x0
+CALLARG	+0x234	a5	s0-4096	_ZN11__sanitizer26GetGlobalLowLevelAllocatorEv+0x0
+CALLARG	+0x2e0	a1	s0-2200	__sanitizer_internal_memcpy+0x0
+CALLARG	+0x2e0	a5	s0-4096	__sanitizer_internal_memcpy+0x0
+CALLARG	+0x324	a0	s0-4248	_ZN11__sanitizer10StackTrace12GetCurrentPcEv+0x0
+CALLARG	+0x324	a1	s0-4264	_ZN11__sanitizer10StackTrace12GetCurrentPcEv+0x0
+CALLARG	+0x354	a0	s0-4264	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x354	a2	s0+0	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x364	a0	s0-4264	_ZNK11__sanitizer10StackTrace5PrintEv+0x0
+CALLARG	+0x430	a1	s0-4096	_ZN6__asan10AsanInitedEv+0x0
+CALLARG	+0x430	a2	s0-4096	_ZN6__asan10AsanInitedEv+0x0
+CALLARG	+0x800	a1	s0-4264	_ZN11__sanitizer12DenseMapBaseINS_8DenseMapImNS_13IntrusiveListIN6__asan14GlobalListNodeEEENS_12DenseMapInfoImEENS_6detail12DenseMapPairImS5_EEEEmS5_S7_SA_E16FindAndConstructERKm+0x0
+CALLARG	+0xdec	a5	s0-4096	_ZN11__sanitizer19RoundUpToPowerOfTwoEm+0x0
+CALLARG	+0xe18	a5	s0-4096	_ZN11__sanitizer11CheckFailedEPKciS1_yy+0x0
+PTR-STORE	+0x88	sd a0, 0x14(s11)	s0-2160
+PTR-STORE	+0xac	sd s0, 9(s5)	s0+0
+PTR-STORE	+0xf8	sd a1, 9(s5)	ANY
+PTR-STORE	+0x2b4	sd s2, -0xe0(a0)	s0-2217
+PTR-STORE	+0x31c	sd a0, 0(a1)	s0-4248
+PTR-STORE	+0x338	sd s0, 9(s2)	s0+0
+TOTAL	cgif_file_fuzzer.asan-ubsan	slot stores 1	slot loads 1	ANY accesses 0	call pointers 19 (ANY 0)	lowest s0-4264	slot s0-4304	slot below every pointer: yes

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spirv-tools
 harness: spvtools_as_fuzzer
-rocq: OssFuzzTheorems.spirv_tools.spvtools_as_fuzzer
+rocq: OSSVerify.spirv_tools.spvtools_as_fuzzer
 origin: upstream
 summary: Picks a target env from the input, then assembles the input text twice with spvTextToBinaryWithOptions
   (default options, then PRESERVE_NUMERIC_IDS); diagnostics are printed and destroyed, binaries destroyed.

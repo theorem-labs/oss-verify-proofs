@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wget2
 harness: libwget_base64_fuzzer
-rocq: OssFuzzTheorems.wget2.libwget_base64_fuzzer
+rocq: OSSVerify.wget2.libwget_base64_fuzzer
 origin: upstream
 summary: wget_base64_is_string, wget_base64_decode_alloc(raw input) and wget_base64_encode_printf_alloc(input)
   are called independently; the decoded and encoded results are freed without comparison (no encode->decode

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spirv-tools
 harness: spvtools_dis_fuzzer
-rocq: OssFuzzTheorems.spirv_tools.spvtools_dis_fuzzer
+rocq: OSSVerify.spirv_tools.spvtools_dis_fuzzer
 origin: upstream
 summary: Packs the input into 32-bit words and disassembles it with spvBinaryToText under every option
   bitmask from NONE (bit 0) up to, not including, the OR of PRINT|COLOR|INDENT|SHOW_BYTE_OFFSET|NO_HEADER|FRIENDLY_NAMES

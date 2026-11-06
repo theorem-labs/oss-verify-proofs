@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lz4
 harness: round_trip_frame_uncompressed_fuzzer
-rocq: OssFuzzTheorems.lz4.round_trip_frame_uncompressed_fuzzer
+rocq: OSSVerify.lz4.round_trip_frame_uncompressed_fuzzer
 origin: upstream
 summary: 'Checks 3 properties (listed below); the first, an API contract: Every step of the streaming
   compressor (createCompressionContext, compressBegin, both compressUpdate calls, uncompressedUpdate,

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libaom
 harness: av1_dec_fuzzer
-rocq: OssFuzzTheorems.libaom.av1_dec_fuzzer
+rocq: OSSVerify.libaom.av1_dec_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

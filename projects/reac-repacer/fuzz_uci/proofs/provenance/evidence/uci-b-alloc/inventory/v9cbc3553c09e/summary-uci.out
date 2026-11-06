@@ -1,0 +1,5 @@
+# fuzz_uci: inventory 180 symbols (61 __asan_*, 40 ___interceptor_*, 79 __interceptor_* incl. 39 trampolines); program functions 15; direct callees 32 (17 in the inventory); register-indirect call sites 0
+#   __asan_memset: ABSENT
+#   __asan_memcpy: PRESENT 0x50674 size 1180
+#   __asan_memmove: ABSENT
+#   every defined symbol whose name contains memset or memcpy: memcpy.c 0x0 FILE, memset.c 0x0 FILE, wmemcpy.c 0x0 FILE, __interceptor_trampoline_memset 0x5066c FUNC, __wrap_memset 0x5066c FUNC, __interceptor_trampoline_memcpy 0x50670 FUNC, __wrap_memcpy 0x50670 FUNC, __asan_memcpy 0x50674 FUNC, ___interceptor_memset 0x50b10 FUNC, __interceptor_memset 0x50b10 FUNC, ___interceptor_memcpy 0x50e00 FUNC, __interceptor_memcpy 0x50e00 FUNC, __sanitizer_internal_memcpy 0x62744 FUNC, __sanitizer_internal_memset 0x627c0 FUNC, memcpy 0x90458 FUNC, memset 0x9085c FUNC, _ZN14__interception11real_memcpyE 0x98f80 OBJECT, _ZN14__interception11real_memsetE 0x98f88 OBJECT

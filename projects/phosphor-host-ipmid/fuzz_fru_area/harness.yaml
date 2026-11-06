@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: phosphor-host-ipmid
 harness: fuzz_fru_area
-rocq: OssFuzzTheorems.phosphor_host_ipmid.fuzz_fru_area
+rocq: OSSVerify.phosphor_host_ipmid.fuzz_fru_area
 origin: oss-fuzz
 summary: Builds a FruInventoryData (Chassis/Board/Product sections selected by the first byte, values
   from length-prefixed fuzz strings) and calls ipmi::fru::buildFruAreaData; the returned FRU bytes are

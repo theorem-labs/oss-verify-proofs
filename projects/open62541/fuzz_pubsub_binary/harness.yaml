@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: open62541
 harness: fuzz_pubsub_binary
-rocq: OssFuzzTheorems.open62541.fuzz_pubsub_binary
+rocq: OSSVerify.open62541.fuzz_pubsub_binary
 origin: upstream
 summary: UA_NetworkMessage_decodeBinary; cleared on success, nothing checked. Allocation budget from the
   last 4 bytes.

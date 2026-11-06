@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: xnnpack
 harness: fuzz_model
-rocq: OssFuzzTheorems.xnnpack.fuzz_model
+rocq: OSSVerify.xnnpack.fuzz_model
 origin: oss-fuzz
 summary: xnn_initialize, fill 864 int8 weights and 32 int32 biases from the input, then xnn_create_convolution2d_nhwc_qs8
   with three fuzzed float scales; the returned status is ignored and the operator is never set up, run

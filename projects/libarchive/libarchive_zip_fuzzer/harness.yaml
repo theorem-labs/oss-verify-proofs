@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_zip_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_zip_fuzzer
+rocq: OSSVerify.libarchive.libarchive_zip_fuzzer
 origin: upstream
 summary: Reads the input as a ZIP archive (passphrases password/test/empty, zip:ignorecrc32, all filters);
   per entry calls pathname(_w), size, mtime, mode, encryption predicates, format/filter names and drains

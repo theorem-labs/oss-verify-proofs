@@ -1,0 +1,401 @@
+file	paired through (stage map)	vs that run's stage-out	differing lines	differing numerals (value@unit line: verification)
+A/AB01.v	start-up	-	0	-
+A/AB03.v	start-up	-	0	-
+A/AB05.v	start-up	-	0	-
+A/AB12.v	start-up	-	0	-
+A/AB13.v	start-up	-	0	-
+A/AB14.v	grant W4	identical	0	-
+A/AB15.v	grant W4	identical	0	-
+A/AB16.v	grant W4	identical	0	-
+A/AB17.v	grant W4	identical	0	-
+A/AB18.v	grant W4	identical	0	-
+A/AB19.v	grant W4	identical	0	-
+A/AB1a.v	grant W4	identical	0	-
+A/AB1b.v	grant W4	identical	0	-
+A/AB1c.v	grant W4	identical	0	-
+A/AB1d.v	grant W4	identical	0	-
+A/AB1e.v	grant W4	identical	0	-
+A/AB1f.v	grant W4	identical	0	-
+A/AB1g.v	grant W4	identical	0	-
+A/AB1h.v	start-up	-	0	-
+A/AB1i.v	grant W4	identical	0	-
+A/AB1k.v	start-up	-	0	-
+A/AB1l.v	start-up	-	0	-
+A/AB1m.v	start-up	-	0	-
+A/AB1n.v	grant W4	identical	0	-
+A/AB1p.v	grant W4	identical	0	-
+A/AB1q.v	grant W4	identical	0	-
+A/AB1r.v	grant W4	identical	0	-
+A/AB1s.v	grant W4	identical	0	-
+A/AB1t.v	grant W4	identical	0	-
+A/AB1u.v	grant W4	identical	0	-
+A/AB1v.v	start-up	-	0	-
+A/AB1w.v	grant W4 + knock k17	differs	3	0x6f87c@406: twin row check.tsv (code-same); 0x6f9a0@406: twin row check.tsv (code-end); 0x70388@406: twin row check.tsv (code-same); 0x7043c@406: twin row check.tsv (code-end); 0x7269c@406: twin row check.tsv (code-end); 0x7279c@406: twin row check.tsv (code-end)
+A/ACeg.v	grant W4	identical	0	-
+A/ACej.v	start-up	-	0	-
+A/ACfl.v	grant W4	identical	0	-
+A/ACfn.v	grant W4	identical	0	-
+A/AD1d.v	grant W4 + knock k17	differs	40	4096@174: knock release value, not moved by the k-run; 0@174: knock release value, not moved by the k-run; 0@198: knock release value, not moved by the k-run
+A/AD1e.v	grant W4 + knock k17	differs	34	4096@184: knock release value, not moved by the k-run; 0@184: knock release value, not moved by the k-run
+A/AD1f.v	grant W4 + knock k17	differs	19	-
+A/AD1g.v	grant W4 + knock k17	differs	217	12@39: knock release value, not moved by the k-run; 0@742: knock release value, not moved by the k-run; 4096@776: knock release value, not moved by the k-run; 0@776: knock release value, not moved by the k-run; 256@776: knock release value, not moved by the k-run; 2@776: knock release value, not moved by the k-run; 47@776: knock release value, not moved by the k-run; 4096@787: knock release value, not moved by the k-run; 0@787: knock release value, not moved by the k-run; 0@965: knock release value, not moved by the k-run; 0@1101: knock release value, not moved by the k-run; 0@1155: knock release value, not moved by the k-run; 8@1211: knock release value, not moved by the k-run; 0@1323: knock release value, not moved by the k-run; 4@1323: knock release value, not moved by the k-run; 8@1323: knock release value, not moved by the k-run
+A/AD1i.v	grant W4	identical	0	-
+A/AD1j.v	grant W4	identical	0	-
+A/AD1k.v	start-up	-	0	-
+A/AD1l.v	grant W4	identical	0	-
+A/AD1m.v	grant W4	identical	0	-
+A/AD1n.v	grant W4	identical	0	-
+A/AD1o.v	grant W4	identical	0	-
+A/AD1p.v	grant W4 + knock k17	differs	7	-
+A/AD1q.v	grant W4	identical	0	-
+A/AD1r.v	grant W4 + knock k17	differs	4	-
+A/AD1s.v	grant W4	identical	0	-
+A/AD1t.v	grant W4	identical	0	-
+A/AD1u.v	grant W4 + knock k17	differs	5	-
+A/AD1v.v	grant W4 + knock k17	differs	3	-
+A/AD1w.v	grant W4	identical	0	-
+A/AD1x.v	grant W4	identical	0	-
+A/AD1y.v	start-up	-	0	-
+A/AD1z.v	grant W4	identical	0	-
+A/AD20.v	grant W4	identical	0	-
+A/AD21.v	grant W4	identical	0	-
+A/AD22.v	grant W4	identical	0	-
+A/AD23.v	grant W4 + knock k17	differs	3	-
+A/AD24.v	grant W4	identical	0	-
+A/AD25.v	grant W4	identical	0	-
+A/AD26.v	grant W4 + knock k17	differs	2	-
+A/AD27.v	grant W4 + knock k17	differs	1	-
+A/AD28.v	grant W4	identical	0	-
+A/AD29.v	grant W4 + knock k17	differs	3	-
+A/AD2a.v	grant W4	identical	0	-
+A/AD2b.v	grant W4	identical	0	-
+A/AD2c.v	grant W4	identical	0	-
+A/AD2d.v	grant W4	identical	0	-
+A/AD2e.v	grant W4 + knock k17	differs	2	-
+A/AD2f.v	grant W4	identical	0	-
+A/AD2g.v	grant W4	identical	0	-
+A/AD2h.v	grant W4	identical	0	-
+A/AD2i.v	start-up	-	0	-
+A/AD2j.v	start-up	-	0	-
+A/AD2k.v	grant W4 + knock k17	differs	8	-
+A/AD2l.v	grant W4 + knock k17	differs	1	-
+A/AD2m.v	grant W4	identical	0	-
+A/AD3a.v	knock k17	differs	4	-
+A/AD3b.v	knock k17	differs	10	-
+A/AD3c.v	knock k17	differs	5	-
+A/AD3d.v	knock k17	differs	2	-
+A/AD3dEnv.v	glue	-	0	-
+A/AD3g.v	knock k17	differs	14	-
+A/AD3h.v	knock k17	differs	8	-
+A/AD3i.v	knock k17	differs	1	-
+A/AD3j.v	knock k17	differs	21	-
+A/AD3k.v	knock k17	differs	6	-
+A/AE20.v	grant W4	identical	0	-
+A/AE22.v	grant W4	identical	0	-
+A/AE23.v	start-up	-	0	-
+A/AE2k.v	grant W4	identical	0	-
+A/AE2p.v	grant W4	identical	0	-
+A/AE2q.v	grant W4	identical	0	-
+A/AE2r.v	grant W4	identical	0	-
+A/AE2s.v	grant W4	identical	0	-
+A/AE2t.v	grant W4	identical	0	-
+A/AE2u.v	grant W4	identical	0	-
+A/AE2v.v	grant W4	identical	0	-
+A/AE2w.v	grant W4	identical	0	-
+A/AE2x.v	grant W4	identical	0	-
+A/AE2y.v	grant W4	identical	0	-
+A/AE2z.v	grant W4	identical	0	-
+A/AE30.v	grant W4	identical	0	-
+A/AE31.v	grant W4	identical	0	-
+A/AE32.v	grant W4	identical	0	-
+A/AE33.v	grant W4	identical	0	-
+A/AE34.v	grant W4	differs	1	0x51310@29: derived: twin symtab __asan_memmove 0x51310, 880 B = 220 words (ae34_memmove.py); 220@29: derived: twin symtab __asan_memmove 0x51310, 880 B = 220 words (ae34_memmove.py)
+A/AE35.v	grant W4	identical	0	-
+A/AE36.v	grant W4	identical	0	-
+A/AE37.v	start-up	-	0	-
+A/AE38.v	grant W4	identical	0	-
+A/AE39.v	grant W4	identical	0	-
+A/AE3a.v	grant W4	identical	0	-
+A/AE3b.v	grant W4	identical	0	-
+A/AE3c.v	grant W4	identical	0	-
+A/AE3d.v	grant W4	identical	0	-
+A/AE3e.v	grant W4	identical	0	-
+A/AE3f.v	grant W4	identical	0	-
+A/AE3g.v	grant W4	identical	0	-
+A/AE3h.v	grant W4	identical	0	-
+A/AE3i.v	start-up	-	0	-
+A/AE3j.v	grant W4	identical	0	-
+A/AE3k.v	grant W4	identical	0	-
+A/AE3l.v	grant W4	identical	0	-
+A/AE3m.v	grant W4	identical	0	-
+A/AE3n.v	grant W4	identical	0	-
+A/AE6g.v	grant W4	identical	0	-
+A/AE6k.v	grant W4	identical	0	-
+A/AE6l.v	grant W4	identical	0	-
+A/AE6m.v	grant W4	identical	0	-
+A/AE6n.v	grant W4	identical	0	-
+A/AE6o.v	grant W4	identical	0	-
+A/AE6p.v	grant W4	identical	0	-
+A/AE6q.v	grant W4	identical	0	-
+A/AE6r.v	grant W4	identical	0	-
+A/AE6s.v	grant W4	identical	0	-
+A/AE6t.v	grant W4	identical	0	-
+A/AE6u.v	grant W4	identical	0	-
+A/AE6v.v	grant W4	identical	0	-
+A/AE6w.v	grant W4	identical	0	-
+A/AE6x.v	grant W4	identical	0	-
+A/AE6y.v	grant W4	identical	0	-
+A/AE6z.v	grant W4	identical	0	-
+A/AE70.v	grant W4	identical	0	-
+A/AE71.v	grant W4	identical	0	-
+A/AE72.v	grant W4	identical	0	-
+A/AE73.v	grant W4	identical	0	-
+A/AE74.v	grant W4	identical	0	-
+A/AE75.v	grant W4	identical	0	-
+A/AE76.v	grant W4	identical	0	-
+A/AE77.v	grant W4	identical	0	-
+A/AE78.v	grant W4	identical	0	-
+A/AE79.v	grant W4	identical	0	-
+A/AE7a.v	grant W4	identical	0	-
+A/AE7b.v	grant W4	identical	0	-
+A/AE7c.v	grant W4	identical	0	-
+A/AE7d.v	grant W4	identical	0	-
+A/AE7e.v	grant W4	identical	0	-
+A/AE7f.v	grant W4	identical	0	-
+A/AF0l.v	grant W4	identical	0	-
+A/AF0m.v	start-up	-	0	-
+A/AF0n.v	grant W4	identical	0	-
+A/AF0o.v	grant W4	identical	0	-
+A/AF0q.v	grant W4	identical	0	-
+A/AF0w.v	grant W4 + knock k17	differs	5	-
+A/AF0x.v	grant W4	identical	0	-
+A/AFek.v	grant W4 + knock k17	differs	3	1@33: knock release value, not moved by the k-run
+A/AFel.v	grant W4	identical	0	-
+A/AFem.v	grant W4 + knock k17	differs	116	0@82: knock release value, not moved by the k-run; 0@128: knock release value, not moved by the k-run; 4096@128: knock release value, not moved by the k-run; 1@133: knock release value, not moved by the k-run; 0@133: knock release value, not moved by the k-run; 0@226: knock release value, not moved by the k-run; 4096@226: knock release value, not moved by the k-run; 1@807: knock release value, not moved by the k-run; 1@1225: knock release value, not moved by the k-run
+A/AFeo.v	grant W4	identical	0	-
+A/AFep.v	grant W4	identical	0	-
+A/AFeq.v	grant W4	identical	0	-
+A/AFer.v	grant W4	identical	0	-
+A/AFes.v	grant W4 + knock k17	differs	1	-
+A/AFet.v	grant W4 + knock k17	differs	2	-
+A/AFeu.v	grant W4	identical	0	-
+A/AFev.v	grant W4	identical	0	-
+A/AFew.v	grant W4	identical	0	-
+A/AFex.v	grant W4 + knock k17	differs	73	0@151: knock release value, not moved by the k-run; 0@166: knock release value, not moved by the k-run; 256@397: knock release value, not moved by the k-run; 4096@397: knock release value, not moved by the k-run; 16@397: knock release value, not moved by the k-run; 0@397: knock release value, not moved by the k-run; 4@397: knock release value, not moved by the k-run; 5@397: knock release value, not moved by the k-run; 0@1028: knock release value, not moved by the k-run
+A/AFey.v	grant W4 + knock k17	differs	18	4@652: knock release value, not moved by the k-run
+A/AFez.v	grant W4 + knock k17	differs	20	4@703: knock release value, not moved by the k-run
+A/AFf0.v	grant W4 + knock k17	differs	33	0@192: knock release value, not moved by the k-run; 4@194: knock release value, not moved by the k-run; 9@194: knock release value, not moved by the k-run; 4096@444: knock release value, not moved by the k-run
+A/AFf1.v	grant W4 + knock k17	differs	17	4@556: knock release value, not moved by the k-run
+A/AFf2.v	grant W4 + knock k17	differs	17	4@729: knock release value, not moved by the k-run
+A/AFf3.v	grant W4 + knock k17	differs	20	4@533: knock release value, not moved by the k-run
+A/AFf4.v	grant W4 + knock k17	differs	45	4@791: knock release value, not moved by the k-run; 0@1050: knock release value, not moved by the k-run
+A/AFf5.v	grant W4	identical	0	-
+A/AFf6.v	grant W4	identical	0	-
+A/AFf7.v	grant W4	identical	0	-
+A/AFf8.v	grant W4	identical	0	-
+A/AFf9.v	grant W4	identical	0	-
+A/AFfa.v	grant W4	identical	0	-
+A/AFfb.v	grant W4	identical	0	-
+A/AFfc.v	grant W4	identical	0	-
+A/AFfd.v	grant W4	identical	0	-
+A/AFfe.v	grant W4	identical	0	-
+A/AFff.v	grant W4	identical	0	-
+A/AFfg.v	grant W4	identical	0	-
+A/AFfi.v	grant W4	identical	0	-
+A/AFfl.v	grant W4 + knock k17	differs	70	0@137: knock release value, not moved by the k-run; 0@152: knock release value, not moved by the k-run; 4@152: knock release value, not moved by the k-run; 5@152: knock release value, not moved by the k-run; 256@359: knock release value, not moved by the k-run; 4096@359: knock release value, not moved by the k-run; 16@359: knock release value, not moved by the k-run; 0@359: knock release value, not moved by the k-run; 0@909: knock release value, not moved by the k-run
+A/AFfm.v	grant W4	identical	0	-
+A/AFfo.v	grant W4	identical	0	-
+A/AFfq.v	grant W4	identical	0	-
+A/AFfr.v	grant W4	identical	0	-
+A/AFfs.v	grant W4 + knock k17	identical	0	-
+A/AFft.v	grant W4	identical	0	-
+A/AFfu.v	grant W4 + knock k17	differs	5	-
+A/AFfv.v	grant W4	identical	0	-
+A/AFfw.v	grant W4	identical	0	-
+A/AFfx.v	grant W4	identical	0	-
+A/AFfy.v	grant W4 + knock k17	differs	44	-
+A/AFfz.v	grant W4 + knock k17	differs	10	-
+A/AFg0.v	grant W4 + knock k17	differs	1	-
+A/AFg1.v	grant W4 + knock k17	differs	25	-
+A/AFg2.v	grant W4 + knock k17	differs	10	-
+A/AFg3.v	grant W4 + knock k17	differs	3	-
+A/AFg4.v	grant W4 + knock k17	differs	1	-
+A/AFg5.v	grant W4 + knock k17	differs	1	-
+A/AFg6.v	grant W4 + knock k17	differs	1	-
+A/AFg7.v	grant W4	identical	0	-
+A/AFg8.v	grant W4 + knock k17	differs	1	-
+A/AFg9.v	grant W4	identical	0	-
+A/AFga.v	grant W4	identical	0	-
+A/AFgb.v	grant W4	identical	0	-
+A/AFgc.v	grant W4	identical	0	-
+A/AFgd.v	grant W4	identical	0	-
+A/AFge.v	grant W4	identical	0	-
+A/AFgf.v	grant W4	identical	0	-
+A/AFgg.v	grant W4	identical	0	-
+A/AFgh.v	grant W4	identical	0	-
+A/AFgi.v	grant W4 + knock k17	differs	34	0@484: knock release value, not moved by the k-run; 16@484: knock release value, not moved by the k-run; 8@484: knock release value, not moved by the k-run
+A/AFgj.v	grant W4	identical	0	-
+A/AFgk.v	grant W4	identical	0	-
+A/AFgl.v	grant W4	identical	0	-
+A/AFgm.v	grant W4 + knock k17	differs	34	0@467: knock release value, not moved by the k-run; 16@467: knock release value, not moved by the k-run; 8@467: knock release value, not moved by the k-run
+A/AFgn.v	grant W4 + knock k17	differs	18	-
+A/AFgo.v	grant W4	identical	0	-
+A/AFgp.v	grant W4	identical	0	-
+A/AFgq.v	grant W4	identical	0	-
+A/AFgr.v	grant W4	identical	0	-
+A/AFgs.v	grant W4	identical	0	-
+A/AFgt.v	grant W4	identical	0	-
+A/AFgu.v	grant W4	identical	0	-
+A/AFgv.v	grant W4	identical	0	-
+A/AFgw.v	grant W4	identical	0	-
+A/AFgx.v	grant W4	identical	0	-
+A/AFgy.v	grant W4	identical	0	-
+A/AFgz.v	grant W4	identical	0	-
+A/AFh0.v	grant W4	identical	0	-
+A/AFh1.v	grant W4	identical	0	-
+A/AFh2.v	grant W4	identical	0	-
+A/AFh3.v	grant W4	identical	0	-
+A/AFh4.v	grant W4	identical	0	-
+A/AFh5.v	grant W4	identical	0	-
+A/AFh6.v	grant W4	identical	0	-
+A/AFh7.v	grant W4	identical	0	-
+A/AFh8.v	grant W4	identical	0	-
+A/AFh9.v	grant W4	identical	0	-
+A/AFha.v	grant W4	identical	0	-
+A/AFhb.v	grant W4	identical	0	-
+A/AFhc.v	grant W4	identical	0	-
+A/AFhd.v	grant W4	identical	0	-
+A/AFhe.v	grant W4	identical	0	-
+A/AFhf.v	grant W4	identical	0	-
+A/AFhg.v	grant W4 + knock k17	differs	1	-
+A/AFhi.v	grant W4	identical	0	-
+A/AFhj.v	grant W4	identical	0	-
+A/AFhk.v	grant W4	identical	0	-
+A/AFhl.v	grant W4	identical	0	-
+A/AFhm.v	grant W4	identical	0	-
+A/AFhn.v	grant W4 + knock k17	differs	25	16@346: knock release value, not moved by the k-run
+A/AFho.v	grant W4	identical	0	-
+A/AFhp.v	grant W4	identical	0	-
+A/AFhq.v	grant W4	identical	0	-
+A/AFhr.v	grant W4	identical	0	-
+A/AFhs.v	grant W4	identical	0	-
+A/AFht.v	grant W4	identical	0	-
+A/AFhu.v	grant W4	identical	0	-
+A/AFhv.v	grant W4	identical	0	-
+A/AFhw.v	grant W4	identical	0	-
+A/AFhx.v	grant W4	identical	0	-
+A/AFhy.v	grant W4	identical	0	-
+A/AFhz.v	grant W4	identical	0	-
+A/AFi0.v	grant W4	identical	0	-
+A/AFi1.v	grant W4	identical	0	-
+A/AFi2.v	grant W4	identical	0	-
+A/AFi3.v	grant W4 + knock k17	differs	1	-
+A/AFi4.v	grant W4	identical	0	-
+A/AFi5.v	grant W4 + knock k17	differs	43	0@76: knock release value, not moved by the k-run; 4@84: knock release value, not moved by the k-run; 5@84: knock release value, not moved by the k-run; 4@296: knock release value, not moved by the k-run; 0x9ffd0@296: twin row check.tsv (symbol _ZZL28InitializeCommonInterceptorsvE12me nobits); 0x5c2dd0@296: twin row check.tsv (coderef nobits)
+A/AFi6.v	grant W4	identical	0	-
+A/AFi7.v	grant W4	identical	0	-
+A/AFi8.v	grant W4	identical	0	-
+A/AFi9.v	grant W4	identical	0	-
+A/AFia.v	grant W4	identical	0	-
+A/AFib.v	grant W4 + knock k17	differs	4	-
+A/AFic.v	grant W4 + knock k17	differs	38	0@67: knock release value, not moved by the k-run; 4@77: knock release value, not moved by the k-run; 5@77: knock release value, not moved by the k-run; 16@328: knock release value, not moved by the k-run
+A/AFid.v	grant W4	identical	0	-
+A/AFie.v	grant W4	identical	0	-
+A/AFif.v	grant W4	identical	0	-
+A/AFig.v	grant W4	identical	0	-
+A/AFih.v	grant W4	identical	0	-
+A/AFii.v	grant W4	identical	0	-
+A/AFij.v	grant W4 + knock k17	differs	3	-
+A/AFik.v	grant W4 + knock k17	differs	7	-
+A/AFil.v	grant W4 + knock k17	differs	7	-
+A/AFim.v	grant W4 + knock k17	differs	20	0@289: knock release value, not moved by the k-run; 1@289: knock release value, not moved by the k-run
+A/AFin.v	grant W4 + knock k17	differs	21	0@280: knock release value, not moved by the k-run; 1@280: knock release value, not moved by the k-run
+A/AFio.v	grant W4 + knock k17	differs	11	4@227: knock release value, not moved by the k-run; 5@227: knock release value, not moved by the k-run
+A/AFip.v	grant W4 + knock k17	differs	6	-
+A/AFiq.v	grant W4 + knock k17	differs	130	-
+A/AFir.v	grant W4 + knock k17	differs	135	-
+A/AFis.v	grant W4 + knock k17	differs	166	5@781: knock release value, not moved by the k-run; 2@781: knock release value, not moved by the k-run; 1@781: knock release value, not moved by the k-run; 31@781: knock release value, not moved by the k-run; 0@781: knock release value, not moved by the k-run; 16@781: knock release value, not moved by the k-run; 32@781: knock release value, not moved by the k-run; 6@781: knock release value, not moved by the k-run; 8@781: knock release value, not moved by the k-run; 64@781: knock release value, not moved by the k-run
+A/AFit.v	grant W4 + knock k17	differs	5	-
+A/AFiu.v	grant W4 + knock k17	differs	9	-
+A/AFiv.v	grant W4 + knock k17	differs	5	-
+A/AFiw.v	grant W4 + knock k17	differs	11	-
+A/AFix.v	grant W4 + knock k17	differs	263	1@404: knock release value, not moved by the k-run; 5@404: knock release value, not moved by the k-run; 64@404: knock release value, not moved by the k-run; 0x3156c@404: twin row check.tsv (code-same); 0@472: knock release value, not moved by the k-run; 1@472: knock release value, not moved by the k-run; 64@472: knock release value, not moved by the k-run; 0x3156c@472: twin row check.tsv (code-same); 64@553: knock release value, not moved by the k-run; 0@682: knock release value, not moved by the k-run; 1023@682: knock release value, not moved by the k-run; 2@682: knock release value, not moved by the k-run; 11@682: knock release value, not moved by the k-run; 20@682: knock release value, not moved by the k-run; 30@682: knock release value, not moved by the k-run; 6@682: knock release value, not moved by the k-run; 4@682: knock release value, not moved by the k-run; 5@682: knock release value, not moved by the k-run; 256@682: knock release value, not moved by the k-run; 4096@682: knock release value, not moved by the k-run
+A/AFiy.v	grant W4 + knock k17	differs	37	-
+A/AFiz.v	grant W4 + knock k17	differs	5	-
+A/AFj0.v	grant W4 + knock k17	differs	8	-
+A/AFj1.v	grant W4 + knock k17	differs	360	4@491: knock release value, not moved by the k-run; 5@491: knock release value, not moved by the k-run; 0@842: knock release value, not moved by the k-run; 0@1044: knock release value, not moved by the k-run; 4@1125: knock release value, not moved by the k-run; 0@1136: knock release value, not moved by the k-run; 0x172648@1185: twin row check.tsv (coderef nobits); 0@1185: knock release value, not moved by the k-run; 0x5c2dd0@1185: twin row check.tsv (coderef nobits); 4@1185: knock release value, not moved by the k-run; 2@1185: knock release value, not moved by the k-run; 5@1185: knock release value, not moved by the k-run; 1@1185: knock release value, not moved by the k-run; 1@1254: knock release value, not moved by the k-run; 8@1254: knock release value, not moved by the k-run; 0@1254: knock release value, not moved by the k-run; 256@1254: knock release value, not moved by the k-run; 4096@1254: knock release value, not moved by the k-run; 2@1254: knock release value, not moved by the k-run; 16@1254: knock release value, not moved by the k-run; 64@1254: knock release value, not moved by the k-run; 15@1254: knock release value, not moved by the k-run; 14@1254: knock release value, not moved by the k-run; 12@1254: knock release value, not moved by the k-run; 4@1254: knock release value, not moved by the k-run; 0x3156c@1254: twin row check.tsv (code-same); 2@1425: knock release value, not moved by the k-run; 0@1435: knock release value, not moved by the k-run; 8@1435: knock release value, not moved by the k-run
+A/AFj2.v	grant W4 + knock k17	differs	33	0@353: knock release value, not moved by the k-run; 2@353: knock release value, not moved by the k-run; 64@353: knock release value, not moved by the k-run
+A/AFj3.v	grant W4 + knock k17	differs	4	-
+A/AFj4.v	grant W4 + knock k17	differs	101	-
+A/AFj5.v	grant W4 + knock k17	differs	108	-
+A/AFj6.v	grant W4 + knock k17	differs	163	5@763: knock release value, not moved by the k-run; 2@763: knock release value, not moved by the k-run; 1@763: knock release value, not moved by the k-run; 31@763: knock release value, not moved by the k-run; 0@763: knock release value, not moved by the k-run; 16@763: knock release value, not moved by the k-run; 32@763: knock release value, not moved by the k-run; 48@763: knock release value, not moved by the k-run; 8@763: knock release value, not moved by the k-run; 64@763: knock release value, not moved by the k-run
+A/AFj7.v	grant W4 + knock k17	differs	4	-
+A/AFj8.v	grant W4 + knock k17	differs	9	-
+A/AFj9.v	grant W4 + knock k17	differs	4	-
+A/AFja.v	grant W4 + knock k17	differs	4	-
+A/AFjb.v	grant W4 + knock k17	differs	170	1@402: knock release value, not moved by the k-run; 5@402: knock release value, not moved by the k-run; 64@402: knock release value, not moved by the k-run; 0x3156c@402: twin row check.tsv (code-same); 0@470: knock release value, not moved by the k-run; 1@470: knock release value, not moved by the k-run; 64@470: knock release value, not moved by the k-run; 0x3156c@470: twin row check.tsv (code-same); 64@551: knock release value, not moved by the k-run
+A/AFjc.v	grant W4 + knock k17	differs	38	-
+A/AFjd.v	grant W4 + knock k17	differs	5	-
+A/AFje.v	grant W4 + knock k17	differs	8	-
+A/AFjf.v	grant W4 + knock k17	differs	488	0@72: knock release value, not moved by the k-run; 0@376: knock release value, not moved by the k-run; 0@412: knock release value, not moved by the k-run; 0@1119: knock release value, not moved by the k-run; 0@1121: knock release value, not moved by the k-run; 0x172648@1121: twin row check.tsv (coderef nobits); 0x5c2dd0@1121: twin row check.tsv (coderef nobits); 4@1121: knock release value, not moved by the k-run; 2@1121: knock release value, not moved by the k-run; 5@1121: knock release value, not moved by the k-run; 1@1121: knock release value, not moved by the k-run; 0@1216: knock release value, not moved by the k-run; 0@1221: knock release value, not moved by the k-run; 0@1280: knock release value, not moved by the k-run; 2@1280: knock release value, not moved by the k-run; 64@1280: knock release value, not moved by the k-run; 0x2008fff7000@1280: knock release value, not moved by the k-run; 0x172648@1280: twin row check.tsv (coderef nobits); 0x5c2dd0@1280: twin row check.tsv (coderef nobits); 3@1280: knock release value, not moved by the k-run; 4@1280: knock release value, not moved by the k-run; 5@1280: knock release value, not moved by the k-run; 256@1280: knock release value, not moved by the k-run; 4096@1280: knock release value, not moved by the k-run; 2@1387: knock release value, not moved by the k-run; 0@1387: knock release value, not moved by the k-run; 8@1387: knock release value, not moved by the k-run; 64@1387: knock release value, not moved by the k-run; 16@1387: knock release value, not moved by the k-run; 1@1387: knock release value, not moved by the k-run; 15@1387: knock release value, not moved by the k-run; 14@1387: knock release value, not moved by the k-run; 12@1387: knock release value, not moved by the k-run; 4@1387: knock release value, not moved by the k-run
+A/AFjg.v	grant W4 + knock k17	differs	41	0@350: knock release value, not moved by the k-run; 2@350: knock release value, not moved by the k-run; 64@350: knock release value, not moved by the k-run
+A/AFjh.v	grant W4 + knock k17	differs	10	-
+A/AFji.v	grant W4 + knock k17	differs	6	-
+A/AFjj.v	grant W4 + knock k17	differs	7	-
+A/AFjk.v	grant W4 + knock k17	differs	12	-
+A/AFjl.v	grant W4 + knock k17	differs	34	-
+A/AFjm.v	grant W4 + knock k17	differs	129	-
+A/AFjn.v	grant W4 + knock k17	differs	38	-
+A/AFjo.v	grant W4 + knock k17	differs	70	-
+A/AFjp.v	grant W4 + knock k17	differs	223	256@647: knock release value, not moved by the k-run; 0@655: knock release value, not moved by the k-run; 2@655: knock release value, not moved by the k-run; 64@655: knock release value, not moved by the k-run; 0@697: knock release value, not moved by the k-run; 0@720: knock release value, not moved by the k-run; 2@720: knock release value, not moved by the k-run; 64@720: knock release value, not moved by the k-run; 64@760: knock release value, not moved by the k-run; 0@760: knock release value, not moved by the k-run; 1@760: knock release value, not moved by the k-run
+A/AFjq.v	grant W4 + knock k17	differs	51	-
+A/AFjr.v	grant W4 + knock k17	differs	34	-
+A/AFjs.v	grant W4 + knock k17	differs	17	-
+A/AFjt.v	grant W4 + knock k17	differs	40	-
+A/AFju.v	grant W4 + knock k17	differs	111	1@741: knock release value, not moved by the k-run; 5@741: knock release value, not moved by the k-run; 64@741: knock release value, not moved by the k-run; 0x3156c@741: twin row check.tsv (code-same); 0@832: knock release value, not moved by the k-run; 1@832: knock release value, not moved by the k-run; 64@832: knock release value, not moved by the k-run; 0x3156c@832: twin row check.tsv (code-same)
+A/AFjv.v	grant W4 + knock k17	differs	37	-
+A/AFjw.v	grant W4 + knock k17	differs	6	-
+A/AFjx.v	grant W4 + knock k17	differs	10	-
+A/AFjy.v	grant W4 + knock k17	differs	519	1@718: knock release value, not moved by the k-run; 5@718: knock release value, not moved by the k-run; 64@718: knock release value, not moved by the k-run; 0x3156c@718: twin row check.tsv (code-same); 0@770: knock release value, not moved by the k-run; 0@807: knock release value, not moved by the k-run; 1@846: knock release value, not moved by the k-run; 0@846: knock release value, not moved by the k-run; 0@860: knock release value, not moved by the k-run; 256@860: knock release value, not moved by the k-run; 4096@860: knock release value, not moved by the k-run; 7@860: knock release value, not moved by the k-run; 2@860: knock release value, not moved by the k-run; 3@860: knock release value, not moved by the k-run; 6@860: knock release value, not moved by the k-run; 4@860: knock release value, not moved by the k-run; 5@860: knock release value, not moved by the k-run; 8@860: knock release value, not moved by the k-run; 8@1003: knock release value, not moved by the k-run; 8@1016: knock release value, not moved by the k-run; 0@1897: knock release value, not moved by the k-run; 8@1897: knock release value, not moved by the k-run; 3@1897: knock release value, not moved by the k-run; 4@1897: knock release value, not moved by the k-run; 5@1897: knock release value, not moved by the k-run; 0@2024: knock release value, not moved by the k-run; 1@2024: knock release value, not moved by the k-run
+A/AFjz.v	grant W4 + knock k17	differs	98	1@694: knock release value, not moved by the k-run; 5@694: knock release value, not moved by the k-run; 64@694: knock release value, not moved by the k-run; 0x3156c@694: twin row check.tsv (code-same); 3@1056: knock release value, not moved by the k-run
+A/AFk0.v	grant W4 + knock k17	differs	471	0@968: knock release value, not moved by the k-run; 1@1110: knock release value, not moved by the k-run; 5@1110: knock release value, not moved by the k-run; 64@1110: knock release value, not moved by the k-run; 0x3156c@1110: twin row check.tsv (code-same); 64@1275: knock release value, not moved by the k-run; 50@1275: knock release value, not moved by the k-run; 0@1275: knock release value, not moved by the k-run; 2@1275: knock release value, not moved by the k-run; 131072@1275: knock release value, not moved by the k-run; 4096@1275: knock release value, not moved by the k-run; 11@1275: knock release value, not moved by the k-run; 20@1275: knock release value, not moved by the k-run; 30@1275: knock release value, not moved by the k-run; 256@1275: knock release value, not moved by the k-run; 8@1528: knock release value, not moved by the k-run; 8192@1528: knock release value, not moved by the k-run; 0@1528: knock release value, not moved by the k-run; 2@1528: knock release value, not moved by the k-run; 26@1528: knock release value, not moved by the k-run; 8@1617: knock release value, not moved by the k-run; 8192@1617: knock release value, not moved by the k-run; 131072@1617: knock release value, not moved by the k-run; 64@1617: knock release value, not moved by the k-run; 0@1617: knock release value, not moved by the k-run; 2@1617: knock release value, not moved by the k-run; 26@1617: knock release value, not moved by the k-run; 64@1643: knock release value, not moved by the k-run; 50@1643: knock release value, not moved by the k-run
+A/AFk0g.v	knock k17	differs	1	-
+A/AFk1.v	grant W4 + knock k17	differs	105	-
+A/AFk2.v	grant W4 + knock k17	differs	66	-
+A/AFk3.v	grant W4	identical	0	-
+A/AFk5.v	grant W4	differs	1	-
+A/AFk6.v	grant W4	identical	0	-
+A/AFk7.v	grant W4	identical	0	-
+A/AFk8.v	grant W4	identical	0	-
+A/AFk9.v	grant W4	identical	0	-
+A/AFka.v	grant W4	identical	0	-
+A/AFkb.v	grant W4	differs	1	-
+A/AFkc.v	grant W4	differs	1	-
+A/AFkd.v	grant W4	differs	1	-
+A/AFke.v	grant W4	differs	1	-
+A/AFkf.v	grant W4	differs	1	-
+A/AFkg.v	grant W4	differs	1	-
+A/AFkh.v	grant W4	differs	1	-
+A/AFki.v	grant W4	differs	1	-
+A/AFkj.v	grant W4	differs	1	-
+A/AFkk.v	grant W4	differs	1	-
+A/AFkl.v	grant W4	differs	1	-
+A/AFkm.v	grant W4 + knock k17	differs	31	4@1070: knock release value, not moved by the k-run; 0x9ffd0@1070: twin row check.tsv (symbol _ZZL28InitializeCommonInterceptorsvE12me nobits); 0x5c2dd0@1070: twin row check.tsv (coderef nobits)
+A/AFkn.v	grant W4	identical	0	-
+A/AFko.v	grant W4	differs	1	-
+A/AFkp.v	grant W4	identical	0	-
+A/AFkq.v	grant W4	identical	0	-
+A/AFkr.v	grant W4	identical	0	-
+A/AFks.v	grant W4	identical	0	-
+A/AFkt.v	grant W4	identical	0	-
+A/AFku.v	grant W4	identical	0	-
+A/AFkv.v	grant W4	identical	0	-
+A/AFkw.v	grant W4	differs	1	-
+A/AFkx.v	grant W4	differs	1	-
+A/AFky.v	grant W4	differs	1	-
+A/AFkz.v	grant W4 + knock k17	differs	31	4@787: knock release value, not moved by the k-run; 0x9ffd0@787: twin row check.tsv (symbol _ZZL28InitializeCommonInterceptorsvE12me nobits); 0x5c2dd0@787: twin row check.tsv (coderef nobits)
+A/AFl0.v	grant W4 + knock k17	differs	1	-
+A/AFl1.v	grant W4	identical	0	-
+A/AFl2.v	grant W4	identical	0	-
+A/AFl3.v	grant W4	identical	0	-
+A/AFl4.v	grant W4	identical	0	-

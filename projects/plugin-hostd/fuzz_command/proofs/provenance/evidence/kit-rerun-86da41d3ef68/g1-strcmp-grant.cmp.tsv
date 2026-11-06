@@ -1,0 +1,33 @@
+# G = img/fuzz_grant.asan.debug sha256 57c26f993615
+# A = img/fuzz_command.asan.debug sha256 68db792d5fa7
+# B = img/fuzz_command.asan-ubsan.debug sha256 658cefbe806b
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes/NAME-ONLY acceptances	C-string acceptances (also one CSTR row each)	differing targets printed (in target-differ, this row)	words-only
+___interceptor_strcmp	G:A	0x426ec	0x45a24	1328	1328	EQUAL-mod-pcrel	41	0	0	(2, 0, 2)	0	full+0x4bc[0x103d0|0x103d8]=8 full+0x500[0x103d0|0x103d8]=8	0x354@0x1cc56|0x1cdb0=b'strcmp\x00' 0x434@0x1cc56|0x1cdb0=b'strcmp\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	___interceptor_strcmp	G:A	0x354	0x1cc56	0x1cdb0	7	737472636d7000	b'strcmp\x00'
+CSTR	___interceptor_strcmp	G:A	0x434	0x1cc56	0x1cdb0	7	737472636d7000	b'strcmp\x00'
+___interceptor_strcmp	G:B	0x426ec	0x45a70	1328	1328	EQUAL-mod-pcrel	41	0	0	(2, 0, 2)	0	full+0x4bc[0x103d0|0x103d8]=8 full+0x500[0x103d0|0x103d8]=8	0x354@0x1cc56|0x1cdb0=b'strcmp\x00' 0x434@0x1cc56|0x1cdb0=b'strcmp\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	___interceptor_strcmp	G:B	0x354	0x1cc56	0x1cdb0	7	737472636d7000	b'strcmp\x00'
+CSTR	___interceptor_strcmp	G:B	0x434	0x1cc56	0x1cdb0	7	737472636d7000	b'strcmp\x00'
+__interceptor_trampoline_strcmp	G:A	0x42138	0x4513c	4	4	EQUAL-mod-pcrel	1	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+__interceptor_trampoline_strcmp	G:B	0x42138	0x45188	4	4	EQUAL-mod-pcrel	1	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+__sanitizer_weak_hook_strcmp	G:A	0x426e8	0x45a20	4	4	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+__sanitizer_weak_hook_strcmp	G:B	0x426e8	0x45a6c	4	4	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+_ZN6__asan18TryAsanInitFromRtlEv	G:A	0x5980c	0x5f640	160	160	EQUAL-mod-pcrel	2	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+_ZN6__asan18TryAsanInitFromRtlEv	G:B	0x5980c	0x5f68c	160	160	EQUAL-mod-pcrel	2	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+__asan_region_is_poisoned	G:A	0x54378	0x5a1ac	836	836	EQUAL-mod-pcrel	26	0	0	(0, 0, 4)	0		0x30c@0x1f3fc|0x1f5ad=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x310@0x2035d|0x20536=b'((beg)) < ((end))\x00' 0x32c@0x1f3fc|0x1f5ad=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x330@0x15488|0x1546d=b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	__asan_region_is_poisoned	G:A	0x30c	0x1f3fc	0x1f5ad	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	G:A	0x310	0x2035d	0x20536	18	28286265672929203c202828656e64292900	b'((beg)) < ((end))\x00'
+CSTR	__asan_region_is_poisoned	G:A	0x32c	0x1f3fc	0x1f5ad	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	G:A	0x330	0x15488	0x1546d	78	28283020262620226d656d5f69735f7a65726f2072657475726e65642066616c73652c2062757420706f69736f6e6564206279746520776173206e6f7420666f756e6422292920213d2028302900	b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'
+__asan_region_is_poisoned	G:B	0x54378	0x5a1f8	836	836	EQUAL-mod-pcrel	26	0	0	(0, 0, 4)	0		0x30c@0x1f3fc|0x1f5f3=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x310@0x2035d|0x2057c=b'((beg)) < ((end))\x00' 0x32c@0x1f3fc|0x1f5f3=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x330@0x15488|0x15475=b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	__asan_region_is_poisoned	G:B	0x30c	0x1f3fc	0x1f5f3	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	G:B	0x310	0x2035d	0x2057c	18	28286265672929203c202828656e64292900	b'((beg)) < ((end))\x00'
+CSTR	__asan_region_is_poisoned	G:B	0x32c	0x1f3fc	0x1f5f3	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	G:B	0x330	0x15488	0x15475	78	28283020262620226d656d5f69735f7a65726f2072657475726e65642066616c73652c2062757420706f69736f6e6564206279746520776173206e6f7420666f756e6422292920213d2028302900	b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'
+_ZN11__sanitizer11mem_is_zeroEPKcm	G:A	0x640b8	0x69eec	180	180	EQUAL-mod-pcrel	4	0	0	(0, 0, 2)	0		0xa4@0x135b2|0x13547=b'/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_libc.cpp\x00' 0xa8@0x18545|0x185c1=b'((size)) <= ((1ULL << (40)))\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	_ZN11__sanitizer11mem_is_zeroEPKcm	G:A	0xa4	0x135b2	0x13547	66	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f73616e6974697a65725f636f6d6d6f6e2f73616e6974697a65725f6c6962632e63707000	b'/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_libc.cpp\x00'
+CSTR	_ZN11__sanitizer11mem_is_zeroEPKcm	G:A	0xa8	0x18545	0x185c1	29	282873697a652929203c3d20282831554c4c203c3c2028343029292900	b'((size)) <= ((1ULL << (40)))\x00'
+_ZN11__sanitizer11mem_is_zeroEPKcm	G:B	0x640b8	0x69f38	180	180	EQUAL-mod-pcrel	4	0	0	(0, 0, 2)	0		0xa4@0x135b2|0x1354f=b'/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_libc.cpp\x00' 0xa8@0x18545|0x185d3=b'((size)) <= ((1ULL << (40)))\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	_ZN11__sanitizer11mem_is_zeroEPKcm	G:B	0xa4	0x135b2	0x1354f	66	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f73616e6974697a65725f636f6d6d6f6e2f73616e6974697a65725f6c6962632e63707000	b'/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_libc.cpp\x00'
+CSTR	_ZN11__sanitizer11mem_is_zeroEPKcm	G:B	0xa8	0x18545	0x185d3	29	282873697a652929203c3d20282831554c4c203c3c2028343029292900	b'((size)) <= ((1ULL << (40)))\x00'

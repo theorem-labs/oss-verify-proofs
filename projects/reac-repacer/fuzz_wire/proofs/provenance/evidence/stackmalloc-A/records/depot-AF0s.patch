@@ -1,0 +1,11 @@
+--- projects/reac-repacer/fuzz_wire/proofs/lib/A/Rt/AF0s.v
++++ projects/reac-repacer/fuzz_wire/proofs/lib/A/Rt/AF0s.v
+@@ -62,7 +62,7 @@
+ exact (pairwise_In zdisjoint (static_extents ly) e (ly_img ly) (owned_extents ly ++ [(ly_stk_lo ly, ly_stk_hi ly - ly_stk_lo ly)]) [ly_img ly]
+ ltac:(unfold static_extents; rewrite <- app_assoc; reflexivity) PD ltac:(apply in_app_iff; left; exact Hex) ltac:(left; reflexivity)). }
+ assert (SZ : 0 <= snd e).
+-{ unfold owned_extents in Hex. cbn [In] in Hex. decompose [or] Hex; subst; cbn [snd];
++{ unfold owned_extents in Hex. cbn [In] in Hex. decompose [or] Hex; subst; try destruct (ly_NB ly =? 0); try destruct (ly_SB ly =? 0); cbn [snd];
+ unfold kPrimResvSize, kPtrArrayResv, kThreadObjSize, kFakeStackSize, kNodesBlockSize, kStoreBlockSize; lia. }
+ exact (zone3_intro ly (fst e) (snd e) IMG SZ IA ltac:(destruct e; exact D9)). }
+ pose proof (ZI (ly_T ly, kThreadObjSize) ltac:(unfold owned_extents; cbn; tauto)) as (HT1 & HT2 & HTz).

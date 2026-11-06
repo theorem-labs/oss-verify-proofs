@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: pem
-rocq: OssFuzzTheorems.openssl.pem
+rocq: OSSVerify.openssl.pem
 origin: upstream
 summary: PEM_read_bio_ex with flags from byte 0; on success writes the parts back into a BIO to touch
   the allocations; nothing compared.

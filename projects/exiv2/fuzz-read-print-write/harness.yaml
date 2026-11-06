@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: exiv2
 harness: fuzz-read-print-write
-rocq: OssFuzzTheorems.exiv2.fuzz_read_print_write
+rocq: OSSVerify.exiv2.fuzz_read_print_write
 origin: upstream
 summary: readMetadata; print every Exif/IPTC/XMP datum; printStructure in six modes into a string stream;
   writeMetadata back into the in-memory image; nothing compared.

@@ -1,0 +1,10 @@
+image ../img/pcap.asan sha256 b7a91d9b1fb0017df0462bf382b3211837851bf801e792673b1cee0797cdca2a (NOT THE PIN)
+twin  ../img/pcap.asan.unstripped sha256 36da3052c383096eed46abd71490e47af9600c030bdf511c4e83d48924e24291 (NOT THE PIN)
+asan_globals: addr 0x9e100 size 256 (4 descriptors of 64 bytes); expected addr 0xa62a0 size 2752 (43)
+i	desc_addr	beg	size	size_with_rz	rz_rule	section	symbol	sym_size	name	odr_indicator	odr_symbol	verdict
+0	0xa62a0	0x20d00	13	32	32	.rodata	.str	32	.str	0xffffffffffffffff	none(-1)	OK
+1	0xa62e0	0x20d40	3	32	32	.rodata	.str	32	.str	0xffffffffffffffff	none(-1)	OK
+2	0xa6320	0x5d3f40	8	32	32	.bss	g_file_len	32	g_file_len	0xffffffffffffffff	none(-1)	OK
+3	0xa6360	0x5d3f60	8	32	32	.bss	g_file	32	g_file	0xffffffffffffffff	none(-1)	OK
+summary: 4 descriptors; 0 with an odr_indicator; 45 shadow rows (13 redzone/partial + 32 descriptor-array)
+VERDICT: FAIL: image sha256; twin sha256; asan_globals geometry

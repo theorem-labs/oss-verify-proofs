@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zlib-ng
 harness: fuzzer_example_small
-rocq: OssFuzzTheorems.zlib_ng.fuzzer_example_small
+rocq: OSSVerify.zlib_ng.fuzzer_example_small
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, a round trip: deflate then inflate with 1-byte
   in/out buffers; output must memcmp-equal the input.'

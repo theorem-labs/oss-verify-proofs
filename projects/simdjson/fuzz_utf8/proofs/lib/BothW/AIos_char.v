@@ -1,0 +1,172 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Lib Require Import Tac ITree Nodes Decode SysStep.
+From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Spec Require Import Prelim Monad Stdio.
+From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.BothW Require Import F_syscalls StdioFiles Stdio_kit BImg MonadF AIos_tac AIos_iface.
+From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.LibA Require Import ITreeA StepF.
+From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Common Require Import F_fmt_fp_lib RunDraw.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+Local Ltac transport_after_call segs m m' MU WM ::= transport_after_call_fast segs m m' MU WM.
+Import ListNotations.
+Import ITree.Exc.
+Open Scope Z_scope.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+
+Section CANSEC1. Context {rc : runConstT}.
+Section Char.
+  Variable ICPT : mem -> Prop.
+  Variable ICPTR : footprint -> Prop.
+  Context {St : Type} (get_so : St -> stdout_st) (set_so : stdout_st -> St -> St).
+  Hypothesis FW0 : fwrite0_out_stmt ICPT ICPTR.
+  Hypothesis FFL : fflush_out_stmt ICPT ICPTR get_so set_so.
+  (* [comment removed for export] *)
+  Hypothesis ICPT_frame : forall W m m', ICPT m -> munch W m m' -> wmono bsegs m m' ->
+    Forall (fun iv => ATOP <= fst iv \/ (RSTDERR <= fst iv /\ snd iv <= RSTDOUT + 232)) W -> ICPT m'.
+
+  Definition SYNC_DEPTH : Z := 80 + ICPT_DEPTH.
+
+  Lemma sync_out_spec :
+    forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+           (F : bvmap 5 word) (fc : bv 32) (m : mem) (lo : Z) (guard : word) (s : St) (so_x : stdout_st),
+      stk bsegs m lo (bv_unsigned sp) -> stdout_file m so_x ->
+      so_buf so_x = so_buf (get_so s) -> (so_buf (get_so s) <> [] -> so_x = get_so s) -> so_first so_x = so_first (get_so s) -> so_lbf_nl so_x = so_lbf_nl (get_so s) ->
+      ssp_cells m guard -> ICPT m -> ios_char_shared m -> ios_cout m -> mem_inv bsegs m ->
+      a0 = Z_to_bv 64 0x6adbe8 -> tp = Z_to_bv 64 RTP ->
+      lo <= bv_unsigned sp - SYNC_DEPTH -> GLOBALS_TOP <= lo -> ATOP <= lo -> bv_unsigned sp mod 16 = 0 ->
+      rng RNG lo (bv_unsigned sp - lo) -> rng_aimg RNG -> ICPTR RNG -> rng0 RNG -> bv_unsigned sp < 2^47 ->
+      implAM RNG (stdout_exit_flush get_so set_so) s
+             (fun _ st' ms' => exists so', st' = set_so so' s /\ so_buf so' = []
+                /\ icpt_post ICPT [(bv_unsigned sp - SYNC_DEPTH, bv_unsigned sp); (RSTDOUT, RSTDOUT + 232)]
+                             ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc lo guard m (fun m' => stdout_file m' (so_inact so')) ms')
+             (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                 F (Z_to_bv 64 0x114cc4) fc None m (seg_rom bsegs)).
+  Proof.
+    intros until so_x. intros ST SOF EB EQ SF SL SSP IC IOSS IOSC MI -> -> LO GLO ATL AL RSTK RIMG RI RG0 SP47.
+    unfold SYNC_DEPTH, ICPT_DEPTH, GLOBALS_TOP in *.
+    destruct SOF as (flags & mode & tail & bufbytes & FC & FL72 & BUF & BUFP & BUFL & INACT).
+    destruct SSP as [GOT GUARD]. unfold got_ssp, ssp_guard in GOT, GUARD. unfold file_cells in FC.
+    destruct IOSS as (VB & SYNCV & CVP & UNSH). destruct IOSC as (O1 & O2 & O3 & O4 & O5 & B1 & B2).
+    pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
+    pose proof (munch_refl [(bv_unsigned sp - (80 + 4096), bv_unsigned sp); (RSTDOUT, RSTDOUT + 232)]%Z m) as MU.
+    pose proof (wmono_refl bsegs m) as WM.
+    apply implAM_from_evt.
+    carve_frame 80%nat ST.
+    steps_to 0x13c608%Z.
+    nstep. nstep. nstep.
+    steps_to 0x6b0f4%Z.
+    replace (bv_unsigned sp + -64 - (bv_unsigned sp + -64)) with 0 by (clear; lia).
+    call_sp (FW0 RNG);
+      try first [ eassumption | reflexivity | unfold GLOBALS_TOP; lia
+                | (eapply rng_sub'; [exact RSTK | lia])
+                | (split; hyp_by_addr)
+                | (eapply ICPT_frame; [exact IC | exact MU | exact WM | apply Forall_cons; [left; cbn [fst snd]; lia | apply Forall_cons; [right; cbn [fst snd]; lia | apply Forall_nil]]])
+                | (exists flags, mode, tail, bufbytes; repeat split; first [hyp_by_addr | assumption]) ].
+    { exists flags, mode, tail, bufbytes. split; [unfold file_cells; exact FC|]. split; [exact FL72|]. split; [exact BUF|]. split; [exact BUFP|]. split; [exact BUFL| exact INACT]. }
+    { unfold ssp_cells, got_ssp, ssp_guard. split; [exact GOT| exact GUARD]. }
+    (* [comment removed for export] *)
+    steps_to 0x6b154%Z.
+    assert (ESP : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -80)) = bv_unsigned sp + -80) by (apply unsigned_lit; clear - RSP LO GLO; lia).
+    apply evtF_done.
+    eapply implAM_post_evt'.
+    { eapply (FFL RNG) with (lo := lo) (guard := guard) (so_x := so_act so_x);
+        [ rewrite ESP; exact PC | exact POST | exact EB
+        | intros NE; rewrite <- (EQ NE); destruct so_x as [act bf lb fi]; cbn [so_act so_buf so_lbf_nl so_first]; cbn [so_buf] in EB;
+          destruct act; [reflexivity| exfalso; apply NE; rewrite <- EB; exact (INACT eq_refl)]
+        | exact SF | exact SL
+        | exact PC0 | exact PC1 | exact MI0 | reflexivity | reflexivity
+        | rewrite ESP; clear - LO; lia | unfold GLOBALS_TOP; exact GLO | exact ATL | rewrite ESP; clear - AL; Z.div_mod_to_equations; lia
+        | rewrite ESP; eapply rng_sub'; [exact RSTK | clear - LO RSP; lia] | exact RIMG | exact RI | exact RG0 | rewrite ESP; clear - SP47; lia ]. }
+    cbv beta. intros [] st2 ms2 (so' & -> & EB' & PO2).
+    destruct PO2 as (t0' & t1' & t2' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & m2 & -> & MU2 & WM2 & MI2 & ST2 & SSP2 & IC2 & SOF2).
+    rewrite ESP in MU2, ST2.
+    rewrite (ret_pc_even 1133908) by (cbn; lia).
+    match goal with WMx : wmono bsegs m ?mc |- _ => transport_after_call bsegs mc m2 MU2 WM2 end.
+    hstep. hstep. do 9 hstep.
+    change (Z.b2z (0 <? 1) + -1) with 0.
+    match goal with H : rw_cells _ _ (bv_unsigned sp + -80)%Z _ |- _ => release_frame H ST2 (bv_unsigned sp) end.
+    apply evtF_done. exists so'. split; [reflexivity|]. split; [exact EB'|].
+    unfold icpt_post. do 14 eexists. eexists.
+    split; [reflexivity|].
+    split; [exact MU|]. split; [exact WM|]. split; [exact MI2|]. split; [exact ST2|].
+    split; [exact SSP2|]. split; [exact IC2| exact SOF2].
+  Qed.
+
+  (* [comment removed for export] *)
+  Definition FLUSH_DEPTH : Z := 48 + SYNC_DEPTH.
+
+  Lemma flush_out_spec :
+    forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+           (F : bvmap 5 word) (fc : bv 32) (m : mem) (lo : Z) (guard : word) (s : St) (so_x : stdout_st),
+      stk bsegs m lo (bv_unsigned sp) -> stdout_file m so_x ->
+      so_buf so_x = so_buf (get_so s) -> (so_buf (get_so s) <> [] -> so_x = get_so s) -> so_first so_x = so_first (get_so s) -> so_lbf_nl so_x = so_lbf_nl (get_so s) ->
+      ssp_cells m guard -> ICPT m -> ios_char_shared m -> ios_cout m -> mem_inv bsegs m ->
+      a0 = Z_to_bv 64 0x6ade38 -> tp = Z_to_bv 64 RTP ->
+      lo <= bv_unsigned sp - FLUSH_DEPTH -> GLOBALS_TOP <= lo -> ATOP <= lo -> bv_unsigned sp mod 16 = 0 ->
+      rng RNG lo (bv_unsigned sp - lo) -> rng_aimg RNG -> ICPTR RNG -> rng0 RNG -> bv_unsigned sp < 2^47 ->
+      implAM RNG (stdout_exit_flush get_so set_so) s
+             (fun _ st' ms' => exists so', st' = set_so so' s /\ so_buf so' = []
+                /\ exists (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (m' : mem),
+                  ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 0x6ade38) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                           F (ret_pc ra) fc None m' (seg_rom bsegs)
+                  /\ munch [(bv_unsigned sp - 4224, bv_unsigned sp); (RSTDOUT, RSTDOUT + 232)] m m' /\ wmono bsegs m m' /\ mem_inv bsegs m'
+                  /\ stk bsegs m' lo (bv_unsigned sp) /\ ssp_cells m' guard /\ ICPT m' /\ stdout_file m' (so_inact so'))
+             (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                 F (Z_to_bv 64 0x1130f4) fc None m (seg_rom bsegs)).
+  Proof.
+    intros until so_x. intros ST SOF EB EQ SF SL SSP IC IOSS IOSC MI -> -> LO GLO ATL AL RSTK RIMG RI RG0 SP47.
+    unfold FLUSH_DEPTH, SYNC_DEPTH, ICPT_DEPTH in LO. pose proof GLO as GLO'. unfold GLOBALS_TOP in GLO'.
+    destruct SOF as (flags & mode & tail & bufbytes & FC & FL72 & BUF & BUFP & BUFL & INACT).
+    destruct SSP as [GOT GUARD]. unfold got_ssp, ssp_guard in GOT, GUARD. unfold file_cells in FC.
+    destruct IOSS as (VB & SYNCV & CVP & UNSH). destruct IOSC as (O1 & O2 & O3 & O4 & O5 & B1 & B2).
+    pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
+    pose proof (munch_refl [(bv_unsigned sp - 4224, bv_unsigned sp); (RSTDOUT, RSTDOUT + 232)]%Z m) as MU.
+    pose proof (wmono_refl bsegs m) as WM.
+    apply implAM_from_evt.
+    carve_frame 48%nat ST.
+    steps_to 0x114cc4%Z.
+    assert (ESP : bv_unsigned (Z_to_bv 64 (bv_unsigned sp + -48)) = bv_unsigned sp + -48) by (apply unsigned_lit; clear - RSP LO GLO'; lia).
+    apply evtF_done.
+    eapply implAM_post_evt'.
+    { eapply (sync_out_spec RNG) with (lo := lo) (guard := guard) (so_x := so_x);
+        [ rewrite ESP; exact ST
+        | exists flags, mode, tail, bufbytes; split; [unfold file_cells; exact FC|]; split; [exact FL72|]; split; [exact BUF|]; split; [exact BUFP|]; split; [exact BUFL| exact INACT]
+        | exact EB | exact EQ | exact SF | exact SL
+        | unfold ssp_cells, got_ssp, ssp_guard; split; [exact GOT| exact GUARD]
+        | eapply ICPT_frame; [exact IC | exact MU | exact WM | apply Forall_cons; [left; cbn [fst snd]; lia | apply Forall_cons; [right; cbn [fst snd]; lia | apply Forall_nil]]]
+        | unfold ios_char_shared; conj_by_addr | unfold ios_cout; conj_by_addr
+        | exact MI | reflexivity | reflexivity
+        | rewrite ESP; unfold SYNC_DEPTH, ICPT_DEPTH; clear - LO; lia | exact GLO | exact ATL | rewrite ESP; clear - AL; Z.div_mod_to_equations; lia
+        | rewrite ESP; eapply rng_sub'; [exact RSTK | clear - LO RSP; lia] | exact RIMG | exact RI | exact RG0 | rewrite ESP; clear - SP47; lia ]. }
+    cbv beta. intros [] st2 ms2 (so' & -> & EB' & PO2).
+    destruct PO2 as (t0' & t1' & t2' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & m2 & -> & MU2 & WM2 & MI2 & ST2 & SSP2 & IC2 & SOF2).
+    rewrite ESP in MU2, ST2. unfold SYNC_DEPTH, ICPT_DEPTH in MU2.
+    destruct SOF2 as (flags2 & mode2 & tail2 & bufbytes2 & FC2 & FL722 & BUF2 & BUFP2 & BUFL2 & INACT2).
+    unfold file_cells in FC2. cbn [so_inact so_active so_buf so_first so_lbf_nl] in FC2, BUFP2, BUFL2, INACT2. clear BUF.
+    rewrite (ret_pc_even 1126732) by (cbn; lia).
+    match goal with WMx : wmono bsegs m ?mc |- _ => transport_after_call bsegs mc m2 MU2 WM2 end.
+    (* [comment removed for export] *)
+    steps_to 0x1132c8%Z.
+    carve_frame 16%nat ST2.
+    steps_to 0x113174%Z.
+    match goal with H : rw_cells _ _ (bv_unsigned sp + -64)%Z _ |- _ => release_frame H ST2 (bv_unsigned sp + -48)%Z end.
+    do 6 hstep.
+    match goal with H : rw_cells _ _ (bv_unsigned sp + -48)%Z _ |- _ => release_frame H ST2 (bv_unsigned sp) end.
+    apply evtF_done. exists so'. split; [reflexivity|]. split; [exact EB'|].
+    do 14 eexists. eexists.
+    split; [reflexivity|].
+    split; [exact MU|]. split; [exact WM|]. split; [eassumption|]. split; [exact ST2|].
+    split; [unfold ssp_cells, got_ssp, ssp_guard; split; [exact GOT| exact GUARD]|].
+    split; [eapply ICPT_frame; [exact IC | exact MU | exact WM | apply Forall_cons; [left; cbn [fst snd]; lia | apply Forall_cons; [right; cbn [fst snd]; lia | apply Forall_nil]]]|].
+    exists flags2, mode2, tail2, bufbytes2. cbn [so_inact so_active so_buf so_first so_lbf_nl].
+    split; [unfold file_cells; exact FC2|]. split; [exact FL722|]. split; [exact BUF2|]. split; [exact BUFP2|]. split; [exact BUFL2| exact INACT2].
+  Qed.
+End Char.
+End CANSEC1.

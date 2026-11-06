@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_seek_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_seek_fuzzer
+rocq: OSSVerify.libarchive.libarchive_seek_fuzzer
 origin: upstream
 summary: Reads zip_seekable/7zip/rar/rar5/iso9660 (+ all filters) through read/seek/skip callbacks over
   the input (4 KiB chunks, clamped seeks); per entry (<= 50) calls pathname and size and drains archive_read_data,

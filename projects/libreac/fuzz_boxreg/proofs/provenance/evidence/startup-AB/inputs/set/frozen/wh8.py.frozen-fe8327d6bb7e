@@ -1,0 +1,302 @@
+#!/usr/bin/env python3
+"""wh8.py - measure the w_H8 band-constancy question on the 50 hand-off states of an AB01/YB01 file.
+
+Runs beside the FROZEN hsform.py (b1d794ec6122) and uses its donor_states / match_close / split_top
+for the state text; nothing here re-implements a parser that a canonical tool already has.
+
+What it measures, per state and per a_vis entry:
+
+  (a) NON-STACK entries: base AND len are multiples of 4096 (page-aligned).
+      base is a symbolic linear form sum(c_i * V_i) + k; page-aligned means every c_i and k = 0 mod 4096.
+  (b) the STACK entry STK_P = (TOP, STACK_END - TOP), TOP = usp - 8388608 (YA02.v:69),
+      usp = u eSp0 = 32768*V0 + 16*V6 (AD2i uS0 / uSp0):
+        b1 in_vis [base, base+len) misses both bands [kLowShadowBeg,kLowShadowEnd) and [kHighShadowBeg,kHighShadowEnd)
+           -- checked at the LOWEST usp valid_sp allows (sp_window_lo), the worst case;
+        b2 in_sh END = SHADOW_OFF + (base+len)/8 >= kHighShadowEnd;
+        b3 in_sh START = SHADOW_OFF + base/8 equals sliverb's END = SHADOW_OFF + (usp - 8388608)/8 (YD1h.v:11);
+        b4 sliverb's START = SHADOW_OFF + run_ceil(usp)/8 is 512-aligned (YM05.v:38-41 page_floor).
+
+  legacy (the first brief): 64-granularity of base / base+len, lazy edge shadow pages, TOP/CEIL, high band vs TOP.
+"""
+import argparse, json, re, sys
+
+sys.path.insert(0, '.')
+import hsform                                           # frozen b1d794ec6122
+
+# --- constants, each quoted from the core at 4b14024f7e8 -------------------------------------------
+SHADOW_OFF      = 0x7fff8000          # YG0f.v:12 (= shadow_off A for these images; see --shadow-off)
+kLowShadowBeg   = 0x7fff7000          # YG0f.v:21
+kLowShadowEnd   = 0x8fff7000          # YG0f.v:22
+kHighShadowBeg  = 0x2008fff7000       # YG0f.v:23
+kHighShadowEnd  = 0x10007fff8000      # YG0f.v:24
+CEIL            = 0x7fff7f800000      # YK09.v:17
+STACK_MAX       = 8388608             # YA02.v:69 / YD1h.v:11
+STACK_END       = 2 ** 47             # 140737488355328
+SP_WINDOW_LO    = 140735340871680     # AD2i uSp0 (= CEIL + STACK_MAX)
+SP_WINDOW_HI    = 140737488355328     # AD2i uSp0
+BANDS = [('low', kLowShadowBeg, kLowShadowEnd), ('high', kHighShadowBeg, kHighShadowEnd)]
+
+
+# --- a tiny reader for the collector's `expr` terms ------------------------------------------------
+class Lin(dict):
+    """symbolic linear form: {var index: coefficient}, with the constant under the key None"""
+    def __add__(self, o):
+        r = Lin(self)
+        for k, v in o.items():
+            r[k] = r.get(k, 0) + v
+        return Lin({k: v for k, v in r.items() if v})
+    def scale(self, c):
+        return Lin({k: v * c for k, v in self.items() if v * c})
+    def const(self):
+        return self.get(None, 0) if len(self) <= 1 and set(self) <= {None} else None
+    def mod(self, m):
+        """0 if every coefficient and the constant is 0 mod m, else the first nonzero residue"""
+        for k, v in self.items():
+            if v % m:
+                return v % m
+        return 0
+    def __str__(self):
+        ts = []
+        for k, v in sorted(self.items(), key=lambda kv: (kv[0] is None, kv[0])):
+            ts.append(('%+d' % v) if k is None else ('%+d*V%d' % (v, k)))
+        return ''.join(ts) or '0'
+
+
+def toks(s):
+    return re.findall(r'\(|\)|[^\s()]+', s)
+
+
+class P:
+    def __init__(self, s):
+        self.t = toks(s); self.i = 0
+    def peek(self):
+        return self.t[self.i] if self.i < len(self.t) else None
+    def take(self):
+        v = self.t[self.i]; self.i += 1; return v
+
+    def atom(self):
+        """one expr, possibly parenthesised"""
+        if self.peek() == '(':
+            self.take(); v = self.expr()
+            assert self.take() == ')', 'unbalanced'
+            return v
+        return self.expr(one=True)
+
+    def expr(self, one=False):
+        h = self.take()
+        if h == '(':
+            v = self.expr()
+            assert self.take() == ')'
+            return v
+        if h == 'ELit':
+            n = self.atom_num(); return Lin({None: n}) if n else Lin()
+        if h == 'EVar':
+            n = int(self.take().replace('%nat', '')); return Lin({n: 1})
+        if h == 'EMd':
+            op = self.take()
+            a = self.atom(); b = self.atom()
+            assert op.endswith('M_MUL'), 'unsupported EMd op %s' % op
+            ca, cb = a.const(), b.const()
+            if ca is not None:
+                return b.scale(ca)
+            if cb is not None:
+                return a.scale(cb)
+            raise AssertionError('non-linear EMd')
+        if h == 'EAlu':
+            op = self.take()
+            a = self.atom(); b = self.atom()
+            if op.endswith('ALU_ADD'):
+                return a + b
+            if op.endswith('ALU_SUB'):
+                return a + b.scale(-1)
+            raise AssertionError('unsupported EAlu op %s' % op)
+        raise AssertionError('unsupported expr head %r' % h)
+
+    def atom_num(self):
+        if self.peek() == '(':
+            self.take(); n = int(self.take()); assert self.take() == ')'
+            return n
+        return int(self.take())
+
+
+def lin(s):
+    p = P(s.strip())
+    v = p.expr()
+    assert p.i == len(p.t), 'trailing tokens in %r' % s
+    return v
+
+
+# --- state reading ---------------------------------------------------------------------------------
+def field_list(term, name):
+    k = term.index(name + ' := ')
+    i = k + len(name) + 4
+    while term[i] == ' ':
+        i += 1
+    assert term[i] == '[', term[i:i + 40]
+    j = hsform.match_close(term, i)
+    body = term[i + 1:j - 1].strip()
+    return hsform.split_top(body) if body else []
+
+
+def pair(s):
+    s = s.strip()
+    assert s.startswith('(') and s.endswith(')'), s[:60]
+    a, b = hsform.split_top(s[1:-1], ',')
+    return lin(a), lin(b)
+
+
+def amap(s):
+    s = s.strip()
+    assert s.startswith('{|'), s[:40]
+    d = {}
+    for f in hsform.split_top(s[2:-2], ';'):
+        k, v = f.split(':=', 1)
+        d[k.strip()] = v.strip()
+    return lin(d['am_base']), lin(d['am_len']), d['am_kind']
+
+
+def states(path, name):
+    out = {}
+    for h, (pre, kn, suf) in sorted(hsform.donor_states(path, name).items()):
+        term = pre + 'KN' + suf
+        out[h] = dict(vis=[pair(x) for x in field_list(term, 'a_vis')],
+                      ghost=[pair(x) for x in field_list(term, 'a_ghost')],
+                      maps=[amap(x) for x in field_list(term, 'a_maps')])
+    return out
+
+
+# --- the checks ------------------------------------------------------------------------------------
+USP = Lin({0: 32768, 6: 16})                     # AD2i uSp0: u eSp0 = 32768*V0 + 16*V6 = usp
+STK_BASE = USP + Lin({None: -STACK_MAX})         # TOP (YA02.v:69)
+STK_LEN = STK_BASE.scale(-1) + Lin({None: STACK_END})   # STACK_END - TOP
+
+
+def is_stack(b, l):
+    return dict(b) == dict(STK_BASE) and dict(l) == dict(STK_LEN)
+
+
+def lazy_pages(maps):
+    """the literal KRWLAZY ranges of a state; a shadow page inside one is lazy for sure (YA0e co_kinds)"""
+    out = []
+    for b, l, k in maps:
+        cb, cl = b.const(), l.const()
+        if k == 'KRWLAZY' and cb is not None and cl is not None:
+            out.append((cb, cb + cl))
+    return out
+
+
+def in_lazy(page, rs):
+    return any(lo <= page < hi for lo, hi in rs)
+
+
+def check_state(h, st, flags, shadow_off=SHADOW_OFF):
+    r = dict(hole=h, nonstack=[], stack=None, legacy=[])
+    lz = lazy_pages(st['maps'])
+    r['lazy_ranges'] = lz
+    for idx, (b, l) in enumerate(st['vis']):
+        cl = l.const()
+        if is_stack(b, l):
+            # (b) the stack entry
+            end = b + l                                       # base + len
+            ce = end.const()
+            sliver_end = USP + Lin({None: -STACK_MAX})        # sliverb's end numerator (YD1h.v:11)
+            # b1: [base, base+len) misses both bands. base is lowest at usp = sp_window_lo.
+            base_min = SP_WINDOW_LO - STACK_MAX
+            end_val = ce
+            b1 = all(end_val <= blo or bhi <= base_min for _, blo, bhi in BANDS)
+            b2 = (ce is not None) and (shadow_off + ce // 8 >= kHighShadowEnd)
+            b3 = dict(b) == dict(sliver_end)
+            b4 = (shadow_off % 512 == 0)            # run_ceil is 0 mod 4096 (YM05 page_floor_mod) => /8 is 0 mod 512
+            r['stack'] = dict(index=idx, base=str(b), len=str(l), base_plus_len=ce,
+                              in_sh_start='%d + (%s)/8' % (shadow_off, b),
+                              in_sh_end=(shadow_off + ce // 8) if ce is not None else None,
+                              sliverb_end='%d + (%s)/8' % (shadow_off, sliver_end),
+                              b1_in_vis_misses_bands=b1, b2_in_sh_end_ge_kHighShadowEnd=b2,
+                              b3_in_sh_start_eq_sliverb_end=b3, b4_sliverb_start_512_aligned=b4,
+                              base_min_at_sp_window_lo=base_min)
+            continue
+        ok_b = (b.mod(4096) == 0)
+        ok_l = (cl is not None and cl % 4096 == 0)
+        ent = dict(index=idx, base=str(b), len=(cl if cl is not None else str(l)),
+                   base_page_aligned=ok_b, len_page_aligned=ok_l,
+                   len_literal=cl is not None)
+        if not (ok_b and ok_l):
+            flags.append((h, ent))
+        # legacy: 64-granularity + lazy edge shadow pages
+        if cl is not None:
+            b64 = (b.mod(64) == 0)
+            e64 = ((b + Lin({None: cl})).mod(64) == 0)
+            ent['base_mult64'] = b64
+            ent['end_mult64'] = e64
+            # shadow edge pages are only decidable when the base is literal
+            cb = b.const()
+            if cb is not None:
+                slo = shadow_off + cb // 8
+                shi = shadow_off + (cb + cl) // 8
+                ent['sh_lo'] = slo
+                ent['sh_hi'] = shi
+                ent['edge_pages_lazy'] = [in_lazy(slo // 4096 * 4096, lz), in_lazy((shi - 1) // 4096 * 4096, lz)]
+            else:
+                ent['sh_lo'] = ent['sh_hi'] = None
+                # base = 4096*V + k: the shadow edge is 512*V + off, page decidable only with V
+                ent['edge_pages_lazy'] = 'symbolic base'
+        r['nonstack'].append(ent)
+    return r
+
+
+def run(path, name, label, shadow_off=SHADOW_OFF):
+    sts = states(path, name)
+    flags = []
+    rs = [check_state(h, sts[h], flags, shadow_off) for h in sorted(sts)]
+    return dict(label=label, path=path, n_states=len(rs), states=rs, flagged=flags)
+
+
+def control():
+    """the control: a made-up NON-STACK entry (base 0x1001, len 3) must FAIL (a); and a stack entry
+    whose in_sh start is 8 bytes off sliverb's end must fail b3."""
+    out = {}
+    flags = []
+    st = dict(vis=[(Lin({None: 0x1001}), Lin({None: 3}))],
+              ghost=[], maps=[(Lin({None: kLowShadowBeg}), Lin({None: 0x1000000}), 'KRWLAZY')])
+    r = check_state(-1, st, flags)
+    out['nonstack_control'] = dict(entry=r['nonstack'][0], flagged=bool(flags))
+    # stack control: base shifted by +64 so that base/8 is 8 above sliverb's end
+    flags2 = []
+    bad_base = STK_BASE + Lin({None: 64})
+    st2 = dict(vis=[(bad_base, STK_LEN + Lin({None: -64}))], ghost=[], maps=[])
+    r2 = check_state(-2, st2, flags2)
+    out['stack_control'] = dict(recognised_as_stack=r2['stack'] is not None,
+                                nonstack_entry=r2['nonstack'][0] if r2['nonstack'] else None)
+    out['stack_control']['b3_would_be'] = (dict(bad_base) == dict(STK_BASE))
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--a', required=True)
+    ap.add_argument('--b', required=True)
+    ap.add_argument('--name', default='HS_tfib')
+    ap.add_argument('--out', required=True)
+    a = ap.parse_args()
+    res = dict(A=run(a.a, a.name, 'A'), B=run(a.b, a.name, 'B'), control=control(),
+               constants=dict(SHADOW_OFF=SHADOW_OFF, kLowShadowBeg=kLowShadowBeg, kLowShadowEnd=kLowShadowEnd,
+                              kHighShadowBeg=kHighShadowBeg, kHighShadowEnd=kHighShadowEnd, CEIL=CEIL,
+                              STACK_END=STACK_END, SP_WINDOW_LO=SP_WINDOW_LO, SP_WINDOW_HI=SP_WINDOW_HI))
+    json.dump(res, open(a.out, 'w'), indent=1)
+    for k in ('A', 'B'):
+        d = res[k]
+        nvis = sum(len(s['nonstack']) + (1 if s['stack'] else 0) for s in d['states'])
+        nns = sum(len(s['nonstack']) for s in d['states'])
+        bad = sum(1 for s in d['states'] for e in s['nonstack'] if not (e['base_page_aligned'] and e['len_page_aligned']))
+        nostk = [s['hole'] for s in d['states'] if s['stack'] is None]
+        print('%s: %d states, %d a_vis entries, %d non-stack, %d NOT page-aligned, states without a stack entry: %s'
+              % (k, d['n_states'], nvis, nns, bad, nostk or 'none'))
+        for key in ('b1_in_vis_misses_bands', 'b2_in_sh_end_ge_kHighShadowEnd',
+                    'b3_in_sh_start_eq_sliverb_end', 'b4_sliverb_start_512_aligned'):
+            vals = {s['stack'][key] for s in d['states'] if s['stack']}
+            print('   %-34s %s' % (key, vals))
+    print('control:', json.dumps(res['control']))
+
+
+if __name__ == '__main__':
+    main()

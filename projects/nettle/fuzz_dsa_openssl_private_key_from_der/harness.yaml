@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nettle
 harness: fuzz_dsa_openssl_private_key_from_der
-rocq: OssFuzzTheorems.nettle.fuzz_dsa_openssl_private_key_from_der
+rocq: OSSVerify.nettle.fuzz_dsa_openssl_private_key_from_der
 origin: oss-fuzz
 summary: dsa_openssl_private_key_from_der(&params, pub, priv, 0, size, data) with no size limit; the result
   code and the parsed values are discarded.

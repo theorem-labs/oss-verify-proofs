@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lcms
 harness: fuzzers
-rocq: OssFuzzTheorems.lcms.fuzzers
+rocq: OSSVerify.lcms.fuzzers
 origin: upstream
 summary: Opens an ICC profile from memory; reads and decodes every tag, reads every raw tag (size query
   only), fetches four info strings, reads input/output/devicelink LUTs for all four intents, detects destination

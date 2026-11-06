@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: arduinojson
 harness: json_fuzzer
-rocq: OssFuzzTheorems.arduinojson.json_fuzzer
+rocq: OSSVerify.arduinojson.json_fuzzer
 origin: upstream
 summary: deserializeJson into a JsonDocument; if it succeeded, serializeJson to a std::string. The re-serialised
   text is never compared to the input or re-parsed (no roundtrip check).

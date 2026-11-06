@@ -1,5 +1,16 @@
 # actionlint's configuration: the labels of runners it cannot know.
-# ubuntu-24.04-16core is a GitHub-hosted larger runner (16 cores, 64 GB) that an org admin created; the proof checks run on it.
+# Both are GitHub-hosted larger runners that an org admin created: ubuntu-24.04-16core (16 cores, 64 GB) runs the
+# proof checks, pr.yml's lint job for every other change and its tests job when that runs the whole-tree lint, and ubuntu-24.04-4core (4 cores,
+# 16 GB, 150 GB of disk) runs pr.yml's controls job, and its lint job when lint reads only the changed files.
 self-hosted-runner:
   labels:
     - ubuntu-24.04-16core
+    - ubuntu-24.04-4core
+# A key GitHub documents that actionlint (1.7.12) does not know yet: concurrency's queue (docs.github.com, "Workflow
+# syntax for GitHub Actions", concurrency: "To allow more than one pending job or workflow run to wait in the same
+# concurrency group, use the optional queue property"), which enroll.yml sets to max so that no waiting run of a
+# project cancels another.
+paths:
+  .github/workflows/enroll.yml:
+    ignore:
+      - 'unexpected key "queue" for "concurrency" section'

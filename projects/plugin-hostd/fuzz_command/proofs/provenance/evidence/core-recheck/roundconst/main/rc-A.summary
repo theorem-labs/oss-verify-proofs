@@ -1,0 +1,39 @@
+# in/RA.full.tsv.gz: selected 124507 kept rows equal to a donor quantity (floor 0x100 on spans only)
+#   MISMATCH	NON-ADDRESS-SAME	1427
+#   MIXED	NON-ADDRESS-SAME	2826
+#   MIXED	SAME-GEOMETRY	4570
+#   SAME	NON-ADDRESS-SAME	115684
+#   class	MISMATCH	extent-to-next	119
+#   class	MISMATCH	extent-to-next(unnamed run)	6
+#   class	MISMATCH	extent-to-next(unnamed run)/2	5
+#   class	MISMATCH	extent-to-next(unnamed run)/4	412
+#   class	MISMATCH	extent-to-next/2	16
+#   class	MISMATCH	extent-to-next/4	12
+#   class	MISMATCH	section/2; span/2	2
+#   class	MISMATCH	section/2; span/2; span/4	1
+#   class	MISMATCH	section/4; span/4	1
+#   class	MISMATCH	section/4; span/4; span/8	14
+#   class	MISMATCH	section; span	1
+#   class	MISMATCH	segment/2; span/2	60
+#   class	MISMATCH	segment/4096	296
+#   class	MISMATCH	segment/4; span/4	1
+#   class	MISMATCH	segment/8; span/8	22
+#   class	MISMATCH	segment; span	83
+#   class	MISMATCH	span	60
+#   class	MISMATCH	span/2	216
+#   class	MISMATCH	span/2; span/4	1
+#   class	MISMATCH	span/4	95
+#   class	MISMATCH	span/8	4
+#   class	MIXED	extent-to-next(unnamed run); extent-to-next/4; extent-to-next/8; symbol-size/4; symbol-size/8	1272
+#   class	MIXED	extent-to-next/2; segment/4; span/4; symbol-size/2	687
+#   class	MIXED	extent-to-next/2; symbol-size/2	1
+#   class	MIXED	extent-to-next/4; segment/8; span/8; symbol-size/4	28
+#   class	MIXED	extent-to-next/8; segment; span; symbol-size/8	411
+#   class	MIXED	extent-to-next; extent-to-next(unnamed run); symbol-size	1
+#   class	MIXED	extent-to-next; extent-to-next/2; extent-to-next/4; segment/8; span/4; span/8; symbol-size; symbol-size/2; symbol-size/4	122
+#   class	MIXED	extent-to-next; extent-to-next/2; segment/4; span/2; span/4; symbol-size; symbol-size/2	30
+#   class	MIXED	extent-to-next; extent-to-next/2; symbol-size; symbol-size/2	2
+#   class	MIXED	extent-to-next; segment/2; span; span/2; symbol-size	4818
+#   class	MIXED	extent-to-next; symbol-size	16
+#   class	MIXED	span	4
+#   class	MIXED	span/2	4

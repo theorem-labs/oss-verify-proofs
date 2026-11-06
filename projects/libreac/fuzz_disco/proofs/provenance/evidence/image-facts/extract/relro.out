@@ -1,0 +1,4 @@
+DiscoImg.v lo: image 0x9fee0, file 0x9fee0: equal
+DiscoImg.v hi: image 0xa1208, file 0xa1208: equal
+YCbj.v lo: image 0xa0280, file 0xa0280: equal
+YCbj.v hi: image 0xa15a8, file 0xa15a8: equal

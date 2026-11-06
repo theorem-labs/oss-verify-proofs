@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ada-url
 harness: url_search_params
-rocq: OssFuzzTheorems.ada_url.url_search_params
+rocq: OSSVerify.ada_url.url_search_params
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an idempotence law: application/x-www-form-urlencoded
   serialisation is a fixed point: url_search_params(s).to_string() == s for s = to_string() of (a) params

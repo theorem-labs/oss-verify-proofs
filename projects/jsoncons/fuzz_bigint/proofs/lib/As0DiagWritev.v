@@ -1,0 +1,366 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
+From OSSVerify.jsoncons.fuzz_bigint.images Require Import Asan.
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import
+  PropExec CatExec CatSim SeqExec StepTac Hoare StoreOk WalkTac RefMemcpyLib MemSplit As0StepLib As0MemIsZero As0RegionPoisoned As0AsanMemset.
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import As0_code_c2dac_c2f3c As0_code_bd7bc_bd7f4.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Open Scope bv_scope.
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+
+#[local] Abbreviation ASEGS := Asan.M.loaded_segments.
+
+Section FPX_1. Context {fx : PropExec.FPState}.
+
+#[local] Ltac unorm :=
+  repeat match goal with
+         | |- context [bv_unsigned (Z_to_bv 64 ?z)] =>
+             lazymatch z with context [Z_to_bv 64 _] => fail | _ => rewrite (u_Z2bv z) by lia end
+         end.
+#[local] Ltac cond :=
+  rwH; unfold at_, v_addi, v_add, c_eq, c_ltu, bv_eqb, bv_ltu; imm_norm; unorm;
+  first [apply Z.eqb_eq | apply Z.eqb_neq | apply Z.ltb_lt | apply Z.ltb_ge]; lia.
+#[local] Ltac wval :=
+  gres; rwH; unfold at_, v_addi, v_add, v_sub; imm_norm; unorm; first [reflexivity | f_equal; lia].
+
+Lemma ret_ok_c2af4 : ret_ok (0xc2e3c : word).  Proof. unfold ret_ok. apply bv_eq. vm_compute. reflexivity. Qed.
+Lemma ret_ok_c2b7c : ret_ok (0xc2ec4 : word).  Proof. unfold ret_ok. apply bv_eq. vm_compute. reflexivity. Qed.
+
+(* [comment removed for export] *)
+Lemma syscall_ret_ok : forall regs (M rom : word -> option byte) (ret : word) k,
+  getr regs 1 = ret -> ret_ok ret -> getr regs 10 = Z_to_bv 64 k -> (0 <= k < 2 ^ 63)%Z ->
+  exists regs', msteps ASEGS (mkst regs (0xbd7bc : word) M rom) (mkst regs' ret M rom)
+    /\ getr regs' 10 = Z_to_bv 64 k /\ keeps_cs regs regs'.
+Proof.
+  intros regs M rom ret k H1 Hret H10 Hk.
+  eexists. split.
+  - stepn F_bd7bc D_bd7bc.                                               (* [comment removed for export] *)
+    stepiv F_bd7c0 D_bd7c0 (Z_to_bv 64 (2 ^ 64 - 4095)) ltac:(gres; apply bv_eq; vm_compute; reflexivity).   (* [comment removed for export] *)
+    stepb_tk F_bd7c4 D_bd7c4 ltac:(cond).                                (* [comment removed for export] *)
+    stepret F_bd7f0 D_bd7f0 ret ltac:(rwH; reflexivity).
+    apply mst_refl.
+  - split; [gres; rwH; reflexivity | solve_keeps_cs].
+Qed.
+
+Lemma step_subw_at' : forall segs regs pc mem rom w rd rs1 rs2 v,
+  fetch_word segs pc = Some w -> is_ecall w = false -> decode_any w = Some (Op32 ALU_SUB rd rs1 rs2, 4%Z) -> bv_eqb rd 0 = false ->
+  v_subw (getr regs rs1) (getr regs rs2) = v ->
+  RiscvSemantics.step segs (mkst regs pc mem rom) = MachineOk (mkst (regupd regs rd v) (v_addi pc 4) mem rom).
+Proof. intros * Hf He Hd Hrd Hv. rewrite (step_subw segs regs pc mem rom w rd rs1 rs2 Hf He Hd). rewrite Hrd, Hv. reflexivity. Qed.
+Lemma v_lw_small' : forall z, (0 <= z < 2 ^ 31)%Z -> v_lw (Z_to_bv 64 z) = Z_to_bv 64 z.
+Proof.
+  intros z Hz. unfold v_lw. rewrite u_Z2bv by lia. f_equal. unfold bv_swrap, bv_wrap.
+  change (bv_half_modulus 32) with (2 ^ 31)%Z. change (bv_modulus 32) with (2 ^ 32)%Z. rewrite Z.mod_small; lia.
+Qed.
+Lemma v_subw_small : forall a b, (0 <= b <= a)%Z -> (a < 2 ^ 31)%Z -> v_subw (Z_to_bv 64 a) (Z_to_bv 64 b) = Z_to_bv 64 (a - b).
+Proof.
+  intros a b H1 H2. unfold v_subw. rewrite !u_Z2bv by lia. f_equal. unfold bv_swrap, bv_wrap.
+  change (bv_half_modulus 32) with (2 ^ 31)%Z. change (bv_modulus 32) with (2 ^ 32)%Z. rewrite Z.mod_small; lia.
+Qed.
+
+Lemma lxor_bound64 : forall a b, (0 <= a < 2 ^ 64)%Z -> (0 <= b < 2 ^ 64)%Z -> (0 <= Z.lxor a b < 2 ^ 64)%Z.
+Proof.
+  intros a b Ha Hb. assert (Hnn : (0 <= Z.lxor a b)%Z) by (apply Z.lxor_nonneg; lia). split; [exact Hnn|].
+  destruct (Z.eq_dec (Z.lxor a b) 0) as [E|NE]; [lia|].
+  apply Z.log2_lt_pow2; [lia|]. pose proof (Z.log2_lxor a b ltac:(lia) ltac:(lia)) as L.
+  assert (Z.log2 a < 64)%Z by (destruct (Z.eq_dec a 0) as [->|]; [cbn; lia | apply Z.log2_lt_pow2; lia]).
+  assert (Z.log2 b < 64)%Z by (destruct (Z.eq_dec b 0) as [->|]; [cbn; lia | apply Z.log2_lt_pow2; lia]). lia.
+Qed.
+
+Definition W64 (M : word -> option byte) (a v : Z) : word -> option byte := wbytes M (Z_to_bv 64 a) (word_to_le_bytes 8 (Z_to_bv 64 v)).
+
+Section WV.
+  Variable M rom : word -> option byte.
+  Variables f q c rem k : Z.           (* [comment removed for export] *)
+  Hypothesis Hk : (0 <= k < 2 ^ 63)%Z.
+  Hypothesis Hrem : (0 <= rem < 2 ^ 63)%Z.
+  Hypothesis Hq : (0 <= q)%Z /\ (q + 32 < 2 ^ 63)%Z.
+
+  (* [comment removed for export] *)
+  Lemma wv_ret_A : forall regs,
+    getr regs 10 = Z_to_bv 64 k -> getr regs 22 = Z_to_bv 64 rem ->
+    exists regs',
+      msteps ASEGS (mkst regs (0xc2e38 : word) M rom) (mkst regs' (if Z.eqb k rem then (0xc2e40 : word) else (0xc2ecc : word)) M rom)
+      /\ getr regs' 10 = Z_to_bv 64 k /\ keeps_but [1]%bv regs regs'.
+  Proof.
+    intros regs H10 H22.
+    assert (S1 : exists r1, msteps ASEGS (mkst regs (0xc2e38 : word) M rom) (mkst r1 (0xbd7bc : word) M rom)
+              /\ getr r1 1 = (0xc2e3c : word) /\ getr r1 10 = Z_to_bv 64 k /\ getr r1 22 = Z_to_bv 64 rem /\ keeps_but [1]%bv regs r1).
+    { eexists. split; [stepn F_c2e38 D_c2e38; apply mst_refl|].
+      repeat split; gres; rwH; try reflexivity; try (apply bv_eq; vm_compute; reflexivity). solve_keeps_but. }
+    destruct S1 as (r1 & RUN1 & R1 & R10 & R22 & K1).
+    destruct (syscall_ret_ok r1 M rom (0xc2e3c : word) k R1 ret_ok_c2af4 R10 Hk) as (r2 & RUN2 & V10 & K2).
+    assert (V22 : getr r2 22 = Z_to_bv 64 rem) by (rewrite (K2 22%bv) by (cbv; tauto); exact R22).
+    destruct (Z.eqb_spec k rem) as [E|NE].
+    - eexists. split; [|split].
+      + eapply msteps_trans; [exact RUN1|]. eapply msteps_trans; [exact RUN2|].
+        stepb_ft F_c2e3c D_c2e3c ltac:(cond).                            (* [comment removed for export] *)
+        apply mst_refl.
+      + exact V10.
+      + eapply keeps_but_trans; [exact K1 | apply keeps_but_cs; exact K2].
+    - eexists. split; [|split].
+      + eapply msteps_trans; [exact RUN1|]. eapply msteps_trans; [exact RUN2|].
+        stepb_tk F_c2e3c D_c2e3c ltac:(cond).                            (* [comment removed for export] *)
+        apply mst_refl.
+      + exact V10.
+      + eapply keeps_but_trans; [exact K1 | apply keeps_but_cs; exact K2].
+  Qed.
+
+  (* [comment removed for export] *)
+  Lemma wv_ret_B : forall regs,
+    getr regs 10 = Z_to_bv 64 k -> getr regs 22 = Z_to_bv 64 rem -> getr regs 20 = Z_to_bv 64 q ->
+    exists regs',
+      msteps ASEGS (mkst regs (0xc2ec0 : word) M rom) (mkst regs' (if Z.eqb k rem then (0xc2e40 : word) else (0xc2ecc : word)) M rom)
+      /\ getr regs' 10 = Z_to_bv 64 k /\ getr regs' 19 = Z_to_bv 64 q /\ keeps_but [1; 19]%bv regs regs'.
+  Proof.
+    intros regs H10 H22 H20.
+    assert (S1 : exists r1, msteps ASEGS (mkst regs (0xc2ec0 : word) M rom) (mkst r1 (0xbd7bc : word) M rom)
+              /\ getr r1 1 = (0xc2ec4 : word) /\ getr r1 10 = Z_to_bv 64 k /\ getr r1 22 = Z_to_bv 64 rem /\ getr r1 20 = Z_to_bv 64 q /\ keeps_but [1; 19]%bv regs r1).
+    { eexists. split; [stepn F_c2ec0 D_c2ec0; apply mst_refl|].
+      repeat split; gres; rwH; try reflexivity; try (apply bv_eq; vm_compute; reflexivity). solve_keeps_but. }
+    destruct S1 as (r1 & RUN1 & R1 & R10 & R22 & R20 & K1).
+    destruct (syscall_ret_ok r1 M rom (0xc2ec4 : word) k R1 ret_ok_c2b7c R10 Hk) as (r2 & RUN2 & V10 & K2).
+    assert (V22 : getr r2 22 = Z_to_bv 64 rem) by (rewrite (K2 22%bv) by (cbv; tauto); exact R22).
+    assert (V20 : getr r2 20 = Z_to_bv 64 q) by (rewrite (K2 20%bv) by (cbv; tauto); exact R20).
+    destruct (Z.eqb_spec k rem) as [E|NE].
+    - eexists. split; [|split; [|split]].
+      + eapply msteps_trans; [exact RUN1|]. eapply msteps_trans; [exact RUN2|].
+        stepiv F_c2ec4 D_c2ec4 (Z_to_bv 64 q) ltac:(wval).               (* [comment removed for export] *)
+        stepb_tk F_c2ec8 D_c2ec8 ltac:(cond).                            (* [comment removed for export] *)
+        apply mst_refl.
+      + gres; rwH; reflexivity.
+      + gres; reflexivity.
+      + eapply keeps_but_trans; [exact K1|]. eapply keeps_but_trans; [apply keeps_but_cs; exact K2|]. solve_keeps_but.
+    - eexists. split; [|split; [|split]].
+      + eapply msteps_trans; [exact RUN1|]. eapply msteps_trans; [exact RUN2|].
+        stepiv F_c2ec4 D_c2ec4 (Z_to_bv 64 q) ltac:(wval).
+        stepb_ft F_c2ec8 D_c2ec8 ltac:(cond).                            (* [comment removed for export] *)
+        apply mst_refl.
+      + gres; rwH; reflexivity.
+      + gres; reflexivity.
+      + eapply keeps_but_trans; [exact K1|]. eapply keeps_but_trans; [apply keeps_but_cs; exact K2|]. solve_keeps_but.
+  Qed.
+
+  (* [comment removed for export] *)
+  Variables b1 l1 fd : Z.
+  Hypothesis Hf : (0 <= f)%Z /\ (f + 124 <= q \/ q + 32 <= f + 120)%Z /\ (f + 124 < 2 ^ 63)%Z.
+  Hypothesis Hfd : (0 <= fd < 2 ^ 31)%Z.
+  Hypothesis HFD : rdn ASEGS M (Z_to_bv 64 (f + 120)) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 fd)).
+  Hypothesis Hc : (1 <= c <= 2)%Z.
+  Hypothesis Hk0 : (0 < k)%Z.
+
+  #[local] Ltac slt_ft := rwH; unfold c_lts, bv_lts; rewrite !signed64_small by lia; first [apply Z.ltb_lt | apply Z.ltb_ge | apply Z.leb_le | apply Z.leb_gt]; lia.
+  #[local] Ltac rdw a := match goal with |- rdn _ _ ?ad _ = _ => replace ad with (Z_to_bv 64 a) by (symmetry; wval) end.
+  #[local] Ltac peel := rewrite rdn_wbytes_out;
+      [ | rewrite length_N_to_le_bytes; cbn [Z.of_nat Pos.to_nat]; unorm; lia | cbn [Z.of_nat Pos.to_nat]; unorm; lia
+        | rewrite length_N_to_le_bytes; cbn [Z.of_nat Pos.to_nat]; unorm; lia ].
+
+  Lemma wv_body_lo : forall regs,
+    (k <= l1 < 2 ^ 63)%Z -> (0 <= b1)%Z -> (b1 + k < 2 ^ 64)%Z ->
+    rdn ASEGS M (Z_to_bv 64 q) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 b1)) ->
+    rdn ASEGS M (Z_to_bv 64 (q + 8)) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 l1)) ->
+    store_ok ASEGS M (Z_to_bv 64 q) 16%nat = true ->
+    getr regs 10 = Z_to_bv 64 k -> getr regs 19 = Z_to_bv 64 q -> getr regs 18 = Z_to_bv 64 c -> getr regs 22 = Z_to_bv 64 rem -> getr regs 9 = Z_to_bv 64 f ->
+    (k <= rem)%Z ->
+    exists regs',
+      msteps ASEGS (mkst regs (0xc2ecc : word) M rom) (mkst regs' (0xc2ebc : word) (W64 (W64 M q (b1 + k)) (q + 8) (l1 - k)) rom)
+      /\ getr regs' 17 = Z_to_bv 64 66 /\ getr regs' 10 = Z_to_bv 64 fd /\ getr regs' 11 = Z_to_bv 64 q /\ getr regs' 12 = Z_to_bv 64 c
+      /\ getr regs' 20 = Z_to_bv 64 q /\ getr regs' 18 = Z_to_bv 64 c /\ getr regs' 22 = Z_to_bv 64 (rem - k)
+      /\ keeps_but [18; 20; 22]%bv regs regs'.
+  Proof.
+    intros regs Hl1 Hb1 Hb1k R0 R8 SOK H10 H19 H18 H22 H9 Hkr.
+    destruct Hq as (Hq0 & Hq1). destruct Hf as (Hf0 & Hfq & Hf1).
+    assert (SOK0 : store_ok ASEGS M (Z_to_bv 64 q) 8%nat = true).
+    { apply (store_ok_sub ASEGS M (Z_to_bv 64 q) _ 16%nat); [unorm; cbn; lia | exact SOK | unorm; lia | unorm; cbn; lia]. }
+    assert (SOK8 : store_ok ASEGS (W64 M q (b1 + k)) (Z_to_bv 64 (q + 8)) 8%nat = true).
+    { unfold W64. apply (store_ok_mono _ _ M); [apply wbytes_grows|].
+      apply (store_ok_sub ASEGS M (Z_to_bv 64 q) _ 16%nat); [unorm; cbn; lia | exact SOK | unorm; lia | unorm; cbn; lia]. }
+    assert (R8' : rdn ASEGS (W64 M q (b1 + k)) (Z_to_bv 64 (q + 8)) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 l1))).
+    { unfold W64. peel. exact R8. }
+    assert (HFD' : rdn ASEGS (W64 M q (b1 + k)) (Z_to_bv 64 (f + 120)) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 fd))).
+    { unfold W64. peel. exact HFD. }
+    eexists. split.
+    - stepb_ft F_c2ecc D_c2ecc ltac:(slt_ft).                                         (* [comment removed for export] *)
+      stepld F_c2ed0 D_c2ed0 (Z_to_bv 64 l1) ltac:(rdw (q + 8)%Z; exact R8).           (* [comment removed for export] *)
+      stepov F_c2ed4 D_c2ed4 (Z_to_bv 64 0) ltac:(gres; rwH; unfold v_sltu, c_ltu, bv_ltu; unorm; replace (l1 <? k)%Z with false by (symmetry; apply Z.ltb_ge; lia); reflexivity).   (* [comment removed for export] *)
+      stepiv F_c2ed8 D_c2ed8 (Z_to_bv 64 0) ltac:(gres; rwH; apply bv_eq; vm_compute; reflexivity).                                     (* [comment removed for export] *)
+      stepiv F_c2edc D_c2edc (Z_to_bv 64 q) ltac:(wval).                               (* [comment removed for export] *)
+      stepld F_c2ee0 D_c2ee0 (Z_to_bv 64 b1) ltac:(rdw q; exact R0).                   (* [comment removed for export] *)
+      stepiv F_c2ee4 D_c2ee4 (Z_to_bv 64 0) ltac:(gres; rwH; apply bv_eq; vm_compute; reflexivity).                                     (* [comment removed for export] *)
+      stepov F_c2ee8 D_c2ee8 (Z_to_bv 64 0) ltac:(gres; rwH; unfold v_and; unorm; rewrite Z.land_0_l; reflexivity).                     (* [comment removed for export] *)
+      stepiv F_c2eec D_c2eec (Z_to_bv 64 k) ltac:(wval).                               (* [comment removed for export] *)
+      stepiv F_c2ef0 D_c2ef0 (Z_to_bv 64 (b1 + k)) ltac:(wval).                        (* [comment removed for export] *)
+      stepsd F_c2ef4 D_c2ef4 (Z_to_bv 64 q) (Z_to_bv 64 (b1 + k)) ltac:(exact SOK0).   (* [comment removed for export] *)
+      stepb_tk F_c2ef8 D_c2ef8 ltac:(cond).                                            (* [comment removed for export] *)
+      stepn F_c2e90 D_c2e90.                                                           (* [comment removed for export] *)
+      stepiv F_c2e94 D_c2e94 (Z_to_bv 64 q) ltac:(wval).                               (* [comment removed for export] *)
+      stepiv F_c2e98 D_c2e98 (Z_to_bv 64 (q + 8)) ltac:(wval).                         (* [comment removed for export] *)
+      stepld F_c2e9c D_c2e9c (Z_to_bv 64 l1) ltac:(rdw (q + 8)%Z; exact R8').          (* [comment removed for export] *)
+      stepiv F_c2ea0 D_c2ea0 (Z_to_bv 64 (rem - k)) ltac:(wval).                       (* [comment removed for export] *)
+      chain_step; [reflexivity | eapply step_lw with (bs := word_to_le_bytes 4 (Z_to_bv 64 fd)) (v := Z_to_bv 64 fd);
+                     [exact F_c2ea4 | reflexivity | exact D_c2ea4 | rdw (f + 120)%Z; exact HFD' | apply bytes_le_to_Z_4; unorm; lia] | step_simpl; vnorm].   (* [comment removed for export] *)
+      chain_step; [reflexivity | eapply step_subw_at' with (v := Z_to_bv 64 c); [exact F_c2ea8 | reflexivity | exact D_c2ea8 | reflexivity
+                     | gres; rwH; rewrite v_subw_small by lia; f_equal; lia] | step_simpl].                                                              (* [comment removed for export] *)
+      stepiv F_c2eac D_c2eac (Z_to_bv 64 (l1 - k)) ltac:(wval).                        (* [comment removed for export] *)
+      stepsd F_c2eb0 D_c2eb0 (Z_to_bv 64 (q + 8)) (Z_to_bv 64 (l1 - k)) ltac:(exact SOK8).   (* [comment removed for export] *)
+      stepn F_c2eb4 D_c2eb4.                                                           (* [comment removed for export] *)
+      stepiv F_c2eb8 D_c2eb8 (Z_to_bv 64 c) ltac:(wval).                               (* [comment removed for export] *)
+      apply mst_refl.
+    - repeat split; gres; rwH; try reflexivity; try (rewrite v_lw_small' by lia; reflexivity). solve_keeps_but.
+  Qed.
+
+  Variables b2 l2 : Z.
+  Lemma wv_body_hi : forall regs,
+    c = 2%Z -> (0 <= l1 < k)%Z -> (k - l1 <= l2 < 2 ^ 63)%Z -> (0 <= b2)%Z -> (b2 + (k - l1) < 2 ^ 64)%Z ->
+    rdn ASEGS M (Z_to_bv 64 (q + 8)) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 l1)) ->
+    rdn ASEGS M (Z_to_bv 64 (q + 16)) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 b2)) ->
+    rdn ASEGS M (Z_to_bv 64 (q + 24)) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 l2)) ->
+    store_ok ASEGS M (Z_to_bv 64 (q + 16)) 16%nat = true ->
+    getr regs 10 = Z_to_bv 64 k -> getr regs 19 = Z_to_bv 64 q -> getr regs 18 = Z_to_bv 64 c -> getr regs 22 = Z_to_bv 64 rem -> getr regs 9 = Z_to_bv 64 f ->
+    (k <= rem)%Z ->
+    exists regs',
+      msteps ASEGS (mkst regs (0xc2ecc : word) M rom) (mkst regs' (0xc2ebc : word) (W64 (W64 M (q + 16) (b2 + (k - l1))) (q + 24) (l2 - (k - l1))) rom)
+      /\ getr regs' 17 = Z_to_bv 64 66 /\ getr regs' 10 = Z_to_bv 64 fd /\ getr regs' 11 = Z_to_bv 64 (q + 16) /\ getr regs' 12 = Z_to_bv 64 1
+      /\ getr regs' 20 = Z_to_bv 64 (q + 16) /\ getr regs' 18 = Z_to_bv 64 1 /\ getr regs' 22 = Z_to_bv 64 (rem - k)
+      /\ keeps_but [18; 20; 22]%bv regs regs'.
+  Proof.
+    intros regs Hc2 Hl1 Hl2 Hb2 Hb2k R8 R16 R24 SOK H10 H19 H18 H22 H9 Hkr.
+    destruct Hq as (Hq0 & Hq1). destruct Hf as (Hf0 & Hfq & Hf1).
+    assert (SOK0 : store_ok ASEGS M (Z_to_bv 64 (q + 16)) 8%nat = true).
+    { apply (store_ok_sub ASEGS M (Z_to_bv 64 (q + 16)) _ 16%nat); [unorm; cbn; lia | exact SOK | unorm; lia | unorm; cbn; lia]. }
+    assert (SOK8 : store_ok ASEGS (W64 M (q + 16) (b2 + (k - l1))) (Z_to_bv 64 (q + 24)) 8%nat = true).
+    { unfold W64. apply (store_ok_mono _ _ M); [apply wbytes_grows|].
+      apply (store_ok_sub ASEGS M (Z_to_bv 64 (q + 16)) _ 16%nat); [unorm; cbn; lia | exact SOK | unorm; lia | unorm; cbn; lia]. }
+    assert (R24' : rdn ASEGS (W64 M (q + 16) (b2 + (k - l1))) (Z_to_bv 64 (q + 24)) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 l2))).
+    { unfold W64. peel. exact R24. }
+    assert (HFD' : rdn ASEGS (W64 M (q + 16) (b2 + (k - l1))) (Z_to_bv 64 (f + 120)) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 fd))).
+    { unfold W64. peel. exact HFD. }
+    eexists. split.
+    - stepb_ft F_c2ecc D_c2ecc ltac:(slt_ft).                                         (* [comment removed for export] *)
+      stepld F_c2ed0 D_c2ed0 (Z_to_bv 64 l1) ltac:(rdw (q + 8)%Z; exact R8).           (* [comment removed for export] *)
+      stepov F_c2ed4 D_c2ed4 (Z_to_bv 64 1) ltac:(gres; rwH; unfold v_sltu, c_ltu, bv_ltu; unorm; replace (l1 <? k)%Z with true by (symmetry; apply Z.ltb_lt; lia); reflexivity).   (* [comment removed for export] *)
+      stepiv F_c2ed8 D_c2ed8 (Z_to_bv 64 16) ltac:(gres; rwH; apply bv_eq; vm_compute; reflexivity).                                    (* [comment removed for export] *)
+      stepiv F_c2edc D_c2edc (Z_to_bv 64 (q + 16)) ltac:(wval).                        (* [comment removed for export] *)
+      stepld F_c2ee0 D_c2ee0 (Z_to_bv 64 b2) ltac:(rdw (q + 16)%Z; exact R16).         (* [comment removed for export] *)
+      stepiv F_c2ee4 D_c2ee4 (Z_to_bv 64 (2 ^ 64 - 1)) ltac:(gres; rwH; apply bv_eq; vm_compute; reflexivity).                          (* [comment removed for export] *)
+      stepov F_c2ee8 D_c2ee8 (Z_to_bv 64 l1) ltac:(gres; rwH; unfold v_and; unorm; change (2 ^ 64 - 1)%Z with (Z.ones 64); rewrite Z.land_comm, Z.land_ones by lia; rewrite Z.mod_small by lia; reflexivity).   (* [comment removed for export] *)
+      stepiv F_c2eec D_c2eec (Z_to_bv 64 (k - l1)) ltac:(wval).                        (* [comment removed for export] *)
+      stepiv F_c2ef0 D_c2ef0 (Z_to_bv 64 (b2 + (k - l1))) ltac:(wval).                 (* [comment removed for export] *)
+      stepsd F_c2ef4 D_c2ef4 (Z_to_bv 64 (q + 16)) (Z_to_bv 64 (b2 + (k - l1))) ltac:(exact SOK0).   (* [comment removed for export] *)
+      stepb_ft F_c2ef8 D_c2ef8 ltac:(cond).                                            (* [comment removed for export] *)
+      stepn F_c2efc D_c2efc.                                                           (* [comment removed for export] *)
+      stepn F_c2f00 D_c2f00.                                                           (* [comment removed for export] *)
+      stepiv F_c2e94 D_c2e94 (Z_to_bv 64 (q + 16)) ltac:(wval).                        (* [comment removed for export] *)
+      stepiv F_c2e98 D_c2e98 (Z_to_bv 64 (q + 24)) ltac:(wval).                        (* [comment removed for export] *)
+      stepld F_c2e9c D_c2e9c (Z_to_bv 64 l2) ltac:(rdw (q + 24)%Z; exact R24').        (* [comment removed for export] *)
+      stepiv F_c2ea0 D_c2ea0 (Z_to_bv 64 (rem - k)) ltac:(wval).                       (* [comment removed for export] *)
+      chain_step; [reflexivity | eapply step_lw with (bs := word_to_le_bytes 4 (Z_to_bv 64 fd)) (v := Z_to_bv 64 fd);
+                     [exact F_c2ea4 | reflexivity | exact D_c2ea4 | rdw (f + 120)%Z; exact HFD' | apply bytes_le_to_Z_4; unorm; lia] | step_simpl; vnorm].   (* [comment removed for export] *)
+      chain_step; [reflexivity | eapply step_subw_at' with (v := Z_to_bv 64 1); [exact F_c2ea8 | reflexivity | exact D_c2ea8 | reflexivity
+                     | gres; rwH; rewrite Hc2; rewrite v_subw_small by lia; reflexivity] | step_simpl].                                                  (* [comment removed for export] *)
+      stepiv F_c2eac D_c2eac (Z_to_bv 64 (l2 - (k - l1))) ltac:(wval).                 (* [comment removed for export] *)
+      stepsd F_c2eb0 D_c2eb0 (Z_to_bv 64 (q + 24)) (Z_to_bv 64 (l2 - (k - l1))) ltac:(exact SOK8).   (* [comment removed for export] *)
+      stepn F_c2eb4 D_c2eb4.                                                           (* [comment removed for export] *)
+      stepiv F_c2eb8 D_c2eb8 (Z_to_bv 64 1) ltac:(wval).                               (* [comment removed for export] *)
+      apply mst_refl.
+    - repeat split; gres; rwH; try reflexivity; try (rewrite v_lw_small' by lia; reflexivity). solve_keeps_but.
+  Qed.
+End WV.
+
+(* [comment removed for export] *)
+Section WVE.
+  Variable M rom : word -> option byte.
+  Variables f sp buf len wpos wbase fd : Z.
+  Hypothesis Hsp : (0 <= sp)%Z /\ (sp + 40 < 2 ^ 63)%Z.
+  Hypothesis Hf : (0 <= f)%Z /\ (f + 124 <= sp + 8 \/ sp + 40 <= f)%Z /\ (f + 124 < 2 ^ 63)%Z.
+  Hypothesis Hw : (0 <= wbase <= wpos)%Z /\ (wpos < 2 ^ 63)%Z.
+  Hypothesis Hlen : (0 <= len < 2 ^ 62)%Z.
+  Hypothesis Hbuf : (0 <= buf < 2 ^ 64)%Z.
+  Hypothesis Hfd : (0 <= fd < 2 ^ 31)%Z.
+  Hypothesis RWP : rdn ASEGS M (Z_to_bv 64 (f + 40)) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 wpos)).
+  Hypothesis RWB : rdn ASEGS M (Z_to_bv 64 (f + 56)) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 wbase)).
+  Hypothesis RFD : rdn ASEGS M (Z_to_bv 64 (f + 120)) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 fd)).
+  Hypothesis SOK : store_ok ASEGS M (Z_to_bv 64 (sp + 8)) 32%nat = true.
+
+  Definition wve_mem : word -> option byte := W64 (W64 (W64 (W64 M (sp + 8) wbase) (sp + 16) (wpos - wbase)) (sp + 24) buf) (sp + 32) len.
+  Definition wve_iov : Z := if Z.eqb wpos wbase then (sp + 24)%Z else (sp + 8)%Z.
+  Definition wve_cnt : Z := if Z.eqb wpos wbase then 1%Z else 2%Z.
+
+  #[local] Ltac rdw a := match goal with |- rdn _ _ ?ad _ = _ => replace ad with (Z_to_bv 64 a) by (symmetry; wval) end.
+  #[local] Ltac peel := rewrite rdn_wbytes_out;
+      [ | rewrite length_N_to_le_bytes; cbn [Z.of_nat Pos.to_nat]; unorm; lia | cbn [Z.of_nat Pos.to_nat]; unorm; lia
+        | rewrite length_N_to_le_bytes; cbn [Z.of_nat Pos.to_nat]; unorm; lia ].
+  #[local] Ltac mysd F D aa vv oktac :=
+    chain_step; [reflexivity | eapply step_sd_at with (a := aa) (v := vv);
+                   [exact F | reflexivity | exact D | wval | (gres; rwH; reflexivity) | oktac] | step_simpl].
+  #[local] Ltac grows := first [apply mem_grows_refl | (eapply mem_grows_trans; [ | apply wbytes_grows ]; grows)].
+  #[local] Ltac sok := apply (store_ok_mono _ _ M); [grows|];
+      apply (store_ok_sub ASEGS M (Z_to_bv 64 (sp + 8)) _ 32%nat); [unorm; cbn; lia | exact SOK | unorm; lia | unorm; cbn; lia].
+
+  Lemma wv_entry : forall regs,
+    getr regs 9 = Z_to_bv 64 f -> getr regs 2 = Z_to_bv 64 sp -> getr regs 11 = Z_to_bv 64 buf -> getr regs 8 = Z_to_bv 64 len ->
+    exists regs',
+      msteps ASEGS (mkst regs (0xc2de8 : word) M rom) (mkst regs' (0xc2e34 : word) wve_mem rom)
+      /\ getr regs' 17 = Z_to_bv 64 66 /\ getr regs' 10 = Z_to_bv 64 fd /\ getr regs' 11 = Z_to_bv 64 wve_iov /\ getr regs' 12 = Z_to_bv 64 wve_cnt
+      /\ getr regs' 18 = Z_to_bv 64 wve_cnt /\ getr regs' 19 = Z_to_bv 64 wve_iov /\ getr regs' 22 = Z_to_bv 64 (wpos - wbase + len)
+      /\ keeps_but [18; 19; 22]%bv regs regs'.
+  Proof.
+    intros regs H9 H2 H11 H8. destruct Hsp as (Hs0 & Hs1). destruct Hf as (Hf0 & Hfs & Hf1). destruct Hw as (Hw0 & Hw1).
+    assert (RFD' : rdn ASEGS wve_mem (Z_to_bv 64 (f + 120)) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 fd))).
+    { unfold wve_mem, W64. peel. peel. peel. peel. exact RFD. }
+    pose proof (lxor_bound64 wpos wbase ltac:(lia) ltac:(lia)) as XB.
+    unfold wve_iov, wve_cnt. unfold wve_mem, W64 in *. destruct (Z.eqb_spec wpos wbase) as [E|NE].
+    - eexists. split.
+      + stepld F_c2de8 D_c2de8 (Z_to_bv 64 wpos) ltac:(rdw (f + 40)%Z; exact RWP).        (* [comment removed for export] *)
+        stepld F_c2dec D_c2dec (Z_to_bv 64 wbase) ltac:(rdw (f + 56)%Z; exact RWB).       (* [comment removed for export] *)
+        stepiv F_c2df0 D_c2df0 (Z_to_bv 64 (wpos - wbase)) ltac:(wval).                   (* [comment removed for export] *)
+        stepn F_c2df4 D_c2df4.                                                            (* [comment removed for export] *)
+        mysd F_c2df8 D_c2df8 (Z_to_bv 64 (sp + 8)) (Z_to_bv 64 wbase) ltac:(sok).
+        mysd F_c2dfc D_c2dfc (Z_to_bv 64 (sp + 16)) (Z_to_bv 64 (wpos - wbase)) ltac:(sok).
+        mysd F_c2e00 D_c2e00 (Z_to_bv 64 (sp + 24)) (Z_to_bv 64 buf) ltac:(sok).
+        mysd F_c2e04 D_c2e04 (Z_to_bv 64 (sp + 32)) (Z_to_bv 64 len) ltac:(sok).
+        stepiv F_c2e08 D_c2e08 (Z_to_bv 64 (wpos - wbase + len)) ltac:(wval).             (* [comment removed for export] *)
+        stepov F_c2e0c D_c2e0c (Z_to_bv 64 0) ltac:(gres; rwH; unfold v_sltu, c_ltu, bv_ltu, v_xor; rewrite E, Z.lxor_nilpotent; reflexivity).   (* [comment removed for export] *)
+        stepb_tk F_c2e10 D_c2e10 ltac:(cond).                                             (* [comment removed for export] *)
+        stepiv F_c2e1c D_c2e1c (Z_to_bv 64 (sp + 24)) ltac:(wval).                        (* [comment removed for export] *)
+        chain_step; [reflexivity | eapply step_lw with (bs := word_to_le_bytes 4 (Z_to_bv 64 fd)) (v := Z_to_bv 64 fd);
+                       [exact F_c2e20 | reflexivity | exact D_c2e20 | rdw (f + 120)%Z; exact RFD' | apply bytes_le_to_Z_4; unorm; lia] | step_simpl; vnorm].
+        stepiv F_c2e24 D_c2e24 (Z_to_bv 64 1) ltac:(wval).                                (* [comment removed for export] *)
+        stepn F_c2e28 D_c2e28.                                                            (* [comment removed for export] *)
+        stepiv F_c2e2c D_c2e2c (Z_to_bv 64 (sp + 24)) ltac:(wval).                        (* [comment removed for export] *)
+        stepiv F_c2e30 D_c2e30 (Z_to_bv 64 1) ltac:(wval).                                (* [comment removed for export] *)
+        apply mst_refl.
+      + repeat split; gres; rwH; try reflexivity; try (rewrite v_lw_small' by lia; reflexivity). solve_keeps_but.
+    - eexists. split.
+      + stepld F_c2de8 D_c2de8 (Z_to_bv 64 wpos) ltac:(rdw (f + 40)%Z; exact RWP).
+        stepld F_c2dec D_c2dec (Z_to_bv 64 wbase) ltac:(rdw (f + 56)%Z; exact RWB).
+        stepiv F_c2df0 D_c2df0 (Z_to_bv 64 (wpos - wbase)) ltac:(wval).
+        stepn F_c2df4 D_c2df4.
+        mysd F_c2df8 D_c2df8 (Z_to_bv 64 (sp + 8)) (Z_to_bv 64 wbase) ltac:(sok).
+        mysd F_c2dfc D_c2dfc (Z_to_bv 64 (sp + 16)) (Z_to_bv 64 (wpos - wbase)) ltac:(sok).
+        mysd F_c2e00 D_c2e00 (Z_to_bv 64 (sp + 24)) (Z_to_bv 64 buf) ltac:(sok).
+        mysd F_c2e04 D_c2e04 (Z_to_bv 64 (sp + 32)) (Z_to_bv 64 len) ltac:(sok).
+        stepiv F_c2e08 D_c2e08 (Z_to_bv 64 (wpos - wbase + len)) ltac:(wval).
+        stepov F_c2e0c D_c2e0c (Z_to_bv 64 1) ltac:(gres; rwH; unfold v_sltu, c_ltu, bv_ltu, v_xor; unorm;
+              assert (Z.lxor wpos wbase <> 0)%Z by (rewrite Z.lxor_eq_0_iff; exact NE);
+              replace (0 <? Z.lxor wpos wbase)%Z with true by (symmetry; apply Z.ltb_lt; lia); reflexivity).   (* [comment removed for export] *)
+        stepb_ft F_c2e10 D_c2e10 ltac:(cond).                                             (* [comment removed for export] *)
+        stepiv F_c2e14 D_c2e14 (Z_to_bv 64 (sp + 8)) ltac:(wval).                         (* [comment removed for export] *)
+        stepn F_c2e18 D_c2e18.                                                            (* [comment removed for export] *)
+        chain_step; [reflexivity | eapply step_lw with (bs := word_to_le_bytes 4 (Z_to_bv 64 fd)) (v := Z_to_bv 64 fd);
+                       [exact F_c2e20 | reflexivity | exact D_c2e20 | rdw (f + 120)%Z; exact RFD' | apply bytes_le_to_Z_4; unorm; lia] | step_simpl; vnorm].
+        stepiv F_c2e24 D_c2e24 (Z_to_bv 64 2) ltac:(wval).
+        stepn F_c2e28 D_c2e28.
+        stepiv F_c2e2c D_c2e2c (Z_to_bv 64 (sp + 8)) ltac:(wval).
+        stepiv F_c2e30 D_c2e30 (Z_to_bv 64 2) ltac:(wval).
+        apply mst_refl.
+      + repeat split; gres; rwH; try reflexivity; try (rewrite v_lw_small' by lia; reflexivity). solve_keeps_but.
+  Qed.
+End WVE.
+End FPX_1.

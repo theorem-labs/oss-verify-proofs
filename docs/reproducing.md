@@ -6,9 +6,10 @@ Each binary is pinned by its SHA-256 in its `harness.yaml`; `./oft fetch` and
 The build that produced the binaries is described on each project page: the
 library's repository and commit (or release archive), its build system, the
 compiler version and what each harness build changes. For a binary that a
-proof is about, the build record in `proofs/<project>/<harness>/provenance/`
-gives all of this in one place, with the flags and the result of an
-independent rebuild ([building.md](building.md#where-a-binary-comes-from)).
+proof is about, the build record in
+`projects/<project>/<harness>/proofs/provenance/` gives all of this in one
+place, with the flags and the result of an independent rebuild
+([building.md](building.md#where-a-binary-comes-from)).
 
 ## What a release attaches
 

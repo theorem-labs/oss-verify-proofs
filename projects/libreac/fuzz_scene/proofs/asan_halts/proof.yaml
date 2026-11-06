@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: libreac/fuzz_scene/asan_halts
+fingerprint: a695211dcf065d2d2849ac17094589322a48fecdd97208762953e5edaeec9224

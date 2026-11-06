@@ -1,0 +1,164 @@
+{
+ "img_lo": [
+  "0x10000",
+  "first PT_LOAD vaddr"
+ ],
+ "img_hi": [
+  "0x5fe000",
+  "page_up(last PT_LOAD vaddr + memsz)"
+ ],
+ "n_res": [
+  4,
+  "number of PT_LOAD"
+ ],
+ "shadow_off": [
+  "0x7fff8000",
+  "ASan RV64 shadow offset"
+ ],
+ "rw_lo": [
+  "0xa2000",
+  "page_down(last PT_LOAD vaddr)"
+ ],
+ "rw_len": [
+  "0x55c000",
+  "img_hi - rw_lo"
+ ],
+ "ph_addr_z": [
+  "0x10040",
+  "img_lo + e_phoff"
+ ],
+ "ph_ent_z": [
+  56,
+  "e_phentsize"
+ ],
+ "ph_num_z": [
+  11,
+  "e_phnum"
+ ],
+ "a_entry": [
+  "0x30eac",
+  "_start+0"
+ ],
+ "x_imemset": [
+  "0x6441c",
+  "__sanitizer_internal_memset+0"
+ ],
+ "x_imemcpy": [
+  "0x643a0",
+  "__sanitizer_internal_memcpy+0"
+ ],
+ "x_memset": [
+  "0x99b74",
+  "memset+0"
+ ],
+ "x_memcpy": [
+  "0x99770",
+  "memcpy+0"
+ ],
+ "x_memiszero": [
+  "0x6494c",
+  "_ZN11__sanitizer11mem_is_zeroEPKcm+0"
+ ],
+ "x_istrncpy": [
+  "0x64848",
+  "_ZN11__sanitizer16internal_strncpyEPcPKcm+0"
+ ],
+ "x_popfree": [
+  "0x37298",
+  "_ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE17PopulateFreeArrayEPNS_14AllocatorStatsEmPNS5_10RegionInfoEm+444"
+ ],
+ "x_envscan": [
+  "0x8f574",
+  "__init_libc+56"
+ ],
+ "x_envscan_k": [
+  "0x8f580",
+  "__init_libc+68"
+ ],
+ "x_pnscan": [
+  "0x8f638",
+  "__init_libc+252"
+ ],
+ "x_pnscan_k": [
+  "0x8f644",
+  "__init_libc+264"
+ ],
+ "x_sealed": [
+  "0x11835",
+  "rodata string \"<sealed>\\0\" (byte search, unique)"
+ ],
+ "x_sniff": [
+  0,
+  "no sniff summary for this image (cgif form: 0)"
+ ],
+ "sniff_tab": [
+  0,
+  "no sniff summary for this image (cgif form: 0)"
+ ],
+ "sniff_cell": [
+  0,
+  "no sniff summary for this image (cgif form: 0)"
+ ],
+ "stops_more": [
+  [
+   "0x34f0c",
+   "_ZN11__sanitizer29SealedHangOnAllocationFailureEv+36"
+  ],
+  [
+   "0x36530",
+   "_ZN11__sanitizer15QuarantineCacheIN6__asan18QuarantineCallbackEE7EnqueueES2_Pvm+400"
+  ],
+  [
+   "0x54728",
+   "_ZN6__asan12PoisonShadowEmmh+1188"
+  ],
+  [
+   "0x5aae0",
+   "_ZN6__asan19SealedReserveShadowEv+432"
+  ],
+  [
+   "0x5aaf4",
+   "_ZN6__asan19SealedReserveShadowEv+452"
+  ],
+  [
+   "0x5ab08",
+   "_ZN6__asan19SealedReserveShadowEv+472"
+  ],
+  [
+   "0x60498",
+   "_ZN11__sanitizer23ReportMmapFailureAndDieEmPKcS1_ib+48"
+  ],
+  [
+   "0x60568",
+   "_ZN11__sanitizer25ReportMunmapFailureAndDieEPvmib+40"
+  ],
+  [
+   "0x6da94",
+   "_ZN11__sanitizer16MapDynamicShadowEmmmRmm+344"
+  ],
+  [
+   "0x6e9a0",
+   "_ZN11__sanitizer18MmapFixedNoReserveEmmPKc+196"
+  ],
+  [
+   "0x6eb30",
+   "_ZN11__sanitizer20ReservedAddressRange4InitEmPKcm+196"
+  ],
+  [
+   "0x78888",
+   "_ZN11__sanitizer18InternalSymbolizer5FlushEv+0"
+  ],
+  [
+   "0x6eca0",
+   "self-loop _ZN11__sanitizerL23SealedRepairReservationEmm+0xc0 (enumerated, not in STOP_SPEC: appended)"
+  ]
+ ],
+ "TFIB_TEXT_LO": [
+  "0x30eac",
+  "text start (= e_entry), from .text"
+ ],
+ "TFIB_TEXT_N": [
+  "0x1b7ff",
+  "(0x9eea8 - 0x30eac) / 4; .text size 0x6dffc / 4 = 112639 words (THE BASIS IS THE SECTION HEADER, never the symbol list: a count of \"functions beyond the end\" varies with symbol typing and aliasing, the section size does not); the donor's released end 0x9c96c relocates here to 0x9ee48 (19 words of masked context, unique), 24 words SHORT of this image's text end 0x9eea8: overridden by item 1i"
+ ]
+}

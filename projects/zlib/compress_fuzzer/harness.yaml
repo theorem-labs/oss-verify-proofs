@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zlib
 harness: compress_fuzzer
-rocq: OssFuzzTheorems.zlib.compress_fuzzer
+rocq: OSSVerify.zlib.compress_fuzzer
 origin: oss-fuzz
 summary: 'check_decompress: uncompress of the input behind a synthesized 2-byte zlib header; result ignored.'
 entry: LLVMFuzzerTestOneInput

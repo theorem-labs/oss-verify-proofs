@@ -1,0 +1,15 @@
+file	line	old	new	role
+B/YD3b.v	541	1507328	1515520	the page of StackStore stackStore (the 4 KiB page [p, p + 0x1000) the store block must avoid): knock 0x170448 in page 0x170000, fuzz_wire 0x1726c8 in page 0x172000; port_core left them (a page multiple that is no bound)
+B/YD3b.v	541	1511424	1519616	the page of StackStore stackStore (the 4 KiB page [p, p + 0x1000) the store block must avoid): knock 0x170448 in page 0x170000, fuzz_wire 0x1726c8 in page 0x172000; port_core left them (a page multiple that is no bound)
+B/YD3j.v	435	0x131000	0x133000	the end of the frame-free window of b2_mod_cells_kept = page_up(common_flags_dont_use + 0x105), the page above the last cell its rows read (knock 0x1300a8 + 0x105 -> 0x131000, fuzz_wire 0x132328 + 0x105 -> 0x133000): port_core moves the statement's copy by symbol (useCounts + 0xbc0, not that page) and leaves the proof-body copies
+B/YD3j.v	441	0x131000	0x133000	the end of the frame-free window of b2_mod_cells_kept = page_up(common_flags_dont_use + 0x105), the page above the last cell its rows read (knock 0x1300a8 + 0x105 -> 0x131000, fuzz_wire 0x132328 + 0x105 -> 0x133000): port_core moves the statement's copy by symbol (useCounts + 0xbc0, not that page) and leaves the proof-body copies
+B/YD3j.v	444	0x131000	0x133000	the end of the frame-free window of b2_mod_cells_kept = page_up(common_flags_dont_use + 0x105), the page above the last cell its rows read (knock 0x1300a8 + 0x105 -> 0x131000, fuzz_wire 0x132328 + 0x105 -> 0x133000): port_core moves the statement's copy by symbol (useCounts + 0xbc0, not that page) and leaves the proof-body copies
+B/YFhn.v	431	0x80050000	0x80050000	CZONE shadow bound: the core owner's value 0x80050000
+B/YFix.v	293	0x80050000	0x80050000	CZONE shadow bound: the core owner's value 0x80050000
+B/YFix.v	297	0x80050000	0x80050000	CZONE shadow bound: the core owner's value 0x80050000
+B/YFjb.v	291	0x80050000	0x80050000	CZONE shadow bound: the core owner's value 0x80050000
+B/YFjb.v	295	0x80050000	0x80050000	CZONE shadow bound: the core owner's value 0x80050000
+B/YFju.v	582	0x80050000	0x80050000	CZONE shadow bound: the core owner's value 0x80050000
+B/YFju.v	592	0x80050000	0x80050000	CZONE shadow bound: the core owner's value 0x80050000
+B/YFkm.v	1319	0x80050000	0x80050000	CZONE shadow bound: the core owner's value 0x80050000
+B/YFkz.v	911	0x80050000	0x80050000	CZONE shadow bound: the core owner's value 0x80050000

@@ -1,0 +1,4 @@
+# files copied from the run's stage-out (none existed in LIB): 3
+B/Rt/YF0r.v
+B/Rt/YF0s.v
+Reusable/YF0v.v

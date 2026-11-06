@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libcbor
 harness: cbor_load_fuzzer
-rocq: OssFuzzTheorems.libcbor.cbor_load_fuzzer
+rocq: OSSVerify.libcbor.cbor_load_fuzzer
 origin: upstream
 summary: cbor_load the input; on success cbor_describe to /dev/null, cbor_serialize_alloc (the serialized
   buffer is freed without being compared to the input or re-loaded), cbor_copy (the copy is never compared

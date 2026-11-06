@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spdlog
 harness: log_fuzzer
-rocq: OssFuzzTheorems.spdlog.log_fuzzer
+rocq: OSSVerify.spdlog.log_fuzzer
 origin: oss-fuzz
 summary: fuzzed runtime format string logged at all six levels via functions and SPDLOG_* macros; output
   goes to a basic_file_sink on /dev/null and is never read; fmt format errors are caught by spdlog's internal

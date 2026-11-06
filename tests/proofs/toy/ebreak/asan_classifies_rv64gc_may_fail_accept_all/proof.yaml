@@ -1,0 +1,3 @@
+refutes: toy/ebreak/asan_classifies_rv64gc_may_fail_accept_all
+approach: the classifier exits 0 on lps's finite-input witness, on which the builds disagree
+uses: [lps-checks]

@@ -3,7 +3,7 @@
 
 lldpd's own fuzz target `fuzz_lldp` ([source](source/fuzz_lldp.c), unmodified), one of the targets OSS-Fuzz builds, over lldpd (lldpd/lldpd at c91f4e29).
 
-lldp_decode() on the raw frame; the result is only freed, nothing about the decoded chassis/port is checked.
+lldp_decode() on the raw frame. A frame that gives no chassis or no port returns 1. Otherwise the result is only freed, and nothing about the decoded chassis/port is checked.
 
 ## How this program differs from what OSS-Fuzz runs
 - Linked against lldpd at commit c91f4e29.
@@ -13,14 +13,18 @@ lldp_decode() on the raw frame; the result is only freed, nothing about the deco
 ## What the harness checks
 The harness makes no check of its own beyond not crashing, so a statement about it says only that the code it calls never crashes, hangs or trips a sanitizer.
 
+The harness turns some inputs away by returning a value other than 0 or -1, which the driver reports as status 78, so its halts statements allow 78 as well:
+- An input shorter than 5 bytes or longer than 2048 is returned 1 without being decoded ([lines 29-31](source/fuzz_lldp.c#L29-L31)).
+- An input lldp_decode makes no chassis or port of (not an LLDP frame) is returned 1 ([lines 41-43](source/fuzz_lldp.c#L41-L43)).
+
 ## Statements ([Statements.v](Statements.v), [Characterise.v](Characterise.v), [Distribution.v](Distribution.v))
 
 | statement | in one line | status |
 |---|---|---|
-| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
-| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
-| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
-| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
+| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0, 2 or 78 | open |
+| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0, 2 or 78 | open |
+| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0, 2 or 78 | open |
+| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0, 2 or 78 | open |
 | `plain_halts_may_fail` | with no memory premise, and even if any request is refused at any time: the plain build exits with any status | open |
 | `ubsan_halts_may_fail` | with no memory premise, and even if any request is refused at any time: the UBSan build exits with any status | open |
 | `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires | open |

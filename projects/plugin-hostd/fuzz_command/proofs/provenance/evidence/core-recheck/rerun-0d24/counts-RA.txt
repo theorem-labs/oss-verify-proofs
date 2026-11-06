@@ -1,0 +1,17 @@
+old RA-3d2e: 212053 rows (+ column line, + 29 header lines); sha256 of the rows without the # header block cbda41f5619b
+new RA-0d24: 212053 rows (+ column line, + 29 header lines); sha256 of the rows without the # header block 75ce43de2a88
+matched by numeral identity: 212053; old rows unmatched: 0; new rows unmatched: 0
+flagged rows: old 25054, new 25117
+same verdict: 211979
+changed verdict: 74
+  new flag (non-finding -> finding class): 63
+  flag cleared (finding class -> non-finding): 0
+  flag class changed (finding -> other finding class): 0
+  non-finding class changed: 11
+
+transitions (old verdict -> new verdict: rows)
+  SAME-SYMBOL -> DIFFERENT-SYMBOL: 51  [new flag (non-finding -> finding class)]
+  ROUND-CONSTANT-SAME -> STALE-DONOR-CODE-POINTER: 10  [new flag (non-finding -> finding class)]
+  SAME-SYMBOL -> UNMEASURED-NAME: 7  [non-finding class changed]
+  ROUND-CONSTANT-SAME -> SAME-SYMBOL: 4  [non-finding class changed]
+  ROUND-CONSTANT-SAME -> SAME-VALUE-DIFFERENT-OBJECT: 2  [new flag (non-finding -> finding class)]

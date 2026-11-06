@@ -1,0 +1,44 @@
+--- B/YFet.v
++++ B/YFet.v
+@@ -289,16 +289,16 @@
+ unfold cell_holds in OLDc |- *. destruct c as [e w v]; cbn [c_at c_w c_val] in *. subst e w.
+ pose proof (ts_const _ TB) as TC.
+ assert (Hv : v = AV (ANum 0)).
+-{ clear - Hc TC. rewrite TC in Hc. cbv [Tfib_const Tfib_const_sym Tfib_const_abs Tfib_const_shadow app In z8 z4 z2 z1 c8 c4 c2 c1] in Hc.
+-repeat (destruct Hc as [Hc|Hc]; [first [congruence | discriminate] |]). destruct Hc. }
++{ clear - Hc TC. rewrite TC in Hc. match type of Hc with In (ACell ?a ?w _) ?l => match goal with |- _ = AV ?r => assert (CK : forallb (fun c0 : acell => if andb (aexp_eqb (c_at c0) a) (Nat.eqb (c_w c0) w) then match c_val c0 with AV e0 => aexp_eqb e0 r | _ => false end else true) l = true) by (vm_compute; reflexivity) end end.
++pose proof (proj1 (forallb_forall _ _) CK _ Hc) as K. cbn in K. destruct v as [e0|m0 v0]; cbn in K; [|discriminate K]. destruct e0; cbn in K; try discriminate K. apply Z.eqb_eq in K. rewrite K. reflexivity. }
+ subst v. intros k Hk. subst rd'. unfold aview. cbn [aeval]. rewrite (C152 (0xa938a + Z.of_nat k)) by (rewrite EAQ, (ts_inst _ TB); unfold TFIB_INST, o_quar; lia).
+ cbn [option_map]. f_equal. unfold YG0f.le_byte. rewrite Z.shiftr_0_l. reflexivity.
+ -
+ unfold cell_holds in OLDc |- *. destruct c as [e w v]; cbn [c_at c_w c_val] in *. subst e w.
+ pose proof (ts_const _ TB) as TC.
+ assert (Hv : v = AV (ANum 0)).
+-{ clear - Hc TC. rewrite TC in Hc. cbv [Tfib_const Tfib_const_sym Tfib_const_abs Tfib_const_shadow app In z8 z4 z2 z1 c8 c4 c2 c1] in Hc.
+-repeat (destruct Hc as [Hc|Hc]; [first [congruence | discriminate] |]). destruct Hc. }
++{ clear - Hc TC. rewrite TC in Hc. match type of Hc with In (ACell ?a ?w _) ?l => match goal with |- _ = AV ?r => assert (CK : forallb (fun c0 : acell => if andb (aexp_eqb (c_at c0) a) (Nat.eqb (c_w c0) w) then match c_val c0 with AV e0 => aexp_eqb e0 r | _ => false end else true) l = true) by (vm_compute; reflexivity) end end.
++pose proof (proj1 (forallb_forall _ _) CK _ Hc) as K. cbn in K. destruct v as [e0|m0 v0]; cbn in K; [|discriminate K]. destruct e0; cbn in K; try discriminate K. apply Z.eqb_eq in K. rewrite K. reflexivity. }
+ subst v. intros k Hk. subst rd'.
+ rewrite <- (OLDc k Hk). apply AG.
+ + cbn [aeval]. lia.
+@@ -478,16 +478,16 @@
+ unfold cell_holds in OLDc |- *. destruct c as [e w v]; cbn [c_at c_w c_val] in *. subst e w.
+ pose proof (ts_const _ TB) as TC.
+ assert (Hv : v = AV (ANum 0)).
+-{ clear - Hc TC. rewrite TC in Hc. cbv [Tfib_const Tfib_const_sym Tfib_const_abs Tfib_const_shadow app In z8 z4 z2 z1 c8 c4 c2 c1] in Hc.
+-repeat (destruct Hc as [Hc|Hc]; [first [congruence | discriminate] |]). destruct Hc. }
++{ clear - Hc TC. rewrite TC in Hc. match type of Hc with In (ACell ?a ?w _) ?l => match goal with |- _ = AV ?r => assert (CK : forallb (fun c0 : acell => if andb (aexp_eqb (c_at c0) a) (Nat.eqb (c_w c0) w) then match c_val c0 with AV e0 => aexp_eqb e0 r | _ => false end else true) l = true) by (vm_compute; reflexivity) end end.
++pose proof (proj1 (forallb_forall _ _) CK _ Hc) as K. cbn in K. destruct v as [e0|m0 v0]; cbn in K; [|discriminate K]. destruct e0; cbn in K; try discriminate K. apply Z.eqb_eq in K. rewrite K. reflexivity. }
+ subst v. intros k Hk. subst rd'. unfold aview. cbn [aeval]. rewrite (C152 (0xa938a + Z.of_nat k)) by (rewrite EAQ, (ts_inst _ TB); unfold TFIB_INST, o_quar; lia).
+ cbn [option_map]. f_equal. unfold YG0f.le_byte. rewrite Z.shiftr_0_l. reflexivity.
+ -
+ unfold cell_holds in OLDc |- *. destruct c as [e w v]; cbn [c_at c_w c_val] in *. subst e w.
+ pose proof (ts_const _ TB) as TC.
+ assert (Hv : v = AV (ANum 0)).
+-{ clear - Hc TC. rewrite TC in Hc. cbv [Tfib_const Tfib_const_sym Tfib_const_abs Tfib_const_shadow app In z8 z4 z2 z1 c8 c4 c2 c1] in Hc.
+-repeat (destruct Hc as [Hc|Hc]; [first [congruence | discriminate] |]). destruct Hc. }
++{ clear - Hc TC. rewrite TC in Hc. match type of Hc with In (ACell ?a ?w _) ?l => match goal with |- _ = AV ?r => assert (CK : forallb (fun c0 : acell => if andb (aexp_eqb (c_at c0) a) (Nat.eqb (c_w c0) w) then match c_val c0 with AV e0 => aexp_eqb e0 r | _ => false end else true) l = true) by (vm_compute; reflexivity) end end.
++pose proof (proj1 (forallb_forall _ _) CK _ Hc) as K. cbn in K. destruct v as [e0|m0 v0]; cbn in K; [|discriminate K]. destruct e0; cbn in K; try discriminate K. apply Z.eqb_eq in K. rewrite K. reflexivity. }
+ subst v. intros k Hk. subst rd'.
+ rewrite <- (OLDc k Hk). apply AG.
+ + cbn [aeval]. lia.

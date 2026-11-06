@@ -1,0 +1,17 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.Proofs.openssl.pem.lib.Common Require Import PropExec AsanAcct AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound.
+From OSSVerify.Proofs.openssl.pem.lib.Start Require Import AsanRegModel AsanRegStmt AsanRegContract AsanRegBridge B_RegConsts B_PlanImage B_Atable.
+From OSSVerify.Proofs.openssl.pem.lib.B Require Import RT_ibase XR_rehash_k XR_regrun.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations. Import AX2. Import APC. Import AP.
+Open Scope Z_scope.
+
+Theorem A_regrun_contract : RGK.regrun_contract B_SEGS B_RGC.
+Proof. exact (RGB.regrun_contract_of_walk B_SEGS B_RGC A_seg_below B_t_segs_wx (eq_refl true) xr_regrun_spec). Qed.

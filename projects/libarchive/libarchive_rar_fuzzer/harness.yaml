@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_rar_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_rar_fuzzer
+rocq: OSSVerify.libarchive.libarchive_rar_fuzzer
 origin: upstream
 summary: Reads the input as a RAR (v4) archive (+ all filters, passphrase 'password'); per entry calls
   pathname(_w), size, mtime, mode, is_encrypted and drains archive_read_data. Every return value is discarded.

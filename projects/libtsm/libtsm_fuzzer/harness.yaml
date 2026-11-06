@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libtsm
 harness: libtsm_fuzzer
-rocq: OssFuzzTheorems.libtsm.libtsm_fuzzer
+rocq: OSSVerify.libtsm.libtsm_fuzzer
 origin: oss-fuzz
 summary: 'Checks one property, an invariant: After feeding the input to the VTE of an 80x24 screen (scrollback
   200), tsm_screen_draw must only ever hand the draw callback cell coordinates inside the screen: posx

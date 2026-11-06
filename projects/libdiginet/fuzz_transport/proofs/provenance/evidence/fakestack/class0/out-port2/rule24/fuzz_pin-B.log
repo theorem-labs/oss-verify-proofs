@@ -1,0 +1,5 @@
+donor: pinned sha256 d6f83d301522, twin sha256 635d02c7e8fa, allocated sections equal (build-id note excepted): True
+target: pinned sha256 41113a03c82f, twin sha256 e217cb0a84f1, allocated sections equal (build-id note excepted): True
+reac-pw/fuzz_pin ref 9b0ac6f0e678 image B class 0: 9 of 9 ranges paired and compared; pc-relative words 43 (walked), 390 (whole functions)
+7 resolve lines: 5 move a value (0x3cbe8 -> 0x3e000, 0x99160 -> 0xa3ce0, 0x991c0 -> 0xa3d40, 0x99e50 -> 0xa49d0, 0x99e60 -> 0xa49e0), 0 name the image of a header range, the rest keep the value
+PASS

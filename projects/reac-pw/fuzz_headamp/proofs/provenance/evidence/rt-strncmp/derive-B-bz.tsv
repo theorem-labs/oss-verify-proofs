@@ -1,0 +1,71 @@
+file:line	old (image A)	new (image B)	class	derive_y method	derive_y check	alreloc	decision
+lib/AU/Bz/A/I_strncmp.v:77	0x4283c	0x428bc	code	name-pair	___interceptor_strncmp+0x1b0	0x428bc	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmp.v:122	0x4268c	0x4270c	code	name-pair	___interceptor_strncmp+0x0	0x4270c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmp.v:148	0x59d1c	0x59d9c	code	name-pair	_ZN6__asan18TryAsanInitFromRtlEv+0x0	0x59d9c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmp.v:152	0x426f4	0x42774	code	name-pair	___interceptor_strncmp+0x68	0x42774	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmp.v:210	0x4268c	0x4270c	code	name-pair	___interceptor_strncmp+0x0	0x4270c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmp.v:232	0x59d1c	0x59d9c	code	name-pair	_ZN6__asan18TryAsanInitFromRtlEv+0x0	0x59d9c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmp.v:265	0x4268c	0x4270c	code	name-pair	___interceptor_strncmp+0x0	0x4270c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:26	0x9c360	0x9c7e0	got	ref-exact	reference target	0x9c7e0	agreed; .got cell: image B word = the same symbol as image A word: ok
+lib/AU/Bz/A/I_strncmpw.v:26	0x1368e8	0x136d68	bss	ref-exact	reference target	0x136d68	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:27	0x9c370	0x9c7f0	got	ref-exact	reference target	0x9c7f0	agreed; .got cell: image B word = the same symbol as image A word: ok
+lib/AU/Bz/A/I_strncmpw.v:27	0xa4db8	0xa5238	bss	ref-exact	reference target	0xa5238	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:28	0xa4db8	0xa5238	bss	ref-exact	reference target	0xa5238	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:29	0xa5a98	0xa5f18	bss	ref-exact	reference target	0xa5f18	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:30	0x1369dd	0x136e5d	bss	name-pair	_ZN11__sanitizer21common_flags_dont_useE+0xf5	0x136e5d	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:163	0x4271c	0x4279c	code	name-pair	___interceptor_strncmp+0x90	0x4279c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:167	0x426f4	0x42774	code	name-pair	___interceptor_strncmp+0x68	0x42774	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:232	0x42a88	0x42b08	code	name-pair	___interceptor_strncmp+0x3fc	0x42b08	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:234	0x42a78	0x42af8	code	name-pair	___interceptor_strncmp+0x3ec	0x42af8	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:266	0x42884	0x42904	code	name-pair	___interceptor_strncmp+0x1f8	0x42904	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:270	0x42a90	0x42b10	code	name-pair	___interceptor_strncmp+0x404	0x42b10	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:295	0x42884	0x42904	code	name-pair	___interceptor_strncmp+0x1f8	0x42904	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:299	0x4283c	0x428bc	code	name-pair	___interceptor_strncmp+0x1b0	0x428bc	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw2.v:26	0x42b50	0x42bd0	code	name-pair	___interceptor_strncmp+0x4c4	0x42bd0	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw2.v:28	0x42b40	0x42bc0	code	name-pair	___interceptor_strncmp+0x4b4	0x42bc0	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw2.v:60	0x428dc	0x4295c	code	name-pair	___interceptor_strncmp+0x250	0x4295c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw2.v:64	0x42b58	0x42bd8	code	name-pair	___interceptor_strncmp+0x4cc	0x42bd8	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw2.v:89	0x428dc	0x4295c	code	name-pair	___interceptor_strncmp+0x250	0x4295c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw2.v:93	0x42894	0x42914	code	name-pair	___interceptor_strncmp+0x208	0x42914	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw3.v:38	0x426dc	0x4275c	code	name-pair	___interceptor_strncmp+0x50	0x4275c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw3.v:45	0x4268c	0x4270c	code	name-pair	___interceptor_strncmp+0x0	0x4270c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw3.v:72	0x42894	0x42914	code	name-pair	___interceptor_strncmp+0x208	0x42914	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:24	0x41b98	0x41c18	code	name-pair	__interceptor_trampoline_strlen+0x0	0x41c18	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:24	0x41c2c	0x41cac	code	name-pair	___interceptor_strlen+0x0	0x41cac	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:25	0x41b9c	0x41c1c	code	name-pair	__interceptor_trampoline_strnlen+0x0	0x41c1c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:25	0x41ec0	0x41f40	code	name-pair	___interceptor_strnlen+0x0	0x41f40	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:26	0x41bb0	0x41c30	code	name-pair	__interceptor_trampoline_memchr+0x0	0x41c30	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:26	0x43898	0x43918	code	name-pair	___interceptor_memchr+0x0	0x43918	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:27	0x51d08	0x51d88	code	name-pair	__interceptor_trampoline_memcpy+0x0	0x51d88	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:27	0x526d8	0x52758	code	name-pair	___interceptor_memcpy+0x0	0x52758	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:28	0x41ba4	0x41c24	code	name-pair	__interceptor_trampoline_strncmp+0x0	0x41c24	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:28	0x4268c	0x4270c	code	name-pair	___interceptor_strncmp+0x0	0x4270c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:29	0x41bac	0x41c2c	code	name-pair	__interceptor_trampoline_memcmp+0x0	0x41c2c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:29	0x437dc	0x4385c	code	name-pair	___interceptor_memcmp+0x0	0x4385c	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:30	0x51d04	0x51d84	code	name-pair	__interceptor_trampoline_memset+0x0	0x51d84	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:30	0x523e8	0x52468	code	name-pair	___interceptor_memset+0x0	0x52468	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:31	0x41c28	0x41ca8	code	name-pair	__interceptor_trampoline_strtol+0x0	0x41ca8	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_tramp.v:31	0x47a58	0x47ad8	code	name-pair	___interceptor_strtol+0x0	0x47ad8	agreed; checked by symbol + offset in both twins: ok
+lib/AU/Bz/A/I_strncmpw.v:28	0x7fff8000	0x7fff8000	class-5 constant (shadow offset)	kept	-	0x7fff8000	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw.v:318	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw.v:318	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw.v:321	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw.v:322	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw.v:330	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw.v:330	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw.v:331	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw.v:331	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw.v:333	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw.v:344	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw.v:344	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw2.v:112	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw2.v:112	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw2.v:115	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw2.v:116	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw2.v:124	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw2.v:124	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw2.v:125	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw2.v:125	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw2.v:127	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw2.v:138	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok
+lib/AU/Bz/A/I_strncmpw2.v:138	2147450880	2147450880	class-5 constant (shadow offset)	kept	-	2147450880	byte-identical to image A: ok

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: binutils
 harness: fuzz_disassemble
-rocq: OssFuzzTheorems.binutils.fuzz_disassemble
+rocq: OSSVerify.binutils.fuzz_disassemble
 origin: oss-fuzz
 summary: Disassembles the input with arch/mach/flavour taken from its last 10 bytes until the disassembler
   stops; output text is discarded.

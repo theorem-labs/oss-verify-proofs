@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: dnsmasq
 harness: fuzz_util
-rocq: OssFuzzTheorems.dnsmasq.fuzz_util
+rocq: OSSVerify.dnsmasq.fuzz_util
 origin: oss-fuzz
 summary: Builds a fuzzed struct daemon, then calls hostname_isequal, legal_hostname, canonicalise, parse_hex
   (x2), wildcard_match(n), hostname_issubdomain, is_name_synthetic on two fuzzed names; every return value

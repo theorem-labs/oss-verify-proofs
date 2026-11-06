@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zlib
 harness: example_dict_fuzzer
-rocq: OssFuzzTheorems.zlib.example_dict_fuzzer
+rocq: OSSVerify.zlib.example_dict_fuzzer
 origin: oss-fuzz
 summary: 'Checks 2 properties (listed below); the first, a round trip: deflateInit2 (level/windowBits/memLevel/strategy
   from data[0]) with a preset dictionary = first data[0] bytes of the input, then inflate supplying the

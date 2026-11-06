@@ -1,0 +1,5 @@
+past-end: this image's end 0xa033c (TFIB_TEXT_N 113716), text end 0xa033c (0 words past); the donor's released end 0x98294, its text end 0x98294; 0 function start(s) / cell value(s) past the end
+atable: stops_more = the 13 self-loops of link.asan: 12 in STOP_SPEC order; APPENDED 0x6ff28 _ZN11__sanitizerL23SealedRepairReservationEmm+0xc0
+PASS AB12.v atable image fields (key = field): 3 rows, exactly the set link.asan (e_entry, PT_LOAD hull) defines
+PASS AB12.v atable x_* fields (key = field, row = the symbol it names): 11 rows, exactly the set the twin img/link.asan.unstripped defines
+PASS AB12.v stops_more (key = self-loop site): 13 rows, exactly the set link.asan (13 self-loops, in .text) defines

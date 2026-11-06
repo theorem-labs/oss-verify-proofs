@@ -1,0 +1,4 @@
+# plant ADD in _ZN6__asan9Allocator22FindHeapChunkByAddressEm at +0x10 of X 0x30954 / Y 0x30948: 00098537 lui a0, 0x98 ; 00050533 add a0, a0, zero ; 28853503 ld a0, 0x288(a0)
+#   the load base is 0x98288: _ZTVN11__sanitizer11FlagHandlerIiEE+0x0 in X, read+0x28 in Y (sha256 X f6a69170e8c8, Y twin 4480095e0bb2, Y pin 4e91ed7ebb46)
+# plant XOR in _ZN6__asan9Allocator22FindHeapChunkByAddressEm at +0x10 of X 0x30954 / Y 0x30948: 00098537 lui a0, 0x98 ; 00054533 xor a0, a0, zero ; 28853503 ld a0, 0x288(a0)
+#   the load base is 0x98288: _ZTVN11__sanitizer11FlagHandlerIiEE+0x0 in X, read+0x28 in Y (sha256 X 026b56c372ca, Y twin 1a28b0f2799a, Y pin bab7a428ac4a)

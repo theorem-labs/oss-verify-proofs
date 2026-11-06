@@ -1,0 +1,10 @@
+P1 A/AFek.v:35 (aN, mkAF 1 4097 0) -> (aN, mkAF 1 4000 0): listed DIFFERS yes (fact-ctor, mkAF); derived -: caught
+    hypderive on the row: verdict=OPEN rule=NOT-ADDRESS (donor value 0x1001 is not an address of the donor image)
+P2 A/AFk6.v:34 (rSHA, mkAF 0x5cf050 kHighMemBeg 12) -> (rSHA, mkAF 0x5cf058 kHighMemBeg 12): listed DIFFERS yes (fact-ctor, mkAF); derived WRONG: caught
+    verdict=WRONG  rule=SYMBOL  right=0x5cf050
+P3 A/AD1o.v:22 0x10000 <= a < 0x31000 -> in_ro_tfa a -> 0x10000 <= a < 0x30000 -> in_ro_tfa a: listed SAME yes (lemma-premise, -); derived KEPT-IMAGE: caught
+    decision=KEPT-IMAGE  rule=BOUND  target_value=0x31000
+P4 A/AFii.v:25 lit4 0x217c4 0x71800 -> lit4 0x217c4 0x71804: listed DIFFERS yes (state-spec, YP09.region); derived WRONG: caught
+    verdict=WRONG  rule=CONTENT  right=0x71800
+rows new in the planted copy: hyplist 4 (outside the plants 0), derived WRONG 3 (outside 0), KEPT-IMAGE 1, CONTENT WRONG 1
+control: PASS

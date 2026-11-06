@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: boost-json
 harness: fuzz_parse
-rocq: OssFuzzTheorems.boost_json.fuzz_parse
+rocq: OSSVerify.boost_json.fuzz_parse
 origin: upstream
 summary: boost::json::parse(sv, ec). Returns jv.is_number(), which the entry point discards; catch(...).
 entry: LLVMFuzzerTestOneInput

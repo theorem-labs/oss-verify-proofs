@@ -1,0 +1,258 @@
+# alreloc a5c53bb2bed4 (sha256 a5c53bb2bed4ad039a600ecda538d6d0a1a01ccf4d62f8da9a09031a277fa17b): plugin-hostd/fuzz_command lib/A at 2d2ff01bb6f (fuzz_command.asan, pin c0661b96b5bd, symbols 68db792d5fa7) -> reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pin f3e0669d2819, symbols b5f352154c54)
+# one row per numeral the tool reported; final = the value in the written file; check: .got cells against this image's own .got entry, class-5 constants byte-identical
+file:line	donor	alreloc	final	rule	donor image	unit image	check	decision
+A/Bz/A/I_consts.v:17	0x5a1ac	0x54888	0x54888	FUNC entry	__asan_region_is_poisoned	__asan_region_is_poisoned		alreloc
+A/Bz/A/I_consts.v:77	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_ikit.v:18	0x5f640	0x59d1c	0x59d1c	FUNC entry	_ZN6__asan18TryAsanInitFromRtlEv	_ZN6__asan18TryAsanInitFromRtlEv		alreloc
+A/Bz/A/I_ikit.v:22	0xb1d98	0xa5a98	0xa5a98	OBJECT start	_ZN6__asanL11asan_initedE	_ZN6__asanL11asan_initedE		alreloc
+A/Bz/A/I_ikit.v:23	0x5f7000	0x5ea7b8	0x5fa000	symbol	builtin_tls+0x12b30	builtin_tls+0x12b30	image bound	HAND: fuzz_manifest's image end (knock derive_y forbid list: 'fm image end 0x5f7000'), unrelocated through boxreg/fuzz_command; alreloc's symbol rule gave 0x5ea7b8 = builtin_tls+0x12b30 (WRONG); set to this image's end 0x5fa000 (page_up of PT_LOAD end 0x5f9630), pin's IMG_TOP form
+A/Bz/A/I_ikit.v:27	0x5f640	0x59d1c	0x59d1c	FUNC entry	_ZN6__asan18TryAsanInitFromRtlEv	_ZN6__asan18TryAsanInitFromRtlEv		alreloc
+A/Bz/A/I_init.v:16	0x5f2fc	0x599d8	0x599d8	FUNC entry	_ZN6__asan15AsanInitFromRtlEv	_ZN6__asan15AsanInitFromRtlEv		alreloc
+A/Bz/A/I_init.v:20	0xb1d98	0xa5a98	0xa5a98	OBJECT start	_ZN6__asanL11asan_initedE	_ZN6__asanL11asan_initedE		alreloc
+A/Bz/A/I_init.v:21	0x5f7000	0x5ea7b8	0x5fa000	symbol	builtin_tls+0x12b30	builtin_tls+0x12b30	image bound	HAND: fuzz_manifest's image end (knock derive_y forbid list: 'fm image end 0x5f7000'), unrelocated through boxreg/fuzz_command; alreloc's symbol rule gave 0x5ea7b8 = builtin_tls+0x12b30 (WRONG); set to this image's end 0x5fa000 (page_up of PT_LOAD end 0x5f9630), pin's IMG_TOP form
+A/Bz/A/I_init.v:25	0x5f2fc	0x599d8	0x599d8	FUNC entry	_ZN6__asan15AsanInitFromRtlEv	_ZN6__asan15AsanInitFromRtlEv		alreloc
+A/Bz/A/I_qck.v:101	0x7fff8000	0x7fff8000	0x7fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_qck.v:101	0x10007fff8000	0x10007fff8000	0x10007fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:43	0x573b4	0x51a90	0x51a90	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x24c	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x24c		alreloc
+A/Bz/A/I_strtolfix.v:45	0x573a4	0x51a80	0x51a80	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x23c	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x23c		alreloc
+A/Bz/A/I_strtolfix.v:71	0x574f0	0x51bcc	0x51bcc	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x388	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x388		alreloc
+A/Bz/A/I_strtolfix.v:73	0x574e0	0x51bbc	0x51bbc	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x378	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x378		alreloc
+A/Bz/A/I_strtolfix.v:128	0x57268	0x51944	0x51944	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x100	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x100		alreloc
+A/Bz/A/I_strtolfix.v:131	0x57244	0x51920	0x51920	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0xdc	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0xdc		alreloc
+A/Bz/A/I_strtolfix.v:180	0x572e8	0x519c4	0x519c4	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x180	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x180		alreloc
+A/Bz/A/I_strtolfix.v:191	0x573bc	0x51a98	0x51a98	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x254	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x254		alreloc
+A/Bz/A/I_strtolfix.v:215	0x57298	0x51974	0x51974	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x130	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x130		alreloc
+A/Bz/A/I_strtolfix.v:239	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:239	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:242	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:243	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:250	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:250	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:251	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:251	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:253	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:263	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:263	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:304	0x57298	0x51974	0x51974	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x130	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x130		alreloc
+A/Bz/A/I_strtolfix.v:326	0xa63e0	0x9c360	0x9c360	.got slot of the same target	.got+0x50	.got+0x50	.got headamp[0x9c360]=0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0 vs donor[0xa63e0]=0x142be8 _ZN11__sanitizer21common_flags_dont_useE+0x0 -> OK	alreloc
+A/Bz/A/I_strtolfix.v:326	0x142be8	0x1368e8	0x1368e8	OBJECT start	_ZN11__sanitizer21common_flags_dont_useE	_ZN11__sanitizer21common_flags_dont_useE		alreloc
+A/Bz/A/I_strtolfix.v:326	0x142cdd	0x1369dd	0x1369dd	symbol	_ZN11__sanitizer21common_flags_dont_useE+0xf5	_ZN11__sanitizer21common_flags_dont_useE+0xf5		alreloc
+A/Bz/A/I_strtolfix.v:342	0x57268	0x51944	0x51944	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x100	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x100		alreloc
+A/Bz/A/I_strtolfix.v:374	0x57204	0x518e0	0x518e0	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x9c	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x9c		alreloc
+A/Bz/A/I_strtolfix.v:406	0x571f0	0x518cc	0x518cc	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x88	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x88		alreloc
+A/Bz/A/I_strtolfix.v:421	0xa63e0	0x9c360	0x9c360	.got slot of the same target	.got+0x50	.got+0x50	.got headamp[0x9c360]=0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0 vs donor[0xa63e0]=0x142be8 _ZN11__sanitizer21common_flags_dont_useE+0x0 -> OK	alreloc
+A/Bz/A/I_strtolfix.v:421	0x142cde	0x1369de	0x1369de	symbol	_ZN11__sanitizer21common_flags_dont_useE+0xf6	_ZN11__sanitizer21common_flags_dont_useE+0xf6		alreloc
+A/Bz/A/I_strtolfix.v:427	0x57168	0x51844	0x51844	FUNC entry	_ZL17StrtolFixAndCheckPvPKcPPcS2_i	_ZL17StrtolFixAndCheckPvPKcPPcS2_i		alreloc
+A/Bz/A/I_strtolfix.v:441	0x571a8	0x51884	0x51884	same-code function	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x40	_ZL17StrtolFixAndCheckPvPKcPPcS2_i+0x40		alreloc
+A/Bz/A/I_strtolfix.v:448	0x7fff8000	0x7fff8000	0x7fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:448	0x10007fff8000	0x10007fff8000	0x10007fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:467	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:467	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:470	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:470	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:484	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:484	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolfix.v:485	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolw.v:19	0x9e984	0x952f8	0x952f8	FUNC entry	strtol	strtol		alreloc
+A/Bz/A/I_strtolw.v:20	0xa7098	0x9cff8	0x9cff8	.got slot of the same target	.got+0xd08	.got+0xce8	.got headamp[0x9cff8]=0x5f7d90 __stack_chk_guard+0x0 vs donor[0xa7098]=0x6045d8 __stack_chk_guard+0x0 -> OK	alreloc
+A/Bz/A/I_strtolw.v:21	0x6045d8	0x5f7d90	0x5f7d90	OBJECT start	__stack_chk_guard	__stack_chk_guard		alreloc
+A/Bz/A/I_strtolw.v:99	0xa63e0	0x9c360	0x9c360	.got slot of the same target	.got+0x50	.got+0x50	.got headamp[0x9c360]=0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0 vs donor[0xa63e0]=0x142be8 _ZN11__sanitizer21common_flags_dont_useE+0x0 -> OK	alreloc
+A/Bz/A/I_strtolw.v:99	0x142cde	0x1369de	0x1369de	symbol	_ZN11__sanitizer21common_flags_dont_useE+0xf6	_ZN11__sanitizer21common_flags_dont_useE+0xf6		alreloc
+A/Bz/A/I_strtolw.v:100	0xb1d98	0xa5a98	0xa5a98	OBJECT start	_ZN6__asanL11asan_initedE	_ZN6__asanL11asan_initedE		alreloc
+A/Bz/A/I_strtolw.v:101	0xa8288	0x9e1b0	0x9e1b0	OBJECT start	_ZN14__interception11real_strtolE	_ZN14__interception11real_strtolE		alreloc
+A/Bz/A/I_strtolw.v:102	0xa63e8	0x9c368	0x9c368	.got slot of the same target	.got+0x58	.got+0x58	.got headamp[0x9c368]=0xa25b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 vs donor[0xa63e8]=0xae8b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 -> OK	alreloc
+A/Bz/A/I_strtolw.v:102	0xae8b8	0xa25b8	0xa25b8	OBJECT start	_ZN6__asan28asan_flags_dont_use_directlyE	_ZN6__asan28asan_flags_dont_use_directlyE		alreloc
+A/Bz/A/I_strtolw.v:102	0xae8b8	0xa25b8	0xa25b8	OBJECT start	_ZN6__asan28asan_flags_dont_use_directlyE	_ZN6__asan28asan_flags_dont_use_directlyE		alreloc
+A/Bz/A/I_strtolw.v:104	0x7fff8000	0x7fff8000	0x7fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolw.v:104	0x10007fff8000	0x10007fff8000	0x10007fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolw.v:105	0xa63e0	0x9c360	0x9c360	.got slot of the same target	.got+0x50	.got+0x50	.got headamp[0x9c360]=0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0 vs donor[0xa63e0]=0x142be8 _ZN11__sanitizer21common_flags_dont_useE+0x0 -> OK	alreloc
+A/Bz/A/I_strtolw.v:105	0x142cde	0x1369de	0x1369de	symbol	_ZN11__sanitizer21common_flags_dont_useE+0xf6	_ZN11__sanitizer21common_flags_dont_useE+0xf6		alreloc
+A/Bz/A/I_strtolw.v:110	0x451e0	0x41c28	0x41c28	FUNC entry	__wrap_strtol	__wrap_strtol		alreloc
+A/Bz/A/I_strtolw.v:133	0xa63e8	0x9c368	0x9c368	.got slot of the same target	.got+0x58	.got+0x58	.got headamp[0x9c368]=0xa25b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 vs donor[0xa63e8]=0xae8b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 -> OK	alreloc
+A/Bz/A/I_strtolw.v:133	0xae8b8	0xa25b8	0xa25b8	OBJECT start	_ZN6__asan28asan_flags_dont_use_directlyE	_ZN6__asan28asan_flags_dont_use_directlyE		alreloc
+A/Bz/A/I_strtolw.v:134	0xae8b8	0xa25b8	0xa25b8	OBJECT start	_ZN6__asan28asan_flags_dont_use_directlyE	_ZN6__asan28asan_flags_dont_use_directlyE		alreloc
+A/Bz/A/I_strtolw.v:135	0xa8288	0x9e1b0	0x9e1b0	OBJECT start	_ZN14__interception11real_strtolE	_ZN14__interception11real_strtolE		alreloc
+A/Bz/A/I_strtolw.v:135	0x9e984	0x952f8	0x952f8	FUNC entry	strtol	strtol		alreloc
+A/Bz/A/I_strtolw.v:153	0x7fff8000	0x7fff8000	0x7fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/I_strtolw.v:153	0x10007fff8000	0x10007fff8000	0x10007fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_isPoisoned.v:114	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_isPoisoned.v:131	725176	675256	675256	OBJECT start	__asan_shadow_memory_dynamic_address	__asan_shadow_memory_dynamic_address		alreloc
+A/Bz/A/R_isPoisoned.v:132	0x5a310	0x549ec	0x549ec	same-code function	__asan_region_is_poisoned+0x164	__asan_region_is_poisoned+0x164		alreloc
+A/Bz/A/R_isPoisoned.v:141	0x7fff8000	0x7fff8000	0x7fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_isPoisoned.v:141	0x10007fff8000	0x10007fff8000	0x10007fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_isPoisoned.v:142	0x7fff8000	0x7fff8000	0x7fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_isPoisoned.v:142	0x10007fff8000	0x10007fff8000	0x10007fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_isPoisoned.v:183	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_isPoisoned.v:184	725176	675256	675256	OBJECT start	__asan_shadow_memory_dynamic_address	__asan_shadow_memory_dynamic_address		alreloc
+A/Bz/A/R_isPoisoned.v:186	0x5a2bc	0x54998	0x54998	same-code function	__asan_region_is_poisoned+0x110	__asan_region_is_poisoned+0x110		alreloc
+A/Bz/A/R_isPoisoned.v:218	725176	675256	675256	OBJECT start	__asan_shadow_memory_dynamic_address	__asan_shadow_memory_dynamic_address		alreloc
+A/Bz/A/R_isPoisoned.v:219	0x5a280	0x5495c	0x5495c	same-code function	__asan_region_is_poisoned+0xd4	__asan_region_is_poisoned+0xd4		alreloc
+A/Bz/A/R_isPoisoned.v:271	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_isPoisoned.v:272	725176	675256	675256	OBJECT start	__asan_shadow_memory_dynamic_address	__asan_shadow_memory_dynamic_address		alreloc
+A/Bz/A/R_isPoisoned.v:273	0x5a238	0x54914	0x54914	same-code function	__asan_region_is_poisoned+0x8c	__asan_region_is_poisoned+0x8c		alreloc
+A/Bz/A/R_isPoisoned.v:311	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_m2s.v:20	0xa63f0	0x9c370	0x9c370	.got slot of the same target	.got+0x60	.got+0x60	.got headamp[0x9c370]=0xa4db8 __asan_shadow_memory_dynamic_address+0x0 vs donor[0xa63f0]=0xb10b8 __asan_shadow_memory_dynamic_address+0x0 -> OK	alreloc
+A/Bz/A/R_m2s.v:20	0xb10b8	0xa4db8	0xa4db8	OBJECT start	__asan_shadow_memory_dynamic_address	__asan_shadow_memory_dynamic_address		alreloc
+A/Bz/A/R_m2s.v:20	0xb1da8	0xa5aa8	0xa5aa8	OBJECT start	_ZN6__asan10kMidMemBegE	_ZN6__asan10kMidMemBegE		alreloc
+A/Bz/A/R_m2s.v:20	0xb1db0	0xa5ab0	0xa5ab0	OBJECT start	_ZN6__asan10kMidMemEndE	_ZN6__asan10kMidMemEndE		alreloc
+A/Bz/A/R_m2s.v:20	0xb1da0	0xa5aa0	0xa5aa0	OBJECT start	_ZN6__asan11kHighMemEndE	_ZN6__asan11kHighMemEndE		alreloc
+A/Bz/A/R_m2s.v:21	0xb10b8	0xa4db8	0xa4db8	OBJECT start	__asan_shadow_memory_dynamic_address	__asan_shadow_memory_dynamic_address		alreloc
+A/Bz/A/R_m2s.v:22	0xb1da0	0xa5aa0	0xa5aa0	OBJECT start	_ZN6__asan11kHighMemEndE	_ZN6__asan11kHighMemEndE		alreloc
+A/Bz/A/R_m2s.v:35	0x59d20	0x543fc	0x543fc	copy of _ZN6__asanL11MemToShadowEm referenced from __asan_poison_memory_region, __asan_unpoison_memory_region	_ZN6__asanL11MemToShadowEm	_ZN6__asanL11MemToShadowEm		alreloc
+A/Bz/A/R_m2s.v:44	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_m2s.v:49	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_m2s.v:67	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_m2s.v:74	0x586d8	0x52db4	0x52db4	copy of _ZN6__asanL11MemToShadowEm referenced from _ZN6__asan29FlushUnneededASanShadowMemoryEmm	_ZN6__asanL11MemToShadowEm	_ZN6__asanL11MemToShadowEm		alreloc
+A/Bz/A/R_m2s.v:83	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_m2s.v:88	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_m2s.v:106	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_m2s.v:111	0x62c0c	0x5d2e8	0x5d2e8	copy of _ZN6__asanL11MemToShadowEm referenced from _ZN6__asan10AsanThread25GetStackFrameAccessByAddrE	_ZN6__asanL11MemToShadowEm	_ZN6__asanL11MemToShadowEm		alreloc
+A/Bz/A/R_m2s.v:120	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_m2s.v:125	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_m2s.v:143	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_memiszero.v:66	0x69eec	0x645c8	0x645c8	FUNC entry	_ZN11__sanitizer11mem_is_zeroEPKcm	_ZN11__sanitizer11mem_is_zeroEPKcm		alreloc
+A/Bz/A/R_memiszero.v:117	0x69f78	0x64654	0x64654	same-code function	_ZN11__sanitizer11mem_is_zeroEPKcm+0x8c	_ZN11__sanitizer11mem_is_zeroEPKcm+0x8c		alreloc
+A/Bz/A/R_memiszero.v:135	0x69f64	0x64640	0x64640	same-code function	_ZN11__sanitizer11mem_is_zeroEPKcm+0x78	_ZN11__sanitizer11mem_is_zeroEPKcm+0x78		alreloc
+A/Bz/A/R_memiszero.v:155	0x69f58	0x64634	0x64634	same-code function	_ZN11__sanitizer11mem_is_zeroEPKcm+0x6c	_ZN11__sanitizer11mem_is_zeroEPKcm+0x6c		alreloc
+A/Bz/A/R_memiszero.v:180	0x69f48	0x64624	0x64624	same-code function	_ZN11__sanitizer11mem_is_zeroEPKcm+0x5c	_ZN11__sanitizer11mem_is_zeroEPKcm+0x5c		alreloc
+A/Bz/A/R_memiszero.v:200	0x69f44	0x64620	0x64620	same-code function	_ZN11__sanitizer11mem_is_zeroEPKcm+0x58	_ZN11__sanitizer11mem_is_zeroEPKcm+0x58		alreloc
+A/Bz/A/R_memiszero.v:221	0x69f2c	0x64608	0x64608	same-code function	_ZN11__sanitizer11mem_is_zeroEPKcm+0x40	_ZN11__sanitizer11mem_is_zeroEPKcm+0x40		alreloc
+A/Bz/A/R_prim_defs.v:34	0x3ffff	0x3ffff	0x3ffff	left: in the image hull, no rule examined it (identity)	__asan_stack_malloc_5+0x7b	_ZN6__asanL22UnpoisonDynamicGlobalsERN11__sanitizer13IntrusiveListINS_13DynInitGlobalEEEb+0x3	class-5 kept identical	alreloc
+A/Bz/A/R_prim_defs.v:34	0x40000	0x40000	0x40000	SIZES_KEEP	__asan_stack_malloc_5+0x7c	_ZN6__asanL22UnpoisonDynamicGlobalsERN11__sanitizer13IntrusiveListINS_13DynInitGlobalEEEb+0x4	class-5 kept identical	alreloc
+A/Bz/A/R_prim_defs.v:34	0x40000	0x40000	0x40000	left: in the image hull, no rule examined it (identity)	__asan_stack_malloc_5+0x7c	_ZN6__asanL22UnpoisonDynamicGlobalsERN11__sanitizer13IntrusiveListINS_13DynInitGlobalEEEb+0x4	class-5 kept identical	alreloc
+A/Bz/A/R_prim_defs.v:36	0x40000	0x40000	0x40000	left: in the image hull, no rule examined it (identity)	__asan_stack_malloc_5+0x7c	_ZN6__asanL22UnpoisonDynamicGlobalsERN11__sanitizer13IntrusiveListINS_13DynInitGlobalEEEb+0x4	class-5 kept identical	alreloc
+A/Bz/A/R_prim_defs.v:37	0x3ffff	0x3ffff	0x3ffff	left: in the image hull, no rule examined it (identity)	__asan_stack_malloc_5+0x7b	_ZN6__asanL22UnpoisonDynamicGlobalsERN11__sanitizer13IntrusiveListINS_13DynInitGlobalEEEb+0x3	class-5 kept identical	alreloc
+A/Bz/A/R_prim_defs.v:37	0x40000	0x40000	0x40000	SIZES_KEEP	__asan_stack_malloc_5+0x7c	_ZN6__asanL22UnpoisonDynamicGlobalsERN11__sanitizer13IntrusiveListINS_13DynInitGlobalEEEb+0x4	class-5 kept identical	alreloc
+A/Bz/A/R_prim_defs.v:37	0x3ffff	0x3ffff	0x3ffff	left: in the image hull, no rule examined it (identity)	__asan_stack_malloc_5+0x7b	_ZN6__asanL22UnpoisonDynamicGlobalsERN11__sanitizer13IntrusiveListINS_13DynInitGlobalEEEb+0x3	class-5 kept identical	alreloc
+A/Bz/A/R_prim_defs.v:37	0x40000	0x40000	0x40000	SIZES_KEEP	__asan_stack_malloc_5+0x7c	_ZN6__asanL22UnpoisonDynamicGlobalsERN11__sanitizer13IntrusiveListINS_13DynInitGlobalEEEb+0x4	class-5 kept identical	alreloc
+A/Bz/A/R_prim_defs.v:39	0x40000	0x40000	0x40000	SIZES_KEEP	__asan_stack_malloc_5+0x7c	_ZN6__asanL22UnpoisonDynamicGlobalsERN11__sanitizer13IntrusiveListINS_13DynInitGlobalEEEb+0x4	class-5 kept identical	alreloc
+A/Bz/A/R_prim_defs.v:110	0x7fff8000	0x7fff8000	0x7fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/A/R_prim_defs.v:119	262144	262144	262144	SIZES_KEEP	__asan_stack_malloc_5+0x7c	_ZN6__asanL22UnpoisonDynamicGlobalsERN11__sanitizer13IntrusiveListINS_13DynInitGlobalEEEb+0x4	class-5 kept identical	alreloc
+A/Bz/A/R_prim_defs.v:119	262144	262144	262144	left: in the image hull, no rule examined it (identity)	__asan_stack_malloc_5+0x7c	_ZN6__asanL22UnpoisonDynamicGlobalsERN11__sanitizer13IntrusiveListINS_13DynInitGlobalEEEb+0x4	class-5 kept identical	alreloc
+A/Bz/A/R_small.v:21	0x5e730	0x58e0c	0x58e0c	FUNC entry	_ZN6__asan10AsanInitedEv	_ZN6__asan10AsanInitedEv		alreloc
+A/Bz/A/R_small.v:25	0xb1d98	0xa5a98	0xa5a98	OBJECT start	_ZN6__asanL11asan_initedE	_ZN6__asanL11asan_initedE		alreloc
+A/Bz/A/R_small.v:29	0x5e730	0x58e0c	0x58e0c	FUNC entry	_ZN6__asan10AsanInitedEv	_ZN6__asan10AsanInitedEv		alreloc
+A/Bz/A/Shadow.v:11	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/Common/PropExec.v:1883	65536	65536	65536	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/Common/PropExec.v:1884	65536	65536	65536	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/Lib/Ceiling.v:13	0x800000000000	0x800000000000	0x800000000000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/Lib/Ceiling.v:45	0x800000000000	0x800000000000	0x800000000000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/Lib/Ceiling.v:61	0x800000000000	0x800000000000	0x800000000000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/Lib/Mem.v:92	0x800000000000	0x800000000000	0x800000000000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/Lib/Step.v:458	65536	65536	65536	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Bz/P/Str_merge.v:18	65536	65536	65536	left: in the image hull, no rule examined it (identity)	-	-	class-5 kept identical	alreloc
+A/Bz/P/Str_merge.v:80	65536	65536	65536	left: in the image hull, no rule examined it (identity)	-	-	class-5 kept identical	alreloc
+A/Bz/P/Str_merge.v:83	65536	65536	65536	left: in the image hull, no rule examined it (identity)	-	-	class-5 kept identical	alreloc
+A/Bz/P/Str_merge.v:87	65536	65536	65536	left: in the image hull, no rule examined it (identity)	-	-	class-5 kept identical	alreloc
+A/Bz/P/Str_merge.v:89	65536	65536	65536	left: in the image hull, no rule examined it (identity)	-	-	class-5 kept identical	alreloc
+A/Bz/P/Str_merge.v:150	65536	65536	65536	left: in the image hull, no rule examined it (identity)	-	-	class-5 kept identical	alreloc
+A/Bz/Spec/StrFun.v:434	65536	65536	65536	left: in the image hull, no rule examined it (identity)	-	-	class-5 kept identical	alreloc
+A/Bz/Spec/StrFun.v:444	65536	65536	65536	left: in the image hull, no rule examined it (identity)	-	-	class-5 kept identical	alreloc
+A/Prog/__errno_location_c.v:7	0x95004	0x8c26c	0x8c26c	FUNC entry	__errno_location	__errno_location		alreloc
+A/Prog/__intscan.v:100	148089	141769	141769	resolve	table+0x1	table+0x1		alreloc
+A/Prog/__intscan.v:105	148089	141769	141769	resolve	table+0x1	table+0x1		alreloc
+A/Prog/__intscan.v:109	148088	141768	141768	OBJECT start	table	table		alreloc
+A/Prog/__intscan.v:112	148089	141769	141769	resolve	table+0x1	table+0x1		alreloc
+A/Prog/__intscan.v:117	148089	141769	141769	resolve	table+0x1	table+0x1		alreloc
+A/Prog/__intscan.v:203	0x9e440	0x94dc8	0x94dc8	same-code function	__intscan+0x5a4	__intscan+0x5a4		alreloc
+A/Prog/__intscan.v:217	0x9e374	0x94cfc	0x94cfc	same-code function	__intscan+0x4d8	__intscan+0x4d8		alreloc
+A/Prog/__intscan.v:253	0x9e3ac	0x94d34	0x94d34	same-code function	__intscan+0x510	__intscan+0x510		alreloc
+A/Prog/__intscan.v:253	148088	141768	141768	OBJECT start	table	table		alreloc
+A/Prog/__intscan.v:291	0x9e0c4	0x94a4c	0x94a4c	same-code function	__intscan+0x228	__intscan+0x228		alreloc
+A/Prog/__intscan.v:332	0x9e07c	0x94a04	0x94a04	same-code function	__intscan+0x1e0	__intscan+0x1e0		alreloc
+A/Prog/__intscan.v:376	0x9dfd0	0x94958	0x94958	same-code function	__intscan+0x134	__intscan+0x134		alreloc
+A/Prog/__intscan.v:410	0x9df38	0x948c0	0x948c0	same-code function	__intscan+0x9c	__intscan+0x9c		alreloc
+A/Prog/__intscan.v:431	0x9df04	0x9488c	0x9488c	same-code function	__intscan+0x68	__intscan+0x68		alreloc
+A/Prog/__intscan.v:470	0x9de9c	0x94824	0x94824	FUNC entry	__intscan	__intscan		alreloc
+A/Prog/__intscan_c.v:9	0x9de9c	0x94824	0x94824	FUNC entry	__intscan	__intscan		alreloc
+A/Prog/__shlim_c.v:8	0x9dd9c	0x94724	0x94724	FUNC entry	__shlim	__shlim		alreloc
+A/Prog/strtol_c.v:10	0x9e984	0x952f8	0x952f8	FUNC entry	strtol	strtol		alreloc
+A/Prog/strtol_c.v:11	0xa7098	0x9cff8	0x9cff8	.got slot of the same target	.got+0xd08	.got+0xce8	.got headamp[0x9cff8]=0x5f7d90 __stack_chk_guard+0x0 vs donor[0xa7098]=0x6045d8 __stack_chk_guard+0x0 -> OK	alreloc
+A/Prog/strtol_c.v:12	0x6045d8	0x5f7d90	0x5f7d90	OBJECT start	__stack_chk_guard	__stack_chk_guard		alreloc
+A/Rt/RtBzClean.v:443	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Rt/RtBzClean.v:443	2147450880	2147450880	2147450880	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Rt/RtBzHBase.v:16	0x45f58	0x4268c	0x4268c	FUNC entry	__interceptor_strncmp	__interceptor_strncmp		alreloc
+A/Rt/RtBzHBase.v:18	0x45140	0x41ba4	0x41ba4	FUNC entry	__wrap_strncmp	__wrap_strncmp		alreloc
+A/Rt/RtBzHStr.v:8	0x45f58	0x4268c	0x4268c	FUNC entry	__interceptor_strncmp	__interceptor_strncmp		alreloc
+A/Rt/RtBzHStr.v:36	0x45f58	0x4268c	0x4268c	FUNC entry	__interceptor_strncmp	__interceptor_strncmp		alreloc
+A/Rt/RtBzStr.v:32	0x7fff8000	0x7fff8000	0x7fff8000	SIZES_KEEP	-	-	class-5 kept identical	alreloc
+A/Rt/RtLStrtol.v:1	0x451e0	0x41c28	0x41c28	FUNC entry	__wrap_strtol	__wrap_strtol		alreloc
+A/Rt/RtLStrtol.v:2	0x4d048	0x47a58	0x47a58	FUNC entry	__interceptor_strtol	__interceptor_strtol		alreloc
+A/Rt/RtLStrtol.v:2	0xa7098	0x9cff8	0x9cff8	.got slot of the same target	.got+0xd08	.got+0xce8	.got headamp[0x9cff8]=0x5f7d90 __stack_chk_guard+0x0 vs donor[0xa7098]=0x6045d8 __stack_chk_guard+0x0 -> OK	alreloc
+A/Rt/RtLStrtol.v:2	0x6045d8	0x5f7d90	0x5f7d90	OBJECT start	__stack_chk_guard	__stack_chk_guard		alreloc
+A/Rt/RtLStrtol.v:4	0x4d048	0x47a58	0x47a58	FUNC entry	__interceptor_strtol	__interceptor_strtol		alreloc
+A/Rt/RtLStrtol.v:5	0xa8288	0x9e1b0	0x9e1b0	OBJECT start	_ZN14__interception11real_strtolE	_ZN14__interception11real_strtolE		alreloc
+A/Rt/RtLStrtol.v:5	0x57168	0x51844	0x51844	FUNC entry	_ZL17StrtolFixAndCheckPvPKcPPcS2_i	_ZL17StrtolFixAndCheckPvPKcPPcS2_i		alreloc
+A/Rt/RtLStrtol.v:7	0x9e984	0x952f8	0x952f8	FUNC entry	strtol	strtol		alreloc
+A/Rt/RtLStrtol.v:14	0xa8288	0x9e1b0	0x9e1b0	OBJECT start	_ZN14__interception11real_strtolE	_ZN14__interception11real_strtolE		alreloc
+A/Rt/RtLStrtol.v:14	0xa63e8	0x9c368	0x9c368	.got slot of the same target	.got+0x58	.got+0x58	.got headamp[0x9c368]=0xa25b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 vs donor[0xa63e8]=0xae8b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 -> OK	alreloc
+A/Rt/RtLStrtol.v:14	0xae8b8	0xa25b8	0xa25b8	OBJECT start	_ZN6__asan28asan_flags_dont_use_directlyE	_ZN6__asan28asan_flags_dont_use_directlyE		alreloc
+A/Rt/RtLStrtol.v:14	0xb1d98	0xa5a98	0xa5a98	OBJECT start	_ZN6__asanL11asan_initedE	_ZN6__asanL11asan_initedE		alreloc
+A/Rt/RtLStrtol.v:179	0x10000	0x10000	0x10000	segment bound (identity)	-	-		alreloc
+A/Rt/RtLStrtol.v:179	0x606000	0x5fa000	0x5fa000	derived image bound	-	-		alreloc
+A/Rt/RtLStrtol.v:257	0x5e44f4	0x5d7cac	0x5d7cac	symbol	builtin_tls+0x24	builtin_tls+0x24		alreloc
+A/Rt/RtLStrtol.v:257	0x5e44f5	0x5d7cad	0x5d7cad	symbol	builtin_tls+0x25	builtin_tls+0x25		alreloc
+A/Rt/RtLStrtol.v:257	0x5e44f6	0x5d7cae	0x5d7cae	symbol	builtin_tls+0x26	builtin_tls+0x26		alreloc
+A/Rt/RtLStrtol.v:257	0x5e44f7	0x5d7caf	0x5d7caf	symbol	builtin_tls+0x27	builtin_tls+0x27		alreloc
+A/Rt/RtLStrtol.v:319	0xb1d98	0xa5a98	0xa5a98	OBJECT start	_ZN6__asanL11asan_initedE	_ZN6__asanL11asan_initedE		alreloc
+A/Rt/RtLStrtol.v:322	0xb1d98	0xa5a98	0xa5a98	OBJECT start	_ZN6__asanL11asan_initedE	_ZN6__asanL11asan_initedE		alreloc
+A/Rt/RtLStrtol.v:325	0xb1d98	0xa5a98	0xa5a98	OBJECT start	_ZN6__asanL11asan_initedE	_ZN6__asanL11asan_initedE		alreloc
+A/Rt/RtLStrtol.v:330	0xa8288	0x9e1b0	0x9e1b0	OBJECT start	_ZN14__interception11real_strtolE	_ZN14__interception11real_strtolE		alreloc
+A/Rt/RtLStrtol.v:330	0xa63e8	0x9c368	0x9c368	.got slot of the same target	.got+0x58	.got+0x58	.got headamp[0x9c368]=0xa25b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 vs donor[0xa63e8]=0xae8b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 -> OK	alreloc
+A/Rt/RtLStrtol.v:332	0xa8288	0x9e1b0	0x9e1b0	OBJECT start	_ZN14__interception11real_strtolE	_ZN14__interception11real_strtolE		alreloc
+A/Rt/RtLStrtol.v:332	0x9e984	0x952f8	0x952f8	FUNC entry	strtol	strtol		alreloc
+A/Rt/RtLStrtol.v:333	0xa63e8	0x9c368	0x9c368	.got slot of the same target	.got+0x58	.got+0x58	.got headamp[0x9c368]=0xa25b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 vs donor[0xa63e8]=0xae8b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 -> OK	alreloc
+A/Rt/RtLStrtol.v:333	0xae8b8	0xa25b8	0xa25b8	OBJECT start	_ZN6__asan28asan_flags_dont_use_directlyE	_ZN6__asan28asan_flags_dont_use_directlyE		alreloc
+A/Rt/RtLStrtol.v:334	0xae8d5	0xa25d5	0xa25d5	symbol	_ZN6__asan28asan_flags_dont_use_directlyE+0x1d	_ZN6__asan28asan_flags_dont_use_directlyE+0x1d		alreloc
+A/Rt/RtLStrtol.v:337	0xa8288	0x9e1b0	0x9e1b0	OBJECT start	_ZN14__interception11real_strtolE	_ZN14__interception11real_strtolE		alreloc
+A/Rt/RtLStrtol.v:337	0x9e984	0x952f8	0x952f8	FUNC entry	strtol	strtol		alreloc
+A/Rt/RtLStrtol.v:338	0xa63e8	0x9c368	0x9c368	.got slot of the same target	.got+0x58	.got+0x58	.got headamp[0x9c368]=0xa25b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 vs donor[0xa63e8]=0xae8b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 -> OK	alreloc
+A/Rt/RtLStrtol.v:338	0xae8b8	0xa25b8	0xa25b8	OBJECT start	_ZN6__asan28asan_flags_dont_use_directlyE	_ZN6__asan28asan_flags_dont_use_directlyE		alreloc
+A/Rt/RtLStrtol.v:339	0xae8d5	0xa25d5	0xa25d5	symbol	_ZN6__asan28asan_flags_dont_use_directlyE+0x1d	_ZN6__asan28asan_flags_dont_use_directlyE+0x1d		alreloc
+A/Rt/RtLStrtol.v:340	0xa8288	0x9e1b0	0x9e1b0	OBJECT start	_ZN14__interception11real_strtolE	_ZN14__interception11real_strtolE		alreloc
+A/Rt/RtLStrtol.v:340	0x9e984	0x952f8	0x952f8	FUNC entry	strtol	strtol		alreloc
+A/Rt/RtLStrtol.v:342	0xa63e8	0x9c368	0x9c368	.got slot of the same target	.got+0x58	.got+0x58	.got headamp[0x9c368]=0xa25b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 vs donor[0xa63e8]=0xae8b8 _ZN6__asan28asan_flags_dont_use_directlyE+0x0 -> OK	alreloc
+A/Rt/RtLStrtol.v:342	0xae8b8	0xa25b8	0xa25b8	OBJECT start	_ZN6__asan28asan_flags_dont_use_directlyE	_ZN6__asan28asan_flags_dont_use_directlyE		alreloc
+A/Rt/RtLStrtol.v:344	0xae8d5	0xa25d5	0xa25d5	symbol	_ZN6__asan28asan_flags_dont_use_directlyE+0x1d	_ZN6__asan28asan_flags_dont_use_directlyE+0x1d		alreloc
+A/Rt/RtLStrtol.v:366	0x451e0	0x41c28	0x41c28	FUNC entry	__wrap_strtol	__wrap_strtol		alreloc
+A/Rt/RtLStrtol.v:366	0xa7098	0x9cff8	0x9cff8	.got slot of the same target	.got+0xd08	.got+0xce8	.got headamp[0x9cff8]=0x5f7d90 __stack_chk_guard+0x0 vs donor[0xa7098]=0x6045d8 __stack_chk_guard+0x0 -> OK	alreloc
+A/Rt/RtLStrtol.v:366	0x6045d8	0x5f7d90	0x5f7d90	OBJECT start	__stack_chk_guard	__stack_chk_guard		alreloc
+A/Rt/RtLStrtol.v:383	0x10000	0x10000	0x10000	segment bound (identity)	-	-		alreloc
+A/Rt/RtLStrtol.v:383	0x606000	0x5fa000	0x5fa000	derived image bound	-	-		alreloc
+A/Rt/RtLStrtol.v:384	0x10000	0x10000	0x10000	segment bound (identity)	-	-		alreloc
+A/Rt/RtLStrtol.v:385	0x10000	0x10000	0x10000	segment bound (identity)	-	-		alreloc
+A/Rt/RtLStrtol.v:386	0x10000	0x10000	0x10000	segment bound (identity)	-	-		alreloc
+A/Rt/RtLStrtol.v:387	0x606000	0x5fa000	0x5fa000	derived image bound	-	-		alreloc
+A/Rt/RtLStrtol.v:418	0xa7098	0x9cff8	0x9cff8	.got slot of the same target	.got+0xd08	.got+0xce8	.got headamp[0x9cff8]=0x5f7d90 __stack_chk_guard+0x0 vs donor[0xa7098]=0x6045d8 __stack_chk_guard+0x0 -> OK	alreloc
+A/Rt/RtLStrtol.v:418	0x6045d8	0x5f7d90	0x5f7d90	OBJECT start	__stack_chk_guard	__stack_chk_guard		alreloc
+A/Rt/RtLStrtol.v:420	0xa7098	0x9cff8	0x9cff8	.got slot of the same target	.got+0xd08	.got+0xce8	.got headamp[0x9cff8]=0x5f7d90 __stack_chk_guard+0x0 vs donor[0xa7098]=0x6045d8 __stack_chk_guard+0x0 -> OK	alreloc
+A/Rt/RtLStrtol.v:420	0x6045d8	0x5f7d90	0x5f7d90	OBJECT start	__stack_chk_guard	__stack_chk_guard		alreloc
+A/Rt/RtLStrtol.v:422	0x6045d8	0x5f7d90	0x5f7d90	OBJECT start	__stack_chk_guard	__stack_chk_guard		alreloc
+A/Rt/RtLStrtol.v:455	0x451e0	0x41c28	0x41c28	FUNC entry	__wrap_strtol	__wrap_strtol		alreloc
+A/Rt/RtNumber.v:20	0x451e4	0x451e4	0x451e4	resolve (identity)	__wrap_atoi	_ZL13printf_commonPvPKcS_+0x7a0		alreloc
+A/Rt/RtNumber.v:20	0x4d10c	0x4d10c	0x4d10c	resolve (identity)	__interceptor_atoi	_ZL16ioctl_table_fillv+0x46fc		alreloc
+A/Rt/RtNumber.v:20	0x451e0	0x41c28	0x41c28	FUNC entry	__wrap_strtol	__wrap_strtol		alreloc
+A/Rt/RtNumber.v:20	0x4d048	0x47a58	0x47a58	FUNC entry	__interceptor_strtol	__interceptor_strtol		alreloc
+A/Rt/RtNumber.v:21	0x57168	0x51844	0x51844	FUNC entry	_ZL17StrtolFixAndCheckPvPKcPPcS2_i	_ZL17StrtolFixAndCheckPvPKcPPcS2_i		alreloc
+A/Rt/RtNumber.v:21	0xa8288	0x9e1b0	0x9e1b0	OBJECT start	_ZN14__interception11real_strtolE	_ZN14__interception11real_strtolE		alreloc
+A/Rt/RtNumber.v:21	0x9e984	0x952f8	0x952f8	FUNC entry	strtol	strtol		alreloc
+A/Rt/RtNumber.v:43	0xae8b8	0xa25b8	0xa25b8	OBJECT start	_ZN6__asan28asan_flags_dont_use_directlyE	_ZN6__asan28asan_flags_dont_use_directlyE		alreloc
+A/Rt/RtNumber.v:46	0x9e984	0x952f8	0x952f8	FUNC entry	strtol	strtol		alreloc
+A/Rt/RtNumber.v:47	0x9e9b4	0x95328	0x95328	same-code function	strtol+0x30	strtol+0x30		alreloc
+A/Rt/RtNumber.v:47	0x9ea0c	0x95380	0x95380	same-code function	strtol+0x88	strtol+0x88		alreloc
+A/Rt/RtNumber.v:47	0xa7098	0x9cff8	0x9cff8	.got slot of the same target	.got+0xd08	.got+0xce8	.got headamp[0x9cff8]=0x5f7d90 __stack_chk_guard+0x0 vs donor[0xa7098]=0x6045d8 __stack_chk_guard+0x0 -> OK	alreloc
+A/Rt/RtNumber.v:47	0x6045d8	0x5f7d90	0x5f7d90	OBJECT start	__stack_chk_guard	__stack_chk_guard		alreloc
+A/Rt/RtNumber.v:48	0x142be8	0x1368e8	0x1368e8	OBJECT start	_ZN11__sanitizer21common_flags_dont_useE	_ZN11__sanitizer21common_flags_dont_useE		alreloc
+A/Rt/RtNumber.v:50	0xae8b8	0xa25b8	0xa25b8	OBJECT start	_ZN6__asan28asan_flags_dont_use_directlyE	_ZN6__asan28asan_flags_dont_use_directlyE		alreloc
+A/Rt/RtNumber.v:53	0x6a484	0x64b60	0x64b60	FUNC entry	_ZN11__sanitizer6GetEnvEPKc	_ZN11__sanitizer6GetEnvEPKc		alreloc
+A/Rt/RtNumber.v:53	0x69260	0x6393c	0x6393c	same-code function	_ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc+0x2c	_ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc+0x2c		alreloc
+A/Rt/RtNumber.v:53	0xa6430	0x9c3b0	0x9c3b0	gap	.got+0xa0	.got+0xa0	.got headamp[0x9c3b0]=0x1 0x1 vs donor[0xa6430]=0x1 0x1 -> OK	alreloc
+A/Rt/RtNumber.v:54	0x6a4a8	0x64b84	0x64b84	same-code function	_ZN11__sanitizer6GetEnvEPKc+0x24	_ZN11__sanitizer6GetEnvEPKc+0x24		alreloc
+A/Rt/RtNumber.v:54	0x6a4ac	0x64b88	0x64b88	same-code function	_ZN11__sanitizer6GetEnvEPKc+0x28	_ZN11__sanitizer6GetEnvEPKc+0x28		alreloc
+A/Rt/RtNumber.v:54	0x6a4b0	0x64b8c	0x64b8c	same-code function	_ZN11__sanitizer6GetEnvEPKc+0x2c	_ZN11__sanitizer6GetEnvEPKc+0x2c		alreloc
+A/Rt/RtNumber.v:56	0x8e8d8	0x84f24	0x84f24	FUNC entry	__wrap_getenv	__wrap_getenv		alreloc
+A/Rt/RtNumber.v:56	0x86038	0x80714	0x80714	FUNC entry	__asan_default_options	__asan_default_options		alreloc
+A/Rt/RtNumber.v:57	0x1df81	0x1ddf5	0x1ddf5	.rodata string	.rodata+0xdca1	.rodata+0xdb15		alreloc
+A/Rt/RtNumber.v:100	0xa63e0	0x9c360	0x9c360	range start (.got slot of the same target, [A, B))	.got+0x50	.got+0x50	.got headamp[0x9c360]=0x1368e8 _ZN11__sanitizer21common_flags_dont_useE+0x0 vs donor[0xa63e0]=0x142be8 _ZN11__sanitizer21common_flags_dont_useE+0x0 -> OK	alreloc
+A/Rt/RtNumber.v:100	0x142cde	0x1369de	0x1369de	range end (resolve)	_ZN11__sanitizer21common_flags_dont_useE+0xf6	_ZN11__sanitizer21common_flags_dont_useE+0xf6		alreloc
+# A/Rt/RtDefs.v: RT_ROM_RANGES (lines 126-133 of the donor, 53 ranges, used only by the donor unit's lib/A/Prog/PaArt.v) left out with its comment: no numeral of it is in the written file

@@ -1,0 +1,4 @@
+mine 2190 rows (2171 sized), real 2171 sized rows
+real rows missing from mine: 0
+mine sized rows not in real: 0
+COMPARE: EQUAL (sized rows)

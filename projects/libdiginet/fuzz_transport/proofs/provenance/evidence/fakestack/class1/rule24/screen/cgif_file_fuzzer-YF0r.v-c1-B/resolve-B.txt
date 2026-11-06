@@ -1,0 +1,5 @@
+[cgif/cgif_file_fuzzer] YF0r.v:44 0x3cc00 0x3e000
+[cgif/cgif_file_fuzzer] YF0r.v:73 0x9e1f8 0xa3ce0
+[cgif/cgif_file_fuzzer] YF0r.v:73 0x9ef00 0xa49d0
+[cgif/cgif_file_fuzzer] YF0r.v:74 0x9e258 0xa3d40
+[cgif/cgif_file_fuzzer] YF0r.v:74 0x9ef10 0xa49e0

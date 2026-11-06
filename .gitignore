@@ -1,5 +1,12 @@
 _build/
 projects/*/bin/
+projects/*/unpatched-bin/
 findings/*/bin/
 __pycache__/
 *.pyc
+# The caches a run of the stream tools' own checks and tests leaves behind (dev/stream/README.md).
+# The stream tools' own checker refuses a committed cache directory, and these lines keep a
+# local pytest, ruff or uv run from offering one to `git add`.
+.pytest_cache/
+.ruff_cache/
+.venv/

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: glib
 harness: fuzz_bookmark
-rocq: OssFuzzTheorems.glib.fuzz_bookmark
+rocq: OSSVerify.glib.fuzz_bookmark
 origin: upstream
 summary: nothing is checked beyond crashes, sanitizers and uncaught exceptions.
 entry: LLVMFuzzerTestOneInput

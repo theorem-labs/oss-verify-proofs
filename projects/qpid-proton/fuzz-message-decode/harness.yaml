@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: qpid-proton
 harness: fuzz-message-decode
-rocq: OssFuzzTheorems.qpid_proton.fuzz_message_decode
+rocq: OSSVerify.qpid_proton.fuzz_message_decode
 origin: upstream
 summary: pn_message_decode(msg, input) and free; the return code is inspected but the success branch is
   an empty placeholder.

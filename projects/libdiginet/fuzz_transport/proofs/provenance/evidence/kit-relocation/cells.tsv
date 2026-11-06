@@ -1,0 +1,85 @@
+file	line	cell	value	rule	measurement
+Reusable/YH03.v	9	src0_A_main	0x131c4	symbol + offset	main+0x0; the start of a function the cell names
+Reusable/YH03.v	10	src0_A_target_run	0x13494	symbol + offset	target_run+0x0; the start of a function the cell names
+Reusable/YH03.v	11	src0_A_LLVMFuzzerTestOneInput	0x13664	symbol + offset	LLVMFuzzerTestOneInput+0x0; the start of a function the cell names
+Reusable/YH03.v	12	src0_A_stack_chk_fail	0x18914	symbol + offset	__stack_chk_fail+0x0 = __stack_chk_fail_local+0x0; the start of a function the cell names
+Reusable/YH03.v	13	src0_A_syscall_ret	0x1891c	symbol + offset	__syscall_ret+0x0; the start of a function the cell names
+Reusable/YH03.v	14	src0_A_errno_location	0x18954	symbol + offset	___errno_location+0x0 = __errno_location+0x0; the start of a function the cell names
+Reusable/YH03.v	15	src0_A_free	0x18960	symbol + offset	free+0x0; the start of a function the cell names
+Reusable/YH03.v	16	src0_A_malloc	0x18aa0	symbol + offset	default_malloc+0x0 = malloc+0x0; the start of a function the cell names
+Reusable/YH03.v	17	src0_A_libc_free	0x18aa4	symbol + offset	__libc_free+0x0; the start of a function the cell names
+Reusable/YH03.v	18	src0_A_get_meta	0x18c70	symbol + offset	get_meta+0x0; the start of a function the cell names
+Reusable/YH03.v	19	src0_A_nontrivial_free	0x18d80	symbol + offset	nontrivial_free+0x0; the start of a function the cell names
+Reusable/YH03.v	20	src0_A_alloc_meta	0x19158	symbol + offset	__malloc_alloc_meta+0x0; the start of a function the cell names
+Reusable/YH03.v	21	src0_A_libc_malloc_impl	0x19430	symbol + offset	__libc_malloc_impl+0x0; the start of a function the cell names
+Reusable/YH03.v	22	src0_A_alloc_slot	0x197a0	symbol + offset	alloc_slot+0x0; the start of a function the cell names
+Reusable/YH03.v	23	src0_A_enframe	0x1a044	symbol + offset	enframe+0x0; the start of a function the cell names
+Reusable/YH03.v	24	src0_A_malloc_allzerop	0x1a194	symbol + offset	__malloc_allzerop+0x0; the start of a function the cell names
+Reusable/YH03.v	25	src0_A_vm_wait	0x1a30c	symbol + offset	__vm_wait+0x0; the start of a function the cell names
+Reusable/YH03.v	26	src0_A_mmap	0x1a310	symbol + offset	__mmap+0x0 = mmap+0x0; the start of a function the cell names
+Reusable/YH03.v	27	src0_A_mprotect	0x1a3fc	symbol + offset	__mprotect+0x0 = mprotect+0x0; the start of a function the cell names
+Reusable/YH03.v	28	src0_A_munmap	0x1a444	symbol + offset	__munmap+0x0 = munmap+0x0; the start of a function the cell names
+Reusable/YH03.v	29	src0_A_memcpy	0x1f910	symbol + offset	memcpy+0x0; the start of a function the cell names
+Reusable/YH03.v	30	src0_A_memset	0x1fd14	symbol + offset	memset+0x0; the start of a function the cell names
+Reusable/YH03.v	31	src0_A_strnlen	0x1fed4	symbol + offset	strnlen+0x0; the start of a function the cell names
+Reusable/YH03.v	32	src0_A_memchr	0x1ff18	symbol + offset	memchr+0x0; the start of a function the cell names
+Reusable/YH03.v	33	src0_A_lock	0x1ffe4	symbol + offset	__lock+0x0; the start of a function the cell names
+Reusable/YH03.v	34	src0_A_unlock	0x2026c	symbol + offset	__unlock+0x0; the start of a function the cell names
+Reusable/YH03.v	35	src0_A_syscall_cp_c	0x202e0	symbol + offset	__syscall_cp_c+0x0 = sccp+0x0; the start of a function the cell names
+Reusable/YH03.v	36	src0_D_const_HIGHS_0x8080808080808080	0x103c0	port_addr_check MAPS	XREF(memchr+0x64)
+Reusable/YH03.v	37	src0_D_const_ONES_0x0101010101010100	0x103d0	port_addr_check MAPS	XREF(memchr+0x5c)
+Reusable/YH03.v	38	src0_D_debruijn32	0x10460	donor bytes (d')	the 32 bytes of decode at 0x10480 occur once in this image
+Reusable/YH03.v	39	src0_D_size_classes	0x10530	symbol + offset	__malloc_size_classes+0x0
+Reusable/YH03.v	40	src0_D_small_cnt_tab	0x10590	symbol + offset	small_cnt_tab+0x0
+Reusable/YH03.v	41	src0_D_med_cnt_tab	0x105ab	symbol + offset	med_cnt_tab+0x0
+Reusable/YH03.v	42	src0_D_got_stack_chk_guard	0x214e0	port_addr_check MAPS	GOT[__stack_chk_guard+0x0]; XREF(__init_ssp+0x14, __init_ssp+0x28, __init_ssp+0x40 +12)
+Reusable/YH03.v	43	src0_D_read_stage	0x22759	symbol + offset	read_stage+0x0
+Reusable/YH03.v	44	src0_D_oft_aligned_copy_empty	0x32770	symbol + offset	oft_aligned_copy.empty+0x0
+Reusable/YH03.v	45	src0_D_stack_chk_guard	0x62b20	symbol + offset	__stack_chk_guard+0x0
+Reusable/YH03.v	46	src0_D_libc	0x62b40	symbol + offset	__libc+0x0
+Reusable/YH03.v	47	src0_D_malloc_lock	0x62bb0	symbol + offset	__malloc_lock+0x0
+Reusable/YH03.v	48	src0_D_malloc_context	0x62bb8	symbol + offset	__malloc_context+0x0
+Reusable/YH03.v	49	src0_D_ofl_lock	0x62f68	symbol + offset	ofl_lock+0x0
+Reusable/YH03.v	50	src0_D_ofl_head	0x62f70	symbol + offset	ofl_head+0x0
+U/Reusable/YH03.v	9	src0_A_main	0x132c0	symbol + offset	main+0x0; the start of a function the cell names
+U/Reusable/YH03.v	10	src0_A_target_run	0x13590	symbol + offset	target_run+0x0; the start of a function the cell names
+U/Reusable/YH03.v	11	src0_A_LLVMFuzzerTestOneInput	0x13760	symbol + offset	LLVMFuzzerTestOneInput+0x0; the start of a function the cell names
+U/Reusable/YH03.v	12	src0_A_stack_chk_fail	0x19444	symbol + offset	__stack_chk_fail+0x0 = __stack_chk_fail_local+0x0; the start of a function the cell names
+U/Reusable/YH03.v	13	src0_A_syscall_ret	0x1944c	symbol + offset	__syscall_ret+0x0; the start of a function the cell names
+U/Reusable/YH03.v	14	src0_A_errno_location	0x19484	symbol + offset	___errno_location+0x0 = __errno_location+0x0; the start of a function the cell names
+U/Reusable/YH03.v	15	src0_A_free	0x19490	symbol + offset	free+0x0; the start of a function the cell names
+U/Reusable/YH03.v	16	src0_A_malloc	0x195d0	symbol + offset	default_malloc+0x0 = malloc+0x0; the start of a function the cell names
+U/Reusable/YH03.v	17	src0_A_libc_free	0x195d4	symbol + offset	__libc_free+0x0; the start of a function the cell names
+U/Reusable/YH03.v	18	src0_A_get_meta	0x197a0	symbol + offset	get_meta+0x0; the start of a function the cell names
+U/Reusable/YH03.v	19	src0_A_nontrivial_free	0x198b0	symbol + offset	nontrivial_free+0x0; the start of a function the cell names
+U/Reusable/YH03.v	20	src0_A_alloc_meta	0x19c88	symbol + offset	__malloc_alloc_meta+0x0; the start of a function the cell names
+U/Reusable/YH03.v	21	src0_A_libc_malloc_impl	0x19f60	symbol + offset	__libc_malloc_impl+0x0; the start of a function the cell names
+U/Reusable/YH03.v	22	src0_A_alloc_slot	0x1a2d0	symbol + offset	alloc_slot+0x0; the start of a function the cell names
+U/Reusable/YH03.v	23	src0_A_enframe	0x1ab74	symbol + offset	enframe+0x0; the start of a function the cell names
+U/Reusable/YH03.v	24	src0_A_malloc_allzerop	0x1acc4	symbol + offset	__malloc_allzerop+0x0; the start of a function the cell names
+U/Reusable/YH03.v	25	src0_A_vm_wait	0x1ae3c	symbol + offset	__vm_wait+0x0; the start of a function the cell names
+U/Reusable/YH03.v	26	src0_A_mmap	0x1ae40	symbol + offset	__mmap+0x0 = mmap+0x0; the start of a function the cell names
+U/Reusable/YH03.v	27	src0_A_mprotect	0x1af2c	symbol + offset	__mprotect+0x0 = mprotect+0x0; the start of a function the cell names
+U/Reusable/YH03.v	28	src0_A_munmap	0x1af74	symbol + offset	__munmap+0x0 = munmap+0x0; the start of a function the cell names
+U/Reusable/YH03.v	29	src0_A_memcpy	0x20440	symbol + offset	memcpy+0x0; the start of a function the cell names
+U/Reusable/YH03.v	30	src0_A_memset	0x20844	symbol + offset	memset+0x0; the start of a function the cell names
+U/Reusable/YH03.v	31	src0_A_strnlen	0x20a04	symbol + offset	strnlen+0x0; the start of a function the cell names
+U/Reusable/YH03.v	32	src0_A_memchr	0x20a48	symbol + offset	memchr+0x0; the start of a function the cell names
+U/Reusable/YH03.v	33	src0_A_lock	0x20b14	symbol + offset	__lock+0x0; the start of a function the cell names
+U/Reusable/YH03.v	34	src0_A_unlock	0x20d9c	symbol + offset	__unlock+0x0; the start of a function the cell names
+U/Reusable/YH03.v	35	src0_A_syscall_cp_c	0x20e10	symbol + offset	__syscall_cp_c+0x0 = sccp+0x0; the start of a function the cell names
+U/Reusable/YH03.v	36	src0_D_const_HIGHS_0x8080808080808080	0x103d0	port_addr_check MAPS	XREF(memchr+0x64)
+U/Reusable/YH03.v	37	src0_D_const_ONES_0x0101010101010100	0x103e0	port_addr_check MAPS	XREF(memchr+0x5c)
+U/Reusable/YH03.v	38	src0_D_debruijn32	0x10500	port_addr_check MAPS	end of static_init_tls.msg; XREF(__libc_malloc_impl+0xec, alloc_slot+0x1d0, alloc_slot+0x370)
+U/Reusable/YH03.v	39	src0_D_size_classes	0x10520	symbol + offset	__malloc_size_classes+0x0
+U/Reusable/YH03.v	40	src0_D_small_cnt_tab	0x10580	symbol + offset	small_cnt_tab+0x0
+U/Reusable/YH03.v	41	src0_D_med_cnt_tab	0x1059b	symbol + offset	med_cnt_tab+0x0
+U/Reusable/YH03.v	42	src0_D_got_stack_chk_guard	0x22050	port_addr_check MAPS	GOT[__stack_chk_guard+0x0]; XREF(__init_ssp+0x14, __init_ssp+0x28, __init_ssp+0x40 +12)
+U/Reusable/YH03.v	43	src0_D_read_stage	0x232c9	symbol + offset	read_stage+0x0
+U/Reusable/YH03.v	44	src0_D_oft_aligned_copy_empty	0x332e0	symbol + offset	oft_aligned_copy.empty+0x0
+U/Reusable/YH03.v	45	src0_D_stack_chk_guard	0x63690	symbol + offset	__stack_chk_guard+0x0
+U/Reusable/YH03.v	46	src0_D_libc	0x636b0	symbol + offset	__libc+0x0
+U/Reusable/YH03.v	47	src0_D_malloc_lock	0x63720	symbol + offset	__malloc_lock+0x0
+U/Reusable/YH03.v	48	src0_D_malloc_context	0x63728	symbol + offset	__malloc_context+0x0
+U/Reusable/YH03.v	49	src0_D_ofl_lock	0x63ad8	symbol + offset	ofl_lock+0x0
+U/Reusable/YH03.v	50	src0_D_ofl_head	0x63ae0	symbol + offset	ofl_head+0x0

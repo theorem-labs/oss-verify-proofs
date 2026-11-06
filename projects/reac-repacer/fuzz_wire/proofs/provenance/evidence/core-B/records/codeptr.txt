@@ -1,0 +1,20 @@
+# donor
+YFem.v        1 code (0 function starts, 0 return pcs, 0 other instruction starts),   12 data, 8 at or above the image top 0x5fa1f0, 1 FINDINGS: 0x61e16
+codeptr: UNMEASURED: 41 of 372 file(s) hold no address literal in range
+rc=1
+# plant
+YE3m.v        5 code (4 function starts, 1 return pcs, 0 other instruction starts),    7 data, 2 at or above the image top 0x5f5070, 1 FINDINGS: 0x5f9020 [stale against fuzz_grant.asan-ubsan, donor file <work><file>: 1 STALE (0x5f9020), 1 donor-file literals with the same meaning in both images]
+rc=1
+# declared
+YB1w.v      709 code (693 function starts, 0 return pcs, 16 other instruction starts),   40 data, 2 at or above the image top 0x5f5070, 1 FINDINGS: 0x10040 [stale against fuzz_grant.asan-ubsan, donor file <work><file>: 1 STALE (0x10040), 3 donor-file literals with the same meaning in both images]
+YFhy.v        2 code (2 function starts, 0 return pcs, 0 other instruction starts),   36 data, 22 at or above the image top 0x5f5070, 1 FINDINGS: 0x103b8 [stale against fuzz_grant.asan-ubsan, donor file <work><file>: 1 STALE (0x103b8), 3 donor-file literals with the same meaning in both images]
+YFi1.v        2 code (2 function starts, 0 return pcs, 0 other instruction starts),   35 data, 14 at or above the image top 0x5f5070, 1 FINDINGS: 0x103b8 [stale against fuzz_grant.asan-ubsan, donor file <work><file>: 1 STALE (0x103b8), 2 donor-file literals with the same meaning in both images]
+codeptr: UNMEASURED: 43 of 372 file(s) hold no address literal in range
+rc=1
+# plant-declared
+YB1w.v      709 code (693 function starts, 0 return pcs, 16 other instruction starts),   40 data, 2 at or above the image top 0x5f5070, 1 FINDINGS: 0x10040 [stale against fuzz_grant.asan-ubsan, donor file <work><file>: 1 STALE (0x10040), 3 donor-file literals with the same meaning in both images]
+YE3m.v        5 code (4 function starts, 1 return pcs, 0 other instruction starts),    7 data, 2 at or above the image top 0x5f5070, 1 FINDINGS: 0x5f9020 [stale against fuzz_grant.asan-ubsan, donor file <work><file>: 1 STALE (0x5f9020), 1 donor-file literals with the same meaning in both images]
+YFhy.v        2 code (2 function starts, 0 return pcs, 0 other instruction starts),   36 data, 22 at or above the image top 0x5f5070, 1 FINDINGS: 0x103b8 [stale against fuzz_grant.asan-ubsan, donor file <work><file>: 1 STALE (0x103b8), 3 donor-file literals with the same meaning in both images]
+YFi1.v        2 code (2 function starts, 0 return pcs, 0 other instruction starts),   35 data, 14 at or above the image top 0x5f5070, 1 FINDINGS: 0x103b8 [stale against fuzz_grant.asan-ubsan, donor file <work><file>: 1 STALE (0x103b8), 2 donor-file literals with the same meaning in both images]
+codeptr: UNMEASURED: 43 of 372 file(s) hold no address literal in range
+rc=1

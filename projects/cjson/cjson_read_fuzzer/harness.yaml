@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cjson
 harness: cjson_read_fuzzer
-rocq: OssFuzzTheorems.cjson.cjson_read_fuzzer
+rocq: OSSVerify.cjson.cjson_read_fuzzer
 origin: upstream
 summary: 4 flag bytes pick require_termination / buffered / formatted / minify; cJSON_ParseWithOpts, then
   cJSON_Print*/PrintBuffered, then cJSON_Minify on a copy. Every output is freed unexamined.

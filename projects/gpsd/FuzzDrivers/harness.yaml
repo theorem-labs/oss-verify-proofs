@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: gpsd
 harness: FuzzDrivers
-rocq: OssFuzzTheorems.gpsd.FuzzDrivers
+rocq: OSSVerify.gpsd.FuzzDrivers
 origin: upstream
 summary: Writes input[2:] to a non-blocking pipe and calls production gpsd_poll() up to 100 times (driver
   auto-detection then driver-specific packet parsing); input bytes 0/1 set readonly/passive; the change

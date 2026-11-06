@@ -1,0 +1,158 @@
+schema: oss-verify-proofs build record v1
+entry_point:
+  project: omx-clap-core
+  harness: fuzz_preset
+  function: LLVMFuzzerTestOneInput
+  records:
+  - projects/omx-clap-core/project.yaml
+  - projects/omx-clap-core/fuzz_preset/harness.yaml
+upstream:
+  name: omx-clap-core
+  repository: https://github.com/FreeMixer/omx-clap-core
+  commit: 246923f04ac0ff2adb189bb9280816670c05b36c
+  licence: GPL-3.0-or-later
+  patch_count: 0
+  licence_evidence: COPYING (the GPL version 3 text) and the SPDX-License-Identifier line (GPL-3.0-or-later) of each src/
+    and fuzz/ file at 246923f0
+oss_fuzz: null
+harness:
+  origin: upstream
+  source:
+    files:
+    - source/fuzz_preset.c
+    - source/alloc.c
+    from:
+      repository: https://github.com/FreeMixer/omx-clap-core
+      commit: 246923f04ac0ff2adb189bb9280816670c05b36c
+      path: fuzz/fuzz_preset.c
+    modified: true
+    licence: GPL-3.0-or-later
+port:
+  repository: theorem-labs/oss-verify
+  commit: 5f067f673c4489bfe989de13bf17be68daf2b2df
+  path: projects/omx-clap-core
+  tools:
+    commit: 6aab4a04e1c104101e4f5e15bbbf210f05e15f11
+    paths:
+    - infra/
+    - tools/
+    built: 249cb2790a814c6008596903a694dddbc2530800
+    how: 'the build ran oss-verify''s main''s tools/ and infra/ at this commit on projects/omx-clap-core/ at the port''s commit:
+      tools/enroll/port-commit makes the commit built (oss_verifier.commit in port/manifest.yaml) of the two'
+  asset:
+    file: omx-clap-core-port.tar.zst
+    bytes: 292936
+    sha256: 793a877b3204973a0ea4dc4d30ed19a408f1cb03ba166417bb1e8ebb5b5fd1e4
+  files: port/projects/omx-clap-core/ (the port's files for the project at the commit, less its seed corpora and other binary
+    or derived files, with the changed fuzz_preset.c and alloc.c that fuzz_preset is built from) and port/manifest.yaml (the
+    manifest of tools/check --twice, less its host keys)
+  patches: []
+  build_system: build.sh (clang, ar; omx-clap-core's Makefile is not used)
+  how_to_rebuild: 'as docs/reproducing.md: unpack omx-clap-core-port.tar.zst and, from it, run tools/check --no-shell --lock
+    <projects/omx-clap-core/fuzz_preset/harness.yaml of this repository> omx-clap-core; it builds omx-clap-core at the commit
+    the lock names, on the builder image project.yaml names, and compares each binary'
+toolchain:
+  clang: 20.1.8
+  builder_image: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  images:
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  static_asan:
+    repository: https://github.com/theorem-labs/static-asan
+    commit: b05061352064fa2be1813ac5429149f3de5f057d
+    note: the builder image's static AddressSanitizer, as in the rc.2 records
+binaries:
+- build: plain
+  file: fuzz_preset.plain
+  bytes: 72776
+  sha256: 805604bb0907ae1b70854fb641c3d34299c9d2daf97d8429cb817e232626df99
+- build: ubsan
+  file: fuzz_preset.ubsan
+  bytes: 75520
+  sha256: 45b0357d18ff66cd5a4ef336de96441316bb734a3da5ca99ba774808384beb58
+- build: asan
+  file: fuzz_preset.asan
+  bytes: 609784
+  sha256: 1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44
+- build: asan-ubsan
+  file: fuzz_preset.asan-ubsan
+  bytes: 611896
+  sha256: d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994
+binary_asset:
+  file: omx-clap-core-bin.tar.zst
+  bytes: 514280
+  sha256: add8e5d83c1793531ac4bf333c7f1c3e8330164729471056bd133dc9a444b081
+source_asset:
+  src:
+    file: omx-clap-core-src.tar.zst
+    bytes: 905046
+    sha256: 4fded8a51b856a7ca97e9f4a3a7dc4839fbce881eba024182c59092c90f440fc
+  src_manifest:
+    file: omx-clap-core-src.MANIFEST.tsv
+    bytes: 1155
+    sha256: 4b8cd1c043ef1412bfb7764b09f9b07313a4c46b3b67bfa0de8dab0e766aa47e
+rebuild:
+- 'the port''s projects/omx-clap-core/ at 5f067f67 with tools/ and infra/ of oss-verify''s main at 6aab4a04 (the commit 249cb279
+  port-commit makes of them; oss_verifier.modified: false), tools/check --twice omx-clap-core on the builder image: all 12
+  binaries of the 3 harnesses identical in the second build (port/manifest.yaml, rebuild.result identical), with these SHA-256s;
+  the 8 binaries of fuzz_state and fuzz_manifest are the bytes the port at e29299ea built'
+- omx-clap-core-bin.tar.zst and the source assets packed by tools/enroll/assets.py from those files; every member of omx-clap-core-src.tar.zst
+  is a git blob of an upstream tree its MANIFEST names
+licence:
+  components:
+  - component: omx-clap-core
+    files: src/preset_file.c and src/lv2_locate.c (into libomx-clap-readers.a, each compiled with fuzz/alloc.h forced on it),
+      the changed fuzz/alloc.c (source/alloc.c), and the changed fuzz target (source/fuzz_preset.c) with fuzz/fuzz.h
+    licence: GPL-3.0-or-later
+    evidence: COPYING (the GPL version 3 text) and the SPDX-License-Identifier line (GPL-3.0-or-later) of each src/ and fuzz/
+      file at 246923f0
+    texts:
+    - LICENSES/omx-clap-core-COPYING
+  - component: musl libc (static)
+    files: '-'
+    licence: MIT
+    evidence: musl COPYRIGHT; linked in every build
+    texts:
+    - LICENSES/musl-COPYRIGHT
+  - component: 'LLVM runtimes: compiler-rt builtins; in ASan builds the sanitizer runtime and libunwind'
+    files: '-'
+    licence: Apache-2.0 WITH LLVM-exception
+    evidence: LICENSE.TXT of compiler-rt and libunwind at llvmorg-20.1.8 (87f0227c), as in the rc.2 records
+    texts:
+    - LICENSES/llvm-compiler-rt-LICENSE.TXT
+    - LICENSES/llvm-libunwind-LICENSE.TXT
+  - component: static-asan patches compiled into the ASan runtime and musl
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of theorem-labs/static-asan at b0506135 (MIT for Theorem Labs work; the LLVM and musl code it patches
+      keeps its own licence)
+    texts:
+    - LICENSES/static-asan-LICENSE
+  - component: 'the OSS Verify port''s driver (infra/base-builder/driver/: cli.c, adapter.c and the headers they include,
+      and the seals wrap_getenv.c, wrap_mkstemp.c and wrap_getpid.c), linked into every build'
+    files: '-'
+    licence: MIT OR Apache-2.0
+    evidence: the SPDX-License-Identifier line of each of those files at theorem-labs/oss-verify 6aab4a0
+    texts:
+    - LICENSES/oss-verify-MIT.txt
+    - LICENSES/oss-verify-LICENSE
+  not_in_binaries: []
+  source_bundle:
+  - file: omx-clap-core-src.tar.zst
+    sha256: 4fded8a51b856a7ca97e9f4a3a7dc4839fbce881eba024182c59092c90f440fc
+  - file: omx-clap-core-src.MANIFEST.tsv
+    sha256: 4b8cd1c043ef1412bfb7764b09f9b07313a4c46b3b67bfa0de8dab0e766aa47e
+  - file: omx-clap-core-port.tar.zst
+    sha256: 793a877b3204973a0ea4dc4d30ed19a408f1cb03ba166417bb1e8ebb5b5fd1e4
+proofs:
+  texts:
+  - LICENSES/anthropic-proofs-LICENSE
+  - LICENSES/anthropic-proofs-LICENSE-MIT
+  - LICENSES/anthropic-proofs-NOTICE
+  texts_location: the repository's top directory
+  licence: Apache-2.0 OR MIT for the 4576 Rocq files of this folder that carry that tag, each with Anthropic's copyright line;
+    MIT, the repository's licence (LICENSE), for the 4 tagged MIT; the other 1379 carry no licence line
+  modified: 'The licence lines of 1064 of its files were written in this repository in 2026-11, by the licence change of the
+    release series: an SPDX tag, and Anthropic''s copyright line above the tag where the file carries Anthropic''s text. In
+    2026-11, 888 more of its files took the licence lines of the Anthropic-licensed file each was made from, in this fuzz target
+    or another (docs/adding-a-proof.md, requirement 7), and one line `Modified by Theorem Labs, 2026-11` that names that file
+    and says how the file was changed from it'

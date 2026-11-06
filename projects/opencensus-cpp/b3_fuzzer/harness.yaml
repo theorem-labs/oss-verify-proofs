@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: opencensus-cpp
 harness: b3_fuzzer
-rocq: OssFuzzTheorems.opencensus_cpp.b3_fuzzer
+rocq: OSSVerify.opencensus_cpp.b3_fuzzer
 origin: upstream
 summary: FromB3Headers with the input as all four headers, then as each one header alongside valid constants;
   every SpanContext discarded.

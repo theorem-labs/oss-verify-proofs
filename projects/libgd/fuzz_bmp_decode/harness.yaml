@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libgd
 harness: fuzz_bmp_decode
-rocq: OssFuzzTheorems.libgd.fuzz_bmp_decode
+rocq: OSSVerify.libgd.fuzz_bmp_decode
 origin: upstream
 summary: gdImageCreateFromBmpPtr on the whole input; destroy if non-NULL. Upstream README calls these
   Tier-1 harnesses "dumb by design".

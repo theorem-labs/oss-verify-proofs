@@ -1,0 +1,9 @@
+keyset: self-test 7 known answers (kind by name and contents; a keyed table under an unkeyed name is UNMEASURED); 14 known answers (stops gate 5, self-loop decode 9); 7 known answers (a field at 0 iff the twin defines no such name)
+NOTE repo/proofs/libreac/fuzz_disco/lib/A/AB12.v: img_hi is written as YImgTop.IMG_TOP (atable --img-names); its reflexivity check against 0x5fe000 decides
+NOTE repo/proofs/libreac/fuzz_disco/lib/A/AB12.v: img_lo is written as YImgTop.IMG_LO (atable --img-names); its reflexivity check against 0x10000 decides
+PASS repo/proofs/libreac/fuzz_disco/lib/A/AB12.v atable image fields (key = field): 1 rows, exactly the set fuzz_disco.asan (e_entry, PT_LOAD hull) defines
+PASS repo/proofs/libreac/fuzz_disco/lib/A/AB12.v atable x_* fields (key = field, row = the symbol it names): 11 rows, exactly the set the twin twin/fuzz_disco.asan.syms defines
+PASS repo/proofs/libreac/fuzz_disco/lib/A/AB12.v stops_more (key = self-loop site): 12 rows, exactly the set fuzz_disco.asan (13 self-loops, in .text; DECLARED excluded by --stops-exclude: _ZN11__sanitizerL23SealedRepairReservationEmm+0xc0) defines
+PASS repo/proofs/libreac/fuzz_disco/lib/A/AD2j.v regions (key = region name): 80 rows, exactly the set the region definitions of repo/proofs/libreac/fuzz_disco/lib/A/AD2j.v defines
+PASS repo/proofs/libreac/fuzz_disco/lib/A/AD2j.v anchor roles (key = role, present iff the image defines its object): 16 rows, exactly the set the twin twin/fuzz_disco.asan.syms defines
+keyset: PASS (measured: 2 file(s), 5 sub-checks, 120 rows)

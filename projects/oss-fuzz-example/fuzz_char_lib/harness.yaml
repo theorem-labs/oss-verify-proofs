@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: oss-fuzz-example
 harness: fuzz_char_lib
-rocq: OssFuzzTheorems.oss_fuzz_example.fuzz_char_lib
+rocq: OSSVerify.oss_fuzz_example.fuzz_char_lib
 origin: upstream
 summary: copies the input to a NUL-terminated string and calls count_lowercase_letters(); the count is
   ignored (library only printf's on 42 / 0x42).

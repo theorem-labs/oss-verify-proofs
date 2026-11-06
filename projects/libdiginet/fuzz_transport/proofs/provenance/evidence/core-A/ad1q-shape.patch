@@ -1,0 +1,20 @@
+--- A/AD1q.v
++++ A/AD1q.v
+@@ -14,7 +14,7 @@
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import ACfn.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YO05 YO09 YO06 YO01.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YI16.
+-From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import GrantShape.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import TransportShape.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG0f YG0d.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import AB1v AF0m ACeg AD1v AD1w AD1x AD1i.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YC5d.
+@@ -25,7 +25,7 @@
+ Import AX2. Import AX2S. Import APG. Import APSG.
+ Open Scope Z_scope.
+ #[local] Existing Instance YK11.fx0.
+-#[local] Existing Instance grant_shape.
++#[local] Existing Instance transport_shape.
+ Section b. Context {rc : YM05.RunCeil}.
+ Section d.
+ Variable B : asyms.

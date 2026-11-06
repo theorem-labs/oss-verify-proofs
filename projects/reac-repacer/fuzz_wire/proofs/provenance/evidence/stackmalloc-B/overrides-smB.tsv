@@ -1,0 +1,9 @@
+# --override rows for reac-repacer/fuzz_wire image B's __asan_stack_malloc_0 / _1 files, DONOR = fuzz_grant's released lib
+# (normalised by ../core-B/mkdon.sh), port_core 0e4e065eab9f. file<TAB>donor-line<TAB>old<TAB>new.
+# Each value is decided by role in numerals-smB.tsv (gates/numerals-smB.py; the same rule on fuzz_grant.asan-ubsan gives the
+# donor's own value, the control). port_core read the donor value as the shadow of a .bss address (0x5f3000 -> 0x5ede80)
+# and wrote 2148228048, which is not this role.
+# The low-shadow bound kLowShadowBeg + IMG_TOP / 8 (shLO false): grant B 0x7fff7000 + 0x5fb000 / 8 = 2148230656 (control),
+# wire B 0x7fff7000 + 0x5f6000 / 8 = 2148228096 (IMG_TOP = the page-rounded end of the last PT_LOAD).
+B/Rt/StackMalloc0.v	255	2148230656	2148228096
+B/Rt/YF0s.v	255	2148230656	2148228096

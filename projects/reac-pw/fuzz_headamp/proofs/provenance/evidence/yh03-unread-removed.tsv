@@ -1,0 +1,15 @@
+# Unread YH03 definition lines removed from this unit's lib/Reusable/YH03.v and lib/U/Reusable/YH03.v (3 lines per copy, 4
+# definitions: an A/E pair and two D cells), by the publishing method's ruling of 2026-10-30 21:39Z: an identifier with no
+# reader outside the two YH03.v files that carries an inherited project codename is removed; the one such identifier that
+# has readers stays. Each value was true of the image. Each row: the file (relative to this unit's proof root), the line
+# in that file as it stood before the removal (YH03.pre-unread.plain.v (sha256 5e83d1856c82; internal record) and
+# YH03.pre-unread.ubsan.v (sha256 178c0c473ecf; internal record)), the number of lines, and the sha256 of the removed
+# line's text (UTF-8, no newline). Verbatim text: yh03-unread-removed.tsv (sha256 790bb8870709; internal record; the pull
+# request body names the record's ref).
+file	line	lines	sha256
+lib/Reusable/YH03.v	24	1	b2e32a4c7b0a78e240b0a0024b79c3f1d57689491a26791eb848c3d19edb3605
+lib/Reusable/YH03.v	170	1	89b5b1e6a9adb057e396e44028d9a8d0fbe3084b0dbdb1246af32628c96334fd
+lib/Reusable/YH03.v	181	1	b6e6fd1ae056185a6bad6c606b9846435138a31bc49e3f169821ecca3aaa8250
+lib/U/Reusable/YH03.v	24	1	bbb59dc99c259f73b2793cb48c1f4907593d3b503ad1000b09d258a1aed180ff
+lib/U/Reusable/YH03.v	170	1	f8edfc90843c941eec2b11879554eec73d22003d5d5414c4aa0f79679969343a
+lib/U/Reusable/YH03.v	181	1	d4a620c0cffbf2eece5603e1874835c73dc8dc0e369dc89921391f7e4cfc17de

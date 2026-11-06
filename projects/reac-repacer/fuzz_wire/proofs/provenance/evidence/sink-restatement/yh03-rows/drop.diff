@@ -1,0 +1,46 @@
+diff --git a/proofs/reac-repacer/fuzz_wire/lib/Reusable/YH03.v b/proofs/reac-repacer/fuzz_wire/lib/Reusable/YH03.v
+index b7afb5a3607..ce7d1dd1a02 100644
+--- a/proofs/reac-repacer/fuzz_wire/lib/Reusable/YH03.v
++++ b/proofs/reac-repacer/fuzz_wire/lib/Reusable/YH03.v
+@@ -26,7 +26,6 @@ Definition src0_A_vm_wait : Z := 0x15cf0.
+ Definition src0_A_mmap : Z := 0x15cf4.
+ Definition src0_A_mprotect : Z := 0x15de0.
+ Definition src0_A_munmap : Z := 0x15e28.
+-Definition src0_A_stdio_read : Z := 0x0. (* no such symbol in this image (no __stdio_read and no fopen are linked, so no sink FILE exists); unused (sink_none): 0 is the read slot of the image's FILE objects, __stdout_FILE + 64, measured *)
+ Definition src0_A_stdio_write : Z := 0x166c8.
+ Definition src0_A_stdio_seek : Z := 0x16858.
+ Definition src0_A_stdio_close : Z := 0x1669c.
+@@ -37,10 +36,6 @@ Definition src0_A_memchr : Z := 0x1b9b0.
+ Definition src0_A_lock : Z := 0x1ba7c.
+ Definition src0_A_unlock : Z := 0x1bd04.
+ Definition src0_A_syscall_cp_c : Z := 0x1bd78.
+-Definition src0_D_str_wb : Z := 0x102a2.
+-Definition src0_D_str_tmp_out_gif : Z := 0x10304.
+-Definition src0_D_str_3 : Z := 0x10311.
+-Definition src0_D_str_rwa : Z := 0x102ed.
+ Definition src0_D_const_HIGHS_0x8080808080808080 : Z := 0x103b0.
+ Definition src0_D_const_ONES_0x0101010101010100 : Z := 0x103c0.
+ Definition src0_D_debruijn32 : Z := 0x10454.
+diff --git a/proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YH03.v b/proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YH03.v
+index 3c08f7769d8..67deac831f0 100644
+--- a/proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YH03.v
++++ b/proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YH03.v
+@@ -26,7 +26,6 @@ Definition src0_A_vm_wait : Z := 0x16104.
+ Definition src0_A_mmap : Z := 0x16108.
+ Definition src0_A_mprotect : Z := 0x161f4.
+ Definition src0_A_munmap : Z := 0x1623c.
+-Definition src0_A_stdio_read : Z := 0x0. (* no such symbol in this image (no __stdio_read and no fopen are linked, so no sink FILE exists); unused (sink_none): 0 is the read slot of the image's FILE objects, __stdout_FILE + 64, measured *)
+ Definition src0_A_stdio_write : Z := 0x16adc.
+ Definition src0_A_stdio_seek : Z := 0x16c6c.
+ Definition src0_A_stdio_close : Z := 0x16ab0.
+@@ -37,10 +36,6 @@ Definition src0_A_memchr : Z := 0x1bdc4.
+ Definition src0_A_lock : Z := 0x1be90.
+ Definition src0_A_unlock : Z := 0x1c118.
+ Definition src0_A_syscall_cp_c : Z := 0x1c18c.
+-Definition src0_D_str_wb : Z := 0x102a2.
+-Definition src0_D_str_tmp_out_gif : Z := 0x10304.
+-Definition src0_D_str_3 : Z := 0x10311.
+-Definition src0_D_str_rwa : Z := 0x102ed.
+ Definition src0_D_const_HIGHS_0x8080808080808080 : Z := 0x103b0.
+ Definition src0_D_const_ONES_0x0101010101010100 : Z := 0x103c0.
+ Definition src0_D_debruijn32 : Z := 0x10454.

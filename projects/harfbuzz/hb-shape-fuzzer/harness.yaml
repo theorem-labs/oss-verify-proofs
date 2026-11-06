@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: harfbuzz
 harness: hb-shape-fuzzer
-rocq: OssFuzzTheorems.harfbuzz.hb_shape_fuzzer
+rocq: OSSVerify.harfbuzz.hb_shape_fuzzer
 origin: upstream
 summary: Loads the fuzzed font, shapes a fixed ASCII string and then a 16-codepoint UTF-32 string derived
   from the input (plus test_font() from test/api/test-ot-face.c, which calls most hb_ot_* / hb_font_*

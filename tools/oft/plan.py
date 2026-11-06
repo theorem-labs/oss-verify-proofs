@@ -2,214 +2,31 @@
 
 A part is checked when its key (keys.py) has no recorded pass on the branch check-results, and, for a run that
 judges a change against a base, when the key differs from the base's: a change is checked on what it changes.  Each
-part's row says why it is or is not checked."""
-import datetime
+part's row says why it is or is not checked.  `oft plan --contracts` gives the work key of each contract file of one
+unit instead (contracts.py)."""
 import json
-import math
-import os
 import re
 import sys
 
 import yaml
 
-from . import facts, keys
+from . import facts, keys, layout, pack
 
 KINDS = ("release", "maintainer", "contributor")
-
-# Each check job's runner.  A job runs on GitHub's standard runner (4 CPUs, 16 GB; free on a public repository) when
-# every unit in it peaked under PEAK_GIB on the 16-core runner and its units' minutes there sum to at most
-# SUM_MINUTES; otherwise on the 16-core runner (64 GB).  PEAK_GIB leaves 2 GiB of the 16 GB for the checker image and
-# dune's tree beside the check.  SUM_MINUTES: most of a check is serial (each proof and each wrapper is one
-# `rocq compile` after another, and the counterexamples run one by one), but the proof library's `dune build -j` and
-# the statements' `dune build` use every CPU, so a job runs longer on 4 CPUs; 150 minutes leaves the job room under
-# GitHub's 6-hour cap even if it takes twice as long.  The measurements are TIMES; a unit missing from it counts as
-# over both thresholds.
-STANDARD = "ubuntu-24.04"
-LARGE = "ubuntu-24.04-16core"
-PEAK_GIB = 14
-SUM_MINUTES = 150
-TIMES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "check-times.tsv")
-# Each check job's time limit, in minutes: MARGIN times the job's measured minutes on its runner (its units' minutes in
-# TIMES, times SLOWER on the standard runner), at least FLOOR and at most CAP; CAP when a unit has no measured minutes.
-#   SLOWER  cgif/cgif_file_fuzzer, the one unit checked on both runners at one commit: 302.8 minutes on ubuntu-24.04
-#           (release-check run 41335592258) against 137.9 and 159.7 on the 16-core runner (runs 41299366541,
-#           41335509469): 2.2 and 1.9 times; the larger is taken.
-#   MARGIN  the minutes in TIMES are each unit's longest run, and for 41 units that run is release-check run
-#           40665207695, which took a median 1.35 times (at most 1.56) the time of run 41299366541 on the same units;
-#           half as much again over the longest run covers a run as slow as that one, of a unit measured on a fast day.
-#   FLOOR   the shortest unit's longest job took 13.9 minutes; 30 leaves room for a slow pull of the images and the
-#           binaries.
-#   CAP     the longest successful check job, zstd/simple_decompress (324.5 minutes, run 40665207695), with 15 minutes
-#           to spare, under GitHub's 360.
-SLOWER = 2.2
-MARGIN = 1.5
-FLOOR = 30
-CAP = 340
-
-
-def check_times(path=TIMES):
-    """{unit: (minutes or None, peak_gib or None)}: the measured checks of TIMES on the 16-core runner."""
-    out = {}
-    with open(path, encoding="utf-8") as f:
-        lines = [line.rstrip("\n") for line in f if not line.startswith("#")]
-    if not lines or lines[0].split("\t") != ["unit", "minutes", "peak_gib"]:
-        raise ValueError("%s: the header must be unit, minutes, peak_gib" % path)
-    for line in lines[1:]:
-        unit, minutes, peak = line.split("\t")
-        out[unit] = (float(minutes) if minutes else None, float(peak) if peak else None)
-    return out
-
-
-def runner(units, times):
-    """The runner of a check job of units, by the rule above."""
-    measured = [times.get(u, (None, None)) for u in units]
-    if all(m is not None and p is not None and p < PEAK_GIB for m, p in measured) \
-            and sum(m for m, _p in measured) <= SUM_MINUTES:
-        return STANDARD
-    return LARGE
-
-
-def timeout_minutes(units, times, on):
-    """The time limit of a check job of units on the runner on, by the rule above."""
-    minutes = [times.get(u, (None, None))[0] for u in units]
-    if any(m is None for m in minutes):
-        return CAP
-    expected = sum(minutes) * (SLOWER if on == STANDARD else 1)
-    # rounded first, so that a product such as 40 x 2.2 x 1.5 is the 132 it is and not 132.00000000000003
-    return min(CAP, max(FLOOR, math.ceil(round(MARGIN * expected, 6))))
-
-
-# How the units are packed into check jobs.  A job may hold measured minutes up to what its time limit allows below
-# CAP: CAP / MARGIN on the 16-core runner (226.7), and on the standard runner CAP / MARGIN / SLOWER (103.0), which is
-# also under SUM_MINUTES.  The units runner() puts on the standard runner, each within that, are packed into jobs of
-# their own, so that a long unit never pulls a short one onto the 16-core runner; the rest are packed into 16-core
-# jobs.  Each kind is packed first-fit decreasing: longest unit first, into the first job it fits in.  A unit with no
-# measured minutes (in TIMES: the 61 with a committed proof; the tree has some 2,150 harnesses, most checked on their
-# statements alone) and no proof is packed on the 16-core runner as UNMEASURED minutes, and its job's limit is CAP.
-# UNMEASURED is the largest minutes per harness of a sweep job with no proved harness in the measured weekly runs of
-# 24 and 26 October 2026 (five such 16-core jobs: 9 or 26 harnesses each, 4.2 to 75.9 minutes; the 75.9-minute job
-# of 26 harnesses is 2.92 a harness, and the median is 0.54), rounded up.  It says nothing of a proof's check, which
-# took 13.9 to 360 minutes for the measured ones: an unmeasured unit with a proof (a new proof, before TIMES has its
-# row) gets a 16-core job of its own, at CAP, so that it cannot take a job's other units past their limit with it.  A
-# unit whose own minutes are over the 16-core room (offloaded()) is in no job: it is checked on the build service
-# (builds-ossv), and the plan takes a citation of that check instead (OFFLOADED).  The jobs are listed longest first,
-# so that the matrix starts them first.  MATRIX is the most jobs GitHub runs in one matrix.
-ROOM = {LARGE: CAP / MARGIN, STANDARD: CAP / MARGIN / SLOWER}
-UNMEASURED = 3.0
-MATRIX = 256
-
-
-def offloaded(unit, times):
-    """Whether unit is too long for a check job even alone: its measured minutes are over the 16-core room."""
-    m = times.get(unit, (None, None))[0]
-    return m is not None and m > ROOM[LARGE]
-
-
-def pack(units, times, proved):
-    """([(runner, [unit, ...]), ...], [unit, ...]): the check jobs of units, by the rule above, and the units that are
-    in no job because offloaded() says so.  proved is the set of units with a proof.  Every unit is in exactly one job
-    or in the second list."""
-    alone, by, away, size = [], {STANDARD: [], LARGE: []}, [], {}
-    for u in units:
-        m = times.get(u, (None, None))[0]
-        on = runner([u], times)
-        if on == STANDARD and m > ROOM[STANDARD]:
-            on = LARGE
-        if offloaded(u, times):
-            away.append(u)
-        elif m is None and u in proved:
-            size[u] = math.inf
-            alone.append((LARGE, [u]))
-        else:
-            size[u] = UNMEASURED if m is None else m
-            by[on].append(u)
-    jobs = alone
-    for on, members in by.items():
-        bins = []
-        for u in sorted(members, key=lambda u: (-size[u], u)):
-            b = next((b for b in bins if b[0] + size[u] <= ROOM[on]), None)
-            if b is None:
-                bins.append([size[u], [u]])
-            else:
-                b[0] += size[u]
-                b[1].append(u)
-        jobs += [(on, b[1]) for b in bins]
-
-    def length(job):
-        return sum(size[u] for u in job[1]) * (SLOWER if job[0] == STANDARD else 1)
-    jobs = [(on, sorted(us)) for on, us in sorted(jobs, key=lambda j: (-length(j), sorted(j[1])))]
-    if len(jobs) > MATRIX:
-        raise ValueError("%d check jobs: more than the %d a matrix runs" % (len(jobs), MATRIX))
-    return jobs, sorted(away)
-
-
-# The checks of offloaded units, done on the build service: one row per unit, part and key, naming the build-service
-# job that checked that part at that key, the SHA-256 of the job's result.json, and the date (YYYY-MM-DD).  It is the
-# file at this path in the tree a plan judges (pr.yml cites the base's, plan()), and citations() refuses a malformed
-# row.  A plan that checks a part of an offloaded unit takes that part's row at the part's key in place of a check job,
-# and fails, naming the unit, the part and the key, when there is none: a row of another key is a check of other
-# bytes.  keys.NOT_THE_CHECKER names the file, so a new row re-keys nothing.
-OFFLOADED = os.path.join("tools", "oft", "offloaded-checks.tsv")
-OFFLOADED_COLUMNS = ["unit", "part", "key", "job", "result_sha256", "date"]
-_HEX64 = re.compile(r"[0-9a-f]{64}")
-_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
-
-
-def citations(path, harnesses=None, wanted=None):
-    """{(unit, part, key): row}: the rows of the OFFLOADED file at path; {} when there is no such file.  harnesses is
-    the set of the tree's units, wanted the (unit, part) pairs it has to check, or both None for another tree's file,
-    whose rows that tree's own plans hold to its harnesses.  Raises ValueError, naming each bad row, for a row whose
-    key or result_sha256 is not 64 lowercase hex digits, whose date is not a real YYYY-MM-DD, whose part is not one of
-    keys.PARTS, whose unit is no harness of the tree or has no such part to check, or that repeats the unit, part and
-    key of an earlier row.  A part may have rows at several keys: a change that gives it a new key lands its row at
-    that key first (pr.yml cites the base's rows), while the old key, the tree's current one, still needs its own."""
-    if not os.path.isfile(path):
-        return {}
-    with open(path, encoding="utf-8") as f:
-        lines = [(n, line.rstrip("\n")) for n, line in enumerate(f, 1) if not line.startswith("#") and line.strip()]
-    if not lines or lines[0][1].split("\t") != OFFLOADED_COLUMNS:
-        raise ValueError("%s: the header must be %s" % (path, ", ".join(OFFLOADED_COLUMNS)))
-    out, seen, bad = {}, {}, []
-    for n, line in lines[1:]:
-        fields = line.split("\t")
-        if len(fields) != len(OFFLOADED_COLUMNS) or not all(fields):
-            bad.append("line %d: a row has %d non-empty columns, tab-separated: %r" % (n, len(OFFLOADED_COLUMNS), line))
-            continue
-        row = dict(zip(OFFLOADED_COLUMNS, fields))
-        why = []
-        for column in ("key", "result_sha256"):
-            if not _HEX64.fullmatch(row[column]):
-                why.append("%s %r is not 64 lowercase hex digits" % (column, row[column]))
-        try:
-            valid_date = bool(_DATE.fullmatch(row["date"])) and datetime.date.fromisoformat(row["date"])
-        except ValueError:
-            valid_date = False
-        if not valid_date:
-            why.append("date %r is not a date YYYY-MM-DD" % row["date"])
-        if row["part"] not in keys.PARTS:
-            why.append("part %r is not one of %s" % (row["part"], ", ".join(keys.PARTS)))
-        elif harnesses is not None and row["unit"] not in harnesses:
-            why.append("unit %r is no harness of this tree" % row["unit"])
-        elif wanted is not None and (row["unit"], row["part"]) not in wanted:
-            why.append("%s has no %s part to check" % (row["unit"], row["part"]))
-        cited = (row["unit"], row["part"], row["key"])
-        if cited in seen:
-            why.append("line %d already cites %s %s at key %s" % (seen[cited], row["unit"], row["part"], row["key"]))
-        seen.setdefault(cited, n)
-        if why:
-            bad.append("line %d: %s" % (n, "; ".join(why)))
-        else:
-            out[(row["unit"], row["part"], row["key"])] = row
-    if bad:
-        raise ValueError("%s: %d bad row(s):\n  %s" % (path, len(bad), "\n  ".join(bad)))
-    return out
+# The files of keys.NOT_THE_CHECKER a plan runs: `python -m oft plan` goes through __main__.py's cmd_plan, whose
+# arguments and defaults decide what plan() gets, and this file and pack.py decide which parts are checked and how
+# they are packed.  release-check.yml's same_tools keeps them in its comparison, so a push that changes the planner
+# is planned with its own planner rather than credited by a merge queue run that planned with its parent's.  The
+# list is here, not in keys.py, because keys.py is the checker: a change to it would re-key every unit.  This file
+# is in the list, so a change to the list loses the credit too.
+PLANNER = ("tools/oft/__main__.py", "tools/oft/plan.py", "tools/oft/pack.py")
 
 
 def rows(root, wanted, change="HEAD", base=None, kind="release", tools=None, store=None, rocqchk=False):
     """[(row, components, the base's components or None)] for each (unit, part) of wanted.  root is the tree a check
     job checks, inside a git repository that holds the commits named here.
 
-    change   the commit whose proofs/, counterexamples/ and findings/ are checked
+    change   the commit whose proofs, counterexamples and findings are checked
     base     the commit the change is judged against, or None to check every part with no recorded pass
     kind     pr.yml's KIND: for maintainer and contributor the statements are the base's, as pr.yml's check job takes
              them; for release they are the change's own
@@ -244,34 +61,22 @@ def rows(root, wanted, change="HEAD", base=None, kind="release", tools=None, sto
     return out
 
 
-def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None, units=None, rocqchk=False,
-         times=None, cited_from=None, out=sys.stdout, err=sys.stderr):
-    """Print {"all", "units", "check_units", "offloaded", "parts", "jobs"} for the parts rows() checks; units, if
-    given, limits the plan to those units (weekly's rotating third).  parts holds every part's row with its key and
-    components.  The jobs are pack()'s, from times (check_times() when None); units and check_units name the units the
-    jobs check.  offloaded holds, for each checked part of a unit pack() leaves out, the row at the part's key of the
-    OFFLOADED file that cites: root's own, or cited_from, when given.  pr.yml gives the base's for a change that is not
-    a release, so that only a row already on main cites, never one the change itself adds; root's own file is held to
-    its form all the same.  When a part has no row, nothing is printed, each such part is named on err with its key,
-    and the plan returns 1.  Each job lists its units, the units whose build it checks (check_units) and those of them
-    with a proof of one of their statements (proof_units, which check-units.sh checks with their proofs and the rest on
-    their statements), the projects whose binaries those and the counterexamples need, the units whose
-    counterexamples and findings it runs, the runner it runs on and its time limit in minutes (timeout_minutes()).  A
-    job carries no keys (the parts do): the workflows pass the jobs as one job output, which grows with the tree, and
-    weekly.yml's determinism job takes them as one environment variable, which Linux caps at 131,072 bytes (with a key
-    per part, #170 measured a plan of every harness at 132,809 bytes)."""
-    times = check_times() if times is None else times
+def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None, units=None, max_jobs=20,
+         rocqchk=False, out=sys.stdout):
+    """Print {"all", "units", "check_units", "parts", "jobs"} for the parts rows() checks; units, if given, limits
+    the plan to those units (the units named in weekly.yml's dispatch).  parts holds every part's row with its key and
+    components.  Each job lists its units, the units whose build it checks (check_units) and those of them with a proof
+    of one of their statements (proof_units, which check-units.sh checks with their proofs and the rest on their
+    statements), the projects whose binaries those and the counterexamples need, the units whose counterexamples and
+    findings it runs, and `cpus`, the CPUs its check may give dune (pack.job_cpus of its proof_units: a unit checked
+    on its statements alone never needs fewer; 0 for every CPU); pack.shards deals the units whose proofs it builds
+    by their measured time.  A job carries no keys (the parts do): the workflows pass
+    the jobs as one job output, which grows with the tree, and weekly.yml's determinism job takes them as one
+    environment variable, which Linux caps at 131,072 bytes (with a key per part, a plan of every
+    harness at 132,809 bytes)."""
     tree = facts.load(root)
     proved = {st.harness.project.name + "/" + st.harness.name for st in tree.statements() if st.proof}
     wanted = keys.wanted(tree)
-    try:
-        own = citations(os.path.join(root, OFFLOADED),
-                        {h.project.name + "/" + h.name for h in tree.harnesses()}, set(wanted))
-        # another tree's file names that tree's harnesses: only its form is held here, as its own plans hold the rest
-        cited = own if cited_from is None else citations(cited_from)
-    except ValueError as e:
-        print("oft plan: %s" % e, file=err)
-        return 1
     if units is not None:
         wanted = [(u, p) for u, p in wanted if u in units]
     parts = [dict(r, components=c) for r, c, _o in rows(root, wanted, change, base, kind, tools, store, rocqchk)]
@@ -279,32 +84,13 @@ def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None,
     for r in parts:
         if r["check"]:
             of.setdefault(r["unit"], set()).add(r["part"])
-    packed, away = pack(sorted(of), times, proved)
-    found, missing = [], []
-    for r in parts:
-        if r["check"] and r["unit"] in away:
-            row = cited.get((r["unit"], r["part"], r["key"]))
-            if row:
-                found.append(row)
-            else:
-                other = sorted(k for u, p, k in cited if (u, p) == (r["unit"], r["part"]))
-                why = ""
-                if (r["unit"], r["part"], r["key"]) in own:
-                    why = ("; this change adds its row, which cites only once it is on the base: merge the row first, "
-                           "then this change")
-                elif other:
-                    why = "; its rows are for key %s, checks of other bytes" % ", ".join(other)
-                missing.append("%s %s: key %s has no check on the build service (builds-ossv) in %s%s" % (
-                    r["unit"], r["part"], r["key"], cited_from or OFFLOADED, why))
-    if missing:
-        print("oft plan: %d part(s) too long for a check job and not checked on the build service at their key; "
-              "check each there and add its row at that key:" % len(missing), file=err)
-        for m in missing:
-            print("  " + m, file=err)
-        return 1
-    chosen = sorted(u for _on, shard in packed for u in shard)
+    chosen = sorted(of)
+    n = max(1, min(max_jobs, len(chosen)))
+    # the units whose proofs this run builds, dealt by their measured time (pack.py), then the rest
+    table = pack.load()
     jobs = []
-    for i, (on, shard) in enumerate(packed):
+    for i, shard in enumerate(pack.shards(chosen, n, proved & {u for u in chosen if "build" in of[u]}, table)
+                              if chosen else []):
         build = [u for u in shard if "build" in of[u]]
         cx = [u for u in shard if "counterexamples" in of[u]]
         jobs.append({"index": i, "units": " ".join(shard), "check_units": " ".join(build),
@@ -312,10 +98,9 @@ def plan(root, change="HEAD", base=None, kind="release", tools=None, store=None,
                      "projects": " ".join(sorted({u.split("/")[0] for u in build + cx})),
                      "counterexamples": " ".join(cx),
                      "findings": " ".join(u for u in shard if "findings" in of[u]),
-                     "runner": on, "timeout_minutes": timeout_minutes(shard, times, on)})
+                     "cpus": pack.job_cpus([u for u in build if u in proved], table)})
     json.dump({"all": bool(parts) and all(r["check"] for r in parts), "units": chosen,
-               "check_units": [u for u in chosen if "build" in of[u]], "offloaded": found, "parts": parts,
-               "jobs": jobs}, out)
+               "check_units": [u for u in chosen if "build" in of[u]], "parts": parts, "jobs": jobs}, out)
     out.write("\n")
     return 0
 
@@ -374,3 +159,181 @@ def images_differ(head_release, base_release):
         return True
     base = _images(base_release)
     return base is None or _images(head_release) != base
+
+
+# pr.yml's checked-elsewhere step: a merge queue group whose every pull request carries merge-pr.sh's VM evidence
+# comment runs no check job when nothing a planned part's check reads moved between the tree its check of record ran
+# on and the group head.  These answer that, with the base's tools, as the reach step asks images_differ, and they
+# are here for the same reason: keys.NOT_THE_CHECKER leaves plan.py out of every key, so a change to them re-checks
+# no fuzz target.
+KEY_LINE = re.compile(r"(?P<unit>[^/\s]+/[^/\s]+) (?P<key>[0-9a-f]{64})")
+# Ruling 16 (OSS Verify, 2026-11-01): main's checker at 87c4b944683b, under which the VM checks of record ran, and
+# at dd31239f2de (keys.checker of each).
+ONLY_CHECKER = ("6d15b1f1a2bd82ec4dc93752b90672434f1e5658f5fbdac8184de52595a5334b",
+                "416c41fb27ae28c1701639ba9ca83898fdecb78b26faa0dd744ba0b8575ef544")
+# Ruling 20 (OSS Verify, 2026-11-01, amended the same day and on 2026-11-02, when the train dropped the reading
+# change and with it the one-reading-per-pair rule of rules.py): what the W2 train moves in every unit's key and
+# nothing else.  keys.VERSION, which the train raises to 3; the dune-path component, which it adds; the checker
+# id, since the train changes 9 files of the checker (keys.checker of the train's tools, and main's before it,
+# which is ONLY_CHECKER[1]); and the theories id, since the train adds theories/Premises.v.  Each is pinned, so a
+# later change to the checker or to theories/ gives an id these do not name and ends ruling 20 by itself
+# (_before_the_train returns None).  Never re-pin these to extend it: a new pair needs the OSS Verify lead's
+# ruling.  test_keys.VmEvidence reads them back at the commit that wrote them, so such a change fails nothing.
+BEFORE_THE_TRAIN = "2"
+AFTER_THE_TRAIN_CHECKER = "f1800c27cab27dded55e606b4f2a99f33b7d7a0bc873e25fde0ca176356b10c1"
+AFTER_THE_TRAIN_THEORIES = ("dff080d6cdccfdb3e9c481ed95ddeead6e386b734e1fcda96fa810071f0e4adc"
+                            " 613a5ee83381ddf6fd5239404cb75c65641a85f50f5416e91578101b90ba607c")
+BEFORE_THE_TRAIN_THEORIES = ("e2114ed52f49c4031474bd34d719b0ce02a0723acca8851559f189a939124e3a"
+                             " 6ceebc312f26592ba54bab60eb6dd0abe8a334c0a925b6f5e5a6d8c9f7c3a52d")
+
+
+def _before_the_train(comp):
+    """The components comp as they were before the W2 train, or None when they are not this train's: its version
+    component back at BEFORE_THE_TRAIN, no dune-path component, the checker id back at main's (ONLY_CHECKER[1])
+    and the theories id back at BEFORE_THE_TRAIN_THEORIES (ruling 20).
+
+    A part whose checker or theories id is not the train's is no part this ruling knows,
+    and gets None: the two ids are pinned exactly, so only the tree the ruling was granted for is read back, and
+    the first later change to the checker or to theories/ ends it.  Every other component is comp's own.  The
+    difference lives here, in the file the pull request after N6 removes, and keys.py knows of no formula but
+    today's."""
+    if comp.get("checker") != AFTER_THE_TRAIN_CHECKER or comp.get("theories") != AFTER_THE_TRAIN_THEORIES:
+        return None
+    was = {"version": BEFORE_THE_TRAIN, "checker": ONLY_CHECKER[1], "theories": BEFORE_THE_TRAIN_THEORIES}
+    return {name: was.get(name, value) for name, value in comp.items() if name != "dune-path"}
+
+
+def ruling_16_allows(comp, recorded):
+    """Whether a part whose key here differs from the key `recorded` may still be skipped: ruling 16 allows one
+    difference, the checker component alone, and only from ONLY_CHECKER[0] to ONLY_CHECKER[1].  True exactly when
+    this part's checker is the second and the key of these components with the first is the recorded one, which no
+    other difference survives.
+
+    The exception ends with the event it was granted for: it is removed, with this function and its callers' lines,
+    by the pull request that follows the VM corpus run N6 passing on post-train main (the CI/CD lead tracks it).
+    Its callers are rulings_allow below, which vm_evidence_keys and the plan job's elsewhere step in
+    .github/workflows/pr.yml call over the same parts to find the key that takes a queue entry out.
+    Until then a unit checked of record under the older checker is not re-checked for the checker alone."""
+    old, new = ONLY_CHECKER
+    return comp.get("checker") == new and keys.key_of(dict(comp, checker=old)) == recorded
+
+
+def ruling_20_allows(comp, recorded):
+    """Whether a part whose key here differs from the key `recorded` may still be skipped under ruling 20 (the OSS
+    Verify lead, 2026-11-01, amended the same day; it mirrors ruling 16): the recorded key is the key these very
+    components give as they stood before the W2 train.  A check of record that ran before the train measured the
+    same tree, and the train moves three things in every unit's key without touching what any check reads: the
+    key's formula (keys.VERSION 3 and the dune-path component), the checker id (the train changes 9 files of the
+    checker), and the theories id (the train adds theories/Premises.v, a pure addition: no existing theory moves,
+    so no proof of a merged unit reads anything new).  _before_the_train takes those three back, pinned, and
+    nothing of what a check reads is forgiven: one changed proof file, statement, image, axiom list, project row or
+    dune-project moves a component, and no ruling brings the two keys together again.
+
+    Ruling 16 holds inside it, for a check of record that ran under main's older checker as well: it is asked of
+    the same pre-train components, so the two exceptions meet in one place and neither repeats the other's rule.
+
+    One thing the keys do not carry: until N6 passes, a hand-written dune file of a unit's build path merged after
+    the train is not built with the proofs a pre-train marker covers, since that marker's check of record ran
+    before it; check_hand_dune bounds such a file to one that can only fail a build, and N6 is the backstop.
+
+    What stands behind it is N6: the farm corpus run of record on post-train main re-checks every unit merged
+    under this ruling, so a key this accepts is a check deferred to N6, never a check dropped.  It ends as ruling
+    16 does, and with it: the pull request that follows N6 passing (the CI/CD lead tracks it) removes both, these
+    functions, the table below and its callers' lines.  Nothing of either is in keys.py."""
+    pre = _before_the_train(comp)
+    return pre is not None and (keys.key_of(pre) == recorded or ruling_16_allows(pre, recorded))
+
+
+# The exceptions a key that differs from its evidence line may still stand under, in the order they are asked: each
+# a name for the message vm_evidence_keys writes and the predicate that answers.  Ruling 16 comes first, since it
+# forgives the checker alone and so says the less of the two.
+RULINGS = (("ruling 16's checker pair", ruling_16_allows), ("ruling 20's pre-train tree", ruling_20_allows))
+
+
+def rulings_allow(comp, recorded):
+    """The name RULINGS gives the first exception that lets a part whose key differs from `recorded` be skipped, or
+    "" when none does, so one call answers for every ruling and the step that reports names the one it used."""
+    return next((name for name, allows in RULINGS if allows(comp, recorded)), "")
+
+
+def _generated_readme(path):
+    """Whether path is a README.md `oft generate` renders and no check reads: a fuzz target's,
+    projects/<p>/<h>/README.md (the statement folder is the same in both layouts, layout.statement_dir, so there is
+    nothing for layout.canonical to move), or its project's, projects/<p>/README.md.  No key holds either: the
+    statement folder's component drops its README.md (unitpaths.HARNESS_DROP, "generated, and no check reads it"),
+    and a project's component is its project.yaml and its fuzz targets' harness.yaml alone
+    (unitpaths.project_files: "The other files directly in projects/<p>/, its README.md and its .opam file, are
+    generated, and no check reads them"; keys._project: "a proof re-renders the README, which no check reads").
+    A folder of projects/<p>/ that is no fuzz target's (layout.NOT_A_HARNESS) has no README of this kind."""
+    parts = path.split("/")
+    if parts[0] != "projects" or parts[-1] != "README.md":
+        return False
+    return len(parts) == 3 or (len(parts) == 4 and parts[2] not in layout.NOT_A_HARNESS)
+
+
+def paths_a_check_reads(changed):
+    """Of the paths changed, those whose change can move a verdict the keys do not already hold.  Four kinds cannot:
+    a file of a unit's own proofs folder in either layout (layout.is_change and layout.canonical), which only that
+    unit's build reads -- a check reads no file of another unit, so every proof library a unit's check may read is in
+    that folder (tools/oft/unitpaths.py) -- and whose id that unit's build key holds, so vm_evidence_keys catches any
+    change to it; CHANGELOG.md, which no check opens; a file of tools/ that no check opens
+    (keys.not_the_checker); and a fuzz target's or a project's generated README.md, which no key holds and no check
+    opens (_generated_readme), and which a proof re-renders with its statement's new status.  Everything else
+    counts, a statement, theories/,
+    toolchain/, .github/, release.yaml, dune-project, a counterexample, a finding and a projects/<p>/unpatched.yaml
+    among them: a counterexamples or findings part is checked in CI, and no VM evidence line records its key.
+
+    An empty path (a trailing newline of the changed list) is no path and counts for nothing."""
+    out = []
+    for path in changed:
+        if not path or path == "CHANGELOG.md" or keys.not_the_checker(path) or _generated_readme(path):
+            continue
+        parts = layout.canonical(path).split("/") if layout.is_change(path) else []
+        if len(parts) > 4 and parts[0] == "projects" and parts[3] == "proofs":
+            continue
+        out.append(path)
+    return out
+
+
+def vm_evidence_keys(planned, lines):
+    """(True, what was measured) when every part planned marks for checking is a unit's build whose key here is the
+    key an evidence line recorded for that unit, else (False, why).  planned is `oft plan`'s parts, lines the
+    `<unit> <key>` lines of the group's evidence comments.
+
+    A part's content key holds everything its check reads (keys.py), so equal keys say that nothing moved between
+    the tree the check of record ran on and this one.  An evidence line records a unit's build key alone, so a
+    planned counterexamples or findings part leaves the group its checks; so does a unit with no line, and two
+    lines for one unit that disagree (two pull requests of one group touching it).  A key that differs is false
+    here too, but the workflow answers it before this function, except for a unit two pull requests recorded,
+    which it leaves here: the plan step fails for the group's last entry, whose pull request recorded that key, so
+    the queue takes that entry out instead of checking a tree its owner never measured
+    (.github/workflows/pr.yml, the plan job's elsewhere step)."""
+    recorded = {}
+    for line in lines:
+        m = KEY_LINE.fullmatch(line.strip())
+        if not m:
+            return False, "an evidence line is not one unit and one key: %r" % line.strip()
+        if recorded.setdefault(m.group("unit"), m.group("key")) != m.group("key"):
+            return False, "%s has two evidence lines of its own, with different keys" % m.group("unit")
+    parts = [p for p in planned if p.get("check")]
+    if not parts:
+        return False, "the plan marks no part to check"
+    other = sorted({p["part"] for p in parts} - {"build"})
+    if other:
+        return False, "the plan marks %s to check, which no evidence line records" % ", ".join(other)
+    by_ruling = {name: [] for name, _allows in RULINGS}
+    for part in parts:
+        unit, key, comp = part["unit"], part["key"], part["components"]
+        was = recorded.get(unit)
+        if was is None:
+            return False, "%s has no key line in its pull request's evidence comment" % unit
+        if was == key:
+            continue
+        ruling = rulings_allow(comp, was)
+        if ruling:
+            by_ruling[ruling].append(unit)
+            continue
+        return False, "%s: its key at this group head is %s and its evidence comment recorded %s" % (unit, key, was)
+    return True, ("%d part(s), each with the key its check of record ran on" % len(parts)
+                  + "".join("; %d by %s: %s" % (len(units), name, " ".join(units))
+                            for name, units in by_ruling.items() if units))

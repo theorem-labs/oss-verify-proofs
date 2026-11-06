@@ -1,0 +1,114 @@
+(* check_bounded_alloc 0x81560 (fs.c:157-163) on fs.asan, 12 words: `addi sp, sp, -16; sd ra, 8(sp); srli a1, a1, 2;
+   slli a2, a1, 1; add a1, a2, a1; addi a1, a1, 3; bltu a1, a0, 0x81588; ld ra, 8(sp); addi sp, sp, 16; ret`, then the
+   abort path `jal __asan_handle_no_return; jal abort`. a1 at the branch is n / 4 * 3 + 3 (no wrap: n < 2^64); under
+   held <= n / 4 * 3 + 3 the branch to the abort path is not taken, and the function returns with memory changed only
+   in its 16-byte stack window.
+   The decode table is lib/A/FSW_check_bounded_alloc_tbl.v (AB1w.v's range of the function, 12 words).
+   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_check_bounded_alloc.v (a working branch),
+   over fs's walk kit lib/A/FSW_K.v in U form: fsw_entry on afn_preU, the journal over unpoison U mem
+   (ajournal_init), fsw_aj_runU for each engine run, fpostU at the return. *)
+From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s.
+From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import
+YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP0g YP01 YP0i YCbn.
+From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YN3v YI04 YI09 YI08 YI00.
+From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YK04 YA0i YA0n YA0o YCbm YA0q.
+From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
+From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YI16 YK06 YM05 YG0q.
+From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.A Require Import
+AB1v FSupoison FSupoisonU FSH_YC20 FSH_Gen FSH_Base FSH_Rt FSH_Fn_checks FSW_K FSW_check_bounded_alloc_tbl.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope bv_scope.
+Open Scope Z_scope.
+(* SINK GUARD (owner a Theorem Labs lane 03:47Z, every lib/A and lib/B FSH_* statement file; positive control
+   lib/A/FSH_SinkCtl.v): a SUCCESS here means a WRONG sink instance resolved. *)
+Fail Definition probe_SK : Reusable.YI16.sink_head := _.
+Fail Definition probe_SH : Reusable.YI14.sink_syms := _.
+
+(* a1 at the branch 0x81578, as the engine leaves it: ((n >> 2) << 1) + (n >> 2) + 3 *)
+Definition cba_a1 : sv :=
+  SAlu ALU_ADD (SAlu ALU_ADD (SAlu ALU_SLL (SAlu ALU_SRL (SOff 11 0) (SLit 2)) (SLit 1))
+                             (SAlu ALU_SRL (SOff 11 0) (SLit 2)))
+               (SLit 3).
+Lemma cba_a1_U : forall E n, ew E 11 = Z_to_bv 64 n -> 0 <= n < 2 ^ 64 -> U E cba_a1 = b64_alloc_bound n.
+Proof.
+intros E n Hn Hr. unfold cba_a1, b64_alloc_bound. rewrite !U_SAlu. cbn [zalu_raw].
+rewrite (U_atom E 11 n Hn Hr), !U_SLit.
+replace (Z.land (zcanon 2) 63) with 2 by reflexivity. replace (Z.land (zcanon 1) 63) with 1 by reflexivity.
+replace (zcanon 3) with 3 by reflexivity.
+rewrite Z.shiftr_div_pow2 by lia. rewrite Z.shiftl_mul_pow2 by lia.
+change (2 ^ 2) with 4. change (2 ^ 1) with 2.
+assert (Hq : 0 <= n / 4 < 2 ^ 62) by (split; [apply Z.div_pos; lia | apply Z.div_lt_upper_bound; lia]).
+rewrite (zcanon_small (n / 4)) by lia.
+rewrite (zcanon_small (n / 4 * 2)) by lia.
+rewrite (zcanon_small (n / 4 * 2 + n / 4)) by lia.
+rewrite zcanon_small by lia.
+lia.
+Qed.
+
+Section W. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
+Variable B : asyms.
+(* FSH_Fn_checks.v Section c's image facts; the walk does not use them *)
+Hypothesis IMG : fs_img_facts tfibsegs B.
+
+Theorem check_bounded_alloc_proof : check_bounded_alloc_spec tfibsegs B.
+Proof.
+intros ly S U W regs mem md ch held n live peak cnt fail HPRE _ Hglob H10 H11 Hheld Hn Hle.
+pose proof (AR_laws_ok tfibsegs B) as LAWS. pose proof fs_segs_low as HSL. pose proof fs_wx as HWX.
+destruct HPRE as [HAPU _].
+pose proof (fsw_sp B _ ly S U W regs mem md ch HAPU) as (Hal16 & Hceil & H47 & HS0).
+pose proof asan_consts as (C1 & _).
+pose proof HAPU as (HAP & _ & _).
+pose proof HAP as (HAR & Hra & _).
+assert (FS : STK_check_bounded_alloc = 16) by reflexivity.
+pose proof (fsw_entry B STK_check_bounded_alloc 16 ly S U W regs mem md ch A_check_bounded_alloc HAPU
+  ltac:(lia) ltac:(vm_compute; reflexivity)) as HS.
+pose proof (ajournal_init tfibsegs B STK_check_bounded_alloc [] ly S W regs (unpoison U mem) md ch HAP) as HJ.
+pose proof (fsw_ARU B _ ly S U W regs mem md ch HAPU) as HARU.
+set (E := Ereg regs []) in HS.
+assert (Usp : bv_unsigned (ew E 2) = spZ regs) by (subst E; rewrite (ew_Ereg_nat regs [] 2 2%bv eq_refl); reflexivity).
+assert (E10 : ew E 10 = Z_to_bv 64 held) by (subst E; rewrite (ew_Ereg_nat regs [] 10 10%bv eq_refl); exact H10).
+assert (E11 : ew E 11 = Z_to_bv 64 n) by (subst E; rewrite (ew_Ereg_nat regs [] 11 11%bv eq_refl); exact H11).
+unfold cfg_at. change (w64 A_check_bounded_alloc) with (Z_to_bv 64 A_check_bounded_alloc).
+(* ---- 0x81560 .. the branch at 0x81578 ---- *)
+fsw_aj_runU cba_tbl_ok HS HJ HARU.
+{ awr_ok_tac. exact Usp. }
+assert (SB1 : same_below mem (ms_mem ms) alloc_ceiling).
+{ change (frame_of E [fstk 16] mem (ms_mem ms)) in HF.
+  apply (same_below_frame1 E (fstk 16) mem (ms_mem ms) alloc_ceiling HF); [|lia].
+  cbn [fstk YP09.r_base YP09.r_wlo base_val]. rewrite Usp. lia. }
+eapply SRr_sym_branch with (c := BC_LTU) (a := cba_a1) (b := SOff 10 0); [exact HS | |].
+- intros Hb _. exfalso. rewrite branch_ltu_U in Hb.
+  rewrite (cba_a1_U E n E11 Hn), (U_atom E 10 held E10 Hheld) in Hb.
+  apply Z.ltb_lt in Hb. lia.
+- intros _ HS2. clear HS.
+  (* ---- not taken: 0x8157c .. the return at 0x81584 ---- *)
+  fsw_aj_runU cba_tbl_ok HS2 HJ HARU.
+  { awr_ok_tac. exact Usp. }
+  rewrite ?wvb_collapse in HJ.
+  assert (SB2 : same_below (ms_mem ms) (ms_mem ms0) alloc_ceiling).
+  { cbn [add_cond ss_mem] in HF0.
+    eapply (same_below_frame1 E _ (ms_mem ms) (ms_mem ms0) alloc_ceiling HF0); [|lia].
+    cbn [YP09.r_base YP09.r_wlo base_val]. rewrite Usp. lia. }
+  pose proof (fsw_reg_atom _ regs [] _ ms0 1%bv 1%bv 1 HS2 ltac:(vm_compute; reflexivity) eq_refl) as R1.
+  eapply (SRr_ret_at tfibsegs cba_tbl cba_tbl_ok fs_wx); [exact HS2 | reflexivity | vm_compute; reflexivity |].
+  intros mat2.
+  assert (Hpc : v_jalr (YK11.getr (ms_regs ms0) 1) 0 = YK11.getr regs 1) by (rewrite R1; exact Hra).
+  rewrite Hpc. unfold fpostU.
+  do 5 eexists. split; [reflexivity|].
+  split; [apply (ajournal_materialize tfibsegs B LAWS HSL); exact HJ|].
+  split; [exact (proj1 (proj2 HARU))|].
+  split; [exact (proj2 (proj2 HARU))|].
+  split; [eapply (aregs_preserved_of_st_ok tfibsegs _ E _ _ regs [] HS2); [apply env_agree_refl | vm_compute; reflexivity]|].
+  split; [reflexivity|].
+  exact (fs_glob_below W mem (ms_mem ms0) live peak cnt fail (same_below_trans _ _ _ _ SB1 SB2) Hglob).
+Qed.
+End W.

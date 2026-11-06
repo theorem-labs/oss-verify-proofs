@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: perfetto
 harness: buffered_frame_deserializer_fuzzer
-rocq: OssFuzzTheorems.perfetto.buffered_frame_deserializer_fuzzer
+rocq: OSSVerify.perfetto.buffered_frame_deserializer_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

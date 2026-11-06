@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nghttp2
 harness: nghttp2_fuzzer_fdp
-rocq: OssFuzzTheorems.nghttp2.nghttp2_fuzzer_fdp
+rocq: OSSVerify.nghttp2.nghttp2_fuzzer_fdp
 origin: upstream
 summary: As nghttp2_fuzzer, but the initial SETTINGS frame has 1-10 entries with fuzzed ids/values in
   [0,1000] (FuzzedDataProvider) before the rest of the input goes to nghttp2_session_mem_recv2; return

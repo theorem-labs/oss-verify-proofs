@@ -1,0 +1,20 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
+
+From Stdlib Require Import ZArith NArith List QArith.
+From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType State Run.
+From LinuxProcessSemantics.EquivalenceDefinition Require Import MustExit FinInput Classifier Measure.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Common Require Import ClassifierRows.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require KReplay.
+Ltac2 kr_t_BoundRows () := "C59OSSVerify5KrLib6Common>ClassifierRows;accepts_allC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemanticsEEquivalenceDefinition:Classifier:rejects_foC4ELinuxProcessSemanticsEEquivalenceDefinition8FinInput?valid_fin_inputC4ELinuxProcessSemanticsEEquivalenceDefinition:Classifier:accepts_foC47Corelib4Init5Logic3notC4ELinuxProcessSemanticsEEquivalenceDefinition8FinInput=to_proc_inputC4ELinuxProcessSemantics?LinuxProcessSem3Run;valid_entryI4ELinuxProcessSemantics?LinuxProcessSem<MemImageType5Image00I4ELinuxProcessSemanticsEEquivalenceDefinition8FinInput<FinProcInput00I47Corelib4Init5Logic3and00I47Corelib4Init5Logic5False00I4ELinuxProcessSemantics?LinuxProcessSem3Run9ExecEntry00I47Corelib4Init9Datatypes4list00C47Corelib5Lists7ListDef3mapI46Stdlib5Lists4List5NoDup00C46Stdlib5Lists4List2InC4ELinuxProcessSemanticsEEquivalenceDefinition7Measure;sum_weightsK46Stdlib6QArith;QArith_base1Q01C46Stdlib6QArith;QArith_base5QmultC46Stdlib6QArith;QArith_base3QleK47Corelib4Init9Datatypes4list01C46Stdlib6QArith;QArith_base4QnumC56Stdlib6ZArith6BinInt1Z3mulK47Corelib7Numbers7BinNums1Z02C56Stdlib6ZArith6BinInt1Z7le_reflC46Stdlib6QArith;QArith_base4QdenC56Stdlib6ZArith6BinInt1Z2leC4ELinuxProcessSemanticsEEquivalenceDefinition7Measure?sum_weights_nilC47Corelib4Init5Logic8eq_ind_rK47Corelib4Init9Datatypes4list02I47Corelib4Init5Logic2eq00I47Corelib4Init5Logic2or00K47Corelib4Init5Logic2eq01K47Corelib4Init5Logic2or01c59OSSVerify5KrLib6Common9BoundRowsHno_reject_of_accepts_allC1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic9False_indC4ELinuxProcessSemanticsEEquivalenceDefinition7MeasureAweight_bound_T_foI46Stdlib6QArith;QArith_base1Q00I4ELinuxProcessSemanticsEEquivalenceDefinition8FinInput7FinCore00C4ELinuxProcessSemanticsEEquivalenceDefinition8FinInput8fin_coreK47Corelib7Numbers7BinNums1Z01K47Corelib7Numbers7BinNums8positive03".
+#[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
+
+Lemma no_reject_of_accepts_all : forall (C : Image) (f : FinProcInput),
+  accepts_all C -> ~ rejects_fo C f.
+Proof.
+ltac2:(KReplay.run1 (kr_t_BoundRows ()) [] "h03ACCh11Ch21Hh33Henh42Hfh52Hnh62enh71fp;1p;2p;3g0000j16Tg0016j25Tg002:j12Tg003Aj20Tg004Ej11Tg004^j14Tg005cj33Tg006[g007Xf1R0#6f2R1/50R2g008^%21f3R3/01#1g0099f0R1f4#2f6R4f5'0#1P1g009Vf8R5f7R6#4731P6P5P3P0P1O4W3W61064eO1W5W4P0P1O2n2001000000120000000W2%12eW0W7W1o"). Qed.
+
+Theorem weight_bound_fo_zero_of_accepts_all : forall (C : Image) (w : FinProcInput -> Q) (M : Q),
+  accepts_all C -> weight_bound_T_fo C w M 0%Q.
+Proof.
+ltac2:(KReplay.run1 (kr_t_BoundRows ()) [] "p'0h01fi001fh14Hallh21li011lh31ah43ACCh51Ch61Mh72_Hh81qh91wi022Ini031bi042l'p;1p;4p;2p;3p;6g0000j1JTg00:NR0j1ITg00:nj4>Tg00;Jj2;Tg00;fj30Tg0016j22Tg00<=j26Tg00=?j2=Tg00=_j25Tg00>Aj23Tg00>aj1:Tg00?Aj14Tg00?bj21Tg00@?j17Tg00@]j1HTg00A>j19Tg00A_j2FTg00B;j1ETg00CAj6@Tg00C_j3?Tg00D?j38Tg00DYj2ATg00E3j2BTg00EMj3CTg00Egj4DTg00G5j2<Tg00GTj4GTg006[g007XR1g00H\R2[f2R3#J%I1R4g00I<R5P1P5g00J=f0R5C>';A0153f7R6f1R7'2[^01P0P1A0157f9R8/27[^011667g00K=R6g00K[R9'=R:f6R;'5R<'3]1P3%:1R=9015f8R>/27[^01P2P:135<X82f5R<#4,16%79'1#H%4:15:<R<#9#7'1%4<%9:#7'1'Fe13:<e16;=%E;E@W1A?137R;9015f</27[^01f:/6;15:8'3f;P3P>P5P3A8133p-0R>^24^31P0P1P>P5g0099f3R>9817f4P>P5O2'An10110100020020103104X24X31p?1001102P3P7O21B133CO2CD'<W1X24X01P7P5O2n10110100020020100101P5O1W1W7W2P>P3P7P:CGeW4X62W9W5o"). Qed.

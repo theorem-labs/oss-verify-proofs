@@ -1,0 +1,50 @@
+# port_addr_check.py sha256 e165063a00810b376b9f65ef3da645c11eed0e22e6b50b2ae10db97ccc6b2d3b
+# text: src = port_core stage (364 files of A/, listing id 45c940f0a4a8); dst = port_core stage-out (364 files of A/, listing id e2f712164819; every file blob-identical to lib/A/ at commit 7f39d662ad6c)
+# listing id = sha256 of the sorted lines "<git blob id>\t<file name>" of the tree's .v files
+# below: the run's output lines; paths made repository-relative or named by role; the tool's two pointers to its own documentation (file-pairing note, donor-vs-donor note) are left out
+
+# recovering symbols of bin/fuzz_grant/fuzz_grant.asan from 28 donors
+  recovered A c2c7559b29bd: {'functions': 1263, 'objects': 716, 'interpolated_objects': 16, 'gap_filled_functions': 53, 'ambiguous_left': 47, 'disambiguated': 19, 'multi_settled': 5, 'code_bytes': 436616, 'named_code_bytes': 435964}
+INPUTS USED by port_addr_check.py --src stage --dst stage-out --src-image A=bin/fuzz_grant/fuzz_grant.asan --dst-image A=bin/fuzz_uci/fuzz_uci.asan:unstripped/fuzz_uci/fuzz_uci.asan --donors-from donors --paired-only --out raw.tsv --summary --cache gate-cache --fail-on-flags
+  image src A  bin/fuzz_grant/fuzz_grant.asan  sha256 c2c7559b29bd  584312 bytes  symbols: donor matching over 28 donors (cache miss)
+  image dst A  bin/fuzz_uci/fuzz_uci.asan  sha256 6ea017c24525  560936 bytes  symbols: symtab of fuzz_uci.asan 56822e263d76
+  ref src  stage  -> local path
+  ref dst  stage-out  -> local path
+  count symbols of src A: 1980
+  count symbols of dst A: 1965
+  count src files read: 364
+  count dst files read: 364
+  count files paired: 364
+  count numerals: 157909
+  count files recognised or declared generated (GENERATED-SKIPPED): 0
+  count constructors whose declared field roles were read from the ported tree: 0
+  count constructors whose declared field roles were read from the source tree: 0
+  count stale-donor candidates dropped instead of judged: 0
+  cache hits 0, misses 1
+  control fill_pass known answer (selftest_fill, run before anything is read): RAN  pass
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-PORTED  count 19  reported as its own row, never silently
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-SOURCE  count 84  reported as its own row, never silently
+# files paired 364; numerals 157909; "kernel" = of those, inside a fail-loud vm_compute / fetch_word fact
+GENERATOR-FILL	6	kernel 6	REPORTED
+IDENT-NAME	3223	kernel 1711
+IMAGE-EXTENT-SAME	55	kernel 9
+INSN-SAME	1182	kernel 759
+LABEL-KEPT	19
+NON-ADDRESS-SAME	144973	kernel 88339
+ROUND-CONSTANT-SAME	34	kernel 21
+SAME-CONTENT	7	kernel 6
+SAME-GEOMETRY	1259	kernel 291
+SAME-SYMBOL	6845	kernel 3581
+DIFFERENT-SYMBOL	1	kernel 1	FLAG
+GEOMETRY-CHANGED	9	kernel 5	FLAG
+KIND-CHANGED	9	kernel 5	FLAG
+NO-COUNTERPART	1	FLAG
+NON-ADDRESS-CHANGED	174	kernel 157	FLAG
+STALE-DONOR-CODE-POINTER	1	FLAG
+UNPAIRED-PORTED	19	FLAG
+UNPAIRED-SOURCE	84	kernel 18	FLAG
+UNRESOLVED	8	kernel 3	FLAG
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+# image A bin/fuzz_grant/fuzz_grant.asan c2c7559b29bd symbols: recovered {'functions': 1263, 'objects': 716, 'interpolated_objects': 16, 'gap_filled_functions': 53, 'ambiguous_left': 47, 'disambiguated': 19, 'multi_settled': 5, 'code_bytes': 436616, 'named_code_bytes': 435964}
+# image A bin/fuzz_uci/fuzz_uci.asan 6ea017c24525 symbols: symtab
+FLAGGED 306 rows in 9 classes: DIFFERENT-SYMBOL=1 GEOMETRY-CHANGED=9 KIND-CHANGED=9 NO-COUNTERPART=1 NON-ADDRESS-CHANGED=174 STALE-DONOR-CODE-POINTER=1 UNPAIRED-PORTED=19 UNPAIRED-SOURCE=84 UNRESOLVED=8

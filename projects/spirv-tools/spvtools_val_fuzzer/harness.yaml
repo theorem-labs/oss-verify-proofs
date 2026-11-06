@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spirv-tools
 harness: spvtools_val_fuzzer
-rocq: OssFuzzTheorems.spirv_tools.spvtools_val_fuzzer
+rocq: OSSVerify.spirv_tools.spvtools_val_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

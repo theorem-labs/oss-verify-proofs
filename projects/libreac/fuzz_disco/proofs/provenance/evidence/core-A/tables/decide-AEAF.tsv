@@ -1,0 +1,242 @@
+file	line	old	new	reason
+A/AFic.v	127	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFic.v	133	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFic.v	289	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFic.v	379	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AF0x.v	24	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AE3i.v	27	0x10310	STRUCTURAL	AE3i chunk list is REGENERATED from disco hole cells (complement of the cells Tfib_const reads), see AE3i-chunks note
+A/AE3i.v	28	0x10330	STRUCTURAL	AE3i chunk list is REGENERATED from disco hole cells (complement of the cells Tfib_const reads), see AE3i-chunks note
+A/AE3i.v	30	0x103c0	STRUCTURAL	AE3i chunk list is REGENERATED from disco hole cells (complement of the cells Tfib_const reads), see AE3i-chunks note
+A/AE3i.v	37	0x21448	0x21c28	entry 3 of the jump table cgif 0x2143c (base loaded at 0x8ca98) = disco table 0x21c1c (base loaded at 0x8f3ec, pcrel target_consistent); cell value in disco ELF = 0x6d8fc
+A/AE3i.v	38	0x2144c	0x21c2c	end of that 4-byte table cell (0x21c28 + 4)
+A/AE3i.v	38	0x2144c	0x21c2c	end of that 4-byte table cell (0x21c28 + 4)
+A/AFg3.v	324	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFii.v	18	0x9ec38	0xa1198	GOT slot matched by value (old holds 0x5f8fd0, new holds 0x5fc090)
+A/AFii.v	23	0x21448	0x21c28	entry 3 of the jump table cgif 0x2143c (base loaded at 0x8ca98) = disco table 0x21c1c (base loaded at 0x8f3ec, pcrel target_consistent); cell value in disco ELF = 0x6d8fc
+A/AFkm.v	617	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFkm.v	912	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkm.v	914	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkm.v	915	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkm.v	916	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkm.v	965	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkm.v	968	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkm.v	969	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkm.v	974	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkm.v	993	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkm.v	1003	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkm.v	1304	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AF0m.v	14	0x128230	0x12b2f0	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AF0m.v	14	0xe7fc0	0xeb080	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AF0m.v	80	0xa6000	0xa90c0	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AF0m.v	112	0x9ec28	0xa1188	GOT slot matched by value (old holds 0xa2870, new holds 0xa4dc0)
+A/AF0m.v	113	0x9ec30	0xa1190	GOT slot matched by value (old holds 0xa2930, new holds 0xa5a00)
+A/AF0m.v	113	0xa2930	0xa5a00	end of asan_globals (cgif [0xa2870,0xa2930) -> disco [0xa4dc0,0xa5a00)); the GOT cell 0xa1190 holds it
+A/AF0m.v	129	0x100000	0x100000	non-address: size / value 1 MiB (cell value or size bound), keep
+A/AF0m.v	185	0xa6000	0xa90c0	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AF0m.v	189	0xa2888	S6-GEN	S6: asan_globals descriptor cell (cgif 3 globals vs disco 49); generated from globals.disco.asan.txt by my script
+A/AF0m.v	189	0x1c088	S6-GEN	.rodata CHECK: bytes differ old 2e737472006c6962 new 2e737472002e7374; generated from globals.disco.asan.txt by my script
+A/AF0m.v	190	0xa2890	S6-GEN	S6: asan_globals descriptor cell (cgif 3 globals vs disco 49); generated from globals.disco.asan.txt by my script
+A/AF0m.v	194	0xa28b0	S6-GEN	S6: asan_globals descriptor cell (cgif 3 globals vs disco 49); generated from globals.disco.asan.txt by my script
+A/AF0m.v	197	0xa28c8	S6-GEN	S6: asan_globals descriptor cell (cgif 3 globals vs disco 49); generated from globals.disco.asan.txt by my script
+A/AF0m.v	197	0x1c088	S6-GEN	.rodata CHECK: bytes differ old 2e737472006c6962 new 2e737472002e7374; generated from globals.disco.asan.txt by my script
+A/AF0m.v	198	0xa28d0	S6-GEN	S6: asan_globals descriptor cell (cgif 3 globals vs disco 49); generated from globals.disco.asan.txt by my script
+A/AF0m.v	202	0xa28f0	S6-GEN	S6: asan_globals descriptor cell (cgif 3 globals vs disco 49); generated from globals.disco.asan.txt by my script
+A/AF0m.v	205	0xa2908	S6-GEN	S6: asan_globals descriptor cell (cgif 3 globals vs disco 49); generated from globals.disco.asan.txt by my script
+A/AF0m.v	205	0x1c088	S6-GEN	.rodata CHECK: bytes differ old 2e737472006c6962 new 2e737472002e7374; generated from globals.disco.asan.txt by my script
+A/AF0m.v	206	0xa2910	S6-GEN	S6: asan_globals descriptor cell (cgif 3 globals vs disco 49); generated from globals.disco.asan.txt by my script
+A/AF0m.v	223	0x9ec38	0xa1198	GOT slot matched by value (old holds 0x5f8fd0, new holds 0x5fc090)
+A/AF0m.v	227	0x21448	0x21c28	entry 3 of the jump table cgif 0x2143c (base loaded at 0x8ca98) = disco table 0x21c1c (base loaded at 0x8f3ec, pcrel target_consistent); cell value in disco ELF = 0x6d8fc
+A/AF0m.v	231	0x9fd60	0xa22b8	.data, pointer cell: map(old value)=new value
+A/AF0m.v	232	0x92ee4	DROP	fopen/fclose interceptor (cgif writes a file): disco has NO fopen/fclose interceptor or real_ cell (only fflush/fwrite); the fopen/fclose facts and their users leave disco's closure
+A/AF0m.v	233	0x9fd58	DROP	fopen/fclose interceptor (cgif writes a file): disco has NO fopen/fclose interceptor or real_ cell (only fflush/fwrite); the fopen/fclose facts and their users leave disco's closure
+A/AF0m.v	233	0x93540	DROP	fopen/fclose interceptor (cgif writes a file): disco has NO fopen/fclose interceptor or real_ cell (only fflush/fwrite); the fopen/fclose facts and their users leave disco's closure
+A/AF0m.v	255	0x8000c510	S6-GEN	S6: shadow byte of program global at 0xa2880 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	256	0x8000c511	S6-GEN	S6: shadow byte of program global at 0xa2888 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	257	0x8000c512	S6-GEN	S6: shadow byte of program global at 0xa2890 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	258	0x8000c513	S6-GEN	S6: shadow byte of program global at 0xa2898 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	259	0x8000c514	S6-GEN	S6: shadow byte of program global at 0xa28a0 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	260	0x8000c515	S6-GEN	S6: shadow byte of program global at 0xa28a8 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	261	0x8000c516	S6-GEN	S6: shadow byte of program global at 0xa28b0 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	262	0x8000c517	S6-GEN	S6: shadow byte of program global at 0xa28b8 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	263	0x8000c518	S6-GEN	S6: shadow byte of program global at 0xa28c0 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	264	0x8000c519	S6-GEN	S6: shadow byte of program global at 0xa28c8 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	265	0x8000c51a	S6-GEN	S6: shadow byte of program global at 0xa28d0 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	266	0x8000c51b	S6-GEN	S6: shadow byte of program global at 0xa28d8 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	267	0x8000c51c	S6-GEN	S6: shadow byte of program global at 0xa28e0 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	268	0x8000c51d	S6-GEN	S6: shadow byte of program global at 0xa28e8 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	269	0x8000c51e	S6-GEN	S6: shadow byte of program global at 0xa28f0 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	272	0x8000c521	S6-GEN	S6: shadow byte of program global at 0xa2908 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	273	0x8000c522	S6-GEN	S6: shadow byte of program global at 0xa2910 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	274	0x8000c523	S6-GEN	S6: shadow byte of program global at 0xa2918 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	275	0x8000c524	S6-GEN	S6: shadow byte of program global at 0xa2920 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	276	0x8000c525	S6-GEN	S6: shadow byte of program global at 0xa2928 (redzone poison); generate from disco globals; generated from globals.disco.asan.txt by my script
+A/AF0m.v	279	0xa2930	0xa5a00	end of asan_globals (cgif [0xa2870,0xa2930) -> disco [0xa4dc0,0xa5a00)); the GOT cell 0xa1190 holds it
+A/AF0m.v	279	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AF0m.v	279	0xa2930	0xa5a00	end of asan_globals (cgif [0xa2870,0xa2930) -> disco [0xa4dc0,0xa5a00)); the GOT cell 0xa1190 holds it
+A/AF0m.v	284	0x9ec28	0xa1188	GOT slot matched by value (old holds 0xa2870, new holds 0xa4dc0)
+A/AF0m.v	287	0x21448	0x21c28	entry 3 of the jump table cgif 0x2143c (base loaded at 0x8ca98) = disco table 0x21c1c (base loaded at 0x8f3ec, pcrel target_consistent); cell value in disco ELF = 0x6d8fc
+A/AF0m.v	287	0x9ec38	0xa1198	GOT slot matched by value (old holds 0x5f8fd0, new holds 0x5fc090)
+A/AF0m.v	309	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AF0m.v	309	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFfy.v	243	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFjy.v	828	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFjy.v	910	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFjy.v	1592	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AE3m.v	34	0x147ea	0x147c5	"%d\n" format string: the 4 bytes 25640a00 equal at 0x147c5 (only the string is read)
+A/AFk9.v	114	0x104022	0x104022	non-address: mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_PRIVATE|MAP_ANONYMOUS, keep
+A/AFk9.v	114	0x104022	0x104022	non-address: mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_PRIVATE|MAP_ANONYMOUS, keep
+A/AE30.v	1392	0x200000	0x200000	non-address: 2 MiB size bound, keep
+A/AE22.v	14	0x9ec38	0xa1198	GOT slot matched by value (old holds 0x5f8fd0, new holds 0x5fc090)
+A/AFjv.v	508	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFjv.v	508	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFhn.v	59	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFhn.v	209	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFhn.v	211	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFhn.v	212	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFhn.v	213	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFhn.v	260	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFhn.v	263	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFhn.v	264	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFhn.v	269	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFhn.v	286	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFhn.v	295	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFhn.v	417	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFix.v	284	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFix.v	288	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFk2.v	620	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFk2.v	650	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFfg.v	97	0xe7208	0xea2c8	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFfg.v	97	0xe7240	0xea300	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFfg.v	101	0x128208	0x12b2c8	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFfg.v	101	0x128230	0x12b2f0	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFfg.v	102	0xe7208	0xea2c8	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFfg.v	103	0xe7240	0xea300	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFfg.v	103	0xe7fc0	0xeb080	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFfg.v	104	0xe7fd0	0xeb090	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFfg.v	104	0x128208	0x12b2c8	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFfg.v	202	0x128208	0x12b2c8	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFfg.v	229	0xe7240	0xea300	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFfg.v	243	0xe7fc0	0xeb080	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AE2k.v	11	0x41950	DROP	fopen/fclose interceptor (cgif writes a file): disco has NO fopen/fclose interceptor or real_ cell (only fflush/fwrite); the fopen/fclose facts and their users leave disco's closure
+A/AE2k.v	13	0x41958	DROP	fopen/fclose interceptor (cgif writes a file): disco has NO fopen/fclose interceptor or real_ cell (only fflush/fwrite); the fopen/fclose facts and their users leave disco's closure
+A/AE2k.v	16	0x93540	DROP	fopen/fclose interceptor (cgif writes a file): disco has NO fopen/fclose interceptor or real_ cell (only fflush/fwrite); the fopen/fclose facts and their users leave disco's closure
+A/AE2k.v	18	0x92ee4	DROP	fopen/fclose interceptor (cgif writes a file): disco has NO fopen/fclose interceptor or real_ cell (only fflush/fwrite); the fopen/fclose facts and their users leave disco's closure
+A/AE2k.v	21	0x9fd58	DROP	fopen/fclose interceptor (cgif writes a file): disco has NO fopen/fclose interceptor or real_ cell (only fflush/fwrite); the fopen/fclose facts and their users leave disco's closure
+A/AE2k.v	22	0x9fd60	0xa22b8	.data, pointer cell: map(old value)=new value
+A/AE2k.v	42	0x9ec38	0xa1198	GOT slot matched by value (old holds 0x5f8fd0, new holds 0x5fc090)
+A/AFk8.v	101	0x104022	0x104022	non-address: mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_PRIVATE|MAP_ANONYMOUS, keep
+A/AE2v.v	156	0x9ec38	0xa1198	GOT slot matched by value (old holds 0x5f8fd0, new holds 0x5fc090)
+A/AFj1.v	742	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFj1.v	745	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFj1.v	746	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFj1.v	747	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFj1.v	804	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFj1.v	807	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFj1.v	808	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFj1.v	813	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFj1.v	851	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFk1.v	657	0x9ec38	0xa1198	GOT slot matched by value (old holds 0x5f8fd0, new holds 0x5fc090)
+A/AFk1.v	658	0x21448	0x21c28	entry 3 of the jump table cgif 0x2143c (base loaded at 0x8ca98) = disco table 0x21c1c (base loaded at 0x8f3ec, pcrel target_consistent); cell value in disco ELF = 0x6d8fc
+A/AFk1.v	756	0x9ec40	0xa11a0	GOT slot matched by value (old holds 0x5d8ec0, new holds 0x5dbf80)
+A/AFk1.v	756	0x21448	0x21c28	entry 3 of the jump table cgif 0x2143c (base loaded at 0x8ca98) = disco table 0x21c1c (base loaded at 0x8f3ec, pcrel target_consistent); cell value in disco ELF = 0x6d8fc
+A/AFk1.v	756	0x2144c	0x21c2c	end of that 4-byte table cell (0x21c28 + 4)
+A/AFk1.v	764	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFk1.v	843	0x21448	0x21c28	entry 3 of the jump table cgif 0x2143c (base loaded at 0x8ca98) = disco table 0x21c1c (base loaded at 0x8f3ec, pcrel target_consistent); cell value in disco ELF = 0x6d8fc
+A/AFk1.v	843	0x2144c	0x21c2c	end of that 4-byte table cell (0x21c28 + 4)
+A/AFk1.v	854	0x9ec38	0xa1198	GOT slot matched by value (old holds 0x5f8fd0, new holds 0x5fc090)
+A/AFjo.v	611	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFjo.v	622	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFjf.v	736	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFjf.v	739	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFjf.v	740	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFjf.v	741	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFjf.v	798	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFjf.v	801	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFjf.v	802	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFjf.v	807	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFjf.v	845	0x167ec8	0x16af88	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFgn.v	70	0x100000	0x100000	non-address: size / value 1 MiB (cell value or size bound), keep
+A/AFju.v	572	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFju.v	579	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFjm.v	507	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFjm.v	507	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFjm.v	515	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFjm.v	515	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFjm.v	580	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFjm.v	592	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFjm.v	619	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFg1.v	671	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFg1.v	722	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AE2w.v	399	0x9ec38	0xa1198	GOT slot matched by value (old holds 0x5f8fd0, new holds 0x5fc090)
+A/AFff.v	30	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFff.v	30	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFff.v	34	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFff.v	34	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFff.v	40	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFff.v	40	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFff.v	50	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFff.v	50	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFff.v	131	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFff.v	131	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFgm.v	95	0x100000	0x100000	non-address: size / value 1 MiB (cell value or size bound), keep
+A/AE3h.v	1352	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AE3h.v	1722	0x813d4	0x87dbc	code: map run code; insn old 130101ff new 130101ff EQUAL
+A/AE37.v	32	0x9ec28	0xa1188	GOT slot matched by value (old holds 0xa2870, new holds 0xa4dc0)
+A/AE37.v	32	0xa2930	0xa5a00	end of asan_globals (cgif [0xa2870,0xa2930) -> disco [0xa4dc0,0xa5a00)); the GOT cell 0xa1190 holds it
+A/AFjp.v	620	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFgi.v	107	0x100000	0x100000	non-address: size / value 1 MiB (cell value or size bound), keep
+A/AE2t.v	399	0x9ec38	0xa1198	GOT slot matched by value (old holds 0x5f8fd0, new holds 0x5fc090)
+A/AE7d.v	75	0x148680	0x14b740	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AE2x.v	154	0x9ec38	0xa1198	GOT slot matched by value (old holds 0x5f8fd0, new holds 0x5fc090)
+A/AE35.v	35	0x147ea	0x147c5	"%d\n" format string: the 4 bytes 25640a00 equal at 0x147c5 (only the string is read)
+A/AFkn.v	922	0x104022	0x104022	non-address: mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_PRIVATE|MAP_ANONYMOUS, keep
+A/AFkn.v	1213	0x104022	0x104022	non-address: mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_PRIVATE|MAP_ANONYMOUS, keep
+A/AFkn.v	1222	0x104022	0x104022	non-address: mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_PRIVATE|MAP_ANONYMOUS, keep
+A/AFkn.v	1231	0x104022	0x104022	non-address: mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_PRIVATE|MAP_ANONYMOUS, keep
+A/AE23.v	32	0x813d4	0x87dbc	code: map run code; insn old 130101ff new 130101ff EQUAL
+A/AE23.v	41	0x813d4	0x87dbc	code: map run code; insn old 130101ff new 130101ff EQUAL
+A/AE23.v	45	0x5f9000	0x5fc0c0	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AE23.v	50	0x813d4	0x87dbc	code: map run code; insn old 130101ff new 130101ff EQUAL
+A/AE23.v	54	0x5f9000	0x5fc0c0	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AE23.v	62	0x9ec78	0xa11d8	GOT slot matched by value (old holds 0x5fa7c0, new holds 0x5fd880)
+A/AE23.v	82	0x813d4	0x87dbc	code: map run code; insn old 130101ff new 130101ff EQUAL
+A/AE23.v	90	0x5f9000	0x5fc0c0	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AE23.v	111	0x813d4	0x87dbc	code: map run code; insn old 130101ff new 130101ff EQUAL
+A/AE23.v	119	0x5f9000	0x5fc0c0	.bss address, uniform shift +0x30c0 (whole .bss, every run)
+A/AFjb.v	283	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFjb.v	287	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AE2p.v	30	0x9ec38	0xa1198	GOT slot matched by value (old holds 0x5f8fd0, new holds 0x5fc090)
+A/AFin.v	455	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFin.v	455	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFin.v	457	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFin.v	457	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AE2u.v	399	0x9ec38	0xa1198	GOT slot matched by value (old holds 0x5f8fd0, new holds 0x5fc090)
+A/AFkz.v	421	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFkz.v	629	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkz.v	631	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkz.v	632	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkz.v	633	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkz.v	681	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkz.v	684	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkz.v	685	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkz.v	690	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkz.v	709	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkz.v	719	0x5eb000	0x5ee0c0	.bss is ONE uniform shift +0x30c0 in disco (runs 0xa2940..0x5fa870); the bound moves with it (remap page-rounded to 0x5ee000)
+A/AFkz.v	896	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFem.v	202	0x100000	0x100000	non-address: size / value 1 MiB (cell value or size bound), keep
+A/AFem.v	203	0x100000	0x100000	non-address: size / value 1 MiB (cell value or size bound), keep
+A/AFem.v	204	0x100000	0x100000	non-address: size / value 1 MiB (cell value or size bound), keep
+A/AFem.v	280	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFem.v	280	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFem.v	333	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFem.v	333	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFem.v	341	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFem.v	341	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFem.v	1504	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFim.v	465	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFim.v	465	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFim.v	467	0x9d000	0x9f000	rw image start page (cgif LOAD rw 0x9da00 -> 0x9d000; disco 0x9fea8 -> 0x9f000); also ro upper bound
+A/AFim.v	467	0x5fb000	0x5fe000	image top (LOAD end page-rounded 0x5fd930->0x5fe000); STRUCTURAL: cite YImgTop.IMG_TOP
+A/AFii.v	23	0x6b788	0x6d8fc	value of jump-table cell 0x21c28 in disco ELF; remap 0x6c23c was a big .text run mispairing of the address map (litcheck code-same is coincidence; true delta here +0x2174)
+A/AF0m.v	227	0x6b788	0x6d8fc	value of jump-table cell 0x21c28 in disco ELF; remap 0x6c23c was a big .text run mispairing of the address map (litcheck code-same is coincidence; true delta here +0x2174)
+A/AFk1.v	658	0x6b788	0x6d8fc	value of jump-table cell 0x21c28 in disco ELF; remap 0x6c23c was a big .text run mispairing of the address map (litcheck code-same is coincidence; true delta here +0x2174)

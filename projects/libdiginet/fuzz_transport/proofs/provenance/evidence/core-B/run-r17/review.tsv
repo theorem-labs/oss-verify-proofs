@@ -1,0 +1,281 @@
+file	line	old	new	status	class	old_fn	new_sym
+B/YB1w.v	70	0x80d54	0x82ffc	old-program-block	exec	0x80d54+0x0	io_send+0x0
+B/YB1w.v	70	0x81070	0x81070	code-end-no-twin (the function that ends here has no twin)	exec	0x81070+0x0	main+0x270
+B/YB1w.v	70	0x81070	0x81070	old-program-block	exec	0x81070+0x0	main+0x270
+B/YB1w.v	70	0x81414	0x8658c	code-end-no-twin (the function that ends here has no twin; next function start 0x8658c)	exec	0x81414+0x0	asan.module_ctor+0x0
+B/YB1w.v	70	0x8144c	0x865c4	old-program-block	exec	0x8144c+0x0	asan.module_dtor+0x0
+B/YB1w.v	70	0x814f8	0x814f8	code-end-no-twin (the function that ends here has no twin)	exec	0x814f8+0x0	LLVMFuzzerTestOneInput+0x258
+B/YB1w.v	70	0x814f8	0x814f8	old-program-block	exec	0x814f8+0x0	LLVMFuzzerTestOneInput+0x258
+B/YB1w.v	70	0x8158c	0x8158c	code-end-no-twin (the function that ends here has no twin)	exec	0x8158c+0x0	LLVMFuzzerTestOneInput+0x2ec
+B/YB1w.v	70	0x8158c	0x8158c	old-program-block	exec	0x8158c+0x0	LLVMFuzzerTestOneInput+0x2ec
+B/YB1w.v	70	0x815cc	0x815cc	code-end-no-twin (the function that ends here has no twin; next function start 0x865c4)	exec	0x815cc+0x0	LLVMFuzzerTestOneInput+0x32c
+B/YB1w.v	70	0x815fc	0x815fc	old-program-block	exec	0x815fc+0x0	LLVMFuzzerTestOneInput+0x35c
+B/YB1w.v	70	0x81788	0x81788	code-end-no-twin (the function that ends here has no twin)	exec	0x81788+0x0	LLVMFuzzerTestOneInput+0x4e8
+B/YB1w.v	70	0x81788	0x81788	old-program-block	exec	0x81788+0x0	LLVMFuzzerTestOneInput+0x4e8
+B/YB1w.v	70	0x81a8c	0x81a8c	code-end-no-twin (the function that ends here has no twin)	exec	0x81a8c+0x0	LLVMFuzzerTestOneInput+0x7ec
+B/YB1w.v	70	0x81a8c	0x81a8c	old-program-block	exec	0x81a8c+0x0	LLVMFuzzerTestOneInput+0x7ec
+B/YB1w.v	70	0x81cfc	0x81cfc	code-end-no-twin (the function that ends here has no twin)	exec	0x81cfc+0x0	LLVMFuzzerTestOneInput+0xa5c
+B/YB1w.v	70	0x81cfc	0x81cfc	old-program-block	exec	0x81cfc+0x0	LLVMFuzzerTestOneInput+0xa5c
+B/YB1w.v	70	0x81fe8	0x81fe8	code-end-no-twin (the function that ends here has no twin)	exec	0x81fe8+0x0	LLVMFuzzerTestOneInput+0xd48
+B/YB1w.v	70	0x81fe8	0x81fe8	old-program-block	exec	0x81fe8+0x0	LLVMFuzzerTestOneInput+0xd48
+B/YB1w.v	70	0x82038	0x8b818	code-end-no-twin (the function that ends here has no twin)	exec	0x82038+0x0	diginet_frame_build+0x0
+B/YB1w.v	70	0x82038	0x8b818	old-program-block	exec	0x82038+0x0	diginet_frame_build+0x0
+B/YB1w.v	70	0x823c8	0x8cc1c	code-end-no-twin (the function that ends here has no twin; next function start 0x8cc1c)	exec	0x823c8+0x0	__wrap_getenv+0x0
+B/YB1w.v	445	0x80d54	0x82ffc	code-end-no-twin (the function that ends here has no twin)	exec	0x80d54+0x0	io_send+0x0
+B/YB1w.v	569	0x97d50	0x97d50	bound-ambiguous (sec:.text.hi -> 0xa25a4, sec:.tbss.lo -> 0xa25a8, load1.filehi -> 0xa25a4, load1.memhi -> 0xa25a4, tls.lo -> 0xa25a8)	tls	-	__vsyslog+0x2b4
+B/YB1w.v	602	0x55c000	0x55c000	geometry-ungated (remap read 0x55c000 as seg3.size; the line states no such geometry: the donor value is kept)	geometry	-	read+0x4b9a90
+B/YCeg.v	27	0x10310	0x10310	per-unit-definition (lib_const_addr: state it from the target program's own measured constant reads (grant: False); a moved GOT range names cells of other objects)	data	-	0x10310
+B/YCeg.v	27	0x10318	0x10318	per-unit-definition (lib_const_addr: state it from the target program's own measured constant reads (grant: False); a moved GOT range names cells of other objects)	data	-	0x10318
+B/YCeg.v	27	0x10338	0xa3d48	per-unit-definition (lib_const_addr: state it from the target program's own measured constant reads (grant: False); a moved GOT range names cells of other objects)	data	-	read+0x17d8
+B/YCeg.v	27	0x10340	0xa3d50	per-unit-definition (lib_const_addr: state it from the target program's own measured constant reads (grant: False); a moved GOT range names cells of other objects)	data	-	read+0x17e0
+B/YCeg.v	27	0x10360	0x10360	per-unit-definition (lib_const_addr: state it from the target program's own measured constant reads (grant: False); a moved GOT range names cells of other objects)	auipc-result?	-	0x10360
+B/YCeg.v	27	0x10368	0x10368	per-unit-definition (lib_const_addr: state it from the target program's own measured constant reads (grant: False); a moved GOT range names cells of other objects)	data	-	0x10368
+B/YCeg.v	27	0x103c8	0x103c8	per-unit-definition (lib_const_addr: state it from the target program's own measured constant reads (grant: False); a moved GOT range names cells of other objects)	data	-	0x103c8
+B/YCeg.v	27	0x103d0	0x103d0	per-unit-definition (lib_const_addr: state it from the target program's own measured constant reads (grant: False); a moved GOT range names cells of other objects)	data	-	0x103d0
+B/YCeg.v	27	0x20dcc	0x20dcc	per-unit-definition (lib_const_addr: state it from the target program's own measured constant reads (grant: False); a moved GOT range names cells of other objects)	data	-	0x20dcc
+B/YCeg.v	27	0x20dd0	0x20dd0	per-unit-definition (lib_const_addr: state it from the target program's own measured constant reads (grant: False); a moved GOT range names cells of other objects)	data	-	0x20dd0
+B/YD1j.v	112	0x5f49e8	0x613e80	data-no-rule (in OLD .bss: no code forms it, no symbol names it; <KIT_MAP> would give 0x613e80)	bss	-	read+0x571910
+B/YD1j.v	120	0x5f49e8	0x613e80	data-no-rule (in OLD .bss: no code forms it, no symbol names it; <KIT_MAP> would give 0x613e80)	bss	-	read+0x571910
+B/YD1j.v	120	0x5f49e8	0x613e80	data-no-rule (in OLD .bss: no code forms it, no symbol names it; <KIT_MAP> would give 0x613e80)	bss	-	read+0x571910
+B/YD1j.v	133	0x5f49e8	0x613e80	data-no-rule (in OLD .bss: no code forms it, no symbol names it; <KIT_MAP> would give 0x613e80)	bss	-	read+0x571910
+B/YD1o.v	198	0x5f49e8	0x613e80	data-no-rule (in OLD .bss: no code forms it, no symbol names it; <KIT_MAP> would give 0x613e80)	bss	-	read+0x571910
+B/YD1o.v	250	0x5f49e8	0x613e80	data-no-rule (in OLD .bss: no code forms it, no symbol names it; <KIT_MAP> would give 0x613e80)	bss	-	read+0x571910
+B/YD1o.v	286	0x5f49e8	0x613e80	data-no-rule (in OLD .bss: no code forms it, no symbol names it; <KIT_MAP> would give 0x613e80)	bss	-	read+0x571910
+B/YD1w.v	132	0x147f7	0x147de	coderef data-DIFFERS	data	-	0x147de
+B/YD2f.v	151	0x5f49e0	0x613e78	data-no-rule (in OLD .bss: no code forms it, no symbol names it; <KIT_MAP> would give 0x613e78)	bss	-	read+0x571908
+B/YD2f.v	151	0x5f4df0	0x614288	data-no-rule (in OLD .bss: no code forms it, no symbol names it; <KIT_MAP> would give 0x614288)	bss	-	read+0x571d18
+B/YE2p.v	31	0x5f49e0	0x613e78	data-no-rule (in OLD .bss: no code forms it, no symbol names it; <KIT_MAP> would give 0x613e78)	bss	-	read+0x571908
+B/YE2t.v	63	0x7fffbad0	0x7fffbad0	shadow-unmapped (granule of OLD 0x1d680: no code-derived map moves it by a multiple of 8; remap: ambiguous)	shadow	-	-
+B/YE2t.v	63	0x7fffbad8	0x7fffbad8	shadow-unmapped (granule of OLD 0x1d6c0: no code-derived map moves it by a multiple of 8; remap: ambiguous)	shadow	-	-
+B/YE2u.v	63	0x7fffbad0	0x7fffbad0	shadow-unmapped (granule of OLD 0x1d680: no code-derived map moves it by a multiple of 8; remap: ambiguous)	shadow	-	-
+B/YE2u.v	63	0x7fffbad8	0x7fffbad8	shadow-unmapped (granule of OLD 0x1d6c0: no code-derived map moves it by a multiple of 8; remap: ambiguous)	shadow	-	-
+B/YE2v.v	63	0x7fffb2e0	0x7fffb2e0	shadow-unmapped (granule of OLD 0x19700: no code-derived map moves it by a multiple of 8; remap: ambiguous)	shadow	-	-
+B/YE2w.v	63	0x7fffab08	0x7fffab08	shadow-unmapped (granule of OLD 0x15840: no code-derived map moves it by a multiple of 8; remap: ambiguous)	shadow	-	-
+B/YE2w.v	63	0x7fffab10	0x7fffab10	shadow-unmapped (granule of OLD 0x15880: no code-derived map moves it by a multiple of 8; remap: ambiguous)	shadow	-	-
+B/YE30.v	1394	0x200000	0x200000	data-unmoved (page-aligned; symbol _ZN11__sanitizerL8theDepotE gives 0x20b340: a size or a page bound, not decided)	bss	-	read+0x15da90
+B/YE35.v	36	0x147f7	0x147de	coderef data-DIFFERS	data	-	0x147de
+B/YE35.v	63	0x7fffa8f8	0x7fffa8f8	shadow-unmapped (granule of OLD 0x147c0: no code-derived map moves it by a multiple of 8; remap: ambiguous)	shadow	-	-
+B/YE35.v	176	0x147f7	0x147de	coderef data-DIFFERS	data	-	0x147de
+B/YE35.v	342	0x147f7	0x147de	coderef data-DIFFERS	data	-	0x147de
+B/YE3k.v	253	0x1d6b9	0x1d867	string 0x1d6a6 + 19 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d867
+B/YE3k.v	254	0x1d6b9	0x1d867	string 0x1d6a6 + 19 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d867
+B/YE3k.v	256	0x1d6b9	0x1d867	string 0x1d6a6 + 19 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d867
+B/YE3k.v	256	0x1d6b9	0x1d867	string 0x1d6a6 + 19 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d867
+B/YE3k.v	506	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	507	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	507	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	509	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	513	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	513	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	525	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	525	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	525	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	826	0x1d6b9	0x1d867	string 0x1d6a6 + 19 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d867
+B/YE3k.v	827	0x1d6b9	0x1d867	string 0x1d6a6 + 19 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d867
+B/YE3k.v	829	0x1d6b9	0x1d867	string 0x1d6a6 + 19 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d867
+B/YE3k.v	829	0x1d6b9	0x1d867	string 0x1d6a6 + 19 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d867
+B/YE3k.v	1085	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	1087	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	1118	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	1118	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	1119	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	1119	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	1350	0x1d6b9	0x1d867	string 0x1d6a6 + 19 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d867
+B/YE3k.v	1351	0x1d6b9	0x1d867	string 0x1d6a6 + 19 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d867
+B/YE3k.v	1353	0x1d6b9	0x1d867	string 0x1d6a6 + 19 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d867
+B/YE3k.v	1353	0x1d6b9	0x1d867	string 0x1d6a6 + 19 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d867
+B/YE3k.v	1600	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	1603	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3k.v	1603	0x1d6bb	0x1d869	string 0x1d6a6 + 21 (the target string holds the same bytes) data-DIFFERS	data	-	0x1d869
+B/YE3m.v	34	0x5f49e8	0x613e80	data-no-rule (in OLD .bss: no code forms it, no symbol names it; <KIT_MAP> would give 0x613e80)	bss	-	read+0x571910
+B/YE3m.v	36	0x147f7	0x147de	coderef data-DIFFERS	data	-	0x147de
+B/YE3m.v	559	0x5f49e8	0x613e80	data-no-rule (in OLD .bss: no code forms it, no symbol names it; <KIT_MAP> would give 0x613e80)	bss	-	read+0x571910
+B/YE3m.v	560	0x147f7	0x147de	coderef data-DIFFERS	data	-	0x147de
+B/YE3m.v	885	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	888	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	913	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	913	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	914	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	914	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	951	0x147fa	0x147e1	string 0x147f7 + 3 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e1
+B/YE3m.v	952	0x147fa	0x147e1	string 0x147f7 + 3 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e1
+B/YE3m.v	955	0x147fa	0x147e1	string 0x147f7 + 3 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e1
+B/YE3m.v	955	0x147fa	0x147e1	string 0x147f7 + 3 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e1
+B/YE3m.v	1069	0x5f49e8	0x613e80	data-no-rule (in OLD .bss: no code forms it, no symbol names it; <KIT_MAP> would give 0x613e80)	bss	-	read+0x571910
+B/YE3m.v	1070	0x147f7	0x147de	coderef data-DIFFERS	data	-	0x147de
+B/YE3m.v	1071	0x5f4de8	0x5f4de8	decimal-unmapped (in OLD .bss: no rule; kept)	bss	-	read+0x552878
+B/YE3m.v	1434	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	1435	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	1435	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	1436	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	1436	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	1438	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	1444	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	1444	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE3m.v	1459	0x147f9	0x147e0	string 0x147f7 + 2 (the target string holds the same bytes) data-DIFFERS	data	-	0x147e0
+B/YE6k.v	1388	0x200000	0x200000	data-unmoved (page-aligned; symbol _ZN11__sanitizerL8theDepotE gives 0x20b340: a size or a page bound, not decided)	bss	-	read+0x15da90
+B/YFem.v	203	0x100000	0x100000	data-unmoved (page-aligned; symbol _ZN11__sanitizerL26internal_alloc_placeh gives 0x10b340: a size or a page bound, not decided)	bss	-	read+0x5da90
+B/YFem.v	204	0x100000	0x100000	data-unmoved (page-aligned; symbol _ZN11__sanitizerL26internal_alloc_placeh gives 0x10b340: a size or a page bound, not decided)	bss	-	read+0x5da90
+B/YFem.v	205	0x100000	0x100000	data-unmoved (page-aligned; symbol _ZN11__sanitizerL26internal_alloc_placeh gives 0x10b340: a size or a page bound, not decided)	bss	-	read+0x5da90
+B/YFgi.v	107	0x9e000	0x9e000	data-unmoved (page-aligned; symbol _ZN6__asanL8instanceE gives 0xa9340: a size or a page bound, not decided)	bss	-	__pthread_exit+0x1a4
+B/YFgi.v	107	0x100000	0x100000	data-unmoved (page-aligned; symbol _ZN11__sanitizerL26internal_alloc_placeh gives 0x10b340: a size or a page bound, not decided)	bss	-	read+0x5da90
+B/YFgm.v	95	0x9e000	0x9e000	data-unmoved (page-aligned; symbol _ZN6__asanL8instanceE gives 0xa9340: a size or a page bound, not decided)	bss	-	__pthread_exit+0x1a4
+B/YFgm.v	95	0x100000	0x100000	data-unmoved (page-aligned; symbol _ZN11__sanitizerL26internal_alloc_placeh gives 0x10b340: a size or a page bound, not decided)	bss	-	read+0x5da90
+B/YFgn.v	70	0x9e000	0x9e000	data-unmoved (page-aligned; symbol _ZN6__asanL8instanceE gives 0xa9340: a size or a page bound, not decided)	bss	-	__pthread_exit+0x1a4
+B/YFgn.v	70	0x100000	0x100000	data-unmoved (page-aligned; symbol _ZN11__sanitizerL26internal_alloc_placeh gives 0x10b340: a size or a page bound, not decided)	bss	-	read+0x5da90
+B/YFhn.v	419	0x800b6c00	0x800bac00	outside-image-moved	geometry	-	-
+B/YFix.v	284	0x80050000	0x80050000	czone-unverified (CZONE bound 0x80050000 is below the end 0x800b65cc of the unit's own highest constant shadow cell, B/YF0m.v (the target lib's own))	shadow	-	-
+B/YFix.v	288	0x80050000	0x80050000	czone-unverified (CZONE bound 0x80050000 is below the end 0x800b65cc of the unit's own highest constant shadow cell, B/YF0m.v (the target lib's own))	shadow	-	-
+B/YFjb.v	283	0x80050000	0x80050000	czone-unverified (CZONE bound 0x80050000 is below the end 0x800b65cc of the unit's own highest constant shadow cell, B/YF0m.v (the target lib's own))	shadow	-	-
+B/YFjb.v	287	0x80050000	0x80050000	czone-unverified (CZONE bound 0x80050000 is below the end 0x800b65cc of the unit's own highest constant shadow cell, B/YF0m.v (the target lib's own))	shadow	-	-
+B/YFju.v	574	0x80050000	0x80050000	czone-unverified (CZONE bound 0x80050000 is below the end 0x800b65cc of the unit's own highest constant shadow cell, B/YF0m.v (the target lib's own))	shadow	-	-
+B/YFju.v	584	0x80050000	0x80050000	czone-unverified (CZONE bound 0x80050000 is below the end 0x800b65cc of the unit's own highest constant shadow cell, B/YF0m.v (the target lib's own))	shadow	-	-
+B/YFkm.v	1296	0x80050000	0x80050000	czone-unverified (CZONE bound 0x80050000 is below the end 0x800b65cc of the unit's own highest constant shadow cell, B/YF0m.v (the target lib's own))	shadow	-	-
+B/YFkz.v	893	0x800b6c00	0x800bac00	outside-image-moved	geometry	-	-
+B/YE3m.v	1071	0x5f4de8	-	derived-name (BUFEND = STDOUT_BUFA + 1024; STDOUT_BUFA is refused)			
+B/YD1o.v	82	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD1o.v	82	0x5f6000	0x5f6000	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	auipc-result?	-	read+0x553a90
+B/YD1o.v	82	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD1o.v	85	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD1o.v	85	0x5f6000	0x5f6000	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	auipc-result?	-	read+0x553a90
+B/YD1o.v	85	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD1o.v	92	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD1o.v	92	0x5f6000	0x5f6000	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	auipc-result?	-	read+0x553a90
+B/YD1o.v	92	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD1o.v	99	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD1o.v	99	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD1o.v	100	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD1o.v	101	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD1o.v	101	0x5f6000	0x5f6000	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	auipc-result?	-	read+0x553a90
+B/YD1o.v	101	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD1o.v	88	0x9dca0	0x9dca0	zero-shadow-derived (a bound a few bytes into the donor's restated Tfib_zero_shadow range, in the same proof, where the unit's own list does not confirm the range: its own bound there is no geometry or object fact; state it)	bss	-	__do_orphaned_stdio_locks+0x0
+B/YD1o.v	94	0x9dca0	0x9dca0	zero-shadow-derived (a bound a few bytes into the donor's restated Tfib_zero_shadow range, in the same proof, where the unit's own list does not confirm the range: its own bound there is no geometry or object fact; state it)	bss	-	__do_orphaned_stdio_locks+0x0
+B/YD1o.v	96	0x9dca0	0x9dca0	zero-shadow-derived (a bound a few bytes into the donor's restated Tfib_zero_shadow range, in the same proof, where the unit's own list does not confirm the range: its own bound there is no geometry or object fact; state it)	bss	-	__do_orphaned_stdio_locks+0x0
+B/YD25.v	531	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD25.v	531	0x5f6000	0x5f6000	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	auipc-result?	-	read+0x553a90
+B/YD25.v	531	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD25.v	534	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD25.v	534	0x5f6000	0x5f6000	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	auipc-result?	-	read+0x553a90
+B/YD25.v	534	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD25.v	541	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD25.v	541	0x5f6000	0x5f6000	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	auipc-result?	-	read+0x553a90
+B/YD25.v	541	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD25.v	548	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD25.v	548	0x9dc70	0x9dc70	zero-shadow-range (restates the donor's Tfib_zero_shadow range (0x9dc70, 0x5f6000); the unit's own list has no such range: state the unit's range)	section-end	-	_pthread_cleanup_pop+0x20
+B/YD1o.v	96	0x13b94	0x13b94	quotient-of-refused (80788 = 646304 / 8 in the donor; its partner was refused, so the quotient goes with it)	derived	-	0x13b94
+B/YD1o.v	101	0x13b8e	0x13b8e	quotient-of-refused (80782 = 646256 / 8 in the donor; its partner was refused, so the quotient goes with it)	derived	-	0x13b8e
+B/YD1o.v	101	0xab072	0xab072	quotient-of-refused (700530 = 5604240 / 8 in the donor; its partner was refused, so the quotient goes with it)	derived	-	read+0x8b02
+B/YFfy.v	472	201364	1	FAIL value-role-conflict (201364 is moved here as an address, but kept at B/YFfy.v:454 as no address: opaque label: argument of mcheck)		-	-
+B/YFfy.v	476	201376	2	FAIL value-role-conflict (201376 is moved here as an address, but kept at B/YFfy.v:458 as no address: opaque label: argument of FCheck)		-	-
+B/YFfz.v	431	201364	1	FAIL value-role-conflict (201364 is moved here as an address, but kept at B/YFfy.v:454 as no address: opaque label: argument of mcheck)		-	-
+B/YFfz.v	435	201376	2	FAIL value-role-conflict (201376 is moved here as an address, but kept at B/YFfy.v:458 as no address: opaque label: argument of FCheck)		-	-
+B/YFg2.v	291	201364	1	FAIL value-role-conflict (201364 is moved here as an address, but kept at B/YFfy.v:454 as no address: opaque label: argument of mcheck)		-	-
+B/YFg2.v	295	201376	2	FAIL value-role-conflict (201376 is moved here as an address, but kept at B/YFfy.v:458 as no address: opaque label: argument of FCheck)		-	-
+B/YFk0.v	761	202260	3	FAIL value-role-conflict (202260 is moved here as an address, but kept at B/YFi3.v:75 as no address: opaque label: argument of mcheck)		-	-
+B/YFk0.v	1027	449860	12	FAIL value-role-conflict (449860 is moved here as an address, but kept at B/YFi3.v:41 as no address: opaque label: argument of spin)		-	-
+B/YFk0.v	1124	449860	12	FAIL value-role-conflict (449860 is moved here as an address, but kept at B/YFi3.v:41 as no address: opaque label: argument of spin)		-	-
+B/YFeu.v	160	209280	4	FAIL label-moved (argument of mcheck: an opaque label keeps the donor's value)		-	-
+B/YFft.v	24	219184	8	FAIL label-moved (argument of ISpin: an opaque label keeps the donor's value)		-	-
+B/YFfy.v	454	201364	1	FAIL label-moved (argument of mcheck: an opaque label keeps the donor's value)		-	-
+B/YFfy.v	458	201376	2	FAIL label-moved (argument of FCheck: an opaque label keeps the donor's value)		-	-
+B/YFfy.v	472	201364	1	FAIL label-moved (argument of mcheck: an opaque label keeps the donor's value)		-	-
+B/YFfy.v	476	201376	2	FAIL label-moved (argument of FCheck: an opaque label keeps the donor's value)		-	-
+B/YFfz.v	431	201364	1	FAIL label-moved (argument of mcheck: an opaque label keeps the donor's value)		-	-
+B/YFfz.v	435	201376	2	FAIL label-moved (argument of FCheck: an opaque label keeps the donor's value)		-	-
+B/YFg2.v	291	201364	1	FAIL label-moved (argument of mcheck: an opaque label keeps the donor's value)		-	-
+B/YFg2.v	295	201376	2	FAIL label-moved (argument of FCheck: an opaque label keeps the donor's value)		-	-
+B/YFi3.v	41	449860	12	FAIL label-moved (argument of spin: an opaque label keeps the donor's value)		-	-
+B/YFi3.v	75	202260	3	FAIL label-moved (argument of mcheck: an opaque label keeps the donor's value)		-	-
+B/YFk0.v	751	221048	9	FAIL label-moved (argument of mcheck: an opaque label keeps the donor's value)		-	-
+B/YFk0.v	755	391236	11	FAIL label-moved (argument of spin: an opaque label keeps the donor's value)		-	-
+B/YFk0.v	761	202260	3	FAIL label-moved (argument of mcheck: an opaque label keeps the donor's value)		-	-
+B/YFk0.v	1023	469488	14	FAIL label-moved (argument of mcheck: an opaque label keeps the donor's value)		-	-
+B/YFk0.v	1024	460508	13	FAIL label-moved (argument of mcheck: an opaque label keeps the donor's value)		-	-
+B/YFk0.v	1027	449860	12	FAIL label-moved (argument of spin: an opaque label keeps the donor's value)		-	-
+B/YFk0.v	1124	449860	12	FAIL label-moved (argument of spin: an opaque label keeps the donor's value)		-	-
+B/YD1g.v	748	0x10000	0x10000	FAIL partner-left ([0x10000, 0x5e6000) -> [0x10000, 0x606000): the end moved, the start was left at the donor's value by no rule)		-	-
+B/YD1r.v	221	0x10000	0x10000	FAIL partner-left ([0x10000, 0x98000) -> [0x10000, 0xa3000): the end moved, the start was left at the donor's value by no rule)		-	-
+B/YE70.v	0	TfibSyms	TransportSyms	FAIL rename-new-undeclared (TransportSyms is used in 209 staged files and declared by none, staged or kept)			
+B/YB1w.v	513	0x55c000	0x571000	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x3d8de8 is 0x567340 in the target, written 0x571000)		-	read+0x4cea90
+B/YD1d.v	34	0x38e000	0x38e000	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x20ade8 is 0x399340 in the target, written 0x38e000)		-	read+0x2eba90
+B/YD1d.v	38	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)		-	read+0x5da90
+B/YD1d.v	40	0x161200	0x161200	FAIL data-symbol (_ZN11__sanitizerL9useCountsE+0x2e000 is 0x16c540 in the target, written 0x161200)		-	read+0xbec90
+B/YD1d.v	207	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)		-	read+0x5da90
+B/YD1d.v	280	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)		-	read+0x5da90
+B/YD1d.v	282	0x161200	0x161200	FAIL data-symbol (_ZN11__sanitizerL9useCountsE+0x2e000 is 0x16c540 in the target, written 0x161200)		-	read+0xbec90
+B/YD1e.v	133	0x38e000	0x38e000	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x20ade8 is 0x399340 in the target, written 0x38e000)		-	read+0x2eba90
+B/YD1e.v	224	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)		-	read+0x5da90
+B/YD1e.v	233	0x38e000	0x38e000	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x20ade8 is 0x399340 in the target, written 0x38e000)		-	read+0x2eba90
+B/YD1e.v	235	0x5e6000	0x606000	FAIL data-symbol (builtin_tls+0x11df0 is 0x605498 in the target, written 0x606000)		-	read+0x563a90
+B/YD1f.v	123	0xbcc00	0xc0c00	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x1a6c0 is 0xc7f40 in the target, written 0xc0c00)		-	read+0x1e690
+B/YD1f.v	125	0xbcc00	0xc0c00	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x1a6c0 is 0xc7f40 in the target, written 0xc0c00)		-	read+0x1e690
+B/YD1f.v	129	0xbcc00	0xc0c00	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x1a6c0 is 0xc7f40 in the target, written 0xc0c00)		-	read+0x1e690
+B/YD1f.v	190	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)		-	read+0x5da90
+B/YD1f.v	192	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)		-	read+0x5da90
+B/YD1f.v	194	0x161200	0x161200	FAIL data-symbol (_ZN11__sanitizerL9useCountsE+0x2e000 is 0x16c540 in the target, written 0x161200)		-	read+0xbec90
+B/YD1f.v	203	0x38e000	0x38e000	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x20ade8 is 0x399340 in the target, written 0x38e000)		-	read+0x2eba90
+B/YD1f.v	209	0x5e6000	0x606000	FAIL data-symbol (builtin_tls+0x11df0 is 0x605498 in the target, written 0x606000)		-	read+0x563a90
+B/YD1f.v	209	0xbec00	0xc2c00	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x1c6c0 is 0xc9f40 in the target, written 0xc2c00)		-	read+0x20690
+B/YD1g.v	38	0x38e000	0x38e000	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x20ade8 is 0x399340 in the target, written 0x38e000)		-	read+0x2eba90
+B/YD1g.v	100	0x5e6000	0x606000	FAIL data-symbol (builtin_tls+0x11df0 is 0x605498 in the target, written 0x606000)		-	read+0x563a90
+B/YD1g.v	636	0x5e6000	0x606000	FAIL data-symbol (builtin_tls+0x11df0 is 0x605498 in the target, written 0x606000)		-	read+0x563a90
+B/YD1g.v	636	0xbec00	0xc2c00	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x1c6c0 is 0xc9f40 in the target, written 0xc2c00)		-	read+0x20690
+B/YD1g.v	725	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)		-	read+0x5da90
+B/YD1g.v	727	0x38e000	0x38e000	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x20ade8 is 0x399340 in the target, written 0x38e000)		-	read+0x2eba90
+B/YD1g.v	748	0x5e6000	0x606000	FAIL data-symbol (builtin_tls+0x11df0 is 0x605498 in the target, written 0x606000)		-	read+0x563a90
+B/YD1g.v	766	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)		-	read+0x5da90
+B/YD1g.v	769	0x38e000	0x38e000	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x20ade8 is 0x399340 in the target, written 0x38e000)		-	read+0x2eba90
+B/YD1g.v	914	0x38e000	0x38e000	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x20ade8 is 0x399340 in the target, written 0x38e000)		-	read+0x2eba90
+B/YD1g.v	1037	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)		-	read+0x5da90
+B/YD1g.v	1278	0x5e6000	0x606000	FAIL data-symbol (builtin_tls+0x11df0 is 0x605498 in the target, written 0x606000)		-	read+0x563a90
+B/YD1g.v	1335	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)		-	read+0x5da90
+B/YD1w.v	173	0x3fffff	0x3fffff	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x27cde7 is 0x40b33f in the target, written 0x3fffff)		-	read+0x35da8f
+B/YE30.v	1394	0x200000	0x200000	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x7cde8 is 0x20b340 in the target, written 0x200000)	bss	-	read+0x15da90
+B/YE6k.v	1388	0x200000	0x200000	FAIL data-symbol (_ZN11__sanitizerL8theDepotE+0x7cde8 is 0x20b340 in the target, written 0x200000)	bss	-	read+0x15da90
+B/YFem.v	203	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)	bss	-	read+0x5da90
+B/YFem.v	204	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)	bss	-	read+0x5da90
+B/YFem.v	205	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)	bss	-	read+0x5da90
+B/YFgi.v	107	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)	bss	-	read+0x5da90
+B/YFgm.v	95	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)	bss	-	read+0x5da90
+B/YFgn.v	70	0x100000	0x100000	FAIL data-symbol (_ZN11__sanitizerL26internal_alloc_placeholderE+0x5dac0 is 0x10b340 in the target, written 0x100000)	bss	-	read+0x5da90
+-	0	0x41590	0x42d20	trampoline-name-differs (source __wrap_strlen, target __interceptor_trampoline_strlen)		0x41590+0x0	__interceptor_trampoline_strlen+0x0
+-	0	0x41594	0x42d24	trampoline-name-differs (source __wrap_strnlen, target __interceptor_trampoline_strnlen)		0x41594+0x0	__interceptor_trampoline_strnlen+0x0
+-	0	0x41598	0x42d28	trampoline-name-differs (source __wrap_strcmp, target __interceptor_trampoline_strcmp)		0x41598+0x0	__interceptor_trampoline_strcmp+0x0
+-	0	0x4159c	0x42d2c	trampoline-name-differs (source __wrap_strchr, target __interceptor_trampoline_strchr)		0x4159c+0x0	__interceptor_trampoline_strchr+0x0
+-	0	0x415a0	0x42d30	trampoline-name-differs (source __wrap_memcmp, target __interceptor_trampoline_memcmp)		0x415a0+0x0	__interceptor_trampoline_memcmp+0x0
+-	0	0x415a4	0x42d34	trampoline-name-differs (source __wrap_bcmp, target __interceptor_trampoline_bcmp)		0x415a4+0x0	__interceptor_trampoline_bcmp+0x0
+-	0	0x415a8	0x42d38	trampoline-name-differs (source __wrap_memchr, target __interceptor_trampoline_memchr)		0x415a8+0x0	__interceptor_trampoline_memchr+0x0
+-	0	0x415ac	0x42d3c	trampoline-name-differs (source __wrap_frexpl, target __interceptor_trampoline_frexpl)		0x415ac+0x0	__interceptor_trampoline_frexpl+0x0
+-	0	0x415b0	0x42d40	trampoline-name-differs (source __wrap_read, target __interceptor_trampoline_read)		0x415b0+0x0	__interceptor_trampoline_read+0x0
+-	0	0x415b4	0x42d44	trampoline-name-differs (source __wrap_fwrite, target __interceptor_trampoline_fwrite)		0x415b4+0x0	__interceptor_trampoline_fwrite+0x0
+-	0	0x415b8	0x42d48	trampoline-name-differs (source __wrap_time, target __interceptor_trampoline_time)		0x415b8+0x0	__interceptor_trampoline_time+0x0
+-	0	0x415bc	0x42d4c	trampoline-name-differs (source __wrap_gmtime_r, target __interceptor_trampoline_gmtime_r)		0x415bc+0x0	__interceptor_trampoline_gmtime_r+0x0
+-	0	0x415c0	0x42d50	trampoline-name-differs (source __wrap_vprintf, target __interceptor_trampoline_vprintf)		0x415c0+0x0	__interceptor_trampoline_vprintf+0x0
+-	0	0x415c4	0x42d54	trampoline-name-differs (source __wrap_vfprintf, target __interceptor_trampoline_vfprintf)		0x415c4+0x0	__interceptor_trampoline_vfprintf+0x0
+-	0	0x415c8	0x42d58	trampoline-name-differs (source __wrap_vsnprintf, target __interceptor_trampoline_vsnprintf)		0x415c8+0x0	__interceptor_trampoline_vsnprintf+0x0
+-	0	0x415cc	0x42d5c	trampoline-name-differs (source __wrap_fprintf, target __interceptor_trampoline_fprintf)		0x415cc+0x0	__interceptor_trampoline_fprintf+0x0
+-	0	0x415d0	0x42d60	trampoline-name-differs (source __wrap_snprintf, target __interceptor_trampoline_snprintf)		0x415d0+0x0	__interceptor_trampoline_snprintf+0x0
+-	0	0x415d4	0x42d64	trampoline-name-differs (source __wrap_clock_gettime, target __interceptor_trampoline_clock_gettime)		0x415d4+0x0	__interceptor_trampoline_clock_gettime+0x0
+-	0	0x415d8	0x42d68	trampoline-name-differs (source __wrap_wcrtomb, target __interceptor_trampoline_wcrtomb)		0x415d8+0x0	__interceptor_trampoline_wcrtomb+0x0
+-	0	0x415dc	0x42d6c	trampoline-name-differs (source __wrap_wctomb, target __interceptor_trampoline_wctomb)		0x415dc+0x0	__interceptor_trampoline_wctomb+0x0
+-	0	0x415e0	0x42d70	trampoline-name-differs (source __wrap_strerror, target __interceptor_trampoline_strerror)		0x415e0+0x0	__interceptor_trampoline_strerror+0x0
+-	0	0x415e4	0x42d74	trampoline-name-differs (source __wrap__exit, target __interceptor_trampoline__exit)		0x415e4+0x0	__interceptor_trampoline__exit+0x0
+-	0	0x415e8	0x42d78	trampoline-name-differs (source __wrap_pthread_attr_getstack, target __interceptor_trampoline_pthread_attr_getstack)		0x415e8+0x0	__interceptor_trampoline_pthread_attr_getstack+0x0
+-	0	0x415ec	0x42d7c	trampoline-name-differs (source __wrap___tls_get_addr, target __interceptor_trampoline___tls_get_addr)		0x415ec+0x0	__interceptor_trampoline___tls_get_addr+0x0
+-	0	0x415f0	0x42d80	trampoline-name-differs (source __wrap_fflush, target __interceptor_trampoline_fflush)		0x415f0+0x0	__interceptor_trampoline_fflush+0x0
+-	0	0x415f4	0x42d84	trampoline-name-differs (source __wrap_sem_init, target __interceptor_trampoline_sem_init)		0x415f4+0x0	__interceptor_trampoline_sem_init+0x0
+-	0	0x415f8	0x42d88	trampoline-name-differs (source __wrap_sem_destroy, target __interceptor_trampoline_sem_destroy)		0x415f8+0x0	__interceptor_trampoline_sem_destroy+0x0
+-	0	0x415fc	0x42d8c	trampoline-name-differs (source __wrap_sem_wait, target __interceptor_trampoline_sem_wait)		0x415fc+0x0	__interceptor_trampoline_sem_wait+0x0
+-	0	0x41600	0x42d90	trampoline-name-differs (source __wrap_sem_trywait, target __interceptor_trampoline_sem_trywait)		0x41600+0x0	__interceptor_trampoline_sem_trywait+0x0
+-	0	0x41604	0x42d94	trampoline-name-differs (source __wrap_sem_timedwait, target __interceptor_trampoline_sem_timedwait)		0x41604+0x0	__interceptor_trampoline_sem_timedwait+0x0
+-	0	0x41608	0x42d98	trampoline-name-differs (source __wrap_sem_post, target __interceptor_trampoline_sem_post)		0x41608+0x0	__interceptor_trampoline_sem_post+0x0
+-	0	0x4160c	0x42d9c	trampoline-name-differs (source __wrap_pthread_setcancelstate, target __interceptor_trampoline_pthread_setcancelstate)		0x4160c+0x0	__interceptor_trampoline_pthread_setcancelstate+0x0
+-	0	0x41610	0x42da0	trampoline-name-differs (source __wrap_send, target __interceptor_trampoline_send)		0x41610+0x0	__interceptor_trampoline_send+0x0
+-	0	0x41614	0x42da4	trampoline-name-differs (source __wrap_sendto, target __interceptor_trampoline_sendto)		0x41614+0x0	__interceptor_trampoline_sendto+0x0
+-	0	0x41618	0x42da8	trampoline-name-differs (source __wrap_sigaltstack, target __interceptor_trampoline_sigaltstack)		0x41618+0x0	__interceptor_trampoline_sigaltstack+0x0
+-	0	0x4161c	0x42dac	trampoline-name-differs (source __wrap_sigaction, target __interceptor_trampoline_sigaction)		0x4161c+0x0	__interceptor_trampoline_sigaction+0x0
+-	0	0x50c54	0x523e4	trampoline-name-differs (source __wrap_memset, target __interceptor_trampoline_memset)		0x50c54+0x0	__interceptor_trampoline_memset+0x0
+-	0	0x50c58	0x523e8	trampoline-name-differs (source __wrap_memcpy, target __interceptor_trampoline_memcpy)		0x50c58+0x0	__interceptor_trampoline_memcpy+0x0
+-	0	0x51fac	0x5373c	trampoline-name-differs (source __wrap_free, target __interceptor_trampoline_free)		0x51fac+0x0	__interceptor_trampoline_free+0x0
+-	0	0x51fb0	0x53740	trampoline-name-differs (source __wrap_malloc, target __interceptor_trampoline_malloc)		0x51fb0+0x0	__interceptor_trampoline_malloc+0x0
+-	0	0x94c38	0x9f48c	trampoline-name-differs (source pthread_testcancel, target __pthread_testcancel)		0x94c38+0x0	__pthread_testcancel+0x0

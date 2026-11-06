@@ -1,0 +1,74 @@
+cb-cache: mode=dune source=CACHE=dune dir=<VM>:<VM_DUNE_CACHE>/cc9ae43a9f4b targets=16 compiled=16 from_cache=0 missing=0 failed=0 inconsistent=0
+cb: kit ows.sh <OWS> sha256 2416d327faf156d6db6796544fb539cd7c02e5e31ad9df216b1485a3cc1550a5; ws-cache <WS_CACHE> sha256 b6f58f7d05e5d75e50620a235b20f48647157b9e54e2f5ac1b83ddcf69fa835f; vm-tool <VM_TOOL> sha256 2ee05685589d592550fde1b928975d160f021e2beecf4ada9b8aca2120fc375c
+cb: pins of libdiginet/fuzz_transport: each file of <VM>:<VM_WS>/projects/libdiginet/bin/fuzz_transport against projects/libdiginet/fuzz_transport/harness.yaml at facts f6acfcb0c1b8 (facts of base f6acfcb0c1, BASE.tsv)
+cb: pin libdiginet/fuzz_transport fuzz_transport.asan e89be137db17 PINNED (asan pins e89be137db17 at facts f6acfcb0c1b8)
+cb: pin libdiginet/fuzz_transport fuzz_transport.asan-ubsan 41113a03c82f PINNED (asan-ubsan pins 41113a03c82f at facts f6acfcb0c1b8)
+cb: pin libdiginet/fuzz_transport fuzz_transport.plain bb20ce415827 PINNED (plain pins bb20ce415827 at facts f6acfcb0c1b8)
+cb: pin libdiginet/fuzz_transport fuzz_transport.ubsan af7b86991906 PINNED (ubsan pins af7b86991906 at facts f6acfcb0c1b8)
+cb: pins libdiginet/fuzz_transport at facts f6acfcb0c1b8: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts f6acfcb0c1b8
+cb: sync check: <VM>:<VM_WS>/proofs/libdiginet/fuzz_transport holds <WT>/proofs/libdiginet/fuzz_transport by content (rsync -c --dry-run after the sync: no difference, 2079 ms)
+cb: sync check: <VM>:<VM_DCO>/proofs/libdiginet/fuzz_transport holds <VM>:<VM_WS>/proofs/libdiginet/fuzz_transport (the clone at the check above) by content (rsync -c --dry-run after the sync: no difference, 1049 ms)
+cb: layout old (the unit's proofs are proofs/libdiginet/fuzz_transport; base f6acfcb0c1b8, facts f6acfcb0c1b8, clone HEAD 56be9351a301)
+cb-dune: <CLONE>, 16 targets, jobs 32, checker <CHECKER_IMAGE>@sha256:cc9ae43a9f4b0dd59d7c8d30727d36e039bfe72a2a9f9c4a99c68e413037e902, cache <VM_DUNE_CACHE>/cc9ae43a9f4b
+cb-dune: deps: rocq dep keyed on the load path's file set: -exclude-dir cb-fileset-6ead74ff1d64d8a8 (3181 .v under proofs/libdiginet/fuzz_transport, facts f6acfcb0c1b8)
+        rocq proofs/libdiginet/fuzz_transport/lib/.OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.theory.d
+        rocq projects/libdiginet/fuzz_transport/.OssFuzzTheorems.libdiginet.theory.d
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/RtStack.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/StackRawKept.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/YF0x.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/YE2y.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSMxA.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM5T.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM3T.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM1T.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc1Tbl.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc2Tbl.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc0Tbl.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSF5.{glob,vo}
+CHECKPOINT-1
+CHECKPOINT-2
+CHECKPOINT-3
+CHECKPOINT-4
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSF5CgB.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM3.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc2.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc0.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc1.{glob,vo}
+        rocq proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM5.{glob,vo}
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtStack.vo (real: 0.88, user: 0.62, sys: 0.25, mem: 476136 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackRawKept.vo (real: 1.03, user: 0.76, sys: 0.27, mem: 540556 ko)
+proofs/libdiginet/fuzz_transport/lib/B/YF0x.vo (real: 3.21, user: 2.86, sys: 0.35, mem: 618816 ko)
+proofs/libdiginet/fuzz_transport/lib/B/YE2y.vo (real: 4.08, user: 3.74, sys: 0.34, mem: 614300 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSMxA.vo (real: 1.33, user: 1.00, sys: 0.32, mem: 599192 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM5T.vo (real: 9.41, user: 9.00, sys: 0.40, mem: 701424 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM3T.vo (real: 9.61, user: 9.19, sys: 0.39, mem: 708564 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM1T.vo (real: 9.77, user: 9.37, sys: 0.39, mem: 741208 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc1Tbl.vo (real: 10.58, user: 10.18, sys: 0.39, mem: 722344 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc2Tbl.vo (real: 10.58, user: 10.16, sys: 0.41, mem: 719900 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc0Tbl.vo (real: 11.31, user: 10.29, sys: 1.02, mem: 720516 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSF5.vo (real: 8.43, user: 8.01, sys: 0.41, mem: 680384 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSF5CgB.vo (real: 1.44, user: 1.02, sys: 0.42, mem: 622300 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM3.vo (real: 48.87, user: 48.30, sys: 0.57, mem: 991992 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc2.vo (real: 79.55, user: 78.93, sys: 0.61, mem: 1040596 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc0.vo (real: 79.56, user: 78.90, sys: 0.66, mem: 1039860 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc1.vo (real: 80.41, user: 79.76, sys: 0.64, mem: 1085548 ko)
+proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM5.vo (real: 698.83, user: 696.43, sys: 2.31, mem: 1565852 ko)
+cb-dune: vo check: 165 .vo read, 1880 Require digests compared with this build's .vo, 849 with the checker image's .vo (38 of its libraries read under <COQLIB>), 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable), 0.0 s
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc0Tbl.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc0.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/StackRawKept.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc1Tbl.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc1.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc2Tbl.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/StackMalloc2.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM3T.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM3.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM5T.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM5.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSF5.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSMxA.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/RtStack.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSM1T.vo compiled
+cb: target proofs/libdiginet/fuzz_transport/lib/B/Rt/RtSF5CgB.vo compiled
+cb: dune: 16 targets: 16 compiled, 0 restored from the cache, 0 missing; 0 failed compiles; 2 more compiled (dependencies outside the targets); 0 inconsistent .vo (vo check)
+rc=0 wall=721

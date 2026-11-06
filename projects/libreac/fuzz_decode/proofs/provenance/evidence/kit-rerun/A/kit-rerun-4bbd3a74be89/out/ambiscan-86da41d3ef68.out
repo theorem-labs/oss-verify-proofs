@@ -1,0 +1,4 @@
+# X = DONOR_TWIN sha256 ce511d541cda
+# Y = DECODE_A_TWIN sha256 4cb0a852e826
+# AMBIG	file	line	name	image	copies	addr/size/STT_FILE/qname ; ...	Img.fsym takes	how the line was read
+TOTAL	files read 15	by-name compares seen (distinct names) 7	ambiguous hits 0	distinct ambiguous names 0	lines with a function token 66	resolved items NAME{FILE}/0xADDR (distinct) 0	files skipped 0

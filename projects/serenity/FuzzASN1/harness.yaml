@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: serenity
 harness: FuzzASN1
-rocq: OssFuzzTheorems.serenity.FuzzASN1
+rocq: OSSVerify.serenity.FuzzASN1
 origin: upstream
 summary: TLS::Certificate::parse_certificate(input); result discarded.
 entry: LLVMFuzzerTestOneInput

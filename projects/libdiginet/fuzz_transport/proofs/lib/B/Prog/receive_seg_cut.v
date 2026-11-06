@@ -1,0 +1,477 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: the runtime site contracts of fuzz_reply's ASan program walks that the donor's
+   runtime vocabulary (Reusable/YG0d.v, from proofs/cgif/cgif_file_fuzzer/lib/YG0d.v) does not name, in its shape. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_sites.v, with its module paths and module names changed; 818 of its 926 lines of code are new or changed and 345 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/A/Prog/TransportGCg.v, with its module paths and module names changed; 397 of its 445 lines of code are new or changed and 878 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/B/Prog/SendctlBCut.v, with its module paths and module names changed; 281 of its 333 lines of code are new or changed and 393 lines of the source are left out. *)
+(* receive_seg_cut: the cuts of the walk of receive on image B (fuzz_transport.asan-ubsan 0x836a8 = transportb_sigma
+   TB_receive, AF_receive = 0x2408 of lib/B/Prog/DgnTransportBList.v, 101 words), as STATEMENTS only, and the
+   composition recv_holds_of: the walk from the entry (recv_entry_at) from the piece Props. Image B's twin of
+   lib/A/Prog/receive_seg_cut.v: the same carried facts at image B's names, image B's cut points and registers, and
+   one more shared Prop, recv_srf_at, the call of spec_read_frame (image B calls it twice; image A inlines it). The
+   walk holds the CALLER's G journal (lib/A/W_journalG.v ajournal_gx TG.G_HARNESS_B 0 []) from the entry to the
+   return; from the malloc's return on, the journal is at k + 1 events and the blocks are the caller's with the
+   frame's block (a, max (n, 1)) added. Offsets are from the entry (BASE + AF_receive = 0x836a8); every cut is at an
+   instruction that is not a call. The pieces, in pc order:
+     head  +0x000 .. +0x034  `addi sp, sp, -128`, the six saves (ra, s0 .. s4 at sp + 120 .. sp + 80), s2 = a3,
+                             s3 = a2, s1 = a1 = n, s4 = a0 = p, a0 = n + (n = 0) = max (n, 1), `jal` the malloc
+                             wrapper (+0x034; YC5d.v amalloc04_rule inside the G journal: lib/A/Prog/receive_seg_alloc.v
+                             gx_malloc_at; the trace of receive_cg.v trans_recv_uctx's first conjunct, the entry
+                             chain). Ends at the mal cut. Prop: recv_head_stmt.
+     cpy   +0x038 .. +0x050  `beqz a0` not taken (4096 <= a), s0 = a, `beqz s1` (n = 0 skips the copy), the arguments
+                             and `jal __asan_memcpy` (+0x050; TransportGCg.v gx_intrin_at OCpy: the destination is the
+                             new block, the source [p, p + n) by trans_src_ok at the call state). Ends at the opb cut.
+                             Prop: recv_cpy_stmt.
+     opb   +0x054 .. +0x094  s4 = &OW, the two `jal __asan_memset` (+0x068: OW, 0, 304; +0x07c: GOT, 0, 224;
+                             gx_intrin_at OSet into G), the load of g_fail_next, the stores of -1 at OW + 232 and of
+                             g_fail_next at M + 88 (op_begin, TCb.v op_begin_m). Ends at the rf cut. Prop:
+                             recv_opb_stmt.
+     rf    +0x098 .. +0x0b4  a2 = sp, a0 = a, a1 = n, `jal spec_read_frame` (+0x0a4; recv_srf_at), the 4-byte load of
+                             the struct's send field at sp + 32, the store of it at g_rx_send (recv_send), `beqz s3`
+                             (+0x0b4): by_poll <> 0 goes to the poll cut, by_poll = 0 to the mrx cut. Prop:
+                             recv_rf_stmt.
+     poll  +0x0b8 .. +0x128  got = min (n, 1514), `jal spec_read_frame` (+0x0d0, len got; recv_srf_at), the stores of
+                             got, the times value, a, the send value and the fails value (recv_w2c), `jal
+                             diginet_session_poll` (+0x11c), the stores of 0 at g_rx and g_rx_fail, `j` the set cut.
+                             Prop: recv_poll_stmt.
+     mrx   +0x12c .. +0x154  `jal m_rx` (+0x134), the load of g_now, s2 = its result, `jal diginet_session_rx`
+                             (+0x154), the set cut. Prop: recv_mrx_stmt.
+     set   +0x158 .. +0x184  a0 = s2, `jal settle` (+0x15c; a donor-form callee through TransportGCg.v gx_call_cg),
+                             a0 = a, `jal` the free wrapper (+0x164; YC5d.v afree04_rule inside the G journal:
+                             receive_seg_alloc.v gx_free_at; the trace of trans_recv_uctx's second conjunct, the fixed
+                             trace [0x83810]), the six reloads, `addi sp, sp, 128`, `ret`. The post. Prop:
+                             recv_set_stmt.
+     srf   no cut: the call of spec_read_frame from receive's frame (recv_srf_at), which rf and poll make.
+     inv   no code: the model facts that the run invariants hold at the worlds the code hands its callees and at the
+                     world it hands settle (recv_inv_stmt).
+   Each cut holds the caller's facts (recv_fix: the premises of receive_cg.v transport_receive_cg at the entry, with
+   the run invariants and their two index bounds as lib/TModel/TRunInv.v run_inv, and the two trace facts of the
+   context), what every cut after the malloc carries (recv_cur: the journal, the frames, the blocks, the meter, what
+   the call kept so far over the statement's window and written range, the six saved words, 4096 <= a), the model's
+   result at the malloc's address (recv_res), the per-cut facts (the world relation at the cut's model world, the
+   frame's bytes in the block, the path) and the registers the code after the cut reads (recv_regs_keep and its
+   extensions: s5 .. s11 are never saved, so every cut keeps them). *)
+From Stdlib Require Import ZArith List Lia Permutation Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK11 YK0s YK0o YM05 YK04 YA0i YA0n.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YG00 YG01 YG0f YG0v YG0n YG0d YCbq YC5d YI00.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YI16 YI5b YI5c.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B Require Import YB1v.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B Require YE2k AsanCells TransportGB.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.A Require Import W_journalG.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.A.Prog Require Import PaTable.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.Prog Require Import
+DgnTransportBSyms DgnTransportBList DgnTransportBAddr DgnTransportBPa DgnTransportBImg DgnTransportBCg.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.A.Prog Require Import TransportGCg TransportRtCg TWorldG.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.Prog Require Import TWorldB TImgB.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.Prog Require Import m_set_cg check_state_data_cg.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.Prog Require Import send_control_cg send_data_cg.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.Prog Require Import diginet_body_check_cg set_state_cg.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.Prog Require Import diginet_session_wake_cg.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.Prog Require Import on_ack_cg on_data_cg on_announce_cg.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.Prog Require Import diginet_frame_parse_cg.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.Prog Require Import diginet_session_tick_cg diginet_session_rx_cg.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.Prog Require Import m_tick_cg m_rx_cg io_recv_cg.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.Prog Require Import spec_read_frame_cg settle_cg.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.Prog Require Import diginet_session_poll_cg.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.Prog Require Import receive_cg.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.TModel Require TWorld TCb TImg TSess0 TSess TOps TRunInv.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Spec Require DgnSpec DgnLib.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Prog.T Require TContract.
+Import ListNotations.
+Open Scope Z_scope.
+Module YK11 := OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable.YK11.
+Module TG := OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B.TransportGB.
+Module TW := OSSVerify.Proofs.libdiginet.fuzz_transport.lib.TModel.TWorld.
+Module TC := OSSVerify.Proofs.libdiginet.fuzz_transport.lib.TModel.TCb.
+Module TI := OSSVerify.Proofs.libdiginet.fuzz_transport.lib.TModel.TImg.
+Module TS0 := OSSVerify.Proofs.libdiginet.fuzz_transport.lib.TModel.TSess0.
+Module TSS := OSSVerify.Proofs.libdiginet.fuzz_transport.lib.TModel.TSess.
+Module TOP := OSSVerify.Proofs.libdiginet.fuzz_transport.lib.TModel.TOps.
+Module DSpec := OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Spec.DgnSpec.
+Module TCt := OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Prog.T.TContract.
+#[global] Remove Hints OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable.YI5b.src0_sink_head
+  OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable.YI5c.src0_sink
+  OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable.YI5c.src0_sink_laws : typeclass_instances.
+
+(* ------------------------------------------------------------------ *)
+(* The cut points, the saved words                                     *)
+(* ------------------------------------------------------------------ *)
+
+(* The cut points, as offsets from the listing's base: mal `beqz a0` (+0x038, the malloc's return), opb the PHi of
+   &OW (+0x054, the memcpy's return or the skip), rf `mv a2, sp` (+0x098, after op_begin), poll `addi a0, zero,
+   0x5ea` (+0x0b8, by_poll <> 0), mrx `mv a0, s0` (+0x12c, by_poll = 0), set `mv a0, s2` (+0x158, the join). *)
+Definition RECV_MAL : Z := AF_receive + 0x38.
+Definition RECV_OPB : Z := AF_receive + 0x54.
+Definition RECV_RF : Z := AF_receive + 0x98.
+Definition RECV_POLL : Z := AF_receive + 0xb8.
+Definition RECV_MRX : Z := AF_receive + 0x12c.
+Definition RECV_SET : Z := AF_receive + 0x158.
+(* The words the prologue saves, as (distance below the entry sp, register): ra, s0, s1, s2, s3, s4 (sd at sp + 120
+   .. sp + 80 after `addi sp, sp, -128`). *)
+Definition RECV_SAVED : list (Z * Z) := [(8, 1); (16, 8); (24, 9); (32, 18); (40, 19); (48, 20)].
+(* s4 at the poll cut: the PHi of g_rx_send (+0x0ac), whose low part -0x6f4 the store at +0x0b0 adds and the by-poll
+   store at +0x108 adds again. *)
+Definition RECV_RXS_HI : Z := TB_g_rx_send + 0x6f4.
+
+(* ------------------------------------------------------------------ *)
+(* The model piece                                                    *)
+(* ------------------------------------------------------------------ *)
+
+(* The run invariants the callees ask for (receive_cg.v's premises (1), (2), (4), (5)) with the two index bounds
+   that keep (2) and (4) inside g_s.queue[] and g_cmd[] are lib/TModel/TRunInv.v run_inv. The model piece: they hold
+   at the world receive hands diginet_session_poll (recv_w2c) and m_rx (recv_w2), at the world m_rx_m leaves
+   (diginet_session_rx's), and at the world settle is handed on each path (after diginet_session_rx_m, and after
+   diginet_session_poll_m and the two stores of 0 at g_rx and g_rx_fail). *)
+Definition recv_inv_stmt : Prop :=
+  (forall Bw bytes, length Bw = Z.to_nat TW.W_LEN -> TRunInv.run_inv Bw -> TRunInv.run_inv (recv_w2 Bw bytes)) /\
+  (forall Bw bytes a pf, length Bw = Z.to_nat TW.W_LEN -> TRunInv.run_inv Bw ->
+     TRunInv.run_inv (recv_w2c Bw bytes a pf)) /\
+  (forall Bw bytes F n Bx t, length Bw = Z.to_nat TW.W_LEN -> TRunInv.run_inv Bw ->
+     TC.m_rx_m timg_B F (recv_w2 Bw bytes) n = Some (Bx, t) -> TRunInv.run_inv Bx) /\
+  (forall F Bx b now By r, length Bx = Z.to_nat TW.W_LEN -> TRunInv.run_inv Bx ->
+     TSS.diginet_session_rx_m timg_B F Bx b now = Some (By, r) -> TRunInv.run_inv By) /\
+  (forall Bw bytes a pf F B2d r, length Bw = Z.to_nat TW.W_LEN -> TRunInv.run_inv Bw ->
+     TSS.diginet_session_poll_m timg_B F (recv_w2c Bw bytes a pf) 0 = Some (B2d, r) ->
+     TRunInv.run_inv (TW.set_g_rx_fail (TW.set_g_rx B2d 0) 0)).
+
+Section cut. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Local Abbreviation tfib_sink_head := YE2k.tfib_sink_head.
+Variable B : asyms.
+Variable MT : ameter_ops.
+Local Abbreviation segs := tfibsegs.
+Local Abbreviation ajournal_gx := (@W_journalG.ajournal_gx rc tfib_sink_head segs B).
+Local Abbreviation BASE := (@pa_val _ transportb_listing PI_transportb A_TEXT).
+
+(* The cut points and the entry in the image's addresses. *)
+Lemma recv_cut_pcs :
+  BASE + AF_receive = transportb_sigma TB_receive /\
+  BASE + RECV_MAL = 0x836e0 /\ BASE + RECV_OPB = 0x836fc /\ BASE + RECV_RF = 0x83740 /\
+  BASE + RECV_POLL = 0x83760 /\ BASE + RECV_MRX = 0x837d4 /\ BASE + RECV_SET = 0x83800.
+Proof. repeat split; reflexivity. Qed.
+
+(* The facts of the record every piece may use: the premises of transport_receive_cg_holds_stmt that are not callee
+   contracts and not the context's trace facts, with gx_ok / gx_noerrno (DgnTransportBCg.v G_HARNESS_gx_ok /
+   G_HARNESS_gx_noerrno from trans_g_unowned / trans_g_no_errno). *)
+Definition recv_laws : Prop :=
+  pc_wrap_malloc (as_code B) = transportb_sigma TB___interceptor_trampoline_malloc /\
+  pc_wrap_free (as_code B) = transportb_sigma TB___interceptor_trampoline_free /\
+  transport_cells B /\ trans_recv_cells B /\
+  trans_g_unowned B /\ trans_g_no_errno B /\ trans_ro_rd_unowned B /\ trans_rom_no_errno B /\
+  AR_laws segs B /\ ameter_laws MT /\
+  gx_ok segs B TG.G_HARNESS_B /\ gx_noerrno B TG.G_HARNESS_B.
+
+(* The callee contracts of the holds statement, in its order. *)
+Definition recv_calls : Prop :=
+  (forall fx' : YK11.FPState, @amalloc04_rule fx' rc tfib_sink_head segs B MT) /\
+  (forall fx' : YK11.FPState, @aintrin_realizes fx' rc segs B OCpy (transportb_sigma TB___asan_memcpy)) /\
+  (forall fx' : YK11.FPState, @aintrin_realizes fx' rc segs B OSet (transportb_sigma TB___asan_memset)) /\
+  (forall fx' : YK11.FPState, @transport_spec_read_frame_cg fx' rc B MT (transportb_sigma TB_spec_read_frame)) /\
+  (forall fx' : YK11.FPState,
+     @transport_diginet_session_poll_cg fx' rc B MT (transportb_sigma TB_diginet_session_poll)) /\
+  (forall fx' : YK11.FPState, @transport_m_rx_cg fx' rc B MT (transportb_sigma TB_m_rx)) /\
+  (forall fx' : YK11.FPState,
+     @transport_diginet_session_rx_cg fx' rc B MT (transportb_sigma TB_diginet_session_rx)) /\
+  (forall fx' : YK11.FPState, @transport_settle_cg fx' rc B MT (transportb_sigma TB_settle)) /\
+  (forall fx' : YK11.FPState, @afree04_rule fx' rc tfib_sink_head segs B MT).
+
+(* The caller's facts: the premises of transport_receive_cg at the entry registers regs, the run invariants with the
+   two index bounds (TRunInv.v run_inv) in place of the statement's invariant premises, and the trace facts of the
+   context raZ regs :: spine ch (receive_cg.v trans_recv_uctx at it: the malloc's trace follows the context, the
+   free's is fixed). *)
+Definition recv_fix (STK sp0 : Z) (FP : list (Z * Z)) (ly : alayout) (S : astate) (W0 : world segs)
+    (mem0 : word -> option byte) (md0 : Model) (own : list (Z * Z))
+    (lyc : alayout) (Sc : astate) (W : world segs) (memc : word -> option byte) (mdc : Model) (k : Z)
+    (regs : bvmap 5 word) (p by_poll pf T : Z) (bytes Bw : list byte) (ch : list (Z * Z * Z)) : Prop :=
+  ajournal_gx TG.G_HARNESS_B 0 [] STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k /\
+  YK0s.ret_ok (YK11.getr regs 1) /\ 4096 <= raZ regs /\
+  YK11.getr regs 3 = w64 (as_gp B) /\ YK11.getr regs 4 = w64 (as_tp B) /\
+  YK11.getr regs 10 = w64 p /\ YK11.getr regs 11 = w64 (Z.of_nat (length bytes)) /\
+  YK11.getr regs 12 = w64 by_poll /\ bv_unsigned (YK11.getr regs 13) mod 2 ^ 32 = pf /\
+  @achain rc lyc (aview segs (w_H W) memc) (spZ regs) (s0Z regs) ch /\
+  spZ regs mod 16 = 0 /\ sp0 - STK <= spZ regs - RECV_STK /\ spZ regs <= sp0 /\
+  - 2 ^ 31 <= by_poll < 2 ^ 31 /\ 0 <= pf < 2 ^ 32 /\ Z.of_nat (length bytes) <= 65535 /\
+  garr8 segs (mrestrict (w_H W) memc) p (TW.zs bytes) /\
+  ((0 < length bytes)%nat ->
+     trans_src_ok B lyc Sc W memc p (Z.of_nat (length bytes)) /\
+     decode_off_win regs RECV_STK p (Z.of_nat (length bytes))) /\
+  tw_at TMAP_B (aview segs (w_H W) memc) Bw /\ TW.g_fail_next Bw <= 1 /\
+  (forall a, recv_addr_ok a -> TOP.receive_m timg_B Bw a bytes by_poll pf <> None) /\
+  trans_rom_view_rd W memc /\
+  TRunInv.run_inv Bw /\
+  recv_dn_each timg_B Bw bytes by_poll pf /\
+  count_cid POLL_CID (frames Sc) + 1 < fs_frames POLL_CID /\
+  count_cid SRX_CID (frames Sc) + 1 < fs_frames SRX_CID /\
+  count_cid ONANN_CID (frames Sc) < fs_frames ONANN_CID /\
+  count_cid SENDDATA_CID (frames Sc) < fs_frames SENDDATA_CID /\
+  count_cid ONDATA_CID (frames Sc) + 2 < fs_frames ONDATA_CID /\
+  st_nev S + k + RECV_EV <= EV_MAX /\ blocks_bytes Sc + RECV_LIVE <= LIVE_MAX /\
+  mo_ok MT Sc T /\ recv_cost MT (Z.of_nat (length bytes)) <= T /\
+  In (decode_utrace (pc_malloc_ra0 (as_code B)) (RECV_RA_MALLOC :: spine ch)) (as_universe B) /\
+  In (decode_utrace (pc_free_ra0 (as_code B)) [RECV_RA_FREE]) (as_universe B).
+
+(* What every cut after the malloc carries, at the current state (ly2, S2, W2, mem2, md2): the caller's G journal at
+   k + 1 events (the malloc's; the callees record none); the caller's frames; the caller's blocks with the frame's
+   block (a, max (n, 1)) added; the meter charged the malloc; what the call has kept so far (acall_kept_g over the
+   statement's window and written range recv_wr bytes); the six saved words below the entry sp; 4096 <= a. *)
+Definition recv_cur (STK sp0 : Z) (FP : list (Z * Z)) (ly : alayout) (S : astate) (W0 : world segs)
+    (mem0 : word -> option byte) (md0 : Model) (own : list (Z * Z))
+    (lyc : alayout) (Sc : astate) (W : world segs) (memc : word -> option byte) (k : Z)
+    (regs : bvmap 5 word) (bytes : list byte) (a : Z)
+    (ly2 : alayout) (S2 : astate) (W2 : world segs) (mem2 : word -> option byte) (md2 : Model) : Prop :=
+  ajournal_gx TG.G_HARNESS_B 0 [] STK sp0 FP ly S W0 mem0 md0 own ly2 S2 W2 mem2 md2 (k + 1) /\
+  frames S2 = frames Sc /\
+  Permutation (ablocks B ly2 S2) ((a, Z.max 1 (Z.of_nat (length bytes))) :: ablocks B lyc Sc) /\
+  mo_le MT Sc S2 (mo_malloc MT (Z.max 1 (Z.of_nat (length bytes)))) /\
+  acall_kept_g segs B TG.G_HARNESS_B lyc Sc W memc W2 mem2 (spZ regs - RECV_STK) (spZ regs) (recv_wr bytes) /\
+  Forall (fun o : Z * Z => rdword (aview segs (w_H W2) mem2) (spZ regs - fst o) =
+      Some (bv_unsigned (YK11.getr regs (Z_to_bv 5 (snd o))))) RECV_SAVED /\
+  4096 <= a.
+
+(* The model's result at the address the malloc returned. *)
+Definition recv_res (Bw : list byte) (bytes : list byte) (by_poll pf a : Z) (Bw' : list byte) : Prop :=
+  recv_addr_ok a /\ TOP.receive_m timg_B Bw a bytes by_poll pf = Some (Bw', tt).
+
+(* The bytes at p, read through the current memory, and their placement at the current state, apart from the block. *)
+Definition recv_src (ly2 : alayout) (S2 : astate) (W2 : world segs) (mem2 : word -> option byte)
+    (p : Z) (bytes : list byte) (a : Z) : Prop :=
+  garr8 segs (mrestrict (w_H W2) mem2) p (TW.zs bytes) /\
+  ((0 < length bytes)%nat ->
+     trans_src_ok B ly2 S2 W2 mem2 p (Z.of_nat (length bytes)) /\
+     (p + Z.of_nat (length bytes) <= a \/ a + Z.max 1 (Z.of_nat (length bytes)) <= p)).
+
+(* The frame's bytes in the block, after the copy. *)
+Definition recv_blk (W2 : world segs) (mem2 : word -> option byte) (a : Z) (bytes : list byte) : Prop :=
+  garr8 segs (mrestrict (w_H W2) mem2) a (TW.zs bytes).
+
+(* The registers every cut keeps: sp = the entry sp - 128, gp, tp, and s5 .. s11 (never saved, so kept to the end). *)
+Definition recv_regs_keep (regs regs2 : bvmap 5 word) : Prop :=
+  YK11.getr regs2 2 = w64 (spZ regs - RECV_FRAME) /\
+  YK11.getr regs2 3 = YK11.getr regs 3 /\ YK11.getr regs2 4 = YK11.getr regs 4 /\
+  YK11.getr regs2 21 = YK11.getr regs 21 /\
+  YK11.getr regs2 22 = YK11.getr regs 22 /\ YK11.getr regs2 23 = YK11.getr regs 23 /\
+  YK11.getr regs2 24 = YK11.getr regs 24 /\ YK11.getr regs2 25 = YK11.getr regs 25 /\
+  YK11.getr regs2 26 = YK11.getr regs 26 /\ YK11.getr regs2 27 = YK11.getr regs 27.
+(* The mal cut: s0 still the caller's, s1 = n, s2 = a3, s3 = by_poll, s4 = p, a0 = a. *)
+Definition recv_regs_mal (regs regs2 : bvmap 5 word) (p by_poll a : Z) (bytes : list byte) : Prop :=
+  recv_regs_keep regs regs2 /\
+  YK11.getr regs2 8 = YK11.getr regs 8 /\ YK11.getr regs2 9 = w64 (Z.of_nat (length bytes)) /\
+  YK11.getr regs2 18 = YK11.getr regs 13 /\ YK11.getr regs2 19 = w64 by_poll /\
+  YK11.getr regs2 20 = w64 p /\ YK11.getr regs2 10 = w64 a.
+(* The opb and rf cuts: s0 = a, s1 = n, s2 = a3, s3 = by_poll. *)
+Definition recv_regs_opb (regs regs2 : bvmap 5 word) (by_poll a : Z) (bytes : list byte) : Prop :=
+  recv_regs_keep regs regs2 /\
+  YK11.getr regs2 8 = w64 a /\ YK11.getr regs2 9 = w64 (Z.of_nat (length bytes)) /\
+  YK11.getr regs2 18 = YK11.getr regs 13 /\ YK11.getr regs2 19 = w64 by_poll.
+(* The poll cut: s0 = a, s1 = n, s2 = a3, s4 = the PHi of g_rx_send. *)
+Definition recv_regs_poll (regs regs2 : bvmap 5 word) (a : Z) (bytes : list byte) : Prop :=
+  recv_regs_keep regs regs2 /\
+  YK11.getr regs2 8 = w64 a /\ YK11.getr regs2 9 = w64 (Z.of_nat (length bytes)) /\
+  YK11.getr regs2 18 = YK11.getr regs 13 /\ YK11.getr regs2 20 = w64 RECV_RXS_HI.
+(* The mrx cut: s0 = a, s1 = n. *)
+Definition recv_regs_mrx (regs regs2 : bvmap 5 word) (a : Z) (bytes : list byte) : Prop :=
+  recv_regs_keep regs regs2 /\
+  YK11.getr regs2 8 = w64 a /\ YK11.getr regs2 9 = w64 (Z.of_nat (length bytes)).
+(* The set cut: s0 = a, s2 = ticked. *)
+Definition recv_regs_set (regs regs2 : bvmap 5 word) (a ticked : Z) : Prop :=
+  recv_regs_keep regs regs2 /\ YK11.getr regs2 8 = w64 a /\ YK11.getr regs2 18 = w64 ticked.
+
+(* The post of the call, at the entry registers regs. *)
+Local Abbreviation POST STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs Bw bytes by_poll pf :=
+  (@transport_recv_post fx rc B MT STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs Bw bytes by_poll pf).
+(* The machine state at a cut pc. *)
+Local Abbreviation CFG pc regs2 mem2 md2 :=
+  (mkCfg (@YK11.mkst fx regs2 (Z_to_bv 64 (BASE + pc)) mem2 (YK11.seg_rom segs)) md2).
+
+(* The entry: from the caller's facts, the post. *)
+Definition recv_entry_at : Prop :=
+  recv_laws -> recv_calls ->
+  forall STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k (regs : bvmap 5 word) (p by_poll pf T : Z)
+         (bytes Bw : list byte) (ch : list (Z * Z * Z)),
+    recv_fix STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k regs p by_poll pf T bytes Bw ch ->
+    SRr segs W (@cfg_at fx segs (transportb_sigma TB_receive) regs memc mdc)
+      (POST STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs Bw bytes by_poll pf).
+
+(* The mal cut, +0x038: the malloc returned a; the bytes at p and their placement at the current state; the memory
+   relates to Bw. *)
+Definition recv_mal_at : Prop :=
+  recv_laws -> recv_calls ->
+  forall STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k (regs : bvmap 5 word) (p by_poll pf T : Z)
+         (bytes Bw : list byte) (ch : list (Z * Z * Z)) (a : Z) (Bw' : list byte)
+         (ly2 : alayout) (S2 : astate) (W2 : world segs) (mem2 : word -> option byte) (md2 : Model)
+         (regs2 : bvmap 5 word),
+    recv_fix STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k regs p by_poll pf T bytes Bw ch ->
+    recv_cur STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs bytes a ly2 S2 W2 mem2 md2 ->
+    recv_res Bw bytes by_poll pf a Bw' ->
+    recv_src ly2 S2 W2 mem2 p bytes a ->
+    tw_at TMAP_B (aview segs (w_H W2) mem2) Bw ->
+    recv_regs_mal regs regs2 p by_poll a bytes ->
+    SRr segs W2 (CFG RECV_MAL regs2 mem2 md2)
+      (POST STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs Bw bytes by_poll pf).
+
+(* The opb cut, +0x054: the frame's bytes are in the block; the memory relates to Bw. *)
+Definition recv_opb_at : Prop :=
+  recv_laws -> recv_calls ->
+  forall STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k (regs : bvmap 5 word) (p by_poll pf T : Z)
+         (bytes Bw : list byte) (ch : list (Z * Z * Z)) (a : Z) (Bw' : list byte)
+         (ly2 : alayout) (S2 : astate) (W2 : world segs) (mem2 : word -> option byte) (md2 : Model)
+         (regs2 : bvmap 5 word),
+    recv_fix STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k regs p by_poll pf T bytes Bw ch ->
+    recv_cur STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs bytes a ly2 S2 W2 mem2 md2 ->
+    recv_res Bw bytes by_poll pf a Bw' ->
+    recv_blk W2 mem2 a bytes ->
+    tw_at TMAP_B (aview segs (w_H W2) mem2) Bw ->
+    recv_regs_opb regs regs2 by_poll a bytes ->
+    SRr segs W2 (CFG RECV_OPB regs2 mem2 md2)
+      (POST STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs Bw bytes by_poll pf).
+
+(* The rf cut, +0x098: after op_begin, the memory relates to recv_w1 Bw. *)
+Definition recv_rf_at : Prop :=
+  recv_laws -> recv_calls ->
+  forall STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k (regs : bvmap 5 word) (p by_poll pf T : Z)
+         (bytes Bw : list byte) (ch : list (Z * Z * Z)) (a : Z) (Bw' : list byte)
+         (ly2 : alayout) (S2 : astate) (W2 : world segs) (mem2 : word -> option byte) (md2 : Model)
+         (regs2 : bvmap 5 word),
+    recv_fix STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k regs p by_poll pf T bytes Bw ch ->
+    recv_cur STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs bytes a ly2 S2 W2 mem2 md2 ->
+    recv_res Bw bytes by_poll pf a Bw' ->
+    recv_blk W2 mem2 a bytes ->
+    tw_at TMAP_B (aview segs (w_H W2) mem2) (recv_w1 Bw) ->
+    recv_regs_opb regs regs2 by_poll a bytes ->
+    SRr segs W2 (CFG RECV_RF regs2 mem2 md2)
+      (POST STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs Bw bytes by_poll pf).
+
+(* The poll cut, +0x0b8: by_poll <> 0; the memory relates to recv_w2 Bw bytes (g_rx_send stored). *)
+Definition recv_poll_at : Prop :=
+  recv_laws -> recv_calls ->
+  forall STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k (regs : bvmap 5 word) (p by_poll pf T : Z)
+         (bytes Bw : list byte) (ch : list (Z * Z * Z)) (a : Z) (Bw' : list byte)
+         (ly2 : alayout) (S2 : astate) (W2 : world segs) (mem2 : word -> option byte) (md2 : Model)
+         (regs2 : bvmap 5 word),
+    recv_fix STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k regs p by_poll pf T bytes Bw ch ->
+    recv_cur STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs bytes a ly2 S2 W2 mem2 md2 ->
+    recv_res Bw bytes by_poll pf a Bw' ->
+    recv_blk W2 mem2 a bytes ->
+    tw_at TMAP_B (aview segs (w_H W2) mem2) (recv_w2 Bw bytes) ->
+    by_poll <> 0 ->
+    recv_regs_poll regs regs2 a bytes ->
+    SRr segs W2 (CFG RECV_POLL regs2 mem2 md2)
+      (POST STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs Bw bytes by_poll pf).
+
+(* The mrx cut, +0x12c: by_poll = 0; the memory relates to recv_w2 Bw bytes. *)
+Definition recv_mrx_at : Prop :=
+  recv_laws -> recv_calls ->
+  forall STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k (regs : bvmap 5 word) (p by_poll pf T : Z)
+         (bytes Bw : list byte) (ch : list (Z * Z * Z)) (a : Z) (Bw' : list byte)
+         (ly2 : alayout) (S2 : astate) (W2 : world segs) (mem2 : word -> option byte) (md2 : Model)
+         (regs2 : bvmap 5 word),
+    recv_fix STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k regs p by_poll pf T bytes Bw ch ->
+    recv_cur STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs bytes a ly2 S2 W2 mem2 md2 ->
+    recv_res Bw bytes by_poll pf a Bw' ->
+    recv_blk W2 mem2 a bytes ->
+    tw_at TMAP_B (aview segs (w_H W2) mem2) (recv_w2 Bw bytes) ->
+    by_poll = 0 ->
+    recv_regs_mrx regs regs2 a bytes ->
+    SRr segs W2 (CFG RECV_MRX regs2 mem2 md2)
+      (POST STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs Bw bytes by_poll pf).
+
+(* The set cut, +0x158: the memory relates to B3, the world settle is handed (on the by-poll path the world after
+   diginet_session_poll_m and the two stores of 0, else the world diginet_session_rx_m leaves), the invariants and
+   g_fail_next <= 1 at B3, settle_m at B3 and ticked is the model's last step, and ticked is 0 or 1. *)
+Definition recv_set_at : Prop :=
+  recv_laws -> recv_calls ->
+  forall STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k (regs : bvmap 5 word) (p by_poll pf T : Z)
+         (bytes Bw : list byte) (ch : list (Z * Z * Z)) (a : Z) (Bw' : list byte)
+         (ly2 : alayout) (S2 : astate) (W2 : world segs) (mem2 : word -> option byte) (md2 : Model)
+         (regs2 : bvmap 5 word) (B3 : list byte) (ticked : Z),
+    recv_fix STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k regs p by_poll pf T bytes Bw ch ->
+    recv_cur STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs bytes a ly2 S2 W2 mem2 md2 ->
+    recv_res Bw bytes by_poll pf a Bw' ->
+    tw_at TMAP_B (aview segs (w_H W2) mem2) B3 -> TW.g_fail_next B3 <= 1 -> TRunInv.run_inv B3 ->
+    TC.settle_m B3 ticked = Some (Bw', tt) -> 0 <= ticked <= 1 ->
+    recv_regs_set regs regs2 a ticked ->
+    SRr segs W2 (CFG RECV_SET regs2 mem2 md2)
+      (POST STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs Bw bytes by_poll pf).
+
+(* The call of spec_read_frame from receive's frame (`jal` at +0x0a4 with len = n, at +0x0d0 with len = got): at a
+   state that carries recv_cur, the frame's bytes in the block and the world relation at Bm, with the registers
+   recv_regs_keep keeps, ra a return address, a0 = a, a1 = len (0 <= len <= n) and a2 = the frame's sp (the struct
+   spec_frame, 80 bytes at sp .. sp + 79, below the six saved words), the call returns to ra at a state that carries
+   recv_cur, the frame's bytes in the block and the world relation at Bm, with the callee-saved registers kept and
+   the struct holding TContract.sf_bytes a (srf_f bytes len); every continuation from there is a continuation of the
+   call. *)
+Definition recv_srf_at : Prop :=
+  recv_laws -> recv_calls ->
+  forall STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k (regs : bvmap 5 word) (p by_poll pf T : Z)
+         (bytes Bw : list byte) (ch : list (Z * Z * Z)) (a : Z)
+         (ly2 : alayout) (S2 : astate) (W2 : world segs) (mem2 : word -> option byte) (md2 : Model)
+         (regsT : bvmap 5 word) (len : Z) (Bm : list byte) (Q : world segs -> config -> Prop),
+    recv_fix STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k regs p by_poll pf T bytes Bw ch ->
+    recv_cur STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs bytes a ly2 S2 W2 mem2 md2 ->
+    recv_blk W2 mem2 a bytes ->
+    tw_at TMAP_B (aview segs (w_H W2) mem2) Bm ->
+    recv_regs_keep regs regsT ->
+    YK0s.ret_ok (YK11.getr regsT 1) -> 4096 <= raZ regsT ->
+    YK11.getr regsT 10 = w64 a -> YK11.getr regsT 11 = w64 len ->
+    YK11.getr regsT 12 = w64 (spZ regs - RECV_FRAME) ->
+    0 <= len <= Z.of_nat (length bytes) ->
+    (forall (ly3 : alayout) (S3 : astate) (W3 : world segs) (mem3 : word -> option byte) (md3 : Model)
+            (regs3 : bvmap 5 word),
+       recv_cur STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs bytes a ly3 S3 W3 mem3 md3 ->
+       recv_blk W3 mem3 a bytes ->
+       tw_at TMAP_B (aview segs (w_H W3) mem3) Bm ->
+       aregs_preserved regsT regs3 ->
+       garr8 segs (mrestrict (w_H W3) mem3) (spZ regs - RECV_FRAME)
+         (TW.zs (TCt.sf_bytes a (srf_f bytes len))) ->
+       SRr segs W3 (mkCfg (@YK11.mkst fx regs3 (YK11.getr regsT 1) mem3 (YK11.seg_rom segs)) md3) Q) ->
+    SRr segs W2 (@cfg_at fx segs (transportb_sigma TB_spec_read_frame) regsT mem2 md2) Q.
+
+(* Each piece: the cut Props it ends in give its own cut (or, for the head, the entry). *)
+Definition recv_head_stmt : Prop := recv_mal_at -> recv_entry_at.
+Definition recv_cpy_stmt : Prop := recv_opb_at -> recv_mal_at.
+Definition recv_opb_stmt : Prop := recv_rf_at -> recv_opb_at.
+Definition recv_rf_stmt : Prop := recv_srf_at -> recv_poll_at -> recv_mrx_at -> recv_rf_at.
+Definition recv_poll_stmt : Prop := recv_srf_at -> recv_inv_stmt -> recv_set_at -> recv_poll_at.
+Definition recv_mrx_stmt : Prop := recv_inv_stmt -> recv_set_at -> recv_mrx_at.
+Definition recv_set_stmt : Prop := recv_set_at.
+Definition recv_srf_stmt : Prop := recv_srf_at.
+
+(* The walk from its pieces. *)
+Theorem recv_holds_of :
+  recv_head_stmt -> recv_cpy_stmt -> recv_opb_stmt -> recv_rf_stmt -> recv_poll_stmt -> recv_mrx_stmt ->
+  recv_set_stmt -> recv_srf_stmt -> recv_inv_stmt -> recv_entry_at.
+Proof.
+  intros HEAD CPY OPB RF POLL MRX SET SRF INV.
+  exact (HEAD (CPY (OPB (RF SRF (POLL SRF INV SET) (MRX INV SET))))).
+Qed.
+
+(* The statement from the entry walk: the record facts give recv_laws (gx_ok / gx_noerrno by G_HARNESS_gx_ok /
+   G_HARNESS_gx_noerrno), the callee contracts recv_calls, and the contract's premises with trans_recv_uctx at the
+   context raZ regs :: spine ch give recv_fix. *)
+Lemma recv_top : recv_entry_at -> forall CTX : list (list Z), @transport_receive_cg_holds_stmt fx rc B MT CTX.
+Proof.
+  intros ENTRY CTX HMPC HFPC HCELLS HRC HGU HGE HRU HRE LAWS MTL HU AM MCPY MSET SRF POLL MRX RX SET AF.
+  intros STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k regs p by_poll pf T bytes Bw ch
+    HJ Hret Hra4 Hgp Htp H10 H11 H12 H13 Hch HinC Hal Hwlo Hwhi Hbp Hpf Hn Hgarr Hsrc Htw Hgf Hmodel Hrom
+    I1 I2 I2b I4 I4b I5a I5b Hdn C1 C2 C3 C4 C5 Hnev Hlive Hmo Hcost.
+  destruct HU as [Htm Htf]. pose proof (Htm _ HinC) as Htm1. cbn [tl] in Htm1.
+  apply (ENTRY
+    (conj HMPC (conj HFPC (conj HCELLS (conj HRC (conj HGU (conj HGE (conj HRU (conj HRE (conj LAWS (conj MTL
+      (conj (G_HARNESS_gx_ok B HGU) (G_HARNESS_gx_noerrno B HGE))))))))))))
+    (conj AM (conj MCPY (conj MSET (conj SRF (conj POLL (conj MRX (conj RX (conj SET AF))))))))
+    STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k regs p by_poll pf T bytes Bw ch).
+  unfold recv_fix.
+  split; [exact HJ|]. split; [exact Hret|]. split; [exact Hra4|]. split; [exact Hgp|]. split; [exact Htp|].
+  split; [exact H10|]. split; [exact H11|]. split; [exact H12|]. split; [exact H13|]. split; [exact Hch|].
+  split; [exact Hal|]. split; [exact Hwlo|]. split; [exact Hwhi|]. split; [exact Hbp|]. split; [exact Hpf|].
+  split; [exact Hn|]. split; [exact Hgarr|]. split; [exact Hsrc|]. split; [exact Htw|]. split; [exact Hgf|].
+  split; [exact Hmodel|]. split; [exact Hrom|].
+  split; [unfold TRunInv.run_inv; split; [exact I1|]; split; [exact I2|]; split; [exact I4|]; split; [exact I5a|];
+          split; [exact I5b|]; split; [exact I4b | exact I2b]|].
+  split; [exact Hdn|]. split; [exact C1|]. split; [exact C2|]. split; [exact C3|]. split; [exact C4|].
+  split; [exact C5|]. split; [exact Hnev|]. split; [exact Hlive|]. split; [exact Hmo|]. split; [exact Hcost|].
+  split; [exact Htm1 | exact Htf].
+Qed.
+End cut.

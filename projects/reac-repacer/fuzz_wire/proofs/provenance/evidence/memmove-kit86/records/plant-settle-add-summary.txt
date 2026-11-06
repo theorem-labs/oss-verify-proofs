@@ -1,0 +1,6 @@
+# settle3: X f6a69170e8c8 Y pin 4e91ed7ebb46 Y twin 4480095e0bb2; strictcmp3 65688e94214a; replay of every non-certified row MATCHES the kit list
+closure: 785 functions; KIT-CERTIFIED 656; NOT CERTIFIED 52; NOT CERTIFIED (kit EQUAL with lui-const) 23; REAL 1; SETTLED 48; SETTLED (kit EQUAL with lui-const) 5
+  targets: BYHAND/SETTLED 3; CSTR/NOT CERTIFIED 30; CSTR/SETTLED 37; JTCHECK/SETTLED 13; LUI/NOT CERTIFIED 80; LUI/REAL 1; LUI/SETTLED 29; TABLE/SETTLED 7
+paircl: 944 functions; KIT-CERTIFIED 797; NOT CERTIFIED 57; NOT CERTIFIED (kit EQUAL with lui-const) 33; REAL 1; SETTLED 50; SETTLED (kit EQUAL with lui-const) 6
+  targets: BYHAND/SETTLED 3; CSTR/NOT CERTIFIED 33; CSTR/SETTLED 39; JTCHECK/SETTLED 13; LUI/NOT CERTIFIED 92; LUI/REAL 1; LUI/SETTLED 31; NONE/NOT CERTIFIED 3; TABLE/SETTLED 7
+REAL: 2 [('_ZN6__asan9Allocator22FindHeapChunkByAddressEm', '0x18', '0x98288=_ZTVN11__sanitizer11FlagHandlerIiEE+0x0 | 0x98288=read+0x28'), ('_ZN6__asan9Allocator22FindHeapChunkByAddressEm', '0x18', '0x98288=_ZTVN11__sanitizer11FlagHandlerIiEE+0x0 | 0x98288=read+0x28')]

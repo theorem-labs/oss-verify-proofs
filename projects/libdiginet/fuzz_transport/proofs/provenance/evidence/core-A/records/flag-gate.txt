@@ -1,0 +1,48 @@
+# gate (a) of libdiginet/fuzz_transport image-A core (row TCA): 2026-10-31T10:50:24Z
+command: gates/flag-gate-A.sh WORK LIB OUT/pac (gates: pac-A.sh cf205cb0cdd8, flag-gate-A.sh 1624404302eb, triage-A.py ce9ec163a04c)
+checker: CKDIR/versions/205a90fd19b8/port_addr_check.py sha256 205a90fd19b8; one default pass, --paired-only --summary --donors-from DONORS --fail-on-flags
+images: src PG/bin/fuzz_grant/fuzz_grant.asan c2c7559b29bd twin 57c26f993615; dst TIMG/stripped/fuzz_transport.asan e89be137db17 twin 86efc3a80314
+inputs: WORK/stage tree cb94de36d3c6 (492 files), WORK/stage-out tree 3df9dee2b44d (492 files), port_core 83f5203d2a2f; LIB/A/AB13.v 1fb1a9636438, AF0m.v 5dfdd0e65356, AD2j.v f32f53f83a52; overrides 50a44ad70d1b; patches (WORK/patches.log) zero-shadow-forallb c61928f405d4 cell-lookup a4cff1a229c0 ad1q-shape b7a6e350fd47 imgtop-alias a1b73a8107be dead-arm-ad1g 5d1c6411a7be bss-zero-range 6d1acdf0c95f g-ACfn 541e4c4696b9 g-AD1w ed41960ef097 g-AD1m 58f8cadc9122 g-AD1p 2b55df460405 g-AD1q c353e5cf6157 g-AD1r 258880fd6cad g-AD2f f9d48ede68ec afet-cost 9f5dfea19198; donor lib A/AB13.v 7f648c473d97, AF0m.v 742dc3de583c, AD2j.v 135f64eea9b6
+# record run
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 465 rows in 9 classes: DIFFERENT-SYMBOL=15 GEOMETRY-CHANGED=10 KIND-CHANGED=9 NON-ADDRESS-CHANGED=175 SAME-VALUE-DIFFERENT-OBJECT=20 STALE-DONOR-CODE-POINTER=3 UNPAIRED-PORTED=149 UNPAIRED-SOURCE=68 UNRESOLVED=16
+UNMEASURED 1 rows in 1 classes: UNMEASURED-NAME=1 (measured by nothing: neither a finding nor a pass)
+checker <file> rc=4 (sha256 205a90fd19b8)
+checker files: 6 of 6 in versions/205a90fd19b8.SHA256SUMS OK
+GENERATOR-FILL 7 (reported, not counted)
+triage-A.py rc=0: 465 flagged rows + 7 GENERATOR-FILL: 472 explained, 0 UNEXPLAINED
+1 UNMEASURED-NAME rows (reported, measured by nothing): 1 explained, 0 UNEXPLAINED
+classification of the flagged + GENERATOR-FILL rows: OK-explained 437, TOOL-LIMIT 35, REAL 0, UNEXPLAINED 0
+# control: A/AF0l.v pc_wrap_memcpy planted as 0x93734 (abort; the file's value is 0x523ac)
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 2 rows in 2 classes: STALE-DONOR-CODE-POINTER=1 UNPAIRED-PORTED=1
+UNMEASURED 491 rows in 1 classes: UNPAIRED-FILE-UNMEASURED=491 (measured by nothing: neither a finding nor a pass)
+checker <file> rc=4 (sha256 205a90fd19b8)
+checker files: 6 of 6 in versions/205a90fd19b8.SHA256SUMS OK
+triage-A.py rc=1: 2 flagged rows + 0 GENERATOR-FILL: 1 explained, 1 UNEXPLAINED
+0 UNMEASURED-NAME rows (reported, measured by nothing): 0 explained, 0 UNEXPLAINED
+classification of the flagged + GENERATOR-FILL rows: OK-explained 1, TOOL-LIMIT 0, REAL 0, UNEXPLAINED 1
+UNEXPLAINED raw 29 STALE-DONOR-CODE-POINTER A/AF0l.v:14->15 0x517f8 -> 0x93734: no rule accepts this row | checker note: donor function start __interceptor_trampoline_memcpy; the port value is abort+0x0; the target has it at __interceptor_t
+planted pair flagged: 1 row(s), class STALE-DONOR-CODE-POINTER; against the unplanted control's flagged rows: 1 added, 0 removed
+# control: A/AF0l.v pc_wrap_memcpy planted as 0x523b0 (pc_asan_memcpy, a value of the same sentence)
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 2 rows in 2 classes: STALE-DONOR-CODE-POINTER=1 UNPAIRED-PORTED=1
+UNMEASURED 491 rows in 1 classes: UNPAIRED-FILE-UNMEASURED=491 (measured by nothing: neither a finding nor a pass)
+checker <file> rc=4 (sha256 205a90fd19b8)
+checker files: 6 of 6 in versions/205a90fd19b8.SHA256SUMS OK
+triage-A.py rc=1: 2 flagged rows + 0 GENERATOR-FILL: 1 explained, 1 UNEXPLAINED
+0 UNMEASURED-NAME rows (reported, measured by nothing): 0 explained, 0 UNEXPLAINED
+classification of the flagged + GENERATOR-FILL rows: OK-explained 1, TOOL-LIMIT 0, REAL 0, UNEXPLAINED 1
+UNEXPLAINED raw 29 STALE-DONOR-CODE-POINTER A/AF0l.v:14->15 0x517f8 -> 0x523b0: no rule accepts this row | checker note: donor function start __interceptor_trampoline_memcpy; the port value is __asan_memcpy+0x0; the target has it at __inter
+planted pair flagged: 1 row(s), class STALE-DONOR-CODE-POINTER; against the unplanted control's flagged rows: 1 added, 0 removed
+# control: the same file unplanted
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 1 rows in 1 classes: UNPAIRED-PORTED=1
+UNMEASURED 491 rows in 1 classes: UNPAIRED-FILE-UNMEASURED=491 (measured by nothing: neither a finding nor a pass)
+checker <file> rc=4 (sha256 205a90fd19b8)
+checker files: 6 of 6 in versions/205a90fd19b8.SHA256SUMS OK
+triage-A.py rc=0: 1 flagged rows + 0 GENERATOR-FILL: 1 explained, 0 UNEXPLAINED
+0 UNMEASURED-NAME rows (reported, measured by nothing): 0 explained, 0 UNEXPLAINED
+classification of the flagged + GENERATOR-FILL rows: OK-explained 1, TOOL-LIMIT 0, REAL 0, UNEXPLAINED 0
+pc_wrap_memcpy pair flagged: 0 row(s)
+controls: PASS (each plant: exactly one flagged row added to the unplanted control's rows and none removed, on the planted A/AF0l.v pc_wrap_memcpy pair, rc 4, that row UNEXPLAINED by triage-A.py; unplanted: the pair not flagged, triage rc 0; record: checker rc 4 or 0, triage rc 0)

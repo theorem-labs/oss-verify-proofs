@@ -1,0 +1,377 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run Fs.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.fast_float.from_chars.images Require Import AsanUbsan.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require PropExec SeqExec CatExec CatSim.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require StepTac.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require MemSplit RefMemcpyLib ShapeSet RealizesCfg AsanAcct PlacementCount AllocNodesCfg.
+Import OSSVerify.Proofs.fast_float.from_chars.lib.Common.PropExec OSSVerify.Proofs.fast_float.from_chars.lib.Common.SeqExec OSSVerify.Proofs.fast_float.from_chars.lib.Common.CatExec OSSVerify.Proofs.fast_float.from_chars.lib.Common.CatSim OSSVerify.Proofs.fast_float.from_chars.lib.Common.StepTac.Hoare OSSVerify.Proofs.fast_float.from_chars.lib.Common.MemSplit OSSVerify.Proofs.fast_float.from_chars.lib.Common.RefMemcpyLib OSSVerify.Proofs.fast_float.from_chars.lib.Common.ShapeSet OSSVerify.Proofs.fast_float.from_chars.lib.Common.RealizesCfg OSSVerify.Proofs.fast_float.from_chars.lib.Common.AsanAcct OSSVerify.Proofs.fast_float.from_chars.lib.Common.PlacementCount OSSVerify.Proofs.fast_float.from_chars.lib.Common.AllocNodesCfg.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require FxLin FxCore.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require FxSound.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require FxSound FxMem FxRgs FxFacts FxStep.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require FxLoop.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require FxSubst FxEnt FxLoop FxPlan FxFrame FxEcall.
+From OSSVerify.Proofs.fast_float.from_chars.lib.FXC Require FxChDen.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require FxDrv.
+Import OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxLin OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxCore OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxSound.FxGlue OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxSound OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxMem OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxRgs OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxFacts OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxStep OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxLoop.FxExplore OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxSubst OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxEnt OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxLoop OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxPlan OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxFrame OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxEcall OSSVerify.Proofs.fast_float.from_chars.lib.FXC.FxChDen.FxAcct OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxDrv.
+From OSSVerify.Proofs.fast_float.from_chars.lib.FXC Require FxBacking FxChDen FxChLib.
+From OSSVerify.Proofs.fast_float.from_chars.lib.FXC Require FxChNull.
+From OSSVerify.Proofs.fast_float.from_chars.lib.FXC Require FxChSep.
+From OSSVerify.Proofs.fast_float.from_chars.lib.FXC Require FxChNull.
+From OSSVerify.Proofs.fast_float.from_chars.lib.FXC Require FxChEnt FxChStart FxChWv.
+Import OSSVerify.Proofs.fast_float.from_chars.lib.FXC.FxBacking OSSVerify.Proofs.fast_float.from_chars.lib.FXC.FxChDen OSSVerify.Proofs.fast_float.from_chars.lib.FXC.FxChLib OSSVerify.Proofs.fast_float.from_chars.lib.FXC.FxChNull.FxChSeg OSSVerify.Proofs.fast_float.from_chars.lib.FXC.FxChSep OSSVerify.Proofs.fast_float.from_chars.lib.FXC.FxChNull.FxChNode OSSVerify.Proofs.fast_float.from_chars.lib.FXC.FxChEnt OSSVerify.Proofs.fast_float.from_chars.lib.FXC.FxChStart OSSVerify.Proofs.fast_float.from_chars.lib.FXC.FxChWv.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require FxLoop.
+From OSSVerify.Proofs.fast_float.from_chars.lib.FXDB Require FxQNode FxMchr FxMNode FxRunPost FxRunPostM FxSNodes AsanMBase AsanMcpy.
+Import OSSVerify.Proofs.fast_float.from_chars.lib.Common.FxLoop.FxQChk OSSVerify.Proofs.fast_float.from_chars.lib.FXDB.FxQNode OSSVerify.Proofs.fast_float.from_chars.lib.FXDB.FxMchr OSSVerify.Proofs.fast_float.from_chars.lib.FXDB.FxMNode OSSVerify.Proofs.fast_float.from_chars.lib.FXDB.FxRunPost OSSVerify.Proofs.fast_float.from_chars.lib.FXDB.FxRunPostM OSSVerify.Proofs.fast_float.from_chars.lib.FXDB.FxSNodes OSSVerify.Proofs.fast_float.from_chars.lib.FXDB.AsanMBase OSSVerify.Proofs.fast_float.from_chars.lib.FXDB.AsanMcpy.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Open Scope Z_scope.
+
+Abbreviation ASEGSN := AsanUbsan.M.loaded_segments.
+
+(* [comment removed for export] *)
+Definition run_post_all (S : sst) (pc' : Z) (sets : list (reg * lin)) (havs : list reg) (j0 : nat) : sst :=
+  match nth_error (s_rgs S) j0 with
+  | Some R0 => SST pc' (hav_regs (set_regs (s_regs S) sets) havs (s_next S))
+                   (upd_nth (s_rgs S) j0 (RG (rg_base R0) (rg_size R0) RW TEmpty))
+                   (s_facts S) (pos_add (s_next S) (length havs)) (s_resv S)
+  | None => run_post S pc' sets havs
+  end.
+
+Section M.
+Variable segs : list Segment.
+Variable cfg : SpuriousCfg.
+Variable LIMIT : Z.
+Variable model0 : Model.
+Variable mem0 : word -> option byte.
+Hypothesis Hwx : wx_segs_nowrap segs.
+
+#[using="Hwx"] Theorem den_run_post_all_m : forall E S M ms model T (regs' : bvmap 5 word) (pc' : Z) (sets : list (reg * lin)) (havs : list reg)
+    (j0 : nat) (R0 : region) (mem' : word -> option byte),
+  DEN segs LIMIT model0 mem0 E S M ms model -> s_resv S = RNone ->
+  nth_error (s_rgs S) j0 = Some R0 -> rk_wz (rg_kind R0) = true ->
+  isteps segs (restrict (Hof E M model) ms)
+    (@mkst (mkFP (ms_fregs ms) (ms_fcsr ms)) regs' (Z_to_bv 64 pc') mem' (ms_rom ms)) ->
+  (forall w : word, ~ (uE E (rg_base R0) <= bv_unsigned w < uE E (rg_base R0) + rsz E R0) -> mem' w = mrestrict (Hof E M model) (ms_mem ms) w) ->
+  (forall i, 0 <= i < rsz E R0 -> rd1 segs mem' (Z_to_bv 64 (uE E (rg_base R0) + i)) <> None /\ wview segs mem' (Z_to_bv 64 (uE E (rg_base R0) + i)) <> None) ->
+  Forall (fun p => fst p <> 0%bv /\ lwf (s_next S) (snd p) = true /\ getr regs' (fst p) = lden E (snd p)) sets ->
+  Forall (fun r => r <> 0%bv) havs ->
+  (forall r, existsb (fun p => bv_eqb (fst p) r) sets = false -> existsb (fun h => bv_eqb h r) havs = false ->
+     getr regs' r = getr (ms_regs ms) r) ->
+  (forall E' ms' model', agree (s_next S) E E' -> DEN segs LIMIT model0 mem0 E' (run_post_all S pc' sets havs j0) M ms' model' ->
+     (forall w, Hof E' M model' w = false -> ms_mem ms' w = mem' w) ->
+     realizes_cfg segs cfg (mkCfg ms' model') T) ->
+  realizes_cfg segs cfg (mkCfg ms model) T.
+Proof. LiaFast.lf_pins (fun (Hwx : LiaFast.U) => LiaFast.u0).
+  intros E S M ms model T regs' pc' sets havs j0 R0 mem' Hd Hrv Hj0 Hk0 Hst Hfr Hwr Hsets Hnz Ho Hk.
+  pose proof Hd as Hd0.
+  destruct Hd0 as [Hsd Hwf Hbw Hh Hawf Hanz Hminv Hhoff Hres Hlim Hsp Hspok Hbrk Hsbrk Htid Hmaps Hgsh Hgtop Hivwf Hpd Hmres Hkind Hlzm Hzrsh Hzrm Hzr Hrl Hvmo Hproc Hfrz Hrom Hown Hblob].
+  set (H := Hof E M model) in *.
+  destruct (sden_0 _ _ _ _ Hsd) as (Hpc & Hsvc & Hrsv & HR & HG & HD & HF & Hfrm).
+  rewrite Hrv in Hrsv. cbn [rsv_ok] in Hrsv.
+  cbn [restrict ms_pc_val ms_svc_pending ms_resv ms_regs] in Hpc, Hsvc, Hrsv, HR.
+  set (n := s_next S) in *.
+  set (E1 := hav_val E regs' havs n).
+  assert (Ha1 : agree n E E1) by apply hav_val_agree.
+  set (S1 := bump S (pos_add n (length havs))).
+  assert (Hnx : (s_next S <= s_next S1)%positive) by (unfold S1, bump; cbn [s_next]; apply pos_add_le).
+  assert (HdS1 : DEN segs LIMIT model0 mem0 E1 S1 M ms model)
+    by (apply den_bump; [exact (den_agree segs LIMIT model0 mem0 E E1 S M ms model Hd Ha1) | apply pos_add_le]).
+  assert (HH1 : Hof E1 M model = H) by (unfold Hof, H; rewrite (allowA_agree (s_next S) E E1 M Hwf Ha1); reflexivity).
+  set (R0' := RG (rg_base R0) (rg_size R0) RW TEmpty).
+  assert (Hpw : run_post_all S pc' sets havs j0 = SST pc' (hav_regs (set_regs (s_regs S) sets) havs n) (upd_nth (s_rgs S) j0 R0')
+                   (s_facts S) (pos_add n (length havs)) (s_resv S)) by (unfold run_post_all; rewrite Hj0; reflexivity).
+  set (msr' := @mkst (mkFP (ms_fregs ms) (ms_fcsr ms)) regs' (Z_to_bv 64 pc') mem' (ms_rom ms)).
+  assert (Hpost : sden segs E1 (run_post_all S pc' sets havs j0) msr').
+  { rewrite Hpw. intros E' Ha'.
+    assert (HaE : agree n E E') by exact (agree_trans _ E E1 E' Ha1 (agree_mono _ _ E1 E' (pos_add_le (length havs) n) Ha')).
+    destruct (Hsd E' HaE) as (Hpc' & Hsvc' & Hrsv' & HR' & HG' & HD' & HF' & Hfrm').
+    cbn [restrict ms_regs ms_mem ms_fcsr ms_resv] in HR', HG', Hfrm', Hrsv'.
+    assert (HbE : lden E' (rg_base R0) = lden E (rg_base R0)).
+    { unfold bases_wf in Hbw. rewrite forallb_forall in Hbw. destruct (andb_prop _ _ (Hbw R0 (nth_error_In _ _ Hj0))) as [B1 _].
+      exact (lden_agree_wf n E E' _ B1 HaE). }
+    assert (HsE : rsz E' R0 = rsz E R0).
+    { unfold bases_wf in Hbw. rewrite forallb_forall in Hbw. destruct (andb_prop _ _ (Hbw R0 (nth_error_In _ _ Hj0))) as [_ B2].
+      unfold rsz. rewrite (lden_agree_wf n E E' _ B2 HaE). reflexivity. }
+    unfold sden0. cbn [s_pc s_regs s_rgs s_facts s_resv msr' mkst ms_pc_val ms_svc_pending ms_resv ms_regs ms_mem ms_fcsr fp_csr].
+    split; [reflexivity|]. split; [reflexivity|]. split; [rewrite Hrv; reflexivity|]. split.
+    - apply (regs_ok_ext E' _ (upd_havs (upd_sets (ms_regs ms) sets regs') havs regs')).
+      + apply regs_ok_hav'; [| exact Hnz |].
+        * apply regs_ok_set'; [exact HR'|]. rewrite Forall_forall in Hsets |- *. intros p Hp.
+          destruct (Hsets p Hp) as (Hp0 & Hpw' & Hpv). split; [exact Hp0|]. rewrite Hpv. symmetry. exact (lden_agree_wf n E E' _ Hpw' HaE).
+        * intros i Hi. rewrite <- (hav_val_at havs E regs' n i Hi). symmetry. apply Ha'. cbn [s_next]. apply pos_add_lt. exact Hi.
+      + intros r. rewrite upd_havs_get, upd_sets_get.
+        destruct (existsb (fun h => bv_eqb h r) havs) eqn:Eh; [reflexivity|].
+        destruct (existsb (fun p => bv_eqb (fst p) r) sets) eqn:Es; [reflexivity|].
+        symmetry. exact (Ho r Es Eh).
+    - split; [|split; [|split; [exact HF' | exact Hfrm']]].
+      + (* [comment removed for export] *)
+        apply Forall_nth'. intros j R HRj. rewrite Forall_nth' in HG'.
+        destruct (Nat.eq_dec j j0) as [->|Hne].
+        * rewrite (nth_upd_same (s_rgs S) j0 R0' R0 Hj0) in HRj. injection HRj as <-.
+          destruct (HG' j0 R0 Hj0) as (Hsz & Hflat & _ & _).
+          assert (Hrsz : rsz E' R0' = rsz E R0) by (unfold R0', rsz; cbn [rg_size]; unfold rsz in HsE; exact HsE).
+          assert (Hbase : lden E' (rg_base R0') = lden E (rg_base R0)) by (unfold R0'; cbn [rg_base]; exact HbE).
+          unfold rg_ok. rewrite Hrsz, Hbase. rewrite HbE, HsE in *. fold (uE E (rg_base R0)) in *. cbn [rg_kind rg_cont R0'].
+          split; [exact Hsz|]. split; [exact Hflat|]. split.
+          -- intros i Hi. exact (Hwr i Hi).
+          -- intros p v Hp. rewrite tget_empty in Hp. discriminate.
+        * rewrite (nth_upd_other (s_rgs S) j0 j R0' ltac:(lia)) in HRj.
+          apply (rg_ok_frame segs E' (mrestrict H (ms_mem ms)) mem' R (HG' j R HRj)).
+          intros x Hx. apply Hfr.
+          pose proof (rgs_disj_nth E' (s_rgs S) j j0 R R0 HD' Hne HRj Hj0) as Hdis. unfold rg_disj in Hdis.
+          rewrite HbE, HsE in Hdis. fold (uE E (rg_base R0)) in Hdis. unfold uE in *. lia.
+      + apply (rgs_disj_upd E' (s_rgs S) j0 R0' R0 Hj0 eq_refl eq_refl HD'). }
+  apply (den_isteps_m segs cfg LIMIT model0 mem0 Hwx E1 S1 M ms model T (run_post_all S pc' sets havs j0) msr' E1 HdS1).
+  - rewrite HH1. exact Hst.
+  - exact Hpost.
+  - apply agree_refl.
+  - rewrite Hpw. unfold S1, bump. cbn [s_next]. apply Pos.le_refl.
+  - intros y Hy. rewrite HH1. unfold msr', mkst. cbn [ms_mem]. apply Hfr.
+    unfold outside in Hy. rewrite Forall_forall in Hy. specialize (Hy R0 (nth_error_In _ _ Hj0)).
+    cbn [S1 bump s_rgs] in Hy.
+    unfold bases_wf in Hbw. rewrite forallb_forall in Hbw. destruct (andb_prop _ _ (Hbw R0 (nth_error_In _ _ Hj0))) as [B1 B2].
+    assert (HbE1 : lden E1 (rg_base R0) = lden E (rg_base R0)) by exact (lden_agree_wf n E E1 _ B1 Ha1).
+    assert (HsE1 : rsz E1 R0 = rsz E R0) by (unfold rsz; rewrite (lden_agree_wf n E E1 _ B2 Ha1); reflexivity).
+    rewrite HbE1, HsE1 in Hy. unfold uE. lia.
+  - rewrite Hpw. cbn [s_rgs S1 bump]. exact (shape_upd (s_rgs S) j0 R0' R0 Hj0 eq_refl eq_refl).
+  - intros E2 ms2 model2 HD2 Ha2 Hm2. apply (Hk E2 ms2 model2); [| exact HD2 | exact Hm2].
+    exact (agree_trans _ E E1 E2 Ha1 (agree_mono _ _ E1 E2 Hnx Ha2)).
+Qed.
+End M.
+
+(* [comment removed for export] *)
+Definition CPS_PC : Z := 0xd4500.
+Definition CPS_HAVS : list reg := List.map xr [5; 6; 7; 11; 12; 13; 14; 15; 16; 17; 28; 29; 30; 31].
+Definition rk_rd (k : rkind) : bool := match k with RO => false | _ => true end.
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+Definition win_ok (fs : list fact) (x nl : lin) (R : region) : bool :=
+  let '(dlo, dhi) := irange fs (lsub x (rg_base R)) in
+  if (Z.leb 0 dlo && Z.leb dlo dhi && Z.leb dhi (2 ^ 48))%bool then
+    let '(elo, ehi) := irange fs (lsub (ladd (rg_base R) (rg_size R)) (ladd x nl)) in
+    if (Z.leb 0 elo && Z.leb elo ehi && Z.leb ehi (2 ^ 48))%bool then
+      if Z.leb (snd (irange fs x)) (2 ^ 48) then
+        if Z.leb (snd (irange fs (rg_base R))) (2 ^ 48) then Z.leb (snd (irange fs (rg_size R))) (2 ^ 48) else false
+      else false
+    else false
+  else false.
+Fixpoint find_win (p : rkind -> bool) (fs : list fact) (rgs : list region) (x nl : lin) (j : nat) : option nat :=
+  match rgs with
+  | [] => None
+  | R :: rs => if p (rg_kind R) then (if win_ok fs x nl R then Some j else find_win p fs rs x nl (Datatypes.S j))
+               else find_win p fs rs x nl (Datatypes.S j)
+  end.
+Definition cps_chk (img : tree Z) (S : sst) (M : smodel) : bool :=
+  let fs := s_facts S in let rgs := s_rgs S in
+  let d := rget (s_regs S) (rkey (xr 10)) in let s := rget (s_regs S) (rkey (xr 11)) in let nl := rget (s_regs S) (rkey (xr 12)) in
+  match rg_is S 1, s_resv S, find_win rk_wz fs rgs d nl O, find_win rk_rd fs rgs s nl O with
+  | Some r, RNone, Some j0, Some j1 =>
+      (Z.eqb (s_pc S) CPS_PC && Z.eqb (r mod 2) 0 && negb (Nat.eqb j0 j1) && Z.leb (snd (irange fs nl)) (2 ^ 40))%bool
+  | _, _, _, _ => false
+  end.
+Definition cps_post (S : sst) : sst :=
+  match rg_is S 1, find_win rk_wz (s_facts S) (s_rgs S) (rget (s_regs S) (rkey (xr 10))) (rget (s_regs S) (rkey (xr 12))) O with
+  | Some r, Some j0 => run_post_all S r [] CPS_HAVS j0
+  | _, _ => S
+  end.
+
+Lemma find_win_spec : forall p fs rgs x nl j j0, find_win p fs rgs x nl j = Some j0 ->
+  exists R, nth_error rgs (j0 - j) = Some R /\ (j <= j0)%nat /\ p (rg_kind R) = true /\ win_ok fs x nl R = true.
+Proof.
+  intros p fs rgs. induction rgs as [|R rs IH]; intros x nl j j0 H; cbn [find_win] in H; [discriminate|].
+  assert (Hrec : find_win p fs rs x nl (Datatypes.S j) = Some j0 ->
+    exists R1, nth_error (R :: rs) (j0 - j) = Some R1 /\ (j <= j0)%nat /\ p (rg_kind R1) = true /\ win_ok fs x nl R1 = true).
+  { intros H'. destruct (IH x nl (Datatypes.S j) j0 H') as (R' & H1 & H2 & H3 & H4). exists R'. split; [|split; [lia | split; assumption]].
+    replace (j0 - j)%nat with (Datatypes.S (j0 - Datatypes.S j)) by lia. exact H1. }
+  destruct (p (rg_kind R)) eqn:H1; [|exact (Hrec H)].
+  destruct (win_ok fs x nl R) eqn:H2; [|exact (Hrec H)].
+  injection H as <-. exists R. rewrite Nat.sub_diag. split; [reflexivity|]. split; [lia|]. split; assumption.
+Qed.
+
+Lemma uE_ladd_small : forall E a b, uE E a + uE E b < two64 -> uE E (ladd a b) = uE E a + uE E b.
+Proof.
+  intros E a b H. unfold uE in *. rewrite lden_ladd, bv_add_unsigned. unfold bv_wrap, bv_modulus. change (2 ^ Z.of_N 64) with two64.
+  pose proof (bv_unsigned_in_range _ (lden E a)) as Ra. pose proof (bv_unsigned_in_range _ (lden E b)) as Rb.
+  unfold bv_modulus in Ra, Rb. apply Z.mod_small. lia.
+Qed.
+
+Lemma win_ok_sound : forall E fs x nl R, Forall (fact_ok E) fs -> win_ok fs x nl R = true -> uE E nl <= 2 ^ 40 ->
+  uE E (rg_base R) <= uE E x /\ uE E x + uE E nl <= uE E (rg_base R) + rsz E R /\ uE E x <= 2 ^ 48 /\ uE E (rg_base R) <= 2 ^ 48 /\
+  rsz E R <= 2 ^ 48.
+Proof.
+  intros E fs x nl R HF H Hn. unfold win_ok in H.
+  destruct (irange fs (lsub x (rg_base R))) as [dlo dhi] eqn:Hd.
+  destruct (Z.leb 0 dlo && Z.leb dlo dhi && Z.leb dhi (2 ^ 48))%bool eqn:HcA; [|discriminate].
+  destruct (irange fs (lsub (ladd (rg_base R) (rg_size R)) (ladd x nl))) as [elo ehi] eqn:He.
+  destruct (Z.leb 0 elo && Z.leb elo ehi && Z.leb ehi (2 ^ 48))%bool eqn:HcB; [|discriminate].
+  destruct (Z.leb (snd (irange fs x)) (2 ^ 48)) eqn:HC1; [|discriminate].
+  destruct (Z.leb (snd (irange fs (rg_base R))) (2 ^ 48)) eqn:HC2; [|discriminate].
+  repeat match goal with Hx : ((_ && _)%bool = true) |- _ => apply andb_prop in Hx as [Hx ?Hc] end.
+  repeat match goal with
+         | Hx : Z.leb _ _ = true |- _ => apply Z.leb_le in Hx
+         end.
+  pose proof (irange_sound E fs (lsub x (rg_base R)) HF) as Rd. rewrite Hd in Rd. cbn [fst snd] in Rd.
+  pose proof (irange_sound E fs (lsub (ladd (rg_base R) (rg_size R)) (ladd x nl)) HF) as Re. rewrite He in Re. cbn [fst snd] in Re.
+  pose proof (irange_sound E fs x HF) as Rx. pose proof (irange_sound E fs (rg_base R) HF) as Rb.
+  pose proof (irange_sound E fs (rg_size R) HF) as Rz.
+  fold (uE E (lsub x (rg_base R))) in Rd. fold (uE E (lsub (ladd (rg_base R) (rg_size R)) (ladd x nl))) in Re.
+  fold (uE E x) in Rx. fold (uE E (rg_base R)) in Rb. fold (uE E (rg_size R)) in Rz.
+  pose proof (uE_range E x) as UX. pose proof (uE_range E (rg_base R)) as UB. pose proof (uE_range E (rg_size R)) as UZ.
+  pose proof (uE_range E nl) as UN.
+  assert (HX : uE E x <= 2 ^ 48) by lia. assert (HB : uE E (rg_base R) <= 2 ^ 48) by lia. assert (HZ : uE E (rg_size R) <= 2 ^ 48) by lia.
+  unfold rsz. fold (uE E (rg_size R)).
+  destruct (small_diff E x (rg_base R) _ _ Rd) as [[D1 D2]|[D1 D2]]; [|unfold two64 in *; lia].
+  destruct (small_diff E (ladd (rg_base R) (rg_size R)) (ladd x nl) _ _ Re) as [[E1 E2]|[E1 E2]];
+    rewrite (uE_ladd_small E (rg_base R) (rg_size R)) in E1, E2 by (unfold two64; lia);
+    rewrite (uE_ladd_small E x nl) in E1, E2 by (unfold two64; lia); unfold two64 in *; lia.
+Qed.
+
+Lemma rdn_of_rd1 : forall segs (m : word -> option byte) n (a : Z) (f : nat -> byte), 0 <= a -> a + Z.of_nat n <= two64 ->
+  (forall k, (k < n)%nat -> rd1 segs m (Z_to_bv 64 (a + Z.of_nat k)) = Some (f k)) ->
+  rdn segs m (Z_to_bv 64 a) n = Some (List.map f (seq 0 n)).
+Proof.
+  intros segs m n. induction n as [|n IH]; intros a f Ha Hn Hm; [reflexivity|].
+  cbn [rdn]. pose proof (Hm O ltac:(lia)) as H0. cbn [Z.of_nat] in H0. rewrite Z.add_0_r in H0. unfold rd1 in H0. rewrite H0.
+  assert (Hadd : (Z_to_bv 64 a + 1)%bv = Z_to_bv 64 (a + 1)).
+  { apply bv_eq. rewrite bv_add_unsigned, !Z_to_bv_unsigned. unfold bv_wrap. rewrite Zplus_mod_idemp_l. reflexivity. }
+  rewrite Hadd. rewrite (IH (a + 1) (fun k => f (Datatypes.S k)) ltac:(lia) ltac:(lia)).
+  - cbn [seq List.map]. rewrite <- seq_shift, map_map. reflexivity.
+  - intros k Hk. replace (a + 1 + Z.of_nat k) with (a + Z.of_nat (Datatypes.S k)) by lia. apply Hm. lia.
+Qed.
+
+Lemma wbytes_or_s : forall bs m (a w : word), wbytes m a bs w = m w \/ exists bb, wbytes m a bs w = Some bb.
+Proof.
+  induction bs as [|b rest IH]; intros m a w; cbn [wbytes]; [left; reflexivity|].
+  destruct (IH (fun x => if bv_eqb x a then Some b else m x) (a + 1)%bv w) as [H|H]; [|right; exact H].
+  rewrite H. destruct (bv_eqb w a); [right; exists b; reflexivity | left; reflexivity].
+Qed.
+Lemma mm_or_rd1_s : forall segs (m m' : word -> option byte) (w : word), (m' w = m w \/ exists bb, m' w = Some bb) ->
+  rd1 segs m w <> None -> rd1 segs m' w <> None.
+Proof. intros segs m m' w [X|(bb & X)] H; unfold rd1 in *; rewrite X; [exact H | discriminate]. Qed.
+Lemma mm_or_wview_s : forall segs (m m' : word -> option byte) (w : word), (m' w = m w \/ exists bb, m' w = Some bb) ->
+  wview segs m w <> None -> wview segs m' w <> None.
+Proof. intros segs m m' w [X|(bb & X)] H; unfold wview in *; rewrite X; [exact H | discriminate]. Qed.
+
+Section Node.
+Variable cfg : SpuriousCfg.
+Variable LIMIT : Z.
+Variable model0 : Model.
+Variable mem0 : word -> option byte.
+Variable img : tree Z.
+Hypothesis Hwx : wx_segs_nowrap ASEGSN.
+Hypothesis Himg : img_ok ASEGSN img.
+
+#[using="Hwx"] Theorem den_cps : forall S M E ms model T,
+  cps_chk img S M = true -> DEN ASEGSN LIMIT model0 mem0 E S M ms model ->
+  (forall E' ms' model', agree (s_next S) E E' -> DEN ASEGSN LIMIT model0 mem0 E' (cps_post S) M ms' model' ->
+      realizes_cfg ASEGSN cfg (mkCfg ms' model') T) ->
+  realizes_cfg ASEGSN cfg (mkCfg ms model) T.
+Proof. LiaFast.lf_pins (fun (Hwx : LiaFast.U) => LiaFast.u0).
+  intros S M E ms model T Hck Hd Hk.
+  unfold cps_chk in Hck. unfold cps_post in Hk.
+  set (fs := s_facts S) in *. set (d := rget (s_regs S) (rkey (xr 10))) in *. set (s := rget (s_regs S) (rkey (xr 11))) in *.
+  set (nl := rget (s_regs S) (rkey (xr 12))) in *.
+  destruct (rg_is S 1) as [r|] eqn:R1; [|discriminate].
+  destruct (s_resv S) eqn:Hrv; try discriminate.
+  destruct (find_win rk_wz fs (s_rgs S) d nl O) as [j0|] eqn:Hf0; [|discriminate].
+  destruct (find_win rk_rd fs (s_rgs S) s nl O) as [j1|] eqn:Hf1; [|discriminate].
+  apply andb_prop in Hck as [Hck Hnl]. apply andb_prop in Hck as [Hck Hj01]. apply andb_prop in Hck as [Hpc0 Hr2].
+  apply Z.eqb_eq in Hpc0. apply Z.eqb_eq in Hr2. apply Z.leb_le in Hnl. apply negb_true_iff, Nat.eqb_neq in Hj01.
+  (* [comment removed for export] *)
+  pose proof Hd as Hd0.
+  destruct Hd0 as [Hsd Hwf Hbw Hh0 Hawf Hanz Hminv Hhoff Hres Hlim Hsp Hspok Hbrk Hsbrk Htid Hmaps Hgsh Hgtop Hivwf Hpd Hmres Hkind Hlzm Hzrsh Hzrm Hzr Hrl Hvmo Hproc Hfrz Hrom Hown Hblob].
+  set (H := Hof E M model) in *.
+  destruct (sden_0 _ _ _ _ Hsd) as (Hpc & Hsvc & Hrsv & HR & HG & HD & HF & Hfrm).
+  rewrite Hrv in Hrsv. cbn [rsv_ok] in Hrsv.
+  cbn [restrict ms_pc_val ms_svc_pending ms_resv ms_regs] in Hpc, Hsvc, Hrsv, HR.
+  destruct (find_win_spec _ _ _ _ _ _ _ Hf0) as (Rd & Hj0 & _ & Hk0 & Hw0). rewrite Nat.sub_0_r in Hj0.
+  destruct (find_win_spec _ _ _ _ _ _ _ Hf1) as (Rs & Hj1 & _ & Hk1 & Hw1). rewrite Nat.sub_0_r in Hj1.
+  pose proof (irange_sound E fs nl HF) as Rn. fold (uE E nl) in Rn.
+  assert (HN : uE E nl <= 2 ^ 40) by lia.
+  destruct (win_ok_sound E fs d nl Rd HF Hw0 HN) as (W1 & W2 & W3 & W4 & W5).
+  destruct (win_ok_sound E fs s nl Rs HF Hw1 HN) as (V1 & V2 & V3 & V4 & V5).
+  pose proof (uE_range E nl) as UN. pose proof (uE_range E d) as UD. pose proof (uE_range E s) as US.
+  set (D := uE E d) in *. set (Sx := uE E s) in *. set (N := uE E nl) in *.
+  set (AD := uE E (rg_base Rd)) in *. set (AS := uE E (rg_base Rs)) in *.
+  rewrite Forall_nth' in HG.
+  pose proof (HG j0 Rd Hj0) as HRd. pose proof (HG j1 Rs Hj1) as HRs.
+  destruct HRd as (Hdsz & Hdfl & Hdpts & _). destruct HRs as (Hssz & Hsfl & Hspts & _).
+  fold AD in Hdpts. fold AS in Hspts.
+  (* [comment removed for export] *)
+  destruct (is_const_sound E _ r R1) as [Hr1 Hr64].
+  assert (Hra : getr (ms_regs ms) 1%bv = Z_to_bv 64 r) by (replace (1%bv : reg) with (xr 1) by (apply bv_eq; reflexivity); rewrite (HR (xr 1)); exact Hr1).
+  assert (H10 : getr (ms_regs ms) 10%bv = Z_to_bv 64 D).
+  { replace (10%bv : reg) with (xr 10) by (apply bv_eq; reflexivity). rewrite (HR (xr 10)). fold d. unfold D, uE. symmetry. apply u64_of. }
+  assert (H11 : getr (ms_regs ms) 11%bv = Z_to_bv 64 Sx).
+  { replace (11%bv : reg) with (xr 11) by (apply bv_eq; reflexivity). rewrite (HR (xr 11)). fold s. unfold Sx, uE. symmetry. apply u64_of. }
+  assert (H12 : getr (ms_regs ms) 12%bv = Z_to_bv 64 N).
+  { replace (12%bv : reg) with (xr 12) by (apply bv_eq; reflexivity). rewrite (HR (xr 12)). fold nl. unfold N, uE. symmetry. apply u64_of. }
+  assert (Hret : ret_ok (Z_to_bv 64 r)) by (apply ret_ok_even; rewrite u_small64 by exact Hr64; assumption).
+  set (mm := mrestrict H (ms_mem ms)).
+  (* [comment removed for export] *)
+  assert (Hpts_s : forall i, 0 <= i < rsz E Rs -> rd1 ASEGSN mm (Z_to_bv 64 (AS + i)) <> None).
+  { intros i Hi. specialize (Hspts i Hi). unfold rk_rd in Hk1.
+    destruct (rg_kind Rs); try discriminate; [exact (proj1 Hspts) | exact (proj1 (proj1 Hspts)) | exact (proj1 (proj1 Hspts)) | exact Hspts]. }
+  set (f := fun k : nat => match rd1 ASEGSN mm (Z_to_bv 64 (Sx + Z.of_nat k)) with Some b => b | None => Z_to_bv 8 0 end).
+  set (bs := List.map f (seq 0 (Z.to_nat N))).
+  assert (Hlbs : length bs = Z.to_nat N) by (unfold bs; rewrite length_map, length_seq; reflexivity).
+  assert (Hsrc : rdn ASEGSN mm (Z_to_bv 64 Sx) (length bs) = Some bs).
+  { rewrite Hlbs. unfold bs. apply rdn_of_rd1; [lia | rewrite Z2Nat.id by lia; unfold two64; lia |].
+    intros k Hkk. unfold f. destruct (rd1 ASEGSN mm (Z_to_bv 64 (Sx + Z.of_nat k))) eqn:X; [reflexivity|].
+    exfalso. assert (Hkk' : Z.of_nat k < N) by lia.
+    apply (Hpts_s (Sx - AS + Z.of_nat k)); [lia|]. replace (AS + (Sx - AS + Z.of_nat k)) with (Sx + Z.of_nat k) by lia. exact X. }
+  (* [comment removed for export] *)
+  assert (Hpt_d : forall i, 0 <= i < rsz E Rd -> rd1 ASEGSN mm (Z_to_bv 64 (AD + i)) <> None /\ wview ASEGSN mm (Z_to_bv 64 (AD + i)) <> None).
+  { intros i Hi. specialize (Hdpts i Hi). unfold rk_wz in Hk0. destruct (rg_kind Rd); try discriminate; [exact Hdpts | exact (proj1 Hdpts)]. }
+  assert (Hdst : store_ok ASEGSN mm (Z_to_bv 64 D) (length bs) = true).
+  { apply store_ok_from; [lia | rewrite Hlbs, Z2Nat.id by lia; unfold two64; lia|].
+    intros i Hi. rewrite Hlbs, Z2Nat.id in Hi by lia. replace (D + i) with (AD + (D - AD + i)) by lia. apply Hpt_d. lia. }
+  assert (Hdisj : D + N <= Sx \/ Sx + N <= D).
+  { pose proof (rgs_disj_nth E (s_rgs S) j0 j1 Rd Rs HD Hj01 Hj0 Hj1) as X. unfold rg_disj in X. fold (uE E (rg_base Rd)) (uE E (rg_base Rs)) in X.
+    fold AD AS in X. lia. }
+  assert (HuS : bv_unsigned (Z_to_bv 64 Sx) = Sx) by (apply u_small64; unfold two64 in *; lia).
+  assert (HuD : bv_unsigned (Z_to_bv 64 D) = D) by (apply u_small64; unfold two64 in *; lia).
+  assert (HOK : mcH mm (Z_to_bv 64 D) (Z_to_bv 64 Sx) N bs).
+  { constructor.
+    - lia.
+    - exact Hlbs.
+    - exact Hsrc.
+    - exact Hdst.
+    - rewrite HuS, HuD. exact Hdisj.
+    - rewrite HuS. lia.
+    - rewrite HuD. lia. }
+  destruct (@ref_memcpy (mkFP (ms_fregs ms) (ms_fcsr ms)) mm (Z_to_bv 64 D) (Z_to_bv 64 Sx) N bs (ms_rom ms) HOK (ms_regs ms) (Z_to_bv 64 r)
+              Hret Hra H10 H11 H12) as (regs' & Hms & Hkeep).
+  assert (Hmsr : restrict H ms = @mkst (mkFP (ms_fregs ms) (ms_fcsr ms)) (ms_regs ms) (0xd4500 : word) mm (ms_rom ms)).
+  { destruct ms as [rg fr pcv sv rv fc mem rom]. cbn [ms_pc_val ms_svc_pending ms_resv] in Hsvc, Hrsv, Hpc. subst sv rv.
+    cbn [ms_pc_val] in Hpc. rewrite Hpc0 in Hpc. unfold CPS_PC in Hpc. subst pcv.
+    unfold restrict, mkst, mm. cbn. f_equal. apply bv_eq. reflexivity. }
+  set (mem' := wbytes mm (Z_to_bv 64 D) bs).
+  apply (den_run_post_all_m ASEGSN cfg LIMIT model0 mem0 Hwx E S M ms model T regs' r [] CPS_HAVS j0 Rd mem' Hd Hrv Hj0 Hk0).
+  - fold H. rewrite Hmsr. apply fx_isteps_of_msteps. exact Hms.
+  - intros w Hw. unfold mem'. apply wbytes_outside; rewrite HuD, Hlbs, Z2Nat.id by lia; [unfold two64 in *; lia|]. fold AD in Hw. lia.
+  - intros i Hi. specialize (Hpt_d i Hi). fold AD. destruct Hpt_d as [P1 P2].
+    assert (Hor : forall w, mem' w = mm w \/ exists bb, mem' w = Some bb) by (intros w; apply wbytes_or_s).
+    split; [exact (mm_or_rd1_s _ _ _ _ (Hor _) P1) | exact (mm_or_wview_s _ _ _ _ (Hor _) P2)].
+  - apply Forall_nil.
+  - unfold CPS_HAVS. repeat constructor; intros Hc; apply (f_equal bv_unsigned) in Hc; vm_compute in Hc; discriminate.
+  - intros rr Es Eh.
+    assert (Hex : exists k, 0 <= k < 32 /\ rr = Z_to_bv 5 k).
+    { exists (bv_unsigned rr). split; [pose proof (bv_unsigned_in_range _ rr) as X; change (bv_modulus 5) with 32 in X; lia|].
+      symmetry; apply Z_to_bv_bv_unsigned. }
+    destruct Hex as (k & Hk32 & ->).
+    assert (Hc : k = 0 \/ k = 1 \/ k = 2 \/ k = 3 \/ k = 4 \/ k = 5 \/ k = 6 \/ k = 7 \/ k = 8 \/ k = 9 \/ k = 10 \/ k = 11 \/ k = 12 \/ k = 13 \/ k = 14 \/ k = 15 \/ k = 16 \/ k = 17 \/ k = 18 \/ k = 19 \/ k = 20 \/ k = 21 \/ k = 22 \/ k = 23 \/ k = 24 \/ k = 25 \/ k = 26 \/ k = 27 \/ k = 28 \/ k = 29 \/ k = 30 \/ k = 31) by lia.
+    destruct Hc as [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | [ -> | -> ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ].
+    all: first
+      [ (vm_compute in Eh; discriminate Eh)
+      | (replace (Z_to_bv 5 0) with (0%bv : reg) by (apply bv_eq; reflexivity); rewrite !getr_zero; reflexivity)
+      | (apply Hkeep; cbn [callee_kept]; repeat (first [left; apply bv_eq; reflexivity | right])) ].
+  - intros E' ms' model' Ha' Hd' _. exact (Hk E' ms' model' Ha' Hd').
+Qed.
+End Node.
+(* [comment removed for export] *)

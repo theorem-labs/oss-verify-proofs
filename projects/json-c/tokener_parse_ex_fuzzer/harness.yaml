@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: json-c
 harness: tokener_parse_ex_fuzzer
-rocq: OssFuzzTheorems.json_c.tokener_parse_ex_fuzzer
+rocq: OSSVerify.json_c.tokener_parse_ex_fuzzer
 origin: upstream
 summary: json_tokener_parse_ex over the input, iterate object members, serialize with PRETTY|SPACED; the
   string is discarded (not re-parsed).

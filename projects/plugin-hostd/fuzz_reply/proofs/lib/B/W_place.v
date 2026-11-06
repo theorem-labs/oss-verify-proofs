@@ -1,0 +1,206 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: where W_listing.v sits in fuzz_reply.asan-ubsan, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AI12.v. *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith List Lia.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YP0m YP02 YP0b.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_syms W_listing W_tbl.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Open Scope bv_scope. Open Scope Z_scope.
+Definition fr_B0 : Z := 0x82344.
+Definition fr_sigma (s : wsym) : Z :=
+match s with
+| WS_pthread_join => 0x42284
+| WS_pthread_mutex_lock => 0x98dbc
+| WS_free => 0x53e40
+| WS_pthread_mutex_unlock => 0x992a8
+| WS_asan_report_load8 => 0x5a130
+| WS_asan_stack_malloc_0 => 0x3d1c0
+| WS_write => 0x42214
+| WS_asan_report_load4 => 0x5a090
+| WS_asan_report_store4 => 0x5a3b0
+| WS_asan_report_store8 => 0x5a450
+| WS_strlen => 0x421e4
+| WS_errno_location => 0x8cf28
+| WS_realloc => 0x53e48
+| WS_asan_memcpy => 0x52780
+| WS_asan_handle_no_return => 0x5af4c
+| WS_abort => 0x8cf70
+| WS_asan_memset => 0x52c1c
+| WS_fprintf => 0x42230
+| WS_asan_stack_malloc_1 => 0x3d334
+| WS_snprintf => 0x42234
+| WS_strncmp => 0x421f4
+| WS_memchr => 0x42208
+| WS_strrchr => 0x421fc
+| WS_strcmp => 0x421f0
+| WS_strndup => 0x421ec
+| WS_asan_memmove => 0x52e5c
+| WS_asan_report_load1 => 0x59f50
+| WS_asan_report_store1 => 0x5a270
+| WS_strnlen => 0x421e8
+| WS_malloc => 0x53e44
+| WS_bcmp => 0x42204
+end.
+Definition fr_obj (i : nat) : Z :=
+match i with
+| 0%nat => 0x9df50
+| 1%nat => 0x5d8ce0
+| 2%nat => 0x5d8cc0
+| 3%nat => 0x5d9040
+| 4%nat => 0x5d8d20
+| 5%nat => 0x5d8d40
+| 6%nat => 0x9dfa8
+| 7%nat => 0x147f1
+| 8%nat => 0xa2520
+| 9%nat => 0xa2560
+| 10%nat => 0x5d8d60
+| 11%nat => 0x5d8e20
+| 12%nat => 0x5d8e40
+| 13%nat => 0x5d8d80
+| 14%nat => 0x9ebb0
+| 15%nat => 0x20e80
+| 16%nat => 0x200ec
+| 17%nat => 0x20f80
+| 18%nat => 0x20f20
+| 19%nat => 0x5d8e60
+| 20%nat => 0x20f40
+| 21%nat => 0x20f60
+| 22%nat => 0x1239d
+| 23%nat => 0x10320
+| 24%nat => 0x20e54
+| 25%nat => 0x20ee0
+| 26%nat => 0x5d8da0
+| 27%nat => 0x5d8de0
+| 28%nat => 0x20f00
+| 29%nat => 0x5d90c0
+| 30%nat => 0xa6638
+| _ => 0
+end.
+Definition fr_hi (j : nat) : Z :=
+match j with
+| 0%nat => 0x9e360
+| 1%nat => 0x5d9368
+| 2%nat => 0x5d9378
+| 3%nat => 0x5d9388
+| 4%nat => 0x5d939c
+| 5%nat => 0x5d93a8
+| 6%nat => 0x5d93bc
+| 7%nat => 0xa243c
+| 8%nat => 0xa2448
+| 9%nat => 0x5d9450
+| 10%nat => 0x9e4b0
+| 11%nat => 0x9e4b4
+| 12%nat => 0x1450c
+| 13%nat => 0x82510
+| 14%nat => 0xa2550
+| 15%nat => 0x9e650
+| 16%nat => 0x5d9818
+| 17%nat => 0xa2890
+| 18%nat => 0x5d88a4
+| 19%nat => 0x9d8bc
+| 20%nat => 0x5d88c4
+| 21%nat => 0x5d88d0
+| 22%nat => 0x5d88dc
+| 23%nat => 0x5d88e4
+| 24%nat => 0x5d88e8
+| 25%nat => 0x5d88f0
+| 26%nat => 0x9db24
+| 27%nat => 0x5d8b30
+| 28%nat => 0x5d8b3c
+| 29%nat => 0x5d8b40
+| 30%nat => 0x5d8b4c
+| 31%nat => 0x5d8c04
+| 32%nat => 0x5d8c44
+| 33%nat => 0x9ec50
+| 34%nat => 0x20c6c
+| 35%nat => 0x9ec94
+| 36%nat => 0x9dce8
+| 37%nat => 0x9dcec
+| 38%nat => 0x1fd48
+| 39%nat => 0x82d4c
+| 40%nat => 0x5d8dc0
+| 41%nat => 0x5d8dcc
+| 42%nat => 0x5d8dec
+| 43%nat => 0x20df0
+| 44%nat => 0x20df4
+| 45%nat => 0x5d912c
+| 46%nat => 0x9e2bc
+| 47%nat => 0x5d92e0
+| 48%nat => 0x20a04
+| 49%nat => 0x20a6c
+| 50%nat => 0x20a90
+| 51%nat => 0x9e220
+| 52%nat => 0x5d922c
+| 53%nat => 0x5d9238
+| 54%nat => 0x5d9248
+| 55%nat => 0x5d93c0
+| 56%nat => 0x9e454
+| 57%nat => 0x9e458
+| 58%nat => 0x124b4
+| 59%nat => 0x844b8
+| 60%nat => 0xa2540
+| 61%nat => 0x5d9548
+| 62%nat => 0x5d954c
+| 63%nat => 0x5d9550
+| 64%nat => 0x5d955c
+| 65%nat => 0x5d9564
+| 66%nat => 0x5d956c
+| 67%nat => 0x5d9598
+| 68%nat => 0x105a0
+| 69%nat => 0x5d95a4
+| 70%nat => 0x5d85dc
+| 71%nat => 0x5d86c4
+| 72%nat => 0x20768
+| 73%nat => 0x20874
+| 74%nat => 0x5d88f4
+| 75%nat => 0x5d8a60
+| 76%nat => 0x20ac4
+| 77%nat => 0x20ac8
+| 78%nat => 0x5d8b4c
+| 79%nat => 0x5d8b78
+| 80%nat => 0x5d8b94
+| 81%nat => 0x5d8e64
+| 82%nat => 0x5d8f14
+| 83%nat => 0x20f34
+| 84%nat => 0x5d8ff0
+| 85%nat => 0x9e1bc
+| 86%nat => 0x5d91c4
+| 87%nat => 0x5d922c
+| 88%nat => 0x9e36c
+| 89%nat => 0x5d86a8
+| 90%nat => 0x9e6b4
+| 91%nat => 0x5d86b8
+| 92%nat => 0x9d7b8
+| 93%nat => 0x5d888c
+| 94%nat => 0x20974
+| 95%nat => 0x5d8a64
+| 96%nat => 0x9daa8
+| 97%nat => 0x20b34
+| 98%nat => 0x9db7c
+| 99%nat => 0x5d8d30
+| 100%nat => 0x9dd3c
+| 101%nat => 0x5d8d40
+| 102%nat => 0x9dde8
+| 103%nat => 0x9de84
+| 104%nat => 0x5d8eb0
+| 105%nat => 0x9e074
+| 106%nat => 0x21080
+| 107%nat => 0x2114c
+| 108%nat => 0x211a8
+| 109%nat => 0x9e258
+| 110%nat => 0x5d9280
+| 111%nat => 0x5d9294
+| 112%nat => 0x9e3b4
+| 113%nat => 0x9e500
+| 114%nat => 0x5d9590
+| 115%nat => 0x9e6a0
+| _ => 0
+end.
+Definition fr_val (a : nat) : Z :=
+if (a =? A_TEXT)%nat then fr_B0 else if (a <? A_HI 0)%nat then fr_obj (a - A_OBJ 0) else fr_hi (a - A_HI 0).
+Lemma fr_prog_check : pi_check wsym (clookup frtbl_prog) fr_val fr_sigma fr_prog_listing = true.
+Proof. vm_compute. reflexivity. Qed.

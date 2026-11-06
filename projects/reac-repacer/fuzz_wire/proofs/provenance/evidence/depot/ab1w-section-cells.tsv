@@ -1,0 +1,21 @@
+cell	value	section	section end (sh_addr + sh_size) or start in fuzz_wire.asan	verdict	note
+tfib_rodata_lo	0x102d0	.rodata	0x102d0	TRUE	
+tfib_rodata_hi	0x2254c	.rodata	0x2258c	FALSE	value is the start of []
+tfib_text_lo	0x2ff7c	.text	0x2ff7c	TRUE	
+tfib_text_hi	0x97250	.text	0x9724c	FALSE	value is the start of ['.tbss']
+tfib_init_array_lo	0x98250	.init_array	0x98250	TRUE	
+tfib_init_array_hi	0x98270	.init_array	0x98270	TRUE	
+tfib_fini_array_lo	0x98270	.fini_array	0x98270	TRUE	
+tfib_fini_array_hi	0x98280	.fini_array	0x98280	TRUE	
+tfib_preinit_array_lo	0x98280	.preinit_array	0x98280	TRUE	
+tfib_preinit_array_hi	0x98288	.preinit_array	0x98288	TRUE	
+tfib_data_rel_ro_lo	0x98288	.data.rel.ro	0x98288	TRUE	
+tfib_data_rel_ro_hi	0x98788	.data.rel.ro	0x98788	TRUE	
+tfib_got_lo	0x98788	.got	0x98788	TRUE	
+tfib_got_hi	0x994e0	.got	0x994e0	TRUE	
+tfib_data_lo	0x9a4e0	.data	0x9a4e0	TRUE	
+tfib_data_hi	0x9d098	.data	0x9d098	TRUE	
+tfib_bss_lo	0x9d0c0	.bss	0x9d0c0	TRUE	
+tfib_bss_hi	0x5f4ff0	.bss	0x5f4ff0	TRUE	
+tfib_tbss_lo	0x97250	.tbss	0x97250	TRUE	
+tfib_tbss_hi	0x97264	.tbss	0x97264	TRUE	

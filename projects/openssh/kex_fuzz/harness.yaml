@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssh
 harness: kex_fuzz
-rocq: OssFuzzTheorems.openssh.kex_fuzz
+rocq: OSSVerify.openssh.kex_fuzz
 origin: upstream
 summary: Runs full client/server key exchanges (5 KEX methods x RSA/ECDSA/Ed25519 host keys) with the
   input substituted for the server-to-client and then the client-to-server stream; every return code is

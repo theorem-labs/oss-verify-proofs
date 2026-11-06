@@ -1,0 +1,8 @@
+ROW	image	function	addr	size	luis	insec	inload	memfed	memfed_out	luiconst	unmeasured	exposure
+# image images/fuzz_transport.asan sha256 86efc3a80314
+ROW	fuzz_transport.asan	memset	0x9d614	248	1	0	0	0	0	0	0	0
+TOTAL	fuzz_transport.asan	functions 4	with-lui 1	with-exposure 0	luis 1	insec 0	inload 0	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+# image images/fuzz_grant.asan sha256 57c26f993615
+ROW	fuzz_grant.asan	memset	0x95e30	248	1	0	0	0	0	0	0	0
+TOTAL	fuzz_grant.asan	functions 4	with-lui 1	with-exposure 0	luis 1	insec 0	inload 0	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	all	functions 8	with-lui 2	with-exposure 0	luis 2	insec 0	inload 0	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0

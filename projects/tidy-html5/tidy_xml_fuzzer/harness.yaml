@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tidy-html5
 harness: tidy_xml_fuzzer
-rocq: OssFuzzTheorems.tidy_html5.tidy_xml_fuzzer
+rocq: OSSVerify.tidy_html5.tidy_xml_fuzzer
 origin: oss-fuzz
 summary: 'XML mode (XmlOut, XmlTags, utf8, numeric entities): parse string, clean, diagnostics, save;
   nothing is compared.'

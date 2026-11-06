@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: neomutt
 harness: cli-fuzz
-rocq: OssFuzzTheorems.neomutt.cli_fuzz
+rocq: OSSVerify.neomutt.cli_fuzz
 origin: upstream
 summary: splits the input into an argv on spaces/control chars and runs the NeoMutt command-line parser
   cli_parse; the parsed CommandLine is freed unread.

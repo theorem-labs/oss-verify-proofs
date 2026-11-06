@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: estoraged
 harness: estoraged_fuzzer
-rocq: OssFuzzTheorems.estoraged.estoraged_fuzzer
+rocq: OSSVerify.estoraged.estoraged_fuzzer
 origin: oss-fuzz
 summary: data[0]%4 selects findPredictedMediaLifeLeftPercent on a temp life_time file, Pattern write/verify,
   Zero write/verify, or CryptErase::doErase over a stub cryptsetup; every call is wrapped in catch(...),

@@ -1,0 +1,229 @@
+file	theorem	axioms	flags
+AB1h.v	tsegs_tfasegs	PrimArray.array PrimString.string	-
+AB1h.v	tfib_wx	PrimArray.array PrimString.string	-
+AB1h.v	find_segment1_none_outside	PrimString.string	-
+AB1h.v	tfib_segs_in_hull	PrimArray.array PrimString.string	-
+AB1h.v	tfib_in_hull	PrimArray.array PrimString.string	-
+AB1h.v	tfib_res_len	PrimArray.array PrimString.string	-
+AB1h.v	tfib_res_lenP	PrimArray.array PrimString.string	-
+AB1h.v	tfib_res_eq	PrimArray.array PrimString.string	-
+AB1h.v	tfib_res_hull	PrimArray.array PrimString.string	-
+AB1h.v	tfib_hull_ok	closed	-
+AB1h.v	tfib_hull_okP	closed	-
+AB1h.v	tfib_shadow_ok	closed	-
+AB1h.v	tfib_res_sizes	PrimArray.array PrimString.string	-
+AB1h.v	tfib_res_top	PrimArray.array PrimString.string	-
+AB1h.v	tfib_res_cover	PrimArray.array PrimString.string	-
+AB1h.v	tfib_segs_wr	PrimArray.array PrimString.string	-
+AB1h.v	tfib_hex2	PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1h.v	tfib_hex3	PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1h.v	tfib_len2	PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.lsr PrimString.length PrimString.string	-
+AB1h.v	tfib_len3	PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.lsr PrimString.length PrimString.string	-
+AB1h.v	tfib_segs_eq	PrimArray.array PrimString.string	-
+AB1h.v	tfib_rw_window	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1h.v	tfib_img_facts	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1h.v	tfibmusl_fetch	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1h.v	tfib_Xenv	closed	-
+AB1h.v	tfib_Fe1	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1h.v	tfib_Fe2	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1h.v	tfib_Fe3	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1h.v	tfib_Ee	closed	-
+AB1h.v	tfib_De1	closed	-
+AB1h.v	tfib_De2	closed	-
+AB1h.v	tfib_De3	closed	-
+AB1h.v	tfib_Xpn	closed	-
+AB1h.v	tfib_Fp0	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1h.v	tfib_Fp1	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1h.v	tfib_Fp2	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1h.v	tfib_Fp3	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1h.v	tfib_Fp4	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1h.v	tfib_Ep	closed	-
+AB1h.v	tfib_Dp0	closed	-
+AB1h.v	tfib_Dp1	closed	-
+AB1h.v	tfib_Dp2	closed	-
+AB1h.v	tfib_Dp3	closed	-
+AB1h.v	tfib_Dp4	closed	-
+AB1v.v	tfibmusl_tbl_eq	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AB1v.v	tfibmusl_tbl_ok	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+ACeg.v	SB_SHADOW_OFF	closed	-
+ACeg.v	tl_env	PrimArray.array PrimString.string	-
+ACeg.v	arodata_ok_journal	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+ACeg.v	Hwx_tfa	PrimArray.array PrimString.string	-
+ACeg.v	tfib_segs_low	PrimArray.array PrimString.string	-
+ACeg.v	tfib_img_range	PrimArray.array PrimString.string	-
+ACeg.v	tfib_img_cover	PrimArray.array PrimString.string	-
+ACeg.v	zone2_of_app	closed	-
+ACeg.v	blk_off_img	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+ACeg.v	frm_off_img	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+ACeg.v	req_size_pos0	closed	-
+ACej.v	listZ_eqb_eq	closed	-
+ACej.v	memZL_In	closed	-
+ACej.v	allb_In	closed	-
+ACej.v	TRACES_main_U	closed	-
+ACej.v	TRACES_target_run_U	closed	-
+ACej.v	TRACES_LLVMFuzzerTestOneInput_U	closed	-
+ACej.v	memZL_false	closed	-
+ACej.v	nodupZL_NoDup	closed	-
+ACej.v	Tfib_universe_ok	closed	-
+ACfn.v	tfib_lib_contract_xP_pinned	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+ACfn.v	tfib_lib_contract_xP_of_xf	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1i.v	layout_of_AR	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1i.v	acall_pre_of_drv	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1i.v	call_trace_drv	closed	-
+AD1i.v	tfib_free_site	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1i.v	tfib_free_null_site	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1i.v	ecall_pre_of_drv	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1i.v	tfib_memcpy_site	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1i.v	tfib_read_check	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1j.v	xconst_sound	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1j.v	xatom_sound	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1j.v	cov0	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1j.v	completed_free	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1j.v	mu0	closed	-
+AD1j.v	ex_consts_chk	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1j.v	ex_consts_of_img	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1j.v	ex_ranges_free	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1j.v	tfib_exit_site	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	val_mem_img	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	file_is_img	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	ofile_is_img	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	img_rd_of_aview	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	img_rd_of_region	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	img_rd_of_mem_ok	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	img_rd_sub	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	val_mem_keptA	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	est_of_fields	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	est_pristine	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	est_written	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	est_after_vf	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	stderr_img_chk	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	stderr_pristine_img	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	tfib_est_img	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	tfib_est_frame	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	length_line0	closed	-
+AD1k.v	length_pend	closed	-
+AD1k.v	tfib_xst_frame	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	tfib_img_not_owned	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	tfib_low_not_owned	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	tfib_not_owned_static	closed	-
+AD1k.v	img_facts	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	got_canary_chk	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	icpt_pre_facts	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	icpt_pre_room	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	rodata_zero_shadow	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	rodata_hull_zero	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	rodata_shadow_facts	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	ro_img_of_IMG	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	mconsts_of_IMG	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	tfib_fwrite_site	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1k.v	msg_refused_eq	closed	-
+AD1k.v	tfib_refused_site	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1l.v	vf_str_of_bytes	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1l.v	vf_tail_of_site	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1l.v	lits_open	closed	-
+AD1l.v	lits_rderr	closed	-
+AD1l.v	lits_usage	closed	-
+AD1l.v	lens_lits	closed	-
+AD1l.v	band_zero_shadow	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1l.v	band_hull_zero	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1l.v	band_shadow_facts	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1l.v	tfib_fprintf_open_site	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1l.v	tfib_fprintf_rderr_site	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1l.v	tfib_fprintf_usage_site	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	rom_seg1	PrimArray.array PrimString.string	-
+AD1o.v	img_rd_of_arodata	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	img_ro_chunks_unowned	closed	-
+AD1o.v	ro_img_of_arodata	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	got_canary_of_arodata	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	canary_readable	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	stdout_img_chk	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	stdout_pristine_img	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	ocpy_of_icpt	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	oset_of_icpt	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	bss_zero_shadow	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	bss_shadow_facts	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	fdchan_stdout	closed	-
+AD1o.v	printf_pre_facts	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	regs_back	closed	-
+AD1o.v	printf_site	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	tfib_printf_first	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1o.v	tfib_printf_next	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1q.v	tfib_srealizesX_of_main	Classical_Prop.classic FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1q.v	tfib_srealizesXP	Classical_Prop.classic FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1q.v	tfib_srealizesXF	Classical_Prop.classic FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1q.v	tfib_srealizesX	Classical_Prop.classic FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1u.v	owned_off	closed	-
+AD1u.v	const_abs_in	closed	-
+AD1u.v	tfib_owned_iff	closed	-
+AD1u.v	tfib_core_owned	closed	-
+AD1u.v	tfib_AIL	PrimArray.array PrimString.string	-
+AD1u.v	finv_img_ivs	closed	-
+AD1u.v	ivs_avoid_sound	closed	-
+AD1u.v	ivs_avoid_sub	closed	-
+AD1u.v	FINV_IVS_img	closed	-
+AD1u.v	finv_img_range	closed	-
+AD1u.v	finv_img_img	PrimArray.array PrimString.string	-
+AD1u.v	FINV_IVS_unowned	closed	-
+AD1u.v	finv_img_not_owned	closed	-
+AD1u.v	FINV_IVS_drvw	closed	-
+AD1u.v	finv_img_not_drvw	closed	-
+AD1u.v	FINV_IVS_errno	closed	-
+AD1u.v	finv_img_not_errno	closed	-
+AD1u.v	finv_frame	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1u.v	finv_aview	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1u.v	finv_lyle	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1u.v	extra_place	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1u.v	finv_stretch	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1u.v	finv_acall_post	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1u.v	finv_off	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1u.v	finv_avoids_block	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1u.v	finv_avoids_stack	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1u.v	finv_avoids_img	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1u.v	finv_fp_u64	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1u.v	finv_img_write	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1v.v	top_ok_le	closed	-
+AD1v.v	top_ok_ceil	closed	-
+AD1v.v	finv_run	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1v.v	finv_site	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1v.v	finv_icpt	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1v.v	argv_str_fits	closed	-
+AD1v.v	argv_str_fits'	closed	-
+AD1v.v	argv_over_read	closed	-
+AD1v.v	prim_pristine_mono	closed	-
+AD1v.v	drv_minv_init	closed	-
+AD1v.v	drv_minv_frames	closed	-
+AD1v.v	drv_minv_qtight	closed	-
+AD1v.v	from_primary_big	closed	-
+AD1v.v	drv_minv_grow	closed	-
+AD1v.v	drv_minv_refusal	closed	-
+AD1v.v	drv_minv_shape	closed	-
+AD1w.v	blk_shift	closed	-
+AD1w.v	garr8_of_blk	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1w.v	finv_printf	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD1w.v	run_tail_eq	closed	-
+AD1x.v	IMG_X_wf	closed	-
+AD2l.v	In_of_existsb	closed	-
+AD2l.v	zr_sub_of_b	closed	-
+AD2l.v	GrantB_ok	closed	-
+AD2l.v	GrantB_syms	closed	-
+AD2m.v	tfib_AICPY	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AD2m.v	tfib_ARDCHK	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AE2k.v	tfib_K_head	closed	-
+AF0q.v	afree_realizes_closed	Classical_Prop.classic FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AF0w.v	amalloc_realizes_of	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AF0w.v	amalloc_realizes_sec	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AF0w.v	tfib_malloc_sec_ok	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AF0w.v	tfib_amalloc_realizes	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AE37.v	x2_run	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AE37.v	x2_phase	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AE37.v	const_chk_sound	closed	-
+AE37.v	rodata_chk_true	closed	-
+AE37.v	In_zrange	closed	-
+AE37.v	shbyte_chk_true	closed	-
+AE37.v	rodata_ok	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AE37.v	shbyte_present	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AE37.v	shw_ok	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AE37.v	zi8_14ea00	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AE37.v	zi8_14f970	PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-
+AE37.v	x2_windows	closed	-
+AE37.v	x2_realizes	FunctionalExtensionality.functional_extensionality_dep PrimArray.array PrimInt63.eqb PrimInt63.int PrimInt63.land PrimInt63.leb PrimInt63.lor PrimInt63.lsl PrimInt63.lsr PrimInt63.ltb PrimInt63.sub PrimString.get PrimString.length PrimString.string	-

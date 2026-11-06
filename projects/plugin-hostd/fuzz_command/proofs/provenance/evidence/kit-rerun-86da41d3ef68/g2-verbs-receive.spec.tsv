@@ -1,0 +1,1 @@
+verbs_receive[+0..+0x70) prologue, saves, side-stack call	B=img/fuzz_command.asan-ubsan.debug	0x8ce4c	A=img/fuzz_command.asan.debug	0x8d480	0x70

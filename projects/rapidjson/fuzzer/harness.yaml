@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: rapidjson
 harness: fuzzer
-rocq: OssFuzzTheorems.rapidjson.fuzzer
+rocq: OSSVerify.rapidjson.fuzzer
 origin: oss-fuzz
 summary: 'For each of four parse-flag sets (default, full precision, numbers-as-strings, comments): Document::Parse;
   on success, serialise with PrettyWriter into a string. The string is not re-parsed or compared; under

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libexif
 harness: exif_from_data_fuzzer
-rocq: OssFuzzTheorems.libexif.exif_from_data_fuzzer
+rocq: OSSVerify.libexif.exif_from_data_fuzzer
 origin: oss-fuzz
 summary: exif_data_new_from_data, then every entry and MakerNote value to strings, exif_data_save_data
   (re-serialise) and exif_data_fix; the saved bytes are never reloaded or compared.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ntopng
 harness: tokener_parse_ex_fuzzer
-rocq: OssFuzzTheorems.ntopng.tokener_parse_ex_fuzzer
+rocq: OSSVerify.ntopng.tokener_parse_ex_fuzzer
 origin: upstream
 summary: json_tokener_parse_ex on the input, then json_object_put and json_tokener_free; the parsed object
   is not serialized back or checked.

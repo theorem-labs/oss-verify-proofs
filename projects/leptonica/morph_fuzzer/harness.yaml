@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: morph_fuzzer
-rocq: OssFuzzTheorems.leptonica.morph_fuzzer
+rocq: OSSVerify.leptonica.morph_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixCloseGeneralized / pixCloseSafe / pixOpenGeneralized with a sel cut from
   ../feyn-fract.tif, and pixMorphDwa_1 for i<5; outputs discarded.

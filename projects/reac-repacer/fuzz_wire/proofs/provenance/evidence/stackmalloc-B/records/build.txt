@@ -1,0 +1,29 @@
+# Builds of the five files (cb d02a58a345b9, the launcher of record; host paths replaced by <path>). Each build log is
+# named by its sha256; the logs are in the unit's internal records.
+
+## 1. iterating build, the donor text (port_core run without B-smB.patch's empty-depot hunks): FAILED, the reason for the hunks
+cb: cache dune (the default; CACHE=none opts out)
+cb: layout L2 (the unit's proofs are projects/reac-repacer/fuzz_wire/proofs; base 480601cd9f8e, facts c3777b3715d0, clone HEAD a3f9509d24de)
+cb: pins reac-repacer/fuzz_wire at facts c3777b3715d0: 4 PINNED, 0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT -> the binaries are the pins at facts c3777b3715d0
+cb: rc=1 wall=141 log=<path> (0 targets compiled, 0 restored from the cache, 2 failed, 3107 warnings)
+  failed: projects/reac-repacer/fuzz_wire/proofs/lib/B/Rt/StackMalloc0.vo
+  failed: projects/reac-repacer/fuzz_wire/proofs/lib/B/Rt/YF0s.vo
+  File "./projects/reac-repacer/fuzz_wire/proofs/lib/B/Rt/YF0s.v", line 67, characters 103-106: Error: No applicable tactic.
+  File "./projects/reac-repacer/fuzz_wire/proofs/lib/B/Rt/StackMalloc0.v", line 67, characters 103-106: Error: No applicable tactic.
+log sha256 d52a296e6f36
+
+## 2. iterating build, the five files as committed (byte-identical to the run of record's stage-out without licence lines)
+cb: cache dune (the default; CACHE=none opts out)
+cb: rc=0 wall=45 log=<path> (2 targets compiled, 0 restored from the cache, 0 failed, 42 warnings)
+cb: vo check: 146 .vo read, 1272 Require digests compared with this build's .vo, 685 with the checker image's .vo (38 of its libraries read under <path>) 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable), 0.0 s
+log sha256 b91fa966fe14
+
+## 3. the Print Assumptions scratch (records/print-assumptions.txt), on the same files
+cb: rc=0 wall=14 log=<path> (1 targets compiled, 2 restored from the cache, 0 failed, 21 warnings)
+cb: vo check: 147 .vo read, 1274 Require digests compared with this build's .vo, 686 with the checker image's .vo (38 of its libraries read under <path>) 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable), 0.0 s
+log sha256 fff4731cc0a8
+
+## 4. fresh build of record: CACHE=none cb build --fresh, a clean clone of 997be5e51596 (the merged head; 1f37eb68c1bf adds no file), the two contract targets
+ows: vo check (after make): 2183 .vo read (base/theories, base/stmts, projects/reac-repacer/fuzz_wire/proofs), 63844 Require digests compared with this workspace's .vo, 17775 with the checker image's .vo (50 of its libraries read under <path>), 1244 .vo failed (1244 inconsistent, 0 missing a library, 0 unreadable, 0 more that Require one of them), 0 of them in this build's targets (2 given) and what they Require, 1.2 s
+(the 1244 inconsistent .vo are base files outside these targets and what they Require)
+log sha256 3911c1e79901

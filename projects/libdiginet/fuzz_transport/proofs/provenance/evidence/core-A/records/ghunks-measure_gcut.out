@@ -1,0 +1,20 @@
+globals	18	writable harness globals (beg >= 0x5d0000) in asan_globals: g_cfg 0x5df080/60, g_raw 0x5df0e0/4, g_now 0x5df100/8, g_fail_next 0x5df120/1, g_last_counter 0x5df140/4, M 0x5df160/1648, g_nq 0x5df960/4, g_ncmd 0x5df980/4, g_rx 0x5df9a0/8, g_s 0x5df9c0/18264, GOT 0x5e52e0/224, g_rx_send 0x5e53e0/4, g_cmd 0x5e5400/40960, g_q 0x5f1c00/4096, g_rx_fail 0x5f3000/4, g_rx_times 0x5f3020/4, g_rx_len 0x5f3040/8, OW 0x5f3060/304
+DRV_G_LO	0x5df080	payload start of g_cfg
+DRV_G_HI	0x5f3190	payload end of OW (0x5f3060 + 304)
+IMG_REGIONS	54	regions of the start-up list
+IMG_L_noG	56	IMG_L / IMG_LC without the hull clip (stage-out value)
+IMG_L	56	IMG_L / IMG_LC with the hull clip, outermost (bounds of IMG_B / IMG_E are those of IMG_REGIONS)
+hull_meets	0	regions of IMG_REGIONS that meet the hull: 
+hull_drops	0	regions inside the hull, dropped by the clip: 
+IMG_XL_noG	57	AD1x IMG_XL = clipX IMG_L without the hull clip (stage-out value)
+IMG_XL	57	AD1x IMG_XL = clipX IMG_L with the hull clip
+L_mem_avoids_G	true	every None-based region of the clipped IMG_LC avoids the hull (region_avoids_G)
+STDOUT_off_hull	true	[0xa8738, 0xa8820) vs hull
+SOBUF_off_hull	true	[0x6141f8, 0x614608) vs hull
+F_STDERR_off_hull	true	[0xa8648, 0xa8730) vs hull
+clip_identity	true	the hull clip returns [r] for every piece of IMG_REGIONS after the STDOUT / SOBUF clips
+IMG_L_written	56	stands: stage-out states 56, the hull-clipped count is 56
+IMG_LC_written	56	stands: stage-out states 56, the hull-clipped count is 56
+IMG_XL_written	57	stands: stage-out states 57, the hull-clipped count is 57
+AD1y_DRV_G_LO	0x5df080	equal to the measured 0x5df080
+AD1y_DRV_G_HI	0x5f3190	equal to the measured 0x5f3190

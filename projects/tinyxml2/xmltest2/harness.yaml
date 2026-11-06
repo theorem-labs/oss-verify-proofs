@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tinyxml2
 harness: xmltest2
-rocq: OssFuzzTheorems.tinyxml2.xmltest2
+rocq: OSSVerify.tinyxml2.xmltest2
 origin: oss-fuzz
 summary: Writes the input to /tmp/libfuzzer.<pid>, XMLDocument::LoadFile on it, unlinks it; the load result
   is discarded.

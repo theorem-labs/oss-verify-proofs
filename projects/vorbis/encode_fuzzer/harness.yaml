@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: vorbis
 harness: encode_fuzzer
-rocq: OssFuzzTheorems.vorbis.encode_fuzzer
+rocq: OSSVerify.vorbis.encode_fuzzer
 origin: upstream
 summary: VBR-encodes fuzzed float PCM (fuzzed 1-8 channels except 6, sample rate, quality) into Ogg pages;
   the encoded stream is never decoded or compared with the input (no encode->decode roundtrip).

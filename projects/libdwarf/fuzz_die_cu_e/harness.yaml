@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_die_cu_e
-rocq: OssFuzzTheorems.libdwarf.fuzz_die_cu_e
+rocq: OSSVerify.libdwarf.fuzz_die_cu_e
 origin: upstream
 summary: dwarf_next_cu_header_e (returns the CU DIE) then dealloc.
 entry: LLVMFuzzerTestOneInput

@@ -1,0 +1,5 @@
+From OSSVerify.spirv_tools.spvtools_binary_parser_fuzzer Require Statements.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require ConstAccept.
+
+Theorem ubsan_agreement_decidable_holds : OSSVerify.spirv_tools.spvtools_binary_parser_fuzzer.Statements.ubsan_agreement_decidable.
+Proof. exact OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.ConstAccept.ubsan_decidable. Qed.

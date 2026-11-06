@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: miniz
 harness: uncompress_fuzzer
-rocq: OssFuzzTheorems.miniz.uncompress_fuzzer
+rocq: OSSVerify.miniz.uncompress_fuzzer
 origin: upstream
 summary: uncompress() of the raw input into a buffer of data[0]*data[1] bytes; the status is computed
   and ignored (both branches return 0).

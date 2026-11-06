@@ -1,4 +1,4 @@
-(** Proof of OssFuzzTheorems.Tests.toy.exit0.Statements.plain_halts_may_fail.
+(** Proof of OSSVerify.Tests.toy.exit0.Statements.plain_halts_may_fail.
 
     Outline.  As for [plain_halts], under [Env.may_fail]: the program makes no
     system call that can fail (exit_group cannot), so refusals change nothing.
@@ -7,9 +7,9 @@ From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType State Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import SpuriousCfg.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import MustExit HaltsAllowed Classifier.
-From OssFuzzTheorems.Core Require Import Shapes.
-From OssFuzzTheorems.Tests.toy.exit0 Require Statements Images.
-From OssFuzzTheorems.Tests.proofs.lib Require Exit0Run.
+From OSSVerify.Core Require Import Shapes.
+From OSSVerify.Tests.toy.exit0 Require Statements Images.
+From OSSVerify.Tests.proofs.lib Require Exit0Run.
 Import ListNotations.
 
 Theorem plain_halts_may_fail_holds : Statements.plain_halts_may_fail.

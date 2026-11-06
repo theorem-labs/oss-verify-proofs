@@ -1,0 +1,103 @@
+action	file	line	old	new	old_hex	new_hex	why	new_sym
+excluded	A/AE6l.v	325	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6l.v	336	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6l.v	462	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6l.v	473	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6l.v	599	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6l.v	610	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6m.v	325	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6m.v	336	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6m.v	462	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6m.v	473	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6m.v	599	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6m.v	610	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6n.v	325	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6n.v	336	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6n.v	462	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6n.v	473	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6n.v	599	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6n.v	610	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6p.v	268	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6p.v	279	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6p.v	466	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6p.v	477	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6p.v	664	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6p.v	675	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6q.v	268	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6q.v	279	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6q.v	466	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6q.v	477	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6q.v	664	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6q.v	675	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6r.v	268	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6r.v	279	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6r.v	466	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6r.v	477	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6r.v	664	505731	-	0x7b783	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6r.v	675	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6u.v	124	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6u.v	134	571523	-	0x8b883	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6u.v	229	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6u.v	239	571523	-	0x8b883	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6u.v	334	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6u.v	344	571523	-	0x8b883	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6u.v	439	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6u.v	449	571523	-	0x8b883	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6u.v	544	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6u.v	554	571523	-	0x8b883	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6v.v	124	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6v.v	134	571523	-	0x8b883	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6v.v	229	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6v.v	239	571523	-	0x8b883	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6v.v	334	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6v.v	344	571523	-	0x8b883	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6v.v	439	538627	-	0x83803	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+excluded	A/AE6v.v	449	571523	-	0x8b883	-	instruction word (low bits 11 in code: an rv64g encoding, never an instruction address)	-
+mapped	A/AE2r.v	261	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	262	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	268	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	271	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	331	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	332	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	338	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	341	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	447	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	448	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	454	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	457	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	517	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	518	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	524	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE2r.v	527	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	338	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	339	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	345	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	348	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	420	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	421	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	427	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	430	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	565	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	566	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	572	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	575	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	647	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	648	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	654	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6o.v	657	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	302	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	303	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	309	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	312	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	384	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	385	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	391	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	394	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	588	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	589	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	595	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	598	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	670	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	671	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	677	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174
+mapped	A/AE6s.v	680	344780	347520	0x542cc	0x54d80	-	__asan_region_is_poisoned+0x174

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cryptsetup
 harness: crypt2_load_fuzz
-rocq: OssFuzzTheorems.cryptsetup.crypt2_load_fuzz
+rocq: OSSVerify.cryptsetup.crypt2_load_fuzz
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

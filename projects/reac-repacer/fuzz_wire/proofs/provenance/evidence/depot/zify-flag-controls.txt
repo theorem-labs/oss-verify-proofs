@@ -1,0 +1,6 @@
+zify_flag_control: AFko.v with: 1 rule line(s) (constr:(false)); without: 0
+zify_flag_control: AFko.v with: rc=0 wall=68 s (limit 900 s) 
+zify_flag_control: AFko.v without: rc=124 wall=900 s (limit 900 s) 
+zify_flag_control: AFjk.v with: 1 rule line(s) (constr:(true)); without: 0
+zify_flag_control: AFjk.v with: rc=0 wall=42 s (limit 900 s) 
+zify_flag_control: AFjk.v without: rc=1 wall=4 s (limit 900 s) File "AFjk.v", line 561, characters 62-66: Error: No applicable tactic. 

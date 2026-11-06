@@ -96,6 +96,7 @@ features:
   stat: calls stat on files
   open-flags: opens files with flags the model does not cover
   fd-flags: reads or sets descriptor flags
+  descriptor-ranges: closes ranges of descriptors
   nonblocking-io: uses non-blocking descriptors
   file-mapping: memory-maps a file
   memory-calls: makes memory-management calls the model does not cover
@@ -113,11 +114,14 @@ features:
   resource-limits: queries or sets resource limits
   cpu-affinity: queries CPU affinity
   process-control: calls prctl
+  credentials: calls getresuid or getresgid, or setgroups as root
+  capabilities: calls capget
+  process-relations: asks for its parent process or its session
   vector-instructions: runs RISC-V vector instructions when the processor advertises the vector extension
 
 statements:
   open: {words: open, meaning: nobody has proved or refuted it}
-  proved: {words: proved, meaning: a proof under proofs/ that CI checked against this revision}
+  proved: {words: proved, meaning: a proof in its fuzz target's proofs folder that CI checked against this revision}
   refuted: {words: refuted, meaning: a Rocq proof of its negation, checked the same way}
   counterexample: {words: counterexample, meaning: "a failing run of the real binary under the pinned runner, re-run by CI; a run in which a build dies by a signal also refutes the agreement statements that name that build"}
   witnessed-false: {words: false (witnessed), meaning: "a recorded run of the published binary, in an environment the statement allows, that ends in a way the statement forbids; described here, not yet re-run by CI"}

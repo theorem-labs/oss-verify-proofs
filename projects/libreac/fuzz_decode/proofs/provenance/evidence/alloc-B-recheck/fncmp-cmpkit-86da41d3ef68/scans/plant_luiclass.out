@@ -1,0 +1,14 @@
+plant a: _ZN6__asan26InitializeAsanInterceptorsEv +0x44  addiw a0, a2, -0x4d8  ->  add a0, a2, zero
+plant a: _ZN6__asan26InitializeAsanInterceptorsEv +0x48  mv a2, zero  ->  sd zero, 0(a0)
+  <plantdir>/planted-a.elf sha256 3480e93d7acc835b
+plant b: _ZN6__asan19SealedReserveShadowEv +0x7c  mv a0, s1  ->  mv a0, a3
+  <plantdir>/planted-b.elf sha256 9e8ce992dc5809f2
+original <cgif-B-twin> sha256 ce511d541cdabbe3
+plant a: _ZN6__asan26InitializeAsanInterceptorsEv 0x3c V=0x38e000 -> NOT CERTIFIED: REAL 0
+   luitrace verdict REVIEW; bases X: ABSOLUTE V-derived V add zero [constant] + 0x0: REVIEW
+   unsettled: luitrace verdict REVIEW (follow-ups: common 0 (equal), X only 2, Y only 0)
+plant b: _ZN6__asan19SealedReserveShadowEv 0x74 V=0x104022 -> NOT CERTIFIED: REAL 0
+   luitrace verdict REVIEW; bases X: -
+   unsettled: X _ZN11__sanitizer13internal_mmapEPvmiiiy +0x4: syscall mmap argument ['a0']: no contract cited
+   unsettled: luitrace verdict REVIEW (follow-ups: common 0 (equal), X only 1, Y only 0)
+plant_luiclass: both controls REFUSED (NOT CERTIFIED)

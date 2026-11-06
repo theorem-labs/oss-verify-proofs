@@ -1,0 +1,38 @@
+# alreloc per-numeral report: plugin-hostd/fuzz_command lib/A/Rt/RtSM5T.v at 781f46bc05cd -> libdiginet/fuzz_transport asan lib/A/Rt/RtSM5T.v: written
+# source image <AGENTS>/pau-pipeline/plugin-hostd/unstripped/fuzz_command/fuzz_command.asan; unit image <WORK>/target/unstripped/fuzz_transport/fuzz_transport.asan
+file:line	old	new	rule	old in source image	new in unit image
+A/Rt/RtSM5T.v:6	0x309000	0x309000	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x176068	_ZN11__sanitizerL8theDepotE+0x17a728
+A/Rt/RtSM5T.v:11	0x3ff84	0x3ff84	resolve (identity)	__asan_stack_malloc_5	__asan_register_globals+0x74c
+A/Rt/RtSM5T.v:12	0x509000	0x509000	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x376068	_ZN11__sanitizerL8theDepotE+0x37a728
+A/Rt/RtSM5T.v:51	0x3ff84	0x3dd04	FUNC entry	__asan_stack_malloc_5	__asan_stack_malloc_5
+A/Rt/RtSM5T.v:52	0x40018	0x3dd98	same-code function	__asan_stack_malloc_5+0x94	__asan_stack_malloc_5+0x94
+A/Rt/RtSM5T.v:53	0x40090	0x3de10	same-code function	__asan_stack_malloc_5+0x10c	__asan_stack_malloc_5+0x10c
+A/Rt/RtSM5T.v:54	0x400c0	0x3de40	same-code function	__asan_stack_malloc_5+0x13c	__asan_stack_malloc_5+0x13c
+A/Rt/RtSM5T.v:55	0x400dc	0x3de5c	same-code function	__asan_stack_malloc_5+0x158	__asan_stack_malloc_5+0x158
+A/Rt/RtSM5T.v:60	0x509000	0x509000	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x376068	_ZN11__sanitizerL8theDepotE+0x37a728
+A/Rt/RtSM5T.v:66	0x3ff84	0x3dd04	FUNC entry	__asan_stack_malloc_5	__asan_stack_malloc_5
+A/Rt/RtSM5T.v:68	0x40410	0x3dfc4	resolve	_ZN6__asanL11MemToShadowEm	_ZN6__asanL11MemToShadowEm
+A/Rt/RtSM5T.v:70	0x3ff84	0x3dd04	FUNC entry	__asan_stack_malloc_5	__asan_stack_malloc_5
+A/Rt/RtSM5T.v:70	0x67b00	0x62880	same-code function	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE+0x358	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE+0x358
+A/Rt/RtSM5T.v:70	0x4b040	0x47660	FUNC entry	__interceptor___tls_get_addr	__interceptor___tls_get_addr
+A/Rt/RtSM5T.v:70	0x9fbb8	0x9de04	FUNC entry	__tls_get_addr	__tls_get_addr
+A/Rt/RtSM5T.v:70	0x61e40	0x5cbc0	FUNC entry	_ZN6__asan16GetCurrentThreadEv	_ZN6__asan16GetCurrentThreadEv
+A/Rt/RtSM5T.v:70	0x5a98c	0x5570c	FUNC entry	_ZN6__asan10AsanTSDGetEv	_ZN6__asan10AsanTSDGetEv
+A/Rt/RtSM5T.v:71	0xa0c6c	0x9eeb8	FUNC entry	tss_get	tss_get
+A/Rt/RtSM5T.v:71	0x6f554	0x6a2d4	FUNC entry	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm
+A/Rt/RtSM5T.v:71	0x40410	0x3dfc4	resolve	_ZN6__asanL11MemToShadowEm	_ZN6__asanL11MemToShadowEm
+A/Rt/RtSM5T.v:102	0xa70f0	0xa4d70	resolve	.got+0xd60	.got+0xd40
+A/Rt/RtSM5T.v:102	0xa81d8	0xa5e30	OBJECT start	_ZN14__interception19real___tls_get_addrE	_ZN14__interception19real___tls_get_addrE
+A/Rt/RtSM5T.v:102	0xa63e0	0xa4080	resolve	.got+0x50	.got+0x50
+A/Rt/RtSM5T.v:102	0x142c71	0x13e5b1	symbol	_ZN11__sanitizer21common_flags_dont_useE+0x89	_ZN11__sanitizer21common_flags_dont_useE+0x89
+A/Rt/RtSM5T.v:103	0xa6440	0xa40e0	resolve	.got+0xb0	.got+0xb0
+A/Rt/RtSM5T.v:103	0x140b58	0x13c498	OBJECT start	_ZN11__sanitizer17current_verbosityE	_ZN11__sanitizer17current_verbosityE
+A/Rt/RtSM5T.v:103	0xa7100	0xa4d80	resolve	.got+0xd70	.got+0xd50
+A/Rt/RtSM5T.v:103	0xb0920	0xac260	OBJECT start	_ZN6__asanL14tsd_key_initedE	_ZN6__asanL14tsd_key_initedE
+A/Rt/RtSM5T.v:238	0x0007c283	0x0007c283	not an address (instruction word (the word of a fetch_word fact)) (identity)	_ZN11__sanitizer17SymbolizerProcess11SendCommandEPKc+0x6b	_ZN6__lsanL13CheckForLeaksEv+0x4a3
+A/Rt/RtSM5T.v:239	0x0007c283	0x0007c283	not an address (instruction word (a decode_any argument)) (identity)	_ZN11__sanitizer17SymbolizerProcess11SendCommandEPKc+0x6b	_ZN6__lsanL13CheckForLeaksEv+0x4a3
+A/Rt/RtSM5T.v:244	0x00160613	0x00160613	not an address (instruction word (the word of a fetch_word fact)) (identity)	_ZN11__sanitizerL9useCountsE+0x1d693	_ZN11__sanitizerL9useCountsE+0x21d53
+A/Rt/RtSM5T.v:245	0x00160613	0x00160613	not an address (instruction word (a decode_any argument)) (identity)	_ZN11__sanitizerL9useCountsE+0x1d693	_ZN11__sanitizerL9useCountsE+0x21d53
+A/Rt/RtSM5T.v:393	0x509000	0x509000	resolve (identity)	_ZN11__sanitizerL8theDepotE+0x376068	_ZN11__sanitizerL8theDepotE+0x37a728
+A/Rt/RtSM5T.v:402	2147450880	2147450880	SIZES_KEEP	-	-
+A/Rt/RtSM5T.v:472	1048576	1048576	SIZES_KEEP	_ZN11__sanitizerL26internal_alloc_placeholderE+0x4dd40	_ZN11__sanitizerL26internal_alloc_placeholderE+0x52400

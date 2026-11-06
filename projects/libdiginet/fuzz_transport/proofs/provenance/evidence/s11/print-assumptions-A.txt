@@ -1,0 +1,199 @@
+# Print Assumptions of the image-A F-row walks (S11 step 3), from a temporary audit file (lib/A/Prog/ZzS11AuditA.v,
+# not committed: one Require of the eleven modules, then one Print Assumptions per theorem below, in this order),
+# built by `cb build` with CB_COMPILE at clone HEAD c192374cbe73 + the seven walk files (log
+# build-20261031T063440Z.log, sha256 877f2530c65466b62c3799f3f34b99d6ebe45f015a6a29ec5da59c476dacd489, rc=0).
+# Each theorem: the kernel's primitive types and operations only (PrimInt63 / PrimString / PrimArray), no Axiom,
+# Parameter or Admitted. The cg_of_F lemmas are TCA's (statement files); their Section hypothesis HGLUE
+# (LeafCgKit.leaf_cg_of_evtF_stmt, proved in LeafCgGlue.v) is an argument after the Section, not an assumption.
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_mac_is_digidesign_F.diginet_mac_is_digidesign_holds_F.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_mac_is_digidesign.diginet_mac_is_digidesign_holds.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_mac_is_digidesign_cg.transport_diginet_mac_is_digidesign_cg_of_F.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_frame_is_keepalive_F.diginet_frame_is_keepalive_holds_F.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_frame_is_keepalive.diginet_frame_is_keepalive_holds.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_frame_is_keepalive_cg.transport_diginet_frame_is_keepalive_cg_of_F.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_announce_parse_F.diginet_announce_parse_holds_F.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_announce_parse.diginet_announce_parse_holds.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_announce_parse_cg.transport_diginet_announce_parse_cg_of_F.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_cursor_init_F.diginet_cursor_init_holds_F.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_cursor_init_F.diginet_cursor_init_holds_of_F.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+
+Print Assumptions OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A.Prog.diginet_cursor_init_cg.transport_diginet_cursor_init_cg_of_F.
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type

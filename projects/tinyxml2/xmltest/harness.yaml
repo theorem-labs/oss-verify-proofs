@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tinyxml2
 harness: xmltest
-rocq: OssFuzzTheorems.tinyxml2.xmltest
+rocq: OSSVerify.tinyxml2.xmltest
 origin: oss-fuzz
 summary: XMLDocument::Parse on the input as a C string; the XMLError result is discarded.
 entry: LLVMFuzzerTestOneInput

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: phosphor-certificate-manager
 harness: parse_cert_fuzzer
-rocq: OssFuzzTheorems.phosphor_certificate_manager.parse_cert_fuzzer
+rocq: OSSVerify.phosphor_certificate_manager.parse_cert_fuzzer
 origin: oss-fuzz
 summary: parseCert(pem) then validateCertificateStartDate / validateCertificateInSSLContext / validateCertificateAgainstStore(empty
   store); every validation failure is reported by throwing (elog<InvalidCertificate>/InternalFailure)

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_rng
-rocq: OssFuzzTheorems.libdwarf.fuzz_rng
+rocq: OSSVerify.libdwarf.fuzz_rng
 origin: upstream
 summary: 'dwarf_load_rnglists, then per rnglist context: context basics, every offset-array value and
   every range-list entry (RLE) via dwarf_get_rnglist_rle; values unused.'

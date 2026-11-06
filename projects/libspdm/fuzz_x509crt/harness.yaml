@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libspdm
 harness: fuzz_x509crt
-rocq: OssFuzzTheorems.libspdm.fuzz_x509crt
+rocq: OSSVerify.libspdm.fuzz_x509crt
 origin: upstream
 summary: mbedtls_x509_crt_parse of the input and, on success, mbedtls_x509_crt_info into a 4 KB buffer;
   results ignored.

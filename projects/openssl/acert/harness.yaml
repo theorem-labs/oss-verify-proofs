@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: acert
-rocq: OssFuzzTheorems.openssl.acert
+rocq: OSSVerify.openssl.acert
 origin: upstream
 summary: d2i_X509_ACERT, X509_ACERT_print to a null BIO, i2d_X509_ACERT; the re-encoding is freed without
   comparison.

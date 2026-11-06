@@ -1,0 +1,6 @@
+# this core (370 lib/B files) + lib/Reusable/YA09.v and YA0e.v
+TOOL <file> sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
+SUMMARY: 372 files read of 372 given; ESCAPES 134; PLAIN 1002; UNMEASURED 0; KERNEL 0; levels TACTIC 828, OPTION 308; HINTS 1 (report only, tactic-level)
+# fuzz_grant's released counterparts of the 370 (recipes 4f87de75d67)
+TOOL <file> sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
+SUMMARY: 370 files read of 370 given; ESCAPES 134; PLAIN 998; UNMEASURED 0; KERNEL 0; levels TACTIC 824, OPTION 308; HINTS 1 (report only, tactic-level)

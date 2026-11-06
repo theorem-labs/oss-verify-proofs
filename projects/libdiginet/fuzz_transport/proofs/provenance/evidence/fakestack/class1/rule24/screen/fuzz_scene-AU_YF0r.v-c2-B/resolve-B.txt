@@ -1,0 +1,5 @@
+[libreac/fuzz_scene] AU/YF0r.v:45 0x3f604 0x3e000
+[libreac/fuzz_scene] AU/YF0r.v:74 0x9ba30 0xa3ce0
+[libreac/fuzz_scene] AU/YF0r.v:74 0x9c728 0xa49d0
+[libreac/fuzz_scene] AU/YF0r.v:75 0x9ba90 0xa3d40
+[libreac/fuzz_scene] AU/YF0r.v:75 0x9c738 0xa49e0

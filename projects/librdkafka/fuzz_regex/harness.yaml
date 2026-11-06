@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: librdkafka
 harness: fuzz_regex
-rocq: OssFuzzTheorems.librdkafka.fuzz_regex
+rocq: OSSVerify.librdkafka.fuzz_regex
 origin: upstream
 summary: Compiles the NUL-terminated input with librdkafka's builtin regex engine (re_regcomp) and frees
   the program; no match is attempted and nothing is checked.

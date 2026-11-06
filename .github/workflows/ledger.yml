@@ -47,7 +47,20 @@ jobs:
         run: |
           set -euo pipefail
           main="$(git rev-parse HEAD)"
-          git fetch --no-tags --filter=blob:none --unshallow origin "$main" "$GITHUB_SHA"
+          # GitHub at times fails to serve an old tree of main ("bad tree object", then "bad pack header"; seen four
+          # times on 2026-11-02, each passing on a re-run), so the fetch is tried 3 times, 30 s then 90 s apart.  A
+          # failed try can leave the clone unshallowed, and --unshallow on a complete clone is an error, so each try
+          # asks git whether the clone is still shallow.
+          for attempt in 1 2 3; do
+            unshallow=()
+            [ "$(git rev-parse --is-shallow-repository)" = true ] && unshallow=(--unshallow)
+            if git fetch --no-tags --filter=blob:none "${unshallow[@]}" origin "$main" "$GITHUB_SHA"; then
+              break
+            fi
+            [ "$attempt" = 3 ] && { echo "::error::the history fetch failed 3 times"; exit 1; }
+            echo "::warning::the history fetch failed (attempt $attempt of 3); GitHub's intermittent tree-serving fault of 2026-11-02 (bad tree object) is the known cause; trying again"
+            sleep $((attempt == 1 ? 30 : 90))
+          done
           echo "main=$main" >> "$GITHUB_OUTPUT"
           echo "main..push: $(git rev-list --count "$main..$GITHUB_SHA") commit(s)"
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0

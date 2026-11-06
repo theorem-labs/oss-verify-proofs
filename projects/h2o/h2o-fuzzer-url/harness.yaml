@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: h2o
 harness: h2o-fuzzer-url
-rocq: OssFuzzTheorems.h2o.h2o_fuzzer_url
+rocq: OSSVerify.h2o.h2o_fuzzer_url
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an API contract: If h2o_url_parse succeeds (ret
   != -1), the parsed url must have a non-NULL scheme.'

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: rabbitmq-c
 harness: fuzz_table
-rocq: OssFuzzTheorems.rabbitmq_c.fuzz_table
+rocq: OSSVerify.rabbitmq_c.fuzz_table
 origin: upstream
 summary: amqp_decode_table() on the whole input; result ignored.
 entry: LLVMFuzzerTestOneInput

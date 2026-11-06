@@ -1,0 +1,3 @@
+Planted control: the MANIFEST line of close-B/RECORD.md deleted (scratch commit on a14c209e0066cff0514840dba723c117d3ff3473)
+proofs/reac-repacer/fuzz_uci/provenance/evidence/close-B/RECORD.md: named by no MANIFEST (its path relative to a MANIFEST's directory, as a line's first field)
+rc=1

@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: plugin-hostd/fuzz_reply/plain_halts
+fingerprint: a190355165451ca79a569b669650c1b7fefe08d873545f298189ef494226c445

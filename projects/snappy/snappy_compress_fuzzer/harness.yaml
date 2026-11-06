@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: snappy
 harness: snappy_compress_fuzzer
-rocq: OssFuzzTheorems.snappy.snappy_compress_fuzzer
+rocq: OSSVerify.snappy.snappy_compress_fuzzer
 origin: upstream
 summary: 'Checks 5 properties (listed below); the first, a round trip: For every compression level MinCompressionLevel()..MaxCompressionLevel():
   Uncompress(Compress(input, level)) == input, full std::string equality.'

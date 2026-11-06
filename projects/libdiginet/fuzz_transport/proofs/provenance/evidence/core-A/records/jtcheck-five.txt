@@ -1,0 +1,77 @@
+_ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE16MaybeReleaseToOSEPNS_12MemoryMapperIS5_EEmb	X 0x34850 Y 0x35144 size 492	lo12 pairs 4 (in differing words 4)	jal 9 (differing 5)	target differs 1	target unmeasured 1	unpaired 0	C-string acceptances 1	[]
+   DIFF +0xdc strictcmp3 lui-in-section: _ZN11__sanitizerL26internal_alloc_placeholderE+0x4e500 | _ZN11__sanitizerL26internal_alloc_placeholderE+0x46640 (('0xf4240 in .bss | 0xf4240 in .bss', 'names', None))
+   UNMEASURED +0x140 unnamed (.rodata): region 66492 | 66800 bytes to the next FUNC / OBJECT start (extent unknown)
+   ACCEPT _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE16MaybeReleaseToOSEPNS_12MemoryMapperIS5_EEmb full +0x120 [0x103b0|0x103c0] 8
+CSTR	_ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE16MaybeReleaseToOSEPNS_12MemoryMapperIS5_EEmb	X:Y	0x1e0	0x1240c	0x12496	24	4973506f7765724f6654776f28626f756e64617279290a00	b'IsPowerOfTwo(boundary)\n\x00'
+_ZN11__sanitizer9VSNPrintfEPciPKcPv	X 0x66940 Y 0x674f4 size 1464	lo12 pairs 19 (in differing words 19)	jal 49 (differing 0)	target differs 0	target unmeasured 1	unpaired 0	C-string acceptances 18	[]
+   UNMEASURED +0x1c0 unnamed (.rodata): region 132 | 136 bytes to the next FUNC / OBJECT start (extent unknown)
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x21c	0x1c797	0x1c82d	7	3c6e756c6c3e00	b'<null>\x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x498	0x135f4	0x1359c	14	21686176655f6c656e6774680a00	b'!have_length\n\x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x4a4	0x15e34	0x15df8	104	537570706f72746564205072696e746620666f726d6174733a2025285b302d395d2a293f287a7c6c7c6c6c293f7b642c752c782c587d3b2025703b20255b2d5d285b302d395d2a293f285c2e5c2a293f733b2025630a50726f766964656420666f726d61743a2000	b'Supported Printf formats: %([0-9]*)?(z|l|ll)?{d,u,x,X}; %p; %[-]([0-9]*)?(\\.\\*)?s; %c\nProvided format: \x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x4c0	0x11951	0x1198f	68	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f73616e6974697a65725f636f6d6d6f6e2f73616e6974697a65725f7072696e74662e63707000	b'/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_printf.cpp\x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x4c4	0x1ef00	0x1efcd	41	282821686176655f7769647468207c7c206c6566745f6a7573746966696564292920213d2028302900	b'((!have_width || left_justified)) != (0)\x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x4e0	0x11951	0x1198f	68	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f73616e6974697a65725f636f6d6d6f6e2f73616e6974697a65725f7072696e74662e63707000	b'/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_printf.cpp\x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x4e4	0x16dca	0x16dc8	64	2828212828707265636973696f6e203e3d2030207c7c206c6566745f6a757374696669656429202626202a63757220213d2027732729292920213d2028302900	b"((!((precision >= 0 || left_justified) && *cur != 's'))) != (0)\x00"
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x4fc	0x1e685	0x1e73d	13	21686176655f666c6167730a00	b'!have_flags\n\x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x508	0x15e34	0x15df8	104	537570706f72746564205072696e746620666f726d6174733a2025285b302d395d2a293f287a7c6c7c6c6c293f7b642c752c782c587d3b2025703b20255b2d5d285b302d395d2a293f285c2e5c2a293f733b2025630a50726f766964656420666f726d61743a2000	b'Supported Printf formats: %([0-9]*)?(z|l|ll)?{d,u,x,X}; %p; %[-]([0-9]*)?(\\.\\*)?s; %c\nProvided format: \x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x520	0x1e685	0x1e73d	13	21686176655f666c6167730a00	b'!have_flags\n\x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x52c	0x15e34	0x15df8	104	537570706f72746564205072696e746620666f726d6174733a2025285b302d395d2a293f287a7c6c7c6c6c293f7b642c752c782c587d3b2025703b20255b2d5d285b302d395d2a293f285c2e5c2a293f733b2025630a50726f766964656420666f726d61743a2000	b'Supported Printf formats: %([0-9]*)?(z|l|ll)?{d,u,x,X}; %p; %[-]([0-9]*)?(\\.\\*)?s; %c\nProvided format: \x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x544	0x1e685	0x1e73d	13	21686176655f666c6167730a00	b'!have_flags\n\x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x550	0x15e34	0x15df8	104	537570706f72746564205072696e746620666f726d6174733a2025285b302d395d2a293f287a7c6c7c6c6c293f7b642c752c782c587d3b2025703b20255b2d5d285b302d395d2a293f285c2e5c2a293f733b2025630a50726f766964656420666f726d61743a2000	b'Supported Printf formats: %([0-9]*)?(z|l|ll)?{d,u,x,X}; %p; %[-]([0-9]*)?(\\.\\*)?s; %c\nProvided format: \x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x568	0x14e8d	0x14e50	8	666f726d61740a00	b'format\n\x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x578	0x16573	0x1654a	17	627566665f6c656e677468203e20300a00	b'buff_length > 0\n\x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x588	0x20415	0x2055d	18	62756666203c3d20627566665f656e640a00	b'buff <= buff_end\n\x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x598	0x15688	0x1561a	7	66616c73650a00	b'false\n\x00'
+CSTR	_ZN11__sanitizer9VSNPrintfEPciPKcPv	X:Y	0x5a4	0x15e34	0x15df8	104	537570706f72746564205072696e746620666f726d6174733a2025285b302d395d2a293f287a7c6c7c6c6c293f7b642c752c782c587d3b2025703b20255b2d5d285b302d395d2a293f285c2e5c2a293f733b2025630a50726f766964656420666f726d61743a2000	b'Supported Printf formats: %([0-9]*)?(z|l|ll)?{d,u,x,X}; %p; %[-]([0-9]*)?(\\.\\*)?s; %c\nProvided format: \x00'
+_ZN6__asan9Decorator10ShadowByteEh	X 0x55190 Y 0x55d44 size 160	lo12 pairs 8 (in differing words 8)	jal 4 (differing 0)	target differs 0	target unmeasured 1	unpaired 0	C-string acceptances 6	['table rel4-jump 83 entries (4-byte entries, bltu x11, 82, lw at +0x1c from the base)']
+   UNMEASURED +0x80 unnamed (.rodata): region 51389 | 51784 bytes to the next FUNC / OBJECT start (extent unknown)
+   ACCEPT _ZN6__asan9Decorator10ShadowByteEh table +0x14 [0x2083c|0x20980] rel4-jump 83 entries
+CSTR	_ZN6__asan9Decorator10ShadowByteEh	X:Y	0x28	0x178cd	0x1791a	10	1b5b316d1b5b33316d00	b'\x1b[1m\x1b[31m\x00'
+CSTR	_ZN6__asan9Decorator10ShadowByteEh	X:Y	0x34	0x1fb81	0x1fcc2	10	1b5b316d1b5b33346d00	b'\x1b[1m\x1b[34m\x00'
+CSTR	_ZN6__asan9Decorator10ShadowByteEh	X:Y	0x48	0x1d8e0	0x1d998	10	1b5b316d1b5b33356d00	b'\x1b[1m\x1b[35m\x00'
+CSTR	_ZN6__asan9Decorator10ShadowByteEh	X:Y	0x5c	0x2036f	0x204b7	10	1b5b316d1b5b33336d00	b'\x1b[1m\x1b[33m\x00'
+CSTR	_ZN6__asan9Decorator10ShadowByteEh	X:Y	0x70	0x10903	0x10913	10	1b5b316d1b5b33366d00	b'\x1b[1m\x1b[36m\x00'
+CSTR	_ZN6__asan9Decorator10ShadowByteEh	X:Y	0x90	0x18efb	0x18f98	9	1b5b316d1b5b306d00	b'\x1b[1m\x1b[0m\x00'
+_ZNK11__sanitizer13SignalContext8DescribeEv	X 0x666f8 Y 0x672ac size 60	lo12 pairs 2 (in differing words 2)	jal 0 (differing 0)	target differs 0	target unmeasured 0	unpaired 0	C-string acceptances 8	['table rel4-str 8 entries (4-byte entries, bltu x10, 7, lw at +0x24 from the base)']
+   ACCEPT _ZNK11__sanitizer13SignalContext8DescribeEv table +0x1c [0x20b7c|0x20cc0] rel4-str 8 entries
+CSTR	_ZNK11__sanitizer13SignalContext8DescribeEv	X:Y	0x1c	0x15e1b	0x15ddf	5	4142525400	b'ABRT\x00'
+CSTR	_ZNK11__sanitizer13SignalContext8DescribeEv	X:Y	0x1c	0x15e20	0x15de4	5	5345475600	b'SEGV\x00'
+CSTR	_ZNK11__sanitizer13SignalContext8DescribeEv	X:Y	0x1c	0x15e25	0x15de9	15	554e4b4e4f574e205349474e414c00	b'UNKNOWN SIGNAL\x00'
+CSTR	_ZNK11__sanitizer13SignalContext8DescribeEv	X:Y	0x1c	0x19658	0x196f5	4	42555300	b'BUS\x00'
+CSTR	_ZNK11__sanitizer13SignalContext8DescribeEv	X:Y	0x1c	0x1ad99	0x1ae24	5	5452415000	b'TRAP\x00'
+CSTR	_ZNK11__sanitizer13SignalContext8DescribeEv	X:Y	0x1c	0x1d630	0x1d6c8	4	494c4c00	b'ILL\x00'
+CSTR	_ZNK11__sanitizer13SignalContext8DescribeEv	X:Y	0x1c	0x203ff	0x20547	4	46504500	b'FPE\x00'
+CSTR	_ZNK11__sanitizer13SignalContext8DescribeEv	X:Y	0x34	0x15e25	0x15de9	15	554e4b4e4f574e205349474e414c00	b'UNKNOWN SIGNAL\x00'
+__strftime_fmt_1	X 0x9a400 Y 0xa1be4 size 1572	lo12 pairs 23 (in differing words 23)	jal 56 (differing 3)	target differs 7	target unmeasured 2	unpaired 0	C-string acceptances 16	['table rel4-jump 86 entries (4-byte entries, bltu x11, 85, lw at +0x4c from the base)']
+   DIFF +0x60 strictcmp3 lui-in-section: (.rodata) | (.rodata) (('0x20028 in .rodata | 0x20028 in .rodata', 'cstr-differs', (b'bolizer_)) != (0)\x00', b'trspn and strcspn function to find more errors.\x00')))
+   DIFF +0xf0 strictcmp3 lui-in-section: (.rodata) | (.rodata) (('0x20007 in .rodata | 0x20007 in .rodata', 'cstr-differs', (b'r_thread_arg_retval.cpp\x00', b'f set, uses custom wrappers for strspn and strcspn function to find more errors.\x00')))
+   DIFF +0x148 strictcmp3 lui-in-section: (.rodata) | (.rodata) (('0x2002a in .rodata | 0x2002a in .rodata', 'cstr-differs', (b'lizer_)) != (0)\x00', b'spn and strcspn function to find more errors.\x00')))
+   DIFF +0x254 strictcmp3 lui-in-section: (.rodata) | (.rodata) (('0x2002b in .rodata | 0x2002b in .rodata', 'cstr-differs', (b'izer_)) != (0)\x00', b'pn and strcspn function to find more errors.\x00')))
+   DIFF +0x46c strictcmp3 lui-in-section: (.rodata) | (.rodata) (('0x20029 in .rodata | 0x20029 in .rodata', 'cstr-differs', (b'olizer_)) != (0)\x00', b'rspn and strcspn function to find more errors.\x00')))
+   DIFF +0x4e8 strictcmp3 lui-in-section: (.rodata) | (.rodata) (('0x20007 in .rodata | 0x20007 in .rodata', 'cstr-differs', (b'r_thread_arg_retval.cpp\x00', b'f set, uses custom wrappers for strspn and strcspn function to find more errors.\x00')))
+   DIFF +0x4fc strictcmp3 lui-in-section: (.rodata) | (.rodata) (('0x20007 in .rodata | 0x20007 in .rodata', 'cstr-differs', (b'r_thread_arg_retval.cpp\x00', b'f set, uses custom wrappers for strspn and strcspn function to find more errors.\x00')))
+   UNMEASURED +0x530 unnamed (.rodata): region 51389 | 51784 bytes to the next FUNC / OBJECT start (extent unknown)
+   UNMEASURED +0x54c unnamed (.rodata): region 51389 | 51784 bytes to the next FUNC / OBJECT start (extent unknown)
+   ACCEPT __strftime_fmt_1 table +0x44 [0x22af4|0x229f4] rel4-jump 86 entries
+   ACCEPT __strftime_fmt_1 full +0x108 [0x10300|0x10300] 8
+   ACCEPT __strftime_fmt_1 full +0x26c [0x10318|0x10318] 8
+   ACCEPT __strftime_fmt_1 full +0x378 [0x10300|0x10300] 8
+   ACCEPT __strftime_fmt_1 full +0x570 [0x10300|0x10300] 8
+   ACCEPT __strftime_fmt_1 lui-const +0x1c0 [0x20026|0x20026] dataflow: .rodata | .rodata
+   ACCEPT __strftime_fmt_1 lui-const +0x4c8 [0x20000|0x20000] dataflow: .rodata | .rodata
+CSTR	__strftime_fmt_1	X:Y	0x50	0x113f0	0x1142e	9	256d2f25642f257900	b'%m/%d/%y\x00'
+CSTR	__strftime_fmt_1	X:Y	0xb4	0x1cbe4	0x1cc6d	2	2d00	b'-\x00'
+CSTR	__strftime_fmt_1	X:Y	0x16c	0x1cbe4	0x1cc6d	2	2d00	b'-\x00'
+CSTR	__strftime_fmt_1	X:Y	0x178	0x2019c	0x202e4	9	25483a254d3a255300	b'%H:%M:%S\x00'
+CSTR	__strftime_fmt_1	X:Y	0x1a8	0x1a6ca	0x1a755	2	0a00	b'\n\x00'
+CSTR	__strftime_fmt_1	X:Y	0x218	0x16041	0x16018	6	2b256c6c6400	b'+%lld\x00'
+CSTR	__strftime_fmt_1	X:Y	0x224	0x150a3	0x15035	6	25483a254d00	b'%H:%M\x00'
+CSTR	__strftime_fmt_1	X:Y	0x230	0x11bd3	0x11c11	9	25592d256d2d256400	b'%Y-%m-%d\x00'
+CSTR	__strftime_fmt_1	X:Y	0x248	0x1cbe4	0x1cc6d	2	2d00	b'-\x00'
+CSTR	__strftime_fmt_1	X:Y	0x2c4	0x18ece	0x18f6b	7	252b2e346c6400	b'%+.4ld\x00'
+CSTR	__strftime_fmt_1	X:Y	0x30c	0x122cc	0x1230a	2	2500	b'%\x00'
+CSTR	__strftime_fmt_1	X:Y	0x340	0x1cbe4	0x1cc6d	2	2d00	b'-\x00'
+CSTR	__strftime_fmt_1	X:Y	0x4c0	0x17f45	0x17fcb	2	0900	b'\t\x00'
+CSTR	__strftime_fmt_1	X:Y	0x5b4	0x12407	0x12491	5	256c6c6400	b'%lld\x00'
+CSTR	__strftime_fmt_1	X:Y	0x5d0	0x206b8	0x207fd	6	252a6c6c6400	b'%*lld\x00'
+CSTR	__strftime_fmt_1	X:Y	0x5dc	0x1afc2	0x1b02c	7	25302a6c6c6400	b'%0*lld\x00'

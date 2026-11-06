@@ -1,5 +1,6 @@
-# counterexamples/<project>/<harness>/<statement>/expect.yaml: a failing run of the real binary,
-# re-run by CI under the pinned runner image, next to a control input that must exit normally.
+# expect.yaml of a counterexample directory, <statement>/ in a fuzz target's counterexamples folder
+# (projects/<project>/<harness>/counterexamples/, or counterexamples/<project>/<harness>/ in the old layout): a failing
+# run of the real binary, re-run by CI under the pinned runner image, next to a control input that must exit normally.
 tag: oss-fuzz-theorems/counterexample/1
 root: {type: ref, name: counterexample}
 defs:

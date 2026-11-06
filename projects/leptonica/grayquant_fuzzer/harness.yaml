@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: grayquant_fuzzer
-rocq: OssFuzzTheorems.leptonica.grayquant_fuzzer
+rocq: OSSVerify.leptonica.grayquant_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixDitherTo2bpp, pixDitherToBinary, pixGenerateMaskByBand[32], pixGenerateMaskByDiscr32,
   pixThresholdGrayArb; outputs discarded.

@@ -1,0 +1,5 @@
+donor: pinned sha256 5d05689fd5b1, twin sha256 6744989bb2e6, allocated sections equal (build-id note excepted): True
+target: pinned sha256 41113a03c82f, twin sha256 e217cb0a84f1, allocated sections equal (build-id note excepted): True
+libreac/fuzz_decode ref e10f488c53fc image B class 0: 9 of 9 ranges paired and compared; pc-relative words 44 (walked), 439 (whole functions)
+76 resolve lines: 5 move a value (0x3c870 -> 0x3e000, 0x992d8 -> 0xa3ce0, 0x99338 -> 0xa3d40, 0x99fe0 -> 0xa49d0, 0x99ff0 -> 0xa49e0), 0 name the image of a header range, the rest keep the value
+PASS

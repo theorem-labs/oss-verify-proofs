@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: gss-ntlmssp
 harness: fuzz-accept-sec-context
-rocq: OssFuzzTheorems.gss_ntlmssp.fuzz_accept_sec_context
+rocq: OSSVerify.gss_ntlmssp.fuzz_accept_sec_context
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

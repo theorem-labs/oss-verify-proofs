@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncpp
 harness: jsoncpp_fuzzer
-rocq: OssFuzzTheorems.jsoncpp.jsoncpp_fuzzer
+rocq: OSSVerify.jsoncpp.jsoncpp_fuzzer
 origin: upstream
 summary: first 4 bytes select 11 CharReaderBuilder settings; CharReader::parse on the rest; result and
   error string discarded; Json::Exception swallowed.

@@ -1,0 +1,143 @@
+# Check, About and Print Assumptions of stack_malloc0_contract and stack_malloc1_contract, and of the two contracts
+# at WireB (the consumer's hypothesis type, closed by exact). The scratch file lib/A/ScratchSmA.v below was added,
+# uncommitted, to the cb clone of 8a2b472e9c3e after its fresh build, compiled by `CB_COMPILE=<it> cb build <clone> <it>`
+# (cb-d02a58a345b9; log build-20261031T175313Z.log, `cb: rc=0 ... 1 targets compiled`) and deleted.
+# Each of the 4 Print Assumptions lists 14 axioms, every one in toolchain/allowed-axioms.txt (checked by name).
+## the scratch file
+From Stdlib Require Import ZArith List.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require Import YK11 YM05 YG0d YG0q.
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.A Require Import AB1v AF0m AD2l.
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.A.Rt Require StackMalloc0 AF0s.
+Section S.
+Local Notation B := AD2l.WireB.
+Definition H_RT_STACK_MALLOC0_type : Prop :=
+  forall (rc : YM05.RunCeil) (fx : YK11.FPState), @astack_malloc_realizes fx rc tfibsegs B 0.
+Definition H_RT_STACK_MALLOC1_type : Prop :=
+  forall (rc : YM05.RunCeil) (fx : YK11.FPState), @astack_malloc_realizes fx rc tfibsegs B 1.
+Lemma H_RT_STACK_MALLOC0_ok : H_RT_STACK_MALLOC0_type.
+Proof.
+  intros rc fx.
+  exact (@StackMalloc0.stack_malloc0_contract fx rc B (AR_laws_ok tfibsegs B) AD2l.WireB_syms).
+Qed.
+Lemma H_RT_STACK_MALLOC1_ok : H_RT_STACK_MALLOC1_type.
+Proof.
+  intros rc fx.
+  exact (@AF0s.stack_malloc1_contract fx rc B (AR_laws_ok tfibsegs B) AD2l.WireB_syms).
+Qed.
+End S.
+Check StackMalloc0.stack_malloc0_contract.
+Check AF0s.stack_malloc1_contract.
+About StackMalloc0.stack_malloc0_contract.
+About AF0s.stack_malloc1_contract.
+Print Assumptions StackMalloc0.stack_malloc0_contract.
+Print Assumptions AF0s.stack_malloc1_contract.
+Print Assumptions H_RT_STACK_MALLOC0_ok.
+Print Assumptions H_RT_STACK_MALLOC1_ok.
+## its compile output (the build log's lines for it)
+StackMalloc0.stack_malloc0_contract
+     : ∀ B : YG0f.asyms,
+         AR_laws tfibsegs B
+         → WireSyms B → astack_malloc_realizes tfibsegs B 0
+where
+?fx : [ |- FPState]
+?rc : [ |- RunCeil]
+AF0s.stack_malloc1_contract
+     : ∀ B : YG0f.asyms,
+         AR_laws tfibsegs B
+         → WireSyms B → astack_malloc_realizes tfibsegs B 1
+where
+?fx : [ |- FPState]
+?rc : [ |- RunCeil]
+StackMalloc0.stack_malloc0_contract :
+∀ {fx : FPState} {rc : RunCeil} (B : YG0f.asyms),
+  AR_laws tfibsegs B → WireSyms B → astack_malloc_realizes tfibsegs B 0
+
+StackMalloc0.stack_malloc0_contract is not universe polymorphic
+Arguments StackMalloc0.stack_malloc0_contract {fx rc} 
+  B _ _ ly S W regs mem md pos S' _ _ _ _ T _
+StackMalloc0.stack_malloc0_contract is opaque
+Expands to: Constant
+            OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.A.Rt.StackMalloc0.stack_malloc0_contract
+Declared in
+library OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.A.Rt.StackMalloc0, line 509, characters 10-32
+AF0s.stack_malloc1_contract :
+∀ {fx : FPState} {rc : RunCeil} (B : YG0f.asyms),
+  AR_laws tfibsegs B → WireSyms B → astack_malloc_realizes tfibsegs B 1
+
+AF0s.stack_malloc1_contract is not universe polymorphic
+Arguments AF0s.stack_malloc1_contract {fx rc} B _ 
+  _ ly S W regs mem md pos S' _ _ _ _ T _
+AF0s.stack_malloc1_contract is opaque
+Expands to: Constant
+            OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.A.Rt.AF0s.stack_malloc1_contract
+Declared in
+library OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.A.Rt.AF0s, line 509, characters 10-32
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+PrimArray.array : Type → Type
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+PrimArray.array : Type → Type
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+PrimArray.array : Type → Type
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+PrimArray.array : Type → Type

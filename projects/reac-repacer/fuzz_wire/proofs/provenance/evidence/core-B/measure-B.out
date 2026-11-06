@@ -1,0 +1,45 @@
+== fuzz_grant.asan-ubsan (CONTROL: must equal the donor text)
+  __stdout_FILE.buf                        0x5f9020 = 6262816
+  __stderr_FILE.buf                        0x5f9018 = 6262808
+  __stdin_FILE.buf                         0x5f9428 = 6263848
+  BUFEND (stdout buf + 1024)               0x5f9420 = 6263840
+  .bss start (information)                 0xa22c0 = 664256
+  __stop_asan_globals (symbol)             0xa22c0 = 664256
+  IMG_TOP (page-up end of last PT_LOAD)    0x5fb000 = 6270976
+  .bss+0x20 (__do_init.__object + 16)      0xa22e0 = 664288
+  first PT_LOAD                            0x10000 = 65536
+  (.bss+0x20) / 8                          0x1445c = 83036
+  symbol __asan_memset                     0x52024 = 335908
+  symbol __interceptor_trampoline_bcmp     0x424d0 = 271568
+  symbol bcmp                              0x96790 = 616336
+  symbol asan.module_dtor                  0x82524 = 533796
+  B/YE2t.v FMT 0x1d6e7 b'cli: cannot open %s\n' len 21: SH [0x7fffbad8, 0x7fffbae0)
+  B/YE2u.v FMT 0x1d6fc b'cli: read error on %s\n' len 23: SH [0x7fffbad8, 0x7fffbae8)
+  B/YE2w.v FMT 0x1583c b'usage: %s INPUT\n' len 17: SH [0x7fffab00, 0x7fffab10)
+  B/YE35.v FMT 0x1479a b'%d\n' len 4: SH [0x7fffa8f0, 0x7fffa8f8)
+  B/YE2v.v FMT 0x196a4 b'cli: input >= %u bytes, refused\n' len 33: SH [0x7fffb2d0, 0x7fffb2e0)
+== fuzz_wire.asan-ubsan
+  __stdout_FILE.buf                        0x5f3ea0 = 6241952
+  __stderr_FILE.buf                        0x5f3e98 = 6241944
+  __stdin_FILE.buf                         0x5f42a8 = 6242984
+  BUFEND (stdout buf + 1024)               0x5f42a0 = 6242976
+  .bss start (information)                 0x9d140 = 643392
+  __stop_asan_globals (symbol)             0x0 = 0
+  IMG_TOP (page-up end of last PT_LOAD)    0x5f6000 = 6250496
+  .bss+0x20 (__do_init.__object + 16)      0x9d160 = 643424
+  first PT_LOAD                            0x10000 = 65536
+  (.bss+0x20) / 8                          0x13a2c = 80428
+  symbol __asan_memset                     None
+  symbol __interceptor_trampoline_bcmp     0x4155c = 267612
+  symbol bcmp                              0x91aa8 = 596648
+  symbol asan.module_dtor                  0x81928 = 530728
+  B/YE2t.v FMT 0x1d5f9 b'cli: cannot open %s\n' len 21: SH [0x7fffbab8, 0x7fffbac8)
+  B/YE2u.v FMT 0x1d60e b'cli: read error on %s\n' len 23: SH [0x7fffbac0, 0x7fffbac8)
+  B/YE2w.v FMT 0x157da b'usage: %s INPUT\n' len 17: SH [0x7fffaaf8, 0x7fffab00)
+  B/YE35.v FMT 0x1476b b'%d\n' len 4: SH [0x7fffa8e8, 0x7fffa8f0)
+  B/YE2v.v FMT 0x19632 b'cli: input >= %u bytes, refused\n' len 33: SH [0x7fffb2c0, 0x7fffb2d0)
+== fuzz_grant B (CONTROL: the donor text says 273): canary cell ANum 0x9e358 at index [273] of 361 Tfib_const_abs cells
+== fuzz_wire A (CONTROL: AE22.v says 273): canary cell ANum 0x99470 at index [273] of 288 Tfib_const_abs cells
+== fuzz_wire B: canary cell ANum 0x99500 at index [193] of 215 Tfib_const_abs cells
+== fuzz_grant B (CONTROL: the donor text says 0xa22c0, 0x5fb000): Tfib_zero_shadow 15 ranges, last (0xa22c0, 0x5fb000 - 0xa22c0): TFIB_BSS = 0xa22c0 = 664256, /8 = 83032, (IMG_TOP - TFIB_BSS) / 8 = 700840; Tfib_const_shadow 186 cells, highest 0x8000c457
+== fuzz_wire B: Tfib_zero_shadow 1 ranges, last (0x10000, 0x5f6000 - 0x10000): TFIB_BSS = 0x10000 = 65536, /8 = 8192, (IMG_TOP - TFIB_BSS) / 8 = 773120; Tfib_const_shadow 0 cells, highest None

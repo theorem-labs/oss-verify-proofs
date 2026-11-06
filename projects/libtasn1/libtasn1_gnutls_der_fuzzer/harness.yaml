@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libtasn1
 harness: libtasn1_gnutls_der_fuzzer
-rocq: OssFuzzTheorems.libtasn1.libtasn1_gnutls_der_fuzzer
+rocq: OSSVerify.libtasn1.libtasn1_gnutls_der_fuzzer
 origin: upstream
 summary: DER-decodes the input as GNUTLS.DHParameter and as GNUTLS.GOSTParameters (after asn1_write_value
   on digestParamSet), then re-encodes the GOST structure with asn1_der_coding (size query then encode);

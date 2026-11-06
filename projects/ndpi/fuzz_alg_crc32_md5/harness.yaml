@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ndpi
 harness: fuzz_alg_crc32_md5
-rocq: OssFuzzTheorems.ndpi.fuzz_alg_crc32_md5
+rocq: OSSVerify.ndpi.fuzz_alg_crc32_md5
 origin: upstream
 summary: runs CRC16 variants, CRC32, one-shot and two-chunk MD5, murmur/quick hashes, popcount, bin2hex->hex2bin
   and hex_encode->hex_decode over the input; every result is discarded.

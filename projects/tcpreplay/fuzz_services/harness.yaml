@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tcpreplay
 harness: fuzz_services
-rocq: OssFuzzTheorems.tcpreplay.fuzz_services
+rocq: OSSVerify.tcpreplay.fuzz_services
 origin: upstream
 summary: Writes the input to a temp file and runs parse_services (tcpprep --services parser).
 entry: LLVMFuzzerTestOneInput

@@ -1,0 +1,148 @@
+diff --git B/YD1r.v B/YD1r.v
+index bb1353b2c12..632b13e8601 100644
+--- B/YD1r.v
++++ B/YD1r.v
+@@ -3,6 +3,7 @@
+ (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+ (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1r.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_decode's ASan build. *)
+ (* Modified by Theorem Labs, 2026-10: the call loop takes the float-state invariant P of lib/A/YD1w.v lib_site_x: each call of LLVMFuzzerTestOneInput may return at another float state fx' with P fx', and the loop goes on at fx'. calls_loop is split at the call into lib_call and after_call (the driver walk between two calls, stated at an arbitrary float state) and proved by induction over the calls left at every float state with P (ms_at, st_ok_ms_at). *)
++(* Modified by Theorem Labs, 2026-10: the program call's journal is at the harness's globals (lib/B/YD1w.v lib_post, ajournal_gx at G_HARNESS_B): after_call reads it as the donor's journal from a start memory memS that agrees with mem outside the hull [G_HARNESS_B_LO, G_HARNESS_B_HI) (lib/B/TransportDrvGB.v drv_journal_of_gx), and journal_regions_kept / lib_reseat take memS, that agreement and the kept regions' hull side condition (lib/B/YD2f.v L_mem_avoids_G). libreac/fuzz_pcap's G form (Reusable/YD1r.v:235-350, 677-704 at origin/ossv/recipes 198234fa4d3). *)
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+@@ -162,6 +163,7 @@ Proof. intros ch l1 l2 T. unfold wr. rewrite map_app. apply t_emit_app. Qed.
+ Lemma map_single {X Y : Type} : forall (f : X -> Y) (l : list X) (y : Y), map f l = [y] -> exists x, l = [x] /\ f x = y.
+ Proof. intros f [|x [|x' l]] y H; cbn in H; try discriminate H. injection H as <-. exists x. split; reflexivity. Qed.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Import YE2k YD1u.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Import TransportGB TransportDrvGB.
+ (* The machine state ms with the float registers and the float CSR of fx'. The lemmas of Section f below walk the
+    driver code between two calls of LLVMFuzzerTestOneInput at an arbitrary float state, which they keep unchanged
+    (st_ok fixes ms_fregs and ms_fcsr): that code reads and writes no float register. After a call that returns at fx',
+@@ -238,17 +240,18 @@ unfold aview, mbyte. rewrite (HF (Z_to_bv 64 a)); [reflexivity|].
+ intros Hw. rewrite u64_lit in Hw by lia. apply (in_wrange_drv E rs a Hok) in Hw.
+ destruct Hw as [Hw|Hw]; [unfold sp_window_lo in U0; lia | apply DRVW_lo in Hw; lia].
+ Qed.
+-Lemma journal_regions_kept : forall E rs ly S (W : world tfibsegs) mem md ly' S' W' mem' md' k sp0,
+-YCbq.ajournal tfibsegs B LLVMF_STK sp0 [YI16.sink_token] ly S W mem md [] ly' S' W' mem' md' k ->
++Lemma journal_regions_kept : forall E rs ly S (W : world tfibsegs) mem memS md ly' S' W' mem' md' k sp0,
++YCbq.ajournal tfibsegs B LLVMF_STK sp0 [YI16.sink_token] ly S W memS md [] ly' S' W' mem' md' k ->
++(forall a, 0 <= a < 2 ^ 64 -> ~ (G_HARNESS_B_LO <= a < G_HARNESS_B_HI) -> aview tfibsegs (w_H W) memS a = aview tfibsegs (w_H W) mem a) ->
+ val_mem tfibsegs (mrestrict (w_H W) mem) A_ofl_head 8 0 -> val_mem tfibsegs (mrestrict (w_H W') mem') A_ofl_head 8 0 ->
+ AR tfibsegs B ly S W mem md ->
+ regions_wf rs = true ->
+ Forall (region_ok tfibsegs E (mrestrict (w_H W) mem)) rs ->
+-forallb (drv_keep_ok (-208)) rs = true ->
++forallb (drv_keep_ok (-208)) rs = true -> forallb region_avoids_G rs = true ->
+ bv_unsigned (ew E 0) = usp -> usp <= bv_unsigned (ew E 6) -> sp0 = usp - 208 -> YM05.ceil_of_top (usp - stack_max_size) ->
+ Forall (region_ok tfibsegs E (mrestrict (w_H W') mem')) rs.
+ Proof.
+-intros E rs ly S W mem md ly' S' W' mem' md' k sp0 HJ Hh0 Hh1 HAR Hwf Hok Hchk E0 E6 Hsp0 HCT.
++intros E rs ly S W mem memS md ly' S' W' mem' md' k sp0 HJ Hag Hh0 Hh1 HAR Hwf Hok Hchk HavG E0 E6 Hsp0 HCT.
+ pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. unfold sp_window_lo in Ulo.
+ pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
+ pose proof HJ as (HAR' & _ & _ & _ & _ & _ & _ & _ & F1 & F2 & F3 & _).
+@@ -257,12 +260,14 @@ apply Forall_forall. intros r Hr.
+ pose proof (proj1 (Forall_forall _ _) Hok r Hr) as HR. pose proof HR as (B1 & B2 & RW & _).
+ pose proof (chunk_inside_In r) as CI. specialize (CI) with (1 := regions_wf_In rs r Hwf Hr).
+ pose proof (proj1 (forallb_forall _ _) Hchk r Hr) as Hc. unfold drv_keep_ok in Hc.
++pose proof (proj1 (forallb_forall _ _) HavG r Hr) as HrG.
+ assert (HIGH : forall a, usp - 208 <= a < 2 ^ 64 ->
+ mbyte tfibsegs (mrestrict (w_H W') mem') a = mbyte tfibsegs (mrestrict (w_H W) mem) a
+ /\ (writable_at tfibsegs (mrestrict (w_H W) mem) a -> writable_at tfibsegs (mrestrict (w_H W') mem') a)).
+ { intros a Ha.
++assert (NG : ~ (G_HARNESS_B_LO <= a < G_HARNESS_B_HI)) by (apply drv_keep_not_G; unfold drv_keep_set; right; right; right; lia).
+ assert (EQA : aview tfibsegs (w_H W') mem' a = aview tfibsegs (w_H W) mem a).
+-{ apply F1; [lia | unfold LLVMF_STK; lia]. }
++{ rewrite <- (Hag a ltac:(lia) NG). apply F1; [lia | unfold LLVMF_STK; lia]. }
+ assert (EQ : mbyte tfibsegs (mrestrict (w_H W') mem') a = mbyte tfibsegs (mrestrict (w_H W) mem) a) by (apply (mbyte_of_aview tfibsegs); exact EQA).
+ split; [exact EQ|]. intros Hw. apply (apresent_writable tfibsegs).
+ apply (apresent_transfer tfibsegs (w_H W) (w_H W') mem mem' a);
+@@ -290,7 +295,9 @@ apply andb_prop in Hofl as [Ho1 Ho2]. apply Z.leb_le in Ho1. apply Z.ltb_lt in H
+ pose proof (Hh1 (Z.to_nat (YP09.c_off c + i - A_ofl_head)) ltac:(lia)) as X1. pose proof (Hh0 (Z.to_nat (YP09.c_off c + i - A_ofl_head)) ltac:(lia)) as X0.
+ rewrite Z2Nat.id in X1, X0 by lia. replace (A_ofl_head + (YP09.c_off c + i - A_ofl_head)) with (YP09.c_off c + i) in X1, X0 by lia.
+ rewrite X1, X0. reflexivity. }
+-apply (mbyte_of_aview tfibsegs). apply F3; [exact Himg | rewrite (ts_owned B HB); exact Hno | rewrite Eerr; exact Hne |].
++assert (NG : ~ (G_HARNESS_B_LO <= YP09.c_off c + i < G_HARNESS_B_HI)) by (apply (region_avoids_G_sound r); [exact HrG | exact Hb | lia]).
++apply (mbyte_of_aview tfibsegs). rewrite <- (Hag (YP09.c_off c + i) ltac:(lia) NG).
++apply F3; [exact Himg | rewrite (ts_owned B HB); exact Hno | rewrite Eerr; exact Hne |].
+ apply YCbq.fp_spares_off. cbn [YCbq.AOFL_HEAD YI16.sk_ofl_head tfib_sink_head]. unfold A_ofl_head in *.
+ apply Bool.andb_false_iff in Hofl. destruct Hofl as [Ho|Ho]; [apply Z.leb_gt in Ho | apply Z.ltb_ge in Ho]; lia.
+ - intros o Ho.
+@@ -303,16 +310,17 @@ apply Z.leb_le in Hw1. apply Z.leb_le in Hw2. apply (proj2 (HIGH (usp + o) ltac:
+ apply andb_prop in Hw as [Hw1 Hw2]. apply Z.leb_le in Hw1. apply Z.leb_le in Hw2.
+ unfold writable_at. rewrite Z.add_0_l. apply tfib_rw_window. rewrite u64_lit by lia. lia.
+ Qed.
+-Lemma lib_reseat : forall E (W W' : world tfibsegs) regs mem regs' mem' ly S md ly' S' md' k,
++Lemma lib_reseat : forall E (W W' : world tfibsegs) regs mem memS regs' mem' ly S md ly' S' md' k,
+ st_ok tfibsegs E S_L (mkst regs (w64 A_LLVMF) (mrestrict (w_H W) mem) (seg_rom tfibsegs)) ->
+ bv_unsigned (ew E 0) = usp -> usp <= bv_unsigned (ew E 6) ->
+-YCbq.ajournal tfibsegs B LLVMF_STK (usp - 208) [YI16.sink_token] ly S W mem md [] ly' S' W' mem' md' k ->
++YCbq.ajournal tfibsegs B LLVMF_STK (usp - 208) [YI16.sink_token] ly S W memS md [] ly' S' W' mem' md' k ->
++(forall a, 0 <= a < 2 ^ 64 -> ~ (G_HARNESS_B_LO <= a < G_HARNESS_B_HI) -> aview tfibsegs (w_H W) memS a = aview tfibsegs (w_H W) mem a) ->
+ val_mem tfibsegs (mrestrict (w_H W) mem) A_ofl_head 8 0 -> val_mem tfibsegs (mrestrict (w_H W') mem') A_ofl_head 8 0 ->
+ AR tfibsegs B ly S W mem md ->
+ aregs_preserved regs regs' -> getr regs' 10%bv = w64 0 -> YM05.ceil_of_top (usp - stack_max_size) ->
+ st_ok tfibsegs (havoc E K_LR (map (getr regs') CLOB')) S_LR (mkst regs' (Z_to_bv 64 RA_LLVMF) (mrestrict (w_H W') mem') (seg_rom tfibsegs)).
+ Proof.
+-intros E W W' regs mem regs' mem' ly S md ly' S' md' k HS E0 E6 HJ Hh0 Hh1 HAR HP Ha0 HCT.
++intros E W W' regs mem memS regs' mem' ly S md ly' S' md' k HS E0 E6 HJ Hag Hh0 Hh1 HAR HP Ha0 HCT.
+ pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
+ pose proof calls_checks as (CKa & CKm & _).
+ rewrite S_LR_eq.
+@@ -336,14 +344,16 @@ change L_mem with (WIN208 :: tl L_mem). constructor.
+ cbn [r_wlo r_whi r_base base_val WIN208]. rewrite E0. intros o Ho. apply (apresent_writable tfibsegs).
+ destruct (Z.lt_ge_cases (usp + o) (usp - 208 - LLVMF_STK)) as [Hlow | Hhi].
+ * pose proof Hr0 as (_ & _ & RW & _). cbn [r_wlo r_whi r_base base_val WIN208] in RW. rewrite E0 in RW.
++assert (NG : ~ (G_HARNESS_B_LO <= usp + o < G_HARNESS_B_HI)) by (apply drv_keep_not_G; unfold drv_keep_set; right; right; right; unfold sp_window_lo in Ulo; lia).
+ assert (EQA : aview tfibsegs (w_H W') mem' (usp + o) = aview tfibsegs (w_H W) mem (usp + o)).
+-{ apply F1; [unfold sp_window_lo in Ulo; lia | lia]. }
++{ rewrite <- (Hag (usp + o) ltac:(unfold sp_window_lo in Ulo; lia) NG). apply F1; [unfold sp_window_lo in Ulo; lia | lia]. }
+ apply (apresent_transfer tfibsegs (w_H W) (w_H W') mem mem' (usp + o));
+ [unfold sp_window_lo in Ulo; lia | apply not_in_img_high; unfold sp_window_lo in Ulo; lia | exact EQA |].
+ apply apresent_of_writable; [unfold sp_window_lo in Ulo; lia | apply RW; lia].
+ * apply Hpres. lia.
+-+ exact (journal_regions_kept E (tl L_mem) ly S W mem md ly' S' W' mem' md' k (usp - 208) HJ Hh0 Hh1 HAR (proj2 (andb_prop _ _ Hwf)) Hrs0
+-ltac:(vm_compute; reflexivity) E0 E6 eq_refl HCT).
++(* the kept image regions avoid the harness globals' hull: YD2f.v's L_mem_avoids_G (region_avoids_G on tl L_mem) *)
+++ exact (journal_regions_kept E (tl L_mem) ly S W mem memS md ly' S' W' mem' md' k (usp - 208) HJ Hag Hh0 Hh1 HAR (proj2 (andb_prop _ _ Hwf)) Hrs0
++ltac:(vm_compute; reflexivity) L_mem_avoids_G E0 E6 eq_refl HCT).
+ Qed.
+ Lemma vp_run : forall E (W : world tfibsegs) regs mem md,
+ st_ok tfibsegs E S_LR (restrict (w_H W) (mkst regs (Z_to_bv 64 RA_LLVMF) mem (seg_rom tfibsegs))) ->
+@@ -731,8 +741,10 @@ assert (Hwin : forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a).
+ - eapply (win_present sp Hsp E (w_H W) mem L_mem); [exact HM | right; right; left; reflexivity | exact E0 | lia | lia | cbn; lia]. }
+ assert (Hbb : blocks_bytes S <= cap + payload_len data).
+ { rewrite (blocks_bytes_ablocks ly S). destruct HBL as [(_ & _ & HP) | (_ & HP)]; rewrite (bsum_perm _ _ HP); cbn; lia. }
+-intros l W' ly' S' regs' mem' md' k _ HAI' (HJ & Hk & HP & Ha0' & HPERM & Hfdl & Hmfs' & Hret & Hout & Hsorted & Hnames' & HFI' & Hplk).
++intros l W' ly' S' regs' mem' md' k _ HAI' (HJG & Hk & HP & Ha0' & HPERM & Hfdl & Hmfs' & Hret & Hout & Hsorted & Hnames' & HFI' & Hplk).
+ unfold cfg_at.
++(* the program contract's journal at the harness globals (YD1w.v lib_post) is the donor's journal from memS, which agrees with mem outside the hull (TransportDrvGB.v) *)
++apply drv_journal_of_gx in HJG as (memS & HJ & Hag).
+ pose proof HJ as (HAR' & Hlyle & Hsecs & Hwle & Hos & Hfrs & Hnev' & Hk0 & F1 & F2 & F3 & F4 & Hgone & HpresJ & Hstk & F5 & HQT').
+ rewrite Hfr in Hfrs. cbn [app] in Hfrs.
+ assert (HTOP' : top_ok usp ly') by exact (top_ok_le _ _ _ _ Hlyle HTOP).
+@@ -740,9 +752,13 @@ assert (HBL' : (payload_len data = 0 /\ q = 0 /\ Permutation (ablocks B ly' S')
+ \/ (0 < payload_len data /\ Permutation (ablocks B ly' S') [(buf, cap); (q, payload_len data)])).
+ { destruct HBL as [(Hz & Hq & HPm) | (Hp & HPm)]; [left | right]; repeat split; try assumption; exact (Permutation_trans HPERM HPm). }
+ assert (HSO' : so_state xst j (w_H W') mem').
+-{ apply (so_state_keep xst XFR j (w_H W) (w_H W') mem mem'); [| exact HSO]. intros a Ha. destruct (STDOUT_static a Ha) as (H1 & H2 & H3). exact (F3 a H1 H2 H3 (spares_stdout a Ha)). }
++{ apply (so_state_keep xst XFR j (w_H W) (w_H W') mem mem'); [| exact HSO]. intros a Ha. destruct (STDOUT_static a Ha) as (H1 & H2 & H3).
++rewrite (F3 a H1 H2 H3 (spares_stdout a Ha)).
++apply Hag; [unfold STDOUT_MUT, STDOUT_LO, STDOUT_HI, SOBUF_LO, SOBUF_HI in Ha; lia | apply drv_keep_not_G; unfold drv_keep_set; left; exact Ha]. }
+ assert (HRO' : arodata_ok B (aview tfibsegs (w_H W') mem')).
+-{ apply (arodata_keep (w_H W) (w_H W') mem mem'); [| exact HRO]. intros a H1 H2 H3. apply F3; [| exact H2 | exact H3 | exact (spares_ro a H1)]. apply in_img_hull. pose proof (in_ro_range a H1). lia. }
++{ apply (arodata_keep (w_H W) (w_H W') mem mem'); [| exact HRO]. intros a H1 H2 H3. pose proof (in_ro_range a H1).
++rewrite (F3 a); [| apply in_img_hull; lia | exact H2 | exact H3 | exact (spares_ro a H1)].
++apply Hag; [lia | apply drv_keep_not_G; unfold drv_keep_set; right; left; exact H1]. }
+ assert (HPL' : 0 < payload_len data -> blk (w_H W') mem' q (payload_len data) (payload data)).
+ { intros Hp. replace (payload_len data =? 0) with false in Hplk by (symmetry; apply Z.eqb_neq; lia).
+ assert (Hinq : In (q, payload_len data) (ablocks B ly S)) by (destruct HBL as [(Hz & _) | (_ & HPm)]; [lia|]; apply (Permutation_in _ (Permutation_sym HPm)); right; left; reflexivity).
+@@ -754,7 +770,7 @@ exact (proj2 (al_client_img _ _ ARL ly S W mem md a HAR (or_introl (ex_intro _ q
+ apply (blk_copy (w_H W) (w_H W') mem mem' q q (payload_len data) (payload data) Hplk (fun i Hi => NIMGQ (q + i) ltac:(lia)) ltac:(lia) ltac:(lia) (fun i Hi => NIMGQ (q + i) ltac:(lia)) ltac:(lia) ltac:(lia)).
+ exact (HPL Hp). }
+ rewrite Hshape, restrict_mkst_fx in HS. fold regs mem in HS.
+-pose proof (lib_reseat E W W' regs mem regs' mem' ly S md ly' S' md' k HS E0 E6 ltac:(rewrite <- Hsp'; exact HJ) (proj2 (proj2 HFI)) (proj2 (proj2 HFI')) HAR HP Ha0' HCT) as HS2.
++pose proof (lib_reseat E W W' regs mem memS regs' mem' ly S md ly' S' md' k HS E0 E6 ltac:(rewrite <- Hsp'; exact HJ) Hag (proj2 (proj2 HFI)) (proj2 (proj2 HFI')) HAR HP Ha0' HCT) as HS2.
+ set (E2 := havoc E K_LR (map (getr regs') CLOB')) in HS2.
+ assert (E2old : forall i, (i < K_LR)%nat -> ew E2 i = ew E i) by (intros i Hi; subst E2; apply ew_havoc_old; exact Hi).
+ assert (E2_0 : bv_unsigned (ew E2 0) = usp) by (rewrite E2old by (unfold K_LR, A_BUF, A_LEN, K_PP; lia); exact E0).

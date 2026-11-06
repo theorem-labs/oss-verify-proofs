@@ -1,0 +1,26 @@
+# path kind sha256 role
+image-B-walks-G45/README.md file 5a9b620ade9e2207e33269413ca8f5fe10bcbaaca1465d92cfa8ba450f3532e6 in no slice
+image-b-core/README.md file cbe37adcdfaf1afb72e22bf55bae20363133eae04a1a395f7b2947018f6b9a65 in no slice
+image-tables/README.md md 2aedb282bc23d91483bc9f883dad4facd13e30834f430ba83cfc92381d1559c4 what the image tables are, the image each was read from, and the generator kept in the internal record
+image-tables/asan_globals.asan.tsv tsv aa9a1b4e1d0b7a7f3faa789e920eb44ff4cd019c03869595a2a8dfca89e136eb the asan_globals descriptors of fuzz_segconf.asan
+image-tables/callsites.asan.tsv tsv 704ffff206b5fe92fc9cf27eb4b8ea7e0fe03d0488babaf15d3a2b3132216a4b call sites of the program functions in fuzz_segconf.asan, with their constant arguments
+image-tables/program.asan-ubsan.tsv tsv a820a0b8d5acdb6a10308a7ae5afd3476e3c660f540e3384b4cb484c10e7ac82 per-function facts of fuzz_segconf.asan-ubsan
+image-tables/program.asan.tsv tsv ffd66223d752e971854442bc7947d5d6326a47369d16cf41bb263710917ef982 per-function facts of fuzz_segconf.asan (address, size, frame, calls)
+interceptors-image-b/README.md file b731069edfe8f988a5aa114bfbc1c250a0b25ca4106804a4104d6092956ca668 in no slice
+interceptors/INTERFACE-A-interceptors.md md 9a7df141f4f14ba7f4aabfed2e25a306c7d76f56a2fb6a11292c5012fcb784af the interceptor interface record
+interceptors/PATHMAP.tsv tsv fb67d5b0b8fa6bfc346f2267392ebd96ea6595220e1a64954afa8b604ab2fbb3 the interceptor layer's map of copied files (donor path per file)
+interceptors/README.md md 5ccdec45565a23f78ebec9f1f80be9e64c2cee190329b767ed86a58bad52745e what the interceptor layer delivered and where each of its run records is kept (internal record citations)
+relocation/README.md md 9a521ec7d1b9f2ae6e92a8e5d7c01a4c86640fa7396243b968f65c6f9ea11fea what the relocation directory holds and the sha256 of the run inputs kept beside the release
+relocation/REGEN-STARTUP.txt txt d01f74ec97f207dd18bb84b96c04a072a3d44361f544cdf30116a66d4e86851f the generated start-up files regenerated in core commit 8: changed inputs and controls, citing the scripts in the internal record
+relocation/atom-ranges-AFek-c8.tsv tsv e7810c32a9bc462caa90e3409489dbdf06a66a72e2d1afb64d3e272bd5144bf7 lib/A/AFek.v's DF_fixed atom ranges checked at core commit 8 (the core lane's check)
+relocation/atom-ranges-AFek.tsv tsv f3aa4449d698516d17baf2f2e7ba0a557e83d63cd468f87e18b654ddc4593ae9 lib/A/AFek.v's DF_fixed atom ranges checked against the unit's own stated ranges (the core lane's check)
+relocation/donor-table.tsv tsv b6608a412567e394e633f4855df0b2c185924dc11c9e1638b1eec9268117b438 the core lane's record: the donor of each relocated lib/A file and why
+relocation/files-C3.txt txt a3c08f9c0d1c675fe67c8a747fdae6bf9ce0dfe012dd27662f6d7d7a43814dc8 a relocation run's --files list
+relocation/files-C4.txt txt 8bb1679cda0de6e0c5996e0ad6a8549c8da660dd8255de70cd1e0b3392f9c46e a relocation run's --files list
+relocation/files-C5.txt txt 4943e960f1c736eb9d46929f416648e9296bcaf76e1703407927274f9ddbf927 a relocation run's --files list
+relocation/files-C6.txt txt decffc64bfead00067f9f2b03b5fe007b22a7c4fe8aa19d9dd1336346a00deec a relocation run's --files list
+relocation/files-C7.txt txt 653c662e593e97cc8b9823f401a0972361193230ba7f95a598a41ab4aab9bee8 a relocation run's --files list
+relocation/files-C8.txt txt e240dbbdce44672b98f7500b9ee4d59c9f7f2d2f8fc1bdbcc09e4f8cb1c63134 a relocation run's --files list
+relocation/files-C8a.txt txt 67390652eb0a2e34b9d464da0d36ca1c79dc58231cf49ca67f65295c904a9a0c a relocation run's --files list
+relocation/files-F6.txt txt a93f22465cab776cba6be34e2820712703b7319ab505cffb2e9c0fe38100a607 a relocation run's --files list
+untime-removed.tsv tsv 8a9da6ba3fa4341fdd5089548752cc27aa70546860e6105be72e737393a14080 the timed tactics taken out of proofs: file, first line, line count and the sha256 of each removed text (tools/publish/untime; the text is in the internal record)

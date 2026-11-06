@@ -1,0 +1,107 @@
+image	row	key	value	section	what is at the value	role
+A	base	0x1029e	0x10b7c	.rodata	START of $d (size 0)	.rodata prefix "-+   0X0x"
+A	base	0x102ac	0x1380f	.rodata	not a symbol start; in .rodata; after $d+0x143	-
+A	base	0x102de	0x1421d	.rodata	not a symbol start; in .rodata; after $d+0x4	-
+A	base	0x102e5	0x1583b	.rodata	not a symbol start; in .rodata; after $d+0x227	-
+A	base	0x1031d	0x16f73	.rodata	not a symbol start; in .rodata; after $d+0x467	-
+A	base	0x10326	0x18e31	.rodata	not a symbol start; in .rodata; after $d+0x12d	-
+A	base	0x1032a	0x196d8	.rodata	not a symbol start; in .rodata; after $d+0x229	-
+A	base	0x10355	0x1d860	.rodata	not a symbol start; in .rodata; after $d+0xda	-
+A	base	0x1036a	0x1d875	.rodata	not a symbol start; in .rodata; after $d+0xef	-
+A	base	0x10381	0x1df96	.rodata	not a symbol start; in .rodata; after $d+0xe0	-
+A	base	0x10385	0x1e9f7	.rodata	not a symbol start; in .rodata; after $d+0x243	-
+A	base	0x103b3	0x207ad	.rodata	not a symbol start; in .rodata; after $d+0xb2	.rodata object
+A	base	0x103c0	0x102e0	.rodata	START of $d (size 0)	-
+A	base	0x103d8	0x10348	.rodata	not a symbol start; in .rodata; after $d+0x8	-
+A	base	0x103e8	0x10368	.rodata	START of $d (size 0)	-
+A	base	0x103f0	0x10378	.rodata	not a symbol start; in .rodata; after $d+0x8	-
+A	base	0x103f8	0x10380	.rodata	START of $d (size 0)	-
+A	base	0x10400	0x10388	.rodata	not a symbol start; in .rodata; after $d+0x8	-
+A	base	0x10418	0x10388	.rodata	not a symbol start; in .rodata; after $d+0x8	-
+A	base	0x10420	0x10398	.rodata	not a symbol start; in .rodata; after $d+0x18	-
+A	base	0x10428	0x103a0	.rodata	not a symbol start; in .rodata; after $d+0x20	-
+A	base	0x10430	0x103c0	.rodata	START of $d (size 0)	-
+A	base	0x107e4	0x22790	.rodata	START of $d (size 0)	-
+A	base	0x10804	0x227b0	.rodata	START of $d,__malloc_size_classes (size 96)	-
+A	base	0x10864	0x22810	.rodata	START of $d,small_cnt_tab (size 27)	-
+A	base	0x1087f	0x2282b	.rodata	START of $d,med_cnt_tab (size 4)	-
+A	base	0x10884	0x22858	.rodata	START of $d (size 0)	.rodata table ROT_0x10884
+A	base	0x10964	0x22938	.rodata	not a symbol start; in .rodata; after $d+0xe0	.rodata object
+A	base	0x10984	0x22958	.rodata	START of $d (size 0)	.rodata table ROT_0x10984
+A	base	0x109cc	0x229a0	.rodata	START of $d,states (size 464)	.rodata STATES
+A	base	0x10b9c	0x22b70	.rodata	START of $d,xdigits (size 16)	.rodata XDIGITS
+A	base	0x1145c	0x22830	.rodata	START of $d (size 0)	-
+A	base	0x11988	0x250f8	.eh_frame	START of $d,__EH_FRAME_LIST_END__,__EH_FRAME_LIST__ (size 4)	-
+A	override	0x1ae04	0x42a14	.text	START of $x,__interceptor_trampoline_strerror,__wrap_strerror (size 4)	strerror trampoline
+A	override	0x1ae48	0x42a10	.text	START of $x,__interceptor_trampoline_wctomb,__wrap_wctomb (size 4)	wctomb trampoline
+A	override	0x21334	0x5208c	.text	START of $x,__interceptor_trampoline_memcpy,__wrap_memcpy (size 4)	memcpy trampoline
+A	override	0x21738	0x52088	.text	START of $x,__interceptor_trampoline_memset,__wrap_memset (size 4)	memset trampoline
+A	override	0x21920	0x429c8	.text	START of $x,__interceptor_trampoline_strnlen,__wrap_strnlen (size 4)	strnlen trampoline
+A	base	0x22e18	0xa1198	.got	not a symbol start; in .got; after $d+0xd80	GOT word of __stack_chk_guard
+A	base	0x22e20	0xa11c8	.got	not a symbol start; in .got; after $d+0xdb0	-
+A	base	0x23f58	0xa4bb0	.data	START of $d,__stderr_used (size 8)	-
+A	base	0x23f60	0xa4bb8	.data	START of $d,__stdout_FILE (size 232)	-
+A	base	0x24048	0xa4ca0	.data	START of $d,__stdout_used (size 8)	-
+A	base	0x34280	0x5fc2c0	.bss	START of $d,exit.exit_lock (size 4)	-
+A	base	0x342a8	0x5fc2e0	.bss	START of $d,__libc (size 104)	-
+A	base	0x34320	0x5fc360	.bss	START of __malloc_context (size 928)	-
+A	base	0x346c0	0xa4d90	.data	START of $d,__stdin_used (size 8)	-
+A	base	0x35000	0x5fe000	(none)	not a symbol start; in (none); after r1+0x6e4	globals end
+A	base	0x7f000200	0x990d8	.text	START of $x,vsnprintf (size 204)	musl vsnprintf
+A	base	0x7f000300	0x991a4	.text	START of $x,sn_write (size 220)	sn_write
+A	override	0x7f000400	0x95fac	.text	START of $x,vfprintf (size 432)	musl vfprintf BODY
+A	base	0x7f000700	0x9565c	.text	START of $x,__lockfile (size 252)	__lockfile
+A	base	0x7f000800	0x95758	.text	START of $x,__unlockfile (size 96)	__unlockfile
+B	base	0x1029e	0x10b7c	.rodata	START of $d (size 0)	.rodata prefix "-+   0X0x"
+B	base	0x102ac	0x1380f	.rodata	not a symbol start; in .rodata; after $d+0x143	-
+B	base	0x102de	0x1421d	.rodata	not a symbol start; in .rodata; after $d+0x4	-
+B	base	0x102e5	0x1583b	.rodata	not a symbol start; in .rodata; after $d+0x227	-
+B	base	0x1031d	0x16f73	.rodata	not a symbol start; in .rodata; after $d+0x467	-
+B	base	0x10326	0x18e31	.rodata	not a symbol start; in .rodata; after $d+0x12d	-
+B	base	0x1032a	0x196d8	.rodata	not a symbol start; in .rodata; after $d+0x229	-
+B	base	0x10355	0x1d868	.rodata	not a symbol start; in .rodata; after $d+0xda	-
+B	base	0x1036a	0x1d87d	.rodata	not a symbol start; in .rodata; after $d+0xef	-
+B	base	0x10381	0x1df9e	.rodata	not a symbol start; in .rodata; after $d+0xe0	-
+B	base	0x10385	0x1e9ff	.rodata	not a symbol start; in .rodata; after $d+0x243	-
+B	base	0x103b3	0x207b5	.rodata	not a symbol start; in .rodata; after $d+0xb2	.rodata object
+B	base	0x103c0	0x102e0	.rodata	START of $d (size 0)	-
+B	base	0x103d8	0x10348	.rodata	not a symbol start; in .rodata; after $d+0x8	-
+B	base	0x103e8	0x10368	.rodata	START of $d (size 0)	-
+B	base	0x103f0	0x10378	.rodata	not a symbol start; in .rodata; after $d+0x8	-
+B	base	0x103f8	0x10380	.rodata	START of $d (size 0)	-
+B	base	0x10400	0x10388	.rodata	not a symbol start; in .rodata; after $d+0x8	-
+B	base	0x10418	0x10388	.rodata	not a symbol start; in .rodata; after $d+0x8	-
+B	base	0x10420	0x10398	.rodata	not a symbol start; in .rodata; after $d+0x18	-
+B	base	0x10428	0x103a0	.rodata	not a symbol start; in .rodata; after $d+0x20	-
+B	base	0x10430	0x103c0	.rodata	START of $d (size 0)	-
+B	base	0x107e4	0x22790	.rodata	START of $d (size 0)	-
+B	base	0x10804	0x227b0	.rodata	START of $d,__malloc_size_classes (size 96)	-
+B	base	0x10864	0x22810	.rodata	START of $d,small_cnt_tab (size 27)	-
+B	base	0x1087f	0x2282b	.rodata	START of $d,med_cnt_tab (size 4)	-
+B	base	0x10884	0x22858	.rodata	START of $d (size 0)	.rodata table ROT_0x10884
+B	base	0x10964	0x22938	.rodata	not a symbol start; in .rodata; after $d+0xe0	.rodata object
+B	base	0x10984	0x22958	.rodata	START of $d (size 0)	.rodata table ROT_0x10984
+B	base	0x109cc	0x229a0	.rodata	START of $d,states (size 464)	.rodata STATES
+B	base	0x10b9c	0x22b70	.rodata	START of $d,xdigits (size 16)	.rodata XDIGITS
+B	base	0x1145c	0x22830	.rodata	START of $d (size 0)	-
+B	base	0x11988	0x25108	.eh_frame	START of $d,__EH_FRAME_LIST_END__,__EH_FRAME_LIST__ (size 4)	-
+B	override	0x1ae04	0x42a8c	.text	START of $x,__interceptor_trampoline_strerror,__wrap_strerror (size 4)	strerror trampoline
+B	override	0x1ae48	0x42a88	.text	START of $x,__interceptor_trampoline_wctomb,__wrap_wctomb (size 4)	wctomb trampoline
+B	override	0x21334	0x52104	.text	START of $x,__interceptor_trampoline_memcpy,__wrap_memcpy (size 4)	memcpy trampoline
+B	override	0x21738	0x52100	.text	START of $x,__interceptor_trampoline_memset,__wrap_memset (size 4)	memset trampoline
+B	override	0x21920	0x42a40	.text	START of $x,__interceptor_trampoline_strnlen,__wrap_strnlen (size 4)	strnlen trampoline
+B	base	0x22e18	0xa1538	.got	not a symbol start; in .got; after $d+0xd80	GOT word of __stack_chk_guard
+B	base	0x22e20	0xa1568	.got	not a symbol start; in .got; after $d+0xdb0	-
+B	base	0x23f58	0xa4f50	.data	START of $d,__stderr_used (size 8)	-
+B	base	0x23f60	0xa4f58	.data	START of $d,__stdout_FILE (size 232)	-
+B	base	0x24048	0xa5040	.data	START of $d,__stdout_used (size 8)	-
+B	base	0x34280	0x5fc680	.bss	START of $d,exit.exit_lock (size 4)	-
+B	base	0x342a8	0x5fc6a0	.bss	START of $d,__libc (size 104)	-
+B	base	0x34320	0x5fc720	.bss	START of __malloc_context (size 928)	-
+B	base	0x346c0	0xa5130	.data	START of $d,__stdin_used (size 8)	-
+B	base	0x35000	0x5fe000	(none)	not a symbol start; in (none); after r1+0x324	globals end
+B	base	0x7f000200	0x99478	.text	START of $x,vsnprintf (size 204)	musl vsnprintf
+B	base	0x7f000300	0x99544	.text	START of $x,sn_write (size 220)	sn_write
+B	override	0x7f000400	0x9634c	.text	START of $x,vfprintf (size 432)	musl vfprintf BODY
+B	base	0x7f000700	0x959fc	.text	START of $x,__lockfile (size 252)	__lockfile
+B	base	0x7f000800	0x95af8	.text	START of $x,__unlockfile (size 96)	__unlockfile

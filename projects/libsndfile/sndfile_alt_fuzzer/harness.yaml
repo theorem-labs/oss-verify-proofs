@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libsndfile
 harness: sndfile_alt_fuzzer
-rocq: OssFuzzTheorems.libsndfile.sndfile_alt_fuzzer
+rocq: OSSVerify.libsndfile.sndfile_alt_fuzzer
 origin: upstream
 summary: Opens the input through sf_open_virtual (read-only virtual IO over the buffer) and, by the first
   byte mod 3, drains it with sf_read_short / sf_read_int / sf_read_double; the samples are discarded ("Do

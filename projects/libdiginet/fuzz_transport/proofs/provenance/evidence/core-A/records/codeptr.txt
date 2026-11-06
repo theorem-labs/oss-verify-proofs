@@ -1,0 +1,30 @@
+# command: EV/gates/codeptr-A.sh WORK LIB OUT/codeptr (TIMG=TIMG PG=PG DON=DON SET=OUT/tools/startup-set/2026-10-30d)
+# pins: bin/fuzz_grant/fuzz_grant.asan c2c7559b29bd; unstripped/fuzz_grant/fuzz_grant.asan 57c26f993615; dgn-transport-pins-port2/stripped/fuzz_transport.asan e89be137db17; dgn-transport-pins-port2/unstripped/fuzz_transport.asan 86efc3a80314; 2026-10-30d/frozen/codeptr.py.frozen-12348302dfd2 12348302dfd2; bundle startup-set-2026-10-30d.tsv (set SHA256SUMS: 50 of 50 OK); plant 0x5f81e0 (stage/A/AE3m.v STDOUT_BUFA)
+# inputs (sha256 of the sorted per-file sha256sum list): stage-out/A 793dd82c0597 (370 files); stage/A e8d56f74db70 (370 files); LIB/A/AF0m.v 5dfdd0e65356; codeptr-notaddr.tsv 449015a11709
+# donor
+AFem.v        1 code (0 function starts, 0 return pcs, 0 other instruction starts),   12 data, 8 at or above the image top 0x5f93b0, 1 FINDINGS: 0x61a86
+codeptr: UNMEASURED: 38 of 370 file(s) hold no address literal in range
+rc=1
+# plant
+AE3m.v        5 code (4 function starts, 1 return pcs, 0 other instruction starts),    8 data, 1 at or above the image top 0x6153d0, 1 FINDINGS: 0x5f81e0 [stale against fuzz_grant.asan, donor file stage/A/AE3m.v: 1 STALE (0x5f81e0), 0 donor-file literals with the same meaning in both images]
+rc=1
+# base
+base: 192 finding(s) in 63 file(s); every value, each occurrence measured: codeptr-occurrences.tsv
+codeptr: UNMEASURED: 38 of 370 file(s) hold no address literal in range
+rc=1
+# declared
+codeptr: UNMEASURED: 40 of 370 file(s) hold no address literal in range
+rc=2
+# plant-declared
+AE3m.v        5 code (4 function starts, 1 return pcs, 0 other instruction starts),    8 data, 1 at or above the image top 0x6153d0, 1 FINDINGS: 0x5f81e0 [stale against fuzz_grant.asan, donor file stage/A/AE3m.v: 1 STALE (0x5f81e0), 0 donor-file literals with the same meaning in both images]
+codeptr: UNMEASURED: 40 of 370 file(s) hold no address literal in range
+rc=1
+# roles
+roles: OK A/AB1w.v:600 tfib_at_rw_lo 0xa5000, tfib_at_rw_len 0x571000; the image: last PT_LOAD 0xa5d88..0x6153d0, page range [0xa5000, 0x616000) of length 0x571000
+roles: 90 declared value(s), 508 occurrence(s): 0 UNEXPLAINED value(s), 0 UNEXPLAINED occurrence(s), 0 literal-set mismatch(es), 0 DEFECT(s)
+rc=0
+roles: 0x63a36 1 occurrence(s), 1 with a measured role (witness); MEASURED: theDepot of the image = 0x18e8d8, / 4 = 0x63a36; A/AF0m.v TFIB_DEPOT = 0x18e8d8
+# controls
+plant: 1 finding line(s) = the planted AE3m.v 0x5f81e0, STALE against fuzz_grant.asan: PASS
+plant-declared: 1 finding line(s) = the declared run: 0 + the planted AE3m.v 0x5f81e0, STALE against fuzz_grant.asan: PASS
+base: AE3m.v unplanted, 0 FINDINGS: PASS

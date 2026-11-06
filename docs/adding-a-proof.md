@@ -26,10 +26,10 @@ write one.
    build record labels it.
 5. **Text.** Comments and names hold nothing private: no internal names and no
    paths from the machine the proof was written on.
-6. **Records.** `proofs/<project>/<harness>/provenance/` holds the binaries'
-   build record: `PROVENANCE.yaml`, `PROVENANCE.md`, what built them, and the
-   licence of every program in them (`LICENSES/`). What built them is
-   `recipe/`, the slice of the recipe that built the target, for a
+6. **Records.** `projects/<project>/<harness>/proofs/provenance/` holds the
+   binaries' build record: `PROVENANCE.yaml`, `PROVENANCE.md`, what built
+   them, and the licence of every program in them (`LICENSES/`). What built
+   them is `recipe/`, the slice of the recipe that built the target, for a
    recipe-built project; for a port-built project (`build.oss_verify` in its
    `project.yaml`) it is `port/`: `port/manifest.yaml`, the build manifest the
    port's `tools/check --twice` wrote, less every `host` key (its `rebuild`
@@ -40,7 +40,9 @@ write one.
    `project.yaml` says, and a port-built project's `PROVENANCE.yaml` cites no
    recipe. GPL and LGPL code has its source archive and manifest in the source
    release, and the recipe or port archive that built it is attached too. The
-   maintainer writes and updates the build record.
+   maintainer writes and updates the build record, and a release checks each
+   record against the facts (`./oft lint --release`, rule `records` in
+   [tools/oft/README.md](../tools/oft/README.md#the-rules-oft-lint)).
 7. **Licences.** Each file has the licence lines of the first of these cases
    that fits it. A file's licence lines are its first lines that say where it
    comes from and under which licence it is, and each `Modified by` line under
@@ -61,7 +63,33 @@ write one.
       instruction words or data, has Anthropic's two lines, then that file's
       `Modified by` lines.
    3. Any other file, written new or with code only from files with no
-      licence lines, is under the MIT licence and has no licence lines.
+      licence lines, is under the MIT licence and has no licence lines, or
+      only the line `SPDX-License-Identifier: MIT`.
+
+   The licence lines are in a file's first 10 lines, and `oft lint` (its
+   `licence` rule) checks them against these cases and the build record. It
+   reads each file on its own: no merge check compares one file's text with
+   another's, so lint finds no copy and never says which case a file is of.
+   Cases 1 to 3 are yours to apply: when a file holds code from a file with
+   Anthropic's two lines, give it that file's licence lines, as case 2 says,
+   and say in the pull request which file it came from. A fuzz target whose
+   licence lines a series of its own applies has a `licence-pending` entry,
+   below, which defers that fuzz target's licence refusals.
+
+   A fuzz target whose licence lines are applied in a series of their own has
+   a `licence-pending` entry in `tools/oft/lint-exceptions.yaml`: its unit
+   (`<project>/<fuzz target>`), the date the series is due, the series' pull
+   request (or `pending`) and a reason. Lint then reports that fuzz target's
+   licence refusals as pending and does not fail on them. The series removes
+   its own entry: an entry fails lint when its fuzz target has Rocq files and
+   no licence refusal left; an entry may wait for a fuzz target whose proofs
+   have not come yet. After its due date it fails a pull request that touches
+   its fuzz target or adds or changes the entry itself, and a lint of the
+   whole tree with no change to judge; for any other pull request it is a
+   warning, so a series that removes its own entry fails on no other. The list
+   only shrinks: a pull request that changes proof files adds no entry, a pull
+   request of the tools adds one and its review judges it, and a release
+   carries none.
 
    A file of case 1 or 2 that was changed has one more line under its licence
    lines, true of this file: who changed it, when, and what changed in it,
@@ -75,10 +103,10 @@ write one.
 
 ## Steps
 
-1. On a branch, put the proofs in `proofs/<project>/<harness>/`: one directory
-   per statement ([proving.md](proving.md)), and the `.v` files they share, if
-   any, in `lib/`, at any depth. A file `lib/A/B.v` is the module
-   `OssFuzzTheorems.Proofs.<project>.<harness>.lib.A.B`, as in the harness's
+1. On a branch, put the proofs in `projects/<project>/<harness>/proofs/`: one
+   directory per statement ([proving.md](proving.md)), and the `.v` files they
+   share, if any, in `lib/`, at any depth. A file `lib/A/B.v` is the module
+   `OSSVerify.Proofs.<project>.<harness>.lib.A.B`, as in the harness's
    `rocq:` field. In the project and harness names, each character other than
    a letter, a digit or `_` is written as `_` (knot-dns is `knot_dns`), and a
    name that starts with a digit gets `h_` in front (`64bit_fuzzer` is
@@ -87,11 +115,12 @@ write one.
    file its licence lines (requirement 7). An agent follows
    [the adding-a-proof skill](../.claude/skills/adding-a-proof/SKILL.md),
    which goes through the files one at a time.
-3. Run what CI runs. Commit, with what `oft generate` renders and a DCO
+3. Run what CI runs. Commit, with what `oft generate --skip-shared` renders
+   (the shared pages and the index are rendered after the merge) and a DCO
    sign-off, before the lint, so that `git diff` lists every changed path:
 
        ./oft fetch <project>
-       ./oft generate
+       ./oft generate --skip-shared
        git add -A && git commit -s
        git diff --name-only origin/main HEAD > changed.txt
        ./oft lint --changed changed.txt --pr-kind contributor
@@ -101,7 +130,7 @@ write one.
          ./oft check <project>/<harness> --parts statements,proofs
 
    A harness's counterexamples are checked in the runner image with
-   `--parts counterexamples`.
+   `--parts counterexamples` (tools/oft/ci/check-units.sh, step 4, "Counterexamples").
 
 4. Open a pull request, and say in it which files came from which files of the
    repository. CI runs the same checks

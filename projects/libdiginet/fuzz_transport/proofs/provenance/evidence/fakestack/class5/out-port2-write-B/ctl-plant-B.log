@@ -1,0 +1,4 @@
+donor: pinned sha256 bbe55d24d096, twin sha256 658cefbe806b, allocated sections equal (build-id note excepted): True
+target: pinned sha256 b44a20551b0e, twin sha256 95ceb93fd997, allocated sections equal (build-id note excepted): True
+ref 781f46bc05cd image B: 11 ranges paired and compared; 73 resolve lines: 12 move a value (0x10340 -> 0x10348, 0x4045c -> 0x3e000, 0xa5f40 -> 0xa3ce0, 0xa5f48 -> 0xa3ce8, 0xa5f50 -> 0xa3cf0, 0xa5fa0 -> 0xa3d40, 0xa6c50 -> 0xa49d0, 0xa6c60 -> 0xa49e0), 1 name the image of a header range, the rest keep the value
+FAIL: RtSM5T range 0x3ffd0 (__asan_stack_malloc_5): range DIFFERENT (7, 1, 0) 0 differ; function DIFFERENT (7, 1, 0) 0 differ

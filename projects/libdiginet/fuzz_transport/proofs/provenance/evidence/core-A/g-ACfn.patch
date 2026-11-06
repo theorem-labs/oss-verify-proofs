@@ -1,0 +1,37 @@
+--- A/ACfn.v
++++ A/ACfn.v
+@@ -14,6 +14,7 @@
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YI16 YE00 YE01.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import AE2k.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YC5d.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import W_journalG.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
+ Import ListNotations.
+ Unset Lia Cache. Unset Nia Cache.
+@@ -25,6 +26,9 @@
+ Definition LIVE_LIB : Z := 2 ^ 33.
+ Definition LLVMF_STK : Z := 32768.
+ Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}.
++(* The program-global ranges G the call may change (the harness globals): W_journalG.v's ajournal_gx G. The slot
++   states its contract at its own G; the driver states its call site at the hull DRV_G (A/AD2f.v, A/TransportDriver.v). *)
++Variable G : list (Z * Z).
+ Variable B : asyms.
+ Variable MT : ameter_ops.
+ Variables XM_LIB XN_LIB : Z -> Z.
+@@ -48,7 +52,7 @@
+ Definition tfib_lib_post_x (regs : bvmap 5 word) (ly : alayout) (S : astate) (W : world segs) (mem : word -> option byte) (md : Model)
+ (p n : Z) (M : Z) (l : lleaf)
+ (ly' : alayout) (S' : astate) (W' : world segs) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model) (k : Z) : Prop :=
+-ajournal segs B LLVMF_STK (spZ regs) [sink_token] ly S W mem md [] ly' S' W' mem' md' k /\ k <= EV_LIB /\
++ajournal_gx segs B G 0 [] LLVMF_STK (spZ regs) [sink_token] ly S W mem md [] ly' S' W' mem' md' k /\ k <= EV_LIB /\
+ aregs_preserved regs regs' /\ getr regs' 10 = w64 0 /\
+ Permutation (ablocks B ly' S') (ablocks B ly S) /\
+ (forall fd, fd_lookup (m_fds md') fd = fd_lookup (m_fds md) fd) /\
+@@ -69,5 +73,5 @@
+ srealizes segs c' (K l)) ->
+ srealizes segs (cfg_at segs A_LLVMF regs mem md) (LIBK pl (m_fs md) K).
+ End a.
+-Definition tfib_lib_contract_x_all {rc : YM05.RunCeil} {LS : lib_shape} (B : asyms) (MT : ameter_ops) (XM_LIB XN_LIB : Z -> Z) (RLO RHI : Z) : Prop :=
+-forall fx : YK11.FPState, @tfib_lib_contract_x fx rc LS B MT XM_LIB XN_LIB RLO RHI.
++Definition tfib_lib_contract_x_all {rc : YM05.RunCeil} {LS : lib_shape} (G : list (Z * Z)) (B : asyms) (MT : ameter_ops) (XM_LIB XN_LIB : Z -> Z) (RLO RHI : Z) : Prop :=
++forall fx : YK11.FPState, @tfib_lib_contract_x fx rc LS G B MT XM_LIB XN_LIB RLO RHI.

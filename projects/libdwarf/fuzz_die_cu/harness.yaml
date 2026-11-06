@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_die_cu
-rocq: OssFuzzTheorems.libdwarf.fuzz_die_cu
+rocq: OSSVerify.libdwarf.fuzz_die_cu
 origin: upstream
 summary: dwarf_next_cu_header_d then dwarf_siblingof_b on the first CU; prints '>>Success' or an error
   line.

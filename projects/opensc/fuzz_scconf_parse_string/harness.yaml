@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: opensc
 harness: fuzz_scconf_parse_string
-rocq: OssFuzzTheorems.opensc.fuzz_scconf_parse_string
+rocq: OSSVerify.opensc.fuzz_scconf_parse_string
 origin: upstream
 summary: scconf_parse_string on a NUL-terminated copy of inputs up to 16,000 bytes; parse result and tree
   ignored, then scconf_free.

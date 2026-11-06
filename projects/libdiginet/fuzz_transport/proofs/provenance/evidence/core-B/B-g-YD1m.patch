@@ -1,0 +1,29 @@
+diff --git B/YD1m.v B/YD1m.v
+index 3bd30ef7b43..a41fce6206a 100644
+--- B/YD1m.v
++++ B/YD1m.v
+@@ -4,6 +4,7 @@
+ (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1m.v (donor image sha256 1c29845fe605), with its module paths changed. *)
+ (* Modified by Theorem Labs, 2026-10: tfib_lib_site_x proves the call site at the float-state invariant P from the slot tfib_lib_contract_xP (lib/A/YCfn.v), whose call returns at some float state fx' with P fx'. *)
+ (* Modified by Theorem Labs, 2026-10: YC5d and YCbq are Required from lib/Reusable: the lib/B copies were the Reusable files' text under lib.B (so lib/B had a second ameter_ops type beside the statement's), and they are deleted. *)
++(* Modified by Theorem Labs, 2026-10: LIBC is the slot at the harness's globals G := G_HARNESS_B (lib/B/TransportGB.v), libreac/fuzz_pcap's G form (Reusable/YD1m.v:37 at origin/ossv/recipes 198234fa4d3, G_HARNESS_U there). *)
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+@@ -14,6 +15,7 @@ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Import YB1v
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YCbq. From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YE01. From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Import YE2k. From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YC5d. From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Import YCfn YD1u. From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YE00.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YO09.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Import TransportGB.
+ Import ListNotations.
+ Unset Lia Cache. Unset Nia Cache.
+ Local Set Warnings "-abstract-large-number".
+@@ -29,7 +31,7 @@ Variables RLO RHI : Z.
+ Hypothesis MT_FREE : forall S m, mo_ok MT S m.
+ Hypothesis RO_IN : forall a, RLO <= a < RHI -> in_ro_tfa a.
+ Variable P : YK11.FPState -> Prop.
+-Hypothesis LIBC : tfib_lib_contract_xP B MT XM_LIB XN_LIB RLO RHI P.
++Hypothesis LIBC : tfib_lib_contract_xP G_HARNESS_B B MT XM_LIB XN_LIB RLO RHI P.
+ Lemma layout_of_AR' : forall ly S W mem md, AR tfibsegs B ly S W mem md -> layout_ok ly.
+ Proof. intros ly S W mem md H. exact (am_layout _ _ _ _ (proj1 H)). Qed.
+ Theorem tfib_lib_site_x : lib_site_x B P.

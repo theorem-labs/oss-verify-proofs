@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: solidity
 harness: solc_mutator_ossfuzz
-rocq: OssFuzzTheorems.solidity.solc_mutator_ossfuzz
+rocq: OSSVerify.solidity.solc_mutator_ossfuzz
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

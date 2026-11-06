@@ -1,0 +1,17 @@
+# X = <cgif-B-twin>
+# Y = <decode-B-twin>
+== (1) the 8 functions given to strictcmp3.py cmp by name
+_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedStackTraceENS_9AllocTypeEb	X symtab 1 (sized FUNC 1)	Y symtab 1 (sized FUNC 1)	fsym X 0x31550 Y 0x31298
+_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddr	X symtab 1 (sized FUNC 1)	Y symtab 1 (sized FUNC 1)	fsym X 0x359e4 Y 0x3580c
+_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocator64IN6__asan4AP64IN	X symtab 1 (sized FUNC 1)	Y symtab 1 (sized FUNC 1)	fsym X 0x36134 Y 0x35f5c
+memset	X symtab 1 (sized FUNC 1)	Y symtab 1 (sized FUNC 1)	fsym X 0x9790c Y 0x92a1c
+_ZN11__sanitizer13internal_mmapEPvmiiiy	X symtab 1 (sized FUNC 1)	Y symtab 1 (sized FUNC 1)	fsym X 0x64198 Y 0x63d88
+_ZN11__sanitizer13StackDepotPutENS_10StackTraceE	X symtab 1 (sized FUNC 1)	Y symtab 1 (sized FUNC 1)	fsym X 0x724e0 Y 0x720d0
+_ZN6__asan12PoisonShadowEmmh	X symtab 1 (sized FUNC 1)	Y symtab 1 (sized FUNC 1)	fsym X 0x53800 Y 0x5308c
+_ZN11__sanitizer9TryMemCpyEPvPKvm	X symtab 1 (sized FUNC 1)	Y symtab 1 (sized FUNC 1)	fsym X 0x6dcc8 Y 0x6d8b8
+(1) names with more than one symtab entry in either image: 0
+== (2) closure members: 786; members whose name has more than one symtab entry in either image: 4
+_ZN6__asanL11MemToShadowEm	X 0x3b218	qualified _ZN6__asanL11MemToShadowEm{asan_errors.cpp}	Y counterpart 0x3b040	X copies ['0x3b218', '0x3cc00', '0x526b4', '0x53cfc', '0x5cbe8']	Y copies ['0x3b040', '0x3c870', '0x51d04', '0x53588', '0x5c6c4']
+_ZN6__asanL11MemToShadowEm	X 0x526b4	qualified _ZN6__asanL11MemToShadowEm{asan_linux.cpp}	Y counterpart 0x51d04	X copies ['0x3b218', '0x3cc00', '0x526b4', '0x53cfc', '0x5cbe8']	Y copies ['0x3b040', '0x3c870', '0x51d04', '0x53588', '0x5c6c4']
+_ZN6__asanL11MemToShadowEm	X 0x53cfc	qualified _ZN6__asanL11MemToShadowEm{asan_poisoning.cpp}	Y counterpart 0x53588	X copies ['0x3b218', '0x3cc00', '0x526b4', '0x53cfc', '0x5cbe8']	Y copies ['0x3b040', '0x3c870', '0x51d04', '0x53588', '0x5c6c4']
+_ZN6__asanL11MemToShadowEm	X 0x5cbe8	qualified _ZN6__asanL11MemToShadowEm{asan_thread.cpp}	Y counterpart 0x5c6c4	X copies ['0x3b218', '0x3cc00', '0x526b4', '0x53cfc', '0x5cbe8']	Y copies ['0x3b040', '0x3c870', '0x51d04', '0x53588', '0x5c6c4']

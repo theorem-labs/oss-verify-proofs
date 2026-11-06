@@ -1,0 +1,77 @@
+gate	file:line	sentence	donor_value	our_value	triage	measured
+RB	lib/B/YB03.v:12	Definition JS_tfib_band	0xa7000	0xb19c0	OK	both sides name __asan::unknown_thread_stats+0x58; our value 0xb19c0 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB05.v:20144	Definition startup_plan_tfib_ranges	0x32000	0x35080	OK	both sides name __lsan::LockAllocator+0x128; our value 0x35080 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB05.v:20144	Definition startup_plan_tfib_ranges	0x36000	0x39080	OK	both sides name __sanitizer::LargeMmapAllocator::__asan::AsanMapUnmapCallback::LargeMmapAllocatorPtrArrayDynamic::LocalAddressSpaceView::Allocate::AllocatorStats+0x344; our value 0x39080 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB05.v:20144	Definition startup_plan_tfib_ranges	0x3c000	0x3f080	OK	both sides name __asan::ErrorGeneric::Print+0xcac; our value 0x3f080 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB05.v:20144	Definition startup_plan_tfib_ranges	0x46000	0x4ade8	OK	both sides name ___interceptor_pthread_attr_getstack+0x150; our value 0x4ade8 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB05.v:20144	Definition startup_plan_tfib_ranges	0x51000	0x56bb0	OK	both sides name ioctl_table_fill+0x8830; our value 0x56bb0 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB05.v:20144	Definition startup_plan_tfib_ranges	0x58000	0x5e070	OK	both sides name __asan_set_error_report_callback+0x80; our value 0x5e070 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB05.v:20144	Definition startup_plan_tfib_ranges	0x72000	0x78070	OK	both sides name __sanitizer::DenseMap::detail::DenseMapPair::DenseMapInfo::_EE::_I::_jE::allocateBuckets+0x180; our value 0x78070 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB05.v:20144	Definition startup_plan_tfib_ranges	0x79000	0x7f070	OK	both sides name __sanitizer::ScopedErrorReportLock::Lock+0xf8; our value 0x7f070 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB05.v:20144	Definition startup_plan_tfib_ranges	0x7c000	0x82070	OK	both sides name __lsan::LeakReport::ReportTopLeaks+0x5c; our value 0x82070 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB05.v:20144	Definition startup_plan_tfib_ranges	0x7f000	0x85070	OK	both sides name __sanitizer::SortAndDedup::InternalMmapVector::CompareLess+0x104; our value 0x85070 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB05.v:20144	Definition startup_plan_tfib_ranges	0x8c000	0x935f4	OK	both sides name libunwind::CFI_Parser::LocalAddressSpace::findFDE::_::_8::FDE_Info::_8::CIE_Info+0xec; our value 0x935f4 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB05.v:20144	Definition startup_plan_tfib_ranges	0x91000	0x985f4	OK	both sides name __divtf3+0xe4; our value 0x985f4 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB05.v:20144	Definition startup_plan_tfib_ranges	0x97000	0x9e17c	OK	both sides name sn_write+0xc4; our value 0x9e17c is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YB13.v:28	Lemma tfib_rw_window	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YB13.v:48	Definition TFIB_BSS	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YB1h.v:86	Lemma tfib_rw_window	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YB1k.v:68	Lemma F_020	0x65000	0x6b070	OK	both sides name __sanitizer::GetMaxUserVirtualAddress+0x54; our value 0x6b070 is not page-aligned: an address moved with its symbol, not a size
+RB	lib/B/YD1e.v:170	Lemma band_allow / sentence 10	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1f.v:105	Lemma band_rom_none / sentence 13	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1g.v:475	Lemma vm_bound	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1g.v:479	Lemma vm_bound / sentence 6	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1g.v:669	Lemma sliver_hid / sentence 12	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1j.v:117	Lemma ex_ranges_free / sentence 13	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1o.v:81	Lemma bss_zero_shadow	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1o.v:84	Lemma bss_zero_shadow / sentence 3	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1o.v:87	Lemma bss_shadow_facts	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1o.v:91	Lemma bss_shadow_facts / sentence 6	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1o.v:94	Lemma bss_shadow_facts / sentence 11	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1o.v:95	Lemma bss_shadow_facts / sentence 13	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1o.v:100	Lemma bss_shadow_facts / sentence 22	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1y.v:191	Definition drv_keep_ok	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD1y.v:193	Definition drv_keep_ok	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD21.v:34	Lemma rt_abs	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD25.v:632	Lemma rd_chk / sentence 125	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD25.v:666	Lemma tfib_segs_low / sentence 4	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD28.v:311	Lemma aview_kept_run	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD2h.v:58	Definition hext_chk	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD2i.v:73	Definition cjust	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YD2i.v:128	Definition wjust	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFem.v:323	Lemma region_ok_cell8	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFem.v:331	Lemma region_ok_cell4	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFem.v:1494	Lemma dep_empty / sentence 31	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFev.v:430	Lemma CONST_OUT / sentence 18	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFf4.v:530	Lemma CONST' / sentence 35	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFff.v:42	Lemma rw_store_ok	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFff.v:52	Lemma imemset_stretch	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFfy.v:117	Lemma CONST_OUT / sentence 15	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFfy.v:169	Lemma CONST_ZONE / sentence 24	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFfy.v:170	Lemma CONST_ZONE / sentence 25	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFfy.v:175	Lemma CONST_ZONE / sentence 36	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFfy.v:175	Lemma CONST_ZONE / sentence 37	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFg0.v:154	Lemma CONST_OUT / sentence 16	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFg1.v:551	Lemma CONST_OUT / sentence 16	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFg1.v:604	Lemma CONST_ZONE / sentence 25	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFg1.v:605	Lemma CONST_ZONE / sentence 26	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFg1.v:610	Lemma CONST_ZONE / sentence 37	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFg1.v:610	Lemma CONST_ZONE / sentence 38	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFg3.v:286	Lemma CONST_OUT / sentence 16	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFg4.v:274	Lemma CONST_OUT / sentence 21	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFg5.v:506	Lemma CONST_OUT / sentence 16	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFg6.v:716	Lemma CONST_OUTR / sentence 16	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFg7.v:158	Lemma CONST_OUT / sentence 16	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFhn.v:418	Definition abs_cell_okI	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFic.v:380	Definition abs_cell_okN	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFix.v:291	Definition abs_cell_ok	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFjb.v:291	Definition abs_cell_ok	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFjm.v:429	Lemma map_zoneN	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFjo.v:624	Definition skel_okb	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFjo.v:637	Lemma skel_cases	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFjp.v:626	Definition dx_okb	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFju.v:582	Definition abs_cell_okS	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFjy.v:1610	Lemma zshadow_final / sentence 38	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFk2.v:655	Lemma dnewb_sound	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFkm.v:1304	Definition abs_cell_okG	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin
+RB	lib/B/YFkz.v:896	Definition abs_cell_okR	0x5fb000	0x606000	OK	our value 0x606000 = image.top, seg3.hi of cmd.B.pin; the donor value 0x5fb000 = image.top, seg3.hi of cgif.B.pin

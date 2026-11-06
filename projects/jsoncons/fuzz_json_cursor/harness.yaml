@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_json_cursor
-rocq: OssFuzzTheorems.jsoncons.fuzz_json_cursor
+rocq: OSSVerify.jsoncons.fuzz_json_cursor
 origin: upstream
 summary: 'json_stream_cursor pull loop: for each event call event.get<std::string>(ec) and advance while
   no error; values discarded.'

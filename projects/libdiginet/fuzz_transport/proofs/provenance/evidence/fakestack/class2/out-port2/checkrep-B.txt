@@ -1,0 +1,7 @@
+image B: rows by rule {'resolve': 22, 'FUNC entry': 8, 'same-code function': 5, 'OBJECT start': 2, 'not an address': 4, 'SIZES_KEEP': 2}
+kept values that lie in a donor symbol (each a model constant or an instruction word, see RELOC-PLAN.md):
+  B/Rt/StackMalloc2Tbl.v:227 0x0007c283 kept [not an address] (lies in _ZN6__lsanL13CheckForLeaksEv+0x6ef of the donor)
+  B/Rt/StackMalloc2Tbl.v:228 0x0007c283 kept [not an address] (lies in _ZN6__lsanL13CheckForLeaksEv+0x6ef of the donor)
+  B/Rt/StackMalloc2Tbl.v:233 0x00160613 kept [not an address] (lies in _ZN11__sanitizerL9useCountsE+0x25093 of the donor)
+  B/Rt/StackMalloc2Tbl.v:234 0x00160613 kept [not an address] (lies in _ZN11__sanitizerL9useCountsE+0x25093 of the donor)
+PASS: 0 wrong rows

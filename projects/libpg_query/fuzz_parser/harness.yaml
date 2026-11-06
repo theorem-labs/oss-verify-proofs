@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libpg_query
 harness: fuzz_parser
-rocq: OssFuzzTheorems.libpg_query.fuzz_parser
+rocq: OSSVerify.libpg_query.fuzz_parser
 origin: upstream
 summary: NUL-terminates the input and calls pg_query_parse; the parse result (tree or error) is freed
   without being inspected.

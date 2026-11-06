@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: opusfile
 harness: opusfile_fuzzer
-rocq: OssFuzzTheorems.opusfile.opusfile_fuzzer
+rocq: OSSVerify.opusfile.opusfile_fuzzer
 origin: oss-fuzz
 summary: op_open_memory, then op_read_stereo to EOF touching link/tag/picture accessors, then 32 deterministic
   pseudo-random op_pcm_seek + op_read_stereo; the samples read after a seek are not compared with the

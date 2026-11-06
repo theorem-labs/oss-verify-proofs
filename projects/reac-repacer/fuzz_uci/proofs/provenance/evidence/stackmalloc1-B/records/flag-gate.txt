@@ -1,0 +1,17 @@
+# record run (donor = stage/, ported = the committed files)
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 11 rows in 4 classes: GEOMETRY-CHANGED=3 STALE-DONOR-CODE-POINTER=1 UNPAIRED-SOURCE=6 UNRESOLVED=1
+checker <file> rc=4 (sha256 e165063a0081)
+triage-sm1: 11 flagged / GENERATOR-FILL rows, 11 explained, 0 unexplained
+rc=0
+# control: YF0r.v FS_LOOP planted as the donor's 0x3d154
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 16 rows in 5 classes: GEOMETRY-CHANGED=3 STALE-DONOR-CODE-POINTER=2 TARGET-DIFFERENT-SYMBOL=4 UNPAIRED-SOURCE=6 UNRESOLVED=1
+checker <file> rc=4 (sha256 e165063a0081)
+UNEXPLAINED TARGET-DIFFERENT-SYMBOL B/Rt/YF0r.v:212/213 0x6028663 -> 0x6028663 (a different function: donor __asan_stack_malloc_1+0x10c, ported _ZN6__asan15InitializeFlagsEv+0xd48; donor pc 0x3d160, ported pc 0x3d160)
+UNEXPLAINED TARGET-DIFFERENT-SYMBOL B/Rt/YF0r.v:218/219 0xfe0514e3 -> 0xfe0514e3 (a different function: donor __asan_stack_malloc_1+0x94, ported _ZN6__asan15InitializeFlagsEv+0xcd0; donor pc 0x3d16c, ported pc 0x3d16c)
+UNEXPLAINED STALE-DONOR-CODE-POINTER B/Rt/YF0r.v:30/31 0x3d154 -> 0x3d154 (donor code address __asan_stack_malloc_1+0x94 left unchanged; in the target the value is __asan::InitializeFlags+0xcd0; the source symbol is elsewhere in the ta)
+UNEXPLAINED TARGET-DIFFERENT-SYMBOL B/Rt/YF0r.v:211/212 0x6028663 -> 0x6028663 (a different function: donor __asan_stack_malloc_1+0x10c, ported _ZN6__asan15InitializeFlagsEv+0xd48; donor pc 0x3d160, ported pc 0x3d160)
+UNEXPLAINED TARGET-DIFFERENT-SYMBOL B/Rt/YF0r.v:217/218 0xfe0514e3 -> 0xfe0514e3 (a different function: donor __asan_stack_malloc_1+0x94, ported _ZN6__asan15InitializeFlagsEv+0xcd0; donor pc 0x3d16c, ported pc 0x3d16c)
+triage-sm1: 16 flagged / GENERATOR-FILL rows, 11 explained, 5 unexplained
+rc=1

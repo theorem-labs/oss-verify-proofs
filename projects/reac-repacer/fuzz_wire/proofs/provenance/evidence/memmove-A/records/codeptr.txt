@@ -1,0 +1,54 @@
+# base: the five files on fuzz_wire.asan, stale against fuzz_pcap.asan (each file's donor text)
+frozen-run:   codeptr.py 12348302dfd2
+codeptr: self-test: 27 known answers (the stale decision 7, the slot 3, the type rule 12 with 2 sentence-final decimals, the names reader 3, --not-address 2)
+MemmoveDef.v UNMEASURED: no address literal in [0x10000, 0x5f4ff0) - nothing checked
+MemmoveIm.v    4 code (1 function starts, 0 return pcs, 0 other instruction starts),    4 data, 14 at or above the image top 0x5f4ff0, 4 FINDINGS: 0x100613, 0x158593, 0x168693, 0x168813 [stale against fuzz_pcap.asan, donor file <gates><file>: 4 STALE (0x100613, 0x158593, 0x168693, 0x168813), 0 donor-file literals with the same meaning in both images]
+MemmoveK.v   11 code (2 function starts, 2 return pcs, 7 other instruction starts),    1 data, 10 at or above the image top 0x5f4ff0, 1 FINDINGS: 0x200000 [stale against fuzz_pcap.asan, donor file <gates><file>: 1 STALE (0x200000), 0 donor-file literals with the same meaning in both images]
+MemmovePaths.v    3 code (0 function starts, 1 return pcs, 0 other instruction starts),    0 data, 11 at or above the image top 0x5f4ff0, 0 FINDINGS [stale against fuzz_pcap.asan, donor file <gates><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+Memmove.v     1 code (1 function starts, 0 return pcs, 0 other instruction starts),    0 data, 0 at or above the image top 0x5f4ff0, 0 FINDINGS [stale against fuzz_pcap.asan, donor file <gates><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+codeptr: UNMEASURED: 1 of 5 file(s) hold no address literal in range
+rc=1
+# declared: the same with the --not-address declarations of gates/codeptr-notaddr-mm.tsv
+frozen-run:   codeptr.py 12348302dfd2
+codeptr: self-test: 27 known answers (the stale decision 7, the slot 3, the type rule 12 with 2 sentence-final decimals, the names reader 3, --not-address 2)
+MemmoveDef.v UNMEASURED: no address literal in [0x10000, 0x5f4ff0) - nothing checked
+MemmoveIm.v 4 number(s) DECLARED NOT addresses (--not-address): 0x100613 (1050131): MemmoveIm.v:49 W_mm34 : bv 32, the instruction word addi a2, zero, 1 (D_mm34) at __sanitizer_internal_memmove+0x34 (fuzz_wire 0x6330c, fuzz_pcap 0x63bec): an instruction word, not an address; 0x158593 (1410451): MemmoveIm.v:37 W_mm1c : bv 32, the instruction word addi a1, a1, 1 (D_mm1c) at __sanitizer_internal_memmove+0x1c (fuzz_wire 0x632f4, fuzz_pcap 0x63bd4): an instruction word, not an address; 0x168693 (1476243): MemmoveIm.v:35 W_mm18 : bv 32, the instruction word addi a3, a3, 1 (D_mm18) at __sanitizer_internal_memmove+0x18 (fuzz_wire 0x632f0, fuzz_pcap 0x63bd0): an instruction word, not an address; 0x168813 (1476627): MemmoveIm.v:57 W_mm44 : bv 32, the instruction word addi a6, a3, 1 (D_mm44) at __sanitizer_internal_memmove+0x44 (fuzz_wire 0x6331c, fuzz_pcap 0x63bfc): an instruction word, not an address
+MemmoveIm.v    4 code (1 function starts, 0 return pcs, 0 other instruction starts),    0 data, 14 at or above the image top 0x5f4ff0, 0 FINDINGS [stale against fuzz_pcap.asan, donor file <gates><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+MemmoveK.v 1 number(s) DECLARED NOT addresses (--not-address): 0x200000 (2097152): MemmoveK.v:1048 entD_ro's bound fst (fst e) + snd (fst e) <= 0x200000 over every icpt_rodata row (largest row end: fuzz_wire 0xa1478, fuzz_pcap 0xa25b8), proved by lia over the concrete rows: a loose bound, the same in the donor file, not an address
+MemmoveK.v   11 code (2 function starts, 2 return pcs, 7 other instruction starts),    0 data, 10 at or above the image top 0x5f4ff0, 0 FINDINGS [stale against fuzz_pcap.asan, donor file <gates><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+MemmovePaths.v    3 code (0 function starts, 1 return pcs, 0 other instruction starts),    0 data, 11 at or above the image top 0x5f4ff0, 0 FINDINGS [stale against fuzz_pcap.asan, donor file <gates><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+Memmove.v     1 code (1 function starts, 0 return pcs, 0 other instruction starts),    0 data, 0 at or above the image top 0x5f4ff0, 0 FINDINGS [stale against fuzz_pcap.asan, donor file <gates><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+codeptr: UNMEASURED: 1 of 5 file(s) hold no address literal in range
+rc=2
+# donor: control: the donor text on its own image (the tool's baseline)
+frozen-run:   codeptr.py 12348302dfd2
+codeptr: self-test: 27 known answers (the stale decision 7, the slot 3, the type rule 12 with 2 sentence-final decimals, the names reader 3, --not-address 2)
+MemmoveDef.v UNMEASURED: no address literal in [0x10000, 0x5f6170) - nothing checked
+MemmoveIm.v    4 code (1 function starts, 0 return pcs, 0 other instruction starts),    4 data, 14 at or above the image top 0x5f6170, 0 FINDINGS
+MemmoveK.v   11 code (2 function starts, 2 return pcs, 7 other instruction starts),    1 data, 10 at or above the image top 0x5f6170, 0 FINDINGS
+MemmovePaths.v    3 code (0 function starts, 1 return pcs, 0 other instruction starts),    0 data, 11 at or above the image top 0x5f6170, 0 FINDINGS
+Memmove.v     1 code (1 function starts, 0 return pcs, 0 other instruction starts),    0 data, 0 at or above the image top 0x5f6170, 0 FINDINGS
+codeptr: UNMEASURED: 1 of 5 file(s) hold no address literal in range
+rc=2
+# plant: control: MemmoveK.v MM_ENTRY planted as the donor's 0x51bf0
+frozen-run:   codeptr.py 12348302dfd2
+codeptr: self-test: 27 known answers (the stale decision 7, the slot 3, the type rule 12 with 2 sentence-final decimals, the names reader 3, --not-address 2)
+MemmoveDef.v UNMEASURED: no address literal in [0x10000, 0x5f4ff0) - nothing checked
+MemmoveIm.v    4 code (1 function starts, 0 return pcs, 0 other instruction starts),    4 data, 14 at or above the image top 0x5f4ff0, 4 FINDINGS: 0x100613, 0x158593, 0x168693, 0x168813 [stale against fuzz_pcap.asan, donor file <gates><file>: 4 STALE (0x100613, 0x158593, 0x168693, 0x168813), 0 donor-file literals with the same meaning in both images]
+MemmoveK.v   12 code (2 function starts, 3 return pcs, 7 other instruction starts),    1 data, 10 at or above the image top 0x5f4ff0, 2 FINDINGS: 0x51bf0, 0x200000 [stale against fuzz_pcap.asan, donor file <gates><file>: 2 STALE (0x51bf0, 0x200000), 0 donor-file literals with the same meaning in both images]
+MemmovePaths.v    3 code (0 function starts, 1 return pcs, 0 other instruction starts),    0 data, 11 at or above the image top 0x5f4ff0, 0 FINDINGS [stale against fuzz_pcap.asan, donor file <gates><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+Memmove.v     1 code (1 function starts, 0 return pcs, 0 other instruction starts),    0 data, 0 at or above the image top 0x5f4ff0, 0 FINDINGS [stale against fuzz_pcap.asan, donor file <gates><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+codeptr: UNMEASURED: 1 of 5 file(s) hold no address literal in range
+rc=1
+# plant-declared: control: the same plant under the declarations
+frozen-run:   codeptr.py 12348302dfd2
+codeptr: self-test: 27 known answers (the stale decision 7, the slot 3, the type rule 12 with 2 sentence-final decimals, the names reader 3, --not-address 2)
+MemmoveDef.v UNMEASURED: no address literal in [0x10000, 0x5f4ff0) - nothing checked
+MemmoveIm.v 4 number(s) DECLARED NOT addresses (--not-address): 0x100613 (1050131): MemmoveIm.v:49 W_mm34 : bv 32, the instruction word addi a2, zero, 1 (D_mm34) at __sanitizer_internal_memmove+0x34 (fuzz_wire 0x6330c, fuzz_pcap 0x63bec): an instruction word, not an address; 0x158593 (1410451): MemmoveIm.v:37 W_mm1c : bv 32, the instruction word addi a1, a1, 1 (D_mm1c) at __sanitizer_internal_memmove+0x1c (fuzz_wire 0x632f4, fuzz_pcap 0x63bd4): an instruction word, not an address; 0x168693 (1476243): MemmoveIm.v:35 W_mm18 : bv 32, the instruction word addi a3, a3, 1 (D_mm18) at __sanitizer_internal_memmove+0x18 (fuzz_wire 0x632f0, fuzz_pcap 0x63bd0): an instruction word, not an address; 0x168813 (1476627): MemmoveIm.v:57 W_mm44 : bv 32, the instruction word addi a6, a3, 1 (D_mm44) at __sanitizer_internal_memmove+0x44 (fuzz_wire 0x6331c, fuzz_pcap 0x63bfc): an instruction word, not an address
+MemmoveIm.v    4 code (1 function starts, 0 return pcs, 0 other instruction starts),    0 data, 14 at or above the image top 0x5f4ff0, 0 FINDINGS [stale against fuzz_pcap.asan, donor file <gates><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+MemmoveK.v 1 number(s) DECLARED NOT addresses (--not-address): 0x200000 (2097152): MemmoveK.v:1048 entD_ro's bound fst (fst e) + snd (fst e) <= 0x200000 over every icpt_rodata row (largest row end: fuzz_wire 0xa1478, fuzz_pcap 0xa25b8), proved by lia over the concrete rows: a loose bound, the same in the donor file, not an address
+MemmoveK.v   12 code (2 function starts, 3 return pcs, 7 other instruction starts),    0 data, 10 at or above the image top 0x5f4ff0, 1 FINDINGS: 0x51bf0 [stale against fuzz_pcap.asan, donor file <gates><file>: 1 STALE (0x51bf0), 0 donor-file literals with the same meaning in both images]
+MemmovePaths.v    3 code (0 function starts, 1 return pcs, 0 other instruction starts),    0 data, 11 at or above the image top 0x5f4ff0, 0 FINDINGS [stale against fuzz_pcap.asan, donor file <gates><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+Memmove.v     1 code (1 function starts, 0 return pcs, 0 other instruction starts),    0 data, 0 at or above the image top 0x5f4ff0, 0 FINDINGS [stale against fuzz_pcap.asan, donor file <gates><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+codeptr: UNMEASURED: 1 of 5 file(s) hold no address literal in range
+rc=1

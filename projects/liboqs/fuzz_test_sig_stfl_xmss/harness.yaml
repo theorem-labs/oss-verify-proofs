@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: liboqs
 harness: fuzz_test_sig_stfl_xmss
-rocq: OssFuzzTheorems.liboqs.fuzz_test_sig_stfl_xmss
+rocq: OSSVerify.liboqs.fuzz_test_sig_stfl_xmss
 origin: upstream
 summary: OQS_SIG_STFL_verify on KAT pk/signature/message for XMSS-SHA2_10_256 or XMSSMT-SHA2_20/2_256
   with pk, then sig, then msg overwritten by fuzz bytes; verify result ignored.

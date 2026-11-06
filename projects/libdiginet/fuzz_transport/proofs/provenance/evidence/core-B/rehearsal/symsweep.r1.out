@@ -1,0 +1,12 @@
+HIT	B/YB1w.v	12	0x97d50	$d+0x0	.tbss	0xa25a4	None	None	OTHER-SYMBOL
+HIT	B/YD1o.v	26	0x20000	[.rodata]+0xfd20	.rodata	0x21000	DESK+0x0	.rodata	OTHER-SYMBOL
+HIT	B/YE39.v	36	0x20000	[.rodata]+0xfd20	.rodata	0x21000	DESK+0x0	.rodata	OTHER-SYMBOL
+HIT	B/YE3e.v	298	0xa0593	_ZL11ioctl_table+0x195b	.bss	0xa0593	__secs_to_tm+0x2bf	.text	OTHER-SYMBOL
+HIT	B/YE3e.v	346	0xa0993	_ZL11ioctl_table+0x1d5b	.bss	0xa0993	do_tzset+0x33f	.text	OTHER-SYMBOL
+HIT	B/YE3e.v	374	0xa3703	_ZN11__sanitizerL26internal_alloc_placeholderE+0x11c3	.bss	0xa3703	[.data.rel.ro]+0x123	.data.rel.ro	OTHER-SYMBOL
+HIT	B/YE6x.v	94	0x20000	[.rodata]+0xfd20	.rodata	0x21000	DESK+0x0	.rodata	OTHER-SYMBOL
+HIT	B/YFia.v	130	0x20000	[.rodata]+0xfd20	.rodata	0x21000	DESK+0x0	.rodata	OTHER-SYMBOL
+HIT	B/YFgi.v	107	0x9e000	_ZN6__asanL8instanceE+0x328	.bss	0x9e000	pthread_exit+0x1a4	.text	OTHER-SYMBOL
+HIT	B/YFgm.v	95	0x9e000	_ZN6__asanL8instanceE+0x328	.bss	0x9e000	pthread_exit+0x1a4	.text	OTHER-SYMBOL
+HIT	B/YFgn.v	70	0x9e000	_ZN6__asanL8instanceE+0x328	.bss	0x9e000	pthread_exit+0x1a4	.text	OTHER-SYMBOL
+rows naming a donor data object: 1484 (kept unmoved 100); hits 11

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: gbmc-pacemaker
 harness: pacemaker_fuzzer
-rocq: OssFuzzTheorems.gbmc_pacemaker.pacemaker_fuzzer
+rocq: OSSVerify.gbmc_pacemaker.pacemaker_fuzzer
 origin: oss-fuzz
 summary: Creates a tlbmc Pacemaker whose ShellCommandExecutor returns fuzz-chosen strings or InternalError,
   then calls PerformChecks, GetMonitoringData, GetPid/GetCpuUsage/GetLastActiveTimestamp/IsServiceActive/RestartService

@@ -1,0 +1,16 @@
+== cgif B: common_flags_dont_use 0x137da8, .got cells ['0x9e1f8']
+  reader _ZN11__sanitizer12_GLOBAL__N_121StackTraceTextPrinter20ProcessAddressFramesEm +0xbc: ld a7, 0x18(s5)   next call: [(212, 'jalr', 't1', 4)]
+  reader _ZN11__sanitizer18ReportErrorSummaryEPKcRKNS_11AddressInfoES1_ +0xc4: ld a7, 0x18(s3)   next call: [(224, 'jalr', 't1', 4)]
+  vtable _ZTVN11__sanitizer26FormattedStackTracePrinterE (0x9dea0, 40 B): slot 0 = _ZN11__sanitizer26FormattedStackTracePrinter11RenderFrameEPNS_20InternalScopedStringEPKcimPKNS_11AddressInfoEbS4_ (0x73748); a7 there: ARG _ZN11__sanitizer11CheckFailedEPKciS1_yy a7 ; ARG _ZN11__sanitizer15internal_strcmpEPKcS1_ a7 ; INDIRECT
+  vtable _ZTVN11__sanitizer23MarkupStackTracePrinterE (0x9df38, 40 B): slot 0 = _ZN11__sanitizer23MarkupStackTracePrinter11RenderFrameEPNS_20InternalScopedStringEPKcimPKNS_11AddressInfoEbS4_ (0x76d2c); a7 there: INDIRECT
+  RegisterCommonFlags +0x1218: the empty string is stored at a2+0x18 (+0x1228); word 0 of that object := s1 = 0x9dd78 (_ZTVN11__sanitizer18FlagHandlerIncludeE+0x10)
+    slot +0x0: _ZN11__sanitizer18FlagHandlerInclude5ParseEPKc -- loads 0x18(this): none
+    slot +0x8: _ZN11__sanitizer18FlagHandlerInclude6FormatEPcm -- loads 0x18(this): +0x10: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3
+== decode B: common_flags_dont_use 0x132e68, .got cells ['0x992d8']
+  reader _ZN11__sanitizer12_GLOBAL__N_121StackTraceTextPrinter20ProcessAddressFramesEm +0xbc: ld a7, 0x18(s5)   next call: [(212, 'jalr', 't1', 4)]
+  reader _ZN11__sanitizer18ReportErrorSummaryEPKcRKNS_11AddressInfoES1_ +0xc4: ld a7, 0x18(s3)   next call: [(224, 'jalr', 't1', 4)]
+  vtable _ZTVN11__sanitizer26FormattedStackTracePrinterE (0x98f80, 40 B): slot 0 = _ZN11__sanitizer26FormattedStackTracePrinter11RenderFrameEPNS_20InternalScopedStringEPKcimPKNS_11AddressInfoEbS4_ (0x73338); a7 there: ARG _ZN11__sanitizer11CheckFailedEPKciS1_yy a7 ; ARG _ZN11__sanitizer15internal_strcmpEPKcS1_ a7 ; INDIRECT
+  vtable _ZTVN11__sanitizer23MarkupStackTracePrinterE (0x99018, 40 B): slot 0 = _ZN11__sanitizer23MarkupStackTracePrinter11RenderFrameEPNS_20InternalScopedStringEPKcimPKNS_11AddressInfoEbS4_ (0x7691c); a7 there: INDIRECT
+  RegisterCommonFlags +0x1218: the empty string is stored at a2+0x18 (+0x1228); word 0 of that object := s1 = 0x98e58 (_ZTVN11__sanitizer18FlagHandlerIncludeE+0x10)
+    slot +0x0: _ZN11__sanitizer18FlagHandlerInclude5ParseEPKc -- loads 0x18(this): none
+    slot +0x8: _ZN11__sanitizer18FlagHandlerInclude6FormatEPcm -- loads 0x18(this): +0x10: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3

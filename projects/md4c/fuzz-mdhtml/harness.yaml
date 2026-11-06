@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: md4c
 harness: fuzz-mdhtml
-rocq: OssFuzzTheorems.md4c.fuzz_mdhtml
+rocq: OSSVerify.md4c.fuzz_mdhtml
 origin: upstream
 summary: The first 8 bytes are read as parser_flags and renderer_flags, and md_html renders the rest;
   the output callback is a no-op and the return value is ignored.

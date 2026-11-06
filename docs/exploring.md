@@ -9,8 +9,9 @@ and facts that memory safety needs. It also tells you how to find the
 machine-generated data in a proof, so that you can skip it.
 
 [index/PROOFS.md](../index/PROOFS.md) lists every proof. Paths that start with
-`lib/` are relative to a proof's directory, `proofs/<project>/<harness>/`.
-Paths that start with `projects/` are relative to the root of the repository.
+`lib/` are relative to a harness's proofs folder,
+`projects/<project>/<harness>/proofs/`. Paths that start with `projects/` are
+relative to the root of the repository.
 
 ## Where to start in a proof
 

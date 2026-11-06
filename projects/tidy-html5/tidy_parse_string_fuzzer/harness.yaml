@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tidy-html5
 harness: tidy_parse_string_fuzzer
-rocq: OssFuzzTheorems.tidy_html5.tidy_parse_string_fuzzer
+rocq: OSSVerify.tidy_html5.tidy_parse_string_fuzzer
 origin: oss-fuzz
 summary: NUL-terminate the input, tidyParseString, clean, diagnostics, save as XHTML; nothing is compared.
 entry: LLVMFuzzerTestOneInput

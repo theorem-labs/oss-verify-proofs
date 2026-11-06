@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjxl
 harness: fuzz_iccprofile_atf
-rocq: OssFuzzTheorems.libjxl.fuzz_iccprofile_atf
+rocq: OSSVerify.libjxl.fuzz_iccprofile_atf
 origin: upstream
 summary: skcms_Parse then skcms_ApproximateCurve on the three TRC curves; results and max_error ignored.
 entry: LLVMFuzzerTestOneInput

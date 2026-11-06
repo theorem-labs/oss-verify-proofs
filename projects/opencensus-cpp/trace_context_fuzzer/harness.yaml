@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: opencensus-cpp
 harness: trace_context_fuzzer
-rocq: OssFuzzTheorems.opencensus_cpp.trace_context_fuzzer
+rocq: OSSVerify.opencensus_cpp.trace_context_fuzzer
 origin: upstream
 summary: FromTraceParentHeader; if valid, ToTraceParentHeader, whose string is discarded (unchecked round
   trip).

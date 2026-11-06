@@ -1,0 +1,6 @@
+# python3 ../cmpkit/strictcmp3.py cmp diginet_frame_build S=img/fuzz_frame.asan-ubsan.unstripped T=img/fuzz_transport.asan-ubsan.unstripped S:T
+# S = img/fuzz_frame.asan-ubsan.unstripped sha256 ee3ea72a063b
+# T = img/fuzz_transport.asan-ubsan.unstripped sha256 e217cb0a84f1
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes/NAME-ONLY acceptances	C-string acceptances (also one CSTR row each)	differing targets printed (in target-differ, this row)	words-only
+diginet_frame_build	S:T	0x82670	0x8b818	1492	1492	EQUAL-mod-pcrel	29	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cfengine
 harness: string_fuzzer
-rocq: OssFuzzTheorems.cfengine.string_fuzzer
+rocq: OSSVerify.cfengine.string_fuzzer
 origin: oss-fuzz
 summary: Rejects size<4 and any NUL byte, then ParseStringExpression on the NUL-terminated copy and FreeStringExpression;
   the parse result is never inspected.

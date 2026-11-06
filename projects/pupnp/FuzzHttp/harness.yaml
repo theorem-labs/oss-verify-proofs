@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: pupnp
 harness: FuzzHttp
-rocq: OssFuzzTheorems.pupnp.FuzzHttp
+rocq: OSSVerify.pupnp.FuzzHttp
 origin: upstream
 summary: first byte selects HTTP request or response parser (parser_request_init / parser_response_init
   GET); parser_append feeds the rest; parse status and message discarded, then httpmsg_destroy.

@@ -1,0 +1,11 @@
+--- Reusable/YF0v.v
++++ Reusable/YF0v.v
+@@ -23,7 +23,7 @@
+ intros x1 n1 x2 n2 P1 P2 A1 A2 B1 B2 N1 N2 D. unfold zdisjoint, shadow_addr in *. cbn [fst snd] in *.
+ apply Z.mod_divide in A1 as [q1 ->]; [|lia]. apply Z.mod_divide in A2 as [q2 ->]; [|lia].
+ apply Z.mod_divide in B1 as [m1 ->]; [|lia]. apply Z.mod_divide in B2 as [m2 ->]; [|lia].
+-rewrite !Z.div_mul by lia. nia.
++rewrite !Z.div_mul by lia. lia.
+ Qed.
+ Lemma app_vs_shadow : forall x n y m a, in_app x n -> in_app y m -> 0 <= m -> x <= a < x + n ->
+ ~ (shadow_addr y <= a < shadow_addr y + m / 8).

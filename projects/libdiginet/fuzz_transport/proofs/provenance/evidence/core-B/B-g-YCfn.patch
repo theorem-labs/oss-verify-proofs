@@ -1,0 +1,50 @@
+diff --git B/YCfn.v B/YCfn.v
+index 5976cc90cca..dad53ff009c 100644
+--- B/YCfn.v
++++ B/YCfn.v
+@@ -5,6 +5,7 @@
+ (* Modified by Theorem Labs, 2026-10: added the slot with the float state at return left open (tfib_lib_contract_xP), cgif's exists-fx' form of it (tfib_lib_contract_xf, lib/YL0g.v:58-64) and the two lemmas that carry tfib_lib_contract_x and tfib_lib_contract_xf into it. *)
+ (* Modified by Theorem Labs, 2026-10: the images module is image B's AsanUbsan; the donor's line Required image A's Asan (cgif lib/YCfn.v:11), which no name in this file uses (ACfn.v Requires Asan, its A twin). *)
+ (* Modified by Theorem Labs, 2026-10: YC5d and YCbq are Required from lib/Reusable: the lib/B copies were the Reusable files' text under lib.B (so lib/B had a second ameter_ops type beside the statement's), and they are deleted. *)
++(* Modified by Theorem Labs, 2026-10: the slot takes the program-global ranges G (libreac/fuzz_pcap's G form, lib/A/Prog/PcapEntry.v:33,61,91 at origin/ossv/recipes 198234fa4d3): the callee's journal in tfib_lib_post_x is lib/A/W_journalG.v's ajournal_gx G 0 [] (the bytes of G may change across the call; XO = 0, no out cells), and tfib_lib_contract_x_all / tfib_lib_contract_xf_all take G before B. *)
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+@@ -17,6 +18,7 @@ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Import YB1v.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YI16 YE00. From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YE01. From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Import YE2k. From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YC5d.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK0o.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import W_journalG.
+ Import ListNotations.
+ Unset Lia Cache. Unset Nia Cache.
+ Local Open Scope Z_scope.
+@@ -27,6 +29,8 @@ Definition EV_LIB : Z := 2000.
+ Definition LIVE_LIB : Z := 2 ^ 33.
+ Definition LLVMF_STK : Z := 32768.
+ Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}.
++(* The program-global ranges the call may change (the harness's globals): W_journalG.v's ajournal_gx G. *)
++Variable G : list (Z * Z).
+ Variable B : asyms.
+ Variable MT : ameter_ops.
+ Variables XM_LIB XN_LIB : Z -> Z.
+@@ -50,7 +54,7 @@ mo_ok MT S (XM_LIB n).
+ Definition tfib_lib_post_x (regs : bvmap 5 word) (ly : alayout) (S : astate) (W : world segs) (mem : word -> option byte) (md : Model)
+ (p n : Z) (M : Z) (l : lleaf)
+ (ly' : alayout) (S' : astate) (W' : world segs) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model) (k : Z) : Prop :=
+-ajournal segs B LLVMF_STK (spZ regs) [sink_token] ly S W mem md [] ly' S' W' mem' md' k /\ k <= EV_LIB /\
++ajournal_gx segs B G 0 [] LLVMF_STK (spZ regs) [sink_token] ly S W mem md [] ly' S' W' mem' md' k /\ k <= EV_LIB /\
+ aregs_preserved regs regs' /\ getr regs' 10 = w64 0 /\
+ Permutation (ablocks B ly' S') (ablocks B ly S) /\
+ (forall fd, fd_lookup (m_fds md') fd = fd_lookup (m_fds md) fd) /\
+@@ -135,7 +139,7 @@ exact (conj H1 (conj H2 (conj H3 (conj H4 (conj H5 (conj H6 (conj H7 (conj H8 (c
+ apply (CONT l W' c' Hwle HAI'). exists fx', ly', S', regs', mem', md', k. exact (conj Hc (conj Hz' HPOST)).
+ Qed.
+ End a.
+-Definition tfib_lib_contract_x_all {rc : YM05.RunCeil} {LS : lib_shape} (B : asyms) (MT : ameter_ops) (XM_LIB XN_LIB : Z -> Z) (RLO RHI : Z) : Prop :=
+-forall fx : YK11.FPState, @tfib_lib_contract_x fx rc LS B MT XM_LIB XN_LIB RLO RHI.
+-Definition tfib_lib_contract_xf_all {rc : YM05.RunCeil} {LS : lib_shape} (B : asyms) (MT : ameter_ops) (XM_LIB XN_LIB : Z -> Z) (RLO RHI : Z) : Prop :=
+-forall fx : YK11.FPState, @tfib_lib_contract_xf fx rc LS B MT XM_LIB XN_LIB RLO RHI.
++Definition tfib_lib_contract_x_all {rc : YM05.RunCeil} {LS : lib_shape} (G : list (Z * Z)) (B : asyms) (MT : ameter_ops) (XM_LIB XN_LIB : Z -> Z) (RLO RHI : Z) : Prop :=
++forall fx : YK11.FPState, @tfib_lib_contract_x fx rc LS G B MT XM_LIB XN_LIB RLO RHI.
++Definition tfib_lib_contract_xf_all {rc : YM05.RunCeil} {LS : lib_shape} (G : list (Z * Z)) (B : asyms) (MT : ameter_ops) (XM_LIB XN_LIB : Z -> Z) (RLO RHI : Z) : Prop :=
++forall fx : YK11.FPState, @tfib_lib_contract_xf fx rc LS G B MT XM_LIB XN_LIB RLO RHI.

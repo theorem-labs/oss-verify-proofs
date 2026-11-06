@@ -1,0 +1,6 @@
+row	function+use	kind	verdict	X	Y
+__strftime_fmt_1+0x1c0	__strftime_fmt_1+0x508 > __nl_langinfo_l+0x110	load	RUNTIME	r11: no constant / image address on this path in __nl_langinfo_l	r11: no constant / image address on this path in __nl_langinfo_l
+__strftime_fmt_1+0x1c0	__strftime_fmt_1+0x508 > __nl_langinfo_l+0x44	load	RUNTIME	r11: no constant / image address on this path in __nl_langinfo_l	r11: no constant / image address on this path in __nl_langinfo_l
+__strftime_fmt_1+0x4c8	__strftime_fmt_1+0x508 > __nl_langinfo_l+0x110	load	RUNTIME	r11: no constant / image address on this path in __nl_langinfo_l	r11: no constant / image address on this path in __nl_langinfo_l
+__strftime_fmt_1+0x4c8	__strftime_fmt_1+0x508 > __nl_langinfo_l+0x44	load	RUNTIME	r11: no constant / image address on this path in __nl_langinfo_l	r11: no constant / image address on this path in __nl_langinfo_l
+SUMMARY rows 35 sites {'RUNTIME': 4}

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: fwupd
 harness: tpm-eventlog-v1_fuzzer
-rocq: OssFuzzTheorems.fwupd.tpm_eventlog_v1_fuzzer
+rocq: OSSVerify.fwupd.tpm_eventlog_v1_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

@@ -11,6 +11,12 @@ defs:
       schema: {type: const, value: oss-fuzz-theorems/release/1}
       release: {type: release-version}
       date: {type: date}
+      # the names this release gives its Rocq theories, <namespace>.<project>.<harness>, and its opam packages,
+      # rocq-<opam_stem>-<project>; absent, those of every release before them (tools/oft/names.py NAMESPACE_DEFAULT,
+      # OPAM_STEM_DEFAULT).  A fingerprint reads the namespace as facts.FINGERPRINT_NAMESPACE, so a release that
+      # renames it moves no fingerprint (docs/versioning.md)
+      namespace: {type: str, pattern: '^[A-Z][A-Za-z0-9]*$', optional: true}
+      opam_stem: {type: str, pattern: '^[a-z][a-z0-9]*(-[a-z0-9]+)*$', optional: true}
       oss_fuzz:
         type: object
         fields:
@@ -42,8 +48,9 @@ defs:
       # the build recipes: the build scripts, pins and patches binaries were built with, at most one archive per
       # GitHub release and each file name once. Each recipe-built project's binary archive pins the one it was built
       # with, in any release (project.yaml assets.bin.recipe), and so does each of its build records
-      # (proofs/<p>/<h>/provenance/PROVENANCE.yaml recipe.asset); a port-built project's (build.oss_verify) pins none,
-      # and its corresponding archive is its assets.port instead
+      # (provenance/PROVENANCE.yaml recipe.asset, in its fuzz target's proofs folder); a `release: private` project may
+      # pin a recipe of its own instead, which is not listed here and whose file name names no other recipe (rules.py);
+      # a port-built project's (build.oss_verify) pins none, and its corresponding archive is its assets.port instead
       recipes: {type: list, items: {type: ref, name: recipe}, min: 1, optional: true}
       # the shape before recipes, which a published tree still has: the release's one recipe, which every binary
       # archive but a port-built project's was built with and none names another; read as a one-entry recipes. Not

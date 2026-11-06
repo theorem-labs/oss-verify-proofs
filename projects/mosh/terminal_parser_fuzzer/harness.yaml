@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: mosh
 harness: terminal_parser_fuzzer
-rocq: OssFuzzTheorems.mosh.terminal_parser_fuzzer
+rocq: OSSVerify.mosh.terminal_parser_fuzzer
 origin: upstream
 summary: Feeds every input byte to Parser::UTF8Parser::input, accumulating Actions; the action list is
   never inspected.

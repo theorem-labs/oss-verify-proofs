@@ -1,0 +1,13 @@
+ROW	image	function	addr	size	luis	insec	inload	memfed	memfed_out	luiconst	unmeasured	exposure
+# image img/fuzz_disco.asan.debug sha256 ec656cf105cb
+ROW	fuzz_disco.asan.debug	__asan_stack_malloc_3	0x3d914	428	1	0	0	0	0	0	0	0
+ROW	fuzz_disco.asan.debug	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE	0x62208	4772	0	0	0	0	0	0	0	0
+ROW	fuzz_disco.asan.debug	___interceptor___tls_get_addr	0x47340	124	0	0	0	0	0	0	0	0
+ROW	fuzz_disco.asan.debug	__tls_get_addr	0x9a364	36	0	0	0	0	0	0	0	0
+ROW	fuzz_disco.asan.debug	_ZN6__asan16GetCurrentThreadEv	0x5c8a0	32	0	0	0	0	0	0	0	0
+ROW	fuzz_disco.asan.debug	_ZN6__asan10AsanTSDGetEv	0x553ec	64	0	0	0	0	0	0	0	0
+ROW	fuzz_disco.asan.debug	__pthread_getspecific	0x9b418	28	0	0	0	0	0	0	0	0
+ROW	fuzz_disco.asan.debug	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	0x69fb4	848	2	0	0	0	0	0	0	0
+ROW	fuzz_disco.asan.debug	_ZN6__asanL11MemToShadowEm{asan_fake_stack.cpp}	0x3dca4	316	0	0	0	0	0	0	0	0
+TOTAL	fuzz_disco.asan.debug	functions 9	with-lui 2	with-exposure 0	luis 3	insec 0	inload 0	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	all	functions 9	with-lui 2	with-exposure 0	luis 3	insec 0	inload 0	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0

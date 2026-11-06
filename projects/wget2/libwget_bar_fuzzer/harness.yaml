@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wget2
 harness: libwget_bar_fuzzer
-rocq: OssFuzzTheorems.wget2.libwget_bar_fuzzer
+rocq: OSSVerify.wget2.libwget_bar_fuzzer
 origin: upstream
 summary: wget_bar init/slots/printf/write_line/update/deregister with the input as text and atoi(input)
   as a byte count; nothing checked.

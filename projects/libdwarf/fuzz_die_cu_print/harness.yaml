@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_die_cu_print
-rocq: OssFuzzTheorems.libdwarf.fuzz_die_cu_print
+rocq: OSSVerify.libdwarf.fuzz_die_cu_print
 origin: upstream
 summary: dwarf_get_address_size, frame section name, next_cu_header_d, siblingof_b and dwarf_child; results
   unused.

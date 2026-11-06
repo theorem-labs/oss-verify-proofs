@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_init_path
-rocq: OssFuzzTheorems.libdwarf.fuzz_init_path
+rocq: OSSVerify.libdwarf.fuzz_init_path
 origin: upstream
 summary: dwarf_init_path and dwarf_init_path_dl (with a global debuglink path) on the temp file; results
   ignored.

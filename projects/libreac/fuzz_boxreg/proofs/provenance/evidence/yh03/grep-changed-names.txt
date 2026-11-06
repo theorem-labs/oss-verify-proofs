@@ -1,0 +1,265 @@
+Every cell whose value differs between this commit's YH03.v and either the input (b5dd72116a44) or the earlier
+0dbfaec69fb2 (yh03regen 4e9a57e74cac), searched in every .v under proofs/libreac/fuzz_boxreg except the two YH03.v,
+at b5dd72116a44 (the same .v files as this commit, YH03.v aside). The same names change in both files.
+Control: src0_A_memset, a read cell, gives 2 match(es), first: b5dd72116a44:proofs/libreac/fuzz_boxreg/lib/Reusable/YH02.v:20:src0_A_memcpy src0_A_memset None None.
+
+$ git grep -n -w src0_A_LZW_GenerateStream b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_bcmp b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_cgif_addframe b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_cgif_close b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_cgif_newgif b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_cgif_raw_addframe b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_cgif_raw_close b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_cgif_raw_newgif b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_cgif_writecb b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_cmpPixel b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_create_byte_list b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_create_byte_list_block b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_fclose b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_fdopen b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_flushFrame b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_fmodeflags b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_fopen b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_freeCGIF b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_freeFrame b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_frexpl b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_lctrans_impl b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_memcmp b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_ofl_add b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_read_frameconfig b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_scalbn b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_signbitl b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_stdio_read b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_stdio_seek b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_strchr b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_strchrnul b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_strlen b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_unlink b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_A_unlist_locked_file b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_D_got_DYNAMIC_reserved b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_D_str_INF b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_D_str_NAN b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_D_str_inf b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_D_str_nan b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_D_str_rwa b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_D_str_tmp_out_gif b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_D_str_wb b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_Exit b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_LLVMFuzzerTestOneInput b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_LZW_GenerateStream b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_bcmp b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_cgif_addframe b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_cgif_close b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_cgif_newgif b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_cgif_raw_addframe b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_cgif_raw_close b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_cgif_raw_newgif b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_cgif_writecb b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_cmpPixel b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_create_byte_list b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_create_byte_list_block b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_exit b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_extenddftf2 b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_fclose b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_fdopen b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_floatsitf b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_flushFrame b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_fmodeflags b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_fopen b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_fpclassifyl b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_freeCGIF b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_freeFrame b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_init_tls b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_memchr b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_memset b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_munmap b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_ofl_add b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_ofl_unlock b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_read b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_read_frameconfig b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_stdio_close b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_stdio_read b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_stdio_seek b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_stdio_write b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_strchr b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_strchrnul b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_strerror b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_strlen b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_strnlen b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_unlink b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_unlist_locked_file b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_unlockfile b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)
+
+$ git grep -n -w src0_E_vprintf b5dd72116a44 -- 'proofs/libreac/fuzz_boxreg/*.v' ':!proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v' ':!proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v'
+(no match)

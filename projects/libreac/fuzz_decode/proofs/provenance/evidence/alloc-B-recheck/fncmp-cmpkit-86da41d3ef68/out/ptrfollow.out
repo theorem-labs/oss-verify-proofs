@@ -1,0 +1,160 @@
+cgif B: asan_flags_dont_use_directly+0x68 stored at a2+0x8 of a heap object in _ZN6__asan15InitializeFlagsEv +0xae8; word 0 := 0x9dcf8 (_ZTVN11__sanitizer11FlagHandlerIPKcEE+0x10)
+    slot +0x0 _ZN11__sanitizer11FlagHandlerIPKcE5ParseES2_: reads of the field none; writes +0x8 sd
+    slot +0x8 _ZN11__sanitizer11FlagHandlerIPKcE6FormatEPcm: reads of the field +0x14 ld: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3; writes none
+cgif B: common_flags_dont_use+0xc8 stored at a0+0x8 of a heap object in _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE +0x98c; word 0 := 0x9dcf8 (_ZTVN11__sanitizer11FlagHandlerIPKcEE+0x10)
+    slot +0x0 _ZN11__sanitizer11FlagHandlerIPKcE5ParseES2_: reads of the field none; writes +0x8 sd
+    slot +0x8 _ZN11__sanitizer11FlagHandlerIPKcE6FormatEPcm: reads of the field +0x14 ld: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3; writes none
+cgif B: common_flags_dont_use+0xd0 stored at a0+0x8 of a heap object in _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE +0x9c0; word 0 := 0x9dcf8 (_ZTVN11__sanitizer11FlagHandlerIPKcEE+0x10)
+    slot +0x0 _ZN11__sanitizer11FlagHandlerIPKcE5ParseES2_: reads of the field none; writes +0x8 sd
+    slot +0x8 _ZN11__sanitizer11FlagHandlerIPKcE6FormatEPcm: reads of the field +0x14 ld: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3; writes none
+cgif B: common_flags_dont_use+0x18 stored at a0+0x8 of a heap object in _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE +0xec; word 0 := 0x9dcf8 (_ZTVN11__sanitizer11FlagHandlerIPKcEE+0x10)
+    slot +0x0 _ZN11__sanitizer11FlagHandlerIPKcE5ParseES2_: reads of the field none; writes +0x8 sd
+    slot +0x8 _ZN11__sanitizer11FlagHandlerIPKcE6FormatEPcm: reads of the field +0x14 ld: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3; writes none
+cgif B: lsan_flags+0x20 stored at a2+0x8 of a heap object in _ZN6__lsan17RegisterLsanFlagsEPN11__sanitizer10FlagParserEPNS_5FlagsE +0x360; word 0 := 0x9dcf8 (_ZTVN11__sanitizer11FlagHandlerIPKcEE+0x10)
+    slot +0x0 _ZN11__sanitizer11FlagHandlerIPKcE5ParseES2_: reads of the field none; writes +0x8 sd
+    slot +0x8 _ZN11__sanitizer11FlagHandlerIPKcE6FormatEPcm: reads of the field +0x14 ld: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3; writes none
+cgif B: ubsan_flags+0x8 stored at a2+0x8 of a heap object in _ZN7__ubsan18RegisterUbsanFlagsEPN11__sanitizer10FlagParserEPNS_5FlagsE +0xac; word 0 := 0x9dcf8 (_ZTVN11__sanitizer11FlagHandlerIPKcEE+0x10)
+    slot +0x0 _ZN11__sanitizer11FlagHandlerIPKcE5ParseES2_: reads of the field none; writes +0x8 sd
+    slot +0x8 _ZN11__sanitizer11FlagHandlerIPKcE6FormatEPcm: reads of the field +0x14 ld: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3; writes none
+cgif B: stack reuse in _ZN6__asan15InitializeFlagsEv, slot sp+0x168..+0x288 (program order):
+  +0x68 addi a0, sp, 0x168
+  +0x74 jal -> __sanitizer_internal_memset   (a0=sp+0x168)
+  +0x78 addi a0, sp, 0x168
+  +0x80 jal -> _ZN11__sanitizer11CommonFlags8CopyFromERKS0_   (a0=sp+0x168)
+  +0x94 sd a0, 0x170(sp)   (slot +0x8)
+  +0x98 sw a1, 0x18c(sp)   (slot +0x24)
+  +0xa0 sb s11, 0x1f1(sp)   (slot +0x89)
+  +0xa4 sw s11, 0x270(sp)   (slot +0x108)
+  +0xa8 addi a1, sp, 0x168
+  +0xb0 jal -> _ZN11__sanitizer11CommonFlags8CopyFromERKS0_   (a1=sp+0x168)
+  +0xbf8 sd s4, 0x168(sp)   (slot +0x0)
+  +0xbfc sw s1, 0x170(sp)   (slot +0x8)
+  +0xc04 sb a0, 0x174(sp)   (slot +0xc)
+  +0xc08 sb a0, 0x175(sp)   (slot +0xd)
+  +0xc0c sb a0, 0x176(sp)   (slot +0xe)
+  +0xc10 sb a0, 0x177(sp)   (slot +0xf)
+  +0xc18 sd s4, 0x178(sp)   (slot +0x10)
+  +0xc1c sd s4, 0x180(sp)   (slot +0x18)
+  +0xc20 addi a0, sp, 0x168
+  +0xc24 jal -> _ZN11__sanitizer10FlagParserC1Ev   (a0=sp+0x168)
+  +0xc28 addi a0, sp, 0x168
+  +0xc30 jal -> _ZN6__lsan17RegisterLsanFlagsEPN11__sanitizer10FlagParserEPNS_5FlagsE   (a0=sp+0x168)
+  +0xc34 addi a0, sp, 0x168
+  +0xc3c jal -> _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFla   (a0=sp+0x168)
+  +0xcd0 addi a0, sp, 0x168
+  +0xcd8 jal -> _ZN11__sanitizer10FlagParser11ParseStringEPKcS2_   (a0=sp+0x168)
+  +0xcf4 addi a0, sp, 0x168
+  +0xcf8 jal -> _ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc   (a0=sp+0x168)
+  +0xe90 addi a0, sp, 0x168
+  +0xe9c jal -> __sanitizer_internal_memset   (a0=sp+0x168)
+  +0xea8 addi a0, sp, 0x168
+  +0xeb0 jal -> _ZN11__sanitizer11CommonFlags8CopyFromERKS0_   (a0=sp+0x168)
+  +0xeb4 sb zero, 0x1b2(sp)   (slot +0x4a)
+  +0xeb8 sd zero, 0x1c0(sp)   (slot +0x58)
+  +0xebc sd zero, 0x1c8(sp)   (slot +0x60)
+  +0xec0 sd zero, 0x1d0(sp)   (slot +0x68)
+  +0xecc sb zero, 0x1d9(sp)   (slot +0x71)
+  +0xed0 sd a0, 0x1e0(sp)   (slot +0x78)
+  +0xed4 sd zero, 0x200(sp)   (slot +0x98)
+  +0xed8 sd zero, 0x208(sp)   (slot +0xa0)
+  +0xedc sb zero, 0x218(sp)   (slot +0xb0)
+  +0xee0 sw a0, 0x21c(sp)   (slot +0xb4)
+  +0xee4 sb zero, 0x242(sp)   (slot +0xda)
+  +0xee8 sb s1, 0x274(sp)   (slot +0x10c)
+  +0xeec addi a1, sp, 0x168
+  +0xef4 jal -> _ZN11__sanitizer11CommonFlags8CopyFromERKS0_   (a1=sp+0x168)
+REUSE-VERDICT cgif B field +0x18: call +0xc24 _ZN11__sanitizer10FlagParserC1Ev (a0) sees rewritten (+0xc1c)
+REUSE-VERDICT cgif B field +0x18: call +0xc30 _ZN6__lsan17RegisterLsanFlagsEPN11__sanitizer10FlagParserEPNS_5FlagsE (a0) sees rewritten (+0xc1c)
+REUSE-VERDICT cgif B field +0x18: call +0xc3c _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE (a0) sees rewritten (+0xc1c)
+REUSE-VERDICT cgif B field +0x18: call +0xcd8 _ZN11__sanitizer10FlagParser11ParseStringEPKcS2_ (a0) sees rewritten (+0xc1c)
+REUSE-VERDICT cgif B field +0x18: call +0xcf8 _ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc (a0) sees rewritten (+0xc1c)
+REUSE-VERDICT cgif B field +0xc8: call +0xc24 _ZN11__sanitizer10FlagParserC1Ev (a0) sees the copy (+0x80)
+REUSE-VERDICT cgif B field +0xc8: call +0xc30 _ZN6__lsan17RegisterLsanFlagsEPN11__sanitizer10FlagParserEPNS_5FlagsE (a0) sees the copy (+0x80)
+REUSE-VERDICT cgif B field +0xc8: call +0xc3c _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE (a0) sees the copy (+0x80)
+REUSE-VERDICT cgif B field +0xc8: call +0xcd8 _ZN11__sanitizer10FlagParser11ParseStringEPKcS2_ (a0) sees the copy (+0x80)
+REUSE-VERDICT cgif B field +0xc8: call +0xcf8 _ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc (a0) sees the copy (+0x80)
+REUSE-VERDICT cgif B field +0xd0: call +0xc24 _ZN11__sanitizer10FlagParserC1Ev (a0) sees the copy (+0x80)
+REUSE-VERDICT cgif B field +0xd0: call +0xc30 _ZN6__lsan17RegisterLsanFlagsEPN11__sanitizer10FlagParserEPNS_5FlagsE (a0) sees the copy (+0x80)
+REUSE-VERDICT cgif B field +0xd0: call +0xc3c _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE (a0) sees the copy (+0x80)
+REUSE-VERDICT cgif B field +0xd0: call +0xcd8 _ZN11__sanitizer10FlagParser11ParseStringEPKcS2_ (a0) sees the copy (+0x80)
+REUSE-VERDICT cgif B field +0xd0: call +0xcf8 _ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc (a0) sees the copy (+0x80)
+decode B: asan_flags_dont_use_directly+0x68 stored at a2+0x8 of a heap object in _ZN6__asan15InitializeFlagsEv +0xae8; word 0 := 0x98dd8 (_ZTVN11__sanitizer11FlagHandlerIPKcEE+0x10)
+    slot +0x0 _ZN11__sanitizer11FlagHandlerIPKcE5ParseES2_: reads of the field none; writes +0x8 sd
+    slot +0x8 _ZN11__sanitizer11FlagHandlerIPKcE6FormatEPcm: reads of the field +0x14 ld: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3; writes none
+decode B: common_flags_dont_use+0xc8 stored at a0+0x8 of a heap object in _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE +0x98c; word 0 := 0x98dd8 (_ZTVN11__sanitizer11FlagHandlerIPKcEE+0x10)
+    slot +0x0 _ZN11__sanitizer11FlagHandlerIPKcE5ParseES2_: reads of the field none; writes +0x8 sd
+    slot +0x8 _ZN11__sanitizer11FlagHandlerIPKcE6FormatEPcm: reads of the field +0x14 ld: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3; writes none
+decode B: common_flags_dont_use+0xd0 stored at a0+0x8 of a heap object in _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE +0x9c0; word 0 := 0x98dd8 (_ZTVN11__sanitizer11FlagHandlerIPKcEE+0x10)
+    slot +0x0 _ZN11__sanitizer11FlagHandlerIPKcE5ParseES2_: reads of the field none; writes +0x8 sd
+    slot +0x8 _ZN11__sanitizer11FlagHandlerIPKcE6FormatEPcm: reads of the field +0x14 ld: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3; writes none
+decode B: common_flags_dont_use+0x18 stored at a0+0x8 of a heap object in _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE +0xec; word 0 := 0x98dd8 (_ZTVN11__sanitizer11FlagHandlerIPKcEE+0x10)
+    slot +0x0 _ZN11__sanitizer11FlagHandlerIPKcE5ParseES2_: reads of the field none; writes +0x8 sd
+    slot +0x8 _ZN11__sanitizer11FlagHandlerIPKcE6FormatEPcm: reads of the field +0x14 ld: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3; writes none
+decode B: lsan_flags+0x20 stored at a2+0x8 of a heap object in _ZN6__lsan17RegisterLsanFlagsEPN11__sanitizer10FlagParserEPNS_5FlagsE +0x360; word 0 := 0x98dd8 (_ZTVN11__sanitizer11FlagHandlerIPKcEE+0x10)
+    slot +0x0 _ZN11__sanitizer11FlagHandlerIPKcE5ParseES2_: reads of the field none; writes +0x8 sd
+    slot +0x8 _ZN11__sanitizer11FlagHandlerIPKcE6FormatEPcm: reads of the field +0x14 ld: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3; writes none
+decode B: ubsan_flags+0x8 stored at a2+0x8 of a heap object in _ZN7__ubsan18RegisterUbsanFlagsEPN11__sanitizer10FlagParserEPNS_5FlagsE +0xac; word 0 := 0x98dd8 (_ZTVN11__sanitizer11FlagHandlerIPKcEE+0x10)
+    slot +0x0 _ZN11__sanitizer11FlagHandlerIPKcE5ParseES2_: reads of the field none; writes +0x8 sd
+    slot +0x8 _ZN11__sanitizer11FlagHandlerIPKcE6FormatEPcm: reads of the field +0x14 ld: ARG _ZN11__sanitizer17internal_snprintfEPcmPKcz a3; writes none
+decode B: stack reuse in _ZN6__asan15InitializeFlagsEv, slot sp+0x168..+0x288 (program order):
+  +0x68 addi a0, sp, 0x168
+  +0x74 jal -> __sanitizer_internal_memset   (a0=sp+0x168)
+  +0x78 addi a0, sp, 0x168
+  +0x80 jal -> _ZN11__sanitizer11CommonFlags8CopyFromERKS0_   (a0=sp+0x168)
+  +0x94 sd a0, 0x170(sp)   (slot +0x8)
+  +0x98 sw a1, 0x18c(sp)   (slot +0x24)
+  +0xa0 sb s11, 0x1f1(sp)   (slot +0x89)
+  +0xa4 sw s11, 0x270(sp)   (slot +0x108)
+  +0xa8 addi a1, sp, 0x168
+  +0xb0 jal -> _ZN11__sanitizer11CommonFlags8CopyFromERKS0_   (a1=sp+0x168)
+  +0xbf8 sd s4, 0x168(sp)   (slot +0x0)
+  +0xbfc sw s1, 0x170(sp)   (slot +0x8)
+  +0xc04 sb a0, 0x174(sp)   (slot +0xc)
+  +0xc08 sb a0, 0x175(sp)   (slot +0xd)
+  +0xc0c sb a0, 0x176(sp)   (slot +0xe)
+  +0xc10 sb a0, 0x177(sp)   (slot +0xf)
+  +0xc18 sd s4, 0x178(sp)   (slot +0x10)
+  +0xc1c sd s4, 0x180(sp)   (slot +0x18)
+  +0xc20 addi a0, sp, 0x168
+  +0xc24 jal -> _ZN11__sanitizer10FlagParserC1Ev   (a0=sp+0x168)
+  +0xc28 addi a0, sp, 0x168
+  +0xc30 jal -> _ZN6__lsan17RegisterLsanFlagsEPN11__sanitizer10FlagParserEPNS_5FlagsE   (a0=sp+0x168)
+  +0xc34 addi a0, sp, 0x168
+  +0xc3c jal -> _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFla   (a0=sp+0x168)
+  +0xcd0 addi a0, sp, 0x168
+  +0xcd8 jal -> _ZN11__sanitizer10FlagParser11ParseStringEPKcS2_   (a0=sp+0x168)
+  +0xcf4 addi a0, sp, 0x168
+  +0xcf8 jal -> _ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc   (a0=sp+0x168)
+  +0xe90 addi a0, sp, 0x168
+  +0xe9c jal -> __sanitizer_internal_memset   (a0=sp+0x168)
+  +0xea8 addi a0, sp, 0x168
+  +0xeb0 jal -> _ZN11__sanitizer11CommonFlags8CopyFromERKS0_   (a0=sp+0x168)
+  +0xeb4 sb zero, 0x1b2(sp)   (slot +0x4a)
+  +0xeb8 sd zero, 0x1c0(sp)   (slot +0x58)
+  +0xebc sd zero, 0x1c8(sp)   (slot +0x60)
+  +0xec0 sd zero, 0x1d0(sp)   (slot +0x68)
+  +0xecc sb zero, 0x1d9(sp)   (slot +0x71)
+  +0xed0 sd a0, 0x1e0(sp)   (slot +0x78)
+  +0xed4 sd zero, 0x200(sp)   (slot +0x98)
+  +0xed8 sd zero, 0x208(sp)   (slot +0xa0)
+  +0xedc sb zero, 0x218(sp)   (slot +0xb0)
+  +0xee0 sw a0, 0x21c(sp)   (slot +0xb4)
+  +0xee4 sb zero, 0x242(sp)   (slot +0xda)
+  +0xee8 sb s1, 0x274(sp)   (slot +0x10c)
+  +0xeec addi a1, sp, 0x168
+  +0xef4 jal -> _ZN11__sanitizer11CommonFlags8CopyFromERKS0_   (a1=sp+0x168)
+REUSE-VERDICT decode B field +0x18: call +0xc24 _ZN11__sanitizer10FlagParserC1Ev (a0) sees rewritten (+0xc1c)
+REUSE-VERDICT decode B field +0x18: call +0xc30 _ZN6__lsan17RegisterLsanFlagsEPN11__sanitizer10FlagParserEPNS_5FlagsE (a0) sees rewritten (+0xc1c)
+REUSE-VERDICT decode B field +0x18: call +0xc3c _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE (a0) sees rewritten (+0xc1c)
+REUSE-VERDICT decode B field +0x18: call +0xcd8 _ZN11__sanitizer10FlagParser11ParseStringEPKcS2_ (a0) sees rewritten (+0xc1c)
+REUSE-VERDICT decode B field +0x18: call +0xcf8 _ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc (a0) sees rewritten (+0xc1c)
+REUSE-VERDICT decode B field +0xc8: call +0xc24 _ZN11__sanitizer10FlagParserC1Ev (a0) sees the copy (+0x80)
+REUSE-VERDICT decode B field +0xc8: call +0xc30 _ZN6__lsan17RegisterLsanFlagsEPN11__sanitizer10FlagParserEPNS_5FlagsE (a0) sees the copy (+0x80)
+REUSE-VERDICT decode B field +0xc8: call +0xc3c _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE (a0) sees the copy (+0x80)
+REUSE-VERDICT decode B field +0xc8: call +0xcd8 _ZN11__sanitizer10FlagParser11ParseStringEPKcS2_ (a0) sees the copy (+0x80)
+REUSE-VERDICT decode B field +0xc8: call +0xcf8 _ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc (a0) sees the copy (+0x80)
+REUSE-VERDICT decode B field +0xd0: call +0xc24 _ZN11__sanitizer10FlagParserC1Ev (a0) sees the copy (+0x80)
+REUSE-VERDICT decode B field +0xd0: call +0xc30 _ZN6__lsan17RegisterLsanFlagsEPN11__sanitizer10FlagParserEPNS_5FlagsE (a0) sees the copy (+0x80)
+REUSE-VERDICT decode B field +0xd0: call +0xc3c _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE (a0) sees the copy (+0x80)
+REUSE-VERDICT decode B field +0xd0: call +0xcd8 _ZN11__sanitizer10FlagParser11ParseStringEPKcS2_ (a0) sees the copy (+0x80)
+REUSE-VERDICT decode B field +0xd0: call +0xcf8 _ZN11__sanitizer10FlagParser18ParseStringFromEnvEPKc (a0) sees the copy (+0x80)

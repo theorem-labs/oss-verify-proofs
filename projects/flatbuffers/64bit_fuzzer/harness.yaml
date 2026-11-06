@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: flatbuffers
 harness: 64bit_fuzzer
-rocq: OssFuzzTheorems.flatbuffers.h_64bit_fuzzer
+rocq: OSSVerify.flatbuffers.h_64bit_fuzzer
 origin: upstream
 summary: 'Verify-then-access: every field of a verified RootTable (vectors, 64-bit vectors, strings, nested
   root) is read and hashed; the hash is discarded, so the property is only that verified buffers are memory-safe

@@ -1,0 +1,16 @@
+# YB13.v slots: cgif_file_fuzzer.asan-ubsan token -> fuzz_uci.asan-ubsan token (rules: decode gen.py slots_AB13 + segment 1 base), occurrences in the donor text
+cgif	fuzz_uci	occurrences
+0x9d000	0x96000	7
+0x9f000	0x98000	7
+0x5fb000	0x5f4000	5
+0xa2ba0	0x9ba10	2
+131072	126976	8
+446464	421888	7
+8192	8192	7
+5619712	5619712	6
+196608	192512	8
+643072	614400	6
+651264	622592	4
+15264	14864	2
+5604448	5604848	1
+0x30000	0x2f000	5

@@ -1,0 +1,11 @@
+--- A/Rt/AF0r.v
++++ A/Rt/AF0r.v
+@@ -39,7 +39,7 @@
+ Definition TP : Z := 0x5d3710.
+ Definition TSD : Z := 0x5f4ab8.
+ Definition fs_ranges : list (Z * nat) :=
+-[(0x3c544, 93%nat); (0x3c6b8, 100%nat); (port_core_refused_3d0a8, 103%nat); (port_core_refused_3d244, 115%nat); (0x61474, 2%nat); (0x45ee4, 31%nat); (0x92708, 9%nat);
++[(0x3c544, 93%nat); (0x3c6b8, 100%nat); (0x61474, 2%nat); (0x45ee4, 31%nat); (0x92708, 9%nat);
+ (0x5b7b4, 8%nat); (0x54300, 6%nat); (0x937bc, 7%nat); (0x68ec8, 140%nat); (0x3c848, 28%nat)].
+ Definition tbl_fs : ctable := Eval vm_compute in build_ranges fs_ranges tbl_icpt.
+ Lemma tbl_fs_eq : tbl_fs = build_ranges fs_ranges tbl_icpt. Proof. vm_cast_no_check (eq_refl tbl_fs). Qed.

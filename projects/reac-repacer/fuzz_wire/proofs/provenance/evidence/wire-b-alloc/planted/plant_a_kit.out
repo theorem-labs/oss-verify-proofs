@@ -1,0 +1,5 @@
+# A = WIRE_B_TWIN_PLANTED_ADD sha256 ad0b11d4cbc7
+# B = GRANT_B_TWIN_PLANTED_ADD sha256 be4fd6693b7a
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes/NAME-ONLY acceptances	C-string acceptances (also one CSTR row each)	differing targets printed (in target-differ, this row)	words-only
+_ZN6__asan16AllocatorOptions7SetFromEPKNS_5FlagsEPKN11__sanitizer11CommonFlagsE	A:B	0x300a8	0x30ad0	60	60	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL

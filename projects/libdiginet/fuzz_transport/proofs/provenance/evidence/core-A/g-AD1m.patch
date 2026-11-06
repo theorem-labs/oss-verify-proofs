@@ -1,0 +1,12 @@
+--- A/AD1m.v
++++ A/AD1m.v
+@@ -29,7 +29,8 @@
+ Variables RLO RHI : Z.
+ Hypothesis MT_FREE : forall S m, mo_ok MT S m.
+ Hypothesis RO_IN : forall a, RLO <= a < RHI -> in_ro_tfa a.
+-Hypothesis LIBC : tfib_lib_contract_x B MT XM_LIB XN_LIB RLO RHI.
++(* the program contract at the harness globals' hull DRV_G (A/AD2f.v); A/TransportDriver.v lifts the slot's G to it *)
++Hypothesis LIBC : tfib_lib_contract_x DRV_G B MT XM_LIB XN_LIB RLO RHI.
+ Lemma layout_of_AR' : forall ly S W mem md, AR tfibsegs B ly S W mem md -> layout_ok ly.
+ Proof. intros ly S W mem md H. exact (am_layout _ _ _ _ (proj1 H)). Qed.
+ Theorem tfib_lib_site_x : lib_site_x B.

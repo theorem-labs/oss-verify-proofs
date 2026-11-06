@@ -5,11 +5,11 @@
  (deps (:elf ../exit0.plain))
  (action
   (run elf-snapshot %{elf} Plain.v --prefix Plain --module-name M
-       --namespace OssFuzzTheorems.Tests.toy.exit0.images)))
+       --namespace OSSVerify.Tests.toy.exit0.images)))
 
 (rule
  (targets Padded.v Padded_seg_000.hex)
  (deps (:elf ../exit0.padded))
  (action
   (run elf-snapshot %{elf} Padded.v --prefix Padded --module-name M
-       --namespace OssFuzzTheorems.Tests.toy.exit0.images)))
+       --namespace OSSVerify.Tests.toy.exit0.images)))

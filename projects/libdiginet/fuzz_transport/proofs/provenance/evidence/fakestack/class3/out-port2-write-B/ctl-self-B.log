@@ -1,0 +1,5 @@
+donor: pinned sha256 bbe55d24d096, twin sha256 658cefbe806b, allocated sections equal (build-id note excepted): True
+target: pinned sha256 bbe55d24d096, twin sha256 658cefbe806b, allocated sections equal (build-id note excepted): True
+plugin-hostd/fuzz_command at 781f46bc05cd, image B: 9 ranges paired and compared; 54 resolve lines: 0 move a value (), 0 name the image of a header range, the rest keep the value
+closeness: 9 of 9 ranges EQUAL byte for byte; 0 pc-relative words differ in the walked ranges, 0 in their 9 whole functions; 0 real / 0 unmeasured / 0 differing targets is the PASS condition
+PASS

@@ -1,0 +1,29 @@
+diff --git B/YD1p.v B/YD1p.v
+index 4d00b9d44e8..d04f2f38bca 100644
+--- B/YD1p.v
++++ B/YD1p.v
+@@ -4,6 +4,7 @@
+ (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1p.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_decode's ASan build. *)
+ (* Modified by Theorem Labs, 2026-10: tfib_drv_main takes the float-state invariant P (P YK11.fx0): the slot tfib_lib_contract_xP and the hypotheses the call loop uses after a call (AFREE, PF1, PFN, EXS) hold at every float state with P; the walk before the loop is at YK11.fx0. *)
+ (* Modified by Theorem Labs, 2026-10: YC5d and YCbq are Required from lib/Reusable: the lib/B copies were the Reusable files' text under lib.B (so lib/B had a second ameter_ops type beside the statement's), and they are deleted. *)
++(* Modified by Theorem Labs, 2026-10: LIBC is the slot at the harness's globals G := G_HARNESS_B (lib/B/TransportGB.v), libreac/fuzz_pcap's G form (Reusable/YD1p.v:60 at origin/ossv/recipes 198234fa4d3, G_HARNESS_U there). *)
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith NArith List Lia Bool String.
+ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
+@@ -18,6 +19,7 @@ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Impor
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YC5d. From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Import YCfn YCeg YE2k YD1u YD1m YD2k.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YO05 YO09 YO06 YO01.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Import TransportGB.
+ Import ListNotations.
+ Unset Lia Cache. Unset Nia Cache.
+ Import AX2. Import AX2S. Import APG. Import APSG.
+@@ -46,7 +48,7 @@ Hypothesis ARDCHK : aread_check_stmt B.
+ Variables (MT : ameter_ops) (XM_LIB XN_LIB : Z -> Z) (RLO RHI : Z).
+ Hypothesis MT_FREE : forall S m, mo_ok MT S m.
+ Hypothesis RO_IN : forall a, RLO <= a < RHI -> in_ro_tfa a.
+-Hypothesis LIBC : forall fx : YK11.FPState, P fx -> tfib_lib_contract_xP (fx := fx) B MT XM_LIB XN_LIB RLO RHI P.
++Hypothesis LIBC : forall fx : YK11.FPState, P fx -> tfib_lib_contract_xP (fx := fx) G_HARNESS_B B MT XM_LIB XN_LIB RLO RHI P.
+ Let MSITE : malloc_site_tfa B := tfib_malloc_site B ML AMALLOC.
+ Let RCHK : read_check_tfa B := tfib_read_check B ARDCHK.
+ Let MCPY : memcpy_site_tfa B := tfib_memcpy_site B AICPY.

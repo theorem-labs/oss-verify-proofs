@@ -1,0 +1,4 @@
+# YH03 cells used by headamp image A's A core (my own parser: Require closure of the 386 A files + ACej through lib/, comments blanked)
+# closure: 628 modules of OssFuzzTheorems.Proofs.reac_pw.fuzz_headamp.lib reached; unresolved: none
+# YH modules in the closure: none; A files naming YH03: none; YH files in lib/Reusable: YH00.v, YH01.v, YH02.v, YH03.v
+# result: 0 YH03 cells used, so 0 lines to check against headamp's .symtab and bytes.

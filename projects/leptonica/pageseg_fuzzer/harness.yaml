@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: pageseg_fuzzer
-rocq: OssFuzzTheorems.leptonica.pageseg_fuzzer
+rocq: OSSVerify.leptonica.pageseg_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixDecideIfTable, pixGetRegionsBinary, pixFindPageForeground (input also
   parsed as a pixacomp) and pixSplitIntoCharacters; outputs discarded.

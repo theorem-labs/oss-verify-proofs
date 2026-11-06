@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: open62541
 harness: fuzz_base64_decode
-rocq: OssFuzzTheorems.open62541.fuzz_base64_decode
+rocq: OSSVerify.open62541.fuzz_base64_decode
 origin: upstream
 summary: UA_unbase64 on the input; the decoded buffer is freed unexamined (no re-encode, no compare).
   Frees only when retLen > 0.

@@ -1,0 +1,3 @@
+_ZN11__sanitizer19GetHandleSignalModeEi	X 0x64d78 Y 0x65658 size 92	lo12 pairs 2 (in differing words 2)	target differs 0	unpaired differing words 0	['table abs8-ptr 8 entries (bound check)']
+_ZNK11__sanitizer13SignalContext8DescribeEv	X 0x65ea0 Y 0x66780 size 60	lo12 pairs 2 (in differing words 2)	target differs 0	unpaired differing words 0	['table abs8-ptr 8 entries (bound check)', 'table rel4-str 8 entries (bound check)']
+__synccall	X 0x94478 Y 0x954c0 size 616	lo12 pairs 5 (in differing words 2)	target differs 0	unpaired differing words 0	[]

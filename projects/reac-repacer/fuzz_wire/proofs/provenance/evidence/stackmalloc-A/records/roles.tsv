@@ -1,0 +1,106 @@
+file	line	donor	target	role	measurement	verdict
+A/Rt/StackMalloc0Tbl.v	29	0x3cda4	0x3c544	pc	__asan_stack_malloc_0+0x0	RIGHT
+A/Rt/StackMalloc0Tbl.v	30	0x3ce28	0x3c5c8	pc	__asan_stack_malloc_0+0x84	RIGHT
+A/Rt/StackMalloc0Tbl.v	31	0x3cea0	0x3c640	pc	__asan_stack_malloc_0+0xfc	RIGHT
+A/Rt/StackMalloc0Tbl.v	32	0x3cec4	0x3c664	pc	__asan_stack_malloc_0+0x120	RIGHT
+A/Rt/StackMalloc0Tbl.v	33	0x3cee0	0x3c680	pc	__asan_stack_malloc_0+0x13c	RIGHT
+A/Rt/StackMalloc0Tbl.v	40	0x5d7ad0	0x5d3710	thread	builtin_tls+0xc8 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/StackMalloc0Tbl.v	41	0x5f8e78	0x5f4ab8	data	__pthread_tsd_main+0x0 (size 1024 | 1024)	RIGHT
+A/Rt/StackMalloc0Tbl.v	68	0x9d550	0x994c8	got	tls_index {1, 0xfffffffffffff800} both images	RIGHT
+A/Rt/StackMalloc0Tbl.v	68	0x9e610	0x9a588	data	_ZN14__interception19real___tls_get_addrE+0x0 (size 8 | 8)	RIGHT
+A/Rt/StackMalloc0Tbl.v	68	0x96620	0x92708	pc	__tls_get_addr+0x0	RIGHT
+A/Rt/StackMalloc0Tbl.v	68	0x9c860	0x987d8	got	cell holds 0x136668 | 0x1322a8: data _ZN11__sanitizer21common_flags_dont_useE+0x0 (size 288 | 288)	RIGHT
+A/Rt/StackMalloc0Tbl.v	68	0x136668	0x1322a8	got-word	the .got word at 0x987d8 is 0x1322a8	RIGHT
+A/Rt/StackMalloc0Tbl.v	69	0x1366f1	0x132331	data	_ZN11__sanitizer21common_flags_dont_useE+0x89 (size 288 | 288)	RIGHT
+A/Rt/StackMalloc0Tbl.v	69	0x9c8c0	0x98838	got	cell holds 0x1345d8 | 0x130218: data _ZN11__sanitizer17current_verbosityE+0x0 (size 4 | 4)	RIGHT
+A/Rt/StackMalloc0Tbl.v	69	0x1345d8	0x130218	got-word	the .got word at 0x98838 is 0x130218	RIGHT
+A/Rt/StackMalloc0Tbl.v	69	0x1345d8	0x130218	got-word	the .got word at 0x98838 is 0x130218	RIGHT
+A/Rt/StackMalloc0Tbl.v	69	0x9d560	0x994d8	got	cell holds 0x8 | 0x8: constant in no section of either image	RIGHT
+A/Rt/StackMalloc0Tbl.v	70	0xa43a0	0x9ffe0	data	_ZN6__asanL14tsd_key_initedE+0x0 (size 1 | 1)	RIGHT
+A/Rt/StackMalloc0Tbl.v	70	0x5d7af0	0x5d3730	thread	builtin_tls+0xe8 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/StackMalloc0Tbl.v	70	0x5d7af8	0x5d3738	thread	builtin_tls+0xf0 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/StackMalloc0Tbl.v	70	0x5d82d0	0x5d3f10	thread	builtin_tls+0x8c8 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/StackMalloc0Tbl.v	78	0x5d8208	0x5d3e48	thread	builtin_tls+0x800 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/StackMalloc0Tbl.v	78	0x5d82e4	0x5d3f24	thread	builtin_tls+0x8dc (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/StackMalloc0Tbl.v	204	0x0007c883	0x0007c883	insn-word	the target word at FS_LOOP + 0x8 = 0x3c5d0 is 0x0007c883	RIGHT
+A/Rt/StackMalloc0Tbl.v	205	0x0007c883	0x0007c883	insn-word	the decode of a fetched word (the fetch row of this file)	RIGHT
+A/Rt/StackMalloc0Tbl.v	210	0x00160613	0x00160613	insn-word	the target word at FS_LOOP + 0x14 = 0x3c5dc is 0x00160613	RIGHT
+A/Rt/StackMalloc0Tbl.v	211	0x00160613	0x00160613	insn-word	the decode of a fetched word (the fetch row of this file)	RIGHT
+A/Rt/StackMalloc0Tbl.v	271	249504	247360	pc-decimal	__asan_stack_malloc_0+0xfc	RIGHT
+A/Rt/StackMalloc0Tbl.v	439	1048576	1048576	model-constant	Z.shiftl 1 kStackSizeLog (kStackSizeLog = 20, Reusable/YG00.v)	RIGHT
+A/Rt/StackMalloc0.v	80	6266880	6246400	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 6246400	RIGHT
+A/Rt/StackMalloc0.v	83	6266880	6246400	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 6246400	RIGHT
+A/Rt/StackMalloc0.v	117	0x5d8208	0x5d3e48	thread	builtin_tls+0x800 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/StackMalloc0.v	118	0x5d8208	0x5d3e48	thread	builtin_tls+0x800 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/StackMalloc0.v	119	0x5d82e4	0x5d3f24	thread	builtin_tls+0x8dc (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/StackMalloc0.v	120	0x5d82e4	0x5d3f24	thread	builtin_tls+0x8dc (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/StackMalloc0.v	185	0x5d8208	0x5d3e48	thread	builtin_tls+0x800 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/StackMalloc0.v	186	0x5d82e4	0x5d3f24	thread	builtin_tls+0x8dc (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/StackMalloc0.v	243	6266880	6246400	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 6246400	RIGHT
+A/Rt/StackMalloc0.v	253	6266880	6246400	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 6246400	RIGHT
+A/Rt/StackMalloc0.v	253	783360	780800	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 780800	RIGHT
+A/Rt/StackMalloc0.v	255	6266880	6246400	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 6246400	RIGHT
+A/Rt/StackMalloc0.v	255	783360	780800	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 780800	RIGHT
+A/Rt/StackMalloc0.v	278	1441792	1441792	model-constant	(kFakeStackSize - kFakeFramesOff) / 8 = 0x160000: the shadow of the frames area (kFakeStackSize = 0xb09000, Reusable/YG0f.v)	RIGHT
+A/Rt/StackMalloc0.v	280	1441792	1441792	model-constant	(kFakeStackSize - kFakeFramesOff) / 8 = 0x160000: the shadow of the frames area (kFakeStackSize = 0xb09000, Reusable/YG0f.v)	RIGHT
+A/Rt/AF0r.v	28	0x3cf18	0x3c6b8	pc	__asan_stack_malloc_1+0x0	RIGHT
+A/Rt/AF0r.v	29	0x3cfac	0x3c74c	pc	__asan_stack_malloc_1+0x94	RIGHT
+A/Rt/AF0r.v	30	0x3d024	0x3c7c4	pc	__asan_stack_malloc_1+0x10c	RIGHT
+A/Rt/AF0r.v	31	0x3d050	0x3c7f0	pc	__asan_stack_malloc_1+0x138	RIGHT
+A/Rt/AF0r.v	32	0x3d06c	0x3c80c	pc	__asan_stack_malloc_1+0x154	RIGHT
+A/Rt/AF0r.v	37	0x109000	0x109000	model-constant	kFakeFramesOff + 1 * 2^kStackSizeLog = 0x109000: class 1 FS_FROFF (frame_addr_cid; kFakeFramesOff = 0x9000, Reusable/YG0f.v)	RIGHT
+A/Rt/AF0r.v	39	0x5d7ad0	0x5d3710	thread	builtin_tls+0xc8 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/AF0r.v	40	0x5f8e78	0x5f4ab8	data	__pthread_tsd_main+0x0 (size 1024 | 1024)	RIGHT
+A/Rt/AF0r.v	42	0x3cda4	0x3c544	pc	code-table row __asan_stack_malloc_0+0x0, 93 words	RIGHT
+A/Rt/AF0r.v	42	0x3cf18	0x3c6b8	pc	code-table row __asan_stack_malloc_1+0x0, 100 words	RIGHT
+A/Rt/AF0r.v	42	0x61ccc	0x61474	pc	code-table row _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_1+0x358, 2 words	RIGHT
+A/Rt/AF0r.v	42	0x46aac	0x45ee4	pc	code-table row __interceptor___tls_get_addr+0x0, 31 words	RIGHT
+A/Rt/AF0r.v	42	0x96620	0x92708	pc	code-table row __tls_get_addr+0x0, 9 words	RIGHT
+A/Rt/AF0r.v	42	0x3d0a8	(dropped)	pc	donor code-table row __asan_stack_malloc_2, 103 words: no such function in the target (A-fs-ranges.patch)	RIGHT
+A/Rt/AF0r.v	42	0x3d244	(dropped)	pc	donor code-table row __asan_stack_malloc_4, 115 words: no such function in the target (A-fs-ranges.patch)	RIGHT
+A/Rt/AF0r.v	43	0x5c00c	0x5b7b4	pc	_ZN6__asan16GetCurrentThreadEv{asan_thread.cpp}+0x0	RIGHT
+A/Rt/AF0r.v	43	0x54b58	0x54300	pc	_ZN6__asan10AsanTSDGetEv{asan_posix.cpp}+0x0	RIGHT
+A/Rt/AF0r.v	43	0x976d4	0x937bc	pc	__pthread_getspecific{pthread_getspecific.c}+0x0	RIGHT
+A/Rt/AF0r.v	43	0x69720	0x68ec8	pc	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm{sanitizer_tls_get_addr.cpp}+0x0	RIGHT
+A/Rt/AF0r.v	43	0x3d410	0x3c848	pc	_ZN6__asanL11MemToShadowEm{asan_fake_stack.cpp}+0x0	RIGHT
+A/Rt/AF0r.v	72	0x9d550	0x994c8	got	tls_index {1, 0xfffffffffffff800} both images	RIGHT
+A/Rt/AF0r.v	72	0x9e610	0x9a588	data	_ZN14__interception19real___tls_get_addrE+0x0 (size 8 | 8)	RIGHT
+A/Rt/AF0r.v	72	0x96620	0x92708	pc	__tls_get_addr+0x0	RIGHT
+A/Rt/AF0r.v	72	0x9c860	0x987d8	got	cell holds 0x136668 | 0x1322a8: data _ZN11__sanitizer21common_flags_dont_useE+0x0 (size 288 | 288)	RIGHT
+A/Rt/AF0r.v	72	0x136668	0x1322a8	got-word	the .got word at 0x987d8 is 0x1322a8	RIGHT
+A/Rt/AF0r.v	73	0x1366f1	0x132331	data	_ZN11__sanitizer21common_flags_dont_useE+0x89 (size 288 | 288)	RIGHT
+A/Rt/AF0r.v	73	0x9c8c0	0x98838	got	cell holds 0x1345d8 | 0x130218: data _ZN11__sanitizer17current_verbosityE+0x0 (size 4 | 4)	RIGHT
+A/Rt/AF0r.v	73	0x1345d8	0x130218	got-word	the .got word at 0x98838 is 0x130218	RIGHT
+A/Rt/AF0r.v	73	0x1345d8	0x130218	got-word	the .got word at 0x98838 is 0x130218	RIGHT
+A/Rt/AF0r.v	73	0x9d560	0x994d8	got	cell holds 0x8 | 0x8: constant in no section of either image	RIGHT
+A/Rt/AF0r.v	74	0xa43a0	0x9ffe0	data	_ZN6__asanL14tsd_key_initedE+0x0 (size 1 | 1)	RIGHT
+A/Rt/AF0r.v	74	0x5d7af0	0x5d3730	thread	builtin_tls+0xe8 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/AF0r.v	74	0x5d7af8	0x5d3738	thread	builtin_tls+0xf0 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/AF0r.v	74	0x5d82d0	0x5d3f10	thread	builtin_tls+0x8c8 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/AF0r.v	82	0x5d8208	0x5d3e48	thread	builtin_tls+0x800 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/AF0r.v	82	0x5d82e4	0x5d3f24	thread	builtin_tls+0x8dc (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/AF0r.v	208	0x0007c283	0x0007c283	insn-word	the target word at FS_LOOP + 0x8 = 0x3c754 is 0x0007c283	RIGHT
+A/Rt/AF0r.v	209	0x0007c283	0x0007c283	insn-word	the decode of a fetched word (the fetch row of this file)	RIGHT
+A/Rt/AF0r.v	214	0x00160613	0x00160613	insn-word	the target word at FS_LOOP + 0x14 = 0x3c760 is 0x00160613	RIGHT
+A/Rt/AF0r.v	215	0x00160613	0x00160613	insn-word	the decode of a fetched word (the fetch row of this file)	RIGHT
+A/Rt/AF0r.v	275	249892	247748	pc-decimal	__asan_stack_malloc_1+0x10c	RIGHT
+A/Rt/AF0r.v	356	1085440	1085440	model-constant	kFakeFramesOff + 1 * 2^kStackSizeLog = 0x109000: class 1 FS_FROFF (frame_addr_cid; kFakeFramesOff = 0x9000, Reusable/YG0f.v)	RIGHT
+A/Rt/AF0r.v	365	1085440	1085440	model-constant	kFakeFramesOff + 1 * 2^kStackSizeLog = 0x109000: class 1 FS_FROFF (frame_addr_cid; kFakeFramesOff = 0x9000, Reusable/YG0f.v)	RIGHT
+A/Rt/AF0r.v	443	1048576	1048576	model-constant	Z.shiftl 1 kStackSizeLog (kStackSizeLog = 20, Reusable/YG00.v)	RIGHT
+A/Rt/AF0s.v	80	6266880	6246400	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 6246400	RIGHT
+A/Rt/AF0s.v	83	6266880	6246400	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 6246400	RIGHT
+A/Rt/AF0s.v	117	0x5d8208	0x5d3e48	thread	builtin_tls+0x800 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/AF0s.v	118	0x5d8208	0x5d3e48	thread	builtin_tls+0x800 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/AF0s.v	119	0x5d82e4	0x5d3f24	thread	builtin_tls+0x8dc (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/AF0s.v	120	0x5d82e4	0x5d3f24	thread	builtin_tls+0x8dc (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/AF0s.v	185	0x5d8208	0x5d3e48	thread	builtin_tls+0x800 (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/AF0s.v	186	0x5d82e4	0x5d3f24	thread	builtin_tls+0x8dc (target builtin_tls 0x5d3648)	RIGHT
+A/Rt/AF0s.v	240	1085440	1085440	model-constant	kFakeFramesOff + 1 * 2^kStackSizeLog = 0x109000: class 1 FS_FROFF (frame_addr_cid; kFakeFramesOff = 0x9000, Reusable/YG0f.v)	RIGHT
+A/Rt/AF0s.v	243	6266880	6246400	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 6246400	RIGHT
+A/Rt/AF0s.v	245	1085440	1085440	model-constant	kFakeFramesOff + 1 * 2^kStackSizeLog = 0x109000: class 1 FS_FROFF (frame_addr_cid; kFakeFramesOff = 0x9000, Reusable/YG0f.v)	RIGHT
+A/Rt/AF0s.v	253	6266880	6246400	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 6246400	RIGHT
+A/Rt/AF0s.v	253	783360	780800	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 780800	RIGHT
+A/Rt/AF0s.v	255	6266880	6246400	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 6246400	RIGHT
+A/Rt/AF0s.v	255	783360	780800	img-top	donor IMG_TOP 0x5fa000; target IMG_TOP 0x5f5000 -> 780800	RIGHT
+A/Rt/AF0s.v	278	1441792	1441792	model-constant	(kFakeStackSize - kFakeFramesOff) / 8 = 0x160000: the shadow of the frames area (kFakeStackSize = 0xb09000, Reusable/YG0f.v)	RIGHT
+A/Rt/AF0s.v	280	1441792	1441792	model-constant	(kFakeStackSize - kFakeFramesOff) / 8 = 0x160000: the shadow of the frames area (kFakeStackSize = 0xb09000, Reusable/YG0f.v)	RIGHT

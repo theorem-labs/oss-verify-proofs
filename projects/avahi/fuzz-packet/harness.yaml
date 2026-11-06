@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: avahi
 harness: fuzz-packet
-rocq: OssFuzzTheorems.avahi.fuzz_packet
+rocq: OSSVerify.avahi.fuzz_packet
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an API contract: same split -> join success contract
   without the service-name part.'

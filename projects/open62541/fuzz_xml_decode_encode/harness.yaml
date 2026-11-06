@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: open62541
 harness: fuzz_xml_decode_encode
-rocq: OssFuzzTheorems.open62541.fuzz_xml_decode_encode
+rocq: OSSVerify.open62541.fuzz_xml_decode_encode
 origin: upstream
 summary: 'Checks 3 properties (listed below); the first, a round trip: decodeXml(encodeXml(v)) == v for
   any Variant v that decodeXml accepted, compared with UA_order == UA_ORDER_EQ (full deep equality); the

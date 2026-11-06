@@ -1,0 +1,13 @@
+file	line (at 78d6988b23aa)	role	text
+AFj1.v	364	Hypothesis FZD	Hypothesis FZD : forall a, FZ a -> ~ aowned B ly S a /\ ~ CZONE a /\ ~ (kLowShadowBeg <= a < kHighShadowEnd).
+AFj1.v	1304	discharge proved	assert (FZDp : forall a, FZ' a -> ~ aowned B ly S a /\ ~ CZONE a /\ ~ (kLowShadowBeg <= a < kHighShadowEnd)).
+AFj1.v	1395	instantiation	{ eapply ABD_old with (zn := nb) (ln := kNodesBlockSize) (zs := sb) (ls := kStoreBlockSize) (memD := memD) (odd := odd);
+AFj1.v	1396	discharge used	first [ exact FZDp | exact Hodd | exact MP | exact HAR | exact AOK | exact CSTDw | exact PRDw | exact EQDw | exact MEQFw
+AFj1.v	1457	discharge proved	assert (FZD0 : forall a, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) -> ~ aowned B ly S a /\ ~ CZONE a /\ ~ (kLowShadowBeg <= a
+AFj1.v	1468	instantiation	eapply AR_transport with (zn := 0) (ln := 0) (zs := 0) (ls := 0) (memD := memD) (odd := odd);
+AFj1.v	1469	discharge used	first [ exact NE | exact FZD0 | exact Hodd | exact MP | exact HAR | exact AOK | exact DEPD0 | exact CK | exact PRD0 | ex
+AFjf.v	404	Hypothesis FZD	Hypothesis FZD : forall a, FZ a -> ~ aowned B ly S a /\ ~ CZONE a /\ ~ (kLowShadowBeg <= a < kHighShadowEnd).
+AFjf.v	1416	discharge proved	assert (FZD0 : forall a : Z, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) ->
+AFjf.v	1427	instantiation	eapply AR_transport with (zn := 0) (ln := 0) (zs := 0) (ls := 0); eassumption. }
+AFjf.v	1447	discharge proved	pose proof (blk_FZD nb sb FPu) as FZD. unfold blk in FZD.
+AFjf.v	1496	instantiation	{ eapply ABD0 with (zn := nb) (ln := kNodesBlockSize) (zs := sb) (ls := kStoreBlockSize); eassumption. }

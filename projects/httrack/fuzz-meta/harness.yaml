@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: httrack
 harness: fuzz-meta
-rocq: OssFuzzTheorems.httrack.fuzz_meta
+rocq: OSSVerify.httrack.fuzz_meta
 origin: upstream
 summary: hts_getCharsetFromMeta on raw HTML; returned charset freed unchecked.
 entry: LLVMFuzzerTestOneInput

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: qpdf
 harness: pngpredictor_fuzzer
-rocq: OssFuzzTheorems.qpdf.pngpredictor_fuzzer
+rocq: OSSVerify.qpdf.pngpredictor_fuzzer
 origin: upstream
 summary: Feeds the input through Pl_PNGFilter(a_decode, columns 32, 1 sample, 8 bits) into Pl_Discard;
   decoded bytes discarded.

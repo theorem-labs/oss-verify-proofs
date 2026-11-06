@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wabt
 harness: wat2wasm_fuzzer
-rocq: OssFuzzTheorems.wabt.wat2wasm_fuzzer
+rocq: OSSVerify.wabt.wat2wasm_fuzzer
 origin: upstream
 summary: WastLexer over the input, ParseWatModule with default features; module and errors discarded (no
   wasm is written despite the name).

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: json-c
 harness: json_object_fuzzer
-rocq: OssFuzzTheorems.json_c.json_object_fuzzer
+rocq: OSSVerify.json_c.json_object_fuzzer
 origin: upstream
 summary: Parses a short string, calls every json_object_get_* getter, json_c_visit, every setter with
   fuzzed values, then json_object_deep_copy; no result is compared (e.g. set then get is not checked).

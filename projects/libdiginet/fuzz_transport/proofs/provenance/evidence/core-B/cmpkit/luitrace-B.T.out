@@ -1,0 +1,45 @@
+# __strftime_fmt_1 at 0xa1840: a1 = 0x20028 (+0x58 lui t1, 0x20; +0x60 addiw a1, t1, 0x28) before +0x64 jr t2; 37 distinct case targets of the 86-entry rel4 table at 0x22994
+case +0x68: overwritten +0x70 addi a1, zero, 2
+case +0xa4: overwritten +0xa8 addi a1, zero, 0xb
+case +0x100: overwritten +0x104 auipc a1, 0xfff6f
+case +0x144: overwritten +0x148 addiw a1, a0, 0x2a
+case +0x150: overwritten +0x5b8 addi a1, zero, 0x64
+case +0x154: overwritten +0x5b8 addi a1, zero, 0x64
+case +0x15c: overwritten +0x160 addi a1, zero, 6
+case +0x174: overwritten +0x490 addi a1, zero, 0x64
+case +0x180: overwritten +0x5b8 addi a1, zero, 0x64
+case +0x190: overwritten +0x5b8 addi a1, zero, 0x64
+case +0x19c: end +0x614 ret 
+case +0x1b0: overwritten +0x1b4 lui a1, 0x20
+case +0x1c8: CALL +0x1d4 jal -0x2dc <__tm_to_secs> (a1 live: an argument register at the call)
+case +0x1f4: overwritten +0x5b8 addi a1, zero, 0x64
+case +0x200: overwritten +0x204 lui a1, 2
+case +0x220: overwritten +0x490 addi a1, zero, 0x64
+case +0x22c: overwritten +0x490 addi a1, zero, 0x64
+case +0x238: overwritten +0x23c addi a1, zero, 0xb
+case +0x250: overwritten +0x254 addiw a1, a0, 0x2b
+case +0x25c: overwritten +0x268 auipc a1, 0xfff6f
+case +0x2d4: overwritten +0x2d8 lw a1, 0x1c(a3)
+case +0x300: end +0x614 ret 
+case +0x314: CALL +0x31c jal 0x308 <week_num> (a1 live: an argument register at the call)
+case +0x330: overwritten +0x334 addi a1, zero, 6
+case +0x348: overwritten +0x5b8 addi a1, zero, 0x64
+case +0x370: overwritten +0x374 auipc a1, 0xfff6e
+case +0x39c: overwritten +0x5b8 addi a1, zero, 0x64
+case +0x3a8: overwritten +0x5b8 addi a1, zero, 0x64
+case +0x3bc: overwritten +0x3c0 lw a1, 0x1c(a3)
+case +0x42c: CALL +0x438 jal -0x16cc <__tm_to_tzname> (a1 live: an argument register at the call)
+case +0x440: overwritten +0x5b8 addi a1, zero, 0x64
+case +0x450: overwritten +0x5b8 addi a1, zero, 0x64
+case +0x468: overwritten +0x46c addiw a1, a0, 0x29
+case +0x470: read +0x470 mv a0, a1 | {a0: CALL +0x480 jal -0x201c <nl_langinfo_l> (a0 live: an argument register at the call)} | overwritten +0x474 mv a1, a4
+case +0x490: overwritten +0x490 addi a1, zero, 0x64
+case +0x4b4: end +0x614 ret 
+case +0x5f4: end +0x614 ret 
+# from +0xf4 follow a0 = 0x20007 + a0 (+ 7): read +0xf4 add a0, a0, a1 | read +0xf8 addiw a0, a0, 7 | CALL +0x508 jal -0x20a4 <nl_langinfo_l> (a0 live: an argument register at the call)
+# from +0x14c follow a1 = 0x2002a: read +0x470 mv a0, a1 | {a0: CALL +0x480 jal -0x201c <nl_langinfo_l> (a0 live: an argument register at the call)} | overwritten +0x474 mv a1, a4
+# from +0x258 follow a1 = 0x2002b: read +0x470 mv a0, a1 | {a0: CALL +0x480 jal -0x201c <nl_langinfo_l> (a0 live: an argument register at the call)} | overwritten +0x474 mv a1, a4
+# from +0x470 follow a1 = 0x20029: read +0x470 mv a0, a1 | {a0: CALL +0x480 jal -0x201c <nl_langinfo_l> (a0 live: an argument register at the call)} | overwritten +0x474 mv a1, a4
+# from +0x4f0 follow a0 = 0x20007 + a0 (+ 0x13): read +0x4f0 addiw a0, a0, 0x13 | CALL +0x508 jal -0x20a4 <nl_langinfo_l> (a0 live: an argument register at the call)
+# from +0x500 follow a0 = 0x20007 + a0: read +0x500 addw a0, a0, a1 | CALL +0x508 jal -0x20a4 <nl_langinfo_l> (a0 live: an argument register at the call)
+# MaybeReleaseToOS at 0x351a0: a3 = 0xf4240 (1000000) from +0xe0: read +0xe0 mul a1, a1, a3 |   (mul: arithmetic use, the result is no address of this value) | CALL +0xec jal 0x389c4 <_ZN11__sanitizer17MonotonicNanoTimeEv> (a3 live: an argument register at the call)

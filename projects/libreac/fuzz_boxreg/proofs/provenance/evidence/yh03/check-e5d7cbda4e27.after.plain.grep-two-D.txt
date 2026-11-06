@@ -1,0 +1,2 @@
+$ grep -cE "Definition [a-z0-9]+_D_.*Definition [a-z0-9]+_D_" proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v
+0

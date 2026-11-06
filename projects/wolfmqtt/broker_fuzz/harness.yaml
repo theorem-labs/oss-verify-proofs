@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wolfmqtt
 harness: broker_fuzz
-rocq: OssFuzzTheorems.wolfmqtt.broker_fuzz
+rocq: OSSVerify.wolfmqtt.broker_fuzz
 origin: upstream
 summary: Feeds the input as a raw MQTT byte stream into the broker via mocked accept/read/write callbacks
   and up to 7 MqttBroker_Step calls, then tears the broker down and re-initialises it; nothing is checked.

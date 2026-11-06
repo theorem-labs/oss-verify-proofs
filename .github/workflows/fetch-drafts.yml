@@ -1,15 +1,19 @@
-# fetch-drafts.yml: one leg of the fetch-drafts job of pr.yml and release-check.yml.  That job is a matrix of legs,
-# each a call of this workflow (`uses: ./.github/workflows/fetch-drafts.yml`), which GitHub runs from the same commit
-# as the calling workflow.
+# fetch-drafts.yml: one leg of the fetch-drafts job of pr.yml and release-check.yml, and of the drafts job of the
+# internal repository's publish-gate.yml.  That job is a matrix of legs, each a call of this workflow (`uses:
+# ./.github/workflows/fetch-drafts.yml`), which GitHub runs from the same commit as the calling workflow.
 #
-# A token with contents: read cannot see a draft release, so a check job reads a draft binary from the artifact this
+# A token with contents: read cannot see a draft release, so a check job reads a draft file from the artifact this
 # workflow uploads for it.  It declares no permissions, so it runs with the token the calling job grants: contents:
 # write and nothing else (a called workflow may narrow its caller's grant, never widen it).  It checks out nothing and
 # runs no script from the tree: the pins come from its input, and every value is checked against the shape the facts'
 # schema gives it before it reaches a command or an artifact's name; the token goes to `gh release download` alone.
+# The names it accepts are those of every file the facts pin: a project's binary, source, port and unpatched
+# archives and its source MANIFEST (schemas/project.yaml, unpatched.yaml), a build recipe, and release.yaml's source
+# archives in their sources-v<N> release (schemas/release.yaml).  pr.yml and release-check.yml pass it binary
+# archives only; publish-gate.yml passes every file of the cut in a release the public repository has not published.
 # This file itself is code the token runs: for pr.yml, the pull request's own copy.  Only a branch of this repository
 # gets a write token, and its author already has write access; a pull request from a fork gets a read-only token.
-# release-check.yml runs on main, on a schedule and on request, so there it is the checked commit's copy.  Who can read
+# release-check.yml runs on main and on request, so there it is the checked commit's copy.  Who can read
 # the artifacts, and why that is accepted, is in pr.yml's header.
 name: fetch-drafts
 on:
@@ -28,7 +32,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - name: this job's draft binaries, each by the tag its pin names, checked against its SHA-256
+      - name: this job's draft files, each by the tag its pin names, checked against its SHA-256
         id: fetch
         env:
           PINS: ${{ inputs.pins }}
@@ -46,9 +50,11 @@ jobs:
           : > "$RUNNER_TEMP/pins.sha256"
           : > "$RUNNER_TEMP/names.txt"
           while IFS=$'\t' read -r rel file sha; do
-            [[ "$rel" =~ ^v[0-9]{4}\.[0-9]{1,2}\.[0-9]+(-rc\.[0-9]+)?(-src)?$ ]] || { echo "::error::not a release tag: '$rel'"; exit 1; }
+            # a release's tag (release.yaml's), a sources-v<N> release of release.yaml's source archives, or an
+            # enrollment commit's own draft (tools/enroll/drafts.py)
+            [[ "$rel" =~ ^(v[0-9]{4}\.[0-9]{1,2}\.[0-9]+(-rc\.[0-9]+)?(-src)?|sources-v[0-9]+|enroll-[a-z0-9][a-z0-9_-]*-[0-9a-f]{12}(-src)?)$ ]] || { echo "::error::not a release tag: '$rel'"; exit 1; }
             # no glob character either, so --pattern matches this one file
-            [[ "$file" =~ ^[a-z0-9][a-z0-9_-]*-bin\.tar\.zst$ ]] || { echo "::error::not a binary archive's name: '$file'"; exit 1; }
+            [[ "$file" =~ ^([a-z0-9][a-z0-9_-]*-(bin|src|port)\.tar\.zst|[a-z0-9][a-z0-9_-]*-src\.MANIFEST\.tsv|recipe(-[0-9]+)?\.tar\.zst)$ ]] || { echo "::error::not the name of a file the facts pin: '$file'"; exit 1; }
             [[ "$sha" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::not a SHA-256: '$sha'"; exit 1; }
             [ ! -e "$dir/$file" ] || { echo "::error::$file is pinned twice"; exit 1; }
             gh release download "$rel" --repo "$GITHUB_REPOSITORY" --pattern "$file" --dir "$dir"
@@ -56,7 +62,7 @@ jobs:
             # Named by run, archive and attempt, from characters upload-artifact accepts. A full re-run uploads its own;
             # a re-run of failed jobs runs only the legs that failed, and a check job matches any attempt.
             name="drafts-$GITHUB_RUN_ID-$file-$GITHUB_RUN_ATTEMPT"
-            [[ "$name" =~ ^drafts-[0-9]+-[a-z0-9][a-z0-9_-]*-bin\.tar\.zst-[0-9]+$ ]] || { echo "::error::not an artifact name: '$name'"; exit 1; }
+            [[ "$name" =~ ^drafts-[0-9]+-([a-z0-9][a-z0-9_-]*-(bin|src|port)\.tar\.zst|[a-z0-9][a-z0-9_-]*-src\.MANIFEST\.tsv|recipe(-[0-9]+)?\.tar\.zst)-[0-9]+$ ]] || { echo "::error::not an artifact name: '$name'"; exit 1; }
             printf '%s %s\n' "$file" "$name" >> "$RUNNER_TEMP/names.txt"
           done < "$RUNNER_TEMP/pins.tsv"
           # a file that differs from its pin, or is missing, fails the job; so does a file no pin names
@@ -69,15 +75,15 @@ jobs:
             { echo "file$k=$file"; echo "name$k=$name"; } >> "$GITHUB_OUTPUT"
             k=$((k + 1))
           done < "$RUNNER_TEMP/names.txt"
-      # One artifact per archive, so that a check job downloads only the archives its projects pin. A step uploads one
+      # One artifact per file, so that a check job downloads only the files its projects pin. A step uploads one
       # artifact, so there is one step per place in the list: the planning job gives a leg at most 6, so fetch-drafts
-      # holds 1,536 archives over 256 jobs. The limit that remains is the planning job's outputs, at most 1 MB per job:
+      # holds 1,536 files over 256 jobs. The limit that remains is the planning job's outputs, at most 1 MB per job:
       # the plan with each group's draft names, and these pins. compression-level 0: a zstd archive gains nothing from
       # it.
       # The cap of 6 is written in three places, which change together: the planning action's `256 * 6`
       # (.github/actions/plan-drafts/action.yml), the fetch step's `length <= 6` above, and these six upload steps.
-      # The step after them fails the leg when fewer archives were uploaded than it pins, so a cap raised without a
-      # step to match fails closed.
+      # The step after them fails the leg when fewer files were uploaded than it pins, so a cap raised without a
+      # step to match fails closed. publish-gate.yml's legs come from tools/publish/plan.py, which holds the same cap.
       - id: upload0
         if: steps.fetch.outputs.name0 != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
@@ -132,15 +138,15 @@ jobs:
           if-no-files-found: error
           retention-days: 1
           compression-level: 0
-      - name: every archive of this leg uploaded, one artifact each
+      - name: every file of this leg uploaded, one artifact each
         env:
           PINS: ${{ inputs.pins }}
           # the artifact id of each upload step that uploaded one
           UPLOADED: ${{ toJSON(steps.*.outputs.artifact-id) }}
         run: |
           set -euo pipefail
-          pins="$(jq length <<< "$PINS")"
-          uploaded="$(jq length <<< "$UPLOADED")"
-          [ "$uploaded" -eq "$pins" ] || {
-            echo "::error::$pins archives in this leg, $uploaded uploaded: a leg holds at most one archive per upload step"; exit 1; }
-          echo "archives uploaded: $uploaded of $pins"
+          n_pins="$(jq length <<< "$PINS")"
+          n_uploaded="$(jq length <<< "$UPLOADED")"
+          [ "$n_uploaded" -eq "$n_pins" ] || {
+            echo "::error::$n_pins files in this leg, $n_uploaded uploaded: a leg holds at most one file per upload step"; exit 1; }
+          echo "files uploaded: $n_uploaded of $n_pins"

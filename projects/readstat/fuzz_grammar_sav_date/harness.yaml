@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: readstat
 harness: fuzz_grammar_sav_date
-rocq: OssFuzzTheorems.readstat.fuzz_grammar_sav_date
+rocq: OSSVerify.readstat.fuzz_grammar_sav_date
 origin: upstream
 summary: sav_parse_date() of the input into a struct tm; result ignored.
 entry: LLVMFuzzerTestOneInput

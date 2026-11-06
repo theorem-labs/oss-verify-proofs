@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ostree
 harness: fuzz-content-stream
-rocq: OssFuzzTheorems.ostree.fuzz_content_stream
+rocq: OSSVerify.ostree.fuzz_content_stream
 origin: oss-fuzz
 summary: Parses the input (top bit of byte 0 selects compressed) as an ostree content-object stream with
   ostree_content_stream_parse(trusted=FALSE); the returned file_info/xattrs/content stream and the error

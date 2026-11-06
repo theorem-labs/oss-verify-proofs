@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_csv
-rocq: OssFuzzTheorems.jsoncons.fuzz_csv
+rocq: OSSVerify.jsoncons.fuzz_csv
 origin: upstream
 summary: csv_string_reader (assume_header, n_rows mapping) into json_decoder<ojson>; result discarded;
   ser_error and two json_runtime_error variants swallowed.

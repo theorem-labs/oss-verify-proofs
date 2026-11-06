@@ -1,7 +1,7 @@
 """tools/oft/ci/facts-review-run and facts-review-gather, and the review job's failure path in facts-review.yml: a
 review that does not finish says why, in the job's log and in the comment, and gather fetches only what it gathers.
 
-On internal #86 (run 40224321468) the review agent exited 1 twice and the log showed nothing of why, and gather's
+On one pull request the review agent exited 1 twice and the log showed nothing of why, and gather's
 `git archive` fetched the whole head commit (8.5 GB) until the fetch broke. The workflow is in the internal
 repository only (`oft release-tree` removes it), so the tests that read it skip where it is not; the scripts and
 these tests ship."""
@@ -14,7 +14,7 @@ import tempfile
 import unittest
 
 from oft import yamlio
-from oft.tests.helpers import REPO
+from oft.tests.helpers import REPO, add_git_config, child_environment
 from oft.tests.test_facts_review_gate import API, FAKE_GH, GATHER, HAVE_WORKFLOW, NO_WORKFLOW, WORKFLOW
 
 RUN = os.path.join(REPO, "tools", "oft", "ci", "facts-review-run")
@@ -24,12 +24,11 @@ COMMENT = os.path.join(REPO, "tools", "oft", "ci", "facts-review-comment")
 # if there is a `status.N`, and else prints `result`, if there is one, and exits with the status in `status`. It
 # prints as `--output-format stream-json` does: a result that is a JSON object comes after a turn of the model it was
 # asked for, as a `result` event whose modelUsage names Anthropic's API; any other text is printed as it is. It counts
-# its calls in `calls`, and writes the identity token it was given, if any, to `tokens`.
+# its calls in `calls`.
 FAKE_CLAUDE = """#!/usr/bin/env bash
 here=$(dirname "$0")
 n=$(( $(cat "$here/calls" 2> /dev/null || echo 0) + 1 ))
 echo "$n" > "$here/calls"
-[ -n "${ANTHROPIC_IDENTITY_TOKEN_FILE:-}" ] && cat "$ANTHROPIC_IDENTITY_TOKEN_FILE" >> "$here/tokens"
 model=none prev=""
 for a in "$@"; do [ "$prev" = --model ] && model=$a; prev=$a; done
 result=$here/result status=$here/status
@@ -42,19 +41,6 @@ elif [ -f "$result" ]; then
   cat "$result"
 fi
 exit "$(cat "$status")"
-"""
-# A stand-in for the GitHub identity token endpoint: a new token on each call, none at all once `curl-fails` is there
-# beside it, and an answer with no token (`{}`) once `curl-empty` is. It writes down its arguments in `curl.argv` and
-# the headers it read on standard input (`-H @-`) in `curl.headers`.
-FAKE_CURL = """#!/usr/bin/env bash
-here=$(dirname "$0")
-printf '%s\\0' "$@" >> "$here/curl.argv"
-for a in "$@"; do [ "$a" = @- ] && cat >> "$here/curl.headers"; done
-n=$(( $(cat "$here/curls" 2> /dev/null || echo 0) + 1 ))
-echo "$n" > "$here/curls"
-[ -f "$here/curl-fails" ] && exit 22
-[ -f "$here/curl-empty" ] && { echo '{}'; exit 0; }
-echo "{\\"value\\": \\"jwt-$n\\"}"
 """
 MAX_TURNS = {"type": "result", "subtype": "error_max_turns", "is_error": True, "num_turns": 201,
              "duration_ms": 845123}
@@ -89,14 +75,10 @@ class RunTest(unittest.TestCase):
         self._tmp = tempfile.TemporaryDirectory(prefix="oft-review-run-")
         self.dir = os.path.realpath(self._tmp.name)
         write(os.path.join(self.dir, "bin", "claude"), FAKE_CLAUDE, 0o755)
-        write(os.path.join(self.dir, "bin", "curl"), FAKE_CURL, 0o755)
         write(os.path.join(self.dir, ".review", "changed.txt"), "M\tprojects/zlib/project.yaml\n")
-        # The review step's own environment: the token file it wrote, and what a new token is fetched with.
-        self.token_file = os.path.join(self.dir, "oidc", "jwt")
-        write(self.token_file, "jwt-0\n")
-        self.env = dict(os.environ, PATH=os.path.join(self.dir, "bin") + os.pathsep + os.environ["PATH"], PR="7",
-                        ANTHROPIC_IDENTITY_TOKEN_FILE=self.token_file, ACTIONS_ID_TOKEN_REQUEST_TOKEN="t",
-                        ACTIONS_ID_TOKEN_REQUEST_URL="https://token.example/?x=1")
+        # The review step's own environment: the gateway's identity token, as the workflow gives it.
+        self.env = child_environment(self.dir, PATH=os.path.join(self.dir, "bin") + os.pathsep + os.environ["PATH"],
+                                     PR="7", ANTHROPIC_AUTH_TOKEN="id-token")
 
     def tearDown(self):
         self._tmp.cleanup()
@@ -106,7 +88,7 @@ class RunTest(unittest.TestCase):
         (result, status) pairs, with the first pair on its first call and the pairs of `later` on the calls after."""
         bin_dir = os.path.join(self.dir, "bin")
         for name in os.listdir(bin_dir):
-            if name not in ("claude", "curl", "curl-fails", "curl-empty"):
+            if name != "claude":
                 os.remove(os.path.join(bin_dir, name))
         calls = [(result, status), *later] if later else [(result, status)]
         for n, (r, s) in enumerate(calls, 1):
@@ -125,11 +107,6 @@ class RunTest(unittest.TestCase):
                 why = f.read()
         with open(os.path.join(bin_dir, "calls")) as f:
             self.calls = int(f.read())
-        tokens = os.path.join(bin_dir, "tokens")
-        self.tokens = []
-        if os.path.exists(tokens):
-            with open(tokens) as f:
-                self.tokens = f.read().split()
         return r.returncode, r.stdout, r.stderr, why
 
     def test_a_turn_limit_says_so(self):
@@ -163,7 +140,7 @@ class RunTest(unittest.TestCase):
         self.assertEqual(self.calls, 3, "a fourth try")
 
     def test_a_review_that_fails_once_is_tried_again(self):
-        """#138's head failed on run 40232827271 and passed on run 40238097164: one more try gets the review."""
+        """A head that failed on one run passed on the next: one more try gets the review."""
         failed = dict(MAX_TURNS, subtype="error_during_execution", errors=["the stream ended"])
         review = {"type": "result", "subtype": "success", "is_error": False, "num_turns": 56, "duration_ms": 276000,
                   "result": "No findings."}
@@ -183,42 +160,6 @@ class RunTest(unittest.TestCase):
         self.assertEqual(self.calls, 1)
         self.assertEqual(why, "the review agent ended with exit status 124, stopped at its 45-minute limit, "
                               "and wrote no review (output that is not one JSON object), on try 1 of 3\n")
-
-    def test_each_try_gets_an_identity_token_of_its_own(self):
-        """A GitHub identity token is single-use, so a second try with the first try's token is refused: the script
-        writes a new one into the file the agent reads (the token endpoint here is a stand-in curl)."""
-        self.run_review(MAX_TURNS, 1)
-        self.assertEqual(self.tokens, ["jwt-0", "jwt-1", "jwt-2"])
-
-    def test_the_request_token_for_a_new_identity_token_is_not_an_argument(self):
-        """R104-07, in the request this script makes for each new identity token: the request token goes to curl on
-        standard input, not in -H's argument, where any process on the machine can read it."""
-        secret = "request-" + "token-" + "x" * 16
-        self.env["ACTIONS_ID_TOKEN_REQUEST_TOKEN"] = secret
-        self.run_review(MAX_TURNS, 1)
-        self.assertEqual(self.tokens, ["jwt-0", "jwt-1", "jwt-2"])
-        bin_dir = os.path.join(self.dir, "bin")
-        with open(os.path.join(bin_dir, "curl.argv")) as f:
-            self.assertNotIn(secret, f.read())
-        with open(os.path.join(bin_dir, "curl.headers")) as f:
-            self.assertEqual(f.read().splitlines()[0], f"Authorization: Bearer {secret}")
-
-    def test_without_a_new_identity_token_there_is_no_second_try(self):
-        write(os.path.join(self.dir, "bin", "curl-fails"), "")
-        rc, _, err, why = self.run_review(MAX_TURNS, 1)
-        self.assertEqual(rc, 1, err)
-        self.assertEqual(self.calls, 1)
-        self.assertEqual(self.tokens, ["jwt-0"])
-        self.assertEqual(why, MAX_TURNS_WHY + ", on try 1 of 3, no more tries (no new identity token)\n")
-
-    def test_an_answer_with_no_identity_token_is_no_new_token(self):
-        # jq -r .value wrote the text null for `{}`, and the file held null as a token
-        write(os.path.join(self.dir, "bin", "curl-empty"), "")
-        rc, _, err, why = self.run_review(MAX_TURNS, 1)
-        self.assertEqual(rc, 1, err)
-        self.assertEqual(self.calls, 1)
-        self.assertEqual(self.tokens, ["jwt-0"])
-        self.assertEqual(why, MAX_TURNS_WHY + ", on try 1 of 3, no more tries (no new identity token)\n")
 
     def test_a_failed_model_call_puts_its_message_in_the_log_only(self):
         api_error = dict(MAX_TURNS, subtype="success", result="API Error: 529 Overloaded\n::error::not a command")
@@ -273,7 +214,7 @@ class RunTest(unittest.TestCase):
         self.assertIn("exit status 0, error_during_execution after 201 turns", why)
 
     def test_a_try_that_exits_0_without_a_review_says_why(self):
-        """A start that failed exits 0 with a success result (#146's turn_setup_failed shape), and a result can be
+        """A start that failed exits 0 with a success result (a turn_setup_failed shape), and a result can be
         blank: the line names the terminal reason and which check refused it, in this script's words."""
         setup = {"type": "result", "subtype": "success", "is_error": False, "terminal_reason": "turn_setup_failed",
                  "num_turns": 1, "duration_ms": 2000, "result": "API Error: no turn ::error::x"}
@@ -288,12 +229,6 @@ class RunTest(unittest.TestCase):
         self.assertEqual(rc, 1, err)
         self.assertEqual(why, "the review agent ended with exit status 0, success after 9 turns and 9 seconds, "
                               "and wrote no review (a result with no words in it), on try 3 of 3\n")
-
-    def test_no_half_written_identity_token_is_left(self):
-        """Each new token is written to a file of its own and moved into place; none of those files is left."""
-        self.run_review(MAX_TURNS, 1)
-        oidc = os.path.dirname(self.token_file)
-        self.assertEqual(sorted(os.listdir(oidc)), ["jwt"])
 
     def test_a_review_writes_the_comment(self):
         rc, out, err, why = self.run_review({"type": "result", "subtype": "success", "is_error": False,
@@ -332,12 +267,15 @@ class FailureStepTest(unittest.TestCase):
     def run_step(self, job, step_id, env, name=None):
         steps = self.jobs[job]["steps"]
         step = next(s for s in steps if (s.get("id") == step_id if step_id else s.get("name") == name))
-        script = os.path.join(self.dir, "step.sh")
+        # a script file of its own per run: a guard on a developer's machine holds a running script read-only until
+        # some time after its run ends
+        fd, script = tempfile.mkstemp(prefix="step-", suffix=".sh", dir=self.dir)
+        os.close(fd)
         write(script, step["run"])
         if os.path.exists(self.output):
             os.remove(self.output)
         open(self.output, "w").close()
-        env = dict(os.environ, GITHUB_OUTPUT=self.output, RUNNER_TEMP=self.dir, PR="7", **env)
+        env = child_environment(self.dir, GITHUB_OUTPUT=self.output, RUNNER_TEMP=self.dir, PR="7", **env)
         r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", script], cwd=self.dir, env=env,
                            capture_output=True, text=True)
         with open(self.output) as f:
@@ -352,9 +290,7 @@ class FailureStepTest(unittest.TestCase):
                 os.remove(failure)
         else:
             write(failure, failure_text + "\n")
-        token = os.path.join(self.dir, "jwt")
-        open(token, "w").close()
-        return self.run_step("review", "review", {"ANTHROPIC_IDENTITY_TOKEN_FILE": token})
+        return self.run_step("review", "review", {})
 
     @unittest.skipUnless(shutil.which("openssl"), "openssl is not installed")
     def test_the_review_step_shows_the_cause_and_passes_it_on(self):
@@ -362,7 +298,6 @@ class FailureStepTest(unittest.TestCase):
         self.assertEqual(rc, 1, out)
         self.assertIn("::error::the facts review did not finish: " + MAX_TURNS_WHY + "\n", out)
         self.assertEqual(output, "failure=" + MAX_TURNS_WHY + "\n")
-        self.assertFalse(os.path.exists(os.path.join(self.dir, "jwt")), "the identity token file is removed")
 
     def session_step(self, script):
         """The review step over a stand-in facts-review-run `script`, with REVIEW_SESSION set."""
@@ -370,9 +305,7 @@ class FailureStepTest(unittest.TestCase):
         shutil.rmtree(session, ignore_errors=True)
         write(os.path.join(self.dir, "tools", "oft", "ci", "facts-review-run"),
               f"#!/usr/bin/env bash\nmkdir -p {session} .review\n{script}\n", 0o755)
-        token = os.path.join(self.dir, "jwt")
-        open(token, "w").close()
-        return self.run_step("review", "review", {"ANTHROPIC_IDENTITY_TOKEN_FILE": token, "REVIEW_SESSION": session})
+        return self.run_step("review", "review", {"REVIEW_SESSION": session})
 
     @unittest.skipUnless(shutil.which("openssl"), "openssl is not installed")
     def test_the_review_step_says_whether_the_conversation_is_kept(self):
@@ -539,7 +472,7 @@ class FailureStepTest(unittest.TestCase):
             return f.read()
 
     def test_the_job_summary_says_how_the_review_ended(self):
-        """#165's first attempt (run 40274755332) showed only a failed step whose log ended at its stop-commands line.
+        """A review's first attempt showed only a failed step whose log ended at its stop-commands line.
         The check's own page now says that no review was written, why, and how each try ended."""
         step = next(s for s in self.jobs["review"]["steps"] if s.get("id") == "summary")
         self.assertEqual(step["env"]["FAILURE"], self.jobs["review"]["outputs"]["failure"])
@@ -575,10 +508,12 @@ class GatherFetchTest(unittest.TestCase):
 
     def git(self, *args, cwd=None):
         return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "init.defaultBranch=main",
-                               *args], cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
+                               *args], cwd=cwd, env=self.env, check=True, capture_output=True,
+                              text=True).stdout.strip()
 
     def test_gather_fetches_only_what_it_gathers(self):
         with tempfile.TemporaryDirectory(prefix="oft-gather-") as tmp:
+            self.env = child_environment(tmp)
             server = os.path.join(tmp, "server")
             files = {"docs/facts.md": "facts\n", "release.yaml": "release: 1\n",
                      ".claude/skills/a/SKILL.md": "outside: a skill\n", "other/big.txt": "outside: other\n",
@@ -614,12 +549,10 @@ class GatherFetchTest(unittest.TestCase):
             write(os.path.join(checkout, "docs", "facts.md"), "facts\n")
             trace, runner = os.path.join(tmp, "packets"), os.path.join(tmp, "runner")
             os.mkdir(runner)
-            env = {k: v for k, v in os.environ.items() if not k.startswith(("GH_", "GITHUB_", "GIT_"))}
             # The script's https://github.com/acme/proofs is the local server; its git commands log what they ask for.
-            env.update(PATH=bin_dir + os.pathsep + os.environ["PATH"], FAKE_GH=api, PR="7", REPO="acme/proofs",
-                       RUNNER_TEMP=runner, GIT_TRACE_PACKET=trace, GIT_CONFIG_COUNT="1",
-                       GIT_CONFIG_KEY_0=f"url.file://{server}.insteadOf",
-                       GIT_CONFIG_VALUE_0="https://github.com/acme/proofs")
+            env = child_environment(tmp, PATH=bin_dir + os.pathsep + os.environ["PATH"], FAKE_GH=api, PR="7",
+                                    REPO="acme/proofs", RUNNER_TEMP=runner, GIT_TRACE_PACKET=trace)
+            add_git_config(env, (f"url.file://{server}.insteadOf", "https://github.com/acme/proofs"))
             r = subprocess.run(["bash", GATHER, ".review"], cwd=checkout, env=env, capture_output=True, text=True)
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 

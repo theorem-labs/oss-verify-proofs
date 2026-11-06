@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: systemd
 harness: fuzz-bus-label
-rocq: OssFuzzTheorems.systemd.fuzz_bus_label
+rocq: OSSVerify.systemd.fuzz_bus_label
 origin: upstream
 summary: bus_label_unescape_n(data) then bus_label_escape(result); escape(unescape(x)) is never compared
   with x.

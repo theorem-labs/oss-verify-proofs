@@ -1,0 +1,22 @@
+== class 1, donor libreac/fuzz_ctrl at 2fceb489f4aa
+copy Rt/StackMallocRawDef.v: image-free (0 numerals >= 0x10000)
+copy Reusable/StackFreeDef.v: image-free (0 numerals >= 0x10000)
+copy Reusable/StackFreeRaw.v: image-free (0 numerals >= 0x10000)
+== image A (asan): donor pin aac16e1fe728, target pin e89be137db17
+twins A: proved (2 pairs)
+donor: pinned sha256 aac16e1fe728, twin sha256 78efaeda1de5, allocated sections equal (build-id note excepted): True
+target: pinned sha256 e89be137db17, twin sha256 86efc3a80314, allocated sections equal (build-id note excepted): True
+libreac/fuzz_ctrl at 2fceb489f4aa, class 1, image A: 8 ranges paired and compared (bodies __asan_stack_malloc_1); 19 resolve lines: 6 move a value (0x3dc3c -> 0x3dfc4, 0x9fac0 -> 0xa4080, 0x9fb20 -> 0xa40e0, 0xa07b0 -> 0xa4d70, 0xa07c0 -> 0xa4d80), 0 name the image of a header range, the rest keep the value
+PASS
+control self A: PASS, 0 values moved
+control plant A: caught (1 FAIL lines; fuzz_transport.asan: planted or for the and at __asan_stack_malloc_1 + 0x94 (word 0x00e678b3 -> 0x00e668b3))
+alreloc: 3 files written; 0 UNMAPPED or unreviewed CONFLICT, 0 KEPT-ADDR (image-range numerals left unchanged) -- review each
+alreloc: per-numeral report: 41 numerals in 3 files under <OUT>/report/libdiginet/fuzz_transport (one .tsv per file)
+PASS: 0 wrong rows
+A/Rt/StackMalloc1Tbl.v: header 6 lines restored from the donor, 0 CtrlTSyms renamed, notice added
+A/Rt/StackMalloc1.v: header 6 lines restored from the donor, 4 CtrlTSyms renamed, notice added
+A/Rt/StackRawKept.v: header 0 lines restored from the donor, 0 CtrlTSyms renamed, notice added
+Rt/StackMallocRawDef.v: copied, 5 module paths renamed
+Reusable/StackFreeDef.v: copied, 5 module paths renamed
+Reusable/StackFreeRaw.v: copied, 6 module paths renamed
+rc=0

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: usrsctp
 harness: fuzzer_listen
-rocq: OssFuzzTheorems.usrsctp.fuzzer_listen
+rocq: OSSVerify.usrsctp.fuzzer_listen
 origin: upstream
 summary: A listening server socket (set up once) receives the whole input (8..65535 bytes) as one raw
   SCTP packet; the accept upcall only closes the new socket.

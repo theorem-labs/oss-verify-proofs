@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: json-c
 harness: json_pointer_fuzzer
-rocq: OssFuzzTheorems.json_c.json_pointer_fuzzer
+rocq: OSSVerify.json_c.json_pointer_fuzzer
 origin: upstream
 summary: json_tokener_parse_ex with fuzzed depth/flags, then json_pointer_get[f] and json_pointer_set[f]
   with a fuzzed path and sub-document; return codes only decide ownership, get-after-set is not checked.

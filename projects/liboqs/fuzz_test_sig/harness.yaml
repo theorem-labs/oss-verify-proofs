@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: liboqs
 harness: fuzz_test_sig
-rocq: OssFuzzTheorems.liboqs.fuzz_test_sig
+rocq: OSSVerify.liboqs.fuzz_test_sig
 origin: upstream
 summary: 'Checks one property, a self-validation: A signature just produced by OQS_SIG_sign over the fuzz
   message (fuzz-selected algorithm, fuzz-seeded RNG keypair) must verify with OQS_SIG_verify under the

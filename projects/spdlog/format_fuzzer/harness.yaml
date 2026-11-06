@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spdlog
 harness: format_fuzzer
-rocq: OssFuzzTheorems.spdlog.format_fuzzer
+rocq: OSSVerify.spdlog.format_fuzzer
 origin: oss-fuzz
 summary: pattern_formatter with a custom flag formatter and a fuzzed pattern, then spdlog::info with a
   fuzzed runtime format string and three arguments; output goes to a basic_file_sink on /dev/null and

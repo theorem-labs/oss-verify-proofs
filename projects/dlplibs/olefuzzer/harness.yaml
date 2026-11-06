@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: dlplibs
 harness: olefuzzer
-rocq: OssFuzzTheorems.dlplibs.olefuzzer
+rocq: OSSVerify.dlplibs.olefuzzer
 origin: upstream
 summary: RVNGStringStream -> fuzz::testStructuredStream (enumerate OLE/zip substreams by id and by name
   and read each fully); bytes read are copied to a scratch buffer and never compared.

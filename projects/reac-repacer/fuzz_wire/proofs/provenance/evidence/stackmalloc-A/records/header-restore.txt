@@ -1,0 +1,16 @@
+# The header restore (the unit owner's ruling, 2026-10-31 18:12Z): each file gets its donor's 4 header lines at
+# release commit 98c99a85e4, byte for byte, above the text of commit 5cb2d7faca11. Comment-only:
+## vtokens.py (a comment-stripped token digest, sha256 f53bb7dfcf74), before = after
+A/Rt/StackMalloc0.v ce92aa607e89b331
+A/Rt/StackMalloc0Tbl.v 7de38e776ba59e1e
+A/Rt/AF0r.v 8d4ba976b3221a43
+A/Rt/AF0s.v 68c3bcd8ceac7416
+Reusable/YF0v.v 75a39a521aa5fd5d
+## stmt_diff.py before after
+stmt_diff: before/A/Rt/StackMalloc0.v: 946 sentences, 33 statements; after/A/Rt/StackMalloc0.v: 946 sentences, 33 statements; statements that differ: 0 (whitespace only: 0)
+stmt_diff: before/A/Rt/StackMalloc0Tbl.v: 674 sentences, 200 statements; after/A/Rt/StackMalloc0Tbl.v: 674 sentences, 200 statements; statements that differ: 0 (whitespace only: 0)
+stmt_diff: before/A/Rt/AF0r.v: 679 sentences, 201 statements; after/A/Rt/AF0r.v: 679 sentences, 201 statements; statements that differ: 0 (whitespace only: 0)
+stmt_diff: before/A/Rt/AF0s.v: 946 sentences, 33 statements; after/A/Rt/AF0s.v: 946 sentences, 33 statements; statements that differ: 0 (whitespace only: 0)
+stmt_diff: before/Reusable/YF0v.v: 193 sentences, 23 statements; after/Reusable/YF0v.v: 193 sentences, 23 statements; statements that differ: 0 (whitespace only: 0)
+## the reproduction: run.sh, then sm_apply.py with the donor lib at 98c99a85e4, then the two depot_apply.py --consumer
+## runs of takes.tsv, gives the 5 files byte for byte

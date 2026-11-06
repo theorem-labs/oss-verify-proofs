@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_macro_dwarf5
-rocq: OssFuzzTheorems.libdwarf.fuzz_macro_dwarf5
+rocq: OSSVerify.libdwarf.fuzz_macro_dwarf5
 origin: upstream
 summary: 'On the first CU: prints CU header fields, then DWARF5 macro context (primary and by-offset)
   and every macro op (defundef, start/end file, import); results unused.'

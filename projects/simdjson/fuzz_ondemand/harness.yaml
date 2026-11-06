@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: simdjson
 harness: fuzz_ondemand
-rocq: OssFuzzTheorems.simdjson.fuzz_ondemand
+rocq: OSSVerify.simdjson.fuzz_ondemand
 origin: upstream
 summary: ondemand::parser::iterate over strings[0], then for each item one of 12 accessors (get_string/bool/array/int64/double/object/uint64/raw_json_string,
   is_null, begin, end, nested iteration); results discarded, exceptions caught.

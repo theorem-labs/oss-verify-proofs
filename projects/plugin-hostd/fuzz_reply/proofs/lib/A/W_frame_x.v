@@ -1,0 +1,1085 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Theorem Labs, 2026-10: the ARx-GENERIC twin of lib/A/W_frame.v's AR-stated kit (a Theorem Labs lane's step 1 of route (b),
+   2026-10-29). W_frame.v is NOT edited: this file sits beside it, and every walk that cites W_frame.v builds unchanged.
+   - Each AR-stated definition, lemma and run Ltac NAME of W_frame.v's Sections g (q, a0), b (c), d (e) and fsp has its
+     twin NAME_x here, stated over a Section relation `ARx` with its laws `LAWS : AR_laws_x segs B ARx hl`
+     (YCbqG.v:184), the journal YCbqG.ajournal_x (written AJ below; the ghost set Hp after S, Hpc after Sc) and its
+     placement parameter PST. The proofs are W_frame.v's, with cgif's laws al_* replaced by AR_laws_x's alx_*, the
+     journal lemmas by YCbqG.v's and YGcallx.v's _x ones, and ecall_pre / astack_malloc_realizes by FCiface.v's _x
+     forms. Every Hp the frame calls see runs unchanged, as FCiface.v's astack_malloc_realizes_x keeps it.
+   - The AR-free names of W_frame.v (Sections fa, j, w, z, ffs, the region / atom / st_ok lemmas, pi_plain_stop, and the
+     Ltacs paj_after_run_plain, jafter_call_keep_hi, jafter_stretch_hi, jafter_stretch_keep_hi, run_K_hi, norm_ss,
+     ff_flag0_tac) are cited from W_frame.v, not copied. region_kept_frame_aj and region_kept_ownframe_aj (Section w)
+     take no law and name no AR: they are cited too.
+   - The run Ltacs paj_run_sh, paj_run_to_sh, paj_run_flag_sh, paj_run_shc, paj_run_to_shc and psrr_branch_pi match
+     the binder count of the run lemma they are given, which the twins raise by two (Hp, Hpc): each has a _x twin that
+     differs only in that count.
+   - Where W_frame.v's proof reads a fact out of AR's own conjuncts, the generic file states it as a named Section
+     hypothesis over ARx: FRMF (YG0s.v:442 frame_facts' fake-frame alignment, read by frame_al64; alx_frames gives
+     only 32-alignment) and IMGC (W_kit.v:52 pa_img_cover, read by frm_off_imgP; W_kit_x.v's form). The two AR laws
+     W_frame.v takes as hypotheses, frame_flag_lawP (YCbq.v:800) and astack_free_law (YG0d.v:313), are restated over
+     ARx as frame_flag_lawP_x and astack_free_law_x (Hp after S, unchanged: YG0dcf.v:584's form). call_effect_journal_x
+     (YGcallx.v:590) asks one law AR_laws_x lacks, ARx_owned_low_law (OWNLOW), which cgif's call_effect_journal reads
+     from AR_laws' al_owned_low.
+   - ONE STATEMENT DIFFERENCE, forced by the second instance: aj_flag_store_pi and the stack_malloc seat read the
+     model invariant off AR (am_wf: cgif's Wf (as_universe B)) and feed it to cgif's model laws (model_laws'
+     ml_stack_free / ml_stack_malloc and stack_malloc_progressP, all keyed on Wf). ARcf carries only Wf_cf
+     (YG0ncf.v:214 amc_wf): cgif's Wf implies it (Wf_cf_of_Wf), and it holds at event counts cgif's Wf does not admit
+     (YG01cf.v:12-14), so those hypotheses could not be met at ARcf. The twins take the invariant as a Section variable
+     WFx with YGcallx.v's ARx_wf_law (WFL), as YGcallx.v:141 does, and in place of model_laws / stack_malloc_progressP
+     the one fact each proof reads off them: SFREE (stack_free_post's frame split, YG01.v:581) and SMALLOC
+     (stack_malloc_progressP's path with stack_malloc_post's PFake arm, YG01.v:462-466). YG05cf.v:34-45 states the
+     same two posts over Wf_cf.
+   - The BRIDGES (Section br) instantiate ARx at cgif's AR with Hp ignored and PST := []: each generic definition is
+     equivalent to W_frame.v's (the journal through YCe5x.ajournal_x_YCbq); FRMF, IMGC, OWNLOW and WFL (at
+     WFx := Wf (as_universe B)) hold there, SFREE and SMALLOC follow from model_laws and stack_malloc_progressP; and
+     frame_al64_x, frm_off_imgP_x, errno_not_aowned_x and SRr_run_pi_AJ_x give W_frame.v's statements there. *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0j YK0s.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP01 YP00 YP0i YP0j YCbn YP0b YP0a.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YN3v YI04 YI08 YP07.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK04 YA0i YA0n YA0o YCbm YA0q.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG0s.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YP0d YP0c YC80 YC81.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YCbqG YGcallx FCiface.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YA0nH.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YC80xR.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YCe5x.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_syms W_kit W_frame.
+Import ListNotations.
+Local Unset Lia Cache. Local Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Local Open Scope Z_scope.
+
+(* The two frame laws W_frame.v takes as AR hypotheses, over ARx (Hp after S; a frame call keeps it). *)
+Section lw. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Variable segs : list Segment.
+Variable B : asyms.
+Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
+(* YCbq.v:800 frame_flag_lawP *)
+Definition frame_flag_lawP_x : Prop :=
+forall ly S Hp (W : world segs) mem md cid pos,
+ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
+apresent (w_H W) mem (flag_addr ly cid pos) /\ aowned B ly S (flag_addr ly cid pos) /\
+(app_addr (flag_addr ly cid pos) /\ ~ in_img segs (flag_addr ly cid pos)) /\
+(4096 <= flag_addr ly cid pos /\ zone2 (flag_addr ly cid pos) 1 /\ flag_addr ly cid pos < alloc_ceiling).
+(* YG0d.v:313 astack_free_law (= YG0dcf.v:584 astack_free_law_cf at ARx := ARcf) *)
+Definition astack_free_law_x : Prop :=
+forall ly S Hp W mem md mem' md' cid pos,
+ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
+aview segs (w_H W) mem' (flag_addr ly cid pos) = Some 0 ->
+(forall a, 0 <= a < 2 ^ 64 -> aowned B ly S a -> a <> flag_addr ly cid pos -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) ->
+(forall a, aview segs (w_H W) mem a <> None -> aview segs (w_H W) mem' a <> None) ->
+m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> eager_used md' = eager_used md ->
+(forall a, in_band_rw a -> w_H W (w64 a) = true -> mem' (w64 a) = mem (w64 a)) ->
+(* QMm W1 (a Theorem Labs lane 2026-10-31 02:05Z): the kept-bytes frame, ARx_frame_law's W0' premise; without it a relation that
+   carries arodata_ok_cf cannot be re-established at mem' *)
+(forall a, 0 <= a < 2 ^ 64 -> kept_x segs B a -> mem' (w64 a) = mem (w64 a)) ->
+ARx ly (stack_free_state cid pos S) Hp W mem' md'.
+End lw.
+
+Section g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+(* W_frame.v:328-398, Section q *)
+Section q.
+Variable segs : list Segment.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
+Context {hl : Z}.
+Hypothesis LAWS : AR_laws_x segs B ARx hl.
+(* the generic counterpart of the fake-frame facts YG0s.v:442 frame_facts gives at cgif's AR (from ARm's am_layout and
+   am_wf), as W_frame.v:337 reads them: the fake stack is page aligned, a live frame's offset in it is 64-aligned, and
+   its size is a multiple of 64, at least 64. AR_laws_x's alx_frames gives only 32-alignment. *)
+Hypothesis FRMF : forall ly S Hp W mem md cid pos, ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
+ly_F ly mod 4096 = 0 /\ fs_frame_off cid pos mod 64 = 0 /\ 64 <= fs_frame_bytes cid /\ fs_frame_bytes cid mod 64 = 0.
+Local Abbreviation AJ := (ajournal_x segs B PST ARx).
+(* W_frame.v:332 frame_al64 *)
+Lemma frame_al64_x : forall ly S Hp W mem md cid pos,
+ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
+frame_addr ly cid pos mod 64 = 0 /\ fs_frame_bytes cid mod 64 = 0 /\ 64 <= fs_frame_bytes cid.
+Proof.
+intros ly S Hp W mem md cid pos HAR Hin.
+destruct (FRMF ly S Hp W mem md cid pos HAR Hin) as (Hpg & Hoff & H64 & Hb).
+unfold frame_addr. split; [|split; [exact Hb | exact H64]].
+rewrite Z.add_mod, Hoff, Z.add_0_r, Z.mod_mod by lia.
+replace (ly_F ly) with (64 * (ly_F ly / 4096 * 64)) by (pose proof (Z.div_mod (ly_F ly) 4096 ltac:(lia)); lia).
+rewrite Z.mul_comm. apply Z_mod_mult.
+Qed.
+(* W_frame.v:343 shadow_hull_vis_of_frame *)
+Lemma shadow_hull_vis_of_frame_x : forall ly S Hp W mem md cid pos d n,
+ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
+frame_addr ly cid pos <= d -> d + n <= frame_addr ly cid pos + fs_frame_bytes cid -> 0 < n ->
+shadow_hull_vis (aview segs (w_H W) mem) d n.
+Proof.
+intros ly S Hp W mem md cid pos d n HAR Hin Hfd Hdn Hn s Hs.
+destruct (frame_al64_x ly S Hp W mem md cid pos HAR Hin) as (Hal & Hbal & Hb64).
+destruct (alx_frames _ _ _ LAWS ly S Hp W mem md cid pos HAR Hin) as (_ & _ & _ & Hsh).
+set (f := frame_addr ly cid pos) in *. set (bs := fs_frame_bytes cid) in *.
+pose proof (Z.div_mod f 64 ltac:(lia)) as Df. pose proof (Z.div_mod bs 64 ltac:(lia)) as Db.
+assert (E8f : f / 8 = 8 * (f / 64)) by (rewrite Hal, Z.add_0_r in Df; rewrite Df at 1; replace (64 * (f / 64)) with (8 * (f / 64) * 8) by lia; rewrite Z.div_mul by lia; reflexivity).
+assert (E8b : bs / 8 = 8 * (bs / 64)) by (rewrite Hbal, Z.add_0_r in Db; rewrite Db at 1; replace (64 * (bs / 64)) with (8 * (bs / 64) * 8) by lia; rewrite Z.div_mul by lia; reflexivity).
+assert (Hsf : shadow_addr f = 8 * (268431360 + f / 64)) by (unfold shadow_addr, SHADOW_OFF; lia).
+assert (L1 : shadow_addr f <= shadow_addr d / 8 * 8).
+{ pose proof (shadow_mono f d Hfd) as M1. rewrite Hsf. rewrite Hsf in M1.
+assert (268431360 + f / 64 <= shadow_addr d / 8) by (apply Z.div_le_lower_bound; lia). lia. }
+assert (L2 : shadow_addr (d + n - 1) / 8 * 8 + 8 <= shadow_addr f + bs / 8).
+{ assert (M2 : shadow_addr (d + n - 1) < shadow_addr f + bs / 8).
+{ unfold shadow_addr in *. assert ((d + n - 1) / 8 < f / 8 + bs / 8) by (apply Z.div_lt_upper_bound; lia). lia. }
+rewrite Hsf, E8b in M2. rewrite Hsf, E8b.
+assert (shadow_addr (d + n - 1) / 8 < 268431360 + f / 64 + bs / 64) by (apply Z.div_lt_upper_bound; lia). lia. }
+specialize (Hsh (s - shadow_addr f) ltac:(lia)). replace (shadow_addr f + (s - shadow_addr f)) with s in Hsh by lia.
+apply (aview_some_of_apresent segs). exact (proj1 Hsh).
+Qed.
+(* W_frame.v:367 region_kept_block_ajw2 *)
+Lemma region_kept_block_ajw2_x : forall E lyc Sc W memc W2 mem2 slo shi (Er : Z -> Prop) n lo hi wlo whi cs b m ly2 S2 Hp2 md2,
+acall_kept segs B lyc Sc W memc W2 mem2 slo shi Er -> ARx ly2 S2 Hp2 W2 mem2 md2 -> In (b, m) (ablocks B ly2 S2) ->
+bv_unsigned (ew E n) = b -> In (b, m) (ablocks B lyc Sc) -> 0 <= lo -> hi <= req_size m -> lo <= wlo -> whi <= hi ->
+(forall a, b + lo <= a < b + hi -> ~ Er a) ->
+region_kept segs E (mrestrict (w_H W) memc) (mrestrict (w_H W2) mem2) (YP09.mkRegion (Some n) lo hi wlo whi cs).
+Proof.
+intros E lyc Sc W memc W2 mem2 slo shi Er n lo hi wlo whi cs b m ly2 S2 Hp2 md2 (_ & K2 & _) HAR2 Hin2 Hn Hin Hlo Hhi Hwlo Hwhi HnE.
+destruct (alx_blocks _ _ _ LAWS _ _ _ _ _ _ b m HAR2 Hin2) as (_ & _ & _ & _ & Hpres2 & _).
+split; cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi base_val]; rewrite Hn; intros a Ha.
+- apply (mbyte_of_aview segs). replace a with (b + (a - b)) by lia. apply (K2 b m (a - b) Hin); [lia|].
+replace (b + (a - b)) with a by lia. apply HnE. exact Ha.
+- intros _. apply (apresent_writable segs). apply (proj1 (Hpres2 a ltac:(lia))).
+Qed.
+(* W_frame.v:380 awr_new_block_any, over the journal at a world relation R (route R, RULE-SHAPES.md): the proof reads
+   only the journal's gone-block clause, which does not mention the world relation.  At R := wle it is
+   awr_new_block_any_x below. *)
+Lemma awr_new_block_any_xR {R : world segs -> world segs -> Prop} : forall STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memc mdc k ly2 S2 Hp2 W2 mem2 md2 res n blc i lyq ownq,
+ajournal_xR segs B PST ARx R STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memc mdc k ->
+ARx ly2 S2 Hp2 W2 mem2 md2 -> ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n)] -> 0 <= n ->
+In (res, n) blc -> 0 <= i < req_size n ->
+awr_byte STK sp0 FP (ablocks B ly S) blc lyq ownq (res + i).
+Proof.
+intros STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memc mdc k ly2 S2 Hp2 W2 mem2 md2 res n blc i lyq ownq HJ HAR2 Ebl Hn Hin Hi.
+pose proof HJ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hgone & _).
+destruct (in_dec (fun x y : Z * Z => ltac:(decide equality; apply Z.eq_dec)) (res, n) (ablocks B ly S)) as [H0 | H0].
+- destruct (in_dec (fun x y : Z * Z => ltac:(decide equality; apply Z.eq_dec)) (res, n) (ablocks B lyc Sc)) as [Hc | Hc].
++ exfalso. apply in_split in Hc as (l1 & l2 & E1).
+pose proof (sep_blocks_pos_x segs B ARx LAWS ly2 S2 Hp2 W2 mem2 md2 (res, n) (res, n) l1 l2 [] HAR2) as Hd.
+rewrite Ebl, E1, <- app_assoc in Hd. cbn [app] in Hd. specialize (Hd eq_refl).
+unfold zdisjoint, block_rng in Hd. cbn [fst snd] in Hd.
+assert (0 < req_size n) by (unfold req_size; destruct (Z.eqb_spec n 0); cbn; lia). lia.
++ right. left. split; [exact (Hgone res n i H0 Hc Hi)|]. exists res, n. split; [exact Hin | lia].
+- right. right. left. exists res, n. split; [exact Hin|]. split; [exact H0 | lia].
+Qed.
+(* W_frame.v:380 awr_new_block_any *)
+Lemma awr_new_block_any_x : forall STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memc mdc k ly2 S2 Hp2 W2 mem2 md2 res n blc i lyq ownq,
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memc mdc k ->
+ARx ly2 S2 Hp2 W2 mem2 md2 -> ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n)] -> 0 <= n ->
+In (res, n) blc -> 0 <= i < req_size n ->
+awr_byte STK sp0 FP (ablocks B ly S) blc lyq ownq (res + i).
+Proof. exact (@awr_new_block_any_xR (@wle segs)). Qed.
+End q.
+
+(* W_frame.v:479-617, Section a0 *)
+Section a0.
+Context {L : ptable wsym} {PL : PAListing L} {PI : PAImg L}.
+Local Abbreviation SEGS := (pa_segs).
+Local Abbreviation VAL := (pa_val).
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Context {hl : Z}.
+Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
+Local Abbreviation AJ := (ajournal_x SEGS B PST ARx).
+(* W_frame.v:486 run_post_pi_AJ *)
+Definition run_post_pi_AJ_x (W : world SEGS) (E : env) (ss ss' : sstate)
+(ms : machine_state) (STK sp0 : Z) (FP : list (Z * Z)) ly S Hp W0 mem md own lyc Sc Hpc (mdc : Model) (k : Z)
+(Q : world SEGS -> config -> Prop) : Prop :=
+forall ms' mat',
+st_ok_pi SEGS VAL E ss' (restrict (w_H W) ms') ->
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms') (with_vm_backing (m_vm_lazy mdc) mat' mdc) k ->
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+SRr SEGS W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q.
+(* W_frame.v:498 SRr_run_pi_AJ, over YCbqG.v's SRr_chain_AJx *)
+Lemma SRr_run_pi_AJ_x : forall W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+img_env VAL A_LIM E ->
+st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
+sym_runN_pi pl_tpi n ss = (ss', st) -> pi_plain_stop st ->
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+awr_ok E (ss_mem ss) STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+run_post_pi_AJ_x W E ss ss' ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRr SEGS W (mkCfg ms mdc) Q.
+Proof.
+intros W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q HE HS Hrun Hst HJ Hwr Hk.
+unfold sym_runN_pi in Hrun. rewrite <- pl_tpi_eq in Hrun.
+destruct (YP0d.sym_run_pi_sound wsym SEGS (clookup pa_tbl) VAL pa_sigma L pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim
+_ E ss ss' st _ HE HS Hrun) as (msr' & Hms & HP & _ & Hfr).
+eapply (SRr_chain_AJx SEGS B PST ARx LAWS pa_segs_low pa_wx W E (abs_ss VAL ss) (abs_ss VAL ss') ms msr');
+[ exact Hms | destruct st; cbn [prun_post] in HP; first [exact HP | destruct Hst] | destruct ss; exact Hfr | exact HJ | destruct ss; exact Hwr | ].
+intros ms' mat' HS' HJ' HF HF' HG. apply (Hk ms' mat' HS' HJ'); destruct ss; first [exact HF | exact HF' | exact HG].
+Qed.
+(* W_frame.v:515 SRr_run_to_pi_AJ *)
+Lemma SRr_run_to_pi_AJ_x : forall W n stop E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+img_env VAL A_LIM E ->
+st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
+sym_run_toN_pi pl_tpi n stop ss = (ss', st) -> pi_plain_stop st ->
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+awr_ok E (ss_mem ss) STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+run_post_pi_AJ_x W E ss ss' ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRr SEGS W (mkCfg ms mdc) Q.
+Proof.
+intros W n stop E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q HE HS Hrun Hst HJ Hwr Hk.
+unfold sym_run_toN_pi in Hrun. rewrite <- pl_tpi_eq in Hrun.
+destruct (YP0d.sym_run_to_pi_sound wsym SEGS (clookup pa_tbl) VAL pa_sigma L pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim
+_ _ E ss ss' st _ HE HS Hrun) as (msr' & Hms & HP & _ & Hfr).
+eapply (SRr_chain_AJx SEGS B PST ARx LAWS pa_segs_low pa_wx W E (abs_ss VAL ss) (abs_ss VAL ss') ms msr');
+[ exact Hms | destruct st; cbn [prun_post] in HP; first [exact HP | destruct Hst] | destruct ss; exact Hfr | exact HJ | destruct ss; exact Hwr | ].
+intros ms' mat' HS' HJ' HF HF' HG. apply (Hk ms' mat' HS' HJ'); destruct ss; first [exact HF | exact HF' | exact HG].
+Qed.
+(* route R: the plain run at SRrG segs R over the journal at R (its continuation may cross a re-hide);
+   the strict proof over YC80xR's SRrG_chain_AJxG *)
+Definition run_post_pi_AJ_xG (R : world SEGS -> world SEGS -> Prop) (W : world SEGS) (E : env) (ss ss' : sstate)
+(ms : machine_state) (STK sp0 : Z) (FP : list (Z * Z)) ly S Hp W0 mem md own lyc Sc Hpc (mdc : Model) (k : Z)
+(Q : world SEGS -> config -> Prop) : Prop :=
+forall ms' mat',
+st_ok_pi SEGS VAL E ss' (restrict (w_H W) ms') ->
+ajournal_xR SEGS B PST ARx R STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms') (with_vm_backing (m_vm_lazy mdc) mat' mdc) k ->
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+SRrG SEGS R W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q.
+Lemma SRrG_run_pi_AJ_xG {R : world SEGS -> world SEGS -> Prop} : forall W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+img_env VAL A_LIM E ->
+st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
+sym_runN_pi pl_tpi n ss = (ss', st) -> pi_plain_stop st ->
+ajournal_xR SEGS B PST ARx R STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+awr_ok E (ss_mem ss) STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+run_post_pi_AJ_xG R W E ss ss' ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRrG SEGS R W (mkCfg ms mdc) Q.
+Proof.
+intros W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q HE HS Hrun Hst HJ Hwr Hk.
+unfold sym_runN_pi in Hrun. rewrite <- pl_tpi_eq in Hrun.
+destruct (YP0d.sym_run_pi_sound wsym SEGS (clookup pa_tbl) VAL pa_sigma L pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim
+_ E ss ss' st _ HE HS Hrun) as (msr' & Hms & HP & _ & Hfr).
+eapply (YC80xR.SRrG_chain_AJxG SEGS B PST ARx LAWS pa_segs_low pa_wx W E (abs_ss VAL ss) (abs_ss VAL ss') ms msr');
+[ exact Hms | destruct st; cbn [prun_post] in HP; first [exact HP | destruct Hst] | destruct ss; exact Hfr | exact HJ | destruct ss; exact Hwr | ].
+intros ms' mat' HS' HJ' HF HF' HG. apply (Hk ms' mat' HS' HJ'); destruct ss; first [exact HF | exact HF' | exact HG].
+Qed.
+(* route R: the run-to at SRrG segs R over the journal at R *)
+Lemma SRrG_run_to_pi_AJ_xG {R : world SEGS -> world SEGS -> Prop} : forall W n stop E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+img_env VAL A_LIM E ->
+st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
+sym_run_toN_pi pl_tpi n stop ss = (ss', st) -> pi_plain_stop st ->
+ajournal_xR SEGS B PST ARx R STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+awr_ok E (ss_mem ss) STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+run_post_pi_AJ_xG R W E ss ss' ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRrG SEGS R W (mkCfg ms mdc) Q.
+Proof.
+intros W n stop E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q HE HS Hrun Hst HJ Hwr Hk.
+unfold sym_run_toN_pi in Hrun. rewrite <- pl_tpi_eq in Hrun.
+destruct (YP0d.sym_run_to_pi_sound wsym SEGS (clookup pa_tbl) VAL pa_sigma L pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim
+_ _ E ss ss' st _ HE HS Hrun) as (msr' & Hms & HP & _ & Hfr).
+eapply (YC80xR.SRrG_chain_AJxG SEGS B PST ARx LAWS pa_segs_low pa_wx W E (abs_ss VAL ss) (abs_ss VAL ss') ms msr');
+[ exact Hms | destruct st; cbn [prun_post] in HP; first [exact HP | destruct Hst] | destruct ss; exact Hfr | exact HJ | destruct ss; exact Hwr | ].
+intros ms' mat' HS' HJ' HF HF' HG. apply (Hk ms' mat' HS' HJ'); destruct ss; first [exact HF | exact HF' | exact HG].
+Qed.
+Hypothesis ASF : astack_free_law_x SEGS B ARx.
+Hypothesis frame_flag_law : frame_flag_lawP_x SEGS B ARx.
+(* the model's state invariant (cgif: Wf (as_universe B), read as am_wf (proj1 HAR) at W_frame.v:580; cf: Wf_cf
+   (as_universe B), ARcf's amc_wf, YG0ncf.v:214), as YGcallx.v:141 abstracts it, with its law ARx_wf_law *)
+Variable WFx : astate -> Prop.
+Hypothesis WFL : ARx_wf_law SEGS ARx WFx.
+(* the one fact W_frame.v:581 reads off model_laws' ml_stack_free (YG0d.v:534): stack_free_post's frame split
+   (YG01.v:581; YG05cf.v:46 is the same text over Wf_cf). SFREE_AR below derives it from model_laws. *)
+Hypothesis SFREE : forall s cid pos, WFx s -> In (cid, pos) (frames s) ->
+exists l1 l2, frames s = l1 ++ (cid, pos) :: l2 /\ frames (stack_free_state cid pos s) = l1 ++ l2.
+(* W_frame.v:535 aj_flag_store_pi, over the journal at a world relation R (route R): a plain step, so the run
+   itself stays strict SRr; the journal (premise and the continuation's) is at R.  At R := wle it is
+   aj_flag_store_pi_x below. *)
+Lemma aj_flag_store_pi_xR {R : world SEGS -> world SEGS -> Prop} : forall W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own' lyc Sc Hpc mdc k cid pos Q,
+img_env VAL A_LIM E ->
+st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
+sym_runN_pi pl_tpi n ss = (ss', st) -> pi_plain_stop st ->
+ajournal_xR SEGS B PST ARx R STK sp0 FP ly S Hp W0 mem md ((cid, pos) :: own') lyc Sc Hpc W (ms_mem ms) mdc k ->
+0 <= cid ->
+(forall a, in_wrange E (ss_mem ss) a ->
+awr_byte STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc ((cid, pos) :: own') a \/ a = flag_addr lyc cid pos) ->
+(forall msr, st_ok_pi SEGS VAL E ss' msr -> mbyte SEGS (ms_mem msr) (flag_addr lyc cid pos) = Some (Z_to_bv 8 0)) ->
+(forall ms' mat',
+st_ok_pi SEGS VAL E ss' (restrict (w_H W) ms') ->
+ajournal_xR SEGS B PST ARx R STK sp0 FP ly S Hp W0 mem md own' lyc (stack_free_state cid pos Sc) Hpc W (ms_mem ms') (with_vm_backing (m_vm_lazy mdc) mat' mdc) k ->
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+SRr SEGS W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q) ->
+SRr SEGS W (mkCfg ms mdc) Q.
+Proof.
+intros W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own' lyc Sc Hpc mdc k cid pos Q HE HS Hrun Hst HJ Hcid Hwr Hflag0 Hk.
+unfold sym_runN_pi in Hrun. rewrite <- pl_tpi_eq in Hrun.
+destruct (YP0d.sym_run_pi_sound wsym SEGS (clookup pa_tbl) VAL pa_sigma L pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim
+_ E ss ss' st _ HE HS Hrun) as (msr' & Hms & HS'0 & _ & Hfr0).
+assert (HS' : st_ok_pi SEGS VAL E ss' msr') by (destruct st; cbn [prun_post] in HS'0; first [exact HS'0 | destruct Hst]). clear HS'0.
+assert (Hfr : frame_of E (ss_mem ss) (ms_mem (restrict (w_H W) ms)) (ms_mem msr')) by (destruct ss; exact Hfr0). clear Hfr0.
+pose proof pa_wx as Hwx. pose proof pa_segs_low as segs_low.
+pose proof HJ as (HAR & Hly & Hsecs & Hwle & Hio & Hfrs & Hnev & Hkk & _).
+pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
+assert (Hin : In (cid, pos) (frames Sc)) by (rewrite Hfrs; left; reflexivity).
+destruct (frame_flag_law lyc Sc Hpc W (ms_mem ms) mdc cid pos HAR Hin) as (Hfp & Hfo & Hfr_rng & Hfr_num).
+apply (SRr_msteps SEGS Hwx W ms msr' mdc Q Hms).
+intros model' Hsame Hcl.
+rewrite (same_but_materialized_wvb mdc model' Hsame).
+pose proof (restrict_unrestrict_clean (w_H W) (ms_mem ms) msr' Hcl) as Hrr.
+pose proof (mrestrict_unrestrict_mem (w_H W) (ms_mem ms) msr' Hcl) as Hmm.
+pose proof (msteps_mem_grows SEGS _ _ Hms) as Hgr. cbn [ms_mem restrict] in Hgr.
+set (memc' := ms_mem (unrestrict (w_H W) (ms_mem ms) msr')) in *.
+assert (Hfr' : forall x : word, ~ in_wrange E (ss_mem ss) (bv_unsigned x) -> mrestrict (w_H W) memc' x = mrestrict (w_H W) (ms_mem ms) x).
+{ subst memc'. rewrite Hmm. exact Hfr. }
+assert (Hgr' : mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) memc')) by (subst memc'; rewrite Hmm; exact Hgr).
+assert (Heqw : forall a, 0 <= a < 2 ^ 64 -> ~ in_wrange E (ss_mem ss) a -> aview SEGS (w_H W) memc' a = aview SEGS (w_H W) (ms_mem ms) a).
+{ intros a Ha HWa. apply aview_eq_of. apply Hfr'. rewrite Z_to_bv_unsigned. unfold bv_wrap, bv_modulus.
+change (2 ^ Z.of_N 64) with (2 ^ 64). rewrite Z.mod_small by lia. exact HWa. }
+assert (Hsame' : same_but_materialized mdc (with_vm_backing (m_vm_lazy mdc) (m_vm_materialized model') mdc)).
+{ rewrite <- (same_but_materialized_wvb mdc model' Hsame). exact Hsame. }
+pose proof (same_but_materialized_wvb mdc _ Hsame') as Emd.
+pose proof (WFL lyc Sc Hpc W (ms_mem ms) mdc HAR) as HWF.
+destruct (SFREE Sc cid pos HWF Hin) as (l1 & l2 & E1 & E2).
+assert (El1 : l1 = []).
+{ destruct l1 as [|f l1']; [reflexivity|]. exfalso.
+rewrite Hfrs in E1. cbn in E1. injection E1 as <- E1'.
+pose proof (sep_frames_pos_x SEGS B ARx LAWS lyc Sc Hpc W (ms_mem ms) mdc (cid, pos) (cid, pos) [] l1' l2 HAR
+ltac:(rewrite Hfrs; cbn; rewrite E1'; reflexivity)) as Hd.
+unfold zdisjoint, frame_rng in Hd. cbn [fst snd] in Hd. pose proof (fs_frame_bytes_pos cid Hcid). lia. }
+subst l1. cbn in E1, E2. rewrite Hfrs in E1. cbn in E1. injection E1 as E1.
+assert (HAR' : ARx lyc (stack_free_state cid pos Sc) Hpc W memc' (with_vm_backing (m_vm_lazy mdc) (m_vm_materialized model') mdc)).
+{ eapply (ASF lyc Sc Hpc W (ms_mem ms) mdc memc' _ cid pos HAR Hin).
+- unfold aview. subst memc'. rewrite Hmm. rewrite (Hflag0 msr' HS'). reflexivity.
+- intros a Ha Ho Hne. apply Heqw; [exact Ha|]. intros HWa.
+destruct (Hwr a HWa) as [Hw | Hw]; [|exact (Hne Hw)].
+exact (proj1 (awr_byte_cases_xR SEGS B PST ARx LAWS _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ a HJ Hw) Ho).
+- intros a Hv. eapply aview_keeps_vis; [exact Hgr' | exact Hv].
+- rewrite Emd. destruct mdc as [f [mp lz mt] io fs pr li ti sg sc]; reflexivity.
+- rewrite Emd. destruct mdc as [f [mp lz mt] io fs pr li ti sg sc]; reflexivity.
+- rewrite Emd. destruct mdc as [f [mp lz mt] io fs pr li ti sg sc]; reflexivity.
+- intros a _ Hh. subst memc'. cbn [unrestrict ms_mem]. unfold munrestrict. rewrite Hh. reflexivity.
+- (* QMm W1: the kept bytes. The run writes only inside in_wrange, and every byte there is either an awr_byte
+     (stack, a live block, this function's frames and their shadow) or the freed frame's flag, all off the image *)
+  intros a Ha Hkp.
+  assert (HW : ~ in_wrange E (ss_mem ss) (bv_unsigned (w64 a))).
+  { unfold w64. rewrite Z_to_bv_unsigned. unfold bv_wrap, bv_modulus.
+    change (2 ^ Z.of_N 64) with (2 ^ 64). rewrite Z.mod_small by lia.
+    intros HWa. destruct (Hwr a HWa) as [Hw | ->].
+    - exact (awr_byte_not_kept_xR SEGS B PST ARx LAWS segs_low _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ a HJ Hw Hkp).
+    - exact (kept_x_off_img SEGS B _ (proj2 Hfr_rng) Hkp). }
+  pose proof (Hfr' (w64 a) HW) as Hfe. unfold mrestrict in Hfe.
+  destruct (w_H W (w64 a)) eqn:Hh.
+  + subst memc'. cbn [unrestrict ms_mem]. unfold munrestrict. rewrite Hh. reflexivity.
+  + exact Hfe. }
+apply (Hk (unrestrict (w_H W) (ms_mem ms) msr') (m_vm_materialized model')).
+- rewrite Hrr. exact HS'.
+- eapply (ajournal_x_after_writeR SEGS B PST ARx LAWS segs_low STK sp0 FP ly S Hp W0 mem md ((cid, pos) :: own') lyc Sc Hpc W (ms_mem ms) mdc k
+memc' _ (in_wrange E (ss_mem ss)) (stack_free_state cid pos Sc) Hpc own' HJ Heqw
+ltac:(intros a Ha; eapply apresent_grows; [exact Hgr' | exact Ha]) Hsame').
++ intros a Ha. destruct (Hwr a Ha) as [Hw | ->]; [left; exact Hw | right; split; [exact Hfo | exact Hfr_rng]].
++ exact HAR'.
++ unfold ablocks. rewrite blocks_stack_free_state. reflexivity.
++ reflexivity.
++ cbn. lia.
++ etransitivity; [exact E2 | symmetry; exact E1].
++ pose proof HJ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & HQT).
+apply (qtight_ext Sc); [reflexivity | reflexivity | reflexivity | exact HQT].
+- cbn [unrestrict ms_mem]. apply frame_of_unrestrict. exact Hfr.
+- exact Hfr'.
+- exact Hgr'.
+Qed.
+(* W_frame.v:535 aj_flag_store_pi *)
+Lemma aj_flag_store_pi_x : forall W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own' lyc Sc Hpc mdc k cid pos Q,
+img_env VAL A_LIM E ->
+st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
+sym_runN_pi pl_tpi n ss = (ss', st) -> pi_plain_stop st ->
+AJ STK sp0 FP ly S Hp W0 mem md ((cid, pos) :: own') lyc Sc Hpc W (ms_mem ms) mdc k ->
+0 <= cid ->
+(forall a, in_wrange E (ss_mem ss) a ->
+awr_byte STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc ((cid, pos) :: own') a \/ a = flag_addr lyc cid pos) ->
+(forall msr, st_ok_pi SEGS VAL E ss' msr -> mbyte SEGS (ms_mem msr) (flag_addr lyc cid pos) = Some (Z_to_bv 8 0)) ->
+(forall ms' mat',
+st_ok_pi SEGS VAL E ss' (restrict (w_H W) ms') ->
+AJ STK sp0 FP ly S Hp W0 mem md own' lyc (stack_free_state cid pos Sc) Hpc W (ms_mem ms') (with_vm_backing (m_vm_lazy mdc) mat' mdc) k ->
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+SRr SEGS W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q) ->
+SRr SEGS W (mkCfg ms mdc) Q.
+Proof. exact (@aj_flag_store_pi_xR (@wle SEGS)). Qed.
+(* route R: the flag store at SRrG segs R (its continuation may cross a re-hide) *)
+Lemma aj_flag_store_pi_xG {R : world SEGS -> world SEGS -> Prop} : forall W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own' lyc Sc Hpc mdc k cid pos Q,
+img_env VAL A_LIM E ->
+st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
+sym_runN_pi pl_tpi n ss = (ss', st) -> pi_plain_stop st ->
+ajournal_xR SEGS B PST ARx R STK sp0 FP ly S Hp W0 mem md ((cid, pos) :: own') lyc Sc Hpc W (ms_mem ms) mdc k ->
+0 <= cid ->
+(forall a, in_wrange E (ss_mem ss) a ->
+awr_byte STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc ((cid, pos) :: own') a \/ a = flag_addr lyc cid pos) ->
+(forall msr, st_ok_pi SEGS VAL E ss' msr -> mbyte SEGS (ms_mem msr) (flag_addr lyc cid pos) = Some (Z_to_bv 8 0)) ->
+(forall ms' mat',
+st_ok_pi SEGS VAL E ss' (restrict (w_H W) ms') ->
+ajournal_xR SEGS B PST ARx R STK sp0 FP ly S Hp W0 mem md own' lyc (stack_free_state cid pos Sc) Hpc W (ms_mem ms') (with_vm_backing (m_vm_lazy mdc) mat' mdc) k ->
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+SRrG SEGS R W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q) ->
+SRrG SEGS R W (mkCfg ms mdc) Q.
+Proof.
+intros W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own' lyc Sc Hpc mdc k cid pos Q HE HS Hrun Hst HJ Hcid Hwr Hflag0 Hk.
+unfold sym_runN_pi in Hrun. rewrite <- pl_tpi_eq in Hrun.
+destruct (YP0d.sym_run_pi_sound wsym SEGS (clookup pa_tbl) VAL pa_sigma L pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim
+_ E ss ss' st _ HE HS Hrun) as (msr' & Hms & HS'0 & _ & Hfr0).
+assert (HS' : st_ok_pi SEGS VAL E ss' msr') by (destruct st; cbn [prun_post] in HS'0; first [exact HS'0 | destruct Hst]). clear HS'0.
+assert (Hfr : frame_of E (ss_mem ss) (ms_mem (restrict (w_H W) ms)) (ms_mem msr')) by (destruct ss; exact Hfr0). clear Hfr0.
+pose proof pa_wx as Hwx. pose proof pa_segs_low as segs_low.
+pose proof HJ as (HAR & Hly & Hsecs & Hwle & Hio & Hfrs & Hnev & Hkk & _).
+pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
+assert (Hin : In (cid, pos) (frames Sc)) by (rewrite Hfrs; left; reflexivity).
+destruct (frame_flag_law lyc Sc Hpc W (ms_mem ms) mdc cid pos HAR Hin) as (Hfp & Hfo & Hfr_rng & Hfr_num).
+apply (YC80xR.SRrG_msteps_r SEGS Hwx W ms msr' mdc Q Hms).
+intros model' Hsame Hcl.
+rewrite (same_but_materialized_wvb mdc model' Hsame).
+pose proof (restrict_unrestrict_clean (w_H W) (ms_mem ms) msr' Hcl) as Hrr.
+pose proof (mrestrict_unrestrict_mem (w_H W) (ms_mem ms) msr' Hcl) as Hmm.
+pose proof (msteps_mem_grows SEGS _ _ Hms) as Hgr. cbn [ms_mem restrict] in Hgr.
+set (memc' := ms_mem (unrestrict (w_H W) (ms_mem ms) msr')) in *.
+assert (Hfr' : forall x : word, ~ in_wrange E (ss_mem ss) (bv_unsigned x) -> mrestrict (w_H W) memc' x = mrestrict (w_H W) (ms_mem ms) x).
+{ subst memc'. rewrite Hmm. exact Hfr. }
+assert (Hgr' : mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) memc')) by (subst memc'; rewrite Hmm; exact Hgr).
+assert (Heqw : forall a, 0 <= a < 2 ^ 64 -> ~ in_wrange E (ss_mem ss) a -> aview SEGS (w_H W) memc' a = aview SEGS (w_H W) (ms_mem ms) a).
+{ intros a Ha HWa. apply aview_eq_of. apply Hfr'. rewrite Z_to_bv_unsigned. unfold bv_wrap, bv_modulus.
+change (2 ^ Z.of_N 64) with (2 ^ 64). rewrite Z.mod_small by lia. exact HWa. }
+assert (Hsame' : same_but_materialized mdc (with_vm_backing (m_vm_lazy mdc) (m_vm_materialized model') mdc)).
+{ rewrite <- (same_but_materialized_wvb mdc model' Hsame). exact Hsame. }
+pose proof (same_but_materialized_wvb mdc _ Hsame') as Emd.
+pose proof (WFL lyc Sc Hpc W (ms_mem ms) mdc HAR) as HWF.
+destruct (SFREE Sc cid pos HWF Hin) as (l1 & l2 & E1 & E2).
+assert (El1 : l1 = []).
+{ destruct l1 as [|f l1']; [reflexivity|]. exfalso.
+rewrite Hfrs in E1. cbn in E1. injection E1 as <- E1'.
+pose proof (sep_frames_pos_x SEGS B ARx LAWS lyc Sc Hpc W (ms_mem ms) mdc (cid, pos) (cid, pos) [] l1' l2 HAR
+ltac:(rewrite Hfrs; cbn; rewrite E1'; reflexivity)) as Hd.
+unfold zdisjoint, frame_rng in Hd. cbn [fst snd] in Hd. pose proof (fs_frame_bytes_pos cid Hcid). lia. }
+subst l1. cbn in E1, E2. rewrite Hfrs in E1. cbn in E1. injection E1 as E1.
+assert (HAR' : ARx lyc (stack_free_state cid pos Sc) Hpc W memc' (with_vm_backing (m_vm_lazy mdc) (m_vm_materialized model') mdc)).
+{ eapply (ASF lyc Sc Hpc W (ms_mem ms) mdc memc' _ cid pos HAR Hin).
+- unfold aview. subst memc'. rewrite Hmm. rewrite (Hflag0 msr' HS'). reflexivity.
+- intros a Ha Ho Hne. apply Heqw; [exact Ha|]. intros HWa.
+destruct (Hwr a HWa) as [Hw | Hw]; [|exact (Hne Hw)].
+exact (proj1 (awr_byte_cases_xR SEGS B PST ARx LAWS _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ a HJ Hw) Ho).
+- intros a Hv. eapply aview_keeps_vis; [exact Hgr' | exact Hv].
+- rewrite Emd. destruct mdc as [f [mp lz mt] io fs pr li ti sg sc]; reflexivity.
+- rewrite Emd. destruct mdc as [f [mp lz mt] io fs pr li ti sg sc]; reflexivity.
+- rewrite Emd. destruct mdc as [f [mp lz mt] io fs pr li ti sg sc]; reflexivity.
+- intros a _ Hh. subst memc'. cbn [unrestrict ms_mem]. unfold munrestrict. rewrite Hh. reflexivity.
+- (* QMm W1: the kept bytes, as in the twin above *)
+  intros a Ha Hkp.
+  assert (HW : ~ in_wrange E (ss_mem ss) (bv_unsigned (w64 a))).
+  { unfold w64. rewrite Z_to_bv_unsigned. unfold bv_wrap, bv_modulus.
+    change (2 ^ Z.of_N 64) with (2 ^ 64). rewrite Z.mod_small by lia.
+    intros HWa. destruct (Hwr a HWa) as [Hw | ->].
+    - exact (awr_byte_not_kept_xR SEGS B PST ARx LAWS segs_low _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ a HJ Hw Hkp).
+    - exact (kept_x_off_img SEGS B _ (proj2 Hfr_rng) Hkp). }
+  pose proof (Hfr' (w64 a) HW) as Hfe. unfold mrestrict in Hfe.
+  destruct (w_H W (w64 a)) eqn:Hh.
+  + subst memc'. cbn [unrestrict ms_mem]. unfold munrestrict. rewrite Hh. reflexivity.
+  + exact Hfe. }
+apply (Hk (unrestrict (w_H W) (ms_mem ms) msr') (m_vm_materialized model')).
+- rewrite Hrr. exact HS'.
+- eapply (ajournal_x_after_writeR SEGS B PST ARx LAWS segs_low STK sp0 FP ly S Hp W0 mem md ((cid, pos) :: own') lyc Sc Hpc W (ms_mem ms) mdc k
+memc' _ (in_wrange E (ss_mem ss)) (stack_free_state cid pos Sc) Hpc own' HJ Heqw
+ltac:(intros a Ha; eapply apresent_grows; [exact Hgr' | exact Ha]) Hsame').
++ intros a Ha. destruct (Hwr a Ha) as [Hw | ->]; [left; exact Hw | right; split; [exact Hfo | exact Hfr_rng]].
++ exact HAR'.
++ unfold ablocks. rewrite blocks_stack_free_state. reflexivity.
++ reflexivity.
++ cbn. lia.
++ etransitivity; [exact E2 | symmetry; exact E1].
++ pose proof HJ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & HQT).
+apply (qtight_ext Sc); [reflexivity | reflexivity | reflexivity | exact HQT].
+- cbn [unrestrict ms_mem]. apply frame_of_unrestrict. exact Hfr.
+- exact Hfr'.
+- exact Hgr'.
+Qed.
+End a0.
+End g.
+(* W_frame.v:623 paj_run_sh, at the twins' binder count (Hp after S, Hpc after Sc) *)
+Ltac paj_run_sh_x RUNP HS HJ :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of RUNP with
+| forall W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q, _ -> _ -> sym_runN_pi ?tpi n ss = _ -> _ =>
+let r := eval vm_compute in (sym_runN_pi tpi FUEL ss) in
+lazymatch r with
+| (?ss', ?st) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_runN_pi tpi FUEL ss = (ss', st)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_sh_x: no hypothesis  img_env _ _ E" end in
+eapply (RUNP W FUEL E ss ss' st ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HEI HS Hrun I HJ);
+[ clear Hrun | clear Hrun HS HJ; paj_after_run_plain HS HJ ]
+end
+end
+| _ => fail "paj_run_sh_x: HS must be  st_ok_pi segs val E ss (restrict (w_H W) ms)"
+end.
+(* W_frame.v:640 paj_run_to_sh *)
+Ltac paj_run_to_sh_x RUNTOP HS HJ stop :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of RUNTOP with
+| forall W n stop E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q, _ -> _ -> sym_run_toN_pi ?tpi n stop ss = _ -> _ =>
+let r := eval vm_compute in (sym_run_toN_pi tpi FUEL stop ss) in
+lazymatch r with
+| (?ss', ?st) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_run_toN_pi tpi FUEL stop ss = (ss', st)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_to_sh_x: no hypothesis  img_env _ _ E" end in
+eapply (RUNTOP W FUEL stop E ss ss' st ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HEI HS Hrun I HJ);
+[ clear Hrun | clear Hrun HS HJ; paj_after_run_plain HS HJ ]
+end
+end
+| _ => fail "paj_run_to_sh_x: HS must be  st_ok_pi segs val E ss (restrict (w_H W) ms)"
+end.
+(* W_frame.v:657 paj_run_flag_sh *)
+Ltac paj_run_flag_sh_x RUNF HS HJ :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of RUNF with
+| forall W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own' lyc Sc Hpc mdc k cid pos Q, _ -> _ -> sym_runN_pi ?tpi n ss = _ -> _ =>
+let r := eval vm_compute in (sym_runN_pi tpi FUEL ss) in
+lazymatch r with
+| (?ss', ?st) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_runN_pi tpi FUEL ss = (ss', st)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_flag_sh_x: no hypothesis  img_env _ _ E" end in
+eapply (RUNF W FUEL E ss ss' st ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HEI HS Hrun I HJ);
+[ clear Hrun | clear Hrun | clear Hrun | clear Hrun HS HJ; paj_after_run_plain HS HJ ]
+end
+end
+| _ => fail "paj_run_flag_sh_x: HS must be  st_ok_pi segs val E ss (restrict (w_H W) ms)"
+end.
+
+(* W_frame.v:675-786, Sections b / c: the two AR-stated lemmas *)
+Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Section c.
+Context {L : ptable wsym} {PL : PAListing L} {PI : PAImg L}.
+Local Abbreviation SEGS := (pa_segs).
+Local Abbreviation VAL := (pa_val).
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Context {hl : Z}.
+Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
+(* the generic counterpart of W_kit.v:52 pa_img_cover (W_kit_x.v's IMGC), which W_frame.v:777 reads off AR's ledger *)
+Hypothesis IMGC : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
+fst (ly_img ly) <= 0x10000 /\ 0x5fb000 <= fst (ly_img ly) + snd (ly_img ly).
+(* W_frame.v:686 aview_above_of_journal, over the journal at a world relation R (route R): the proof reads only the
+   journal's view-frame clause.  At R := wle it is aview_above_of_journal_x below. *)
+Lemma aview_above_of_journal_xR {R : world SEGS -> world SEGS -> Prop} : forall STK sp0 FP ly S Hp W0 mem md own ly' S' Hp' W' mem' md' k,
+ajournal_xR SEGS B PST ARx R STK sp0 FP ly S Hp W0 mem md own ly' S' Hp' W' mem' md' k ->
+forall a, sp0 <= a < 2 ^ 64 -> aview SEGS (w_H W') mem' a = aview SEGS (w_H W0) mem a.
+Proof.
+intros STK sp0 FP ly S Hp W0 mem md own ly' S' Hp' W' mem' md' k HJ a Ha.
+pose proof HJ as (_ & _ & _ & _ & _ & _ & _ & _ & F1 & _ & _ & _ & _ & _ & (_ & Hstk0 & Hceil & Hslo & _) & _).
+apply F1; lia.
+Qed.
+(* W_frame.v:686 aview_above_of_journal *)
+Lemma aview_above_of_journal_x : forall STK sp0 FP ly S Hp W0 mem md own ly' S' Hp' W' mem' md' k,
+ajournal_x SEGS B PST ARx STK sp0 FP ly S Hp W0 mem md own ly' S' Hp' W' mem' md' k ->
+forall a, sp0 <= a < 2 ^ 64 -> aview SEGS (w_H W') mem' a = aview SEGS (w_H W0) mem a.
+Proof. exact (@aview_above_of_journal_xR (@wle SEGS)). Qed.
+(* W_frame.v:774 frm_off_imgP: a live fake frame lies at or above the image's top (alx_img), which IMGC puts at or
+   above 0x5fb000 *)
+Lemma frm_off_imgP_x : forall ly S Hp (W : world SEGS) mem md cid pos,
+ARx ly S Hp W mem md -> In (cid, pos) (frames S) -> off_img (frame_addr ly cid pos) (fs_frame_bytes cid).
+Proof.
+intros ly S Hp W mem md cid pos HAR Hin. unfold off_img.
+destruct (IMGC ly S Hp W mem md HAR) as [_ C2].
+pose proof (proj2 (alx_img _ _ _ LAWS ly S Hp W mem md HAR) cid pos Hin) as Hf.
+right. lia.
+Qed.
+End c.
+End b.
+
+(* W_frame.v:848-885, Sections d / e *)
+Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Section e.
+Context {L : ptable wsym} {PL : PAListing L} {PI : PAImg L}.
+Local Abbreviation SEGS := (pa_segs).
+Local Abbreviation VAL := (pa_val).
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
+Context {hl : Z}.
+Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
+Local Abbreviation AJ := (ajournal_x SEGS B PST ARx).
+(* W_frame.v:856 run_post_pi_AJ_call *)
+Definition run_post_pi_AJ_call_x (W : world SEGS) (E : env) (ss ssc : sstate)
+(ms : machine_state) (STK sp0 : Z) (FP : list (Z * Z)) ly S Hp W0 mem md own lyc Sc Hpc (mdc : Model) (k : Z)
+(Q : world SEGS -> config -> Prop) : Prop :=
+forall ms' mat',
+st_ok SEGS E ssc (restrict (w_H W) ms') ->
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms') (with_vm_backing (m_vm_lazy mdc) mat' mdc) k ->
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+SRr SEGS W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q.
+(* W_frame.v:866 SRr_run_pi_AJ_call *)
+Lemma SRr_run_pi_AJ_call_x : forall W n E ss ss' s ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+img_env VAL A_LIM E ->
+st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
+sym_runN_pi pl_tpi n ss = (ss', PRS_call s) ->
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+awr_ok E (ss_mem ss) STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+run_post_pi_AJ_call_x W E ss (setpc ss' (pa_sigma s)) ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRr SEGS W (mkCfg ms mdc) Q.
+Proof.
+intros W n E ss ss' s ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q HE HS Hrun HJ Hwr Hk.
+unfold sym_runN_pi in Hrun. rewrite <- pl_tpi_eq in Hrun.
+destruct (YP0d.sym_run_pi_sound wsym SEGS (clookup pa_tbl) VAL pa_sigma L pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim
+_ E ss ss' (PRS_call s) _ HE HS Hrun) as (msr' & Hms & HP & _ & Hfr).
+cbn [YP0d.prun_post] in HP.
+eapply (SRr_chain_AJx SEGS B PST ARx LAWS pa_segs_low pa_wx W E (abs_ss VAL ss) (setpc ss' (pa_sigma s)) ms msr');
+[ exact Hms | exact HP | destruct ss; exact Hfr | exact HJ | destruct ss; exact Hwr | ].
+intros ms' mat' HS' HJ' HF HF' HG. apply (Hk ms' mat' HS' HJ'); destruct ss; first [exact HF | exact HF' | exact HG].
+Qed.
+(* route R: the run to a call at SRrG segs R over the journal at R *)
+Definition run_post_pi_AJ_call_xG (R : world SEGS -> world SEGS -> Prop) (W : world SEGS) (E : env) (ss ssc : sstate)
+(ms : machine_state) (STK sp0 : Z) (FP : list (Z * Z)) ly S Hp W0 mem md own lyc Sc Hpc (mdc : Model) (k : Z)
+(Q : world SEGS -> config -> Prop) : Prop :=
+forall ms' mat',
+st_ok SEGS E ssc (restrict (w_H W) ms') ->
+ajournal_xR SEGS B PST ARx R STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms') (with_vm_backing (m_vm_lazy mdc) mat' mdc) k ->
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
+SRrG SEGS R W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q.
+Lemma SRrG_run_pi_AJ_call_xG {R : world SEGS -> world SEGS -> Prop} : forall W n E ss ss' s ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+img_env VAL A_LIM E ->
+st_ok_pi SEGS VAL E ss (restrict (w_H W) ms) ->
+sym_runN_pi pl_tpi n ss = (ss', PRS_call s) ->
+ajournal_xR SEGS B PST ARx R STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W (ms_mem ms) mdc k ->
+awr_ok E (ss_mem ss) STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+run_post_pi_AJ_call_xG R W E ss (setpc ss' (pa_sigma s)) ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
+SRrG SEGS R W (mkCfg ms mdc) Q.
+Proof.
+intros W n E ss ss' s ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q HE HS Hrun HJ Hwr Hk.
+unfold sym_runN_pi in Hrun. rewrite <- pl_tpi_eq in Hrun.
+destruct (YP0d.sym_run_pi_sound wsym SEGS (clookup pa_tbl) VAL pa_sigma L pa_fetch_ok pa_cert pa_B_ok A_LIM A_LIM_text pl_lim
+_ E ss ss' (PRS_call s) _ HE HS Hrun) as (msr' & Hms & HP & _ & Hfr).
+cbn [YP0d.prun_post] in HP.
+eapply (YC80xR.SRrG_chain_AJxG SEGS B PST ARx LAWS pa_segs_low pa_wx W E (abs_ss VAL ss) (setpc ss' (pa_sigma s)) ms msr');
+[ exact Hms | exact HP | destruct ss; exact Hfr | exact HJ | destruct ss; exact Hwr | ].
+intros ms' mat' HS' HJ' HF HF' HG. apply (Hk ms' mat' HS' HJ'); destruct ss; first [exact HF | exact HF' | exact HG].
+Qed.
+End e.
+End d.
+(* W_frame.v:888 paj_run_shc *)
+Ltac paj_run_shc_x RUNP RUNC HS HJ :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of RUNP with
+| forall W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q, _ -> _ -> sym_runN_pi ?tpi n ss = _ -> _ =>
+let r := eval vm_compute in (sym_runN_pi tpi FUEL ss) in
+lazymatch r with
+| (?ss', PRS_call ?s) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_runN_pi tpi FUEL ss = (ss', PRS_call s)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_shc_x: no hypothesis  img_env _ _ E" end in
+eapply (RUNC W FUEL E ss ss' s ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HEI HS Hrun HJ);
+[ clear Hrun | clear Hrun HS HJ; cbn [setpc];
+let ms' := fresh "ms" in let mat := fresh "mat" in let HF := fresh "HF" in let HFr := fresh "HFr" in let HG := fresh "HG" in
+intros ms' mat HS HJ HF HFr HG; cbn [ms_mem mkst] in HF, HFr, HG, HJ ]
+| (?ss', ?st) =>
+let Hrun := fresh "Hrun" in
+assert (Hrun : sym_runN_pi tpi FUEL ss = (ss', st)) by (vm_compute; reflexivity);
+let HEI := lazymatch goal with HEI : img_env _ _ E |- _ => HEI | _ => fail "paj_run_shc_x: no hypothesis  img_env _ _ E" end in
+eapply (RUNP W FUEL E ss ss' st ms _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HEI HS Hrun I HJ);
+[ clear Hrun | clear Hrun HS HJ;
+let ms' := fresh "ms" in let mat := fresh "mat" in let HF := fresh "HF" in let HFr := fresh "HFr" in let HG := fresh "HG" in
+intros ms' mat HS HJ HF HFr HG; cbn [ms_mem mkst] in HF, HFr, HG, HJ ]
+end
+end
+| _ => fail "paj_run_shc_x: HS must be  st_ok_pi segs val E ss (restrict (w_H W) ms)"
+end.
+(* W_frame.v:915 paj_run_to_shc *)
+Ltac paj_run_to_shc_x RUNTOP HS HJ stop :=
+paj_run_to_sh_x RUNTOP HS HJ stop;
+[ | try (lazymatch goal with HFx : frame_of _ _ _ _ |- _ =>
+repeat match goal with H : context [ms_mem (mkst _ _ _ _)] |- _ => progress cbn [ms_mem mkst] in H end end) ].
+(* W_frame.v:919 psrr_branch_pi *)
+Ltac psrr_branch_pi_x RUNP BR HS :=
+lazymatch type of HS with
+| st_ok_pi ?segs ?val ?E ?ss (restrict (w_H ?W) ?ms) =>
+lazymatch type of RUNP with
+| forall W n E ss ss' st ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q, _ -> _ -> sym_runN_pi ?tpi n ss = _ -> _ =>
+let r := eval vm_compute in (sym_step_pi tpi ss) in
+lazymatch r with
+| PStop (SR_branch ?c ?a ?b) => apply (BR W E ss ms _ _ c a b HS); clear HS; let Hc := fresh "Hc" in intros Hc HS
+| _ => fail "psrr_branch_pi_x: state is not stuck at a branch:" r
+end end
+end.
+
+(* W_frame.v:1086-1236, Section fsp: presence across __asan_stack_malloc_<cid>, over ARx. *)
+Section fsp. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Variable segs : list Segment.
+Variable B : asyms.
+Variable PST : list (Z * Z).
+Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
+Context {hl : Z}.
+Hypothesis LAWS : AR_laws_x segs B ARx hl.
+Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
+Hypothesis errno_low : api_env segs B.
+(* the law call_effect_journal_x (YGcallx.v:590) asks that AR_laws_x lacks: cgif's al_owned_low *)
+Hypothesis OWNLOW : ARx_owned_low_law segs B ARx.
+(* the model's state invariant and its law, as in Section a0 (cgif: Wf (as_universe B), read as am_wf (proj1 HAR) at
+   W_frame.v:1163; cf: Wf_cf (as_universe B)) *)
+Variable WFx : astate -> Prop.
+Hypothesis WFL : ARx_wf_law segs ARx WFx.
+(* the facts W_frame.v:1164-1167 reads off its hypothesis stack_malloc_progress (YCbq.v:806) and model_laws'
+   ml_stack_malloc (YG0d.v:531) through atok_apath: a class with room has a malloc path, whose result differs from s
+   only in its fake stack and has the new, not yet live, frame at the head (stack_malloc_post's PFake arm,
+   YG01.v:462-466; YG05cf.v:34 is the same text over Wf_cf). SMALLOC_AR below derives it from those two. *)
+Hypothesis SMALLOC : forall s cid, WFx s -> 0 <= cid <= 10 -> count_cid cid (frames s) < fs_frames cid ->
+exists pos s', apath (stack_malloc cid s) [] (PFake cid pos, s') /\ (exists f, s' = set_fs f s) /\
+frames s' = (cid, pos) :: frames s /\ ~ In (cid, pos) (frames s).
+Local Abbreviation code := (as_code B).
+Local Abbreviation AJ := (ajournal_x segs B PST ARx).
+(* W_frame.v:1097 astack_malloc_pres: FCiface.v's astack_malloc_realizes_x with the image-presence conjunct *)
+Definition astack_malloc_pres_x (cid : Z) : Prop :=
+forall ly S Hp W regs mem md pos S',
+ecall_pre_x segs B ARx ly S Hp W regs mem md ->
+count_cid cid (frames S) < fs_frames cid ->
+apath (stack_malloc cid S) [] (PFake cid pos, S') ->
+SRr segs W (cfg_at segs (pc_stack_malloc code cid) regs mem md)
+(fun W' c' => W' = W /\ exists regs' mem' md',
+c' = cfg_at segs (raZ regs) regs' mem' md' /\
+ARx ly S' Hp W mem' md' /\ aregs_preserved regs regs' /\ same_but_materialized md md' /\
+getr regs' 10 = w64 (frame_addr ly cid pos) /\
+zero_shadow (aview segs (w_H W) mem') SHADOW_OFF (frame_addr ly cid pos) (fs_frame_bytes cid) /\
+rdword (aview segs (w_H W) mem') (frame_addr ly cid pos + fs_frame_bytes cid - 8) = Some (flag_addr ly cid pos) /\
+(forall a, frame_addr ly cid pos <= a < frame_addr ly cid pos + fs_frame_bytes cid -> apresent (w_H W) mem' a) /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ aowned B ly S a -> ~ aowned B ly S' a -> ~ (spZ regs - ESTACK <= a < spZ regs) ->
+aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
+(forall a, spZ regs - ESTACK <= a < spZ regs -> apresent (w_H W) mem' a) /\
+(forall a, in_img segs a -> apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
+(* W_frame.v:1114 astack_malloc_pres_realizes *)
+Lemma astack_malloc_pres_realizes_x : forall cid, astack_malloc_pres_x cid -> astack_malloc_realizes_x segs B ARx cid.
+Proof.
+intros cid H ly S Hp W regs mem md pos S' HPRE Hcnt Hpath.
+eapply SRr_mono; [exact (H ly S Hp W regs mem md pos S' HPRE Hcnt Hpath)|].
+cbv beta. intros W' c' _ (-> & regs' & mem' & md' & Hc & HAR & HP & Hs & Ha0 & Hz & Hfl & Hfp & Hfr & Hsc & _).
+split; [reflexivity|]. exists regs', mem', md'. repeat (split; [eassumption|]). exact Hsc.
+Qed.
+(* W_frame.v:1127 aj_stack_malloc_pres_at_raw; the caller's ghost set Hpc is kept across the call *)
+Lemma aj_stack_malloc_pres_at_raw_x : forall cid, astack_malloc_pres_x cid -> 0 <= cid <= 10 ->
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k (o : Z) raw,
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ESTACK - o <= STK ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+count_cid cid (frames Sc) < fs_frames cid ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 (pc_stack_malloc code cid)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => W2 = W /\ exists S2 regs2 mem2 md2 pos,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+AJ STK sp0 FP ly S Hp W0 mem md ((cid, pos) :: own) lyc S2 Hpc W mem2 md2 k /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 (frame_addr lyc cid pos) /\
+ablocks B lyc S2 = ablocks B lyc Sc /\ frames S2 = (cid, pos) :: frames Sc /\ ~ In (cid, pos) (frames Sc) /\
+st_nev S2 = st_nev Sc /\ blocks_bytes S2 = blocks_bytes Sc /\
+zero_shadow (aview segs (w_H W) mem2) SHADOW_OFF (frame_addr lyc cid pos) (fs_frame_bytes cid) /\
+rdword (aview segs (w_H W) mem2) (frame_addr lyc cid pos + fs_frame_bytes cid - 8) = Some (flag_addr lyc cid pos) /\
+acall_kept segs B lyc Sc W memT W mem2 (sp0 + o - ESTACK) (sp0 + o) (fun _ => False) /\
+(forall a, in_img segs a -> apresent (w_H W) memT a -> apresent (w_H W) mem2 a) /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ aowned B lyc Sc a -> ~ aowned B lyc S2 a -> ~ (sp0 + o - ESTACK <= a < sp0 + o) ->
+ aview segs (w_H W) mem2 a = aview segs (w_H W) memT a) /\
+(* the room round: the seat's state is a set_fs of the call's, so the room is kept (rp_RPF) *)
+(exists f, S2 = set_fs f Sc)).
+Proof.
+intros cid ASM Hcid W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k o raw
+HJ Hsp' Hal Hneg Hbud Hgp Htp Hra Hraw Hcnt.
+pose proof HJ as (HAR & Hly & Hsecs & Hwle & Hio & Hfrs & Hnev & Hk & F1 & F2 & F3 & F4 & Hgone & Hpres & Hstatic & F5 & HQT).
+pose proof Hstatic as (Hal16 & Hstk0 & Hceil & Hslo & Hshi & H47 & Hbot & Htop2 & Htop).
+pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). pose proof (proj1 errno_low) as [He0 He1].
+assert (ASTACK = 16384) as Has by reflexivity. assert (ESTACK = 4096) as Hes by reflexivity.
+pose proof Hly as (_ & _ & _ & _ & _ & _ & _ & _ & Etop & Eslo & Eshi & _).
+assert (HstkC : astk_ok ESTACK lyc (spZ regsT)).
+{ unfold astk_ok, ly_bot in *. rewrite Hsp', Eslo, Eshi, Etop. repeat split; try zlia.
+all: rewrite Z.add_mod, Hal16, Hal by zlia; reflexivity. }
+assert (HPRE : ecall_pre_x segs B ARx lyc Sc Hpc W regsT memT mdc).
+{ split; [exact HAR|]. split; [rewrite Hra; exact Hraw|]. split; [destruct HstkC as (Q1 & _); exact Q1|].
+split; [rewrite Eslo, Hsp'; zlia|]. split; [rewrite Eshi, Hsp'; zlia|].
+split; [intros a Ha; apply Hpres; rewrite Hsp' in Ha; zlia|]. split; [exact Hgp | exact Htp]. }
+pose proof (WFL lyc Sc Hpc W memT mdc HAR) as HWF.
+destruct (SMALLOC Sc cid HWF Hcid Hcnt) as (pos & S2 & Hpath & (f & ES2) & Hfrs2 & Hfresh).
+eapply SRr_mono; [exact (ASM lyc Sc Hpc W regsT memT mdc pos S2 HPRE Hcnt Hpath)|].
+cbv beta. intros W2 c2 HwleW (-> & regs2 & mem2 & md2 & -> & HAR2 & HP & Hsame & Hres & Hz & Hflag & Hfpres & Hfr & Hpres2 & Hgrow).
+assert (Hblk : blocks S2 = blocks Sc) by (rewrite ES2; reflexivity).
+assert (Eab2 : ablocks B lyc S2 = ablocks B lyc Sc) by (unfold ablocks; rewrite Hblk; reflexivity).
+assert (Hnev2 : st_nev S2 = st_nev Sc) by (rewrite ES2; reflexivity).
+assert (Hbb : blocks_bytes S2 = blocks_bytes Sc) by (rewrite ES2; reflexivity).
+assert (Hsecs2 : st_secs S2 = st_secs Sc) by (rewrite ES2; reflexivity).
+assert (HJ1 : ajournal_x segs B [] ARx ESTACK (spZ regsT) [] lyc Sc Hpc W memT mdc [(cid, pos)] lyc S2 Hpc W mem2 md2 0).
+{ eapply (call_effect_journal_x segs B ARx LAWS segs_low errno_low OWNLOW ESTACK lyc Sc Hpc W regsT memT mdc lyc S2 Hpc W mem2 md2
+    (fun _ => False) [] [(cid, pos)] 0);
+[exact HAR2 | apply layout_le_refl | apply wle_refl | apply same_io_materialized; exact Hsame | | exact Hpres2 | exact HAR | exact HstkC
+| cbn; exact Hfrs2 | zlia | zlia | rewrite Hsecs2; zlia | intros a [] | | ].
+- intros a H0 H1 H2 H3 _. apply (Hfr a H0 H1 H2). intros H. apply H3. left. exact H.
+- intros p n i Hpn Hnp. exfalso. apply Hnp. rewrite Eab2. exact Hpn.
+- rewrite ES2. apply (qtight_ext Sc); [reflexivity | reflexivity | reflexivity | exact HQT]. }
+split; [reflexivity|]. exists S2, regs2, mem2, md2, pos.
+split; [unfold cfg_at, raZ; rewrite Hra; unfold w64; rewrite Z_to_bv_bv_unsigned; reflexivity|].
+split.
+{ rewrite Hsp' in HJ1. replace k with (k + 0) by zlia. change ((cid, pos) :: own) with ([(cid, pos)] ++ own).
+eapply (ajournal_x_sub segs B PST ARx LAWS segs_low);
+[exact HJ | eapply ajournal_x_nil_pst; exact HJ1 | zlia | zlia | intros a (rg & [] & _)]. }
+split; [exact HP|]. split; [exact Hres|]. split; [exact Eab2|]. split; [exact Hfrs2|]. split; [exact Hfresh|].
+split; [exact Hnev2|]. split; [exact Hbb|]. split; [exact Hz|]. split; [exact Hflag|].
+split; [| split; [exact Hgrow | split; [intros a H0 H1 H2 H3; apply (Hfr a H0 H1 H2); rewrite Hsp'; exact H3 | exists f; exact ES2]]].
+rewrite Hsp' in HJ1. eapply (acall_kept_of_journal_x segs B ARx segs_low); [exact HJ1 | exact HAR | intros a (rg & [] & _) | | exact sink_closed_nil].
+intros b m i Hb Hi _. rewrite Eab2. exact Hb.
+Qed.
+(* W_frame.v:1127 aj_stack_malloc_pres_at_raw over the journal at a world relation R (route R): the call moves no world
+   (W2 = W), the callee's journal is lifted to R; the strict aj_stack_malloc_pres_at_raw_x above keeps its own proof *)
+Lemma aj_stack_malloc_pres_at_raw_xR {R : world segs -> world segs -> Prop}
+  (R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3) (WLE_R : forall W W', @wle segs W W' -> R W W') :
+forall cid, astack_malloc_pres_x cid -> 0 <= cid <= 10 ->
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k (o : Z) raw,
+ajournal_xR segs B PST ARx R STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ESTACK - o <= STK ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+count_cid cid (frames Sc) < fs_frames cid ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 (pc_stack_malloc code cid)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => W2 = W /\ exists S2 regs2 mem2 md2 pos,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+ajournal_xR segs B PST ARx R STK sp0 FP ly S Hp W0 mem md ((cid, pos) :: own) lyc S2 Hpc W mem2 md2 k /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 (frame_addr lyc cid pos) /\
+ablocks B lyc S2 = ablocks B lyc Sc /\ frames S2 = (cid, pos) :: frames Sc /\ ~ In (cid, pos) (frames Sc) /\
+st_nev S2 = st_nev Sc /\ blocks_bytes S2 = blocks_bytes Sc /\
+zero_shadow (aview segs (w_H W) mem2) SHADOW_OFF (frame_addr lyc cid pos) (fs_frame_bytes cid) /\
+rdword (aview segs (w_H W) mem2) (frame_addr lyc cid pos + fs_frame_bytes cid - 8) = Some (flag_addr lyc cid pos) /\
+acall_kept segs B lyc Sc W memT W mem2 (sp0 + o - ESTACK) (sp0 + o) (fun _ => False) /\
+(forall a, in_img segs a -> apresent (w_H W) memT a -> apresent (w_H W) mem2 a) /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ aowned B lyc Sc a -> ~ aowned B lyc S2 a -> ~ (sp0 + o - ESTACK <= a < sp0 + o) ->
+ aview segs (w_H W) mem2 a = aview segs (w_H W) memT a) /\
+(* the room round: the seat's state is a set_fs of the call's, so the room is kept (rp_RPF) *)
+(exists f, S2 = set_fs f Sc)).
+Proof.
+intros cid ASM Hcid W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k o raw
+HJ Hsp' Hal Hneg Hbud Hgp Htp Hra Hraw Hcnt.
+pose proof HJ as (HAR & Hly & Hsecs & Hwle & Hio & Hfrs & Hnev & Hk & F1 & F2 & F3 & F4 & Hgone & Hpres & Hstatic & F5 & HQT).
+pose proof Hstatic as (Hal16 & Hstk0 & Hceil & Hslo & Hshi & H47 & Hbot & Htop2 & Htop).
+pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). pose proof (proj1 errno_low) as [He0 He1].
+assert (ASTACK = 16384) as Has by reflexivity. assert (ESTACK = 4096) as Hes by reflexivity.
+pose proof Hly as (_ & _ & _ & _ & _ & _ & _ & _ & Etop & Eslo & Eshi & _).
+assert (HstkC : astk_ok ESTACK lyc (spZ regsT)).
+{ unfold astk_ok, ly_bot in *. rewrite Hsp', Eslo, Eshi, Etop. repeat split; try zlia.
+all: rewrite Z.add_mod, Hal16, Hal by zlia; reflexivity. }
+assert (HPRE : ecall_pre_x segs B ARx lyc Sc Hpc W regsT memT mdc).
+{ split; [exact HAR|]. split; [rewrite Hra; exact Hraw|]. split; [destruct HstkC as (Q1 & _); exact Q1|].
+split; [rewrite Eslo, Hsp'; zlia|]. split; [rewrite Eshi, Hsp'; zlia|].
+split; [intros a Ha; apply Hpres; rewrite Hsp' in Ha; zlia|]. split; [exact Hgp | exact Htp]. }
+pose proof (WFL lyc Sc Hpc W memT mdc HAR) as HWF.
+destruct (SMALLOC Sc cid HWF Hcid Hcnt) as (pos & S2 & Hpath & (f & ES2) & Hfrs2 & Hfresh).
+eapply SRr_mono; [exact (ASM lyc Sc Hpc W regsT memT mdc pos S2 HPRE Hcnt Hpath)|].
+cbv beta. intros W2 c2 HwleW (-> & regs2 & mem2 & md2 & -> & HAR2 & HP & Hsame & Hres & Hz & Hflag & Hfpres & Hfr & Hpres2 & Hgrow).
+assert (Hblk : blocks S2 = blocks Sc) by (rewrite ES2; reflexivity).
+assert (Eab2 : ablocks B lyc S2 = ablocks B lyc Sc) by (unfold ablocks; rewrite Hblk; reflexivity).
+assert (Hnev2 : st_nev S2 = st_nev Sc) by (rewrite ES2; reflexivity).
+assert (Hbb : blocks_bytes S2 = blocks_bytes Sc) by (rewrite ES2; reflexivity).
+assert (Hsecs2 : st_secs S2 = st_secs Sc) by (rewrite ES2; reflexivity).
+assert (HJ1 : ajournal_x segs B [] ARx ESTACK (spZ regsT) [] lyc Sc Hpc W memT mdc [(cid, pos)] lyc S2 Hpc W mem2 md2 0).
+{ eapply (call_effect_journal_x segs B ARx LAWS segs_low errno_low OWNLOW ESTACK lyc Sc Hpc W regsT memT mdc lyc S2 Hpc W mem2 md2
+    (fun _ => False) [] [(cid, pos)] 0);
+[exact HAR2 | apply layout_le_refl | apply wle_refl | apply same_io_materialized; exact Hsame | | exact Hpres2 | exact HAR | exact HstkC
+| cbn; exact Hfrs2 | zlia | zlia | rewrite Hsecs2; zlia | intros a [] | | ].
+- intros a H0 H1 H2 H3 _. apply (Hfr a H0 H1 H2). intros H. apply H3. left. exact H.
+- intros p n i Hpn Hnp. exfalso. apply Hnp. rewrite Eab2. exact Hpn.
+- rewrite ES2. apply (qtight_ext Sc); [reflexivity | reflexivity | reflexivity | exact HQT]. }
+(* the callee's journal is at wle; at R by WLE_R *)
+assert (HJ1R : ajournal_xR segs B [] ARx R ESTACK (spZ regsT) [] lyc Sc Hpc W memT mdc [(cid, pos)] lyc S2 Hpc W mem2 md2 0)
+  by (apply (ajournal_xR_mono segs B [] ARx (@wle segs) R WLE_R); exact HJ1).
+split; [reflexivity|]. exists S2, regs2, mem2, md2, pos.
+split; [unfold cfg_at, raZ; rewrite Hra; unfold w64; rewrite Z_to_bv_bv_unsigned; reflexivity|].
+split.
+{ rewrite Hsp' in HJ1R. replace k with (k + 0) by zlia. change ((cid, pos) :: own) with ([(cid, pos)] ++ own).
+eapply (ajournal_x_subR segs B PST ARx LAWS segs_low R_trans);
+[exact HJ | eapply ajournal_x_nil_pstR; exact HJ1R | zlia | zlia | intros a (rg & [] & _)]. }
+split; [exact HP|]. split; [exact Hres|]. split; [exact Eab2|]. split; [exact Hfrs2|]. split; [exact Hfresh|].
+split; [exact Hnev2|]. split; [exact Hbb|]. split; [exact Hz|]. split; [exact Hflag|].
+split; [| split; [exact Hgrow | split; [intros a H0 H1 H2 H3; apply (Hfr a H0 H1 H2); rewrite Hsp'; exact H3 | exists f; exact ES2]]].
+rewrite Hsp' in HJ1. eapply (acall_kept_of_journal_x segs B ARx segs_low); [exact HJ1 | exact HAR | intros a (rg & [] & _) | | exact sink_closed_nil].
+intros b m i Hb Hi _. rewrite Eab2. exact Hb.
+Qed.
+(* W_frame.v:1195 aj_stack_malloc_pres_at *)
+Lemma aj_stack_malloc_pres_at_x : forall cid, astack_malloc_pres_x cid -> 0 <= cid <= 10 ->
+forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k (o : Z) raw,
+AJ STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> ESTACK - o <= STK ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) ->
+getr regsT 1 = raw -> YK0s.ret_ok raw ->
+count_cid cid (frames Sc) < fs_frames cid ->
+SRr segs W (mkCfg (mkst regsT (Z_to_bv 64 (pc_stack_malloc code cid)) memT (seg_rom segs)) mdc)
+(fun W2 c2 => W2 = W /\ exists S2 regs2 mem2 md2 pos,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom segs)) md2 /\
+AJ STK sp0 FP ly S Hp W0 mem md ((cid, pos) :: own) lyc S2 Hpc W mem2 md2 k /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 (frame_addr lyc cid pos) /\
+ablocks B lyc S2 = ablocks B lyc Sc /\ frames S2 = (cid, pos) :: frames Sc /\ ~ In (cid, pos) (frames Sc) /\
+st_nev S2 = st_nev Sc /\ blocks_bytes S2 = blocks_bytes Sc /\
+zero_shadow (aview segs (w_H W) mem2) SHADOW_OFF (frame_addr lyc cid pos) (fs_frame_bytes cid) /\
+rdword (aview segs (w_H W) mem2) (frame_addr lyc cid pos + fs_frame_bytes cid - 8) = Some (flag_addr lyc cid pos) /\
+acall_kept segs B lyc Sc W memT W mem2 (sp0 + o - ESTACK) (sp0 + o) (fun _ => False) /\
+(forall a, in_img segs a -> apresent (w_H W) memT a -> apresent (w_H W) mem2 a) /\
+(* the room round: the seat's state is a set_fs of the call's (the raw lemma's last conjunct) *)
+(exists f, S2 = set_fs f Sc)).
+Proof.
+intros cid ASM Hcid W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k o raw
+HJ Hsp' Hal Hneg Hbud Hgp Htp Hra Hraw Hcnt.
+eapply SRr_mono; [exact (aj_stack_malloc_pres_at_raw_x cid ASM Hcid W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k o raw
+  HJ Hsp' Hal Hneg Hbud Hgp Htp Hra Hraw Hcnt)|].
+cbv beta. intros W2 c2 _ (HW & S2 & regs2 & mem2 & md2 & pos & P1 & P2 & P3 & P4 & P5 & P6 & P7 & P8 & P9 & P10 & P11 & P12 & P13 & _ & P15).
+split; [exact HW|]. exists S2, regs2, mem2, md2, pos.
+repeat (split; [assumption|]). exact P15.
+Qed.
+(* W_frame.v:1225 errno_not_aowned *)
+Lemma errno_not_aowned_x : forall ly S Hp W mem md,
+ARx ly S Hp W mem md ->
+(forall i, 0 <= i < 4 -> ~ Exists (in_zr (as_errno B + i)) (as_owned_static B)) ->
+forall i, 0 <= i < 4 -> ~ aowned B ly S (as_errno B + i).
+Proof.
+intros ly S Hp W mem md HAR HEO i Hi Ho.
+apply (HEO i Hi).
+exact (proj1 (alx_owned_image _ _ _ LAWS ly S Hp W mem md (as_errno B + i) HAR
+  (proj1 (proj2 errno_low) (as_errno B + i) ltac:(lia))) Ho).
+Qed.
+End fsp.
+
+(* THE BRIDGES. At ARx := cgif's AR with Hp ignored (ARi) and PST := [], every generic definition of this file is
+   equivalent to W_frame.v's AR one, every Section hypothesis above holds, and four lemmas give W_frame.v's statements.
+   LX is the AR instance of the laws (YCbqG.v:1677 AR_laws_x_of_AR builds it from AR_laws and three facts the consumer
+   has). *)
+Section br. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Section s.
+Variable segs : list Segment.
+Variable B : asyms.
+Local Abbreviation ARi := (fun ly S (_ : list Z) W mem md => AR segs B ly S W mem md).
+Lemma frame_flag_lawP_x_AR : frame_flag_lawP_x segs B ARi <-> frame_flag_lawP segs B.
+Proof.
+split; intros H.
+- intros ly S W mem md cid pos. exact (H ly S [] W mem md cid pos).
+- intros ly S Hp W mem md cid pos. exact (H ly S W mem md cid pos).
+Qed.
+(* QMm W1 (2026-10-31): astack_free_law_x now takes one premise the cgif law does not, the kept-bytes frame, so the
+   two are no longer equivalent. The cgif -> x direction is the one with users. *)
+Lemma astack_free_law_x_AR : astack_free_law segs B -> astack_free_law_x segs B ARi.
+Proof.
+intros H ly S Hp W mem md mem' md' cid pos P1 P2 P3 P4 P5 P6 P7 P8 P9 _.
+exact (H ly S W mem md mem' md' cid pos P1 P2 P3 P4 P5 P6 P7 P8 P9).
+Qed.
+Lemma astack_malloc_pres_x_AR : forall cid, astack_malloc_pres_x segs B ARi cid <-> astack_malloc_pres segs B cid.
+Proof.
+intros cid. split; intros H.
+- intros ly S W regs mem md pos S'. exact (H ly S [] W regs mem md pos S').
+- intros ly S Hp W regs mem md pos S'. exact (H ly S W regs mem md pos S').
+Qed.
+(* FRMF, WFL, OWNLOW, SFREE and SMALLOC at ARi, from exactly the facts W_frame.v's and YCbq.v's proofs read *)
+Lemma FRMF_AR : forall ly S (Hp : list Z) (W : world segs) mem md cid pos, AR segs B ly S W mem md -> In (cid, pos) (frames S) ->
+ly_F ly mod 4096 = 0 /\ fs_frame_off cid pos mod 64 = 0 /\ 64 <= fs_frame_bytes cid /\ fs_frame_bytes cid mod 64 = 0.
+Proof.
+intros ly S Hp W mem md cid pos [M _] Hin.
+destruct (frame_facts B ly S _ cid pos M Hin) as (_ & _ & _ & _ & Hpg & _ & _ & Hoff & H64 & Hb & _).
+split; [exact Hpg|]. split; [exact Hoff|]. split; [exact H64 | exact Hb].
+Qed.
+Lemma WFL_AR : ARx_wf_law segs ARi (Wf (as_universe B)).
+Proof. intros ly S Hp W mem md HAR. exact (am_wf _ _ _ _ (proj1 HAR)). Qed.
+Lemma OWNLOW_AR : AR_laws segs B -> ARx_owned_low_law segs B ARi.
+Proof. intros LW ly S Hp W mem md a HAR Ho. exact (al_owned_low _ _ LW ly S W mem md a HAR Ho). Qed.
+Lemma SFREE_AR : model_laws (as_universe B) -> forall s cid pos, Wf (as_universe B) s -> In (cid, pos) (frames s) ->
+exists l1 l2, frames s = l1 ++ (cid, pos) :: l2 /\ frames (stack_free_state cid pos s) = l1 ++ l2.
+Proof. intros ML s cid pos HWF Hin. exact (proj2 (ml_stack_free _ ML s cid pos HWF Hin)). Qed.
+Lemma SMALLOC_AR : model_laws (as_universe B) -> stack_malloc_progressP B ->
+forall s cid, Wf (as_universe B) s -> 0 <= cid <= 10 -> count_cid cid (frames s) < fs_frames cid ->
+exists pos s', apath (stack_malloc cid s) [] (PFake cid pos, s') /\ (exists f, s' = set_fs f s) /\
+frames s' = (cid, pos) :: frames s /\ ~ In (cid, pos) (frames s).
+Proof.
+intros ML SMP s cid HWF Hcid Hcnt.
+destruct (SMP s cid HWF Hcid Hcnt) as (pos & s' & Hpath).
+pose proof (ml_stack_malloc _ ML s cid HWF Hcid) as HTOK.
+destruct (atok_apath _ _ _ [] (PFake cid pos, s') HTOK Hpath) as (ns' & HQ). unfold stack_malloc_post in HQ.
+destruct HQ as (_ & Hf & _ & _ & Hfrs & Hfresh).
+exists pos, s'. split; [exact Hpath|]. split; [exact Hf|]. split; [exact Hfrs | exact Hfresh].
+Qed.
+Hypothesis LX : AR_laws_x segs B ARi 0.
+Lemma frame_al64_AR : forall ly S W mem md cid pos,
+AR segs B ly S W mem md -> In (cid, pos) (frames S) ->
+frame_addr ly cid pos mod 64 = 0 /\ fs_frame_bytes cid mod 64 = 0 /\ 64 <= fs_frame_bytes cid.
+Proof. intros ly S W mem md cid pos HAR Hin. exact (frame_al64_x segs ARi FRMF_AR ly S [] W mem md cid pos HAR Hin). Qed.
+Lemma errno_not_aowned_AR : api_env segs B -> forall ly S W mem md,
+AR segs B ly S W mem md ->
+(forall i, 0 <= i < 4 -> ~ Exists (in_zr (as_errno B + i)) (as_owned_static B)) ->
+forall i, 0 <= i < 4 -> ~ aowned B ly S (as_errno B + i).
+Proof. intros EL ly S W mem md HAR. exact (errno_not_aowned_x segs B ARi LX EL ly S [] W mem md HAR). Qed.
+End s.
+Section p.
+Context {L : ptable wsym} {PL : PAListing L} {PI : PAImg L}.
+Variable B : asyms.
+Local Abbreviation ARi := (fun ly S (_ : list Z) W mem md => AR pa_segs B ly S W mem md).
+Lemma IMGC_AR : forall ly S (Hp : list Z) (W : world pa_segs) mem md, AR pa_segs B ly S W mem md ->
+fst (ly_img ly) <= 0x10000 /\ 0x5fb000 <= fst (ly_img ly) + snd (ly_img ly).
+Proof. intros ly S Hp W mem md (_ & LG & _). exact (pa_img_cover ly S md LG). Qed.
+Lemma run_post_pi_AJ_x_AR : forall W E ss ss' ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+run_post_pi_AJ_x B [] ARi W E ss ss' ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q <->
+run_post_pi_AJ B W E ss ss' ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q.
+Proof.
+intros W E ss ss' ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q. unfold run_post_pi_AJ_x, run_post_pi_AJ. split.
+- intros H ms' mat' HS HJ. apply (H ms' mat' HS).
+  exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK pa_segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ).
+- intros H ms' mat' HS HJ. apply (H ms' mat' HS).
+  exact (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK pa_segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ).
+Qed.
+Lemma run_post_pi_AJ_call_x_AR : forall W E ss ssc ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
+run_post_pi_AJ_call_x B [] ARi W E ss ssc ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q <->
+run_post_pi_AJ_call B W E ss ssc ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q.
+Proof.
+intros W E ss ssc ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q. unfold run_post_pi_AJ_call_x, run_post_pi_AJ_call. split.
+- intros H ms' mat' HS HJ. apply (H ms' mat' HS).
+  exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK pa_segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ).
+- intros H ms' mat' HS HJ. apply (H ms' mat' HS).
+  exact (proj1 (@YCe5x.ajournal_x_YCbq fx rc SK pa_segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ).
+Qed.
+Hypothesis LX : AR_laws_x pa_segs B ARi 0.
+Lemma frm_off_imgP_AR : forall ly S (W : world pa_segs) mem md cid pos,
+AR pa_segs B ly S W mem md -> In (cid, pos) (frames S) -> off_img (frame_addr ly cid pos) (fs_frame_bytes cid).
+Proof. intros ly S W mem md cid pos HAR Hin. exact (frm_off_imgP_x B ARi LX IMGC_AR ly S [] W mem md cid pos HAR Hin). Qed.
+Lemma SRr_run_pi_AJ_AR : forall W n E ss ss' st ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q,
+img_env pa_val A_LIM E ->
+st_ok_pi pa_segs pa_val E ss (restrict (w_H W) ms) ->
+sym_runN_pi pl_tpi n ss = (ss', st) -> pi_plain_stop st ->
+ajournal pa_segs B STK sp0 FP ly S W0 mem md own lyc Sc W (ms_mem ms) mdc k ->
+awr_ok E (ss_mem ss) STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own ->
+run_post_pi_AJ B W E ss ss' ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q ->
+SRr pa_segs W (mkCfg ms mdc) Q.
+Proof.
+intros W n E ss ss' st ms STK sp0 FP ly S W0 mem md own lyc Sc mdc k Q HE HS Hrun Hst HJ Hwr Hk.
+apply (SRr_run_pi_AJ_x B [] ARi LX W n E ss ss' st ms STK sp0 FP ly S [] W0 mem md own lyc Sc [] mdc k Q HE HS Hrun Hst).
+- exact (proj2 (@YCe5x.ajournal_x_YCbq fx rc SK pa_segs B _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) HJ).
+- exact Hwr.
+- exact (proj2 (run_post_pi_AJ_x_AR W E ss ss' ms STK sp0 FP ly S [] W0 mem md own lyc Sc [] mdc k Q) Hk).
+Qed.
+End p.
+End br.

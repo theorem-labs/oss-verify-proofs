@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: opennavsurf-bag
 harness: bag_read_fuzzer
-rocq: OssFuzzTheorems.opennavsurf_bag.bag_read_fuzzer
+rocq: OSSVerify.opennavsurf_bag.bag_read_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

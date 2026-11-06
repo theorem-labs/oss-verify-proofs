@@ -1,4 +1,4 @@
-(** * OssFuzzTheorems.Core.Driver: the input file every build reads
+(** * OSSVerify.Core.Driver: the input file every build reads
 
     Every binary in this collection is run as [<file> FILE].  A small driver
     linked into every build reads FILE whole and splits it as
@@ -21,14 +21,16 @@
 
     This file writes that format down as Rocq data, so that statements and
     corollaries can name inputs ("the file [testcase_file p]") rather than
-    byte lists.  It is a description of the driver's C source, which will be
-    in each project's source bundle (not in this release yet); no statement
-    depends on it, and nothing here is a claim about the binaries. *)
+    byte lists.  It is a description of the driver's C source, which is in
+    the src/ folder of the recipe archive a release attaches (a port-built
+    project's driver is in its port archive; docs/reproducing.md says
+    where); no statement depends on it, and nothing here is a claim about
+    the binaries. *)
 
 From Stdlib Require Import ZArith List Lia.
 From stdpp.bitvector Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase.
-From OssFuzzTheorems.Core Require Import Shapes.
+From OSSVerify.Core Require Import Shapes.
 Import ListNotations.
 Local Open Scope Z_scope.
 

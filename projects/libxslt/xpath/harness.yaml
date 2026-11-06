@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libxslt
 harness: xpath
-rocq: OssFuzzTheorems.libxslt.xpath
+rocq: OSSVerify.libxslt.xpath
 origin: upstream
 summary: Parses an XML document (recover mode), sets up an XSLT transform context with EXSLT namespaces
   and variables, compiles the fuzzed XPath expression and evaluates it with xmlXPathCompiledEval under

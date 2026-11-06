@@ -1,0 +1,39 @@
+# 1. MemmoveIm.v W_mm<off> = the word at __sanitizer_internal_memmove + off (wire 0x63078, pcap 0x63c08)
+OK   22 words W_mm00 .. W_mm54 in MemmoveIm.v
+OK   W_mm00 = 0x02b57463: wire 0x02b57463 at 0x63078, pcap 0x02b57463 at 0x63c08
+OK   W_mm04 = 0x04c05863: wire 0x04c05863 at 0x6307c, pcap 0x04c05863 at 0x63c0c
+OK   W_mm08 = 0x00c50633: wire 0x00c50633 at 0x63080, pcap 0x00c50633 at 0x63c10
+OK   W_mm0c = 0x00050693: wire 0x00050693 at 0x63084, pcap 0x00050693 at 0x63c14  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm10 = 0x0005c703: wire 0x0005c703 at 0x63088, pcap 0x0005c703 at 0x63c18  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm14 = 0x00e68023: wire 0x00e68023 at 0x6308c, pcap 0x00e68023 at 0x63c1c
+OK   W_mm18 = 0x00168693: wire 0x00168693 at 0x63090, pcap 0x00168693 at 0x63c20  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm1c = 0x00158593: wire 0x00158593 at 0x63094, pcap 0x00158593 at 0x63c24  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm20 = 0xfec698e3: wire 0xfec698e3 at 0x63098, pcap 0xfec698e3 at 0x63c28
+OK   W_mm24 = 0x0300006f: wire 0x0300006f at 0x6309c, pcap 0x0300006f at 0x63c2c
+OK   W_mm28 = 0x02a5f663: wire 0x02a5f663 at 0x630a0, pcap 0x02a5f663 at 0x63c30
+OK   W_mm2c = 0x02c05463: wire 0x02c05463 at 0x630a4, pcap 0x02c05463 at 0x63c34
+OK   W_mm30 = 0xfff60693: wire 0xfff60693 at 0x630a8, pcap 0xfff60693 at 0x63c38
+OK   W_mm34 = 0x00100613: wire 0x00100613 at 0x630ac, pcap 0x00100613 at 0x63c3c  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm38 = 0x00d58733: wire 0x00d58733 at 0x630b0, pcap 0x00d58733 at 0x63c40
+OK   W_mm3c = 0x00074703: wire 0x00074703 at 0x630b4, pcap 0x00074703 at 0x63c44  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm40 = 0x00d507b3: wire 0x00d507b3 at 0x630b8, pcap 0x00d507b3 at 0x63c48
+OK   W_mm44 = 0x00168813: wire 0x00168813 at 0x630bc, pcap 0x00168813 at 0x63c4c  (in [0x10000, image top): a number codeptr / decval read)
+OK   W_mm48 = 0xfff68693: wire 0xfff68693 at 0x630c0, pcap 0xfff68693 at 0x63c50
+OK   W_mm4c = 0x00e78023: wire 0x00e78023 at 0x630c4, pcap 0x00e78023 at 0x63c54
+OK   W_mm50 = 0xff0664e3: wire 0xff0664e3 at 0x630c8, pcap 0xff0664e3 at 0x63c58
+OK   W_mm54 = 0x00008067: wire 0x00008067 at 0x630cc, pcap 0x00008067 at 0x63c5c
+# 2. the kept ld words at __asan_memmove + off (wire 0x510b0, pcap 0x51c40)
+OK   538627 = 0x83803: wire 0x83803 at __asan_memmove+0x84, pcap 0x83803 at __asan_memmove+0x84
+OK   538627 = 0x83803: wire 0x83803 at __asan_memmove+0xd0, pcap 0x83803 at __asan_memmove+0xd0
+OK   571523 = 0x8b883: wire 0x8b883 at __asan_memmove+0x88, pcap 0x8b883 at __asan_memmove+0x88
+OK   571523 = 0x8b883: wire 0x8b883 at __asan_memmove+0xd4, pcap 0x8b883 at __asan_memmove+0xd4
+# 3. the return address 345540 -> 342580
+OK   fuzz_pcap.asan-ubsan: __asan_region_is_poisoned 0x54450 + 0x174 = 0x545c4 = 345540 (the file's 345540); word before it 0x3d10f0ef
+OK   fuzz_wire.asan-ubsan: __asan_region_is_poisoned 0x538c0 + 0x174 = 0x53a34 = 342580 (the file's 342580); word before it 0x3d10f0ef
+OK   the call word at +0x170 is jal 0x3d10f0ef in both images
+# 4. MemmoveK.v bound 0x200000 vs the row ends of icpt_rodata
+OK   MemmoveK.v states `fst (fst e) + snd (fst e) <= 0x200000` once (Hrange of entD_ro)
+OK   fuzz_wire lib/B/YE2y.v: 7 rows, largest lo + len = 0xa14f8 <= 0x200000
+OK   fuzz_pcap's released lib/Reusable/YE2y.v: 7 rows, largest lo + len = 0xa24b8 <= 0x200000
+measure-mm: 0 mismatches
+rc=0

@@ -18,11 +18,16 @@
 #     some 10,000 files with toolchain/ near the end.)
 #   - daily: the runner is built again when the public repository's tools/oft is another git tree than the one the
 #     newest runner was built from (the summary names both);
-#   - by hand, on main only: gh workflow run images.yml --ref main -f image=both   (or checker, or runner)
+#   - by hand, on main only: gh workflow run images.yml --ref main -f image=both   (or checker, or runner, or none,
+#     which builds nothing)
+# Daily, and by hand with -f image=none, the job verify-pins also verifies the attestation of each digest
+# release.yaml pins (below). A run by hand that builds an image skips it: that run is made for the new images, and the
+# image job verifies each one's attestation.
 #
-# The run's one verdict is the job `images`, which always runs (a skipped job reports success): the plan passed, and
-# the image job passed when the plan named an image and was skipped when it named none. In any other repository than
-# this one both are skipped, and it says that this repository builds no image.
+# The run's one verdict is the job `images`, which always runs (a skipped job reports success): the plan passed, the
+# image job passed when the plan named an image and was skipped when it named none, and verify-pins passed on a daily
+# run or a run by hand with -f image=none and was skipped on any other. In any other repository than this one all
+# three are skipped, and it says that this repository builds no image.
 #
 # The inputs of each image:
 #   checker  toolchain/checker.Dockerfile and toolchain/lps-core.paths, and the model: rocq-linux-process-semantics at
@@ -42,14 +47,25 @@
 # ignored path, facts with an error). Nothing this workflow adds names this private repository: the images carry no
 # org.opencontainers.image.source label, the job fails if a package is linked to a repository (ghcr.io may link one to
 # the repository whose workflow pushes to it), and the attestation, which names it, the workflow and the commit, is not
-# pushed beside the image. Verify an image with a token that reads this repository:
+# pushed beside the image. The image job verifies each attestation it stores with the command below, and verify-pins
+# verifies release.yaml's images.checker and images.runner with it; each run's log holds the verdicts. To verify an
+# image again, with gh 2.67 or newer and a token that reads this repository's attestations:
 #   gh attestation verify oci://<image>@<digest> --repo theorem-labs/<this repository> \
-#     --signer-workflow theorem-labs/<this repository>/.github/workflows/images.yml --source-ref refs/heads/main
+#     --cert-identity https://github.com/theorem-labs/<this repository>/.github/workflows/images.yml@refs/heads/main \
+#     --source-ref refs/heads/main
+# --cert-identity names images.yml and the ref it ran on exactly; the image job's verify step says why it stays so.
 # An image pinned before this workflow existed has no attestation.
 #
 # To push, the workflow's token needs write access to each package: an organization admin adds this repository with
 # the Write role under "Manage Actions access" in the settings of oss-fuzz-theorems-checker and of
 # oss-fuzz-theorems-runner (GitHub has no API for it).
+#
+# This workflow has no concurrency group, and a push run must never share one.  A push plans by the diff from the
+# push before it (github.event.before, the plan step), and reads no registry state for the checker, so each push to
+# main is the only run that can see what that push changed.  Put two pushes in one group and GitHub cancels one of
+# them -- the run in progress with cancel-in-progress, else the one waiting, since it keeps at most one pending run
+# per group -- and the change that run was to build is then built by nobody: the next push's diff starts after it.
+# A toolchain change would go silently unbuilt.  So a push run is left to finish, however many pushes land.
 name: images
 on:
   push:
@@ -59,9 +75,9 @@ on:
   workflow_dispatch:
     inputs:
       image:
-        description: the image to build and push
+        description: the image to build and push (none builds nothing, and verifies release.yaml's pins)
         type: choice
-        options: [both, checker, runner]
+        options: [both, checker, runner, none]
         default: both
 permissions: {}
 defaults:
@@ -115,8 +131,10 @@ jobs:
             echo "$public main: $tools_commit, tools/oft tree $tools_tree"
           }
           # The newest runner this workflow finished: the newest version with a build- tag whose attestation this
-          # repository holds. A push that failed after it (the registry check, the attestation) leaves a version with
-          # no attestation, and such a version is passed over, so the next daily run builds the runner again.
+          # repository holds. A push that failed before its attestation was stored (the registry check, the
+          # attestation) leaves a version with no attestation, and such a version is passed over, so the next daily
+          # run builds the runner again. One whose attestation then failed to verify holds an attestation and is taken
+          # as finished: its run failed, and a run by hand builds the runner again.
           newest_runner() {
             local digests d n
             digests=$(gh api "/orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/${runner_image##*/}/versions?per_page=100" \
@@ -143,6 +161,7 @@ jobs:
             case $CHOICE in
               both) want=(checker runner) ;;
               checker | runner) want=("$CHOICE") ;;
+              none) ;;
               *) echo "::error::no image '$CHOICE'"; exit 1 ;;
             esac
           elif [ "$EVENT" = schedule ]; then
@@ -197,7 +216,7 @@ jobs:
       contents: read      # this commit
       packages: write     # to push the image
       id-token: write     # the workflow's identity, which the attestation's signing certificate names
-      attestations: write # to store the attestation
+      attestations: write # to store the attestation, and to read it back to verify it (write holds read)
     env:
       KEY: ${{ matrix.image }}
       TOOLS_COMMIT: ${{ needs.plan.outputs.tools_commit }}
@@ -207,12 +226,14 @@ jobs:
         with:
           persist-credentials: false
           # every file but the proof libraries, as pr.yml's plan job takes them: the runner's check below loads the
-          # facts (projects/, findings/, release.yaml), and neither image reads proofs/<p>/<h>/lib/
+          # facts (projects/, the findings, release.yaml), and neither image reads proofs/<p>/<h>/lib/ or
+          # projects/<p>/<h>/proofs/lib/
           filter: blob:none
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /*
             !/proofs/*/*/lib/
+            !/projects/*/*/proofs/lib/
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
@@ -356,7 +377,51 @@ jobs:
           # not beside the public image: the attestation names this private repository
           push-to-registry: false
           create-storage-record: false
-      # only an attested image is offered for a pin, and only once the release gate's image job has scanned it
+      # The attestation just stored, verified with the command a pin is verified with (the attestation ruling: gh attestation
+      # verify passes for the checker and runner digests release.yaml pins), so that each build's run log holds the
+      # verdict. A run is where that evidence can be made: on 2026-11-01 no token an agent holds read this
+      # repository's attestations (the attestations API refused the theorem-labs GitHub App's: HTTP 403, "Resource
+      # not accessible by integration"), and this job's token does. A refused verification fails the job, so no
+      # digest it refuses is offered for a pin. gh 2.49 to 2.66 could exit 0 for a digest with no attestation of the
+      # predicate type asked for (CVE-2025-25204), so the step refuses an older gh, and the log names the one that
+      # verified. The same gh check is in verify-pins: a script both jobs ran would be a new file, which
+      # tools/oft/paths.py must list, and that file is in every unit's key.
+      - name: gh attestation verify passes for the pushed digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ steps.name.outputs.name }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          set -euo pipefail
+          gh_version=$(gh --version)
+          echo "$gh_version"
+          gh_version=${gh_version%%$'\n'*}
+          if ! [[ "$gh_version" =~ ^gh\ version\ ([0-9]+)\.([0-9]+)\. ]] ||
+             (( 10#${BASH_REMATCH[1]} < 2 || (10#${BASH_REMATCH[1]} == 2 && 10#${BASH_REMATCH[2]} < 67) )); then
+            echo "::error::gh 2.67 or newer is needed, not '$gh_version': gh 2.49 to 2.66 could exit 0 for a digest" \
+              "with no attestation of the predicate type asked for (CVE-2025-25204)"
+            exit 1
+          fi
+          # The signer, exactly: images.yml on refs/heads/main. Images are built from main alone, and only they may
+          # be pinned, so an attestation made on another ref must fail here. --cert-identity matches the whole
+          # certificate identity; --signer-workflow names no ref, and gh matched it as a prefix until cli/cli
+          # c906a6ad5 (2026-09-21), so that images.yml.<more> passed it. Do not loosen this to make another run pass.
+          identity="https://github.com/$GITHUB_REPOSITORY/.github/workflows/images.yml@refs/heads/main"
+          # The command at the top of this file, narrowed to the commit this run built. The attestation is seconds
+          # old, so a passing error of the API or the registry is tried again: three tries, 10 and 20 s apart.
+          for try in 1 2 3; do
+            if gh attestation verify "oci://$NAME@$DIGEST" --repo "$GITHUB_REPOSITORY" --cert-identity "$identity" \
+                 --source-ref refs/heads/main --source-digest "$GITHUB_SHA"; then
+              echo "attestation verified: $NAME@$DIGEST (images.yml at $GITHUB_SHA, refs/heads/main)" |
+                tee -a "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            [ "$try" = 3 ] || { echo "try $try of 3 failed; the next in $((try * 10)) s"; sleep $((try * 10)); }
+          done
+          echo "::error::gh attestation verify refused $NAME@$DIGEST, the digest this job attested, in 3 tries"
+          exit 1
+      # only an attested and verified image is offered for a pin, and only once the release gate's image job has
+      # scanned it
       - name: the image, for a pull request that pins it
         env:
           REF: ${{ steps.push.outputs.ref }}
@@ -378,22 +443,97 @@ jobs:
         if: always()
         run: docker logout ghcr.io
 
+  # The digests release.yaml pins, verified with the command at the top of this file (the attestation ruling: gh attestation
+  # verify passes for the checker and runner digests release.yaml pins). The image job verifies each image as it is
+  # made; this job answers for the pins, a digest built before that step existed among them. It needs no other job.
+  # It runs here because on 2026-11-01 no token an agent holds read this repository's attestations (the attestations
+  # API refused the theorem-labs GitHub App's: HTTP 403, "Resource not accessible by integration"), and this job's
+  # token does. A pin this workflow did not attest is refused, and the daily run fails with it: that is the true
+  # verdict until release.yaml pins attested digests, not a fault to silence. A run by hand that builds an image skips
+  # this job, so that the pins' verdict does not stand for the new images'; -f image=none runs it alone.
+  verify-pins:
+    # this repository only, as the plan job; daily, and by hand with -f image=none
+    if: >-
+      github.repository_id == '1425069221' &&
+      (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.image == 'none'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read       # release.yaml
+      attestations: read   # the attestations of the pinned digests
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          persist-credentials: false
+          # release.yaml alone, at the commit this run is on
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: /release.yaml
+      # Each pin is verified and named with its verdict, a refused one too, before the job fails on any refusal. The
+      # gh check and the signer are the image job's (its verify step says why).
+      - name: gh attestation verify passes for each digest release.yaml pins
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh_version=$(gh --version)
+          echo "$gh_version"
+          gh_version=${gh_version%%$'\n'*}
+          if ! [[ "$gh_version" =~ ^gh\ version\ ([0-9]+)\.([0-9]+)\. ]] ||
+             (( 10#${BASH_REMATCH[1]} < 2 || (10#${BASH_REMATCH[1]} == 2 && 10#${BASH_REMATCH[2]} < 67) )); then
+            echo "::error::gh 2.67 or newer is needed, not '$gh_version': gh 2.49 to 2.66 could exit 0 for a digest" \
+              "with no attestation of the predicate type asked for (CVE-2025-25204)"
+            exit 1
+          fi
+          identity="https://github.com/$GITHUB_REPOSITORY/.github/workflows/images.yml@refs/heads/main"
+          refused=0
+          for key in checker runner; do
+            pin=$(sed -n "s/^  $key: //p" release.yaml)
+            if ! [[ "$pin" =~ ^ghcr\.io/theorem-labs/oss-fuzz-theorems-$key@sha256:[0-9a-f]{64}$ ]]; then
+              echo "::error::release.yaml's images.$key is not a ghcr.io/theorem-labs/oss-fuzz-theorems-$key digest:" \
+                "'$pin'"
+              refused=1
+            elif gh attestation verify "oci://$pin" --repo "$GITHUB_REPOSITORY" --cert-identity "$identity" \
+                   --source-ref refs/heads/main; then
+              echo "images.$key $pin: verified" | tee -a "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::error::images.$key $pin: gh attestation verify refused it"
+              echo "images.$key $pin: refused" >> "$GITHUB_STEP_SUMMARY"
+              refused=1
+            fi
+          done
+          exit "$refused"
+
   images:
-    needs: [plan, image]
+    needs: [plan, image, verify-pins]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
     steps:
-      - name: every image the plan named was built and pushed, and none other
+      - name: every image the plan named was built, pushed and verified, and none other; verify-pins passed when it ran
         env:
           HERE: ${{ github.repository_id == '1425069221' }}
           PLAN: ${{ needs.plan.result }}
           IMAGES: ${{ needs.plan.outputs.images }}
           IMAGE: ${{ needs.image.result }}
+          VERIFY: >-
+            ${{ github.repository_id == '1425069221' &&
+            (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.image == 'none')) }}
+          PINS: ${{ needs.verify-pins.result }}
         run: |
           set -euo pipefail
-          got="plan $PLAN (images ${IMAGES:-unset}), image $IMAGE"
+          got="plan $PLAN (images ${IMAGES:-unset}), image $IMAGE, verify-pins $PINS"
+          # VERIFY is verify-pins' own condition: where it holds, a refused pin fails the run; elsewhere verify-pins
+          # must not have run
+          if [ "$VERIFY" = true ]; then
+            [ "$PINS" = success ] || { echo "::error::release.yaml's pins were not verified: $got"; exit 1; }
+            echo "release.yaml's pins verified"
+          else
+            [ "$PINS" = skipped ] || { echo "::error::verify-pins ran, yet this run verifies no pin: $got"; exit 1; }
+            echo "verify-pins skipped: it verifies release.yaml's pins daily and on a run by hand with -f image=none;" \
+              "the image job verifies each image a run builds"
+          fi
           if [ "$HERE" != true ]; then
             [ "$PLAN/$IMAGE" = skipped/skipped ] || { echo "::error::this repository builds no image, yet: $got"; exit 1; }
             echo "this repository builds no image"; exit 0
@@ -401,7 +541,8 @@ jobs:
           [ "$PLAN" = success ] || { echo "::error::the plan did not pass: $got"; exit 1; }
           if [ "$IMAGES" = '[]' ]; then
             [ "$IMAGE" = skipped ] || { echo "::error::the plan named no image, yet: $got"; exit 1; }
-            echo "no image's inputs changed: nothing built"; exit 0
+            echo "the plan named no image: nothing built"; exit 0
           fi
-          [ "$IMAGE" = success ] || { echo "::error::an image the plan named was not built and pushed: $got"; exit 1; }
-          echo "built and pushed: $IMAGES"
+          [ "$IMAGE" = success ] ||
+            { echo "::error::an image the plan named was not built, pushed and verified: $got"; exit 1; }
+          echo "built, pushed and verified: $IMAGES"

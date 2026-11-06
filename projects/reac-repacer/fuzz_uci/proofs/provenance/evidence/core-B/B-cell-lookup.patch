@@ -1,0 +1,22 @@
+--- B/YFim.v
++++ B/YFim.v
+@@ -494,7 +494,7 @@
+ pose proof (PRES' S' W' regsR memR mdR POST) as PR.
+ assert (OOM1 : val_mem tfibsegs (mrestrict (w_H W') memR) (TFIB_OOM + 1) 1 1).
+ { pose proof (proj1 (Forall_forall _ _) (am_const _ _ _ _ (HARm' S' W' regsR memR mdR POST)) (z1 (ANum (TFIB_OOM + 1)) 1)) as C.
+-rewrite (ts_const B TS ly) in C. specialize (C ltac:(unfold Tfib_const; apply in_app_iff; right; apply in_app_iff; left; apply (nth_error_In _ 60); reflexivity)).
++rewrite (ts_const B TS ly) in C. specialize (C ltac:(apply (YF0x.cell_lookup_In _ (ANum (TFIB_OOM + 1))); vm_compute; reflexivity)).
+ exact (cell_holds_val_mem B ly (w_H W') memR (ANum (TFIB_OOM + 1)) 1 (ANum 1) C). }
+ split; [reflexivity|]. split.
+ - apply Forall_cons; [exact (Forall_inv HF)|]. apply Forall_cons.
+--- B/YFin.v
++++ B/YFin.v
+@@ -484,7 +484,7 @@
+ pose proof (PRES' S' W' regsR memR mdR POST) as PR.
+ assert (OOM1 : val_mem tfibsegs (mrestrict (w_H W') memR) (TFIB_OOM + 1) 1 1).
+ { pose proof (proj1 (Forall_forall _ _) (am_const _ _ _ _ (HARm' S' W' regsR memR mdR POST)) (z1 (ANum (TFIB_OOM + 1)) 1)) as C.
+-rewrite (ts_const B TS ly) in C. specialize (C ltac:(unfold Tfib_const; apply in_app_iff; right; apply in_app_iff; left; apply (nth_error_In _ 60); reflexivity)).
++rewrite (ts_const B TS ly) in C. specialize (C ltac:(apply (YF0x.cell_lookup_In _ (ANum (TFIB_OOM + 1))); vm_compute; reflexivity)).
+ exact (cell_holds_val_mem B ly (w_H W') memR (ANum (TFIB_OOM + 1)) 1 (ANum 1) C). }
+ split; [reflexivity|]. split.
+ - apply Forall_cons; [exact (Forall_inv HF)|]. apply Forall_cons.

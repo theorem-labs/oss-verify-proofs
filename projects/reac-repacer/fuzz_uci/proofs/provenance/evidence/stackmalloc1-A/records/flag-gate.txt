@@ -1,0 +1,48 @@
+# efa19b81e92b (of record): record run (donor = stage/, ported = the committed files)
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 8 rows in 3 classes: STALE-DONOR-CODE-POINTER=1 UNPAIRED-SOURCE=6 UNRESOLVED=1
+checker <file> rc=4 (sha256 efa19b81e92b)
+triage-sm1: 8 flagged / GENERATOR-FILL rows, 8 explained, 0 unexplained
+rc=0
+# efa19b81e92b (of record): control, a code pointer: AF0r.v FS_LOOP planted as the donor's 0x3cfac
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 13 rows in 4 classes: STALE-DONOR-CODE-POINTER=2 TARGET-DIFFERENT-SYMBOL=4 UNPAIRED-SOURCE=6 UNRESOLVED=1
+checker <file> rc=4 (sha256 efa19b81e92b)
+UNEXPLAINED TARGET-DIFFERENT-SYMBOL A/Rt/AF0r.v:210/211 0x6028663 -> 0x6028663 (a different function: donor __asan_stack_malloc_1+0x10c, ported _ZN6__asan15InitializeFlagsEv+0xba0; donor pc 0x3cfb8, ported pc 0x3cfb8)
+UNEXPLAINED TARGET-DIFFERENT-SYMBOL A/Rt/AF0r.v:216/217 0xfe0514e3 -> 0xfe0514e3 (a different function: donor __asan_stack_malloc_1+0x94, ported _ZN6__asan15InitializeFlagsEv+0xb28; donor pc 0x3cfc4, ported pc 0x3cfc4)
+UNEXPLAINED STALE-DONOR-CODE-POINTER A/Rt/AF0r.v:28/29 0x3cfac -> 0x3cfac (donor code address __asan_stack_malloc_1+0x94 left unchanged; in the target the value is __asan::InitializeFlags+0xb28; the source symbol is elsewhere in the ta)
+UNEXPLAINED TARGET-DIFFERENT-SYMBOL A/Rt/AF0r.v:209/210 0x6028663 -> 0x6028663 (a different function: donor __asan_stack_malloc_1+0x10c, ported _ZN6__asan15InitializeFlagsEv+0xba0; donor pc 0x3cfb8, ported pc 0x3cfb8)
+UNEXPLAINED TARGET-DIFFERENT-SYMBOL A/Rt/AF0r.v:215/216 0xfe0514e3 -> 0xfe0514e3 (a different function: donor __asan_stack_malloc_1+0x94, ported _ZN6__asan15InitializeFlagsEv+0xb28; donor pc 0x3cfc4, ported pc 0x3cfc4)
+triage-sm1: 13 flagged / GENERATOR-FILL rows, 8 explained, 5 unexplained
+rc=1
+# efa19b81e92b (of record): control, a data pointer: AF0r.v TSD planted as the donor's 0x5f8e78
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 9 rows in 4 classes: STALE-DONOR-CODE-POINTER=1 STALE-DONOR-DATA-POINTER=1 UNPAIRED-SOURCE=6 UNRESOLVED=1
+checker <file> rc=4 (sha256 efa19b81e92b)
+UNEXPLAINED STALE-DONOR-DATA-POINTER A/Rt/AF0r.v:39/40 0x5f8e78 -> 0x5f8e78 (value unchanged (a copied literal?); the donor's address of __pthread_tsd_main (1024 bytes), which this image has at 0x5f3338 (keyed on the symbol name __pthrea)
+triage-sm1: 9 flagged / GENERATOR-FILL rows, 8 explained, 1 unexplained
+rc=1
+# e165063a0081 (the checker it replaces, beside it): record run (donor = stage/, ported = the committed files)
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 8 rows in 3 classes: STALE-DONOR-CODE-POINTER=1 UNPAIRED-SOURCE=6 UNRESOLVED=1
+checker <file> rc=4 (sha256 e165063a0081)
+triage-sm1: 8 flagged / GENERATOR-FILL rows, 8 explained, 0 unexplained
+rc=0
+# e165063a0081 (the checker it replaces, beside it): control, a code pointer: AF0r.v FS_LOOP planted as the donor's 0x3cfac
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 13 rows in 4 classes: STALE-DONOR-CODE-POINTER=2 TARGET-DIFFERENT-SYMBOL=4 UNPAIRED-SOURCE=6 UNRESOLVED=1
+checker <file> rc=4 (sha256 e165063a0081)
+UNEXPLAINED TARGET-DIFFERENT-SYMBOL A/Rt/AF0r.v:210/211 0x6028663 -> 0x6028663 (a different function: donor __asan_stack_malloc_1+0x10c, ported _ZN6__asan15InitializeFlagsEv+0xba0; donor pc 0x3cfb8, ported pc 0x3cfb8)
+UNEXPLAINED TARGET-DIFFERENT-SYMBOL A/Rt/AF0r.v:216/217 0xfe0514e3 -> 0xfe0514e3 (a different function: donor __asan_stack_malloc_1+0x94, ported _ZN6__asan15InitializeFlagsEv+0xb28; donor pc 0x3cfc4, ported pc 0x3cfc4)
+UNEXPLAINED STALE-DONOR-CODE-POINTER A/Rt/AF0r.v:28/29 0x3cfac -> 0x3cfac (donor code address __asan_stack_malloc_1+0x94 left unchanged; in the target the value is __asan::InitializeFlags+0xb28; the source symbol is elsewhere in the ta)
+UNEXPLAINED TARGET-DIFFERENT-SYMBOL A/Rt/AF0r.v:209/210 0x6028663 -> 0x6028663 (a different function: donor __asan_stack_malloc_1+0x10c, ported _ZN6__asan15InitializeFlagsEv+0xba0; donor pc 0x3cfb8, ported pc 0x3cfb8)
+UNEXPLAINED TARGET-DIFFERENT-SYMBOL A/Rt/AF0r.v:215/216 0xfe0514e3 -> 0xfe0514e3 (a different function: donor __asan_stack_malloc_1+0x94, ported _ZN6__asan15InitializeFlagsEv+0xb28; donor pc 0x3cfc4, ported pc 0x3cfc4)
+triage-sm1: 13 flagged / GENERATOR-FILL rows, 8 explained, 5 unexplained
+rc=1
+# e165063a0081 (the checker it replaces, beside it): control, a data pointer: AF0r.v TSD planted as the donor's 0x5f8e78
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+FLAGGED 9 rows in 4 classes: STALE-DONOR-CODE-POINTER=1 STALE-DONOR-DATA-POINTER=1 UNPAIRED-SOURCE=6 UNRESOLVED=1
+checker <file> rc=4 (sha256 e165063a0081)
+UNEXPLAINED STALE-DONOR-DATA-POINTER A/Rt/AF0r.v:39/40 0x5f8e78 -> 0x5f8e78 (value unchanged (a copied literal?); the donor's address of __pthread_tsd_main (1024 bytes), which this image has at 0x5f3338 (keyed on the symbol name __pthrea)
+triage-sm1: 9 flagged / GENERATOR-FILL rows, 8 explained, 1 unexplained
+rc=1

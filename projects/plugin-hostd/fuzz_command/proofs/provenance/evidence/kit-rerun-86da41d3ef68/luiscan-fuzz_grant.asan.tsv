@@ -1,0 +1,10 @@
+ROW	image	function	addr	size	luis	insec	inload	memfed	memfed_out	luiconst	unmeasured	exposure
+# image img/fuzz_grant.asan.debug sha256 57c26f993615
+ROW	fuzz_grant.asan.debug	___interceptor_strcmp	0x426ec	1328	7	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan.debug	__interceptor_trampoline_strcmp	0x42138	4	0	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan.debug	__sanitizer_weak_hook_strcmp	0x426e8	4	0	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan.debug	_ZN6__asan18TryAsanInitFromRtlEv	0x5980c	160	2	0	1	0	0	0	0	0
+ROW	fuzz_grant.asan.debug	__asan_region_is_poisoned	0x54378	836	0	0	0	0	0	0	0	0
+ROW	fuzz_grant.asan.debug	_ZN11__sanitizer11mem_is_zeroEPKcm	0x640b8	180	0	0	0	0	0	0	0	0
+TOTAL	fuzz_grant.asan.debug	functions 6	with-lui 2	with-exposure 0	luis 9	insec 0	inload 1	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	all	functions 6	with-lui 2	with-exposure 0	luis 9	insec 0	inload 1	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0

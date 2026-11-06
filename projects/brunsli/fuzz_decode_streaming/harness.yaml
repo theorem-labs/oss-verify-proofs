@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: brunsli
 harness: fuzz_decode_streaming
-rocq: OssFuzzTheorems.brunsli.fuzz_decode_streaming
+rocq: OSSVerify.brunsli.fuzz_decode_streaming
 origin: upstream
 summary: Feeds the input to internal::dec::ProcessJpeg one byte longer at a time. It expects NOT_ENOUGH_DATA
   before the end and OK at the end, but on any other status it silently returns 0. Then WriteJpeg to a

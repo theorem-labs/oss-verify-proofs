@@ -1,10 +1,10 @@
 schema: oss-fuzz-theorems/harness/1
 project: lldpd
 harness: fuzz_lldp
-rocq: OssFuzzTheorems.lldpd.fuzz_lldp
+rocq: OSSVerify.lldpd.fuzz_lldp
 origin: upstream
-summary: lldp_decode() on the raw frame; the result is only freed, nothing about the decoded chassis/port
-  is checked.
+summary: lldp_decode() on the raw frame. A frame that gives no chassis or no port returns 1. Otherwise the result
+  is only freed, and nothing about the decoded chassis/port is checked.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -127,6 +127,11 @@ builds:
       sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
 licence: NOASSERTION
 checks: []
+rejects:
+- where: source/fuzz_lldp.c:29-31
+  what: An input shorter than 5 bytes or longer than 2048 is returned 1 without being decoded
+- where: source/fuzz_lldp.c:41-43
+  what: An input lldp_decode makes no chassis or port of (not an LLDP frame) is returned 1
 distribution:
   file: Distribution.v
   argv0: fuzz_lldp
@@ -218,8 +223,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   plain_halts_may_fail:
     kind: halts
     builds:
@@ -236,8 +243,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -246,8 +255,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts_may_fail:
     kind: halts
     builds:
@@ -264,5 +275,7 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2

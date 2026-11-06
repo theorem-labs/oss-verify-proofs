@@ -1,0 +1,52 @@
+# the five files
+TOOL <file> sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
+read A/Rt/MemmoveDef.v: 0 reported
+read A/Rt/MemmoveIm.v: 2 reported
+   :19 PLAIN TACTIC: Unset Lia Cache.
+   :19 PLAIN TACTIC: Unset Nia Cache.
+read A/Rt/MemmoveK.v: 2 reported
+   :33 PLAIN TACTIC: Unset Lia Cache.
+   :33 PLAIN TACTIC: Unset Nia Cache.
+read A/Rt/MemmovePaths.v: 2 reported
+   :32 PLAIN TACTIC: Unset Lia Cache.
+   :32 PLAIN TACTIC: Unset Nia Cache.
+read A/Rt/Memmove.v: 2 reported
+   :27 PLAIN TACTIC: Unset Lia Cache.
+   :27 PLAIN TACTIC: Unset Nia Cache.
+SUMMARY: 5 files read of 5 given; ESCAPES 0; PLAIN 8; UNMEASURED 0; KERNEL 0; levels TACTIC 8, OPTION 0; HINTS 0 (report only, tactic-level)
+rc=0
+# fuzz_pcap's released counterparts (recipes 5098883da0b)
+TOOL <file> sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
+read proofs/libreac/fuzz_pcap/lib/A/Rt/MemmoveDef.v: 0 reported
+read proofs/libreac/fuzz_pcap/lib/A/Rt/MemmoveIm.v: 2 reported
+   :18 PLAIN TACTIC: Unset Lia Cache.
+   :18 PLAIN TACTIC: Unset Nia Cache.
+read proofs/libreac/fuzz_pcap/lib/A/Rt/MemmoveK.v: 2 reported
+   :33 PLAIN TACTIC: Unset Lia Cache.
+   :33 PLAIN TACTIC: Unset Nia Cache.
+read proofs/libreac/fuzz_pcap/lib/A/Rt/MemmovePaths.v: 2 reported
+   :32 PLAIN TACTIC: Unset Lia Cache.
+   :32 PLAIN TACTIC: Unset Nia Cache.
+read proofs/libreac/fuzz_pcap/lib/A/Rt/Memmove.v: 2 reported
+   :26 PLAIN TACTIC: Unset Lia Cache.
+   :26 PLAIN TACTIC: Unset Nia Cache.
+SUMMARY: 5 files read of 5 given; ESCAPES 0; PLAIN 8; UNMEASURED 0; KERNEL 0; levels TACTIC 8, OPTION 0; HINTS 0 (report only, tactic-level)
+rc=0
+# control: Memmove.v's Local Zify flag made global
+TOOL <file> sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
+read A/Rt/MemmoveDef.v: 0 reported
+read A/Rt/MemmoveIm.v: 2 reported
+   :19 PLAIN TACTIC: Unset Lia Cache.
+   :19 PLAIN TACTIC: Unset Nia Cache.
+read A/Rt/MemmoveK.v: 2 reported
+   :33 PLAIN TACTIC: Unset Lia Cache.
+   :33 PLAIN TACTIC: Unset Nia Cache.
+read A/Rt/MemmovePaths.v: 2 reported
+   :32 PLAIN TACTIC: Unset Lia Cache.
+   :32 PLAIN TACTIC: Unset Nia Cache.
+read A/Rt/Memmove.v: 3 reported
+   :27 PLAIN TACTIC: Unset Lia Cache.
+   :27 PLAIN TACTIC: Unset Nia Cache.
+   :31 ESCAPES TACTIC: Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=
+SUMMARY: 5 files read of 5 given; ESCAPES 1; PLAIN 8; UNMEASURED 0; KERNEL 0; levels TACTIC 9, OPTION 0; HINTS 0 (report only, tactic-level)
+rc=0

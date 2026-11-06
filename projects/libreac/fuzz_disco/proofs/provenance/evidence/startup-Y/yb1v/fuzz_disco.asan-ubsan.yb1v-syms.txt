@@ -1,0 +1,6 @@
+# function symbols of an unstripped twin, nm text: addr size type name (hex, hex, T or t, name)
+# twin sha256 ead714913acd1e81835e08e021456cebcb35c09af2f87f4e7e2b6891f1b92489
+# pin  sha256 cee6f04ad3d4928e242405689ae058bb9e8b6533000c90bde984a2f0d5ff5146
+# PT_LOAD 2..4 of twin and pin: byte-equal (checked)
+0000000000080f44 0000000000000030 t oft_exit_guard
+000000000008f6b0 0000000000000228 T sysconf

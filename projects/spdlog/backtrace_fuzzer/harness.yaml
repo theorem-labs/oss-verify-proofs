@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spdlog
 harness: backtrace_fuzzer
-rocq: OssFuzzTheorems.spdlog.backtrace_fuzzer
+rocq: OSSVerify.spdlog.backtrace_fuzzer
 origin: oss-fuzz
 summary: enable_backtrace(n) for a fuzzed uint16 n, then n spdlog::debug calls with fuzzed strings, then
   dump_backtrace to a /dev/null file sink; output goes to a basic_file_sink on /dev/null and is never

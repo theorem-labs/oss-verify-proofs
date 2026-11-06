@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: dovecot
 harness: fuzz-message-parser
-rocq: OssFuzzTheorems.dovecot.fuzz_message_parser
+rocq: OSSVerify.dovecot.fuzz_message_parser
 origin: upstream
 summary: MIME message_parser over the fuzz bytes until parse_next_block returns -1, then deinit; blocks
   and parts discarded.

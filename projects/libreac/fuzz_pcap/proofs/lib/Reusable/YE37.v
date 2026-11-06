@@ -1,0 +1,311 @@
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE37.v (247 lines), with its
+   module paths changed, the name TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan+UBSan
+   build; it is the asan-ubsan twin of lib/A/AE37.v at a working branch acbe70c5a8c, and carries the
+   same changes that file carries over the donor.  This is the return realizer of the second atexit handler of the
+   exit walk, X2_PC.
+   STATEMENT PC (re-derived from the unstripped twin fuzz_pcap.asan-ubsan .symtab, sha256
+   c969d83cdd59, not from the donor's text): X2_PC = 0x811b0 = asan.module_dtor+0 (size 48); it is stated in
+   lib/Reusable/YE23.v:35, and this file only uses it.  The walk leaves no other pc of its own: it runs tbl_x213
+   (lib/Reusable/YE3m.v) from X2_PC and stops at SR_jalr (SOff 1 0), the return to the caller's ra.
+   TAKEN FROM (never hand-written from the donor's text, and never by a delta off the asan file):
+   - the four asan_globals descriptors of x2_rodata's (0x9dfd0, 256) region: lib/Reusable/YF0m.v:188-219 (M-DESC
+     rows, a Theorem Labs lane's generator); the section is 0x9dfd0..0x9e0d0 by lib/Reusable/YB1w.v:17's
+     tfib_asan_globals_lo/hi, and YF0m.v:352 states the same 0x100 bytes as one owned range.  cgif has THREE
+     descriptors (donor YE37.v:35-40, 0xa2ae0, 192 bytes); fuzz_pcap has FOUR (g0 .str "<fuzz-input>" 0x20d00+0xd,
+     g1 .str "rb" 0x20d40+3, g2 g_file_len .bss 0x5d3e40+8, g3 g_file .bss 0x5d3e60+8), so the region is 256 bytes
+     and carries one descriptor block more; the per-descriptor offsets read are the donor's (0, 8, 16, 32, 40, 48,
+     56 -- the name pointer at 24 is not read).  Key: section + offset (the descriptor words carry no symbol).
+   - the (globals_lo, globals_hi) pair the dtor loads: YF0m.v:114-115 z8 0x9a370 = 0x9dfd0, z8 0x9a378 = 0x9e0d0
+     (the donor's 0x9ee98 is not this image's cell; the asan twin is AE37.v's 0x9a4a8 = 0x9e100 / 0x9e200).
+   - every other x2_rodata row: the YF0m.v Tfib_const cell of the same name/role, by its own address, not by a
+     delta -- 0x103a0 (YF0m:141), the nine words at 0x996d8 (YF0m:172-180), 0x9b580 = memset 0x92e2c (YF0m:98),
+     0x9efd0 (YF0m:69), 0x9f000 (YF0m:75), 0xa101c (YF0m:89), 0xa17b8 = SHADOW_OFF (YF0m:81), 0xa2498 (YF0m:83),
+     0xa24a0..0xa24b0 (YF0m:85-87), 0x131260 (YF0m:94), 0x133360 (YF0m:47).
+   - every shadow byte of x2_shw / x2_shw_const: YF0m.v:299-344 (Tfib_const_shadow) and YF0m.v:347
+     (Tfib_zero_shadow).  The windows are the four globals' shadow plus the descriptor array's:
+     0x7fffc1a0..a4, 0x7fffc1a8..ac, 0x800b27c8..cc, 0x800b27cc..d0 and 0x8000bbfa..0x8000bc1a (0x20 granules, the
+     donor's array is 0xc0 long = 0x18), exactly lib/Reusable/YE23.v:37-39's XW2.  Three of their first bytes
+     (0x7fffc1a0, 0x800b27c8, 0x800b27cc) are ZERO shadow, not constant cells, so they come from Tfib_zero_shadow
+     rows 0, 3 and 4 -- the donor has one such byte, fuzz_pcap has three (its g2/g3 are 8-byte .bss globals with no
+     partial granule).
+   - cellr 0x9e100 (___asan_globals_registered = 1) YF0m.v:116, cellr 0x9f070 (__asan mu_for_globals = 0)
+     YF0m.v:221, which lib/A/AD1j.v:80's twin passes in as MU0. *)
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0k YK0s YK0n YP0n YK1d.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import
+YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP08 YP03 YP04 YP0g YP01.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YN3v YI04.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YG0v YO0f.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q YA0m.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import
+YG00 YG0a YG01 YG0f YG0n YG0d.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import
+YB1v YE34 YF0l YF0m YE3g YE2p YE3i YE3h YE3m YE23 YF0x YE20 YE2y YE7f.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import PcapImgEnd YImgTop.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YM05.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope bv_scope.
+Open Scope Z_scope.
+Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Notation tbl2 := tbl_x213 (only parsing).
+Notation tbl2_ok := tbl_x213_ok (only parsing).
+Definition x2_rodata : list (Z * Z * list (Z * N * Z)) :=
+[ ((symaddr (Symbols.AsanUbsan.Sec.s_rodata + 0xc0)%Z), 8, [(0, 8%N, 0xafffff00000fffff)]);
+((symaddr (Symbols.AsanUbsan.Sec.s_got + 0x40)%Z), 72, [(0, 8%N, (symaddr Symbols.AsanUbsan.s__ZN11__sanitizer14PageSizeCachedE)); (8, 8%N, (symaddr Symbols.AsanUbsan.s__ZN11__sanitizer22SecondaryAllocatorNameE)); (16, 8%N, (symaddr Symbols.AsanUbsan.s__ZN11__sanitizer21common_flags_dont_useE)); (24, 8%N, (symaddr Symbols.AsanUbsan.s__ZN6__asan28asan_flags_dont_use_directlyE)); (32, 8%N, (symaddr Symbols.AsanUbsan.s___asan_shadow_memory_dynamic_address));
+(40, 8%N, (symaddr Symbols.AsanUbsan.s__ZN6__asan10kMidMemBegE)); (48, 8%N, (symaddr Symbols.AsanUbsan.s__ZN6__asan10kMidMemEndE)); (56, 8%N, (symaddr Symbols.AsanUbsan.s__ZN6__asan11kHighMemEndE)); (64, 8%N, (symaddr Symbols.AsanUbsan.s__ZN14__interception11real_memsetE))]);
+((symaddr (Symbols.AsanUbsan.Sec.s_got + 0xcd8)%Z), 16, [(0, 8%N, (symaddr Symbols.AsanUbsan.Sec.s_asan_globals)); (8, 8%N, (symaddr (Symbols.AsanUbsan.Sec.s_asan_globals + Symbols.AsanUbsan.Sec.Size.s_asan_globals)%Z))]);
+((symaddr Symbols.AsanUbsan.s__ZN14__interception11real_memsetE), 8, [(0, 8%N, (symaddr Symbols.AsanUbsan.s_memset))]);
+((symaddr Symbols.AsanUbsan.Sec.s_asan_globals), 256, [(0, 8%N, (symaddr (Symbols.AsanUbsan.Sec.s_rodata + 68128)%Z)); (8, 8%N, 0xd); (16, 8%N, 0x20);   (32, 8%N, (symaddr (Symbols.AsanUbsan.Sec.s_rodata + 68160)%Z));
+(40, 8%N, 0); (48, 8%N, 0); (56, 8%N, 0xffffffffffffffff);
+(64, 8%N, (symaddr (Symbols.AsanUbsan.Sec.s_rodata + 68192)%Z)); (72, 8%N, 0x3); (80, 8%N, 0x20);   (96, 8%N, (symaddr (Symbols.AsanUbsan.Sec.s_rodata + 68224)%Z));
+(104, 8%N, 0); (112, 8%N, 0); (120, 8%N, 0xffffffffffffffff);
+(128, 8%N, (symaddr Symbols.AsanUbsan.s_g_file_len)); (136, 8%N, 0x8); (144, 8%N, 0x20);   (160, 8%N, (symaddr (Symbols.AsanUbsan.Sec.s_rodata + 68160)%Z));
+(168, 8%N, 0); (176, 8%N, 0); (184, 8%N, 0xffffffffffffffff);
+(192, 8%N, (symaddr Symbols.AsanUbsan.s_g_file)); (200, 8%N, 0x8); (208, 8%N, 0x20);   (224, 8%N, (symaddr (Symbols.AsanUbsan.Sec.s_rodata + 68160)%Z));
+(232, 8%N, 0); (240, 8%N, 0); (248, 8%N, 0xffffffffffffffff)]);
+((symaddr (Symbols.AsanUbsan.s__ZN6__asan28asan_flags_dont_use_directlyE + 0x18)%Z), 8, [(0, 8%N, 0x101010000000001)]);
+((symaddr (Symbols.AsanUbsan.s__ZN6__asan28asan_flags_dont_use_directlyE + 0x48)%Z), 8, [(0, 8%N, 0x1000100000000)]);
+((symaddr Symbols.AsanUbsan.s__ZN6__asanL17can_poison_memoryE), 1, [(0, 1%N, 1)]);
+((symaddr Symbols.AsanUbsan.s___asan_shadow_memory_dynamic_address), 8, [(0, 8%N, 0x7fff8000)]);
+((symaddr Symbols.AsanUbsan.s__ZN6__asanL11asan_initedE), 1, [(0, 1%N, 1)]);
+((symaddr Symbols.AsanUbsan.s__ZN6__asan11kHighMemEndE), 24, [(0, 8%N, 0x7fffffffffff); (8, 8%N, 0); (16, 8%N, 0)]);
+((symaddr Symbols.AsanUbsan.s__ZN11__sanitizer14PageSizeCachedE), 8, [(0, 8%N, 0x1000)]);
+((symaddr (Symbols.AsanUbsan.s__ZN11__sanitizer21common_flags_dont_useE + 0x78)%Z), 8, [(0, 8%N, 0xffffffffffffffff)]) ].
+Definition ro_chunk (base : Z) (c : Z * N * Z) : YP09.chunk := YP09.mkChunk (base + fst (fst c)) (CVal (snd (fst c)) (SLit (snd c))).
+Definition ro_region (r : Z * Z * list (Z * N * Z)) : YP09.region :=
+YP09.mkRegion None (fst (fst r)) (fst (fst r) + snd (fst r)) (fst (fst r)) (fst (fst r)) (map (ro_chunk (fst (fst r))) (snd r)).
+Definition X2_STK : Z := 272.
+Definition x2_shw : list (Z * Z) := [((symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68128) / 8 + 0x7fff8000)%Z), 4); ((symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68192) / 8 + 0x7fff8000)%Z), 4); ((symaddr ((Symbols.AsanUbsan.s_g_file_len) / 8 + 0x7fff8000)%Z), 4); ((symaddr ((Symbols.AsanUbsan.s_g_file) / 8 + 0x7fff8000)%Z), 4); ((symaddr ((Symbols.AsanUbsan.Sec.s_asan_globals) / 8 + 0x7fff8000)%Z), 32)].
+Definition shw_region (w : Z * Z) : YP09.region :=
+YP09.mkRegion None (fst w) (fst w + snd w) (fst w) (fst w + snd w) [].
+Definition x2_regions : smem :=
+YP09.mkRegion (Some 2%nat) (- X2_STK) 0 (- X2_STK) 0 []
+:: cellr (symaddr Symbols.AsanUbsan.s____asan_globals_registered) 8 (SLit 1) true
+:: cellr (symaddr Symbols.AsanUbsan.s__ZN6__asanL14mu_for_globalsE) 8 (SLit 0) true
+:: map shw_region x2_shw ++ map ro_region x2_rodata.
+Definition ss_x2 : sstate := mkSS X2_PC sr_atoms x2_regions None (mkFacts [(2%nat, mkAF (2 ^ 44) (2 ^ 47) 4)] [] []).
+Definition x2_st : sstate := Eval vm_compute in fst (sym_runN tfibsegs tbl2 FUEL ss_x2).
+Lemma x2_run : sym_runN tfibsegs tbl2 FUEL ss_x2 = (x2_st, RS_stopped (SR_jalr (SOff 1 0))).
+Proof. vm_compute. reflexivity. Qed.
+Lemma x2_phase : forall (W : world tfibsegs) E ss ss' st ms md,
+st_ok tfibsegs E ss (restrict (w_H W) ms) ->
+sym_runN tfibsegs tbl2 FUEL ss = (ss', st) ->
+SRr tfibsegs W (mkCfg ms md)
+(fun W' c' => W' = W /\ exists ms1 mat1, c' = mkCfg ms1 (with_vm_backing (m_vm_lazy md) mat1 md) /\
+match st with RS_ecall => st_ok_ecall tfibsegs E ss' (restrict (w_H W) ms1)
+| _ => st_ok tfibsegs E ss' (restrict (w_H W) ms1) end /\
+frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms1) /\
+frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms1))).
+Proof.
+intros W E ss ss' st ms md HS Hrun.
+eapply (SRr_run_gen tfibsegs tbl2 tbl2_ok YF0x.Hwx_tfa W FUEL E ss ss' st ms md _ HS Hrun).
+intros ms1 mat1 HS1 HF HFr. apply SRr_ret. split; [reflexivity|]. exists ms1, mat1. split; [reflexivity|].
+split; [exact HS1|]. split; [exact HF | exact HFr].
+Qed.
+Definition const_chk (ly : alayout) (a : Z) (n : N) (v : Z) : bool :=
+match cell_lookup (Tfib_const ly) (ANum a) with
+| Some (ACell (ANum a') w' (AV (ANum v'))) => (a' =? a) && Nat.eqb w' (N.to_nat n) && (v' =? v)
+| _ => false
+end.
+Lemma const_chk_sound : forall ly a n v, const_chk ly a n v = true ->
+cell_lookup (Tfib_const ly) (ANum a) = Some (ACell (ANum a) (N.to_nat n) (AV (ANum v))).
+Proof.
+intros ly a n v H. unfold const_chk in H.
+destruct (cell_lookup (Tfib_const ly) (ANum a)) as [[e w av]|]; [|discriminate].
+destruct e; try discriminate. destruct av as [e'| ]; try discriminate. destruct e'; try discriminate.
+apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
+apply Z.eqb_eq in H1. apply Nat.eqb_eq in H2. apply Z.eqb_eq in H3. subst. reflexivity.
+Qed.
+Definition rodata_chk (ly : alayout) : bool :=
+forallb (fun r => (0 <=? fst (fst r)) && (fst (fst r) + snd (fst r) <=? 2 ^ 47) &&
+forallb (fun c => const_chk ly (fst (fst r) + fst (fst c)) (snd (fst c)) (snd c)
+&& (0 <=? snd c) && (snd c <? 2 ^ (8 * Z.of_N (snd (fst c)))) && (Z.of_N (snd (fst c)) <=? 8)) (snd r))
+x2_rodata.
+Lemma rodata_chk_true : forall ly, rodata_chk ly = true.
+Proof. intros ly. vm_compute. reflexivity. Qed.
+Fixpoint zrange (lo : Z) (n : nat) : list Z := match n with O => [] | S k => lo :: zrange (lo + 1) k end.
+Lemma In_zrange : forall n lo a, lo <= a < lo + Z.of_nat n -> In a (zrange lo n).
+Proof.
+induction n as [|n IH]; intros lo a Ha; [lia|]. cbn [zrange].
+destruct (Z.eq_dec a lo) as [->|Hne]; [left; reflexivity | right]. apply IH. lia.
+Qed.
+Definition x2_shw_const : list (Z * Z) := [((symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68136) / 8 + 0x7fff8000)%Z), 3); ((symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68192) / 8 + 0x7fff8000)%Z), 4); ((symaddr ((Symbols.AsanUbsan.s_g_file_len + 0x8) / 8 + 0x7fff8000)%Z), 3); ((symaddr ((Symbols.AsanUbsan.s_g_file + 0x8) / 8 + 0x7fff8000)%Z), 3); ((symaddr ((Symbols.AsanUbsan.Sec.s_asan_globals) / 8 + 0x7fff8000)%Z), 32)].
+Definition x2_shbytes : list Z := flat_map (fun w => zrange (fst w) (Z.to_nat (snd w))) x2_shw_const.
+Definition shbyte_chk (ly : alayout) : bool :=
+forallb (fun a => match cell_lookup (Tfib_const ly) (ANum a) with
+| Some (ACell (ANum a') 1%nat (AV (ANum v))) => (a' =? a) && (0 <=? v) && (v <? 256)
+| _ => false end) x2_shbytes.
+Lemma shbyte_chk_true : forall ly, shbyte_chk ly = true.
+Proof. intros ly. vm_compute. reflexivity. Qed.
+Section S.
+Variable B : asyms.
+Hypothesis LAWS : AR_laws tfibsegs B.
+Hypothesis TB : PcapSyms B.
+Hypothesis MU0 : forall ly, cell_lookup (Tfib_const ly) (ANum (symaddr Symbols.AsanUbsan.s__ZN6__asanL14mu_for_globalsE)) = Some (ACell (ANum (symaddr Symbols.AsanUbsan.s__ZN6__asanL14mu_for_globalsE)) 8 (AV (ANum 0))).
+Lemma rodata_ok : forall ly S (H : word -> bool) mem E,
+ARm B ly S (aview tfibsegs H mem) -> Forall (region_ok tfibsegs E (mrestrict H mem)) (map ro_region x2_rodata).
+Proof.
+intros ly S H mem E HM. pose proof (rodata_chk_true ly) as Hc. unfold rodata_chk in Hc.
+rewrite forallb_forall in Hc. apply Forall_map. apply Forall_forall. intros [[base sz] cs] Hin.
+specialize (Hc _ Hin). cbn [fst snd] in Hc. apply andb_prop in Hc as [Hc Hcs]. apply andb_prop in Hc as [H0 Hhi].
+apply Z.leb_le in H0. apply Z.leb_le in Hhi.
+unfold ro_region, region_ok. cbn [fst snd YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks base_val].
+split; [lia|]. split; [lia|]. split; [intros o Ho; exfalso; lia|].
+rewrite forallb_forall in Hcs. apply Forall_map. apply Forall_forall. intros [[off n] v] Hc'.
+specialize (Hcs _ Hc'). cbn [fst snd] in Hcs.
+apply andb_prop in Hcs as [Hcs H4]. apply andb_prop in Hcs as [Hcs H3]. apply andb_prop in Hcs as [H1 H2].
+apply Z.leb_le in H2. apply Z.ltb_lt in H3. apply Z.leb_le in H4.
+unfold ro_chunk. cbn [fst snd].
+eapply (chunk_ok_val tfibsegs E _ 0 (base + off) n (SLit v) v); [reflexivity | lia | lia |].
+rewrite Z.add_0_l. exact (tfib_const_lookup B TB ly S H mem (base + off) (N.to_nat n) v HM (const_chk_sound _ _ _ _ H1)).
+Qed.
+Lemma shbytes_present : forall ly S (H : word -> bool) mem a,
+ARm B ly S (aview tfibsegs H mem) -> In a x2_shbytes -> exists b, mbyte tfibsegs (mrestrict H mem) a = Some b.
+Proof.
+intros ly S H mem a HM Hin. pose proof (shbyte_chk_true ly) as Hc. unfold shbyte_chk in Hc.
+rewrite forallb_forall in Hc. specialize (Hc a Hin). cbn beta in Hc.
+destruct (cell_lookup (Tfib_const ly) (ANum a)) as [[e w av]|] eqn:HL; [|discriminate].
+destruct e; try discriminate. destruct w as [|[|w]]; try discriminate.
+destruct av as [e'| ]; try discriminate. destruct e'; try discriminate.
+apply andb_prop in Hc as [Hc _]. apply andb_prop in Hc as [Hc _]. apply Z.eqb_eq in Hc. subst.
+pose proof (tfib_const_lookup B TB ly S H mem a 1 _ HM HL) as Hv.
+specialize (Hv 0%nat ltac:(lia)). rewrite Z.add_0_r in Hv. eexists. exact Hv.
+Qed.
+(* The donor has ONE zero-shadow byte in its windows (donor YE37.v:149-158, the first granule of
+   .str "<fuzz-input>"); fuzz_pcap has THREE: the data granule of each of g0, g2 and g3.  Each comes from the
+   Tfib_zero_shadow row (YF0m.v:347) that covers it: row 0 (0x10000, 0x20d08 - 0x10000) at index 8608, row 3
+   (0x9e0d0, 0x5d3e48 - 0x9e0d0) at index 682926, row 4 (0x5d3e60, 0x5d3e68 - 0x5d3e60) at index 0. *)
+Lemma shbyte0_present : forall ly S (H : word -> bool) mem,
+ARm B ly S (aview tfibsegs H mem) -> exists b, mbyte tfibsegs (mrestrict H mem) (symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68128) / 8 + 0x7fff8000)%Z) = Some b.
+Proof.
+intros ly S H mem HM.
+pose proof (proj1 (Forall_forall _ _) (am_zshadow B ly S _ HM) (0x10000, (symaddr (Symbols.AsanUbsan.Sec.s_rodata + 68136)%Z) - 0x10000)
+ltac:(unfold zero_shadow_ranges; right; rewrite (ts_zsh _ TB); left; reflexivity)) as HZ.
+specialize (HZ (symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68128) / 8 - 0x10000 / 8)%Z) ltac:(cbn [fst snd]; vm_compute; split; [discriminate|reflexivity])). cbn [fst snd] in HZ.
+replace (shadow_of_addr SHADOW_OFF 0x10000 + (symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68128) / 8 - 0x10000 / 8)%Z)) with (symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68128) / 8 + 0x7fff8000)%Z) in HZ by reflexivity.
+unfold aview in HZ. destruct (mbyte tfibsegs (mrestrict H mem) (symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68128) / 8 + 0x7fff8000)%Z)) as [b|]; [exists b; reflexivity | discriminate].
+Qed.
+Lemma shbyte2_present : forall ly S (H : word -> bool) mem,
+ARm B ly S (aview tfibsegs H mem) -> exists b, mbyte tfibsegs (mrestrict H mem) (symaddr ((Symbols.AsanUbsan.s_g_file_len) / 8 + 0x7fff8000)%Z) = Some b.
+Proof.
+intros ly S H mem HM.
+pose proof (proj1 (Forall_forall _ _) (am_zshadow B ly S _ HM) ((symaddr (Symbols.AsanUbsan.Sec.s_asan_globals + Symbols.AsanUbsan.Sec.Size.s_asan_globals)%Z), (symaddr (Symbols.AsanUbsan.s_g_file_len + 0x8)%Z) - (symaddr (Symbols.AsanUbsan.Sec.s_asan_globals + Symbols.AsanUbsan.Sec.Size.s_asan_globals)%Z))
+ltac:(unfold zero_shadow_ranges; right; rewrite (ts_zsh _ TB); right; right; right; left; reflexivity)) as HZ.
+specialize (HZ (symaddr (Symbols.AsanUbsan.s_g_file_len / 8 - (Symbols.AsanUbsan.Sec.s_asan_globals + Symbols.AsanUbsan.Sec.Size.s_asan_globals) / 8)%Z) ltac:(cbn [fst snd]; vm_compute; split; [discriminate|reflexivity])). cbn [fst snd] in HZ.
+replace (shadow_of_addr SHADOW_OFF (symaddr (Symbols.AsanUbsan.Sec.s_asan_globals + Symbols.AsanUbsan.Sec.Size.s_asan_globals)%Z) + (symaddr (Symbols.AsanUbsan.s_g_file_len / 8 - (Symbols.AsanUbsan.Sec.s_asan_globals + Symbols.AsanUbsan.Sec.Size.s_asan_globals) / 8)%Z)) with (symaddr ((Symbols.AsanUbsan.s_g_file_len) / 8 + 0x7fff8000)%Z) in HZ by reflexivity.
+unfold aview in HZ. destruct (mbyte tfibsegs (mrestrict H mem) (symaddr ((Symbols.AsanUbsan.s_g_file_len) / 8 + 0x7fff8000)%Z)) as [b|]; [exists b; reflexivity | discriminate].
+Qed.
+Lemma shbyte3_present : forall ly S (H : word -> bool) mem,
+ARm B ly S (aview tfibsegs H mem) -> exists b, mbyte tfibsegs (mrestrict H mem) (symaddr ((Symbols.AsanUbsan.s_g_file) / 8 + 0x7fff8000)%Z) = Some b.
+Proof.
+intros ly S H mem HM.
+pose proof (proj1 (Forall_forall _ _) (am_zshadow B ly S _ HM) ((symaddr Symbols.AsanUbsan.s_g_file), (symaddr (Symbols.AsanUbsan.s_g_file + 0x8)%Z) - (symaddr Symbols.AsanUbsan.s_g_file))
+ltac:(unfold zero_shadow_ranges; right; rewrite (ts_zsh _ TB); right; right; right; right; left; reflexivity)) as HZ.
+specialize (HZ 0 ltac:(cbn [fst snd]; vm_compute; split; [discriminate|reflexivity])). cbn [fst snd] in HZ.
+replace (shadow_of_addr SHADOW_OFF (symaddr Symbols.AsanUbsan.s_g_file) + 0) with (symaddr ((Symbols.AsanUbsan.s_g_file) / 8 + 0x7fff8000)%Z) in HZ by reflexivity.
+unfold aview in HZ. destruct (mbyte tfibsegs (mrestrict H mem) (symaddr ((Symbols.AsanUbsan.s_g_file) / 8 + 0x7fff8000)%Z)) as [b|]; [exists b; reflexivity | discriminate].
+Qed.
+Lemma shw_ok : forall ly S (H : word -> bool) mem E,
+ARm B ly S (aview tfibsegs H mem) -> Forall (region_ok tfibsegs E (mrestrict H mem)) (map shw_region x2_shw).
+Proof.
+intros ly S H mem E HM. apply Forall_map. apply Forall_forall. intros [lo n] Hin.
+assert (Hr : (lo = (symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68128) / 8 + 0x7fff8000)%Z) /\ n = 4) \/ (lo = (symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68192) / 8 + 0x7fff8000)%Z) /\ n = 4) \/ (lo = (symaddr ((Symbols.AsanUbsan.s_g_file_len) / 8 + 0x7fff8000)%Z) /\ n = 4) \/
+(lo = (symaddr ((Symbols.AsanUbsan.s_g_file) / 8 + 0x7fff8000)%Z) /\ n = 4) \/ (lo = (symaddr ((Symbols.AsanUbsan.Sec.s_asan_globals) / 8 + 0x7fff8000)%Z) /\ n = 32)).
+{ cbn in Hin. destruct Hin as [Hq|[Hq|[Hq|[Hq|[Hq|[]]]]]]; injection Hq as <- <-; tauto. }
+unfold shw_region, region_ok. cbn [fst snd YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks base_val].
+split; [lia|]. split; [lia|]. split; [|constructor]. intros o Ho. rewrite Z.add_0_l.
+assert (Hb2 : exists b, mbyte tfibsegs (mrestrict H mem) o = Some b).
+{ destruct (Z.eq_dec o (symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68128) / 8 + 0x7fff8000)%Z)) as [->|Hne0]; [exact (shbyte0_present ly S H mem HM)|].
+destruct (Z.eq_dec o (symaddr ((Symbols.AsanUbsan.s_g_file_len) / 8 + 0x7fff8000)%Z)) as [->|Hne2]; [exact (shbyte2_present ly S H mem HM)|].
+destruct (Z.eq_dec o (symaddr ((Symbols.AsanUbsan.s_g_file) / 8 + 0x7fff8000)%Z)) as [->|Hne3]; [exact (shbyte3_present ly S H mem HM)|].
+apply (shbytes_present ly S H mem o HM).
+unfold x2_shbytes, x2_shw_const. cbn [flat_map fst snd Z.to_nat Pos.to_nat Pos.iter_op Nat.add].
+rewrite !in_app_iff. destruct Hr as [[-> ->]|[[-> ->]|[[-> ->]|[[-> ->]|[-> ->]]]]];
+[left | right; left | right; right; left | right; right; right; left | right; right; right; right; left];
+apply In_zrange; cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia. }
+destruct Hb2 as [b Hb].
+apply (mbyte_high_writable _ o b); [unfold TFIB_IMG_END, pcap_img_end, YImgTop.IMG_TOP; lia | exact Hb].
+Qed.
+Lemma zi8_14ea00 : wseg_ok tfibsegs (Z_to_bv 64 (symaddr Symbols.AsanUbsan.s____asan_globals_registered)) (Z.to_nat 8) = true. Proof. vm_compute. reflexivity. Qed.
+Lemma zi8_14f970 : wseg_ok tfibsegs (Z_to_bv 64 (symaddr Symbols.AsanUbsan.s__ZN6__asanL14mu_for_globalsE)) (Z.to_nat 8) = true. Proof. vm_compute. reflexivity. Qed.
+Lemma x2_windows : forall E a, in_wrange E (ss_mem ss_x2) a ->
+(bv_unsigned (ew E 2) - X2_STK <= a < bv_unsigned (ew E 2)) \/ XW2 a.
+Proof.
+intros E a Hin. destruct (in_wrange_windows E _ a Hin) as (b & lo & hi & Ht & Hr).
+cbn in Ht. unfold XW2. unfold X2_STK in *.
+repeat (destruct Ht as [Hq|Ht]; [injection Hq as <- <- <-; cbn [base_val] in Hr; lia|]). destruct Ht.
+Qed.
+Theorem x2_realizes : xret_realizes_noar tfibsegs B X2_PC XW2 XTRUE.
+Proof.
+intros ly S W regs mem md HPRE _. pose proof HPRE as (HAR & Hra & Hal16 & Hslo & Htop & HpresE & Hgp & Htp).
+pose proof YF0x.Hwx_tfa as Hwx. pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). assert (HES : ESTACK = 4096) by reflexivity.
+pose proof (am_layout B ly S _ (proj1 HAR)) as HLY. pose proof (lo_top ly HLY) as (Lbot & Ltop & _ & Lhi & _ & _ & Lbeg).
+pose proof (proj1 HAR) as HM.
+unfold cfg_at. change (w64 X2_PC) with (Z_to_bv 64 X2_PC).
+set (sp0 := spZ regs) in *.
+assert (Hsp44 : 2 ^ 44 <= sp0 <= 2 ^ 47) by lia.
+set (E := Ereg regs (@nil word)).
+assert (E2 : bv_unsigned (ew E 2) = sp0) by (subst E; rewrite (ew_Ereg_nat regs _ 2 2%bv eq_refl); reflexivity).
+assert (HS0 : st_ok tfibsegs E ss_x2 (restrict (w_H W) (mkst regs (Z_to_bv 64 X2_PC) mem (seg_rom tfibsegs)))).
+{ rewrite restrict_mkst_fx. unfold ss_x2. apply (entry_st_ok_full tfibsegs); change (Ereg regs []) with E.
+- apply regs_ok_Ereg.
+- vm_compute. reflexivity.
+- unfold x2_regions. apply Forall_cons; [|apply Forall_cons; [|apply Forall_cons; [|apply Forall_app; split; [exact (shw_ok ly S _ mem E HM) | exact (rodata_ok ly S _ mem E HM)]]]].
++ apply (region_ok_stack tfibsegs E _ 2 sp0 (- X2_STK)); [exact E2 | unfold X2_STK; lia | lia |].
+intros a Ha. apply YE2y.apresent_writable. apply HpresE. unfold X2_STK in Ha. lia.
++ unfold region_ok, cellr. cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks base_val Z.of_N].
+split; [lia|]. split; [lia|]. split; [intros o Ho; rewrite Z.add_0_l; apply (wseg_writable _ (symaddr Symbols.AsanUbsan.s____asan_globals_registered) 8); [exact zi8_14ea00 | lia | lia | lia | lia] |].
+constructor; [|constructor]. eapply (chunk_ok_val tfibsegs E _ 0 _ 8 _ 1); [reflexivity | zside | zside |].
+rewrite Z.add_0_l. exact (tfib_const_lookup B TB ly S _ mem (symaddr Symbols.AsanUbsan.s____asan_globals_registered) 8 1 HM ltac:(vm_compute; reflexivity)).
++ unfold region_ok, cellr. cbn [YP09.r_base YP09.r_lo YP09.r_hi YP09.r_wlo YP09.r_whi YP09.r_chunks base_val Z.of_N].
+split; [lia|]. split; [lia|]. split; [intros o Ho; rewrite Z.add_0_l; apply (wseg_writable _ (symaddr Symbols.AsanUbsan.s__ZN6__asanL14mu_for_globalsE) 8); [exact zi8_14f970 | lia | lia | lia | lia] |].
+constructor; [|constructor]. eapply (chunk_ok_val tfibsegs E _ 0 _ 8 _ 0); [reflexivity | zside | zside |].
+rewrite Z.add_0_l. exact (tfib_const_lookup B TB ly S _ mem (symaddr Symbols.AsanUbsan.s__ZN6__asanL14mu_for_globalsE) 8 0 HM (MU0 ly)).
+- apply pairwise_disjoint_of_extents. unfold x2_regions, x2_shw, x2_rodata, cellr, shw_region, ro_region, extent_of_region.
+cbn [map app fst snd YP09.r_base YP09.r_lo YP09.r_hi base_val Z.of_N]. rewrite E2. unfold X2_STK.
+cbn [zpairwise_disjoint zall_disjoint]. unfold zdisj. cbn [fst snd]. repeat split; lia.
+- split; [|split; exact I]. cbn [f_atoms atoms_ok]. unfold afact_ok. cbn [af_lo af_hi af_al2]. rewrite E2.
+change (2 ^ 4) with 16. repeat split; lia. }
+eapply SRr_bind; [apply (x2_phase W E ss_x2 x2_st _ _ md HS0 x2_run)|].
+cbv beta. intros W1 c1 _ (-> & ms1 & mat1 & -> & HS1 & HF1 & HFr1).
+eapply (SRr_ret_at tfibsegs tbl2 tbl2_ok Hwx W E); [exact HS1 | reflexivity | vm_compute; reflexivity |].
+intros mat'. rewrite wvb_wvb.
+assert (MEQ : forall x : word, ~ ((sp0 - X2_STK <= bv_unsigned x < sp0) \/ XW2 (bv_unsigned x)) -> ms_mem ms1 x = mem x).
+{ intros x Hx. apply HF1. intros Hin. apply Hx. destruct (x2_windows E _ Hin) as [Hw|Hw]; rewrite ?E2 in Hw; [left; exact Hw | right; exact Hw]. }
+assert (MEQr : forall x : word, ~ ((sp0 - X2_STK <= bv_unsigned x < sp0) \/ XW2 (bv_unsigned x)) ->
+mrestrict (w_H W) (ms_mem ms1) x = mrestrict (w_H W) mem x).
+{ intros x Hx. apply HFr1. intros Hin. apply Hx. destruct (x2_windows E _ Hin) as [Hw|Hw]; rewrite ?E2 in Hw; [left; exact Hw | right; exact Hw]. }
+assert (AV : forall a, 0 <= a < 2 ^ 64 -> ~ (sp0 - X2_STK <= a < sp0) -> ~ XW2 a ->
+aview tfibsegs (w_H W) (ms_mem ms1) a = aview tfibsegs (w_H W) mem a).
+{ intros a Hr H1 H2. apply aview_eq_of. apply MEQr. rewrite unsigned_lit_small by lia. tauto. }
+assert (PRS : forall a, sp0 - X2_STK <= a < sp0 -> apresent (w_H W) (ms_mem ms1) a).
+{ intros a Ha. unfold X2_STK in Ha. apply (apresent_of_writable (w_H W) (ms_mem ms1) a ltac:(lia) (high_not_img a ltac:(lia))).
+destruct HS1 as (_ & _ & _ & _ & _ & _ & _ & (_ & Hrs & _) & _).
+pose proof (Forall_inv Hrs) as Hr0. destruct Hr0 as (_ & _ & Hw & _).
+cbn [YP09.r_base YP09.r_wlo YP09.r_whi base_val] in Hw. rewrite E2 in Hw. unfold X2_STK in Hw.
+replace a with (sp0 + (a - sp0)) by lia. apply Hw. lia. }
+rreg HS1 (1%bv : bv 5) Q1. replace (ew E 1) with (getr regs 1) in Q1 by (symmetry; exact (ew_Ereg_nat regs [] 1 1%bv eq_refl)).
+replace (v_jalr (getr (ms_regs ms1) 1) 0) with (w64 (raZ regs)) by (rewrite Q1; unfold raZ, w64; rewrite Z_to_bv_bv_unsigned; symmetry; exact Hra).
+split; [reflexivity|]. exists (ms_regs ms1), (ms_mem ms1), (with_vm_backing (m_vm_lazy md) mat' md).
+split; [reflexivity|].
+split; [|split; [|split]].
+- exact (aregs_preserved_of_st_ok _ E _ _ regs [] HS1 ltac:(split; [intros i Hi; reflexivity | reflexivity]) ltac:(vm_compute; reflexivity)).
+- apply with_vm_backing_same.
+- intros a Hr Hs Hx. apply AV; [exact Hr | unfold X2_STK; unfold sp0 in *; lia | exact Hx].
+- intros a Hr Hx Hp.
+destruct (Z_lt_le_dec a (sp0 - X2_STK)) as [L1|L1]; [| destruct (Z_lt_le_dec a sp0) as [L2|L2]; [apply PRS; lia|]].
+all: destruct Hp as [Hh [b Hb]]; split; [exact Hh|]; exists b; rewrite MEQ; [exact Hb|]; rewrite unsigned_lit_small by lia; intros [Hw|Hw]; [lia | exact (Hx Hw)].
+Qed.
+End S.
+End d.

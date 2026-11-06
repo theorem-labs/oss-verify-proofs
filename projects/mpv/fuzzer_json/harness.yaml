@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: mpv
 harness: fuzzer_json
-rocq: OssFuzzTheorems.mpv.fuzzer_json
+rocq: OSSVerify.mpv.fuzzer_json
 origin: upstream
 summary: json_parse (<=100 KiB, MAX_JSON_DEPTH); on success json_write and json_write_pretty; the written
   text is never re-parsed or compared to the input node.

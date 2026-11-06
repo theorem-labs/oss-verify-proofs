@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: arduinojson
 harness: number_fuzzer
-rocq: OssFuzzTheorems.arduinojson.number_fuzzer
+rocq: OSSVerify.arduinojson.number_fuzzer
 origin: upstream
 summary: ArduinoJson::detail::parseNumber on a NUL-terminated copy of the input; result discarded.
 entry: LLVMFuzzerTestOneInput

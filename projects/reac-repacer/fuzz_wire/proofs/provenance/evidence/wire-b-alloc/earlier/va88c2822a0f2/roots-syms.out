@@ -1,0 +1,21 @@
+== X_U
+___interceptor_malloc	0x5226c	348	STT_FUNC	STB_GLOBAL
+___interceptor_free	0x5209c	464	STT_FUNC	STB_GLOBAL
+__interceptor_trampoline_free	0x52094	4	STT_FUNC	STB_GLOBAL
+__interceptor_free	0x5209c	464	STT_FUNC	STB_WEAK
+__interceptor_trampoline_malloc	0x52098	4	STT_FUNC	STB_GLOBAL
+__interceptor_malloc	0x5226c	348	STT_FUNC	STB_WEAK
+== GR_U
+___interceptor_malloc	0x530b0	348	STT_FUNC	STB_GLOBAL
+___interceptor_free	0x52ee0	464	STT_FUNC	STB_GLOBAL
+__interceptor_trampoline_free	0x52ed8	4	STT_FUNC	STB_GLOBAL
+__interceptor_free	0x52ee0	464	STT_FUNC	STB_WEAK
+__interceptor_trampoline_malloc	0x52edc	4	STT_FUNC	STB_GLOBAL
+__interceptor_malloc	0x530b0	348	STT_FUNC	STB_WEAK
+== ID_U
+___interceptor_malloc	0x52de8	348	STT_FUNC	STB_GLOBAL
+___interceptor_free	0x52c18	464	STT_FUNC	STB_GLOBAL
+__interceptor_trampoline_free	0x52c10	4	STT_FUNC	STB_GLOBAL
+__interceptor_free	0x52c18	464	STT_FUNC	STB_WEAK
+__interceptor_trampoline_malloc	0x52c14	4	STT_FUNC	STB_GLOBAL
+__interceptor_malloc	0x52de8	348	STT_FUNC	STB_WEAK

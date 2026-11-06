@@ -1,0 +1,4 @@
+# X = uci-B-twin sha256 8d07ffcf5948
+# Y = grant-B-twin sha256 5a5ee7c02b4e
+# AMBIG	file	line	name	image	copies	addr/size/STT_FILE/qname ; ...	Img.fsym takes	how the line was read
+TOTAL	files read 14	by-name compares seen (distinct names) 431	ambiguous hits 0	distinct ambiguous names 0	lines with a function token 4386	resolved items NAME{FILE}/0xADDR (distinct) 4	files skipped 0

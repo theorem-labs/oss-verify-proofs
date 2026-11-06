@@ -11,12 +11,13 @@ A proof enters the repository when its pull request meets every requirement in
 
 ## 1. Put the proof in place
 
-- One directory for each statement, `proofs/<project>/<harness>/<statement>/`, with `Proof.v` (or `Refutation.v`),
-  any helper `.v` files, and `proof.yaml` ([docs/proving.md](../../../docs/proving.md)). Files that the proofs of a
-  harness share go in `proofs/<project>/<harness>/lib/`. Module names follow step 1 of
+- One directory for each statement, `projects/<project>/<harness>/proofs/<statement>/`, with `Proof.v` (or
+  `Refutation.v`), any helper `.v` files, and `proof.yaml` ([docs/proving.md](../../../docs/proving.md)). Files that
+  the proofs of a harness share go in `projects/<project>/<harness>/proofs/lib/`. Module names follow step 1 of
   [docs/adding-a-proof.md](../../../docs/adding-a-proof.md).
-- Change nothing outside `proofs/`, `counterexamples/` and `docs/`, apart from the files that `./oft generate`
-  renders.
+- Change nothing outside the harness's `proofs/` and `counterexamples/` folders and `docs/`, apart from your fuzz
+  target's files that `./oft generate --skip-shared` renders. The shared pages and the index (`tools/oft/paths.py`
+  `SHARED`) are rendered after the merge: a pull request that carries one is refused by lint.
 - A counterexample that shows a memory-safety bug in a library goes to that library first
   ([SECURITY.md](../../../SECURITY.md)).
 
@@ -41,8 +42,8 @@ A file's licence lines are its first lines that say where it comes from and unde
 - A one-line comment, in a file that restates the instruction words of a program or holds data computed from one,
   beginning `(* This file states or restates instruction words` or `(* Machine-generated data computed from`. The
   program's code in such a file keeps the program's licences, and the file has no Anthropic lines.
-- None, in a file written here, under the MIT licence: the `Proof.v` of each statement's directory, and the library
-  files with no licence lines.
+- None, or only `(* SPDX-License-Identifier: MIT *)`, in a file written here, under the MIT licence: the `Proof.v` of
+  each statement's directory, and the library files with no licence lines.
 
 Go through your `.v` files one at a time, and take the first case that fits:
 
@@ -54,7 +55,7 @@ Go through your `.v` files one at a time, and take the first case that fits:
    the one-line comment, holding none of its instruction words or data, gets Anthropic's two lines, then that file's
    `Modified by` lines.
 3. **Any other file**: you wrote it, or it holds code only from files with no licence lines, such as a statement's
-   `Proof.v`. It is under the MIT licence, and has no licence lines.
+   `Proof.v`. It is under the MIT licence, and has no licence lines, or only `(* SPDX-License-Identifier: MIT *)`.
 
 In cases 1 and 2, if you changed anything, add one line under the licence lines, true of this file, from its diff
 against the file that it came from: `(* Modified by <name>, <year>-<month>: <what changed in this file>. *)`, for
@@ -71,7 +72,7 @@ Then, for the whole pull request:
 ## 4. Check, then open the pull request
 
 Run step 3 of [docs/adding-a-proof.md](../../../docs/adding-a-proof.md) as it is written: it commits what
-`./oft generate` renders with `git commit -s`, lints the change, and runs `oft check` in the checker image
+`./oft generate --skip-shared` renders with `git commit -s`, lints the change, and runs `oft check` in the checker image
 (counterexamples with `--parts counterexamples`, in the runner image). Sign every commit off: `git commit -s`.
 
 ## Mistakes that a review sends back

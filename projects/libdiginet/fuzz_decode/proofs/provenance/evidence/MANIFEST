@@ -1,0 +1,7 @@
+# path kind sha256 role
+gate/GATE.md md ee07d44df93e20e7dc8766e350f6f52b6642fba2eda82ad10c944810305cd6f3 the relocation gate (port_addr_check efa19b81e92b --paired-only --fail-on-flags) over the kit files: command, planted control, result line, the measured reason of every flagged row; yh03check rows per class; the settings count
+gate/gate-flagged.tsv tsv 6aeb0d4081c70d0f944f715355f23c3747743be826d4b5b6690f69ccea5fb322 the 609 flagged rows as the gate printed them (verdict, image, files, lines, sentence, values, labels, note)
+k2/README.md md 20190746098c31d7cae1990e4006fafd2ab162d9dc77a00454f03f9e3b9132fc the relocation run: script sha256, command line, donor and kit refs, the * convention of the tables
+k2/k2-cells.tsv tsv 1d5c836768766a7ac9d9fc11d46fdd0b3669e26ee5402a45883495045b84c3ef every kept YH03 cell: file, line, cell, value, the rule that set it, its measurement
+k2/k2-conflicts.tsv tsv f3f708ad8367119966236201784e301970abda0c21b9345e3ec5719297edc823 hex values the address tool also classes NON-ADDRESS: not applied
+k2/k2-values.tsv tsv 8f23abbe7f786be28b6328bc90ec356944af1d17d7416f291c05a131d5da6592 every value the relocation changed: file, line, old, new, how; each donor file it did not copy, with the reason

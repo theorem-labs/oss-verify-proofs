@@ -1,0 +1,8 @@
+HAND	_ZN9libunwind10CFI_ParserINS_17LocalAddressSpaceEE8parseCIEERS1_mPNS2_8CIE_InfoE	+0x23c
+X	REFUSED	slot 47 targets 0x83cb0, not a word of the function
+Y	TABLE	base 0x21398 (+0x238 auipc + +0x23c addi), rel4 jump entries: slot + base
+Y	DISPATCH	+0x258 bltu s5,a1; +0x25c slli a1,a1,2; +0x260 add a1,a1,s6; +0x264 lw a0,0(a1); +0x268 add a0,a0,s6; +0x26c jalr zero,0(a0)
+Y	DOMINANCE	the slli +0x25c, the word right after the guard +0x258, reads the a1 that the guard compared, so nothing runs between the compare and the scaling of that index; every word +0x25c..+0x26c has one predecessor, the word before it, so the guard's fall-through is the only way to the indexed load and the jalr; bltu is unsigned, so a negative index is out of range
+Y	BOUND	the limit s5 at the guard +0x258: every reaching definition on every path of the CFG: +0x234 addi s5,zero,46 -> index < 47, 47 entries; the walk passes 1 call(s), each taken to keep s5, which the psABI makes callee-saved (Func.defines: a call writes only its link and the caller-saved registers; callee code is not read)
+Y	CFG	indirect jumps: the dispatch +0x26c and 1 ret, each ra from a load; the base s6 is read only at +0x260, +0x268
+VERDICT	_ZN9libunwind10CFI_ParserINS_17LocalAddressSpaceEE8parseCIEERS1_mPNS2_8CIE_InfoE	+0x23c	NOT SETTLED (X: slot 47 targets 0x83cb0, not a word of the function)

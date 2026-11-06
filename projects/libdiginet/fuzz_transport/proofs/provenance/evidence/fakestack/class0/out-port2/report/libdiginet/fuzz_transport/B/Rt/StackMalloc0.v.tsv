@@ -1,0 +1,6 @@
+# alreloc per-numeral report: libreac/fuzz_ctrl lib/B/Rt/StackMalloc0.v at e10f488c53fc -> libdiginet/fuzz_transport asan-ubsan lib/B/Rt/StackMalloc0.v: dry run
+# source image <LIBREAC_V190>/x/unstripped/fuzz_ctrl/fuzz_ctrl.asan-ubsan; unit image <WORK>/target/unstripped/fuzz_transport/fuzz_transport.asan-ubsan
+file:line	old	new	rule	old in source image	new in unit image
+B/Rt/StackMalloc0.v:4	0x3cda4	0x3cda4	resolve (identity)	_ZN6__asan12ErrorGeneric5PrintEv+0xc30	_ZN6__asan12ErrorGeneric5PrintEv+0xc30
+B/Rt/StackMalloc0.v:5	0x3d5b8	0x3d5b8	resolve (identity)	_ZN6__asan9FakeStack16ForEachFakeFrameEPFvmmPvES1_+0x1c	_ZN6__asan9FakeStack16ForEachFakeFrameEPFvmmPvES1_+0x1c
+B/Rt/StackMalloc0.v:5	0x3cda4	0x3cda4	resolve (identity)	_ZN6__asan12ErrorGeneric5PrintEv+0xc30	_ZN6__asan12ErrorGeneric5PrintEv+0xc30

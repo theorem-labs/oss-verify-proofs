@@ -1,0 +1,27 @@
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.Reloc Require Import RStep.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.I Require Import IInst IImgP.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G Require G_getf2.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G Require G_letf2.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G Require G_subtf3.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G Require C_extendsftf2 G_extendsftf2.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G Require C_floatditf G_floatditf.
+
+#[local] Existing Instance N_img.
+#[local] Hint Extern 1 (RStep.CodeAtT _ _ _) => IInst.inst : typeclass_instances.
+#[local] Hint Extern 1 (RStep.CodeAt _ _ _) => IInst.inst : typeclass_instances.
+#[local] Hint Extern 1 (RStep.RoB _ _ _) => IInst.inst : typeclass_instances.
+#[local] Hint Extern 1 (RStep.RelCode _ _) => IInst.inst : typeclass_instances.
+#[local] Hint Extern 1 (RStep.RelSym _) => IInst.inst : typeclass_instances.
+#[local] Hint Extern 1 (RStep.RelNear _ _) => IInst.inst : typeclass_instances.
+#[local] Hint Extern 2 (RStep.ZFact _) => IInst.inst : typeclass_instances.
+
+#[export] Instance N_fe_getround_spec_c : OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_subtf3.G_fe_getround.fe_getround_spec_c := OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_subtf3.G_fe_getround.fe_getround_spec_c_ok.
+#[export] Instance N_fe_raise_inexact_spec_c : OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_subtf3.G_fe_getround.fe_raise_inexact_spec_c := OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_subtf3.G_fe_getround.fe_raise_inexact_spec_c_ok.
+#[export] Instance N_addtf3_spec_c : OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_subtf3.G_addtf3_E.addtf3_spec_c := OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_subtf3.G_addtf3_E.addtf3_spec_c_ok.
+#[export] Instance N_subtf3_contract : OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_subtf3.subtf3_contract := OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_subtf3.subtf3_contract_ok.
+#[export] Instance N_letf2_contract : OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_letf2.letf2_contract := OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_letf2.letf2_contract_ok.
+#[export] Instance N_getf2_contract : OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_getf2.getf2_contract := OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_getf2.getf2_contract_ok.
+#[export] Instance N_extendsftf2_contract : OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.C_extendsftf2.extendsftf2_contract := OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_extendsftf2.extendsftf2_contract_ok.
+#[export] Instance N_floatditf_contract : OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.C_floatditf.floatditf_contract := OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.G.G_floatditf.floatditf_contract_ok.

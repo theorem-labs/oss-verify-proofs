@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_ubjson_encoder
-rocq: OssFuzzTheorems.jsoncons.fuzz_ubjson_encoder
+rocq: OSSVerify.jsoncons.fuzz_ubjson_encoder
 origin: upstream
 summary: ubjson_stream_reader drives a ubjson_bytes_encoder (decode -> re-encode); bytes discarded; ec
   ignored.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: xz
 harness: fuzz_decode_alone
-rocq: OssFuzzTheorems.xz.fuzz_decode_alone
+rocq: OSSVerify.xz.fuzz_decode_alone
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an API contract: lzma_code() driven to completion
   on the .lzma (alone) decoder never returns LZMA_PROG_ERROR (liblzma''s "API misuse / internal inconsistency"

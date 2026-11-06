@@ -1,0 +1,4 @@
+# cellvals.py: 310 stated memory values at image addresses in stage-out, read in fuzz_transport.asan
+  chunk NOBITS 1, chunk SAME 8, lit NOBITS 123, lit SAME 99, lookup NOBITS 3, lookup SAME 4, val_mem NOBITS 38, val_mem SAME 34
+result: file-backed statements 145: SAME 145, DIFF 0; .bss statements (runtime values, no image bytes) 165
+control: A/AD20.v:49 chunk 0xa5dc8 8: stated 0xa2914 -> 0xa2915: DIFF 0 -> 1: PASS

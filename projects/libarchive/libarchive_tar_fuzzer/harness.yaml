@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_tar_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_tar_fuzzer
+rocq: OSSVerify.libarchive.libarchive_tar_fuzzer
 origin: upstream
 summary: Reads the input as tar/gnutar (read_concatenated_archives, mac-ext, all filters); per entry calls
   ~16 metadata accessors, iterates sparse_next and xattr_next to exhaustion, and drains archive_read_data.

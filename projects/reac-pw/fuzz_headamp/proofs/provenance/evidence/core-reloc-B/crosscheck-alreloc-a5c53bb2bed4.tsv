@@ -1,0 +1,386 @@
+# every numeral where derive_y b7b132fb12a7 and alreloc a5c53bb2bed4 (DRY, lib/A at b0cad0df5623 -> fuzz_headamp.asan-ubsan) disagree, decided against fuzz_headamp.asan-ubsan (pin 53edda9bdeeb, .symtab of 1674e30a0698)
+lib/A file:line	lib/AU file:line	A value	derive_y	alreloc	final	decided for	class	evidence (B .symtab / bytes / code)	alreloc rule
+A/AB13.v:22	AU/YB13.v:23	5619712	5619712	5620864	5619712	derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address	OBJECT twin
+A/AB13.v:26	AU/YB13.v:27	5619712	5619712	5620864	5619712	derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address	OBJECT twin
+A/AB13.v:42	AU/YB13.v:43	5619712	5619712	5620864	5619712	derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address	OBJECT twin
+A/AB13.v:85	AU/YB13.v:86	438272	442368	438272	442368	derive_y	image-count	seg1 size: AsanUbsan_segment_001 seg_size 0x6c000 (PT_LOAD1 0x30764+0x6a958 page-rounded [0x30000,0x9c000)); A 0x6b000	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 438400 (in
+A/AB13.v:86	AU/YB13.v:87	634880	638976	634880	638976	derive_y	image-bound	seg2 base 0x9c000 (AsanUbsan_segment_002)	UNMAPPED
+A/AB13.v:86	AU/YB13.v:87	634880	638976	634880	638976	derive_y	image-bound	seg2 base 0x9c000 (AsanUbsan_segment_002)	UNMAPPED
+A/AB13.v:86	AU/YB13.v:87	12288	8192	12288	8192	derive_y	image-count	seg2 size: AsanUbsan_segment_002 seg_size 0x2000 ([0x9c000,0x9e000)); A 0x3000	(not in report)
+A/AB13.v:87	AU/YB13.v:88	5619712	5619712	5620864	5619712	derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address	OBJECT twin
+A/AB13.v:89	AU/YB13.v:90	5619712	5619712	5620864	5619712	derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address	OBJECT twin
+A/AB13.v:95	AU/YB13.v:96	14048	15200	14048	15200	derive_y	derived	seg3 file-backed end 0xa1b60 (__stop_asan_globals) - 0x9e000 = 15200 (the 0xa16e0 of the line moves to 0xa1b60)	(not in report)
+A/AB13.v:105	AU/YB13.v:106	438272	442368	438272	442368	derive_y	image-count	seg1 size: AsanUbsan_segment_001 seg_size 0x6c000 (PT_LOAD1 0x30764+0x6a958 page-rounded [0x30000,0x9c000)); A 0x6b000	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 438400 (in
+A/AB13.v:106	AU/YB13.v:107	634880	638976	634880	638976	derive_y	image-bound	seg2 base 0x9c000 (AsanUbsan_segment_002)	UNMAPPED
+A/AB13.v:106	AU/YB13.v:107	634880	638976	634880	638976	derive_y	image-bound	seg2 base 0x9c000 (AsanUbsan_segment_002)	UNMAPPED
+A/AB13.v:108	AU/YB13.v:109	634880	638976	634880	638976	derive_y	image-bound	seg2 base 0x9c000 (AsanUbsan_segment_002)	UNMAPPED
+A/AB13.v:108	AU/YB13.v:109	12288	8192	12288	8192	derive_y	image-count	seg2 size: AsanUbsan_segment_002 seg_size 0x2000 ([0x9c000,0x9e000)); A 0x3000	(not in report)
+A/AB13.v:109	AU/YB13.v:110	634880	638976	634880	638976	derive_y	image-bound	seg2 base 0x9c000 (AsanUbsan_segment_002)	UNMAPPED
+A/AB13.v:114	AU/YB13.v:115	12288	8192	12288	8192	derive_y	image-count	seg2 size: AsanUbsan_segment_002 seg_size 0x2000 ([0x9c000,0x9e000)); A 0x3000	(not in report)
+A/AB13.v:115	AU/YB13.v:116	5619712	5619712	5620864	5619712	derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address	OBJECT twin
+A/AB13.v:153	AU/YB13.v:154	438272	442368	438272	442368	derive_y	image-count	seg1 size: AsanUbsan_segment_001 seg_size 0x6c000 (PT_LOAD1 0x30764+0x6a958 page-rounded [0x30000,0x9c000)); A 0x6b000	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 438400 (in
+A/AB1h.v:52	AU/YB1h.v:53	0x6b000	0x6b080	0x6c000	0x6c000	alreloc	image-count	seg1 size 0x6c000 (AsanUbsan_segment_001); A 0x6b000	segment bound
+A/AB1h.v:53	AU/YB1h.v:54	0x3000	0x3000	0x2000	0x2000	alreloc	image-count	seg2 size 0x2000 (AsanUbsan_segment_002); A 0x3000	segment bound
+A/AB1h.v:79	AU/YB1h.v:80	5619712	5619712	5620864	5619712	derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address	OBJECT twin
+A/AB1h.v:83	AU/YB1h.v:84	5619712	5619712	5620864	5619712	derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address	OBJECT twin
+A/AB1h.v:102	AU/YB1h.v:103	5619712	5619712	5620864	5619712	derive_y	image-count	seg3 size 0x55c000 = AsanUbsan_segment_003 seg_size (same as A); alreloc read it as a .bss address	OBJECT twin
+A/AB1w.v:14	AU/YB1w.v:15	0x9bc80	0x9c0f8	0x9c100	0x9c0f8	derive_y	section-bound	.preinit_array end: B [0x9c0f0,0x9c0f8)	OBJECT twin
+A/AB1w.v:15	AU/YB1w.v:16	0x9bc80	0x9c0f8	0x9c100	0x9c100	alreloc	section-bound	.data.rel.ro start: B [0x9c100,0x9c790) (.preinit_array ends 0x9c0f8, 8-byte gap); A .preinit_array end = .data.rel.ro start = 0x9bc80	OBJECT twin
+A/AB1w.v:69	AU/YB1w.v:70	0x84544	0x84634	0x8493c	0x84634	derive_y	moved	@$x (B .symtab / bytes)	FUNC entry
+A/AB1w.v:562	AU/YB1w.v:563	0x97b34	0x97fac	0x97b34	0x97fac	derive_y	moved	@__set_thread_area (B .symtab / bytes)	UNMAPPED
+A/AB1w.v:562	AU/YB1w.v:563	0x97b40	0x97fb8	0x97b40	0x97fb8	derive_y	moved	@__unmapself (B .symtab / bytes)	UNMAPPED
+A/AB1w.v:563	AU/YB1w.v:564	0x97b34	0x97fac	0x97b34	0x97fac	derive_y	moved	@__set_thread_area (B .symtab / bytes)	UNMAPPED
+A/ACeg.v:48	AU/YCeg.v:49	0x9bc80	0x9c0f8	0x9c100	0x9c100	alreloc	section-bound	.data.rel.ro start: B [0x9c100,0x9c790) (.preinit_array ends 0x9c0f8, 8-byte gap); A .preinit_array end = .data.rel.ro start = 0x9bc80	range start (OBJECT twin, A <= x < B)
+A/ACeh.v:60	AU/YCeh.v:61	0x9bc80	0x9c0f8	0x9c100	0x9c100	alreloc	section-bound	.data.rel.ro start: B [0x9c100,0x9c790) (.preinit_array ends 0x9c0f8, 8-byte gap); A .preinit_array end = .data.rel.ro start = 0x9bc80	range start (OBJECT twin, A <= x < B)
+A/ACej.v:12	AU/YCej.v:13	0x80e94	0x80f14	0x80e94	0x80fcc	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:13	AU/YCej.v:14	0x80e94	0x80f14	0x80e94	0x80fcc	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:14	AU/YCej.v:15	0x82e64	0x82ee4	0x82e64	0x82f00	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:15	AU/YCej.v:16	0x82e64	0x82ee4	0x82e64	0x82f00	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:16	AU/YCej.v:17	0x82e98	0x82f18	0x82e98	0x82f38	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:17	AU/YCej.v:18	0x82e98	0x82f18	0x82e98	0x82f38	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:18	AU/YCej.v:19	0x83744	0x837c4	0x83744	0x83904	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:19	AU/YCej.v:20	0x83744	0x837c4	0x83744	0x83904	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:20	AU/YCej.v:21	0x8379c	0x8381c	0x8379c	0x83958	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:21	AU/YCej.v:22	0x8379c	0x8381c	0x8379c	0x83958	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:22	AU/YCej.v:23	0x837a4	0x83824	0x837a4	0x83960	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:23	AU/YCej.v:24	0x837a4	0x83824	0x837a4	0x83960	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:24	AU/YCej.v:25	0x837ac	0x8382c	0x837ac	0x83968	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:25	AU/YCej.v:26	0x837ac	0x8382c	0x837ac	0x83968	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:26	AU/YCej.v:27	0x837b4	0x83834	0x837b4	0x83970	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:27	AU/YCej.v:28	0x837b4	0x83834	0x837b4	0x83970	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:45	AU/YCej.v:46	0x8379c	0x8381c	0x8379c	0x83958	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:46	AU/YCej.v:47	0x8379c	0x8381c	0x8379c	0x83958	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:47	AU/YCej.v:48	0x837a4	0x83824	0x837a4	0x83960	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:48	AU/YCej.v:49	0x837a4	0x83824	0x837a4	0x83960	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:49	AU/YCej.v:50	0x837ac	0x8382c	0x837ac	0x83968	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:50	AU/YCej.v:51	0x837ac	0x8382c	0x837ac	0x83968	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:51	AU/YCej.v:52	0x837b4	0x83834	0x837b4	0x83970	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:52	AU/YCej.v:53	0x837b4	0x83834	0x837b4	0x83970	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:57	AU/YCej.v:58	0x80e94	0x80f14	0x80e94	0x80fcc	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:58	AU/YCej.v:59	0x80e94	0x80f14	0x80e94	0x80fcc	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:59	AU/YCej.v:60	0x82e64	0x82ee4	0x82e64	0x82f00	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:60	AU/YCej.v:61	0x82e64	0x82ee4	0x82e64	0x82f00	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:61	AU/YCej.v:62	0x82e98	0x82f18	0x82e98	0x82f38	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:62	AU/YCej.v:63	0x82e98	0x82f18	0x82e98	0x82f38	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:63	AU/YCej.v:64	0x83744	0x837c4	0x83744	0x83904	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/ACej.v:64	AU/YCej.v:65	0x83744	0x837c4	0x83744	0x83904	neither	generated	YCej.v regenerated from fuzz_headamp.asan-ubsan by gen_traces.py a78026af (B code differs inside LLVMFuzzerTestOneInput: A 12924 B / B 12860 B); the instruction before each B ra is the jal to __wrap_malloc 0x530e0 / __wrap_free 0x530dc (decoded on the pin)	UNMAPPED
+A/AD1d.v:50	AU/YD1d.v:51	1446400	1447552	1446400	1446400	alreloc	model-constant	kFakeStackSize 11571200 / 8, a run-time size; B start-up states AU/YB01.v carry 1446400 (19x) and 11571200 (123x); 1447552 appears nowhere	SIZES_KEEP
+A/AD1d.v:292	AU/YD1d.v:293	1446400	1447552	1446400	1446400	alreloc	model-constant	kFakeStackSize 11571200 / 8, a run-time size; B start-up states AU/YB01.v carry 1446400 (19x) and 11571200 (123x); 1447552 appears nowhere	SIZES_KEEP
+A/AD1f.v:195	AU/YD1f.v:196	1446400	1447552	1446400	1446400	alreloc	model-constant	kFakeStackSize 11571200 / 8, a run-time size; B start-up states AU/YB01.v carry 1446400 (19x) and 11571200 (123x); 1447552 appears nowhere	SIZES_KEEP
+A/AD1o.v:96	AU/YD1o.v:97	82660	82804	82699	82804	derive_y	derived	0xa1ba0 / 8 (the line's 0xa1720 moved to 0xa1ba0)	section .rodata string
+A/AD1o.v:96	AU/YD1o.v:97	783359	783359	784511	783359	derive_y	image-count	(0x5fa000 - 1) / 8: B image top page 0x5fa000 (same as A)	OBJECT twin
+A/AD1o.v:101	AU/YD1o.v:102	82652	82796	82691	82796	derive_y	derived	662368 / 8 (__stop_asan_globals B 0xa1b60)	section .rodata string
+A/AD1o.v:101	AU/YD1o.v:102	700708	700564	701860	700564	derive_y	derived	(0x5fa000 - 0xa1b60) / 8	OBJECT twin
+A/AD1r.v:218	AU/YD1r.v:219	0x9bc80	0x9c0f8	0x9c100	0x9c100	alreloc	section-bound	.data.rel.ro start: B [0x9c100,0x9c790) (.preinit_array ends 0x9c0f8, 8-byte gap); A .preinit_array end = .data.rel.ro start = 0x9bc80	range start (OBJECT twin, A <= x < B)
+A/AD1w.v:136	AU/YD1w.v:137	0x1480d	0x14834	0x1480d	0x14834	derive_y	moved	string b'%d\n'+0 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AD1x.v:64	AU/YD1x.v:65	0x20c30	0x20c60	0x20c30	0x20c60	derive_y	moved	VSNPrintf jump table entry 24: A base 0x20bd0 (VSNPrintf+0x1bc auipc/addi) -> B base 0x20c00	UNMAPPED
+A/AD2d.v:73	AU/YD2d.v:74	0x9bc80	0x9c0f8	0x9c100	0x9c100	alreloc	section-bound	.data.rel.ro start: B [0x9c100,0x9c790) (.preinit_array ends 0x9c0f8, 8-byte gap); A .preinit_array end = .data.rel.ro start = 0x9bc80	OBJECT twin
+A/AD2d.v:135	AU/YD2d.v:136	0x9bc80	0x9c0f8	0x9c100	0x9c100	alreloc	section-bound	.data.rel.ro start: B [0x9c100,0x9c790) (.preinit_array ends 0x9c0f8, 8-byte gap); A .preinit_array end = .data.rel.ro start = 0x9bc80	range start (OBJECT twin, A <= x < B)
+A/AE23.v:39	AU/YE23.v:40	0x7fffc1d8	0x7fffc1e0	0x7fffc1d8	0x7fffc1e0	derive_y	moved	shadow of @.str (B .symtab / bytes)	(not in report)
+A/AE23.v:39	AU/YE23.v:40	0x7fffc28c	0x7fffc294	0x7fffc28c	0x7fffc294	derive_y	moved	shadow of @.str (B .symtab / bytes)	(not in report)
+A/AE23.v:39	AU/YE23.v:40	0x7fffc29c	0x7fffc2a4	0x7fffc29c	0x7fffc2a4	derive_y	moved	shadow of @$d (B .symtab / bytes)	(not in report)
+A/AE23.v:39	AU/YE23.v:40	0x8000b80c	0x8000b89c	0x8000b80c	0x8000b89c	derive_y	moved	shadow of @ent_build.vocab (B .symtab / bytes)	(not in report)
+A/AE23.v:39	AU/YE23.v:40	0x8000b83c	0x8000b8cc	0x8000b83c	0x8000b8cc	derive_y	moved	shadow of @_ZTVN9libunwind12UnwindCursorINS_17LocalAddressSpaceENS_15Re (B .symtab / bytes)	(not in report)
+A/AE23.v:39	AU/YE23.v:40	0x8000c184	0x8000c214	0x8000c184	0x8000c214	derive_y	moved	shadow of @$d (B .symtab / bytes)	(not in report)
+A/AE23.v:39	AU/YE23.v:40	0x8000c2dc	0x8000c36c	0x8000c2dc	0x8000c36c	derive_y	moved	shadow of @__stop_asan_globals (B .symtab / bytes)	(not in report)
+A/AE23.v:99	AU/YE23.v:100	0x5f8450	0x5f88d0	0x5f8450	0x5f88d0	derive_y	moved	@buf (B .symtab / bytes)	UNMAPPED (same-named copies)
+A/AE23.v:128	AU/YE23.v:129	0x5f8450	0x5f88d0	0x5f8450	0x5f88d0	derive_y	moved	@buf (B .symtab / bytes)	UNMAPPED (same-named copies)
+A/AE2k.v:38	AU/YE2k.v:39	0x103b8	0x103c0	0x103b8	0x103c0	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AE2r.v:265	AU/YE2r.v:266	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE2r.v:271	AU/YE2r.v:272	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE2r.v:274	AU/YE2r.v:275	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE2r.v:335	AU/YE2r.v:336	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE2r.v:341	AU/YE2r.v:342	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE2r.v:344	AU/YE2r.v:345	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE2r.v:451	AU/YE2r.v:452	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE2r.v:457	AU/YE2r.v:458	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE2r.v:460	AU/YE2r.v:461	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE2r.v:521	AU/YE2r.v:522	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE2r.v:527	AU/YE2r.v:528	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE2r.v:530	AU/YE2r.v:531	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE2t.v:65	AU/YE2t.v:66	0x7fffbaf0	0x7fffbaf7	0x7fffbaf0	0x7fffbaf8	neither	shadow-hull	shadow hull of B FMT: [0x7fffbaf8, 0x7fffbb00)	(not in report)
+A/AE2t.v:65	AU/YE2t.v:66	0x7fffbaf8	0x7fffbaff	0x7fffbaf8	0x7fffbb00	neither	shadow-hull	shadow hull of B FMT: [0x7fffbaf8, 0x7fffbb00)	(not in report)
+A/AE2u.v:65	AU/YE2u.v:66	0x7fffbaf0	0x7fffbaf7	0x7fffbaf0	0x7fffbaf8	neither	shadow-hull	shadow hull of B FMT: [0x7fffbaf8, 0x7fffbb08)	(not in report)
+A/AE2u.v:65	AU/YE2u.v:66	0x7fffbb00	0x7fffbb07	0x7fffbb00	0x7fffbb08	neither	shadow-hull	shadow hull of B FMT: [0x7fffbaf8, 0x7fffbb08)	(not in report)
+A/AE2v.v:65	AU/YE2v.v:66	0x7fffb2e0	0x7fffb2e4	0x7fffb2e0	0x7fffb2e0	alreloc	shadow-hull	shadow hull of B FMT: [0x7fffb2e0, 0x7fffb2f0)	(not in report)
+A/AE2v.v:65	AU/YE2v.v:66	0x7fffb2e8	0x7fffb2ec	0x7fffb2e8	0x7fffb2f0	neither	shadow-hull	shadow hull of B FMT: [0x7fffb2e0, 0x7fffb2f0)	(not in report)
+A/AE2w.v:65	AU/YE2w.v:66	0x7fffab10	0x7fffab14	0x7fffab10	0x7fffab10	alreloc	shadow-hull	shadow hull of B FMT: [0x7fffab10, 0x7fffab20)	(not in report)
+A/AE2w.v:65	AU/YE2w.v:66	0x7fffab18	0x7fffab1c	0x7fffab18	0x7fffab20	neither	shadow-hull	shadow hull of B FMT: [0x7fffab10, 0x7fffab20)	(not in report)
+A/AE32.v:265	AU/YE32.v:266	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE32.v:271	AU/YE32.v:272	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE32.v:274	AU/YE32.v:275	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE32.v:335	AU/YE32.v:336	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE32.v:341	AU/YE32.v:342	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE32.v:344	AU/YE32.v:345	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE32.v:451	AU/YE32.v:452	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE32.v:457	AU/YE32.v:458	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE32.v:460	AU/YE32.v:461	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE32.v:521	AU/YE32.v:522	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE32.v:527	AU/YE32.v:528	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE32.v:530	AU/YE32.v:531	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE35.v:38	AU/YE35.v:39	0x1480d	0x14834	0x1480d	0x14834	derive_y	moved	string b'%d\n'+0 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE35.v:65	AU/YE35.v:66	0x7fffa900	0x7fffa904	0x7fffa900	0x7fffa900	alreloc	shadow-hull	shadow hull of B FMT: [0x7fffa900, 0x7fffa908)	(not in report)
+A/AE35.v:65	AU/YE35.v:66	0x7fffa908	0x7fffa90c	0x7fffa908	0x7fffa908	alreloc	shadow-hull	shadow hull of B FMT: [0x7fffa900, 0x7fffa908)	(not in report)
+A/AE35.v:178	AU/YE35.v:179	83981	84020	83981	84020	derive_y	moved	string b'%d\n'+0 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE35.v:344	AU/YE35.v:345	83981	84020	83981	84020	derive_y	moved	string b'%d\n'+0 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE37.v:33	AU/YE37.v:34	0x103b8	0x103c0	0x103b8	0x103c0	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AE37.v:38	AU/YE37.v:39	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa10c0 (8) = 0x21480	section .rodata string
+A/AE37.v:40	AU/YE37.v:41	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1100 (8) = 0x21480	section .rodata string
+A/AE37.v:42	AU/YE37.v:43	0x20f00	0x20f40	0x20f00	0x20f40	derive_y	rom-pair	B bytes at 0xa1120 (8) = 0x20f40	UNMAPPED (string content)
+A/AE37.v:42	AU/YE37.v:43	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1140 (8) = 0x21480	section .rodata string
+A/AE37.v:44	AU/YE37.v:45	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1180 (8) = 0x21480	section .rodata string
+A/AE37.v:46	AU/YE37.v:47	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa11c0 (8) = 0x21480	section .rodata string
+A/AE37.v:48	AU/YE37.v:49	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1200 (8) = 0x21480	section .rodata string
+A/AE37.v:50	AU/YE37.v:51	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1240 (8) = 0x21480	section .rodata string
+A/AE37.v:52	AU/YE37.v:53	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1280 (8) = 0x21480	section .rodata string
+A/AE37.v:54	AU/YE37.v:55	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa12c0 (8) = 0x21480	section .rodata string
+A/AE37.v:56	AU/YE37.v:57	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1300 (8) = 0x21480	section .rodata string
+A/AE37.v:58	AU/YE37.v:59	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1340 (8) = 0x21480	section .rodata string
+A/AE37.v:60	AU/YE37.v:61	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1380 (8) = 0x21480	section .rodata string
+A/AE37.v:62	AU/YE37.v:63	0x21100	0x21140	0x21100	0x21140	derive_y	rom-pair	B bytes at 0xa13a0 (8) = 0x21140	UNMAPPED
+A/AE37.v:62	AU/YE37.v:63	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa13c0 (8) = 0x21480	section .rodata string
+A/AE37.v:64	AU/YE37.v:65	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1400 (8) = 0x21480	section .rodata string
+A/AE37.v:66	AU/YE37.v:67	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1440 (8) = 0x21480	section .rodata string
+A/AE37.v:68	AU/YE37.v:69	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1480 (8) = 0x21480	section .rodata string
+A/AE37.v:70	AU/YE37.v:71	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa14c0 (8) = 0x21480	section .rodata string
+A/AE37.v:72	AU/YE37.v:73	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1500 (8) = 0x21480	section .rodata string
+A/AE37.v:74	AU/YE37.v:75	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1540 (8) = 0x21480	section .rodata string
+A/AE37.v:76	AU/YE37.v:77	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1580 (8) = 0x21480	section .rodata string
+A/AE37.v:78	AU/YE37.v:79	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa15c0 (8) = 0x21480	section .rodata string
+A/AE37.v:80	AU/YE37.v:81	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1600 (8) = 0x21480	section .rodata string
+A/AE37.v:82	AU/YE37.v:83	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1640 (8) = 0x21480	section .rodata string
+A/AE37.v:84	AU/YE37.v:85	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1680 (8) = 0x21480	section .rodata string
+A/AE37.v:86	AU/YE37.v:87	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa16c0 (8) = 0x21480	section .rodata string
+A/AE37.v:88	AU/YE37.v:89	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1700 (8) = 0x21480	section .rodata string
+A/AE37.v:90	AU/YE37.v:91	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1740 (8) = 0x21480	section .rodata string
+A/AE37.v:92	AU/YE37.v:93	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1780 (8) = 0x21480	section .rodata string
+A/AE37.v:94	AU/YE37.v:95	0x21340	0x21380	0x21340	0x21380	derive_y	rom-pair	B bytes at 0xa17a0 (8) = 0x21380	UNMAPPED (string content)
+A/AE37.v:94	AU/YE37.v:95	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa17c0 (8) = 0x21480	section .rodata string
+A/AE37.v:96	AU/YE37.v:97	0x21360	0x213a0	0x21360	0x213a0	derive_y	rom-pair	B bytes at 0xa17e0 (8) = 0x213a0	UNMAPPED (string content)
+A/AE37.v:96	AU/YE37.v:97	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1800 (8) = 0x21480	section .rodata string
+A/AE37.v:98	AU/YE37.v:99	0x21380	0x213c0	0x21380	0x213c0	derive_y	rom-pair	B bytes at 0xa1820 (8) = 0x213c0	UNMAPPED (string content)
+A/AE37.v:98	AU/YE37.v:99	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1840 (8) = 0x21480	section .rodata string
+A/AE37.v:100	AU/YE37.v:101	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1880 (8) = 0x21480	section .rodata string
+A/AE37.v:102	AU/YE37.v:103	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa18c0 (8) = 0x21480	section .rodata string
+A/AE37.v:104	AU/YE37.v:105	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1900 (8) = 0x21480	section .rodata string
+A/AE37.v:106	AU/YE37.v:107	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1940 (8) = 0x21480	section .rodata string
+A/AE37.v:108	AU/YE37.v:109	0x21420	0x21420	0x21460	0x21460	alreloc	rom-pair	B bytes at 0xa1960 (8) = 0x21460	string content: the unit's local label holding b'.\x00'
+A/AE37.v:108	AU/YE37.v:109	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1980 (8) = 0x21480	section .rodata string
+A/AE37.v:112	AU/YE37.v:113	0x21480	0x214c0	0x21480	0x214c0	derive_y	rom-pair	B bytes at 0xa19e0 (8) = 0x214c0	UNMAPPED (string content)
+A/AE37.v:114	AU/YE37.v:115	0x214a0	0x214e0	0x214a0	0x214e0	derive_y	rom-pair	B bytes at 0xa1a20 (8) = 0x214e0	UNMAPPED (string content)
+A/AE37.v:116	AU/YE37.v:117	0x214c0	0x21500	0x214c0	0x21500	derive_y	rom-pair	B bytes at 0xa1a60 (8) = 0x21500	UNMAPPED (string content)
+A/AE37.v:118	AU/YE37.v:119	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1ac0 (8) = 0x21480	section .rodata string
+A/AE37.v:120	AU/YE37.v:121	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1b00 (8) = 0x21480	section .rodata string
+A/AE37.v:122	AU/YE37.v:123	0x21440	0x21440	0x21480	0x21480	alreloc	rom-pair	B bytes at 0xa1b40 (8) = 0x21480	section .rodata string
+A/AE37.v:138	AU/YE37.v:139	0x7fffc1d8	0x7fffc1e0	0x7fffc1d8	0x7fffc1e0	derive_y	moved	shadow of @.str (B .symtab / bytes)	DERIVED-UNSURE (the shadow of 0x20ec0 -> 0x20f00, but its line and code sentence
+A/AE37.v:138	AU/YE37.v:139	176	168	176	176	alreloc	image-count	x2_shw first window: B globals run [0x20f00,0x21480) = 1408 bytes -> 176 shadow cells (as A [0x20ec0,0x21440))	(not in report)
+A/AE37.v:138	AU/YE37.v:139	0x7fffc28c	0x7fffc294	0x7fffc28c	0x7fffc294	derive_y	moved	shadow of @.str (B .symtab / bytes)	DERIVED-UNSURE (the shadow of 0x21460 -> 0x214a0, but its line and code sentence
+A/AE37.v:138	AU/YE37.v:139	0x8000b80c	0x8000b89c	0x8000b80c	0x8000b89c	derive_y	moved	shadow of @ent_build.vocab (B .symtab / bytes)	DERIVED-UNSURE (the shadow of 0x9c060 -> 0x9c4e0, but its line and code sentence
+A/AE37.v:138	AU/YE37.v:139	0x8000c184	0x8000c214	0x8000c184	0x8000c214	derive_y	moved	shadow of @$d (B .symtab / bytes)	DERIVED-UNSURE (the shadow of 0xa0c20 -> 0xa10a0, but its line and code sentence
+A/AE37.v:248	AU/YE37.v:249	0x7fffc1d8	0x7fffc1e0	0x7fffc1d8	0x7fffc1e0	derive_y	moved	shadow of @.str (B .symtab / bytes)	DERIVED-UNSURE (the shadow of 0x20ec0 -> 0x20f00, but its line and code sentence
+A/AE37.v:248	AU/YE37.v:249	0x8000c2dc	0x8000c36c	0x8000c2dc	0x8000c36c	derive_y	moved	shadow of @__stop_asan_globals (B .symtab / bytes)	DERIVED-UNSURE (the shadow of 0xa16e0 -> 0xa1b60, but its line and code sentence
+A/AE39.v:33	AU/YE39.v:34	0x10368	0x10370	0x10368	0x10370	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AE39.v:33	AU/YE39.v:34	0x10388	0x10390	0x10388	0x10390	derive_y	moved	string b'\x01\x01\x01\x01\x01\x01\x01'+7 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3a.v:17	AU/YE3a.v:18	0x10368	0x10370	0x10368	0x10370	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AE3a.v:18	AU/YE3a.v:19	0x10380	0x10388	0x10380	0x10388	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AE3j.v:254	AU/YE3j.v:255	120752	120814	120752	120814	derive_y	moved	string b'cli: cannot open %s\n'+17 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:255	AU/YE3j.v:256	120752	120814	120752	120814	derive_y	moved	string b'cli: cannot open %s\n'+17 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:257	AU/YE3j.v:258	120752	120814	120752	120814	derive_y	moved	string b'cli: cannot open %s\n'+17 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:257	AU/YE3j.v:258	120752	120814	120752	120814	derive_y	moved	string b'cli: cannot open %s\n'+17 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:507	AU/YE3j.v:508	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:508	AU/YE3j.v:509	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:508	AU/YE3j.v:509	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:510	AU/YE3j.v:511	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:514	AU/YE3j.v:515	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:514	AU/YE3j.v:515	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:526	AU/YE3j.v:527	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:526	AU/YE3j.v:527	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:526	AU/YE3j.v:527	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:827	AU/YE3j.v:828	120752	120814	120752	120814	derive_y	moved	string b'cli: cannot open %s\n'+17 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:828	AU/YE3j.v:829	120752	120814	120752	120814	derive_y	moved	string b'cli: cannot open %s\n'+17 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:830	AU/YE3j.v:831	120752	120814	120752	120814	derive_y	moved	string b'cli: cannot open %s\n'+17 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:830	AU/YE3j.v:831	120752	120814	120752	120814	derive_y	moved	string b'cli: cannot open %s\n'+17 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:1086	AU/YE3j.v:1087	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:1088	AU/YE3j.v:1089	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:1119	AU/YE3j.v:1120	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:1119	AU/YE3j.v:1120	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:1120	AU/YE3j.v:1121	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:1120	AU/YE3j.v:1121	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:1351	AU/YE3j.v:1352	120752	120814	120752	120814	derive_y	moved	string b'cli: cannot open %s\n'+17 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:1352	AU/YE3j.v:1353	120752	120814	120752	120814	derive_y	moved	string b'cli: cannot open %s\n'+17 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:1354	AU/YE3j.v:1355	120752	120814	120752	120814	derive_y	moved	string b'cli: cannot open %s\n'+17 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:1354	AU/YE3j.v:1355	120752	120814	120752	120814	derive_y	moved	string b'cli: cannot open %s\n'+17 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:1601	AU/YE3j.v:1602	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:1604	AU/YE3j.v:1605	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3j.v:1604	AU/YE3j.v:1605	120754	120816	120754	120816	derive_y	moved	string b'cli: cannot open %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:254	AU/YE3k.v:255	120775	120837	120775	120837	derive_y	moved	string b'cli: read error on %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:255	AU/YE3k.v:256	120775	120837	120775	120837	derive_y	moved	string b'cli: read error on %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:257	AU/YE3k.v:258	120775	120837	120775	120837	derive_y	moved	string b'cli: read error on %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:257	AU/YE3k.v:258	120775	120837	120775	120837	derive_y	moved	string b'cli: read error on %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:507	AU/YE3k.v:508	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:508	AU/YE3k.v:509	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:508	AU/YE3k.v:509	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:510	AU/YE3k.v:511	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:514	AU/YE3k.v:515	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:514	AU/YE3k.v:515	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:526	AU/YE3k.v:527	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:526	AU/YE3k.v:527	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:526	AU/YE3k.v:527	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:827	AU/YE3k.v:828	120775	120837	120775	120837	derive_y	moved	string b'cli: read error on %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:828	AU/YE3k.v:829	120775	120837	120775	120837	derive_y	moved	string b'cli: read error on %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:830	AU/YE3k.v:831	120775	120837	120775	120837	derive_y	moved	string b'cli: read error on %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:830	AU/YE3k.v:831	120775	120837	120775	120837	derive_y	moved	string b'cli: read error on %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:1086	AU/YE3k.v:1087	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:1088	AU/YE3k.v:1089	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:1119	AU/YE3k.v:1120	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:1119	AU/YE3k.v:1120	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:1120	AU/YE3k.v:1121	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:1120	AU/YE3k.v:1121	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:1351	AU/YE3k.v:1352	120775	120837	120775	120837	derive_y	moved	string b'cli: read error on %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:1352	AU/YE3k.v:1353	120775	120837	120775	120837	derive_y	moved	string b'cli: read error on %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:1354	AU/YE3k.v:1355	120775	120837	120775	120837	derive_y	moved	string b'cli: read error on %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:1354	AU/YE3k.v:1355	120775	120837	120775	120837	derive_y	moved	string b'cli: read error on %s\n'+19 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:1601	AU/YE3k.v:1602	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:1604	AU/YE3k.v:1605	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3k.v:1604	AU/YE3k.v:1605	120777	120839	120777	120839	derive_y	moved	string b'cli: read error on %s\n'+21 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:37	AU/YE3m.v:38	0x1480d	0x14834	0x1480d	0x14834	derive_y	moved	string b'%d\n'+0 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:561	AU/YE3m.v:562	83981	84020	83981	84020	derive_y	moved	string b'%d\n'+0 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:886	AU/YE3m.v:887	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:889	AU/YE3m.v:890	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:914	AU/YE3m.v:915	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:914	AU/YE3m.v:915	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:915	AU/YE3m.v:916	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:915	AU/YE3m.v:916	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:952	AU/YE3m.v:953	83984	84023	83984	84023	derive_y	moved	string b'%d\n'+3 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:953	AU/YE3m.v:954	83984	84023	83984	84023	derive_y	moved	string b'%d\n'+3 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:956	AU/YE3m.v:957	83984	84023	83984	84023	derive_y	moved	string b'%d\n'+3 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:956	AU/YE3m.v:957	83984	84023	83984	84023	derive_y	moved	string b'%d\n'+3 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:1071	AU/YE3m.v:1072	83981	84020	83981	84020	derive_y	moved	string b'%d\n'+0 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:1435	AU/YE3m.v:1436	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:1436	AU/YE3m.v:1437	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:1436	AU/YE3m.v:1437	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:1437	AU/YE3m.v:1438	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:1437	AU/YE3m.v:1438	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:1439	AU/YE3m.v:1440	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:1445	AU/YE3m.v:1446	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:1445	AU/YE3m.v:1446	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE3m.v:1460	AU/YE3m.v:1461	83983	84022	83983	84022	derive_y	moved	string b'%d\n'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AE6o.v:342	AU/YE6o.v:343	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6o.v:348	AU/YE6o.v:349	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6o.v:351	AU/YE6o.v:352	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6o.v:424	AU/YE6o.v:425	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6o.v:430	AU/YE6o.v:431	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6o.v:433	AU/YE6o.v:434	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6o.v:569	AU/YE6o.v:570	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6o.v:575	AU/YE6o.v:576	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6o.v:578	AU/YE6o.v:579	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6o.v:651	AU/YE6o.v:652	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6o.v:657	AU/YE6o.v:658	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6o.v:660	AU/YE6o.v:661	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6s.v:306	AU/YE6s.v:307	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6s.v:312	AU/YE6s.v:313	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6s.v:315	AU/YE6s.v:316	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6s.v:388	AU/YE6s.v:389	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6s.v:394	AU/YE6s.v:395	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6s.v:397	AU/YE6s.v:398	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6s.v:592	AU/YE6s.v:593	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6s.v:598	AU/YE6s.v:599	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6s.v:601	AU/YE6s.v:602	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6s.v:674	AU/YE6s.v:675	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6s.v:680	AU/YE6s.v:681	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE6s.v:683	AU/YE6s.v:684	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE74.v:342	AU/YE74.v:343	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE74.v:348	AU/YE74.v:349	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE74.v:351	AU/YE74.v:352	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE74.v:424	AU/YE74.v:425	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE74.v:430	AU/YE74.v:431	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE74.v:433	AU/YE74.v:434	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE74.v:569	AU/YE74.v:570	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE74.v:575	AU/YE74.v:576	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE74.v:578	AU/YE74.v:579	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE74.v:651	AU/YE74.v:652	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE74.v:657	AU/YE74.v:658	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE74.v:660	AU/YE74.v:661	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE78.v:306	AU/YE78.v:307	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE78.v:312	AU/YE78.v:313	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE78.v:315	AU/YE78.v:316	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE78.v:388	AU/YE78.v:389	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE78.v:394	AU/YE78.v:395	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE78.v:397	AU/YE78.v:398	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE78.v:592	AU/YE78.v:593	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE78.v:598	AU/YE78.v:599	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE78.v:601	AU/YE78.v:602	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE78.v:674	AU/YE78.v:675	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE78.v:680	AU/YE78.v:681	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AE78.v:683	AU/YE78.v:684	346620	346748	346620	346748	derive_y	moved	__asan_region_is_poisoned+0x174 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 346748 (in
+A/AFek.v:44	AU/YFek.v:45	0x103b0	0x103b8	0x103b0	0x103b8	derive_y	moved	string b'W)Q\xce\xa0\xc8E\x18\x8c\xb2G\x97\x8c\xb2G\x97\xff\xff\x0f'+8 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AFem.v:360	AU/YFem.v:361	0x103b0	0x103b8	0x103b0	0x103b8	derive_y	moved	string b'W)Q\xce\xa0\xc8E\x18\x8c\xb2G\x97\x8c\xb2G\x97\xff\xff\x0f'+8 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AFem.v:414	AU/YFem.v:415	400166	400294	400166	400454	neither	derived	theDepot / 4: B _ZN11__sanitizerL8theDepotE 0x187118 / 4 = 400454 (A 0x186c98 / 4 = 400166)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 400294 (in
+A/AFes.v:105	AU/YFes.v:106	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFes.v:136	AU/YFes.v:137	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFet.v:712	AU/YFet.v:713	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFet.v:714	AU/YFet.v:715	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFet.v:727	AU/YFet.v:728	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFeu.v:163	AU/YFeu.v:164	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFeu.v:165	AU/YFeu.v:166	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFeu.v:226	AU/YFeu.v:227	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFeu.v:237	AU/YFeu.v:238	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFf4.v:1047	AU/YFf4.v:1048	1441792	1441792	1442944	1441792	derive_y	model-constant	(11571200 - (4096 + 32768)) / 8, run-time sizes (kFakeStackSize); not an address	OBJECT twin
+A/AFf8.v:404	AU/YFf8.v:405	411876	412004	411876	412004	derive_y	moved	_ZN11__sanitizer16internal_madviseEmmi+0x24 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 412004 (in
+A/AFf8.v:705	AU/YFf8.v:706	411876	412004	411876	412004	derive_y	moved	_ZN11__sanitizer16internal_madviseEmmi+0x24 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 412004 (in
+A/AFf8.v:1008	AU/YFf8.v:1009	411876	412004	411876	412004	derive_y	moved	_ZN11__sanitizer16internal_madviseEmmi+0x24 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 412004 (in
+A/AFf8.v:1307	AU/YFf8.v:1308	411876	412004	411876	412004	derive_y	moved	_ZN11__sanitizer16internal_madviseEmmi+0x24 (B .symtab / bytes)	DECIMAL-UNSURE (the same-code function rule reads it as an address -> 412004 (in
+A/AFf9.v:381	AU/YFf9.v:382	4194240	4194240	4195392	4194240	derive_y	model-constant	size quotient (4194240 = 2^22 - 64) of the run-time arena; not an address	OBJECT twin
+A/AFf9.v:381	AU/YFf9.v:382	4194240	4194240	4195392	4194240	derive_y	model-constant	size quotient (4194240 = 2^22 - 64) of the run-time arena; not an address	OBJECT twin
+A/AFfg.v:100	AU/YFfg.v:101	0xe6000	0xe6000	0xe6480	0xe6480	alreloc	moved	_ZN11__sanitizerL26internal_alloc_placeholderE+0x40040 (A 0xa5fc0 / B 0xa6440, size 0x81040; member offsets of the same layout)	range end (end 0xe6000 -> 0xe6480, last byte in _ZN11__sanitizerL26internal_allo
+A/AFfg.v:106	AU/YFfg.v:107	0xe6000	0xe6000	0xe6480	0xe6480	alreloc	moved	_ZN11__sanitizerL26internal_alloc_placeholderE+0x40040 (A 0xa5fc0 / B 0xa6440, size 0x81040; member offsets of the same layout)	range start (OBJECT twin, A <= x < B)
+A/AFfg.v:232	AU/YFfg.v:233	0xe6000	0xe6000	0xe6480	0xe6480	alreloc	moved	_ZN11__sanitizerL26internal_alloc_placeholderE+0x40040 (A 0xa5fc0 / B 0xa6440, size 0x81040; member offsets of the same layout)	OBJECT twin
+A/AFfg.v:232	AU/YFfg.v:233	3456	4608	3456	3456	alreloc	kept	memset length of the same struct member (layout constant; B code same), = 0xe6d80-0xe6000 in A and 0xe7200-0xe6480 in B	(not in report)
+A/AFfi.v:210	AU/YFfi.v:211	0x103b8	0x103c0	0x103b8	0x103c0	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AFfu.v:409	AU/YFfu.v:410	84984	85128	85023	85128	derive_y	derived	681024 / 8 (the line's 679872 moved +0x480 to 681024)	section .rodata string
+A/AFg1.v:299	AU/YFg1.v:300	84984	85128	85023	85128	derive_y	derived	681024 / 8 (the line's 679872 moved +0x480 to 681024)	section .rodata string
+A/AFgk.v:112	AU/YFgk.v:113	0x103b8	0x103c0	0x103b8	0x103c0	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AFhd.v:57	AU/YFhd.v:58	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFhd.v:74	AU/YFhd.v:75	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFhd.v:94	AU/YFhd.v:95	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFhd.v:108	AU/YFhd.v:109	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFhd.v:124	AU/YFhd.v:125	100000	100000	100046	100000	derive_y	model-constant	kQuarantine batch bound 100000 (a count; alreloc read it as a .rodata address)	section .rodata string
+A/AFhy.v:89	AU/YFhy.v:90	0x103c8	0x103d0	0x103c8	0x103d0	derive_y	moved	string b'`\x03\xbf]=\xcd\x92\xa3\x18\x02'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AFhy.v:89	AU/YFhy.v:90	0x10440	0x10450	0x10440	0x10450	derive_y	moved	string b'\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\x11\x1a&\x0f.\x1d0\n'+63 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AFhy.v:89	AU/YFhy.v:90	0x10540	0x10550	0x10540	0x10550	derive_y	moved	string b'\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\x11\x1a&\x0f.\x1d0\n'+63 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AFi1.v:61	AU/YFi1.v:62	0x103c8	0x103d0	0x103c8	0x103d0	derive_y	moved	string b'`\x03\xbf]=\xcd\x92\xa3\x18\x02'+2 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AFi1.v:61	AU/YFi1.v:62	0x10440	0x10450	0x10440	0x10450	derive_y	moved	string b'\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\x11\x1a&\x0f.\x1d0\n'+63 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AFi1.v:61	AU/YFi1.v:62	0x10540	0x10550	0x10540	0x10550	derive_y	moved	string b'\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\x11\x1a&\x0f.\x1d0\n'+63 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AFi3.v:77	AU/YFi3.v:78	202260	202260	202388	202260	derive_y	model-constant	spec location id of mcheck (a label, kept byte-identical as in A)	FUNC entry
+A/AFi9.v:59	AU/YFi9.v:60	1048575	1048575	1049727	1048575	derive_y	model-constant	mkAF bound 2^20 - 1; not an address	OBJECT twin
+A/AFih.v:62	AU/YFih.v:63	0x103e8	0x103f8	0x103e8	0x103f8	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AFih.v:68	AU/YFih.v:69	0x1cdc7	0x1ce05	0x1cdc7	0x1ce05	derive_y	moved	string b'memory at address %p'+8 (B .symtab / bytes)	INSN-UNSURE (the section .rodata string rule reads it as an address -> 0x1ce05, 
+A/AFih.v:69	AU/YFih.v:70	0x1cdcf	0x1ce0d	0x1cdcf	0x1ce0d	derive_y	moved	string b'memory at address %p'+16 (B .symtab / bytes)	INSN-UNSURE (the section .rodata string rule reads it as an address -> 0x1ce0d, 
+A/AFih.v:69	AU/YFih.v:70	0x1cdd3	0x1ce11	0x1cdd3	0x1ce11	derive_y	moved	string b'memory at address %p'+20 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AFih.v:70	AU/YFih.v:71	0x20c30	0x20c60	0x20c30	0x20c60	derive_y	moved	VSNPrintf jump table entry 24 (B base 0x20c00)	UNMAPPED
+A/AFih.v:70	AU/YFih.v:71	0x465d0	0x46620	0x46650	0x46620	derive_y	rom-pair	B bytes at 0x20c60 = 0x46620 (0x20c00+0x46620 = VSNPrintf+0x350, as A 0x20bd0+0x465d0)	same-code function
+A/AFih.v:71	AU/YFih.v:72	0x103e8	0x103f8	0x103e8	0x103f8	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AFii.v:26	AU/YFii.v:27	0x6a0d0	0x69dc0	0x6a150	0x6a508	neither	rom-pair	B bytes at 0x21ab4 = 0x6a508 (table-relative: 0x21aa8+0x6a508 = 0x8bfb0 = sysconf+0x208, as A 0x21a68+0x6a0d0 = sysconf+0x208)	same-code function
+A/AFjm.v:329	AU/YFjm.v:330	2148217192	2148217336	2148217192	2148217336	derive_y	moved	shadow of builtin_tls+0xeb8 (B .symtab / bytes)	(not in report)
+A/AFjr.v:628	AU/YFjr.v:629	82688	82832	82727	82832	derive_y	derived	(662488 + 168) / 8 (the line's 661336 moved to 662488)	section .rodata string
+A/AFk0.v:772	AU/YFk0.v:773	202260	202260	202388	202260	derive_y	model-constant	spec location id of mcheck (a label, kept byte-identical as in A)	FUNC entry
+A/AFk1.v:661	AU/YFk1.v:662	0x6a0d0	0x69dc0	0x6a150	0x6a508	neither	rom-pair	B bytes at 0x21ab4 = 0x6a508 (table-relative: 0x21aa8+0x6a508 = 0x8bfb0 = sysconf+0x208, as A 0x21a68+0x6a0d0 = sysconf+0x208)	same-code function
+A/AFk1.v:696	AU/YFk1.v:697	2148217192	2148217336	2148217192	2148217336	derive_y	moved	shadow of builtin_tls+0xeb8 (B .symtab / bytes)	(not in report)
+A/AFk2.v:597	AU/YFk2.v:598	0x1cdc7	0x1ce05	0x1cdc7	0x1ce05	derive_y	moved	string b'memory at address %p'+8 (B .symtab / bytes)	INSN-UNSURE (the section .rodata string rule reads it as an address -> 0x1ce05, 
+A/AFk2.v:598	AU/YFk2.v:599	0x1cdcf	0x1ce0d	0x1cdcf	0x1ce0d	derive_y	moved	string b'memory at address %p'+16 (B .symtab / bytes)	INSN-UNSURE (the section .rodata string rule reads it as an address -> 0x1ce0d, 
+A/AFk2.v:598	AU/YFk2.v:599	0x1cdd3	0x1ce11	0x1cdd3	0x1ce11	derive_y	moved	string b'memory at address %p'+20 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AFk2.v:599	AU/YFk2.v:600	0x20c30	0x20c60	0x20c30	0x20c60	derive_y	moved	VSNPrintf jump table entry 24 (B base 0x20c00)	UNMAPPED
+A/AFk2.v:599	AU/YFk2.v:600	0x465d0	0x46620	0x46650	0x46620	derive_y	rom-pair	B bytes at 0x20c60 = 0x46620	same-code function
+A/AFk2.v:617	AU/YFk2.v:618	0x20c30	0x20c60	0x20c30	0x20c60	derive_y	moved	VSNPrintf jump table entry 24 (B base 0x20c00)	UNMAPPED
+A/AFk2.v:617	AU/YFk2.v:618	0x20c34	0x20c64	0x20c34	0x20c64	derive_y	moved	end of VSNPrintf jump-table entry 24	UNMAPPED
+A/AFk2.v:617	AU/YFk2.v:618	0x103e8	0x103f8	0x103e8	0x103f8	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AFk2.v:617	AU/YFk2.v:618	0x103f0	0x10400	0x103f0	0x10400	derive_y	moved	end of the 8-byte 0xaaaaaaaaaaaaaaaa pattern word: B 0x103f8+8 (A 0x103e8+8)	UNMAPPED (no symbol home)
+A/AFk2.v:679	AU/YFk2.v:680	0x103e8	0x103f8	0x103e8	0x103f8	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AFk2.v:681	AU/YFk2.v:682	0x103e8	0x103f8	0x103e8	0x103f8	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AFk2.v:716	AU/YFk2.v:717	0x20c30	0x20c60	0x20c30	0x20c60	derive_y	moved	VSNPrintf jump table entry 24	UNMAPPED
+A/AFk2.v:716	AU/YFk2.v:717	0x20c34	0x20c64	0x20c34	0x20c64	derive_y	moved	end of VSNPrintf jump-table entry 24	UNMAPPED
+A/AFk2.v:721	AU/YFk2.v:722	0x103e8	0x103f8	0x103e8	0x103f8	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AFk2.v:721	AU/YFk2.v:722	0x103f0	0x10400	0x103f0	0x10400	derive_y	moved	end of the pattern word B 0x103f8+8	UNMAPPED (no symbol home)
+A/AFkp.v:62	AU/YFkp.v:63	0x103b8	0x103c0	0x103b8	0x103c0	derive_y	moved	@$d (B .symtab / bytes)	UNMAPPED
+A/AFkp.v:62	AU/YFkp.v:63	0x10440	0x10450	0x10440	0x10450	derive_y	moved	string b'\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\x11\x1a&\x0f.\x1d0\n'+63 (B .symtab / bytes)	UNMAPPED (no symbol home)
+A/AFkp.v:62	AU/YFkp.v:63	0x10540	0x10550	0x10540	0x10550	derive_y	moved	string b'\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\x11\x1a&\x0f.\x1d0\n'+63 (B .symtab / bytes)	UNMAPPED (no symbol home)

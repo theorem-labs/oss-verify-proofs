@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nsmd
 harness: decode_nsm_disable_tokens_req_fuzzer
-rocq: OssFuzzTheorems.nsmd.decode_nsm_disable_tokens_req_fuzzer
+rocq: OSSVerify.nsmd.decode_nsm_disable_tokens_req_fuzzer
 origin: oss-fuzz
 summary: Requires >= sizeof(nsm_msg_hdr) bytes and hdr->request == true, then calls decode_nsm_disable_tokens_req(msg,
   len) and ignores its return code; the 64 KiB out_buf is allocated but unused.

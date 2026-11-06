@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: dbus-sensors
 harness: utils_fuzzer
-rocq: OssFuzzTheorems.dbus_sensors.utils_fuzzer
+rocq: OSSVerify.dbus_sensors.utils_fuzzer
 origin: oss-fuzz
 summary: 'FuzzedDataProvider-driven calls into dbus-sensors helpers: getDeviceBusAddr, escapePathForDbus,
   getPathForUnits, getPowerState/getPollRate/getPermitSet on a fuzzed config map, escapeName, splitFileName,

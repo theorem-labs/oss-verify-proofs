@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: gdal
 harness: mitab_mif_fuzzer
-rocq: OssFuzzTheorems.gdal.mitab_mif_fuzzer
+rocq: OSSVerify.gdal.mitab_mif_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

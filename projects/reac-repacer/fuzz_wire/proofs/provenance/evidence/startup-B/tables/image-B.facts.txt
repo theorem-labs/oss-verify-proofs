@@ -1,0 +1,41 @@
+pin  sha256 af4534831a4528320c7dc74ca3f64bb96e8232ed2e313f01126d10879f3417d6 (['bin', 'fuzz_wire', 'fuzz_wire.asan-ubsan'])
+twin sha256 51eb4bef24252e4df6e11baa89f653d20d74e38ae684f61bc94f4fb339ac97c3
+PT_LOAD count pin 4 twin 4
+  PT_LOAD vaddr 0x10000 filesz 0x1ef5c memsz 0x1ef5c flags 0x4: header fields EQUAL; bytes differing 25 (ELF/phdr header 5, build-id 20, OTHER 0)
+  PT_LOAD vaddr 0x2ff5c filesz 0x67384 memsz 0x67384 flags 0x5: header fields EQUAL; bytes differing 0 (ELF/phdr header 0, build-id 0, OTHER 0)
+  PT_LOAD vaddr 0x982e0 filesz 0x1290 memsz 0x1d20 flags 0x6: header fields EQUAL; bytes differing 0 (ELF/phdr header 0, build-id 0, OTHER 0)
+  PT_LOAD vaddr 0x9a570 filesz 0x2bb8 memsz 0x55ab00 flags 0x6: header fields EQUAL; bytes differing 0 (ELF/phdr header 0, build-id 0, OTHER 0)
+PT_LOAD bytes pin == twin outside the ELF header fields and the build id: YES
+image hull [0x10000, 0x5f6000) (page-up of the last PT_LOAD end)
+e_entry 0x2ff5c
+sections (twin): .note.gnu.build-id@0x102a8+0x24 .rodata@0x102d0+0x122bc .eh_frame_hdr@0x2258c+0x20b4 .eh_frame@0x24640+0xa91c .text@0x2ff5c+0x67384 .tbss@0x972e0+0x14 .init_array@0x982e0+0x20 .fini_array@0x98300+0x10 .preinit_array@0x98310+0x8 .data.rel.ro@0x98318+0x500 .got@0x98818+0xd58 .relro_padding@0x99570+0xa90 .data@0x9a570+0x2bb8 .bss@0x9d140+0x557f30
+.text addr 0x2ff5c size 0x67384 -> TFIB_TEXT_LO 0x2ff5c TFIB_TEXT_N = ceil(size/4) = 105697
+asan_globals: NO such section in the twin -> 0 descriptors
+__odr_asan* symbols: 0; ___asan_gen_* symbols: 0
+__asan_register_globals 0x3e09c: direct callers ['_ZN6__asanL23force_interface_symbolsEv+0x1b4', '__asan_register_elf_globals+0x34']
+asan.module_ctor: ['0x80d64+56']
+asan.module_dtor: ['0x81928+48']
+symbol main                     ['0x7f758 size 708 STT_FUNC']
+symbol _start                   ['0x2ff5c size 0 STT_FUNC']
+symbol _start_c                 ['0x2ff78 size 44 STT_FUNC']
+symbol LLVMFuzzerTestOneInput   ['0x7fbf8 size 428 STT_FUNC']
+symbol memset                   ['0x91fac size 248 STT_FUNC']
+symbol memcpy                   ['0x91ba8 size 1028 STT_FUNC']
+symbol memmove                  absent
+symbol bcmp                     ['0x91aa8 size 4 STT_FUNC']
+symbol memcmp                   ['0x91b78 size 48 STT_FUNC']
+symbol strlen                   ['0x921f8 size 144 STT_FUNC']
+symbol memchr                   ['0x91aac size 204 STT_FUNC']
+symbol strchr                   ['0x920a4 size 60 STT_FUNC']
+symbol __stack_chk_guard        ['0x5f37d0 size 8 STT_OBJECT']
+symbol __asan_memset            absent
+symbol __asan_memcpy            ['0x50c14 size 1180 STT_FUNC']
+symbol __asan_memmove           ['0x510b0 size 880 STT_FUNC']
+symbol _ZN6__asan9asan_initE    absent
+symbol __asan_init              ['0x58fc0 size 148 STT_FUNC']
+canary .got cell(s) (8-byte .got word = &__stack_chk_guard 0x5f37d0): ['0x99500']
+ipc ___interceptor_malloc 0x5226c: GetCurrentPc 0x7259c return addresses ['0x522e8', '0x52334'] (gen_traces --ipc takes the second)
+ipc ___interceptor_free 0x5209c: GetCurrentPc 0x7259c return addresses ['0x521b8', '0x521d4'] (gen_traces --ipc takes the second)
+program functions (DWARF, non-runtime CUs ['/src/libreac/src/reac.c', '/usr/local/lib/oss-verify/driver/adapter.c', '/usr/local/lib/oss-verify/driver/cli.c', '/usr/local/lib/oss-verify/driver/wrap_getenv.c', '/usr/local/lib/oss-verify/driver/wrap_getpid.c', 'fuzz/fuzz_wire.c', 'src/repace_wire.c']): 30
+FP-SETTER check_meter [0x8016c,0x804c0) addi s0, sp, 128 at 0x801a4; calls malloc/free: none
+FP-SETTER check_read [0x805f4,0x80abc) addi s0, sp, 192 at 0x80630; calls malloc/free: none

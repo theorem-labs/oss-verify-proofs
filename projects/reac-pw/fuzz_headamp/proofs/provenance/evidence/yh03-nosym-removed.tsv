@@ -1,0 +1,38 @@
+# YH03 NOSYM cells removed from this unit's lib/Reusable/YH03.v and lib/U/Reusable/YH03.v (14 per copy), by the publishing
+# method's ruling of 2026-10-30 19:53Z: an unread NOSYM cell whose value the unit's own pinned image contradicts is removed,
+# with no hand-set value. Each row: the file (relative to this unit's proof root), the line in that file as it stood
+# before the removal (YH03.pre-nosym.plain.v (sha256 0541d425f554; internal record) and YH03.pre-nosym.ubsan.v (sha256
+# 59eef0f17178; internal record)), the number of lines, and the sha256 of the removed line's text (UTF-8, no newline).
+# The verbatim rows and the per-cell reading against the pins (plain sha256 61497eebc35c52a0b5decd81ae453deeea1a18220ebf8f6436da6718b13c78b5,
+# ubsan sha256 0516fd55d25d0dc25addf9f7563673fa7a309e1f0c2e8c6a4bff0d6c9c8ef9e8) are kept in an internal record that the
+# pull request body names by ref: yh03-nosym-removed.tsv (sha256 67bea1b75e7e; internal record) and nosym.tsv (sha256
+# ff41d35c02e9; internal record).
+file	line	lines	sha256
+lib/Reusable/YH03.v	133	1	cd4de14051ec9d5a45749005c85a00925d36e63d18edfa64b49e0d6ad45f0d69
+lib/Reusable/YH03.v	134	1	5342bb44306d20c70e93f9c536be6fa416707fc766f2d194f5fa4895ae38a944
+lib/Reusable/YH03.v	136	1	5ec277a21e1783595005ebf1371ddd0cdc41e66a09f79c4b8b91fa46472db1a8
+lib/Reusable/YH03.v	138	1	b991611e5a0152abe76236aa53f282c00ca4256ec8706f16317476f65256dd7f
+lib/Reusable/YH03.v	139	1	9a9b66214db074f5714fb0ad83e4ba376bf817d70cd87e7fd204840ce20da447
+lib/Reusable/YH03.v	140	1	9386711d8860fba6960a0091a25b08a08536c6943c891a13d22dc21f033fbced
+lib/Reusable/YH03.v	141	1	9b09ed7d3a402185ce7ae506157c6c87d89d2d3025f475344d64e32d0338ff90
+lib/Reusable/YH03.v	142	1	6ee5b3ba37070d225a9b4cd0a934c9daebe146c0701acf31740a2e04b7f8f2bd
+lib/Reusable/YH03.v	143	1	2437b7a60479be3cfaeefa69f7be4ec669283348bc55bb6ba38a91f23ca41adb
+lib/Reusable/YH03.v	148	1	e508963ab760c02ba7bd8b75bc4e865e87965fa3aaadc24072993eddbc7ae0af
+lib/Reusable/YH03.v	149	1	1b313ea39aff93f5387c6434b2258a8829339e332b81c03625c59da694b2ed39
+lib/Reusable/YH03.v	150	1	fc2897fb643deb782b3a5e5967ca76a4adabcb429ffbca2e17cadfe4ad3b4173
+lib/Reusable/YH03.v	182	1	2c547994ab6b1d46f958dae4277990b40b5903c4e1d91b8db777182aef1d00f0
+lib/Reusable/YH03.v	184	1	7a086161cb25974e8993685a0db64cbcf7df5b9bc52c720a64ca1f926789233b
+lib/U/Reusable/YH03.v	133	1	8c695119cdddf5fdf1d69da0668c528b40b9b734a526f862fabd7570e3b54a36
+lib/U/Reusable/YH03.v	134	1	7c3d923b0c629ec2c324cafbb20861b6f5b48a94d757631d6e0be4a2400af69e
+lib/U/Reusable/YH03.v	136	1	ffc364ba185ab307a077de00e1a5fabe920bd1a09bd35629868216254827dfda
+lib/U/Reusable/YH03.v	138	1	bd4cca958b01f84cbfe732eb07404ca3d3bdd1b715b75e91d60fc8f99fd3eb62
+lib/U/Reusable/YH03.v	139	1	43adab61a19db5c7a4c2d786f65d238f672cab48c033282c2d865339961469ab
+lib/U/Reusable/YH03.v	140	1	8cf4da5c92780119a4aa60fc212eb849f66def42aae8b8bea722c7db0c51390b
+lib/U/Reusable/YH03.v	141	1	38457c8c5621a48bc80fad941e6b3db1a745649ad29ff1dc3e9ba0087a15d5c4
+lib/U/Reusable/YH03.v	142	1	b8a425e001127f02100d8fb8175d18cd452be3a869ecf5a37d4b3349e2c76025
+lib/U/Reusable/YH03.v	143	1	d15094420958fc90ef88c21c2f69e12c0156eb8512ea2ca881101ba791b7e022
+lib/U/Reusable/YH03.v	148	1	e508963ab760c02ba7bd8b75bc4e865e87965fa3aaadc24072993eddbc7ae0af
+lib/U/Reusable/YH03.v	149	1	1b313ea39aff93f5387c6434b2258a8829339e332b81c03625c59da694b2ed39
+lib/U/Reusable/YH03.v	150	1	fc2897fb643deb782b3a5e5967ca76a4adabcb429ffbca2e17cadfe4ad3b4173
+lib/U/Reusable/YH03.v	182	1	00af7c21923341e0bd621eb0a8e39aba1eaecb54c86b7db3df35cded3aff17be
+lib/U/Reusable/YH03.v	184	1	0d8d5f1ef312035b6b54d34316edd06583243a9c1c3037651c355ba2f2a0bee9

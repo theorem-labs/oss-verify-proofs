@@ -1,4 +1,5 @@
-# proofs/<project>/<harness>/<statement>/proof.yaml: which statement a proof is of, pinned to its published fingerprint.
+# proof.yaml of a proof directory, <statement>/ in a fuzz target's proofs folder (projects/<project>/<harness>/proofs/, or
+# proofs/<project>/<harness>/ in the old layout): which statement a proof is of, pinned to its published fingerprint.
 tag: oss-fuzz-theorems/proof/1
 root: {type: ref, name: proof}
 defs:

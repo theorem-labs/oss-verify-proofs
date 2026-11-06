@@ -1,0 +1,13 @@
+# numerals: 182309 in code lines of 492 files (182144 aligned with a donor token); quantities: donor 17854, target 18447, common 17548, differing 3135
+(a1) kept lengths beside moved partners: 264 pairs checked; {'SPAN-SAME': 264}
+(a1b) code ranges (start, word count): 122 checked; {'RANGE-SAME': 122}
+(a2) kept numerals that are a differing donor quantity: {'DECIDED-NOT-IMAGE-DERIVED': 449, 'DECIDED-SAME-IN-BOTH': 5}
+(a3) port_core's derived counts recomputed: {'GEO-SAME': 114, 'KNOWN': 1, 'DECIDED-PATCH-REWROTE': 5, 'NOT-A-NUMERAL': 1, 'DERIVED-SAME': 3}
+(b) GOT[0]: target .got start 0xa4030, word 0x0; donor's 0x9c810, word 0x0 (neither image has .dynamic: OK-GOT0 wants 0); numerals naming the donor's GOT[0] 2, written as the target's .got start 2; numerals equal to the target's .got start 2
+(c1) numerals at or above 0x7fff0000: {'CONST-SAME': 3405, 'SHADOW-SAME (kept)': 9, 'SHADOW-SAME': 14, 'DECIDED-UNIT-BOUND': 9}
+(c1w) format-string shadow windows (FMT, SH_LO, SH_HI): {'WINDOW-SAME': 5}
+(c2) right operands of / mod Z.modulo Z.div Z.land Z.shiftr Z.shiftl ^ (and of *): {'OP-SAME': 12477, 'MUL-SAME': 2375, 'MUL-MOVED-AS-QUANTITY': 7}
+(c3) check.tsv arithmetic-constant rows: {'CONST-SAME': 1239}
+(c4) Reusable/YG0f.v numerals: {'CONST-SAME': 180, 'NOTE': 1}
+(d) function-table rows dropped (donor tfib_A_ names absent from stage-out): 22; no-twin.tsv source names: 23; {'PRESENT-AS-TARGET-ROW': 1, 'ABSENT': 22}
+result: FINDING rows 0; open CANDIDATE rows 0; open AMBIGUOUS rows 0; rows decided by hand (--decided) 468

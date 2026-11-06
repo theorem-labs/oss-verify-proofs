@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ada-url
 harness: ada_c
-rocq: OssFuzzTheorems.ada_url.ada_c
+rocq: OSSVerify.ada_url.ada_c
 origin: upstream
 summary: 'Checks 5 properties (listed below); the first, an API contract: C API: ada_can_parse(input)
   must equal ada_is_valid(ada_parse(input)); same for ada_can_parse_with_base vs ada_parse_with_base.'

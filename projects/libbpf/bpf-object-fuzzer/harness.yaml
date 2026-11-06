@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libbpf
 harness: bpf-object-fuzzer
-rocq: OssFuzzTheorems.libbpf.bpf_object_fuzzer
+rocq: OSSVerify.libbpf.bpf_object_fuzzer
 origin: upstream
 summary: bpf_object__open_mem on the input as an in-memory ELF BPF object (log printing silenced); on
   success the object is closed. The open error code only selects an early return; nothing is inspected.

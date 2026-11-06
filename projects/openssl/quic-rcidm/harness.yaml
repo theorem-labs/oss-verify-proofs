@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: quic-rcidm
-rocq: OssFuzzTheorems.openssl.quic_rcidm
+rocq: OSSVerify.openssl.quic_rcidm
 origin: upstream
 summary: Command interpreter over ossl_quic_rcidm_* (add from initial/retry/NCID, handshake complete,
   packet sent, roll, pop/peek retire, preferred DCID); results ignored.

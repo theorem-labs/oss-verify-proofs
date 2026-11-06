@@ -1,0 +1,20 @@
+donor: pinned sha256 bbe55d24d096, twin sha256 658cefbe806b, allocated sections equal (build-id note excepted): True
+target: pinned sha256 41113a03c82f, twin sha256 e217cb0a84f1, allocated sections equal (build-id note excepted): True
+ref 781f46bc05cd image B: 13 ranges paired and compared; 50 resolve lines: 7 move a value (0x3fbd4 -> 0x3d974, 0x4045c -> 0x3e000, 0xa5f40 -> 0xa3ce0, 0xa5fa0 -> 0xa3d40, 0xa6c50 -> 0xa49d0, 0xa6c60 -> 0xa49e0, 261076 -> 252276), 0 name the image of a header range, the rest keep the value
+ABSENT in the target (kept by a resolve line, removed from fs_ranges after the write): RtSM1T 0x3fe04 (115 words, __asan_stack_malloc_4)
+ABSENT in the target (kept by a resolve line, removed from fs_ranges after the write): RtSM1T 0x40290 (95 words, __asan_stack_malloc_7)
+PASS
+control self B: PASS, 0 values moved
+control plant B: caught (1 FAIL lines)
+  B/Rt/RtSM1T.v: 0 derived, 0 direct, 0 engine, 0 via-maps, 30 symbol, 0 section, 0 gap, 51 resolved, 0 KEPT-ADDR, 0 UNMAPPED
+alreloc: 1 files written; 0 UNMAPPED or unreviewed CONFLICT, 0 KEPT-ADDR (image-range numerals left unchanged) -- review each
+alreloc: per-numeral report: 87 numerals in 1 files under <OUT>/report/libdiginet/fuzz_transport (one .tsv per file)
+  B/Rt/RtSM1T.v:42 0x5e4118 -> 0x5f3770 MOVED [symbol] (builtin_tls+0xc8 on both sides): confirm it is an address
+  B/Rt/RtSM1T.v:77 0x1427f1 -> 0x13e231 MOVED [symbol] (_ZN11__sanitizer21common_flags_dont_useE+0x89 on both sides): confirm it is an address
+  B/Rt/RtSM1T.v:78 0x5e4138 -> 0x5f3790 MOVED [symbol] (builtin_tls+0xe8 on both sides): confirm it is an address
+  B/Rt/RtSM1T.v:78 0x5e4140 -> 0x5f3798 MOVED [symbol] (builtin_tls+0xf0 on both sides): confirm it is an address
+  B/Rt/RtSM1T.v:78 0x5e4918 -> 0x5f3f70 MOVED [symbol] (builtin_tls+0x8c8 on both sides): confirm it is an address
+  B/Rt/RtSM1T.v:86 0x5e4850 -> 0x5f3ea8 MOVED [symbol] (builtin_tls+0x800 on both sides): confirm it is an address
+  B/Rt/RtSM1T.v:86 0x5e492c -> 0x5f3f84 MOVED [symbol] (builtin_tls+0x8dc on both sides): confirm it is an address
+PASS: 0 wrong rows
+B/Rt/RtSM1T.v: header 5 lines restored from the donor, 0 CmdBSyms renamed, notice added; fs_ranges drops __asan_stack_malloc_4 (0x3fe04), __asan_stack_malloc_7 (0x40290)

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libigl
 harness: igl_fuzzer
-rocq: OssFuzzTheorems.libigl.igl_fuzzer
+rocq: OSSVerify.libigl.igl_fuzzer
 origin: oss-fuzz
 summary: Writes the input to fuzz_file.msh in the cwd and constructs igl::MshLoader on it; every C++ exception
   is swallowed by catch(...) and the loaded mesh is never inspected.

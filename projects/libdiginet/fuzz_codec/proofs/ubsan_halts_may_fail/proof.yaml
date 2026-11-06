@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: libdiginet/fuzz_codec/ubsan_halts_may_fail
+fingerprint: dbc8f507d8211c37c70f4b49bf5c27054889247f358ca789c8e337e6076b025f

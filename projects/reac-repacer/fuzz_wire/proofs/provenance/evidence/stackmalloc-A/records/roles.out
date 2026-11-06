@@ -1,0 +1,1 @@
+sm_roles: 105 numeral(s): {'RIGHT': 105}; by role {'pc': 24, 'thread': 24, 'data': 8, 'got': 8, 'got-word': 6, 'insn-word': 8, 'pc-decimal': 2, 'model-constant': 11, 'img-top': 14}; donor IMG_TOP 0x5fa000, target IMG_TOP 0x5f5000

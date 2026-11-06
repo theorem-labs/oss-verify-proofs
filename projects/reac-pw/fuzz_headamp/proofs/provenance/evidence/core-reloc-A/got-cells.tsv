@@ -1,0 +1,214 @@
+# every .got cell of the relocated A files: the symbol the role GOT word at the role value serves, and the symbol headamp's GOT word at the written value serves (role and headamp .got are slot-for-slot equal by symbol: 427 slots, headamp = role + 0x1b40)
+# selection is BOTH ways: a row is taken when the role value lies in role's .got OR the headamp value lies in headamp's .got (headamp has no .got.plt; .got 0x9c310 + 0xd58). The converse direction alone gives the same 211 rows, all right. The patched and unit-shaped files (AE37, AE23, AB1w, AE34, AF0l, ACej), which have no line-paired role counterpart, hold 54 further numerals inside headamp's .got: every one is the start of a real slot, read from headamp's bytes.
+file:line(role line)	role value	headamp value	role GOT word serves	headamp GOT word serves	verdict
+A/AB1w.v:14	0x9a7d0	0x9c310	('W', 0)	('W', 0)	OK
+A/AB1w.v:15	0x9a7d0	0x9c310	('W', 0)	('W', 0)	OK
+A/AB1w.v:570	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AB1w.v:571	0x9a828	0x9c368	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	OK
+A/AB1w.v:572	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/AB1w.v:573	0x9a838	0x9c378	('AT', ('_ZN6__asan10kMidMemBegE',))	('AT', ('_ZN6__asan10kMidMemBegE',))	OK
+A/AB1w.v:574	0x9a840	0x9c380	('AT', ('_ZN6__asan10kMidMemEndE',))	('AT', ('_ZN6__asan10kMidMemEndE',))	OK
+A/AB1w.v:575	0x9a848	0x9c388	('AT', ('_ZN6__asan11kHighMemEndE',))	('AT', ('_ZN6__asan11kHighMemEndE',))	OK
+A/AB1w.v:576	0x9b398	0x9ced8	('AT', ('_ZN6__asan21replace_intrin_cachedE',))	('AT', ('_ZN6__asan21replace_intrin_cachedE',))	OK
+A/AB1w.v:577	0x9b4c0	0x9d000	('AT', ('___environ', '__environ', '_environ', 'environ'))	('AT', ('___environ', '__environ', '_environ', 'environ'))	OK
+A/ACeg.v:20	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/ACeg.v:22	0x9a888	0x9c3c8	('AT', ('__asan_option_detect_stack_use_after_return',))	('AT', ('__asan_option_detect_stack_use_after_return',))	OK
+A/ACeh.v:21	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/ACeh.v:23	0x9a888	0x9c3c8	('AT', ('__asan_option_detect_stack_use_after_return',))	('AT', ('__asan_option_detect_stack_use_after_return',))	OK
+A/AD1j.v:113	636088	643064	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AD2l.v:51	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/AD2l.v:52	0x9a888	0x9c3c8	('AT', ('__asan_option_detect_stack_use_after_return',))	('AT', ('__asan_option_detect_stack_use_after_return',))	OK
+A/AE22.v:17	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AE23.v:42	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE23.v:42	0x9a808	0x9c348	('W', 0)	('W', 0)	OK
+A/AE23.v:44	0x9b4e8	0x9d028	('AT', ('_ZL7preinit', '__fini_array_end'))	('AT', ('_ZL7preinit', '__fini_array_end'))	OK
+A/AE23.v:44	0x9b4f0	0x9d030	('AT', ('__fini_array_start', '__init_array_end'))	('AT', ('__fini_array_start', '__init_array_end'))	OK
+A/AE23.v:45	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE23.v:45	0x9a808	0x9c348	('W', 0)	('W', 0)	OK
+A/AE23.v:53	0x9b4e8	0x9d028	('AT', ('_ZL7preinit', '__fini_array_end'))	('AT', ('_ZL7preinit', '__fini_array_end'))	OK
+A/AE23.v:53	0x9b4f0	0x9d030	('AT', ('__fini_array_start', '__init_array_end'))	('AT', ('__fini_array_start', '__init_array_end'))	OK
+A/AE23.v:54	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE23.v:54	0x9a808	0x9c348	('W', 0)	('W', 0)	OK
+A/AE23.v:65	0x9b4e8	0x9d028	('AT', ('_ZL7preinit', '__fini_array_end'))	('AT', ('_ZL7preinit', '__fini_array_end'))	OK
+A/AE23.v:65	0x9b4f8	0x9d038	('AT', ('__daylight', 'daylight'))	('AT', ('__daylight', 'daylight'))	OK
+A/AE23.v:65	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE23.v:65	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AE23.v:84	0x9b4e8	0x9d028	('AT', ('_ZL7preinit', '__fini_array_end'))	('AT', ('_ZL7preinit', '__fini_array_end'))	OK
+A/AE23.v:84	0x9b4f8	0x9d038	('AT', ('__daylight', 'daylight'))	('AT', ('__daylight', 'daylight'))	OK
+A/AE23.v:84	0x9b4e8	0x9d028	('AT', ('_ZL7preinit', '__fini_array_end'))	('AT', ('_ZL7preinit', '__fini_array_end'))	OK
+A/AE23.v:84	0x9b4e8	0x9d028	('AT', ('_ZL7preinit', '__fini_array_end'))	('AT', ('_ZL7preinit', '__fini_array_end'))	OK
+A/AE23.v:84	0x9b4e8	0x9d028	('AT', ('_ZL7preinit', '__fini_array_end'))	('AT', ('_ZL7preinit', '__fini_array_end'))	OK
+A/AE23.v:84	0x9b4f0	0x9d030	('AT', ('__fini_array_start', '__init_array_end'))	('AT', ('__fini_array_start', '__init_array_end'))	OK
+A/AE23.v:86	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE23.v:86	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AE23.v:86	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE23.v:86	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE23.v:86	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE23.v:86	0x9a808	0x9c348	('W', 0)	('W', 0)	OK
+A/AE23.v:113	0x9b4e8	0x9d028	('AT', ('_ZL7preinit', '__fini_array_end'))	('AT', ('_ZL7preinit', '__fini_array_end'))	OK
+A/AE23.v:113	0x9b4f8	0x9d038	('AT', ('__daylight', 'daylight'))	('AT', ('__daylight', 'daylight'))	OK
+A/AE23.v:113	0x9b4e8	0x9d028	('AT', ('_ZL7preinit', '__fini_array_end'))	('AT', ('_ZL7preinit', '__fini_array_end'))	OK
+A/AE23.v:113	0x9b4e8	0x9d028	('AT', ('_ZL7preinit', '__fini_array_end'))	('AT', ('_ZL7preinit', '__fini_array_end'))	OK
+A/AE23.v:113	0x9b4e8	0x9d028	('AT', ('_ZL7preinit', '__fini_array_end'))	('AT', ('_ZL7preinit', '__fini_array_end'))	OK
+A/AE23.v:113	0x9b4f0	0x9d030	('AT', ('__fini_array_start', '__init_array_end'))	('AT', ('__fini_array_start', '__init_array_end'))	OK
+A/AE23.v:115	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE23.v:115	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AE23.v:115	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE23.v:115	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE23.v:115	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE23.v:115	0x9a808	0x9c348	('W', 0)	('W', 0)	OK
+A/AE23.v:831	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AE23.v:1029	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AE23.v:1227	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AE23.v:1427	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AE2k.v:22	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AE2k.v:24	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/AE2k.v:34	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AE2p.v:32	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AE2t.v:61	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AE2t.v:401	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AE2u.v:61	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AE2u.v:401	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AE2v.v:61	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AE2v.v:158	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AE2w.v:61	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AE2w.v:401	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AE2x.v:156	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AE2y.v:70	0x9b398	0x9ced8	('AT', ('_ZN6__asan21replace_intrin_cachedE',))	('AT', ('_ZN6__asan21replace_intrin_cachedE',))	OK
+A/AE2y.v:72	0x9a828	0x9c368	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	OK
+A/AE35.v:61	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AE36.v:36	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE36.v:36	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AE36.v:36	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE36.v:36	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE36.v:36	0x9a800	0x9c340	('AT', ('__cxa_finalize',))	('AT', ('__cxa_finalize',))	OK
+A/AE36.v:36	0x9a808	0x9c348	('W', 0)	('W', 0)	OK
+A/AE37.v:33	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AE37.v:35	0x9b4a8	0x9cfe8	('AT', ('__start_asan_globals',))	('AT', ('__start_asan_globals',))	OK
+A/AE7e.v:104	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AFek.v:52	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AFem.v:380	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AFeq.v:149	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFf9.v:195	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AFf9.v:196	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/AFf9.v:197	0x9a838	0x9c378	('AT', ('_ZN6__asan10kMidMemBegE',))	('AT', ('_ZN6__asan10kMidMemBegE',))	OK
+A/AFf9.v:197	0x9a840	0x9c380	('AT', ('_ZN6__asan10kMidMemEndE',))	('AT', ('_ZN6__asan10kMidMemEndE',))	OK
+A/AFf9.v:197	0x9a848	0x9c388	('AT', ('_ZN6__asan11kHighMemEndE',))	('AT', ('_ZN6__asan11kHighMemEndE',))	OK
+A/AFf9.v:199	0x9a850	0x9c390	('AT', ('_ZN14__interception11real_memsetE',))	('AT', ('_ZN14__interception11real_memsetE',))	OK
+A/AFf9.v:200	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFf9.v:200	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFfc.v:296	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AFfc.v:297	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/AFfc.v:298	0x9a838	0x9c378	('AT', ('_ZN6__asan10kMidMemBegE',))	('AT', ('_ZN6__asan10kMidMemBegE',))	OK
+A/AFfc.v:298	0x9a840	0x9c380	('AT', ('_ZN6__asan10kMidMemEndE',))	('AT', ('_ZN6__asan10kMidMemEndE',))	OK
+A/AFfc.v:298	0x9a848	0x9c388	('AT', ('_ZN6__asan11kHighMemEndE',))	('AT', ('_ZN6__asan11kHighMemEndE',))	OK
+A/AFfc.v:300	0x9a850	0x9c390	('AT', ('_ZN14__interception11real_memsetE',))	('AT', ('_ZN14__interception11real_memsetE',))	OK
+A/AFfc.v:301	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFfc.v:301	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFff.v:127	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFfg.v:122	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFfi.v:209	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFfo.v:50	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFgi.v:100	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AFgi.v:102	0x9a828	0x9c368	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	OK
+A/AFgi.v:103	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/AFgi.v:104	0x9a838	0x9c378	('AT', ('_ZN6__asan10kMidMemBegE',))	('AT', ('_ZN6__asan10kMidMemBegE',))	OK
+A/AFgi.v:104	0x9a840	0x9c380	('AT', ('_ZN6__asan10kMidMemEndE',))	('AT', ('_ZN6__asan10kMidMemEndE',))	OK
+A/AFgi.v:104	0x9a848	0x9c388	('AT', ('_ZN6__asan11kHighMemEndE',))	('AT', ('_ZN6__asan11kHighMemEndE',))	OK
+A/AFgi.v:106	0x9a850	0x9c390	('AT', ('_ZN14__interception11real_memsetE',))	('AT', ('_ZN14__interception11real_memsetE',))	OK
+A/AFgi.v:107	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFgk.v:110	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFgm.v:88	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AFgm.v:90	0x9a828	0x9c368	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	OK
+A/AFgm.v:91	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/AFgm.v:92	0x9a838	0x9c378	('AT', ('_ZN6__asan10kMidMemBegE',))	('AT', ('_ZN6__asan10kMidMemBegE',))	OK
+A/AFgm.v:92	0x9a840	0x9c380	('AT', ('_ZN6__asan10kMidMemEndE',))	('AT', ('_ZN6__asan10kMidMemEndE',))	OK
+A/AFgm.v:92	0x9a848	0x9c388	('AT', ('_ZN6__asan11kHighMemEndE',))	('AT', ('_ZN6__asan11kHighMemEndE',))	OK
+A/AFgm.v:94	0x9a850	0x9c390	('AT', ('_ZN14__interception11real_memsetE',))	('AT', ('_ZN14__interception11real_memsetE',))	OK
+A/AFgm.v:95	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFgn.v:63	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AFgn.v:65	0x9a828	0x9c368	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	OK
+A/AFgn.v:66	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/AFgn.v:67	0x9a838	0x9c378	('AT', ('_ZN6__asan10kMidMemBegE',))	('AT', ('_ZN6__asan10kMidMemBegE',))	OK
+A/AFgn.v:67	0x9a840	0x9c380	('AT', ('_ZN6__asan10kMidMemEndE',))	('AT', ('_ZN6__asan10kMidMemEndE',))	OK
+A/AFgn.v:67	0x9a848	0x9c388	('AT', ('_ZN6__asan11kHighMemEndE',))	('AT', ('_ZN6__asan11kHighMemEndE',))	OK
+A/AFgn.v:69	0x9a850	0x9c390	('AT', ('_ZN14__interception11real_memsetE',))	('AT', ('_ZN14__interception11real_memsetE',))	OK
+A/AFgn.v:70	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFgo.v:64	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFgq.v:91	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFgq.v:91	0x9a878	0x9c3b8	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	OK
+A/AFgr.v:105	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFgr.v:105	0x9a878	0x9c3b8	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	OK
+A/AFgs.v:109	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AFgs.v:111	0x9a828	0x9c368	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	OK
+A/AFgs.v:112	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/AFgs.v:113	0x9a838	0x9c378	('AT', ('_ZN6__asan10kMidMemBegE',))	('AT', ('_ZN6__asan10kMidMemBegE',))	OK
+A/AFgs.v:113	0x9a840	0x9c380	('AT', ('_ZN6__asan10kMidMemEndE',))	('AT', ('_ZN6__asan10kMidMemEndE',))	OK
+A/AFgs.v:113	0x9a848	0x9c388	('AT', ('_ZN6__asan11kHighMemEndE',))	('AT', ('_ZN6__asan11kHighMemEndE',))	OK
+A/AFgs.v:115	0x9a850	0x9c390	('AT', ('_ZN14__interception11real_memsetE',))	('AT', ('_ZN14__interception11real_memsetE',))	OK
+A/AFgv.v:129	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AFgv.v:131	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/AFgv.v:132	0x9a838	0x9c378	('AT', ('_ZN6__asan10kMidMemBegE',))	('AT', ('_ZN6__asan10kMidMemBegE',))	OK
+A/AFgv.v:132	0x9a840	0x9c380	('AT', ('_ZN6__asan10kMidMemEndE',))	('AT', ('_ZN6__asan10kMidMemEndE',))	OK
+A/AFgv.v:132	0x9a848	0x9c388	('AT', ('_ZN6__asan11kHighMemEndE',))	('AT', ('_ZN6__asan11kHighMemEndE',))	OK
+A/AFgv.v:134	0x9a850	0x9c390	('AT', ('_ZN14__interception11real_memsetE',))	('AT', ('_ZN14__interception11real_memsetE',))	OK
+A/AFgv.v:135	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFgv.v:135	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFgz.v:409	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFhy.v:85	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AFhy.v:89	0x9a828	0x9c368	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	OK
+A/AFhy.v:89	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/AFhy.v:89	0x9a838	0x9c378	('AT', ('_ZN6__asan10kMidMemBegE',))	('AT', ('_ZN6__asan10kMidMemBegE',))	OK
+A/AFhy.v:89	0x9a840	0x9c380	('AT', ('_ZN6__asan10kMidMemEndE',))	('AT', ('_ZN6__asan10kMidMemEndE',))	OK
+A/AFhy.v:89	0x9a848	0x9c388	('AT', ('_ZN6__asan11kHighMemEndE',))	('AT', ('_ZN6__asan11kHighMemEndE',))	OK
+A/AFhy.v:90	0x9a850	0x9c390	('AT', ('_ZN14__interception11real_memsetE',))	('AT', ('_ZN14__interception11real_memsetE',))	OK
+A/AFhy.v:90	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFhy.v:93	0x9b488	0x9cfc8	('AT', ('_ZN6__lsan15disable_counterE',))	('AT', ('_ZN6__lsan15disable_counterE',))	OK
+A/AFi1.v:57	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AFi1.v:61	0x9a828	0x9c368	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	OK
+A/AFi1.v:61	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/AFi1.v:61	0x9a838	0x9c378	('AT', ('_ZN6__asan10kMidMemBegE',))	('AT', ('_ZN6__asan10kMidMemBegE',))	OK
+A/AFi1.v:61	0x9a840	0x9c380	('AT', ('_ZN6__asan10kMidMemEndE',))	('AT', ('_ZN6__asan10kMidMemEndE',))	OK
+A/AFi1.v:61	0x9a848	0x9c388	('AT', ('_ZN6__asan11kHighMemEndE',))	('AT', ('_ZN6__asan11kHighMemEndE',))	OK
+A/AFi1.v:62	0x9a850	0x9c390	('AT', ('_ZN14__interception11real_memsetE',))	('AT', ('_ZN14__interception11real_memsetE',))	OK
+A/AFi1.v:62	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFi1.v:65	0x9b488	0x9cfc8	('AT', ('_ZN6__lsan15disable_counterE',))	('AT', ('_ZN6__lsan15disable_counterE',))	OK
+A/AFi9.v:95	0x9a818	0x9c358	('AT', ('_ZN11__sanitizer22SecondaryAllocatorNameE',))	('AT', ('_ZN11__sanitizer22SecondaryAllocatorNameE',))	OK
+A/AFih.v:71	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFii.v:20	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AFii.v:26	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFii.v:27	0x9a878	0x9c3b8	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	OK
+A/AFk1.v:659	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AFk1.v:758	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AFk1.v:758	0x9b4c0	0x9d000	('AT', ('___environ', '__environ', '_environ', 'environ'))	('AT', ('___environ', '__environ', '_environ', 'environ'))	OK
+A/AFk1.v:759	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFk1.v:759	0x9a880	0x9c3c0	('AT', ('_ZN11__sanitizer17current_verbosityE',))	('AT', ('_ZN11__sanitizer17current_verbosityE',))	OK
+A/AFk1.v:796	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFk1.v:797	0x9a878	0x9c3b8	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	OK
+A/AFk1.v:841	0x9a878	0x9c3b8	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	OK
+A/AFk1.v:841	0x9a880	0x9c3c0	('AT', ('_ZN11__sanitizer17current_verbosityE',))	('AT', ('_ZN11__sanitizer17current_verbosityE',))	OK
+A/AFk1.v:843	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFk1.v:843	0x9a878	0x9c3b8	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	OK
+A/AFk1.v:856	0x9b4b8	0x9cff8	('AT', ('__stack_chk_guard',))	('AT', ('__stack_chk_guard',))	OK
+A/AFk1.v:856	0x9b4c0	0x9d000	('AT', ('___environ', '__environ', '_environ', 'environ'))	('AT', ('___environ', '__environ', '_environ', 'environ'))	OK
+A/AFk2.v:616	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFk2.v:616	0x9a878	0x9c3b8	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	OK
+A/AFk2.v:686	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFk2.v:726	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFk2.v:726	0x9a878	0x9c3b8	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	OK
+A/AFk6.v:41	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFk6.v:41	0x9a878	0x9c3b8	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	OK
+A/AFkk.v:570	0x9a870	0x9c3b0	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	('AT', ('__asan_wrap_list_present', '__sanitizer_sealed_init', '__sanitizer_silent_reports'))	OK
+A/AFkk.v:571	0x9a878	0x9c3b8	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	('AT', ('_ZN11__sanitizer25sealed_report_in_progressE',))	OK
+A/AFkp.v:57	0x9a820	0x9c360	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	('AT', ('_ZN11__sanitizer21common_flags_dont_useE',))	OK
+A/AFkp.v:62	0x9a828	0x9c368	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	('AT', ('_ZN6__asan28asan_flags_dont_use_directlyE',))	OK
+A/AFkp.v:62	0x9a830	0x9c370	('AT', ('__asan_shadow_memory_dynamic_address',))	('AT', ('__asan_shadow_memory_dynamic_address',))	OK
+A/AFkp.v:62	0x9a838	0x9c378	('AT', ('_ZN6__asan10kMidMemBegE',))	('AT', ('_ZN6__asan10kMidMemBegE',))	OK
+A/AFkp.v:62	0x9a840	0x9c380	('AT', ('_ZN6__asan10kMidMemEndE',))	('AT', ('_ZN6__asan10kMidMemEndE',))	OK
+A/AFkp.v:62	0x9a848	0x9c388	('AT', ('_ZN6__asan11kHighMemEndE',))	('AT', ('_ZN6__asan11kHighMemEndE',))	OK
+A/AFkp.v:63	0x9a850	0x9c390	('AT', ('_ZN14__interception11real_memsetE',))	('AT', ('_ZN14__interception11real_memsetE',))	OK
+A/AFkp.v:63	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFl0.v:38	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFl2.v:63	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFl4.v:47	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK
+A/AFl4.v:161	0x9a810	0x9c350	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	('AT', ('_ZN11__sanitizer14PageSizeCachedE',))	OK

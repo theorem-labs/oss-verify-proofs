@@ -6,13 +6,14 @@ import shutil
 import tempfile
 import unittest
 
-from oft import disclosure, facts, generate, schema
+from oft import disclosure, facts, generate, rules, schema
 from oft.rules import counts as rules_counts
-from oft.tests.helpers import (HELD_PATCH, HELD_PAYLOAD, Tree, add_findings, build_record, folded, patch_copies,
-                               recount, tree)
+from oft.tests.helpers import (HELD_PATCH, HELD_PAYLOAD, Tree, add_findings, alias_patch, build_record, folded,
+                               patch_copies, port_built, public_patch, recount, tree)
 from oft.tests.test_oss_verify import PORT, PORT_ASSET
-from oft.tests.test_release_tree import (APPROVED, PACKAGE, RELEASED, UNAPPROVED, add_proof, approve, entry,
-                                         index_status, make_private, release, snapshot, write_approvals)
+from oft.tests.test_release_tree import (APPROVED, PACKAGE, RELEASED, UNAPPROVED, add_proof, approve,
+                                         assert_ported_cut, enrolled, entry, index_status, make_private, release,
+                                         snapshot, write_approvals)
 
 FINDING = "findings/zlib/checksum_fuzzer/stand-in-abort"
 SLUG, PATCH = "stand-in-abort", "0001-stand-in.patch"
@@ -139,6 +140,25 @@ class HeldBack(HeldFixture, unittest.TestCase):
         for rel in ("proofs/zlib", "counterexamples/zlib", "patches/zlib", "notes/zlib.md"):
             self.assertFalse(os.path.lexists(self.t.path(rel)), rel)
 
+    def test_an_enrollment_entry_of_a_project_a_finding_holds_whole_is_no_error(self):
+        """An enrollment entry is a ceiling (the approvals plan): a finding that holds zlib whole after its enrollment
+        merge (here a reported one) stops neither the facts nor the cut.  zlib ships its held page, and json its proof."""
+        approve(self.t, enrolled(RELEASED), enrolled(APPROVED, ["plain_halts", "ubsan_agrees"]))
+        self.assertEqual(hold(self.t).held, {"zlib"})
+        self.assertEqual(rules.check(facts.load(self.t.root)), [])
+        out = self.release()
+        self.assertIn("held back by a finding that is not public: zlib\n", out)
+        self.assertEqual(self.t.yaml("projects/zlib/project.yaml")["status"], "held")
+        self.assertFalse(os.path.lexists(self.t.path("proofs", "zlib")))
+        self.assertTrue(os.path.isfile(self.t.path("proofs", RELEASED, "plain_halts", "Proof.v")))
+        self.assertEqual(self.t.generate(check=True), 0, self.t.last_output)
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+
+    def test_a_ported_held_project_cuts_to_the_same_release(self):
+        """Its counterexamples, patches and findings go in either layout (test_release_tree.assert_ported_cut)."""
+        self.t.write("patches/zlib/" + PATCH, "A stand-in patch.\n")
+        assert_ported_cut(self, self.t)
+
     def test_the_counts_are_recomputed_and_the_cut_passes_generate_check_and_lint(self):
         out = self.release()
         self.assertEqual(self.t.yaml("release.yaml")["counts"],
@@ -153,7 +173,8 @@ class HeldBack(HeldFixture, unittest.TestCase):
         that releases the hold leaves release.yaml valid as it is."""
         self.assertEqual(self.t.yaml("release.yaml")["counts"], rules_counts(facts.load(self.t.root)))
         self.assertEqual([str(f) for f in self.t.lint()], [])
-        self.set_state("public")
+        public_patch(self.t)
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
         self.assertEqual([str(f) for f in self.t.lint()], [])
 
     def test_the_held_project_keeps_its_row_in_the_index_and_has_no_other_rows(self):
@@ -176,7 +197,7 @@ class HeldBack(HeldFixture, unittest.TestCase):
         self.assertEqual([e["fuzz_target"] for e in self.t.yaml("approvals.yaml")["fuzz_targets"]], [RELEASED])
 
     def test_a_private_project_oss_fuzz_has_that_a_finding_holds_gets_the_held_page(self):
-        """b73257f8: a private project OSS-Fuzz has keeps its held page, finding or not."""
+        """A private project OSS-Fuzz has keeps its held page, finding or not."""
         make_private(self.t, "zlib")
         self.assertEqual(self.t.generate(), 0, self.t.last_output)
         self.release()
@@ -252,7 +273,7 @@ class HeldBack(HeldFixture, unittest.TestCase):
         self.assertEqual([str(f) for f in self.t.lint()], [])
 
     def test_a_symbolic_link_at_an_ignored_path_the_cut_removes_is_refused_before_any_change(self):
-        """internal #80's final review at 320061f9f6, finding 3: checkout_links reads no ignored path, and the cut
+        """checkout_links reads no ignored path, and the cut
         removes projects/zlib/bin/ and projects/zlib/_build/ from the held page it keeps; a link there stopped rmtree
         after proofs/zlib was gone.  The cut refuses it before its first change, and leaves its target alone."""
         outside = tempfile.mkdtemp()
@@ -287,18 +308,19 @@ class HeldBack(HeldFixture, unittest.TestCase):
                 self.assertRefused("error: %s names %s" % (rel, why))
 
     def test_a_copy_of_the_patch_with_its_headers_changed_is_refused_wherever_it_ships(self):
-        """#117's code-quality review, finding 1: a copy of the patch with `diff -u` header timestamps, or with another
+        """A copy of the patch with `diff -u` header timestamps, or with another
         path prefix, in a document, in the build record of a fuzz target the release recipe built, and in the record of
         a port-built one written as UTF-32."""
         copies = patch_copies(HELD_PATCH)
         record = "proofs/%s/provenance/PROVENANCE.md" % RELEASED
-        for rel, port_built, enc in (("docs/repair.md", False, None), (record, False, None),
-                                     (record, True, "utf-32-le")):
+        for rel, by_port, enc in (("docs/repair.md", False, None), (record, False, None),
+                                  (record, True, "utf-32-le")):
             for how in ("header timestamps", "another path prefix"):
-                with self.subTest(rel=rel, port_built=port_built, how=how):
+                with self.subTest(rel=rel, by_port=by_port, how=how):
                     self.restart()
-                    if port_built:
-                        port_build(self.t, "json")
+                    if by_port:
+                        port_built(self.t, "json")
+                        self.assertEqual(self.t.generate(), 0, self.t.last_output)
                     data = copies[how]
                     self.t.write(rel, data.decode().encode(enc) if enc else data, mode="wb")
                     self.assertRefused("error: %s names %s" % (rel, self.hunk(2)))
@@ -329,7 +351,7 @@ class HeldBack(HeldFixture, unittest.TestCase):
         self.assertRefused("error: docs/repro.bin names the bytes of %s/input.bin" % FINDING)
 
     def test_a_link_out_of_the_checkout_at_a_build_record_is_refused_and_never_read(self):
-        """#117's deep review, finding 3: a build record that is a link to a directory outside the checkout."""
+        """A build record that is a link to a directory outside the checkout."""
         outside = tempfile.mkdtemp(prefix="oft-outside-")
         self.addCleanup(shutil.rmtree, outside)
         with open(os.path.join(outside, "elsewhere.txt"), "wb") as f:
@@ -401,7 +423,7 @@ class HeldBack(HeldFixture, unittest.TestCase):
         self.assertFalse(os.path.lexists(self.t.path("findings")))
 
     def test_a_public_finding_holds_back_nothing(self):
-        self.set_state("public")
+        public_patch(self.t)
         self.assertHoldsNothing()
 
     def test_a_pruned_finding_holds_back_nothing(self):
@@ -422,20 +444,106 @@ class HeldBack(HeldFixture, unittest.TestCase):
         self.t.put_yaml("projects/%s/harness.yaml" % APPROVED, h)
         self.assertHoldsNothing()
 
+    def test_a_holding_finding_s_patch_in_a_kept_patches_entry_is_refused_by_the_release_search(self):
+        """A kept project's patch text is a file the release keeps, so the release's search refuses a copy of a holding
+        finding's patch in it, in any listed form, as in any other kept file: the cross-model review's reproduction
+        (the reported zlib finding's patch, plus one trailing newline, as a patch of json under an unrelated id), and
+        the same patch with header timestamps."""
+        for how, data, why in (("one more newline", HELD_PATCH.encode() + b"\n",
+                                "the bytes of %s/%s" % (FINDING, PATCH)),
+                               ("header timestamps", patch_copies(HELD_PATCH)["header timestamps"], self.hunk(2))):
+            with self.subTest(how=how):
+                self.restart()
+                alias_patch(self.t, data)
+                self.assertEqual(self.t.generate(), 0, self.t.last_output)
+                self.assertRefused("error: patches/json/alias.patch names %s" % why)
 
-def port_build(t, project):
-    """project's binaries built by the OSS Verify port, not the release recipe."""
-    rel = "projects/%s/project.yaml" % project
-    y = t.yaml(rel)
-    y["build"]["oss_verify"] = dict(PORT, path="projects/" + project)
-    y["assets"]["bin"].pop("recipe", None)   # the port built the archive, and no recipe
-    y["assets"]["port"] = dict(PORT_ASSET, file=project + "-port.tar.zst")
-    y["assets"]["src"] = {"release": "v2026.11.0", "file": project + "-src.tar.zst", "bytes": 9000000,
-                          "sha256": "5d" * 32}
-    y["assets"]["src_manifest"] = {"release": "v2026.11.0", "file": project + "-src.MANIFEST.tsv", "bytes": 4000,
-                                   "sha256": "5e" * 32}
-    t.put_yaml(rel, y)
-    assert t.generate() == 0, t.last_output
+    def test_a_public_finding_of_a_port_build_with_no_copied_port_record_is_refused(self):
+        """The cross-model review's reproduction: the finding public with its entry, the project port-built, and no
+        copied port directory to show that the build carries the patch."""
+        public_patch(self.t)
+        port_built(self.t, "zlib")
+        self.t.generate()
+        self.assertRefused("error: proofs/zlib/checksum_fuzzer/provenance/port/projects/zlib/series: does not list "
+                           "the patch of public finding stand-in-abort, so the published build does not carry it")
+
+    def test_a_holding_finding_s_patch_in_a_kept_port_record_is_refused_by_the_release_search(self):
+        """json is kept and port-built, so its copied port directory ships with its proofs and the release's search
+        reads every file of it: a copy of the reported zlib finding's patch there is refused whatever the file's name.
+        A `*.patch` its series does not list is refused by the rules as well (the final review's reproduction)."""
+        record = "proofs/%s/provenance/port/projects/json/" % RELEASED
+        stamped = patch_copies(HELD_PATCH)["header timestamps"]
+        for name, data, why in (
+                ("NOTES", HELD_PATCH.encode(), " names the bytes of %s/%s" % (FINDING, PATCH)),
+                ("NOTES", stamped, " names " + self.hunk(2)),
+                ("0001-unlisted.patch", HELD_PATCH.encode(),
+                 ": a patch of the port record that its series does not list")):
+            with self.subTest(name=name, why=why):
+                self.restart()
+                port_built(self.t, "json")
+                self.assertEqual(self.t.generate(), 0, self.t.last_output)
+                self.t.write(record + "build.sh", "make\n")
+                self.t.write(record + name, data, "wb")
+                self.assertRefused("error: " + record + name + why)
+
+    def test_a_project_with_one_reported_finding_beside_a_public_one_is_still_held(self):
+        public_patch(self.t)
+        second = "findings/zlib/checksum_fuzzer/stand-in-again"
+        shutil.copytree(self.t.path(FINDING), self.t.path(second))
+        os.rename(self.t.path(second, PATCH), self.t.path(second, "0002-stand-in.patch"))
+        with open(self.t.path(second, "0002-stand-in.patch"), "ab") as f:
+            f.write(b"--- a/adler32.c\n+++ b/adler32.c\n@@ -1 +1 @@\n-an adler line\n+another adler line\n")
+        y = self.t.yaml(second + "/finding.yaml")
+        y.update(state="reported", patch="0002-stand-in.patch")
+        self.t.put_yaml(second + "/finding.yaml", y)
+        self.t.write("findings/zlib/checksum_fuzzer/series", PATCH + "\n0002-stand-in.patch\n")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        out = self.release()
+        self.assertIn("held back by a finding that is not public: zlib", out)
+        self.assertEqual(self.t.yaml("projects/zlib/project.yaml")["status"], "held")
+        for gone in ("patches/zlib", "findings"):
+            self.assertFalse(os.path.lexists(self.t.path(gone)), gone)
+
+    def test_a_project_whose_finding_is_public_ships_its_patch_and_page(self):
+        public_patch(self.t)
+        approve(self.t, RELEASED, APPROVED, entry(UNAPPROVED, statements=["ubsan_agrees"]))
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        with open(self.t.path("patches/zlib/" + PATCH), "rb") as f:
+            expected_patch = f.read()
+        out = self.release()
+        self.assertNotIn("held back", out)
+        self.assertFalse(os.path.lexists(self.t.path("findings")))
+        with open(self.t.path("patches/zlib/" + PATCH), "rb") as f:
+            self.assertEqual(f.read(), expected_patch)
+        page = self.t.read("projects/zlib/README.md")
+        self.assertIn("  - [*stand-in-abort*](../../patches/zlib/%s): A stand-in finding for these tests; it describes "
+                      "no bug in zlib. Its input makes both ASan builds abort ([reported upstream]"
+                      "(https://bugs.example.org/stand-in-abort))" % PATCH, page)
+        self.assertEqual(self.t.generate(check=True), 0, self.t.last_output)
+        self.assertEqual([str(f) for f in self.t.lint()], [])
+
+    def test_a_project_with_public_and_pruned_findings_ships_only_its_public_patch(self):
+        public_patch(self.t)
+        second = "findings/zlib/checksum_fuzzer/stand-in-pruned"
+        shutil.copytree(self.t.path(FINDING), self.t.path(second))
+        os.rename(self.t.path(second, PATCH), self.t.path(second, "0002-pruned.patch"))
+        with open(self.t.path(second, "0002-pruned.patch"), "ab") as f:
+            f.write(b"--- a/inflate.c\n+++ b/inflate.c\n@@ -1 +1 @@\n-an inflate line\n+another inflate line\n")
+        y = self.t.yaml(second + "/finding.yaml")
+        y.update(state="pruned", patch="0002-pruned.patch", input=dict(y["control"]))
+        self.t.put_yaml(second + "/finding.yaml", y)
+        self.t.write("findings/zlib/checksum_fuzzer/series", PATCH + "\n")
+        approve(self.t, RELEASED, APPROVED, entry(UNAPPROVED, statements=["ubsan_agrees"]))
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        self.release()
+        page = self.t.read("projects/zlib/README.md")
+        self.assertEqual(self.t.yaml("projects/zlib/project.yaml")["status"], "available")
+        self.assertIn("stand-in-abort", page)
+        self.assertNotIn("stand-in-pruned", page)
+        self.assertTrue(os.path.isfile(self.t.path("patches/zlib/" + PATCH)))
+        self.assertFalse(os.path.lexists(self.t.path("findings")))
+        self.assertEqual(self.t.generate(check=True), 0, self.t.last_output)
+        self.assertEqual([str(f) for f in self.t.lint()], [])
 
 
 HELD_STATEMENTS = ("asan_agrees",)
@@ -512,7 +620,7 @@ class EnrolledHold(HeldFixture, unittest.TestCase):
         self.assertEqual(got[APPROVED], ["plain_halts", "ubsan_agrees"])
 
     def test_oft_approvals_says_only_held_for_a_fuzz_target_whose_proofs_are_all_held(self):
-        """internal #80's deep review, finding 9: no "listed, no proof yet" for a fuzz target with proofs."""
+        """No "listed, no proof yet" for a fuzz target with proofs."""
         for s in ("plain_halts", "ubsan_agrees"):
             shutil.rmtree(self.t.path("proofs", APPROVED, s))
         self.assertEqual(self.t.generate(), 0, self.t.last_output)
@@ -538,11 +646,11 @@ class EnrolledHold(HeldFixture, unittest.TestCase):
         self.assertFalse(any("held back by an open finding" in m for m in msgs), msgs)
 
     def test_a_private_enrolled_project_is_held_whole_by_its_finding(self):
-        """internal #80's gates at 320061f9f6: a private project is held whole, so the open findings of an enrolled one
+        """A private project is held whole, so the open findings of an enrolled one
         hold it whole too (Hold.held), as any finding of a project that is not enrolled does.  So it may build from the
         port's internal copy, and the cut says a finding holds it back."""
         make_private(self.t, "zlib")
-        port_build(self.t, "zlib")
+        port_built(self.t, "zlib")
         rel = "projects/zlib/project.yaml"
         y = self.t.yaml(rel)
         y["build"]["oss_verify"]["repository"] = schema.INTERNAL_PORT_REPOSITORY
@@ -573,7 +681,7 @@ class EnrolledHold(HeldFixture, unittest.TestCase):
 
     def test_a_hold_that_would_leave_a_published_harness_only_withheld_statements_holds_the_whole_project(self):
         """rules.py refuses a harness that publishes a build while Statements.v carries none of its statements, unless
-        it withdrew every one (internal main's #234): a statement hold that would leave only withheld statements holds
+        it withdrew every one: a statement hold that would leave only withheld statements holds
         the whole project, so the cut ships its held page instead of refusing the facts it would leave."""
         rel = "projects/%s/harness.yaml" % APPROVED
         h = self.t.yaml(rel)
@@ -630,6 +738,40 @@ class EnrolledHold(HeldFixture, unittest.TestCase):
         self.release()
         self.assertNotIn("asan_halts", self.t.yaml("projects/%s/harness.yaml" % APPROVED)["statements"])
         self.assertNotIn(APPROVED + "/asan_halts", index_status(self.t))
+
+    def test_a_hold_after_the_enrollment_merge_does_not_stop_the_cut(self):
+        """An enrollment entry is a ceiling (the approvals plan): after both projects' enrollment merges, json turns
+        private and an open finding of enrolled zlib holds asan_halts (its recorded asan run exits 77, as above).  The
+        facts have no error, and the cut leaves out json whole and zlib's held statements, and keeps the rest."""
+        # the enrollment merges: each entry lists the statements its enrollment facts pull requests wrote, here every
+        # statement of its fuzz target, as for a project enrolled from scratch
+        approve(self.t, *(enrolled(u, sorted(self.t.yaml("projects/%s/harness.yaml" % u)["statements"]))
+                          for u in (RELEASED, APPROVED)))
+        self.assertEqual(rules.check(facts.load(self.t.root)), [])
+        # then the holds
+        y = self.t.yaml(FINDING + "/finding.yaml")
+        y["input"]["asan"] = dict(y["input"]["asan"], exit=77)
+        self.t.put_yaml(FINDING + "/finding.yaml", y)
+        add_proof(self.t, APPROVED + "/asan_halts")
+        make_private(self.t, "json")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        held = HELD_WITH_PAIR + ("asan_halts",)
+        self.assertEqual(hold(self.t), facts.Hold(set(), {"json"}, {"zlib": {"checksum_fuzzer/" + s for s in held}}))
+        self.assertEqual(rules.check(facts.load(self.t.root)), [])
+        out = self.release()
+        self.assertIn("held back by an open finding: %s/asan_halts\n" % APPROVED, out)
+        self.assertFalse(os.path.lexists(self.t.path("proofs", "json")))
+        self.assertEqual(sorted(os.listdir(self.t.path("projects", "json"))), ["README.md", "project.yaml"])
+        self.assertEqual(self.t.yaml("projects/json/project.yaml")["status"], "held")
+        for s in ("plain_halts", "ubsan_agrees"):
+            self.assertTrue(os.path.isfile(self.t.path("proofs", APPROVED, s, "Proof.v")), s)
+        for s in ("asan_halts", "asan_agrees"):
+            self.assertFalse(os.path.lexists(self.t.path("proofs", APPROVED, s)), s)
+        self.assertFalse(os.path.lexists(self.t.path("proofs", UNAPPROVED)))
+        st = index_status(self.t)
+        self.assertEqual((st[APPROVED + "/plain_halts"], st[APPROVED + "/ubsan_agrees"]), ("proved", "proved"))
+        self.assertEqual(self.t.generate(check=True), 0, self.t.last_output)
+        self.assertEqual([str(f) for f in self.t.lint()], [])
 
     def test_a_signal_death_holds_every_statement_of_that_build(self):
         """A build killed by a signal makes its halts statements false and every agreement that names it
@@ -723,6 +865,17 @@ class EnrolledHold(HeldFixture, unittest.TestCase):
         self.assertFalse(os.path.lexists(self.t.path("counterexamples", APPROVED, "asan_halts")))
         self.assertEqual(self.t.generate(check=True), 0, self.t.last_output)
         self.assertEqual([str(f) for f in self.t.lint()], [])
+
+    def test_a_ported_held_statement_with_a_counterexample_cuts_to_the_same_release(self):
+        """The held statement's counterexample goes from the counterexamples folder of either layout."""
+        y = self.t.yaml(FINDING + "/finding.yaml")
+        y["input"]["asan"] = dict(y["input"]["asan"], exit=77)
+        self.t.put_yaml(FINDING + "/finding.yaml", y)
+        add_asan_halts_counterexample(self.t)
+        shutil.rmtree(self.t.path("proofs", APPROVED, "asan_agrees"))
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        self.assertIn("checksum_fuzzer/asan_halts", hold(self.t).statements["zlib"])
+        assert_ported_cut(self, self.t)
 
     def test_the_shipped_text_check_covers_the_statement_hold(self):
         self.t.write("CHANGELOG.md", "Fixed the %s bug.\n" % SLUG)
@@ -822,13 +975,20 @@ class EnrolledHold(HeldFixture, unittest.TestCase):
         self.assertEqual(self.t.generate(), 0, self.t.last_output)
 
     def test_a_fuzz_target_whose_module_begins_with_the_held_ones_ships(self):
-        """internal #80's final review, finding 7: checksum_fuzzer_v2's rendered Statements.v names its own module,
+        """checksum_fuzzer_v2's rendered Statements.v names its own module,
         OssFuzzTheorems.zlib.checksum_fuzzer_v2, and its own asan_agrees; neither names the held one."""
         self.add_v2()
         self.assertEqual(set(hold(self.t).statements["zlib"]), {"checksum_fuzzer/" + s for s in HELD_WITH_PAIR})
         approve(self.t, RELEASED, entry(APPROVED, statements=["plain_halts", "ubsan_agrees"]))
         self.release()
         self.assertIn("Definition asan_agrees", self.t.read("projects/zlib/checksum_fuzzer_v2/Statements.v"))
+
+    def test_a_patch_entry_holding_an_open_finding_s_patch_is_refused_by_the_release_search(self):
+        """The project ships, with its open finding's statements held back: its patch text is a kept file, so a copy
+        of that finding's patch under another id is refused by the release's search."""
+        alias_patch(self.t, HELD_PATCH.encode(), project="zlib")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        self.assertRefused("error: patches/zlib/alias.patch names the bytes of %s/%s" % (FINDING, PATCH))
 
 
 if __name__ == "__main__":

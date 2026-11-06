@@ -1,0 +1,61 @@
+--- A/AD1o.v
++++ A/AD1o.v
+@@ -77,26 +77,26 @@
+ exact (memset_icpt_realizes B LAWS HB ly S W regs mem md d x n HPRE G10 G11 G12 Hn Hd Hdn Hdst Hra Hhull Ham).
+ Qed.
+ Lemma bss_zero_shadow : forall ly S W mem md, AR tfibsegs B ly S W mem md ->
+-zero_shadow (aview tfibsegs (w_H W) mem) SHADOW_OFF 0xa9340 (0x616000 - 0xa9340).
++zero_shadow (aview tfibsegs (w_H W) mem) SHADOW_OFF 0x5f31e0 (0x616000 - 0x5f31e0).
+ Proof.
+ intros ly S W mem md HAR.
+-exact (al_zshadow _ _ LAWS ly S W mem md (0xa9340, 0x616000 - 0xa9340) HAR
++exact (al_zshadow _ _ LAWS ly S W mem md (0x5f31e0, 0x616000 - 0x5f31e0) HAR
+ ltac:(unfold zero_shadow_ranges; right; rewrite (ts_zsh B HB); cbn; tauto)).
+ Qed.
+-Lemma bss_shadow_facts : forall ly S W mem md p n, AR tfibsegs B ly S W mem md -> 0xa9360 <= p -> p + n <= 0x616000 -> 0 < n ->
++Lemma bss_shadow_facts : forall ly S W mem md p n, AR tfibsegs B ly S W mem md -> 0x5f3200 <= p -> p + n <= 0x616000 -> 0 < n ->
+ range_addressable (aview tfibsegs (w_H W) mem) SHADOW_OFF p n /\ shadow_hull_vis (aview tfibsegs (w_H W) mem) p n.
+ Proof.
+ intros ly S W mem md p n HAR Hp Hn Hn0. pose proof (bss_zero_shadow ly S W mem md HAR) as HZ. split.
+-- intros x Hx. apply (zero_shadow_range _ SHADOW_OFF 0xa9340 (0x616000 - 0xa9340) eq_refl eq_refl HZ x). lia.
++- intros x Hx. apply (zero_shadow_range _ SHADOW_OFF 0x5f31e0 (0x616000 - 0x5f31e0) eq_refl eq_refl HZ x). lia.
+ - intros s Hs. unfold shadow_addr in Hs.
+-assert (L1 : 0xa9360 / 8 <= p / 8) by (apply Z.div_le_mono; lia).
++assert (L1 : 0x5f3200 / 8 <= p / 8) by (apply Z.div_le_mono; lia).
+ assert (L2 : (p + n - 1) / 8 <= (0x616000 - 1) / 8) by (apply Z.div_le_mono; lia).
+-change (0xa9360 / 8) with 86636 in L1. change ((0x616000 - 1) / 8) with 797695 in L2.
++change (0x5f3200 / 8) with 779840 in L1. change ((0x616000 - 1) / 8) with 797695 in L2.
+ pose proof (Z.div_mod (SHADOW_OFF + p / 8) 8 ltac:(lia)) as D1. pose proof (Z.mod_pos_bound (SHADOW_OFF + p / 8) 8 ltac:(lia)) as D1'.
+ pose proof (Z.div_mod (SHADOW_OFF + (p + n - 1) / 8) 8 ltac:(lia)) as D2. pose proof (Z.mod_pos_bound (SHADOW_OFF + (p + n - 1) / 8) 8 ltac:(lia)) as D2'.
+-replace s with (shadow_of_addr SHADOW_OFF 0xa9340 + (s - shadow_of_addr SHADOW_OFF 0xa9340)) by lia.
+-rewrite (HZ (s - shadow_of_addr SHADOW_OFF 0xa9340)); [discriminate|].
+-unfold shadow_of_addr, SHADOW_OFF in *. change (693056 / 8) with 86632. change ((6381568 - 693056) / 8) with 711064. lia.
++replace s with (shadow_of_addr SHADOW_OFF 0x5f31e0 + (s - shadow_of_addr SHADOW_OFF 0x5f31e0)) by lia.
++rewrite (HZ (s - shadow_of_addr SHADOW_OFF 0x5f31e0)); [discriminate|].
++unfold shadow_of_addr, SHADOW_OFF in *. change (6238688 / 8) with 779836. change ((6381568 - 6238688) / 8) with 17860. lia.
+ Qed.
+ Lemma fdchan_stdout : forall md, (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) -> fdchan (Z_to_bv 64 1) ch_stdout md.
+ Proof. intros md Hf. unfold fdchan. rewrite (Hf (Z_to_bv 64 1)). split; [vm_compute; reflexivity | reflexivity]. Qed.
+--- A/AD25.v
++++ A/AD25.v
+@@ -525,17 +525,17 @@
+ - apply (frame_of_trans E LH_mem (ss_mem S_RE) _ _ _ (eq_sym SK1) HFr1). rewrite <- Emm. exact HFr.
+ Qed.
+ Lemma rs_zero_shadow : forall ly S W mem md, AR tfibsegs B ly S W mem md ->
+-zero_shadow (aview tfibsegs (w_H W) mem) SHADOW_OFF 0xa9340 (0x616000 - 0xa9340).
++zero_shadow (aview tfibsegs (w_H W) mem) SHADOW_OFF 0xa9340 (0x5df0b8 - 0xa9340).
+ Proof.
+ intros ly S W mem md HAR.
+-apply (al_zshadow _ _ ARL ly S W mem md (0xa9340, 0x616000 - 0xa9340) HAR).
++apply (al_zshadow _ _ ARL ly S W mem md (0xa9340, 0x5df0b8 - 0xa9340) HAR).
+ unfold zero_shadow_ranges. right. rewrite (ts_zsh B HB). unfold Tfib_zero_shadow. cbn. tauto.
+ Qed.
+ Lemma rs_range_addressable : forall ly S W mem md n, AR tfibsegs B ly S W mem md -> 0 <= n -> RS_LO + n <= RS_HI ->
+ range_addressable (aview tfibsegs (w_H W) mem) SHADOW_OFF RS_LO n.
+ Proof.
+ intros ly S W mem md n HAR Hn Hle x Hx.
+-apply (zero_shadow_range _ SHADOW_OFF 0xa9340 (0x616000 - 0xa9340) eq_refl eq_refl (rs_zero_shadow ly S W mem md HAR) x).
++apply (zero_shadow_range _ SHADOW_OFF 0xa9340 (0x5df0b8 - 0xa9340) eq_refl eq_refl (rs_zero_shadow ly S W mem md HAR) x).
+ unfold RS_LO, RS_HI in *. lia.
+ Qed.
+ Lemma rs_shadow_hull_vis : forall ly S W mem md n, AR tfibsegs B ly S W mem md -> 0 < n -> RS_LO + n <= RS_HI ->

@@ -1,0 +1,21 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+From Corelib Require Import PrimString.
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.jsoncons.fuzz_json_encoder.images Require Import Asan.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import PropExec AxSymExec3 AxSymExec3B AxSymExec3Sound AsanPlanCore LibSym SegRun SegPlan SegPlanAuto Pm4PlanKit.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCert CutOps CutHeap CutAuto CutLib Pm4CutKit.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutHeap2 CutAutoX CutCertA CutHeapA CutAutoXA.
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Set Printing Width 1000000. Set Printing Depth 1000000.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCodec.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutGen Require Import Cut_tce_xasan_T.
+Definition dict_Cut_tce_xasan_R0 : CCD.pt := CCD.mk_table 1636%positive "((910144 910144 910144 910144 910144 911392 417764 836392 827600 1387168 1388196)(0#1)(5(0 100)1 4611686018427387904)(4#3(1 0))(0#2#4)(0 910252)(1#6)(2 0(1 2)(0 -96))(2#8)(3(1 3))(4(1 4))(5(1 5))(6(1 6))(7(1 7))(8(1 2))(9#8)(10(0 128))(0 1482488)(11#18)(12(0 1))(13(1 13))(14(1 14))(15(1 15))(16(1 16))(17(1 17))(18(1 18))(19(1 12))(20(1 10))(22(1 22))(23(1 23))(0 2147450880)(24#31)(25(1 25))(26(1 26))(27(1 27))(28(1 28))(29(1 29))(30(1 30))(31(1 31))((1 2)-80)(0#40 8(1 24))((1 2)-72)(0#42 8(1 23))((1 2)-64)(0#44 8(1 22))((1 2)-56)(0#46 8(1 21))((1 2)-48)(0#48 8(1 20))((1 2)-40)(0#50 8(1 19))((1 2)-32)(0#52 8(1 18))((1 2)-24)(0#54 8(1 9))((1 2)-16)(0#56 8(1 8))((1 2)-8)(0#58 8(1 1))((1 2)-96)(0#60 8(0 0))(3 1444792 1448528)((0 0)1482488)(0#63 8#31)((0 0)1482496)(0#65 4(0 1))((0 0)2147628550)(1#67(0 1))(3 1419712 1421408)(3 149796 165237)((1 10)0)(6#71(0 272))((1 10)96)(0 1421312)(0#73 8#74)((1 10)128)(2 0(1 10)(0 96))(0#76 8#77)(5(1 10)7077888 140737479966448)(4(1 10)8)(2 6(1 10)(0 3))(#81 2147450880)(1#82(0 34))((0 0)2147446784)(0 17592186048512)(7#84#85#71(0 272))((1 12)0)(6#87(0 16))(9#87(0 16))(5(1 12)7077888 140737479966704)(4(1 12)8)(2 6(1 12)(0 3))(#92 2147450880)(1#93(0 2))(7#84#85#87(0 16))((1 2)-1120)(0 1024)(9#96#97)((1 2)-88)(9#99(0 8))(0 1120)(6#96#101)(5(1 2)140735332484192 140737488355328)(4(1 2)32)(7#96#101#71(0 272))(7#96#101#87(0 16))(7#71(0 272)#87(0 16))(7#82(0 34)#87(0 16))((0 0)6931840)(7#82(0 34)#109(0 2))((0 0)7069728)(7#82(0 34)#111(0 544))(#3#41#43#45#47#49#51#53#55#57#59#61#62#64#66#68#69#70#72#75#78#79#80#83#86#88#89#90#91#94#95#98#100#102#103#104#105#106#107#108#110#112)(1 417764))"%pstring.
+Definition o0 : CA.pout := CCD.dec_pout_t dict_Cut_tce_xasan_R0 130%positive "(#5(((417764(#7#9#10#11#12#13#14#15#16#17#19#20#21#22#23#24#25#26#27#28(21(0 1))#29#30#32#33#34#35#36#37#38#39)()#113)#114))()())"%pstring.
+Definition o1 : CA.pout := CCD.dec_pout_t dict_Cut_tce_xasan_R0 130%positive "(#5(((417764(#7#9#10#11#12#13#14#15#16#17#19#20#21#22#23#24#25#26#27#28(21(0 2))#29#30#32#33#34#35#36#37#38#39)()#113)#114))()())"%pstring.
+Definition o2 : CA.pout := CCD.dec_pout_t dict_Cut_tce_xasan_R0 130%positive "(#5(((417764(#7#9#10#11#12#13#14#15#16#17#19#20#21#22#23#24#25#26#27#28(21(0 3))#29#30#32#33#34#35#36#37#38#39)()#113)#114))()())"%pstring.
+Definition o3 : CA.pout := CCD.dec_pout_t dict_Cut_tce_xasan_R0 130%positive "(#5(((417764(#7#9#10#11#12#13#14#15#16#17#19#20#21#22#23#24#25#26#27#28(21(0 4))#29#30#32#33#34#35#36#37#38#39)()#113)#114))()())"%pstring.
+Definition o4 : CA.pout := CCD.dec_pout_t dict_Cut_tce_xasan_R0 276%positive "(#5(((417764(#7#9#10#11#12#13#14#15#16#17#19#20#21#22#23#24#25#26#27#28(21(1 11))#29#30#32#33#34#35#36#37#38#39)()(#3#41#43#45#47#49#51#53#55#57#59#61#62#64#66#68#69#70#72#75#78#79#80#83#86#88#89#90#91#94#95#98#100#102#103#104#105#106#107#108#110#112(5(1 11)5 6)))#114))()())"%pstring.

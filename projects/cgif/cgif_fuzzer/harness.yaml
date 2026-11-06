@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cgif
 harness: cgif_fuzzer
-rocq: OssFuzzTheorems.cgif.cgif_fuzzer
+rocq: OSSVerify.cgif.cgif_fuzzer
 origin: upstream
 summary: Input decoded as a CGIF_Config + up to 16 frame configs (palettes, pixel data); cgif_newgif/cgif_addframe/cgif_close
   with a write callback that discards output; return codes ignored.

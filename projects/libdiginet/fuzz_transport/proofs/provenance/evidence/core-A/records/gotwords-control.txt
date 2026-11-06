@@ -1,0 +1,5 @@
+plant A/AFii.v:20 0xa4d18 -> 0xa4d20 (G1: the next .got cell): caught by ['A GOT-DIFF', 'B STATED-DIFF', 'C got-word DIFF']
+plant A/AB1w.v:17 0xa4030 -> 0xa4038 (G2: GOT[0] -> GOT[1]): caught by ['A GOT-DIFF']
+plant A/AD1j.v:113 6372144 -> 6257424 (G3: the held value put back to the donor's): caught by ['C got-value DIFF']
+  D. OK-GOT0: target GOT[0] = .got start 0xa4030, its word 0x0 (OK-GOT0 wants 0x0: OK); donor GOT[0] = 0x9c810, word 0x0 (wants 0x0: OK); core numerals naming GOT[0] (= 0xa4030): 1 (A/AB1w.v:16), each GOT-SAME: True
+control: 3 planted line(s), each caught: True; findings outside the planted lines: 0: PASS

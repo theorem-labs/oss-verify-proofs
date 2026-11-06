@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lodepng
 harness: lodepng_fuzzer
-rocq: OssFuzzTheorems.lodepng.lodepng_fuzzer
+rocq: OSSVerify.lodepng.lodepng_fuzzer
 origin: upstream
 summary: decodes with CRC/adler/nlen checks disabled, then (if that worked) decodes twice more with colour
   conversion; decode errors and pixels are ignored, nothing is compared across the three decodes.

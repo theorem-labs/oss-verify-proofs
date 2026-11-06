@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: fluent-bit
 harness: ares-test-fuzz
-rocq: OssFuzzTheorems.fluent_bit.ares_test_fuzz
+rocq: OSSVerify.fluent_bit.ares_test_fuzz
 origin: upstream
 summary: ares_dns_parse, then every query/RR field is fetched and rendered into a dig-style text buffer,
   then ares_dns_write re-serializes the record; the written bytes are NOT compared with (or re-parsed

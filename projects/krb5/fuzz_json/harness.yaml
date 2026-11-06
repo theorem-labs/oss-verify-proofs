@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: krb5
 harness: fuzz_json
-rocq: OssFuzzTheorems.krb5.fuzz_json
+rocq: OSSVerify.krb5.fuzz_json
 origin: upstream
 summary: k5_json_decode then k5_json_encode of the decoded value; the re-encoded text is freed without
   being compared to (or re-decoded against) the input.

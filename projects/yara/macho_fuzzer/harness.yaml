@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: yara
 harness: macho_fuzzer
-rocq: OssFuzzTheorems.yara.macho_fuzzer
+rocq: OSSVerify.yara.macho_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

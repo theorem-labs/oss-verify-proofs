@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libvpx
 harness: vpx_dec_fuzzer_vp9
-rocq: OssFuzzTheorems.libvpx.vpx_dec_fuzzer_vp9
+rocq: OSSVerify.libvpx.vpx_dec_fuzzer_vp9
 origin: upstream
 summary: Parses an IVF container by hand (32-byte file header, 12-byte frame headers), picks thread count
   / postproc / loop-filter options from header byte 32, calls vpx_codec_peek_stream_info and vpx_codec_decode

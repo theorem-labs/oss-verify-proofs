@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libsodium
 harness: crypto_aead_fuzzer
-rocq: OssFuzzTheorems.libsodium.crypto_aead_fuzzer
+rocq: OSSVerify.libsodium.crypto_aead_fuzzer
 origin: oss-fuzz
 summary: 'Checks one property, a round trip: AEAD round trip for an input-chosen primitive (chacha20poly1305
   ietf/original, xchacha20poly1305, aegis128l, aegis256, aes256gcm) with input key, nonce, message and

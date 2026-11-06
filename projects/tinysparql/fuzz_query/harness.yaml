@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tinysparql
 harness: fuzz_query
-rocq: OssFuzzTheorems.tinysparql.fuzz_query
+rocq: OSSVerify.tinysparql.fuzz_query
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

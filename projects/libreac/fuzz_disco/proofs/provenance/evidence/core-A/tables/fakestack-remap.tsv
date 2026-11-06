@@ -1,0 +1,181 @@
+file	line	col	context	literal	value	class	status	new	note
+A/AF0r.v	212	57	code	Branch BC_EQ 5 0 108		decode-arg	decode-check-needed		fetch site not named by the term
+A/AF0r.v	218	58	code	Branch BC_NE 10 0 8168		decode-arg	decode-check-needed		fetch site not named by the term
+A/AF0r.v	29	28	code	0x3c8a4	0x3c8a4	exec	mapped	0x3d474	.text (code)
+A/AF0r.v	30	27	code	0x3c938	0x3c938	exec	mapped	0x3d67c	.text (code)
+A/AF0r.v	31	28	code	0x3c9b0	0x3c9b0	exec	mapped	0x3d6f4	.text (code)
+A/AF0r.v	32	27	code	0x3c9dc	0x3c9dc	exec	mapped	0x3d720	.text (code)
+A/AF0r.v	33	27	code	0x3c9f8	0x3c9f8	exec	mapped	0x3d73c	.text (code)
+A/AF0r.v	38	28	code	0x109000	0x109000	bss	review	0x10c0c0	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0r.v	40	22	code	0x5d8f90	0x5d8f90	tls-cell	mapped	0x5dc050	tp+0x0 (TLS image byte 0x0; follows the PT_TLS template's map)
+A/AF0r.v	41	23	code	0x5fa338	0x5fa338	auipc-result?	review	0x5fc814	equals the OLD auipc result (pc + hi20<<12) of 1 auipc(s) (first at 0x99338): as that auipc's result -> 0x5fc814; as bss (mapped -> 0x5fd3f8): .bss (data-mixed); decide per use
+A/AF0r.v	43	3	code	0x3c8a4	0x3c8a4	exec	mapped	0x3d474	.text (code)
+A/AF0r.v	43	23	code	0x3ca34	0x3ca34	exec	mapped	0x3d778	.text (code)
+A/AF0r.v	43	43	code	0x61aac	0x61aac	exec	mapped	0x62560	.text (code)
+A/AF0r.v	43	61	code	0x46274	0x46274	exec	mapped	0x47340	.text (code)
+A/AF0r.v	43	80	code	0x97e88	0x97e88	exec	mapped	0x9a364	.text (code)
+A/AF0r.v	43	98	code	0x5bdec	0x5bdec	exec	mapped	0x5c8a0	.text (code)
+A/AF0r.v	44	2	code	0x54938	0x54938	exec	mapped	0x553ec	.text (code)
+A/AF0r.v	44	20	code	0x98f3c	0x98f3c	exec	mapped	0x9b418	.text (code)
+A/AF0r.v	44	38	code	0x69500	0x69500	exec	mapped	0x69fb4	.text (code)
+A/AF0r.v	44	58	code	0x3cbd0	0x3cbd0	exec	mapped	0x3dca4	.text (code)
+A/AF0r.v	73	3	code	0x9ec90	0x9ec90	data	mapped	0xa11f0	.got (data-mixed)
+A/AF0r.v	73	63	code	0x9fd50	0x9fd50	data	mapped	0xa22b0	.data (data-mixed)
+A/AF0r.v	73	85	code	0x97e88	0x97e88	exec	mapped	0x9a364	.text (code)
+A/AF0r.v	73	98	code	0x9df88	0x9df88	auipc-result?	review	0xa0a3c	equals the OLD auipc result (pc + hi20<<12) of 1 auipc(s) (first at 0x46f88): as that auipc's result -> 0xa0a3c; as data (mapped -> 0xa0500): .got (data-mixed); decide per use
+A/AF0r.v	73	120	code	0x137b28	0x137b28	bss	mapped	0x13abe8	.bss (data-mixed)
+A/AF0r.v	74	2	code	0x137bb1	0x137bb1	bss	mapped	0x13ac71	.bss (data-mixed)
+A/AF0r.v	74	32	code	0x9dfe8	0x9dfe8	data	mapped	0xa0560	.got (data-mixed)
+A/AF0r.v	74	54	code	0x135a98	0x135a98	bss	mapped	0x138b58	.bss (data-mixed)
+A/AF0r.v	74	68	code	0x135a98	0x135a98	bss	mapped	0x138b58	.bss (data-mixed)
+A/AF0r.v	74	78	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	74	86	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	74	98	code	0x9eca0	0x9eca0	data	mapped	0xa1200	.got (data-mixed)
+A/AF0r.v	75	2	code	0xa5860	0xa5860	bss	mapped	0xa8920	.bss (data-mixed)
+A/AF0r.v	75	29	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	75	32	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	75	96	code	0x5d8fb0	0x5d8fb0	tls-cell	mapped	0x5dc070	dtv+0x0 (dtv[0] at builtin_tls + tls_size - 0x10; moves with the dtv)
+A/AF0r.v	75	110	code	0x5d8fb8	0x5d8fb8	tls-cell	mapped	0x5dc078	dtv+0x8 (dtv[1] at builtin_tls + tls_size - 0x10; moves with the dtv)
+A/AF0r.v	75	133	code	0x5d9790	0x5d9790	tls-cell	mapped	0x5dc850	builtin_tls+0x8c8
+A/AF0r.v	83	99	code	0x5d96c8	0x5d96c8	tls-cell	mapped	0x5dc788	builtin_tls+0x800
+A/AF0r.v	83	141	code	0x5d97a4	0x5d97a4	tls-cell	mapped	0x5dc864	builtin_tls+0x8dc
+A/AF0r.v	90	50	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	96	58	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	179	45	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	182	97	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	206	78	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	207	57	code	0x4	0x4	page-index	review	0x6	page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	208	78	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	209	71	code	0x0007c283	0x7c283	exec	review	0x0007cd37	.text: not an instruction start in OLD
+A/AF0r.v	210	26	code	0x0007c283	0x7c283	exec	review	0x0007cd37	.text: not an instruction start in OLD
+A/AF0r.v	210	80	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	212	79	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	214	78	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	215	73	code	0x00160613	0x160613	bss	review	0x001636d3	.bss (data-mixed): interpolated 0x2874b bytes past the nearest reference (0x137ec8), beyond --reach 0x1000: may be a size, not an address
+A/AF0r.v	216	27	code	0x00160613	0x160613	bss	review	0x001636d3	.bss (data-mixed): interpolated 0x2874b bytes past the nearest reference (0x137ec8), beyond --reach 0x1000: may be a size, not an address
+A/AF0r.v	216	81	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	218	82	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	276	37	code	248240	0x3c9b0	exec	review	251636	decimal value inside code (PCs are written in hex); .text (code)
+A/AF0r.v	355	59	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	357	46	code	1085440	0x109000	bss	review	1097920	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0r.v	366	106	code	1085440	0x109000	bss	review	1097920	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0r.v	403	56	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	405	75	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0r.v	444	126	code	1048576	0x100000	bss	review	1061056	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0s.v	80	115	code	6270976	0x5fb000	geometry	mapped	6283264	hull.hi,seg3.end
+A/AF0s.v	83	30	code	6270976	0x5fb000	geometry	mapped	6283264	hull.hi,seg3.end
+A/AF0s.v	117	62	code	0x5d96c8	0x5d96c8	tls-cell	mapped	0x5dc788	builtin_tls+0x800
+A/AF0s.v	118	69	code	0x5d96c8	0x5d96c8	tls-cell	mapped	0x5dc788	builtin_tls+0x800
+A/AF0s.v	119	62	code	0x5d97a4	0x5d97a4	tls-cell	mapped	0x5dc864	builtin_tls+0x8dc
+A/AF0s.v	120	69	code	0x5d97a4	0x5d97a4	tls-cell	mapped	0x5dc864	builtin_tls+0x8dc
+A/AF0s.v	142	74	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0s.v	161	75	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0s.v	161	81	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0s.v	185	41	code	0x5d96c8	0x5d96c8	tls-cell	mapped	0x5dc788	builtin_tls+0x800
+A/AF0s.v	186	41	code	0x5d97a4	0x5d97a4	tls-cell	mapped	0x5dc864	builtin_tls+0x8dc
+A/AF0s.v	208	13	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0s.v	240	24	code	1085440	0x109000	bss	review	1097920	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0s.v	243	16	code	6270976	0x5fb000	geometry	mapped	6283264	hull.hi,seg3.end
+A/AF0s.v	245	14	code	1085440	0x109000	bss	review	1097920	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0s.v	253	110	code	6270976	0x5fb000	geometry	mapped	6283264	hull.hi,seg3.end
+A/AF0s.v	254	16	code	2148213760	0x800b2400	shadow	review	2148215320	shadow of 0x5d2000 (.bss): interpolated 0x99b0 bytes past the nearest reference (0x5c8650), beyond --reach 0x1000: may be a size, not an address
+A/AF0s.v	255	183	code	6270976	0x5fb000	geometry	mapped	6283264	hull.hi,seg3.end
+A/AF0s.v	278	100	code	1441792	0x160000	bss	review	1454272	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0s.v	280	53	code	1441792	0x160000	bss	review	1454272	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0s.v	357	19	string	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0s.v	461	50	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0s.v	492	22	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0s.v	493	22	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0s.v	493	31	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0s.v	493	88	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0s.v	253	128	code	783872	0xbf600	derived	mapped	785408	value of `6270976 / 8` after rewriting its literals
+A/AF0s.v	255	201	code	783872	0xbf600	derived	mapped	785408	value of `6270976 / 8` after rewriting its literals
+A/AF0t.v	208	57	code	Branch BC_EQ 5 0 108		decode-arg	decode-check-needed		fetch site not named by the term
+A/AF0t.v	214	58	code	Branch BC_NE 10 0 8168		decode-arg	decode-check-needed		fetch site not named by the term
+A/AF0t.v	30	28	code	0x3ca34	0x3ca34	exec	mapped	0x3d778	.text (code)
+A/AF0t.v	31	27	code	0x3cac8	0x3cac8	exec	mapped	0x3d80c	.text (code)
+A/AF0t.v	32	28	code	0x3cb40	0x3cb40	exec	mapped	0x3d884	.text (code)
+A/AF0t.v	33	27	code	0x3cb70	0x3cb70	exec	mapped	0x3d8b4	.text (code)
+A/AF0t.v	34	27	code	0x3cb8c	0x3cb8c	exec	mapped	0x3d8d0	.text (code)
+A/AF0t.v	39	28	code	0x209000	0x209000	bss	review	0x20c0c0	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0t.v	41	22	code	0x5d8f90	0x5d8f90	tls-cell	mapped	0x5dc050	tp+0x0 (TLS image byte 0x0; follows the PT_TLS template's map)
+A/AF0t.v	42	23	code	0x5fa338	0x5fa338	auipc-result?	review	0x5fc814	equals the OLD auipc result (pc + hi20<<12) of 1 auipc(s) (first at 0x99338): as that auipc's result -> 0x5fc814; as bss (mapped -> 0x5fd3f8): .bss (data-mixed); decide per use
+A/AF0t.v	69	3	code	0x9ec90	0x9ec90	data	mapped	0xa11f0	.got (data-mixed)
+A/AF0t.v	69	63	code	0x9fd50	0x9fd50	data	mapped	0xa22b0	.data (data-mixed)
+A/AF0t.v	69	85	code	0x97e88	0x97e88	exec	mapped	0x9a364	.text (code)
+A/AF0t.v	69	98	code	0x9df88	0x9df88	auipc-result?	review	0xa0a3c	equals the OLD auipc result (pc + hi20<<12) of 1 auipc(s) (first at 0x46f88): as that auipc's result -> 0xa0a3c; as data (mapped -> 0xa0500): .got (data-mixed); decide per use
+A/AF0t.v	69	120	code	0x137b28	0x137b28	bss	mapped	0x13abe8	.bss (data-mixed)
+A/AF0t.v	70	2	code	0x137bb1	0x137bb1	bss	mapped	0x13ac71	.bss (data-mixed)
+A/AF0t.v	70	32	code	0x9dfe8	0x9dfe8	data	mapped	0xa0560	.got (data-mixed)
+A/AF0t.v	70	54	code	0x135a98	0x135a98	bss	mapped	0x138b58	.bss (data-mixed)
+A/AF0t.v	70	68	code	0x135a98	0x135a98	bss	mapped	0x138b58	.bss (data-mixed)
+A/AF0t.v	70	78	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	70	86	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	70	98	code	0x9eca0	0x9eca0	data	mapped	0xa1200	.got (data-mixed)
+A/AF0t.v	71	2	code	0xa5860	0xa5860	bss	mapped	0xa8920	.bss (data-mixed)
+A/AF0t.v	71	29	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	71	32	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	71	96	code	0x5d8fb0	0x5d8fb0	tls-cell	mapped	0x5dc070	dtv+0x0 (dtv[0] at builtin_tls + tls_size - 0x10; moves with the dtv)
+A/AF0t.v	71	110	code	0x5d8fb8	0x5d8fb8	tls-cell	mapped	0x5dc078	dtv+0x8 (dtv[1] at builtin_tls + tls_size - 0x10; moves with the dtv)
+A/AF0t.v	71	133	code	0x5d9790	0x5d9790	tls-cell	mapped	0x5dc850	builtin_tls+0x8c8
+A/AF0t.v	79	99	code	0x5d96c8	0x5d96c8	tls-cell	mapped	0x5dc788	builtin_tls+0x800
+A/AF0t.v	79	141	code	0x5d97a4	0x5d97a4	tls-cell	mapped	0x5dc864	builtin_tls+0x8dc
+A/AF0t.v	86	50	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	92	58	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	175	45	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	178	97	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	202	78	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	203	57	code	0x4	0x4	page-index	review	0x6	page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	204	78	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	205	71	code	0x0007c283	0x7c283	exec	review	0x0007cd37	.text: not an instruction start in OLD
+A/AF0t.v	206	26	code	0x0007c283	0x7c283	exec	review	0x0007cd37	.text: not an instruction start in OLD
+A/AF0t.v	206	80	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	208	79	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	210	78	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	211	73	code	0x00160613	0x160613	bss	review	0x001636d3	.bss (data-mixed): interpolated 0x2874b bytes past the nearest reference (0x137ec8), beyond --reach 0x1000: may be a size, not an address
+A/AF0t.v	212	27	code	0x00160613	0x160613	bss	review	0x001636d3	.bss (data-mixed): interpolated 0x2874b bytes past the nearest reference (0x137ec8), beyond --reach 0x1000: may be a size, not an address
+A/AF0t.v	212	81	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	214	82	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	272	37	code	248640	0x3cb40	exec	review	252036	decimal value inside code (PCs are written in hex); .text (code)
+A/AF0t.v	351	59	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	353	46	code	2134016	0x209000	bss	review	2146496	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0t.v	362	106	code	2134016	0x209000	bss	review	2146496	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0t.v	399	56	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	401	75	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	405	16	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	406	67	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	416	39	code	4	0x4	page-index	review	6	end of a half-open interval (lo <= x < hi); decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	419	29	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	419	43	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	419	85	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	421	15	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0t.v	440	126	code	1048576	0x100000	bss	review	1061056	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0u.v	80	115	code	6270976	0x5fb000	geometry	mapped	6283264	hull.hi,seg3.end
+A/AF0u.v	83	30	code	6270976	0x5fb000	geometry	mapped	6283264	hull.hi,seg3.end
+A/AF0u.v	117	62	code	0x5d96c8	0x5d96c8	tls-cell	mapped	0x5dc788	builtin_tls+0x800
+A/AF0u.v	118	69	code	0x5d96c8	0x5d96c8	tls-cell	mapped	0x5dc788	builtin_tls+0x800
+A/AF0u.v	119	62	code	0x5d97a4	0x5d97a4	tls-cell	mapped	0x5dc864	builtin_tls+0x8dc
+A/AF0u.v	120	69	code	0x5d97a4	0x5d97a4	tls-cell	mapped	0x5dc864	builtin_tls+0x8dc
+A/AF0u.v	142	74	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0u.v	161	75	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0u.v	161	81	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0u.v	185	41	code	0x5d96c8	0x5d96c8	tls-cell	mapped	0x5dc788	builtin_tls+0x800
+A/AF0u.v	186	41	code	0x5d97a4	0x5d97a4	tls-cell	mapped	0x5dc864	builtin_tls+0x8dc
+A/AF0u.v	208	13	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0u.v	240	24	code	2134016	0x209000	bss	review	2146496	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0u.v	243	16	code	6270976	0x5fb000	geometry	mapped	6283264	hull.hi,seg3.end
+A/AF0u.v	245	14	code	2134016	0x209000	bss	review	2146496	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0u.v	245	72	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0u.v	253	110	code	6270976	0x5fb000	geometry	mapped	6283264	hull.hi,seg3.end
+A/AF0u.v	254	16	code	2148213760	0x800b2400	shadow	review	2148215320	shadow of 0x5d2000 (.bss): interpolated 0x99b0 bytes past the nearest reference (0x5c8650), beyond --reach 0x1000: may be a size, not an address
+A/AF0u.v	255	183	code	6270976	0x5fb000	geometry	mapped	6283264	hull.hi,seg3.end
+A/AF0u.v	278	100	code	1441792	0x160000	bss	review	1454272	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0u.v	280	53	code	1441792	0x160000	bss	review	1454272	.bss: page-aligned value whose mapped value is not page-aligned: a page/chunk boundary rather than an address?
+A/AF0u.v	357	19	string	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0u.v	461	50	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0u.v	492	22	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0u.v	493	22	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0u.v	493	31	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0u.v	493	88	code	4	0x4	page-index	review	6	decimal below --small 0x10000 (size/count?); page index of seg2.hexlen -> ['0x6']
+A/AF0u.v	253	128	code	783872	0xbf600	derived	mapped	785408	value of `6270976 / 8` after rewriting its literals
+A/AF0u.v	255	201	code	783872	0xbf600	derived	mapped	785408	value of `6270976 / 8` after rewriting its literals

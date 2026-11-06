@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: abseil-cpp
 harness: string_escape_fuzzer
-rocq: OssFuzzTheorems.abseil_cpp.string_escape_fuzzer
+rocq: OSSVerify.abseil_cpp.string_escape_fuzzer
 origin: oss-fuzz
 summary: 'Checks 4 properties (listed below); the first, a round trip: CUnescape(CHexEscape(s)) == s,
   CUnescape(CEscape(s)) == s, CUnescape(Utf8SafeCEscape(s)) == s and CUnescape(Utf8SafeCHexEscape(s))

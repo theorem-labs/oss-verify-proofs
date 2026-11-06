@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: opendnp3
 harness: fuzzdecoder
-rocq: OssFuzzTheorems.opendnp3.fuzzdecoder
+rocq: OSSVerify.opendnp3.fuzzdecoder
 origin: upstream
 summary: Decoder::DecodeLPDU on the raw input with a no-op IDecoderCallbacks and a NOTHING-level logger;
   nothing is inspected.

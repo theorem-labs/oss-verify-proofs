@@ -1,0 +1,43 @@
+# hypvalues.sh WORK LIB OUT/hyp  (2026-10-31T10:44:55Z)
+tools: hypvalues.sh 427df4e07fed, hyplist.py 20238b9fc53b, coqhyp.py 0ae5fac85a22, hypderive.py 86004079bc3e, imgs.py c738c122a959, 
+inputs: WORK/stage-out tree 3df9dee2b44d (492 files), WORK/stage tree cb94de36d3c6 (492 files), LIB/A/AD2j.v f32f53f83a52, WORK/versions.txt port_core 83f5203d2a2f
+## hyplist
+hyplist.py WORK: 492 stage-out files paired with 492 stage files; 184441 numerals outside comments and strings
+class	SAME	DIFFERS	DIFFERS-FORM	NEW	total
+section-hyp	5314	109	0	0	5423
+record-field	1185	21	0	0	1206
+inductive	2	0	0	0	2
+lemma-premise	13583	109	0	6	13698
+fact-ctor	6556	99	0	0	6655
+state-spec	806	363	0	0	1169
+def-in-hyp	11586	830	0	4	12420
+ALL	39032	1531	0	10	40573
+not listed (census): in proof bodies 97589, in lemma conclusions 28509, in other vernacular 4164, in other definitions and computed (Eval) states 13606; listed + not listed = 184441 of 184441
+not listed, by place and decision: computed-state DIFFERS 634, computed-state SAME 5829, conclusion DIFFERS 1295, conclusion SAME 27214, definition DIFFERS 1388, definition NEW 126, definition SAME 5629, in-proof DIFFERS 1708, in-proof NEW 11, in-proof SAME 95870, other DIFFERS 245, other SAME 3919 (rows not SAME: unlisted-differs.tsv)
+def-in-hyp rows by depth: 1: 8210, 2: 2326, 3: 697, 4: 493, 5: 206, 6: 122, 7: 101, 8: 77, 9: 55, 10: 42, 11: 36, 12: 20, 13: 5, 14: 7, 15: 9, 16: 5, 17: 3, 18: 1, 19: 1, 20: 1, 21: 1, 22: 1, 23: 1
+names used in a hypothesis position with more than one definer (all followed): 50 D E0 H KEPTA Kv LY MEQ0 MEQI NPv R8v S' SKv SREGS SS0 SSLOTv TOP WIN WINF WINT ajournal at_CD at_CONT at_EXIT at_L0 at_OE at_RETD at_RETK at_RETP cbyte code covered envp expr_vars_lt ivs_wf kHighMemBeg msize_bytes n off_img pair_eqb r rom same_io sp0 sr_vars_lt top_ok tr uE usp w64 x
+## hypderive
+hypderive.py WORK LIB OUT/hyp
+images: T e89be137db17 TIMG/stripped/fuzz_transport.asan, TT 86efc3a80314 TIMG/unstripped/fuzz_transport.asan, D c2c7559b29bd PG/bin/fuzz_grant/fuzz_grant.asan, DT 57c26f993615 PG/unstripped/fuzz_grant/fuzz_grant.asan
+listed 40573; differs-from-donor 1541 (DIFFERS 1531, DIFFERS-FORM 0, NEW 10)
+DIFFERS rows derived: OK 1537, WRONG 1, NEEDS-STARTUP 0, KNOWN 3, RUNTIME 0, OPEN 0
+DIFFERS rules: BYTES 56, CONTENT 147, COUNT 3, GOT 113, GPATCH 8, IMAGE-QTY 64, JTABLE 9, KNOWN 3, NEW 2, SHADOW-BOUND 1, SHSPAN 1, SHWIN 10, SYMBOL 1117, SYMBOL-ALIGNED 2, SYMBOL-RANK 5
+SAME rows that name a donor image value: 306: SAME-IN-BOTH 157, CONST (by hand / the bv-32 rule) 148, KNOWN 1, KEPT-IMAGE 0
+CONTENT (memory facts of listed rows with literal address and value): 373: OK 162, WRONG 0, RUNTIME 172, RELATIVE 39
+information only, DIFFERS outside hypothesis positions (unlisted-derived.tsv): 5407: NEW 137, OK 5184, OPEN 52, WRONG 34
+WRONG	A/AD1o.v:87	written 0x5f3200	right 0xa9360	donor 0xa14a0	SYMBOL	donor 0xa14a0 = __do_init.__object+0x10 (size 0x40, .bss); target __do_init.__object at 0xa9350 (size 0x40) + 0x10 = 0xa9360
+## control
+P1	A/AFek.v	35	(aN, mkAF 1 4097 0)	(aN, mkAF 1 4000 0)	4000	DIFFERS	-
+P2	A/AFk6.v	34	(rSHA, mkAF 0x5cf050 kHighMemBeg 12)	(rSHA, mkAF 0x5cf058 kHighMemBeg 12)	0x5cf058	DIFFERS	WRONG
+P3	A/AD1o.v	22	0x10000 <= a < 0x31000 -> in_ro_tfa a	0x10000 <= a < 0x30000 -> in_ro_tfa a	0x30000	SAME	KEPT-IMAGE
+P4	A/AFii.v	25	lit4 0x217c4 0x71800	lit4 0x217c4 0x71804	0x71804	DIFFERS	WRONG
+P1 A/AFek.v:35 (aN, mkAF 1 4097 0) -> (aN, mkAF 1 4000 0): listed DIFFERS yes (fact-ctor, mkAF); derived -: caught
+    hypderive on the row: verdict=OPEN rule=NOT-ADDRESS (donor value 0x1001 is not an address of the donor image)
+P2 A/AFk6.v:34 (rSHA, mkAF 0x5cf050 kHighMemBeg 12) -> (rSHA, mkAF 0x5cf058 kHighMemBeg 12): listed DIFFERS yes (fact-ctor, mkAF); derived WRONG: caught
+    verdict=WRONG  rule=SYMBOL  right=0x5cf050
+P3 A/AD1o.v:22 0x10000 <= a < 0x31000 -> in_ro_tfa a -> 0x10000 <= a < 0x30000 -> in_ro_tfa a: listed SAME yes (lemma-premise, -); derived KEPT-IMAGE: caught
+    decision=KEPT-IMAGE  rule=BOUND  target_value=0x31000
+P4 A/AFii.v:25 lit4 0x217c4 0x71800 -> lit4 0x217c4 0x71804: listed DIFFERS yes (state-spec, YP09.region); derived WRONG: caught
+    verdict=WRONG  rule=CONTENT  right=0x71800
+rows new in the planted copy: hyplist 4 (outside the plants 0), derived WRONG 3 (outside 0), KEPT-IMAGE 1, CONTENT WRONG 1
+control: PASS

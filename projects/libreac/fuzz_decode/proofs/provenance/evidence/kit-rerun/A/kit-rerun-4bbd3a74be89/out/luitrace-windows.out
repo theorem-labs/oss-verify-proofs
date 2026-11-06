@@ -1,0 +1,702 @@
+### image DONOR_TWIN
+## Allocate 0x31550 window +0x160..+0x230
+  +0x160  c015051b  addiw a0, a0, -0x3ff
+  +0x164  00aab533  sltu a0, s5, a0
+  +0x168  00754993  xori s3, a0, 7
+  +0x16c  629d1503  lh a0, 0x629(s10)
+  +0x170  0230000f  fence r, rw
+  +0x174  00010a37  lui s4, 0x10
+  +0x178  fffa0c1b  addiw s8, s4, -1
+  +0x17c  01857533  and a0, a0, s8
+  +0x180  1dc050ef  jal 0x51dc
+  +0x184  00050493  mv s1, a0
+  +0x188  62bd1503  lh a0, 0x62b(s10)
+  +0x18c  0230000f  fence r, rw
+  +0x190  01857533  and a0, a0, s8
+  +0x194  1c8050ef  jal 0x51c8
+  +0x198  0b34e663  bltu s1, s3, 0xac
+  +0x19c  00048993  mv s3, s1
+  +0x1a0  0aa4f463  bgeu s1, a0, 0xa8
+  +0x1a4  00800593  addi a1, zero, 8
+  +0x1a8  000a8513  mv a0, s5
+  +0x1ac  0155e463  bltu a1, s5, 8
+  +0x1b0  00800513  addi a0, zero, 8
+  +0x1b4  00850533  add a0, a0, s0
+  +0x1b8  40800c33  neg s8, s0
+  +0x1bc  00993593  sltiu a1, s2, 9
+  +0x1c0  fff50513  addi a0, a0, -1
+  +0x1c4  fff58593  addi a1, a1, -1
+  +0x1c8  01857533  and a0, a0, s8
+  +0x1cc  0085f5b3  and a1, a1, s0
+  +0x1d0  00b50533  add a0, a0, a1
+  +0x1d4  00757593  andi a1, a0, 7
+  +0x1d8  6a059063  bnez a1, 0x6a0
+  +0x1dc  01000593  addi a1, zero, 0x10
+  +0x1e0  001ab493  seqz s1, s5
+  +0x1e4  001a061b  addiw a2, s4, 1
+  +0x1e8  01359a3b  sllw s4, a1, s3
+  +0x1ec  00100593  addi a1, zero, 1
+  +0x1f0  009a84b3  add s1, s5, s1
+  +0x1f4  00c936b3  sltu a3, s2, a2
+  +0x1f8  014509b3  add s3, a0, s4
+  +0x1fc  00c9b433  sltu s0, s3, a2
+  +0x200  0086f433  and s0, a3, s0
+  +0x204  fff40513  addi a0, s0, -1
+  +0x208  01457633  and a2, a0, s4
+  +0x20c  02859513  slli a0, a1, 0x28
+  +0x210  013609b3  add s3, a2, s3
+  +0x214  01556863  bltu a0, s5, 0x10
+  +0x218  01356663  bltu a0, s3, 0xc
+  +0x21c  621d3503  ld a0, 0x621(s10)
+  +0x220  06957063  bgeu a0, s1, 0x60
+  +0x224  4392c0ef  jal 0x2cc38
+  +0x228  02050a63  beqz a0, 0x34
+  +0x22c  fffe0517  auipc a0, 0xfffe0
+## Allocate 0x31550 window +0x480..+0x560
+  +0x480  631210ef  jal 0x21e30
+  +0x484  416905b3  sub a1, s2, s6
+  +0x488  008585b3  add a1, a1, s0
+  +0x48c  0fa00613  addi a2, zero, 0xfa
+  +0x490  000b0513  mv a0, s6
+  +0x494  61d210ef  jal 0x21e1c
+  +0x498  fff80537  lui a0, 0xfff80
+  +0x49c  01055513  srli a0, a0, 0x10
+  +0x4a0  00a4fb33  and s6, s1, a0
+  +0x4a4  000b0a63  beqz s6, 0x14
+  +0x4a8  000a0513  mv a0, s4
+  +0x4ac  000b0593  mv a1, s6
+  +0x4b0  00000613  mv a2, zero
+  +0x4b4  5fd210ef  jal 0x21dfc
+  +0x4b8  09648a63  beq s1, s6, 0x94
+  +0x4bc  5e1210ef  jal 0x21de0
+  +0x4c0  08050663  beqz a0, 0x8c
+  +0x4c4  0006c517  auipc a0, 0x6c
+  +0x4c8  7f453503  ld a0, 0x7f4(a0)
+  +0x4cc  00053503  ld a0, 0(a0)
+  +0x4d0  016a0b33  add s6, s4, s6
+  +0x4d4  fff50593  addi a1, a0, -1
+  +0x4d8  00b53633  sltu a2, a0, a1
+  +0x4dc  fff60613  addi a2, a2, -1
+  +0x4e0  00b67633  and a2, a2, a1
+  +0x4e4  05667263  bgeu a2, s6, 0x44
+  +0x4e8  0006c617  auipc a2, 0x6c
+  +0x4ec  7d863603  ld a2, 0x7d8(a2)
+  +0x4f0  0006c697  auipc a3, 0x6c
+  +0x4f4  7d86b683  ld a3, 0x7d8(a3)
+  +0x4f8  00063783  ld a5, 0(a2)
+  +0x4fc  0006b603  ld a2, 0(a3)
+  +0x500  fff78713  addi a4, a5, -1
+  +0x504  01677463  bgeu a4, s6, 8
+  +0x508  03667063  bgeu a2, s6, 0x20
+  +0x50c  0006c697  auipc a3, 0x6c
+  +0x510  7c46b683  ld a3, 0x7c4(a3)
+  +0x514  0006b883  ld a7, 0(a3)
+  +0x518  0038d693  srli a3, a7, 3
+  +0x51c  00a68833  add a6, a3, a0
+  +0x520  2568ea63  bltu a7, s6, 0x254
+  +0x524  25687863  bgeu a6, s6, 0x250
+  +0x528  0006c597  auipc a1, 0x6c
+  +0x52c  7885b583  ld a1, 0x788(a1)
+  +0x530  0555c583  lbu a1, 0x55(a1)
+  +0x534  003b5613  srli a2, s6, 3
+  +0x538  00c50533  add a0, a0, a2
+  +0x53c  40b005bb  negw a1, a1
+  +0x540  00b4f5b3  and a1, s1, a1
+  +0x544  0075f593  andi a1, a1, 7
+  +0x548  00b50023  sb a1, 0(a0)
+  +0x54c  54c290ef  jal 0x2954c
+  +0x550  01053583  ld a1, 0x10(a0)
+  +0x554  00053603  ld a2, 0(a0)
+  +0x558  00853683  ld a3, 8(a0)
+  +0x55c  40998733  sub a4, s3, s1
+## Allocate 0x31550 window +0x5a0..+0x6b0
+  +0x5a0  07050513  addi a0, a0, 0x70
+  +0x5a4  0135e863  bltu a1, s3, 0x10
+  +0x5a8  01f98593  addi a1, s3, 0x1f
+  +0x5ac  0055d593  srli a1, a1, 5
+  +0x5b0  0e00006f  j 0xe0
+  +0x5b4  0019d593  srli a1, s3, 1
+  +0x5b8  55555637  lui a2, 0x55555
+  +0x5bc  333336b7  lui a3, 0x33333
+  +0x5c0  0f0f1737  lui a4, 0xf0f1
+  +0x5c4  010107b7  lui a5, 0x1010
+  +0x5c8  00b9e5b3  or a1, s3, a1
+  +0x5cc  5556061b  addiw a2, a2, 0x555
+  +0x5d0  3336869b  addiw a3, a3, 0x333
+  +0x5d4  f0f7071b  addiw a4, a4, -0xf1
+  +0x5d8  1017879b  addiw a5, a5, 0x101
+  +0x5dc  0025d813  srli a6, a1, 2
+  +0x5e0  0105e5b3  or a1, a1, a6
+  +0x5e4  02061813  slli a6, a2, 0x20
+  +0x5e8  01060633  add a2, a2, a6
+  +0x5ec  02069813  slli a6, a3, 0x20
+  +0x5f0  010686b3  add a3, a3, a6
+  +0x5f4  02071813  slli a6, a4, 0x20
+  +0x5f8  01070733  add a4, a4, a6
+  +0x5fc  02079813  slli a6, a5, 0x20
+  +0x600  010787b3  add a5, a5, a6
+  +0x604  0045d813  srli a6, a1, 4
+  +0x608  0105e5b3  or a1, a1, a6
+  +0x60c  0085d813  srli a6, a1, 8
+  +0x610  0105e5b3  or a1, a1, a6
+  +0x614  0105d813  srli a6, a1, 0x10
+  +0x618  0105e5b3  or a1, a1, a6
+  +0x61c  0205d813  srli a6, a1, 0x20
+  +0x620  0105e5b3  or a1, a1, a6
+  +0x624  fff5c593  not a1, a1
+  +0x628  0015d813  srli a6, a1, 1
+  +0x62c  00c87633  and a2, a6, a2
+  +0x630  40c585b3  sub a1, a1, a2
+  +0x634  00d5f633  and a2, a1, a3
+  +0x638  0025d593  srli a1, a1, 2
+  +0x63c  00d5f5b3  and a1, a1, a3
+  +0x640  00b605b3  add a1, a2, a1
+  +0x644  0045d613  srli a2, a1, 4
+  +0x648  00c585b3  add a1, a1, a2
+  +0x64c  03e00613  addi a2, zero, 0x3e
+  +0x650  00e5f5b3  and a1, a1, a4
+  +0x654  fff00693  addi a3, zero, -1
+  +0x658  02f585b3  mul a1, a1, a5
+  +0x65c  0385d593  srli a1, a1, 0x38
+  +0x660  40b6063b  subw a2, a2, a1
+  +0x664  00159593  slli a1, a1, 1
+  +0x668  00c9d733  srl a4, s3, a2
+  +0x66c  00c6963b  sllw a2, a3, a2
+  +0x670  07e5c593  xori a1, a1, 0x7e
+  +0x674  00177713  andi a4, a4, 1
+  +0x678  fff64613  not a2, a2
+  +0x67c  00c9f633  and a2, s3, a2
+  +0x680  00e5e5b3  or a1, a1, a4
+  +0x684  00c03633  snez a2, a2
+  +0x688  00c585b3  add a1, a1, a2
+  +0x68c  ffe58593  addi a1, a1, -2
+  +0x690  00359593  slli a1, a1, 3
+  +0x694  00b50533  add a0, a0, a1
+  +0x698  00053583  ld a1, 0(a0)
+  +0x69c  00158593  addi a1, a1, 1
+  +0x6a0  00b53023  sd a1, 0(a0)
+  +0x6a4  00813503  ld a0, 8(sp)
+  +0x6a8  02050c63  beqz a0, 0x38
+  +0x6ac  0006c517  auipc a0, 0x6c
+## Allocate 0x31550 window +0x8a0..+0x8e0
+  +0x8a0  21550513  addi a0, a0, 0x215
+  +0x8a4  24d58613  addi a2, a1, 0x24d
+  +0x8a8  26200593  addi a1, zero, 0x262
+  +0x8ac  000c8693  mv a3, s9
+  +0x8b0  0a1390ef  jal 0x398a0
+  +0x8b4  fff80537  lui a0, 0xfff80
+  +0x8b8  01055513  srli a0, a0, 0x10
+  +0x8bc  00750513  addi a0, a0, 7
+  +0x8c0  00a4f6b3  and a3, s1, a0
+  +0x8c4  fffe3517  auipc a0, 0xfffe3
+  +0x8c8  fffe6597  auipc a1, 0xfffe6
+  +0x8cc  1e950513  addi a0, a0, 0x1e9
+  +0x8d0  18d58613  addi a2, a1, 0x18d
+  +0x8d4  07800593  addi a1, zero, 0x78
+  +0x8d8  00048713  mv a4, s1
+  +0x8dc  075390ef  jal 0x39874
+## CombAlloc 0x359e4 window +0x60..+0x210
+  +0x060  1c071263  bnez a4, 0x1c4
+  +0x064  00c68733  add a4, a3, a2
+  +0x068  fff70713  addi a4, a4, -1
+  +0x06c  40d007b3  neg a5, a3
+  +0x070  00f77733  and a4, a4, a5
+  +0x074  000107b7  lui a5, 0x10
+  +0x078  00d7ee63  bltu a5, a3, 0x1c
+  +0x07c  00e7ec63  bltu a5, a4, 0x18
+  +0x080  20000613  addi a2, zero, 0x200
+  +0x084  02e66a63  bltu a2, a4, 0x34
+  +0x088  01f70713  addi a4, a4, 0x1f
+  +0x08c  00575413  srli s0, a4, 5
+  +0x090  1040006f  j 0x104
+  +0x094  04050713  addi a4, a0, 0x40
+  +0x098  2b050593  addi a1, a0, 0x2b0
+  +0x09c  00070513  mv a0, a4
+  +0x0a0  00068413  mv s0, a3
+  +0x0a4  234000ef  jal 0x234
+  +0x0a8  00040693  mv a3, s0
+  +0x0ac  00900593  addi a1, zero, 9
+  +0x0b0  14b47463  bgeu s0, a1, 0x148
+  +0x0b4  1500006f  j 0x150
+  +0x0b8  00175613  srli a2, a4, 1
+  +0x0bc  555557b7  lui a5, 0x55555
+  +0x0c0  33333837  lui a6, 0x33333
+  +0x0c4  0f0f18b7  lui a7, 0xf0f1
+  +0x0c8  010102b7  lui t0, 0x1010
+  +0x0cc  00c76633  or a2, a4, a2
+  +0x0d0  5557879b  addiw a5, a5, 0x555
+  +0x0d4  3338081b  addiw a6, a6, 0x333
+  +0x0d8  f0f8889b  addiw a7, a7, -0xf1
+  +0x0dc  1012829b  addiw t0, t0, 0x101
+  +0x0e0  00265313  srli t1, a2, 2
+  +0x0e4  00666633  or a2, a2, t1
+  +0x0e8  02079313  slli t1, a5, 0x20
+  +0x0ec  006787b3  add a5, a5, t1
+  +0x0f0  02081313  slli t1, a6, 0x20
+  +0x0f4  00680833  add a6, a6, t1
+  +0x0f8  02089313  slli t1, a7, 0x20
+  +0x0fc  006888b3  add a7, a7, t1
+  +0x100  02029313  slli t1, t0, 0x20
+  +0x104  006282b3  add t0, t0, t1
+  +0x108  00465313  srli t1, a2, 4
+  +0x10c  00666633  or a2, a2, t1
+  +0x110  00865313  srli t1, a2, 8
+  +0x114  00666633  or a2, a2, t1
+  +0x118  01065313  srli t1, a2, 0x10
+  +0x11c  00666633  or a2, a2, t1
+  +0x120  02065313  srli t1, a2, 0x20
+  +0x124  00666633  or a2, a2, t1
+  +0x128  fff64613  not a2, a2
+  +0x12c  00165313  srli t1, a2, 1
+  +0x130  00f377b3  and a5, t1, a5
+  +0x134  40f60633  sub a2, a2, a5
+  +0x138  010677b3  and a5, a2, a6
+  +0x13c  00265613  srli a2, a2, 2
+  +0x140  01067633  and a2, a2, a6
+  +0x144  00c78633  add a2, a5, a2
+  +0x148  00465793  srli a5, a2, 4
+  +0x14c  00f60633  add a2, a2, a5
+  +0x150  03e00793  addi a5, zero, 0x3e
+  +0x154  01167633  and a2, a2, a7
+  +0x158  fff00813  addi a6, zero, -1
+  +0x15c  02560633  mul a2, a2, t0
+  +0x160  03865613  srli a2, a2, 0x38
+  +0x164  40c787bb  subw a5, a5, a2
+  +0x168  00161613  slli a2, a2, 1
+  +0x16c  00f758b3  srl a7, a4, a5
+  +0x170  00f817bb  sllw a5, a6, a5
+  +0x174  07e64613  xori a2, a2, 0x7e
+  +0x178  0018f813  andi a6, a7, 1
+  +0x17c  fff7c793  not a5, a5
+  +0x180  00f77733  and a4, a4, a5
+  +0x184  01066633  or a2, a2, a6
+  +0x188  00e03733  snez a4, a4
+  +0x18c  00e60633  add a2, a2, a4
+  +0x190  ffe60413  addi s0, a2, -2
+  +0x194  0a040063  beqz s0, 0xa0
+  +0x198  02000613  addi a2, zero, 0x20
+  +0x19c  0cc47a63  bgeu s0, a2, 0xd4
+  +0x1a0  05000613  addi a2, zero, 0x50
+  +0x1a4  02c404b3  mul s1, s0, a2
+  +0x1a8  009584b3  add s1, a1, s1
+  +0x1ac  0004a603  lw a2, 0(s1)
+  +0x1b0  0e060063  beqz a2, 0xe0
+  +0x1b4  fff60613  addi a2, a2, -1
+  +0x1b8  7ff58593  addi a1, a1, 0x7ff
+  +0x1bc  02061713  slli a4, a2, 0x20
+  +0x1c0  00c4a023  sw a2, 0(s1)
+  +0x1c4  21158593  addi a1, a1, 0x211
+  +0x1c8  0084b603  ld a2, 8(s1)
+  +0x1cc  01e75713  srli a4, a4, 0x1e
+  +0x1d0  00e48733  add a4, s1, a4
+  +0x1d4  01076703  lwu a4, 0x10(a4)
+  +0x1d8  00c5b02f  amoadd.d zero, a2, (a1)
+  +0x1dc  02053503  ld a0, 0x20(a0)
+  +0x1e0  02041413  slli s0, s0, 0x20
+  +0x1e4  00471713  slli a4, a4, 4
+  +0x1e8  00a40533  add a0, s0, a0
+  +0x1ec  00a70533  add a0, a4, a0
+  +0x1f0  00900593  addi a1, zero, 9
+  +0x1f4  00b6e863  bltu a3, a1, 0x10
+  +0x1f8  fff68693  addi a3, a3, -1
+  +0x1fc  00a6f6b3  and a3, a3, a0
+  +0x200  04069a63  bnez a3, 0x54
+  +0x204  02813083  ld ra, 0x28(sp)
+  +0x208  02013403  ld s0, 0x20(sp)
+  +0x20c  01813483  ld s1, 0x18(sp)
+## memset 0x9790c window +0x40..+0xf0
+  +0x040  40a006bb  negw a3, a0
+  +0x044  03859813  slli a6, a1, 0x38
+  +0x048  101015b7  lui a1, 0x10101
+  +0x04c  0036f693  andi a3, a3, 3
+  +0x050  00459713  slli a4, a1, 4
+  +0x054  40d60633  sub a2, a2, a3
+  +0x058  00d505b3  add a1, a0, a3
+  +0x05c  10070693  addi a3, a4, 0x100
+  +0x060  ffc67713  andi a4, a2, -4
+  +0x064  02d83633  mulhu a2, a6, a3
+  +0x068  00c5a023  sw a2, 0(a1)
+  +0x06c  00e586b3  add a3, a1, a4
+  +0x070  fec6ae23  sw a2, -4(a3)
+  +0x074  08f76063  bltu a4, a5, 0x80
+  +0x078  00c5a223  sw a2, 4(a1)
+  +0x07c  00c5a423  sw a2, 8(a1)
+  +0x080  01900793  addi a5, zero, 0x19
+  +0x084  fec6aa23  sw a2, -0xc(a3)
+  +0x088  fec6ac23  sw a2, -8(a3)
+  +0x08c  06f76463  bltu a4, a5, 0x68
+  +0x090  00c5a623  sw a2, 0xc(a1)
+  +0x094  00c5a823  sw a2, 0x10(a1)
+  +0x098  00c5aa23  sw a2, 0x14(a1)
+  +0x09c  00c5ac23  sw a2, 0x18(a1)
+  +0x0a0  0045f793  andi a5, a1, 4
+  +0x0a4  02000813  addi a6, zero, 0x20
+  +0x0a8  01878793  addi a5, a5, 0x18
+  +0x0ac  40f70733  sub a4, a4, a5
+  +0x0b0  fec6a223  sw a2, -0x1c(a3)
+  +0x0b4  fec6a423  sw a2, -0x18(a3)
+  +0x0b8  fec6a623  sw a2, -0x14(a3)
+  +0x0bc  fec6a823  sw a2, -0x10(a3)
+  +0x0c0  03076a63  bltu a4, a6, 0x34
+  +0x0c4  02061613  slli a2, a2, 0x20
+  +0x0c8  00f585b3  add a1, a1, a5
+  +0x0cc  02065693  srli a3, a2, 0x20
+  +0x0d0  00d66633  or a2, a2, a3
+  +0x0d4  01f00693  addi a3, zero, 0x1f
+  +0x0d8  00c5b023  sd a2, 0(a1)
+  +0x0dc  00c5b423  sd a2, 8(a1)
+  +0x0e0  00c5b823  sd a2, 0x10(a1)
+  +0x0e4  00c5bc23  sd a2, 0x18(a1)
+  +0x0e8  fe070713  addi a4, a4, -0x20
+  +0x0ec  02058593  addi a1, a1, 0x20
+### image DECODE_A_TWIN
+## Allocate 0x3124c window +0x160..+0x230
+  +0x160  c015051b  addiw a0, a0, -0x3ff
+  +0x164  00aab533  sltu a0, s5, a0
+  +0x168  00754993  xori s3, a0, 7
+  +0x16c  629d1503  lh a0, 0x629(s10)
+  +0x170  0230000f  fence r, rw
+  +0x174  00010a37  lui s4, 0x10
+  +0x178  fffa0c1b  addiw s8, s4, -1
+  +0x17c  01857533  and a0, a0, s8
+  +0x180  2bc050ef  jal 0x52bc
+  +0x184  00050493  mv s1, a0
+  +0x188  62bd1503  lh a0, 0x62b(s10)
+  +0x18c  0230000f  fence r, rw
+  +0x190  01857533  and a0, a0, s8
+  +0x194  2a8050ef  jal 0x52a8
+  +0x198  0b34e663  bltu s1, s3, 0xac
+  +0x19c  00048993  mv s3, s1
+  +0x1a0  0aa4f463  bgeu s1, a0, 0xa8
+  +0x1a4  00800593  addi a1, zero, 8
+  +0x1a8  000a8513  mv a0, s5
+  +0x1ac  0155e463  bltu a1, s5, 8
+  +0x1b0  00800513  addi a0, zero, 8
+  +0x1b4  00850533  add a0, a0, s0
+  +0x1b8  40800c33  neg s8, s0
+  +0x1bc  00993593  sltiu a1, s2, 9
+  +0x1c0  fff50513  addi a0, a0, -1
+  +0x1c4  fff58593  addi a1, a1, -1
+  +0x1c8  01857533  and a0, a0, s8
+  +0x1cc  0085f5b3  and a1, a1, s0
+  +0x1d0  00b50533  add a0, a0, a1
+  +0x1d4  00757593  andi a1, a0, 7
+  +0x1d8  6a059063  bnez a1, 0x6a0
+  +0x1dc  01000593  addi a1, zero, 0x10
+  +0x1e0  001ab493  seqz s1, s5
+  +0x1e4  001a061b  addiw a2, s4, 1
+  +0x1e8  01359a3b  sllw s4, a1, s3
+  +0x1ec  00100593  addi a1, zero, 1
+  +0x1f0  009a84b3  add s1, s5, s1
+  +0x1f4  00c936b3  sltu a3, s2, a2
+  +0x1f8  014509b3  add s3, a0, s4
+  +0x1fc  00c9b433  sltu s0, s3, a2
+  +0x200  0086f433  and s0, a3, s0
+  +0x204  fff40513  addi a0, s0, -1
+  +0x208  01457633  and a2, a0, s4
+  +0x20c  02859513  slli a0, a1, 0x28
+  +0x210  013609b3  add s3, a2, s3
+  +0x214  01556863  bltu a0, s5, 0x10
+  +0x218  01356663  bltu a0, s3, 0xc
+  +0x21c  621d3503  ld a0, 0x621(s10)
+  +0x220  06957063  bgeu a0, s1, 0x60
+  +0x224  2e12c0ef  jal 0x2cae0
+  +0x228  02050a63  beqz a0, 0x34
+  +0x22c  fffe0517  auipc a0, 0xfffe0
+## Allocate 0x3124c window +0x480..+0x560
+  +0x480  175210ef  jal 0x21974
+  +0x484  416905b3  sub a1, s2, s6
+  +0x488  008585b3  add a1, a1, s0
+  +0x48c  0fa00613  addi a2, zero, 0xfa
+  +0x490  000b0513  mv a0, s6
+  +0x494  161210ef  jal 0x21960
+  +0x498  fff80537  lui a0, 0xfff80
+  +0x49c  01055513  srli a0, a0, 0x10
+  +0x4a0  00a4fb33  and s6, s1, a0
+  +0x4a4  000b0a63  beqz s6, 0x14
+  +0x4a8  000a0513  mv a0, s4
+  +0x4ac  000b0593  mv a1, s6
+  +0x4b0  00000613  mv a2, zero
+  +0x4b4  141210ef  jal 0x21940
+  +0x4b8  09648a63  beq s1, s6, 0x94
+  +0x4bc  125210ef  jal 0x21924
+  +0x4c0  08050663  beqz a0, 0x8c
+  +0x4c4  00067517  auipc a0, 0x67
+  +0x4c8  63053503  ld a0, 0x630(a0)
+  +0x4cc  00053503  ld a0, 0(a0)
+  +0x4d0  016a0b33  add s6, s4, s6
+  +0x4d4  fff50593  addi a1, a0, -1
+  +0x4d8  00b53633  sltu a2, a0, a1
+  +0x4dc  fff60613  addi a2, a2, -1
+  +0x4e0  00b67633  and a2, a2, a1
+  +0x4e4  05667263  bgeu a2, s6, 0x44
+  +0x4e8  00067617  auipc a2, 0x67
+  +0x4ec  61463603  ld a2, 0x614(a2)
+  +0x4f0  00067697  auipc a3, 0x67
+  +0x4f4  6146b683  ld a3, 0x614(a3)
+  +0x4f8  00063783  ld a5, 0(a2)
+  +0x4fc  0006b603  ld a2, 0(a3)
+  +0x500  fff78713  addi a4, a5, -1
+  +0x504  01677463  bgeu a4, s6, 8
+  +0x508  03667063  bgeu a2, s6, 0x20
+  +0x50c  00067697  auipc a3, 0x67
+  +0x510  6006b683  ld a3, 0x600(a3)
+  +0x514  0006b883  ld a7, 0(a3)
+  +0x518  0038d693  srli a3, a7, 3
+  +0x51c  00a68833  add a6, a3, a0
+  +0x520  2568ea63  bltu a7, s6, 0x254
+  +0x524  25687863  bgeu a6, s6, 0x250
+  +0x528  00067597  auipc a1, 0x67
+  +0x52c  5c45b583  ld a1, 0x5c4(a1)
+  +0x530  0555c583  lbu a1, 0x55(a1)
+  +0x534  003b5613  srli a2, s6, 3
+  +0x538  00c50533  add a0, a0, a2
+  +0x53c  40b005bb  negw a1, a1
+  +0x540  00b4f5b3  and a1, s1, a1
+  +0x544  0075f593  andi a1, a1, 7
+  +0x548  00b50023  sb a1, 0(a0)
+  +0x54c  2e0290ef  jal 0x292e0
+  +0x550  01053583  ld a1, 0x10(a0)
+  +0x554  00053603  ld a2, 0(a0)
+  +0x558  00853683  ld a3, 8(a0)
+  +0x55c  40998733  sub a4, s3, s1
+## Allocate 0x3124c window +0x5a0..+0x6b0
+  +0x5a0  07050513  addi a0, a0, 0x70
+  +0x5a4  0135e863  bltu a1, s3, 0x10
+  +0x5a8  01f98593  addi a1, s3, 0x1f
+  +0x5ac  0055d593  srli a1, a1, 5
+  +0x5b0  0e00006f  j 0xe0
+  +0x5b4  0019d593  srli a1, s3, 1
+  +0x5b8  55555637  lui a2, 0x55555
+  +0x5bc  333336b7  lui a3, 0x33333
+  +0x5c0  0f0f1737  lui a4, 0xf0f1
+  +0x5c4  010107b7  lui a5, 0x1010
+  +0x5c8  00b9e5b3  or a1, s3, a1
+  +0x5cc  5556061b  addiw a2, a2, 0x555
+  +0x5d0  3336869b  addiw a3, a3, 0x333
+  +0x5d4  f0f7071b  addiw a4, a4, -0xf1
+  +0x5d8  1017879b  addiw a5, a5, 0x101
+  +0x5dc  0025d813  srli a6, a1, 2
+  +0x5e0  0105e5b3  or a1, a1, a6
+  +0x5e4  02061813  slli a6, a2, 0x20
+  +0x5e8  01060633  add a2, a2, a6
+  +0x5ec  02069813  slli a6, a3, 0x20
+  +0x5f0  010686b3  add a3, a3, a6
+  +0x5f4  02071813  slli a6, a4, 0x20
+  +0x5f8  01070733  add a4, a4, a6
+  +0x5fc  02079813  slli a6, a5, 0x20
+  +0x600  010787b3  add a5, a5, a6
+  +0x604  0045d813  srli a6, a1, 4
+  +0x608  0105e5b3  or a1, a1, a6
+  +0x60c  0085d813  srli a6, a1, 8
+  +0x610  0105e5b3  or a1, a1, a6
+  +0x614  0105d813  srli a6, a1, 0x10
+  +0x618  0105e5b3  or a1, a1, a6
+  +0x61c  0205d813  srli a6, a1, 0x20
+  +0x620  0105e5b3  or a1, a1, a6
+  +0x624  fff5c593  not a1, a1
+  +0x628  0015d813  srli a6, a1, 1
+  +0x62c  00c87633  and a2, a6, a2
+  +0x630  40c585b3  sub a1, a1, a2
+  +0x634  00d5f633  and a2, a1, a3
+  +0x638  0025d593  srli a1, a1, 2
+  +0x63c  00d5f5b3  and a1, a1, a3
+  +0x640  00b605b3  add a1, a2, a1
+  +0x644  0045d613  srli a2, a1, 4
+  +0x648  00c585b3  add a1, a1, a2
+  +0x64c  03e00613  addi a2, zero, 0x3e
+  +0x650  00e5f5b3  and a1, a1, a4
+  +0x654  fff00693  addi a3, zero, -1
+  +0x658  02f585b3  mul a1, a1, a5
+  +0x65c  0385d593  srli a1, a1, 0x38
+  +0x660  40b6063b  subw a2, a2, a1
+  +0x664  00159593  slli a1, a1, 1
+  +0x668  00c9d733  srl a4, s3, a2
+  +0x66c  00c6963b  sllw a2, a3, a2
+  +0x670  07e5c593  xori a1, a1, 0x7e
+  +0x674  00177713  andi a4, a4, 1
+  +0x678  fff64613  not a2, a2
+  +0x67c  00c9f633  and a2, s3, a2
+  +0x680  00e5e5b3  or a1, a1, a4
+  +0x684  00c03633  snez a2, a2
+  +0x688  00c585b3  add a1, a1, a2
+  +0x68c  ffe58593  addi a1, a1, -2
+  +0x690  00359593  slli a1, a1, 3
+  +0x694  00b50533  add a0, a0, a1
+  +0x698  00053583  ld a1, 0(a0)
+  +0x69c  00158593  addi a1, a1, 1
+  +0x6a0  00b53023  sd a1, 0(a0)
+  +0x6a4  00813503  ld a0, 8(sp)
+  +0x6a8  02050c63  beqz a0, 0x38
+  +0x6ac  00067517  auipc a0, 0x67
+## Allocate 0x3124c window +0x8a0..+0x8e0
+  +0x8a0  51e50513  addi a0, a0, 0x51e
+  +0x8a4  4eb58613  addi a2, a1, 0x4eb
+  +0x8a8  26200593  addi a1, zero, 0x262
+  +0x8ac  000c8693  mv a3, s9
+  +0x8b0  748390ef  jal 0x39748
+  +0x8b4  fff80537  lui a0, 0xfff80
+  +0x8b8  01055513  srli a0, a0, 0x10
+  +0x8bc  00750513  addi a0, a0, 7
+  +0x8c0  00a4f6b3  and a3, s1, a0
+  +0x8c4  fffe3517  auipc a0, 0xfffe3
+  +0x8c8  fffe6597  auipc a1, 0xfffe6
+  +0x8cc  4f250513  addi a0, a0, 0x4f2
+  +0x8d0  48458613  addi a2, a1, 0x484
+  +0x8d4  07800593  addi a1, zero, 0x78
+  +0x8d8  00048713  mv a4, s1
+  +0x8dc  71c390ef  jal 0x3971c
+## CombAlloc 0x357c0 window +0x60..+0x210
+  +0x060  1c071263  bnez a4, 0x1c4
+  +0x064  00c68733  add a4, a3, a2
+  +0x068  fff70713  addi a4, a4, -1
+  +0x06c  40d007b3  neg a5, a3
+  +0x070  00f77733  and a4, a4, a5
+  +0x074  000107b7  lui a5, 0x10
+  +0x078  00d7ee63  bltu a5, a3, 0x1c
+  +0x07c  00e7ec63  bltu a5, a4, 0x18
+  +0x080  20000613  addi a2, zero, 0x200
+  +0x084  02e66a63  bltu a2, a4, 0x34
+  +0x088  01f70713  addi a4, a4, 0x1f
+  +0x08c  00575413  srli s0, a4, 5
+  +0x090  1040006f  j 0x104
+  +0x094  04050713  addi a4, a0, 0x40
+  +0x098  2b050593  addi a1, a0, 0x2b0
+  +0x09c  00070513  mv a0, a4
+  +0x0a0  00068413  mv s0, a3
+  +0x0a4  234000ef  jal 0x234
+  +0x0a8  00040693  mv a3, s0
+  +0x0ac  00900593  addi a1, zero, 9
+  +0x0b0  14b47463  bgeu s0, a1, 0x148
+  +0x0b4  1500006f  j 0x150
+  +0x0b8  00175613  srli a2, a4, 1
+  +0x0bc  555557b7  lui a5, 0x55555
+  +0x0c0  33333837  lui a6, 0x33333
+  +0x0c4  0f0f18b7  lui a7, 0xf0f1
+  +0x0c8  010102b7  lui t0, 0x1010
+  +0x0cc  00c76633  or a2, a4, a2
+  +0x0d0  5557879b  addiw a5, a5, 0x555
+  +0x0d4  3338081b  addiw a6, a6, 0x333
+  +0x0d8  f0f8889b  addiw a7, a7, -0xf1
+  +0x0dc  1012829b  addiw t0, t0, 0x101
+  +0x0e0  00265313  srli t1, a2, 2
+  +0x0e4  00666633  or a2, a2, t1
+  +0x0e8  02079313  slli t1, a5, 0x20
+  +0x0ec  006787b3  add a5, a5, t1
+  +0x0f0  02081313  slli t1, a6, 0x20
+  +0x0f4  00680833  add a6, a6, t1
+  +0x0f8  02089313  slli t1, a7, 0x20
+  +0x0fc  006888b3  add a7, a7, t1
+  +0x100  02029313  slli t1, t0, 0x20
+  +0x104  006282b3  add t0, t0, t1
+  +0x108  00465313  srli t1, a2, 4
+  +0x10c  00666633  or a2, a2, t1
+  +0x110  00865313  srli t1, a2, 8
+  +0x114  00666633  or a2, a2, t1
+  +0x118  01065313  srli t1, a2, 0x10
+  +0x11c  00666633  or a2, a2, t1
+  +0x120  02065313  srli t1, a2, 0x20
+  +0x124  00666633  or a2, a2, t1
+  +0x128  fff64613  not a2, a2
+  +0x12c  00165313  srli t1, a2, 1
+  +0x130  00f377b3  and a5, t1, a5
+  +0x134  40f60633  sub a2, a2, a5
+  +0x138  010677b3  and a5, a2, a6
+  +0x13c  00265613  srli a2, a2, 2
+  +0x140  01067633  and a2, a2, a6
+  +0x144  00c78633  add a2, a5, a2
+  +0x148  00465793  srli a5, a2, 4
+  +0x14c  00f60633  add a2, a2, a5
+  +0x150  03e00793  addi a5, zero, 0x3e
+  +0x154  01167633  and a2, a2, a7
+  +0x158  fff00813  addi a6, zero, -1
+  +0x15c  02560633  mul a2, a2, t0
+  +0x160  03865613  srli a2, a2, 0x38
+  +0x164  40c787bb  subw a5, a5, a2
+  +0x168  00161613  slli a2, a2, 1
+  +0x16c  00f758b3  srl a7, a4, a5
+  +0x170  00f817bb  sllw a5, a6, a5
+  +0x174  07e64613  xori a2, a2, 0x7e
+  +0x178  0018f813  andi a6, a7, 1
+  +0x17c  fff7c793  not a5, a5
+  +0x180  00f77733  and a4, a4, a5
+  +0x184  01066633  or a2, a2, a6
+  +0x188  00e03733  snez a4, a4
+  +0x18c  00e60633  add a2, a2, a4
+  +0x190  ffe60413  addi s0, a2, -2
+  +0x194  0a040063  beqz s0, 0xa0
+  +0x198  02000613  addi a2, zero, 0x20
+  +0x19c  0cc47a63  bgeu s0, a2, 0xd4
+  +0x1a0  05000613  addi a2, zero, 0x50
+  +0x1a4  02c404b3  mul s1, s0, a2
+  +0x1a8  009584b3  add s1, a1, s1
+  +0x1ac  0004a603  lw a2, 0(s1)
+  +0x1b0  0e060063  beqz a2, 0xe0
+  +0x1b4  fff60613  addi a2, a2, -1
+  +0x1b8  7ff58593  addi a1, a1, 0x7ff
+  +0x1bc  02061713  slli a4, a2, 0x20
+  +0x1c0  00c4a023  sw a2, 0(s1)
+  +0x1c4  21158593  addi a1, a1, 0x211
+  +0x1c8  0084b603  ld a2, 8(s1)
+  +0x1cc  01e75713  srli a4, a4, 0x1e
+  +0x1d0  00e48733  add a4, s1, a4
+  +0x1d4  01076703  lwu a4, 0x10(a4)
+  +0x1d8  00c5b02f  amoadd.d zero, a2, (a1)
+  +0x1dc  02053503  ld a0, 0x20(a0)
+  +0x1e0  02041413  slli s0, s0, 0x20
+  +0x1e4  00471713  slli a4, a4, 4
+  +0x1e8  00a40533  add a0, s0, a0
+  +0x1ec  00a70533  add a0, a4, a0
+  +0x1f0  00900593  addi a1, zero, 9
+  +0x1f4  00b6e863  bltu a3, a1, 0x10
+  +0x1f8  fff68693  addi a3, a3, -1
+  +0x1fc  00a6f6b3  and a3, a3, a0
+  +0x200  04069a63  bnez a3, 0x54
+  +0x204  02813083  ld ra, 0x28(sp)
+  +0x208  02013403  ld s0, 0x20(sp)
+  +0x20c  01813483  ld s1, 0x18(sp)
+## memset 0x92474 window +0x40..+0xf0
+  +0x040  40a006bb  negw a3, a0
+  +0x044  03859813  slli a6, a1, 0x38
+  +0x048  101015b7  lui a1, 0x10101
+  +0x04c  0036f693  andi a3, a3, 3
+  +0x050  00459713  slli a4, a1, 4
+  +0x054  40d60633  sub a2, a2, a3
+  +0x058  00d505b3  add a1, a0, a3
+  +0x05c  10070693  addi a3, a4, 0x100
+  +0x060  ffc67713  andi a4, a2, -4
+  +0x064  02d83633  mulhu a2, a6, a3
+  +0x068  00c5a023  sw a2, 0(a1)
+  +0x06c  00e586b3  add a3, a1, a4
+  +0x070  fec6ae23  sw a2, -4(a3)
+  +0x074  08f76063  bltu a4, a5, 0x80
+  +0x078  00c5a223  sw a2, 4(a1)
+  +0x07c  00c5a423  sw a2, 8(a1)
+  +0x080  01900793  addi a5, zero, 0x19
+  +0x084  fec6aa23  sw a2, -0xc(a3)
+  +0x088  fec6ac23  sw a2, -8(a3)
+  +0x08c  06f76463  bltu a4, a5, 0x68
+  +0x090  00c5a623  sw a2, 0xc(a1)
+  +0x094  00c5a823  sw a2, 0x10(a1)
+  +0x098  00c5aa23  sw a2, 0x14(a1)
+  +0x09c  00c5ac23  sw a2, 0x18(a1)
+  +0x0a0  0045f793  andi a5, a1, 4
+  +0x0a4  02000813  addi a6, zero, 0x20
+  +0x0a8  01878793  addi a5, a5, 0x18
+  +0x0ac  40f70733  sub a4, a4, a5
+  +0x0b0  fec6a223  sw a2, -0x1c(a3)
+  +0x0b4  fec6a423  sw a2, -0x18(a3)
+  +0x0b8  fec6a623  sw a2, -0x14(a3)
+  +0x0bc  fec6a823  sw a2, -0x10(a3)
+  +0x0c0  03076a63  bltu a4, a6, 0x34
+  +0x0c4  02061613  slli a2, a2, 0x20
+  +0x0c8  00f585b3  add a1, a1, a5
+  +0x0cc  02065693  srli a3, a2, 0x20
+  +0x0d0  00d66633  or a2, a2, a3
+  +0x0d4  01f00693  addi a3, zero, 0x1f
+  +0x0d8  00c5b023  sd a2, 0(a1)
+  +0x0dc  00c5b423  sd a2, 8(a1)
+  +0x0e0  00c5b823  sd a2, 0x10(a1)
+  +0x0e4  00c5bc23  sd a2, 0x18(a1)
+  +0x0e8  fe070713  addi a4, a4, -0x20
+  +0x0ec  02058593  addi a1, a1, 0x20

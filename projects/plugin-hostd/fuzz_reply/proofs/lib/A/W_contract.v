@@ -1,0 +1,2098 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: the per-function contract form of fuzz_reply's ASan program walks, in the form of
+   the cgif function contracts that proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v assumes and lib/A/AC8h.v proves for freeCGIF. *)
+(* Each contract has two halves.
+   - The memory half is the donor's: `afn_pre` at the entry pc, and a post that is an `ajournal` of what the
+     call did to the allocator state, `aregs_preserved`, and a `Permutation` of the live blocks.
+   - The functional half is the plain proof's contract of the same function (lib/Prog/<fn>_c.v on this branch),
+     re-expressed over the ASan view: `bytes_at rsegs m a bs` becomes `val_mem SEGS (mrestrict (w_H W) mem) a n v`,
+     and a plain address becomes the listing's own `VAL (A_OBJ i)` or a block of `ablocks B ly S`.
+   A leaf that calls a runtime entry takes that entry's site contract as a Section hypothesis of its walk
+   (the form of lib/A/AD1p.v:50-55); `astrlen_realizes` below is the one entry the donor's runtime vocabulary
+   (Reusable/YG0d.v) does not already name. *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP0g YP01 YP0i YCbn YP0b YP0a.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YN3v YI04.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK04 YA0i YA0n YA0o YCbm YA0q.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
+YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YP0d YP0c YC80 YC81.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_syms W_listing W_kit W_journal W_rep.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YC5d YI00 YN0h.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import HarnessRep ListRep.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require next_line_c.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require CheckRep.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_shadow_pin.
+(* the plain model's request traces (RelayRunT.rev), list_push's and send_line's (ListTr, RelayRunF's adr0): the room
+   premises below are stated over their peak (tr_peak) *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require RelayRunT ListTr RelayRunF.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope bv_scope.
+Open Scope Z_scope.
+(* Presence carried through the runs (mem_grows) and through the calls' presence clauses. *)
+Ltac pres_chain :=
+  repeat match goal with
+  | Hg : mem_grows (mrestrict _ ?m0) (mrestrict _ ?m1) |- apresent _ ?m1 _ => apply (apresent_grows _ m0 m1 _ Hg)
+  | Hp : forall a, apresent _ ?m0 a -> apresent _ ?m1 a |- apresent _ ?m1 _ => apply Hp
+  end; assumption.
+(* C3 (a Theorem Labs lane's option (a); a Theorem Labs lane's lib/A/ReplyTrPeak.v:120-135 on a working branch
+   a974170418e, word for word; reviewer B1cReviewTrPeak SOUND): the most the
+   live bytes rise above their value at the start of a request trace, each request at its own point - RMalloc n
+   reaches cur + n; RFree k lowers cur by k; RRealloc k n reaches cur + n (the old k bytes still live, ASan's
+   allocate-copy-free) and leaves cur + n - k.  `bb + tr_peak tr <= LIVE_MAX` gives every allocator request of tr its
+   live-bytes premise in order (W_journal.v amalloc_cf_rule / arealloc_cf_rule / astrndup_cf_rule; afree_cf_rule
+   asks none), and asks nothing more for traces whose freed sizes are not negative; it is never above the summed
+   measure tr_alloc for traces of nonnegative sizes.  The lemma kit is lib/A/W_tr_peak.v. *)
+Definition tr_peak {P : Type} (tr : list (RelayRunT.rev P)) : Z :=
+fold_right (fun ev acc =>
+  match ev with
+  | RelayRunT.RMalloc n => Z.max 0 (n + acc)
+  | RelayRunT.RFree k _ => Z.max 0 (acc - k)
+  | RelayRunT.RRealloc k n _ => Z.max 0 (Z.max n (n - k + acc))
+  end) 0 tr.
+(* the live bytes' change over a trace (each free by exactly its size) *)
+Definition tr_net {P : Type} (tr : list (RelayRunT.rev P)) : Z :=
+fold_right (fun ev acc =>
+  match ev with
+  | RelayRunT.RMalloc n => n
+  | RelayRunT.RFree k _ => - k
+  | RelayRunT.RRealloc k n _ => n - k
+  end + acc) 0 tr.
+Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Section b.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+#[local] Notation VAL := (@pa_val _ fr_prog_listing PI).
+#[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PI).
+#[local] Notation BASE := (@pa_val _ fr_prog_listing PI A_TEXT).
+
+(* The objects of W_place.v that the walks name. *)
+Definition A_got_shadow : nat := A_OBJ 0.       (* the GOT slot that holds the shadow cell *)
+Definition A_shadow_cell : nat := A_OBJ 32.     (* __asan_shadow_memory_dynamic_address *)
+Definition A_g_nout : nat := A_OBJ 13.          (* g_nout *)
+Definition A_g_nsrc : nat := A_OBJ 7.          (* g_nsrc (relay.c), the relay table's count *)
+Definition A_g_src : nat := A_OBJ 8.           (* g_src (relay.c), the relay table's 56-byte entries *)
+
+(* Helpers every walk with a runtime call site needs, factored out of W_has_prefix.v.
+   A symbolic run writes only inside the writable ranges of its regions (frame_of), so a byte outside
+   them is the byte the run started from; the ASan shadow of any byte the program can address lies
+   below alloc_ceiling, so below every stack frame. *)
+Lemma aview_kept_out : forall E rs H (m m' : word -> option byte),
+frame_of E rs (mrestrict H m) (mrestrict H m') ->
+forall a, 0 <= a < 2 ^ 64 -> ~ in_wrange E rs a -> aview SEGS H m' a = aview SEGS H m a.
+Proof.
+intros E rs H m m' HF a Ha Hno. apply (aview_eq_of SEGS). apply HF. rewrite unsigned_lit_small by lia. exact Hno.
+Qed.
+Lemma amem_range_in : forall x m y, amem_range x m -> 0 <= x -> x <= y -> y <= x + m -> 0 <= y < kHighMemEnd.
+Proof. intros x m y HM Hx HA HB. unfold amem_range, kLowMemEnd, kHighMemBeg, kHighMemEnd in *. lia. Qed.
+Lemma shadow_below_stack : forall lo hi y, alloc_ceiling <= lo -> 0 <= y < kHighMemEnd ->
+0 <= shadow_addr y < 2 ^ 64 /\ ~ (lo <= shadow_addr y < hi).
+Proof.
+intros lo hi y Hlo HY. pose proof (shadow_addr_bounds y HY) as [L1 H1]. pose proof asan_consts as (C1 & _).
+unfold kLowMemEnd in L1. unfold kHighShadowEnd in H1. split; [lia|]. intros [HA HB]. lia.
+Qed.
+Lemma shadow_hull_below_stack : forall lo hi x m sa, alloc_ceiling <= lo ->
+0 <= x < kHighMemEnd -> 0 <= x + m - 1 < kHighMemEnd ->
+shadow_addr x / 8 * 8 <= sa < shadow_addr (x + m - 1) / 8 * 8 + 8 ->
+0 <= sa < 2 ^ 64 /\ ~ (lo <= sa < hi).
+Proof.
+intros lo hi x m sa Hlo H1 H2 Hsa. pose proof asan_consts as (C1 & _).
+pose proof (shadow_addr_bounds x H1) as [A1 B1]. pose proof (shadow_addr_bounds (x + m - 1) H2) as [A2 B2].
+unfold kLowMemEnd in A1, A2. unfold kHighShadowEnd in B1, B2.
+pose proof (Z.mul_div_le (shadow_addr (x + m - 1)) 8 ltac:(lia)) as D1.
+pose proof (Z.div_pos (shadow_addr x) 8 ltac:(lia) ltac:(lia)) as D2.
+split; [lia|]. intros [HA HB]. lia.
+Qed.
+
+Section c.
+Variable B : asyms.
+Hypothesis LAWS : AR_laws SEGS B.
+
+(* The post of a leaf that allocates nothing, frees nothing and takes no fake frame:
+   the allocator state is the one it was called with, the callee-saved registers are kept,
+   the caller gets back the live blocks it had, and every byte present at the call is still present
+   (a caller that stores to a global after the call needs it; a Theorem Labs lane's presence ruling). *)
+Definition aleaf_post (STK : Z) (regs : bvmap 5 word) ly S (W : world SEGS)
+(mem : word -> option byte) (md : Model) (Pa0 : word -> Prop) : world SEGS -> config -> Prop :=
+fun W' c' => exists regs' mem' md',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal SEGS B STK (spZ regs) [] ly S W mem md [] ly S W' mem' md' 0 /\
+aregs_preserved regs regs' /\ Pa0 (getr regs' 10) /\
+(forall a, apresent (w_H W) mem a -> apresent (w_H W') mem' a) /\
+(* errno's view is kept (a Theorem Labs lane's ARM_gone reads errno-dependent state after check_shape_done /
+   check_no_loss_read / check_shape_event): a leaf writes only its frame, and errno is an image byte *)
+(forall j, 0 <= j < 4 -> aview SEGS (w_H W') mem' (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j)).
+(* The same post over W2's journal (W_journal.v ajournal_gx) at G = [], XO = 0, OUT = []: a leaf that writes no
+   global and no out-parameter.  ajournal_gx_nil says it is aleaf_post; the walks after the journal's landing
+   state their posts in this form. *)
+Definition aleafx_post (STK : Z) (regs : bvmap 5 word) ly S (W : world SEGS)
+(mem : word -> option byte) (md : Model) (Pa0 : word -> Prop) : world SEGS -> config -> Prop :=
+fun W' c' => exists regs' mem' md',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+@ajournal_gx _ SK SEGS B [] 0 [] STK (spZ regs) [] ly S W mem md [] ly S W' mem' md' 0 /\
+aregs_preserved regs regs' /\ (forall a, apresent (w_H W) mem a -> apresent (w_H W') mem' a) /\
+(* every byte outside this function's own frame is kept: same view, still writable (W8's SEG_LATCH needs it
+   of check_bounded - it reads errno, the key slack and its globals again after the call; W_rep.v:208) *)
+(forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - STK <= a < spZ regs) -> abyte_kept W mem W' mem' a) /\
+Pa0 (getr regs' 10).
+
+(* check_shape_done (fuzz_reply.asan 0x85734, 10 instructions).
+   Plain contract: lib/Prog/check_shape_done_c.v:10-20.  It aborts unless a0 is the value of g_nout,
+   so the caller owes exactly that; nothing else of the machine changes. *)
+Definition CSD_STK : Z := 16.
+Definition csd_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch n,
+afn_pre SEGS B CSD_STK ly S W regs mem md ch ->
+getr regs 10 = w64 n -> 0 <= n < 2 ^ 64 ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_nout) 8 n ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (aleaf_post CSD_STK regs ly S W mem md (fun a => a = w64 n)).
+(* has_prefix (0x86020, 24 instructions).
+   Plain contract: lib/Prog/has_prefix_c.v:13-36.  It returns 1 when P is a prefix of the first a1 bytes
+   at a0 and 0 otherwise.  P is the NUL-terminated string at a2; the ASan build measures it with the
+   strlen interceptor and compares with the bcmp interceptor. *)
+Definition HP_STK : Z := 32 + 2 * ESTACK.
+Definition hp_prefix_of (W : world SEGS) (mem : word -> option byte) (s p lp : Z) : Prop :=
+forall i, 0 <= i < lp -> aview SEGS (w_H W) mem (s + i) = aview SEGS (w_H W) mem (p + i).
+Definition hp_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(s n p lp : Z) : world SEGS -> config -> Prop :=
+fun W' c' => exists regs' mem' md',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal SEGS B HP_STK (spZ regs) [] ly S W mem md [] ly S W' mem' md' 0 /\
+aregs_preserved regs regs' /\
+(forall a, apresent (w_H W) mem a -> apresent (w_H W') mem' a) /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - HP_STK <= a < spZ regs) ->
+ aview SEGS (w_H W') mem' a = aview SEGS (w_H W) mem a) /\
+((lp <= n /\ hp_prefix_of W mem s p lp /\ getr regs' 10 = w64 1) \/
+ ((lp <= n -> ~ hp_prefix_of W mem s p lp) /\ getr regs' 10 = w64 0)).
+Definition hp_vis (W : world SEGS) (mem : word -> option byte) (x m : Z) : Prop :=
+forall a, x <= a < x + m -> aview SEGS (w_H W) mem a <> None.
+Definition hp_off (regs : bvmap 5 word) (x m : Z) : Prop :=
+forall a, x <= a < x + m -> ~ (spZ regs - HP_STK <= a < spZ regs).
+Definition hp_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch s n p lp,
+afn_pre SEGS B HP_STK ly S W regs mem md ch ->
+getr regs 10 = w64 s -> getr regs 11 = w64 n -> getr regs 12 = w64 p ->
+0 <= n < 2 ^ 64 -> 0 <= lp -> lp + 1 < 2 ^ 32 -> 0 < p -> p + lp + 1 <= 2 ^ 63 -> 0 <= s -> s + lp <= 2 ^ 63 ->
+first_byte SEGS W mem p (lp + 1) 0 lp ->
+hp_vis W mem p (lp + 1) -> hp_off regs p (lp + 8) -> amem_range p (lp + 1) -> amem_range p 8 ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF p (lp + 1) ->
+shadow_hull_vis (aview SEGS (w_H W) mem) p (lp + 1) ->
+(forall a, p + lp < a < p + lp - (p + lp) mod 8 + 8 -> aview SEGS (w_H W) mem a <> None) ->
+rom_view SEGS W mem ->
+(lp <= n -> hp_vis W mem s lp /\ hp_off regs s lp /\ amem_range s lp /\
+ range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF s lp /\ (0 < lp -> shadow_hull_vis (aview SEGS (w_H W) mem) s lp) /\
+ range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF p lp /\ (0 < lp -> shadow_hull_vis (aview SEGS (w_H W) mem) p lp)) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (hp_post regs ly S W mem md s n p lp).
+
+(* check_bounded (0x85304, 43 instructions).
+   Plain contract: lib/Prog/check_bounded_c.v:10-37.  For each of the g_nsrc entries of the relay table
+   g_src (relay.c source_t, 56 bytes: used at +24, cap at +32) it aborts unless used <= LINE_LIMIT,
+   used <= cap and cap < 2 * (LINE_LIMIT + 4096) = 20192; so the caller owes exactly those bounds.  The
+   ASan build reads used and cap behind a shadow check each, so the table must be a block the allocator
+   state knows, which is what `In (P, N) (ablocks B ly S)` says.  It returns nothing. *)
+Definition CB_STK : Z := 16.
+Definition cb_entry_ok (W : world SEGS) (mem : word -> option byte) (P j : Z) : Prop :=
+exists used cap, val_mem SEGS (mrestrict (w_H W) mem) (P + 56 * j + 24) 8 used /\
+val_mem SEGS (mrestrict (w_H W) mem) (P + 56 * j + 32) 8 cap /\
+0 <= used <= 6000 /\ used <= cap /\ cap < 20192.
+Definition cb_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch n P N,
+afn_pre SEGS B CB_STK ly S W regs mem md ch ->
+- 2 ^ 31 <= n < 2 ^ 31 ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_nsrc) 4 (n mod 2 ^ 32) ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_src) 8 P -> 0 <= P < 2 ^ 64 ->
+(0 < n -> In (P, N) (ablocks B ly S) /\ 56 * n <= req_size N) ->
+(forall j, 0 <= j < n -> cb_entry_ok W mem P j) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (aleafx_post CB_STK regs ly S W mem md (fun _ => True)).
+
+(* The strlen site.  The donor's runtime vocabulary (Reusable/YG0d.v) names strnlen (astrnlen_realizes,
+   YG0d.v:413) but not strlen; this is that contract with the bound dropped, in the same shape. *)
+Definition astrlen_realizes (pc : Z) : Prop :=
+forall ly S W regs mem md x k,
+ecall_pre SEGS B ly S W regs mem md ->
+ly_stk_lo ly + 2 * ESTACK <= spZ regs -> (forall a, spZ regs - 2 * ESTACK <= a < spZ regs -> apresent (w_H W) mem a) ->
+getr regs 10 = w64 x -> 0 < x ->
+0 <= k -> k + 1 < 2 ^ 32 -> x + k + 1 <= 2 ^ 63 ->
+first_byte SEGS W mem x (k + 1) 0 k ->
+src_ok SEGS W regs mem x (k + 1) -> (forall a, x <= a <= x + k -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs)) ->
+amem_range x (k + 1) -> amem_range x 8 ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF x (k + 1) ->
+shadow_hull_vis (aview SEGS (w_H W) mem) x (k + 1) ->
+(forall a, x + k < a < x + k - (x + k) mod 8 + 8 -> aview SEGS (w_H W) mem a <> None) ->
+rom_view SEGS W mem ->
+SRr SEGS W (cfg_at SEGS pc regs mem md)
+(fun W' c' => W' = W /\ exists regs' mem' md',
+c' = cfg_at SEGS (raZ regs) regs' mem' md' /\
+AR SEGS B ly S W mem' md' /\ aregs_preserved regs regs' /\ same_but_materialized md md' /\
+getr regs' 10 = w64 k /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs) -> aview SEGS (w_H W) mem' a = aview SEGS (w_H W) mem a) /\
+(forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
+
+(* The strlen site in the journal frame, the shape Reusable/YCbq.v:2063 aj_bcmp_at gives for bcmp.
+   Its proof is that one, with the strlen contract in place of the bcmp contract. *)
+Lemma aj_strlen_at : forall pc, astrlen_realizes pc ->
+forall W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k x kk (o : Z) raw,
+ajournal SEGS B STK sp0 FP ly S W0 mem md own lyc Sc W memT mdc k ->
+getr regsT 10 = w64 x -> 0 < x ->
+0 <= kk -> kk + 1 < 2 ^ 32 -> x + kk + 1 <= 2 ^ 63 ->
+spZ regsT = sp0 + o -> o mod 16 = 0 -> o <= 0 -> 2 * ESTACK - o <= STK ->
+getr regsT 3 = w64 (as_gp B) -> getr regsT 4 = w64 (as_tp B) -> getr regsT 1 = raw -> YK0s.ret_ok raw ->
+first_byte SEGS W memT x (kk + 1) 0 kk ->
+src_ok SEGS W regsT memT x (kk + 1) ->
+(forall a, x <= a <= x + kk -> ~ (sp0 + o - 2 * ESTACK <= a < sp0 + o)) ->
+amem_range x (kk + 1) -> amem_range x 8 ->
+range_addressable (aview SEGS (w_H W) memT) SHADOW_OFF x (kk + 1) ->
+shadow_hull_vis (aview SEGS (w_H W) memT) x (kk + 1) ->
+(forall a, x + kk < a < x + kk - (x + kk) mod 8 + 8 -> aview SEGS (w_H W) memT a <> None) ->
+rom_view SEGS W memT ->
+SRr SEGS W (mkCfg (mkst regsT (Z_to_bv 64 pc) memT (seg_rom SEGS)) mdc)
+(fun W2 c2 => W2 = W /\ exists regs2 mem2 md2,
+c2 = mkCfg (mkst regs2 raw mem2 (seg_rom SEGS)) md2 /\
+ajournal SEGS B STK sp0 FP ly S W0 mem md own lyc Sc W mem2 md2 k /\
+aregs_preserved regsT regs2 /\ getr regs2 10 = w64 kk /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ (sp0 + o - 2 * ESTACK <= a < sp0 + o) -> aview SEGS (w_H W) mem2 a = aview SEGS (w_H W) memT a) /\
+(forall a, apresent (w_H W) memT a -> apresent (w_H W) mem2 a)).
+Proof.
+intros pc AM W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k x kk o raw
+HJ Ha0 Hx0 Hk0 Hk32 Hxk Hsp' Hal Hneg Hbud Hgp Htp Hra Hraw Hfb Hsx Hbx Hmx Hm8 Hrx Hhx Htail Hrom.
+pose proof HJ as (HAR & Hly & Hsecs & Hwle & Hio & Hfrs & Hnev & Hk & _ & _ & _ & _ & _ & Hpres & Hstatic & F5 & HQT).
+pose proof Hstatic as (Hal16 & Hstk0 & Hceil & Hslo & Hshi & H47 & Hbot & Htop2 & Htop).
+assert (ESTACK = 4096) as Hes by reflexivity.
+assert (HPRE : ecall_pre SEGS B lyc Sc W regsT memT mdc).
+{ eapply ecall_pre_at; try eassumption; try zlia; try (rewrite Hra; exact Hraw). }
+pose proof Hly as (_ & _ & _ & _ & _ & _ & _ & _ & Etop & Eslo & Eshi & _).
+assert (Hlo2 : ly_stk_lo lyc + 2 * ESTACK <= spZ regsT) by (rewrite Eslo, Hsp'; zlia).
+assert (Hpres2E : forall a, spZ regsT - 2 * ESTACK <= a < spZ regsT -> apresent (w_H W) memT a)
+by (intros a Ha; apply Hpres; rewrite Hsp' in Ha; zlia).
+eapply SRr_mono.
+{ exact (AM lyc Sc W regsT memT mdc x kk HPRE Hlo2 Hpres2E Ha0 Hx0 Hk0 Hk32 Hxk Hfb Hsx
+ltac:(rewrite Hsp'; exact Hbx) Hmx Hm8 Hrx Hhx Htail Hrom). }
+cbv beta. intros W2 c2 _ (-> & regs2 & mem2 & md2 & -> & HAR2 & HP & Hsame & Hres & Hfr & Hpres2).
+rewrite Hsp' in Hfr.
+split; [reflexivity|]. exists regs2, mem2, md2.
+split; [unfold cfg_at, raZ; rewrite Hra; unfold w64; rewrite Z_to_bv_bv_unsigned; reflexivity|].
+split.
+{ eapply (ajournal_after_write SEGS B LAWS pa_segs_low STK sp0 FP ly S W0 mem md own lyc Sc W memT mdc k mem2 md2
+(fun a => sp0 + o - 2 * ESTACK <= a < sp0 + o) Sc own HJ).
+- intros a Ha Hna. apply (Hfr a Ha). exact Hna.
+- exact Hpres2.
+- exact Hsame.
+- intros a Ha; left; left; zlia.
+- exact HAR2.
+- reflexivity. - reflexivity. - zlia. - exact Hfrs. - exact HQT. }
+split; [exact HP|]. split; [exact Hres|]. split; [exact Hfr | exact Hpres2].
+Qed.
+End c.
+
+(* ---- The harness's lists and sources (lane W2): list_push, list_free, source_reset, op_add. ----
+   Memory half: the journal is W_journal.v's ajournal_gx at the program-global set G (the list or source the
+   function writes lies in G; G is a parameter, callers pass theirs, gx_ok is the walk's Section hypothesis).
+   The representation is W_rep.v's alist_at / asrc_at / asrc_closed.  Functional half: lib/Prog/list_push_c.v,
+   list_free_c.v, source_reset_c.v, op_add_c.v over the same records (hlist, hsrc), without the plain side's
+   runtime-resource terms (rt_ok / roomF / runF), which the ASan side states as the allocator meter MT.
+   Allocator sites go through the GUIDE section 3.1 parameter: the meter MT (Reusable/YC5d.v) and the request
+   bound MMAX of W_journal.v's live-state rules. *)
+Section w2.
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable G : list (Z * Z).
+(* the n bytes at a lie in one of the instance's zero-shadow ranges (Reusable/YG0n.v:188 zero_shadow_ranges
+   holds as_zero_shadow B; AR_zshadow_law makes their shadow zero in every AR state) *)
+Definition azs (a n : Z) : Prop :=
+exists r, In r (as_zero_shadow B) /\ fst r mod 8 = 0 /\ fst r <= a /\ a + n <= fst r + snd r / 8 * 8.
+(* the heap blocks a list owns: its vector (when it has one) and one block per text *)
+Definition list_blks (l : hlist) : list (Z * Z) :=
+(if hl_cap l =? 0 then [] else [(hl_v l, AREC * hl_cap l)]) ++
+map (fun r => (fst r, Z.of_nat (length (snd r)) + 1)) (hl_recs l).
+Definition blk_FP (bs : list (Z * Z)) : list (Z * Z) := map (fun b => (fst b, fst b + req_size (snd b))) bs.
+(* the call keeps present every present image byte outside the allocator's statics and errno: a caller that
+   stores to its own globals after the call needs it (the journal keeps their view, not their presence) *)
+Definition apres_kept (W : world SEGS) (mem : word -> option byte) (W' : world SEGS) (mem' : word -> option byte) : Prop :=
+forall a, in_img SEGS a -> ~ Exists (in_zr a) (as_owned_static B) -> ~ (as_errno B <= a < as_errno B + 4) ->
+apresent (w_H W) mem a -> apresent (w_H W') mem' a.
+
+(* list_free (fuzz_reply.asan 0x86080, 101 instructions).  Plain contract: lib/Prog/list_free_c.v:26-49.
+   Frees every text (the inlined list_drop of the last entry, with its zero-length memmove) and the vector,
+   and leaves the list empty. *)
+Definition LF_STK : Z := 80 + ASTACK.
+Definition lf_cost (l : hlist) : Z := (hl_n l + 1) * mo_free MT.
+Definition lf_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(LA : Z) (l : hlist) (lines : bool) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' kk,
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx SEGS B G 0 [] LF_STK (spZ regs) (blk_FP (list_blks l)) ly S W mem md [] ly' S' W' mem' md' kk /\
+aregs_preserved regs regs' /\
+alist_at B ly' S' W' mem' LA empty_list lines /\
+(forall rest, Permutation (ablocks B ly S) (list_blks l ++ rest) -> Permutation (ablocks B ly' S') rest) /\
+apres_kept W mem W' mem' /\
+(forall i, 0 <= i < 4 -> aview SEGS (w_H W') mem' (as_errno B + i) = aview SEGS (w_H W) mem (as_errno B + i)) /\
+frames S' = frames S /\
+mo_le MT S S' (lf_cost l).
+Definition lf_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch LA (l : hlist) (lines : bool),
+afn_pre SEGS B LF_STK ly S W regs mem md ch ->
+getr regs 10 = w64 LA ->
+LA mod 8 = 0 ->
+alist_at B ly S W mem LA l lines ->
+(forall a, LA <= a < LA + 16 -> inG G a) -> azs LA 16 ->
+rom_view SEGS W mem ->
+mo_ok MT S (lf_cost l) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (lf_post regs ly S W mem md LA l lines).
+
+(* list_push (0x85090, 157 instructions).  Plain contract: lib/Prog/list_push_c.v:26-66.
+   Grows the vector with realloc when it is full (8, then doubling), copies the n source bytes into a fresh
+   malloc'd block of n + 1 bytes, NUL-terminates it and appends (block, bytes) to the list.  The source lies in
+   a live block other than the vector (the plain contract's src_home, its block arm; every caller's source is a
+   heap block: the input, s->partial, the relay's buffer). *)
+(* the request bound of the allocator rules (W_journal.v amalloc_cf_rule / arealloc_cf_rule): list_push's growth
+   premise is stated against it, as the realloc rule needs it *)
+Variable MMAX : Z.
+Definition LP_STK : Z := 96 + ASTACK.
+Definition lp_grow (l : hlist) : bool := hl_n l =? hl_cap l.
+Definition lp_vbytes (l : hlist) : Z := AREC * grow_cap (hl_n l) (hl_cap l).
+Definition lp_cost (l : hlist) (n : Z) : Z :=
+(if lp_grow l then mo_malloc MT (lp_vbytes l) + mo_free MT else 0) + mo_malloc MT (n + 1).
+(* list_push's requests: the plain model's trace ListTr.list_push_tra (the vector's growth, malloc (128) or realloc
+   (16 cap -> 32 cap), then strndup's malloc (n + 1)); the names play no part in the sizes, so adr0 *)
+Definition lp_tr (l : hlist) (n : Z) := ListTr.list_push_tra RelayRunF.adr0 (hl_n l) (hl_cap l) n.
+Definition lp_FP (l : hlist) : list (Z * Z) := if hl_cap l =? 0 then [] else [(hl_v l, hl_v l + AREC * hl_cap l)].
+Definition lp_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(LA : Z) (l : hlist) (lines : bool) (x : list byte) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' kk (l' : hlist) (d : Z),
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx SEGS B G 0 [] LP_STK (spZ regs) (lp_FP l) ly S W mem md [] ly' S' W' mem' md' kk /\
+aregs_preserved regs regs' /\
+alist_at B ly' S' W' mem' LA l' lines /\
+hl_recs l' = hl_recs l ++ [(d, x)] /\ hl_cap l' = grow_cap (hl_n l) (hl_cap l) /\
+(lp_grow l = false -> hl_v l' = hl_v l) /\
+(forall rest,
+ Permutation (ablocks B ly S) ((if lp_grow l && negb (hl_cap l =? 0) then [(hl_v l, AREC * hl_cap l)] else []) ++ rest) ->
+ Permutation (ablocks B ly' S')
+   ((d, Z.of_nat (length x) + 1) :: (if lp_grow l then [(hl_v l', AREC * hl_cap l')] else []) ++ rest)) /\
+apres_kept W mem W' mem' /\
+(forall i, 0 <= i < 4 -> aview SEGS (w_H W') mem' (as_errno B + i) = aview SEGS (w_H W) mem (as_errno B + i)) /\
+frames S' = frames S /\
+mo_le MT S S' (lp_cost l (Z.of_nat (length x))).
+Definition lp_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch LA SRC (l : hlist) (lines : bool) (x : list byte) q k,
+afn_pre SEGS B LP_STK ly S W regs mem md ch ->
+getr regs 10 = w64 LA -> getr regs 11 = w64 SRC -> getr regs 12 = w64 (Z.of_nat (length x)) ->
+LA mod 8 = 0 ->
+alist_at B ly S W mem LA l lines ->
+(forall a, LA <= a < LA + 16 -> inG G a) -> azs LA 16 ->
+(lp_grow l = true -> lp_vbytes l < MMAX) -> Z.of_nat (length x) < 2 ^ 16 ->
+blocks_bytes S + tr_peak (lp_tr l (Z.of_nat (length x))) <= LIVE_MAX ->
+In (q, k) (ablocks B ly S) -> q <> hl_v l -> q <= SRC -> SRC + Z.of_nat (length x) <= q + req_size k ->
+garr8 SEGS (mrestrict (w_H W) mem) SRC (bzs x) ->
+(lines = true -> ~ In (Z_to_bv 8 0) x /\ Z.of_nat (length x) <= APARTIAL) ->
+(lines = false -> (1 <= length x)%nat) ->
+mo_ok MT S (lp_cost l (Z.of_nat (length x))) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (lp_post regs ly S W mem md LA l lines x).
+
+(* source_reset (0x8575c, 31 instructions).  Plain contract: lib/Prog/source_reset_c.v:26-54.
+   list_free of pending, expected and held, free(partial), memset of the 96 bytes: the source is closed.
+   `o = Some h`: an open source h (asrc_at); `o = None`: an already closed one (asrc_closed). *)
+Definition hs_blks (h : hsrc) : list (Z * Z) :=
+list_blks (hs_pending h) ++ [(hs_partial h, APARTIAL)] ++ list_blks (hs_expected h) ++ list_blks (hs_held h).
+Definition SR_STK : Z := 32 + LF_STK.
+Definition sr_blks (o : option hsrc) : list (Z * Z) := match o with Some h => hs_blks h | None => [] end.
+Definition sr_cost (o : option hsrc) : Z :=
+match o with
+| Some h => lf_cost (hs_pending h) + lf_cost (hs_expected h) + lf_cost (hs_held h) + mo_free MT
+| None => 4 * mo_free MT
+end.
+Definition sr_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(HA : Z) (o : option hsrc) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' kk,
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx SEGS B G 0 [] SR_STK (spZ regs) (blk_FP (sr_blks o)) ly S W mem md [] ly' S' W' mem' md' kk /\
+aregs_preserved regs regs' /\
+asrc_closed W' mem' HA /\
+(forall rest, Permutation (ablocks B ly S) (sr_blks o ++ rest) -> Permutation (ablocks B ly' S') rest) /\
+apres_kept W mem W' mem' /\
+(forall i, 0 <= i < 4 -> aview SEGS (w_H W') mem' (as_errno B + i) = aview SEGS (w_H W) mem (as_errno B + i)) /\
+frames S' = frames S /\
+mo_le MT S S' (sr_cost o).
+Definition sr_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch HA (o : option hsrc),
+afn_pre SEGS B SR_STK ly S W regs mem md ch ->
+getr regs 10 = w64 HA ->
+HA mod 8 = 0 ->
+match o with Some h => asrc_at B ly S W mem HA h | None => asrc_closed W mem HA end ->
+(forall a, HA <= a < HA + ASRC -> inG G a) -> azs HA ASRC ->
+rom_view SEGS W mem ->
+mo_ok MT S (sr_cost o) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (sr_post regs ly S W mem md HA o).
+(* Helpers of the four walks. *)
+Section w2h.
+Hypothesis LAWS : AR_laws SEGS B.
+(* a range in the instance's zero-shadow ranges passes every shadow check, in every AR state *)
+Lemma azs_range_addressable : forall ly S W mem md a n,
+AR SEGS B ly S W mem md -> azs a n ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF a n.
+Proof.
+intros ly S W mem md a n HAR (r & Hin & H8 & Hlo & Hhi) y Hy.
+assert (Hz : zero_shadow (aview SEGS (w_H W) mem) SHADOW_OFF (fst r) (snd r)).
+{ apply (al_zshadow _ _ LAWS ly S W mem md r HAR). unfold zero_shadow_ranges. right. exact Hin. }
+exists 0. split; [|left; reflexivity].
+replace y with (fst r + (y - fst r)) by lia. rewrite shadow_of_addr_aligned_off by exact H8.
+apply Hz. split; [apply Z.div_pos; lia|]. apply Z.div_lt_upper_bound; lia.
+Qed.
+End w2h.
+(* A register whose value the engine cannot name (an address computed from two atoms, e.g. v + 16 * n)
+   becomes a fresh atom n that holds its value; a region can then be based on it. *)
+Lemma st_ok_pi_fresh : forall n E ss regs pc m rom (r : bv 5),
+st_ok_pi SEGS VAL E ss (mkst regs pc m rom) -> ss_atoms_lt n ss = true -> bv_eqb r 0 = false ->
+st_ok_pi SEGS VAL (ewset E n (getr regs r))
+(mkSS (ss_pc ss) (sr_set (ss_regs ss) r (SOff n 0)) (ss_mem ss) (ss_resv ss) (ss_facts ss)) (mkst regs pc m rom).
+Proof.
+intros n E ss regs pc m rom r HS Hat Hr. unfold st_ok_pi, abs_ss in *.
+destruct ss as [pc0 sr0 fr0 sm0 rv0 fs0]. cbn in *.
+pose proof (st_ok_set_reg SEGS n E (mkSST (VAL A_TEXT + pc0) sr0 fr0 sm0 rv0 fs0) regs pc m rom r (getr regs r) HS Hat Hr) as H.
+cbn in H. eapply st_ok_regs_ext; [exact H|]. intros r'.
+unfold getr, regupd. rewrite Hr. destruct (bv_eqb r' 0) eqn:E0; [reflexivity|]. unfold reg_get.
+destruct (decide (r' = r)) as [->|Hne]; [rewrite bvmap_get_set_same; reflexivity|].
+rewrite bvmap_get_set_other; [reflexivity|]. intros Heq. apply Hne. symmetry. exact Heq.
+Qed.
+Lemma img_env_ewset_low : forall E n w, img_env VAL A_LIM E -> (n < A_TEXT)%nat -> img_env VAL A_LIM (ewset E n w).
+Proof. intros E n w HE Hn a Ha. rewrite ew_ewset_other by lia. exact (HE a Ha). Qed.
+End w2.
+(* check_no_loss_read (0x85904, 21 instructions).
+   Plain contract: lib/Prog/check_no_loss_read_c.v:10-20.  a0 is a struct source of the .bss global g_s
+   (every call site, 0x848c4-0x849e8, passes g_s + 96 * j), and the four bytes at a0+24 (pending.n) are a
+   signed value <= 0, which is what keeps the abort unreached.  The ASan build reads those four bytes through a
+   shadow check; a global's shadow is zero because its range is one of the instance's zero-shadow ranges (azs,
+   AR_zshadow_law).  This statement supersedes the working branch one, whose premise
+   `In (p, N) (ablocks B ly S)` (a heap block) no caller can discharge. *)
+Section cnlr.
+Variable B : asyms.
+Definition CNLR_STK : Z := 16.
+Definition cnlr_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch p v,
+afn_pre SEGS B CNLR_STK ly S W regs mem md ch ->
+getr regs 10 = w64 p ->
+p mod 16 = 0 -> 0x10000 <= p -> p + 28 <= 0x5fb000 -> azs B p 28 ->
+(* apart from the two cells the shadow check reads: the GOT slot of the shadow base and the cell itself *)
+(p + 28 <= VAL (A_OBJ 0) \/ VAL (A_OBJ 0) + 8 <= p) -> (p + 28 <= VAL (A_OBJ 32) \/ VAL (A_OBJ 32) + 8 <= p) ->
+val_mem SEGS (mrestrict (w_H W) mem) (p + 24) 4 v ->
+0 <= v < 2 ^ 32 -> (v = 0 \/ 2 ^ 31 <= v) ->
+(* check_no_loss_read returns nothing: it leaves a0 holding the word it read, so the post claims
+   nothing about a0. *)
+SRr SEGS W (cfg_at SEGS pc regs mem md) (aleaf_post B CNLR_STK regs ly S W mem md (fun _ => True)).
+End cnlr.
+(* A caller instantiates a callee's spec at the CALLEE's own globals (e.g. G' = [(LA, 16)] for list_free), so
+   the callee's journal keeps every other image byte (the donor's image clause), and lifts the result to its own G
+   with ajournal_gx_G_mono.  So the walks' theorems are taken in the G-generic form below; gx_rt is the lane's
+   side condition on G next to gx_ok: G misses errno and the runtime's two static cells the walks read (the GOT
+   slot of the shadow base and the cell), a vm_compute over G at PB_fr. *)
+Section w2g.
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable MMAX : Z.
+Definition gx_rt (G : list (Z * Z)) : Prop :=
+forall a, inG G a -> ~ (as_errno B <= a < as_errno B + 4) /\
+~ (VAL (A_OBJ 0) <= a < VAL (A_OBJ 0) + 8) /\ ~ (VAL (A_OBJ 32) <= a < VAL (A_OBJ 32) + 8).
+Lemma gx_rt_sub : forall G1 G2, (forall a, inG G1 a -> inG G2 a) -> gx_rt G2 -> gx_rt G1.
+Proof. intros G1 G2 Hs H2 a Ha. exact (H2 a (Hs a Ha)). Qed.
+(* What a G-generic walk takes of the CALLEE's own G (a list, a source slot: program globals; never the caller's
+   G_fr, which holds errno and so fails gx_rt): gx_ok and gx_rt, the ROM bytes outside G (W_journal.v rom_out),
+   every byte of G readable and writable, and the shadow of every range of G visible in every allocator state.
+   These are the Section hypotheses of W_list_free.v (HRO) and W_source_reset.v (GX_ROM, GX_W, GSHV, HRO); at a
+   concrete G of program globals each is a vm_compute at PB_fr. *)
+Definition gx_prog (G : list (Z * Z)) : Prop :=
+gx_ok SEGS B G /\ gx_rt G /\ rom_out SEGS B G /\
+(forall a, inG G a -> seg_rom SEGS (Z_to_bv 64 a) <> None) /\
+(forall a, inG G a -> forall m, writable_at SEGS m a) /\
+(forall ly S W mem md a n, AR SEGS B ly S W mem md -> 0 < n ->
+ (forall x, a <= x < a + n -> inG G x) -> shadow_hull_vis (aview SEGS (w_H W) mem) a n).
+Lemma gx_prog_sub : forall G1 G2, (forall a, inG G1 a -> inG G2 a) -> gx_prog G2 -> gx_prog G1.
+Proof.
+intros G1 G2 Hs (H1 & H2 & H3 & H4 & H5 & H6).
+split; [exact (gx_ok_sub SEGS B G1 G2 Hs H1)|].
+split; [exact (gx_rt_sub G1 G2 Hs H2)|].
+split; [intros a Ha; destruct (H3 a Ha) as (Hn & Ho & He & Hk);
+        split; [intros Hin; exact (Hn (Hs a Hin)) | exact (conj Ho (conj He Hk))]|].
+split; [intros a Ha; exact (H4 a (Hs a Ha))|].
+split; [intros a Ha; exact (H5 a (Hs a Ha))|].
+intros ly S W mem md a n HAR Hn Hx. exact (H6 ly S W mem md a n HAR Hn (fun x Hx' => Hs x (Hx x Hx'))).
+Qed.
+Definition lf_spec_g (pc : Z) : Prop := forall G, gx_prog G -> lf_spec B MT G pc.
+Definition sr_spec_g (pc : Z) : Prop := forall G, gx_prog G -> sr_spec B MT G pc.
+Definition lp_spec_g (pc : Z) : Prop := forall G, gx_ok SEGS B G -> gx_rt G -> lp_spec B MT G MMAX pc.
+End w2g.
+(* ---------------------------------------------------------------- next_line's spec (lane W1, text agreed with
+   W3Checks 22:15Z-22:55Z).  The objects the out-stream contracts name, and the stream's bytes. *)
+Definition A_g_out : nat := A_OBJ 15.           (* g_out *)
+Definition A_g_gone : nat := A_OBJ 30.          (* g_gone *)
+(* The O bytes of the controller's stream at OUT, as the ASan view reads them. *)
+Definition ob_at (W : world SEGS) (mem : word -> option byte) (OUT : Z) (ob : list byte) : Prop :=
+forall i, 0 <= i < Z.of_nat (length ob) ->
+aview SEGS (w_H W) mem (OUT + i) = Some (bv_unsigned (nth (Z.to_nat i) ob (Z_to_bv 8 0))).
+(* next_line (0x85d4c, 69 instructions), proved by lane W1 (lib/A/W_next_line.v).
+   Plain contract: lib/Prog/next_line_c.v:16-52.  next_line(at, line, len) reads *at = A and g_nout = O; when
+   A < O it finds the first NUL of the O - A bytes at g_out + A with the memchr interceptor and writes the line's
+   start, its length and the new position through its three pointers.  The ASan build checks the shadow of each
+   8-byte cell.  Every cell is a real-stack cell inside the window [sp, sp + XO) of the journal (ajournal_gx's XO):
+   check_shape_event's own frame, or LLVMFuzzerTestOneInput's `at` (s1 + 192 / s1 + 208, s1 the aligned real sp,
+   0x840f4) reached through check_no_loss / check_shape_ends.  As in the plain contract (disjoint_from W out O),
+   the stream lies outside the window whatever A is (the A = O path writes the frame too); memchr (the shared
+   lib/Rt/MemchrDef.v amemchr_realizesM) reads the O - A bytes from g_out + A, and their visibility is ob_at's. *)
+Definition NL_FRAME : Z := 64.
+Definition NL_STK : Z := NL_FRAME + 2 * ESTACK.
+Definition nl_cells (PA PL PN : Z) : list (Z * Z) := [(PA, PA + 8); (PL, PL + 8); (PN, PN + 8)].
+Section w1n.
+Variable B : asyms.
+Definition nl_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(XO PA PL PN A O OUT : Z) (ob : list byte) : world SEGS -> config -> Prop :=
+fun W' c' => exists regs' mem' md',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+@ajournal_gx _ SK SEGS B [] XO (nl_cells PA PL PN) NL_STK (spZ regs) [] ly S W mem md [] ly S W' mem' md' 0 /\
+aregs_preserved regs regs' /\ W' = W /\
+(* every present byte stays present (callers store to their globals after the call: check_no_loss's
+   inlined list_drop), as lfind_post; stronger than W2's apres_kept *)
+(forall a, apresent (w_H W) mem a -> apresent (w_H W') mem' a) /\
+(* nothing outside its stack window and the three cells changes (memchr writes only its scratch) *)
+(forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - NL_STK <= a < spZ regs + XO) ->
+  ~ inFP (nl_cells PA PL PN) a -> aview SEGS (w_H W') mem' a = aview SEGS (w_H W) mem a) /\
+val_mem SEGS (mrestrict (w_H W') mem') (VAL A_g_nout) 8 O /\
+val_mem SEGS (mrestrict (w_H W') mem') (VAL A_g_out) 8 OUT /\
+ob_at W' mem' OUT ob /\
+((A = O /\ getr regs' 10 = w64 0 /\
+  forall a, inFP (nl_cells PA PL PN) a -> aview SEGS (w_H W') mem' a = aview SEGS (w_H W) mem a) \/
+ (exists ln, A < O /\ next_line_c.first_line ob A ln /\ getr regs' 10 = w64 1 /\
+  val_mem SEGS (mrestrict (w_H W') mem') PA 8 (A + Z.of_nat (length ln) + 1) /\
+  val_mem SEGS (mrestrict (w_H W') mem') PL 8 (OUT + A) /\
+  val_mem SEGS (mrestrict (w_H W') mem') PN 8 (Z.of_nat (length ln)))).
+Definition nl_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch XO PA PL PN A O OUT ob,
+afn_pre SEGS B NL_STK ly S W regs mem md ch ->
+0 <= XO -> XO mod 16 = 0 -> spZ regs + XO <= ly_top ly ->
+(forall a, spZ regs <= a < spZ regs + XO -> apresent (w_H W) mem a) ->
+getr regs 10 = w64 PA -> getr regs 11 = w64 PL -> getr regs 12 = w64 PN ->
+PA mod 8 = 0 -> PL mod 8 = 0 -> PN mod 8 = 0 ->
+spZ regs <= PA -> PA + 8 <= spZ regs + XO -> spZ regs <= PL -> PL + 8 <= spZ regs + XO ->
+spZ regs <= PN -> PN + 8 <= spZ regs + XO ->
+(PA + 8 <= PL \/ PL + 8 <= PA) -> (PA + 8 <= PN \/ PN + 8 <= PA) -> (PL + 8 <= PN \/ PN + 8 <= PL) ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF PA 8 ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF PL 8 ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF PN 8 ->
+val_mem SEGS (mrestrict (w_H W) mem) PA 8 A ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_nout) 8 O ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_out) 8 OUT ->
+Z.of_nat (length ob) = O -> ob_at W mem OUT ob ->
+0 <= A <= O ->
+(* O < 2^32: the length bound of the shared memchr text (lib/Rt/MemchrDef.v amemchr_realizesM: n < 2^32); the
+   stream one operation sends is at most 33,488,385 bytes, g_capout <= OUT_MAX (ACfn_cf.v) *)
+(0 < O -> 0 < OUT /\ OUT + O <= 2 ^ 63 /\ O < 2 ^ 32 /\
+  (forall a, OUT <= a < OUT + O -> ~ (spZ regs - NL_STK <= a < spZ regs + XO))) ->
+(A < O -> In (Z_to_bv 8 0) (skipn (Z.to_nat A) ob) /\ amem_range OUT (O + 8) /\
+  range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF OUT O /\ shadow_hull_vis (aview SEGS (w_H W) mem) OUT O /\
+  rom_view SEGS W mem) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (nl_post regs ly S W mem md XO PA PL PN A O OUT ob).
+End w1n.
+(* ---- The harness's checks (lane W3): check_shape_event; the contracts of check_shape_ends and check_no_loss are at
+   the end of this file (Sections w3e and w3n), moved there from their walk files. ---- *)
+Section w3.
+Variable B : asyms.
+(* check_shape_event (0x85fa0, 32 instructions).
+   Plain contract: lib/Prog/check_shape_event_c.v:13-41.  check_shape_event(event) reads g_gone; when the
+   controller went it checks that nothing was read (check_shape_done(0)); else it takes the stream's first line
+   with next_line and aborts unless it is the event: same length (strlen) and same bytes (bcmp); then
+   check_shape_done(at).  The functional half is the plain one: (gone = 1 and the stream is empty) or (gone = 0
+   and the stream is the event and its NUL).  The memory half adds what the two interceptors and next_line's
+   memchr need of the event and of the stream: visible, outside this function's stack window, addressable
+   shadow, and the 8-byte tail strlen reads past the event's NUL. *)
+Definition CSE_FRAME : Z := 48.
+Definition CSE_STK : Z := CSE_FRAME + NL_STK.
+Definition cse_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch EV e gone O OUT ob,
+afn_pre SEGS B CSE_STK ly S W regs mem md ch ->
+getr regs 10 = w64 EV ->
+~ In (Z_to_bv 8 0) e -> ob_at W mem EV (e ++ [Z_to_bv 8 0]) ->
+0 < EV -> EV < alloc_ceiling -> EV + Z.of_nat (length e) + 1 <= 2 ^ 63 -> Z.of_nat (length e) + 1 < 2 ^ 32 ->
+(forall a, EV <= a <= EV + Z.of_nat (length e) -> ~ (spZ regs - CSE_STK <= a < spZ regs)) ->
+amem_range EV (Z.of_nat (length e) + 1) -> amem_range EV 8 ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF EV (Z.of_nat (length e) + 1) ->
+shadow_hull_vis (aview SEGS (w_H W) mem) EV (Z.of_nat (length e) + 1) ->
+(forall a, EV + Z.of_nat (length e) < a < EV + Z.of_nat (length e) - (EV + Z.of_nat (length e)) mod 8 + 8 ->
+  aview SEGS (w_H W) mem a <> None /\ ~ (spZ regs - CSE_STK <= a < spZ regs)) ->
+rom_view SEGS W mem ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_gone) 1 gone -> (gone = 0 \/ gone = 1) ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_nout) 8 O ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_out) 8 OUT ->
+Z.of_nat (length ob) = O -> ob_at W mem OUT ob ->
+(0 < O -> 0 < OUT /\ OUT + O + 8 <= 2 ^ 63 /\ O < 2 ^ 32 /\ amem_range OUT (O + 8) /\
+  range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF OUT O /\ shadow_hull_vis (aview SEGS (w_H W) mem) OUT O /\
+  (forall a, OUT <= a < OUT + O -> aview SEGS (w_H W) mem a <> None /\ ~ (spZ regs - CSE_STK <= a < spZ regs))) ->
+((gone = 1 /\ O = 0) \/ (gone = 0 /\ ob = e ++ [Z_to_bv 8 0])) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (aleaf_post B CSE_STK regs ly S W mem md (fun _ => True)).
+End w3.
+(* ---------------------------------------------------------------- lane W1's published call specs.
+   list_find and list_drop, in the agreed G-parametric form (W4's shapes, named by a Theorem Labs lane 22:20Z).
+   Their model is W_rep's: the list at LA is `alist_at B ly S W mem LA l lines` with l : hlist, whose
+   records hl_recs l are (address, bytes) pairs.  Plain contracts: lib/Prog/list_find_c.v:11-45 and
+   lib/Prog/list_drop_c.v (over the plain allocator interface). *)
+Section w1.
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable G : list (Z * Z).
+(* list_find (0x85e60, 80 instructions).  It reads l->n and l->v, then for each record compares its length
+   with a2 and, when they agree, its bytes with the bcmp interceptor; it returns the first index whose text
+   is the a2 bytes at a1, or -1.  It writes nothing: the journal's ly S W are the ones it was called with,
+   and every byte outside its own frame is the byte it was called with.  It calls no program function and
+   no allocator entry; its one runtime site is bcmp. *)
+Definition LFIND_FRAME : Z := 80.
+Definition LFIND_STK : Z := LFIND_FRAME + 2 * ESTACK.
+Definition lfind_match (l : HarnessRep.hlist) (sb : list byte) (j : nat) : Prop :=
+(j < length (HarnessRep.hl_recs l))%nat /\ snd (nth j (HarnessRep.hl_recs l) (0, [])) = sb /\
+(forall k, (k < j)%nat -> snd (nth k (HarnessRep.hl_recs l) (0, [])) <> sb).
+Definition lfind_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(l : HarnessRep.hlist) (sb : list byte) : world SEGS -> config -> Prop :=
+fun W' c' => W' = W /\ exists regs' mem' md',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+@ajournal_gx _ SK SEGS B G 0 [] LFIND_STK (spZ regs) [] ly S W mem md [] ly S W' mem' md' 0 /\
+aregs_preserved regs regs' /\
+(forall a, apresent (w_H W) mem a -> apresent (w_H W') mem' a) /\
+(forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - LFIND_STK <= a < spZ regs) ->
+ aview SEGS (w_H W') mem' a = aview SEGS (w_H W) mem a) /\
+((exists j, lfind_match l sb j /\ getr regs' 10 = w64 (Z.of_nat j)) \/
+ ((forall k, (k < length (HarnessRep.hl_recs l))%nat -> snd (nth k (HarnessRep.hl_recs l) (0, [])) <> sb) /\
+  getr regs' 10 = Z_to_bv 64 (-1))).
+Definition lfind_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch LA l lines src sb,
+afn_pre SEGS B LFIND_STK ly S W regs mem md ch ->
+getr regs 10 = w64 LA -> getr regs 11 = w64 src -> getr regs 12 = w64 (Z.of_nat (length sb)) ->
+alist_at B ly S W mem LA l lines ->
+(* the list head is a global (or a field of one): 8-aligned, addressable shadow, off this frame *)
+LA mod 8 = 0 -> 4096 <= LA -> LA + 16 <= kLowMemEnd ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF LA 16 ->
+(forall a, LA <= a < LA + 16 -> ~ (spZ regs - LFIND_STK <= a < spZ regs)) ->
+(* the bytes bcmp reads at a1 *)
+0 <= src -> src + Z.of_nat (length sb) <= 2 ^ 63 -> Z.of_nat (length sb) < 2 ^ 32 ->
+(forall i, 0 <= i < Z.of_nat (length sb) ->
+ aview SEGS (w_H W) mem (src + i) = Some (bv_unsigned (nth (Z.to_nat i) sb (Z_to_bv 8 0)))) ->
+(forall a, src <= a < src + Z.of_nat (length sb) -> ~ (spZ regs - LFIND_STK <= a < spZ regs)) ->
+amem_range src (Z.of_nat (length sb)) ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF src (Z.of_nat (length sb)) ->
+(0 < Z.of_nat (length sb) -> shadow_hull_vis (aview SEGS (w_H W) mem) src (Z.of_nat (length sb))) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (lfind_post regs ly S W mem md l sb).
+(* list_drop (0x85814, 60 instructions).  list_drop(l, i) frees the text of record i through the allocator
+   (the GUIDE's allocator parameter, afree_cf_rule, not a bare afree), moves the records after it down with
+   the memmove intrinsic, and stores n - 1.  It writes l->n and the vector's bytes: the vector is a heap
+   block, l is a global, so the journal is ajournal_gx with G containing the list head's 16 bytes.  Its
+   post is W_rep's alist_at at the dropped list. *)
+Definition LDROP_FRAME : Z := 48.   (* 0x85814 addi sp,sp,-48; ra and s0..s3 at 40..8 *)
+Definition LDROP_STK : Z := LDROP_FRAME + ASTACK.
+Definition ldrop_list (l : HarnessRep.hlist) (i : nat) : HarnessRep.hlist :=
+HarnessRep.HL (HarnessRep.hl_v l) (HarnessRep.hl_cap l) (firstn i (HarnessRep.hl_recs l) ++ skipn (S i) (HarnessRep.hl_recs l))
+(HarnessRep.text_rec (last (HarnessRep.hl_recs l) (0, [])) ++ HarnessRep.hl_junk l).
+Definition ldrop_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(LA : Z) (l : HarnessRep.hlist) (lines : bool) (i : nat) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+@ajournal_gx _ SK SEGS B G 0 [] LDROP_STK (spZ regs)
+[(HarnessRep.hl_v l, HarnessRep.hl_v l + AREC * HarnessRep.hl_cap l);
+ (fst (nth i (HarnessRep.hl_recs l) (0, [])),
+  fst (nth i (HarnessRep.hl_recs l) (0, [])) + req_size (Z.of_nat (length (snd (nth i (HarnessRep.hl_recs l) (0, [])))) + 1))]
+ly S W mem md [] ly' S' W' mem' md' 1 /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+(* errno's view is kept, so a caller keeps its own errno clause across the call (the same conjunct as lib/B's
+   ldrop_post, where list_free calls list_drop) *)
+(forall j, 0 <= j < 4 -> aview SEGS (w_H W') mem' (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j)) /\
+alist_at B ly' S' W' mem' LA (ldrop_list l i) lines /\
+(* the text of record i is the one block that went *)
+(exists b1 b2, ablocks B ly S = b1 ++ (fst (nth i (HarnessRep.hl_recs l) (0, [])),
+ Z.of_nat (length (snd (nth i (HarnessRep.hl_recs l) (0, [])))) + 1) :: b2 /\ ablocks B ly' S' = b1 ++ b2) /\
+mo_le MT S S' (mo_free MT).
+Definition ldrop_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch LA l lines i,
+afn_pre SEGS B LDROP_STK ly S W regs mem md ch ->
+getr regs 10 = w64 LA -> getr regs 11 = w64 (Z.of_nat i) ->
+alist_at B ly S W mem LA l lines ->
+(i < length (HarnessRep.hl_recs l))%nat ->
+LA mod 8 = 0 -> 4096 <= LA ->
+(* the memmove intrinsic takes n < 2^32; the harness's largest list moves at most 2^29 - 16 bytes *)
+AREC * (HarnessRep.hl_n l - 1 - Z.of_nat i) < 2 ^ 32 ->
+azs B LA 16 ->
+(forall a, LA <= a < LA + 16 -> inG G a /\ ~ (spZ regs - LDROP_STK <= a < spZ regs)) ->
+(forall a, HarnessRep.hl_v l <= a < HarnessRep.hl_v l + AREC * HarnessRep.hl_cap l -> ~ (spZ regs - LDROP_STK <= a < spZ regs)) ->
+mo_ok MT S (mo_free MT) ->
+(* the __asan_memmove intrinsic's prologue reads .rodata (0x103d0) *)
+rom_view SEGS W mem ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (ldrop_post regs ly S W mem md LA l lines i).
+End w1.
+(* The G-generic forms (W2's convention, Section w2g): a caller instantiates the callee at the callee's own
+   globals and lifts the journal with ajournal_gx_G_mono. *)
+Section w1g.
+Variable B : asyms.
+Definition lfind_spec_g (pc : Z) : Prop := forall G, gx_ok SEGS B G -> gx_rt B G -> lfind_spec B G pc.
+(* No ldrop_spec_g: pb_list_drop's ROMS needs ROM bytes off G, gx_ok does not give it; callers fix G. *)
+End w1g.
+End b.
+End a.
+
+(* ---- send_line (fuzz_reply.asan 0x82734, 135 instructions) and drain (0x830dc, 834 instructions), lane W7. ----
+   The memory half is W_journal.v's ajournal_gx (program globals G, no out-parameter) and the allocator's
+   live-state meter MT (W_journal.v arealloc_cf_rule: mo_ok before, mo_le after, forced success).  The functional
+   half is the plain proof's: lib/Prog/send_line_b_c.v (send_off / send_live, send_line_cap) and
+   lib/Prog/drain_b_c.v, over W_rep.v's representation (aout_at, arelay_at, aentry_ok, asrc_at).  The Prog files
+   are Required, not Imported, where they Import lib/Lib (whose getr / mkst / seg_rom differ from YK11's). *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YI00 YC5d.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import HarnessRep RelayRep gestures_end_b_c.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require send_line_c send_line_b_c.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import RelayModel RelayKeys.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require RelayRunT drain_b_c.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_rep W_journal W_shadow_pin.
+Section s7. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable MMAX : Z.
+Variable RG : rep_globals.
+
+(* send_line (line, len) (relay.c:66-86 with fuzz_send inlined, fuzz_reply.c:278-313).
+   Frame 128 bytes; it calls __errno_location, realloc and __asan_memcpy, so its stack budget is the frame plus
+   the allocator's scratch.  It stores to g_client_broken, g_send_eintr, g_nout, g_capout, g_out and errno. *)
+Definition SL_FRAME : Z := 128.
+Definition SL_STK : Z := SL_FRAME + ASTACK.
+Definition G_SL : list (Z * Z) :=
+[(rg_client_broken RG, 1); (rg_send_eintr RG, 1); (rg_nout RG, 8); (rg_capout RG, 8); (rg_out RG, 8); (as_errno B, 4)].
+(* The plain model (Prog/send_line_c.v send_off / send_live, Prog/send_line_b_c.v:61-139): off = client closed,
+   broken or len = 0; live = not off and not dead.  An EINTR round clears g_send_eintr and sets errno to EINTR; a dead
+   controller sets errno to EPIPE and g_client_broken. *)
+Definition sl_live (c : ctl) (len : Z) : bool := send_line_c.send_live (ct_cl c) (ct_br c) (ct_dd c) len.
+Definition sl_ctl (c : ctl) (len : Z) : ctl :=
+let off := send_line_c.send_off (ct_cl c) (ct_br c) len in
+CTL (ct_cl c) (if off then ct_br c else ct_dd c) (ct_dd c) (if off then ct_ei c else 0)
+(if off then ct_ev c else if ct_dd c =? 1 then send_line_c.EPIPE_V else if ct_ei c =? 1 then send_line_c.EINTR_V else ct_ev c).
+Definition sl_O (c : ctl) (O Bl : list byte) : list byte := if sl_live c (Z.of_nat (length Bl)) then O ++ Bl else O.
+Definition sl_no (c : ctl) (no len : Z) : Z := if sl_live c len then no + len else no.
+Definition sl_cap (c : ctl) (mx no cap len : Z) : Z := send_line_b_c.send_line_cap (sl_live c len) mx no cap len.
+(* What the rounds charge the allocator's meter: one realloc (mo_malloc of the new size + mo_free) per growth,
+   the rounds of Prog/send_line_b_c.v sl_run. *)
+Fixpoint sl_cost_run (fuel : nat) (mx no cap rem : Z) : Z :=
+match fuel with
+| O => 0
+| S f =>
+  if rem <=? 0 then 0 else
+  let n := if negb (mx =? 0) && (mx <? rem) then mx else rem in
+  if cap <? no + n then mo_malloc MT ((no + n) * 2) + mo_free MT + sl_cost_run f mx (no + n) ((no + n) * 2) (rem - n)
+  else sl_cost_run f mx (no + n) cap (rem - n)
+end.
+Definition sl_cost (c : ctl) (mx no cap len : Z) : Z :=
+if sl_live c len then sl_cost_run (Z.to_nat len) mx no cap len else 0.
+(* What the rounds ask of the allocator's bounds: the sizes of the growth requests (each (no + n) * 2), summed
+   (sl_alloc: what the live bytes may grow by) and their largest (sl_maxr: the request bound).  A send that does
+   not grow g_out asks nothing; this is what a caller's own request trace bounds (Prog/send_line_b_c.v sl_run).
+   A caller that already bounds the final capacity (sl_cap < MMAX, blocks_bytes S + 2 * sl_cap <= LIVE_MAX) gets
+   these from sl_maxr_le_cap and sl_alloc_le_2cap below. *)
+Fixpoint sl_alloc_run (fuel : nat) (mx no cap rem : Z) : Z :=
+match fuel with
+| O => 0
+| S f =>
+  if rem <=? 0 then 0 else
+  let n := if negb (mx =? 0) && (mx <? rem) then mx else rem in
+  if cap <? no + n then (no + n) * 2 + sl_alloc_run f mx (no + n) ((no + n) * 2) (rem - n)
+  else sl_alloc_run f mx (no + n) cap (rem - n)
+end.
+Fixpoint sl_max_run (fuel : nat) (mx no cap rem : Z) : Z :=
+match fuel with
+| O => 0
+| S f =>
+  if rem <=? 0 then 0 else
+  let n := if negb (mx =? 0) && (mx <? rem) then mx else rem in
+  if cap <? no + n then Z.max ((no + n) * 2) (sl_max_run f mx (no + n) ((no + n) * 2) (rem - n))
+  else sl_max_run f mx (no + n) cap (rem - n)
+end.
+Fixpoint sl_fin_run (fuel : nat) (mx no cap rem : Z) : Z :=
+match fuel with
+| O => cap
+| S f =>
+  if rem <=? 0 then cap else
+  let n := if negb (mx =? 0) && (mx <? rem) then mx else rem in
+  if cap <? no + n then sl_fin_run f mx (no + n) ((no + n) * 2) (rem - n)
+  else sl_fin_run f mx (no + n) cap (rem - n)
+end.
+Definition sl_alloc (c : ctl) (mx no cap len : Z) : Z :=
+if sl_live c len then sl_alloc_run (Z.to_nat len) mx no cap len else 0.
+Definition sl_maxr (c : ctl) (mx no cap len : Z) : Z :=
+if sl_live c len then sl_max_run (Z.to_nat len) mx no cap len else 0.
+(* send_line's requests: the plain model's trace (Prog/send_line_b_c.v send_line_tr, the growth chain of g_out); the
+   names play no part in the sizes, so j = 0 and adr0 (as ge_tr below) *)
+Definition sl_tr (c : ctl) (mx no cap len : Z) :=
+send_line_b_c.send_line_tr (sl_live c len) mx no cap len 0 RelayRunF.adr0.
+Lemma sl_run_fin : forall fuel mx no cap rem j o,
+fst (snd (send_line_b_c.sl_run fuel mx no cap rem j o)) = sl_fin_run fuel mx no cap rem.
+Proof.
+induction fuel as [|f IH]; intros mx no cap rem j o; cbn; [reflexivity|].
+destruct (rem <=? 0); [reflexivity|].
+destruct (cap <? no + _); cbn; apply IH.
+Qed.
+Lemma sl_fin_ge : forall fuel mx no cap rem, 0 <= cap -> cap <= sl_fin_run fuel mx no cap rem.
+Proof.
+induction fuel as [|f IH]; intros mx no cap rem Hc; cbn; [lia|].
+destruct (rem <=? 0); [lia|].
+destruct (cap <? no + _) eqn:E; [apply Z.ltb_lt in E|].
+- pose proof (IH mx (no + (if negb (mx =? 0) && (mx <? rem) then mx else rem))
+    ((no + (if negb (mx =? 0) && (mx <? rem) then mx else rem)) * 2)
+    (rem - (if negb (mx =? 0) && (mx <? rem) then mx else rem)) ltac:(lia)). lia.
+- apply IH. exact Hc.
+Qed.
+Lemma sl_alloc_run_le : forall fuel mx no cap rem, 0 <= cap ->
+sl_alloc_run fuel mx no cap rem <= 2 * sl_fin_run fuel mx no cap rem - 2 * cap.
+Proof.
+induction fuel as [|f IH]; intros mx no cap rem Hc; cbn; [lia|].
+destruct (rem <=? 0); [lia|].
+set (n := if negb (mx =? 0) && (mx <? rem) then mx else rem).
+destruct (cap <? no + n) eqn:E; [apply Z.ltb_lt in E|].
+- pose proof (IH mx (no + n) ((no + n) * 2) (rem - n) ltac:(lia)). lia.
+- apply IH. exact Hc.
+Qed.
+Lemma sl_max_run_le : forall fuel mx no cap rem, 0 <= cap ->
+0 <= sl_max_run fuel mx no cap rem <= sl_fin_run fuel mx no cap rem.
+Proof.
+induction fuel as [|f IH]; intros mx no cap rem Hc; cbn; [lia|].
+destruct (rem <=? 0); [lia|].
+set (n := if negb (mx =? 0) && (mx <? rem) then mx else rem).
+destruct (cap <? no + n) eqn:E; [apply Z.ltb_lt in E|].
+- pose proof (IH mx (no + n) ((no + n) * 2) (rem - n) ltac:(lia)).
+  pose proof (sl_fin_ge f mx (no + n) ((no + n) * 2) (rem - n) ltac:(lia)). lia.
+- apply IH. exact Hc.
+Qed.
+Lemma sl_cap_fin : forall c mx no cap len,
+sl_cap c mx no cap len = if sl_live c len then sl_fin_run (Z.to_nat len) mx no cap len else cap.
+Proof.
+intros c mx no cap len. unfold sl_cap, send_line_b_c.send_line_cap. destruct (sl_live c len); [apply sl_run_fin | reflexivity].
+Qed.
+Lemma sl_maxr_le_cap : forall c mx no cap len, 0 <= cap -> 0 <= sl_maxr c mx no cap len <= sl_cap c mx no cap len.
+Proof.
+intros c mx no cap len Hc. rewrite sl_cap_fin. unfold sl_maxr. destruct (sl_live c len); [apply sl_max_run_le; exact Hc | lia].
+Qed.
+Lemma sl_alloc_le_2cap : forall c mx no cap len, 0 <= cap -> sl_alloc c mx no cap len <= 2 * sl_cap c mx no cap len.
+Proof.
+intros c mx no cap len Hc. rewrite sl_cap_fin. unfold sl_alloc. destruct (sl_live c len); [|lia].
+pose proof (sl_alloc_run_le (Z.to_nat len) mx no cap len Hc). lia.
+Qed.
+(* Where the line may sit: inside a live block other than g_out's, or in the image off the allocator's statics with
+   its exact bytes addressable (ashp, W_shadow_pin.v: range_addressable over [line, line + len) plus the shadow hull,
+   in every AR state; a string literal such as gesture_end's " end" has a PARTIAL last granule and a redzone, so a
+   zero-shadow range never covers it - the old text's as_zero_shadow conjunct was false for it).  The not-static half
+   is what lets the line's bytes survive a growth round's realloc: the allocator rule keeps an image byte only off
+   as_owned_static (acall_kept, YCbq.v:830). *)
+Definition sl_line_ok (ly : alayout) (S : astate) (out line len : Z) : Prop :=
+len = 0 \/
+(exists q m, In (q, m) (ablocks B ly S) /\ q <> out /\ q <= line /\ line + len <= q + req_size m) \/
+((forall a, line <= a < line + len -> in_img SEGS a) /\ ashp B line len /\
+ (forall a, line <= a < line + len -> ~ Exists (in_zr a) (as_owned_static B))).
+Definition sl_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(c : ctl) (O : list byte) (mx no cap out : Z) (Bl : list byte) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' k out',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx SEGS B G_SL 0 [] SL_STK (spZ regs) (ablocks_fp (aout_blks cap out)) ly S W mem md [] ly' S' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+mo_le MT S S' (sl_cost c mx no cap (Z.of_nat (length Bl))) /\
+(exists rest, Permutation (ablocks B ly S) (aout_blks cap out ++ rest) /\
+ Permutation (ablocks B ly' S') (aout_blks (sl_cap c mx no cap (Z.of_nat (length Bl))) out' ++ rest)) /\
+aout_at B RG ly' S' W' mem' (sl_ctl c (Z.of_nat (length Bl))) (sl_O c O Bl) mx
+  (sl_no c no (Z.of_nat (length Bl))) (sl_cap c mx no cap (Z.of_nat (length Bl))) out' /\
+(* an OFF send returns before it touches g_out (send_line_c.v), so g_out's block is the old one; without this an
+   off send's post admits another block of the same size (rg_out is in G_SL, so no journal keeps the cell) -
+   found by DrLinea at drain's DLS rebuild, whose DMEM needs out1 = dxout cx when dlive cx = false *)
+(sl_live c (Z.of_nat (length Bl)) = false -> out' = out).
+Definition sl_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch c O mx no cap out line Bl,
+afn_pre SEGS B SL_STK ly S W regs mem md ch ->
+getr regs 10 = w64 line -> getr regs 11 = w64 (Z.of_nat (length Bl)) ->
+aout_at B RG ly S W mem c O mx no cap out ->
+rom_view SEGS W mem ->
+garr8 SEGS (arm W mem) line (bzs Bl) -> 0 <= line -> line + Z.of_nat (length Bl) < 2 ^ 63 ->
+sl_line_ok ly S out line (Z.of_nat (length Bl)) ->
+(* W7's premise (a working branch 14d97d478bb): the line is no byte of G_SL, so send_line's own writes to
+   its globals cannot move it.  Taken verbatim so that the union merge converges. *)
+(forall a, line <= a < line + Z.of_nat (length Bl) -> ~ inG G_SL a) ->
+sl_maxr c mx no cap (Z.of_nat (length Bl)) < MMAX ->
+blocks_bytes S + tr_peak (sl_tr c mx no cap (Z.of_nat (length Bl))) <= LIVE_MAX ->
+mo_ok MT S (sl_cost c mx no cap (Z.of_nat (length Bl))) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (sl_post regs ly S W mem md c O mx no cap out Bl).
+
+(* drain (s) (relay.c:171-224 with gesture_seen inlined, and the harness's fuzz_recv / reference_feed / list_drop
+   inlined, fuzz_reply.c:240-276, 217-238, 153-158).  Frame 336 bytes; its deepest callee is send_line
+   (list_push's frame is 96).  It stores to g_s[j] (its harness source: eintr, pending, pending_off, npartial,
+   overlong) and errno, and through send_line to G_SL. *)
+Definition DRAIN_FRAME : Z := 336.
+Definition DRAIN_STK : Z := DRAIN_FRAME + SL_STK.
+Definition G_DR : list (Z * Z) := (rg_s RG, 4 * ASRC) :: G_SL.
+(* The allocator's meter over the plain model's request trace (Prog/RelayRunT.v rev): an allocation is charged as
+   a realloc (mo_malloc + mo_free), a free as mo_free; the largest request and the bytes requested in all. *)
+Definition tr_cost {P : Type} (tr : list (RelayRunT.rev P)) : Z :=
+fold_right (fun ev acc =>
+  match ev with
+  | RelayRunT.RMalloc n => mo_malloc MT n + mo_free MT
+  | RelayRunT.RFree _ _ => mo_free MT
+  | RelayRunT.RRealloc _ n _ => mo_malloc MT n + mo_free MT
+  end + acc) 0 tr.
+Definition tr_alloc {P : Type} (tr : list (RelayRunT.rev P)) : Z :=
+fold_right (fun ev acc =>
+  match ev with
+  | RelayRunT.RMalloc n => n
+  | RelayRunT.RFree _ _ => 0
+  | RelayRunT.RRealloc _ n _ => n
+  end + acc) 0 tr.
+Definition tr_max {P : Type} (tr : list (RelayRunT.rev P)) : Z :=
+fold_right (fun ev acc =>
+  match ev with
+  | RelayRunT.RMalloc n => Z.max n acc
+  | RelayRunT.RFree _ _ => acc
+  | RelayRunT.RRealloc _ n _ => Z.max n acc
+  end) 0 tr.
+(* The other three harness sources: a slot drain's scan (source_of) passes over, closed or another fd.  The fd test
+   is the machine's: `beq a1, a4` at 0x832dc compares the low 32 bits, and val_mem of 4 bytes pins only f mod 2^32. *)
+Definition aothers_at (W : world SEGS) (mem : word -> option byte) (j : nat) (fd : Z) : Prop :=
+forall i, (i < 4)%nat -> i <> j -> exists f o,
+val_mem SEGS (arm W mem) (rg_s RG + ASRC * Z.of_nat i) 4 f /\
+val_mem SEGS (arm W mem) (rg_s RG + ASRC * Z.of_nat i + 4) 4 o /\ (o = 0 \/ f mod 2 ^ 32 <> fd mod 2 ^ 32).
+(* The plain model of one drain (Prog/drain_b_c.v): the lines the pending stream completes, their bytes with NULs,
+   whether the output is live for them, and the state and request trace drain_run leaves. *)
+Definition dr_lines (h : hsrc) : list (list Z) := lines (hs_state h) (bzs (pending_stream h)).
+Definition dr_tot (h : hsrc) : Z := Z.of_nat (length (with_nul (dr_lines h))).
+Definition dr_live (c : ctl) (h : hsrc) : bool := sl_live c (dr_tot h).
+Definition dr_fin (c : ctl) (mx no cap : Z) (e : rentry) (h : hsrc) : drain_b_c.dstate :=
+drain_b_c.drain_fin (dr_live c h) mx no cap e h.
+Definition dr_tr (c : ctl) (mx no cap : Z) (e : rentry) (h : hsrc) :=
+drain_b_c.drain_tr (dr_live c h) mx no cap e h 0 drain_b_c.dadr0.
+Definition dr_cost (c : ctl) (mx no cap : Z) (e : rentry) (h : hsrc) : Z := tr_cost (dr_tr c mx no cap e h).
+Definition dr_ctl (c : ctl) (h : hsrc) (ev : Z) : ctl :=
+let off := send_line_c.send_off (ct_cl c) (ct_br c) (dr_tot h) in
+CTL (ct_cl c) (if off then ct_br c else ct_dd c) (ct_dd c) (if off then ct_ei c else 0) ev.
+Definition dr_fp (SA : Z) (e : rentry) (h : hsrc) (cap out : Z) : list (Z * Z) :=
+(SA, SA + AENT) :: ablocks_fp (aentry_blks e ++ asrc_blks h ++ aout_blks cap out).
+Definition dr_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(SA HA : Z) (e : rentry) (h : hsrc) (c : ctl) (O : list byte) (mx no cap out : Z) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' k (e' : rentry) (h' : hsrc) (out' ev' : Z) (LB : list byte) rest,
+let fin := dr_fin c mx no cap e h in
+let live := dr_live c h in
+let cap' := if live then drain_b_c.ds_ocap fin else cap in
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx SEGS B G_DR 0 [] DRAIN_STK (spZ regs) (dr_fp SA e h cap out) ly S W mem md [] ly' S' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+mo_le MT S S' (dr_cost c mx no cap e h) /\
+Permutation (ablocks B ly S) (aentry_blks e ++ asrc_blks h ++ aout_blks cap out ++ rest) /\
+Permutation (ablocks B ly' S') (aentry_blks e' ++ asrc_blks h' ++ aout_blks cap' out' ++ rest) /\
+(* the relay's entry *)
+garr8 SEGS (arm W' mem') SA (bzs (entry_bytes e')) /\ awr W' mem' SA AENT /\ aentry_ok B ly' S' W' mem' e' /\
+re_fd e' = re_fd e /\ re_eof e' = (if hs_closed h =? 1 then 1 else re_eof e) /\ 0 < re_cap e' /\
+re_cap e' = drain_b_c.ds_cap fin /\ bzs (re_U e') = drain_b_c.ds_u fin /\
+re_skip e' = (if drain_b_c.ds_skip fin then 1 else 0) /\
+drain_b_c.keys_texts (re_keys e') = drain_b_c.ds_H fin /\ drain_b_c.ent_ka e' = drain_b_c.ds_ka fin /\
+((re_hp e' = re_hp e /\ re_kh e' = re_kh e) \/ re_kh e' <= 2 ^ 30) /\
+NoDup (drain_b_c.keys_texts (re_keys e')) /\
+same_set (drain_b_c.keys_texts (re_keys e')) (upds (drain_b_c.keys_texts (re_keys e)) (dr_lines h)) /\
+(* the harness's source j, and the other three slots of g_s *)
+asrc_at B ly' S' W' mem' HA h' /\
+(forall a, rg_s RG <= a < rg_s RG + 4 * ASRC -> ~ (HA <= a < HA + ASRC) -> abyte_kept W mem W' mem' a) /\
+hl_cap (hs_expected h') = drain_b_c.ds_ecap fin /\
+hl_cap (hs_expected h') <= Z.max 8 (Z.max (hl_cap (hs_expected h)) (2 * hl_n (hs_expected h'))) /\
+hs_fd h' = hs_fd h /\ hs_closed h' = hs_closed h /\ hs_eintr h' = 0 /\
+hl_recs (hs_pending h') = [] /\ hs_off h' = 0 /\
+hl_v (hs_pending h') = hl_v (hs_pending h) /\ hl_cap (hs_pending h') = hl_cap (hs_pending h) /\
+hs_partial h' = hs_partial h /\
+hs_state h' = feed (hs_state h) (bzs (pending_stream h)) /\
+map snd (hl_recs (hs_expected h')) = map snd (hl_recs (hs_expected h)) ++ map (map (Z_to_bv 8)) (dr_lines h) /\
+firstn (length (hl_recs (hs_expected h))) (hl_recs (hs_expected h')) = hl_recs (hs_expected h) /\
+hs_held h' = hs_held h /\
+re_skip e' = hs_overlong h' /\ (re_skip e' = 0 -> bzs (re_U e') = bzs (hs_W h')) /\
+(* the controller's stream: every complete line sent, NUL-terminated, in order *)
+bzs LB = with_nul (dr_lines h) /\
+aout_at B RG ly' S' W' mem' (dr_ctl c h ev') (if live then O ++ LB else O) mx (if live then no + dr_tot h else no) cap' out'.
+Definition dr_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch (G SA : Z) (e : rentry) (j : nat) (h : hsrc) (c : ctl) (O : list byte) (mx no cap out : Z),
+let HA := rg_s RG + ASRC * Z.of_nat j in
+afn_pre SEGS B DRAIN_STK ly S W regs mem md ch ->
+getr regs 10 = w64 SA ->
+In (G, ATABLE) (ablocks B ly S) -> G <= SA -> SA + AENT <= G + ATABLE ->
+(* the entry pointer's alignment: image B's drain checks it on entry (0x832b4 `andi a0, a0, 7`, 0x832b8 `bnez` to
+   the ubsan alignment report); a slot pointer into the 16-aligned table has it *)
+SA mod 8 = 0 ->
+garr8 SEGS (arm W mem) SA (bzs (entry_bytes e)) -> awr W mem SA AENT -> aentry_ok B ly S W mem e ->
+(j < 4)%nat -> asrc_at B ly S W mem HA h -> aothers_at W mem j (re_fd e) ->
+hs_fd h = re_fd e -> re_skip e = hs_overlong h -> (re_skip e = 0 -> bzs (re_U e) = bzs (hs_W h)) ->
+aout_at B RG ly S W mem c O mx no cap out ->
+rom_view SEGS W mem ->
+(exists rest, Permutation (ablocks B ly S) ((G, ATABLE) :: aentry_blks e ++ asrc_blks h ++ aout_blks cap out ++ rest)) ->
+Z.of_nat (length (pending_stream h)) < 2 ^ 26 -> hl_cap (hs_expected h) < 2 ^ 26 ->
+re_nheld e + Z.of_nat (length (pending_stream h)) < 2 ^ 26 ->
+tr_max (dr_tr c mx no cap e h) < MMAX ->
+blocks_bytes S + tr_peak (dr_tr c mx no cap e h) <= LIVE_MAX ->
+mo_ok MT S (dr_cost c mx no cap e h) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (dr_post regs ly S W mem md SA HA e h c O mx no cap out).
+End s7.
+
+(* ---- relay_event (fuzz_reply.asan 0x826e4, 20 instructions), relay_add (0x82950, 183) and relay_finish (0x822ec,
+   154), lane W5.  The memory half is W_journal.v's ajournal_gx at the caller's G, which must hold the globals each
+   function writes; the functional half is the plain contracts lib/Prog/relay_event_b_c.v and relay_add_b_c.v over
+   W_rep.v's representation (alock_at, awake_at, arelay_at, aout_at). *)
+Section w5. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable MMAX : Z.
+Variable G : list (Z * Z).
+Variable RG : rep_globals.
+(* The allocator rules' caller-context table (W_journal.v Section hc, the _c rules: `In (raZ regsT :: spine ch) CTX`
+   at each allocator call). *)
+Variable CTX : list (list Z).
+
+(* relay_event (line) (relay.c:403-409): send_line (line, strlen (line) + 1) under g_lock; the unlock is a tail call.
+   Frame 32 bytes, deepest callee send_line.  It writes g_lock's lock word (through the mutex) and, through
+   send_line, G_SL.  The line e ++ NUL lies in a live block other than g_out's; the bytes after the NUL up to the
+   end of its 8-byte granule are visible (strlen's interceptor reads them, astrlen_realizes W_contract.v:234) - a
+   premise in that form, because op_event's line block is malloc(len + 1) and that granule tail lies past the
+   block's requested size, so no "inside the block" bound holds for it. *)
+Definition RE_FRAME : Z := 32.
+Definition RE_STK : Z := RE_FRAME + SL_STK.
+Definition re_len (e : list byte) : Z := Z.of_nat (length e) + 1.
+(* errno, deliberately NOT a "kept" conjunct here (nor in rf_post): relay_event reaches send_line, whose EINTR
+   round writes errno, so errno's four bytes are not kept.  Their VALUE is carried instead, by aout_at's
+   `val_mem (as_errno B) 4 (ct_ev c')` for the model's control state c' (sl_ctl / rf_ctl).  Only a function that
+   reaches no send_line may state errno kept - ra_post does (relay_add), as W2's lp / lf / sr posts do. *)
+Definition re_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(c : ctl) (O : list byte) (mx no cap out : Z) (e : list byte) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' k out',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+@ajournal_gx _ SK SEGS B G 0 [] RE_STK (spZ regs) (ablocks_fp (aout_blks cap out)) ly S W mem md [] ly' S' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+mo_le MT S S' (sl_cost MT c mx no cap (re_len e)) /\
+(exists rest, Permutation (ablocks B ly S) (aout_blks cap out ++ rest) /\
+ Permutation (ablocks B ly' S') (aout_blks (sl_cap c mx no cap (re_len e)) out' ++ rest)) /\
+aout_at B RG ly' S' W' mem' (sl_ctl c (re_len e)) (sl_O c O (e ++ [Z_to_bv 8 0])) mx
+  (sl_no c no (re_len e)) (sl_cap c mx no cap (re_len e)) out' /\
+alock_at RG W' mem' false.
+Definition re_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch c O mx no cap out line (e : list byte) q m,
+afn_pre SEGS B RE_STK ly S W regs mem md ch ->
+getr regs 10 = w64 line ->
+garr8 SEGS (arm W mem) line (bzs (e ++ [Z_to_bv 8 0])) -> ~ In (Z_to_bv 8 0) e ->
+In (q, m) (ablocks B ly S) -> q <> out -> q <= line ->
+line + re_len e <= q + req_size m ->
+(forall a, line + Z.of_nat (length e) < a < line + Z.of_nat (length e) - (line + Z.of_nat (length e)) mod 8 + 8 ->
+ aview SEGS (w_H W) mem a <> None) ->
+aout_at B RG ly S W mem c O mx no cap out ->
+alock_at RG W mem false -> rom_view SEGS W mem ->
+(forall a, rg_lock RG <= a < rg_lock RG + 12 -> inG G a) -> (forall a, inG (G_SL B RG) a -> inG G a) ->
+(forall a, rg_lock RG <= a < rg_lock RG + 12 -> ~ (as_errno B <= a < as_errno B + 4)) ->
+(* the room send_line asks (sl_spec's own premises at len := re_len e, C3's peak form): relay_event passes them straight
+   through.  No bound on the final capacity sl_cap: no caller holds a bound on g_capout (a Theorem Labs lane row C3) *)
+sl_maxr c mx no cap (re_len e) < MMAX ->
+blocks_bytes S + tr_peak (sl_tr c mx no cap (re_len e)) <= LIVE_MAX ->
+mo_ok MT S (sl_cost MT c mx no cap (re_len e)) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (re_post regs ly S W mem md c O mx no cap out e).
+
+(* relay_add (fd) (relay.c:410-433): nothing for fd < 0 (returns -1); else under g_lock a full table grows to 16
+   entries with realloc (only from the empty table: |es| < 4 <= 16), the entry fd, 0, ... is appended and g_nsrc
+   counts it; returns 0.  The wake byte is written to g_wake[1] only when it is >= 0, and it is -1 (awake_at).
+   Frame 128 bytes plus a 64-byte ASan fake frame (__asan_stack_malloc_0, class 0); the realloc's scratch is the
+   deepest.  It writes g_lock's lock word, g_nsrc, g_capsrc and g_src.  The realloc is the allocator's live-state
+   site rule (W_journal.v arealloc_cf_rule); its forced-success premise is the meter's mo_ok. *)
+Definition RA_FRAME : Z := 128.
+Definition RA_STK : Z := RA_FRAME + ASTACK.
+Definition arelay_empty (W : world SEGS) (mem : word -> option byte) : Prop :=
+val_mem SEGS (arm W mem) (rg_src RG) 8 0 /\ awr W mem (rg_src RG) 8 /\
+val_mem SEGS (arm W mem) (rg_nsrc RG) 4 0 /\ awr W mem (rg_nsrc RG) 4 /\
+val_mem SEGS (arm W mem) (rg_capsrc RG) 4 0 /\ awr W mem (rg_capsrc RG) 4.
+(* the relay before relay_add: no table yet (T = 0), or the table at T *)
+Definition ra_rel ly S (W : world SEGS) (mem : word -> option byte) (T : Z) (es : list rentry) : Prop :=
+(T = 0 /\ es = [] /\ arelay_empty W mem) \/ arelay_at B RG ly S W mem T es.
+(* the entry relay_add appends (memset to zero, then s->fd = fd) *)
+Definition ra_new (fd : Z) : rentry :=
+RE fd 0 0 (repeat (Z_to_bv 8 0) 4) 0 0 0 0 0 (repeat (Z_to_bv 8 0) 4) [] [] [].
+(* the bytes of live blocks it writes: the new entry, when the table exists *)
+Definition ra_FP (T : Z) (es : list rentry) : list (Z * Z) :=
+if T =? 0 then [] else [(T + AENT * Z.of_nat (length es), T + AENT * (Z.of_nat (length es) + 1))].
+Definition ra_cost (T : Z) : Z := if T =? 0 then mo_malloc MT ATABLE + mo_free MT else 0.
+Definition ra_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(fd T : Z) (es : list rentry) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' k,
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+@ajournal_gx _ SK SEGS B G 0 [] RA_STK (spZ regs) (ra_FP T es) ly S W mem md [] ly' S' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\ frames S' = frames S /\ mo_le MT S S' (ra_cost T) /\
+alock_at RG W' mem' false /\
+((fd < 0 /\ getr regs' 10 = w64 (-1) /\ ablocks B ly' S' = ablocks B ly S) \/
+ (0 <= fd /\ getr regs' 10 = w64 0 /\ exists T',
+   arelay_at B RG ly' S' W' mem' T' (es ++ [ra_new fd]) /\
+   ((T = 0 /\ Permutation (ablocks B ly' S') ((T', ATABLE) :: ablocks B ly S)) \/
+    (T <> 0 /\ T' = T /\ ablocks B ly' S' = ablocks B ly S)))) /\
+(* errno's four bytes are KEPT: relay_add reaches no send_line (no EINTR round), its allocator site's rule and
+   the lock / unlock / memset contracts keep them, and RA_G excludes them by ra_spec's premise.  (Unlike re_post
+   and rf_post, which carry errno's VALUE through aout_at, because send_line can change it there.) *)
+(forall i, 0 <= i < 4 -> aview SEGS (w_H W') mem' (as_errno B + i) = aview SEGS (w_H W) mem (as_errno B + i)).
+(* the globals relay_add writes, and the lock's two other words it keeps (half-open, inside the objects) *)
+Definition RA_G : list (Z * Z) :=
+[(rg_lock RG, 12); (rg_nsrc RG, 4); (rg_capsrc RG, 4); (rg_src RG, 8)].
+Definition ra_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch fd T es,
+afn_pre SEGS B RA_STK ly S W regs mem md ch -> spZ regs mod 32 = 0 ->
+count_cid 0 (frames S) < fs_frames 0 ->
+getr regs 10 = Z_to_bv 64 fd -> - 2 ^ 31 <= fd < 2 ^ 31 ->
+alock_at RG W mem false -> awake_at RG W mem -> rom_view SEGS W mem ->
+ra_rel ly S W mem T es ->
+(0 <= fd -> (length es < 4)%nat /\ ~ In fd (map re_fd es)) ->
+(forall a, inG RA_G a -> inG G a) ->
+(forall a, inG RA_G a -> ~ (as_errno B <= a < as_errno B + 4)) ->
+(0 <= fd -> T = 0 -> blocks_bytes S + ATABLE <= LIVE_MAX) ->
+(* the realloc's caller context, on the only path that reallocs: the call at pc + 0x148 returns to pc + 332
+   (0x82a9c - 0x82950), and relay_add's own frame record (sp, ra, s0) is on the chain the unwinder reads, which
+   needs room above sp for the caller's frame *)
+(0 <= fd -> T = 0 -> spZ regs + 16 < ly_top ly /\ In (pc + 332 :: raZ regs :: spine ch) CTX) ->
+mo_ok MT S (ra_cost T) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (ra_post regs ly S W mem md fd T es).
+End w5.
+(* The G-generic form (W2's convention, Section w2g above): a caller takes relay_add at G = RA_G RG, then lifts
+   with ajournal_gx_G_mono.  relay_event has no such form: re_spec needs G_SL inside G and G_SL holds errno's four
+   bytes, which gx_rt excludes, so a gx_rt-guarded re_spec_g could never be used; callers take re_spec directly. *)
+Section w5g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable RG : rep_globals.
+Variable CTX : list (list Z).
+Definition ra_spec_g (pc : Z) : Prop := forall G, gx_ok SEGS B G -> gx_rt B G -> ra_spec B MT G RG CTX pc.
+End w5g.
+
+(* ---- relay_remove (fuzz_reply.asan 0x83de4, 179 instructions) and relay_instance_gone (0x82c2c, 300
+   instructions), lane W6. ----
+   Both take g_lock, walk the relay's table, and release it; their effects are W7's drain (dr_spec) on the sources
+   they drain, W4's gestures_end / gesture_end on the held keys they end, and the allocator's free.  The memory half
+   is W_journal.v's ajournal_gx at the globals they write (G_RR / G_RIG, the lock and the table count, and drain's
+   G_DR), with the allocator's live-state meter MT charged with the plain model's request trace
+   (Prog/relay_remove_b_c.v relay_remove_tr, Prog/relay_instance_gone_b_c.v relay_instance_gone_tr).  The
+   functional half is the plain contracts (Prog/relay_remove_b_c.v, Prog/relay_instance_gone_b_c.v) over W_rep.v,
+   with blocks as concrete addresses in ablocks (no trace names) and the controller's stream as W7's send_line
+   model (sl_ctl / sl_O / sl_cap) applied to each byte string sent.  Both functions are entered with sp 32-aligned
+   (their callers' sp, after `andi sp,sp,-32`), so the prologue's own `andi sp,sp,-32` keeps sp. *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require gesture_end_c relay_remove_b_c relay_instance_gone_b_c.
+Section s6. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable MMAX : Z.
+Variable RG : rep_globals.
+(* the free interceptor's caller-context table (W_journal.v Section hc, the _c rules; K0_SITES' CTX_AFREE: free and
+   free(NULL) enter the same interceptor pc0, so ONE table serves AFREE and AFREEN) *)
+Variable CTX_AFREE : list (list Z).
+#[local] Notation VAL := (@pa_val _ fr_prog_listing PI).
+(* The placement of the relay's globals in the image, shared by relay_remove and relay_instance_gone (and relay_add
+   / relay_finish / op_add through RG := fr_globals): g_lock / g_nsrc / g_src are the listing objects A_OBJ 6 / 7 / 8,
+   aligned, in the image, not owned by the runtime and not errno, with g_lock and g_nsrc writable, and all apart
+   from the runtime's own cells.  W_img discharges the geometry by vm_compute on the pinned placement; the three
+   B-abstract facts (not owned-static, not errno, apart from as_uar_cell) come from the image's own B at the top. *)
+Definition rg_rng (a : Z) : Prop :=
+  rg_lock RG <= a < rg_lock RG + 12 \/ rg_nsrc RG <= a < rg_nsrc RG + 4 \/
+  rg_src RG <= a < rg_src RG + 8 \/ rg_wake RG + 4 <= a < rg_wake RG + 8 \/
+  rg_s RG <= a < rg_s RG + 4 * ASRC.
+Definition rg_place : Prop :=
+  rg_lock RG = VAL (A_OBJ 6) /\ rg_nsrc RG = VAL (A_OBJ 7) /\ rg_src RG = VAL (A_OBJ 8) /\
+  rg_lock RG mod 8 = 0 /\ rg_nsrc RG mod 4 = 0 /\ rg_src RG mod 8 = 0 /\
+  (forall a, rg_rng a -> in_img SEGS a /\ ~ Exists (in_zr a) (as_owned_static B) /\ ~ (as_errno B <= a < as_errno B + 4)) /\
+  (forall (H : word -> bool) (m : word -> option byte) a,
+     (rg_lock RG <= a < rg_lock RG + 12 \/ rg_nsrc RG <= a < rg_nsrc RG + 4) ->
+     H (Z_to_bv 64 a) = false -> writable_at SEGS (mrestrict H m) a) /\
+  (forall a, rg_rng a -> ~ (VAL (A_OBJ 0) <= a < VAL (A_OBJ 0) + 8) /\ ~ (VAL (A_OBJ 1) <= a < VAL (A_OBJ 1) + 8) /\
+     ~ (VAL (A_OBJ 32) <= a < VAL (A_OBJ 32) + 8) /\ ~ (as_uar_cell B <= a < as_uar_cell B + 4)).
+
+(* The stream after one send_line per byte string, in order (sl_spec's post, iterated): the flags, the bytes the
+   controller read, and g_capout. *)
+Fixpoint sl_sends (mx : Z) (c : ctl) (O : list byte) (cap : Z) (Bs : list (list byte)) : ctl * list byte * Z :=
+  match Bs with
+  | [] => (c, O, cap)
+  | Bl :: r =>
+    let len := Z.of_nat (length Bl) in
+    sl_sends mx (sl_ctl c len) (sl_O c O Bl) (sl_cap c mx (Z.of_nat (length O)) cap len) r
+  end.
+(* gesture_end (key) is send_line (key, |key|) then send_line (" end", 5) (fuzz_reply.asan 0x857d8); the byte
+   strings sent for held keys ended in order. *)
+Definition ge_bytes (ks : list (Z * list byte * list byte)) : list (list byte) :=
+  concat (map (fun k => [key_text k; gesture_end_c.END5]) ks).
+(* A relay entry with its held keys replaced (the array, its size and the rest kept). *)
+Definition entry_keys (e : rentry) (ks : list (Z * list byte * list byte)) : rentry :=
+  RE (re_fd e) (re_eof e) (re_skip e) (re_pad1 e) (re_buf e) (re_used e) (re_cap e) (re_hp e) (re_kh e) (re_pad2 e)
+     ks (re_U e) (re_junk e).
+(* What drain (dr_spec / dr_post) leaves of the relay entry e and the harness source h: e1, h1 and the bytes LB of
+   the lines it relays, everything but the memory. *)
+Definition dr_rel (c : ctl) (mx no cap : Z) (e : rentry) (h : hsrc) (e1 : rentry) (h1 : hsrc) (LB : list byte) : Prop :=
+  let fin := dr_fin c mx no cap e h in
+  re_fd e1 = re_fd e /\ re_eof e1 = (if hs_closed h =? 1 then 1 else re_eof e) /\ 0 < re_cap e1 /\
+  re_cap e1 = drain_b_c.ds_cap fin /\ bzs (re_U e1) = drain_b_c.ds_u fin /\
+  re_skip e1 = (if drain_b_c.ds_skip fin then 1 else 0) /\
+  drain_b_c.keys_texts (re_keys e1) = drain_b_c.ds_H fin /\ drain_b_c.ent_ka e1 = drain_b_c.ds_ka fin /\
+  NoDup (drain_b_c.keys_texts (re_keys e1)) /\
+  same_set (drain_b_c.keys_texts (re_keys e1)) (upds (drain_b_c.keys_texts (re_keys e)) (dr_lines h)) /\
+  hl_cap (hs_expected h1) = drain_b_c.ds_ecap fin /\
+  hl_cap (hs_expected h1) <= Z.max 8 (Z.max (hl_cap (hs_expected h)) (2 * hl_n (hs_expected h1))) /\
+  hs_fd h1 = hs_fd h /\ hs_closed h1 = hs_closed h /\ hs_eintr h1 = 0 /\
+  hl_recs (hs_pending h1) = [] /\ hs_off h1 = 0 /\
+  hl_v (hs_pending h1) = hl_v (hs_pending h) /\ hl_cap (hs_pending h1) = hl_cap (hs_pending h) /\
+  hs_partial h1 = hs_partial h /\
+  hs_state h1 = feed (hs_state h) (bzs (pending_stream h)) /\
+  map snd (hl_recs (hs_expected h1)) = map snd (hl_recs (hs_expected h)) ++ map (map (Z_to_bv 8)) (dr_lines h) /\
+  firstn (length (hl_recs (hs_expected h))) (hl_recs (hs_expected h1)) = hl_recs (hs_expected h) /\
+  hs_held h1 = hs_held h /\
+  re_skip e1 = hs_overlong h1 /\ (re_skip e1 = 0 -> bzs (re_U e1) = bzs (hs_W h1)) /\
+  bzs LB = with_nul (dr_lines h).
+(* What drain needs of the entry e (in the table block at G0) and the harness source h at slot j (dr_spec's pre,
+   less the memory facts the table and the stream give). *)
+Definition dr_src_ok (ly : alayout) (S : astate) (W : world SEGS) (mem : word -> option byte) (e : rentry) (h : hsrc)
+    (j : nat) : Prop :=
+  (j < 4)%nat /\ asrc_at B ly S W mem (rg_s RG + ASRC * Z.of_nat j) h /\ aothers_at RG W mem j (re_fd e) /\
+  hs_fd h = re_fd e /\ re_skip e = hs_overlong h /\ (re_skip e = 0 -> bzs (re_U e) = bzs (hs_W h)) /\
+  Z.of_nat (length (pending_stream h)) < 2 ^ 26 /\ hl_cap (hs_expected h) < 2 ^ 26 /\
+  re_nheld e + Z.of_nat (length (pending_stream h)) < 2 ^ 26.
+
+(* relay_remove (fd) (relay.c:453-468): for fd >= 0, under g_lock, the entry of fd, if any, is drained when open,
+   its held keys are ended (gestures_end), its buffer freed, and the last entry moved into its slot; then g_lock is
+   released and, g_wake[1] being -1, nothing is written to the wake pipe.  The fake frame is class 0 (64 bytes). *)
+Definition RR_FRAME : Z := 96.
+Definition RR_STK : Z := RR_FRAME + DRAIN_STK.
+Definition G_RR : list (Z * Z) := (rg_lock RG, 12) :: (rg_nsrc RG, 4) :: G_DR B RG.
+Definition rr_drains (FD : Z) (es : list rentry) : bool :=
+  (0 <=? FD) && match find (fun e => re_fd e =? FD) es with Some e => re_eof e =? 0 | None => false end.
+Definition rr_fp (G0 FD : Z) (es : list rentry) (h : hsrc) (cap out : Z) : list (Z * Z) :=
+  ablocks_fp ((G0, ATABLE) :: concat (map aentry_blks es) ++ (if rr_drains FD es then asrc_blks h else []) ++
+              aout_blks cap out).
+(* The requests relay_remove makes, as its callees charge them (one source of truth with dr_spec): for fd >= 0 and
+   the first entry e of fd, drain's own trace dr_tr when e is open (dr_spec's, with drain's liveness), then the key
+   run of gestures_end over the keys drain leaves (the plain model's keys_end_run, liveness sl_live c 1), then the
+   free of the held array and the free of s->buf, BOTH ALWAYS: the callees charge mo_free for free (NULL) too
+   (gse_cost [] = mo_free MT; afree_null_cf_rule), which the plain trace relay_remove_tr omits (a Theorem Labs lane's Q1).
+   The address names are the one name a0 (tr_cost, tr_alloc and tr_max read sizes only). *)
+Definition rr_tr (c : ctl) (mx no cap FD : Z) (es : list rentry) (h : hsrc) : list (RelayRunT.rev YO0i.sptr) :=
+  let a0 := drain_b_c.da_out drain_b_c.dadr0 in
+  if FD <? 0 then [] else
+  match find (fun e => re_fd e =? FD) es with
+  | None => []
+  | Some e =>
+    let open := re_eof e =? 0 in
+    let s := if open then dr_fin c mx no cap e h else drain_b_c.drain_init no cap e h in
+    (if open then dr_tr c mx no cap e h else []) ++
+    fst (keys_end_run (sl_live c 1) mx (drain_b_c.ds_no s) (drain_b_c.ds_ocap s)
+           (map (fun x => (Z.of_nat (length x), a0)) (drain_b_c.ds_H s)) 0 a0) ++
+    [RelayRunT.RFree (drain_b_c.ds_ka s) a0; RelayRunT.RFree (drain_b_c.ds_cap s) a0]
+  end.
+Definition rr_found (ly : alayout) (S : astate) (W : world SEGS) (mem : word -> option byte)
+    (ly' : alayout) (S' : astate) (W' : world SEGS) (mem' : word -> option byte)
+    (G0 : Z) (es : list rentry) (i j : nat) (h : hsrc) (c : ctl) (O : list byte) (mx cap out : Z) : Prop :=
+  let e := nth i es relay_remove_b_c.no_entry in
+  let HA := rg_s RG + ASRC * Z.of_nat j in
+  let open := re_eof e =? 0 in
+  let no := Z.of_nat (length O) in
+  exists (e1 : rentry) (h1 : hsrc) (ev : Z) (LB : list byte) (c2 : ctl) (O2 : list byte) (cap2 out2 : Z) rest,
+  let live := open && dr_live c h in
+  let c1 := if open then dr_ctl c h ev else c in
+  let O1 := if live then O ++ LB else O in
+  let cap1 := if live then drain_b_c.ds_ocap (dr_fin c mx no cap e h) else cap in
+  (if open then dr_rel c mx no cap e h e1 h1 LB /\ asrc_at B ly' S' W' mem' HA h1 else e1 = e) /\
+  sl_sends mx c1 O1 cap1 (ge_bytes (re_keys e1)) = (c2, O2, cap2) /\
+  arelay_at B RG ly' S' W' mem' G0 (relay_remove_b_c.remove_at i es) /\
+  aout_at B RG ly' S' W' mem' c2 O2 mx (Z.of_nat (length O2)) cap2 out2 /\
+  Permutation (ablocks B ly S)
+    ((G0, ATABLE) :: concat (map aentry_blks es) ++ (if open then asrc_blks h else []) ++ aout_blks cap out ++ rest) /\
+  Permutation (ablocks B ly' S')
+    ((G0, ATABLE) :: concat (map aentry_blks (relay_remove_b_c.remove_at i es)) ++ (if open then asrc_blks h1 else []) ++
+     aout_blks cap2 out2 ++ rest).
+Definition rr_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+    (G0 FD : Z) (es : list rentry) (j : nat) (h : hsrc) (c : ctl) (O : list byte) (mx cap out : Z)
+    : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' k,
+  c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+  @ajournal_gx _ SK SEGS B G_RR 0 [] RR_STK (spZ regs) (rr_fp G0 FD es h cap out) ly S W mem md [] ly' S' W' mem' md' k /\
+  aregs_preserved regs regs' /\ apres_kept B W mem W' mem' /\
+  mo_le MT S S' (tr_cost MT (rr_tr c mx (Z.of_nat (length O)) cap FD es h)) /\
+  alock_at RG W' mem' false /\ awake_at RG W' mem' /\
+  (forall a, rg_s RG <= a < rg_s RG + 4 * ASRC ->
+   (rr_drains FD es = true -> ~ (rg_s RG + ASRC * Z.of_nat j <= a < rg_s RG + ASRC * Z.of_nat j + ASRC)) ->
+   abyte_kept W mem W' mem' a) /\
+  ((FD < 0 \/ forall e, In e es -> re_fd e <> FD) ->
+   arelay_at B RG ly' S' W' mem' G0 es /\ aout_at B RG ly' S' W' mem' c O mx (Z.of_nat (length O)) cap out /\
+   Permutation (ablocks B ly' S') (ablocks B ly S)) /\
+  (forall i, (i < length es)%nat -> 0 <= FD -> re_fd (nth i es relay_remove_b_c.no_entry) = FD ->
+   rr_found ly S W mem ly' S' W' mem' G0 es i j h c O mx cap out).
+Definition rr_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch (G0 FD : Z) (es : list rentry) (j : nat) (h : hsrc) (c : ctl) (O : list byte) (mx cap out : Z),
+let tr := rr_tr c mx (Z.of_nat (length O)) cap FD es h in
+afn_pre SEGS B RR_STK ly S W regs mem md ch -> spZ regs mod 32 = 0 -> count_cid 0 (frames S) < fs_frames 0 -> rg_place ->
+getr regs 10 = w64 FD -> - 2 ^ 31 <= FD < 2 ^ 31 ->
+alock_at RG W mem false -> awake_at RG W mem ->
+arelay_at B RG ly S W mem G0 es ->
+aout_at B RG ly S W mem c O mx (Z.of_nat (length O)) cap out -> rom_view SEGS W mem ->
+(forall i, (i < length es)%nat -> re_fd (nth i es relay_remove_b_c.no_entry) = FD ->
+ re_eof (nth i es relay_remove_b_c.no_entry) = 0 -> dr_src_ok ly S W mem (nth i es relay_remove_b_c.no_entry) h j) ->
+(exists rest, Permutation (ablocks B ly S)
+  ((G0, ATABLE) :: concat (map aentry_blks es) ++ (if rr_drains FD es then asrc_blks h else []) ++ aout_blks cap out ++ rest)) ->
+tr_max tr < MMAX -> blocks_bytes S + tr_peak tr <= LIVE_MAX -> mo_ok MT S (tr_cost MT tr) ->
+(* the free at relay_remove + 0x1b0 (0x83f94, ra 0x83f98) is called with s0 = this entry's sp (a frame pointer), so
+   its caller context is the return there, then this entry's return and chain (W5's ra_spec / rf_spec shape; a Theorem Labs lane
+   21:28Z).  K0's CTX_AFREE holds [0x83f98; 0x846c4(; 0x821e8)] and [0x83f98; 0x849e0(; 0x821e8)], the two call sites
+   in LLVMFuzzerTestOneInput.  IMAGE A ONLY: image B's relay_remove keeps no frame pointer (its context is the closed
+   singleton [0x84360]). *)
+spZ regs + 16 < ly_top ly -> In (pc + 436 :: raZ regs :: spine ch) CTX_AFREE ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (rr_post regs ly S W mem md G0 FD es j h c O mx cap out).
+
+(* relay_instance_gone (id) (relay.c:441-449, gestures_end_instance inlined, relay.c:149-168): under g_lock, for
+   each entry of the table in order: drain it when open; snprintf the prefix "param_gesture <id> " into the frame;
+   then for its held keys, at index n while n < nheld: a key with the prefix is ended (gesture_end), freed, and the
+   last key moved into its place; any other key is passed.  Then g_lock is released.  The fake frame is class 1
+   (128 bytes). *)
+Definition RIG_FRAME : Z := 224.
+Definition RIG_STK : Z := RIG_FRAME + DRAIN_STK.
+Definition G_RIG : list (Z * Z) := (rg_lock RG, 12) :: G_DR B RG.
+(* gestures_end_instance's loop over the held keys (relay_instance_gone_b_c.geia_loop over the key records): the
+   keys ended, in the order ended, and the keys kept, in array order. *)
+Fixpoint geik_loop (fuel : nat) (pre : list Z) (n : nat) (ks : list (Z * list byte * list byte))
+    : list (Z * list byte * list byte) * list (Z * list byte * list byte) :=
+  match fuel with
+  | O => ([], ks)
+  | Datatypes.S f =>
+    if Nat.ltb n (length ks) then
+      if has_prefix pre (bzs (key_text (nth n ks (0, [], [])))) then
+        let '(E, K) := geik_loop f pre n (swap_remove (0, [], []) n ks) in (nth n ks (0, [], []) :: E, K)
+      else geik_loop f pre (Datatypes.S n) ks
+    else ([], ks)
+  end.
+Definition geik (pre : list Z) (ks : list (Z * list byte * list byte)) := geik_loop (length ks) pre 0 ks.
+(* The run over the table: each entry e with its harness source (h, j) becomes e' (drained when open, its keys with
+   the prefix ended), h becomes h' (drained when e is open), and the stream goes from (c, O, cap) to (c2, O2, cap2). *)
+Fixpoint rig_rel (pre : list Z) (mx : Z) (c : ctl) (O : list byte) (cap : Z)
+    (ps : list (rentry * (hsrc * nat))) (qs : list (rentry * hsrc)) (c2 : ctl) (O2 : list byte) (cap2 : Z) : Prop :=
+  match ps, qs with
+  | [], [] => c2 = c /\ O2 = O /\ cap2 = cap
+  | (e, (h, _)) :: r, (e', h') :: q =>
+    exists (e1 : rentry) (ev : Z) (LB : list byte),
+    let open := re_eof e =? 0 in
+    let no := Z.of_nat (length O) in
+    let live := open && dr_live c h in
+    let c1 := if open then dr_ctl c h ev else c in
+    let O1 := if live then O ++ LB else O in
+    let cap1 := if live then drain_b_c.ds_ocap (dr_fin c mx no cap e h) else cap in
+    (if open then dr_rel c mx no cap e h e1 h' LB else e1 = e /\ h' = h) /\
+    e' = entry_keys e1 (snd (geik pre (re_keys e1))) /\
+    let '(c3, O3, cap3) := sl_sends mx c1 O1 cap1 (ge_bytes (fst (geik pre (re_keys e1)))) in
+    rig_rel pre mx c3 O3 cap3 r q c2 O2 cap2
+  | _, _ => False
+  end.
+Definition rig_srcs (ps : list (rentry * (hsrc * nat))) : list (Z * Z) :=
+  concat (map (fun p => if re_eof (fst p) =? 0 then asrc_blks (fst (snd p)) else []) ps).
+Definition rig_fp (G0 : Z) (es : list rentry) (hs : list (hsrc * nat)) (cap out : Z) : list (Z * Z) :=
+  ablocks_fp ((G0, ATABLE) :: concat (map aentry_blks es) ++ rig_srcs (combine es hs) ++ aout_blks cap out).
+Definition rig_slots (ps : list (rentry * (hsrc * nat))) : list nat :=
+  concat (map (fun p => if re_eof (fst p) =? 0 then [snd (snd p)] else []) ps).
+Definition rig_tr (c : ctl) (mx no cap ID : Z) (es : list rentry) (hs : list (hsrc * nat)) :=
+  let a0 := drain_b_c.da_out drain_b_c.dadr0 in
+  relay_instance_gone_b_c.relay_instance_gone_tr (sl_live c 1) mx no cap (relay_instance_gone_b_c.instance_prefix ID)
+    es hs (fun _ => a0) 0 a0.
+Definition rig_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+    (G0 ID : Z) (es : list rentry) (hs : list (hsrc * nat)) (c : ctl) (O : list byte) (mx cap out : Z)
+    : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' k (qs : list (rentry * hsrc)) (c2 : ctl) (O2 : list byte) (cap2 out2 : Z) rest,
+  c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+  @ajournal_gx _ SK SEGS B G_RIG 0 [] RIG_STK (spZ regs) (rig_fp G0 es hs cap out) ly S W mem md [] ly' S' W' mem' md' k /\
+  aregs_preserved regs regs' /\ apres_kept B W mem W' mem' /\
+  mo_le MT S S' (tr_cost MT (rig_tr c mx (Z.of_nat (length O)) cap ID es hs)) /\
+  alock_at RG W' mem' false /\
+  rig_rel (relay_instance_gone_b_c.instance_prefix ID) mx c O cap (combine es hs) qs c2 O2 cap2 /\
+  length qs = length es /\
+  arelay_at B RG ly' S' W' mem' G0 (map fst qs) /\
+  aout_at B RG ly' S' W' mem' c2 O2 mx (Z.of_nat (length O2)) cap2 out2 /\
+  (forall i, (i < length es)%nat -> re_eof (nth i es relay_remove_b_c.no_entry) = 0 ->
+   asrc_at B ly' S' W' mem' (rg_s RG + ASRC * Z.of_nat (snd (nth i hs relay_instance_gone_b_c.no_hj)))
+     (snd (nth i qs (relay_remove_b_c.no_entry, fst relay_instance_gone_b_c.no_hj)))) /\
+  (forall a, rg_s RG <= a < rg_s RG + 4 * ASRC ->
+   (forall j, In j (rig_slots (combine es hs)) -> ~ (rg_s RG + ASRC * Z.of_nat j <= a < rg_s RG + ASRC * Z.of_nat j + ASRC)) ->
+   abyte_kept W mem W' mem' a) /\
+  Permutation (ablocks B ly S)
+    ((G0, ATABLE) :: concat (map aentry_blks es) ++ rig_srcs (combine es hs) ++ aout_blks cap out ++ rest) /\
+  Permutation (ablocks B ly' S')
+    ((G0, ATABLE) :: concat (map aentry_blks (map fst qs)) ++
+     concat (map (fun p => if re_eof (fst (fst p)) =? 0 then asrc_blks (snd (snd p)) else []) (combine (combine es hs) qs)) ++
+     aout_blks cap2 out2 ++ rest).
+(* The expected list's capacity bound rig_post exports, entry by entry: rig_post's rig_rel carries drain's dr_rel for
+   every open entry (its conjunct hl_cap (hs_expected h1) <= max 8 (max (hl_cap (hs_expected h)) (2 * hl_n ..)), the
+   bound relay_remove's rr_found states directly), and a closed entry's source is unchanged.  Asked by a Theorem Labs lane
+   (B's check_no_loss after relay_instance_gone), so that a consumer reads the same guarantee from both posts. *)
+Lemma rig_rel_ecap : forall pre mx ps qs c O cap c2 O2 cap2,
+  rig_rel pre mx c O cap ps qs c2 O2 cap2 ->
+  forall i, (i < length ps)%nat ->
+  hl_cap (hs_expected (snd (nth i qs (relay_remove_b_c.no_entry, fst relay_instance_gone_b_c.no_hj)))) <=
+  Z.max 8 (Z.max (hl_cap (hs_expected (fst (snd (nth i ps (relay_remove_b_c.no_entry, relay_instance_gone_b_c.no_hj))))))
+                 (2 * hl_n (hs_expected (snd (nth i qs (relay_remove_b_c.no_entry, fst relay_instance_gone_b_c.no_hj)))))).
+Proof.
+intros pre mx ps. induction ps as [|[e [h j]] r IH]; intros qs c O cap c2 O2 cap2 HR i Hi; [cbn in Hi; lia|].
+destruct qs as [|[e' h'] q]; [cbn in HR; contradiction|].
+cbn [rig_rel] in HR. destruct HR as (e1 & ev & LB & HR). cbv zeta in HR. destruct HR as (Hd & _ & Hrest).
+destruct i as [|i].
+- cbn [nth fst snd]. revert Hd. destruct (re_eof e =? 0); intros Hd.
+  + unfold dr_rel in Hd. cbv zeta in Hd.
+    destruct Hd as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hb & _). exact Hb.
+  + destruct Hd as [_ ->]. lia.
+- cbn [nth length] in *.
+  match type of Hrest with context [sl_sends ?a ?b ?d ?f ?g] =>
+    destruct (sl_sends a b d f g) as [[c3 O3] cap3] end.
+  exact (IH q c3 O3 cap3 c2 O2 cap2 Hrest i ltac:(lia)).
+Qed.
+Definition rig_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch (G0 ID : Z) (es : list rentry) (hs : list (hsrc * nat)) (c : ctl) (O : list byte) (mx cap out : Z),
+let tr := rig_tr c mx (Z.of_nat (length O)) cap ID es hs in
+afn_pre SEGS B RIG_STK ly S W regs mem md ch -> spZ regs mod 32 = 0 -> count_cid 1 (frames S) < fs_frames 1 -> rg_place ->
+getr regs 10 = w64 ID -> - 2 ^ 31 <= ID < 2 ^ 31 ->
+alock_at RG W mem false ->
+arelay_at B RG ly S W mem G0 es ->
+aout_at B RG ly S W mem c O mx (Z.of_nat (length O)) cap out -> rom_view SEGS W mem ->
+length hs = length es ->
+Forall (fun p => re_eof (fst p) = 0 -> dr_src_ok ly S W mem (fst p) (fst (snd p)) (snd (snd p))) (combine es hs) ->
+NoDup (rig_slots (combine es hs)) ->
+(exists rest, Permutation (ablocks B ly S)
+  ((G0, ATABLE) :: concat (map aentry_blks es) ++ rig_srcs (combine es hs) ++ aout_blks cap out ++ rest)) ->
+tr_max tr < MMAX -> blocks_bytes S + tr_peak tr <= LIVE_MAX -> mo_ok MT S (tr_cost MT tr) ->
+(* the free at relay_instance_gone + 0x288 (0x82eb4, ra 0x82eb8), s0 = this entry's sp: caller context as rr_spec's;
+   K0's CTX_AFREE holds [0x82eb8; 0x8483c(; 0x821e8)] *)
+spZ regs + 16 < ly_top ly -> In (pc + 652 :: raZ regs :: spine ch) CTX_AFREE ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (rig_post regs ly S W mem md G0 ID es hs c O mx cap out).
+End s6.
+(* ---- gesture_end (0x857d8), gestures_end (0x82554), gesture_model (0x85b9c), lane W4. ----
+   Memory half: W_journal.v's ajournal_gx at the globals the function writes through its callees (G_SL for
+   gesture_end and gestures_end, which reach send_line; the caller's G, holding g_s[j].held, for gesture_model,
+   which reaches list_push / list_drop) and the allocator meter MT.  Functional half: lib/Prog/gesture_end_b_c.v,
+   gestures_end_b_c.v and gesture_model_c.v, stated with send_line's model of Section s7 (two sends per held key:
+   the key's bytes, then " end\0") and RelayModel.upd (the held keys after one relayed line). *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import CheckRep.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require gesture_end_b_c RelayRunF.
+Section w4. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+#[local] Notation VAL := (@pa_val _ fr_prog_listing PI).
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable MMAX : Z.
+Variable RG : rep_globals.
+
+(* " end\0": .str.4 of fuzz_reply.asan (0x20f00), what relay.c:127 sends after a held key. *)
+Definition END5 : list byte := map (Z_to_bv 8) [32; 101; 110; 100; 0].
+Definition A_lit_end5 : nat := A_OBJ 31.
+
+(* gesture_end (held) (relay.c:125-128): send_line (held, strlen (held)); send_line (" end", 5), the second a tail
+   call.  Frame 16; strlen's scratch below it, send_line's budget below it and (tail) at the caller's sp. *)
+Definition GE_FRAME : Z := 16.
+Definition GE_STK : Z := GE_FRAME + Z.max (2 * ESTACK) SL_STK.
+Definition ge_ctl (c : ctl) (XL : Z) : ctl := sl_ctl (sl_ctl c XL) 5.
+Definition ge_O (c : ctl) (O x : list byte) : list byte := sl_O (sl_ctl c (Z.of_nat (length x))) (sl_O c O x) END5.
+Definition ge_no (c : ctl) (no XL : Z) : Z := sl_no (sl_ctl c XL) (sl_no c no XL) 5.
+Definition ge_cap (c : ctl) (mx no cap XL : Z) : Z := sl_cap (sl_ctl c XL) mx (sl_no c no XL) (sl_cap c mx no cap XL) 5.
+Definition ge_cost (c : ctl) (mx no cap XL : Z) : Z :=
+sl_cost MT c mx no cap XL + sl_cost MT (sl_ctl c XL) mx (sl_no c no XL) (sl_cap c mx no cap XL) 5.
+
+(* gesture_end's growth requests: the plain model's trace of its two sends (Prog/gesture_end_b_c.v gesture_end_tr;
+   the addresses play no part in the sizes, so j = 0 and adr0) *)
+Definition ge_tr (c : ctl) (mx no cap XL : Z) :=
+gesture_end_b_c.gesture_end_tr (sl_live c XL) mx no cap XL 0 RelayRunF.adr0.
+(* The room gesture_end asks of its caller, stated over that trace (a Theorem Labs lane's ruling 09:4xZ, a Theorem Labs lane's
+   counterexample: a caller in a key loop bounds its own request trace, not g_capout): the largest request under the
+   allocator's bound, and the live bytes plus the trace's peak (tr_peak, C3) within LIVE_MAX. *)
+Definition ge_room (bb : Z) (c : ctl) (mx no cap XL : Z) : Prop :=
+tr_max (ge_tr c mx no cap XL) < MMAX /\ bb + tr_peak (ge_tr c mx no cap XL) <= LIVE_MAX.
+Definition ge_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(c : ctl) (O : list byte) (mx no cap out : Z) (x : list byte) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' k out',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx SEGS B (G_SL B RG) 0 [] GE_STK (spZ regs) (ablocks_fp (aout_blks cap out)) ly S W mem md [] ly' S' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+mo_le MT S S' (ge_cost c mx no cap (Z.of_nat (length x))) /\
+(exists rest, Permutation (ablocks B ly S) (aout_blks cap out ++ rest) /\
+ Permutation (ablocks B ly' S') (aout_blks (ge_cap c mx no cap (Z.of_nat (length x))) out' ++ rest)) /\
+aout_at B RG ly' S' W' mem' (ge_ctl c (Z.of_nat (length x))) (ge_O c O x) mx
+  (ge_no c no (Z.of_nat (length x))) (ge_cap c mx no cap (Z.of_nat (length x))) out'.
+(* The held key x at Hk is a NUL-terminated string inside its own live block (q, m).  The rest of its last 8-byte
+   granule (strlen's word read) is the allocator's, not the key's: ruling (A), 02:20Z, the walk takes its
+   visibility from the instance's granule-tail fact (W_gesture_end.v ALLOC_TAIL). *)
+Definition ge_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch c O mx no cap out Hk (x : list byte) q m,
+afn_pre SEGS B GE_STK ly S W regs mem md ch ->
+getr regs 10 = w64 Hk ->
+aout_at B RG ly S W mem c O mx no cap out ->
+garr8 SEGS (arm W mem) Hk (bzs (x ++ [Z_to_bv 8 0])) -> ~ In (Z_to_bv 8 0) x ->
+14 <= Z.of_nat (length x) <= APARTIAL ->
+In (q, m) (ablocks B ly S) -> q <> out -> q <= Hk -> Hk + Z.of_nat (length x) + 1 <= q + req_size m ->
+garr8 SEGS (arm W mem) (VAL A_lit_end5) (bzs END5) -> rom_view SEGS W mem ->
+ge_room (blocks_bytes S) c mx no cap (Z.of_nat (length x)) ->
+mo_ok MT S (ge_cost c mx no cap (Z.of_nat (length x))) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (ge_post regs ly S W mem md c O mx no cap out x).
+
+(* gestures_end (s) (relay.c:132-142): for each held key in array order, gesture_end (key) and free (key); then
+   free (s->held), s->held = NULL, s->nheld = 0.  Frame 80; gesture_end's budget and the allocator's below it. *)
+Definition GSE_FRAME : Z := 80.
+Definition GSE_STK : Z := GSE_FRAME + Z.max GE_STK ASTACK.
+Definition gse_keys (e : rentry) : list (list byte) := map key_text (re_keys e).
+Definition gse_blks (e : rentry) : list (Z * Z) :=
+(if re_hp e =? 0 then [] else [(re_hp e, re_kh e)]) ++
+map (fun k => (key_addr k, Z.of_nat (length (key_text k)) + 1)) (re_keys e).
+(* the output after the keys xs, each sent as gesture_end sends it *)
+Fixpoint gse_run (c : ctl) (O : list byte) (mx no cap : Z) (xs : list (list byte)) : ctl * list byte * Z * Z :=
+match xs with
+| [] => (c, O, no, cap)
+| x :: xs' => gse_run (ge_ctl c (Z.of_nat (length x))) (ge_O c O x) mx (ge_no c no (Z.of_nat (length x)))
+    (ge_cap c mx no cap (Z.of_nat (length x))) xs'
+end.
+Definition gse_c (r : ctl * list byte * Z * Z) : ctl := fst (fst (fst r)).
+Definition gse_O (r : ctl * list byte * Z * Z) : list byte := snd (fst (fst r)).
+Definition gse_no (r : ctl * list byte * Z * Z) : Z := snd (fst r).
+Definition gse_cap (r : ctl * list byte * Z * Z) : Z := snd r.
+(* the meter: gesture_end's two sends and one free per key, and the final free of the array *)
+Fixpoint gse_cost (c : ctl) (mx no cap : Z) (xs : list (list byte)) : Z :=
+match xs with
+| [] => mo_free MT
+| x :: xs' => ge_cost c mx no cap (Z.of_nat (length x)) + mo_free MT +
+    gse_cost (ge_ctl c (Z.of_nat (length x))) mx (ge_no c no (Z.of_nat (length x))) (ge_cap c mx no cap (Z.of_nat (length x))) xs'
+end.
+(* gesture_end's room for every key (ge_room), bb bounding blocks_bytes before each key: after a key, bb moves by its
+   gesture_end's net change (tr_net of its trace) and down by the free of the key's strndup block of |x| + 1 bytes
+   (Prog/gestures_end_b_c.v keys_end_run: gesture_end_tr ++ RFree (xl + 1)), so a caller's peak over its own trace
+   gives every key's room (a Theorem Labs lane's ruling 09:5xZ: a room premise is stated in the trace the caller can bound, not
+   in g_capout; C3: the peak, not the sum) *)
+Fixpoint gse_room (bb : Z) (c : ctl) (mx no cap : Z) (xs : list (list byte)) : Prop :=
+match xs with
+| [] => True
+| x :: xs' => ge_room bb c mx no cap (Z.of_nat (length x)) /\
+    gse_room (bb + tr_net (ge_tr c mx no cap (Z.of_nat (length x))) - (Z.of_nat (length x) + 1))
+      (ge_ctl c (Z.of_nat (length x))) mx
+      (ge_no c no (Z.of_nat (length x))) (ge_cap c mx no cap (Z.of_nat (length x))) xs'
+end.
+(* The held part of a source_t (W_rep.v aentry_ok's pad lengths, which place held at +40 and nheld at +48, and its
+   last five clauses): all that gestures_end reads.  A caller that freed the receive buffer first (relay_finish)
+   still has it. *)
+Definition aheld_ok (ly : alayout) (S : astate) (W : world SEGS) (mem : word -> option byte) (e : rentry) : Prop :=
+length (re_pad1 e) = 4%nat /\ length (re_pad2 e) = 4%nat /\
+re_nheld e < 2 ^ 26 /\
+((re_hp e = 0 /\ re_keys e = []) \/
+ (re_hp e <> 0 /\ In (re_hp e, re_kh e) (ablocks B ly S) /\ 8 * re_nheld e <= re_kh e /\ 8 <= re_kh e /\
+  garr8 SEGS (arm W mem) (re_hp e) (bzs (key_ptrs (re_keys e))))) /\
+NoDup (map key_addr (re_keys e)) /\
+NoDup (map key_text (re_keys e)) /\
+Forall (fun k =>
+  In (key_addr k, Z.of_nat (length (key_text k)) + 1) (ablocks B ly S) /\
+  garr8 SEGS (arm W mem) (key_addr k) (bzs (key_text k ++ [Z_to_bv 8 0])) /\
+  ~ In (Z_to_bv 8 0) (key_text k) /\ 14 <= Z.of_nat (length (key_text k)) <= APARTIAL) (re_keys e).
+Definition gse_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(SA TB : Z) (e : rentry) (c : ctl) (O : list byte) (mx no cap out : Z) (rest : list (Z * Z)) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' k out',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx SEGS B (G_SL B RG) 0 [] GSE_STK (spZ regs) ((SA + 40, SA + 52) :: ablocks_fp (gse_blks e ++ aout_blks cap out))
+  ly S W mem md [] ly' S' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+mo_le MT S S' (gse_cost c mx no cap (gse_keys e)) /\
+Permutation (ablocks B ly' S') ((TB, ATABLE) :: aout_blks (gse_cap (gse_run c O mx no cap (gse_keys e))) out' ++ rest) /\
+aout_at B RG ly' S' W' mem' (gse_c (gse_run c O mx no cap (gse_keys e))) (gse_O (gse_run c O mx no cap (gse_keys e))) mx
+  (gse_no (gse_run c O mx no cap (gse_keys e))) (gse_cap (gse_run c O mx no cap (gse_keys e))) out' /\
+garr8 SEGS (arm W' mem') SA (bzs (entry_bytes (entry_cleared e))) /\ awr W' mem' SA AENT.
+(* s at SA is one source_t of the relay's table block (TB, ATABLE), as drain's contract (dr_spec) states it; only
+   its held part need hold (relay_finish frees s->buf first). *)
+Definition gse_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch SA TB e c O mx no cap out rest,
+afn_pre SEGS B GSE_STK ly S W regs mem md ch ->
+getr regs 10 = w64 SA ->
+In (TB, ATABLE) (ablocks B ly S) -> TB <= SA -> SA + AENT <= TB + ATABLE -> SA mod 8 = 0 ->
+garr8 SEGS (arm W mem) SA (bzs (entry_bytes e)) -> awr W mem SA AENT -> aheld_ok ly S W mem e ->
+aout_at B RG ly S W mem c O mx no cap out ->
+Permutation (ablocks B ly S) ((TB, ATABLE) :: gse_blks e ++ aout_blks cap out ++ rest) ->
+garr8 SEGS (arm W mem) (VAL A_lit_end5) (bzs END5) -> rom_view SEGS W mem ->
+gse_room (blocks_bytes S) c mx no cap (gse_keys e) ->
+mo_ok MT S (gse_cost c mx no cap (gse_keys e)) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (gse_post regs ly S W mem md SA TB e c O mx no cap out rest).
+
+(* gesture_model (s, line, len) (fuzz_reply.c:377-401), s = &g_s[j]: the held list at s + 80 after one relayed line
+   is RelayModel.upd of it (a new "begin" key appended by list_push, an "end" of a held key dropped by list_drop,
+   anything else unchanged).  Frame 48; list_find and the bcmp interceptor below it, list_push / list_drop (tail
+   calls) at the caller's sp.  G: the caller's globals, holding the 16 bytes of the held list's head. *)
+Variable G : list (Z * Z).
+Definition A_lit_gesture : nat := A_OBJ 21.   (* .str.5 "param_gesture", 0x20f20 *)
+Definition A_lit_begin : nat := A_OBJ 23.     (* .str.6 "begin", 0x20f40 *)
+Definition A_lit_end : nat := A_OBJ 24.       (* .str.7 "end", 0x20f60 *)
+Definition GM_FRAME : Z := 48.
+Definition GM_STK : Z := GM_FRAME + LP_STK.
+(* gesture_model's charge is its trace's (Prog/HarnessTr.v gesture_model_tr): list_push's (the vector's growth and
+   the key copy of the key's length) on a begin of a key not held, list_drop's one free on an end of a held key,
+   nothing else.  Charging list_push on every line (the earlier lp_cost l (length ln) + mo_free) over-counts a
+   meter of secondary requests by one per line once the held vector is full (KF-COUNT). *)
+Definition gm_cost (l : hlist) (ln : list byte) : Z :=
+match RelayModel.gesture (bzs ln) with
+| Some (RelayModel.GBegin, x) =>
+    if existsb (RelayModel.list_eqb x) (texts l) then 0 else lp_cost MT l (Z.of_nat (length x))
+| Some (RelayModel.GEnd, x) => if existsb (RelayModel.list_eqb x) (texts l) then mo_free MT else 0
+| None => 0
+end.
+Definition gm_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(HA : Z) (H : hlist) (ln : list byte) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' kk (H' : hlist),
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx SEGS B G 0 [] GM_STK (spZ regs) (blk_FP (list_blks H)) ly S W mem md [] ly' S' W' mem' md' kk /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+(* errno's view is kept: gesture_model's own stores hit only its frame, and every callee keeps errno (bcmp and
+   list_find keep all bytes outside their windows, lp_post and ldrop_post carry the same conjunct); check_no_loss's
+   cnl_post needs it across this call (W3Checks-2, 14:4xZ) *)
+(forall j, 0 <= j < 4 -> aview SEGS (w_H W') mem' (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j)) /\
+alist_at B ly' S' W' mem' (HA + 80) H' true /\ NoDup (texts H') /\ texts H' = RelayModel.upd (texts H) (bzs ln) /\
+hl_cap H' = (if hl_n H <? hl_n H' then grow_cap (hl_n H) (hl_cap H) else hl_cap H) /\
+(forall rest, Permutation (ablocks B ly S) (list_blks H ++ rest) -> Permutation (ablocks B ly' S') (list_blks H' ++ rest)) /\
+frames S' = frames S /\
+mo_le MT S S' (gm_cost H ln).
+Definition gm_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch HA LINE (ln : list byte) H q k,
+afn_pre SEGS B GM_STK ly S W regs mem md ch ->
+getr regs 10 = w64 HA -> getr regs 11 = w64 LINE -> getr regs 12 = w64 (Z.of_nat (length ln)) ->
+alist_at B ly S W mem (HA + 80) H true -> NoDup (texts H) ->
+(forall a, HA + 80 <= a < HA + 96 -> inG G a) -> azs B (HA + 80) 16 ->
+(HA + 80) mod 8 = 0 ->
+garr8 SEGS (arm W mem) LINE (bzs ln) -> ~ In (Z_to_bv 8 0) ln -> Z.of_nat (length ln) <= APARTIAL ->
+In (q, k) (ablocks B ly S) -> ~ In (q, k) (list_blks H) -> q <= LINE -> LINE + Z.of_nat (length ln) <= q + req_size k ->
+garr8 SEGS (arm W mem) (VAL A_lit_gesture) RelayModel.K_GESTURE ->
+garr8 SEGS (arm W mem) (VAL A_lit_begin) RelayModel.W_BEGIN ->
+garr8 SEGS (arm W mem) (VAL A_lit_end) RelayModel.W_END -> rom_view SEGS W mem ->
+(lp_grow H = true -> lp_vbytes H < MMAX) -> AREC * hl_cap H < 2 ^ 32 ->
+blocks_bytes S + (if lp_grow H then lp_vbytes H else 0) + (Z.of_nat (length ln) + 1) <= LIVE_MAX ->
+mo_ok MT S (gm_cost H ln) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (gm_post regs ly S W mem md HA H ln).
+End w4.
+(* gesture_model at the caller's choice of globals (W2's _g convention, W_contract.v Section w2g). *)
+Section w4g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable MMAX : Z.
+(* rom_out at G: list_drop's spec at a caller's G comes from W1's pb_list_drop_ro (W_list_drop_top.v), which asks it *)
+Definition gm_spec_g (pc : Z) : Prop :=
+forall G, gx_ok SEGS B G -> gx_rt B G -> rom_out SEGS B G -> gm_spec B MT MMAX G pc.
+End w4g.
+
+(* relay_finish's spec, moved here from lib/A/W_relay_finish.v (lane W5's walk file) so callers Require only
+   W_contract.v. *)
+Section w5f. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+#[local] Notation VAL := (@pa_val _ fr_prog_listing PI).
+(* ---- THE SPEC: relay_finish (fuzz_reply.asan 0x822ec, 154 instructions), lane W5. ----
+   relay_finish () (relay.c:343-362) with no relay thread up (g_thread_up = 0: the plain contract's
+   rw_cells G_THREAD_UP [C1 0], Prog/relay_finish_b_c.v:83): under g_lock, for each source of the table in order,
+   free (s->buf) then gestures_end (s); then g_nsrc = 0, g_client = -1, g_listen = -1.  Frame 96 plus a 64-byte ASan
+   fake frame (__asan_stack_malloc_0, class 0); its deepest callee is gestures_end (GSE_STK below its sp).
+   Memory half: W_journal.v's ajournal_gx at the caller's G, which holds the globals relay_finish writes (RF_G) and,
+   through gestures_end / gesture_end / send_line, G_SL; the footprint is the table, the entries' blocks and the
+   g_out block.  Functional half: Prog/relay_finish_b_c.v relay_finish_contract over W_rep.v's representation, with
+   the output stream of W4's gestures_end model (W_contract.v Section w4: gse_run, gse_cost, gse_room) run over the
+   entries in table order.  g_thread_up and g_listen are not fields of W_rep.v's rep_globals; they are the
+   variables GTU and GL. *)
+Section rfs.
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable MMAX : Z.
+Variable G : list (Z * Z).
+Variable RG : rep_globals.
+Variable GTU GL : Z.
+(* the allocator rules' caller-context table (W_journal.v Section hc) *)
+Variable CTX : list (list Z).
+Definition RF_FRAME : Z := 96.
+Definition RF_STK : Z := RF_FRAME + Z.max GSE_STK ASTACK.
+(* the table block (none when the relay never had a source), and the entries' blocks *)
+Definition rf_tblk (T : Z) : list (Z * Z) := if T =? 0 then [] else [(T, ATABLE)].
+Definition rf_eblks (es : list rentry) : list (Z * Z) := concat (map aentry_blks es).
+Definition rf_FP (T : Z) (es : list rentry) (cap out : Z) : list (Z * Z) :=
+ablocks_fp (rf_tblk T ++ rf_eblks es ++ aout_blks cap out).
+(* the output stream after the entries' gestures_end calls, in table order *)
+Fixpoint rf_run (c : ctl) (O : list byte) (mx no cap : Z) (es : list rentry) : ctl * list byte * Z * Z :=
+match es with
+| [] => (c, O, no, cap)
+| e :: es' => let r := gse_run c O mx no cap (gse_keys e) in rf_run (gse_c r) (gse_O r) mx (gse_no r) (gse_cap r) es'
+end.
+(* the meter: per entry the free of s->buf and gestures_end's cost *)
+Fixpoint rf_cost (c : ctl) (O : list byte) (mx no cap : Z) (es : list rentry) : Z :=
+match es with
+| [] => 0
+| e :: es' => let r := gse_run c O mx no cap (gse_keys e) in
+  mo_free MT + gse_cost MT c mx no cap (gse_keys e) + rf_cost (gse_c r) (gse_O r) mx (gse_no r) (gse_cap r) es'
+end.
+(* send_line's room for every gestures_end, bb bounding blocks_bytes before each.  The next entry's room is
+   bb + gse_cap r - cap, cap the entry's g_out capacity before the call: the entry's buffer and keys are freed and the
+   g_out block only changes from cap to gse_cap r (lx_rf_room_p's per-entry form, commit 066a0abe56c,
+   lib/A/ReplyLS3oRf.v:243-249).  The earlier threading bb + gse_cap r asked the caller for k * cap of room, which no
+   LS row supplies. *)
+Fixpoint rf_room (bb : Z) (c : ctl) (O : list byte) (mx no cap : Z) (es : list rentry) : Prop :=
+match es with
+| [] => True
+| e :: es' => let r := gse_run c O mx no cap (gse_keys e) in
+  gse_room MMAX bb c mx no cap (gse_keys e) /\
+  rf_room (bb + gse_cap r - cap) (gse_c r) (gse_O r) mx (gse_no r) (gse_cap r) es'
+end.
+(* g_client = -1 after *)
+Definition rf_ctl (c : ctl) : ctl := CTL (-1) (ct_br c) (ct_dd c) (ct_ei c) (ct_ev c).
+(* the globals relay_finish itself writes (half-open, inside the objects): g_lock's lock word (through the mutex),
+   g_nsrc, g_client, g_listen *)
+Definition RF_G : list (Z * Z) := [(rg_lock RG, 12); (rg_nsrc RG, 4); (rg_client RG, 4); (GL, 4)].
+(* errno: carried by VALUE through aout_at (send_line's EINTR round writes it), never as a kept conjunct - see the
+   note before re_post. *)
+Definition rf_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(T : Z) (es : list rentry) (c : ctl) (O : list byte) (mx no cap out : Z) (rest : list (Z * Z)) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' k out',
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+@ajournal_gx _ SK SEGS B G 0 [] RF_STK (spZ regs) (rf_FP T es cap out) ly S W mem md [] ly' S' W' mem' md' k /\
+aregs_preserved regs regs' /\
+apres_kept B W mem W' mem' /\
+frames S' = frames S /\
+mo_le MT S S' (rf_cost c O mx no cap es) /\
+Permutation (ablocks B ly' S') (rf_tblk T ++ aout_blks (gse_cap (rf_run c O mx no cap es)) out' ++ rest) /\
+aout_at B RG ly' S' W' mem' (rf_ctl (gse_c (rf_run c O mx no cap es))) (gse_O (rf_run c O mx no cap es)) mx
+  (gse_no (rf_run c O mx no cap es)) (gse_cap (rf_run c O mx no cap es)) out' /\
+alock_at RG W' mem' false /\
+ra_rel B RG ly' S' W' mem' T [] /\
+val_mem SEGS (arm W' mem') GL 4 (2 ^ 32 - 1) /\ awr W' mem' GL 4.
+Definition rf_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch T es c O mx no cap out rest,
+afn_pre SEGS B RF_STK ly S W regs mem md ch -> spZ regs mod 32 = 0 ->
+count_cid 0 (frames S) < fs_frames 0 ->
+val_mem SEGS (arm W mem) GTU 1 0 ->
+alock_at RG W mem false ->
+ra_rel B RG ly S W mem T es ->
+(exists lst, val_mem SEGS (arm W mem) GL 4 lst) -> awr W mem GL 4 ->
+aout_at B RG ly S W mem c O mx no cap out ->
+Permutation (ablocks B ly S) (rf_tblk T ++ rf_eblks es ++ aout_blks cap out ++ rest) ->
+(* the BYTES of " end\0" (true from rom_view) - a content fact, not a shadow claim; the zero-shadow claim over this
+   literal is false (its last granule is partial, shadow byte 5) and no part of rf_spec states it *)
+garr8 SEGS (arm W mem) (VAL A_lit_end5) (bzs END5) -> rom_view SEGS W mem ->
+(forall a, inG RF_G a -> inG G a) -> (forall a, inG (G_SL B RG) a -> inG G a) ->
+(forall a, inG RF_G a -> ~ (as_errno B <= a < as_errno B + 4)) ->
+rf_room (blocks_bytes S) c O mx no cap es ->
+(* the entry loop's free (s->buf) caller context: the call at pc + 0x184 returns to pc + 392 (0x82474 - 0x822ec),
+   relay_finish's own frame record on the chain, which needs room above sp for the caller's frame.  (gestures_end's
+   frees are W4's gse_spec's, at its own call site pc + 408.) *)
+spZ regs + 16 < ly_top ly -> In (pc + 392 :: raZ regs :: spine ch) CTX ->
+mo_ok MT S (rf_cost c O mx no cap es) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (rf_post regs ly S W mem md T es c O mx no cap out rest).
+End rfs.
+(* No G-generic rf_spec_g: rf_spec needs G_SL inside G and G_SL holds errno's four bytes, which gx_rt excludes, so a
+   gx_rt-guarded form could never be used.  A caller takes rf_spec at its own G (RF_G ++ G_SL or larger) directly. *)
+End w5f.
+
+(* ---- check_shape_ends (fuzz_reply.asan 0x853b0, 225 instructions), lane W3: its contract, moved here from
+   lib/A/W_check_shape_ends.v on 2026-10-29 so that tools/bkit/mkbkit.py twins it into lib/B with no hand copy.
+   Image B's body differs (frame 112; list_drop CALLED at 0x85924 / 0x85a00 where A inlines free + memmove), so B's
+   CSHE_FRAME and CSHE_STK come in as cfg b_facts; the text below is shared.  B's two list_drop calls need
+   ldrop_spec's memmove size `AREC * (hl_n l - 1 - Z.of_nat i) < 2 ^ 32` (kit 5bf9ced2993's weakened form), which
+   `hl_n H < 2 ^ 26` below already gives (16 * 2^26 < 2^32): no cap premise is stated. ---- *)
+Section w3e. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+#[local] Notation VAL := (@pa_val _ fr_prog_listing PI).
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable G : list (Z * Z).
+(* ------------------------------------------------------------------ the contract *)
+(* The frame is 144 bytes (0x853b0 addi sp,sp,-144); the deepest callee is the allocator's free. *)
+Definition CSHE_FRAME : Z := 144.
+Definition CSHE_STK : Z := CSHE_FRAME + ASTACK.
+
+(* Where a byte that must survive an allocator call may live: above the allocation ceiling (the real stack),
+   in the image outside the allocator's own statics and errno, or in one of the fake frames of S.  These are
+   exactly the three clauses of acall_kept (Reusable/YCbq.v:825) a caller can name. *)
+Definition cshe_home (ly : alayout) (S : astate) (a : Z) : Prop :=
+alloc_ceiling <= a \/
+(in_img SEGS a /\ ~ Exists (in_zr a) (as_owned_static B) /\ ~ (as_errno B <= a < as_errno B + 4)) \/
+(exists cid pos, In (cid, pos) (frames S) /\ in_zr a (frame_rng ly (cid, pos))).
+
+
+(* the blocks the dropped records own, in the Permutation form of W2's posts *)
+Definition cshe_ds_blks (ds : list (Z * list byte)) : list (Z * Z) :=
+map (fun r => (fst r, Z.of_nat (length (snd r)) + 1)) ds.
+(* one free per held record is the most it can do *)
+Definition cshe_cost (H : hlist) : Z := hl_n H * mo_free MT.
+
+Definition cshe_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(XO AT HA : Z) (h : hsrc) (P : list byte) (A0 gone : Z) (ob : list byte) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' kk (H' : hlist) (ds : list (Z * list byte)) (c : Z),
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx SEGS B G XO [(AT, AT + 8)] CSHE_STK (spZ regs) (blk_FP (list_blks (hs_held h)))
+  ly S W mem md [] ly' S' W' mem' md' kk /\
+aregs_preserved regs regs' /\
+(* errno's view is kept (gm_post's / ldrop_post's conjunct; ARM_gone reads errno-dependent state after the call) *)
+(forall j, 0 <= j < 4 -> aview SEGS (w_H W') mem' (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j)) /\
+asrc_at B ly' S' W' mem' HA (CheckRep.set_held h H') /\
+hl_v H' = hl_v (hs_held h) /\ hl_cap H' = hl_cap (hs_held h) /\
+NoDup (CheckRep.texts H') /\
+((gone <> 0 /\
+  hl_recs H' = filter (fun r => negb (CheckRep.prefixb P (snd r))) (hl_recs (hs_held h)) /\
+  ds = filter (fun r => CheckRep.prefixb P (snd r)) (hl_recs (hs_held h)) /\ c = 0) \/
+ (gone = 0 /\
+  CheckRep.ends_run P (hl_recs (hs_held h)) (skipn (Z.to_nat A0) ob)
+    (CheckRep.want_of P (hl_recs (hs_held h))) = Some (hl_recs H', ds, c))) /\
+0 <= c /\
+val_mem SEGS (mrestrict (w_H W') mem') AT 8 (A0 + c) /\
+val_mem SEGS (mrestrict (w_H W') mem') (VAL A_g_gone) 1 gone /\
+(forall rest, Permutation (ablocks B ly S) (cshe_ds_blks ds ++ rest) -> Permutation (ablocks B ly' S') rest) /\
+frames S' = frames S /\
+mo_le MT S S' (cshe_cost (hs_held h)).
+
+Definition cshe_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch XO AT HA (j : nat) PF h P A0 gone O OUT ob,
+let H := hs_held h in
+let PLEN := Z.of_nat (length P) in
+afn_pre SEGS B CSHE_STK ly S W regs mem md ch ->
+(* the journal's out-cell window: the caller's `at` is a real-stack cell inside [sp, sp + XO) *)
+0 <= XO -> XO mod 16 = 0 -> spZ regs + XO <= ly_top ly ->
+(forall a, spZ regs <= a < spZ regs + XO -> apresent (w_H W) mem a) ->
+(* the arguments *)
+getr regs 10 = w64 HA -> getr regs 11 = w64 PF -> getr regs 12 = w64 AT ->
+(* the source: one of g_s[0..3], a program global this function writes (held.n) *)
+asrc_at B ly S W mem HA h ->
+HA mod 8 = 0 -> 4096 <= HA -> HA + ASRC <= kLowMemEnd ->
+(forall a, HA + 64 <= a < HA + 96 -> inG G a) -> azs B (HA + 64) 32 ->
+HA = VAL (A_OBJ 22) + ASRC * Z.of_nat j -> (j < 4)%nat ->
+(forall a, HA <= a < HA + ASRC -> ~ (spZ regs - CSHE_STK <= a < spZ regs + XO)) ->
+(forall a, HA <= a < HA + ASRC -> cshe_home ly S a) ->
+NoDup (CheckRep.texts H) ->
+hl_n H < 2 ^ 26 ->
+
+(* the held records and the vector are off this frame, and survive the frees of the others *)
+(forall a, hl_v H <= a < hl_v H + AREC * hl_cap H -> ~ (spZ regs - CSHE_STK <= a < spZ regs + XO)) ->
+(forall r, In r (hl_recs H) -> forall a, fst r <= a < fst r + Z.of_nat (length (snd r)) + 1 ->
+  ~ (spZ regs - CSHE_STK <= a < spZ regs + XO)) ->
+(* the out cell *)
+AT mod 8 = 0 -> spZ regs <= AT -> AT + 8 <= spZ regs + XO ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF AT 8 ->
+val_mem SEGS (mrestrict (w_H W) mem) AT 8 A0 ->
+(* the prefix string P, NUL-terminated, with the slack strlen's word read may touch *)
+~ In (Z_to_bv 8 0) P -> PLEN + 1 < 2 ^ 32 -> 0 < PF -> PF + PLEN + 8 <= 2 ^ 63 ->
+(forall i, 0 <= i < PLEN -> aview SEGS (w_H W) mem (PF + i) = Some (bv_unsigned (nth (Z.to_nat i) P (Z_to_bv 8 0)))) ->
+aview SEGS (w_H W) mem (PF + PLEN) = Some 0 ->
+(forall a, PF <= a < PF + PLEN + 8 -> aview SEGS (w_H W) mem a <> None /\
+  ~ (spZ regs - CSHE_STK <= a < spZ regs + XO)) ->
+amem_range PF (PLEN + 1) -> amem_range PF 8 ->
+range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF PF (PLEN + 1) ->
+shadow_hull_vis (aview SEGS (w_H W) mem) PF (PLEN + 1) ->
+(* WHERE P LIVES, so loop 2/3's has_prefix finds its bytes and its shadow again after each free.  Two homes, one
+   per kind of call site, measured on both images' objdump (W3Checks, 2026-10-29): the remove arm (A 0x84a08,
+   B 0x84884) and the exit (A 0x84cf0, B 0x84f8c, where s3 is re-set to .str.3 at B 0x84f38) pass the literal
+   at 0x20ee0; the gone arm (A 0x848e8, B 0x84c24) passes the fake frame's prefix[48], s3 = frame + 32 (set at
+   A 0x84250 / B 0x8453c), which snprintf writes (found by a Theorem Labs lane and a Theorem Labs lane):
+   - a read-only literal: in_rom + ROMNS + rom_view keep its bytes, and its shadow is a const cell (ashp);
+   - a local in one of S's fake frames: the journal's frame clause keeps both its bytes and the frame's shadow
+     bytes (YCbq.v ajournal), so the entry's range_addressable / shadow_hull_vis above hold again after a free.
+   The earlier text demanded the literal, which is false at the gone arm's call. *)
+((forall a, PF <= a < PF + PLEN + 8 -> in_rom SEGS a) /\ ashp B PF (PLEN + 1) \/
+ exists cid pos, In (cid, pos) (frames S) /\ forall a, PF <= a < PF + PLEN + 8 -> in_zr a (frame_rng ly (cid, pos))) ->
+(* loop 3's bcmp compares the line's last four bytes with " end" (.str.4, 0x20f00 = VAL A_lit_end5): its bytes,
+   as gesture_end's ge_spec states them (W_contract.v) *)
+garr8 SEGS (arm W mem) (VAL A_lit_end5) (bzs END5) -> rom_view SEGS W mem ->
+(* the globals and the controller's stream, as cse_spec states them *)
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_gone) 1 gone -> 0 <= gone < 256 ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_nout) 8 O ->
+val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_out) 8 OUT ->
+(* the stream as cnl_spec states it: g_out is a live heap block apart from the source's blocks, so the inlined
+   frees keep it, and its shadow facts follow from the block (YCbq.v range_addressable_of_block /
+   shadow_hull_vis_of_block); O < 2 ^ 32 is next_line's memchr bound (nl_spec) *)
+ob_at W mem OUT ob -> Z.of_nat (length ob) = O -> O <= 2 ^ 40 -> (0 < O -> O < 2 ^ 32) -> amem_range OUT (O + 8) ->
+(ob = [] \/ exists CO, O <= CO /\ In (OUT, CO) (ablocks B ly S) /\ ~ In OUT (hs_blocks h)) ->
+0 <= A0 <= O ->
+(* the functional pre of the plain contract *)
+(gone = 0 -> CheckRep.ends_run P (hl_recs H) (skipn (Z.to_nat A0) ob) (CheckRep.want_of P (hl_recs H)) <> None) ->
+(* the allocator's budget: at most one free per held record *)
+mo_ok MT S (cshe_cost H) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md) (cshe_post regs ly S W mem md XO AT HA h P A0 gone ob).
+
+End w3e.
+
+(* ---- check_no_loss (fuzz_reply.asan 0x85958), lane W3: its contract (gmc, cnl_go, cnl_cost, CNL_FRAME, CNL_STK,
+   cnl_post, cnl_spec, cnl_objs_apart, cnl_ro) and the model's vocabulary it names (capstep, capb, tbytes, hbytes,
+   cnl_cap, cnl_room, txs, bsr, cpos, A_g_s), moved here from lib/A/W_check_no_loss.v on 2026-10-29 so that
+   tools/bkit/mkbkit.py twins it into lib/B with no hand copy.  B's CNL_FRAME and CNL_STK come in as cfg b_facts;
+   the text below is shared.  cnl_post will gain an errno-view conjunct once gm_post keeps errno. ---- *)
+(* ------------------------------------------------------------------ the model's side *)
+(* One step of the held list's capacity: it grows exactly when gesture_model appends a key (list_push). *)
+Definition capstep (T : list (list Z)) (l : list Z) (cap : Z) : Z :=
+if Nat.ltb (length T) (length (RelayModel.upd T l)) then grow_cap (Z.of_nat (length T)) cap else cap.
+(* The held list's capacity never passes this: its own, or twice what the expected lines can append. *)
+Definition capb (H E : hlist) : Z := Z.max 8 (Z.max (hl_cap H) (2 * (hl_n H + Z.of_nat (count_begin (texts E))))).
+(* The bytes a held list with texts T and capacity cap owns (its vector, then each text and its NUL). *)
+Definition tbytes (T : list (list Z)) : Z := fold_right (fun t acc => Z.of_nat (length t) + 1 + acc) 0 T.
+Definition hbytes (T : list (list Z)) (cap : Z) : Z := (if cap =? 0 then 0 else AREC * cap) + tbytes T.
+Fixpoint cnl_cap (T : list (list Z)) (cap : Z) (rs : list (Z * list byte)) : Z :=
+match rs with
+| [] => cap
+| r :: rs' => cnl_cap (RelayModel.upd T (bzs (snd r))) (capstep T (bzs (snd r)) cap) rs'
+end.
+(* The blocks_bytes room every gesture_model call needs (gm_spec's premises), replayed over the expected texts:
+   bb is blocks_bytes before the step; the step frees the text it consumed. *)
+Fixpoint cnl_room (MMAX bb : Z) (T : list (list Z)) (cap : Z) (rs : list (Z * list byte)) : Prop :=
+match rs with
+| [] => True
+| r :: rs' =>
+  (* gm_spec's growth premise `lp_grow H = true -> lp_vbytes H < MMAX`: list_push's realloc request 16 * 2cap must
+     stay under the instance's cf_malloc_max (lp_spec, W_contract.v; W2's bound, 2026-10-29) *)
+  (Z.of_nat (length T) = cap -> AREC * grow_cap (Z.of_nat (length T)) cap < MMAX) /\
+  bb + (if Z.of_nat (length T) =? cap then AREC * grow_cap (Z.of_nat (length T)) cap else 0) +
+    (Z.of_nat (length (snd r)) + 1) <= LIVE_MAX /\
+  cnl_room MMAX (bb - hbytes T cap + hbytes (RelayModel.upd T (bzs (snd r))) (capstep T (bzs (snd r)) cap) -
+      (Z.of_nat (length (snd r)) + 1))
+    (RelayModel.upd T (bzs (snd r))) (capstep T (bzs (snd r)) cap) rs'
+end.
+Definition txs (rs : list (Z * list byte)) : list (list Z) := map (fun r => bzs (snd r)) rs.
+(* the stream bytes of records rs (CheckRep.bstream over a list of records), and where *at points after pre *)
+Definition bsr (rs : list (Z * list byte)) : list byte := concat (map (fun r => snd r ++ [Z_to_bv 8 0]) rs).
+Definition cpos (gone A0 : Z) (pre : list (Z * list byte)) : Z :=
+if gone =? 0 then A0 + Z.of_nat (length (bsr pre)) else A0.
+Definition A_g_s : nat := A_OBJ 22.            (* g_s: 4 x struct source, 0x5d88e0 *)
+Section w3n. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {SK : YI16.sink_head}.
+Context {PI : PAImg fr_prog_listing}.
+#[local] Notation SEGS := (@pa_segs _ fr_prog_listing PI).
+#[local] Notation VAL := (@pa_val _ fr_prog_listing PI).
+Variable B : asyms.
+Variable MT : ameter_ops.
+Variable G : list (Z * Z).
+Variable MMAX : Z.
+(* ------------------------------------------------------------------ the contract *)
+(* The meter: gesture_model's charge (gmc, gm_cost's at a held list of texts T and capacity cap: the growth and the
+   key copy on a begin of a key not in T, one free on an end of a key in T, nothing else) and the free of the
+   consumed text, per expected record. *)
+Definition gmc (T : list (list Z)) (cap : Z) (ln : list byte) : Z :=
+match RelayModel.gesture (bzs ln) with
+| Some (RelayModel.GBegin, x) =>
+    if existsb (RelayModel.list_eqb x) T then 0 else
+    (if Z.of_nat (length T) =? cap then mo_malloc MT (AREC * grow_cap (Z.of_nat (length T)) cap) + mo_free MT else 0) +
+    mo_malloc MT (Z.of_nat (length x) + 1)
+| Some (RelayModel.GEnd, x) => if existsb (RelayModel.list_eqb x) T then mo_free MT else 0
+| None => 0
+end.
+Fixpoint cnl_go (T : list (list Z)) (cap : Z) (rs : list (Z * list byte)) : Z :=
+match rs with
+| [] => 0
+| r :: rs' => gmc T cap (snd r) + mo_free MT +
+    cnl_go (RelayModel.upd T (bzs (snd r))) (capstep T (bzs (snd r)) cap) rs'
+end.
+Definition cnl_cost (E H : hlist) : Z := cnl_go (texts H) (hl_cap H) (hl_recs E).
+(* Frame 128; next_line, gesture_model (with list_push / list_drop below it), bcmp, free and memmove below it. *)
+Definition CNL_FRAME : Z := 128.
+Definition CNL_STK : Z := CNL_FRAME + Z.max NL_STK (Z.max GM_STK ASTACK).
+Definition cnl_post (regs : bvmap 5 word) ly S (W : world SEGS) (mem : word -> option byte) (md : Model)
+(XO HA AT : Z) (h : hsrc) (E H : hlist) (gone A0 NO OUT : Z) (ob : list byte) : world SEGS -> config -> Prop :=
+fun W' c' => exists ly' S' regs' mem' md' kk (E' H' : hlist),
+c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom SEGS)) md' /\
+ajournal_gx SEGS B G XO [(AT, AT + 8)] CNL_STK (spZ regs) (blk_FP (list_blks E ++ list_blks H))
+  ly S W mem md [] ly' S' W' mem' md' kk /\
+aregs_preserved regs regs' /\ apres_kept B W mem W' mem' /\
+(* errno's view is kept, after apres_kept as in gm_post (W4 45476a00e76): the free keeps it (aj_free_gx), the
+   memmove writes only its destination, gesture_model / next_line / bcmp keep it; ARM_gone reads it after the call *)
+(forall j, 0 <= j < 4 -> aview SEGS (w_H W') mem' (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j)) /\
+asrc_at B ly' S' W' mem' HA (set_exp_held h E' H') /\
+hl_recs E' = [] /\ hl_v E' = hl_v E /\ hl_cap E' = hl_cap E /\
+NoDup (texts H') /\ texts H' = RelayModel.upds (texts H) (texts E) /\
+hl_cap H' <= Z.max 8 (Z.max (hl_cap H) (2 * (hl_n H + Z.of_nat (count_begin (texts E))))) /\
+val_mem SEGS (arm W' mem') AT 8 (if gone =? 0 then A0 + Z.of_nat (length (bstream E)) else A0) /\
+val_mem SEGS (arm W' mem') (VAL A_g_gone) 1 gone /\
+val_mem SEGS (arm W' mem') (VAL A_g_nout) 8 NO /\ val_mem SEGS (arm W' mem') (VAL A_g_out) 8 OUT /\
+ob_at W' mem' OUT ob /\
+(forall rest, Permutation (ablocks B ly S) (list_blks E ++ list_blks H ++ rest) ->
+ Permutation (ablocks B ly' S') (list_blks E' ++ list_blks H' ++ rest)) /\
+frames S' = frames S /\
+mo_le MT S S' (cnl_cost E H) /\
+(* the held list's capacity never shrinks: gesture_model changes it only through list_push's grow_cap (gm_post,
+   lp_post), and grow_cap never lowers a capacity >= 0 (Prog/ListRep.v:14).  Appended last, so a positional destruct
+   of the earlier conjuncts still binds. *)
+hl_cap H <= hl_cap H' /\
+(* the EXACT capacity law: the held capacity after the run is cnl_cap (:1944) of the expected records over the held
+   texts and capacity, the loop's own step function.  The bound above is not enough for a caller that counts blocks: a
+   run with nothing expected must leave the capacity UNCHANGED, and only this equation says so.  Appended last. *)
+hl_cap H' = cnl_cap (texts H) (hl_cap H) (hl_recs E).
+(* s = &g_s[j] (HA) and at (AT, a cell of the caller's frame inside the window [sp, sp + XO)). *)
+Definition cnl_spec (pc : Z) : Prop :=
+forall W ly S regs mem md ch XO HA (j : nat) AT (h : hsrc) gone A0 NO OUT (ob : list byte),
+afn_pre SEGS B CNL_STK ly S W regs mem md ch ->
+0 <= XO -> XO mod 16 = 0 -> spZ regs + XO <= ly_top ly ->
+(forall a, spZ regs <= a < spZ regs + XO -> apresent (w_H W) mem a) ->
+getr regs 10 = w64 HA -> getr regs 11 = w64 AT ->
+HA = VAL A_g_s + ASRC * Z.of_nat j -> (j < 4)%nat ->
+AT mod 8 = 0 -> spZ regs <= AT -> AT + 8 <= spZ regs + XO ->
+asrc_at B ly S W mem HA h ->
+(forall a, HA + 64 <= a < HA + 96 -> inG G a) -> azs B (HA + 64) 32 ->
+NoDup (texts (hs_held h)) ->
+hl_n (hs_expected h) < 2 ^ 26 ->
+hl_n (hs_held h) + Z.of_nat (count_begin (texts (hs_expected h))) < 2 ^ 22 ->
+val_mem SEGS (arm W mem) AT 8 A0 -> 0 <= A0 <= NO ->
+val_mem SEGS (arm W mem) (VAL A_g_gone) 1 gone -> 0 <= gone < 256 ->
+val_mem SEGS (arm W mem) (VAL A_g_nout) 8 NO -> val_mem SEGS (arm W mem) (VAL A_g_out) 8 OUT ->
+ob_at W mem OUT ob -> Z.of_nat (length ob) = NO -> NO <= 2 ^ 40 ->
+(* next_line's memchr bound (nl_spec, W_contract.v: `0 < O -> ... O < 2 ^ 32`); W8's aout_at is its source *)
+(0 < NO -> NO < 2 ^ 32) -> amem_range OUT (NO + 8) ->
+(ob = [] \/ exists CO, NO <= CO /\ In (OUT, CO) (ablocks B ly S) /\ ~ In OUT (hs_blocks h)) ->
+(gone = 0 -> exists rest, skipn (Z.to_nat A0) ob = bstream (hs_expected h) ++ rest) ->
+rom_view SEGS W mem ->
+garr8 SEGS (arm W mem) (VAL A_lit_gesture) RelayModel.K_GESTURE ->
+garr8 SEGS (arm W mem) (VAL A_lit_begin) RelayModel.W_BEGIN ->
+garr8 SEGS (arm W mem) (VAL A_lit_end) RelayModel.W_END ->
+cnl_room MMAX (blocks_bytes S) (texts (hs_held h)) (hl_cap (hs_held h)) (hl_recs (hs_expected h)) ->
+mo_ok MT S (cnl_cost (hs_expected h) (hs_held h)) ->
+(* list_drop's memmove inside gesture_model needs the held vector's bytes to fit an unsigned word *)
+AREC * capb (hs_held h) (hs_expected h) < 2 ^ 32 ->
+(* the caller's stack is readable from sp up to ly_top.  Image B needs it: its allocator's unwinder, reached from
+   check_no_loss's free and gesture_model's realloc, follows saved s0 cells above the caller's sp (a Theorem Labs lane,
+   2026-10-29; W8's cut states the same fact once as STKR and its arms pass it here).  It is true on image A as well
+   and A's walk does not use it: ONE text for both images, LAST so every positional binding above is unchanged. *)
+(forall a, spZ regs <= a < ly_top ly -> aview SEGS (w_H W) mem a <> None) ->
+SRr SEGS W (cfg_at SEGS pc regs mem md)
+  (cnl_post regs ly S W mem md XO HA AT h (hs_expected h) (hs_held h) gone A0 NO OUT ob).
+
+(* The image objects the walk reads are apart and g_s is 16-aligned.  The abstract placement PAImg does not fix the
+   objects' values relative to each other, so this is a Section hypothesis, discharged at the pinned placement PB_fr
+   (W_img.v) by vm_compute. *)
+Definition cnl_objs_apart : Prop :=
+let g := VAL (A_OBJ 0) in let c := VAL (A_OBJ 32) in let gn := VAL A_g_gone in let s := VAL A_g_s in
+s mod 16 = 0 /\ (gn + 1 <= s \/ s + 384 <= gn) /\ (gn + 1 <= g \/ g + 8 <= gn) /\ (gn + 1 <= c \/ c + 8 <= gn) /\
+(s + 384 <= g \/ g + 8 <= s) /\ (s + 384 <= c \/ c + 8 <= s) /\
+(s + 384 <= VAL A_g_nout \/ VAL A_g_nout + 8 <= s) /\ (s + 384 <= VAL A_g_out \/ VAL A_g_out + 8 <= s) /\
+(s + 384 <= VAL A_lit_gesture \/ VAL A_lit_gesture + 13 <= s) /\
+(s + 384 <= VAL A_lit_begin \/ VAL A_lit_begin + 5 <= s) /\
+(s + 384 <= VAL A_lit_end \/ VAL A_lit_end + 3 <= s) /\
+(forall a, s <= a < s + 384 -> ~ in_rom SEGS a).
+(* The image objects the walk keeps unchanged and reads: g_gone, g_nout, g_out, the four sources g_s and gesture_model's
+   three literals.  The instance owes that they are no allocator static (gx_ok) and miss errno and the runtime's two
+   static cells (gx_rt): a vm_compute over the instance's statics at PB_fr. *)
+Definition cnl_ro : list (Z * Z) :=
+[(VAL A_g_gone, 1); (VAL A_g_nout, 8); (VAL A_g_out, 8); (VAL A_g_s, 384);
+ (VAL A_lit_gesture, 13); (VAL A_lit_begin, 5); (VAL A_lit_end, 3)].
+End w3n.

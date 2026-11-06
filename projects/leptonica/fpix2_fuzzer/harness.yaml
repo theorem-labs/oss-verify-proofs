@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: fpix2_fuzzer
-rocq: OssFuzzTheorems.leptonica.fpix2_fuzzer
+rocq: OSSVerify.leptonica.fpix2_fuzzer
 origin: upstream
 summary: pixReadMemSpix, pix->DPix->FPix conversion, then DPix/FPix arithmetic (AddMultConstant, LinearCombination,
   ScaleByInteger(1), SetAllArbitrary, GetMax/GetMin, AddContinuedBorder, AffinePta and ProjectivePta with

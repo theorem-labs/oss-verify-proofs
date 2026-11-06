@@ -1,0 +1,9 @@
+# fuzz_uci image-A class-1 stack_malloc contract: the donor files (fuzz_grant's RELEASED lib, recipes 4f87de75d67,
+# normalised by mkdon-sm1.sh, core-A's rule: lib/Reusable/* -> root)
+#   A/Rt/AF0r.v <- lib/A/Rt/AF0r.v    (the code table, the symbolic runs, the probe loop)
+#   A/Rt/AF0s.v <- lib/A/Rt/AF0s.v    (tfib_stack_malloc_at and the corollary stack_malloc1_contract)
+#   YF0v.v      <- lib/Reusable/YF0v.v (own_free_frame / own_free_frame_shadow, which AF0s.v uses): a shared kernel
+#               file the unit's lib/Reusable does not hold, so it is staged once, into lib/Reusable
+A/Rt/AF0r.v
+A/Rt/AF0s.v
+YF0v.v

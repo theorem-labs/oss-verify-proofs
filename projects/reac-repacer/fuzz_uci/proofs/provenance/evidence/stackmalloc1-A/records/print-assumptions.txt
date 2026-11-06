@@ -1,0 +1,75 @@
+# Check + Print Assumptions of stack_malloc1_contract, and the consumer's hypothesis type closed by exact (an
+# uncommitted scratch file lib/A/ScratchSm1A.v, built by `CB_COMPILE=<it> cb build` on this branch and deleted;
+# 14 axioms, every one in toolchain/allowed-axioms.txt)
+## the scratch file
+From Stdlib Require Import ZArith List.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
+From OssFuzzTheorems.reac_repacer.fuzz_uci.images Require Asan.
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import YK11 YM05 YG0d YG0q.
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.A Require Import AB1v AF0m AD2l.
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.A.Rt Require AF0s.
+Module UAs := OssFuzzTheorems.reac_repacer.fuzz_uci.images.Asan.
+(* lib/A/UciTFIB.v:18 of the consumer's branch, verbatim *)
+Definition ucisegs0 : list Segment := UAs.M.loaded_segments.
+Section S.
+Local Notation segs := ucisegs0.
+Local Notation B := AD2l.UciB.
+(* the consumer's Section hypothesis, its type verbatim *)
+Definition H_RT_STACK_MALLOC1_type : Prop :=
+  forall (rc : YM05.RunCeil) (fx : YK11.FPState), @astack_malloc_realizes fx rc segs B 1.
+Lemma H_RT_STACK_MALLOC1_ok : H_RT_STACK_MALLOC1_type.
+Proof.
+  intros rc fx.
+  exact (@AF0s.stack_malloc1_contract fx rc B (AR_laws_ok tfibsegs B) AD2l.UciB_syms).
+Qed.
+End S.
+Check AF0s.stack_malloc1_contract.
+Print Assumptions AF0s.stack_malloc1_contract.
+Print Assumptions H_RT_STACK_MALLOC1_ok.
+## its compile output (the build log's lines after it)
+AF0s.stack_malloc1_contract
+     : ∀ B : YG0f.asyms,
+         AR_laws tfibsegs B → UciSyms B → astack_malloc_realizes tfibsegs B 1
+where
+?fx : [ |- FPState]
+?rc : [ |- RunCeil]
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+PrimArray.array : Type → Type
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+PrimArray.array : Type → Type
+File "./proofs/reac-repacer/fuzz_uci/lib/A/ScratchSm1A.v", line 11, characters 6-14:
+File "./proofs/reac-repacer/fuzz_uci/lib/A/ScratchSm1A.v", line 12, characters 6-14:
+proofs/reac-repacer/fuzz_uci/lib/A/ScratchSm1A.vo (real: 5.91, user: 5.60, sys: 0.30, mem: 698176 ko)
+cb: target proofs/reac-repacer/fuzz_uci/lib/A/ScratchSm1A.vo compiled
+cb: dune: 1 targets: 1 compiled, 0 restored from the cache, 0 missing; 0 failed compiles; 0 more compiled (dependencies outside the targets)
+rc=0 wall=10

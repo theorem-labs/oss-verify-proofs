@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjpeg-turbo
 harness: compress_yuv_fuzzer
-rocq: OssFuzzTheorems.libjpeg_turbo.compress_yuv_fuzzer
+rocq: OSSVerify.libjpeg_turbo.compress_yuv_fuzzer
 origin: upstream
 summary: tj3EncodeYUV8 then tj3CompressFromYUV8 on a loaded or raw image under 6 option sets; output only
   summed. The "sum > bound" test after touching output bytes only prevents dead-code elimination for MSan;

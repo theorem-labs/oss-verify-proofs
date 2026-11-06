@@ -1,0 +1,17 @@
+From OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib Require Theorems.
+Set Printing Fully Qualified.
+Goal True. idtac "SINKDEPS-BEGIN plain_halts". Abort.
+Redirect "sinkdeps-plain_halts" Print All Dependencies OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib.Theorems.libreac_fuzz_boxreg_plain_halts.
+Goal True. idtac "SINKDEPS-BEGIN ubsan_halts". Abort.
+Redirect "sinkdeps-ubsan_halts" Print All Dependencies OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib.Theorems.libreac_fuzz_boxreg_ubsan_halts.
+Goal True. idtac "SINKDEPS-BEGIN ubsan_agrees". Abort.
+Redirect "sinkdeps-ubsan_agrees" Print All Dependencies OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib.Theorems.libreac_fuzz_boxreg_ubsan_agrees.
+Goal True. idtac "SINKDEPS-BEGIN asan_halts". Abort.
+Redirect "sinkdeps-asan_halts" Print All Dependencies OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib.Theorems.libreac_fuzz_boxreg_asan_halts.
+Goal True. idtac "SINKDEPS-BEGIN asan_agrees". Abort.
+Redirect "sinkdeps-asan_agrees" Print All Dependencies OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib.Theorems.libreac_fuzz_boxreg_asan_agrees.
+Goal True. idtac "SINKDEPS-BEGIN asan_ubsan_halts". Abort.
+Redirect "sinkdeps-asan_ubsan_halts" Print All Dependencies OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib.Theorems.libreac_fuzz_boxreg_asan_ubsan_halts.
+Goal True. idtac "SINKDEPS-BEGIN asan_ubsan_agrees". Abort.
+Redirect "sinkdeps-asan_ubsan_agrees" Print All Dependencies OssFuzzTheorems.Proofs.libreac.fuzz_boxreg.lib.Theorems.libreac_fuzz_boxreg_asan_ubsan_agrees.
+Goal True. idtac "SINKDEPS-END". Abort.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wabt
 harness: read_binary_interp_fuzzer
-rocq: OssFuzzTheorems.wabt.read_binary_interp_fuzzer
+rocq: OSSVerify.wabt.read_binary_interp_fuzzer
 origin: upstream
 summary: fuzzer-chosen feature flags, then ReadBinaryInterp (stop on first error) into an interp::ModuleDesc;
   result and errors discarded.

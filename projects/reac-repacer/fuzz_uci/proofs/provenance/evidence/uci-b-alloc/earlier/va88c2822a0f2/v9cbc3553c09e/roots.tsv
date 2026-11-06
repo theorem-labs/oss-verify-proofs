@@ -1,0 +1,12 @@
+# U = UCI_B_TWIN sha256 8d07ffcf5948
+# G = GRANT_B_TWIN sha256 5a5ee7c02b4e
+# I = IDENT_B_TWIN sha256 43b44d50be8a
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(rodata-str-eq,jumptab-eq,const-eq)	target-differ
+__interceptor_trampoline_malloc	U:G	0x51788	0x52edc	4	4	EQUAL	0	0	0	(0, 0, 0)	0
+__interceptor_trampoline_malloc	U:I	0x51788	0x52c14	4	4	EQUAL	0	0	0	(0, 0, 0)	0
+___interceptor_malloc	U:G	0x5195c	0x530b0	348	348	EQUAL-mod-pcrel	3	0	0	(0, 0, 0)	0
+___interceptor_malloc	U:I	0x5195c	0x52de8	348	348	EQUAL-mod-pcrel	3	0	0	(0, 0, 0)	0
+__interceptor_trampoline_free	U:G	0x51784	0x52ed8	4	4	EQUAL	0	0	0	(0, 0, 0)	0
+__interceptor_trampoline_free	U:I	0x51784	0x52c10	4	4	EQUAL	0	0	0	(0, 0, 0)	0
+___interceptor_free	U:G	0x5178c	0x52ee0	464	464	EQUAL-mod-pcrel	3	0	0	(0, 0, 0)	0
+___interceptor_free	U:I	0x5178c	0x52c18	464	464	EQUAL-mod-pcrel	3	0	0	(0, 0, 0)	0

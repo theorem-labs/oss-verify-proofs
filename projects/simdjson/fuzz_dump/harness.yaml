@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: simdjson
 harness: fuzz_dump
-rocq: OssFuzzTheorems.simdjson.fuzz_dump
+rocq: OSSVerify.simdjson.fuzz_dump
 origin: upstream
 summary: parse, then a recursive tree walk printing every element to a null ostream; no value is checked.
 entry: LLVMFuzzerTestOneInput

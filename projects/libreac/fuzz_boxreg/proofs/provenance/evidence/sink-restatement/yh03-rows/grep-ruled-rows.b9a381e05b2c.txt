@@ -1,0 +1,27 @@
+# ref b9a381e05b2c20ef8f28aba3ca48396cf50a6c17
+# readers outside the two YH03.v (git grep -w, proofs/libreac/fuzz_boxreg/*.v)
+src0_A_stdio_read 0
+src0_E_stdio_read 0
+src0_A_stdio_seek 0
+src0_E_stdio_seek 0
+src0_D_str_wb 0
+src0_D_str_tmp_out_gif 0
+src0_D_str_3 0
+src0_D_str_rwa 0
+# positive control 1: a name YI5c.v reads, by the same command
+src0_D_ofl_lock 6
+b9a381e05b2c:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:16:sk_ofl_lock := src0_D_ofl_lock;
+b9a381e05b2c:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:25:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_file sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+b9a381e05b2c:proofs/libreac/fuzz_boxreg/lib/Reusable/YI5c.v:42:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_file sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+b9a381e05b2c:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:16:sk_ofl_lock := src0_D_ofl_lock;
+b9a381e05b2c:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:25:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_file sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+b9a381e05b2c:proofs/libreac/fuzz_boxreg/lib/U/Reusable/YI5c.v:42:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_file sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+# positive control 2: the rows themselves, by git grep -w over the two YH03.v only
+src0_A_stdio_read 2
+src0_E_stdio_read 2
+src0_A_stdio_seek 2
+src0_E_stdio_seek 2
+src0_D_str_wb 2
+src0_D_str_tmp_out_gif 2
+src0_D_str_3 2
+src0_D_str_rwa 2

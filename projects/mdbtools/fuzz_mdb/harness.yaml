@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: mdbtools
 harness: fuzz_mdb
-rocq: OssFuzzTheorems.mdbtools.fuzz_mdb
+rocq: OSSVerify.mdbtools.fuzz_mdb
 origin: upstream
 summary: mdb_open_buffer on the input; reads the table catalog, then for each table reads the columns,
   rewinds and fetches every row; nothing checked.

@@ -1,0 +1,15 @@
+verdict	file	dst_line	src_line	src_value	dst_value	reason
+UNPAIRED-PORTED	B/Rt/StackMalloc0.v	66			0x0	PATCH: the 0 of `ly_NB ly =? 0` / `ly_SB ly =? 0`, a line B-smB.patch writes (lib/Reusable/YG0f.v owned_extents); no image value
+UNPAIRED-PORTED	B/Rt/StackMalloc0.v	66			0x0	PATCH: the 0 of `ly_NB ly =? 0` / `ly_SB ly =? 0`, a line B-smB.patch writes (lib/Reusable/YG0f.v owned_extents); no image value
+STALE-DONOR-CODE-POINTER	B/Rt/StackMalloc0Tbl.v	25	30	0x3cf4c	0x3cf4c	UNEXPLAINED
+UNPAIRED-PORTED	B/Rt/YF0s.v	66			0x0	PATCH: the 0 of `ly_NB ly =? 0` / `ly_SB ly =? 0`, a line B-smB.patch writes (lib/Reusable/YG0f.v owned_extents); no image value
+UNPAIRED-PORTED	B/Rt/YF0s.v	66			0x0	PATCH: the 0 of `ly_NB ly =? 0` / `ly_SB ly =? 0`, a line B-smB.patch writes (lib/Reusable/YG0f.v owned_extents); no image value
+UNRESOLVED	B/Rt/StackMalloc0.v	250	255	0x800b6600	0x800b5c00	IMG: kLowShadowBeg + IMG_TOP / 8; grant IMG_TOP 0x5fb000 -> 2148230656 (the donor value), wire IMG_TOP 0x5f6000 -> 2148228096 (overrides-smB.tsv; numerals-smB.tsv IMG rows)
+GEOMETRY-CHANGED	B/Rt/YF0r.v	30	35	0x2000	0x2000	MODEL: fs_frames 1 = Z.shiftl 1 (kStackSizeLog - 6 - 1) = 8192 with kStackSizeLog = 20 (lib/Reusable/YG00.v), FS_N of class 1; a count, not an image quantity
+UNPAIRED-SOURCE	B/Rt/YF0r.v		43	0x3d250		DROPPED: the donor fs_ranges row of __asan_stack_malloc_2 (its start), removed by B-smB.patch; fuzz_wire twin has no symbol __asan_stack_malloc_2, fuzz_grant twin has it
+UNPAIRED-SOURCE	B/Rt/YF0r.v		43	0x67		DROPPED: the donor fs_ranges row of __asan_stack_malloc_2 (its word count 103), removed by B-smB.patch; fuzz_wire twin has no symbol __asan_stack_malloc_2, fuzz_grant twin has it
+UNPAIRED-SOURCE	B/Rt/YF0r.v		43	0x3d3ec		DROPPED: the donor fs_ranges row of __asan_stack_malloc_4 (its start), removed by B-smB.patch; fuzz_wire twin has no symbol __asan_stack_malloc_4, fuzz_grant twin has it
+UNPAIRED-SOURCE	B/Rt/YF0r.v		43	0x73		DROPPED: the donor fs_ranges row of __asan_stack_malloc_4 (its word count 115), removed by B-smB.patch; fuzz_wire twin has no symbol __asan_stack_malloc_4, fuzz_grant twin has it
+GEOMETRY-CHANGED	B/Rt/YF0r.v	244	249	0x2000	0x2000	MODEL: fs_frames 1 = Z.shiftl 1 (kStackSizeLog - 6 - 1) = 8192 with kStackSizeLog = 20 (lib/Reusable/YG00.v), FS_N of class 1; a count, not an image quantity
+GEOMETRY-CHANGED	B/Rt/YF0s.v	51	56	0x2000	0x2000	MODEL: fs_frames 1 = Z.shiftl 1 (kStackSizeLog - 6 - 1) = 8192 with kStackSizeLog = 20 (lib/Reusable/YG00.v), FS_N of class 1; a count, not an image quantity
+UNRESOLVED	B/Rt/YF0s.v	250	255	0x800b6600	0x800b5c00	IMG: kLowShadowBeg + IMG_TOP / 8; grant IMG_TOP 0x5fb000 -> 2148230656 (the donor value), wire IMG_TOP 0x5f6000 -> 2148228096 (overrides-smB.tsv; numerals-smB.tsv IMG rows)

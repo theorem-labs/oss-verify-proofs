@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: augeas
 harness: augeas_api_fuzzer
-rocq: OssFuzzTheorems.augeas.augeas_api_fuzzer
+rocq: OSSVerify.augeas.augeas_api_fuzzer
 origin: oss-fuzz
 summary: The NUL-terminated input is used as root, path, value and label for aug_init/aug_defvar/aug_get/aug_label/aug_rename/aug_text_store/aug_print/aug_setm;
   every return code is ignored.

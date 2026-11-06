@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: gdk-pixbuf
 harness: pixbuf_cons_fuzzer
-rocq: OssFuzzTheorems.gdk_pixbuf.pixbuf_cons_fuzzer
+rocq: OSSVerify.gdk_pixbuf.pixbuf_cons_fuzzer
 origin: oss-fuzz
 summary: Requires >= 800 input bytes and uses them as the pixel bytes of a 10x20, 3-channel, rowstride-40
   pixbuf, then runs scale_simple, rotate_simple, flip, composite_color_simple, set_option/get_option with

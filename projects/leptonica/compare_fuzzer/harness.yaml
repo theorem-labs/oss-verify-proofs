@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: compare_fuzzer
-rocq: OssFuzzTheorems.leptonica.compare_fuzzer
+rocq: OSSVerify.leptonica.compare_fuzzer
 origin: upstream
 summary: pixReadMemSpix, pixCopy, then pixGetPerceptualDiff, pixEqualWithAlpha and pixCompareBinary (XOR,
   SUBTRACT) of the image against its own copy. psame (1 for an identical copy) and the XOR fraction (0

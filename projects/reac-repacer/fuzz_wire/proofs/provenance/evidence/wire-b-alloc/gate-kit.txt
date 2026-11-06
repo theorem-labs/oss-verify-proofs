@@ -1,0 +1,13 @@
+roots.tsv: 4 rows for the pair U:G
+  __interceptor_trampoline_malloc EQUAL target-differ 0
+  ___interceptor_malloc EQUAL-mod-pcrel target-differ 0
+  __interceptor_trampoline_free EQUAL target-differ 0
+  ___interceptor_free EQUAL-mod-pcrel target-differ 0
+ACCEPTANCES.tsv: 107 closure rows, 174 target pairs, 76 hand-trace rows
+  closure rows: 62 SETTLED-EQUAL, 45 left to the hand traces
+  target pairs: 96 SETTLED-EQUAL, 78 left to the hand traces
+  every target left unsettled has a LUI row (76) or a hand table settlement in handtable.out under this record's rule, parts (1)-(3): entries, dispatch, bound (2), of 78
+  handtable.out _ZN9libunwind10CFI_ParserINS_17LocalAddressSpaceEE20parseFDEInstructionsERS1_RKNS2_8FDE_InfoERKNS2_8CIE_InfoEmiPNS2_10PrologInfoE +0x140: SETTLED-BY-HAND (parts 1-3 on both images; part 4, a non-wri
+  handtable.out _ZN9libunwind10CFI_ParserINS_17LocalAddressSpaceEE8parseCIEERS1_mPNS2_8CIE_InfoE +0x23c: SETTLED-BY-HAND (parts 1-3 on both images; part 4, a non-wri
+  data lines reading DIFFERS: 0 (the comment header, which quotes the plant verdicts, is not a data line)
+GATE wire-b-alloc-kit VERDICT: PASS head 75cd74cdfee5b2ed1165fe5fbe48ef157f89a474 inputs cmpkit 86da41d3ef68: strictcmp3.py b553126fa224 (roots.tsv); settle.py 4eeeae293912, luitrace.py 06d2b1005932 and mkaccept.py 984322748de5 (ACCEPTANCES.tsv, jtcheck 226254f48c97: jtcheck.py 94c2f3081b0c); handtable.py 95e3bc23db39 (handtable.out)

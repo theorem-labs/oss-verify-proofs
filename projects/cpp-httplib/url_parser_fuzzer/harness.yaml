@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cpp-httplib
 harness: url_parser_fuzzer
-rocq: OssFuzzTheorems.cpp_httplib.url_parser_fuzzer
+rocq: OSSVerify.cpp_httplib.url_parser_fuzzer
 origin: upstream
 summary: selector byte picks parse_query_text / decode_query_component / decode_path_component / encode_query_component
   / normalize_query_string / is_valid_path; results discarded.

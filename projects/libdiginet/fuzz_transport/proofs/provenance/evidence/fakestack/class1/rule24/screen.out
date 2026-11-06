@@ -1,0 +1,30 @@
+libreac/fuzz_grant	1	A/Rt/AF0r.v	asan	pin OK; PASS; 12 ranges: range 62, fn 416; common (8 of 8): range 38, fn 59
+libreac/fuzz_grant	2	A/Rt/AF0r.v	asan	pin OK; PASS; 12 ranges: range 62, fn 416; common (8 of 8): range 38, fn 59
+libreac/fuzz_grant	1	B/Rt/YF0r.v	asan-ubsan	pin OK; FAIL; 11 ranges: range 56, fn 364; common (8 of 8): range 40, fn 59; FAIL: __asan_stack_malloc_4: donor 1 copies, target 0 copies, or the sizes differ | FAIL: B/Rt/YF0r.v range 0x3d3ec (__asan_stack_malloc_4): 1 / 0 copies and no call pairs it
+libreac/fuzz_grant	2	B/Rt/YF0r.v	asan-ubsan	pin OK; FAIL; 11 ranges: range 56, fn 364; common (8 of 8): range 40, fn 59; FAIL: __asan_stack_malloc_4: donor 1 copies, target 0 copies, or the sizes differ | FAIL: B/Rt/YF0r.v range 0x3d3ec (__asan_stack_malloc_4): 1 / 0 copies and no call pairs it
+libreac/fuzz_disco	1	A/AF0r.v	asan	pin OK; PASS; 10 ranges: range 46, fn 289; common (8 of 8): range 38, fn 52
+libreac/fuzz_disco	2	A/AF0r.v	asan	pin OK; PASS; 10 ranges: range 46, fn 289; common (8 of 8): range 38, fn 52
+libreac/fuzz_disco	1	Reusable/YF0r.v	asan-ubsan	pin OK; PASS; 10 ranges: range 48, fn 281; common (8 of 8): range 40, fn 53
+libreac/fuzz_disco	2	Reusable/YF0r.v	asan-ubsan	pin OK; PASS; 10 ranges: range 48, fn 281; common (8 of 8): range 40, fn 53
+libreac/fuzz_scene	1	A/AF0r.v	asan	pin OK; PASS; 10 ranges: range 50, fn 443; common (8 of 8): range 41, fn 64
+libreac/fuzz_scene	2	A/AF0r.v	asan	pin OK; PASS; 10 ranges: range 50, fn 443; common (8 of 8): range 41, fn 64
+libreac/fuzz_scene	1	AU/YF0r.v	asan-ubsan	pin OK; PASS; 10 ranges: range 50, fn 443; common (8 of 8): range 41, fn 64
+libreac/fuzz_scene	2	AU/YF0r.v	asan-ubsan	pin OK; PASS; 10 ranges: range 50, fn 443; common (8 of 8): range 41, fn 64
+libreac/fuzz_knock	1	A/AF0r.v	asan	pin OK; PASS; 9 ranges: range 44, fn 438; common (8 of 8): range 44, fn 68
+libreac/fuzz_knock	1	AU/YF0r.v	asan-ubsan	pin OK; PASS; 9 ranges: range 44, fn 438; common (8 of 8): range 44, fn 68
+libreac/fuzz_pcap	1	A/AF0r.v	asan	pin OK; PASS; 10 ranges: range 49, fn 388; common (8 of 8): range 41, fn 64
+libreac/fuzz_pcap	1	Reusable/YF0r.v	asan-ubsan	pin OK; PASS; 10 ranges: range 51, fn 387; common (8 of 8): range 43, fn 66
+libreac/fuzz_ctrl	1	A/Rt/StackMalloc1Tbl.v	asan	pin OK; PASS; 8 ranges: range 38, fn 55; common (8 of 8): range 38, fn 55
+libreac/fuzz_ctrl	2	A/Rt/StackMalloc2Tbl.v	asan	pin OK; PASS; 8 ranges: range 38, fn 55; common (8 of 8): range 38, fn 55
+libreac/fuzz_ctrl	1	B/Rt/StackMalloc1Tbl.v	asan-ubsan	pin OK; PASS; 8 ranges: range 40, fn 54; common (8 of 8): range 40, fn 54
+libreac/fuzz_ctrl	2	B/Rt/StackMalloc2Tbl.v	asan-ubsan	pin OK; PASS; 8 ranges: range 40, fn 54; common (8 of 8): range 40, fn 54
+plugin-hostd/fuzz_command	1	A/Rt/RtSM1T.v	asan	pin OK; FAIL; 13 ranges: range 87, fn 504; common (8 of 8): range 36, fn 60; FAIL: __asan_stack_malloc_3: donor 1 copies, target 0 copies, or the sizes differ | FAIL: __asan_stack_malloc_7: donor 1 copies, target 0 copies, or the sizes differ | FAIL: A/Rt/RtSM1T.v range 0x3fc0c (__asan_stack_malloc_3): 1 / 0 copies and no call pairs it | FAIL: A/Rt/RtSM1T.v range 0x40244 (__asan_stack_malloc_7): 1 / 0 copies and no call pairs it
+plugin-hostd/fuzz_command	1	B/Rt/RtSM1T.v	asan-ubsan	pin OK; FAIL; 13 ranges: range 84, fn 501; common (8 of 8): range 34, fn 58; FAIL: __asan_stack_malloc_4: donor 1 copies, target 0 copies, or the sizes differ | FAIL: __asan_stack_malloc_7: donor 1 copies, target 0 copies, or the sizes differ | FAIL: B/Rt/RtSM1T.v range 0x3fe04 (__asan_stack_malloc_4): 1 / 0 copies and no call pairs it | FAIL: B/Rt/RtSM1T.v range 0x40290 (__asan_stack_malloc_7): 1 / 0 copies and no call pairs it
+cgif/cgif_file_fuzzer	1	A/AF0r.v	asan	pin OK; PASS; 10 ranges: range 51, fn 421; common (8 of 8): range 42, fn 65
+cgif/cgif_file_fuzzer	2	A/AF0r.v	asan	pin OK; PASS; 10 ranges: range 51, fn 421; common (8 of 8): range 42, fn 65
+cgif/cgif_file_fuzzer	1	YF0r.v	asan-ubsan	pin OK; PASS; 10 ranges: range 53, fn 423; common (8 of 8): range 44, fn 67
+cgif/cgif_file_fuzzer	2	YF0r.v	asan-ubsan	pin OK; PASS; 10 ranges: range 53, fn 423; common (8 of 8): range 44, fn 67
+reac-pw/fuzz_pin	1	A/AF0r.v	asan	pin OK; PASS; 9 ranges: range 41, fn 386; common (8 of 8): range 41, fn 64
+reac-pw/fuzz_pin	1	AU/YF0r.v	asan-ubsan	pin OK; PASS; 9 ranges: range 43, fn 390; common (8 of 8): range 43, fn 66
+reac-repacer/fuzz_uci	1	A/Rt/AF0r.v	asan	pin OK; PASS; 9 ranges: range 44, fn 438; common (8 of 8): range 44, fn 68
+reac-repacer/fuzz_uci	1	B/Rt/YF0r.v	asan-ubsan	pin OK; PASS; 9 ranges: range 44, fn 438; common (8 of 8): range 44, fn 68

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libvips
 harness: thumbnail_fuzzer
-rocq: OssFuzzTheorems.libvips.thumbnail_fuzzer
+rocq: OSSVerify.libvips.thumbnail_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

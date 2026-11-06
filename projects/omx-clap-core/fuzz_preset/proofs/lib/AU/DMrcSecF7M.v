@@ -1,0 +1,182 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecF7M.v (a working branch 5ad50e61fc6a, file sha256 45bf0db11a09) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
+(* Theorem Labs, 2026-10-30 (lane B1, slice H4, row srrm-walk; integrator a Theorem Labs lane): new file. rule 24: no function
+   proved here (kind: srrm-walk bookkeeping; the walk of __asan::QuarantineCallback::Recycle (0x348fc) is already
+   proved by H4; this file composes its prefix on the materialized-page (M) engine).
+
+   WHAT.  [to_LMD_M] is DMrcSecF7.to_LMD composed from DMrcSecF6M.to_XG_M and the M piece DMrcSecGxWalkM.segGX_M
+   (zone DMrcSecGxWalkM.ZGX ly MAP LEN: the stack, the image window, the thread object, the cache context and the
+   dead map); its post adds DMrcSecMat.mat_win (DMrcSecMat.RDW ly MAP LEN lst) mat: every page materialized at
+   0x34ec8 was materialized at the entry or is the page of a read-zone address.  ZGX at this map / length is five
+   of RDW's zones.  The prelude and the Section header are DMrcSecF7.v's, verbatim; the post DMrcSecF7.ATD and the
+   proof of its PRED part are DMrcSecF7's (the proof text of DMrcSecF7.to_LMD, with qualified names). *)
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From Stdlib Require Import Logic.FunctionalExtensionality.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s YO0d.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP0g YP01 YP0i YP0j.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YN3v YI04.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG0a YG01 YG04 YG02 YG06 YG07 YG03 YG0f YG0v YG0n YG0d YG0s YG0q YG0o.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YB1v YB1q YB1t YF0l YF0m YF0x YFl0 YFl1.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YO0a YB1w YFeq YFex YFfu.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YFfj YFew YFeu YFfm YFf3 YFf4 YFff YFgu YFf5 YFgw YFfb.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import DMrcSecGx DMrcSecGxWalk DMrcSecGv.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YFg8 YFfc.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import DMrcSecF6 DMrcSecFe.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YB13.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import ImgBase ImgBaseDG.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import AGif2cgif DGif0cgif.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import DMspec DMiface.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require DMwalkIF DMrcSecFc.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require DMrcSecF7 DMrcSecF6M DMrcSecGxWalkM YFfbM DMrcSecMat.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Ltac ceil := try (let H := fresh "CR" in let H2 := fresh "CR" in pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as H; pose proof H as H2; unfold YG0f.ASAN_CEIL in H2).
+Local Set Warnings "-abstract-large-number".
+Local Set Warnings "-notation-for-abbreviation".
+Open Scope Z_scope.
+Local Open Scope am_scope.
+Set Printing Depth 100. Set Printing Width 200.
+#[local] Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
+Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Ltac numconst := ceil; unfold zone3, zone3cases, TFIB_IMG_LO, kLowShadowBeg, kHighMemBeg, kHighMemEnd, ASAN_CEIL, kThreadObjSize, kSpaceSize, kPrimResvSize, kPtrArrayResv, kNodesBlockSize, kStoreBlockSize, t_qc, t_cache, t_cache_stats, t_unwinding, t_stats, KSTACK, TFIB_IMG_END, kBatchBytes, SHADOW_OFF, TFIB_TP, TFIB_TSD, TFIB_INST, A_ALLOCATOR, o_space, o_rinfo, o_sec, o_sec_chunks, o_sec_reserved, o_sec_n, o_sec_sorted, o_sec_stats, o_sec_mutex, kRegionInfoOff, kLowMemEnd, kChunkHeaderSize, kPage, YFgu.GFRAME, DMrcSecGx.GFRAME, GDEPTH in *.
+Ltac splits := repeat match goal with |- _ /\ _ => split end.
+Ltac inS := cbn [In]; repeat (first [left; reflexivity | right]).
+Section c.
+Variable B : asyms.
+Hypothesis TB : TfibSyms B.
+Variables (ly : alayout) (X : astate) (k : chunk) (cbp : Z) (W : world tfibsegs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model).
+Variables (r : nat) (o : Z) (sm : secmap) (i : nat).
+Variable ARXr : Z -> alayout -> astate -> world tfibsegs -> (word -> option byte) -> Model -> Prop.
+Variable inst : Z.
+Hypothesis PRE : rcc_pre_x B ARXr inst ly X k cbp W regs mem md.
+Hypothesis SC : DMrcSecFc.sec_cut B ly X k W regs mem r o sm i.
+Variables NMAXD LMAXD : Z.
+Hypothesis NOK : DMwalkIF.nmaxd_ok NMAXD.
+Hypothesis LOK : DMwalkIF.lmaxd_ok NMAXD LMAXD.
+Hypothesis HN : ck_n k < NMAXD.
+Hypothesis HE : ck_extent k <= LMAXD.
+Local Notation fc_LO := (DMrcSecFc.sc_LO B ly X k W regs mem r o sm i SC).
+Local Notation fc_IMG := (DMrcSecFc.sc_IMG B ly X k W regs mem r o sm i SC).
+Local Notation fc_Hk := (DMrcSecFc.sc_Hk B ly X k W regs mem r o sm i SC).
+Local Notation fc_HSP := (DMrcSecFc.sc_HSP B ly X k W regs mem r o sm i SC).
+Local Notation fc_HI := (DMrcSecFc.sc_HI B ly X k W regs mem r o sm i SC).
+Local Notation fc_ARRF := (DMrcSecFc.sc_ARRF B ly X k W regs mem r o sm i SC).
+Local Notation fc_slot_geom := (DMrcSecFc.sc_slot_geom B ly X k W regs mem r o sm i SC).
+Local Notation fc_slot_val := (DMrcSecFc.sc_slot_val B ly X k W regs mem r o sm i SC).
+Local Notation fc_ELEN := (DMrcSecFc.sc_ELEN B ly X k W regs mem r o sm i SC).
+Local Notation fc_const_vals := (DMrcSecFc.sc_const_vals B ly X k W regs mem r o sm i SC).
+Local Notation fc_inst_vals := (DMrcSecFc.sc_inst_vals B ly X k W regs mem r o sm i SC).
+Local Notation fc_junkD_vals := (DMrcSecFc.sc_junkD_vals B ly X k W regs mem r o sm i SC).
+Local Notation fc_last_facts := (DMrcSecFc.sc_last_facts B ly X k W regs mem r o sm i SC).
+Local Notation fc_maph_vals := (DMrcSecFc.sc_maph_vals B ly X k W regs mem r o sm i SC).
+Local Notation fc_qi_val := (DMrcSecFc.sc_qi_val B ly X k W regs mem r o sm i SC).
+Local Notation fc_shadow_present := (DMrcSecFc.sc_shadow_present B ly X k W regs mem r o sm i SC).
+Local Notation fc_thread_present := (DMrcSecFc.sc_thread_present B ly X k W regs mem r o sm i SC).
+Local Notation fc_tls_vals := (DMrcSecFc.sc_tls_vals B ly X k W regs mem r o sm i SC).
+Local Notation fc_hw_val := (DMrcSecFc.sc_hw_val B ly X k W regs mem r o sm i SC).
+Local Notation fc_junk_vals := (DMrcSecFc.sc_junk_vals B ly X k W regs mem r o sm i SC).
+Local Notation fc_MAPX := (DMrcSecFc.sc_MAPX B ly X k W regs mem r o sm i SC).
+Local Notation fc_SX := (DMrcSecFc.sc_SX B ly X k W regs mem r o sm i SC).
+Local Notation fc_SECX := (DMrcSecFc.sc_SECX B ly X k W regs mem r o sm i SC).
+Local Notation fc_LST := (DMrcSecFc.sc_LST B ly X k W regs mem r o sm i SC).
+Local Notation fc_FH_A := (DMrcSecFc.sc_FH_A B ly X k W regs mem r o sm i SC).
+Local Notation fc_GEOM := (DMrcSecFc.GEOMw B ly X k W regs mem r o sm i SC NMAXD LMAXD LOK HE).
+Local Notation fc_hdr_facts := (DMrcSecFc.hdr_factsw B ly X k W regs mem r o sm i SC NMAXD NOK HN).
+Hypothesis Hb : ck_beg k = PSec r o.
+Hypothesis Hsm : nth_error (st_secs X) r = Some sm.
+Hypothesis Hi : nth_error (st_sec_arr X) i = Some r.
+Hypothesis HTSD : ly_tsd ly = TFIB_TSD.
+Let sp0 : Z := bv_unsigned (getr regs 2).
+Local Notation H0 := (w_H W).
+Local Notation rd0 := (aview tfibsegs (w_H W) mem).
+Local Notation m0 := (mrestrict (w_H W) mem).
+Local Notation T := (ly_T ly).
+Local Notation SB := (ly_space ly).
+Local Notation Q := (ly_Q ly).
+Local Notation MAP := (YFg8.MAP ly r).
+Local Notation LEN := (YFg8.LEN sm).
+Local Notation nA := (YFg8.nA X).
+Local Notation hdr := (YFfc.hdr B ly k).
+Local Notation HWv := (YFfc.HWv B ly k W mem).
+Local Notation j1 := (YFfc.j1 ly W mem).
+Local Notation j2 := (YFfc.j2 ly W mem).
+Local Notation v := (DMrcSecF6.v regs).
+Local Notation vra := (DMrcSecF6.v regs 1%bv).
+Local Notation vs0 := (DMrcSecF6.v regs 8%bv).
+Local Notation vs1 := (DMrcSecF6.v regs 9%bv).
+Local Notation vs2 := (DMrcSecF6.v regs 18%bv).
+Local Notation vs3 := (DMrcSecF6.v regs 19%bv).
+Local Notation vs4 := (DMrcSecF6.v regs 20%bv).
+Local Notation WINA := (DMrcSecF6.WINA regs).
+(* The read zones of the walk (DMrcSecMat.RDW at this Section's map, length and last map). *)
+Local Notation RDWs := (DMrcSecMat.RDW ly MAP LEN (YFg8.lst ly X r)).
+Lemma ZGX_RDW : forall a, DMrcSecGxWalkM.ZGX ly MAP LEN a -> RDWs a.
+Proof. intros a Ha. unfold DMrcSecGxWalkM.ZGX in Ha. unfold DMrcSecMat.RDW. tauto. Qed.
+Theorem to_LMD_M : forall mat, SRr tfibsegs W (mkCfg (mkst regs (w64 A_RChunk) mem (seg_rom tfibsegs)) (with_vm_backing (m_vm_lazy md) mat md))
+(fun W' c' => DMrcSecF7.ATD ly W regs mem md r W' c' /\ DMrcSecMat.mat_win (DMrcSecMat.RDW ly MAP LEN (YFg8.lst ly X r)) mat (m_vm_materialized (cfg_model c'))).
+Proof.
+intros mat.
+pose proof (fc_HI) as (hP1 & hP2 & hQ1 & hQ2 & hT1 & hT2 & hC1 & hC2 & hS1 & hS2 & hCE & _).
+pose proof (fc_HSP) as [S1 S2].
+eapply SRr_bind; [exact (DMrcSecF6M.to_XG_M B ly X k cbp W regs mem md r o sm i ARXr inst PRE SC NMAXD LMAXD NOK LOK HN HE Hi mat)|].
+intros W1 c1 _ [HX MWX]. destruct HX as (-> & regsX & memX & matX & -> & SX).
+cbn [cfg_model] in MWX. rewrite m_vm_materialized_wvb in MWX.
+pose proof (DMrcSecFe.XSEED B TB ly X k cbp W regs mem md r o sm i ARXr inst PRE SC NMAXD LMAXD NOK LOK HN HE regsX memX SX) as FHX.
+destruct SX as (regsL & PX & SR & R13).
+destruct PX as (SRL & L2 & L1r & L8 & L9 & L10 & L11 & L12 & L13 & L14 & L19 & L20 & MQA & PRS & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & VM).
+assert (X2 : getr regsX 2 = w64 (sp0 - 80)) by (rewrite (SR 2%bv ltac:(inS)); exact L2).
+assert (USX : bv_unsigned (getr regsX 2) = sp0 - 80) by (rewrite X2; unfold w64; apply unsigned_lit_small; pose proof (u64_range (getr regs 2)); clear - S1 S2 hS1 hS2 H; numconst; subst sp0; lia).
+eapply SRr_mono; [exact (DMrcSecGxWalkM.segGX_M W ly regsX memX md hdr MAP LEN HWv (ck_n k) j1 j2 cbp vra vs0 vs1 vs2 vs3 vs4 matX FHX)|].
+intros W2 c2 _ [HD MWD].
+split; [| exact (YFfbM.mat_win_trans _ _ _ _ MWX (YFfbM.mat_win_mono _ _ _ _ ZGX_RDW MWD))].
+destruct HD as (-> & regsD & memD & matD & -> & DSR & D2 & D1 & D8 & D9 & D18 & D19 & D20 & D10 & D11 & D12 & MQX & DPRS & DMUT & DJ1 & DJ2).
+rewrite USX in D2, DPRS. unfold DMrcSecGx.MEQ, DMrcSecGx.WIN in MQX. rewrite USX in MQX.
+split; [reflexivity|]. exists regsD, memD, matD. split; [reflexivity|].
+unfold DMrcSecF7.PRED. cbv zeta. fold sp0. splits.
+- intros r' Hr'. unfold DMrcSecGv.SREGS in Hr'. cbn [In] in Hr'.
+assert (CASE : r' = 19%bv \/ r' = 20%bv \/ In r' DMrcSecGx.SREGS).
+{ unfold DMrcSecGx.SREGS. cbn [In]. clear - Hr'. intuition (subst; auto 20). }
+destruct CASE as [-> | [-> | C]].
++ rewrite D19. unfold DMrcSecF6.v, w64. apply Z_to_bv_bv_unsigned.
++ rewrite D20. unfold DMrcSecF6.v, w64. apply Z_to_bv_bv_unsigned.
++ rewrite (DSR r' C). assert (C2 : In r' YFgw.SREGS /\ In r' YFgu.SREGS).
+{ unfold DMrcSecGx.SREGS in C. unfold YFgw.SREGS, YFgu.SREGS. cbn [In] in C |- *. clear - C. intuition (subst; auto 40). }
+destruct C2 as [C2 C3]. rewrite (SR r' C2). exact (SRL r' C3).
+- rewrite D2. replace (sp0 - 80 + DMrcSecGx.GFRAME) with sp0 by (numconst; lia). unfold sp0, w64. apply Z_to_bv_bv_unsigned.
+- exact D1.
+- exact D8.
+- exact D9.
+- exact D18.
+- exact D10.
+- exact D11.
+- exact D12.
+- intros x Hx. unfold DMrcSecF7.WIND, DMrcSecF6.WINA in Hx. fold sp0 in Hx. rewrite MQX by (clear - Hx; numconst; lia). apply MQA. unfold DMrcSecF6.WINA. fold sp0. clear - Hx. lia.
+- intros a Ha. destruct (Z_lt_le_dec a (sp0 - 48)) as [LOW|HI'].
++ apply DPRS. lia.
++ apply (apresent_same (w_H W) memX); [|apply PRS; lia]. apply MQX. rewrite unsigned_lit_small by (clear - Ha S1 S2 hS1 hS2; numconst; lia).
+clear - Ha HI' S1 S2 hS1 hCE hT1 hT2. numconst. lia.
+- intros a Ha. assert (Ha' : off_img a) by (apply (zone3_off_img _ _ _ hT1); clear - Ha; unfold t_stats, kThreadObjSize in *; lia).
+destruct (Z_lt_le_dec a (T + t_stats + 48)) as [LOW|HI'].
++ pose proof (DJ1 (Z.to_nat (a - (T + t_stats + 40))) ltac:(lia)) as Hb'. rewrite Z2Nat.id in Hb' by lia. replace (T + t_stats + 40 + (a - (T + t_stats + 40))) with a in Hb' by lia.
+exact (mbyte_off_apresent (w_H W) memD a _ Ha' Hb').
++ pose proof (DJ2 (Z.to_nat (a - (T + t_stats + 48))) ltac:(lia)) as Hb'. rewrite Z2Nat.id in Hb' by lia. replace (T + t_stats + 48 + (a - (T + t_stats + 48))) with a in Hb' by lia.
+exact (mbyte_off_apresent (w_H W) memD a _ Ha' Hb').
+-
+intros kk Hkk. destruct kk as [|kk'].
++ pose proof (DMUT 0%nat ltac:(lia)) as E0. cbn [Z.of_nat] in E0 |- *. rewrite le_byte_zero in *. exact E0.
++ rewrite (mbyte_mrestrict_same (w_H W) memX memD).
+* pose proof (VM (S kk') Hkk) as E1. rewrite E1. f_equal. f_equal. rewrite le_byte_zero.
+unfold YO0f.le_byte. rewrite Z.shiftr_div_pow2 by lia. change (2 ^ (8 * Z.of_nat 4)) with 4294967296. rewrite Z.mod_small by lia.
+rewrite Z.div_small; [reflexivity|]. split; [lia|]. eapply Z.lt_le_trans with (2 ^ 8); [lia|]. apply Z.pow_le_mono_r; lia.
+* apply MQX. unfold A_ALLOCATOR. rewrite unsigned_lit_small by lia. clear - Hkk S1 hS1 hT1. numconst. lia.
+Qed.
+End c.
+End b.

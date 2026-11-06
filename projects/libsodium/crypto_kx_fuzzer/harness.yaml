@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libsodium
 harness: crypto_kx_fuzzer
-rocq: OssFuzzTheorems.libsodium.crypto_kx_fuzzer
+rocq: OSSVerify.libsodium.crypto_kx_fuzzer
 origin: oss-fuzz
 summary: Seed keypair, then client and server session keys against an input public key; returns and keys
   ignored. The natural law (client rx == server tx and vice versa for a matched pair) is not checked --

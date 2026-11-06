@@ -1,0 +1,16 @@
+# planted copy: 567032 bytes, 1 byte differs from fuzz_wire.asan-ubsan af4534831a45 (offset 0x400f2; bits 1)
+# fncmp.py f8b778b1103a: planted copy (sha256 59336ae197f5) 0x510b0 vs fuzz_pcap.asan-ubsan 9e66f771f22a 0x51c40, 880 B
+DIFF +0x40: addi s4, s0, -0x7ff  |  addi s4, s0, -0x800
+instructions 220/220  real-diffs 1  external pairs 10  conflicts 0
+  pair 0x538c0 -> ['0x54450']
+  pair 0x568a4 -> ['0x57434']
+  pair 0x56dfc -> ['0x5798c']
+  pair 0x59aec -> ['0x5a67c']
+  pair 0x63078 -> ['0x63c08']
+  pair 0x7259c -> ['0x7312c']
+  pair 0x98868 -> ['0x996e8']
+  pair 0x98878 -> ['0x996f8']
+  pair 0x993e0 -> ['0x9a260']
+  pair 0x1000103d8 -> ['0x1000103d0']
+VERDICT DIFFERENT
+rc=0

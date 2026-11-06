@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_showsectgrp
-rocq: OssFuzzTheorems.libdwarf.fuzz_showsectgrp
+rocq: OSSVerify.libdwarf.fuzz_showsectgrp
 origin: upstream
 summary: dwarf_init_path, dwarf_sec_group_sizes and dwarf_sec_group_map into calloc'd arrays; results
   unused.

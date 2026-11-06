@@ -1,0 +1,40 @@
+--- A/AE2r.v
++++ A/AE2r.v
+@@ -18,6 +18,7 @@
+ From OssFuzzTheorems.Proofs.libreac.fuzz_disco.lib.A Require Import AB1v AE34 AF0l AF0m AF0x AB1w AE3d AE20 AE2y AE6t AE6u AE6v.
+ From OssFuzzTheorems.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YM05.
+ Import ListNotations.
++#[local] Ltac Zify.zify_pre_hook ::= try unfold YImgTop.IMG_TOP, YImgTop.IMG_LO in *.
+ Unset Lia Cache. Unset Nia Cache.
+ Local Set Warnings "-abstract-large-number".
+ Open Scope bv_scope.
+--- A/AE6o.v
++++ A/AE6o.v
+@@ -18,6 +18,7 @@
+ From OssFuzzTheorems.Proofs.libreac.fuzz_disco.lib.A Require Import AB1v AE34 AF0l AF0m AF0x AB1w AE3c AE20 AE2y AE6k.
+ From OssFuzzTheorems.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YM05.
+ Import ListNotations.
++#[local] Ltac Zify.zify_pre_hook ::= try unfold YImgTop.IMG_TOP, YImgTop.IMG_LO in *.
+ Unset Lia Cache. Unset Nia Cache.
+ Local Set Warnings "-abstract-large-number".
+ Open Scope bv_scope.
+--- A/AE6s.v
++++ A/AE6s.v
+@@ -18,6 +18,7 @@
+ From OssFuzzTheorems.Proofs.libreac.fuzz_disco.lib.A Require Import AB1v AE34 AF0l AF0m AF0x AB1w AE3c AE20 AE2y AE6k.
+ From OssFuzzTheorems.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YM05.
+ Import ListNotations.
++#[local] Ltac Zify.zify_pre_hook ::= try unfold YImgTop.IMG_TOP, YImgTop.IMG_LO in *.
+ Unset Lia Cache. Unset Nia Cache.
+ Local Set Warnings "-abstract-large-number".
+ Open Scope bv_scope.
+--- A/AE6t.v
++++ A/AE6t.v
+@@ -18,6 +18,7 @@
+ From OssFuzzTheorems.Proofs.libreac.fuzz_disco.lib.A Require Import AB1v AE34 AF0l AF0m AF0x AB1w AE3d AE20 AE2y.
+ From OssFuzzTheorems.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YM05.
+ Import ListNotations.
++#[local] Ltac Zify.zify_pre_hook ::= try unfold YImgTop.IMG_TOP, YImgTop.IMG_LO in *.
+ Unset Lia Cache. Unset Nia Cache.
+ Local Set Warnings "-abstract-large-number".
+ Open Scope bv_scope.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nss
 harness: tls-client
-rocq: OssFuzzTheorems.nss.tls_client
+rocq: OSSVerify.nss.tls_client
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

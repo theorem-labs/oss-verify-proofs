@@ -1,0 +1,515 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.Lib Require Import Tac Arr Bytes ITree Nodes Decode SysStep RegsEquiv MonadX Image.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.Spec Require Import Prelim Monad Stdio Driver Prog.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.U Require Export Layout.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.P Require Import Str_tac Startup_glue.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.U Require Import Imp_ios_defs Exit_iface F_stdio_exit0 F_fwrite0 F_fflush Imp_oflush Imp_sync Imp_woflush Imp_wsync Imp_wunshift Imp_exit Imp_exit_top.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.U Require Import Exit Pj_loc_defs Pj_loc_kit Pj_os_kit Stdio_iface F_stdio_exit.
+From OSSVerify.simdjson.fuzz_implementations.images Require Import Ubsan.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.Lib Require Import StoreFast.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.Lib Require Import Ceiling.
+From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.P Require Import Rnd.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+Local Ltac transport_after_call segs m m' MU WM ::= transport_after_call_fast segs m m' MU WM.
+Import ListNotations.
+Open Scope Z_scope.
+
+Notation usegs := Image.usegs.
+Notation mem := (word -> option byte).
+Notation z64 := (Z_to_bv 64 0).
+Ltac retpc_lit := lazymatch goal with |- evt _ _ (MS _ _ (ret_pc (Z_to_bv 64 ?n)) _ _ _ _) =>
+  replace (ret_pc (Z_to_bv 64 n)) with (Z_to_bv 64 n : word) by (apply bv_eq; vm_compute; reflexivity) end.
+
+Lemma rw_cells_nil0 : forall (m : mem) A, 0 <= A -> A <= 2^64 -> rw_cells usegs m A [CB 0 []].
+Proof.
+  intros m A H0 H1. unfold rw_cells, cells_at, bytes_at, wr_at. cbn. repeat split; try lia; intros i Hi; lia.
+Qed.
+
+Definition fwrite0_gen_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+    (Fp : Z) (flags : word) (WP wfn bufp bufsize fd lbf : Z) (tail : list byte) (lo : Z) (m : mem) : machine_state -> Prop :=
+  fun ms' => exists (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (mode' : word) (m' : mem),
+    ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 z64 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+             F (ret_pc ra) fc None m' (seg_rom usegs)
+    /\ munch [(lo, bv_unsigned sp); (Fp, Fp + 232)] m m' /\ wmono usegs m m' /\ mem_inv usegs m'
+    /\ stk usegs m' lo (bv_unsigned sp)
+    /\ rw_cells usegs m' Fp (file_cells flags (bufp + bufsize) WP bufp wfn bufp bufsize fd mode' lbf tail).
+
+Lemma fwrite0_gen : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+    (F : bvmap 5 word) (fc : bv 32) (m : mem)
+    (Fp S : Z) (flags mode : word) (wend wpos wbase wfn bufp bufsize fd lbf : Z) (tail : list byte) (lo : Z),
+  rw_cells usegs m Fp (file_cells flags wend wpos wbase wfn bufp bufsize fd mode lbf tail) ->
+  ((wend = 0 /\ Z.land (bv_unsigned flags) 8 = 0) \/ (wend = bufp + bufsize /\ wbase = bufp /\ bufp <= wpos <= bufp + bufsize)) ->
+  (lbf = 10 \/ lbf = 0xffffffff) ->
+  a0 = Z_to_bv 64 S -> a1 = Z_to_bv 64 1 -> a2 = Z_to_bv 64 0 -> a3 = Z_to_bv 64 Fp ->
+  (0 <= bufp) -> (0 <= bufsize) -> (0 < bufp + bufsize) -> (bufp + bufsize <= lo) ->
+  (0 <= Fp) -> (Fp + 232 <= bufp) ->
+  (bv_unsigned sp <= S < 2^64) ->
+  stk usegs m lo (bv_unsigned sp) -> (lo <= bv_unsigned sp - FWRITE0_DEPTH) -> (GLOBALS_TOP <= lo) -> (bv_unsigned sp < 2^63) ->
+  mem_inv usegs m ->
+  evt usegs (fwrite0_gen_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc Fp flags (if wend =? 0 then bufp else wpos) wfn bufp bufsize fd lbf tail lo m)
+      (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+          F (Z_to_bv 64 F_FWRITE) fc None m (seg_rom usegs)).
+Proof.
+  intros until lo. intros FC CASE LBF -> -> -> -> B0 BS0 BB BLO Fp0 FPB SR ST LO GLO SPHI MI.
+  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP. unfold GLOBALS_TOP, FWRITE0_DEPTH in *.
+  destruct CASE as [[-> NOWR] | (-> & -> & WPB)].
+  - rewrite Z.eqb_refl. eapply evt_mono.
+    + eapply (fwrite0_idle_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m Fp S flags mode wpos wbase wfn bufp bufsize fd lbf tail 0%nat [] lo);
+        first [ exact FC | exact NOWR | apply rw_cells_nil0; lia | exact LBF | reflexivity | exact ST | exact MI | cbn [Z.of_nat]; lia | unfold GLOBALS_TOP, FWRITE0_DEPTH; lia ].
+    + intros ms' PO. destruct PO as (x0 & x1 & x2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & x3 & x4 & x5 & x6 & mode' & m' & -> & MU & WM & MI' & ST' & FC' & _).
+      unfold fwrite0_gen_post. do 14 eexists. exists mode', m'. split; [reflexivity|].
+      split; [| split; [exact WM| split; [exact MI'| split; [exact ST'| exact FC']]]].
+      eapply munch_weaken; [| exact MU]. unfold sub_fp. cbn [outside]. intros x Hx. lia.
+  - replace (bufp + bufsize =? 0) with false by (symmetry; apply Z.eqb_neq; lia). eapply evt_mono.
+    + eapply (fwrite0_active_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m Fp S flags wpos wfn bufp bufsize fd mode lbf tail 0%nat [] lo);
+        first [ exact FC | apply rw_cells_nil0; lia | exact LBF | reflexivity | exact ST | exact MI | cbn [Z.of_nat]; lia | unfold GLOBALS_TOP, FWRITE0_DEPTH; lia ].
+    + intros ms' PO. destruct PO as (x0 & x1 & x2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & x3 & x4 & x5 & x6 & m' & -> & MU & WM & MI' & ST' & FC' & _).
+      unfold fwrite0_gen_post. do 14 eexists. exists mode, m'. split; [reflexivity|].
+      split; [| split; [exact WM| split; [exact MI'| split; [exact ST'| exact FC']]]].
+      eapply munch_weaken; [| exact MU]. unfold sub_fp. cbn [outside]. intros x Hx. lia.
+Qed.
+
+Lemma file_clean : forall (m : mem) Fp flags wfn bufp bufsize fd mode lbf tail,
+  rw_cells usegs m Fp (file_cells flags 0 0 0 wfn bufp bufsize fd mode lbf tail) ->
+  exists j0 j1 j2 j3, rw_cells usegs m Fp (clean_file_cells j0 0 j1 0 j2 j3).
+Proof.
+  intros m Fp flags wfn bufp bufsize fd mode lbf tail H. unfold file_cells in H.
+  pose proof (rw_cells_split_n usegs m Fp _ 21%nat (Fp + 144) H eq_refl) as [H1 _]. cbv [firstn] in H1. clear H.
+  merge_at H1 0%nat 2%nat. merge_at H1 3%nat 2%nat. merge_at H1 5%nat 1%nat. merge_at H1 7%nat 11%nat.
+  eexists _, _, _, _. exact H1.
+Qed.
+
+Notation COUT := 0xf3878%Z (only parsing).    Notation CLOG := 0xf3af8%Z (only parsing).
+Notation WCOUT := 0xf3918%Z (only parsing).   Notation WCLOG := 0xf3b98%Z (only parsing).
+Notation SBCOUT := 0xf3628%Z (only parsing).  Notation SBCERR := 0xf3688%Z (only parsing).
+Notation SBWCOUT := 0xf36e8%Z (only parsing). Notation SBWCERR := 0xf3748%Z (only parsing).
+Notation VO_C := 0xdf178%Z (only parsing).    Notation VSB_C := 0xdf5d8%Z (only parsing).
+Notation VO_W := 0xdf298%Z (only parsing).    Notation VSB_W := 0xdf708%Z (only parsing).
+Notation FF16 := (Z_to_bv 8 16) (only parsing).
+
+Definition ios_views (m : mem) : Prop :=
+     (ostream_cells COUT VO_C 8 SBCOUT VSB_C F_SYNC m FF16 /\ sbuf_cells SBCOUT RSTDOUT LOC_CVC VT_CVC UNSH_C (IOS + 12) m)
+  /\ (ostream_cells CLOG VO_C 8 SBCERR VSB_C F_SYNC m FF16 /\ sbuf_cells SBCERR RSTDERR LOC_CVC VT_CVC UNSH_C (IOS + 20) m)
+  /\ (wostream_cells WCOUT VO_W 8 SBWCOUT VSB_W F_WSYNC m FF16 /\ wsbuf_cells SBWCOUT RSTDOUT LOC_CVW VT_CVW WUNSH (IOS + 36) m)
+  /\ (wostream_cells WCLOG VO_W 8 SBWCERR VSB_W F_WSYNC m FF16 /\ wsbuf_cells SBWCERR RSTDERR LOC_CVW VT_CVW WUNSH (IOS + 44) m).
+
+Ltac tk H n nm := lazymatch type of H with rw_cells _ _ ?A ?cs => let A2 := eval cbv in (A + Z.of_nat (cells_size (firstn n cs)))%Z in take H n A2 nm end.
+Ltac drop H n := let J := fresh "J" in tk H n J; clear J.
+
+Ltac retypeU H cs' := apply (fun X => rw_cells_retype _ _ _ _ cs' X) in H;
+  [| cbn [cells_wf cell_wf]; repeat split; try apply repeat_length; reflexivity | apply bytes_eq_unsigned; vm_compute; reflexivity | reflexivity].
+Ltac ffbyte H := retypeU H [C1 (Z_to_bv 8 2); C1 (Z_to_bv 8 16); CB 6 (repeat (Z_to_bv 8 0) 6)]; drop H 1%nat; let T := fresh "V" in tk H 1%nat T; clear H; rename T into H.
+Ltac rdhalf H := retypeU H [C4 z64; C4 z64]; let T := fresh "V" in tk H 1%nat T; clear H; rename T into H.
+
+Ltac ostream_views H V FF RD SB TIE := tk H 1%nat V; drop H 1%nat; tk H 1%nat FF; ffbyte FF; drop H 2%nat; tk H 1%nat RD; rdhalf RD; tk H 1%nat SB; drop H 11%nat; tk H 1%nat TIE; drop H 1%nat.
+
+Ltac sbuf_views H V F3 := tk H 1%nat V; drop H 7%nat; tk H 3%nat F3; drop H 1%nat.
+
+Lemma ios_views_of : forall m, ios_block m -> iosx_img_facts m -> locx3 m -> ios_views m.
+Proof.
+  intros m H (G1 & G2 & G3 & G4 & G5 & G6) (L1 & L2 & L3). unfold ios_block, ios_cells, IOS in H.
+  drop H 8%nat.
+  sbuf_views H CV CF. sbuf_views H EV EF. sbuf_views H WV WF. sbuf_views H WEV WEF.
+  drop H 26%nat.
+  ostream_views H OV OFF ORD OSB OTIE.
+  ostream_views H WOV WOFF WORD WOSB WOTIE.
+  drop H 40%nat.
+  ostream_views H LV LFF LRD LSB LTIE.
+  ostream_views H WLV WLFF WLRD WLSB WLTIE.
+  clear H. unfold ios_views, ostream_cells, sbuf_cells, wostream_cells, wsbuf_cells, IOS, LOC_CVC, LOC_CVW, VT_CVC, VT_CVW, UNSH_C, WUNSH, F_SYNC, F_WSYNC.
+  unfold LOC_CVC, LOC_CVW, VT_CVC, VT_CVW in L1, L2, L3.
+  repeat match goal with |- _ /\ _ => split end; assumption.
+Qed.
+
+Lemma ook_c : forall O SB lo, 0 < O -> O + 152 <= GLOBALS_TOP -> 0 < SB -> SB + 8 <= GLOBALS_TOP -> GLOBALS_TOP <= lo -> ostream_ok O VO_C 8 SB VSB_C F_SYNC lo FF16.
+Proof. intros O SB lo A B C D E. unfold ostream_ok, F_SYNC, GLOBALS_TOP in *. repeat split; try lia; vm_compute; reflexivity. Qed.
+Lemma ook_w : forall O SB lo, 0 < O -> O + 152 <= GLOBALS_TOP -> 0 < SB -> SB + 8 <= GLOBALS_TOP -> GLOBALS_TOP <= lo -> wostream_ok O VO_W 8 SB VSB_W F_WSYNC lo FF16.
+Proof. intros O SB lo A B C D E. unfold wostream_ok, F_WSYNC, GLOBALS_TOP in *. repeat split; try lia; vm_compute; reflexivity. Qed.
+Lemma sbok_c : forall SB Fp STP lo, 0 < SB -> SB + 88 <= GLOBALS_TOP -> 0 <= Fp < 2^64 -> 0 <= STP < 2^64 -> GLOBALS_TOP <= lo -> sbuf_ok SB Fp LOC_CVC VT_CVC UNSH_C STP lo.
+Proof. intros SB Fp STP lo A B C D E. unfold sbuf_ok, LOC_CVC, VT_CVC, UNSH_C, GLOBALS_TOP in *. repeat split; try lia; vm_compute; reflexivity. Qed.
+Lemma sbok_w : forall SB Fp STP lo, 0 < SB -> SB + 88 <= GLOBALS_TOP -> 0 <= Fp < 2^64 -> 0 <= STP < 2^64 -> GLOBALS_TOP <= lo -> wsbuf_ok SB Fp LOC_CVW VT_CVW WUNSH STP lo.
+Proof. intros SB Fp STP lo A B C D E. unfold wsbuf_ok, LOC_CVW, VT_CVW, WUNSH, GLOBALS_TOP in *. repeat split; try lia; vm_compute; reflexivity. Qed.
+
+Lemma land_sub : forall f m k, Z.land f m = 0 -> Z.land m k = k -> Z.land f k = 0.
+Proof. intros f m k H E. rewrite <- E, Z.land_assoc, H. apply Z.land_0_l. Qed.
+
+Ltac drop_bundles :=
+  repeat match goal with
+  | H : ostream_cells _ _ _ _ _ _ _ _ |- _ => clear H | H : sbuf_cells _ _ _ _ _ _ _ |- _ => clear H
+  | H : wostream_cells _ _ _ _ _ _ _ _ |- _ => clear H | H : wsbuf_cells _ _ _ _ _ _ _ |- _ => clear H end.
+
+Ltac name_stk ST := first [ match goal with H : stk _ _ _ _ |- _ => tryif constr_eq H ST then fail else (try clear ST; rename H into ST) end | idtac ].
+Ltac name_mi MI := match goal with H : mem_inv _ _ |- _ => rename H into MI end.
+
+Ltac name_file FC := match goal with H : rw_cells _ _ _ (file_cells _ _ _ _ _ _ _ _ _ _ _) |- _ => unfold file_cells in H; rename H into FC end.
+Ltac after_call ST MI := drop_bundles; name_stk ST; name_mi MI; try retpc_lit.
+
+Definition cflush_post (O Fp : Z) (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+    (flags : word) (wfn bufp bufsize fd lbf : Z) (tail : list byte) (lo : Z) (m : mem) : machine_state -> Prop :=
+  fun ms' => exists (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (mode' : word) (m' : mem),
+    ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 O) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+             F (ret_pc ra) fc None m' (seg_rom usegs)
+    /\ munch [(lo, bv_unsigned sp); (Fp, Fp + 232)] m m' /\ wmono usegs m m' /\ mem_inv usegs m'
+    /\ stk usegs m' lo (bv_unsigned sp)
+    /\ rw_cells usegs m' Fp (file_cells flags 0 0 0 wfn bufp bufsize fd mode' lbf tail).
+
+Lemma clog_flush : forall (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+    (F : bvmap 5 word) (fc : bv 32) (m : mem) (lo : Z) (flags mode : word) (wend e : Z) (tail : list byte),
+  stk usegs m lo (bv_unsigned sp) -> (lo <= bv_unsigned sp - 256) -> (GLOBALS_TOP <= lo) -> (bv_unsigned sp < 2^63) ->
+  ios_block m -> iosx_img_facts m -> locx3 m ->
+  rw_cells usegs m RSTDERR (file_cells flags wend e e F_STDIO_WRITE 0x115d28 0 2 mode 0xffffffff tail) ->
+  Z.land (bv_unsigned flags) 40 = 0 -> (wend = 0 \/ (wend = 0x115d28 /\ e = 0x115d28)) -> (0 <= e < 2^63) ->
+  mem_inv usegs m ->
+  evt usegs (cflush_post CLOG RSTDERR ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc flags F_STDIO_WRITE 0x115d28 0 2 0xffffffff tail lo m)
+      (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 CLOG) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+          F (Z_to_bv 64 F_OFLUSH) fc None m (seg_rom usegs)).
+Proof.
+  intros until tail. intros ST LO GLO SPHI IOSB IMGF LX3 FC FL40 WCASE EB MI.
+  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP. unfold GLOBALS_TOP in *. unfold file_cells in FC.
+  pose proof (ios_views_of m IOSB IMGF LX3) as (_ & [OC SBC] & _). clear IOSB IMGF LX3.
+  destruct OC as (O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8). destruct SBC as (B1 & B2 & B3). unfold IOS, LOC_CVC, VT_CVC, UNSH_C, F_SYNC in O8, B1, B2, B3.
+  pose proof (munch_refl [(lo, bv_unsigned sp); (RSTDERR, RSTDERR + 232)]%Z m) as MU. pose proof (wmono_refl usegs m) as WM.
+
+  call (oflush_seg1 CLOG VO_C 8 SBCERR VSB_C F_SYNC lo);
+    [ exact ST | lia | unfold GLOBALS_TOP; lia | exact (conj O1 (conj O2 (conj O3 (conj O4 (conj O5 (conj O6 (conj O7 O8))))))) | apply ook_c; unfold GLOBALS_TOP; lia | exact MI | ].
+  after_call ST MI. match goal with H : rw_cells _ _ _ (oflush_frame _ _ _ _ _ _) |- _ => rename H into FRO end.
+
+  name_sp sp (-48)%Z. replace (bv_unsigned sp + -48) with (bv_unsigned sp0) in ST, FRO by lia.
+  call (sync_seg1a SBCERR RSTDERR LOC_CVC VT_CVC UNSH_C (IOS + 20) lo);
+    [ exact ST | lia | unfold GLOBALS_TOP; lia | exact (conj B1 (conj B2 B3)) | apply sbok_c; unfold GLOBALS_TOP, IOS; lia | exact MI | ].
+  after_call ST MI.
+  match goal with H : rw_cells _ _ (bv_unsigned sp0 + -80) [CB 8 _] |- _ => rename H into J0 end.
+  match goal with H : rw_cells _ _ (bv_unsigned sp0 + -72) [CB 8 _] |- _ => rename H into JE end.
+  match goal with H : rw_cells _ _ (bv_unsigned sp0 + -64) [CB 8 _] |- _ => rename H into JB end.
+  match goal with H : rw_cells _ _ (bv_unsigned sp0 + -56) (sync_saved _ _ _ _ _ _ _) |- _ => rename H into SAVED end.
+
+  lazymatch type of JE with rw_cells _ _ _ [CB 8 ?j1] => call (unshift_c _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ (bv_unsigned sp0 + -72) (bv_unsigned sp0 + -64) j1) end;
+    [ exact JE | reflexivity | reflexivity | lia | lia | lia | exact MI | ].
+  after_call ST MI. match goal with H : rw_cells _ _ (bv_unsigned sp0 + -72) [C8 _] |- _ => rename H into JE end.
+
+  call (sync_seg1b SBCERR RSTDERR LOC_CVC VT_CVC UNSH_C (IOS + 20) lo);
+    [ lia | lia | exact JE | exact (conj B1 (conj B2 B3)) | apply sbok_c; unfold GLOBALS_TOP, IOS; lia | exact MI | ].
+  after_call ST MI. match goal with H : rw_cells _ _ (bv_unsigned sp0 + -72) [C8 _] |- _ => rename H into JE end.
+
+  call_sp (fwrite0_gen _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ RSTDERR _ flags mode wend e e F_STDIO_WRITE 0x115d28 0 2 0xffffffff tail lo);
+    [ exact FC
+    | destruct WCASE as [-> | [-> ->]]; [left; split; [reflexivity| apply (land_sub _ 40 8 FL40); reflexivity] | right; lia]
+    | right; reflexivity | reflexivity | reflexivity | reflexivity | reflexivity
+    | lia | lia | lia | lia | lia | lia | lia | exact ST | unfold FWRITE0_DEPTH; lia | unfold GLOBALS_TOP; lia | lia | exact MI | ].
+  after_call ST MI. try clear FC. name_file FC.
+  replace (if wend =? 0 then 0x115d28 else e) with 0x115d28%Z in FC by (destruct WCASE as [-> | [-> ->]]; reflexivity).
+
+  call (sync_seg2 SBCERR RSTDERR LOC_CVC VT_CVC UNSH_C (IOS + 20) lo 3);
+    [ left; reflexivity | exact (conj B1 (conj B2 B3)) | apply sbok_c; unfold GLOBALS_TOP, IOS; lia | exact MI | ].
+  after_call ST MI.
+
+  call_sp (fflush_idle_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ RSTDERR flags _ _ _ F_STDIO_WRITE 0x115d28 0 2 0xffffffff tail lo);
+    [ exact FC | reflexivity | lia | lia | lia | exact ST | lia | unfold GLOBALS_TOP; lia | exact MI | ].
+  after_call ST MI. try clear FC. name_file FC.
+
+  call (sync_seg3 lo); [ exact ST | lia | unfold GLOBALS_TOP; lia | exact J0 | exact JE | exact JB | exact SAVED | exact MI | ].
+  after_call ST MI. clear J0 JE JB SAVED.
+  unname_sp.
+
+  call (oflush_seg2 CLOG VO_C 8 SBCERR VSB_C F_SYNC lo);
+    [ exact ST | lia | unfold GLOBALS_TOP; lia | exact FRO | exact (conj O1 (conj O2 (conj O3 (conj O4 (conj O5 (conj O6 (conj O7 O8))))))) | apply ook_c; unfold GLOBALS_TOP; lia | exact MI | ].
+  after_call ST MI.
+  apply evt_done. unfold cflush_post. do 14 eexists. eexists. eexists. split; [reflexivity|].
+  split; [exact MU|]. split; [exact WM|]. split; [exact MI|]. split; [exact ST|]. exact FC.
+Qed.
+
+Definition wunshift_post' (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32) (E X lo : Z) (m : mem) : machine_state -> Prop :=
+  fun ms' => exists (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (m' : mem),
+    ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 z64 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (ret_pc ra) fc None m' (seg_rom usegs)
+    /\ munch [(bv_unsigned sp + -64, bv_unsigned sp); (E, E + 8); (0xf5518, 0xf5518 + 8)] m m' /\ wmono usegs m m' /\ mem_inv usegs m'
+    /\ stk usegs m' lo (bv_unsigned sp)
+    /\ rw_cells usegs m' E [C8 (Z_to_bv 64 X)]
+    /\ rw_cells usegs m' 0xf5518 [C8 (Z_to_bv 64 0x115810)].
+Lemma wunshift_lit : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+    (F : bvmap 5 word) (fc : bv 32) (m : mem) (CV E X lo : Z) (j : list byte),
+  a0 = Z_to_bv 64 CV -> rw_cells usegs m (CV + 16) [C8 (Z_to_bv 64 0x24948)] -> (0 < CV) -> (CV + 24 <= lo) ->
+  a4 = Z_to_bv 64 E -> a2 = Z_to_bv 64 X -> a3 = Z_to_bv 64 (X + 8) -> rw_cells usegs m E [CB 8 j] -> (0 <= X) -> (X + 16 < 2^64) ->
+  (bv_unsigned sp <= E) -> (E + 8 < 2^63) ->
+  tp = Z_to_bv 64 RTP -> rw_cells usegs m 0xf5518 [C8 (Z_to_bv 64 0x115810)] ->
+  stk usegs m lo (bv_unsigned sp) -> (lo <= bv_unsigned sp - 64) -> (GLOBALS_TOP <= lo) ->
+  mem_inv usegs m ->
+  evt usegs (wunshift_post' ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc E X lo m)
+      (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+          F (Z_to_bv 64 WUNSH) fc None m (seg_rom usegs)).
+Proof. intros. eapply (wunshift_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m CV E X lo j); eassumption. Qed.
+
+Section WFlush.
+
+  Variables (O SB STP Fp BUFP BSZ FD : Z).
+  Definition wnb : Prop := 0xdfcf0 <= Fp /\ Fp + 232 <= 0xf35e8 /\ 0xf35e8 <= SB /\ SB + 96 <= O /\ O + 152 <= 0xf3d88 /\ 0 <= STP < 2^64
+                        /\ 0 <= BUFP /\ 0 <= BSZ /\ 0 < BUFP + BSZ /\ BUFP + BSZ <= GLOBALS_TOP /\ Fp + 232 <= BUFP.
+  Hypothesis NB : wnb.
+
+  Definition wflush_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+      (flags : word) (wfn lbf : Z) (tail : list byte) (lo : Z) (m : mem) : machine_state -> Prop :=
+    fun ms' => exists (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (mode' : word) (m' : mem),
+      ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 O) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+               F (ret_pc ra) fc None m' (seg_rom usegs)
+      /\ munch [(lo, bv_unsigned sp); (Fp, Fp + 232); (0xf5518, 0xf5518 + 8)] m m' /\ wmono usegs m m' /\ mem_inv usegs m'
+      /\ stk usegs m' lo (bv_unsigned sp)
+      /\ rw_cells usegs m' Fp (file_cells flags 0 0 0 wfn BUFP BSZ FD mode' lbf tail)
+      /\ rw_cells usegs m' 0xf5518 [C8 (Z_to_bv 64 0x115810)].
+
+  Lemma wflush : forall (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+      (F : bvmap 5 word) (fc : bv 32) (m : mem) (lo : Z) (flags mode : word) (wfn lbf : Z) (tail : list byte),
+    stk usegs m lo (bv_unsigned sp) -> (lo <= bv_unsigned sp - 256) -> (GLOBALS_TOP <= lo) -> (bv_unsigned sp < 2^63) ->
+    wostream_cells O VO_W 8 SB VSB_W F_WSYNC m FF16 -> wsbuf_cells SB Fp LOC_CVW VT_CVW WUNSH STP m -> rw_cells usegs m (LOC_CVW + 16) [C8 (Z_to_bv 64 0x24948)] ->
+    rw_cells usegs m Fp (file_cells flags 0 0 0 wfn BUFP BSZ FD mode lbf tail) -> Z.land (bv_unsigned flags) 8 = 0 -> (lbf = 10 \/ lbf = 0xffffffff) ->
+    tp = Z_to_bv 64 RTP -> rw_cells usegs m 0xf5518 [C8 (Z_to_bv 64 0x115810)] ->
+    mem_inv usegs m ->
+    evt usegs (wflush_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc flags wfn lbf tail lo m)
+        (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 O) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+            F (Z_to_bv 64 F_WOFLUSH) fc None m (seg_rom usegs)).
+  Proof.
+    intros until tail; intros ST LO GLO SPHI OC SBC CVL FC FL8 LBF TPE TPL MI.
+    pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP. pose proof NB as (F0 & F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8 & F9 & F10).
+    unfold GLOBALS_TOP in *. unfold file_cells in FC. unfold LOC_CVW in CVL.
+    destruct OC as (O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8). destruct SBC as (B1 & B2 & B3). unfold LOC_CVW, VT_CVW, WUNSH, F_WSYNC in O8, B1, B2, B3.
+    pose proof (munch_refl [(lo, bv_unsigned sp); (Fp, Fp + 232); (0xf5518, 0xf5518 + 8)]%Z m) as MU. pose proof (wmono_refl usegs m) as WM.
+
+    call (woflush_seg1 O VO_W 8 SB VSB_W F_WSYNC lo);
+      [ exact ST | lia | unfold GLOBALS_TOP; lia | exact (conj O1 (conj O2 (conj O3 (conj O4 (conj O5 (conj O6 (conj O7 O8))))))) | apply ook_w; unfold GLOBALS_TOP; lia | exact MI | ].
+    after_call ST MI. match goal with H : rw_cells _ _ _ (woflush_frame _ _ _ _ _ _) |- _ => rename H into FRO end.
+
+    name_sp sp (-48)%Z. replace (bv_unsigned sp + -48) with (bv_unsigned sp0) in ST, FRO by lia.
+    call (wsync_seg1a SB Fp LOC_CVW VT_CVW WUNSH STP lo);
+      [ exact ST | lia | unfold GLOBALS_TOP; lia | exact (conj B1 (conj B2 B3)) | apply sbok_w; unfold GLOBALS_TOP; lia | exact MI | ].
+    after_call ST MI.
+    match goal with H : rw_cells _ _ (bv_unsigned sp0 + -80) [CB 8 _] |- _ => rename H into J0 end.
+    match goal with H : rw_cells _ _ (bv_unsigned sp0 + -72) [CB 8 _] |- _ => rename H into JE end.
+    match goal with H : rw_cells _ _ (bv_unsigned sp0 + -64) [CB 8 _] |- _ => rename H into JB end.
+    match goal with H : rw_cells _ _ (bv_unsigned sp0 + -56) (wsync_saved _ _ _ _ _ _ _) |- _ => rename H into SAVED end.
+
+    name_sp sp0 (-80)%Z. replace (bv_unsigned sp0 + -80) with (bv_unsigned sp1) in ST by lia. replace (bv_unsigned sp0 + -72) with (bv_unsigned sp1 + 8) in JE by lia.
+    lazymatch type of JE with rw_cells _ _ _ [CB 8 ?j1] =>
+      call (wunshift_lit _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ LOC_CVW (bv_unsigned sp1 + 8) (bv_unsigned sp1 + 16) lo j1) end;
+      [ reflexivity | exact CVL | unfold LOC_CVW; lia | unfold LOC_CVW, GLOBALS_TOP; lia | f_equal; lia | f_equal; lia | f_equal; lia | exact JE | lia | lia | lia | lia
+      | exact TPE | exact TPL | exact ST | lia | unfold GLOBALS_TOP; lia | exact MI | ].
+    after_call ST MI. try clear JE. try clear TPL.
+    match goal with H : rw_cells _ _ (bv_unsigned sp1 + 8) [C8 _] |- _ => rename H into JE end.
+    match goal with H : rw_cells _ _ 0xf5518 _ |- _ => rename H into TPL end.
+    unname_sp. replace (bv_unsigned sp0 + -80 + 8) with (bv_unsigned sp0 + -72) in JE by lia. replace (bv_unsigned sp0 + -80 + 16) with (bv_unsigned sp0 + -64) in JE by lia.
+
+    call (wsync_seg1b SB Fp LOC_CVW VT_CVW WUNSH STP lo);
+      [ lia | lia | exact JE | exact (conj B1 (conj B2 B3)) | apply sbok_w; unfold GLOBALS_TOP; lia | exact MI | ].
+    after_call ST MI. match goal with H : rw_cells _ _ (bv_unsigned sp0 + -72) [C8 _] |- _ => rename H into JE end.
+
+    call_sp (fwrite0_gen _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ Fp _ flags mode 0 0 0 wfn BUFP BSZ FD lbf tail lo);
+      [ exact FC | left; split; [reflexivity| exact FL8] | exact LBF | reflexivity | reflexivity | reflexivity | reflexivity
+      | lia | lia | lia | lia | lia | lia | lia | exact ST | unfold FWRITE0_DEPTH; lia | unfold GLOBALS_TOP; lia | lia | exact MI | ].
+    after_call ST MI. try clear FC. name_file FC. cbn [Z.eqb] in FC.
+
+    call (wsync_seg2 SB Fp LOC_CVW VT_CVW WUNSH STP lo 0);
+      [ right; reflexivity | exact (conj B1 (conj B2 B3)) | apply sbok_w; unfold GLOBALS_TOP; lia | exact MI | ].
+    after_call ST MI.
+
+    call_sp (fflush_idle_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ Fp flags _ _ _ wfn BUFP BSZ FD lbf tail lo);
+      [ exact FC | reflexivity | lia | lia | lia | exact ST | lia | unfold GLOBALS_TOP; lia | exact MI | ].
+    after_call ST MI. try clear FC. name_file FC.
+
+    call (wsync_seg3 lo); [ exact ST | lia | unfold GLOBALS_TOP; lia | exact J0 | exact JE | exact JB | exact SAVED | exact MI | ].
+    after_call ST MI. clear J0 JE JB SAVED.
+    unname_sp.
+
+    call (woflush_seg2 O VO_W 8 SB VSB_W F_WSYNC lo);
+      [ exact ST | lia | unfold GLOBALS_TOP; lia | exact FRO | exact (conj O1 (conj O2 (conj O3 (conj O4 (conj O5 (conj O6 (conj O7 O8))))))) | apply ook_w; unfold GLOBALS_TOP; lia | exact MI | ].
+    after_call ST MI.
+    apply evt_done. unfold wflush_post. do 14 eexists. eexists. eexists. split; [reflexivity|].
+    split; [exact MU|]. split; [exact WM|]. split; [exact MI|]. split; [exact ST|]. split; [exact FC| exact TPL].
+  Qed.
+End WFlush.
+Lemma wnb_wcout : wnb WCOUT SBWCOUT (IOS + 36) RSTDOUT RSTDOUT_BUF 1024.
+Proof. unfold wnb, IOS, GLOBALS_TOP. lia. Qed.
+Lemma wnb_wclog : wnb WCLOG SBWCERR (IOS + 44) RSTDERR 0x115d28 0.
+Proof. unfold wnb, IOS, GLOBALS_TOP. lia. Qed.
+
+Lemma ps_get_set' : forall (s : PState) so, ps_so (set_so_ps so s) = so.
+Proof. intros [? ? ? ? ?] so; reflexivity. Qed.
+Lemma ps_set_set' : forall (s : PState) so so', set_so_ps so' (set_so_ps so s) = set_so_ps so' s.
+Proof. intros [? ? ? ? ?] so so'; reflexivity. Qed.
+Lemma ps_set_get' : forall (s : PState), set_so_ps (ps_so s) s = s.
+Proof. intros [? ? ? ? ?]; reflexivity. Qed.
+
+Definition cout_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+    (flags : word) (tail : list byte) (lo : Z) (canary : word) (m : mem) (s : PState) : unit -> PState -> machine_state -> Prop :=
+  fun _ s' ms' => exists (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (mode' : word) (m' : mem) (so' : stdout_st),
+    ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 COUT) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+             F (ret_pc ra) fc None m' (seg_rom usegs)
+    /\ munch [(lo, bv_unsigned sp); (RSTDOUT, RSTDOUT + 232)] m m' /\ wmono usegs m m' /\ mem_inv usegs m'
+    /\ stk usegs m' lo (bv_unsigned sp)
+    /\ so' = (if 0 <? zlength (so_buf (ps_so s)) then so_after (ps_so s) else ps_so s) /\ s' = set_so_ps so' s
+    /\ rw_cells usegs m' RSTDOUT (file_cells flags 0 0 0 (wfn_of so') RSTDOUT_BUF 1024 1 mode' (lbf_of so') tail)
+    /\ ssp_cells m' canary.
+
+Lemma cout_flush : forall (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+    (F : bvmap 5 word) (fc : bv 32) (m : mem) (lo : Z) (s : PState) (flags mode : word) (tail bufbytes : list byte) (canary : word),
+  stk usegs m lo (bv_unsigned sp) -> (lo <= bv_unsigned sp - 304) -> (GLOBALS_TOP <= lo) -> (bv_unsigned sp < 2^63) ->
+  ios_block m -> iosx_img_facts m -> locx3 m ->
+  rw_cells usegs m RSTDOUT (file_cells flags (if so_active (ps_so s) then RSTDOUT_BUF + 1024 else 0) (if so_active (ps_so s) then RSTDOUT_BUF + zlength (so_buf (ps_so s)) else 0)
+                                       (if so_active (ps_so s) then RSTDOUT_BUF else 0) (wfn_of (ps_so s)) RSTDOUT_BUF 1024 1 mode (lbf_of (ps_so s)) tail) ->
+  Z.land (bv_unsigned flags) 72 = 0 ->
+  rw_cells usegs m RSTDOUT_BUF [CB 1024 bufbytes] -> firstn (length (so_buf (ps_so s))) bufbytes = to_bytes (so_buf (ps_so s)) -> (zlength (so_buf (ps_so s)) <= 1024) ->
+  (so_active (ps_so s) = false -> so_buf (ps_so s) = []) ->
+  ssp_cells m canary ->
+  mem_inv usegs m ->
+  implM usegs (stdout_exit_flush ps_so set_so_ps) s (cout_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc flags tail lo canary m s)
+        (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 COUT) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+            F (Z_to_bv 64 F_OFLUSH) fc None m (seg_rom usegs)).
+Proof.
+  intros until canary. intros ST LO GLO SPHI IOSB IMGF LX3 FC FL72 BUF BUFP BUFL INACT SSP MI.
+  pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP. unfold GLOBALS_TOP in *. unfold file_cells in FC.
+  pose proof (ios_views_of m IOSB IMGF LX3) as ([OC SBC] & _). clear IOSB IMGF LX3.
+  destruct OC as (O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8). destruct SBC as (B1 & B2 & B3). unfold IOS, LOC_CVC, VT_CVC, UNSH_C, F_SYNC in O8, B1, B2, B3.
+  destruct SSP as [SG SC]. unfold got_ssp, ssp_guard in SG, SC.
+  assert (ZL0 : 0 <= zlength (so_buf (ps_so s))) by (unfold zlength; lia).
+  pose proof (munch_refl [(lo, bv_unsigned sp); (RSTDOUT, RSTDOUT + 232)]%Z m) as MU. pose proof (wmono_refl usegs m) as WM.
+  eapply (implM_evt usegs). 2:{ intros ms' H; exact H. } cbv beta.
+
+  call (oflush_seg1 COUT VO_C 8 SBCOUT VSB_C F_SYNC lo);
+    [ exact ST | lia | unfold GLOBALS_TOP; lia | exact (conj O1 (conj O2 (conj O3 (conj O4 (conj O5 (conj O6 (conj O7 O8))))))) | apply ook_c; unfold GLOBALS_TOP; lia | exact MI | ].
+  after_call ST MI. match goal with H : rw_cells _ _ _ (oflush_frame _ _ _ _ _ _) |- _ => rename H into FRO end.
+
+  name_sp sp (-48)%Z. replace (bv_unsigned sp + -48) with (bv_unsigned sp0) in ST, FRO by lia.
+  call (sync_seg1a SBCOUT RSTDOUT LOC_CVC VT_CVC UNSH_C (IOS + 12) lo);
+    [ exact ST | lia | unfold GLOBALS_TOP; lia | exact (conj B1 (conj B2 B3)) | apply sbok_c; unfold GLOBALS_TOP, IOS; lia | exact MI | ].
+  after_call ST MI.
+  match goal with H : rw_cells _ _ (bv_unsigned sp0 + -80) [CB 8 _] |- _ => rename H into J0 end.
+  match goal with H : rw_cells _ _ (bv_unsigned sp0 + -72) [CB 8 _] |- _ => rename H into JE end.
+  match goal with H : rw_cells _ _ (bv_unsigned sp0 + -64) [CB 8 _] |- _ => rename H into JB end.
+  match goal with H : rw_cells _ _ (bv_unsigned sp0 + -56) (sync_saved _ _ _ _ _ _ _) |- _ => rename H into SAVED end.
+
+  lazymatch type of JE with rw_cells _ _ _ [CB 8 ?j1] => call (unshift_c _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ (bv_unsigned sp0 + -72) (bv_unsigned sp0 + -64) j1) end;
+    [ exact JE | reflexivity | reflexivity | lia | lia | lia | exact MI | ].
+  after_call ST MI. match goal with H : rw_cells _ _ (bv_unsigned sp0 + -72) [C8 _] |- _ => rename H into JE end.
+
+  call (sync_seg1b SBCOUT RSTDOUT LOC_CVC VT_CVC UNSH_C (IOS + 12) lo);
+    [ lia | lia | exact JE | exact (conj B1 (conj B2 B3)) | apply sbok_c; unfold GLOBALS_TOP, IOS; lia | exact MI | ].
+  after_call ST MI. match goal with H : rw_cells _ _ (bv_unsigned sp0 + -72) [C8 _] |- _ => rename H into JE end.
+
+  call_sp (fwrite0_gen _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ RSTDOUT _ flags mode _ _ _ (wfn_of (ps_so s)) RSTDOUT_BUF 1024 1 (lbf_of (ps_so s)) tail lo);
+    [ exact FC
+    | destruct (so_active (ps_so s)); [right; lia | left; split; [reflexivity| apply (land_sub _ 72 8 FL72); reflexivity]]
+    | unfold lbf_of; destruct (so_lbf_nl (ps_so s)); [left | right]; reflexivity
+    | reflexivity | reflexivity | reflexivity | reflexivity
+    | lia | lia | lia | lia | lia | lia | lia | exact ST | unfold FWRITE0_DEPTH; lia | unfold GLOBALS_TOP; lia | lia | exact MI | ].
+  after_call ST MI. try clear FC. name_file FC.
+  replace (if (if so_active (ps_so s) then RSTDOUT_BUF + 1024 else 0) =? 0 then RSTDOUT_BUF else (if so_active (ps_so s) then RSTDOUT_BUF + zlength (so_buf (ps_so s)) else 0))%Z
+     with (RSTDOUT_BUF + zlength (so_buf (ps_so s)))%Z in FC
+     by (destruct (so_active (ps_so s)); [reflexivity | rewrite (INACT eq_refl); reflexivity]).
+
+  call (sync_seg2 SBCOUT RSTDOUT LOC_CVC VT_CVC UNSH_C (IOS + 12) lo 3);
+    [ left; reflexivity | exact (conj B1 (conj B2 B3)) | apply sbok_c; unfold GLOBALS_TOP, IOS; lia | exact MI | ].
+  after_call ST MI.
+  apply evt_done.
+
+  name_sp sp0 (-80)%Z. replace (bv_unsigned sp0 + -80) with (bv_unsigned sp1) in ST by lia.
+  lazymatch goal with |- implM _ _ _ _ (MS _ _ _ _ _ ?mX _) =>
+  lazymatch type of FC with rw_cells _ _ _ (_ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: C4 ?md :: _) =>
+    eapply implM_post_evt';
+    [ eapply (fflush_stdout_proof ps_so set_so_ps ps_get_set' ps_set_set' ps_set_get' _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc mX s flags md tail bufbytes lo canary);
+      [ exact INACT | unfold stdout_cells, file_cells; exact FC | exact FL72 | exact BUF | exact BUFP | exact BUFL | reflexivity
+      | exact ST | unfold FFLUSH_DEPTH; lia | unfold GLOBALS_TOP; lia | split; [exact SG| exact SC] | exact MI ]
+    | cbv beta; intros [] ? ms' PO; unfold fflush_stdout_post, FFLUSH_DEPTH in PO; revert ms' PO; post_call usegs mX ]
+  end end.
+  after_call ST MI. match goal with H : rw_cells _ _ _ (stdout_idle_cells _ _ _ _) |- _ => unfold stdout_idle_cells, file_cells in H; rename H into FC end.
+  match goal with H : ssp_cells _ _ |- _ => clear H end.
+  unname_sp.
+
+  call (sync_seg3 lo); [ exact ST | lia | unfold GLOBALS_TOP; lia | exact J0 | exact JE | exact JB | exact SAVED | exact MI | ].
+  after_call ST MI. clear J0 JE JB SAVED.
+  unname_sp.
+
+  call (oflush_seg2 COUT VO_C 8 SBCOUT VSB_C F_SYNC lo);
+    [ exact ST | lia | unfold GLOBALS_TOP; lia | exact FRO | exact (conj O1 (conj O2 (conj O3 (conj O4 (conj O5 (conj O6 (conj O7 O8))))))) | apply ook_c; unfold GLOBALS_TOP; lia | exact MI | ].
+  after_call ST MI.
+  apply evt_done. unfold cout_post. do 14 eexists. eexists. eexists. eexists. split; [reflexivity|].
+  split; [exact MU|]. split; [exact WM|]. split; [exact MI|]. split; [exact ST|]. split; [eassumption|]. split; [eassumption|]. split; [exact FC| split; [exact SG| exact SC]].
+Qed.
+
+Section IosExit.
+  Context {CE__ : Ceiling} {RN__ : RunRnd}.
+
+  Theorem ios_exit_proof : ios_exit_stmt.
+  Proof.
+    intros lo hi CLO GLO sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m s ST LO HHI TPE XC MI.
+    destruct XC as ((cdt & thr & sec & tm1 & LCH) & _ & _ & _ & SINF & _ & _ & SOF & SEF & (g & [SG SC]) & _ & [IOSB LX3] & TPL & IMGF).
+    destruct SOF as (flags & mode & tail & bufbytes & FC & FL72 & BUF & BUFP & BUFL & INACT).
+    destruct SEF as (eflags & emode & e & wend & etail & EFC & EFL40 & ECASE & EB).
+    pose proof (stdin_clean m SINF) as SIN. clear SINF. unfold clean_file_cells, RSTDIN in SIN.
+    unfold RTPLOC, RGLOC in TPL. unfold got_ssp, ssp_guard in SG, SC. unfold file_cells in FC, EFC. unfold ios_block, ios_cells, IOS in IOSB.
+    destruct LX3 as (L1 & L2 & L3). unfold LOC_CVC, LOC_CVW, VT_CVC, VT_CVW in L1, L2, L3. destruct IMGF as (G1 & G2 & G3 & G4 & G5 & G6).
+    pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
+    unfold HDX, X_IOSDTOR, AEX_IOS, AEX_HRA, GLOBALS_TOP in *.
+    pose proof (stk_below _ _ _ _ MI ST ltac:(lia)) as SPU. unfold UTOP in SPU.
+    pose proof (munch_refl [(lo, bv_unsigned sp); (RSTDOUT, RSTDOUT + 232); (RSTDERR, RSTDERR + 232); (0xf5518, 0xf5518 + 8)]%Z m) as MU. pose proof (wmono_refl usegs m) as WM.
+    eapply (implM_evt usegs). 2:{ intros ms' H; exact H. } cbv beta.
+    carve_frame 16%nat ST.
+    lstep. lstep. lstep.
+    lstep. lstep.
+    lstep. lstep.
+    apply evt_done.
+
+    name_sp sp (-16)%Z. replace (bv_unsigned sp + -16) with (bv_unsigned sp0) in ST by lia.
+    match goal with H : rw_cells _ _ (bv_unsigned sp + -16) _ |- _ => rename H into FR end.
+    lazymatch goal with |- implM _ _ _ _ (MS _ _ _ _ _ ?mX _) =>
+      eapply implM_post_evt';
+      [ eapply (cout_flush _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc mX lo s flags mode tail bufbytes g);
+        [ exact ST | lia | unfold GLOBALS_TOP; lia | lia | exact IOSB | exact (conj G1 (conj G2 (conj G3 (conj G4 (conj G5 G6))))) | exact (conj L1 (conj L2 L3))
+        | exact FC | exact FL72 | exact BUF | exact BUFP | exact BUFL | exact INACT | split; [exact SG| exact SC] | exact MI ]
+      | cbv beta; intros [] s' ms' PO; unfold cout_post in PO; revert ms' PO; post_call usegs mX ]
+    end.
+    after_call ST MI. try clear FC. try clear BUF. name_file FC. match goal with H : ssp_cells _ _ |- _ => clear H end.
+
+    lstep. lstep.
+    call (clog_flush _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ lo eflags emode wend e etail);
+      [ exact ST | lia | unfold GLOBALS_TOP; lia | lia | exact IOSB | exact (conj G1 (conj G2 (conj G3 (conj G4 (conj G5 G6))))) | exact (conj L1 (conj L2 L3))
+      | exact EFC | exact EFL40 | exact ECASE | exact EB | exact MI | ].
+    after_call ST MI. try clear EFC. match goal with H : rw_cells _ _ RSTDERR (file_cells _ _ _ _ _ _ _ _ _ _ _) |- _ => unfold file_cells in H; rename H into EFC end.
+
+    lstep. lstep.
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) => pose proof (ios_views_of mX IOSB (conj G1 (conj G2 (conj G3 (conj G4 (conj G5 G6))))) (conj L1 (conj L2 L3))) as (_ & _ & [WOC WSB] & [WLC WLSB]) end.
+    lazymatch type of FC with rw_cells _ _ _ (_ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: C4 ?md :: _) =>
+    call (wflush WCOUT SBWCOUT (IOS + 36) RSTDOUT RSTDOUT_BUF 1024 1 wnb_wcout _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ lo flags md _ _ tail) end;
+      [ exact ST | lia | unfold GLOBALS_TOP; lia | lia | exact WOC | exact WSB | exact L3
+      | exact FC | apply (land_sub _ 72 8 FL72); reflexivity | unfold lbf_of; destruct (so_lbf_nl _); [left| right]; reflexivity | exact TPE | exact TPL | exact MI | ].
+    after_call ST MI. try clear FC. try clear TPL. name_file FC. match goal with H : rw_cells _ _ 0xf5518 _ |- _ => rename H into TPL end.
+
+    lstep. lstep.
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) => pose proof (ios_views_of mX IOSB (conj G1 (conj G2 (conj G3 (conj G4 (conj G5 G6))))) (conj L1 (conj L2 L3))) as (_ & _ & _ & [WLC WLSB]) end.
+    lazymatch type of EFC with rw_cells _ _ _ (_ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: _ :: C4 ?md :: _) =>
+    call (wflush WCLOG SBWCERR (IOS + 44) RSTDERR 0x115d28 0 2 wnb_wclog _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc _ lo eflags md _ _ etail) end;
+      [ exact ST | lia | unfold GLOBALS_TOP; lia | lia | exact WLC | exact WLSB | exact L3
+      | exact EFC | apply (land_sub _ 40 8 EFL40); reflexivity | right; reflexivity | exact TPE | exact TPL | exact MI | ].
+    after_call ST MI. try clear EFC.
+    match goal with H : rw_cells _ _ RSTDERR (file_cells _ _ _ _ _ _ _ _ _ _ _) |- _ => rename H into EFC end.
+
+    unname_sp.
+    lstep. lstep. lstep.
+    release_frame FR ST (bv_unsigned sp).
+    lstep.
+    try retpc_lit.
+    apply evt_done. unfold hpost. do 15 eexists. exists F. eexists. split; [reflexivity|].
+    split.
+    { eapply xagree_of_munch; [exact MU | exact WM |]. unfold XW, RTPLOC, AEX_VEC_OBJ. cbn [outside fst snd]. intros a Ho. lia. }
+    split; [exact MI|]. split; [exact ST|].
+
+    split; [exists cdt, thr, sec, tm1; exact LCH|].
+    destruct (file_clean _ _ _ _ _ _ _ _ _ _ FC) as (o0 & o1 & o2 & o3 & CO). destruct (file_clean _ _ _ _ _ _ _ _ _ _ EFC) as (e0 & e1 & e2 & e3 & CE).
+    eexists _, 0, _, 0, _, _, o0, 0, o1, 0, o2, o3, e0, 0, e1, 0, e2, e3.
+    split; [exact SIN|]. split; [exact CO|]. split; [exact CE|]. lia.
+  Qed.
+End IosExit.

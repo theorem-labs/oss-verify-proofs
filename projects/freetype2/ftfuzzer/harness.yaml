@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: freetype2
 harness: ftfuzzer
-rocq: OssFuzzTheorems.freetype2.ftfuzzer
+rocq: OSSVerify.freetype2.ftfuzzer
 origin: upstream
 summary: 'Parses the input (optionally as a tar archive of font + attachments via libarchive), then for
   up to 20 faces x 20 named instances x 10 strikes: FT_New_Memory_Face, FT_Attach_Stream, FT_Set_Char_Size/FT_Select_Size,

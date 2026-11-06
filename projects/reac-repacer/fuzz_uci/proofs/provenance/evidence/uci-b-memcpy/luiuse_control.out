@@ -1,0 +1,6 @@
+P1	want ADDRESS	got ADDRESS	OK	[('plant', 4, 'base', 'load PURE'), ('plant', 8, 'ret', 'a0 PURE')]
+P2	want NUMBER	got NUMBER	OK	[('plant', 4, 'arith', 'op PURE,None'), ('plant', 8, 'base', 'load MIXED')]
+P3	want ADDRESS	got ADDRESS	OK	[('callee', 0, 'base', 'load PURE'), ('plant', 8, 'ret', 'a0 PURE')]
+P4	want ADDRESS	got ADDRESS	OK	[('plant', 8, 'arith', 'op PURE,CONST'), ('plant', 12, 'base', 'store PURE'), ('plant', 16, 'ret', 'a0 PURE')]
+P5	want ADDRESS	got ADDRESS	OK	[('plant', 4, 'data', 'store8 PURE'), ('plant', 12, 'base', 'load PURE'), ('plant', 16, 'ret', 'a0 PURE')]
+P6	want NUMBER+HAND	got NUMBER+HAND	OK	[('plant', 4, 'logic', 'opimm1 PURE'), ('plant', 8, 'ret', 'a0 PURE')]

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: espeak-ng
 harness: ssml-fuzzer
-rocq: OssFuzzTheorems.espeak_ng.ssml_fuzzer
+rocq: OSSVerify.espeak_ng.ssml_fuzzer
 origin: upstream
 summary: espeak_Synth of the NUL-terminated input with UTF-8 + phoneme + SSML flags, audio discarded by
   a no-op synth callback; return code ignored.

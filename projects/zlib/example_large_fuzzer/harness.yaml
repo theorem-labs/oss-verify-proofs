@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zlib
 harness: example_large_fuzzer
-rocq: OssFuzzTheorems.zlib.example_large_fuzzer
+rocq: OSSVerify.zlib.example_large_fuzzer
 origin: oss-fuzz
 summary: 'Checks 2 properties (listed below); the first, an invariant: Deflate a zero buffer, then already-compressed
   bytes at level 0, then the zero buffer again; inflate total_out must equal exactly 2*uncomprLen + diff.

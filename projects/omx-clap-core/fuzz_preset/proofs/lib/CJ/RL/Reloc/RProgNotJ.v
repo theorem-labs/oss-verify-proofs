@@ -1,0 +1,85 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
+Unset Lia Cache.
+
+Notation PJ_Auipc_nt o a1 a2 s r := (cons (o%Z, (Auipc (@BV 5%N a1%Z I) a2, s%Z)) r) (only parsing).
+Notation PJ_Branch_BC_EQ_nnn o a1 a2 a3 s r := (cons (o%Z, (Branch BC_EQ (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 13%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Branch_BC_GEU_nnn o a1 a2 a3 s r := (cons (o%Z, (Branch BC_GEU (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 13%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Branch_BC_GE_nnn o a1 a2 a3 s r := (cons (o%Z, (Branch BC_GE (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 13%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Branch_BC_LTU_nnn o a1 a2 a3 s r := (cons (o%Z, (Branch BC_LTU (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 13%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Branch_BC_LT_nnn o a1 a2 a3 s r := (cons (o%Z, (Branch BC_LT (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 13%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Branch_BC_NE_nnn o a1 a2 a3 s r := (cons (o%Z, (Branch BC_NE (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 13%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_CsrI_CSR_RS_nnn o a1 a2 a3 s r := (cons (o%Z, (CsrI CSR_RS (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Csr_CSR_RS_nnn o a1 a2 a3 s r := (cons (o%Z, (Csr CSR_RS (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Ecall_ o s r := (cons (o%Z, (Ecall, s%Z)) r) (only parsing).
+Notation PJ_FLoad_FMT_D_nnn o a1 a2 a3 s r := (cons (o%Z, (FLoad FMT_D (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_FLoad_FMT_D_nnt o a1 a2 a3 s r := (cons (o%Z, (FLoad FMT_D (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) a3, s%Z)) r) (only parsing).
+Notation PJ_FStore_FMT_D_nnn o a1 a2 a3 s r := (cons (o%Z, (FStore FMT_D (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_FStore_FMT_S_nnn o a1 a2 a3 s r := (cons (o%Z, (FStore FMT_S (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Fari_F_MUL_FMT_D_nnnn o a1 a2 a3 a4 s r := (cons (o%Z, (Fari F_MUL FMT_D (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I) (@BV 3%N a4%Z I), s%Z)) r) (only parsing).
+Notation PJ_Fari_F_MUL_FMT_S_nnnn o a1 a2 a3 a4 s r := (cons (o%Z, (Fari F_MUL FMT_S (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I) (@BV 3%N a4%Z I), s%Z)) r) (only parsing).
+Notation PJ_Fcvt_FC_D_FC_W_nnn o a1 a2 a3 s r := (cons (o%Z, (Fcvt FC_D FC_W (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 3%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Fcvt_FC_S_FC_W_nnn o a1 a2 a3 s r := (cons (o%Z, (Fcvt FC_S FC_W (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 3%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Fmv_FMV_F_X_FMT_D_nn o a1 a2 s r := (cons (o%Z, (Fmv FMV_F_X FMT_D (@BV 5%N a1%Z I) (@BV 5%N a2%Z I), s%Z)) r) (only parsing).
+Notation PJ_Fmv_FMV_F_X_FMT_S_nn o a1 a2 s r := (cons (o%Z, (Fmv FMV_F_X FMT_S (@BV 5%N a1%Z I) (@BV 5%N a2%Z I), s%Z)) r) (only parsing).
+Notation PJ_Fmv_FMV_X_F_FMT_D_nn o a1 a2 s r := (cons (o%Z, (Fmv FMV_X_F FMT_D (@BV 5%N a1%Z I) (@BV 5%N a2%Z I), s%Z)) r) (only parsing).
+Notation PJ_Fmv_FMV_X_F_FMT_S_nn o a1 a2 s r := (cons (o%Z, (Fmv FMV_X_F FMT_S (@BV 5%N a1%Z I) (@BV 5%N a2%Z I), s%Z)) r) (only parsing).
+Notation PJ_Fsgnj_F_SGNJ_FMT_D_nnn o a1 a2 a3 s r := (cons (o%Z, (Fsgnj F_SGNJ FMT_D (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Jal_nn o a1 a2 s r := (cons (o%Z, (Jal (@BV 5%N a1%Z I) (@BV 21%N a2%Z I), s%Z)) r) (only parsing).
+Notation PJ_Jal_nt o a1 a2 s r := (cons (o%Z, (Jal (@BV 5%N a1%Z I) a2, s%Z)) r) (only parsing).
+Notation PJ_Jalr_nnn o a1 a2 a3 s r := (cons (o%Z, (Jalr (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Load_SZ1_false_nnn o a1 a2 a3 s r := (cons (o%Z, (Load SZ1 false (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Load_SZ1_false_nnt o a1 a2 a3 s r := (cons (o%Z, (Load SZ1 false (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) a3, s%Z)) r) (only parsing).
+Notation PJ_Load_SZ1_true_nnn o a1 a2 a3 s r := (cons (o%Z, (Load SZ1 true (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Load_SZ1_true_nnt o a1 a2 a3 s r := (cons (o%Z, (Load SZ1 true (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) a3, s%Z)) r) (only parsing).
+Notation PJ_Load_SZ2_false_nnn o a1 a2 a3 s r := (cons (o%Z, (Load SZ2 false (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Load_SZ2_true_nnn o a1 a2 a3 s r := (cons (o%Z, (Load SZ2 true (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Load_SZ4_false_nnn o a1 a2 a3 s r := (cons (o%Z, (Load SZ4 false (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Load_SZ4_true_nnn o a1 a2 a3 s r := (cons (o%Z, (Load SZ4 true (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Load_SZ8_true_nnn o a1 a2 a3 s r := (cons (o%Z, (Load SZ8 true (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Load_SZ8_true_nnt o a1 a2 a3 s r := (cons (o%Z, (Load SZ8 true (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) a3, s%Z)) r) (only parsing).
+Notation PJ_Lr_AW_true_true_nn o a1 a2 s r := (cons (o%Z, (Lr AW true true (@BV 5%N a1%Z I) (@BV 5%N a2%Z I), s%Z)) r) (only parsing).
+Notation PJ_Lui_nn o a1 a2 s r := (cons (o%Z, (Lui (@BV 5%N a1%Z I) (@BV 20%N a2%Z I), s%Z)) r) (only parsing).
+Notation PJ_Mul32_M_DIVU_nnn o a1 a2 a3 s r := (cons (o%Z, (Mul32 M_DIVU (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Mul32_M_DIV_nnn o a1 a2 a3 s r := (cons (o%Z, (Mul32 M_DIV (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Mul32_M_MUL_nnn o a1 a2 a3 s r := (cons (o%Z, (Mul32 M_MUL (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Mul32_M_REMU_nnn o a1 a2 a3 s r := (cons (o%Z, (Mul32 M_REMU (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Mul_M_DIVU_nnn o a1 a2 a3 s r := (cons (o%Z, (Mul M_DIVU (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Mul_M_MULHU_nnn o a1 a2 a3 s r := (cons (o%Z, (Mul M_MULHU (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Mul_M_MUL_nnn o a1 a2 a3 s r := (cons (o%Z, (Mul M_MUL (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Op32_ALU_ADD_nnn o a1 a2 a3 s r := (cons (o%Z, (Op32 ALU_ADD (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Op32_ALU_SLL_nnn o a1 a2 a3 s r := (cons (o%Z, (Op32 ALU_SLL (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Op32_ALU_SRL_nnn o a1 a2 a3 s r := (cons (o%Z, (Op32 ALU_SRL (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Op32_ALU_SUB_nnn o a1 a2 a3 s r := (cons (o%Z, (Op32 ALU_SUB (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_OpImm32_nnn o a1 a2 a3 s r := (cons (o%Z, (OpImm32 (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_OpImm_ALU_ADD_nnn o a1 a2 a3 s r := (cons (o%Z, (OpImm ALU_ADD (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_OpImm_ALU_ADD_nnt o a1 a2 a3 s r := (cons (o%Z, (OpImm ALU_ADD (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) a3, s%Z)) r) (only parsing).
+Notation PJ_OpImm_ALU_AND_nnn o a1 a2 a3 s r := (cons (o%Z, (OpImm ALU_AND (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_OpImm_ALU_OR_nnn o a1 a2 a3 s r := (cons (o%Z, (OpImm ALU_OR (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_OpImm_ALU_SLTU_nnn o a1 a2 a3 s r := (cons (o%Z, (OpImm ALU_SLTU (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_OpImm_ALU_SLT_nnn o a1 a2 a3 s r := (cons (o%Z, (OpImm ALU_SLT (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_OpImm_ALU_XOR_nnn o a1 a2 a3 s r := (cons (o%Z, (OpImm ALU_XOR (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Op_ALU_ADD_nnn o a1 a2 a3 s r := (cons (o%Z, (Op ALU_ADD (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Op_ALU_AND_nnn o a1 a2 a3 s r := (cons (o%Z, (Op ALU_AND (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Op_ALU_OR_nnn o a1 a2 a3 s r := (cons (o%Z, (Op ALU_OR (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Op_ALU_SLL_nnn o a1 a2 a3 s r := (cons (o%Z, (Op ALU_SLL (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Op_ALU_SLTU_nnn o a1 a2 a3 s r := (cons (o%Z, (Op ALU_SLTU (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Op_ALU_SLT_nnn o a1 a2 a3 s r := (cons (o%Z, (Op ALU_SLT (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Op_ALU_SRL_nnn o a1 a2 a3 s r := (cons (o%Z, (Op ALU_SRL (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Op_ALU_SUB_nnn o a1 a2 a3 s r := (cons (o%Z, (Op ALU_SUB (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Op_ALU_XOR_nnn o a1 a2 a3 s r := (cons (o%Z, (Op ALU_XOR (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Sc_AW_true_true_nnn o a1 a2 a3 s r := (cons (o%Z, (Sc AW true true (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_ShiftImm32_ALU_SLL_nnn o a1 a2 a3 s r := (cons (o%Z, (ShiftImm32 ALU_SLL (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_ShiftImm32_ALU_SRA_nnn o a1 a2 a3 s r := (cons (o%Z, (ShiftImm32 ALU_SRA (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_ShiftImm32_ALU_SRL_nnn o a1 a2 a3 s r := (cons (o%Z, (ShiftImm32 ALU_SRL (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 5%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_ShiftImm_ALU_SLL_nnn o a1 a2 a3 s r := (cons (o%Z, (ShiftImm ALU_SLL (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 6%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_ShiftImm_ALU_SRA_nnn o a1 a2 a3 s r := (cons (o%Z, (ShiftImm ALU_SRA (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 6%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_ShiftImm_ALU_SRL_nnn o a1 a2 a3 s r := (cons (o%Z, (ShiftImm ALU_SRL (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 6%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Store_SZ1_nnn o a1 a2 a3 s r := (cons (o%Z, (Store SZ1 (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Store_SZ1_nnt o a1 a2 a3 s r := (cons (o%Z, (Store SZ1 (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) a3, s%Z)) r) (only parsing).
+Notation PJ_Store_SZ2_nnn o a1 a2 a3 s r := (cons (o%Z, (Store SZ2 (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Store_SZ4_nnn o a1 a2 a3 s r := (cons (o%Z, (Store SZ4 (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).
+Notation PJ_Store_SZ8_nnn o a1 a2 a3 s r := (cons (o%Z, (Store SZ8 (@BV 5%N a1%Z I) (@BV 5%N a2%Z I) (@BV 12%N a3%Z I), s%Z)) r) (only parsing).

@@ -1,0 +1,36 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import PropExec Shape MState Mem Cells Step Frame HeapIface Asn1Aux.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Spec Require Import SInv.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import ALazy SRz AEvtS AEvtA AShadow AUnw ARt.
+Import ListNotations.
+Open Scope Z_scope.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require CDefT.
+From Ltac2 Require Ltac2.
+Ltac2 gd_tbl_ATopContract () : Init.string Init.list := ["LinuxProcessSemantics.LinuxProcessSem.Run.config"; "Corelib.Init.Logic.ex"; "stdpp.bitvector.definitions.bv"; "Corelib.Init.Datatypes.option"; "LinuxProcessSemantics.LinuxProcessSem.State.Model"; "OSSVerify.KrLib.LibA.ARt.HST"; "Corelib.Init.Datatypes.list"; "OSSVerify.KrLib.Lib.HeapIface.blk"; "Corelib.Init.Logic.and"; "Corelib.Init.Logic.eq"; "LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg"; "OSSVerify.KrLib.Lib.MState.MS"; "OSSVerify.KrLib.Lib.Frame.mkR"; "stdpp.bitvector.definitions.Z_to_bv"; "OSSVerify.KrLib.Lib.MState.ret_pc"; "Corelib.Init.Datatypes.None"; "OSSVerify.KrLib.Lib.PropExec.seg_rom"; "OSSVerify.KrLib.Lib.Mem.mem_inv"; "OSSVerify.KrLib.Lib.Frame.stk"; "stdpp.bitvector.definitions.bv_unsigned"; "OSSVerify.KrLib.LibA.ARt.sshad"; "OSSVerify.KrLib.LibA.ARt.arl_AL"; "OSSVerify.KrLib.Lib.HeapIface.mo_frame"; "OSSVerify.KrLib.LibA.ARt.presA"; "OSSVerify.KrLib.LibA.ARt.hstkhi"; "OSSVerify.KrLib.Spec.SInv.si_fp"; "OSSVerify.KrLib.LibA.ARt.arl_L"; "Corelib.Numbers.BinNums.Z"; "OSSVerify.KrLib.LibA.ARt.htop"; "OSSVerify.KrLib.LibA.ARt.hflag"; "OSSVerify.KrLib.LibA.ARt.HK"; "OSSVerify.KrLib.LibA.ARt.hcs"; "Stdlib.ZArith.BinInt.Z.le"; "OSSVerify.KrLib.LibA.ARt.havol"; "Stdlib.ZArith.BinInt.Z.add"; "OSSVerify.KrLib.LibA.ARt.hfr"; "OSSVerify.KrLib.LibA.ARt.HM"; "Corelib.Init.Datatypes.app"; "OSSVerify.KrLib.Spec.SInv.si_P"; "LinuxProcessSemantics.Riscv.Prelude.bvmap"; "OSSVerify.KrLib.Lib.Mem.bytes_at"; "Stdlib.ZArith.BinInt.Z.of_nat"; "Corelib.Init.Datatypes.length"; "Stdlib.ZArith.BinInt.Z.lt"; "Stdlib.ZArith.BinInt.Z.pow"; "OSSVerify.KrLib.Lib.HeapIface.client_range"; "OSSVerify.KrLib.LibA.ARt.fdata"; "OSSVerify.KrLib.LibA.AShadow.aobj"; "Corelib.Init.Logic.or"; "OSSVerify.KrLib.LibA.ARt.arl_stklo"; "Stdlib.ZArith.BinInt.Z.sub"; "Stdlib.ZArith.BinInt.Z.modulo"; "OSSVerify.KrLib.LibA.ARt.arl_tp"; "OSSVerify.KrLib.LibA.ARt.AVOL_MAX"; "OSSVerify.KrLib.LibA.AUnw.uwc"; "OSSVerify.KrLib.LibA.ARt.FR_MAX"; "Corelib.Init.Peano.le"; "OSSVerify.KrLib.LibA.AEvtS.aevtS"; "FuzzStmt.fuzz_postA"].
+
+
+Definition FUZZ_ENTRY : Z := 0x09700c.   (* [comment removed for export] *)
+
+Section FuzzStmt.
+  Variable segs : list Segment.
+  Variable R : art_layout.
+  Variable HIA : artA segs R.
+  Variable SI : sinv (arl_L R).   (* [comment removed for export] *)
+  Variable PHI : Z -> Z.          (* [comment removed for export] *)
+  Variable FSTK : Z.              (* [comment removed for export] *)
+  Variable FFR : Z -> Z.          (* [comment removed for export] *)
+
+  Definition fuzz_postA (h : HST segs R HIA) (LB LF : list blk)
+      (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+      (n lo slo : Z) (m : mem) (mo : Model) : config -> Prop := ltac2:(CDefT.buildp (gd_tbl_ATopContract ()) "Lc,$0.(1.(2.&40.)Lt0,(2.&40.)(1.(2.&40.)Lt1,(2.&40.)(1.(2.&40.)Lt2,(2.&40.)(1.(2.&40.)La1,(2.&40.)(1.(2.&40.)La2,(2.&40.)(1.(2.&40.)La3,(2.&40.)(1.(2.&40.)La4,(2.&40.)(1.(2.&40.)La5,(2.&40.)(1.(2.&40.)La6,(2.&40.)(1.(2.&40.)La7,(2.&40.)(1.(2.&40.)Lt3,(2.&40.)(1.(2.&40.)Lt4,(2.&40.)(1.(2.&40.)Lt5,(2.&40.)(1.(2.&40.)Lt6,(2.&40.)(1.P,(2.&40.)(3.(2.&8.))Lm',P,(2.&40.)(3.(2.&8.))(1.$4.Lmo',$4.(1.(5.Vsegs,VR,VHIA,)Lh',(5.Vsegs,VR,VHIA,)(1.(6.$7.)LLBx,(6.$7.)(8.(9.$0.R13.(:.(;.(<.O17.O16.O15.O14.R12.R11.R10.O13.O12.(=.&40.=)R?.R>.R=.R<.R;.R:.R9.O11.O10.O?.O>.O=.O<.O;.O:.O9.O8.R8.R7.R6.R5.)O7.(>.O17.)O6.(?.(2.&40.))R4.(10.Vsegs,))R3.))(8.(11.Vsegs,R4.)(8.(12.Vsegs,R4.O4.(13.&40.O16.))(8.(14.Vsegs,(15.VR,)R4.O3.(13.&40.O16.))(8.(16.O1.R3.)(8.(17.Vsegs,VR,O19.O18.(13.&40.O16.)(13.&40.O16.)(18.Vsegs,VR,VHIA,O1:.)(19.(1:.VR,)VSI,)O2.R4.)(8.(9.$1;.(1<.Vsegs,VR,VHIA,R2.)(1<.Vsegs,VR,VHIA,O1:.))(8.(9.$1;.(18.Vsegs,VR,VHIA,R2.)(18.Vsegs,VR,VHIA,O1:.))(8.(9.$1;.(1=.Vsegs,VR,VHIA,R2.)(1=.Vsegs,VR,VHIA,O1:.))(8.(1>.Vsegs,VR,VHIA,R2.R3.)(8.Px,$1;.P,(1?.Vsegs,VR,VHIA,O1:.R1.)(1?.Vsegs,VR,VHIA,R4.R2.)(8.(20.(21.Vsegs,VR,VHIA,R2.)(22.(21.Vsegs,VR,VHIA,O1:.)A1.VPHI,O5.))(8.(20.(23.Vsegs,VR,VHIA,R2.)(22.(23.Vsegs,VR,VHIA,O1:.)A1.VFFR,O5.))(8.(24.Vsegs,VR,VHIA,R2.(25.$7.R1.O19.)O18.R4.)(26.(1:.VR,)VSI,R4.)))))))))))))))))))))))))))))))))")
+(* [comment removed for export] *).
+
+  Definition fuzz_entry_stmtA (ENTRY : Z) : Prop := ltac2:(CDefT.buildp (gd_tbl_ATopContract ()) "Ph,(5.Vsegs,VR,VHIA,)PLB,(6.$7.)PLF,(6.$7.)Pra,(2.&40.)Psp,(2.&40.)Pgp,(2.&40.)Ptp,(2.&40.)Pt0,(2.&40.)Pt1,(2.&40.)Pt2,(2.&40.)Ps0,(2.&40.)Ps1,(2.&40.)Pa0,(2.&40.)Pa1,(2.&40.)Pa2,(2.&40.)Pa3,(2.&40.)Pa4,(2.&40.)Pa5,(2.&40.)Pa6,(2.&40.)Pa7,(2.&40.)Ps2,(2.&40.)Ps3,(2.&40.)Ps4,(2.&40.)Ps5,(2.&40.)Ps6,(2.&40.)Ps7,(2.&40.)Ps8,(2.&40.)Ps9,(2.&40.)Ps10,(2.&40.)Ps11,(2.&40.)Pt3,(2.&40.)Pt4,(2.&40.)Pt5,(2.&40.)Pt6,(2.&40.)PF,(27.&5.(2.&40.))Pfc,(2.&20.)Pm,P,(2.&40.)(3.(2.&8.))Pmo,$4.PDATA,$1;.Pn,$1;.Plo,$1;.Pslo,$1;.Pbs,(6.(2.&8.))P,(24.Vsegs,VR,VHIA,R2;.R2:.R29.R7.)P,(1>.Vsegs,VR,VHIA,R2<.R7.)P,(28.Vsegs,R9.R7.R3.)P,(9.$1;.(29.(2:.(2.&8.)R4.))R7.)P,(8.(20.=R8.)(2;.R8.(2<.+2.+1:.)))P,(2;.=R:.)P,(2=.(1:.VR,)(25.$7.R30.(2>.R2?.))R9.R;.R:.)P,P,(20.+1.R;.)(2?.Vsegs,(15.VR,)(1?.Vsegs,VR,VHIA,R33.)R?.R=.R<.)P,(30.(20.(22.R=.R<.)R;.)(20.(13.&40.R2?.)R=.))P,(30.(9.$1;.R=.=)(20.(22.(22.R>.R=.)+8.)(2<.+2.+2?.)))P,(12.Vsegs,R11.R=.(13.&40.R31.))P,(14.Vsegs,(15.VR,)R12.R=.(13.&40.R32.))P,(20.(31.VR,)R>.)P,(20.R?.R10.)P,(20.R11.(32.(13.&40.R35.)VFSTK,))P,(20.(13.&40.R36.)(1<.Vsegs,VR,VHIA,R3:.))P,(9.$1;.(33.(13.&40.R37.)+10.)=)P,(20.(13.&40.R38.)(2<.+2.+2?.))P,(11.Vsegs,R19.)P,(9.(2.&40.)R38.(=.&40.(34.VR,)))P,(26.(1:.VR,)VSI,R1;.)P,(20.(22.(21.Vsegs,VR,VHIA,R40.)A1.VPHI,R19.)$35.)P,(36.Vsegs,R1=.(31.VR,)(18.Vsegs,VR,VHIA,R41.)(13.&40.R37.)(13.&40.R3=.)=)P,(20.(22.(23.Vsegs,VR,VHIA,R42.)A1.VFFR,R1;.)$37.)P,(38.(2:.$7.R41.)#20.)P,(9.(2.&40.)R38.(=.&40.R1>.))P,(9.(2.&40.)R38.(=.&40.R1>.))(39.Vsegs,(3:.R46.R45.R44.R43.R42.R41.R40.R3<.R3;.R32.R31.R30.R2?.R2>.R2=.R2<.R2;.R2:.R29.R24.R23.R1?.R1>.R1=.R22.R21.)(:.(;.(<.R43.R42.R41.R40.R3?.R3>.R3=.R3<.R3;.R3:.R39.R38.R37.R36.R35.R34.R33.R32.R31.R30.R2?.R2>.R2=.R2<.R2;.R2:.R29.R28.R27.R26.R25.)R24.(=.&40.O1.)R23.(?.(2.&40.))R22.(10.Vsegs,))R21.))")
+(* [comment removed for export] *).
+End FuzzStmt.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tinygltf
 harness: fuzz_gltf_v3_c
-rocq: OssFuzzTheorems.tinygltf.fuzz_gltf_v3_c
+rocq: OSSVerify.tinygltf.fuzz_gltf_v3_c
 origin: upstream
 summary: Same selector as fuzz_gltf_v3 over the C build of tiny_gltf_v3.c; the parse result is discarded.
 entry: LLVMFuzzerTestOneInput

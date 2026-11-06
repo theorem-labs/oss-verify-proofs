@@ -109,8 +109,12 @@ CMD ["bash"]
 # ledger, lint and release-tree drive, and PyYAML on python3's own path, since
 # some tests start python3 with a PYTHONPATH of their own.  So they run in a
 # stage of their own, and only their result reaches the image, as
-# /opt/oss-fuzz-theorems/TOOLS-TESTS.txt.  One test is left out: it lints the
-# checkout around tools/oft, and the image holds only tools/oft.
+# /opt/oss-fuzz-theorems/TOOLS-TESTS.txt.  The image holds tools/oft alone, and
+# no jq: a test that reads the checkout around tools/oft (a workflow file, say)
+# or runs a script that needs jq skips where they are not, and the tests SKIP
+# names, which do not, are left out.  jq stays out of this stage too: in the
+# tools of release 2026.10.2, 44 tests that read .github/workflows skip only
+# where there is no jq.
 FROM runner AS tools-tests
 RUN --mount=type=tmpfs,target=/var/lib/apt/lists --mount=type=tmpfs,target=/var/cache/apt \
     apt-get update && apt-get install -y --no-install-recommends git && \
@@ -122,14 +126,33 @@ cd /opt/oss-fuzz-theorems/tools
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/opt/oss-fuzz-theorems/tools python3 - <<'PY'
 import sys
 import unittest
-SKIP = "oft.tests.test_lint.Clean.test_this_repository_is_clean"
+# What is left out: a test, or every test of a class.  None tests qemu, oft check or anything else this image is for.
+SKIP = {
+    # lints the whole checkout around tools/oft
+    "oft.tests.test_lint.Clean.test_this_repository_is_clean",
+    # The tools of release 2026.10.2 fail these where the checkout around tools/oft, or jq, is not; internal pull
+    # requests #395 and #396 (its copy on the line main has since joined) made the copies on main skip there instead.
+    # These lines go when the release whose tools/oft this image carries has those.  Four tests read .github/workflows,
+    # which this image does not hold: pr.yml's check job renders the tree it checks with the base's tools; images.yml's
+    # and weekly.yml's collecting jobs give each run its one verdict; no step of pr.yml or weekly.yml takes the whole
+    # plan into its environment.
+    "oft.tests.test_workflow_verdicts.CheckTreeTest.test_the_check_renders_the_tree_it_checks_with_the_base_s_tools",
+    "oft.tests.test_workflow_verdicts.CollectTest.test_images",
+    "oft.tests.test_workflow_verdicts.CollectTest.test_weekly",
+    "oft.tests.test_workflow_verdicts.PlanSizeTest.test_no_step_takes_the_whole_plan_into_its_environment",
+    # Session runs tools/oft/ci/facts-review-run, the facts review's CI script, which reads the agent's output with jq.
+    "oft.tests.test_facts_review_session.Session",
+}
 def flat(suite):
     for t in suite:
         yield from (flat(t) if isinstance(t, unittest.TestSuite) else [t])
+def names(t):
+    return {t.id(), t.id().rsplit(".", 1)[0]}
 tests = list(flat(unittest.defaultTestLoader.discover("oft/tests", top_level_dir=".")))
-kept = [t for t in tests if t.id() != SKIP]
-if len(tests) - len(kept) != 1:
-    sys.exit("expected to leave out exactly %s" % SKIP)
+missing = SKIP - set().union(*map(names, tests))
+if missing:
+    sys.exit("no such test or class to leave out: %s" % ", ".join(sorted(missing)))
+kept = [t for t in tests if not names(t) & SKIP]
 r = unittest.TextTestRunner(verbosity=1).run(unittest.TestSuite(kept))
 line = "tools/oft tests: %d of %d run, all passed: %s" % (r.testsRun, len(tests), r.wasSuccessful())
 print(line)

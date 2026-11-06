@@ -1,0 +1,4 @@
+file	line	count	text_value	image_B_value	measurement	result
+lib/B/YB05.v	4	asan_globals descriptors	180	180	image B asan_globals section [0xaa860, 0xad560) / 64-byte descriptor = 180	OK
+lib/B/YB05.v	4	XMemset steps (descriptors + the table)	181	181	180 descriptors + 1	OK
+lib/B/YB05.v	4	first descriptor with an ODR indicator	68	68	image B descriptor 68 is the first whose odr_indicator word is neither 0 nor -1 (rec_codes, indicator 0x5e37c0)	OK

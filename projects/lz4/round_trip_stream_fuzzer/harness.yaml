@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lz4
 harness: round_trip_stream_fuzzer
-rocq: OssFuzzTheorems.lz4.round_trip_stream_fuzzer
+rocq: OSSVerify.lz4.round_trip_stream_fuzzer
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, a round trip: Eight streaming modes run in turn
   (prefix, extDict alternating between the input and a heap copy of it, loadDict, attachDict, and the

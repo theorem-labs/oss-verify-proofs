@@ -1,0 +1,39 @@
+# gate: settings check v10 (global_settings.py sha256 439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242)
+# tree: proofs/libreac/fuzz_disco at commit b1afc3e80791ebe54b1034a568112da851f005f0, 3765 .v files
+# command: python3 global_settings.py <tree> <each .v file of proofs/libreac/fuzz_disco, from git ls-tree>
+# verdict: exit 0 (PASS: no kernel-level setting)
+# control: the same check on a copy of proofs/libreac/fuzz_disco/lib/A/AB01.v with 'Unset Guard Checking.' appended: exit 5 (caught, as it must be)
+# rows: below, the run's TOOL / selftest / control lines, every KERNEL or UNMEASURED row under its file, and the SUMMARY (settings_digest.py)
+TOOL <work>/gs/global_settings.py sha256=439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242
+selftest: 45 synthetic setting cases and 11 synthetic hint cases (each text starts its case on line 4; v8: 16 bullet / brace must-FLAG cases, 2 of them on line 5), v9: 32 level cases, 66 kernel-level cases (8 forms x plain / Local / Global / Export / #[local] / #[global] / bullet / brace / after a `}` / in a proof, plus 4 must-not incl. v10's 2 coq-prog-args strings), 11 whole-run cases (9 kernel forms must exit 5 in a cgif-named lib/Reusable/YA09.v or a Local form in lib/A/Foo.v; 1 tactic-level file must exit 0 and report; 1 coq-prog-args string must exit 0), 6 partial-parse cases, 8 input cases (non-UTF-8, unreadable, partly parsed, absolute FILE, FILE leaving WT, FILE a directory, no FILE, no argument), 5 count cases (1 file, 3 files, a duplicate, a non-directory WT, an absent file); moved: none; missing-input known answer (WT=<work>/gs, FILE=tool-rule-selftest-absent.v): real tool REFUSES (exit 2, REFUSE: target file is absent (no regular file at the path): <work>/gs/tool-rule-selftest-absent.v |   searched: <work>/gs/tool-rule-selftest-absent.v); mutant (REFUSAL-SITE -> silent empty text): known-answer check FAILS (exit 0, read tool-rule-selftest-absent.v: 0 reported | SUMMARY: 1 files read of 1 given; ESCAPES 0; PLAIN 0; UNMEASURED 0; KERNEL 0; levels TACTIC 0, OPTION 0; HINTS 0 (report only, tactic-level)); selftest PASS
+control: 20 real-file known answers (copies in <work>/gs, sha256 pinned): AB14-41193e1fb22.v :12 PLAIN, :12 PLAIN, :14 ESCAPES, :139 ESCAPES [levels ESCAPES TACTIC x2, PLAIN TACTIC x2]; F20F-d91a1b23270.v :37 ESCAPES [levels ESCAPES TACTIC x1]; LiaTwx2-41193e1fb22.v contains :18 ESCAPES [levels ESCAPES OPTION x1, ESCAPES TACTIC x6]; AndN-41193e1fb22.v :4 PLAIN, :4 PLAIN, :4 PLAIN, :5 PLAIN, :132 PLAIN [levels PLAIN OPTION x2, PLAIN TACTIC x3]; YA09-77b2702c17c.v :20 PLAIN, :20 PLAIN, :24 ESCAPES, :268 ESCAPES, :271 ESCAPES, :278 ESCAPES, :279 ESCAPES, :286 ESCAPES, :287 ESCAPES, :1368 ESCAPES, :1370 ESCAPES, :1459 ESCAPES, :1461 ESCAPES, :1463 ESCAPES, :1465 ESCAPES, :1645 ESCAPES, :1646 ESCAPES, :2041 ESCAPES, :2043 ESCAPES, :2123 ESCAPES, :2129 ESCAPES, :2162 ESCAPES, :2163 ESCAPES, :2202 ESCAPES, :2204 ESCAPES, :2213 ESCAPES, :2215 ESCAPES, :2225 ESCAPES, :2227 ESCAPES, :2250 ESCAPES, :2253 ESCAPES, :2290 ESCAPES, :2292 ESCAPES, :2380 ESCAPES, :2381 ESCAPES, :2400 ESCAPES, :2407 ESCAPES, :2730 ESCAPES, :2735 ESCAPES, :2745 ESCAPES, :2746 ESCAPES, :2757 ESCAPES, :2758 ESCAPES, :2800 ESCAPES, :2805 ESCAPES, :2815 ESCAPES, :2816 ESCAPES, :2827 ESCAPES, :2828 ESCAPES, :2873 ESCAPES, :2875 ESCAPES, :2877 ESCAPES, :2879 ESCAPES, :3339 ESCAPES, :3341 ESCAPES [levels ESCAPES TACTIC x53, PLAIN TACTIC x2]; ctl/scene-b069d3e1516/lib/Reusable/YA09.v ESCAPES TACTIC x53, PLAIN TACTIC x2; ctl/scene-b069d3e1516/lib/Reusable/YA0e.v ESCAPES TACTIC x72, PLAIN TACTIC x2; ctl/boxreg-f7e88c4793c/lib/Reusable/YA09.v ESCAPES TACTIC x53, PLAIN TACTIC x2; ctl/boxreg-f7e88c4793c/lib/Reusable/YA0e.v ESCAPES TACTIC x72, PLAIN TACTIC x2; ctl/disco-0ce6f0e8f35/lib/Reusable/YA09.v ESCAPES TACTIC x53, PLAIN TACTIC x2; ctl/disco-0ce6f0e8f35/lib/Reusable/YA0e.v ESCAPES TACTIC x72, PLAIN TACTIC x2; ctl/grantB-9198a8522ec/lib/Reusable/YA09.v ESCAPES TACTIC x53, PLAIN TACTIC x2; ctl/grantB-9198a8522ec/lib/Reusable/YA0e.v ESCAPES TACTIC x72, PLAIN TACTIC x2; ctl/ctrl-77b2702c17c/lib/Reusable/YA09.v ESCAPES TACTIC x53, PLAIN TACTIC x2; ctl/ctrl-77b2702c17c/lib/Reusable/YA0e.v ESCAPES TACTIC x72, PLAIN TACTIC x2; ctl/knock-0a89620d3fa/lib/Reusable/YM03.v ESCAPES TACTIC x3; ctl/knock-0a89620d3fa/lib/Reusable/YM05.v ESCAPES TACTIC x3, PLAIN TACTIC x2; ctl/knock-0a89620d3fa/lib/Reusable/YK0c.v ESCAPES TACTIC x1, PLAIN TACTIC x2; ctl/knock-0a89620d3fa/lib/Reusable/YQ04.v ESCAPES TACTIC x1, PLAIN OPTION x1, PLAIN TACTIC x3; ctl/pwglue-ea39002e512/lib/A/Prog/PaSym.v PLAIN TACTIC x2, UNMEASURED OPTION x1; moved: none
+INPUT wt <work>/tree (a directory; 3765 FILE arguments, each read relative to it)
+read proofs/libreac/fuzz_disco/lib/A/Bz/Lib/Exec.v: 4 reported
+   :65 UNMEASURED OPTION: Arguments
+read proofs/libreac/fuzz_disco/lib/A/Prog/PaSym.v: 3 reported
+   :178 UNMEASURED OPTION: Arguments
+read proofs/libreac/fuzz_disco/lib/B/Bz/Lib/Exec.v: 4 reported
+   :65 UNMEASURED OPTION: Arguments
+read proofs/libreac/fuzz_disco/lib/CJ/Lib/Ceil.v: 6 reported
+   :22 UNMEASURED OPTION: Arguments
+read proofs/libreac/fuzz_disco/lib/CJ/Lib/Exec.v: 4 reported
+   :68 UNMEASURED OPTION: Arguments
+read proofs/libreac/fuzz_disco/lib/CJ/P/SFW_add_split.v: 9 reported
+   :17 UNMEASURED TACTIC: Strategy
+   :108 UNMEASURED TACTIC: Strategy
+   :154 UNMEASURED TACTIC: Strategy
+   :168 UNMEASURED TACTIC: Strategy
+   :179 UNMEASURED TACTIC: Strategy
+   :239 UNMEASURED TACTIC: Strategy
+read proofs/libreac/fuzz_disco/lib/Lib/Exec.v: 7 reported
+   :136 UNMEASURED OPTION: Arguments
+read proofs/libreac/fuzz_disco/lib/Reusable/YG0f.v: 3 reported
+   :88 UNMEASURED OPTION: Arguments
+read proofs/libreac/fuzz_disco/lib/Reusable/YP0a.v: 3 reported
+   :177 UNMEASURED OPTION: Arguments
+SUMMARY: 3765 files read of 3765 given; ESCAPES 1178; PLAIN 6722; UNMEASURED 14; KERNEL 0; levels TACTIC 7174, OPTION 740; HINTS 254 (report only, tactic-level)
+# control run:
+read proofs/libreac/fuzz_disco/lib/A/AB01.v: 3 reported
+   :604 KERNEL: Unset Guard Checking.
+SUMMARY: 1 files read of 1 given; ESCAPES 0; PLAIN 2; UNMEASURED 0; KERNEL 1; levels TACTIC 2, OPTION 0; HINTS 0 (report only, tactic-level)
+REFUSE: 1 kernel-level setting(s) (see the KERNEL rows); never accepted (VERIFY 16:5xZ)

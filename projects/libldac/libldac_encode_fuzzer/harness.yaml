@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libldac
 harness: libldac_encode_fuzzer
-rocq: OssFuzzTheorems.libldac.libldac_encode_fuzzer
+rocq: OSSVerify.libldac.libldac_encode_fuzzer
 origin: upstream
 summary: FuzzedDataProvider picks channel mode, sample format, EQMID and rate, then loops calling ldacBT_encode
   over the whole input, sampling-frequency/bitrate/version getters; encoded stream and return codes ignored.

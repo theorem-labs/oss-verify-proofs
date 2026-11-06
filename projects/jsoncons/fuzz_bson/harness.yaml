@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_bson
-rocq: OssFuzzTheorems.jsoncons.fuzz_bson
+rocq: OSSVerify.jsoncons.fuzz_bson
 origin: upstream
 summary: bson::decode_bson<json> from an istringstream over the input; value discarded; ser_error swallowed.
 entry: LLVMFuzzerTestOneInput

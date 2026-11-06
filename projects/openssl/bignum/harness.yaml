@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: bignum
-rocq: OssFuzzTheorems.openssl.bignum
+rocq: OSSVerify.openssl.bignum
 origin: upstream
 summary: 'Checks one property, a differential check: BN_mod_exp (optimised) vs BN_mod_exp_simple (reference)
   on the same a, b, m decoded from the input; a mismatch only prints the five numbers to stdout and the

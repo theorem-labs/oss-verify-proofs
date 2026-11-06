@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tmux
 harness: style-fuzzer
-rocq: OssFuzzTheorems.tmux.style_fuzzer
+rocq: OSSVerify.tmux.style_fuzzer
 origin: upstream
 summary: style_parse on the NUL-terminated input (<=512 bytes) into a zeroed style/grid_cell; the return
   code and result are ignored.

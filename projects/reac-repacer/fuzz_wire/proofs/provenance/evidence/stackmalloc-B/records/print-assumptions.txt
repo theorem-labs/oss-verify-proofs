@@ -1,0 +1,57 @@
+# Check + Print Assumptions of the two contracts, from an uncommitted scratch file lib/B/Rt/ZPaSmB.v
+#   From OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib.B.Rt Require StackMalloc0 YF0s.
+#   Check / Print Assumptions StackMalloc0.stack_malloc0_contract, then YF0s.stack_malloc1_contract
+# built by cb (CB_COMPILE = the scratch .vo, so its output is in the build log; that log sha256 fff4731cc0a8, rc=0), then deleted.
+# Axioms: 14 distinct names, the same 14 for both contracts; each is exactly one entry of toolchain/allowed-axioms.txt: yes
+#   FunctionalExtensionality.functional_extensionality_dep = Stdlib.Logic.FunctionalExtensionality.functional_extensionality_dep; PrimArray.array = Corelib.Array.PrimArray.array; PrimInt63.eqb = Corelib.Numbers.Cyclic.Int63.PrimInt63.eqb; PrimInt63.int = Corelib.Numbers.Cyclic.Int63.PrimInt63.int; PrimInt63.land = Corelib.Numbers.Cyclic.Int63.PrimInt63.land; PrimInt63.leb = Corelib.Numbers.Cyclic.Int63.PrimInt63.leb; PrimInt63.lor = Corelib.Numbers.Cyclic.Int63.PrimInt63.lor; PrimInt63.lsl = Corelib.Numbers.Cyclic.Int63.PrimInt63.lsl; PrimInt63.lsr = Corelib.Numbers.Cyclic.Int63.PrimInt63.lsr; PrimInt63.ltb = Corelib.Numbers.Cyclic.Int63.PrimInt63.ltb; PrimInt63.sub = Corelib.Numbers.Cyclic.Int63.PrimInt63.sub; PrimString.get = Corelib.Strings.PrimString.get; PrimString.length = Corelib.Strings.PrimString.length; PrimString.string = Corelib.Strings.PrimString.string
+# No Admitted / admit / Axiom / Parameter / Abort / Conjecture in the five files.
+StackMalloc0.stack_malloc0_contract
+     : forall B : YG0f.asyms,
+       YG0d.AR_laws YB1v.tfibsegs B ->
+       YF0m.WireSyms B ->
+       YG0d.astack_malloc_realizes YB1v.tfibsegs B BinNums.Z0
+where
+?fx : [ |- YK11.FPState]
+?rc : [ |- YM05.RunCeil]
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  forall (A : Type) (B : A -> Type) (f g : forall x : A, B x),
+  (forall x : A, f x = g x) -> f = g
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type
+YF0s.stack_malloc1_contract
+     : forall B : YG0f.asyms,
+       YG0d.AR_laws YB1v.tfibsegs B ->
+       YF0m.WireSyms B ->
+       YG0d.astack_malloc_realizes YB1v.tfibsegs B (BinInt.Z.pos BinNums.xH)
+where
+?fx : [ |- YK11.FPState]
+?rc : [ |- YM05.RunCeil]
+Axioms:
+PrimInt63.sub : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.lsr : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lsl : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.lor : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimString.length : PrimString.string -> PrimInt63.int
+PrimInt63.leb : PrimInt63.int -> PrimInt63.int -> bool
+PrimInt63.land : PrimInt63.int -> PrimInt63.int -> PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string -> PrimInt63.int -> PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  forall (A : Type) (B : A -> Type) (f g : forall x : A, B x),
+  (forall x : A, f x = g x) -> f = g
+PrimInt63.eqb : PrimInt63.int -> PrimInt63.int -> bool
+PrimArray.array : Type -> Type

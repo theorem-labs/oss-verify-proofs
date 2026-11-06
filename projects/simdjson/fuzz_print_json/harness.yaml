@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: simdjson
 harness: fuzz_print_json
-rocq: OssFuzzTheorems.simdjson.fuzz_print_json
+rocq: OSSVerify.simdjson.fuzz_print_json
 origin: upstream
 summary: parse, then ostream << element into a null stream; no comparison.
 entry: LLVMFuzzerTestOneInput
@@ -248,7 +248,17 @@ statements:
     reading: may-fail
     exits: any
     binds_checks: false
-    status: open
+    status: witnessed-false
+    witness:
+      build: plain
+      input_hex: '0000000000005b302c312c322c332c342c352c362c372c382c392c31302c31312c31322c31332c31342c31352c31362c31372c31382c31392c32302c32312c32322c32332c32342c32352c32362c32372c32382c32392c33302c33312c33322c33332c33342c33352c33362c33372c33382c33392c34302c34312c34322c34332c34342c34352c34362c34372c34382c34392c35302c35312c35322c35332c35342c35352c35362c35372c35382c35392c36302c36312c36322c36332c36342c36352c36362c36372c36382c36392c37302c37312c37322c37332c37342c37352c37362c37372c37382c37395d'
+      refused:
+        call: mmap
+        position: 7
+        bytes: 4096
+      outcome: abort
+      after: uncaught-bad-alloc
+      runner: qemu-riscv64 10.0.11
   asan_halts:
     kind: halts
     builds:
@@ -276,7 +286,17 @@ statements:
     reading: may-fail
     exits: any
     binds_checks: false
-    status: open
+    status: witnessed-false
+    witness:
+      build: ubsan
+      input_hex: '0000000000005b302c312c322c332c342c352c362c372c382c392c31302c31312c31322c31332c31342c31352c31362c31372c31382c31392c32302c32312c32322c32332c32342c32352c32362c32372c32382c32392c33302c33312c33322c33332c33342c33352c33362c33372c33382c33392c34302c34312c34322c34332c34342c34352c34362c34372c34382c34392c35302c35312c35322c35332c35342c35352c35362c35372c35382c35392c36302c36312c36322c36332c36342c36352c36362c36372c36382c36392c37302c37312c37322c37332c37342c37352c37362c37372c37382c37395d'
+      refused:
+        call: mmap
+        position: 7
+        bytes: 4096
+      outcome: abort
+      after: uncaught-bad-alloc
+      runner: qemu-riscv64 10.0.11
   asan_ubsan_halts:
     kind: halts
     builds:

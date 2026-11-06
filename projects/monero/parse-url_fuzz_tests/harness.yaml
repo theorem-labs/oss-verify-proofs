@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: monero
 harness: parse-url_fuzz_tests
-rocq: OssFuzzTheorems.monero.parse_url_fuzz_tests
+rocq: OSSVerify.monero.parse_url_fuzz_tests
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

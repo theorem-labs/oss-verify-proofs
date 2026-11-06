@@ -1,0 +1,204 @@
+# definitions checked: 33; differing: 0
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	8	tfib_rodata_lo	0x102e0	0x102e0	OK	section .rodata start
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	8	tfib_rodata_hi	0x246a4	0x246a4	OK	section .rodata end
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	9	tfib_text_lo	0x33340	0x33340	OK	section .text start
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	9	tfib_text_hi	0xa46fc	0xa46fc	OK	section .text end
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	10	tfib_init_array_lo	0xa5700	0xa5700	OK	section .init_array start
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	10	tfib_init_array_hi	0xa5720	0xa5720	OK	section .init_array end
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	11	tfib_fini_array_lo	0xa5720	0xa5720	OK	section .fini_array start
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	11	tfib_fini_array_hi	0xa5730	0xa5730	OK	section .fini_array end
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	12	tfib_preinit_array_lo	0xa5730	0xa5730	OK	section .preinit_array start
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	12	tfib_preinit_array_hi	0xa5738	0xa5738	OK	section .preinit_array end
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	13	tfib_data_rel_ro_lo	0xa5740	0xa5740	OK	section .data.rel.ro start
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	13	tfib_data_rel_ro_hi	0xa6390	0xa6390	OK	section .data.rel.ro end
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	14	tfib_got_lo	0xa6390	0xa6390	OK	section .got start
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	14	tfib_got_hi	0xa7108	0xa7108	OK	section .got end
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	15	tfib_data_lo	0xa8108	0xa8108	OK	section .data start
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	15	tfib_data_hi	0xaacf8	0xaacf8	OK	section .data end
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	16	tfib_asan_globals_lo	0xaad00	0xaad00	OK	section asan_globals start
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	16	tfib_asan_globals_hi	0xada00	0xada00	OK	section asan_globals end
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	17	tfib_bss_lo	0xada00	0xada00	OK	section .bss start
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	17	tfib_bss_hi	0x605e78	0x605e78	OK	section .bss end
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	18	tfib_tbss_lo	0xa4700	0xa4700	OK	section .tbss start
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	18	tfib_tbss_hi	0xa4714	0xa4714	OK	section .tbss end
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	19	tfib_img_lo	0x10000	0x10000	OK	page-rounded PT_LOAD hull start
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	19	tfib_img_hi	0x606000	0x606000	OK	page-rounded PT_LOAD hull end
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	20	tfib_entry	0x33340	0x33340	OK	ELF header e_entry
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	580	tfib_at_img_lo	0x10000	0x10000	OK	page-rounded PT_LOAD hull start
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	581	tfib_at_img_hi	0x606000	0x606000	OK	page-rounded PT_LOAD hull end
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	584	tfib_at_a_entry	0x33340	0x33340	OK	ELF header e_entry
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	585	tfib_at_rw_lo	0xa8000	0xa8000	OK	page base of the last writable PT_LOAD
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	586	tfib_at_rw_len	0x55e000	0x55e000	OK	page-rounded size of the last writable PT_LOAD
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	587	tfib_at_ph_addr_z	0x10040	0x10040	OK	first PT_LOAD vaddr + e_phoff
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	588	tfib_at_ph_ent_z	0x38	0x38	OK	ELF header e_phentsize
+cmd/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	589	tfib_at_ph_num_z	0xb	0xb	OK	ELF header e_phnum
+# definitions checked: 33; differing: 0
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	9	tfib_rodata_lo	0x102e0	0x102e0	OK	section .rodata start
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	9	tfib_rodata_hi	0x246e4	0x246e4	OK	section .rodata end
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	10	tfib_text_lo	0x3338c	0x3338c	OK	section .text start
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	10	tfib_text_hi	0xa4258	0xa4258	OK	section .text end
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	11	tfib_init_array_lo	0xa5258	0xa5258	OK	section .init_array start
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	11	tfib_init_array_hi	0xa5278	0xa5278	OK	section .init_array end
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	12	tfib_fini_array_lo	0xa5278	0xa5278	OK	section .fini_array start
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	12	tfib_fini_array_hi	0xa5288	0xa5288	OK	section .fini_array end
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	13	tfib_preinit_array_lo	0xa5288	0xa5288	OK	section .preinit_array start
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	13	tfib_preinit_array_hi	0xa5290	0xa5290	OK	section .preinit_array end
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	14	tfib_data_rel_ro_lo	0xa52a0	0xa52a0	OK	section .data.rel.ro start
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	14	tfib_data_rel_ro_hi	0xa5ef0	0xa5ef0	OK	section .data.rel.ro end
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	15	tfib_got_lo	0xa5ef0	0xa5ef0	OK	section .got start
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	15	tfib_got_hi	0xa6c68	0xa6c68	OK	section .got end
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	16	tfib_data_lo	0xa7c68	0xa7c68	OK	section .data start
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	16	tfib_data_hi	0xaa858	0xaa858	OK	section .data end
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	17	tfib_asan_globals_lo	0xaa860	0xaa860	OK	section asan_globals start
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	17	tfib_asan_globals_hi	0xad560	0xad560	OK	section asan_globals end
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	18	tfib_bss_lo	0xad580	0xad580	OK	section .bss start
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	18	tfib_bss_hi	0x6059f8	0x6059f8	OK	section .bss end
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	19	tfib_tbss_lo	0xa4258	0xa4258	OK	section .tbss start
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	19	tfib_tbss_hi	0xa426c	0xa426c	OK	section .tbss end
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	20	tfib_img_lo	0x10000	0x10000	OK	page-rounded PT_LOAD hull start
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	20	tfib_img_hi	0x606000	0x606000	OK	page-rounded PT_LOAD hull end
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	21	tfib_entry	0x3338c	0x3338c	OK	ELF header e_entry
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	581	tfib_at_img_lo	0x10000	0x10000	OK	page-rounded PT_LOAD hull start
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	582	tfib_at_img_hi	0x606000	0x606000	OK	page-rounded PT_LOAD hull end
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	585	tfib_at_a_entry	0x3338c	0x3338c	OK	ELF header e_entry
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	586	tfib_at_rw_lo	0xa7000	0xa7000	OK	page base of the last writable PT_LOAD
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	587	tfib_at_rw_len	0x55f000	0x55f000	OK	page-rounded size of the last writable PT_LOAD
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	588	tfib_at_ph_addr_z	0x10040	0x10040	OK	first PT_LOAD vaddr + e_phoff
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	589	tfib_at_ph_ent_z	0x38	0x38	OK	ELF header e_phentsize
+cmd/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	590	tfib_at_ph_num_z	0xb	0xb	OK	ELF header e_phnum
+# definitions checked: 33; differing: 0
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	8	tfib_rodata_lo	0x102e0	0x102e0	OK	section .rodata start
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	8	tfib_rodata_hi	0x246a4	0x246a4	OK	section .rodata end
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	9	tfib_text_lo	0x33340	0x33340	OK	section .text start
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	9	tfib_text_hi	0xa46fc	0xa46fc	OK	section .text end
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	10	tfib_init_array_lo	0xa5700	0xa5700	OK	section .init_array start
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	10	tfib_init_array_hi	0xa5720	0xa5720	OK	section .init_array end
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	11	tfib_fini_array_lo	0xa5720	0xa5720	OK	section .fini_array start
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	11	tfib_fini_array_hi	0xa5730	0xa5730	OK	section .fini_array end
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	12	tfib_preinit_array_lo	0xa5730	0xa5730	OK	section .preinit_array start
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	12	tfib_preinit_array_hi	0xa5738	0xa5738	OK	section .preinit_array end
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	13	tfib_data_rel_ro_lo	0xa5740	0xa5740	OK	section .data.rel.ro start
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	13	tfib_data_rel_ro_hi	0xa6390	0xa6390	OK	section .data.rel.ro end
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	14	tfib_got_lo	0xa6390	0xa6390	OK	section .got start
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	14	tfib_got_hi	0xa7108	0xa7108	OK	section .got end
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	15	tfib_data_lo	0xa8108	0xa8108	OK	section .data start
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	15	tfib_data_hi	0xaacf8	0xaacf8	OK	section .data end
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	16	tfib_asan_globals_lo	0xaad00	0xaad00	OK	section asan_globals start
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	16	tfib_asan_globals_hi	0xada00	0xada00	OK	section asan_globals end
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	17	tfib_bss_lo	0xada00	0xada00	OK	section .bss start
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	17	tfib_bss_hi	0x605e78	0x605e78	OK	section .bss end
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	18	tfib_tbss_lo	0xa4700	0xa4700	OK	section .tbss start
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	18	tfib_tbss_hi	0xa4714	0xa4714	OK	section .tbss end
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	19	tfib_img_lo	0x10000	0x10000	OK	page-rounded PT_LOAD hull start
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	19	tfib_img_hi	0x606000	0x606000	OK	page-rounded PT_LOAD hull end
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	20	tfib_entry	0x33340	0x33340	OK	ELF header e_entry
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	580	tfib_at_img_lo	0x10000	0x10000	OK	page-rounded PT_LOAD hull start
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	581	tfib_at_img_hi	0x606000	0x606000	OK	page-rounded PT_LOAD hull end
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	584	tfib_at_a_entry	0x33340	0x33340	OK	ELF header e_entry
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	585	tfib_at_rw_lo	0xa8000	0xa8000	OK	page base of the last writable PT_LOAD
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	586	tfib_at_rw_len	0x55e000	0x55e000	OK	page-rounded size of the last writable PT_LOAD
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	587	tfib_at_ph_addr_z	0x10040	0x10040	OK	first PT_LOAD vaddr + e_phoff
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	588	tfib_at_ph_ent_z	0x38	0x38	OK	ELF header e_phentsize
+merged/proofs/plugin-hostd/fuzz_command/lib/A/AB1w.v	589	tfib_at_ph_num_z	0xb	0xb	OK	ELF header e_phnum
+# definitions checked: 33; differing: 0
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	9	tfib_rodata_lo	0x102e0	0x102e0	OK	section .rodata start
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	9	tfib_rodata_hi	0x246e4	0x246e4	OK	section .rodata end
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	10	tfib_text_lo	0x3338c	0x3338c	OK	section .text start
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	10	tfib_text_hi	0xa4258	0xa4258	OK	section .text end
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	11	tfib_init_array_lo	0xa5258	0xa5258	OK	section .init_array start
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	11	tfib_init_array_hi	0xa5278	0xa5278	OK	section .init_array end
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	12	tfib_fini_array_lo	0xa5278	0xa5278	OK	section .fini_array start
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	12	tfib_fini_array_hi	0xa5288	0xa5288	OK	section .fini_array end
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	13	tfib_preinit_array_lo	0xa5288	0xa5288	OK	section .preinit_array start
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	13	tfib_preinit_array_hi	0xa5290	0xa5290	OK	section .preinit_array end
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	14	tfib_data_rel_ro_lo	0xa52a0	0xa52a0	OK	section .data.rel.ro start
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	14	tfib_data_rel_ro_hi	0xa5ef0	0xa5ef0	OK	section .data.rel.ro end
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	15	tfib_got_lo	0xa5ef0	0xa5ef0	OK	section .got start
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	15	tfib_got_hi	0xa6c68	0xa6c68	OK	section .got end
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	16	tfib_data_lo	0xa7c68	0xa7c68	OK	section .data start
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	16	tfib_data_hi	0xaa858	0xaa858	OK	section .data end
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	17	tfib_asan_globals_lo	0xaa860	0xaa860	OK	section asan_globals start
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	17	tfib_asan_globals_hi	0xad560	0xad560	OK	section asan_globals end
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	18	tfib_bss_lo	0xad580	0xad580	OK	section .bss start
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	18	tfib_bss_hi	0x6059f8	0x6059f8	OK	section .bss end
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	19	tfib_tbss_lo	0xa4258	0xa4258	OK	section .tbss start
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	19	tfib_tbss_hi	0xa426c	0xa426c	OK	section .tbss end
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	20	tfib_img_lo	0x10000	0x10000	OK	page-rounded PT_LOAD hull start
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	20	tfib_img_hi	0x606000	0x606000	OK	page-rounded PT_LOAD hull end
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	21	tfib_entry	0x3338c	0x3338c	OK	ELF header e_entry
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	581	tfib_at_img_lo	0x10000	0x10000	OK	page-rounded PT_LOAD hull start
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	582	tfib_at_img_hi	0x606000	0x606000	OK	page-rounded PT_LOAD hull end
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	585	tfib_at_a_entry	0x3338c	0x3338c	OK	ELF header e_entry
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	586	tfib_at_rw_lo	0xa7000	0xa7000	OK	page base of the last writable PT_LOAD
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	587	tfib_at_rw_len	0x55f000	0x55f000	OK	page-rounded size of the last writable PT_LOAD
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	588	tfib_at_ph_addr_z	0x10040	0x10040	OK	first PT_LOAD vaddr + e_phoff
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	589	tfib_at_ph_ent_z	0x38	0x38	OK	ELF header e_phentsize
+merged/proofs/plugin-hostd/fuzz_command/lib/B/YB1w.v	590	tfib_at_ph_num_z	0xb	0xb	OK	ELF header e_phnum
+# definitions checked: 33; differing: 2
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	7	tfib_rodata_lo	0x102e0	0x102e0	OK	section .rodata start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	7	tfib_rodata_hi	0x2278c	0x227cc	DIFFERS	section .rodata end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	8	tfib_text_lo	0x302dc	0x302dc	OK	section .text start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	8	tfib_text_hi	0x9ca00	0x9c9fc	DIFFERS	section .text end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	9	tfib_init_array_lo	0x9da00	0x9da00	OK	section .init_array start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	9	tfib_init_array_hi	0x9da20	0x9da20	OK	section .init_array end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	10	tfib_fini_array_lo	0x9da20	0x9da20	OK	section .fini_array start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	10	tfib_fini_array_hi	0x9da30	0x9da30	OK	section .fini_array end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	11	tfib_preinit_array_lo	0x9da30	0x9da30	OK	section .preinit_array start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	11	tfib_preinit_array_hi	0x9da38	0x9da38	OK	section .preinit_array end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	12	tfib_data_rel_ro_lo	0x9da38	0x9da38	OK	section .data.rel.ro start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	12	tfib_data_rel_ro_hi	0x9df38	0x9df38	OK	section .data.rel.ro end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	13	tfib_got_lo	0x9df38	0x9df38	OK	section .got start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	13	tfib_got_hi	0x9eca8	0x9eca8	OK	section .got end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	14	tfib_data_lo	0x9fca8	0x9fca8	OK	section .data start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	14	tfib_data_hi	0xa2870	0xa2870	OK	section .data end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	15	tfib_asan_globals_lo	0xa2870	0xa2870	OK	section asan_globals start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	15	tfib_asan_globals_hi	0xa2930	0xa2930	OK	section asan_globals end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	16	tfib_bss_lo	0xa2940	0xa2940	OK	section .bss start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	16	tfib_bss_hi	0x5fa870	0x5fa870	OK	section .bss end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	17	tfib_tbss_lo	0x9ca00	0x9ca00	OK	section .tbss start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	17	tfib_tbss_hi	0x9ca14	0x9ca14	OK	section .tbss end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	18	tfib_img_lo	0x10000	0x10000	OK	page-rounded PT_LOAD hull start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	18	tfib_img_hi	0x5fb000	0x5fb000	OK	page-rounded PT_LOAD hull end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	19	tfib_entry	0x302dc	0x302dc	OK	ELF header e_entry
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	590	tfib_at_img_lo	0x10000	0x10000	OK	page-rounded PT_LOAD hull start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	591	tfib_at_img_hi	0x5fb000	0x5fb000	OK	page-rounded PT_LOAD hull end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	594	tfib_at_a_entry	0x302dc	0x302dc	OK	ELF header e_entry
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	595	tfib_at_rw_lo	0x9f000	0x9f000	OK	page base of the last writable PT_LOAD
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	596	tfib_at_rw_len	0x55c000	0x55c000	OK	page-rounded size of the last writable PT_LOAD
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	597	tfib_at_ph_addr_z	0x10040	0x10040	OK	first PT_LOAD vaddr + e_phoff
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	598	tfib_at_ph_ent_z	0x38	0x38	OK	ELF header e_phentsize
+cgif/proofs/cgif/cgif_file_fuzzer/lib/A/AB1w.v	599	tfib_at_ph_num_z	0xb	0xb	OK	ELF header e_phnum
+# definitions checked: 33; differing: 0
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	7	tfib_rodata_lo	0x102e0	0x102e0	OK	section .rodata start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	7	tfib_rodata_hi	0x2278c	0x2278c	OK	section .rodata end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	8	tfib_text_lo	0x3030c	0x3030c	OK	section .text start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	8	tfib_text_hi	0x9cc70	0x9cc70	OK	section .text end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	9	tfib_init_array_lo	0x9dc70	0x9dc70	OK	section .init_array start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	9	tfib_init_array_hi	0x9dc90	0x9dc90	OK	section .init_array end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	10	tfib_fini_array_lo	0x9dc90	0x9dc90	OK	section .fini_array start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	10	tfib_fini_array_hi	0x9dca0	0x9dca0	OK	section .fini_array end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	11	tfib_preinit_array_lo	0x9dca0	0x9dca0	OK	section .preinit_array start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	11	tfib_preinit_array_hi	0x9dca8	0x9dca8	OK	section .preinit_array end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	12	tfib_data_rel_ro_lo	0x9dca8	0x9dca8	OK	section .data.rel.ro start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	12	tfib_data_rel_ro_hi	0x9e1a8	0x9e1a8	OK	section .data.rel.ro end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	13	tfib_got_lo	0x9e1a8	0x9e1a8	OK	section .got start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	13	tfib_got_hi	0x9ef18	0x9ef18	OK	section .got end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	14	tfib_data_lo	0x9ff18	0x9ff18	OK	section .data start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	14	tfib_data_hi	0xa2ae0	0xa2ae0	OK	section .data end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	15	tfib_asan_globals_lo	0xa2ae0	0xa2ae0	OK	section asan_globals start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	15	tfib_asan_globals_hi	0xa2ba0	0xa2ba0	OK	section asan_globals end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	16	tfib_bss_lo	0xa2bc0	0xa2bc0	OK	section .bss start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	16	tfib_bss_hi	0x5faaf0	0x5faaf0	OK	section .bss end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	17	tfib_tbss_lo	0x9cc70	0x9cc70	OK	section .tbss start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	17	tfib_tbss_hi	0x9cc84	0x9cc84	OK	section .tbss end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	18	tfib_img_lo	0x10000	0x10000	OK	page-rounded PT_LOAD hull start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	18	tfib_img_hi	0x5fb000	0x5fb000	OK	page-rounded PT_LOAD hull end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	19	tfib_entry	0x3030c	0x3030c	OK	ELF header e_entry
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	590	tfib_at_img_lo	0x10000	0x10000	OK	page-rounded PT_LOAD hull start
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	591	tfib_at_img_hi	0x5fb000	0x5fb000	OK	page-rounded PT_LOAD hull end
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	594	tfib_at_a_entry	0x3030c	0x3030c	OK	ELF header e_entry
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	595	tfib_at_rw_lo	0x9f000	0x9f000	OK	page base of the last writable PT_LOAD
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	596	tfib_at_rw_len	0x55c000	0x55c000	OK	page-rounded size of the last writable PT_LOAD
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	597	tfib_at_ph_addr_z	0x10040	0x10040	OK	first PT_LOAD vaddr + e_phoff
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	598	tfib_at_ph_ent_z	0x38	0x38	OK	ELF header e_phentsize
+cgif/proofs/cgif/cgif_file_fuzzer/lib/YB1w.v	599	tfib_at_ph_num_z	0xb	0xb	OK	ELF header e_phnum

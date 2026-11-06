@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: tink-cc
 harness: tink_encrypt_fuzzer
-rocq: OssFuzzTheorems.tink_cc.tink_encrypt_fuzzer
+rocq: OSSVerify.tink_cc.tink_encrypt_fuzzer
 origin: oss-fuzz
 summary: 'Checks one property, an API contract: AES-SIV EncryptDeterministically with a fixed valid 64-byte
   key must succeed on every message: ct.value() on a non-OK StatusOr throws absl::BadStatusOrAccess (uncaught

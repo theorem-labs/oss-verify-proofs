@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cpp-httplib
 harness: header_parser_fuzzer
-rocq: OssFuzzTheorems.cpp_httplib.header_parser_fuzzer
+rocq: OSSVerify.cpp_httplib.header_parser_fuzzer
 origin: upstream
 summary: selector byte picks one of 7 header parsers (range, accept, media type, multipart boundary, disposition,
   http date, can_compress); every result discarded.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wasm3
 harness: fuzzer
-rocq: OssFuzzTheorems.wasm3.fuzzer
+rocq: OSSVerify.wasm3.fuzzer
 origin: upstream
 summary: 'inputs 8 B..256 KiB: m3_ParseModule, m3_LoadModule into a runtime with a 64 MiB memory cap,
   m3_FindFunction("fib"); the call is commented out (TODO) at this pin; results discarded.'

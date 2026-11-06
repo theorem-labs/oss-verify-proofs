@@ -1,0 +1,69 @@
+file	line	stage_out	committed	symbol+offset	committed_text	stage_text
+Reusable/YC1f.v	176	0x10000	-	-	Lemma pa_slot_img : forall k e, 0 <= k < 2 ^ 40 -> plookup pl_tpi k = Some e -> YImgTop.IMG_LO <= BA	Lemma pa_slot_img : forall k e, 0 <= k < 2 ^ 40 -> plookup pl_tpi k = Some e -> 0x10000 <= BASE + k.
+Reusable/YC1f.v	193	0x10000	-	-	Lemma pa_base_lo : YImgTop.IMG_LO <= BASE.	Lemma pa_base_lo : 0x10000 <= BASE.
+Reusable/YC1f.v	319	0x10000,0x5fe000,0x10000	-	-	destruct (Z.le_gt_cases (p + req_size n) YImgTop.IMG_LO) as [|H1]; [left; lia|].	destruct (Z.le_gt_cases (p + req_size n) 0x10000) as [|H1]; [left; lia|].
+Reusable/YC1h.v	125	0x10000,0x5fe000,0x10000	-	-	destruct (Z.le_gt_cases (frame_addr ly cid pos + fs_frame_bytes cid) YImgTop.IMG_LO) as [|H1]; [left	destruct (Z.le_gt_cases (frame_addr ly cid pos + fs_frame_bytes cid) 0x10000) as [|H1]; [left; lia|]
+Reusable/YC1i.v	27	0x29a8,0x291c	-	-	Context {PI : PAImg lib_both3_0_listing}.	Context {PI : PAImg lib_asan3_1_listing}.
+Reusable/YC1i.v	53	0x29d8,0x2918,0x1000	-	-		Definition TCBB_KEPT : list (bv 5) := [2; 3; 4; 8; 9; 19; 20; 21; 22; 24; 25; 26; 27]%bv.
+Reusable/YC1i.v	66	0x2968,0x1060	-	-		Definition cbb_post (regs : bvmap 5 word) ly S (W : world SEGS) mem md (bb Lbb n : Z) : world SEGS -
+Reusable/YC44.v	93	0x10000,0x5fe000	-	-	palf_uar_img : YImgTop.IMG_LO <= as_uar_cell B /\ as_uar_cell B + 8 <= YImgTop.IMG_TOP;	palf_uar_img : 0x10000 <= as_uar_cell B /\ as_uar_cell B + 8 <= 0x5fe000;
+Reusable/YC4a.v	40	0x10000,0x5fe000,0x10000	-	-	pa_img_range : forall a, in_img pa_segs a -> YImgTop.IMG_LO <= a < YImgTop.IMG_TOP;	pa_img_range : forall a, in_img pa_segs a -> 0x10000 <= a < 0x5fe000;
+Reusable/YC4a.v	82	0x10000,0x5fe000,0x10000	-	-	pa2_img_range : forall a, in_img pa2_segs a -> YImgTop.IMG_LO <= a < YImgTop.IMG_TOP;	pa2_img_range : forall a, in_img pa2_segs a -> 0x10000 <= a < 0x5fe000;
+Reusable/YC4a.v	98	0x10000,0x5fe000	-	-	Lemma pa2_obj1_img : forall i, (i < 13)%nat -> YImgTop.IMG_LO <= pa2_val1 (A_OBJ i) /\ pa2_val1 (A_O	Lemma pa2_obj1_img : forall i, (i < 13)%nat -> 0x10000 <= pa2_val1 (A_OBJ i) /\ pa2_val1 (A_OBJ i) +
+Reusable/YC8g.v	58	0x5f5e100,0x5f5e100,0x1000	-	-		Section o.
+Reusable/YCbf.v	274	0x40c0,0x1000,0x100000000000	-	-		Ltac rn_prelude :=
+Reusable/YCbq.v	790	0x10000,0x5fe000	-	-	Definition off_img (a n : Z) : Prop := a + n <= YImgTop.IMG_LO \/ YImgTop.IMG_TOP <= a.	Definition off_img (a n : Z) : Prop := a + n <= 0x10000 \/ 0x5fe000 <= a.
+Reusable/YCe5.v	669	0x10000,0x5fe000	-	-	Definition off_img (a n : Z) : Prop := a + n <= YImgTop.IMG_LO \/ YImgTop.IMG_TOP <= a.	Definition off_img (a n : Z) : Prop := a + n <= 0x10000 \/ 0x5fe000 <= a.
+Reusable/YCjr.v	37	0xffe,0x2000,0x1000	-	-		Definition PC_INIT : Z := port_core_refused_852bc.
+Reusable/YCjr.v	104	0x10000,0x5fe000	-	-	res = 0 \/ (4096 <= res /\ ((res + req_size n <= YImgTop.IMG_LO \/ YImgTop.IMG_TOP <= res) /\ (res +	res = 0 \/ (4096 <= res /\ ((res + req_size n <= 65536 \/ 6283264 <= res) /\ (res + req_size n <= 21
+Reusable/YI0z.v	9	0x62c,0x70c,0x798	0x2830,0x2988,0x2a2c	-;-	Definition AF_both3_LLVMFuzzerTestOneInput : Z := 0x0.	Definition AF_both3_cgif_newgif : Z := 0x0.
+Reusable/YI0z.v	50	0xf4010113,0x1300d,0xa113c23	0xdc010113,0x13023,0x22113c23	-;-	PW 0xdc010113;	PW 0xf4010113;
+Reusable/YI0z.v	67	0x104b3	0x10493,0x58b93	-;__asan_set_error_report_callback+0x117	PW 0x10493;	PW 0x104b3;
+Reusable/YI0z.v	74	0x5bc83,0x50a13,0x60a63	0x5b983,0x50a93,0x60c63	_ZN6__asanL19GetAccumulatedStatsEPNS_9AsanStatsE+0x303;_ZL16ioctl_table_fillv+0x77c7	PW 0x5b983;	PW 0x5bc83;
+Reusable/YI0z.v	82	0xd93,0xdbd93,0x20d9063	0xb13,0xb0c13,0x20b1263	-;_ZN11__sanitizerL26internal_alloc_placeholderE+0x6593	PW 0xb13;	PW 0xd93;
+Reusable/YI0z.v	90	0x1300d,0xfe294ce3,0x90113	0x13023,0xfe2c4ce3,0xc0113	-;-	PW 0x13023;	PW 0x1300d;
+Reusable/YI0z.v	97	0x399093	0x3c5d93,0xff800913,0xff100693	_ZN11__sanitizerL8theDepotE+0x23aa3b;-	PW 0x3c5d93;	PW 0x399093;
+Reusable/YI0z.v	101	0x0	-	-		PLdHi (12%bv : reg) (12%bv : reg) 3 (A_OBJ 3) 0x0 SZ8 true;
+Reusable/YI0z.v	102	0xa93023,0xb93423,0xc93823	0x0,0xac3023,0xbc3423	_ZN6__asanL14fake_stack_tlsE;-	PAddHi (12%bv : reg) (12%bv : reg) 3 (A_OBJ 3) 0x0;	PW 0xa93023;
+Reusable/YI0z.v	327	0xac0623,0xac06a3,0xac0723	0x1abd593,0x16ad8e23,0x16ad8ea3	-;-	PW 0x1abd593;	PW 0xac0623;
+Reusable/YI0z.v	497	0x22050e63,0x50993,0x200006f	0xaa4bc23,0x51463,0x7cd0106f	-;_ZL16ioctl_table_fillv+0x8197	PW 0xaa4bc23;	PW 0x22050e63;
+Reusable/YI0z.v	585	0x79f513,0x34051063,0x5098513	0x380006f,0x1c8513,0xab6463	-;_ZN11__sanitizerL8theDepotE+0x3d1bb	PW 0x380006f;	PCall AS_asan_memset (1%bv : reg);
+Reusable/YI0z.v	607	0x2a061c63,0x55503	0x60463,0x2810106f,0xcc603	_ZN11__sanitizer18LargeMmapAllocatorINS_20NoOpMapUnmapCallbackENS_32LargeMmapAllocatorPtrArrayStaticENS_21LocalAddressSpaceViewEE10DeallocateEPNS_14AllocatorStatsEPv+0x127;-	PW 0x60463;	PW 0x2a061c63;
+Reusable/YI0z.v	2978	0x3e59613,0x360a13,0x3f65613	0x2813083,0x2013403,0x1813483	-;-	PW 0x2813083;	PW 0x3e59613;
+Reusable/YI0z.v	3038	0x22059463,0x51503,0x62c	0x16059a63,0x54503,0x3ba50c63	-;_ZN6__asan12PoisonShadowEmmh+0x207	PW 0x16059a63;	PW 0x22059463;
+Reusable/YI0z.v	3050	0x1e059463,0x603593	0x14059863,0x54b03,0xa00613	-;__asan_unpoison_memory_region+0x2f	PW 0x14059863;	PW 0x1e059463;
+Reusable/YI0z.v	3233	0x480006f,0x384b503,0x380006f	0xda8533,0xf69ff06f,0x60603	-;-	PW 0xda8533;	PW 0x480006f;
+Reusable/YI0z.v	3374	0x308000ef,0x200006f,0x50993	0x74f593,0x4059e63,0x34d593	-;-	PW 0x74f593;	PW 0x308000ef;
+Reusable/YI0z.v	3492	-	0xfff44a93,0xa025b3,0x40b005b3	-;-	PW 0xfff44a93;	
+Reusable/YI0z.v	3611	-	0xab38889b,0x0,0x0	-;_ZN6__asanL14fake_stack_tlsE	PW 0xab38889b;	
+Reusable/YI0z.v	4212	0xac0423	0xac0023,0xac00a3,0xac0123	-;-	PW 0xac0023;	PW 0xac0423;
+Reusable/YI0z.v	4663	0x40d8a63	0x8098a63,0xff500513,0xad8223	-;-	PW 0x8098a63;	PW 0x40d8a63;
+Reusable/YI0z.v	7452	0x78db503	0x7893503	-	PW 0x7893503;	PW 0x78db503;
+Reusable/YI0z.v	7454	0x440006f,0xc36a3,0xc3723	0xf80006f,0x180a8b13,0x3b5d93	-;-	PW 0xf80006f;	PW 0x440006f;
+Reusable/YI0z.v	7477	0xf4040113,0xb813083,0xb013403	0xb8593,0xd8503,0x24051a63	_ZN11__sanitizerL26internal_alloc_placeholderE+0xdf13;_ZN11__sanitizerL26internal_alloc_placeholderE+0x2de83	PW 0xb8593;	PW 0xf4040113;
+Reusable/YI0z.v	7533	-	0x104b703,0x377513,0x84b783	-;_ZN11__sanitizerL8theDepotE+0x1ec1bb	PW 0x104b703;	
+Reusable/YI0z.v	7625	0x15ba13,0xc0a5cce3,0xb3993	0x358593,0xd6a5c4e3,0xb0513	_ZN11__sanitizerL8theDepotE+0x1cd23b;-	PW 0x358593;	PW 0x15ba13;
+Reusable/YI0z.v	7630	0x15ba13,0xdca5c8e3,0xb3993	0x358593,0xdaa5c4e3,0xb0513	_ZN11__sanitizerL8theDepotE+0x1cd23b;-	PW 0x358593;	PW 0x15ba13;
+Reusable/YI0z.v	7635	0x163a93,0xdcb64ae3,0x757613	0x360613,0xe8b646e3	_ZN11__sanitizerL8theDepotE+0x1d52bb;-	PW 0x360613;	PW 0x163a93;
+Reusable/YI0z.v	7639	0x16bb13,0xd4c6c2e3,0x777693	0x368693,0xe8c6cae3	_ZN11__sanitizerL8theDepotE+0x1dd33b;-	PW 0x368693;	PW 0x16bb13;
+Reusable/YI0z.v	7643	0x363a93,0xa6b642e3,0x75f693	0xeab640e3	-	PW 0xeab640e3;	PW 0x363a93;
+Reusable/YI0z.v	7646	0x16bb13,0xa6c6c8e3,0x777593	0xeac6c6e3	-	PW 0xeac6c6e3;	PW 0x16bb13;
+Reusable/YI0z.v	7649	0xa6b642e3,0x75f693,0xa6c6c8e3	0xeab64ce3	-	PW 0xeab64ce3;	PW 0xa6b642e3;
+Reusable/YI0z.v	7652	0xc4c6cce3,0x787593,0x35ba13	0xecc6c2e3	-	PW 0xecc6c2e3;	PW 0xc4c6cce3;
+Reusable/YI0z.v	7655	0x163a93,0xceb644e3,0x757713	0xecb648e3,0x757693,0xecc6cee3	-;-	PW 0xecb648e3;	PW 0x163a93;
+Reusable/YI0z.v	7661	0xa061063,0x1850613,0x368c13	0xeeb644e3,0x757693,0xeec6cae3	-;-	PW 0xeeb644e3;	PW 0xa061063;
+Reusable/YI0z.v	8009	0x6059e63,0x1850593,0x360993	0x2059e63,0x0,0x5b583	-;_ZN6__asanL14fake_stack_tlsE	PW 0x2059e63;	PW 0x6059e63;
+Reusable/YI0z.v	8025	0x77f293,0x32b713,0xe702c2e3	-	-		PW 0x77f293;
+Reusable/YI0z.v	8026	0xf8b644e3,0x6c50006f,0x757613	0x360613,0xfcb64ee3,0xff010113	_ZN11__sanitizerL8theDepotE+0x1d52bb;-	PW 0x360613;	PW 0xf8b644e3;
+Reusable/YI0z.v	8033	0x35ba13,0xd5d463,0x830ff06f	0x2059c63,0x5b583,0x18050513	-;_ZN6__asan22FlushToDeadThreadStatsEPNS_9AsanStatsE+0x1a3	PW 0x2059c63;	PW 0x35ba13;
+Reusable/YI0z.v	8041	0x4059c63,0x54503,0x15a993	0x59e63,0x52503,0xa02533	_ZN6__asan15AsanInitFromRtlEv+0x8f;__asan_memcpy+0x3fb	PW 0x59e63;	PW 0x4059c63;
+Reusable/YI0z.v	8049	0x363a93,0xfab642e3,0x40513	0x360613,0xfeb640e3,0x6485b787	_ZN11__sanitizerL8theDepotE+0x1d52bb;-	PW 0x360613;	PW 0x363a93;
+Reusable/YI0z.v	8108	0x757513,0x18051263,0x0	0x2000613,0x78513,0x593	-;_ZN11__sanitizer10Symbolizer12PlatformInitEv+0x46f	PW 0x2000613;	PW 0x757513;
+Reusable/YI0z.v	8171	0x18059e63,0xaea03,0x2058263	0x3c059063,0x28b3583,0x155f863	-;-	PW 0x3c059063;	PW 0x18059e63;
+Reusable/YI0z.v	8184	0x18061663,0xff8ab603,0x40513	0x38061863	-	PW 0x38061863;	PW 0x18061663;
+Reusable/YI0z.v	8186	0x50863,0x98583,0xe059663	0xb57463,0xb8993,0x30d0d13	-;_ZN11__sanitizerL26internal_alloc_placeholderE+0xe313	PW 0xb57463;	PCall AS_cgif_raw_close (1%bv : reg);
+Reusable/YI0z.v	8246	0x5040513,0x358a13,0x12585b3	0x1480006f,0xffea7513,0x200593	-;-	PW 0x1480006f;	PW 0x5040513;
+Reusable/YI0z.v	8344	-	0x757593,0x358593,0xc6c5cce3	-;_ZN11__sanitizerL8theDepotE+0x1cd23b	PW 0x757593;	
+Reusable/YI0z.v	8407	0x35ba13,0xe8a5cae3	0x358593,0xd6a5c8e3	_ZN11__sanitizerL8theDepotE+0x1cd23b;-	PW 0x358593;	PW 0x35ba13;
+Reusable/YI0z.v	8410	0x74f593,0x35ba13,0xf8a5cae3	0xff010113,0x113423,0xc050263	-;_ZN11__sanitizerL26internal_alloc_placeholderE+0x68da3	PCall AS___asan_report_store4 (1%bv : reg);	PCall AS_asan_report_load4 (1%bv : reg);
+Reusable/YK09.v	2745	0x10000,0x671000,0x7fff8000	-	-		Definition ASAN : atable :=

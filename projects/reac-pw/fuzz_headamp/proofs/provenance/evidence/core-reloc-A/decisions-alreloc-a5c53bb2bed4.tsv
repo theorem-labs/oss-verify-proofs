@@ -1,0 +1,814 @@
+# A3 decision rows: every code numeral of the relocated A files whose headamp value is not alreloc a5c53bb2bed4's own value, or that alreloc flagged; each decided against headamp's .symtab and bytes (fuzz_headamp.asan pin f3e0669d2819, unstripped b5f352154c54)
+# source: reac-pw/fuzz_role lib/A at 9f8c843f0e03 (role asan pin 614cffc0864c); cross-check: port_core 1e42da8952ec, donors scene/identity/knock/grant (origin/ossv/recipes 6ebe35ba632) onto headamp with --slots = headamp A2 1e6517d55369
+# categories: moved (address, evidence = symbol+offset / string / geometry / GOT word / shadow of a symbol), flag-agree (alreloc flagged, port_core gives the same value), kept/insn-word/label-or-constant/model-constant (value kept), region-count / a2-index (from headamp A2 AD2j / AF0m), image-count / insn-count / derived / shadow-hull / func-end / rom-pair (recomputed from headamp's binary)
+file:line(role line)	token (role value)	headamp value	category	evidence	alreloc rule	port_core 1e42da8952ec value
+A/AB13.v:19	8192	12288	moved	port_core verified: GEOM:0x2000->0x3000	none	12288
+A/AB13.v:21	5619712	5619712	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	5619712
+A/AB13.v:23	8192	12288	moved	port_core verified: GEOM:0x2000->0x3000	none	12288
+A/AB13.v:25	5619712	5619712	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	5619712
+A/AB13.v:40	8192	12288	moved	port_core verified: GEOM:0x2000->0x3000	none	12288
+A/AB13.v:41	5619712	5619712	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	5619712
+A/AB13.v:75	15648	14048	moved	port_core verified: GEOM:0x3d20->0x36e0	none	14048
+A/AB13.v:75	5604064	5605664	moved	port_core value; GEOM:0x5582e0->0x558920	UNMAPPED	5605664
+A/AB13.v:84	196608	196608	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	196608
+A/AB13.v:84	196608	196608	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	196608
+A/AB13.v:84	434176	438272	moved	port_core value; GEOM:0x6a000->0x6b000	DECIMAL-UNSURE (the same-code function rule reads it as an a	438272
+A/AB13.v:85	630784	634880	moved	port_core value; GEOM:0x9a000->0x9b000	UNMAPPED	634880
+A/AB13.v:85	630784	634880	moved	port_core value; GEOM:0x9a000->0x9b000	UNMAPPED	634880
+A/AB13.v:85	8192	12288	moved	port_core verified: GEOM:0x2000->0x3000	none	12288
+A/AB13.v:86	638976	647168	moved	port_core value; GEOM:0x9c000->0x9e000	UNMAPPED	647168
+A/AB13.v:86	638976	647168	moved	port_core value; GEOM:0x9c000->0x9e000	UNMAPPED	647168
+A/AB13.v:86	5619712	5619712	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	5619712
+A/AB13.v:88	638976	647168	moved	port_core value; GEOM:0x9c000->0x9e000	UNMAPPED	647168
+A/AB13.v:88	5619712	5619712	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	5619712
+A/AB13.v:89	638976	647168	moved	port_core value; GEOM:0x9c000->0x9e000	UNMAPPED	647168
+A/AB13.v:94	15648	14048	moved	port_core verified: GEOM:0x3d20->0x36e0	none	14048
+A/AB13.v:104	196608	196608	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	196608
+A/AB13.v:104	196608	196608	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	196608
+A/AB13.v:104	434176	438272	moved	port_core value; GEOM:0x6a000->0x6b000	DECIMAL-UNSURE (the same-code function rule reads it as an a	438272
+A/AB13.v:105	630784	634880	moved	port_core value; GEOM:0x9a000->0x9b000	UNMAPPED	634880
+A/AB13.v:105	630784	634880	moved	port_core value; GEOM:0x9a000->0x9b000	UNMAPPED	634880
+A/AB13.v:105	8192	12288	moved	port_core verified: GEOM:0x2000->0x3000	none	12288
+A/AB13.v:107	630784	634880	moved	port_core value; GEOM:0x9a000->0x9b000	UNMAPPED	634880
+A/AB13.v:107	8192	12288	moved	port_core verified: GEOM:0x2000->0x3000	none	12288
+A/AB13.v:108	630784	634880	moved	port_core value; GEOM:0x9a000->0x9b000	UNMAPPED	634880
+A/AB13.v:113	8192	12288	moved	port_core verified: GEOM:0x2000->0x3000	none	12288
+A/AB13.v:114	5619712	5619712	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	5619712
+A/AB13.v:118	434176	438272	moved	port_core value; GEOM:0x6a000->0x6b000	DECIMAL-UNSURE (the same-code function rule reads it as an a	438272
+A/AB13.v:122	434176	438272	moved	port_core value; GEOM:0x6a000->0x6b000	DECIMAL-UNSURE (the same-code function rule reads it as an a	438272
+A/AB13.v:142	196608	196608	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	196608
+A/AB13.v:142	196608	196608	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	196608
+A/AB13.v:142	434176	438272	moved	port_core value; GEOM:0x6a000->0x6b000	DECIMAL-UNSURE (the same-code function rule reads it as an a	438272
+A/AB13.v:144	196608	196608	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	196608
+A/AB13.v:144	434176	438272	moved	port_core value; GEOM:0x6a000->0x6b000	DECIMAL-UNSURE (the same-code function rule reads it as an a	438272
+A/AB13.v:145	196608	196608	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	196608
+A/AB13.v:152	434176	438272	moved	port_core value; GEOM:0x6a000->0x6b000	DECIMAL-UNSURE (the same-code function rule reads it as an a	438272
+A/AB1h.v:52	0x2000	0x3000	moved	alreloc verified; port_core 0x2000 unverified: GEOM:0x2000->0x3000	segment bound	0x2000
+A/AB1h.v:65	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AB1h.v:76	8192	12288	moved	port_core verified: GEOM:0x2000->0x3000	none	12288
+A/AB1h.v:78	5619712	5619712	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	5619712
+A/AB1h.v:80	8192	12288	moved	port_core verified: GEOM:0x2000->0x3000	none	12288
+A/AB1h.v:82	5619712	5619712	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	5619712
+A/AB1h.v:100	8192	12288	moved	port_core verified: GEOM:0x2000->0x3000	none	12288
+A/AB1h.v:101	5619712	5619712	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	5619712
+A/AB1v.v:15	15533	15557	insn-count	instructions from sysconf 0x8b930 (role 0x89e30) to headamp .text end 0x9ac44: 15557 (role: 15533 to its .text end 0x990e4)	none	15557
+A/AB1w.v:65	0x3cbfc	0x3ccac	func-end	end of SetTLSFakeStack 0x3cc7c+48 = start of __asan_stack_malloc_4 (role: of __asan_stack_malloc_3)	UNMAPPED	0x3ccac
+A/AB1w.v:80	0x41ad4	0x41ba4	func-end	end of the twin of role's last function in the entry (__wrap_strcmp): headamp 0x41ba4 + size; a headamp-only function follows it (alreloc gave the start of the next role function's twin 0x41ba8); port_core 0x41ba4	FUNC entry	0x41ba4
+A/AB1w.v:114	0x41b54	0x41c28	func-end	end of the twin of role's last function in the entry (__wrap_sigaction): headamp 0x41c28 + size; a headamp-only function follows it (alreloc gave the start of the next role function's twin 0x41c2c); port_core 0x41c28	FUNC entry	0x41c28
+A/AB1w.v:117	0x425b0	0x42688	func-end	end of the twin of role's last function in the entry (__interceptor_strcmp): headamp 0x42688 + size; a headamp-only function follows it (alreloc gave the start of the next role function's twin 0x42c64); port_core 0x42688	FUNC entry	0x42688
+A/AB1w.v:147	0x510cc	0x51844	func-end	end of the twin of role's last function in the entry (_ZN11__sanitizer4SortI10ioctl_desc18ioctl_desc_compareEEvPT_mT0_): headamp 0x51844 + size; a headamp-only function follows it (alreloc gave the start of the next role function's twin 0x51d04); port_core 0x51844	FUNC entry	0x51844
+A/AB1w.v:452	0x82e6c	0x845ac	func-end	end of asan.module_dtor 0x8457c+48 (role: start of reac_role_refuse_code; headamp: start of reac_headamp_prop_parse)	UNMAPPED	0x845ac
+A/AB1w.v:599	0x10040	0x10040	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	0x10040
+A/ACef.v:15	3764	4710	insn-count	instructions from main 0x80720 to __extenddftf2 0x850b8: 4710 (role: 3764 from main 0x7fae8 to __extenddftf2 0x835b8)	none	4710
+A/AD1e.v:235	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AD1g.v:86	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	none	1530
+A/AD1g.v:86	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	none	1530
+A/AD1g.v:87	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	none	1530
+A/AD1g.v:87	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	none	1530
+A/AD1g.v:87	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	none	1530
+A/AD1g.v:89	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	none	1530
+A/AD1g.v:89	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	none	1530
+A/AD1g.v:377	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	not an address (operand of a product or power) (identity)	1530
+A/AD1g.v:379	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	not an address (operand of a product or power) (identity)	1530
+A/AD1g.v:381	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	not an address (operand of a product or power) (identity)	1530
+A/AD1g.v:382	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	not an address (operand of a product or power) (identity)	1530
+A/AD1g.v:383	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	not an address (operand of a product or power) (identity)	1530
+A/AD1g.v:386	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	not an address (operand of a product or power) (identity)	1530
+A/AD1g.v:387	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	not an address (operand of a product or power) (identity)	1530
+A/AD1g.v:747	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AD1g.v:1070	6193152	6201344	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (6193152 = the hull span AIMG_HI - AIMG_LO of	6201344
+A/AD1g.v:1070	1512	1514	image-count	6201344 / 4096 = 1514 (headamp image hull 0x5ea000 in pages) in the arm `change 6201344 with (_ * 4096)`; role has 1512 = 0x5e8000 / 4096 there; both tools kept the role value	none	1482
+A/AD1j.v:114	6253216	6259808	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AD1j.v:122	6253216	6259808	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AD1j.v:122	6253216	6259808	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AD1j.v:135	6253216	6259808	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AD1o.v:95	81836	82660	derived	port_core value; (654688+0)/8 with 654688 moved to 661280 (line 95)	UNMAPPED	82660
+A/AD1o.v:95	782335	783359	derived	(0x5fa000 - 1) / 8 (headamp IMG_TOP)	UNMAPPED	783359
+A/AD1o.v:100	81828	82652	derived	port_core value; (654624+0)/8 with 654624 moved to 661216 (line 100)	UNMAPPED	82652
+A/AD1o.v:100	700508	700708	derived	(6266880 - 661216) / 8: headamp IMG_TOP 0x5fa000, __stop_asan_globals 0xa16e0	UNMAPPED	700708
+A/AD1o.v:197	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AD1o.v:249	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AD1o.v:285	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AD1w.v:135	0x1481e	0x1480d	moved	port_core value; STR:b'%d\n'+0	UNMAPPED (no symbol home)	0x1480d
+A/AD1x.v:26	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD1x.v:27	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD22.v:21	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD22.v:21	85	79	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	79
+A/AD23.v:306	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AD23.v:308	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AD23.v:309	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AD27.v:70	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
+A/AD27.v:75	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD27.v:88	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD27.v:95	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD27.v:97	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD28.v:106	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
+A/AD28.v:107	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
+A/AD28.v:107	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
+A/AD28.v:107	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
+A/AD28.v:108	84	78	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	78
+A/AD28.v:110	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD28.v:294	840	832	image-count	length of A2 region R_A3 (the .data run from oft_arg0 to asan_globals): headamp AD2j [657632, 658464) CImg 832 (role [650648, 651488) CImg 840); alreloc and port_core both kept the role value	none	840
+A/AD28.v:295	840	832	image-count	length of A2 region R_A3 (the .data run from oft_arg0 to asan_globals): headamp AD2j [657632, 658464) CImg 832 (role [650648, 651488) CImg 840); alreloc and port_core both kept the role value	none	840
+A/AD2d.v:25	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD2d.v:26	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD2d.v:132	840	832	image-count	length of A2 region R_A3 (the .data run from oft_arg0 to asan_globals): headamp AD2j [657632, 658464) CImg 832 (role [650648, 651488) CImg 840); alreloc and port_core both kept the role value	none	840
+A/AD2e.v:64	81	75	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	75
+A/AD2e.v:69	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
+A/AD2e.v:69	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
+A/AD2e.v:70	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
+A/AD2e.v:70	83	77	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	77
+A/AD2e.v:193	81	75	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	75
+A/AD2f.v:59	79	73	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	73
+A/AD2f.v:68	85	79	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	79
+A/AD2f.v:68	79	73	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	73
+A/AD2f.v:68	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD2f.v:86	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD2f.v:95	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD2f.v:148	0x5f6a98	0x5f8458	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x0	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AD2f.v:148	0x5f6ea8	0x5f8868	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stdin_FILE	REFUSED
+A/AD2f.v:149	79	73	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	73
+A/AD2f.v:156	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AD2f.v:168	81	75	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	75
+A/AD2f.v:170	81	75	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	75
+A/AD2f.v:185	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD2f.v:185	82	76	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	76
+A/AD2f.v:197	70	64	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	64
+A/AD2f.v:197	70	64	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	64
+A/AD2f.v:197	71	65	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	65
+A/AD2f.v:197	71	65	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	65
+A/AD2f.v:197	75	69	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	69
+A/AD2f.v:197	75	69	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	69
+A/AD2f.v:197	79	73	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	73
+A/AD2f.v:198	70	64	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	64
+A/AD2f.v:198	70	64	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	64
+A/AD2f.v:198	71	65	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	65
+A/AD2f.v:198	71	65	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	65
+A/AD2f.v:198	79	73	region-count	headamp A2 1e6517d55369 AD2j IMG_REGIONS has 73 regions (role-a2 9a1e95fc85c: 79; R_A5a at 64 vs 70, R_A7b at 68 vs 74); port_core (--slots of 1e6517d55369) agrees	none	73
+A/AD2f.v:232	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AD2f.v:279	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AD2f.v:279	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AD2k.v:31	1528	1530	moved	port_core verified: GEOM:0x5f8->0x5fa	none	1530
+A/AD2k.v:153	6252065	6258657	moved	port_core value; SYM:__libc+0x1	UNMAPPED	6258657
+A/AD2k.v:154	6252067	6258659	moved	port_core value; SYM:__libc+0x3	UNMAPPED	6258659
+A/AE22.v:38	193	193	a2-index	index of z8 (ANum A_GOT_CANARY 0x9cff8) V_GOT_CANARY 0x5f7d90 (__stack_chk_guard) in headamp AF0m Tfib_const_abs (A2 cb68d3ec501): 193; port_core keeps the donor index 209	none	209
+A/AE23.v:47	0x5f63e4	0x5f7da4	moved	alreloc verified (port_core P-REFUSED): SYM:lock+0x0	copy of lock referenced from __funcs_on_exit, atexit	REFUSED
+A/AE23.v:56	0x5f63e4	0x5f7da4	moved	alreloc verified (port_core P-REFUSED): SYM:lock+0x0	copy of lock referenced from __funcs_on_exit, atexit	REFUSED
+A/AE23.v:91	0x5f63e4	0x5f7da4	moved	alreloc verified (port_core P-REFUSED): SYM:lock+0x0	copy of lock referenced from __funcs_on_exit, atexit	REFUSED
+A/AE23.v:98	0x5f6a90	0x5f8450	moved	port_core value; SYM:buf+0x0	UNMAPPED (same-named copies)	0x5f8450
+A/AE23.v:120	0x5f63e4	0x5f7da4	moved	alreloc verified (port_core P-REFUSED): SYM:lock+0x0	copy of lock referenced from __funcs_on_exit, atexit	REFUSED
+A/AE23.v:127	0x5f6a90	0x5f8450	moved	port_core value; SYM:buf+0x0	UNMAPPED (same-named copies)	0x5f8450
+A/AE23.v:474	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE23.v:479	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE23.v:481	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE23.v:562	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE23.v:567	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE23.v:569	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE23.v:650	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE23.v:655	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE23.v:657	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE23.v:668	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE23.v:830	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE23.v:1028	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE23.v:1226	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE23.v:1426	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE2k.v:37	0x103b8	0x103b8	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	0x103b8
+A/AE2p.v:31	0x5f6a98	0x5f8458	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x0	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE2r.v:264	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE2r.v:270	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE2r.v:273	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE2r.v:334	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE2r.v:340	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE2r.v:343	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE2r.v:450	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE2r.v:456	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE2r.v:459	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE2r.v:520	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE2r.v:526	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE2r.v:529	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE2t.v:64	0x7fffbaf0	0x7fffbaf0	shadow-hull	shadow hull of headamp FMT 0x1d79f .. +20: [0x7fffbaf0, 0x7fffbaf8)	none	REFUSED
+A/AE2t.v:64	0x7fffbaf8	0x7fffbaf8	shadow-hull	shadow hull of headamp FMT 0x1d79f .. +20: [0x7fffbaf0, 0x7fffbaf8)	none	REFUSED
+A/AE2t.v:403	120737	120735	moved	port_core value; STR:b'cli: cannot open %s\n'+0	UNMAPPED	120735
+A/AE2u.v:64	0x7fffbaf0	0x7fffbaf0	shadow-hull	shadow hull of headamp FMT 0x1d7b4 .. +22: [0x7fffbaf0, 0x7fffbb00)	none	REFUSED
+A/AE2u.v:64	0x7fffbb00	0x7fffbb00	shadow-hull	shadow hull of headamp FMT 0x1d7b4 .. +22: [0x7fffbaf0, 0x7fffbb00)	none	REFUSED
+A/AE2u.v:403	120758	120756	moved	port_core value; STR:b'cli: read error on %s\n'+0	UNMAPPED	120756
+A/AE2v.v:64	0x7fffb2e8	0x7fffb2e0	shadow-hull	shadow hull of headamp FMT 0x1970e .. +32: [0x7fffb2e0, 0x7fffb2e8)	none	REFUSED
+A/AE2v.v:64	0x7fffb2f8	0x7fffb2e8	shadow-hull	shadow hull of headamp FMT 0x1970e .. +32: [0x7fffb2e0, 0x7fffb2e8)	none	REFUSED
+A/AE2v.v:160	104316	104206	moved	port_core value; STR:b'cli: input >= %u bytes, '+0	UNMAPPED	104206
+A/AE2w.v:64	0x7fffab10	0x7fffab10	shadow-hull	shadow hull of headamp FMT 0x15896 .. +16: [0x7fffab10, 0x7fffab18)	none	REFUSED
+A/AE2w.v:64	0x7fffab18	0x7fffab18	shadow-hull	shadow hull of headamp FMT 0x15896 .. +16: [0x7fffab10, 0x7fffab18)	none	REFUSED
+A/AE2w.v:403	88231	88214	moved	port_core value; STR:b'usage: %s INPUT\n'+0	UNMAPPED	88214
+A/AE32.v:264	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE32.v:270	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE32.v:273	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE32.v:334	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE32.v:340	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE32.v:343	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE32.v:450	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE32.v:456	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE32.v:459	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE32.v:520	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE32.v:526	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE32.v:529	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE32.v:575	0x510cc	0x51d04	moved	alreloc verified (port_core P-REFUSED): SYM:__interceptor_trampoline_memset+0x0	FUNC entry	REFUSED
+A/AE33.v:950	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE33.v:1082	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE33.v:1214	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE33.v:1346	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE33.v:1478	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE33.v:1610	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE33.v:1742	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE33.v:1874	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE33.v:2006	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE34.v:27	0x41ac8	0x41b98	moved	alreloc verified (port_core NO-P): SYM:__interceptor_trampoline_strlen+0x0	FUNC entry	None
+A/AE34.v:27	0x41b24	0x41bf8	moved	alreloc verified (port_core NO-P): SYM:__interceptor_trampoline_fflush+0x0	FUNC entry	None
+A/AE34.v:27	0x41b28	0x41bfc	moved	alreloc verified (port_core NO-P): SYM:__interceptor_trampoline_sem_init+0x0	FUNC entry	None
+A/AE34.v:27	0x41de8	0x41ec0	moved	alreloc verified (port_core NO-P): SYM:___interceptor_strnlen+0x0	FUNC entry	None
+A/AE34.v:27	0x42894	0x42f48	moved	alreloc verified (port_core NO-P): SYM:_Z23MemcmpInterceptorCommonPvPFiPKvS1_mES1_S1_m+0x0	FUNC entry	None
+A/AE34.v:27	0x43128	0x437dc	moved	alreloc verified (port_core NO-P): SYM:___interceptor_memcmp+0x0	FUNC entry	None
+A/AE34.v:27	0x431e4	0x43898	moved	alreloc verified (port_core NO-P): SYM:___interceptor_memchr+0x0	FUNC entry	None
+A/AE34.v:29	0x510cc	0x51d04	moved	alreloc verified (port_core P-REFUSED): SYM:__interceptor_trampoline_memset+0x0	FUNC entry	REFUSED
+A/AE35.v:37	0x1481e	0x1480d	moved	port_core value; STR:b'%d\n'+0	UNMAPPED (no symbol home)	0x1480d
+A/AE35.v:64	0x7fffa900	0x7fffa900	shadow-hull	shadow hull of headamp FMT 0x1480d .. +3: [0x7fffa900, 0x7fffa908)	none	REFUSED
+A/AE35.v:64	0x7fffa908	0x7fffa908	shadow-hull	shadow hull of headamp FMT 0x1480d .. +3: [0x7fffa900, 0x7fffa908)	none	REFUSED
+A/AE35.v:177	83998	83981	moved	port_core value; STR:b'%d\n'+0	UNMAPPED (no symbol home)	83981
+A/AE35.v:343	83998	83981	moved	port_core value; STR:b'%d\n'+0	UNMAPPED (no symbol home)	83981
+A/AE37.v:32	0x103b8	0x103b8	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	0x103b8
+A/AE39.v:32	0x10368	0x10368	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	0x10368
+A/AE39.v:32	0x10388	0x10388	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	0x10388
+A/AE3a.v:16	0x10368	0x10368	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	0x10368
+A/AE3a.v:17	0x10380	0x10380	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	0x10380
+A/AE3j.v:208	120737	120735	moved	port_core value; STR:b'cli: cannot open %s\n'+0	UNMAPPED	120735
+A/AE3j.v:211	120737	120735	moved	port_core value; STR:b'cli: cannot open %s\n'+0	UNMAPPED	120735
+A/AE3j.v:211	120737	120735	moved	port_core value; STR:b'cli: cannot open %s\n'+0	UNMAPPED	120735
+A/AE3j.v:253	120754	120752	moved	port_core value; STR:b'cli: cannot open %s\n'+17	UNMAPPED (no symbol home)	120752
+A/AE3j.v:254	120754	120752	moved	port_core value; STR:b'cli: cannot open %s\n'+17	UNMAPPED (no symbol home)	120752
+A/AE3j.v:256	120754	120752	moved	port_core value; STR:b'cli: cannot open %s\n'+17	UNMAPPED (no symbol home)	120752
+A/AE3j.v:256	120754	120752	moved	port_core value; STR:b'cli: cannot open %s\n'+17	UNMAPPED (no symbol home)	120752
+A/AE3j.v:380	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3j.v:381	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3j.v:383	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3j.v:383	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3j.v:506	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:507	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:507	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:509	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:513	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:513	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:525	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:525	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:525	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:781	120737	120735	moved	port_core value; STR:b'cli: cannot open %s\n'+0	UNMAPPED	120735
+A/AE3j.v:784	120737	120735	moved	port_core value; STR:b'cli: cannot open %s\n'+0	UNMAPPED	120735
+A/AE3j.v:784	120737	120735	moved	port_core value; STR:b'cli: cannot open %s\n'+0	UNMAPPED	120735
+A/AE3j.v:826	120754	120752	moved	port_core value; STR:b'cli: cannot open %s\n'+17	UNMAPPED (no symbol home)	120752
+A/AE3j.v:827	120754	120752	moved	port_core value; STR:b'cli: cannot open %s\n'+17	UNMAPPED (no symbol home)	120752
+A/AE3j.v:829	120754	120752	moved	port_core value; STR:b'cli: cannot open %s\n'+17	UNMAPPED (no symbol home)	120752
+A/AE3j.v:829	120754	120752	moved	port_core value; STR:b'cli: cannot open %s\n'+17	UNMAPPED (no symbol home)	120752
+A/AE3j.v:953	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3j.v:954	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3j.v:956	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3j.v:956	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3j.v:1085	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:1087	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:1118	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:1118	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:1119	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:1119	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:1305	120737	120735	moved	port_core value; STR:b'cli: cannot open %s\n'+0	UNMAPPED	120735
+A/AE3j.v:1308	120737	120735	moved	port_core value; STR:b'cli: cannot open %s\n'+0	UNMAPPED	120735
+A/AE3j.v:1308	120737	120735	moved	port_core value; STR:b'cli: cannot open %s\n'+0	UNMAPPED	120735
+A/AE3j.v:1350	120754	120752	moved	port_core value; STR:b'cli: cannot open %s\n'+17	UNMAPPED (no symbol home)	120752
+A/AE3j.v:1351	120754	120752	moved	port_core value; STR:b'cli: cannot open %s\n'+17	UNMAPPED (no symbol home)	120752
+A/AE3j.v:1353	120754	120752	moved	port_core value; STR:b'cli: cannot open %s\n'+17	UNMAPPED (no symbol home)	120752
+A/AE3j.v:1353	120754	120752	moved	port_core value; STR:b'cli: cannot open %s\n'+17	UNMAPPED (no symbol home)	120752
+A/AE3j.v:1477	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3j.v:1478	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3j.v:1480	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3j.v:1480	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3j.v:1600	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:1603	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3j.v:1603	120756	120754	moved	port_core value; STR:b'cli: cannot open %s\n'+19	UNMAPPED (no symbol home)	120754
+A/AE3k.v:208	120758	120756	moved	port_core value; STR:b'cli: read error on %s\n'+0	UNMAPPED	120756
+A/AE3k.v:211	120758	120756	moved	port_core value; STR:b'cli: read error on %s\n'+0	UNMAPPED	120756
+A/AE3k.v:211	120758	120756	moved	port_core value; STR:b'cli: read error on %s\n'+0	UNMAPPED	120756
+A/AE3k.v:253	120777	120775	moved	port_core value; STR:b'cli: read error on %s\n'+19	UNMAPPED (no symbol home)	120775
+A/AE3k.v:254	120777	120775	moved	port_core value; STR:b'cli: read error on %s\n'+19	UNMAPPED (no symbol home)	120775
+A/AE3k.v:256	120777	120775	moved	port_core value; STR:b'cli: read error on %s\n'+19	UNMAPPED (no symbol home)	120775
+A/AE3k.v:256	120777	120775	moved	port_core value; STR:b'cli: read error on %s\n'+19	UNMAPPED (no symbol home)	120775
+A/AE3k.v:380	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3k.v:381	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3k.v:383	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3k.v:383	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3k.v:506	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:507	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:507	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:509	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:513	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:513	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:525	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:525	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:525	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:781	120758	120756	moved	port_core value; STR:b'cli: read error on %s\n'+0	UNMAPPED	120756
+A/AE3k.v:784	120758	120756	moved	port_core value; STR:b'cli: read error on %s\n'+0	UNMAPPED	120756
+A/AE3k.v:784	120758	120756	moved	port_core value; STR:b'cli: read error on %s\n'+0	UNMAPPED	120756
+A/AE3k.v:826	120777	120775	moved	port_core value; STR:b'cli: read error on %s\n'+19	UNMAPPED (no symbol home)	120775
+A/AE3k.v:827	120777	120775	moved	port_core value; STR:b'cli: read error on %s\n'+19	UNMAPPED (no symbol home)	120775
+A/AE3k.v:829	120777	120775	moved	port_core value; STR:b'cli: read error on %s\n'+19	UNMAPPED (no symbol home)	120775
+A/AE3k.v:829	120777	120775	moved	port_core value; STR:b'cli: read error on %s\n'+19	UNMAPPED (no symbol home)	120775
+A/AE3k.v:953	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3k.v:954	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3k.v:956	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3k.v:956	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3k.v:1085	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:1087	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:1118	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:1118	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:1119	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:1119	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:1305	120758	120756	moved	port_core value; STR:b'cli: read error on %s\n'+0	UNMAPPED	120756
+A/AE3k.v:1308	120758	120756	moved	port_core value; STR:b'cli: read error on %s\n'+0	UNMAPPED	120756
+A/AE3k.v:1308	120758	120756	moved	port_core value; STR:b'cli: read error on %s\n'+0	UNMAPPED	120756
+A/AE3k.v:1350	120777	120775	moved	port_core value; STR:b'cli: read error on %s\n'+19	UNMAPPED (no symbol home)	120775
+A/AE3k.v:1351	120777	120775	moved	port_core value; STR:b'cli: read error on %s\n'+19	UNMAPPED (no symbol home)	120775
+A/AE3k.v:1353	120777	120775	moved	port_core value; STR:b'cli: read error on %s\n'+19	UNMAPPED (no symbol home)	120775
+A/AE3k.v:1353	120777	120775	moved	port_core value; STR:b'cli: read error on %s\n'+19	UNMAPPED (no symbol home)	120775
+A/AE3k.v:1477	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3k.v:1478	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3k.v:1480	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3k.v:1480	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3k.v:1600	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:1603	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3k.v:1603	120779	120777	moved	port_core value; STR:b'cli: read error on %s\n'+21	UNMAPPED (no symbol home)	120777
+A/AE3l.v:134	104316	104206	moved	port_core value; STR:b'cli: input >= %u bytes, '+0	UNMAPPED	104206
+A/AE3l.v:137	104316	104206	moved	port_core value; STR:b'cli: input >= %u bytes, '+0	UNMAPPED	104206
+A/AE3l.v:137	104316	104206	moved	port_core value; STR:b'cli: input >= %u bytes, '+0	UNMAPPED	104206
+A/AE3l.v:178	104330	104220	moved	port_core value; STR:b'cli: input >= %u bytes, '+14	UNMAPPED	104220
+A/AE3l.v:181	104330	104220	moved	port_core value; STR:b'cli: input >= %u bytes, '+14	UNMAPPED	104220
+A/AE3l.v:181	104330	104220	moved	port_core value; STR:b'cli: input >= %u bytes, '+14	UNMAPPED	104220
+A/AE3l.v:222	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3l.v:223	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3l.v:225	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3l.v:225	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3l.v:310	104332	104222	moved	port_core value; STR:b'cli: input >= %u bytes, '+16	UNMAPPED	104222
+A/AE3l.v:313	104332	104222	moved	port_core value; STR:b'cli: input >= %u bytes, '+16	UNMAPPED	104222
+A/AE3l.v:313	104332	104222	moved	port_core value; STR:b'cli: input >= %u bytes, '+16	UNMAPPED	104222
+A/AE3m.v:34	0x5f6aa0	0x5f8460	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE3m.v:36	0x1481e	0x1480d	moved	port_core value; STR:b'%d\n'+0	UNMAPPED (no symbol home)	0x1480d
+A/AE3m.v:559	6253216	6259808	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE3m.v:560	83998	83981	moved	port_core value; STR:b'%d\n'+0	UNMAPPED (no symbol home)	83981
+A/AE3m.v:647	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3m.v:648	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3m.v:651	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3m.v:651	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3m.v:885	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:888	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:913	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:913	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:914	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:914	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:951	84001	83984	moved	port_core value; STR:b'%d\n'+3	UNMAPPED (no symbol home)	83984
+A/AE3m.v:952	84001	83984	moved	port_core value; STR:b'%d\n'+3	UNMAPPED (no symbol home)	83984
+A/AE3m.v:955	84001	83984	moved	port_core value; STR:b'%d\n'+3	UNMAPPED (no symbol home)	83984
+A/AE3m.v:955	84001	83984	moved	port_core value; STR:b'%d\n'+3	UNMAPPED (no symbol home)	83984
+A/AE3m.v:1069	6253216	6259808	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x8	copy of buf referenced from __stderr_FILE, __stdout_FILE	REFUSED
+A/AE3m.v:1070	83998	83981	moved	port_core value; STR:b'%d\n'+0	UNMAPPED (no symbol home)	83981
+A/AE3m.v:1071	6254240	6260832	moved	alreloc verified (port_core P-REFUSED): SYM:buf+0x0	copy of buf referenced from __stdin_FILE	REFUSED
+A/AE3m.v:1172	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3m.v:1173	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3m.v:1176	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3m.v:1176	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3m.v:1434	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:1435	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:1435	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:1436	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:1436	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:1438	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:1444	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:1444	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3m.v:1459	84000	83983	moved	port_core value; STR:b'%d\n'+2	UNMAPPED (no symbol home)	83983
+A/AE3n.v:211	88231	88214	moved	port_core value; STR:b'usage: %s INPUT\n'+0	UNMAPPED	88214
+A/AE3n.v:214	88231	88214	moved	port_core value; STR:b'usage: %s INPUT\n'+0	UNMAPPED	88214
+A/AE3n.v:214	88231	88214	moved	port_core value; STR:b'usage: %s INPUT\n'+0	UNMAPPED	88214
+A/AE3n.v:256	88238	88221	moved	port_core value; STR:b'usage: %s INPUT\n'+7	UNMAPPED	88221
+A/AE3n.v:257	88238	88221	moved	port_core value; STR:b'usage: %s INPUT\n'+7	UNMAPPED	88221
+A/AE3n.v:259	88238	88221	moved	port_core value; STR:b'usage: %s INPUT\n'+7	UNMAPPED	88221
+A/AE3n.v:259	88238	88221	moved	port_core value; STR:b'usage: %s INPUT\n'+7	UNMAPPED	88221
+A/AE3n.v:383	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3n.v:384	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3n.v:386	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3n.v:386	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3n.v:509	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:510	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:510	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:512	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:516	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:516	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:528	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:528	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:528	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:784	88231	88214	moved	port_core value; STR:b'usage: %s INPUT\n'+0	UNMAPPED	88214
+A/AE3n.v:787	88231	88214	moved	port_core value; STR:b'usage: %s INPUT\n'+0	UNMAPPED	88214
+A/AE3n.v:787	88231	88214	moved	port_core value; STR:b'usage: %s INPUT\n'+0	UNMAPPED	88214
+A/AE3n.v:829	88238	88221	moved	port_core value; STR:b'usage: %s INPUT\n'+7	UNMAPPED	88221
+A/AE3n.v:830	88238	88221	moved	port_core value; STR:b'usage: %s INPUT\n'+7	UNMAPPED	88221
+A/AE3n.v:832	88238	88221	moved	port_core value; STR:b'usage: %s INPUT\n'+7	UNMAPPED	88221
+A/AE3n.v:832	88238	88221	moved	port_core value; STR:b'usage: %s INPUT\n'+7	UNMAPPED	88221
+A/AE3n.v:956	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3n.v:957	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3n.v:959	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3n.v:959	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3n.v:1106	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:1108	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:1139	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:1139	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:1140	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:1140	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:1326	88231	88214	moved	port_core value; STR:b'usage: %s INPUT\n'+0	UNMAPPED	88214
+A/AE3n.v:1329	88231	88214	moved	port_core value; STR:b'usage: %s INPUT\n'+0	UNMAPPED	88214
+A/AE3n.v:1329	88231	88214	moved	port_core value; STR:b'usage: %s INPUT\n'+0	UNMAPPED	88214
+A/AE3n.v:1371	88238	88221	moved	port_core value; STR:b'usage: %s INPUT\n'+7	UNMAPPED	88221
+A/AE3n.v:1372	88238	88221	moved	port_core value; STR:b'usage: %s INPUT\n'+7	UNMAPPED	88221
+A/AE3n.v:1374	88238	88221	moved	port_core value; STR:b'usage: %s INPUT\n'+7	UNMAPPED	88221
+A/AE3n.v:1374	88238	88221	moved	port_core value; STR:b'usage: %s INPUT\n'+7	UNMAPPED	88221
+A/AE3n.v:1498	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3n.v:1499	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3n.v:1501	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3n.v:1501	68492	68511	moved	port_core value; STR:b'-+   0X0x'+0	UNMAPPED	68511
+A/AE3n.v:1621	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:1624	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE3n.v:1624	88240	88223	moved	port_core value; STR:b'usage: %s INPUT\n'+9	UNMAPPED	88223
+A/AE6l.v:327	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6l.v:338	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6l.v:464	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6l.v:475	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6l.v:601	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6l.v:612	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6m.v:327	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6m.v:338	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6m.v:464	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6m.v:475	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6m.v:601	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6m.v:612	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6n.v:327	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6n.v:338	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6n.v:464	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6n.v:475	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6n.v:601	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6n.v:612	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6o.v:341	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6o.v:347	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6o.v:350	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6o.v:423	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6o.v:429	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6o.v:432	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6o.v:568	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6o.v:574	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6o.v:577	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6o.v:650	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6o.v:656	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6o.v:659	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6p.v:270	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6p.v:281	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6p.v:468	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6p.v:479	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6p.v:666	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6p.v:677	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6q.v:270	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6q.v:281	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6q.v:468	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6q.v:479	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6q.v:666	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6q.v:677	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6r.v:270	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6r.v:281	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6r.v:468	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6r.v:479	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6r.v:666	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE6r.v:677	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6s.v:305	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6s.v:311	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6s.v:314	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6s.v:387	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6s.v:393	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6s.v:396	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6s.v:591	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6s.v:597	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6s.v:600	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6s.v:673	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6s.v:679	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6s.v:682	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE6u.v:126	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6u.v:136	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE6u.v:231	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6u.v:241	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE6u.v:336	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6u.v:346	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE6u.v:441	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6u.v:451	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE6u.v:546	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6u.v:556	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE6v.v:126	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6v.v:136	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE6v.v:231	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6v.v:241	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE6v.v:336	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6v.v:346	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE6v.v:441	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE6v.v:451	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE6w.v:1082	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6w.v:1214	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6w.v:1346	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6w.v:1478	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6w.v:1610	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6w.v:1742	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6w.v:1874	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6w.v:2006	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6w.v:2138	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6y.v:1106	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6y.v:1237	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6y.v:1368	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6y.v:1499	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6y.v:1630	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6y.v:1761	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6y.v:1892	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6y.v:2023	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6y.v:2154	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6z.v:1082	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6z.v:1214	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6z.v:1346	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6z.v:1478	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6z.v:1610	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6z.v:1742	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6z.v:1874	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6z.v:2006	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE6z.v:2138	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE70.v:1083	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE70.v:1215	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE70.v:1347	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE70.v:1479	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE70.v:1611	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE70.v:1743	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE70.v:1875	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE70.v:2007	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE70.v:2139	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE71.v:327	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE71.v:338	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE71.v:464	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE71.v:475	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE71.v:601	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE71.v:612	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE72.v:327	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE72.v:338	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE72.v:464	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE72.v:475	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE72.v:601	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE72.v:612	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE73.v:327	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE73.v:338	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE73.v:464	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE73.v:475	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE73.v:601	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE73.v:612	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE74.v:341	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE74.v:347	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE74.v:350	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE74.v:423	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE74.v:429	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE74.v:432	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE74.v:568	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE74.v:574	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE74.v:577	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE74.v:650	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE74.v:656	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE74.v:659	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE75.v:270	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE75.v:281	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE75.v:468	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE75.v:479	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE75.v:666	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE75.v:677	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE76.v:270	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE76.v:281	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE76.v:468	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE76.v:479	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE76.v:666	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE76.v:677	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE77.v:270	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE77.v:281	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE77.v:468	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE77.v:479	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE77.v:666	505731	505731	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	505731
+A/AE77.v:677	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE78.v:305	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE78.v:311	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE78.v:314	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE78.v:387	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE78.v:393	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE78.v:396	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE78.v:591	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE78.v:597	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE78.v:600	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE78.v:673	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE78.v:679	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE78.v:682	343492	346620	moved	alreloc proposal = port_core; SYM:__asan_region_is_poisoned+0x174	DECIMAL-UNSURE (the same-code function rule reads it as an a	346620
+A/AE7a.v:126	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE7a.v:136	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE7a.v:231	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE7a.v:241	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE7a.v:336	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE7a.v:346	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE7a.v:441	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE7a.v:451	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE7a.v:546	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE7a.v:556	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE7b.v:126	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE7b.v:136	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE7b.v:231	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE7b.v:241	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE7b.v:336	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE7b.v:346	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE7b.v:441	538627	538627	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	538627
+A/AE7b.v:451	571523	571523	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	571523
+A/AE7c.v:1084	439939	439939	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	439939
+A/AE7c.v:1216	439939	439939	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	439939
+A/AE7c.v:1348	439939	439939	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	439939
+A/AE7c.v:1480	439939	439939	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	439939
+A/AE7c.v:1612	439939	439939	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	439939
+A/AE7c.v:1744	439939	439939	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	439939
+A/AE7c.v:1876	439939	439939	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	439939
+A/AE7c.v:2008	439939	439939	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	439939
+A/AE7c.v:2140	439939	439939	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	439939
+A/AE7e.v:1135	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE7e.v:1279	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE7e.v:1423	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE7e.v:1567	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE7e.v:1711	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE7e.v:1855	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE7e.v:1999	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE7e.v:2143	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AE7e.v:2287	472835	472835	flag-agree	alreloc INSN-UNSURE; port_core same	INSN-UNSURE (the same-code function rule reads it as an addr	472835
+A/AF0l.v:15	0	0	constant	not an address (outside image and shadow); port_core refused the line	none	REFUSED
+A/AFek.v:43	0x102e8	0x102e8	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	0x102e8
+A/AFek.v:43	0x10308	0x10308	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	0x10308
+A/AFek.v:43	0x103b0	0x103b0	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	0x103b0
+A/AFel.v:183	5788392	5794984	moved	port_core value; SYM:_ZN11__sanitizerL8theDepotE+0x400010	UNMAPPED	5794984
+A/AFel.v:183	5788392	5794984	moved	port_core value; SYM:_ZN11__sanitizerL8theDepotE+0x400010	UNMAPPED	5794984
+A/AFel.v:190	5788392	5794984	moved	port_core value; SYM:_ZN11__sanitizerL8theDepotE+0x400010	UNMAPPED	5794984
+A/AFel.v:190	5788392	5794984	moved	port_core value; SYM:_ZN11__sanitizerL8theDepotE+0x400010	UNMAPPED	5794984
+A/AFel.v:261	1528544	1535136	moved	port_core value; SYM:_ZN11__sanitizerL10stackStoreE+0x18	UNMAPPED	1535136
+A/AFem.v:129	127070	127070	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	127070
+A/AFem.v:207	127070	127070	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	127070
+A/AFem.v:357	0x102e8	0x102e8	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	0x102e8
+A/AFem.v:358	0x10308	0x10308	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	0x10308
+A/AFem.v:359	0x103b0	0x103b0	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	0x103b0
+A/AFem.v:413	398518	400166	derived	theDepot / 4: headamp _ZN11__sanitizerL8theDepotE 0x186c98 / 4 = 400166 (role 0x1852d8 / 4)	DECIMAL-UNSURE (the same-code function rule reads it as an a	400166
+A/AFem.v:1056	6120248	6126840	moved	port_core value; SYM:builtin_tls+0x70	UNMAPPED	6126840
+A/AFes.v:104	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFes.v:135	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFet.v:711	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFet.v:713	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFet.v:726	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFeu.v:161	209280	209280	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	209280
+A/AFeu.v:162	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFeu.v:164	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFeu.v:225	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFeu.v:236	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFev.v:124	655626	662218	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x372	UNMAPPED	662218
+A/AFev.v:124	655626	662218	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x372	UNMAPPED	662218
+A/AFf4.v:1046	1441792	1441792	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	1441792
+A/AFf8.v:403	408748	411876	moved	alreloc proposal = port_core; SYM:_ZN11__sanitizer16internal_madviseEmmi+0x24	DECIMAL-UNSURE (the same-code function rule reads it as an a	411876
+A/AFf8.v:704	408748	411876	moved	alreloc proposal = port_core; SYM:_ZN11__sanitizer16internal_madviseEmmi+0x24	DECIMAL-UNSURE (the same-code function rule reads it as an a	411876
+A/AFf8.v:1007	408748	411876	moved	alreloc proposal = port_core; SYM:_ZN11__sanitizer16internal_madviseEmmi+0x24	DECIMAL-UNSURE (the same-code function rule reads it as an a	411876
+A/AFf8.v:1306	408748	411876	moved	alreloc proposal = port_core; SYM:_ZN11__sanitizer16internal_madviseEmmi+0x24	DECIMAL-UNSURE (the same-code function rule reads it as an a	411876
+A/AFf9.v:380	4194240	4194240	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	4194240
+A/AFf9.v:380	4194240	4194240	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	4194240
+A/AFfc.v:198	655425	662017	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x2a9	UNMAPPED	662017
+A/AFfc.v:198	655426	662018	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x2aa	UNMAPPED	662018
+A/AFfc.v:198	655426	662018	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x2aa	UNMAPPED	662018
+A/AFfi.v:209	0x103b8	0x103b8	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	0x103b8
+A/AFfr.v:229	0x10340	0x10338	rom-pair	headamp bytes at 0x10338 = 0xcc6e96b9cc6e96b9 (role: the same 8 bytes at 0x10340); port_core value	UNMAPPED (no symbol home)	0x10338
+A/AFfr.v:393	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AFft.v:27	219184	219184	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	219184
+A/AFfu.v:408	84160	84984	derived	port_core value; (673280+0)/8 with 673280 moved to 679872 (line 408)	UNMAPPED	84984
+A/AFfu.v:489	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AFfy.v:456	201364	201364	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	201364
+A/AFfy.v:460	201376	201376	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	201376
+A/AFfy.v:474	201364	201364	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	201364
+A/AFfy.v:478	201376	201376	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	201376
+A/AFfz.v:438	201364	201364	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	201364
+A/AFfz.v:442	201376	201376	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	201376
+A/AFg1.v:298	84160	84984	derived	port_core value; (673280+0)/8 with 673280 moved to 679872 (line 298)	UNMAPPED	84984
+A/AFg1.v:372	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AFg2.v:294	201364	201364	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	201364
+A/AFg2.v:298	201376	201376	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	201376
+A/AFg3.v:159	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AFg5.v:322	654776	661368	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x20	UNMAPPED	661368
+A/AFg6.v:166	654776	661368	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x20	UNMAPPED	661368
+A/AFg6.v:572	654776	661368	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x20	UNMAPPED	661368
+A/AFgk.v:111	0x103b8	0x103b8	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	0x103b8
+A/AFgs.v:108	0x10340	0x10338	rom-pair	headamp bytes at 0x10338 = 0xcc6e96b9cc6e96b9 (role: the same 8 bytes at 0x10340); port_core value	UNMAPPED (no symbol home)	0x10338
+A/AFhd.v:56	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFhd.v:73	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFhd.v:93	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFhd.v:107	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFhd.v:123	100000	100000	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	100000
+A/AFhn.v:211	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFhn.v:213	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFhn.v:214	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFhn.v:215	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFhn.v:262	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFhn.v:265	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFhn.v:266	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFhn.v:271	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFhn.v:288	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFhn.v:297	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFhn.v:419	0x80050000	0x80050000	model-constant	low-shadow bound 0x80050000: scene, grant and cgif carry it unchanged although their images differ, role keeps it; identity alone carries 0x8004fdf8; port_core moved it to 0x800502b8 (port_core class-5 error)	none	0x800502b8
+A/AFhy.v:88	0x103c8	0x103c8	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	0x103c8
+A/AFhy.v:88	0x10448	0x10440	moved	port_core value; STR:b'\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\x11\x1a&\x0f.\x1d0\n'+63	UNMAPPED (no symbol home)	0x10440
+A/AFhy.v:88	0x10548	0x10540	moved	port_core value; STR:b'\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\x11\x1a&\x0f.\x1d0\n'+63	UNMAPPED (no symbol home)	0x10540
+A/AFhy.v:88	0x10340	0x10338	rom-pair	headamp bytes at 0x10338 = 0xcc6e96b9cc6e96b9 (role: the same 8 bytes at 0x10340); port_core value	UNMAPPED (no symbol home)	0x10338
+A/AFi1.v:60	0x103c8	0x103c8	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	0x103c8
+A/AFi1.v:60	0x10448	0x10440	moved	port_core value; STR:b'\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\x11\x1a&\x0f.\x1d0\n'+63	UNMAPPED (no symbol home)	0x10440
+A/AFi1.v:60	0x10548	0x10540	moved	port_core value; STR:b'\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\x11\x1a&\x0f.\x1d0\n'+63	UNMAPPED (no symbol home)	0x10540
+A/AFi1.v:60	0x10340	0x10338	rom-pair	headamp bytes at 0x10338 = 0xcc6e96b9cc6e96b9 (role: the same 8 bytes at 0x10340); port_core value	UNMAPPED (no symbol home)	0x10338
+A/AFi3.v:42	449860	449860	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	449860
+A/AFi3.v:76	202260	202260	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	202260
+A/AFi8.v:14	65538	65538	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	65538
+A/AFi9.v:58	1048575	1048575	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	1048575
+A/AFih.v:61	0x103f0	0x103e8	moved	port_core value; STR:b'\x04\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xdd8\xcd\xcc\x85\xf1\x13\x87\xf1\xc1\x07\x1f|\xf0\xc1'+1	UNMAPPED	0x103e8
+A/AFih.v:68	0x1cdd5	0x1cdd3	moved	port_core value; STR:b'memory at address %p'+20	UNMAPPED (no symbol home)	0x1cdd3
+A/AFih.v:69	0x459a0	0x465d0	rom-pair	headamp bytes at the twin cell hold 0x465d0 (the walk never reaches this target); alreloc 0x46054 not in headamp ROM	same-code function	0x465d0
+A/AFih.v:70	0x103f0	0x103e8	moved	port_core value; STR:b'\x04\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xdd8\xcd\xcc\x85\xf1\x13\x87\xf1\xc1\x07\x1f|\xf0\xc1'+1	UNMAPPED	0x103e8
+A/AFii.v:25	0x21b50	0x21a74	rom-pair	headamp .rodata 0x21a74 holds 0x6a0d0 (role 0x21b50 holds 0x684f4); twin table: its 7 neighbours shift by 0x1bdc alike; port_core value	UNMAPPED	0x21a74
+A/AFii.v:25	0x684f4	0x6a0d0	rom-pair	headamp bytes at the twin cell hold 0x6a0d0 (the walk never reaches this target); alreloc 0x6912c not in headamp ROM	same-code function	0x6a0d0
+A/AFiw.v:301	654776	661368	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x20	UNMAPPED	661368
+A/AFiw.v:314	6120248	6126840	moved	port_core value; SYM:builtin_tls+0x70	UNMAPPED	6126840
+A/AFix.v:286	0x80050000	0x80050000	model-constant	low-shadow bound 0x80050000: scene, grant and cgif carry it unchanged although their images differ, role keeps it; identity alone carries 0x8004fdf8; port_core moved it to 0x800502b8 (port_core class-5 error)	none	0x800502b8
+A/AFix.v:290	0x80050000	0x80050000	model-constant	low-shadow bound 0x80050000: scene, grant and cgif carry it unchanged although their images differ, role keeps it; identity alone carries 0x8004fdf8; port_core moved it to 0x800502b8 (port_core class-5 error)	none	0x800502b8
+A/AFiz.v:297	654776	661368	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x20	UNMAPPED	661368
+A/AFiz.v:310	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AFja.v:299	654776	661368	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x20	UNMAPPED	661368
+A/AFja.v:312	6120248	6126840	moved	port_core value; SYM:builtin_tls+0x70	UNMAPPED	6126840
+A/AFjb.v:285	0x80050000	0x80050000	model-constant	low-shadow bound 0x80050000: scene, grant and cgif carry it unchanged although their images differ, role keeps it; identity alone carries 0x8004fdf8; port_core moved it to 0x800502b8 (port_core class-5 error)	none	0x800502b8
+A/AFjb.v:289	0x80050000	0x80050000	model-constant	low-shadow bound 0x80050000: scene, grant and cgif carry it unchanged although their images differ, role keeps it; identity alone carries 0x8004fdf8; port_core moved it to 0x800502b8 (port_core class-5 error)	none	0x800502b8
+A/AFjd.v:296	654776	661368	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x20	UNMAPPED	661368
+A/AFjd.v:309	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AFjm.v:328	2148216368	2148217192	moved	port_core verified: SHADOW-OF SYM:builtin_tls+0xeb8	none	2148217192
+A/AFjm.v:365	65538	65538	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	65538
+A/AFjm.v:367	65538	65538	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	65538
+A/AFjm.v:368	65538	65538	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED (no symbol home)	65538
+A/AFjr.v:627	81864	82688	derived	port_core value; (654744+168)/8 with 654744 moved to 661336 (line 627)	UNMAPPED	82688
+A/AFju.v:576	0x80050000	0x80050000	model-constant	low-shadow bound 0x80050000: scene, grant and cgif carry it unchanged although their images differ, role keeps it; identity alone carries 0x8004fdf8; port_core moved it to 0x800502b8 (port_core class-5 error)	none	0x800502b8
+A/AFju.v:586	0x80050000	0x80050000	model-constant	low-shadow bound 0x80050000: scene, grant and cgif carry it unchanged although their images differ, role keeps it; identity alone carries 0x8004fdf8; port_core moved it to 0x800502b8 (port_core class-5 error)	none	0x800502b8
+A/AFju.v:624	655432	662024	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x2b0	UNMAPPED	662024
+A/AFjw.v:461	654776	661368	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x20	UNMAPPED	661368
+A/AFjw.v:474	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AFk0.v:761	221048	221048	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	221048
+A/AFk0.v:765	391236	391236	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	391236
+A/AFk0.v:771	202260	202260	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	202260
+A/AFk0.v:1033	469488	469488	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	469488
+A/AFk0.v:1034	460508	460508	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	460508
+A/AFk0.v:1037	449860	449860	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	449860
+A/AFk0.v:1134	449860	449860	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	449860
+A/AFk1.v:660	0x21b50	0x21a74	rom-pair	headamp .rodata 0x21a74 holds 0x6a0d0 (role 0x21b50 holds 0x684f4); twin table: its 7 neighbours shift by 0x1bdc alike; port_core value	UNMAPPED	0x21a74
+A/AFk1.v:660	0x684f4	0x6a0d0	rom-pair	headamp bytes at the twin cell hold 0x6a0d0 (the walk never reaches this target); alreloc 0x6912c not in headamp ROM	same-code function	0x6a0d0
+A/AFk1.v:695	2148216368	2148217192	moved	port_core verified: SHADOW-OF SYM:builtin_tls+0xeb8	none	2148217192
+A/AFk1.v:758	0x21b50	0x21a74	rom-pair	headamp .rodata 0x21a74 holds 0x6a0d0 (role 0x21b50 holds 0x684f4); twin table: its 7 neighbours shift by 0x1bdc alike; port_core value	UNMAPPED	0x21a74
+A/AFk1.v:758	0x21b54	0x21a78	rom-pair	headamp .rodata 0x21a74 holds 0x6a0d0 (role 0x21b50 holds 0x684f4); twin table: its 7 neighbours shift by 0x1bdc alike; port_core value	UNMAPPED	0x21a78
+A/AFk1.v:845	0x21b50	0x21a74	rom-pair	headamp .rodata 0x21a74 holds 0x6a0d0 (role 0x21b50 holds 0x684f4); twin table: its 7 neighbours shift by 0x1bdc alike; port_core value	UNMAPPED	0x21a74
+A/AFk1.v:845	0x21b54	0x21a78	rom-pair	headamp .rodata 0x21a74 holds 0x6a0d0 (role 0x21b50 holds 0x684f4); twin table: its 7 neighbours shift by 0x1bdc alike; port_core value	UNMAPPED	0x21a78
+A/AFk2.v:597	0x1cdd5	0x1cdd3	moved	port_core value; STR:b'memory at address %p'+20	UNMAPPED (no symbol home)	0x1cdd3
+A/AFk2.v:598	0x459a0	0x465d0	rom-pair	headamp bytes at the twin cell hold 0x465d0 (the walk never reaches this target); alreloc 0x46054 not in headamp ROM	same-code function	0x465d0
+A/AFk2.v:616	0x103f0	0x103e8	moved	port_core value; STR:b'\x04\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xdd8\xcd\xcc\x85\xf1\x13\x87\xf1\xc1\x07\x1f|\xf0\xc1'+1	UNMAPPED	0x103e8
+A/AFk2.v:616	0x103f8	0x103f0	moved	port_core value; STR:b'\x04\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xdd8\xcd\xcc\x85\xf1\x13\x87\xf1\xc1\x07\x1f|\xf0\xc1'+9	UNMAPPED (no symbol home)	0x103f0
+A/AFk2.v:678	0x103f0	0x103e8	moved	port_core value; STR:b'\x04\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xdd8\xcd\xcc\x85\xf1\x13\x87\xf1\xc1\x07\x1f|\xf0\xc1'+1	UNMAPPED	0x103e8
+A/AFk2.v:680	0x103f0	0x103e8	moved	port_core value; STR:b'\x04\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xdd8\xcd\xcc\x85\xf1\x13\x87\xf1\xc1\x07\x1f|\xf0\xc1'+1	UNMAPPED	0x103e8
+A/AFk2.v:720	0x103f0	0x103e8	moved	port_core value; STR:b'\x04\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xdd8\xcd\xcc\x85\xf1\x13\x87\xf1\xc1\x07\x1f|\xf0\xc1'+1	UNMAPPED	0x103e8
+A/AFk2.v:720	0x103f8	0x103f0	moved	port_core value; STR:b'\x04\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xdd8\xcd\xcc\x85\xf1\x13\x87\xf1\xc1\x07\x1f|\xf0\xc1'+9	UNMAPPED (no symbol home)	0x103f0
+A/AFk5.v:573	524280	524280	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	524280
+A/AFk8.v:113	262136	262136	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	262136
+A/AFkc.v:466	262136	262136	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	262136
+A/AFkd.v:586	262136	262136	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	262136
+A/AFke.v:590	262136	262136	flag-agree	alreloc DECIMAL-UNSURE; port_core same	DECIMAL-UNSURE (the same-code function rule reads it as an a	262136
+A/AFkk.v:586	654776	661368	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x20	UNMAPPED	661368
+A/AFkk.v:590	654792	661384	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x30	UNMAPPED	661384
+A/AFkk.v:603	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AFkm.v:914	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFkm.v:967	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFkm.v:995	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFkm.v:1005	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFkm.v:1306	0x80050000	0x80050000	model-constant	low-shadow bound 0x80050000: scene, grant and cgif carry it unchanged although their images differ, role keeps it; identity alone carries 0x8004fdf8; port_core moved it to 0x800502b8 (port_core class-5 error)	none	0x800502b8
+A/AFkm.v:1409	262144	262144	flag-agree	alreloc OFFSET-UNSURE; port_core same	OFFSET-UNSURE (a pc-relative offset: the pc 0x40000 (_ZN6__a	262144
+A/AFkm.v:1420	262144	262144	flag-agree	alreloc OFFSET-UNSURE; port_core same	OFFSET-UNSURE (a pc-relative offset: the pc 0x40000 (_ZN6__a	262144
+A/AFkp.v:61	0x103b8	0x103b8	flag-agree	alreloc UNMAPPED; port_core same	UNMAPPED	0x103b8
+A/AFkp.v:61	0x10448	0x10440	moved	port_core value; STR:b'\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\x11\x1a&\x0f.\x1d0\n'+63	UNMAPPED (no symbol home)	0x10440
+A/AFkp.v:61	0x10548	0x10540	moved	port_core value; STR:b'\x01\x02\x07\x03\r\x08\x13\x04\x19\x0e\x1c\t"\x14(\x05\x11\x1a&\x0f.\x1d0\n'+63	UNMAPPED (no symbol home)	0x10540
+A/AFkx.v:439	654776	661368	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x20	UNMAPPED	661368
+A/AFkx.v:443	654792	661384	moved	port_core value; SYM:_ZN6__asanL8instanceE+0x30	UNMAPPED	661384
+A/AFkx.v:456	6120336	6126928	moved	port_core value; SYM:builtin_tls+0xc8	UNMAPPED	6126928
+A/AFkz.v:631	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFkz.v:683	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFkz.v:711	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFkz.v:721	0x5e8000	0x5ea000	moved	port_core value; GEOM:0x5e8000->0x5ea000	DERIVED-UNSURE (0x5e8000 = the hull span AIMG_HI - AIMG_LO o	0x5ea000
+A/AFkz.v:898	0x80050000	0x80050000	model-constant	low-shadow bound 0x80050000: scene, grant and cgif carry it unchanged although their images differ, role keeps it; identity alone carries 0x8004fdf8; port_core moved it to 0x800502b8 (port_core class-5 error)	none	0x800502b8

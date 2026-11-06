@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_linkify_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_linkify_fuzzer
+rocq: OSSVerify.libarchive.libarchive_linkify_fuzzer
 origin: upstream
 summary: Builds up to 32 entries (fuzz pathname, ino, dev, nlink 1..5, file/dir, size, ids) and runs them
   through archive_entry_linkify with a fuzz-chosen tar/cpio strategy, then drains the resolver; only tracks

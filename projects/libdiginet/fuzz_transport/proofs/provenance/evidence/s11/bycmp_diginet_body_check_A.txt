@@ -1,0 +1,7 @@
+# python3 ../cmpkit/strictcmp3.py cmp diginet_body_check S=img/fuzz_decode.asan.unstripped T=img/fuzz_transport.asan.unstripped S:T
+# S = img/fuzz_decode.asan.unstripped sha256 a7133a6c74e5
+# T = img/fuzz_transport.asan.unstripped sha256 86efc3a80314
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes/NAME-ONLY acceptances	C-string acceptances (also one CSTR row each)	differing targets printed (in target-differ, this row)	words-only
+diginet_body_check	S:T	0x826dc	0x8c530	1052	1052	EQUAL-mod-pcrel	12	0	0	(0, 0, 1)	0		0xc4@0x16e3d|0x16f72=b'2 32 32 4 c:49 96 40 4 m:50\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	diginet_body_check	S:T	0xc4	0x16e3d	0x16f72	28	32203332203332203420633a34392039362034302034206d3a353000	b'2 32 32 4 c:49 96 40 4 m:50\x00'

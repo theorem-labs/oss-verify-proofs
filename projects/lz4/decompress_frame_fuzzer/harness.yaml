@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lz4
 harness: decompress_frame_fuzzer
-rocq: OssFuzzTheorems.lz4.decompress_frame_fuzzer
+rocq: OSSVerify.lz4.decompress_frame_fuzzer
 origin: upstream
 summary: Decodes the input as an LZ4 frame four times (stableDst 0/1, with and without a zeroed dictionary
   of fuzzed size) into a fuzzed capacity in [0, 4*size]; return codes and output ignored.

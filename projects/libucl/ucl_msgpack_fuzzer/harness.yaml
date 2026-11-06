@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libucl
 harness: ucl_msgpack_fuzzer
-rocq: OssFuzzTheorems.libucl.ucl_msgpack_fuzzer
+rocq: OSSVerify.libucl.ucl_msgpack_fuzzer
 origin: upstream
 summary: ucl_parser_add_chunk_full in UCL_PARSE_MSGPACK mode (lowercase keys, duplicate-append); the resulting
   object is fetched and unref'd, never inspected or re-emitted.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lighttpd
 harness: fuzz_utils
-rocq: OssFuzzTheorems.lighttpd.fuzz_utils
+rocq: OSSVerify.lighttpd.fuzz_utils
 origin: oss-fuzz
 summary: 'first byte % 12 picks one buffer utility on the rest: urldecode_path, path_simplify, is_valid_UTF8,
   to_lower, to_upper, append_string_encoded (REL_URI / HTML), c_escaped, bs_escaped, bs_escaped_json,

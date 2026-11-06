@@ -1,0 +1,132 @@
+# range: old 0x8125c +12121 slots, new 0x81264 +12119 slots
+# slot kinds old: {'PAddHi': 126, 'PCall': 840, 'PHi': 278, 'PLdHi': 132, 'PTail': 7, 'PW': 10738}
+# slot kinds new: {'PAddHi': 126, 'PCall': 838, 'PHi': 278, 'PLdHi': 132, 'PTail': 7, 'PW': 10738}
+# objects old 95 new 95; hi old 278 new 278; syms old 89 new 89
+# syms only-old: []; only-new: []; order changed: True
+# objects by name only-old: [".rodata:str:'1 32 1514 10 frame:1027'", ".rodata:str:'3 32 32 8 c.i:1067 96 34 11 body.i:1053 176 32 7 io:1124'"]
+# objects by name only-new: [".rodata:str:'1 32 1514 10 frame:1030'", ".rodata:str:'3 32 32 8 c.i:1070 96 34 11 body.i:1056 176 32 7 io:1127'"]
+# normalized forms old: {'ADDI': 126, 'I': 164, 'LD': 132, 'OPAQUE': 57, 'PCall': 840, 'PHi': 278, 'PTail': 7, 'PW': 10346, 'RELOAD': 22, 'S': 109, 'SPILL': 40}
+# normalized forms new: {'ADDI': 126, 'I': 167, 'LD': 132, 'OPAQUE': 57, 'PCall': 838, 'PHi': 278, 'PTail': 7, 'PW': 10343, 'RELOAD': 22, 'S': 109, 'SPILL': 40}
+# functions only-old: []; only-new: []
+# function order changed: True
+function	old_addr	new_addr	old_slots	new_slots	verdict	detail
+LLVMFuzzerTestOneInput	0x8125c	0x81264	1727	1727	DIFFERENT	size 1727 -> 1727 slots; 6 edit blocks; first at old +0xc4
+io_send	0x82d58	0x82d60	473	473	EQUAL	
+io_recv	0x834bc	0x834c4	32	42	DIFFERENT	size 32 -> 42 slots; 3 edit blocks; first at old +0x0
+io_now	0x8353c	0x8356c	3	3	EQUAL	
+notice	0x83548	0x83578	150	150	EQUAL	
+receive	0x837a0	0x837d0	293	281	DIFFERENT	size 293 -> 281 slots; 41 edit blocks; first at old +0x20
+m_tick	0x83c34	0x83c34	30	30	EQUAL	
+settle	0x83cac	0x83cac	21	21	EQUAL	
+m_wake	0x83d00	0x83d00	82	82	EQUAL	
+check_state_wake_code	0x83e48	0x83e48	8	8	EQUAL	
+check_sent_frame	0x83e68	0x83e68	189	189	EQUAL	
+check_ack_frame	0x8415c	0x8415c	44	44	EQUAL	
+check_latest_control	0x8420c	0x8420c	23	23	EQUAL	
+check_inflight_retry	0x84268	0x84268	66	66	EQUAL	
+check_state_wake	0x84370	0x84370	10	10	EQUAL	
+check_inflight_new	0x84398	0x84398	18	18	EQUAL	
+check_latest_frame	0x843e0	0x843e0	52	52	EQUAL	
+check_keepalive_due	0x844b0	0x844b0	20	20	EQUAL	
+check_latest_sent	0x84500	0x84500	209	209	EQUAL	
+check_latest_display	0x84844	0x84844	18	18	EQUAL	
+m_rx	0x84e60	0x8488c	429	429	EQUAL	
+desk_named	0x85514	0x84f40	49	49	EQUAL	
+m_lost	0x855d8	0x85004	59	59	EQUAL	
+m_maybe_online	0x856c4	0x850f0	71	71	EQUAL	
+check_state_online	0x8488c	0x8520c	13	13	EQUAL	
+check_inflight_acked	0x848c0	0x85240	41	41	EQUAL	
+check_inflight_lost	0x84964	0x852e4	42	42	EQUAL	
+check_state_desk	0x84a0c	0x8538c	171	171	EQUAL	
+check_state_data	0x84cb8	0x85638	106	106	EQUAL	
+build_and_receive	0x857e0	0x857e0	201	201	DIFFERENT	size 201 -> 201 slots; 2 edit blocks; first at old +0xd8
+check_ack_settle	0x85b04	0x85b04	12	12	EQUAL	
+check_state_settle	0x85b34	0x85b34	135	135	EQUAL	
+check_inflight_settle	0x85d50	0x85d50	49	49	EQUAL	
+check_keepalive_settle	0x85e14	0x85e14	23	23	EQUAL	
+check_latest_queue	0x85e70	0x85e70	91	91	EQUAL	
+check_latest_drain	0x85fdc	0x85fdc	77	77	EQUAL	
+check_refusal_submit	0x86110	0x86110	72	72	EQUAL	
+check_latest_submit	0x86230	0x86230	8	8	EQUAL	
+asan.module_ctor	0x86250	0x86250	14	14	EQUAL	
+asan.module_dtor	0x86288	0x86288	12	12	EQUAL	
+diginet_session_config_default	0x862b8	0x862b8	141	141	EQUAL	
+diginet_session_init	0x864ec	0x864ec	132	132	EQUAL	
+diginet_session_wake	0x866fc	0x866fc	408	408	EQUAL	
+send_control	0x86d5c	0x86d5c	248	248	EQUAL	
+diginet_session_close	0x8713c	0x8713c	278	278	EQUAL	
+diginet_session_rx	0x87594	0x87594	312	312	EQUAL	
+on_announce	0x87a74	0x87a74	622	622	EQUAL	
+on_ack	0x8842c	0x8842c	297	297	EQUAL	
+on_data	0x888d0	0x888d0	398	398	EQUAL	
+session_lost	0x88f08	0x88f08	236	236	EQUAL	
+diginet_session_tick	0x892b8	0x892b8	782	782	EQUAL	
+diginet_session_submit	0x89ef0	0x89ef0	143	143	EQUAL	
+send_data	0x8a12c	0x8a12c	247	247	EQUAL	
+take	0x8a508	0x8a508	307	307	EQUAL	
+diginet_session_deadline	0x8a9d4	0x8a9d4	237	237	EQUAL	
+diginet_session_poll	0x8ad88	0x8ad88	250	250	EQUAL	
+maybe_online	0x8b170	0x8b170	264	264	EQUAL	
+diginet_mac_is_digidesign	0x8b590	0x8b590	43	43	EQUAL	
+diginet_frame_is_keepalive	0x8b63c	0x8b63c	48	48	EQUAL	
+diginet_frame_parse	0x8b6fc	0x8b6fc	383	383	EQUAL	
+diginet_frame_build	0x8bcf8	0x8bcf8	336	336	EQUAL	
+diginet_announce_parse	0x8c238	0x8c238	147	147	EQUAL	
+diginet_personality_from_name	0x8c484	0x8c484	43	43	EQUAL	
+diginet_body_check	0x8c530	0x8c530	263	263	EQUAL	
+diginet_cursor_init	0x8c94c	0x8c94c	43	43	EQUAL	
+diginet_msg_next	0x8c9f8	0x8c9f8	370	370	EQUAL	
+# tally: {'DIFFERENT': 4, 'EQUAL': 62}
+# edit blocks of DIFFERENT functions:
+#  LLVMFuzzerTestOneInput	replace old +0xc4..+0xc8 new +0xc4..+0xc8	[('ADDI', 361875, ".rodata:str:'3 32 32 8 c.i:1067 96 34 11 body.i:1053 176 32 7 io:1124'")]	->	[('ADDI', 361875, ".rodata:str:'3 32 32 8 c.i:1070 96 34 11 body.i:1056 176 32 7 io:1127'")]
+#  LLVMFuzzerTestOneInput	replace old +0xd0..+0xd4 new +0xd0..+0xd4	[('SPILL', 11973667, ".rodata:str:'3 32 32 8 c.i:1067 96 34 11 body.i:1053 176 32 7 io:1124'")]	->	[('SPILL', 11973667, ".rodata:str:'3 32 32 8 c.i:1070 96 34 11 body.i:1056 176 32 7 io:1127'")]
+#  LLVMFuzzerTestOneInput	replace old +0x5e0..+0x5e4 new +0x5e0..+0x5e4	[('PW', 3165260323)]	->	[('PW', 3165259299)]
+#  LLVMFuzzerTestOneInput	replace old +0x644..+0x648 new +0x644..+0x648	[('PW', 3175761155)]	->	[('PW', 3167372547)]
+#  LLVMFuzzerTestOneInput	replace old +0x6b0..+0x6b4 new +0x6b0..+0x6b4	[('PW', 3175761155)]	->	[('PW', 3167372547)]
+#  LLVMFuzzerTestOneInput	replace old +0x7a4..+0x7a8 new +0x7a4..+0x7a8	[('PW', 3175761155)]	->	[('PW', 3167372547)]
+#  io_recv	replace old +0x0..+0xc new +0x0..+0x14	[('PW', 4278255891), ('PW', 1127459), ('PW', 8466467)]	->	[('PW', 4261478675), ('PW', 1129507), ('PW', 8468515), ('PW', 9516067), ('PW', 18952227)]
+#  io_recv	replace old +0x1c..+0x60 new +0x24..+0x88	[('PW', 4289725459), ('PW', 79691887), ('PHi', 10), ('LD', 341635, 'g_rx+0x0'), ('PW', 33984099), ('PHi', 10), ('LD', 337667, 'g_rx_times+0x0'), ('PW', 34015331), ('PHi', 15), ('LD', 504835, 'g_rx_len+0x0'), ('PW', 4294379283), ('S', 15015971, 'g_rx_times+0x0', ''), ('PW', 12870755), ('PW', 394259), ('PW', 361747), ('PW', 427411), ('PW', 263699)]	->	[('PW', 4289725587), ('PW', 104857711), ('PHi', 18), ('LD', 603395, 'g_rx+0x0'), ('PW', 33885795), ('PW', 361491), ('PHi', 11), ('LD', 370307, 'g_rx_times+0x0'), ('PW', 33982051), ('PHi', 14), ('LD', 472195, 'g_rx_len+0x0'), ('PW', 4294346387), ('S', 14000163, 'g_rx_times+0x0', ''), ('PW', 12903523), ('PW', 394387), ('PW', 298083), ('PW', 296339), ('PCall', 'm_rx', 1), ('PW', 16777327), ('PW', 1171), ('PW', 25165935), ('PCall', 'm_tick', 1), ('I', 603523, 'g_rx+0x0'), ('PW', 263443), ('PW', 296467)]
+#  io_recv	replace old +0x64..+0x7c new +0x8c..+0xa4	[('PW', 8388719), ('PW', 1043), ('PW', 263451), ('PW', 8466563), ('PW', 78851), ('PW', 16843027)]	->	[('PW', 296219), ('PW', 25243779), ('PW', 16856067), ('PW', 8467587), ('PW', 80131), ('PW', 33620243)]
+#  receive	replace old +0x20..+0x24 new +0x20..+0x24	[('PW', 428307)]	->	[('PW', 427155)]
+#  receive	replace old +0x28..+0x2c new +0x28..+0x2c	[('PW', 361619)]	->	[('PW', 362771)]
+#  receive	replace old +0x48..+0x4c new +0x48..+0x4c	[('PW', 939852387)]	->	[('PW', 872745571)]
+#  receive	replace old +0x50..+0x54 new +0x50..+0x54	[('PW', 297571)]	->	[('PW', 592483)]
+#  receive	replace old +0x5c..+0x60 new +0x5c..+0x60	[('PW', 296467)]	->	[('PW', 591379)]
+#  receive	replace old +0xac..+0xb0 new +0xac..+0xb0	[('PW', 147122275)]	->	[('PW', 147417187)]
+#  receive	replace old +0xc0..+0xc4 new +0xc0..+0xc4	[('PW', 805673571)]	->	[('PW', 772117091)]
+#  receive	replace old +0xd8..+0xdc new +0xd8..+0xdc	[('PW', 805704803)]	->	[('PW', 738597987)]
+#  receive	replace old +0x104..+0x108 new +0x104..+0x108	[('PW', 805671011)]	->	[('PW', 738564195)]
+#  receive	replace old +0x11c..+0x120 new +0x11c..+0x120	[('PW', 772151907)]	->	[('PW', 738595427)]
+#  receive	replace old +0x134..+0x13c new +0x134..+0x13c	[('PW', 4280583571), ('PW', 413531747)]	->	[('PW', 4280878483), ('PW', 379975267)]
+#  receive	replace old +0x140..+0x14c new +0x140..+0x14c	[('PHi', 11), ('S', 10854435, 'g_rx_send+0x0', ''), ('PW', 235504739)]	->	[('PHi', 12), ('S', 10887203, 'g_rx_send+0x0', ''), ('PW', 269058147)]
+#  receive	replace old +0x150..+0x15c new +0x150..+0x15c	[('PW', 297363), ('PW', 10806371), ('PW', 1587546515)]	->	[('PW', 591251), ('PW', 11101283), ('PW', 1587545491)]
+#  receive	replace old +0x160..+0x164 new +0x160..+0x164	[('PW', 145025123)]	->	[('PW', 145320035)]
+#  receive	replace old +0x168..+0x178 new +0x168..+0x178	[('PW', 3495443), ('PW', 22414899), ('PW', 394755), ('PW', 637934691)]	->	[('PW', 3495571), ('PW', 22447795), ('PW', 427651), ('PW', 604410979)]
+#  receive	replace old +0x17c..+0x190 new +0x17c..+0x190	[('PW', 3495443), ('PW', 22414899), ('PW', 394883), ('PW', 12862979), ('PW', 637965923)]	->	[('PW', 3495571), ('PW', 22447795), ('PW', 427779), ('PW', 12863107), ('PW', 570891875)]
+#  receive	replace old +0x194..+0x1a8 new +0x194..+0x1a8	[('PW', 8787475), ('PW', 10904883), ('PW', 38455), ('PW', 2247493147), ('PW', 80025187)]	->	[('PW', 8820371), ('PW', 10937651), ('PW', 38583), ('PW', 2247526043), ('PW', 81073763)]
+#  receive	replace old +0x1ac..+0x1bc new +0x1ac..+0x1bc	[('PW', 3495443), ('PW', 22414899), ('PW', 394755), ('PW', 637932131)]	->	[('PW', 3495571), ('PW', 22447795), ('PW', 427651), ('PW', 570858083)]
+#  receive	replace old +0x1c0..+0x1d4 new +0x1c0..+0x1d4	[('PW', 3495443), ('PW', 22414899), ('PW', 394883), ('PW', 14960131), ('PW', 604413027)]	->	[('PW', 3495571), ('PW', 22447795), ('PW', 427779), ('PW', 14960259), ('PW', 570889315)]
+#  receive	replace old +0x1d8..+0x1f0 new +0x1d8..+0x1f0	[('PW', 8787475), ('PW', 10904883), ('PW', 16778771), ('PW', 12936803), ('PW', 4280911379), ('PW', 380007011)]	->	[('PW', 8820371), ('PW', 10937651), ('PW', 16778899), ('PW', 13985379), ('PW', 4280649363), ('PW', 312932963)]
+#  receive	replace old +0x1f4..+0x248 new +0x1f4..+0x204	[('PW', 1669779), ('PW', 65607955), ('PW', 66673171), ('S', 10854435, 'g_rx_send+0x0', ''), ('PW', 101322851), ('PW', 67406947), ('PW', 263443), ('PW', 624019), ('PCall', 'm_rx', 1), ('PCall', 'm_tick', 1), ('PW', 67798115), ('PW', 263443), ('PW', 624019), ('PCall', 'm_rx', 1), ('PW', 58720367), ('PW', 263443), ('PW', 296339), ('PCall', 'm_rx', 1), ('PHi', 11), ('LD', 374403, 'g_now+0x0'), ('PW', 330003)]	->	[('PW', 1373843), ('PW', 65311891), ('S', 10887203, 'g_rx_send+0x0', ''), ('PHi', 18)]
+#  receive	replace old +0x24c..+0x27c new +0x208..+0x210	[('ADDI', 328979, 'g_s+0x0'), ('PW', 263571), ('PW', 296467), ('PCall', 'diginet_session_rx', 1), ('PW', 75497583), ('PCall', 'm_tick', 1), ('PW', 1722643), ('PHi', 9), ('PHi', 10), ('PW', 1739411), ('S', 20262947, 'g_rx_len+0x0', ''), ('PHi', 10)]	->	[('PHi', 12), ('S', 11874339, 'g_rx_len+0x0', '')]
+#  receive	replace old +0x280..+0x28c new +0x214..+0x22c	[('S', 8695843, 'g_rx+0x0', ''), ('S', 22356003, 'g_rx_times+0x0', ''), ('S', 21602339, 'g_rx_fail+0x0', '')]	->	[('PW', 66376979), ('S', 8990755, 'g_rx+0x0', ''), ('PW', 1476243), ('PW', 1393811), ('S', 14032931, 'g_rx_times+0x0', ''), ('S', 11116579, 'g_rx_fail+0x0', '')]
+#  receive	replace old +0x29c..+0x2a0 new +0x23c..+0x240	[('S', 307235, 'g_rx+0x0', '')]	->	[('S', 602147, 'g_rx+0x0', '')]
+#  receive	replace old +0x2a4..+0x2a8 new +0x244..+0x278	[('PW', 591123)]	->	[('PW', 50331759), ('PW', 263443), ('I', 591251, 'g_s+0x10'), ('PCall', 'm_rx', 1), ('PHi', 11), ('LD', 374403, 'g_now+0x0'), ('PW', 328851), ('PHi', 10), ('ADDI', 328979, 'g_s+0x0'), ('PW', 263571), ('I', 591379, 'g_s+0x10'), ('PCall', 'diginet_session_rx', 1), ('PW', 296211)]
+#  receive	replace old +0x34c..+0x350 new +0x31c..+0x320	[('PW', 3747606639)]	->	[('PW', 3797938287)]
+#  receive	replace old +0x354..+0x364 new +0x324..+0x334	[('PW', 3495443), ('PW', 22414899), ('PW', 394755), ('PW', 268833379)]	->	[('PW', 3495571), ('PW', 22447795), ('PW', 427651), ('PW', 268866147)]
+#  receive	delete old +0x368..+0x380 new +0x338..+0x338	[('PW', 3495443), ('PW', 22414899), ('PW', 394883), ('PW', 19154435), ('PW', 235314275), ('PW', 21234963)]	->	[]
+#  receive	replace old +0x38c..+0x398 new +0x344..+0x350	[('PW', 20203139), ('PW', 235345507), ('PW', 22283539)]	->	[('PW', 19154563), ('PW', 235347043), ('PW', 21234963)]
+#  receive	replace old +0x3a4..+0x3b0 new +0x35c..+0x380	[('PW', 21251843), ('PW', 235376739), ('PW', 25564691)]	->	[('PW', 20203267), ('PW', 235378275), ('PW', 22283539), ('PW', 3495827), ('PW', 22513587), ('PW', 493571), ('PW', 21251971), ('PW', 235409507), ('PW', 25597587)]
+#  receive	replace old +0x3b4..+0x3cc new +0x384..+0x39c	[('PW', 17208979), ('PW', 13035059), ('PW', 8853267), ('PW', 10970419), ('PW', 10904883), ('PW', 3806326895)]	->	[('PW', 17241875), ('PW', 14116531), ('PW', 8886163), ('PW', 11003187), ('PW', 10937651), ('PW', 3856658543)]
+#  receive	replace old +0x3d8..+0x3dc new +0x3a8..+0x3ac	[('PW', 3468052195)]	->	[('PW', 3501608675)]
+#  receive	replace old +0x3e4..+0x3e8 new +0x3b4..+0x3dc	[('PW', 3469135075)]	->	[('PW', 3536241891), ('PCall', '__asan_report_load1', 1), ('PW', 7698195), ('PW', 3671543011), ('PCall', '__asan_report_load1', 1), ('PW', 7698323), ('PW', 3706176227), ('PCall', '__asan_report_load1', 1), ('PW', 7697939), ('PW', 3535161571)]
+#  receive	replace old +0x3f0..+0x3f4 new +0x3e4..+0x3e8	[('PW', 3636905187)]	->	[('PW', 3536244451)]
+#  receive	replace old +0x3fc..+0x400 new +0x3f0..+0x3f4	[('PW', 3637988067)]	->	[('PW', 3705095907)]
+#  receive	replace old +0x404..+0x430 new +0x3f8..+0x400	[('PW', 7697939), ('PW', 3501605091), ('PCall', '__asan_report_load1', 1), ('PW', 7698067), ('PW', 3502687971), ('PCall', '__asan_report_load1', 1), ('PW', 7698067), ('PW', 3636907747), ('PCall', '__asan_report_load1', 1), ('PW', 7698195), ('PW', 3671540963)]	->	[('PW', 7698323), ('PW', 3706178787)]
+#  receive	delete old +0x464..+0x470 new +0x434..+0x434	[('PW', 7698067), ('PW', 4006006499), ('PCall', '__asan_report_load1', 1)]	->	[]
+#  receive	replace old +0x474..+0x478 new +0x438..+0x43c	[('PW', 4040639715)]	->	[('PW', 4007087843)]
+#  receive	replace old +0x480..+0x484 new +0x444..+0x448	[('PW', 4041722595)]	->	[('PW', 4041721059)]
+#  receive	replace old +0x48c..+0x490 new +0x450..+0x454	[('PW', 4076355811)]	->	[('PW', 4042803939)]
+#  receive	insert old +0x494..+0x494 new +0x458..+0x464	[]	->	[('PW', 7698579), ('PW', 4077437155), ('PCall', '__asan_report_load1', 1)]
+#  build_and_receive	replace old +0xd8..+0xdc new +0xd8..+0xdc	[('ADDI', 361875, ".rodata:str:'1 32 1514 10 frame:1027'")]	->	[('ADDI', 361875, ".rodata:str:'1 32 1514 10 frame:1030'")]
+#  build_and_receive	replace old +0xe4..+0xe8 new +0xe4..+0xe8	[('SPILL', 12137507, ".rodata:str:'1 32 1514 10 frame:1027'")]	->	[('SPILL', 12137507, ".rodata:str:'1 32 1514 10 frame:1030'")]

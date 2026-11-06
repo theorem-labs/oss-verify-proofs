@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: glslang
 harness: compile_fuzzer
-rocq: OssFuzzTheorems.glslang.compile_fuzzer
+rocq: OSSVerify.glslang.compile_fuzzer
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

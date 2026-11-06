@@ -1,0 +1,122 @@
+class	file	line	stage_out	committed	verdict	measurement
+a	A/AB13.v	40	8192	12288	RIGHT	PT_LOAD #3 (RW, RELRO) vaddr 0x9fea8 memsz 0x2158 -> pages [0x9f000, 0xa2000) = 0x3000 = 12288 (readelf of pin)
+a	A/AD1d.v	40	1458880	1446400	RIGHT	KDisj length (ELit 1446400) for EVar 424's shadow appears verbatim in the GENERATED AB01 (collector, joint PASS); vm_compute kn_zero check over those states
+a	A/AD1d.v	282	1458880	1446400	RIGHT	KDisj length (ELit 1446400) for EVar 424's shadow appears verbatim in the GENERATED AB01 (collector, joint PASS); vm_compute kn_zero check over those states
+a	A/AD23.v	305	67616	67584	RIGHT	gp = __global_pointer$ = 0x10800 = 67584 (pin symtab twin)
+a	A/AD23.v	307	67616	67584	RIGHT	gp = __global_pointer$ = 0x10800 = 67584 (pin symtab twin)
+a	A/AD23.v	308	67616	67584	RIGHT	gp = __global_pointer$ = 0x10800 = 67584 (pin symtab twin)
+a	A/AD28.v	25	524272	527012	RIGHT	main = 0x80aa4 = 527012 (symtab)
+a	A/AD2f.v	155	67616	67584	RIGHT	gp = __global_pointer$ = 0x10800 = 67584 (pin symtab twin)
+a	A/AD2f.v	235	67616	67584	RIGHT	gp = __global_pointer$ = 0x10800 = 67584 (pin symtab twin)
+a	A/AD2f.v	281	67616	67584	RIGHT	gp = __global_pointer$ = 0x10800 = 67584 (pin symtab twin)
+a	A/AD2f.v	281	67616	67584	RIGHT	gp = __global_pointer$ = 0x10800 = 67584 (pin symtab twin)
+a	A/AE3h.v	1690	606880	616316	RIGHT	0x9677c = printf_core+0x620, word 0x0005c603 = lbu a2,0(a1) (pin bytes), the fetch F_118cdc; v_addi +4 = 0x96780
+a	A/AE3h.v	1724	13	12	RIGHT	__sanitizer_cov_dump size 48 bytes = 12 instructions (symtab)
+a	A/AE3i.v	24	0x2fd7c	0x2feac	RIGHT	PT_LOAD #1 (R) vaddr 0x10000 filesz 0x1feac -> end 0x2feac
+a	A/AE3i.v	28	0x10320	0x10310	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	28	0x10320	0x10310	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	29	0x10348	0x10340	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	29	0x103b0	0x10350	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	29	0x10348	0x10340	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	30	0x103c0	0x10358	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	30	0x103d0	0x103b0	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	30	0x103c0	0x10358	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	31	0x103e0	0x103c0	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	31	0x10448	0x103d0	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	31	0x103e0	0x103c0	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	32	0x10488	0x103d8	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	32	0x10548	0x10448	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	32	0x10488	0x103d8	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	33	0x10588	0x10488	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	33	0x1cd68	0x10548	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	33	0x10588	0x10488	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	34	0x1cd7d	0x10588	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	34	0x20cf8	0x1cd68	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3i.v	34	0x1cd7d	0x10588	RIGHT	img_ro_chunks regenerated = [0x10000, 0x2feac) minus AF0m Tfib_owned_static; recomputed now: 59 chunks, identical to the committed list
+a	A/AE3m.v	1072	6265504	6277984	RIGHT	BUFEND = end of buf 0x5fc758 + 1032 = 0x5fcb60 = 6277984 = STDOUT_BUFA 0x5fc760 + 1024 (symtab)
+a	A/AFf8.v	406	410032	412772	RIGHT	412772 = 0x64c64 = internal_madvise+0x20 = the ecall (addi a7,zero,0xe9; ecall), pc+4 = 412776 (pin disasm)
+a	A/AFf8.v	707	410032	412772	RIGHT	412772 = 0x64c64 = internal_madvise+0x20 = the ecall (addi a7,zero,0xe9; ecall), pc+4 = 412776 (pin disasm)
+a	A/AFf8.v	1010	410032	412772	RIGHT	412772 = 0x64c64 = internal_madvise+0x20 = the ecall (addi a7,zero,0xe9; ecall), pc+4 = 412776 (pin disasm)
+a	A/AFf8.v	1309	410032	412772	RIGHT	412772 = 0x64c64 = internal_madvise+0x20 = the ecall (addi a7,zero,0xe9; ecall), pc+4 = 412776 (pin disasm)
+a	A/AFfc.v	199	666689	679169	RIGHT	__asan::instance = 0xa5a58 = 678488 (size 3632); +0x2a9 = 679169, the same field offset cgif uses (666008 + 0x2a9 = 666689)
+a	A/AFfg.v	246	267036	262728	RIGHT	internal_allocator+0xe4 = 0x5ea00 is the return pc of jal memset (0x5e9fc); length = s3 + 0x248 = 0x40248 = 262728 = (IAL_LO + 0x81008) - (IAL_LO + 0x40dc0); start 0xeb080 = IAL_LO 0xaa2c0 + 0x40dc0 (pin disasm)
+a	A/AFia.v	134	8192	12288	RIGHT	PT_LOAD #3 (RW, RELRO) vaddr 0x9fea8 memsz 0x2158 -> pages [0x9f000, 0xa2000) = 0x3000 = 12288 (readelf of pin)
+a	A/AFjr.v	628	83235	84832	RIGHT	instance 678488 / 8 = 84832 (quotient of the measured base)
+a	A/AFju.v	577	0x80050618	0x80050000	RIGHT	kLowShadowBeg-relative window [0x7fff8000, 0x80050000): the donor states the SAME constant (cgif AFju.v:574, :584); it is a fixed shadow window, not an image address, so the tool shifting it by +0x618 is wrong
+a	A/AFju.v	587	0x80050618	0x80050000	RIGHT	kLowShadowBeg-relative window [0x7fff8000, 0x80050000): the donor states the SAME constant (cgif AFju.v:574, :584); it is a fixed shadow window, not an image address, so the tool shifting it by +0x618 is wrong
+a	A/AFk8.v	102	0x1070e2	0x104022	RIGHT	mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_ANON|MAP_PRIVATE = 0x104022, built by lui/addiw in SealedRepairReservation at 0x6ec58 (and SealedReserveShadow 0x5a9a4, 0x5aa2c) (pin disasm); a constant, not an address
+a	A/AFk9.v	115	0x1070e2	0x104022	RIGHT	mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_ANON|MAP_PRIVATE = 0x104022, built by lui/addiw in SealedRepairReservation at 0x6ec58 (and SealedReserveShadow 0x5a9a4, 0x5aa2c) (pin disasm); a constant, not an address
+a	A/AFk9.v	115	0x1070e2	0x104022	RIGHT	mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_ANON|MAP_PRIVATE = 0x104022, built by lui/addiw in SealedRepairReservation at 0x6ec58 (and SealedReserveShadow 0x5a9a4, 0x5aa2c) (pin disasm); a constant, not an address
+a	A/AFkn.v	925	0x1070e2	0x104022	RIGHT	mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_ANON|MAP_PRIVATE = 0x104022, built by lui/addiw in SealedRepairReservation at 0x6ec58 (and SealedReserveShadow 0x5a9a4, 0x5aa2c) (pin disasm); a constant, not an address
+a	A/AFkn.v	1216	0x1070e2	0x104022	RIGHT	mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_ANON|MAP_PRIVATE = 0x104022, built by lui/addiw in SealedRepairReservation at 0x6ec58 (and SealedReserveShadow 0x5a9a4, 0x5aa2c) (pin disasm); a constant, not an address
+a	A/AFkn.v	1225	0x1070e2	0x104022	RIGHT	mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_ANON|MAP_PRIVATE = 0x104022, built by lui/addiw in SealedRepairReservation at 0x6ec58 (and SealedReserveShadow 0x5a9a4, 0x5aa2c) (pin disasm); a constant, not an address
+a	A/AFkn.v	1234	0x1070e2	0x104022	RIGHT	mmap flags MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_ANON|MAP_PRIVATE = 0x104022, built by lui/addiw in SealedRepairReservation at 0x6ec58 (and SealedReserveShadow 0x5a9a4, 0x5aa2c) (pin disasm); a constant, not an address
+b-gen_ad2	A/AD1x.v	25	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD1x.v	26	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD22.v	20	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD22.v	20	39	86	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD27.v	70	37	84	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD27.v	75	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD27.v	88	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD27.v	95	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD27.v	97	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD28.v	106	37	84	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD28.v	107	37	84	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD28.v	107	37	84	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD28.v	107	37	84	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD28.v	108	38	85	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD28.v	110	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2d.v	24	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2d.v	25	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2e.v	63	35	82	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2e.v	68	37	84	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2e.v	68	37	84	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2e.v	69	37	84	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2e.v	69	37	84	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2e.v	192	35	82	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	58	33	80	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	67	39	86	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	67	33	80	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	67	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	85	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	94	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	148	33	80	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	167	35	82	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	169	35	82	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	184	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	184	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	196	24	71	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	196	24	71	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	196	25	72	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	196	25	72	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	196	29	76	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	196	29	76	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	196	33	80	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	197	24	71	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	197	24	71	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	197	25	72	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	197	25	72	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2f.v	197	33	80	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2h.v	65	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+b-gen_ad2	A/AD2h.v	70	36	83	RIGHT	region count: disco has 80 IMG_REGIONS (generated AD2j, 0 MISMATCH vs cgif control); counts derived/checked in Coq by vm_compute in the same file
+d-non-address	A/AE3e.v	408	2109524	2097044	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFem.v	130	127426	127070	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFem.v	208	127426	127070	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFet.v	712	100018	100000	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFet.v	714	100018	100000	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFeu.v	162	212304	209280	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFeu.v	226	100018	100000	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFfy.v	457	204388	201364	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFfy.v	475	204388	201364	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFfz.v	439	204388	201364	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFg2.v	295	204388	201364	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFhd.v	55	100018	100000	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFhd.v	72	100018	100000	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFhd.v	92	100018	100000	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFhd.v	106	100018	100000	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFhd.v	122	100018	100000	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFi3.v	75	205284	202260	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFk0.v	762	224072	221048	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFk0.v	772	205284	202260	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFk0.v	1034	472228	469488	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)
+d-non-address	A/AFk0.v	1035	463248	460508	RIGHT	not an image value (opaque model label kept at cgif value / proof fuel / decode immediate of the stated word)

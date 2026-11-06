@@ -1,0 +1,234 @@
+# The 44 comment numerals the re-pin tool left (own-comments-left.tsv), each read from the new pinned binaries,
+# Line numbers: of the tree after the merge of the re-pin base f6acfcb0c1b8 (it removed the Modified-by first lines of many files).
+# then the further stale comment immediates found in the same check. Binaries: plain bb20ce415827 / ubsan af7b86991906 (stripped pins),
+# unstripped twins c2d42d895415 / c53d4b20cfc1; disassembly GNU objdump 2.42 (riscv64-alpine-linux-musl-objdump -d, -t -h) of the twins;
+# segments by pyelftools from the stripped pins; demo-image words decoded with capstone 5.0.7 from their seg_bytes.
+file	line	numeral	result	new	how measured
+lib/Prog/T/TContract.v	115	0x213c8	stays		stays: new plain .data.rel.ro objdump -h idx 7 (readelf [8]) VMA 0x213c8 size 0x98
+lib/Prog/T/TContract.v	116	0x21000	stays		stays: new plain RW LOAD 0x213b8 memsz 0xc48 (pyelftools, pinned stripped image) -> pages [0x21000, 0x22000)
+lib/Prog/T/TContract.v	116	0x22000	stays		stays: as 0x21000
+lib/Prog/T/WMem.v	1	0x10050	stays		stays: world = M 0x32790 .. OW end 0x426b0+304 = 0x427e0, length 0x10050 (new plain objdump -t) | the line is gone at the new base, which removed the Modified-by first line (the release lead's ruling 1)
+lib/Prog/T/WMem.v	22	0x22000	stays		stays: new plain last LOAD 0x224f8 memsz 0x40e90 -> pages [0x22000, 0x64000)
+lib/Prog/T/WMem.v	22	0x42000	stays		stays: size 0x64000 - 0x22000
+lib/Prog/T/WMem.v	51	0x428b0	stays		stays: new plain builtin_tls 0x427e8 + 0xc8 = 0x428b0 = ms_tp of FrameAPI.v:40
+lib/Prog/T/WMem.v	69	0x42000	stays		stays: made-up DemoImg, 0x1000 auipc a5,0x41 (seg_bytes, capstone) -> 0x1000 + 0x41000
+lib/Prog/T/WMem.v	71	0x42008	stays		stays: DemoImg 0x1008 auipc a5,0x41 -> 0x42008
+lib/Prog/T/WMem.v	73	0x41010	stays		stays: DemoImg 0x1010 auipc a5,0x40 -> 0x41010
+lib/Prog/T/WMem.v	159	0x42004	stays		stays: DemoCallImg 0x1004 auipc a5,0x41 -> 0x42004
+lib/Prog/T/WMemIdx.v	12	0x41010	stays		stays: DemoImg 0x1010 auipc a5,0x40
+lib/Prog/T/check_ack_frame.v	3	0x42024	stays		stays: new plain 0x15024 0002d617 auipc a2,0x2d -> 0x42024; 0x15028 lw a2,1352(a2) -> 0x4256c g_rx_send
+lib/Prog/T/check_ack_settle.v	2	0x41d80	stays		stays: new plain 0x15d80 0002c517 auipc a0,0x2c -> 0x41d80; addi 2008 -> 0x42558 g_fail_next
+lib/Prog/T/check_inflight_settle.v	82	0x42558	stays		stays: new plain 0x15eb4 auipc a0,0x2c; 0x15eb8 addi s0,a0,1700 -> 0x42558 g_fail_next
+lib/Prog/T/check_latest_control.v	3	0x32054	stays		stays: new plain 0x15054 0001d597 auipc a1,0x1d -> 0x32054
+lib/Prog/T/check_latest_control.v	4	0x327e4	stays		stays: 0x32054 + 1936 = 0x327e4 = M + 0x54 (new plain 0x15058 lw a1,1936(a1))
+lib/Prog/T/check_state_wake.v	2	0x32138	stays		stays: new plain 0x15138 0001d517 auipc a0,0x1d -> 0x32138
+lib/Prog/T/check_state_wake.v	3	0x327a8	stays		stays: 0x32138 + 1648 = 0x327a8 = M + 0x18 (new plain 0x1513c lw a0,1648(a0))
+lib/Prog/T/io_send_c.v	3	0x14948	stays		stays: an ubsan pc; ubsan io_send did not move (0x1482c); new ubsan 0x14948 andi a1,s3,1 (the tool read it with plain symbols)
+lib/Prog/T/io_send_c.v	3	0x14ad8	stays		stays: new ubsan 0x14ad8 slli s3,s3,0x3f
+lib/Prog/T/io_send_c.v	3	0x14ae0	stays		stays: new ubsan 0x14ae0 andi a0,a0,-5
+lib/TModel/TWorld.v	1	0x10050	stays		stays: both worlds 0x10050 (plain 0x32790..0x427e0, ubsan 0x33300..0x43350)
+lib/TModel/TWorld.v	2	0x33310	changed	0x33300	new ubsan symbol M = 0x33300 (objdump -t), size 1648
+lib/TModel/TWorldMem.v	1	0x10050	stays		stays: as TWorld.v:2 | the line is gone at the new base, which removed the Modified-by first line (the release lead's ruling 1)
+lib/U/Prog/T/TContract.v	115	0x21f10	changed	0x21ef8	new ubsan .data.rel.ro: objdump -h idx 7 (readelf [8]) VMA 0x21ef8 size 0xd8
+lib/U/Prog/T/TContract.v	116	0x21000	stays		stays: new ubsan RW LOAD 0x21ee8 memsz 0x1118 -> pages [0x21000, 0x23000)
+lib/U/Prog/T/TContract.v	116	0x23000	stays		stays: as 0x21000
+lib/U/Prog/T/WMem.v	1	0x10050	stays		stays: world 0x33300 .. OW end 0x43220+304 = 0x43350 | the line is gone at the new base, which removed the Modified-by first line (the release lead's ruling 1)
+lib/U/Prog/T/WMem.v	22	0x23000	stays		stays: new ubsan last LOAD 0x23068 memsz 0x40e90 -> pages [0x23000, 0x64000)
+lib/U/Prog/T/WMem.v	22	0x41000	stays		stays: size 0x64000 - 0x23000
+lib/U/Prog/T/WMem.v	51	0x43430	changed	0x43420	new ubsan builtin_tls 0x43358 (objdump -t) + 0xc8 = 0x43420 = ms_tp of U/FrameAPI.v:40
+lib/U/Prog/T/WMem.v	69	0x43000	stays		stays: made-up DemoImg 0x1000 auipc a5,0x42 (seg_bytes, capstone)
+lib/U/Prog/T/WMem.v	71	0x43008	stays		stays: DemoImg 0x1008 auipc a5,0x42
+lib/U/Prog/T/WMem.v	73	0x42010	stays		stays: DemoImg 0x1010 auipc a5,0x41
+lib/U/Prog/T/WMem.v	159	0x43004	stays		stays: DemoCallImg 0x1004 auipc a5,0x42
+lib/U/Prog/T/WMemIdx.v	12	0x42010	stays		stays: DemoImg 0x1010 auipc a5,0x41
+lib/U/Prog/T/check_ack_frame.v	5	0x43464	changed	0x43448	new ubsan 0x15448: 0002e617 auipc a2,0x2e; 0x15448 + 0x2e000 = 0x43448
+lib/U/Prog/T/check_ack_settle.v	2	0x4346c	changed	0x43450	new ubsan 0x16450: 0002d517 auipc a0,0x2d; 0x16450 + 0x2d000 = 0x43450
+lib/U/Prog/T/check_inflight_settle.v	83	0x430d8	changed	0x430c8	new ubsan 0x1658c auipc a0,0x2d; 0x16590 b3c50413 addi s0,a0,-1220: 0x4358c - 1220 = 0x430c8 g_fail_next
+lib/U/Prog/T/check_latest_control.v	5	0x334a0	changed	0x33484	new ubsan 0x15484: 0001e597 auipc a1,0x1e; 0x15484 + 0x1e000 = 0x33484
+lib/U/Prog/T/check_latest_control.v	6	0x33364	changed	0x33354	new ubsan 0x15488: ed05a583 lw a1,-304(a1); 0x33484 - 304 = 0x33354 = M (0x33300) + 0x54
+lib/U/Prog/T/check_state_wake.v	2	0x335b0	changed	0x33594	new ubsan 0x15594: 0001e517 auipc a0,0x1e; 0x15594 + 0x1e000 = 0x33594
+lib/U/Prog/T/check_state_wake.v	3	0x33328	changed	0x33318	new ubsan 0x15598: d8452503 lw a0,-636(a0); 0x33594 - 636 = 0x33318 = M + 0x18
+# Further stale comment numerals (not in the tool list): lo12 / auipc immediates of moved functions, the re-encoded U demo image, two numerals the tool moved
+# with the other build's symbols, and the bare-hex pcs (no 0x) of two ubsan walks, which the tool did not read. Each: file, line, old text, new text, how.
+lib/U/Prog/T/check_latest_frame.v	113	15684	changed	15668	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 15684 = new 15668 (function moved -0x1c, EQUAL-mod-pcrel); new 15668: andi	a2,a0,7
+lib/U/Prog/T/check_latest_frame.v	114	15688	changed	1566c	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 15688 = new 1566c (function moved -0x1c, EQUAL-mod-pcrel); new 1566c: bnez	a2,TGT
+lib/U/Prog/T/check_latest_frame.v	118	1568c	changed	15670	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 1568c = new 15670 (function moved -0x1c, EQUAL-mod-pcrel); new 15670: ld	a2,56(a0)
+lib/U/Prog/T/check_latest_frame.v	120	15690	changed	15674	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 15690 = new 15674 (function moved -0x1c, EQUAL-mod-pcrel); new 15674: auipc	a3,0x2e
+lib/U/Prog/T/check_latest_frame.v	120	15694	changed	15678	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 15694 = new 15678 (function moved -0x1c, EQUAL-mod-pcrel); new 15678: addi	a3,a3,-1452
+lib/U/Prog/T/check_latest_frame.v	121	15698	changed	1567c	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 15698 = new 1567c (function moved -0x1c, EQUAL-mod-pcrel); new 1567c: lwu	a4,112(a3)
+lib/U/Prog/T/check_latest_frame.v	123	1569c	changed	15680	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 1569c = new 15680 (function moved -0x1c, EQUAL-mod-pcrel); new 15680: bltu	a4,a2,TGT
+lib/U/Prog/T/check_latest_frame.v	127	156a0	changed	15684	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156a0 = new 15684 (function moved -0x1c, EQUAL-mod-pcrel); new 15684: lbu	a2,41(a0)
+lib/U/Prog/T/check_latest_frame.v	129	156a4	changed	15688	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156a4 = new 15688 (function moved -0x1c, EQUAL-mod-pcrel); new 15688: lw	a4,108(a3)
+lib/U/Prog/T/check_latest_frame.v	131	156a8	changed	1568c	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156a8 = new 1568c (function moved -0x1c, EQUAL-mod-pcrel); new 1568c: bltu	a4,a2,TGT
+lib/U/Prog/T/check_latest_frame.v	134	156ac	changed	15690	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156ac = new 15690 (function moved -0x1c, EQUAL-mod-pcrel); new 15690: beq	a1,a2,TGT
+lib/U/Prog/T/check_latest_frame.v	134	156b8	changed	1569c	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156b8 = new 1569c (function moved -0x1c, EQUAL-mod-pcrel); new 1569c: auipc	a1,0x1e
+lib/U/Prog/T/check_latest_frame.v	143	156b0	changed	15694	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156b0 = new 15694 (function moved -0x1c, EQUAL-mod-pcrel); new 15694: lw	a1,4(a3)
+lib/U/Prog/T/check_latest_frame.v	145	156b4	changed	15698	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156b4 = new 15698 (function moved -0x1c, EQUAL-mod-pcrel); new 15698: beqz	a1,TGT
+lib/U/Prog/T/check_latest_frame.v	148	156b8	changed	1569c	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156b8 = new 1569c (function moved -0x1c, EQUAL-mod-pcrel); new 1569c: auipc	a1,0x1e
+lib/U/Prog/T/check_latest_frame.v	149	156b8	changed	1569c	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156b8 = new 1569c (function moved -0x1c, EQUAL-mod-pcrel); new 1569c: auipc	a1,0x1e
+lib/U/Prog/T/check_latest_frame.v	149	156bc	changed	156a0	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156bc = new 156a0 (function moved -0x1c, EQUAL-mod-pcrel); new 156a0: lw	a1,-840(a1)
+lib/U/Prog/T/check_latest_frame.v	152	156c0	changed	156a4	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156c0 = new 156a4 (function moved -0x1c, EQUAL-mod-pcrel); new 156a4: lw	a0,32(a0)
+lib/U/Prog/T/check_latest_frame.v	156	156c4	changed	156a8	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156c4 = new 156a8 (function moved -0x1c, EQUAL-mod-pcrel); new 156a8: addw	a1,a1,a2
+lib/U/Prog/T/check_latest_frame.v	169	156c8	changed	156ac	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156c8 = new 156ac (function moved -0x1c, EQUAL-mod-pcrel); new 156ac: bne	a0,a1,TGT
+lib/U/Prog/T/check_latest_frame.v	171	156cc	changed	156b0	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 156cc = new 156b0 (function moved -0x1c, EQUAL-mod-pcrel); new 156b0: ret
+lib/U/Prog/T/check_refusal_submit.v	169	16918	changed	168fc	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16918 = new 168fc (function moved -0x1c, EQUAL-mod-pcrel); new 168fc: ret
+lib/U/Prog/T/check_refusal_submit.v	178	168a0	changed	16884	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168a0 = new 16884 (function moved -0x1c, EQUAL-mod-pcrel); new 16884: andi	a3,a0,3
+lib/U/Prog/T/check_refusal_submit.v	180	168a4	changed	16888	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168a4 = new 16888 (function moved -0x1c, EQUAL-mod-pcrel); new 16888: bnez	a3,TGT
+lib/U/Prog/T/check_refusal_submit.v	180	1693c	changed	16920	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 1693c = new 16920 (function moved -0x1c, EQUAL-mod-pcrel); new 16920: unimp
+lib/U/Prog/T/check_refusal_submit.v	183	168a8	changed	1688c	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168a8 = new 1688c (function moved -0x1c, EQUAL-mod-pcrel); new 1688c: lbu	a6,24(a0)
+lib/U/Prog/T/check_refusal_submit.v	188	168ac	changed	16890	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168ac = new 16890 (function moved -0x1c, EQUAL-mod-pcrel); new 16890: li	a3,4
+lib/U/Prog/T/check_refusal_submit.v	188	168b0	changed	16894	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168b0 = new 16894 (function moved -0x1c, EQUAL-mod-pcrel); new 16894: bltu	a6,a3,TGT
+lib/U/Prog/T/check_refusal_submit.v	188	16910	changed	168f4	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16910 = new 168f4 (function moved -0x1c, EQUAL-mod-pcrel); new 168f4: li	a0,-10
+lib/U/Prog/T/check_refusal_submit.v	195	16910	changed	168f4	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16910 = new 168f4 (function moved -0x1c, EQUAL-mod-pcrel); new 168f4: li	a0,-10
+lib/U/Prog/T/check_refusal_submit.v	195	16914	changed	168f8	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16914 = new 168f8 (function moved -0x1c, EQUAL-mod-pcrel); new 168f8: beq	a1,a0,TGT
+lib/U/Prog/T/check_refusal_submit.v	195	16930	changed	16914	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16930 = new 16914 (function moved -0x1c, EQUAL-mod-pcrel); new 16914: addi	sp,sp,-16
+lib/U/Prog/T/check_refusal_submit.v	222	168d4	changed	168b8	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168d4 = new 168b8 (function moved -0x1c, EQUAL-mod-pcrel); new 168b8: bltu	a4,a3,TGT
+lib/U/Prog/T/check_refusal_submit.v	222	1693c	changed	16920	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 1693c = new 16920 (function moved -0x1c, EQUAL-mod-pcrel); new 16920: unimp
+lib/U/Prog/T/check_refusal_submit.v	225	168d8	changed	168bc	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168d8 = new 168bc (function moved -0x1c, EQUAL-mod-pcrel); new 168bc: add	t3,a0,a3
+lib/U/Prog/T/check_refusal_submit.v	225	168dc	changed	168c0	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168dc = new 168c0 (function moved -0x1c, EQUAL-mod-pcrel); new 168c0: lbu	t3,0(t3)
+lib/U/Prog/T/check_refusal_submit.v	227	168e0	changed	168c4	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168e0 = new 168c4 (function moved -0x1c, EQUAL-mod-pcrel); new 168c4: bne	t3,t0,TGT
+lib/U/Prog/T/check_refusal_submit.v	227	16908	changed	168ec	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16908 = new 168ec (function moved -0x1c, EQUAL-mod-pcrel); new 168ec: addi	a3,a3,1
+lib/U/Prog/T/check_refusal_submit.v	238	16908	changed	168ec	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16908 = new 168ec (function moved -0x1c, EQUAL-mod-pcrel); new 168ec: addi	a3,a3,1
+lib/U/Prog/T/check_refusal_submit.v	239	1690c	changed	168f0	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 1690c = new 168f0 (function moved -0x1c, EQUAL-mod-pcrel); new 168f0: bne	a6,a3,TGT
+lib/U/Prog/T/check_refusal_submit.v	239	168d4	changed	168b8	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168d4 = new 168b8 (function moved -0x1c, EQUAL-mod-pcrel); new 168b8: bltu	a4,a3,TGT
+lib/U/Prog/T/check_refusal_submit.v	247	16910	changed	168f4	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16910 = new 168f4 (function moved -0x1c, EQUAL-mod-pcrel); new 168f4: li	a0,-10
+lib/U/Prog/T/check_refusal_submit.v	247	16914	changed	168f8	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16914 = new 168f8 (function moved -0x1c, EQUAL-mod-pcrel); new 168f8: beq	a1,a0,TGT
+lib/U/Prog/T/check_refusal_submit.v	258	168e4	changed	168c8	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168e4 = new 168c8 (function moved -0x1c, EQUAL-mod-pcrel); new 168c8: bgeu	a3,a4,TGT
+lib/U/Prog/T/check_refusal_submit.v	258	1693c	changed	16920	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 1693c = new 16920 (function moved -0x1c, EQUAL-mod-pcrel); new 16920: unimp
+lib/U/Prog/T/check_refusal_submit.v	261	168e8	changed	168cc	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168e8 = new 168cc (function moved -0x1c, EQUAL-mod-pcrel); new 168cc: add	t3,a7,a3
+lib/U/Prog/T/check_refusal_submit.v	261	168ec	changed	168d0	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168ec = new 168d0 (function moved -0x1c, EQUAL-mod-pcrel); new 168d0: lbu	t3,0(t3)
+lib/U/Prog/T/check_refusal_submit.v	263	168f0	changed	168d4	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168f0 = new 168d4 (function moved -0x1c, EQUAL-mod-pcrel); new 168d4: bne	t3,t1,TGT
+lib/U/Prog/T/check_refusal_submit.v	263	16908	changed	168ec	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16908 = new 168ec (function moved -0x1c, EQUAL-mod-pcrel); new 168ec: addi	a3,a3,1
+lib/U/Prog/T/check_refusal_submit.v	269	168f4	changed	168d8	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168f4 = new 168d8 (function moved -0x1c, EQUAL-mod-pcrel); new 168d8: addi	t3,a3,3
+lib/U/Prog/T/check_refusal_submit.v	269	168f8	changed	168dc	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168f8 = new 168dc (function moved -0x1c, EQUAL-mod-pcrel); new 168dc: bltu	a4,t3,TGT
+lib/U/Prog/T/check_refusal_submit.v	269	1693c	changed	16920	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 1693c = new 16920 (function moved -0x1c, EQUAL-mod-pcrel); new 16920: unimp
+lib/U/Prog/T/check_refusal_submit.v	272	168fc	changed	168e0	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168fc = new 168e0 (function moved -0x1c, EQUAL-mod-pcrel); new 168e0: add	t3,a5,a3
+lib/U/Prog/T/check_refusal_submit.v	272	16900	changed	168e4	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16900 = new 168e4 (function moved -0x1c, EQUAL-mod-pcrel); new 168e4: lbu	t3,0(t3)
+lib/U/Prog/T/check_refusal_submit.v	274	16904	changed	168e8	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16904 = new 168e8 (function moved -0x1c, EQUAL-mod-pcrel); new 168e8: beq	t3,t2,TGT
+lib/U/Prog/T/check_refusal_submit.v	274	1691c	changed	16900	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 1691c = new 16900 (function moved -0x1c, EQUAL-mod-pcrel); new 16900: li	a0,-10
+lib/U/Prog/T/check_refusal_submit.v	289	1691c	changed	16900	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 1691c = new 16900 (function moved -0x1c, EQUAL-mod-pcrel); new 16900: li	a0,-10
+lib/U/Prog/T/check_refusal_submit.v	289	16920	changed	16904	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16920 = new 16904 (function moved -0x1c, EQUAL-mod-pcrel); new 16904: bne	a1,a0,TGT
+lib/U/Prog/T/check_refusal_submit.v	289	16930	changed	16914	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16930 = new 16914 (function moved -0x1c, EQUAL-mod-pcrel); new 16914: addi	sp,sp,-16
+lib/U/Prog/T/check_refusal_submit.v	297	16924	changed	16908	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16924 = new 16908 (function moved -0x1c, EQUAL-mod-pcrel); new 16908: auipc	a0,0x21
+lib/U/Prog/T/check_refusal_submit.v	297	16928	changed	1690c	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16928 = new 1690c (function moved -0x1c, EQUAL-mod-pcrel); new 1690c: lw	a0,1864(a0)
+lib/U/Prog/T/check_refusal_submit.v	300	1692c	changed	16910	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 1692c = new 16910 (function moved -0x1c, EQUAL-mod-pcrel); new 16910: beq	a0,a2,TGT
+lib/U/Prog/T/check_refusal_submit.v	300	16918	changed	168fc	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 16918 = new 168fc (function moved -0x1c, EQUAL-mod-pcrel); new 168fc: ret
+lib/U/Prog/T/check_refusal_submit.v	303	168b4	changed	16898	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168b4 = new 16898 (function moved -0x1c, EQUAL-mod-pcrel); new 16898: li	a3,0
+lib/U/Prog/T/check_refusal_submit.v	303	168d0	changed	168b4	bare-hex pc in a comment, not seen by the re-pin tool: old ubsan 168d0 = new 168b4 (function moved -0x1c, EQUAL-mod-pcrel); new 168b4: li	t2,112
+lib/U/Prog/T/WMem.v	74	addi  a5, a5, 0xc8	changed	addi  a5, a5, 0xb8	DemoImg seg_bytes at 0x1014 = 0x0b878793 = addi a5,a5,0xb8 (capstone); 0x42010 + 0xb8 = 0x420c8
+lib/U/Prog/T/WMem.v	100	ld a0, 0xf8(a5)	changed	ld a0, 0xe8(a5)	DemoImg at 0x1004 = 0x0e87b503 = ld a0,0xe8(a5)
+lib/U/Prog/T/WMem.v	121	sd a1, 0xf0(a5)	changed	sd a1, 0xe0(a5)	DemoImg at 0x100c = 0x0eb7b023 = sd a1,0xe0(a5)
+lib/U/Prog/T/WMem.v	229	ld a0, 0xf4(a5)	changed	ld a0, 0xe4(a5)	DemoCallImg at 0x1008 = 0x0e47b503 = ld a0,0xe4(a5)
+lib/U/Prog/T/WMemIdx.v	13	addi  a5, a5, 0xc8	changed	addi  a5, a5, 0xb8	DemoImg of U/Prog/T/WMem.v at 0x1014 = addi a5,a5,0xb8
+lib/U/Prog/T/check_ack_frame.v	6	lw    a2, -888(a2)	changed	lw    a2, -876(a2)	new ubsan 0x1544c: c9462603 lw a2,-876(a2); 0x43448 - 876 = 0x430dc g_rx_send
+lib/U/Prog/T/check_ack_frame.v	66	lw a2, -888(a2)	changed	lw a2, -876(a2)	as line 7
+lib/U/Prog/T/check_ack_settle.v	3	addi  a0, a0, -916	changed	addi  a0, a0, -904	new ubsan 0x16454: c7850513 addi a0,a0,-904; 0x43450 - 904 = 0x430c8 g_fail_next
+lib/U/Prog/T/check_ack_settle.v	32	addi a0, a0, -916	changed	addi a0, a0, -904	as line 4
+lib/U/Prog/T/check_latest_control.v	52	lw a1, -316(a1)	changed	lw a1, -304(a1)	as line 7
+lib/U/Prog/T/check_state_wake.v	30	lw a0, -648(a0)	changed	lw a0, -636(a0)	as line 4
+lib/Prog/T/check_state_online.v	1	addi a0,a0,944	changed	addi a0,a0,-508	new plain 0x15990: e0450513 addi a0,a0,-508; 0x1598c auipc a0,0x1d: 0x3298c - 508 = 0x32790 M
+lib/Prog/T/check_state_online.v	31	addi a0, a0, 944:	changed	addi a0, a0, -508:	as line 2
+lib/U/Prog/T/check_state_online.v	1	auipc a0,0x1e; addi a0,a0,-1556	changed	auipc a0,0x1d; addi a0,a0,1116	new ubsan 0x15ea4: 0001d517 auipc a0,0x1d; 0x15ea8: 45c50513 addi a0,a0,1116; 0x32ea4 + 1116 = 0x33300 M
+lib/U/Prog/T/check_state_online.v	30	auipc a0, 0x1e	changed	auipc a0, 0x1d	as line 2
+lib/U/Prog/T/check_state_online.v	31	addi a0, a0, -1556:	changed	addi a0, a0, 1116:	as line 2
+lib/TModel/TOps.v	217	0x13e90 reads the address byte 2(s5)	changed	0x13e88 reads the address byte 2(s5)	ubsan LLVMFuzzerTestOneInput did not move (0x13760); new ubsan 0x13e88: 002ac603 lbu a2,2(s5) (0x13e90 is addi s3,s5,3); the re-pin tool moved it by the plain delta
+lib/U/Prog/T/io_send_c.v	2	plain 0x14824-0x1482c, 0x148e4;	changed	plain 0x1482c-0x14834, 0x148ec;	plain io_send moved 0x144e4 -> 0x144ec; new plain 0x1482c slli s5,s5,0x3f .. 0x14834 andi a0,a0,-5, 0x148ec andi a0,s5,1 (as Prog/T/io_send_c.v:2); the re-pin tool read these plain pcs with ubsan symbols
+lib/U/Prog/T/check_latest_frame.v	149	lw a1,-852(a1)	changed	lw a1,-840(a1)	new ubsan 0x156a0: cb85a583 lw a1,-840(a1) (auipc a1,0x1e at 0x1569c): 0x3369c - 840 = 0x33354 M+0x54
+lib/U/Prog/T/check_refusal_submit.v	297	lw a0,1852(a0)	changed	lw a0,1864(a0)	new ubsan 0x1690c: 74852503 lw a0,1864(a0) (auipc a0,0x21 at 0x16908): 0x37908 + 1864 = 0x38050 g_s+0x46e0 (S_queued)
+# The 55 comment numerals the re-pin tool of record left in the files merged after the dry run (own-comments-left.tsv of f6acfcb0c1b8,
+# the rows not in the dry run's 44), each read from the new pins as above; then the stale immediates found in the same check (lines
+# of moved functions whose comment quotes the old instruction: the instruction at the new pc read from the new disassembly).
+lib/Prog/T/WMemIdx.v	43	0x42000	stays		stays: made-up demo image (DemoImg seg_bytes), 0x1000 auipc a5,0x41 -> 0x42000
+lib/Prog/T/check_inflight_acked.v	101	0x1540c	changed	0x159b8	pc 0x1540c -> 0x159b8 (check_inflight_acked+0x4; check_inflight_acked moved +0x5ac)
+lib/Prog/T/check_inflight_acked.v	101	0x15410	changed	0x159bc	pc 0x15410 -> 0x159bc (check_inflight_acked+0x8; check_inflight_acked moved +0x5ac)
+lib/Prog/T/check_inflight_acked.v	101	0x15414	changed	0x159c0	pc 0x15414 -> 0x159c0 (check_inflight_acked+0xc; check_inflight_acked moved +0x5ac)
+lib/Prog/T/check_inflight_lost.v	2	0x15448	changed	0x159f4	pc 0x15448 -> 0x159f4 (check_inflight_lost+0x4; check_inflight_lost moved +0x5ac)
+lib/Prog/T/check_inflight_lost.v	7	0x15468	changed	0x15a14	pc 0x15468 -> 0x15a14 (check_inflight_lost+0x24; check_inflight_lost moved +0x5ac)
+lib/Prog/T/check_inflight_lost.v	87	0x15448	changed	0x159f4	pc 0x15448 -> 0x159f4 (check_inflight_lost+0x4; check_inflight_lost moved +0x5ac)
+lib/Prog/T/check_inflight_lost.v	101	0x15464	changed	0x15a10	pc 0x15464 -> 0x15a10 (check_inflight_lost+0x20; check_inflight_lost moved +0x5ac)
+lib/Prog/T/check_inflight_lost.v	101	0x15468	changed	0x15a14	pc 0x15468 -> 0x15a14 (check_inflight_lost+0x24; check_inflight_lost moved +0x5ac)
+lib/Prog/T/check_inflight_new.v	3	0x15160	stays		stays: check_inflight_new did not move (EQUAL); new 15160: addi	a0,a0,1588
+lib/Prog/T/check_inflight_new.v	6	0x1517c	stays		stays: check_inflight_new did not move (EQUAL); new 1517c: ld	a1,1024(a1)
+lib/Prog/T/check_inflight_new.v	6	0x15180	stays		stays: check_inflight_new did not move (EQUAL); new 15180: ld	a0,56(a0)
+lib/Prog/T/check_inflight_new.v	6	0x15184	stays		stays: check_inflight_new did not move (EQUAL); new 15184: bltu	a1,a0,15194 <check_inflight_new+0x40>
+lib/Prog/T/check_keepalive_due.v	2	0x151f4	stays		stays: check_keepalive_due did not move (EQUAL); new 151f4: addi	a0,a0,1440
+lib/Prog/T/check_keepalive_due.v	5	0x15210	stays		stays: check_keepalive_due did not move (EQUAL); new 15210: ld	a1,876(a1)
+lib/Prog/T/check_keepalive_due.v	5	0x15214	stays		stays: check_keepalive_due did not move (EQUAL); new 15214: ld	a2,56(a0)
+lib/Prog/T/check_keepalive_due.v	5	0x15218	stays		stays: check_keepalive_due did not move (EQUAL); new 15218: bltu	a1,a2,15228 <check_keepalive_due+0x38>
+lib/Prog/T/check_keepalive_settle.v	2	0x15f54	stays		stays: check_keepalive_settle did not move (EQUAL); new 15f54: addi	a0,a0,1544
+lib/Prog/T/check_keepalive_settle.v	4	0x15f64	stays		stays: check_keepalive_settle did not move (EQUAL); new 15f64: addi	a1,a1,-2000
+lib/Prog/T/check_keepalive_settle.v	87	0x15f54	stays		stays: check_keepalive_settle did not move (EQUAL); new 15f54: addi	a0,a0,1544
+lib/Prog/T/check_keepalive_settle.v	95	0x15f64	stays		stays: check_keepalive_settle did not move (EQUAL); new 15f64: addi	a1,a1,-2000
+lib/Prog/T/check_latest_display.v	2	0x153a8	stays		stays: check_latest_display did not move (EQUAL); new 153a8: addi	a0,a0,1004
+lib/Prog/T/check_latest_display.v	5	0x153b8	stays		stays: check_latest_display did not move (EQUAL); new 153b8: addi	a1,a1,420
+lib/Prog/T/check_latest_display.v	67	0x153a8	stays		stays: check_latest_display did not move (EQUAL); new 153a8: addi	a0,a0,1004
+lib/Prog/T/check_latest_display.v	83	0x153b8	stays		stays: check_latest_display did not move (EQUAL); new 153b8: addi	a1,a1,420
+lib/Prog/T/diginet_session_rx.v	946	0x166b8	stays		stays: diginet_session_rx did not move (EQUAL); new 166b8: jal	1f8dc <bcmp>
+lib/Prog/T/io_now.v	1	0x42578	stays		stays: plain g_now 0x42578 (new objdump -t); 0x149d8 auipc a0,0x2e + -1120 = 0x42578
+lib/Prog/T/notice.v	3	0x10428	stays		stays: the jump table of notice is at 0x10428 in .rodata of the new image too (jtcheck: same table address, 6 entries)
+lib/U/Prog/T/WMemIdx.v	43	0x43000	stays		stays: made-up demo image (DemoImg seg_bytes), 0x1000 auipc a5,0x42 -> 0x43000
+lib/U/Prog/T/check_inflight_acked.v	106	0x15954	changed	0x15ed4	pc 0x15954 -> 0x15ed4 (check_inflight_acked+0x4; check_inflight_acked moved +0x580)
+lib/U/Prog/T/check_inflight_acked.v	106	0x15958	changed	0x15ed8	pc 0x15958 -> 0x15ed8 (check_inflight_acked+0x8; check_inflight_acked moved +0x580)
+lib/U/Prog/T/check_inflight_acked.v	106	0x1595c	changed	0x15edc	pc 0x1595c -> 0x15edc (check_inflight_acked+0xc; check_inflight_acked moved +0x580)
+lib/U/Prog/T/check_inflight_lost.v	2	0x1599c	changed	0x15f1c	pc 0x1599c -> 0x15f1c (check_inflight_lost+0x4; check_inflight_lost moved +0x580)
+lib/U/Prog/T/check_inflight_lost.v	8	0x159c4	changed	0x15f44	pc 0x159c4 -> 0x15f44 (check_inflight_lost+0x2c; check_inflight_lost moved +0x580)
+lib/U/Prog/T/check_inflight_lost.v	92	0x1599c	changed	0x15f1c	pc 0x1599c -> 0x15f1c (check_inflight_lost+0x4; check_inflight_lost moved +0x580)
+lib/U/Prog/T/check_inflight_lost.v	109	0x159c0	changed	0x15f40	pc 0x159c0 -> 0x15f40 (check_inflight_lost+0x28; check_inflight_lost moved +0x580)
+lib/U/Prog/T/check_inflight_lost.v	109	0x159c4	changed	0x15f44	pc 0x159c4 -> 0x15f44 (check_inflight_lost+0x2c; check_inflight_lost moved +0x580)
+lib/U/Prog/T/check_inflight_new.v	2	0x155d4	changed	0x155b8	pc 0x155d4 -> 0x155b8 (check_inflight_new+0x4; check_inflight_new moved -0x1c)
+lib/U/Prog/T/check_inflight_new.v	5	0x155f0	changed	0x155d4	pc 0x155f0 -> 0x155d4 (check_inflight_new+0x20; check_inflight_new moved -0x1c)
+lib/U/Prog/T/check_inflight_new.v	5	0x155f4	changed	0x155d8	pc 0x155f4 -> 0x155d8 (check_inflight_new+0x24; check_inflight_new moved -0x1c)
+lib/U/Prog/T/check_inflight_new.v	5	0x155f8	changed	0x155dc	pc 0x155f8 -> 0x155dc (check_inflight_new+0x28; check_inflight_new moved -0x1c)
+lib/U/Prog/T/check_keepalive_due.v	2	0x156e4	changed	0x156c8	pc 0x156e4 -> 0x156c8 (check_keepalive_due+0x4; check_keepalive_due moved -0x1c)
+lib/U/Prog/T/check_keepalive_due.v	5	0x15700	changed	0x156e4	pc 0x15700 -> 0x156e4 (check_keepalive_due+0x20; check_keepalive_due moved -0x1c)
+lib/U/Prog/T/check_keepalive_due.v	5	0x15704	changed	0x156e8	pc 0x15704 -> 0x156e8 (check_keepalive_due+0x24; check_keepalive_due moved -0x1c)
+lib/U/Prog/T/check_keepalive_due.v	5	0x15708	changed	0x156ec	pc 0x15708 -> 0x156ec (check_keepalive_due+0x28; check_keepalive_due moved -0x1c)
+lib/U/Prog/T/check_keepalive_settle.v	2	0x1664c	changed	0x16630	pc 0x1664c -> 0x16630 (check_keepalive_settle+0x4; check_keepalive_settle moved -0x1c)
+lib/U/Prog/T/check_keepalive_settle.v	4	0x1665c	changed	0x16640	pc 0x1665c -> 0x16640 (check_keepalive_settle+0x14; check_keepalive_settle moved -0x1c)
+lib/U/Prog/T/check_keepalive_settle.v	88	0x1664c	changed	0x16630	pc 0x1664c -> 0x16630 (check_keepalive_settle+0x4; check_keepalive_settle moved -0x1c)
+lib/U/Prog/T/check_keepalive_settle.v	96	0x1665c	changed	0x16640	pc 0x1665c -> 0x16640 (check_keepalive_settle+0x14; check_keepalive_settle moved -0x1c)
+lib/U/Prog/T/check_latest_display.v	2	0x158e8	changed	0x158cc	pc 0x158e8 -> 0x158cc (check_latest_display+0x4; check_latest_display moved -0x1c)
+lib/U/Prog/T/check_latest_display.v	5	0x158f8	changed	0x158dc	pc 0x158f8 -> 0x158dc (check_latest_display+0x14; moved -0x1c); addi at 0x158dc: 2020 -> 2032 (new 158dc: addi a1,a1,2032 = 0x430c8 g_fail_next)
+lib/U/Prog/T/check_latest_display.v	67	0x158e8	changed	0x158cc	pc 0x158e8 -> 0x158cc (check_latest_display+0x4; check_latest_display moved -0x1c)
+lib/U/Prog/T/check_latest_display.v	83	0x158f8	changed	0x158dc	pc 0x158f8 -> 0x158dc (check_latest_display+0x14; moved -0x1c)
+lib/U/Prog/T/io_now.v	1	0x430f8	changed	0x430e8	g_now: new ubsan symbol 0x430e8 (objdump -t); 0x14bbc auipc a0,0x2e + 1324 = 0x430e8
+lib/U/Prog/T/notice.v	4	0x10438	stays		stays: the jump table of notice is at 0x10438 in .rodata of the new image too (jtcheck: same table address, 6 entries)
+lib/Prog/T/check_inflight_acked.v	2	addi imm 336	changed	-1116	new 159b8: addi	a1,a1,-1116
+lib/Prog/T/check_inflight_lost.v	2	addi imm 844	changed	-608	new 159f4: addi	a1,a1,-608
+lib/Prog/T/check_inflight_lost.v	7	lw imm 332	changed	-1120	new 15a14: lw	a2,-1120(a2)
+lib/Prog/T/io_now.v	1	ld imm -1056	changed	-1120	new 149dc: ld	a0,-1120(a0)
+lib/Prog/T/io_now.v	21	ld imm -1056	changed	-1120	new 149dc: ld	a0,-1120(a0)
+lib/Prog/T/m_maybe_online.v	149	addi imm -972	changed	-372	new 15908: addi	a0,a0,-372
+lib/Prog/T/m_maybe_online.v	192	addi imm -1576	changed	-976	new 1592c: addi	a1,a1,-976
+lib/Prog/T/notice.v	284	lw imm -828	changed	-892	new 14a1c: lw	a2,-892(a0)
+lib/Prog/T/notice.v	288	sw imm -828	changed	-892	new 14a24: sw	a2,-892(a0)
+lib/Prog/T/notice.v	317	addi imm -1264	changed	-1328	new 14a8c: addi	a0,a0,-1328
+lib/Prog/T/notice.v	430	lw imm -876	changed	-940	new 14a58: lw	a1,-940(a0)
+lib/Prog/T/notice.v	433	sw imm -876	changed	-940	new 14a60: sw	a1,-940(a0)
+lib/Prog/T/notice.v	438	lw imm -900	changed	-964	new 14a6c: lw	a2,-964(a0)
+lib/Prog/T/notice.v	442	sw imm -900	changed	-964	new 14a74: sw	a2,-964(a0)
+lib/Prog/T/notice.v	490	sw imm -528	changed	-592	new 14a44: sw	zero,-592(a0)
+lib/Prog/T/notice.v	495	lw imm -1024	changed	-1088	new 14ae4: lw	a1,-1088(a0)
+lib/Prog/T/notice.v	499	sw imm -1024	changed	-1088	new 14aec: sw	a1,-1088(a0)
+lib/U/Prog/T/check_inflight_acked.v	2	addi imm 1928	changed	504	new 15ed4: addi	a1,a1,504
+lib/U/Prog/T/check_inflight_lost.v	2	auipc imm 0x1e	changed	0x1d	new 15f18: auipc	a1,0x1d
+lib/U/Prog/T/check_inflight_lost.v	2	addi imm -1672	changed	1000	new 15f1c: addi	a1,a1,1000
+lib/U/Prog/T/check_inflight_lost.v	8	lw imm 1904	changed	480	new 15f44: lw	a2,480(a2)
+lib/U/Prog/T/check_keepalive_settle.v	2	addi imm -1392	changed	-1380	new 16630: addi	a0,a0,-1380
+lib/U/Prog/T/check_keepalive_settle.v	4	addi imm -840	changed	-828	new 16640: addi	a1,a1,-828
+lib/U/Prog/T/check_latest_display.v	2	addi imm -1492	changed	-1480	new 158cc: addi	a0,a0,-1480
+lib/U/Prog/T/diginet_session_rx.v	874	addi imm 1518	changed	1546	new 16e9c: addi	a1,a1,1546
+lib/U/Prog/T/io_now.v	1	ld imm 1380	changed	1324	new 14bc0: ld	a0,1324(a0)
+lib/U/Prog/T/io_now.v	21	ld imm 1380	changed	1324	new 14bc0: ld	a0,1324(a0)
+lib/U/Prog/T/m_maybe_online.v	103	addi imm 512	changed	1300	new 15df0: addi	a2,a0,1300
+lib/U/Prog/T/m_maybe_online.v	134	lwu imm -12	changed	776	new 15e14: lwu	a0,776(a0)
+lib/U/Prog/T/notice.v	352	lw imm 1596	changed	1540	new 14c0c: lw	a3,1540(a0)
+lib/U/Prog/T/notice.v	359	sw imm 1596	changed	1540	new 14c18: sw	a2,1540(a0)
+lib/U/Prog/T/notice.v	385	addi imm 1148	changed	1092	new 14c88: addi	a0,a0,1092
+lib/U/Prog/T/notice.v	470	lw imm 1544	changed	1488	new 14c4c: lw	a2,1488(a0)
+lib/U/Prog/T/notice.v	477	sw imm 1544	changed	1488	new 14c58: sw	a1,1488(a0)
+lib/U/Prog/T/notice.v	485	lw imm 1516	changed	1460	new 14c64: lw	a3,1460(a0)
+lib/U/Prog/T/notice.v	492	sw imm 1516	changed	1460	new 14c70: sw	a2,1460(a0)
+lib/U/Prog/T/notice.v	532	sw imm 1892	changed	1836	new 14c38: sw	zero,1836(a0)
+lib/U/Prog/T/notice.v	541	lw imm 1360	changed	1304	new 14cfc: lw	a2,1304(a0)
+lib/U/Prog/T/notice.v	548	sw imm 1360	changed	1304	new 14d08: sw	a1,1304(a0)

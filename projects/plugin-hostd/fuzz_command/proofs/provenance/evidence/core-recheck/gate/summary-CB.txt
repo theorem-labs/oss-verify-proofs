@@ -1,0 +1,42 @@
+INPUTS USED by port_addr_check.py --git $HUB --src c8557374ad2e:proofs/cgif/cgif_file_fuzzer/lib --dst c8557374ad2e:proofs/cgif/cgif_file_fuzzer/lib --src-image B=$IMG/cgif.B.pin:$IMG/cgif.B.twin --dst-image B=$IMG/cgif.B.pin:$IMG/cgif.B.twin --donors-from $BIN --cache cache --paired-only --summary --fail-on-flags --out full.tsv --include Y*.v --dst-include Y*.v
+  image src B  $IMG/cgif.B.pin  sha256 1c29845fe605  590264 bytes  symbols: symtab of cgif.B.twin ce511d541cda
+  image dst B  $IMG/cgif.B.pin  sha256 1c29845fe605  590264 bytes  symbols: symtab of cgif.B.twin ce511d541cda
+  ref src  c8557374ad2e:proofs/cgif/cgif_file_fuzzer/lib  -> c8557374ad2e6c079948f0813d37e31638d1c0d1  (git $HUB)
+  ref dst  c8557374ad2e:proofs/cgif/cgif_file_fuzzer/lib  -> c8557374ad2e6c079948f0813d37e31638d1c0d1  (git $HUB)
+  count symbols of src B: 1998
+  count symbols of dst B: 1998
+  count src files read: 2467
+  count src files after --include: 1449
+  count dst files read: 2467
+  count dst files after --dst-include: 1449
+  count files paired: 1449
+  count numerals: 606645
+  count files recognised or declared generated (GENERATED-SKIPPED): 0
+  count constructors whose declared field roles were read from the ported tree: 215
+  count constructors whose declared field roles were read from the source tree: 215
+  count stale-donor candidates dropped instead of judged: 0
+  count file pairs whose build came from rule (i'): 1230
+  count file pairs whose build came from rule (i): 166
+  count file pairs whose build came from rule (ii): 1502
+  count named-symbol cells UNMEASURED (the run reads the file against another build): 366
+  control fill_pass known answer (selftest_fill, run before anything is read): RAN  pass
+  control donor-vs-donor: NOT RUN  a separate run of this tool with one image on both sides; see the tool's documentation file
+  DECLARED ABSENT / DEFAULT USED  a named-symbol judgement: YH03.v describes P [rule (i'): it names src0segs->P] and the run reads it against B  count 366  the cell keeps the verdict the other rules give it
+  note file pairing: normalised RELATIVE PATH after --map / --rename, then the identity of the first hex in the file name; never the basename alone. There is no donor-text carry filter, so no candidate is dropped for being absent from a same-named donor file (the tool author's note)
+# files paired 1449; numerals 606645; "kernel" = of those, inside a fail-loud vm_compute / fetch_word fact
+IDENT-NAME	4304	kernel 2445
+IMAGE-EXTENT-SAME	181	kernel 36
+INSN-SAME	2590	kernel 1512
+LABEL-KEPT	42	kernel 15
+NON-ADDRESS-SAME	572222	kernel 320309
+ROUND-CONSTANT-SAME	499	kernel 211
+SAME-CONTENT	399	kernel 155
+SAME-GEOMETRY	8906	kernel 1948
+SAME-SYMBOL	16934	kernel 5906
+HASH-UNCHANGED	4	kernel 4	FLAG
+TARGET-OUTSIDE	171	kernel 90	FLAG
+UNRESOLVED	393	kernel 152	FLAG
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+UNMEASURED named-symbol 366 / 1593 cells	UNMEASURED-NAME 0 rows	UNPAIRED-FILE-UNMEASURED 0 rows
+# image B $IMG/cgif.B.pin 1c29845fe605 symbols: symtab
+# image B $IMG/cgif.B.pin 1c29845fe605 symbols: symtab

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libmpeg2
 harness: mpeg2_dec_fuzzer
-rocq: OssFuzzTheorems.libmpeg2.mpeg2_dec_fuzzer
+rocq: OSSVerify.libmpeg2.mpeg2_dec_fuzzer
 origin: upstream
 summary: Creates an ittiam MPEG-2 decoder (fuzz-chosen arch, colour format, cores), decodes the header
   then up to kMaxNumDecodeCalls frames, reallocating on resolution change; decoded frames and error codes

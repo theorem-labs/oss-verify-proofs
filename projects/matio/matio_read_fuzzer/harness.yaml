@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: matio
 harness: matio_read_fuzzer
-rocq: OssFuzzTheorems.matio.matio_read_fuzzer
+rocq: OSSVerify.matio.matio_read_fuzzer
 origin: upstream
 summary: Mat_Open on the input (as a temp file), Mat_GetDir, then Mat_VarRead and Mat_VarFree for every
   name; nothing is checked.

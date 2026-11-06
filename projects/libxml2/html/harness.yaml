@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libxml2
 harness: html
-rocq: OssFuzzTheorems.libxml2.html
+rocq: OSSVerify.libxml2.html
 origin: upstream
 summary: 'Checks 3 properties (listed below); the first, an API contract: OOM/IO reporting contract under
   failure injection for htmlCtxtReadMemory, htmlDocContentDumpOutput (content NULL iff OOM), xmlCopyDoc

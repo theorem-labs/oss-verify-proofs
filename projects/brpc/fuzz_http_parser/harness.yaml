@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: brpc
 harness: fuzz_http_parser
-rocq: OssFuzzTheorems.brpc.fuzz_http_parser
+rocq: OSSVerify.brpc.fuzz_http_parser
 origin: upstream
 summary: A mode byte picks http_parser_execute (request or response, all callbacks return 0) or http_parser_parse_url
   (connect 0/1). Return values and parser state are discarded.
@@ -133,6 +133,9 @@ builds:
       sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
 licence: NOASSERTION
 checks: []
+rejects:
+- where: source/fuzz_http_parser.cpp:36-38
+  what: An input shorter than 5 bytes or longer than 4096 is returned 1 without being parsed
 distribution:
   file: Distribution.v
   argv0: fuzz_http_parser
@@ -228,8 +231,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -238,8 +243,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -248,8 +255,10 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -258,5 +267,7 @@ statements:
     exits:
     - 0
     - 2
+    - 78
     binds_checks: false
     status: open
+    revision: 2

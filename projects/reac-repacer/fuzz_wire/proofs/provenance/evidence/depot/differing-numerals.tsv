@@ -1,0 +1,699 @@
+file	unit line	value	position	source	line text
+A/AB1w.v	406	0x6f87c	statement	twin-row	Definition tfib_A_StackStore_Store : Z := 0x6f87c.  Definition tfib_E_StackStore_Store : Z := 0x6f9a0.
+A/AB1w.v	406	0x6f9a0	statement	twin-row	Definition tfib_A_StackStore_Store : Z := 0x6f87c.  Definition tfib_E_StackStore_Store : Z := 0x6f9a0.
+A/AB1w.v	407	0x70388	statement	twin-row	Definition tfib_A_StackStore_BlockInfo_Create : Z := 0x70388.  Definition tfib_E_StackStore_BlockInfo_Create : Z := 0x7043c.
+A/AB1w.v	407	0x7043c	statement	twin-row	Definition tfib_A_StackStore_BlockInfo_Create : Z := 0x70388.  Definition tfib_E_StackStore_BlockInfo_Create : Z := 0x7043c.
+A/AB1w.v	408	0x7269c	statement	twin-row	Definition tfib_A_TwoLevelMap_Create_71714 : Z := 0x7269c.  Definition tfib_E_TwoLevelMap_Create_71714 : Z := 0x7279c.
+A/AB1w.v	408	0x7279c	statement	twin-row	Definition tfib_A_TwoLevelMap_Create_71714 : Z := 0x7269c.  Definition tfib_E_TwoLevelMap_Create_71714 : Z := 0x7279c.
+A/AD1d.v	174	4096	proof	knock-unmoved	(kLowShadowEnd, kHighShadowBeg - kLowShadowEnd); (4096, 0); (u eP, kPrimResvSize); (u eQ, kPtrArrayResv); (u eC, kCtxMapSize)]
+A/AD1d.v	174	0	proof	knock-unmoved	(kLowShadowEnd, kHighShadowBeg - kLowShadowEnd); (4096, 0); (u eP, kPrimResvSize); (u eQ, kPtrArrayResv); (u eC, kCtxMapSize)]
+A/AD1d.v	198	0	proof	knock-unmoved	assert (NB0 : nb_eager ly0 = 0) by reflexivity.
+A/AD1e.v	184	4096	proof	knock-unmoved	assert (STATIC : forall z, In z [wzp (dP E); wzp (dQ E); wzp (dT E); wzp (dF E); (4096, 0); (4096, 0); (u eC, 256); wzp (dD E); (ASAN_CEIL, 2 ^ 47 - ASAN_CEIL);
+A/AD1e.v	184	0	proof	knock-unmoved	assert (STATIC : forall z, In z [wzp (dP E); wzp (dQ E); wzp (dT E); wzp (dF E); (4096, 0); (4096, 0); (u eC, 256); wzp (dD E); (ASAN_CEIL, 2 ^ 47 - ASAN_CEIL);
+A/AD1e.v	184	4096	proof	knock-unmoved	assert (STATIC : forall z, In z [wzp (dP E); wzp (dQ E); wzp (dT E); wzp (dF E); (4096, 0); (4096, 0); (u eC, 256); wzp (dD E); (ASAN_CEIL, 2 ^ 47 - ASAN_CEIL);
+A/AD1e.v	184	0	proof	knock-unmoved	assert (STATIC : forall z, In z [wzp (dP E); wzp (dQ E); wzp (dT E); wzp (dF E); (4096, 0); (4096, 0); (u eC, 256); wzp (dD E); (ASAN_CEIL, 2 ^ 47 - ASAN_CEIL);
+A/AD1g.v	39	12	statement	knock-unmoved	Definition musl_maps (ch : acs) : list amap := firstn (length (a_maps ch) - 12) (a_maps ch).
+A/AD1g.v	742	0	statement	knock-unmoved	ALayout (u eP) (u eSp) (u eQ) (u eT) (u eC) (u eF) 0 0 (u eTop) ASAN_CEIL (2 ^ 47) TFIB_TSD [] extra (u eD) VIS0 TFIB_IMG (fun _ => 0).
+A/AD1g.v	742	0	statement	knock-unmoved	ALayout (u eP) (u eSp) (u eQ) (u eT) (u eC) (u eF) 0 0 (u eTop) ASAN_CEIL (2 ^ 47) TFIB_TSD [] extra (u eD) VIS0 TFIB_IMG (fun _ => 0).
+A/AD1g.v	776	4096	statement	knock-unmoved	Lemma statics_eq : static_extents ly0 = map wzp [dP; dQ; dT; dF] ++ [(4096, 0); (4096, 0); (u eC, 256); wzp dD; (ASAN_CEIL, 2 ^ 47 - ASAN_CEIL); TFIB_IMG].
+A/AD1g.v	776	0	statement	knock-unmoved	Lemma statics_eq : static_extents ly0 = map wzp [dP; dQ; dT; dF] ++ [(4096, 0); (4096, 0); (u eC, 256); wzp dD; (ASAN_CEIL, 2 ^ 47 - ASAN_CEIL); TFIB_IMG].
+A/AD1g.v	776	4096	statement	knock-unmoved	Lemma statics_eq : static_extents ly0 = map wzp [dP; dQ; dT; dF] ++ [(4096, 0); (4096, 0); (u eC, 256); wzp dD; (ASAN_CEIL, 2 ^ 47 - ASAN_CEIL); TFIB_IMG].
+A/AD1g.v	776	0	statement	knock-unmoved	Lemma statics_eq : static_extents ly0 = map wzp [dP; dQ; dT; dF] ++ [(4096, 0); (4096, 0); (u eC, 256); wzp dD; (ASAN_CEIL, 2 ^ 47 - ASAN_CEIL); TFIB_IMG].
+A/AD1g.v	776	256	statement	knock-unmoved	Lemma statics_eq : static_extents ly0 = map wzp [dP; dQ; dT; dF] ++ [(4096, 0); (4096, 0); (u eC, 256); wzp dD; (ASAN_CEIL, 2 ^ 47 - ASAN_CEIL); TFIB_IMG].
+A/AD1g.v	776	2	statement	knock-unmoved	Lemma statics_eq : static_extents ly0 = map wzp [dP; dQ; dT; dF] ++ [(4096, 0); (4096, 0); (u eC, 256); wzp dD; (ASAN_CEIL, 2 ^ 47 - ASAN_CEIL); TFIB_IMG].
+A/AD1g.v	776	47	statement	knock-unmoved	Lemma statics_eq : static_extents ly0 = map wzp [dP; dQ; dT; dF] ++ [(4096, 0); (4096, 0); (u eC, 256); wzp dD; (ASAN_CEIL, 2 ^ 47 - ASAN_CEIL); TFIB_IMG].
+A/AD1g.v	790	4096	proof	knock-unmoved	assert (CA0 : 4096 <= ASAN_CEIL) by (pose proof usp_range as H; pose proof ceil_ge_TOP as [CG _]; unfold YA02.TOP in CG; clear - CG H; lia).
+A/AD1g.v	791	4096	proof	knock-unmoved	assert (E0 : forall b, 4096 <= fst b -> zdisjoint (4096, 0) b) by (intros b Hb; unfold zdisjoint; cbn [fst snd]; lia).
+A/AD1g.v	791	4096	proof	knock-unmoved	assert (E0 : forall b, 4096 <= fst b -> zdisjoint (4096, 0) b) by (intros b Hb; unfold zdisjoint; cbn [fst snd]; lia).
+A/AD1g.v	791	0	proof	knock-unmoved	assert (E0 : forall b, 4096 <= fst b -> zdisjoint (4096, 0) b) by (intros b Hb; unfold zdisjoint; cbn [fst snd]; lia).
+A/AD1g.v	792	4096	proof	knock-unmoved	assert (E1 : forall b, 4096 <= fst b -> zdisjoint b (4096, 0)) by (intros b Hb; unfold zdisjoint; cbn [fst snd]; lia).
+A/AD1g.v	792	4096	proof	knock-unmoved	assert (E1 : forall b, 4096 <= fst b -> zdisjoint b (4096, 0)) by (intros b Hb; unfold zdisjoint; cbn [fst snd]; lia).
+A/AD1g.v	792	0	proof	knock-unmoved	assert (E1 : forall b, 4096 <= fst b -> zdisjoint b (4096, 0)) by (intros b Hb; unfold zdisjoint; cbn [fst snd]; lia).
+A/AD1g.v	793	4096	proof	knock-unmoved	assert (LO : forall d, In d [dP; dQ; dT; dF] -> 4096 <= fst (wzp d))
+A/AD1g.v	966	0	statement	knock-unmoved	Lemma vis0_pos : Forall (fun v => 0 < snd v) (ly_vis0 ly0).
+A/AD1g.v	1101	0	statement	knock-unmoved	if Nat.eqb (c_w c) 0 then true else
+A/AD1g.v	1155	0	proof	knock-unmoved	destruct (Nat.eqb w 0) eqn:Hw0.
+A/AD1g.v	1213	8	statement	knock-unmoved	[ (ADepot 0, d_nuniq + 4); (ADepot d_map1, 8); (AStore s_total, 8); (AStore s_block0, 8);
+A/AD1g.v	1213	8	statement	knock-unmoved	[ (ADepot 0, d_nuniq + 4); (ADepot d_map1, 8); (AStore s_total, 8); (AStore s_block0, 8);
+A/AD1g.v	1213	8	statement	knock-unmoved	[ (ADepot 0, d_nuniq + 4); (ADepot d_map1, 8); (AStore s_total, 8); (AStore s_block0, 8);
+A/AD1g.v	1214	8	statement	knock-unmoved	(ADepot d_mu, 4); (AStore s_stored0, 4); (AStore s_mtx0, 4); (AStore s_alloc, 8) ].
+A/AD1g.v	1324	0	statement	knock-unmoved	cell_holds B ly0 rdS (z4 (ADepot d_nuniq) 0) /\ cell_holds B ly0 rdS (z8 (ADepot d_map1) 0) /\
+A/AD1g.v	1324	0	statement	knock-unmoved	cell_holds B ly0 rdS (z4 (ADepot d_nuniq) 0) /\ cell_holds B ly0 rdS (z8 (ADepot d_map1) 0) /\
+A/AD1g.v	1325	0	statement	knock-unmoved	cell_holds B ly0 rdS (z8 (AStore s_total) 0) /\ cell_holds B ly0 rdS (z8 (AStore s_block0) 0) /\
+A/AD1g.v	1325	0	statement	knock-unmoved	cell_holds B ly0 rdS (z8 (AStore s_total) 0) /\ cell_holds B ly0 rdS (z8 (AStore s_block0) 0) /\
+A/AD1g.v	1326	0	statement	knock-unmoved	(forall b, 0 <= b < d_tab_words -> rd32 rdS (as_depot B + 4 * b) 0).
+A/AD1g.v	1326	4	statement	knock-unmoved	(forall b, 0 <= b < d_tab_words -> rd32 rdS (as_depot B + 4 * b) 0).
+A/AD1g.v	1326	0	statement	knock-unmoved	(forall b, 0 <= b < d_tab_words -> rd32 rdS (as_depot B + 4 * b) 0).
+A/AD1g.v	1332	0	proof	knock-unmoved	- unfold z4, c4. eapply cell_zero_of_range with (e0 := ADepot 0) (len := d_nuniq + 4); [apply ZH; find_in | unfold d_nuniq; cbn; lia | unfold d_nuniq; cbn; lia]
+A/AD1g.v	1332	4	proof	knock-unmoved	- unfold z4, c4. eapply cell_zero_of_range with (e0 := ADepot 0) (len := d_nuniq + 4); [apply ZH; find_in | unfold d_nuniq; cbn; lia | unfold d_nuniq; cbn; lia]
+A/AD1g.v	1333	8	proof	knock-unmoved	- unfold z8, c8. eapply cell_zero_of_range with (e0 := ADepot d_map1) (len := 8); [apply ZH; find_in | cbn; lia | cbn; lia].
+A/AD1g.v	1334	8	proof	knock-unmoved	- unfold z8, c8. eapply cell_zero_of_range with (e0 := AStore s_total) (len := 8); [apply ZH; find_in | cbn; lia | cbn; lia].
+A/AD1g.v	1335	8	proof	knock-unmoved	- unfold z8, c8. eapply cell_zero_of_range with (e0 := AStore s_block0) (len := 8); [apply ZH; find_in | cbn; lia | cbn; lia].
+A/AD1g.v	1337	0	proof	knock-unmoved	pose proof (ZH (ADepot 0, d_nuniq + 4) ltac:(find_in) (4 * b + Z.of_nat k) ltac:(cbn [snd]; unfold d_nuniq, d_tab_words in *; lia)) as X.
+A/AD1g.v	1337	4	proof	knock-unmoved	pose proof (ZH (ADepot 0, d_nuniq + 4) ltac:(find_in) (4 * b + Z.of_nat k) ltac:(cbn [snd]; unfold d_nuniq, d_tab_words in *; lia)) as X.
+A/AD1g.v	1337	4	proof	knock-unmoved	pose proof (ZH (ADepot 0, d_nuniq + 4) ltac:(find_in) (4 * b + Z.of_nat k) ltac:(cbn [snd]; unfold d_nuniq, d_tab_words in *; lia)) as X.
+A/AD1g.v	1341	0	statement	knock-unmoved	Forall (cell_holds B ly0 rdS) [ z4 (ADepot d_mu) 0; z4 (AStore s_stored0) 0; z4 (AStore s_mtx0) 0; z8 (AStore s_alloc) 0 ].
+A/AD1g.v	1341	0	statement	knock-unmoved	Forall (cell_holds B ly0 rdS) [ z4 (ADepot d_mu) 0; z4 (AStore s_stored0) 0; z4 (AStore s_mtx0) 0; z8 (AStore s_alloc) 0 ].
+A/AD1g.v	1341	0	statement	knock-unmoved	Forall (cell_holds B ly0 rdS) [ z4 (ADepot d_mu) 0; z4 (AStore s_stored0) 0; z4 (AStore s_mtx0) 0; z8 (AStore s_alloc) 0 ].
+A/AD1g.v	1341	0	statement	knock-unmoved	Forall (cell_holds B ly0 rdS) [ z4 (ADepot d_mu) 0; z4 (AStore s_stored0) 0; z4 (AStore s_mtx0) 0; z8 (AStore s_alloc) 0 ].
+A/AD1g.v	1347	4	proof	knock-unmoved	- unfold z4, c4. eapply cell_zero_of_range with (e0 := ADepot d_mu) (len := 4); [apply ZH; find_in | cbn; lia | cbn; lia].
+A/AD1g.v	1348	4	proof	knock-unmoved	- unfold z4, c4. eapply cell_zero_of_range with (e0 := AStore s_stored0) (len := 4); [apply ZH; find_in | cbn; lia | cbn; lia].
+A/AD1g.v	1349	4	proof	knock-unmoved	- unfold z4, c4. eapply cell_zero_of_range with (e0 := AStore s_mtx0) (len := 4); [apply ZH; find_in | cbn; lia | cbn; lia].
+A/AD1g.v	1350	8	proof	knock-unmoved	- unfold z8, c8. eapply cell_zero_of_range with (e0 := AStore s_alloc) (len := 8); [apply ZH; find_in | cbn; lia | cbn; lia].
+A/AE34.v	29	0x51310	statement	AE34-derived	(0x470b4, 102%nat); (0x50c2c, 441%nat); (0x51310, 220%nat); (0x51680, 568%nat); (0x53694, 79%nat); (0x53b20, 209%nat); (0x580a4, 6%nat);
+A/AE34.v	29	220	statement	AE34-derived	(0x470b4, 102%nat); (0x50c2c, 441%nat); (0x51310, 220%nat); (0x51680, 568%nat); (0x53694, 79%nat); (0x53b20, 209%nat); (0x580a4, 6%nat);
+A/AFek.v	33	1	statement	knock-unmoved	(aTOT, mkAF 1 131072 0); (aN, mkAF 1 4097 0); (aHASH, u64f); (aS2, mkAF TFIB_DEPOT (TFIB_DEPOT + 4 * 2 ^ 20 - 4) 2);
+A/AFem.v	84	0	statement	knock-unmoved	Class ly_mapped (ly : alayout) : Prop := ly_mapped_pf : ly_NB ly <> 0 /\ ly_SB ly <> 0.
+A/AFem.v	84	0	statement	knock-unmoved	Class ly_mapped (ly : alayout) : Prop := ly_mapped_pf : ly_NB ly <> 0 /\ ly_SB ly <> 0.
+A/AFem.v	128	0	statement	knock-unmoved	Lemma nD_range : 0 <= nD <= 4096.
+A/AFem.v	128	4096	statement	knock-unmoved	Lemma nD_range : 0 <= nD <= 4096.
+A/AFem.v	133	1	statement	knock-unmoved	Lemma nD_pos `{HNE : depot_ne S} : 1 <= nD.
+A/AFem.v	138	1	statement	knock-unmoved	Lemma TOT_pos `{HNE : depot_ne S} : 1 <= TOT.
+A/AFem.v	141	0	proof	knock-unmoved	assert (P : forall l : list (list Z), 0 <= fold_right (fun t acc => Z.of_nat (length t) + 1 + acc) 0 l)
+A/AFem.v	141	1	proof	knock-unmoved	assert (P : forall l : list (list Z), 0 <= fold_right (fun t acc => Z.of_nat (length t) + 1 + acc) 0 l)
+A/AFem.v	141	0	proof	knock-unmoved	assert (P : forall l : list (list Z), 0 <= fold_right (fun t acc => Z.of_nat (length t) + 1 + acc) 0 l)
+A/AFem.v	145	0	statement	knock-unmoved	Lemma TOT_range : 0 <= TOT <= 127070.
+A/AFem.v	226	4096	statement	knock-unmoved	0 <= nD <= 4096 /\ 0 <= TOT <= 127070 /\ 0 <= HSH < 2 ^ 64 /\ 0 <= bkt < 1048576 /\ 0 <= HDv <= nD /\ 0 <= STD < 2 ^ 32 /\
+A/AFem.v	226	0	statement	knock-unmoved	0 <= nD <= 4096 /\ 0 <= TOT <= 127070 /\ 0 <= HSH < 2 ^ 64 /\ 0 <= bkt < 1048576 /\ 0 <= HDv <= nD /\ 0 <= STD < 2 ^ 32 /\
+A/AFem.v	226	0	statement	knock-unmoved	0 <= nD <= 4096 /\ 0 <= TOT <= 127070 /\ 0 <= HSH < 2 ^ 64 /\ 0 <= bkt < 1048576 /\ 0 <= HDv <= nD /\ 0 <= STD < 2 ^ 32 /\
+A/AFem.v	807	1	proof	knock-unmoved	set (id0 := Z.of_nat j + 1).
+A/AFem.v	1225	1	statement	knock-unmoved	Lemma hashes'_old : forall id, 1 <= id <= nD -> hashes' id = hashes id.
+A/AFex.v	152	0	proof	knock-unmoved	Proof. unfold sd, depot_after, s1. destruct (z =? 0); cbn [st_depot set_depot set_internal_inited set_nev];
+A/AFex.v	166	0	statement	knock-unmoved	Lemma HNS : ly_NB ly <> 0 /\ ly_SB ly <> 0.
+A/AFex.v	166	0	statement	knock-unmoved	Lemma HNS : ly_NB ly <> 0 /\ ly_SB ly <> 0.
+A/AFex.v	401	256	statement	knock-unmoved	zone3 (ly_C ly) 256 /\ ly_C ly + 256 <= ASAN_CEIL /\ kHighMemBeg <= ly_stk_lo ly /\ ly_stk_hi ly <= kHighMemEnd /\
+A/AFex.v	401	256	statement	knock-unmoved	zone3 (ly_C ly) 256 /\ ly_C ly + 256 <= ASAN_CEIL /\ kHighMemBeg <= ly_stk_lo ly /\ ly_stk_hi ly <= kHighMemEnd /\
+A/AFex.v	402	4096	statement	knock-unmoved	ly_prim ly <= ly_space ly /\ ly_space ly + kSpaceSize + 4096 <= ly_prim ly + kPrimResvSize /\
+A/AFex.v	403	16	statement	knock-unmoved	zone3 (ck_base B ly k) (ck_extent k) /\ ck_base B ly k + ck_extent k <= ASAN_CEIL /\ 16 <= ck_rz k /\
+A/AFex.v	404	4096	statement	knock-unmoved	kHighMemBeg <= Bv /\ Bv + kBatchBytes <= ASAN_CEIL /\ ly_stk_lo ly mod 4096 = 0 /\
+A/AFex.v	404	0	statement	knock-unmoved	kHighMemBeg <= Bv /\ Bv + kBatchBytes <= ASAN_CEIL /\ ly_stk_lo ly mod 4096 = 0 /\
+A/AFex.v	407	4	statement	knock-unmoved	Lemma SE4 : nth_error (static_extents ly) 4 = Some (ly_NB ly, kNodesBlockSize).
+A/AFex.v	409	5	statement	knock-unmoved	Lemma SE5 : nth_error (static_extents ly) 5 = Some (ly_SB ly, kStoreBlockSize).
+A/AFex.v	1029	0	proof	knock-unmoved	{ rewrite S'_depot. unfold sd, depot_after, s1. destruct (z =? 0); cbn; [exact HND|]. intros Hc. apply app_eq_nil in Hc as [_ Hc]. discriminate. }
+A/AFey.v	654	4	proof	knock-unmoved	assert (NBX : In (ly_NB ly, kNodesBlockSize) (owned_extents ly) /\ nth_error (static_extents ly) 4 = Some (ly_NB ly, kNodesBlockSize))
+A/AFez.v	705	4	proof	knock-unmoved	assert (NBX : In (ly_NB ly, kNodesBlockSize) (owned_extents ly) /\ nth_error (static_extents ly) 4 = Some (ly_NB ly, kNodesBlockSize))
+A/AFf0.v	192	0	statement	knock-unmoved	Lemma ok_NB : ly_NB ly <> 0 -> ly_SB ly <> 0 -> okr (ly_NB ly) kNodesBlockSize.
+A/AFf0.v	192	0	statement	knock-unmoved	Lemma ok_NB : ly_NB ly <> 0 -> ly_SB ly <> 0 -> okr (ly_NB ly) kNodesBlockSize.
+A/AFf0.v	199	9	proof	knock-unmoved	- exact (SX 4 9 _ _ E4 eq_refl ltac:(lia)). }
+A/AFf0.v	201	4	proof	knock-unmoved	apply D_cases in HD as [[X _]|[X|[X _]]]; hnum; try lia; [zd (SX 4 2 _ _ E4 eq_refl ltac:(lia)) | zd (SX 4 8 _ _ E4 eq_refl ltac:(lia))].
+A/AFf0.v	201	4	proof	knock-unmoved	apply D_cases in HD as [[X _]|[X|[X _]]]; hnum; try lia; [zd (SX 4 2 _ _ E4 eq_refl ltac:(lia)) | zd (SX 4 8 _ _ E4 eq_refl ltac:(lia))].
+A/AFf0.v	444	4096	proof	knock-unmoved	assert (NB : Z.of_nat (length (st_depot S)) <= 4096).
+A/AFf1.v	558	4	proof	knock-unmoved	assert (NBX : In (ly_NB ly, kNodesBlockSize) (owned_extents ly) /\ nth_error (static_extents ly) 4 = Some (ly_NB ly, kNodesBlockSize))
+A/AFf2.v	731	4	proof	knock-unmoved	assert (NBX : In (ly_NB ly, kNodesBlockSize) (owned_extents ly) /\ nth_error (static_extents ly) 4 = Some (ly_NB ly, kNodesBlockSize))
+A/AFf3.v	535	4	proof	knock-unmoved	assert (NBX : nth_error (static_extents ly) 4 = Some (ly_NB ly, kNodesBlockSize)) by (rewrite <- (nb_ext_set ly HNB0); exact (nb_ext_nth_st ly)).
+A/AFf4.v	793	4	proof	knock-unmoved	assert (NBX : nth_error (static_extents ly) 4 = Some (ly_NB ly, kNodesBlockSize)) by (rewrite <- (nb_ext_set ly HNB0); exact (nb_ext_nth_st ly)).
+A/AFf4.v	1053	0	proof	knock-unmoved	assert (VNB : range_vis B ly rd (ANB 0, match st_depot X with [] => 0 | _ :: _ => kNodesBlockSize end) ->
+A/AFf4.v	1053	0	proof	knock-unmoved	assert (VNB : range_vis B ly rd (ANB 0, match st_depot X with [] => 0 | _ :: _ => kNodesBlockSize end) ->
+A/AFf4.v	1054	0	proof	knock-unmoved	range_vis B ly rd' (ANB 0, match st_depot X with [] => 0 | _ :: _ => kNodesBlockSize end)).
+A/AFf4.v	1054	0	proof	knock-unmoved	range_vis B ly rd' (ANB 0, match st_depot X with [] => 0 | _ :: _ => kNodesBlockSize end)).
+A/AFf4.v	1060	0	proof	knock-unmoved	assert (VSB : range_vis B ly rd (ASB 0, match st_depot X with [] => 0 | _ :: _ => kStoreBlockSize end) ->
+A/AFf4.v	1060	0	proof	knock-unmoved	assert (VSB : range_vis B ly rd (ASB 0, match st_depot X with [] => 0 | _ :: _ => kStoreBlockSize end) ->
+A/AFf4.v	1061	0	proof	knock-unmoved	range_vis B ly rd' (ASB 0, match st_depot X with [] => 0 | _ :: _ => kStoreBlockSize end)).
+A/AFf4.v	1061	0	proof	knock-unmoved	range_vis B ly rd' (ASB 0, match st_depot X with [] => 0 | _ :: _ => kStoreBlockSize end)).
+A/AFfl.v	138	0	proof	knock-unmoved	Proof. unfold sd, depot_after, s1. destruct (z =? 0); cbn [st_depot set_depot set_internal_inited set_nev];
+A/AFfl.v	152	0	statement	knock-unmoved	Lemma HNS : ly_NB ly <> 0 /\ ly_SB ly <> 0.
+A/AFfl.v	152	0	statement	knock-unmoved	Lemma HNS : ly_NB ly <> 0 /\ ly_SB ly <> 0.
+A/AFfl.v	154	4	statement	knock-unmoved	Lemma SE4 : nth_error (static_extents ly) 4 = Some (ly_NB ly, kNodesBlockSize).
+A/AFfl.v	156	5	statement	knock-unmoved	Lemma SE5 : nth_error (static_extents ly) 5 = Some (ly_SB ly, kStoreBlockSize).
+A/AFfl.v	363	256	statement	knock-unmoved	zone3 (ly_C ly) (256) /\ ly_C ly + 256 <= ASAN_CEIL /\ kHighMemBeg <= ly_stk_lo ly /\ ly_stk_hi ly <= kHighMemEnd /\
+A/AFfl.v	363	256	statement	knock-unmoved	zone3 (ly_C ly) (256) /\ ly_C ly + 256 <= ASAN_CEIL /\ kHighMemBeg <= ly_stk_lo ly /\ ly_stk_hi ly <= kHighMemEnd /\
+A/AFfl.v	364	4096	statement	knock-unmoved	ly_prim ly <= ly_space ly /\ ly_space ly + kSpaceSize + 4096 <= ly_prim ly + kPrimResvSize /\
+A/AFfl.v	365	16	statement	knock-unmoved	zone3 (ck_base B ly k) (ck_extent k) /\ ck_base B ly k + ck_extent k <= ASAN_CEIL /\ 16 <= ck_rz k /\ ly_stk_lo ly mod 4096 = 0.
+A/AFfl.v	365	4096	statement	knock-unmoved	zone3 (ck_base B ly k) (ck_extent k) /\ ck_base B ly k + ck_extent k <= ASAN_CEIL /\ 16 <= ck_rz k /\ ly_stk_lo ly mod 4096 = 0.
+A/AFfl.v	365	0	statement	knock-unmoved	zone3 (ck_base B ly k) (ck_extent k) /\ ck_base B ly k + ck_extent k <= ASAN_CEIL /\ 16 <= ck_rz k /\ ly_stk_lo ly mod 4096 = 0.
+A/AFfl.v	910	0	proof	knock-unmoved	{ rewrite S'_depot. unfold sd, depot_after, s1. destruct (z =? 0); cbn; [exact HND|]. intros Hc. apply app_eq_nil in Hc as [_ Hc]. discriminate. }
+A/AFgi.v	485	0	proof	knock-unmoved	assert (G0 : forall lo len, ((len = 0 /\ lo <= p - 16) \/ 0 < len) -> (forall a, p - 16 <= a < p + N8v -> ~ (lo <= a < lo + len)) -> p + 8 <= lo \/ lo + len <= 
+A/AFgi.v	485	16	proof	knock-unmoved	assert (G0 : forall lo len, ((len = 0 /\ lo <= p - 16) \/ 0 < len) -> (forall a, p - 16 <= a < p + N8v -> ~ (lo <= a < lo + len)) -> p + 8 <= lo \/ lo + len <= 
+A/AFgi.v	485	0	proof	knock-unmoved	assert (G0 : forall lo len, ((len = 0 /\ lo <= p - 16) \/ 0 < len) -> (forall a, p - 16 <= a < p + N8v -> ~ (lo <= a < lo + len)) -> p + 8 <= lo \/ lo + len <= 
+A/AFgi.v	485	16	proof	knock-unmoved	assert (G0 : forall lo len, ((len = 0 /\ lo <= p - 16) \/ 0 < len) -> (forall a, p - 16 <= a < p + N8v -> ~ (lo <= a < lo + len)) -> p + 8 <= lo \/ lo + len <= 
+A/AFgi.v	485	8	proof	knock-unmoved	assert (G0 : forall lo len, ((len = 0 /\ lo <= p - 16) \/ 0 < len) -> (forall a, p - 16 <= a < p + N8v -> ~ (lo <= a < lo + len)) -> p + 8 <= lo \/ lo + len <= 
+A/AFgi.v	485	16	proof	knock-unmoved	assert (G0 : forall lo len, ((len = 0 /\ lo <= p - 16) \/ 0 < len) -> (forall a, p - 16 <= a < p + N8v -> ~ (lo <= a < lo + len)) -> p + 8 <= lo \/ lo + len <= 
+A/AFgi.v	490	0	proof	knock-unmoved	- apply G0; [rewrite nb_ext_eq; destruct (ly_NB ly =? 0); cbn [fst snd]; [left; split; [reflexivity | clear - DR1; lia] | right; cbv; reflexivity]|].
+A/AFgi.v	492	0	proof	knock-unmoved	- apply G0; [rewrite sb_ext_eq; destruct (ly_SB ly =? 0); cbn [fst snd]; [left; split; [reflexivity | clear - DR1; lia] | right; cbv; reflexivity]|].
+A/AFgm.v	468	0	proof	knock-unmoved	assert (G0 : forall lo len, ((len = 0 /\ lo <= p - 16) \/ 0 < len) -> (forall a, p - 16 <= a < p + N8v -> ~ (lo <= a < lo + len)) -> p + 8 <= lo \/ lo + len <= 
+A/AFgm.v	468	16	proof	knock-unmoved	assert (G0 : forall lo len, ((len = 0 /\ lo <= p - 16) \/ 0 < len) -> (forall a, p - 16 <= a < p + N8v -> ~ (lo <= a < lo + len)) -> p + 8 <= lo \/ lo + len <= 
+A/AFgm.v	468	0	proof	knock-unmoved	assert (G0 : forall lo len, ((len = 0 /\ lo <= p - 16) \/ 0 < len) -> (forall a, p - 16 <= a < p + N8v -> ~ (lo <= a < lo + len)) -> p + 8 <= lo \/ lo + len <= 
+A/AFgm.v	468	16	proof	knock-unmoved	assert (G0 : forall lo len, ((len = 0 /\ lo <= p - 16) \/ 0 < len) -> (forall a, p - 16 <= a < p + N8v -> ~ (lo <= a < lo + len)) -> p + 8 <= lo \/ lo + len <= 
+A/AFgm.v	468	8	proof	knock-unmoved	assert (G0 : forall lo len, ((len = 0 /\ lo <= p - 16) \/ 0 < len) -> (forall a, p - 16 <= a < p + N8v -> ~ (lo <= a < lo + len)) -> p + 8 <= lo \/ lo + len <= 
+A/AFgm.v	468	16	proof	knock-unmoved	assert (G0 : forall lo len, ((len = 0 /\ lo <= p - 16) \/ 0 < len) -> (forall a, p - 16 <= a < p + N8v -> ~ (lo <= a < lo + len)) -> p + 8 <= lo \/ lo + len <= 
+A/AFgm.v	473	0	proof	knock-unmoved	- apply G0; [rewrite nb_ext_eq; destruct (ly_NB ly =? 0); cbn [fst snd]; [left; split; [reflexivity | clear - DR1; lia] | right; cbv; reflexivity]|].
+A/AFgm.v	475	0	proof	knock-unmoved	- apply G0; [rewrite sb_ext_eq; destruct (ly_SB ly =? 0); cbn [fst snd]; [left; split; [reflexivity | clear - DR1; lia] | right; cbv; reflexivity]|].
+A/AFhn.v	354	16	proof	knock-unmoved	assert (EN : forall a, ly_NB ly + 16 <= a < ly_NB ly + kNodesBlockSize -> rd' a = rd0 a).
+A/AFi5.v	76	0	proof	knock-unmoved	{ unfold owned_extents in Hex. cbn [In] in Hex. decompose [or] Hex; subst; try destruct (ly_NB ly =? 0); try destruct (ly_SB ly =? 0); cbn [snd];
+A/AFi5.v	76	0	proof	knock-unmoved	{ unfold owned_extents in Hex. cbn [In] in Hex. decompose [or] Hex; subst; try destruct (ly_NB ly =? 0); try destruct (ly_SB ly =? 0); cbn [snd];
+A/AFi5.v	84	4	proof	knock-unmoved	pose proof (ZI (nb_ext ly) (nth_error_In _ 4 (nb_ext_nth ly))) as ZNB. pose proof (ZI (sb_ext ly) (nth_error_In _ 5 (sb_ext_nth ly))) as ZSB.
+A/AFi5.v	84	5	proof	knock-unmoved	pose proof (ZI (nb_ext ly) (nth_error_In _ 4 (nb_ext_nth ly))) as ZNB. pose proof (ZI (sb_ext ly) (nth_error_In _ 5 (sb_ext_nth ly))) as ZSB.
+A/AFi5.v	296	4	proof	knock-unmoved	assert (EZT : forall a, TFIB_DEPOT <= a < TFIB_DEPOT + 4 * d_tab_words -> rd' a = rd0 a).
+A/AFi5.v	299	0x9ffd0	proof	twin-row	exists (0x9ffd0, 0x5c2dd0 - 0x9ffd0). split; [cbn; tauto|]. unfold in_zr; cbn. unfold TFIB_DEPOT, d_tab_words in Ha. lia.
+A/AFi5.v	299	0x5c2dd0	proof	twin-row	exists (0x9ffd0, 0x5c2dd0 - 0x9ffd0). split; [cbn; tauto|]. unfold in_zr; cbn. unfold TFIB_DEPOT, d_tab_words in Ha. lia.
+A/AFi5.v	299	0x9ffd0	proof	twin-row	exists (0x9ffd0, 0x5c2dd0 - 0x9ffd0). split; [cbn; tauto|]. unfold in_zr; cbn. unfold TFIB_DEPOT, d_tab_words in Ha. lia.
+A/AFic.v	67	0	proof	knock-unmoved	{ unfold owned_extents in Hex. cbn [In] in Hex. decompose [or] Hex; subst; try destruct (ly_NB ly =? 0)%Z; try destruct (ly_SB ly =? 0)%Z; cbn [snd];
+A/AFic.v	67	0	proof	knock-unmoved	{ unfold owned_extents in Hex. cbn [In] in Hex. decompose [or] Hex; subst; try destruct (ly_NB ly =? 0)%Z; try destruct (ly_SB ly =? 0)%Z; cbn [snd];
+A/AFic.v	77	4	proof	knock-unmoved	first [ exact (ZI (nb_ext ly) (nth_error_In _ 4 (nb_ext_nth ly))) | exact (ZI (sb_ext ly) (nth_error_In _ 5 (sb_ext_nth ly)))
+A/AFic.v	77	5	proof	knock-unmoved	first [ exact (ZI (nb_ext ly) (nth_error_In _ 4 (nb_ext_nth ly))) | exact (ZI (sb_ext ly) (nth_error_In _ 5 (sb_ext_nth ly)))
+A/AFic.v	336	16	proof	knock-unmoved	assert (EN : forall a, ly_NB ly + 16 <= a < ly_NB ly + kNodesBlockSize -> rd' a = rd0 a).
+A/AFim.v	294	0	proof	knock-unmoved	- exact (YG06.WfP_weaken (as_universe B) 0 1 1 0 0 0 S' WFP' ltac:(lia) ltac:(lia) ltac:(lia)).
+A/AFim.v	294	1	proof	knock-unmoved	- exact (YG06.WfP_weaken (as_universe B) 0 1 1 0 0 0 S' WFP' ltac:(lia) ltac:(lia) ltac:(lia)).
+A/AFim.v	294	1	proof	knock-unmoved	- exact (YG06.WfP_weaken (as_universe B) 0 1 1 0 0 0 S' WFP' ltac:(lia) ltac:(lia) ltac:(lia)).
+A/AFim.v	294	0	proof	knock-unmoved	- exact (YG06.WfP_weaken (as_universe B) 0 1 1 0 0 0 S' WFP' ltac:(lia) ltac:(lia) ltac:(lia)).
+A/AFim.v	294	0	proof	knock-unmoved	- exact (YG06.WfP_weaken (as_universe B) 0 1 1 0 0 0 S' WFP' ltac:(lia) ltac:(lia) ltac:(lia)).
+A/AFim.v	294	0	proof	knock-unmoved	- exact (YG06.WfP_weaken (as_universe B) 0 1 1 0 0 0 S' WFP' ltac:(lia) ltac:(lia) ltac:(lia)).
+A/AFin.v	285	0	proof	knock-unmoved	- exact (WfP_weaken _ 0 1 1 0 0 0 S' WFP' ltac:(lia) ltac:(lia) ltac:(lia)).
+A/AFin.v	285	1	proof	knock-unmoved	- exact (WfP_weaken _ 0 1 1 0 0 0 S' WFP' ltac:(lia) ltac:(lia) ltac:(lia)).
+A/AFin.v	285	1	proof	knock-unmoved	- exact (WfP_weaken _ 0 1 1 0 0 0 S' WFP' ltac:(lia) ltac:(lia) ltac:(lia)).
+A/AFin.v	285	0	proof	knock-unmoved	- exact (WfP_weaken _ 0 1 1 0 0 0 S' WFP' ltac:(lia) ltac:(lia) ltac:(lia)).
+A/AFin.v	285	0	proof	knock-unmoved	- exact (WfP_weaken _ 0 1 1 0 0 0 S' WFP' ltac:(lia) ltac:(lia) ltac:(lia)).
+A/AFin.v	285	0	proof	knock-unmoved	- exact (WfP_weaken _ 0 1 1 0 0 0 S' WFP' ltac:(lia) ltac:(lia) ltac:(lia)).
+A/AFio.v	229	4	proof	knock-unmoved	first [ apply in_app_iff; left; exact (nth_error_In _ 4 (nb_ext_nth_st ly)) | apply in_app_iff; left; exact (nth_error_In _ 5 (sb_ext_nth_st ly))
+A/AFio.v	229	5	proof	knock-unmoved	first [ apply in_app_iff; left; exact (nth_error_In _ 4 (nb_ext_nth_st ly)) | apply in_app_iff; left; exact (nth_error_In _ 5 (sb_ext_nth_st ly))
+A/AFis.v	786	5	statement	knock-unmoved	Variables (regs0 : bvmap 5 word) (mem0 : word -> option byte) (md0 : Model) (n : Z) (ch : list (Z * Z * Z)).
+A/AFis.v	789	2	statement	knock-unmoved	Let sp0 : Z := bv_unsigned (getr regs0 2).
+A/AFis.v	790	1	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFis.v	790	31	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFis.v	790	0	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFis.v	790	16	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFis.v	790	2	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFis.v	790	16	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFis.v	790	2	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFis.v	790	32	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFis.v	790	1	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFis.v	790	16	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFis.v	791	2	statement	knock-unmoved	Hypothesis Hv2 : v mod 2 = 0.
+A/AFis.v	791	0	statement	knock-unmoved	Hypothesis Hv2 : v mod 2 = 0.
+A/AFis.v	794	16	statement	knock-unmoved	Hypothesis Hsp : ly_stk_lo ly + ASTACK <= sp0 /\ ly_bot ly < sp0 /\ sp0 <= ly_stk_hi ly /\ sp0 mod 16 = 0.
+A/AFis.v	794	0	statement	knock-unmoved	Hypothesis Hsp : ly_stk_lo ly + ASTACK <= sp0 /\ ly_bot ly < sp0 /\ sp0 <= ly_stk_hi ly /\ sp0 mod 16 = 0.
+A/AFis.v	796	1	statement	knock-unmoved	Hypothesis Hkz : 1 <= kz <= 6.
+A/AFis.v	796	6	statement	knock-unmoved	Hypothesis Hkz : 1 <= kz <= 6.
+A/AFis.v	801	8	statement	knock-unmoved	~ (SUv ly cl v kz <= a < SUv ly cl v kz + N8D n / 8) /\ ~ (sp0 - ASTACK <= a < sp0).
+A/AFis.v	823	64	proof	knock-unmoved	intros W' m a Hle [Hh Hb]. split; [|exact Hb]. destruct (w_H W' (Z_to_bv 64 a)) eqn:E; [|reflexivity].
+A/AFix.v	417	1	statement	knock-unmoved	(st_depot S = [] -> z = 1 /\ exists (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (regs2 : bvmap 5 word),
+A/AFix.v	417	5	statement	knock-unmoved	(st_depot S = [] -> z = 1 /\ exists (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (regs2 : bvmap 5 word),
+A/AFix.v	417	5	statement	knock-unmoved	(st_depot S = [] -> z = 1 /\ exists (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (regs2 : bvmap 5 word),
+A/AFix.v	420	64	statement	knock-unmoved	(mkCfg (mkst regs2 (Z_to_bv 64 0x3156c) mem2 (seg_rom tfibsegs)) md')).
+A/AFix.v	420	0x3156c	statement	twin-row	(mkCfg (mkst regs2 (Z_to_bv 64 0x3156c) mem2 (seg_rom tfibsegs)) md')).
+A/AFix.v	474	0	proof	knock-unmoved	assert (FPZ : ly_NB ly' <> 0 -> ly_SB ly' <> 0 -> forall x : word, depot_footprint B ly' (bv_unsigned x) -> DZONE_at ly' (bv_unsigned x)).
+A/AFix.v	474	0	proof	knock-unmoved	assert (FPZ : ly_NB ly' <> 0 -> ly_SB ly' <> 0 -> forall x : word, depot_footprint B ly' (bv_unsigned x) -> DZONE_at ly' (bv_unsigned x)).
+A/AFix.v	483	1	proof	knock-unmoved	assert (ES' : st_depot (depot_after 1 tr S) = [tr]) by (unfold depot_after; cbn; rewrite E0; reflexivity).
+A/AFix.v	484	1	proof	knock-unmoved	exists 1, regs', mem'. split; [rewrite EC, R1; reflexivity|]. split; [exact RP|].
+A/AFix.v	487	64	proof	knock-unmoved	assert (EC' : c' = mkCfg (mkst regs' (Z_to_bv 64 0x3156c) mem' (seg_rom tfibsegs)) md') by (rewrite EC, R1; reflexivity).
+A/AFix.v	487	0x3156c	proof	twin-row	assert (EC' : c' = mkCfg (mkst regs' (Z_to_bv 64 0x3156c) mem' (seg_rom tfibsegs)) md') by (rewrite EC, R1; reflexivity).
+A/AFix.v	497	0	proof	knock-unmoved	{ unfold depot_after. destruct (z =? 0); cbn; [exact NE|]. intros Hc. apply app_eq_nil in Hc as [_ Hc]. discriminate. }
+A/AFix.v	554	64	statement	knock-unmoved	H' (Z_to_bv 64 a) = H (Z_to_bv 64 a) -> mem' (Z_to_bv 64 a) = mem (Z_to_bv 64 a) -> aview tfibsegs H' mem' a = aview tfibsegs H mem a.
+A/AFix.v	554	64	statement	knock-unmoved	H' (Z_to_bv 64 a) = H (Z_to_bv 64 a) -> mem' (Z_to_bv 64 a) = mem (Z_to_bv 64 a) -> aview tfibsegs H' mem' a = aview tfibsegs H mem a.
+A/AFix.v	554	64	statement	knock-unmoved	H' (Z_to_bv 64 a) = H (Z_to_bv 64 a) -> mem' (Z_to_bv 64 a) = mem (Z_to_bv 64 a) -> aview tfibsegs H' mem' a = aview tfibsegs H mem a.
+A/AFix.v	554	64	statement	knock-unmoved	H' (Z_to_bv 64 a) = H (Z_to_bv 64 a) -> mem' (Z_to_bv 64 a) = mem (Z_to_bv 64 a) -> aview tfibsegs H' mem' a = aview tfibsegs H mem a.
+A/AFix.v	702	0	statement	knock-unmoved	Lemma first_put_pre_of_AR_at : forall (B : asyms) (W Wc : world tfibsegs) (ly : alayout) (S : astate) (mem0 mem : word -> option byte) (md0 md : Model) (tr : li
+A/AFix.v	702	1023	statement	knock-unmoved	Lemma first_put_pre_of_AR_at : forall (B : asyms) (W Wc : world tfibsegs) (ly : alayout) (S : astate) (mem0 mem : word -> option byte) (md0 md : Model) (tr : li
+A/AFix.v	702	0	statement	knock-unmoved	Lemma first_put_pre_of_AR_at : forall (B : asyms) (W Wc : world tfibsegs) (ly : alayout) (S : astate) (mem0 mem : word -> option byte) (md0 md : Model) (tr : li
+A/AFix.v	702	2	statement	knock-unmoved	Lemma first_put_pre_of_AR_at : forall (B : asyms) (W Wc : world tfibsegs) (ly : alayout) (S : astate) (mem0 mem : word -> option byte) (md0 md : Model) (tr : li
+A/AFix.v	702	11	statement	knock-unmoved	Lemma first_put_pre_of_AR_at : forall (B : asyms) (W Wc : world tfibsegs) (ly : alayout) (S : astate) (mem0 mem : word -> option byte) (md0 md : Model) (tr : li
+A/AFix.v	702	2	statement	knock-unmoved	Lemma first_put_pre_of_AR_at : forall (B : asyms) (W Wc : world tfibsegs) (ly : alayout) (S : astate) (mem0 mem : word -> option byte) (md0 md : Model) (tr : li
+A/AFix.v	702	20	statement	knock-unmoved	Lemma first_put_pre_of_AR_at : forall (B : asyms) (W Wc : world tfibsegs) (ly : alayout) (S : astate) (mem0 mem : word -> option byte) (md0 md : Model) (tr : li
+A/AFix.v	702	2	statement	knock-unmoved	Lemma first_put_pre_of_AR_at : forall (B : asyms) (W Wc : world tfibsegs) (ly : alayout) (S : astate) (mem0 mem : word -> option byte) (md0 md : Model) (tr : li
+A/AFix.v	702	30	statement	knock-unmoved	Lemma first_put_pre_of_AR_at : forall (B : asyms) (W Wc : world tfibsegs) (ly : alayout) (S : astate) (mem0 mem : word -> option byte) (md0 md : Model) (tr : li
+A/AFix.v	709	6	proof	knock-unmoved	do 6 (apply Forall_app in AC as [_ AC]). apply Forall_app in AC as [AC _]. exact AC. }
+A/AFix.v	712	0	proof	knock-unmoved	[ z4 (ADepot d_nuniq) 0; z8 (ADepot d_map1) 0; z8 (AStore s_total) 0; z8 (AStore s_block0) 0;
+A/AFix.v	712	0	proof	knock-unmoved	[ z4 (ADepot d_nuniq) 0; z8 (ADepot d_map1) 0; z8 (AStore s_total) 0; z8 (AStore s_block0) 0;
+A/AFix.v	712	0	proof	knock-unmoved	[ z4 (ADepot d_nuniq) 0; z8 (ADepot d_map1) 0; z8 (AStore s_total) 0; z8 (AStore s_block0) 0;
+A/AFix.v	712	0	proof	knock-unmoved	[ z4 (ADepot d_nuniq) 0; z8 (ADepot d_map1) 0; z8 (AStore s_total) 0; z8 (AStore s_block0) 0;
+A/AFix.v	713	0	proof	knock-unmoved	z4 (ADepot d_mu) 0; z4 (AStore s_stored0) 0; z4 (AStore s_mtx0) 0; z8 (AStore s_alloc) 0 ]).
+A/AFix.v	713	0	proof	knock-unmoved	z4 (ADepot d_mu) 0; z4 (AStore s_stored0) 0; z4 (AStore s_mtx0) 0; z8 (AStore s_alloc) 0 ]).
+A/AFix.v	713	0	proof	knock-unmoved	z4 (ADepot d_mu) 0; z4 (AStore s_stored0) 0; z4 (AStore s_mtx0) 0; z8 (AStore s_alloc) 0 ]).
+A/AFix.v	713	0	proof	knock-unmoved	z4 (ADepot d_mu) 0; z4 (AStore s_stored0) 0; z4 (AStore s_mtx0) 0; z8 (AStore s_alloc) 0 ]).
+A/AFix.v	721	0	proof	knock-unmoved	assert (SB0 : ly_SB ly = 0) by exact (proj2 (proj1 (proj1 (proj2 (proj2 (proj1 (depot_ok_pre B ly _ S E0) (am_depot _ _ _ _ M))))) E0)).
+A/AFix.v	722	0	proof	knock-unmoved	assert (ESB : (ly_SB ly =? 0) = true) by (rewrite SB0; reflexivity).
+A/AFix.v	731	4	proof	knock-unmoved	cbn in Hc. destruct Hc as [<-|[<-|[<-|[]]]]; cbn [In]; [do 4 right; left | do 5 right; left | do 6 right; left]; reflexivity.
+A/AFix.v	731	5	proof	knock-unmoved	cbn in Hc. destruct Hc as [<-|[<-|[<-|[]]]]; cbn [In]; [do 4 right; left | do 5 right; left | do 6 right; left]; reflexivity.
+A/AFix.v	731	6	proof	knock-unmoved	cbn in Hc. destruct Hc as [<-|[<-|[<-|[]]]]; cbn [In]; [do 4 right; left | do 5 right; left | do 6 right; left]; reflexivity.
+A/AFix.v	734	256	proof	knock-unmoved	[(ly_C ly, 256); (ly_D ly, 4096); (ly_stk_lo ly, ly_stk_hi ly - ly_stk_lo ly); ly_img ly] DJ).
+A/AFix.v	734	4096	proof	knock-unmoved	[(ly_C ly, 256); (ly_D ly, 4096); (ly_stk_lo ly, ly_stk_hi ly - ly_stk_lo ly); ly_img ly] DJ).
+A/AFix.v	759	0	proof	knock-unmoved	apply (first_put_pre_of_AR_at B W W ly S mem0 mem md0 md tr [] 0 TS IMGc HAR MR E0 AG).
+A/AFj1.v	502	4	proof	knock-unmoved	pose proof (D (nb_ext ly) (nth_error_In _ 4 (nb_ext_nth_st ly))) as D4.
+A/AFj1.v	503	5	proof	knock-unmoved	pose proof (D (sb_ext ly) (nth_error_In _ 5 (sb_ext_nth_st ly))) as D5.
+A/AFj1.v	855	0	proof	knock-unmoved	Proof. intros NE. unfold depot_after. destruct (z =? 0); cbn; [exact NE|]. intros Hc. apply app_eq_nil in Hc as [_ Hc]. discriminate. Qed.
+A/AFj1.v	1058	0	statement	knock-unmoved	(forall r, In r (aareas (SF z)) -> fst r <> ANB 0 -> fst r <> ASB 0 -> range_vis B ly rd' r) /\ Forall (range_vis B ly rd') (aclient (SF z)).
+A/AFj1.v	1058	0	statement	knock-unmoved	(forall r, In r (aareas (SF z)) -> fst r <> ANB 0 -> fst r <> ASB 0 -> range_vis B ly rd' r) /\ Forall (range_vis B ly rd') (aclient (SF z)).
+A/AFj1.v	1147	4	proof	knock-unmoved	intros CD. do 4 (apply Forall_cons_iff in CD as [_ CD]). apply Forall_cons_iff in CD as [CD _]. exact CD. }
+A/AFj1.v	1154	0	proof	knock-unmoved	assert (NBc : snd (nb_ext ly) = 0 \/ snd (nb_ext ly) = kNodesBlockSize) by (rewrite nb_ext_eq; destruct (ly_NB ly =? 0); [left | right]; reflexivity).
+A/AFj1.v	1154	0	proof	knock-unmoved	assert (NBc : snd (nb_ext ly) = 0 \/ snd (nb_ext ly) = kNodesBlockSize) by (rewrite nb_ext_eq; destruct (ly_NB ly =? 0); [left | right]; reflexivity).
+A/AFj1.v	1155	0	proof	knock-unmoved	assert (SBc : snd (sb_ext ly) = 0 \/ snd (sb_ext ly) = kStoreBlockSize) by (rewrite sb_ext_eq; destruct (ly_SB ly =? 0); [left | right]; reflexivity).
+A/AFj1.v	1155	0	proof	knock-unmoved	assert (SBc : snd (sb_ext ly) = 0 \/ snd (sb_ext ly) = kStoreBlockSize) by (rewrite sb_ext_eq; destruct (ly_SB ly =? 0); [left | right]; reflexivity).
+A/AFj1.v	1220	0x172648	proof	twin-row	destruct (Z_lt_le_dec (aeval B ly (c_at c) + k) 0x172648) as [Hlo|Hge].
+A/AFj1.v	1222	0	proof	knock-unmoved	assert (NBc : snd (nb_ext ly) = 0 \/ snd (nb_ext ly) = kNodesBlockSize) by (rewrite nb_ext_eq; destruct (ly_NB ly =? 0); [left | right]; reflexivity).
+A/AFj1.v	1222	0	proof	knock-unmoved	assert (NBc : snd (nb_ext ly) = 0 \/ snd (nb_ext ly) = kNodesBlockSize) by (rewrite nb_ext_eq; destruct (ly_NB ly =? 0); [left | right]; reflexivity).
+A/AFj1.v	1223	0	proof	knock-unmoved	assert (SBc : snd (sb_ext ly) = 0 \/ snd (sb_ext ly) = kStoreBlockSize) by (rewrite sb_ext_eq; destruct (ly_SB ly =? 0); [left | right]; reflexivity).
+A/AFj1.v	1223	0	proof	knock-unmoved	assert (SBc : snd (sb_ext ly) = 0 \/ snd (sb_ext ly) = kStoreBlockSize) by (rewrite sb_ext_eq; destruct (ly_SB ly =? 0); [left | right]; reflexivity).
+A/AFj1.v	1225	0x5c2dd0	proof	twin-row	* destruct (Z_lt_le_dec (aeval B ly (c_at c) + k) 0x5c2dd0) as [Hlo2|Hge2].
+A/AFj1.v	1229	4	proof	knock-unmoved	pose proof (pairwise_ij _ _ 4 2 _ _ (lo_disj ly LY) (nb_ext_nth_st ly) eq_refl) as DNB. pose proof (pairwise_ij _ _ 5 1 _ _ (lo_disj ly LY) (sb_ext_nth_st ly) e
+A/AFj1.v	1229	2	proof	knock-unmoved	pose proof (pairwise_ij _ _ 4 2 _ _ (lo_disj ly LY) (nb_ext_nth_st ly) eq_refl) as DNB. pose proof (pairwise_ij _ _ 5 1 _ _ (lo_disj ly LY) (sb_ext_nth_st ly) e
+A/AFj1.v	1229	5	proof	knock-unmoved	pose proof (pairwise_ij _ _ 4 2 _ _ (lo_disj ly LY) (nb_ext_nth_st ly) eq_refl) as DNB. pose proof (pairwise_ij _ _ 5 1 _ _ (lo_disj ly LY) (sb_ext_nth_st ly) e
+A/AFj1.v	1229	1	proof	knock-unmoved	pose proof (pairwise_ij _ _ 4 2 _ _ (lo_disj ly LY) (nb_ext_nth_st ly) eq_refl) as DNB. pose proof (pairwise_ij _ _ 5 1 _ _ (lo_disj ly LY) (sb_ext_nth_st ly) e
+A/AFj1.v	1275	1	statement	knock-unmoved	at_RET_at ly' md' odd z W' (mkCfg (mkst regs' (getr regs0 1) mem' (seg_rom tfibsegs)) (with_vm_backing (m_vm_lazy md') mat md')) ->
+A/AFj1.v	1276	8	statement	knock-unmoved	(odd = true <-> n mod 8 <> 0) -> MPF z -> AR tfibsegs B ly S W mem0 md0 ->
+A/AFj1.v	1276	0	statement	knock-unmoved	(odd = true <-> n mod 8 <> 0) -> MPF z -> AR tfibsegs B ly S W mem0 md0 ->
+A/AFj1.v	1301	256	proof	knock-unmoved	(ly_C ly, 256); (ly_D ly, 4096); (ly_stk_lo ly, ly_stk_hi ly - ly_stk_lo ly); ly_img ly] -> In e (AD3j.first_put_avoid ly S)).
+A/AFj1.v	1301	4096	proof	knock-unmoved	(ly_C ly, 256); (ly_D ly, 4096); (ly_stk_lo ly, ly_stk_hi ly - ly_stk_lo ly); ly_img ly] -> In e (AD3j.first_put_avoid ly S)).
+A/AFj1.v	1313	256	proof	knock-unmoved	+ apply (NOTIN (ly_C ly, 256) a); [apply INEXT; cbn; tauto | exact O | exact Hf].
+A/AFj1.v	1321	256	proof	knock-unmoved	+ apply (NOTIN (ly_C ly, 256) a); [apply INEXT; cbn; tauto | cbn [fst snd]; lia | exact Hf].
+A/AFj1.v	1323	4096	proof	knock-unmoved	+ apply (NOTIN (ly_D ly, 4096) a); [apply INEXT; cbn; tauto | cbn [fst snd]; lia | exact Hf].
+A/AFj1.v	1331	2	proof	knock-unmoved	assert (KP : ly_prim ly <= Kv /\ Kv + 2 ^ 16 + 4096 <= ly_prim ly + kPrimResvSize) by (clear - F4 F5 K1 K2; unfold kSpaceSize, kPrimResvSize in *; zlia).
+A/AFj1.v	1331	16	proof	knock-unmoved	assert (KP : ly_prim ly <= Kv /\ Kv + 2 ^ 16 + 4096 <= ly_prim ly + kPrimResvSize) by (clear - F4 F5 K1 K2; unfold kSpaceSize, kPrimResvSize in *; zlia).
+A/AFj1.v	1331	4096	proof	knock-unmoved	assert (KP : ly_prim ly <= Kv /\ Kv + 2 ^ 16 + 4096 <= ly_prim ly + kPrimResvSize) by (clear - F4 F5 K1 K2; unfold kSpaceSize, kPrimResvSize in *; zlia).
+A/AFj1.v	1337	0	proof	knock-unmoved	assert (WHa : forall a, 0 <= a < 2 ^ 64 -> ~ FZ' a -> w_H W' (Z_to_bv 64 a) = w_H W (Z_to_bv 64 a)).
+A/AFj1.v	1337	2	proof	knock-unmoved	assert (WHa : forall a, 0 <= a < 2 ^ 64 -> ~ FZ' a -> w_H W' (Z_to_bv 64 a) = w_H W (Z_to_bv 64 a)).
+A/AFj1.v	1337	64	proof	knock-unmoved	assert (WHa : forall a, 0 <= a < 2 ^ 64 -> ~ FZ' a -> w_H W' (Z_to_bv 64 a) = w_H W (Z_to_bv 64 a)).
+A/AFj1.v	1337	64	proof	knock-unmoved	assert (WHa : forall a, 0 <= a < 2 ^ 64 -> ~ FZ' a -> w_H W' (Z_to_bv 64 a) = w_H W (Z_to_bv 64 a)).
+A/AFj1.v	1337	64	proof	knock-unmoved	assert (WHa : forall a, 0 <= a < 2 ^ 64 -> ~ FZ' a -> w_H W' (Z_to_bv 64 a) = w_H W (Z_to_bv 64 a)).
+A/AFj1.v	1344	8	proof	knock-unmoved	~ (Kv + RZ <= bv_unsigned x < Kv + RZ + n) -> ~ (SUv <= bv_unsigned x < SUv + N8D / 8) -> mem' x = mem0 x).
+A/AFj1.v	1348	4096	proof	knock-unmoved	assert (TB : 4096 <= ly_T ly /\ ly_T ly + kThreadObjSize < 2 ^ 64).
+A/AFj1.v	1348	2	proof	knock-unmoved	assert (TB : 4096 <= ly_T ly /\ ly_T ly + kThreadObjSize < 2 ^ 64).
+A/AFj1.v	1348	64	proof	knock-unmoved	assert (TB : 4096 <= ly_T ly /\ ly_T ly + kThreadObjSize < 2 ^ 64).
+A/AFj1.v	1351	0	proof	knock-unmoved	assert (WINT_T : forall a, WINT a -> 0 <= a < 2 ^ 64 /\ ly_T ly <= a < ly_T ly + kThreadObjSize).
+A/AFj1.v	1351	2	proof	knock-unmoved	assert (WINT_T : forall a, WINT a -> 0 <= a < 2 ^ 64 /\ ly_T ly <= a < ly_T ly + kThreadObjSize).
+A/AFj1.v	1351	64	proof	knock-unmoved	assert (WINT_T : forall a, WINT a -> 0 <= a < 2 ^ 64 /\ ly_T ly <= a < ly_T ly + kThreadObjSize).
+A/AFj1.v	1353	0	proof	knock-unmoved	assert (CHK_P : forall a, Kv <= a < Kv + RZ + n -> 0 <= a < 2 ^ 64 /\ ly_prim ly <= a < ly_prim ly + kPrimResvSize).
+A/AFj1.v	1353	2	proof	knock-unmoved	assert (CHK_P : forall a, Kv <= a < Kv + RZ + n -> 0 <= a < 2 ^ 64 /\ ly_prim ly <= a < ly_prim ly + kPrimResvSize).
+A/AFj1.v	1353	64	proof	knock-unmoved	assert (CHK_P : forall a, Kv <= a < Kv + RZ + n -> 0 <= a < 2 ^ 64 /\ ly_prim ly <= a < ly_prim ly + kPrimResvSize).
+A/AFj1.v	1355	0	proof	knock-unmoved	assert (PB_S : forall a, PBW odd a -> 0 <= a < 2 ^ 64 /\ kLowShadowBeg <= a < kHighMemBeg).
+A/AFj1.v	1355	2	proof	knock-unmoved	assert (PB_S : forall a, PBW odd a -> 0 <= a < 2 ^ 64 /\ kLowShadowBeg <= a < kHighMemBeg).
+A/AFj1.v	1355	64	proof	knock-unmoved	assert (PB_S : forall a, PBW odd a -> 0 <= a < 2 ^ 64 /\ kLowShadowBeg <= a < kHighMemBeg).
+A/AFj1.v	1363	0	proof	knock-unmoved	assert (VMw : forall a (w : nat) v0, (forall k, (k < w)%nat -> 0 <= a + Z.of_nat k < 2 ^ 64 /\ ~ FZ' (a + Z.of_nat k)) ->
+A/AFj1.v	1363	2	proof	knock-unmoved	assert (VMw : forall a (w : nat) v0, (forall k, (k < w)%nat -> 0 <= a + Z.of_nat k < 2 ^ 64 /\ ~ FZ' (a + Z.of_nat k)) ->
+A/AFj1.v	1363	64	proof	knock-unmoved	assert (VMw : forall a (w : nat) v0, (forall k, (k < w)%nat -> 0 <= a + Z.of_nat k < 2 ^ 64 /\ ~ FZ' (a + Z.of_nat k)) ->
+A/AFj1.v	1366	0	proof	knock-unmoved	assert (KR : forall o (w : nat), 0 <= o -> o + Z.of_nat w <= 2 ^ 16 -> forall k, (k < w)%nat -> 0 <= Kv + o + Z.of_nat k < 2 ^ 64 /\ ~ FZ' (Kv + o + Z.of_nat k)
+A/AFj1.v	1366	2	proof	knock-unmoved	assert (KR : forall o (w : nat), 0 <= o -> o + Z.of_nat w <= 2 ^ 16 -> forall k, (k < w)%nat -> 0 <= Kv + o + Z.of_nat k < 2 ^ 64 /\ ~ FZ' (Kv + o + Z.of_nat k)
+A/AFj1.v	1366	16	proof	knock-unmoved	assert (KR : forall o (w : nat), 0 <= o -> o + Z.of_nat w <= 2 ^ 16 -> forall k, (k < w)%nat -> 0 <= Kv + o + Z.of_nat k < 2 ^ 64 /\ ~ FZ' (Kv + o + Z.of_nat k)
+A/AFj1.v	1366	0	proof	knock-unmoved	assert (KR : forall o (w : nat), 0 <= o -> o + Z.of_nat w <= 2 ^ 16 -> forall k, (k < w)%nat -> 0 <= Kv + o + Z.of_nat k < 2 ^ 64 /\ ~ FZ' (Kv + o + Z.of_nat k)
+A/AFj1.v	1366	2	proof	knock-unmoved	assert (KR : forall o (w : nat), 0 <= o -> o + Z.of_nat w <= 2 ^ 16 -> forall k, (k < w)%nat -> 0 <= Kv + o + Z.of_nat k < 2 ^ 64 /\ ~ FZ' (Kv + o + Z.of_nat k)
+A/AFj1.v	1366	64	proof	knock-unmoved	assert (KR : forall o (w : nat), 0 <= o -> o + Z.of_nat w <= 2 ^ 16 -> forall k, (k < w)%nat -> 0 <= Kv + o + Z.of_nat k < 2 ^ 64 /\ ~ FZ' (Kv + o + Z.of_nat k)
+A/AFj1.v	1368	8	proof	knock-unmoved	pose proof (VMw Kv 8%nat _ ltac:(intros k Hk; pose proof (KR 0 8%nat ltac:(lia) ltac:(lia) k Hk) as X; rewrite Z.add_0_r in X; exact X) V1) as V1w.
+A/AFj1.v	1368	0	proof	knock-unmoved	pose proof (VMw Kv 8%nat _ ltac:(intros k Hk; pose proof (KR 0 8%nat ltac:(lia) ltac:(lia) k Hk) as X; rewrite Z.add_0_r in X; exact X) V1) as V1w.
+A/AFj1.v	1368	8	proof	knock-unmoved	pose proof (VMw Kv 8%nat _ ltac:(intros k Hk; pose proof (KR 0 8%nat ltac:(lia) ltac:(lia) k Hk) as X; rewrite Z.add_0_r in X; exact X) V1) as V1w.
+A/AFj1.v	1369	8	proof	knock-unmoved	pose proof (VMw (Kv + 8) 8%nat _ (KR 8 8%nat ltac:(lia) ltac:(lia)) V2) as V2w.
+A/AFj1.v	1369	8	proof	knock-unmoved	pose proof (VMw (Kv + 8) 8%nat _ (KR 8 8%nat ltac:(lia) ltac:(lia)) V2) as V2w.
+A/AFj1.v	1369	8	proof	knock-unmoved	pose proof (VMw (Kv + 8) 8%nat _ (KR 8 8%nat ltac:(lia) ltac:(lia)) V2) as V2w.
+A/AFj1.v	1369	8	proof	knock-unmoved	pose proof (VMw (Kv + 8) 8%nat _ (KR 8 8%nat ltac:(lia) ltac:(lia)) V2) as V2w.
+A/AFj1.v	1370	16	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 16) 1%nat _ ltac:(intros k Hk; replace (Kv + RZ - 16) with (Kv + (RZ - 16)) by lia; apply (KR (RZ - 16) 1%nat); [clear - RZr; zlia | 
+A/AFj1.v	1370	1	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 16) 1%nat _ ltac:(intros k Hk; replace (Kv + RZ - 16) with (Kv + (RZ - 16)) by lia; apply (KR (RZ - 16) 1%nat); [clear - RZr; zlia | 
+A/AFj1.v	1370	16	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 16) 1%nat _ ltac:(intros k Hk; replace (Kv + RZ - 16) with (Kv + (RZ - 16)) by lia; apply (KR (RZ - 16) 1%nat); [clear - RZr; zlia | 
+A/AFj1.v	1370	16	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 16) 1%nat _ ltac:(intros k Hk; replace (Kv + RZ - 16) with (Kv + (RZ - 16)) by lia; apply (KR (RZ - 16) 1%nat); [clear - RZr; zlia | 
+A/AFj1.v	1370	16	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 16) 1%nat _ ltac:(intros k Hk; replace (Kv + RZ - 16) with (Kv + (RZ - 16)) by lia; apply (KR (RZ - 16) 1%nat); [clear - RZr; zlia | 
+A/AFj1.v	1370	1	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 16) 1%nat _ ltac:(intros k Hk; replace (Kv + RZ - 16) with (Kv + (RZ - 16)) by lia; apply (KR (RZ - 16) 1%nat); [clear - RZr; zlia | 
+A/AFj1.v	1371	15	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 15) 1%nat _ ltac:(intros k Hk; replace (Kv + RZ - 15) with (Kv + (RZ - 15)) by lia; apply (KR (RZ - 15) 1%nat); [clear - RZr; zlia | 
+A/AFj1.v	1371	1	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 15) 1%nat _ ltac:(intros k Hk; replace (Kv + RZ - 15) with (Kv + (RZ - 15)) by lia; apply (KR (RZ - 15) 1%nat); [clear - RZr; zlia | 
+A/AFj1.v	1371	15	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 15) 1%nat _ ltac:(intros k Hk; replace (Kv + RZ - 15) with (Kv + (RZ - 15)) by lia; apply (KR (RZ - 15) 1%nat); [clear - RZr; zlia | 
+A/AFj1.v	1371	15	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 15) 1%nat _ ltac:(intros k Hk; replace (Kv + RZ - 15) with (Kv + (RZ - 15)) by lia; apply (KR (RZ - 15) 1%nat); [clear - RZr; zlia | 
+A/AFj1.v	1371	15	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 15) 1%nat _ ltac:(intros k Hk; replace (Kv + RZ - 15) with (Kv + (RZ - 15)) by lia; apply (KR (RZ - 15) 1%nat); [clear - RZr; zlia | 
+A/AFj1.v	1371	1	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 15) 1%nat _ ltac:(intros k Hk; replace (Kv + RZ - 15) with (Kv + (RZ - 15)) by lia; apply (KR (RZ - 15) 1%nat); [clear - RZr; zlia | 
+A/AFj1.v	1372	14	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 14) 2%nat _ ltac:(intros k Hk; replace (Kv + RZ - 14) with (Kv + (RZ - 14)) by lia; apply (KR (RZ - 14) 2%nat); [clear - RZr; zlia | 
+A/AFj1.v	1372	2	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 14) 2%nat _ ltac:(intros k Hk; replace (Kv + RZ - 14) with (Kv + (RZ - 14)) by lia; apply (KR (RZ - 14) 2%nat); [clear - RZr; zlia | 
+A/AFj1.v	1372	14	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 14) 2%nat _ ltac:(intros k Hk; replace (Kv + RZ - 14) with (Kv + (RZ - 14)) by lia; apply (KR (RZ - 14) 2%nat); [clear - RZr; zlia | 
+A/AFj1.v	1372	14	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 14) 2%nat _ ltac:(intros k Hk; replace (Kv + RZ - 14) with (Kv + (RZ - 14)) by lia; apply (KR (RZ - 14) 2%nat); [clear - RZr; zlia | 
+A/AFj1.v	1372	14	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 14) 2%nat _ ltac:(intros k Hk; replace (Kv + RZ - 14) with (Kv + (RZ - 14)) by lia; apply (KR (RZ - 14) 2%nat); [clear - RZr; zlia | 
+A/AFj1.v	1372	2	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 14) 2%nat _ ltac:(intros k Hk; replace (Kv + RZ - 14) with (Kv + (RZ - 14)) by lia; apply (KR (RZ - 14) 2%nat); [clear - RZr; zlia | 
+A/AFj1.v	1373	12	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 12) 4%nat _ ltac:(intros k Hk; replace (Kv + RZ - 12) with (Kv + (RZ - 12)) by lia; apply (KR (RZ - 12) 4%nat); [clear - RZr; zlia | 
+A/AFj1.v	1373	4	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 12) 4%nat _ ltac:(intros k Hk; replace (Kv + RZ - 12) with (Kv + (RZ - 12)) by lia; apply (KR (RZ - 12) 4%nat); [clear - RZr; zlia | 
+A/AFj1.v	1373	12	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 12) 4%nat _ ltac:(intros k Hk; replace (Kv + RZ - 12) with (Kv + (RZ - 12)) by lia; apply (KR (RZ - 12) 4%nat); [clear - RZr; zlia | 
+A/AFj1.v	1373	12	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 12) 4%nat _ ltac:(intros k Hk; replace (Kv + RZ - 12) with (Kv + (RZ - 12)) by lia; apply (KR (RZ - 12) 4%nat); [clear - RZr; zlia | 
+A/AFj1.v	1373	12	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 12) 4%nat _ ltac:(intros k Hk; replace (Kv + RZ - 12) with (Kv + (RZ - 12)) by lia; apply (KR (RZ - 12) 4%nat); [clear - RZr; zlia | 
+A/AFj1.v	1373	4	proof	knock-unmoved	pose proof (VMw (Kv + RZ - 12) 4%nat _ ltac:(intros k Hk; replace (Kv + RZ - 12) with (Kv + (RZ - 12)) by lia; apply (KR (RZ - 12) 4%nat); [clear - RZr; zlia | 
+A/AFj1.v	1374	4	proof	knock-unmoved	pose proof (VMw Pv 4%nat _ ltac:(intros k Hk; destruct (WINT_T (Pv + Z.of_nat k) ltac:(unfold WINT; left; lia)) as [Ra HT]; exact (conj Ra (NTT _ HT))) V7) as V
+A/AFj1.v	1375	1	proof	knock-unmoved	pose proof (VMw (T + t_unwinding) 1%nat _ ltac:(intros k Hk; destruct (WINT_T (T + t_unwinding + Z.of_nat k) ltac:(unfold WINT; right; right; right; lia)) as [R
+A/AFj1.v	1376	1	proof	knock-unmoved	assert (V10w : odd = true -> val_mem tfibsegs (mrestrict (w_H W) mem') PBv 1 (n mod 8)).
+A/AFj1.v	1376	8	proof	knock-unmoved	assert (V10w : odd = true -> val_mem tfibsegs (mrestrict (w_H W) mem') PBv 1 (n mod 8)).
+A/AFj1.v	1377	1	proof	knock-unmoved	{ intros Ho. apply (VMw PBv 1%nat _); [|exact (V10 Ho)]. intros k Hk.
+A/AFj1.v	1394	1	proof	knock-unmoved	assert (ABD0 : AD3j.AR_but_depot AD3j.as_const_g2f B ly (SF 1) W mem' (with_vm_backing (m_vm_lazy md0) mat md0)).
+A/AFj1.v	1401	64	proof	knock-unmoved	set (cP := mkCfg (mkst regs2c (Z_to_bv 64 0x3156c) memD (seg_rom tfibsegs)) md').
+A/AFj1.v	1401	0x3156c	proof	twin-row	set (cP := mkCfg (mkst regs2c (Z_to_bv 64 0x3156c) memD (seg_rom tfibsegs)) md').
+A/AFj1.v	1415	1	proof	knock-unmoved	pose proof (SF_same 1) as (Rregs & Rinit & Rsecs & Rarr & Rres & Rqt & Rqg & Rfs & Rii & Rnev & Rcache & Rdep).
+A/AFj1.v	1416	1	proof	knock-unmoved	assert (DEP1 : st_depot (SF 1) = st_depot (depot_after 1 tr S)) by (unfold SF; rewrite Rdep; unfold depot_after; cbn; reflexivity).
+A/AFj1.v	1416	1	proof	knock-unmoved	assert (DEP1 : st_depot (SF 1) = st_depot (depot_after 1 tr S)) by (unfold SF; rewrite Rdep; unfold depot_after; cbn; reflexivity).
+A/AFj1.v	1417	1	proof	knock-unmoved	assert (ABY : A_bytes (w_A W') <= abudget (SF 1)).
+A/AFj1.v	1419	1	proof	knock-unmoved	assert (DA : depot_abytes (SF 1) = kNodesBlockSize + kStoreBlockSize) by (unfold depot_abytes; rewrite DEP1; unfold depot_after; cbn; rewrite ES; reflexivity).
+A/AFj1.v	1420	0	proof	knock-unmoved	assert (DA0 : depot_abytes S = 0) by (unfold depot_abytes; rewrite ES; reflexivity).
+A/AFj1.v	1426	1	proof	knock-unmoved	B W ly S regsc memc mdc tr ly' W' md' cP (SF 1) mem' ly ly' mdold mdf
+A/AFj1.v	1436	1	proof	knock-unmoved	B W ly S regsc memc mdc tr ly' W' md' cP (SF 1) W' mem' mdf
+A/AFj1.v	1449	2	proof	knock-unmoved	2:{ exfalso. pose proof (depot_ok_mapped B ly _ S (am_depot B ly S _ HARm) NE) as [HNz _]. exact (HNz HN0). }
+A/AFj1.v	1456	0	proof	knock-unmoved	assert (NFZ : forall a, ~ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0))) by (intros a [X|X]; lia).
+A/AFj1.v	1456	0	proof	knock-unmoved	assert (NFZ : forall a, ~ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0))) by (intros a [X|X]; lia).
+A/AFj1.v	1456	0	proof	knock-unmoved	assert (NFZ : forall a, ~ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0))) by (intros a [X|X]; lia).
+A/AFj1.v	1456	0	proof	knock-unmoved	assert (NFZ : forall a, ~ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0))) by (intros a [X|X]; lia).
+A/AFj1.v	1456	0	proof	knock-unmoved	assert (NFZ : forall a, ~ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0))) by (intros a [X|X]; lia).
+A/AFj1.v	1456	0	proof	knock-unmoved	assert (NFZ : forall a, ~ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0))) by (intros a [X|X]; lia).
+A/AFj1.v	1457	0	proof	knock-unmoved	assert (FZD0 : forall a, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) -> ~ aowned B ly S a /\ ~ CZONE a /\ ~ (kLowShadowBeg <= a < kHighShadowEnd))
+A/AFj1.v	1457	0	proof	knock-unmoved	assert (FZD0 : forall a, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) -> ~ aowned B ly S a /\ ~ CZONE a /\ ~ (kLowShadowBeg <= a < kHighShadowEnd))
+A/AFj1.v	1457	0	proof	knock-unmoved	assert (FZD0 : forall a, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) -> ~ aowned B ly S a /\ ~ CZONE a /\ ~ (kLowShadowBeg <= a < kHighShadowEnd))
+A/AFj1.v	1457	0	proof	knock-unmoved	assert (FZD0 : forall a, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) -> ~ aowned B ly S a /\ ~ CZONE a /\ ~ (kLowShadowBeg <= a < kHighShadowEnd))
+A/AFj1.v	1457	0	proof	knock-unmoved	assert (FZD0 : forall a, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) -> ~ aowned B ly S a /\ ~ CZONE a /\ ~ (kLowShadowBeg <= a < kHighShadowEnd))
+A/AFj1.v	1457	0	proof	knock-unmoved	assert (FZD0 : forall a, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) -> ~ aowned B ly S a /\ ~ CZONE a /\ ~ (kLowShadowBeg <= a < kHighShadowEnd))
+A/AFj1.v	1460	0	proof	knock-unmoved	{ intros NE0. apply DEP3. unfold depot_after. destruct (z =? 0); cbn; [exact NE0|]. intros Hc. apply app_eq_nil in Hc as [_ Hc]. discriminate. }
+A/AFj1.v	1461	0	proof	knock-unmoved	assert (PRD0 : forall a, DZONE a \/ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0)) -> apresent (w_H W) mem0 a -> apresent (w_H W) memD a).
+A/AFj1.v	1461	0	proof	knock-unmoved	assert (PRD0 : forall a, DZONE a \/ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0)) -> apresent (w_H W) mem0 a -> apresent (w_H W) memD a).
+A/AFj1.v	1461	0	proof	knock-unmoved	assert (PRD0 : forall a, DZONE a \/ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0)) -> apresent (w_H W) mem0 a -> apresent (w_H W) memD a).
+A/AFj1.v	1461	0	proof	knock-unmoved	assert (PRD0 : forall a, DZONE a \/ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0)) -> apresent (w_H W) mem0 a -> apresent (w_H W) memD a).
+A/AFj1.v	1461	0	proof	knock-unmoved	assert (PRD0 : forall a, DZONE a \/ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0)) -> apresent (w_H W) mem0 a -> apresent (w_H W) memD a).
+A/AFj1.v	1461	0	proof	knock-unmoved	assert (PRD0 : forall a, DZONE a \/ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0)) -> apresent (w_H W) mem0 a -> apresent (w_H W) memD a).
+A/AFj1.v	1463	0	proof	knock-unmoved	assert (EQD0 : forall x : word, DZONE (bv_unsigned x) \/ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> mem' x = memD x).
+A/AFj1.v	1463	0	proof	knock-unmoved	assert (EQD0 : forall x : word, DZONE (bv_unsigned x) \/ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> mem' x = memD x).
+A/AFj1.v	1463	0	proof	knock-unmoved	assert (EQD0 : forall x : word, DZONE (bv_unsigned x) \/ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> mem' x = memD x).
+A/AFj1.v	1463	0	proof	knock-unmoved	assert (EQD0 : forall x : word, DZONE (bv_unsigned x) \/ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> mem' x = memD x).
+A/AFj1.v	1463	0	proof	knock-unmoved	assert (EQD0 : forall x : word, DZONE (bv_unsigned x) \/ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> mem' x = memD x).
+A/AFj1.v	1463	0	proof	knock-unmoved	assert (EQD0 : forall x : word, DZONE (bv_unsigned x) \/ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> mem' x = memD x).
+A/AFj1.v	1465	0	proof	knock-unmoved	assert (MEQF0 : forall x : word, ~ WIN odd (bv_unsigned x) -> ~ DZONE (bv_unsigned x) -> ~ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) ->
+A/AFj1.v	1465	0	proof	knock-unmoved	assert (MEQF0 : forall x : word, ~ WIN odd (bv_unsigned x) -> ~ DZONE (bv_unsigned x) -> ~ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) ->
+A/AFj1.v	1465	0	proof	knock-unmoved	assert (MEQF0 : forall x : word, ~ WIN odd (bv_unsigned x) -> ~ DZONE (bv_unsigned x) -> ~ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) ->
+A/AFj1.v	1465	0	proof	knock-unmoved	assert (MEQF0 : forall x : word, ~ WIN odd (bv_unsigned x) -> ~ DZONE (bv_unsigned x) -> ~ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) ->
+A/AFj1.v	1465	0	proof	knock-unmoved	assert (MEQF0 : forall x : word, ~ WIN odd (bv_unsigned x) -> ~ DZONE (bv_unsigned x) -> ~ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) ->
+A/AFj1.v	1465	0	proof	knock-unmoved	assert (MEQF0 : forall x : word, ~ WIN odd (bv_unsigned x) -> ~ DZONE (bv_unsigned x) -> ~ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) ->
+A/AFj1.v	1466	8	proof	knock-unmoved	~ (Kv + RZ <= bv_unsigned x < Kv + RZ + n) -> ~ (SUv <= bv_unsigned x < SUv + N8D / 8) -> mem' x = mem0 x).
+A/AFj1.v	1468	0	proof	knock-unmoved	eapply AR_transport with (zn := 0) (ln := 0) (zs := 0) (ls := 0) (memD := memD) (odd := odd);
+A/AFj1.v	1468	0	proof	knock-unmoved	eapply AR_transport with (zn := 0) (ln := 0) (zs := 0) (ls := 0) (memD := memD) (odd := odd);
+A/AFj1.v	1468	0	proof	knock-unmoved	eapply AR_transport with (zn := 0) (ln := 0) (zs := 0) (ls := 0) (memD := memD) (odd := odd);
+A/AFj1.v	1468	0	proof	knock-unmoved	eapply AR_transport with (zn := 0) (ln := 0) (zs := 0) (ls := 0) (memD := memD) (odd := odd);
+A/AFj2.v	355	0	proof	knock-unmoved	{ intros a Ha. assert (Ra : 0 <= a < 2 ^ 64) by (unfold AD3j.tfib_dzone_lo, AD3j.tfib_dzone_hi in Ha; lia).
+A/AFj2.v	355	2	proof	knock-unmoved	{ intros a Ha. assert (Ra : 0 <= a < 2 ^ 64) by (unfold AD3j.tfib_dzone_lo, AD3j.tfib_dzone_hi in Ha; lia).
+A/AFj2.v	355	64	proof	knock-unmoved	{ intros a Ha. assert (Ra : 0 <= a < 2 ^ 64) by (unfold AD3j.tfib_dzone_lo, AD3j.tfib_dzone_hi in Ha; lia).
+A/AFj6.v	769	5	statement	knock-unmoved	Variables (regs0 : bvmap 5 word) (mem0 : word -> option byte) (md0 : Model) (n : Z) (ch : list (Z * Z * Z)).
+A/AFj6.v	771	2	statement	knock-unmoved	Let sp0 : Z := bv_unsigned (getr regs0 2).
+A/AFj6.v	772	1	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFj6.v	772	31	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFj6.v	772	0	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFj6.v	772	16	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFj6.v	772	2	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFj6.v	772	16	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFj6.v	772	2	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFj6.v	772	32	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFj6.v	772	1	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFj6.v	772	16	statement	knock-unmoved	Hypotheses (Hcl : 1 <= cl <= 31) (Hv : 0 <= v /\ 16 * v + 2 ^ 16 <= 2 ^ 32) (Hcnt : 1 <= cnt <= 16).
+A/AFj6.v	773	2	statement	knock-unmoved	Hypothesis Hv2 : v mod 2 = 0.
+A/AFj6.v	773	0	statement	knock-unmoved	Hypothesis Hv2 : v mod 2 = 0.
+A/AFj6.v	776	16	statement	knock-unmoved	Hypothesis Hsp : ly_stk_lo ly + ASTACK <= sp0 /\ ly_bot ly < sp0 /\ sp0 <= ly_stk_hi ly /\ sp0 mod 16 = 0.
+A/AFj6.v	776	0	statement	knock-unmoved	Hypothesis Hsp : ly_stk_lo ly + ASTACK <= sp0 /\ ly_bot ly < sp0 /\ sp0 <= ly_stk_hi ly /\ sp0 mod 16 = 0.
+A/AFj6.v	778	0	statement	knock-unmoved	Hypothesis Nrange : 0 <= n <= 48.
+A/AFj6.v	778	48	statement	knock-unmoved	Hypothesis Nrange : 0 <= n <= 48.
+A/AFj6.v	781	8	statement	knock-unmoved	~ WIN ly regs0 n cl v odd a /\ ~ (Kv ly cl v + RZ <= a < Kv ly cl v + RZ + NPv n) /\ ~ (SUv ly cl v <= a < SUv ly cl v + N8D n / 8) /\
+A/AFj6.v	804	64	proof	knock-unmoved	intros W' m a Hle [Hh Hb]. split; [|exact Hb]. destruct (w_H W' (Z_to_bv 64 a)) eqn:E; [|reflexivity].
+A/AFjb.v	415	1	statement	knock-unmoved	(st_depot S = [] -> z = 1 /\ exists (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (regs2 : bvmap 5 word),
+A/AFjb.v	415	5	statement	knock-unmoved	(st_depot S = [] -> z = 1 /\ exists (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (regs2 : bvmap 5 word),
+A/AFjb.v	415	5	statement	knock-unmoved	(st_depot S = [] -> z = 1 /\ exists (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (regs2 : bvmap 5 word),
+A/AFjb.v	418	64	statement	knock-unmoved	(mkCfg (mkst regs2 (Z_to_bv 64 0x3156c) mem2 (seg_rom tfibsegs)) md')).
+A/AFjb.v	418	0x3156c	statement	twin-row	(mkCfg (mkst regs2 (Z_to_bv 64 0x3156c) mem2 (seg_rom tfibsegs)) md')).
+A/AFjb.v	472	0	proof	knock-unmoved	assert (FPZ : ly_NB ly' <> 0 -> ly_SB ly' <> 0 -> forall x : word, depot_footprint B ly' (bv_unsigned x) -> DZONE_at ly' (bv_unsigned x)).
+A/AFjb.v	472	0	proof	knock-unmoved	assert (FPZ : ly_NB ly' <> 0 -> ly_SB ly' <> 0 -> forall x : word, depot_footprint B ly' (bv_unsigned x) -> DZONE_at ly' (bv_unsigned x)).
+A/AFjb.v	481	1	proof	knock-unmoved	assert (ES' : st_depot (depot_after 1 tr S) = [tr]) by (unfold depot_after; cbn; rewrite E0; reflexivity).
+A/AFjb.v	482	1	proof	knock-unmoved	exists 1, regs', mem'. split; [rewrite EC, R1; reflexivity|]. split; [exact RP|].
+A/AFjb.v	485	64	proof	knock-unmoved	assert (EC' : c' = mkCfg (mkst regs' (Z_to_bv 64 0x3156c) mem' (seg_rom tfibsegs)) md') by (rewrite EC, R1; reflexivity).
+A/AFjb.v	485	0x3156c	proof	twin-row	assert (EC' : c' = mkCfg (mkst regs' (Z_to_bv 64 0x3156c) mem' (seg_rom tfibsegs)) md') by (rewrite EC, R1; reflexivity).
+A/AFjb.v	495	0	proof	knock-unmoved	{ unfold depot_after. destruct (z =? 0); cbn; [exact NE|]. intros Hc. apply app_eq_nil in Hc as [_ Hc]. discriminate. }
+A/AFjb.v	552	64	statement	knock-unmoved	H' (Z_to_bv 64 a) = H (Z_to_bv 64 a) -> mem' (Z_to_bv 64 a) = mem (Z_to_bv 64 a) -> aview tfibsegs H' mem' a = aview tfibsegs H mem a.
+A/AFjb.v	552	64	statement	knock-unmoved	H' (Z_to_bv 64 a) = H (Z_to_bv 64 a) -> mem' (Z_to_bv 64 a) = mem (Z_to_bv 64 a) -> aview tfibsegs H' mem' a = aview tfibsegs H mem a.
+A/AFjb.v	552	64	statement	knock-unmoved	H' (Z_to_bv 64 a) = H (Z_to_bv 64 a) -> mem' (Z_to_bv 64 a) = mem (Z_to_bv 64 a) -> aview tfibsegs H' mem' a = aview tfibsegs H mem a.
+A/AFjb.v	552	64	statement	knock-unmoved	H' (Z_to_bv 64 a) = H (Z_to_bv 64 a) -> mem' (Z_to_bv 64 a) = mem (Z_to_bv 64 a) -> aview tfibsegs H' mem' a = aview tfibsegs H mem a.
+A/AFjf.v	87	0	statement	knock-unmoved	Lemma depot_abytes_nil : forall s, st_depot s = [] -> depot_abytes s = 0.
+A/AFjf.v	384	0	proof	knock-unmoved	| ANum z, AV _ => negb (z =? TFIB_STORE + AD3c.ss_alloc) || Nat.eqb (c_w c0) 0
+A/AFjf.v	419	0	proof	knock-unmoved	Proof. intros HNE. unfold depot_after. destruct (z =? 0); cbn; [exact HNE|]. intros Hc. apply app_eq_nil in Hc as [_ Hc]. discriminate. Qed.
+A/AFjf.v	914	1	statement	knock-unmoved	flat_map (region_cells S1) (zseq 1 31) ++ flat_map (cache_cells S1) (zseq 1 31) ++ flat_map chunk_cells (st_chunks S1)
+A/AFjf.v	914	31	statement	knock-unmoved	flat_map (region_cells S1) (zseq 1 31) ++ flat_map (cache_cells S1) (zseq 1 31) ++ flat_map chunk_cells (st_chunks S1)
+A/AFjf.v	914	1	statement	knock-unmoved	flat_map (region_cells S1) (zseq 1 31) ++ flat_map (cache_cells S1) (zseq 1 31) ++ flat_map chunk_cells (st_chunks S1)
+A/AFjf.v	914	31	statement	knock-unmoved	flat_map (region_cells S1) (zseq 1 31) ++ flat_map (cache_cells S1) (zseq 1 31) ++ flat_map chunk_cells (st_chunks S1)
+A/AFjf.v	1131	0	statement	knock-unmoved	Lemma areas_nd : forall r, In r (aareas (SF z)) -> fst r <> ANB 0 -> fst r <> ASB 0 -> In r (aareas S).
+A/AFjf.v	1131	0	statement	knock-unmoved	Lemma areas_nd : forall r, In r (aareas (SF z)) -> fst r <> ANB 0 -> fst r <> ASB 0 -> In r (aareas S).
+A/AFjf.v	1139	0	statement	knock-unmoved	Lemma vis_areas_nd : forall r, In r (aareas (SF z)) -> fst r <> ANB 0 -> fst r <> ASB 0 -> range_vis B ly rd' r.
+A/AFjf.v	1139	0	statement	knock-unmoved	Lemma vis_areas_nd : forall r, In r (aareas (SF z)) -> fst r <> ANB 0 -> fst r <> ASB 0 -> range_vis B ly rd' r.
+A/AFjf.v	1161	0x172648	proof	twin-row	destruct (Z_lt_le_dec (aeval B ly (c_at c) + k) 0x172648) as [Hlo|Hge].
+A/AFjf.v	1163	0	proof	knock-unmoved	assert (NBc : snd (nb_ext ly) = 0 \/ snd (nb_ext ly) = kNodesBlockSize) by (rewrite nb_ext_eq; destruct (ly_NB ly =? 0); [left | right]; reflexivity).
+A/AFjf.v	1163	0	proof	knock-unmoved	assert (NBc : snd (nb_ext ly) = 0 \/ snd (nb_ext ly) = kNodesBlockSize) by (rewrite nb_ext_eq; destruct (ly_NB ly =? 0); [left | right]; reflexivity).
+A/AFjf.v	1164	0	proof	knock-unmoved	assert (SBc : snd (sb_ext ly) = 0 \/ snd (sb_ext ly) = kStoreBlockSize) by (rewrite sb_ext_eq; destruct (ly_SB ly =? 0); [left | right]; reflexivity).
+A/AFjf.v	1164	0	proof	knock-unmoved	assert (SBc : snd (sb_ext ly) = 0 \/ snd (sb_ext ly) = kStoreBlockSize) by (rewrite sb_ext_eq; destruct (ly_SB ly =? 0); [left | right]; reflexivity).
+A/AFjf.v	1166	0x5c2dd0	proof	twin-row	* destruct (Z_lt_le_dec (aeval B ly (c_at c) + k) 0x5c2dd0) as [Hlo2|Hge2].
+A/AFjf.v	1170	4	proof	knock-unmoved	pose proof (pairwise_ij _ _ 4 2 _ _ (lo_disj ly LY) (nb_ext_nth_st ly) eq_refl) as DNB. pose proof (pairwise_ij _ _ 5 1 _ _ (lo_disj ly LY) (sb_ext_nth_st ly) e
+A/AFjf.v	1170	2	proof	knock-unmoved	pose proof (pairwise_ij _ _ 4 2 _ _ (lo_disj ly LY) (nb_ext_nth_st ly) eq_refl) as DNB. pose proof (pairwise_ij _ _ 5 1 _ _ (lo_disj ly LY) (sb_ext_nth_st ly) e
+A/AFjf.v	1170	5	proof	knock-unmoved	pose proof (pairwise_ij _ _ 4 2 _ _ (lo_disj ly LY) (nb_ext_nth_st ly) eq_refl) as DNB. pose proof (pairwise_ij _ _ 5 1 _ _ (lo_disj ly LY) (sb_ext_nth_st ly) e
+A/AFjf.v	1170	1	proof	knock-unmoved	pose proof (pairwise_ij _ _ 4 2 _ _ (lo_disj ly LY) (nb_ext_nth_st ly) eq_refl) as DNB. pose proof (pairwise_ij _ _ 5 1 _ _ (lo_disj ly LY) (sb_ext_nth_st ly) e
+A/AFjf.v	1230	0	proof	knock-unmoved	{ apply depot_abytes_ne. rewrite Rdep. destruct (z =? 0); [exact HNE|]. intros Hc. apply app_eq_nil in Hc as [_ Hc]. discriminate. }
+A/AFjf.v	1286	0	proof	knock-unmoved	{ apply depot_abytes_mono. intros HNE0. rewrite Rdep. destruct (z =? 0); [exact HNE0|]. intros Hc. apply app_eq_nil in Hc as [_ Hc]. discriminate. }
+A/AFjf.v	1293	0	statement	knock-unmoved	Definition fput (nb sb : Z) : Prop := ly_NB ly = 0 /\ ly_SB ly = 0 /\
+A/AFjf.v	1293	0	statement	knock-unmoved	Definition fput (nb sb : Z) : Prop := ly_NB ly = 0 /\ ly_SB ly = 0 /\
+A/AFjf.v	1308	0	statement	knock-unmoved	Lemma blk_XC : forall nb sb, fput nb sb -> forall odd a, XC odd a -> 0 <= a < 2 ^ 64 /\ ~ blk nb sb a.
+A/AFjf.v	1308	2	statement	knock-unmoved	Lemma blk_XC : forall nb sb, fput nb sb -> forall odd a, XC odd a -> 0 <= a < 2 ^ 64 /\ ~ blk nb sb a.
+A/AFjf.v	1308	64	statement	knock-unmoved	Lemma blk_XC : forall nb sb, fput nb sb -> forall odd a, XC odd a -> 0 <= a < 2 ^ 64 /\ ~ blk nb sb a.
+A/AFjf.v	1311	0x2008fff7000	proof	knock-unmoved	assert (Hw : (T <= a < T + kThreadObjSize /\ WINT a) \/ (Kv <= a < Kv + class_size cl) \/ (0x2008fff7000 <= a < kHighMemBeg) \/
+A/AFjf.v	1312	0x172648	proof	twin-row	(0x172648 <= a < 0x5c2dd0) \/ (fst (nb_ext ly) <= a < fst (nb_ext ly) + snd (nb_ext ly)) \/ (fst (sb_ext ly) <= a < fst (sb_ext ly) + snd (sb_ext ly))).
+A/AFjf.v	1312	0x5c2dd0	proof	twin-row	(0x172648 <= a < 0x5c2dd0) \/ (fst (nb_ext ly) <= a < fst (nb_ext ly) + snd (nb_ext ly)) \/ (fst (sb_ext ly) <= a < fst (sb_ext ly) + snd (sb_ext ly))).
+A/AFjf.v	1323	3	proof	knock-unmoved	- do 3 right. left. zlia.
+A/AFjf.v	1324	4	proof	knock-unmoved	- do 4 right. left. zlia.
+A/AFjf.v	1325	5	proof	knock-unmoved	- do 5 right. zlia. }
+A/AFjf.v	1340	0	statement	knock-unmoved	Lemma blk_stk : forall nb sb, fput nb sb -> forall a, sp0 - ASTACK <= a < sp0 -> 0 <= a < 2 ^ 64 /\ ~ blk nb sb a.
+A/AFjf.v	1340	2	statement	knock-unmoved	Lemma blk_stk : forall nb sb, fput nb sb -> forall a, sp0 - ASTACK <= a < sp0 -> 0 <= a < 2 ^ 64 /\ ~ blk nb sb a.
+A/AFjf.v	1340	64	statement	knock-unmoved	Lemma blk_stk : forall nb sb, fput nb sb -> forall a, sp0 - ASTACK <= a < sp0 -> 0 <= a < 2 ^ 64 /\ ~ blk nb sb a.
+A/AFjf.v	1344	64	proof	knock-unmoved	- pose proof (bv_unsigned_in_range 64 (getr regs0 2)) as R. change (bv_modulus 64) with (2 ^ 64) in R. unfold sp0 in *.
+A/AFjf.v	1344	2	proof	knock-unmoved	- pose proof (bv_unsigned_in_range 64 (getr regs0 2)) as R. change (bv_modulus 64) with (2 ^ 64) in R. unfold sp0 in *.
+A/AFjf.v	1344	64	proof	knock-unmoved	- pose proof (bv_unsigned_in_range 64 (getr regs0 2)) as R. change (bv_modulus 64) with (2 ^ 64) in R. unfold sp0 in *.
+A/AFjf.v	1344	2	proof	knock-unmoved	- pose proof (bv_unsigned_in_range 64 (getr regs0 2)) as R. change (bv_modulus 64) with (2 ^ 64) in R. unfold sp0 in *.
+A/AFjf.v	1344	64	proof	knock-unmoved	- pose proof (bv_unsigned_in_range 64 (getr regs0 2)) as R. change (bv_modulus 64) with (2 ^ 64) in R. unfold sp0 in *.
+A/AFjf.v	1355	256	proof	knock-unmoved	- apply (blk_ebn nb sb FP (ly_C ly, 256)); [unfold AD3g.ext_but_NB; cbn; tauto | cbn [fst snd]; lia].
+A/AFjf.v	1358	4096	proof	knock-unmoved	- apply (blk_ebn nb sb FP (ly_D ly, 4096)); [unfold AD3g.ext_but_NB; cbn; tauto | cbn [fst snd]; lia].
+A/AFjf.v	1374	256	proof	knock-unmoved	- unfold in_zr in Ho. apply (blk_ebn nb sb FP (ly_C ly, 256) a); [unfold AD3g.ext_but_NB; cbn; tauto | exact Ho | exact Hb].
+A/AFjf.v	1386	64	statement	knock-unmoved	Lemma apresent_HW : forall (Hh Hh' : word -> bool) m a, Hh' (Z_to_bv 64 a) = Hh (Z_to_bv 64 a) -> apresent Hh' m a -> apresent Hh m a.
+A/AFjf.v	1386	64	statement	knock-unmoved	Lemma apresent_HW : forall (Hh Hh' : word -> bool) m a, Hh' (Z_to_bv 64 a) = Hh (Z_to_bv 64 a) -> apresent Hh' m a -> apresent Hh m a.
+A/AFjf.v	1389	64	statement	knock-unmoved	(forall k, (k < w)%nat -> Hh' (Z_to_bv 64 (a + Z.of_nat k)) = Hh (Z_to_bv 64 (a + Z.of_nat k))) ->
+A/AFjf.v	1389	64	statement	knock-unmoved	(forall k, (k < w)%nat -> Hh' (Z_to_bv 64 (a + Z.of_nat k)) = Hh (Z_to_bv 64 (a + Z.of_nat k))) ->
+A/AFjf.v	1403	2	proof	knock-unmoved	2: {
+A/AFjf.v	1416	0	proof	knock-unmoved	assert (FZD0 : forall a : Z, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) ->
+A/AFjf.v	1416	0	proof	knock-unmoved	assert (FZD0 : forall a : Z, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) ->
+A/AFjf.v	1416	0	proof	knock-unmoved	assert (FZD0 : forall a : Z, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) ->
+A/AFjf.v	1416	0	proof	knock-unmoved	assert (FZD0 : forall a : Z, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) ->
+A/AFjf.v	1416	0	proof	knock-unmoved	assert (FZD0 : forall a : Z, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) ->
+A/AFjf.v	1416	0	proof	knock-unmoved	assert (FZD0 : forall a : Z, (0 <= a < 0 + 0) \/ (0 <= a < 0 + 0) ->
+A/AFjf.v	1419	0	proof	knock-unmoved	assert (PRD0 : forall a, DZONE a \/ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0)) -> apresent (w_H W) mem0 a -> apresent (w_H W) memD a)
+A/AFjf.v	1419	0	proof	knock-unmoved	assert (PRD0 : forall a, DZONE a \/ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0)) -> apresent (w_H W) mem0 a -> apresent (w_H W) memD a)
+A/AFjf.v	1419	0	proof	knock-unmoved	assert (PRD0 : forall a, DZONE a \/ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0)) -> apresent (w_H W) mem0 a -> apresent (w_H W) memD a)
+A/AFjf.v	1419	0	proof	knock-unmoved	assert (PRD0 : forall a, DZONE a \/ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0)) -> apresent (w_H W) mem0 a -> apresent (w_H W) memD a)
+A/AFjf.v	1419	0	proof	knock-unmoved	assert (PRD0 : forall a, DZONE a \/ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0)) -> apresent (w_H W) mem0 a -> apresent (w_H W) memD a)
+A/AFjf.v	1419	0	proof	knock-unmoved	assert (PRD0 : forall a, DZONE a \/ ((0 <= a < 0 + 0) \/ (0 <= a < 0 + 0)) -> apresent (w_H W) mem0 a -> apresent (w_H W) memD a)
+A/AFjf.v	1421	0	proof	knock-unmoved	assert (EQD0 : forall x : word, DZONE (bv_unsigned x) \/ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> mem' x = memD x)
+A/AFjf.v	1421	0	proof	knock-unmoved	assert (EQD0 : forall x : word, DZONE (bv_unsigned x) \/ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> mem' x = memD x)
+A/AFjf.v	1421	0	proof	knock-unmoved	assert (EQD0 : forall x : word, DZONE (bv_unsigned x) \/ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> mem' x = memD x)
+A/AFjf.v	1421	0	proof	knock-unmoved	assert (EQD0 : forall x : word, DZONE (bv_unsigned x) \/ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> mem' x = memD x)
+A/AFjf.v	1421	0	proof	knock-unmoved	assert (EQD0 : forall x : word, DZONE (bv_unsigned x) \/ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> mem' x = memD x)
+A/AFjf.v	1421	0	proof	knock-unmoved	assert (EQD0 : forall x : word, DZONE (bv_unsigned x) \/ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> mem' x = memD x)
+A/AFjf.v	1424	0	proof	knock-unmoved	~ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> ~ (Kv + RZ <= bv_unsigned x < Kv + RZ + NPv) ->
+A/AFjf.v	1424	0	proof	knock-unmoved	~ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> ~ (Kv + RZ <= bv_unsigned x < Kv + RZ + NPv) ->
+A/AFjf.v	1424	0	proof	knock-unmoved	~ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> ~ (Kv + RZ <= bv_unsigned x < Kv + RZ + NPv) ->
+A/AFjf.v	1424	0	proof	knock-unmoved	~ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> ~ (Kv + RZ <= bv_unsigned x < Kv + RZ + NPv) ->
+A/AFjf.v	1424	0	proof	knock-unmoved	~ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> ~ (Kv + RZ <= bv_unsigned x < Kv + RZ + NPv) ->
+A/AFjf.v	1424	0	proof	knock-unmoved	~ ((0 <= bv_unsigned x < 0 + 0) \/ (0 <= bv_unsigned x < 0 + 0)) -> ~ (Kv + RZ <= bv_unsigned x < Kv + RZ + NPv) ->
+A/AFjf.v	1425	8	proof	knock-unmoved	~ (SUv <= bv_unsigned x < SUv + N8D / 8) -> mem' x = mem0 x)
+A/AFjf.v	1427	0	proof	knock-unmoved	eapply AR_transport with (zn := 0) (ln := 0) (zs := 0) (ls := 0); eassumption. }
+A/AFjf.v	1427	0	proof	knock-unmoved	eapply AR_transport with (zn := 0) (ln := 0) (zs := 0) (ls := 0); eassumption. }
+A/AFjf.v	1427	0	proof	knock-unmoved	eapply AR_transport with (zn := 0) (ln := 0) (zs := 0) (ls := 0); eassumption. }
+A/AFjf.v	1427	0	proof	knock-unmoved	eapply AR_transport with (zn := 0) (ln := 0) (zs := 0) (ls := 0); eassumption. }
+A/AFjf.v	1448	0	proof	knock-unmoved	assert (WHZ : forall a, 0 <= a < 2 ^ 64 -> ~ ((nb <= a < nb + kNodesBlockSize) \/ (sb <= a < sb + kStoreBlockSize)) ->
+A/AFjf.v	1448	2	proof	knock-unmoved	assert (WHZ : forall a, 0 <= a < 2 ^ 64 -> ~ ((nb <= a < nb + kNodesBlockSize) \/ (sb <= a < sb + kStoreBlockSize)) ->
+A/AFjf.v	1448	64	proof	knock-unmoved	assert (WHZ : forall a, 0 <= a < 2 ^ 64 -> ~ ((nb <= a < nb + kNodesBlockSize) \/ (sb <= a < sb + kStoreBlockSize)) ->
+A/AFjf.v	1449	64	proof	knock-unmoved	w_H W' (Z_to_bv 64 a) = w_H W (Z_to_bv 64 a)).
+A/AFjf.v	1449	64	proof	knock-unmoved	w_H W' (Z_to_bv 64 a) = w_H W (Z_to_bv 64 a)).
+A/AFjf.v	1451	64	proof	knock-unmoved	assert (TW : forall a, XC odd a -> w_H W' (Z_to_bv 64 a) = w_H W (Z_to_bv 64 a))
+A/AFjf.v	1451	64	proof	knock-unmoved	assert (TW : forall a, XC odd a -> w_H W' (Z_to_bv 64 a) = w_H W (Z_to_bv 64 a))
+A/AFjf.v	1459	16	proof	knock-unmoved	assert (V3 : val_mem tfibsegs (mrestrict (w_H W) mem') (Kv + RZ - 16) 1 2)
+A/AFjf.v	1459	1	proof	knock-unmoved	assert (V3 : val_mem tfibsegs (mrestrict (w_H W) mem') (Kv + RZ - 16) 1 2)
+A/AFjf.v	1459	2	proof	knock-unmoved	assert (V3 : val_mem tfibsegs (mrestrict (w_H W) mem') (Kv + RZ - 16) 1 2)
+A/AFjf.v	1461	15	proof	knock-unmoved	assert (V4 : val_mem tfibsegs (mrestrict (w_H W) mem') (Kv + RZ - 15) 1 (hdr_byte1 jb))
+A/AFjf.v	1461	1	proof	knock-unmoved	assert (V4 : val_mem tfibsegs (mrestrict (w_H W) mem') (Kv + RZ - 15) 1 (hdr_byte1 jb))
+A/AFjf.v	1463	14	proof	knock-unmoved	assert (V5 : val_mem tfibsegs (mrestrict (w_H W) mem') (Kv + RZ - 14) 2 0)
+A/AFjf.v	1463	2	proof	knock-unmoved	assert (V5 : val_mem tfibsegs (mrestrict (w_H W) mem') (Kv + RZ - 14) 2 0)
+A/AFjf.v	1463	0	proof	knock-unmoved	assert (V5 : val_mem tfibsegs (mrestrict (w_H W) mem') (Kv + RZ - 14) 2 0)
+A/AFjf.v	1465	12	proof	knock-unmoved	assert (V6 : val_mem tfibsegs (mrestrict (w_H W) mem') (Kv + RZ - 12) 4 NPv)
+A/AFjf.v	1465	4	proof	knock-unmoved	assert (V6 : val_mem tfibsegs (mrestrict (w_H W) mem') (Kv + RZ - 12) 4 NPv)
+A/AFjf.v	1467	4	proof	knock-unmoved	assert (V7 : val_mem tfibsegs (mrestrict (w_H W) mem') Pv 4 (cnt - 1))
+A/AFjf.v	1467	1	proof	knock-unmoved	assert (V7 : val_mem tfibsegs (mrestrict (w_H W) mem') Pv 4 (cnt - 1))
+A/AFjf.v	1469	1	proof	knock-unmoved	assert (V8 : val_mem tfibsegs (mrestrict (w_H W) mem') (T + t_unwinding) 1 0)
+A/AFjf.v	1469	0	proof	knock-unmoved	assert (V8 : val_mem tfibsegs (mrestrict (w_H W) mem') (T + t_unwinding) 1 0)
+A/AFjf.v	1471	1	proof	knock-unmoved	assert (V10 : odd = true -> val_mem tfibsegs (mrestrict (w_H W) mem') PBv 1 (NPv mod 8)).
+A/AFjf.v	1471	8	proof	knock-unmoved	assert (V10 : odd = true -> val_mem tfibsegs (mrestrict (w_H W) mem') PBv 1 (NPv mod 8)).
+A/AFjf.v	1478	8	proof	knock-unmoved	~ (Kv + RZ <= bv_unsigned x < Kv + RZ + NPv) -> ~ (SUv <= bv_unsigned x < SUv + N8D / 8) -> mem' x = mem0 x).
+A/AFjf.v	1495	1	proof	knock-unmoved	assert (ABD : AD3j.AR_but_depot AD3j.as_const_g2f B ly (SF 1) W mem' (with_vm_backing (m_vm_lazy md0) mat md0)).
+A/AFjf.v	1510	1	proof	knock-unmoved	pose proof (SF_same 1) as (Rregs & Rinit & Rsecs & Rarr & Rres & Rqt & Rqg & Rfs & Rii & Rnev & Rcache & Rdep).
+A/AFjf.v	1511	1	proof	knock-unmoved	assert (AB : A_bytes (w_A W') <= abudget (SF 1)).
+A/AFjf.v	1514	1	proof	knock-unmoved	assert (DA1 : depot_abytes (st_final S cl l off n tr 1) = kNodesBlockSize + kStoreBlockSize).
+A/AFjf.v	1521	1	proof	knock-unmoved	B W ly S regsP memP mdP tr ly' W' md' _ (SF 1) mem' ly ly' (with_vm_backing (m_vm_lazy md0) mat md0) (with_vm_backing (m_vm_lazy md') mat md')
+A/AFjf.v	1527	1	proof	knock-unmoved	B W ly S regsP memP mdP tr ly' W' md' _ (SF 1) W' mem' (with_vm_backing (m_vm_lazy md') mat md')
+A/AFjg.v	363	0	proof	knock-unmoved	assert (Ra : 0 <= a < 2 ^ 64) by (unfold AD3j.tfib_dzone_lo, AD3j.tfib_dzone_hi in Ha; lia).
+A/AFjg.v	363	2	proof	knock-unmoved	assert (Ra : 0 <= a < 2 ^ 64) by (unfold AD3j.tfib_dzone_lo, AD3j.tfib_dzone_hi in Ha; lia).
+A/AFjg.v	363	64	proof	knock-unmoved	assert (Ra : 0 <= a < 2 ^ 64) by (unfold AD3j.tfib_dzone_lo, AD3j.tfib_dzone_hi in Ha; lia).
+A/AFjp.v	653	256	statement	knock-unmoved	zdisjoint (ly_C ly, 256) (nb_ext l) /\ zdisjoint (ly_C ly, 256) (sb_ext l).
+A/AFjp.v	653	256	statement	knock-unmoved	zdisjoint (ly_C ly, 256) (nb_ext l) /\ zdisjoint (ly_C ly, 256) (sb_ext l).
+A/AFjp.v	682	0	statement	knock-unmoved	(forall a, base_val E' (YP09.r_base r) + YP09.r_lo r <= a < base_val E' (YP09.r_base r) + YP09.r_hi r -> ~ DX_at l a /\ 0 <= a < 2 ^ 64).
+A/AFjp.v	682	2	statement	knock-unmoved	(forall a, base_val E' (YP09.r_base r) + YP09.r_lo r <= a < base_val E' (YP09.r_base r) + YP09.r_hi r -> ~ DX_at l a /\ 0 <= a < 2 ^ 64).
+A/AFjp.v	682	64	statement	knock-unmoved	(forall a, base_val E' (YP09.r_base r) + YP09.r_lo r <= a < base_val E' (YP09.r_base r) + YP09.r_hi r -> ~ DX_at l a /\ 0 <= a < 2 ^ 64).
+A/AFjp.v	698	0	proof	knock-unmoved	assert (NBc : (nb_ext l).2 = 0 \/ (nb_ext l).2 = kNodesBlockSize) by (rewrite nb_ext_eq; destruct (ly_NB l =? 0); [left | right]; reflexivity).
+A/AFjp.v	698	0	proof	knock-unmoved	assert (NBc : (nb_ext l).2 = 0 \/ (nb_ext l).2 = kNodesBlockSize) by (rewrite nb_ext_eq; destruct (ly_NB l =? 0); [left | right]; reflexivity).
+A/AFjp.v	699	0	proof	knock-unmoved	assert (SBc : (sb_ext l).2 = 0 \/ (sb_ext l).2 = kStoreBlockSize) by (rewrite sb_ext_eq; destruct (ly_SB l =? 0); [left | right]; reflexivity).
+A/AFjp.v	699	0	proof	knock-unmoved	assert (SBc : (sb_ext l).2 = 0 \/ (sb_ext l).2 = kStoreBlockSize) by (rewrite sb_ext_eq; destruct (ly_SB l =? 0); [left | right]; reflexivity).
+A/AFjp.v	722	0	statement	knock-unmoved	(forall a, base_val E' (YP09.r_base r) + YP09.r_lo r <= a < base_val E' (YP09.r_base r) + YP09.r_hi r -> ~ DX a /\ 0 <= a < 2 ^ 64).
+A/AFjp.v	722	2	statement	knock-unmoved	(forall a, base_val E' (YP09.r_base r) + YP09.r_lo r <= a < base_val E' (YP09.r_base r) + YP09.r_hi r -> ~ DX a /\ 0 <= a < 2 ^ 64).
+A/AFjp.v	722	64	statement	knock-unmoved	(forall a, base_val E' (YP09.r_base r) + YP09.r_lo r <= a < base_val E' (YP09.r_base r) + YP09.r_hi r -> ~ DX a /\ 0 <= a < 2 ^ 64).
+A/AFjp.v	769	64	proof	knock-unmoved	intros W1 W2 m a Hle [Hh Hb]. split; [|exact Hb]. destruct (w_H W2 (Z_to_bv 64 a)) eqn:E; [|reflexivity].
+A/AFjp.v	777	64	proof	knock-unmoved	assert (He : m (Z_to_bv 64 a) = mem0 (Z_to_bv 64 a)).
+A/AFjp.v	777	64	proof	knock-unmoved	assert (He : m (Z_to_bv 64 a) = mem0 (Z_to_bv 64 a)).
+A/AFjp.v	786	0	statement	knock-unmoved	(forall k, 0 <= k < Z.max 1 (Z.of_nat (c_w c)) -> rd' (aeval B ly (c_at c) + k) = rd (aeval B ly (c_at c) + k)) ->
+A/AFjp.v	786	1	statement	knock-unmoved	(forall k, 0 <= k < Z.max 1 (Z.of_nat (c_w c)) -> rd' (aeval B ly (c_at c) + k) = rd (aeval B ly (c_at c) + k)) ->
+A/AFju.v	754	1	statement	knock-unmoved	(st_depot S = [] -> z = 1 /\ exists (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (regs2 : bvmap 5 word),
+A/AFju.v	754	5	statement	knock-unmoved	(st_depot S = [] -> z = 1 /\ exists (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (regs2 : bvmap 5 word),
+A/AFju.v	754	5	statement	knock-unmoved	(st_depot S = [] -> z = 1 /\ exists (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (regs2 : bvmap 5 word),
+A/AFju.v	757	64	statement	knock-unmoved	(mkCfg (mkst regs2 (Z_to_bv 64 0x3156c) mem2 (seg_rom tfibsegs)) md')).
+A/AFju.v	757	0x3156c	statement	twin-row	(mkCfg (mkst regs2 (Z_to_bv 64 0x3156c) mem2 (seg_rom tfibsegs)) md')).
+A/AFju.v	834	0	proof	knock-unmoved	assert (FPZ : ly_NB ly' <> 0 -> ly_SB ly' <> 0 -> forall x : word, depot_footprint B ly' (bv_unsigned x) -> DZONE_at ly' (bv_unsigned x)).
+A/AFju.v	834	0	proof	knock-unmoved	assert (FPZ : ly_NB ly' <> 0 -> ly_SB ly' <> 0 -> forall x : word, depot_footprint B ly' (bv_unsigned x) -> DZONE_at ly' (bv_unsigned x)).
+A/AFju.v	843	1	proof	knock-unmoved	assert (ES' : st_depot (depot_after 1 tr S) = [tr]) by (unfold depot_after; cbn; rewrite E0; reflexivity).
+A/AFju.v	844	1	proof	knock-unmoved	exists 1, regs', mem'. split; [rewrite EC, R1; reflexivity|]. split; [exact RP|].
+A/AFju.v	852	64	proof	knock-unmoved	replace (mkCfg (mkst regs' (Z_to_bv 64 0x3156c) mem' (seg_rom tfibsegs)) md') with c' by (rewrite EC, R1; reflexivity). exact (HE E0 TRNE).
+A/AFju.v	852	0x3156c	proof	twin-row	replace (mkCfg (mkst regs' (Z_to_bv 64 0x3156c) mem' (seg_rom tfibsegs)) md') with c' by (rewrite EC, R1; reflexivity). exact (HE E0 TRNE).
+A/AFju.v	859	0	proof	knock-unmoved	{ unfold depot_after. destruct (z =? 0); cbn; [exact NE|]. intros Hc. apply app_eq_nil in Hc as [_ Hc]. discriminate. }
+A/AFjy.v	722	1	statement	knock-unmoved	f_FPP : st_depot S = [] -> z = 1 /\ exists (Wc : world tfibsegs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model)
+A/AFjy.v	722	5	statement	knock-unmoved	f_FPP : st_depot S = [] -> z = 1 /\ exists (Wc : world tfibsegs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model)
+A/AFjy.v	723	5	statement	knock-unmoved	(regs2 : bvmap 5 word),
+A/AFjy.v	726	64	statement	knock-unmoved	(mkCfg (mkst regs2 (Z_to_bv 64 0x3156c) memD (seg_rom tfibsegs)) md');
+A/AFjy.v	726	0x3156c	statement	twin-row	(mkCfg (mkst regs2 (Z_to_bv 64 0x3156c) memD (seg_rom tfibsegs)) md');
+A/AFjy.v	778	0	proof	knock-unmoved	| ANum z, AV _ => negb (z =? TFIB_STORE + AD3c.ss_alloc) || Nat.eqb (c_w c0) 0
+A/AFjy.v	818	0	proof	knock-unmoved	Proof. intros HNE. unfold depot_after. destruct (z =? 0); cbn; [exact HNE|]. intros Hc. apply app_eq_nil in Hc as [_ Hc]. discriminate. Qed.
+A/AFjy.v	853	1	statement	knock-unmoved	st_chunks SF = st_chunks S ++ [KSc] /\ st_secs SF = st_secs S ++ [mkSec MSv NDv true] /\ st_nev SF = st_nev S + 1 /\ st_regions SF = st_regions S.
+A/AFjy.v	856	0	proof	knock-unmoved	repeat split; try reflexivity. unfold depot_after. destruct (z =? 0); reflexivity.
+A/AFjy.v	890	0	statement	knock-unmoved	Lemma E0_NB : st_depot S = [] -> ly_NB ly = 0 /\ ly_SB ly = 0.
+A/AFjy.v	890	0	statement	knock-unmoved	Lemma E0_NB : st_depot S = [] -> ly_NB ly = 0 /\ ly_SB ly = 0.
+A/AFjy.v	893	0	statement	knock-unmoved	ly_NB ly' <> 0 /\ ly_SB ly' <> 0 /\ in_app (ly_NB ly') kNodesBlockSize /\ in_app (ly_SB ly') kStoreBlockSize /\
+A/AFjy.v	893	0	statement	knock-unmoved	ly_NB ly' <> 0 /\ ly_SB ly' <> 0 /\ in_app (ly_NB ly') kNodesBlockSize /\ in_app (ly_SB ly') kStoreBlockSize /\
+A/AFjy.v	920	0	proof	knock-unmoved	{ unfold perm_maps. change (ly_NB (lyF_at ly')) with (ly_NB ly'). rewrite (proj2 (Z.eqb_neq _ 0) HN). cbn [In app].
+A/AFjy.v	923	0	proof	knock-unmoved	{ unfold perm_maps. change (ly_SB (lyF_at ly')) with (ly_SB ly'). rewrite (proj2 (Z.eqb_neq _ 0) HS). cbn [In app].
+A/AFjy.v	942	256	statement	knock-unmoved	(ly_F ly, kFakeStackSize); (ly_C ly, 256); (ly_D ly, 4096); (ly_stk_lo ly, ly_stk_hi ly - ly_stk_lo ly); ly_img ly] ->
+A/AFjy.v	942	4096	statement	knock-unmoved	(ly_F ly, kFakeStackSize); (ly_C ly, 256); (ly_D ly, 4096); (ly_stk_lo ly, ly_stk_hi ly - ly_stk_lo ly); ly_img ly] ->
+A/AFjy.v	946	7	proof	knock-unmoved	Proof. intros a Ha. apply (FZ_ebn (ly_img ly)); [cbn [In]; do 7 right; left; reflexivity|]. destruct IMG as [I1 I2]. lia. Qed.
+A/AFjy.v	948	2	proof	knock-unmoved	Proof. intros a Ha. apply (FZ_ebn (ly_T ly, kThreadObjSize)); [cbn [In]; do 2 right; left; reflexivity | exact Ha]. Qed.
+A/AFjy.v	953	3	statement	knock-unmoved	Lemma FZ_ext3 : forall (i : nat) e a, nth_error (owned_extents ly) i = Some e -> (i = 3 \/ i = 6 \/ i = 7)%nat ->
+A/AFjy.v	953	6	statement	knock-unmoved	Lemma FZ_ext3 : forall (i : nat) e a, nth_error (owned_extents ly) i = Some e -> (i = 3 \/ i = 6 \/ i = 7)%nat ->
+A/AFjy.v	953	7	statement	knock-unmoved	Lemma FZ_ext3 : forall (i : nat) e a, nth_error (owned_extents ly) i = Some e -> (i = 3 \/ i = 6 \/ i = 7)%nat ->
+A/AFjy.v	957	3	proof	knock-unmoved	destruct Hi as [-> |[-> | ->]]; cbn in He; injection He as <-; cbn [In]; [do 3 right; left | do 4 right; left | do 5 right; left]; reflexivity.
+A/AFjy.v	957	4	proof	knock-unmoved	destruct Hi as [-> |[-> | ->]]; cbn in He; injection He as <-; cbn [In]; [do 3 right; left | do 4 right; left | do 5 right; left]; reflexivity.
+A/AFjy.v	957	5	proof	knock-unmoved	destruct Hi as [-> |[-> | ->]]; cbn in He; injection He as <-; cbn [In]; [do 3 right; left | do 4 right; left | do 5 right; left]; reflexivity.
+A/AFjy.v	968	256	proof	knock-unmoved	- apply (FZ_ebn (ly_C ly, 256)); [cbn [In]; do 4 right; left; reflexivity | cbn [fst snd]; lia].
+A/AFjy.v	968	4	proof	knock-unmoved	- apply (FZ_ebn (ly_C ly, 256)); [cbn [In]; do 4 right; left; reflexivity | cbn [fst snd]; lia].
+A/AFjy.v	969	4096	proof	knock-unmoved	- apply (FZ_ebn (ly_D ly, 4096)); [cbn [In]; do 5 right; left; reflexivity | cbn [fst snd]; lia].
+A/AFjy.v	969	5	proof	knock-unmoved	- apply (FZ_ebn (ly_D ly, 4096)); [cbn [In]; do 5 right; left; reflexivity | cbn [fst snd]; lia].
+A/AFjy.v	972	8	statement	knock-unmoved	WINT a \/ WINI a \/ (QSv <= a < QSv + 8) \/ (mb <= a < mb + MSv) \/ (SMv <= a < SMv + MSv / 8) \/ DZONE a \/ (grow = true /\ QR a).
+A/AFjy.v	972	8	statement	knock-unmoved	WINT a \/ WINI a \/ (QSv <= a < QSv + 8) \/ (mb <= a < mb + MSv) \/ (SMv <= a < SMv + MSv / 8) \/ DZONE a \/ (grow = true /\ QR a).
+A/AFjy.v	1008	8	statement	knock-unmoved	(mb <= a < mb + MSv) \/ (SHADOW_OFF + YImgTop.IMG_TOP / 8 <= a < kHighShadowEnd /\ SMv <= a < SMv + MSv / 8) \/
+A/AFjy.v	1019	8	proof	knock-unmoved	rewrite SMA in Hw, SM2. unfold shadow_addr, SHADOW_OFF in *. clear - Hw M1 SM2 MZ. unfold zone3, TFIB_IMG_LO, kLowShadowBeg, TFIB_IMG_END in M1. assert (DD : YI
+A/AFjy.v	1474	1	statement	knock-unmoved	Forall (cell_holds B lyF rd') (flat_map (region_cells SF) (zseq 1 31)) /\ Forall (cell_holds B lyF rd') (flat_map (cache_cells SF) (zseq 1 31)) /\
+A/AFjy.v	1474	31	statement	knock-unmoved	Forall (cell_holds B lyF rd') (flat_map (region_cells SF) (zseq 1 31)) /\ Forall (cell_holds B lyF rd') (flat_map (cache_cells SF) (zseq 1 31)) /\
+A/AFjy.v	1474	1	statement	knock-unmoved	Forall (cell_holds B lyF rd') (flat_map (region_cells SF) (zseq 1 31)) /\ Forall (cell_holds B lyF rd') (flat_map (cache_cells SF) (zseq 1 31)) /\
+A/AFjy.v	1474	31	statement	knock-unmoved	Forall (cell_holds B lyF rd') (flat_map (region_cells SF) (zseq 1 31)) /\ Forall (cell_holds B lyF rd') (flat_map (cache_cells SF) (zseq 1 31)) /\
+A/AFjy.v	1909	0	statement	knock-unmoved	Lemma vis_areas_nd : forall r, In r (aareas SF) -> fst r <> ANB 0 -> fst r <> ASB 0 -> range_vis B lyF rd' r.
+A/AFjy.v	1909	0	statement	knock-unmoved	Lemma vis_areas_nd : forall r, In r (aareas SF) -> fst r <> ANB 0 -> fst r <> ASB 0 -> range_vis B lyF rd' r.
+A/AFjy.v	1921	8	proof	knock-unmoved	destruct (Z_lt_le_dec i (8 * res)) as [LO|HI].
+A/AFjy.v	1922	0	proof	knock-unmoved	{ pose proof (proj1 (Forall_forall _ _) (am_areas _ _ _ _ MA) (AQ 0, 8 * st_sec_reserved S) ltac:(unfold aareas; apply in_app_iff; right; left; reflexivity)) as
+A/AFjy.v	1922	8	proof	knock-unmoved	{ pose proof (proj1 (Forall_forall _ _) (am_areas _ _ _ _ MA) (AQ 0, 8 * st_sec_reserved S) ltac:(unfold aareas; apply in_app_iff; right; left; reflexivity)) as
+A/AFjy.v	1930	3	proof	knock-unmoved	+ apply OLD. unfold aareas. rewrite !in_app_iff. do 3 right. left. reflexivity.
+A/AFjy.v	1933	3	proof	knock-unmoved	+ apply OLD. unfold aareas. rewrite !in_app_iff. do 3 right. do 3 right. left. reflexivity.
+A/AFjy.v	1933	3	proof	knock-unmoved	+ apply OLD. unfold aareas. rewrite !in_app_iff. do 3 right. do 3 right. left. reflexivity.
+A/AFjy.v	1934	3	proof	knock-unmoved	+ apply OLD. unfold aareas. rewrite !in_app_iff. do 3 right. do 4 right. left. reflexivity.
+A/AFjy.v	1934	4	proof	knock-unmoved	+ apply OLD. unfold aareas. rewrite !in_app_iff. do 3 right. do 4 right. left. reflexivity.
+A/AFjy.v	1935	3	proof	knock-unmoved	+ apply OLD. unfold aareas. rewrite !in_app_iff. do 3 right. do 5 right. left. reflexivity.
+A/AFjy.v	1935	5	proof	knock-unmoved	+ apply OLD. unfold aareas. rewrite !in_app_iff. do 3 right. do 5 right. left. reflexivity.
+A/AFjy.v	2046	0	proof	knock-unmoved	assert (WNB : ly_NB lyF = 0) by (rewrite ENB; exact N0). assert (WSB : ly_SB lyF = 0) by (rewrite ESB; exact S0).
+A/AFjy.v	2046	0	proof	knock-unmoved	assert (WNB : ly_NB lyF = 0) by (rewrite ENB; exact N0). assert (WSB : ly_SB lyF = 0) by (rewrite ESB; exact S0).
+A/AFjy.v	2050	0	proof	knock-unmoved	{ unfold perm_maps. change (ly_NB (AD3c.set_ly_SB (AD3g.set_ly_NB lyF nb) sb)) with nb. rewrite (proj2 (Z.eqb_neq _ 0) HN). cbn [In app].
+A/AFjy.v	2053	0	proof	knock-unmoved	{ unfold perm_maps. change (ly_SB (AD3c.set_ly_SB (AD3g.set_ly_NB lyF nb) sb)) with sb. rewrite (proj2 (Z.eqb_neq _ 0) HS). cbn [In app].
+A/AFjy.v	2139	1	proof	knock-unmoved	assert (ESf : st_depot SF = st_depot (depot_after 1 tr S)) by (rewrite Rdep, Ez; reflexivity).
+A/AFjz.v	697	1	statement	knock-unmoved	(st_depot S = [] -> zz = 1 /\ exists (Wc : world tfibsegs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model)
+A/AFjz.v	697	5	statement	knock-unmoved	(st_depot S = [] -> zz = 1 /\ exists (Wc : world tfibsegs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model)
+A/AFjz.v	698	5	statement	knock-unmoved	(regs2 : bvmap 5 word), AD3j.put_effect layout_grow ly Wc md l W' md'' /\
+A/AFjz.v	700	64	statement	knock-unmoved	(mkCfg (mkst regs2 (Z_to_bv 64 0x3156c) m (seg_rom tfibsegs)) md'')).
+A/AFjz.v	700	0x3156c	statement	twin-row	(mkCfg (mkst regs2 (Z_to_bv 64 0x3156c) m (seg_rom tfibsegs)) md'')).
+A/AFjz.v	1071	3	proof	knock-unmoved	- do 3 right. left. change (Exists (in_zr a) (sec_extents lyF (SFS grow z))).
+A/AFk0.v	982	0	statement	knock-unmoved	(ly_NB ly = 0 -> ly_NB ly' <> 0 -> ALedger tfibsegs (lyF_at ly') (SFS grow z) md4 /\ amwf md4) ->
+A/AFk0.v	982	0	statement	knock-unmoved	(ly_NB ly = 0 -> ly_NB ly' <> 0 -> ALedger tfibsegs (lyF_at ly') (SFS grow z) md4 /\ amwf md4) ->
+A/AFk0.v	994	0	proof	knock-unmoved	assert (NB0 : ly_NB ly' <> 0) by (rewrite NB'; exact NZ).
+A/AFk0.v	995	0	proof	knock-unmoved	assert (SB0 : ly_SB ly' <> 0) by (rewrite SB'; exact SZ).
+A/AFk0.v	1116	1	statement	knock-unmoved	(st_depot S = [] -> zz = 1 /\ exists (Wc : world tfibsegs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model)
+A/AFk0.v	1116	5	statement	knock-unmoved	(st_depot S = [] -> zz = 1 /\ exists (Wc : world tfibsegs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model)
+A/AFk0.v	1117	5	statement	knock-unmoved	(regs2 : bvmap 5 word), AD3j.put_effect layout_grow ly Wc md l W' md'' /\
+A/AFk0.v	1119	64	statement	knock-unmoved	(mkCfg (mkst regs2 (Z_to_bv 64 0x3156c) m (seg_rom tfibsegs)) md'')).
+A/AFk0.v	1119	0x3156c	statement	twin-row	(mkCfg (mkst regs2 (Z_to_bv 64 0x3156c) m (seg_rom tfibsegs)) md'')).
+A/AFk0.v	1277	64	statement	knock-unmoved	Lemma grant50_top : forall (a k : word) md, alloc_top (m_vmmaps (grant_md false (Z_to_bv 64 50) a k md)) = alloc_top (m_vmmaps md).
+A/AFk0.v	1277	50	statement	knock-unmoved	Lemma grant50_top : forall (a k : word) md, alloc_top (m_vmmaps (grant_md false (Z_to_bv 64 50) a k md)) = alloc_top (m_vmmaps md).
+A/AFk0.v	1282	0	statement	knock-unmoved	Lemma SZF : forall grow z, Forall (fun e => 0 <= snd e < 2 ^ 64) (sec_extents lyF (SFS grow z)).
+A/AFk0.v	1282	2	statement	knock-unmoved	Lemma SZF : forall grow z, Forall (fun e => 0 <= snd e < 2 ^ 64) (sec_extents lyF (SFS grow z)).
+A/AFk0.v	1282	64	statement	knock-unmoved	Lemma SZF : forall grow z, Forall (fun e => 0 <= snd e < 2 ^ 64) (sec_extents lyF (SFS grow z)).
+A/AFk0.v	1285	0	proof	knock-unmoved	- eapply Forall_impl; [|exact (YG08.sec_extents_sizes64P _ 0 0 0 ly S WF)]. cbv beta. intros e He. lia.
+A/AFk0.v	1285	0	proof	knock-unmoved	- eapply Forall_impl; [|exact (YG08.sec_extents_sizes64P _ 0 0 0 ly S WF)]. cbv beta. intros e He. lia.
+A/AFk0.v	1285	0	proof	knock-unmoved	- eapply Forall_impl; [|exact (YG08.sec_extents_sizes64P _ 0 0 0 ly S WF)]. cbv beta. intros e He. lia.
+A/AFk0.v	1290	0	statement	knock-unmoved	0 <= a < 2 ^ 64 /\ ~ (mb <= a < mb + MSv) /\ ~ (SHLO mb <= a < SHHI mb) /\ (idx = res -> ~ (QSv <= a < QSv + 131072)).
+A/AFk0.v	1290	2	statement	knock-unmoved	0 <= a < 2 ^ 64 /\ ~ (mb <= a < mb + MSv) /\ ~ (SHLO mb <= a < SHHI mb) /\ (idx = res -> ~ (QSv <= a < QSv + 131072)).
+A/AFk0.v	1290	64	statement	knock-unmoved	0 <= a < 2 ^ 64 /\ ~ (mb <= a < mb + MSv) /\ ~ (SHLO mb <= a < SHHI mb) /\ (idx = res -> ~ (QSv <= a < QSv + 131072)).
+A/AFk0.v	1290	131072	statement	knock-unmoved	0 <= a < 2 ^ 64 /\ ~ (mb <= a < mb + MSv) /\ ~ (SHLO mb <= a < SHHI mb) /\ (idx = res -> ~ (QSv <= a < QSv + 131072)).
+A/AFk0.v	1293	4096	proof	knock-unmoved	assert (SL : shadow_addr mb - 4096 < SHLO mb).
+A/AFk0.v	1294	4096	proof	knock-unmoved	{ unfold AFjs.SHLO. pose proof (Z.mod_pos_bound (shadow_addr mb) 4096 ltac:(lia)) as MB. pose proof (Z.div_mod (shadow_addr mb) 4096 ltac:(lia)) as DM. lia. }
+A/AFk0.v	1294	4096	proof	knock-unmoved	{ unfold AFjs.SHLO. pose proof (Z.mod_pos_bound (shadow_addr mb) 4096 ltac:(lia)) as MB. pose proof (Z.div_mod (shadow_addr mb) 4096 ltac:(lia)) as DM. lia. }
+A/AFk0.v	1302	64	statement	knock-unmoved	(forall a, AD3j.tfib_dzone_lo <= a < AD3j.tfib_dzone_hi -> w_H Wc (Z_to_bv 64 a) = w_H W (Z_to_bv 64 a)) ->
+A/AFk0.v	1302	64	statement	knock-unmoved	(forall a, AD3j.tfib_dzone_lo <= a < AD3j.tfib_dzone_hi -> w_H Wc (Z_to_bv 64 a) = w_H W (Z_to_bv 64 a)) ->
+A/AFk0.v	1307	64	statement	knock-unmoved	(forall a, AD3j.tfib_dzone_lo <= a < AD3j.tfib_dzone_hi -> w_H Wc (Z_to_bv 64 a) = w_H W (Z_to_bv 64 a)) ->
+A/AFk0.v	1307	64	statement	knock-unmoved	(forall a, AD3j.tfib_dzone_lo <= a < AD3j.tfib_dzone_hi -> w_H Wc (Z_to_bv 64 a) = w_H W (Z_to_bv 64 a)) ->
+A/AFk0.v	1310	0	statement	knock-unmoved	eager_used md <= eager_used md0 + k -> A_bytes (w_A Wc) <= A_bytes (w_A W) + k -> 0 <= k -> 2 * k + 11 * 2 ^ 20 <= 2 ^ 30 ->
+A/AFk0.v	1310	2	statement	knock-unmoved	eager_used md <= eager_used md0 + k -> A_bytes (w_A Wc) <= A_bytes (w_A W) + k -> 0 <= k -> 2 * k + 11 * 2 ^ 20 <= 2 ^ 30 ->
+A/AFk0.v	1310	11	statement	knock-unmoved	eager_used md <= eager_used md0 + k -> A_bytes (w_A Wc) <= A_bytes (w_A W) + k -> 0 <= k -> 2 * k + 11 * 2 ^ 20 <= 2 ^ 30 ->
+A/AFk0.v	1310	2	statement	knock-unmoved	eager_used md <= eager_used md0 + k -> A_bytes (w_A Wc) <= A_bytes (w_A W) + k -> 0 <= k -> 2 * k + 11 * 2 ^ 20 <= 2 ^ 30 ->
+A/AFk0.v	1310	20	statement	knock-unmoved	eager_used md <= eager_used md0 + k -> A_bytes (w_A Wc) <= A_bytes (w_A W) + k -> 0 <= k -> 2 * k + 11 * 2 ^ 20 <= 2 ^ 30 ->
+A/AFk0.v	1310	2	statement	knock-unmoved	eager_used md <= eager_used md0 + k -> A_bytes (w_A Wc) <= A_bytes (w_A W) + k -> 0 <= k -> 2 * k + 11 * 2 ^ 20 <= 2 ^ 30 ->
+A/AFk0.v	1310	30	statement	knock-unmoved	eager_used md <= eager_used md0 + k -> A_bytes (w_A Wc) <= A_bytes (w_A W) + k -> 0 <= k -> 2 * k + 11 * 2 ^ 20 <= 2 ^ 30 ->
+A/AFk0.v	1364	256	statement	knock-unmoved	zdisjoint (ly_C ly, 256) (nb_ext l) /\ zdisjoint (ly_C ly, 256) (sb_ext l).
+A/AFk0.v	1364	256	statement	knock-unmoved	zdisjoint (ly_C ly, 256) (nb_ext l) /\ zdisjoint (ly_C ly, 256) (sb_ext l).
+A/AFk0.v	1425	0	statement	knock-unmoved	(ly_NB ly = 0 -> st_depot S = [] /\ exists (Wc : world tfibsegs) regs mem (md : Model) c',
+A/AFk0.v	1432	0	proof	knock-unmoved	assert (E0of : ly_NB ly = 0 -> st_depot S = []).
+A/AFk0.v	1441	0	proof	knock-unmoved	assert (NB0 : ly_NB ly' <> 0) by (rewrite NB'; exact NZ). assert (SB0 : ly_SB ly' <> 0) by (rewrite SB'; exact SZ).
+A/AFk0.v	1441	0	proof	knock-unmoved	assert (NB0 : ly_NB ly' <> 0) by (rewrite NB'; exact NZ). assert (SB0 : ly_SB ly' <> 0) by (rewrite SB'; exact SZ).
+A/AFk0.v	1469	0	proof	knock-unmoved	assert (AA : forall k, In k [(ANB 0, kNodesBlockSize); (ASB 0, kStoreBlockSize)] -> range_vis B ly' (aview tfibsegs (w_H W2) memD') k).
+A/AFk0.v	1469	0	proof	knock-unmoved	assert (AA : forall k, In k [(ANB 0, kNodesBlockSize); (ASB 0, kStoreBlockSize)] -> range_vis B ly' (aview tfibsegs (w_H W2) memD') k).
+A/AFk0.v	1474	0	proof	knock-unmoved	replace (nb + 0 + (a - nb)) with a in V by lia.
+A/AFk0.v	1479	0	proof	knock-unmoved	replace (sb + 0 + (a - sb)) with a in V by lia.
+A/AFk0.v	1482	0	proof	knock-unmoved	assert (Ra : 0 <= a < 2 ^ 64).
+A/AFk0.v	1482	2	proof	knock-unmoved	assert (Ra : 0 <= a < 2 ^ 64).
+A/AFk0.v	1482	64	proof	knock-unmoved	assert (Ra : 0 <= a < 2 ^ 64).
+A/AFk0.v	1486	64	proof	knock-unmoved	rewrite <- (WH (Z_to_bv 64 a)); [exact Hh | rewrite unsigned_lit_small by exact Ra; exact NNB | rewrite unsigned_lit_small by exact Ra; exact NSB]. }
+A/AFk0.v	1497	0	statement	knock-unmoved	(ly_NB ly = 0 -> st_depot S = [] /\ exists (Wc : world tfibsegs) regs mem (md : Model) c',
+A/AFk0.v	1500	0	statement	knock-unmoved	ly_NB ly = 0 -> ly_NB ly' <> 0 -> ALedger tfibsegs (lyF_at ly') (SFS grow z) md4 /\ amwf md4.
+A/AFk0.v	1500	0	statement	knock-unmoved	ly_NB ly = 0 -> ly_NB ly' <> 0 -> ALedger tfibsegs (lyF_at ly') (SFS grow z) md4 /\ amwf md4.
+A/AFk0.v	1531	8	proof	knock-unmoved	{ apply (FPP_site W3 md2 (MSv + MSv / 8 + 8192)); try reflexivity.
+A/AFk0.v	1531	8192	proof	knock-unmoved	{ apply (FPP_site W3 md2 (MSv + MSv / 8 + 8192)); try reflexivity.
+A/AFk0.v	1534	0	proof	knock-unmoved	- assert (E2 : eager_used mdN = eager_used md0) by (unfold mdN; apply eager_used_wvb). assert (0 <= MSv / 8) by (apply Z.div_pos; lia). lia.
+A/AFk0.v	1534	8	proof	knock-unmoved	- assert (E2 : eager_used mdN = eager_used md0) by (unfold mdN; apply eager_used_wvb). assert (0 <= MSv / 8) by (apply Z.div_pos; lia). lia.
+A/AFk0.v	1535	0	proof	knock-unmoved	- rewrite A3. cbn [A_bytes fst snd]. assert (0 <= MSv / 8) by (apply Z.div_pos; lia). lia.
+A/AFk0.v	1535	8	proof	knock-unmoved	- rewrite A3. cbn [A_bytes fst snd]. assert (0 <= MSv / 8) by (apply Z.div_pos; lia). lia.
+A/AFk0.v	1536	0	proof	knock-unmoved	- assert (0 <= MSv / 8) by (apply Z.div_pos; lia). lia.
+A/AFk0.v	1536	8	proof	knock-unmoved	- assert (0 <= MSv / 8) by (apply Z.div_pos; lia). lia.
+A/AFk0.v	1537	8	proof	knock-unmoved	- clear - MS0. unfold MALLOC_MAX in MS0. assert (MSv / 8 <= 2 ^ 26) by (apply Z.div_le_upper_bound; lia). lia. }
+A/AFk0.v	1537	2	proof	knock-unmoved	- clear - MS0. unfold MALLOC_MAX in MS0. assert (MSv / 8 <= 2 ^ 26) by (apply Z.div_le_upper_bound; lia). lia. }
+A/AFk0.v	1537	26	proof	knock-unmoved	- clear - MS0. unfold MALLOC_MAX in MS0. assert (MSv / 8 <= 2 ^ 26) by (apply Z.div_le_upper_bound; lia). lia. }
+A/AFk0.v	1620	8	proof	knock-unmoved	{ apply (FPP_site W5 md5 (MSv + MSv / 8 + 8192 + 131072)).
+A/AFk0.v	1620	8192	proof	knock-unmoved	{ apply (FPP_site W5 md5 (MSv + MSv / 8 + 8192 + 131072)).
+A/AFk0.v	1620	131072	proof	knock-unmoved	{ apply (FPP_site W5 md5 (MSv + MSv / 8 + 8192 + 131072)).
+A/AFk0.v	1622	64	proof	knock-unmoved	rewrite (OUT5 (Z_to_bv 64 a)) by (rewrite unsigned_lit_small by exact Ra; exact (N3 EQ)).
+A/AFk0.v	1630	0	proof	knock-unmoved	assert (EN : eager_used mdN = eager_used md0) by (unfold mdN; apply eager_used_wvb). assert (0 <= MSv / 8) by (apply Z.div_pos; lia). lia.
+A/AFk0.v	1630	8	proof	knock-unmoved	assert (EN : eager_used mdN = eager_used md0) by (unfold mdN; apply eager_used_wvb). assert (0 <= MSv / 8) by (apply Z.div_pos; lia). lia.
+A/AFk0.v	1631	0	proof	knock-unmoved	- rewrite A5, A3. cbn [A_bytes fst snd]. assert (0 <= MSv / 8) by (apply Z.div_pos; lia). lia.
+A/AFk0.v	1631	8	proof	knock-unmoved	- rewrite A5, A3. cbn [A_bytes fst snd]. assert (0 <= MSv / 8) by (apply Z.div_pos; lia). lia.
+A/AFk0.v	1632	0	proof	knock-unmoved	- assert (0 <= MSv / 8) by (apply Z.div_pos; lia). lia.
+A/AFk0.v	1632	8	proof	knock-unmoved	- assert (0 <= MSv / 8) by (apply Z.div_pos; lia). lia.
+A/AFk0.v	1633	8	proof	knock-unmoved	- clear - MS0. unfold MALLOC_MAX in MS0. assert (MSv / 8 <= 2 ^ 26) by (apply Z.div_le_upper_bound; lia). lia. }
+A/AFk0.v	1633	2	proof	knock-unmoved	- clear - MS0. unfold MALLOC_MAX in MS0. assert (MSv / 8 <= 2 ^ 26) by (apply Z.div_le_upper_bound; lia). lia. }
+A/AFk0.v	1633	26	proof	knock-unmoved	- clear - MS0. unfold MALLOC_MAX in MS0. assert (MSv / 8 <= 2 ^ 26) by (apply Z.div_le_upper_bound; lia). lia. }
+A/AFk0.v	1646	64	proof	knock-unmoved	destruct (w_H W6 (Z_to_bv 64 a)) eqn:EH; [|reflexivity]. rewrite (LE56 _ EH) in Hh. discriminate Hh. }
+A/AFk0.v	1656	64	proof	knock-unmoved	by exact (LED1 z mdV md5 EQ (LV z) (proj1 VM5) (proj1 (proj2 VM5)) (proj1 (proj2 (proj2 VM5))) (proj2 (proj2 (proj2 VM5))) (grant50_isp _ _ _) (COV_Q mdV MWV EQ
+A/AFk0.v	1656	50	proof	knock-unmoved	by exact (LED1 z mdV md5 EQ (LV z) (proj1 VM5) (proj1 (proj2 VM5)) (proj1 (proj2 (proj2 VM5))) (proj2 (proj2 (proj2 VM5))) (grant50_isp _ _ _) (COV_Q mdV MWV EQ
+A/AFkm.v	1070	4	proof	knock-unmoved	assert (EZT : forall a, TFIB_DEPOT <= a < TFIB_DEPOT + 4 * d_tab_words -> rd' a = rd0 a).
+A/AFkm.v	1073	0x9ffd0	proof	twin-row	exists (0x9ffd0, 0x5c2dd0 - 0x9ffd0). split; [cbn; tauto|]. unfold in_zr; cbn. unfold TFIB_DEPOT, d_tab_words in Ha. lia4.
+A/AFkm.v	1073	0x5c2dd0	proof	twin-row	exists (0x9ffd0, 0x5c2dd0 - 0x9ffd0). split; [cbn; tauto|]. unfold in_zr; cbn. unfold TFIB_DEPOT, d_tab_words in Ha. lia4.
+A/AFkm.v	1073	0x9ffd0	proof	twin-row	exists (0x9ffd0, 0x5c2dd0 - 0x9ffd0). split; [cbn; tauto|]. unfold in_zr; cbn. unfold TFIB_DEPOT, d_tab_words in Ha. lia4.
+A/AFkz.v	787	4	proof	knock-unmoved	assert (EZT : forall a, TFIB_DEPOT <= a < TFIB_DEPOT + 4 * d_tab_words -> rd' a = rd0 a).
+A/AFkz.v	790	0x9ffd0	proof	twin-row	exists (0x9ffd0, 0x5c2dd0 - 0x9ffd0). split; [cbn; tauto|]. unfold in_zr; cbn. unfold TFIB_DEPOT, d_tab_words in Ha. zlia.
+A/AFkz.v	790	0x5c2dd0	proof	twin-row	exists (0x9ffd0, 0x5c2dd0 - 0x9ffd0). split; [cbn; tauto|]. unfold in_zr; cbn. unfold TFIB_DEPOT, d_tab_words in Ha. zlia.
+A/AFkz.v	790	0x9ffd0	proof	twin-row	exists (0x9ffd0, 0x5c2dd0 - 0x9ffd0). split; [cbn; tauto|]. unfold in_zr; cbn. unfold TFIB_DEPOT, d_tab_words in Ha. zlia.

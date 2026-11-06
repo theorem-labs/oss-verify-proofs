@@ -1,0 +1,5 @@
+#!/bin/sh
+# ./theorem <command> [...]: OSS Verify's commands for a developer, as
+# `./theorem prove PROJECT/HARNESS --base REF` (tools/oft/README.md).  It
+# passes its arguments to ./oft, whose commands they are.
+exec "$(dirname "$0")/oft" "$@"

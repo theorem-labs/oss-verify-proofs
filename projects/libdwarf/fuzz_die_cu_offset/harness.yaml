@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_die_cu_offset
-rocq: OssFuzzTheorems.libdwarf.fuzz_die_cu_offset
+rocq: OSSVerify.libdwarf.fuzz_die_cu_offset
 origin: upstream
 summary: dwarf_CU_dieoffset_given_die, dwarf_offdie_b on that offset, dwarf_get_version_of_die on a NULL
   die; results unused (no check that offdie_b returns the same DIE).

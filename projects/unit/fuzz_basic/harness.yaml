@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: unit
 harness: fuzz_basic
-rocq: OssFuzzTheorems.unit.fuzz_basic
+rocq: OSSVerify.unit.fuzz_basic
 origin: upstream
 summary: 'For 4..128-byte inputs, calls 12 helpers in sequence: base64 validate+decode, djb/murmur hashes,
   int/size/off_t/number parsers, SHA-1 (once and twice-updated), term/time parsers, URI decode/decode_plus/encode,

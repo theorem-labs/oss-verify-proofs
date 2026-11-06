@@ -1,0 +1,17 @@
+# harness.yaml `where:` lines against the patched harness (not edited here: the facts re-pin regenerates projects/).
+# sources and map as source-citations.tsv. check: the old range endpoints are byte-identical to the mapped endpoints of the patched source.
+file	line	old	new	move	old_source_endpoints	new_source_endpoints	check
+projects/libdiginet/fuzz_transport/harness.yaml	77	source/fuzz_transport.c:1157-1164	source/fuzz_transport.c:1160-1167	moves	* and a body that holds the longest command and fits a frame | 	* and a body that holds the longest command and fits a frame | 	same
+projects/libdiginet/fuzz_transport/harness.yaml	83	source/fuzz_transport.c:398-420	source/fuzz_transport.c:398-420	stays	FUZZ_CHECK check_sent_frame(const uint8_t *frame, size_t len | }	FUZZ_CHECK check_sent_frame(const uint8_t *frame, size_t len | }	same
+projects/libdiginet/fuzz_transport/harness.yaml	90	source/fuzz_transport.c:422-430	source/fuzz_transport.c:422-430	stays	FUZZ_CHECK check_ack_frame(const struct spec_frame *f) | }	FUZZ_CHECK check_ack_frame(const struct spec_frame *f) | }	same
+projects/libdiginet/fuzz_transport/harness.yaml	97	source/fuzz_transport.c:432-495	source/fuzz_transport.c:432-495	stays	FUZZ_CHECK check_inflight_new(void) | }	FUZZ_CHECK check_inflight_new(void) | }	same
+projects/libdiginet/fuzz_transport/harness.yaml	106	source/fuzz_transport.c:497-569	source/fuzz_transport.c:497-569	stays	FUZZ_CHECK check_state_online(void) | }	FUZZ_CHECK check_state_online(void) | }	same
+projects/libdiginet/fuzz_transport/harness.yaml	114	source/fuzz_transport.c:571-580	source/fuzz_transport.c:571-580	stays	FUZZ_CHECK check_keepalive_due(void) | }	FUZZ_CHECK check_keepalive_due(void) | }	same
+projects/libdiginet/fuzz_transport/harness.yaml	121	source/fuzz_transport.c:582-654	source/fuzz_transport.c:582-654	stays	FUZZ_CHECK check_latest_frame(const struct spec_frame *f, un | }	FUZZ_CHECK check_latest_frame(const struct spec_frame *f, un | }	same
+projects/libdiginet/fuzz_transport/harness.yaml	129	source/fuzz_transport.c:656-676	source/fuzz_transport.c:656-676	stays	FUZZ_CHECK check_refusal_submit(const struct diginet_cmd *c, | }	FUZZ_CHECK check_refusal_submit(const struct diginet_cmd *c, | }	same
+projects/libdiginet/fuzz_transport/harness.yaml	136	source/fuzz_transport.c:680-688	source/fuzz_transport.c:680-688	stays	FUZZ_CHECK check_ack_settle(void) | }	FUZZ_CHECK check_ack_settle(void) | }	same
+projects/libdiginet/fuzz_transport/harness.yaml	143	source/fuzz_transport.c:690-742	source/fuzz_transport.c:690-742	stays	FUZZ_CHECK check_state_settle(void) | }	FUZZ_CHECK check_state_settle(void) | }	same
+projects/libdiginet/fuzz_transport/harness.yaml	151	source/fuzz_transport.c:744-771	source/fuzz_transport.c:744-771	stays	FUZZ_CHECK check_inflight_settle(void) | }	FUZZ_CHECK check_inflight_settle(void) | }	same
+projects/libdiginet/fuzz_transport/harness.yaml	159	source/fuzz_transport.c:773-783	source/fuzz_transport.c:773-783	stays	FUZZ_CHECK check_keepalive_settle(void) | }	FUZZ_CHECK check_keepalive_settle(void) | }	same
+projects/libdiginet/fuzz_transport/harness.yaml	166	source/fuzz_transport.c:785-819	source/fuzz_transport.c:785-819	stays	FUZZ_CHECK check_latest_drain(void) | }	FUZZ_CHECK check_latest_drain(void) | }	same
+# note on line 77: the range as pinned starts on the second line of the check comment (old 1156 is its first line) and ends on the blank line after abort(); the same span shifted is 1160-1167; the comment, the call and abort() are 1159-1166 in the patched source.

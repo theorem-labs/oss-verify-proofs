@@ -1,0 +1,754 @@
+# rt-strs image B (fuzz_headamp.asan-ubsan pin 53edda9bdeeb, twin 1674e30a0698): every numeral of the 17 image-A files (at 5a446b5c8e10) as derive_y b7b132fb12a7 moved it A -> B, and as alreloc a5c53bb2bed4 (--from-build asan --assume-source, dry, independent) moved it; code numerals re-checked by symbol + offset over both unstripped twins (pyelftools). Comment rows: the B files carry the A comments verbatim (each the donor's), so those numerals are not in the files. decision column: the value in the file.
+# further checks (not rows): 39 fetch_word words per image equal the image; .got slots B 0x9c7e0 -> common_flags_dont_use 0x136d68, 0x9c840 -> current_verbosity 0x134cd8, 0x9c810 -> real_memset 0x9e658 (A: 0x9c360, 0x9c3c0, 0x9c390, same targets); TLS GD pair B 0x9d4d0 = (1, 0xfffffffffffff800), computed by B's own auipc/addi at 0x3cd44; IE word B 0x9d4e0 = 8, read by B's ld at 0x69d14; runtime cells equal lib/AU/YF0m.v (b0 d2a2313d53c): 0x9c7e0 = 0x136d68, 0x136e63 = 1, 0x136e58 = 0x101000100000000, 0x136e60 = 0x101010101010101, 0x9c810 = 0x9e658, 0x9e658 = 0x95d28, 0x136df1 = 1, 0xa4aa0 = 1 / +4 = 0, 0x134cd8 = 0, TP 0x5d81d0, TSD 0x5f9578, TP-8 = 0x5d81f0, 0x5d81f8 = 0x5d89d0, (AT 48) = 0x5d8908, (AT 56) = 0x5d89e4; trampoline words 0x0940006f at 0x41c18, 0x5b80006f at 0x41c20; probe end 0x42708; RtSM4T code-table ranges: 10 name-paired functions of equal size and count, every differing word pc-relative (auipc/jal/lo12); image-derived counts recomputed from the B .symtab: (0x41cac,165), (0x421d4,333), (0x54d54,6), (0x3cd2c,115) and the 9 other RtSM4T ranges
+file:line	old	derive_y	alreloc	class	where	agree	image-B check	decision
+A/FMsl0.v:1	0x4218c		0x4220c	-	comment	alreloc only		comment (A text verbatim)
+A/FMsl0.v:3	0x41b98		0x41c18	-	comment	alreloc only		comment (A text verbatim)
+A/FMsl0.v:37	0x4221c	0x4229c	0x4229c	code	comment	agree		comment (A text verbatim)
+A/FMsl0.v:37	0x424b0		0x42530	-	comment	alreloc only		comment (A text verbatim)
+A/FMsl0.v:38	0x4218c	0x4220c	0x4220c	code	comment	agree		comment (A text verbatim)
+A/FMsl0.v:39	0x424b0	0x42530	0x42530	code	comment	agree		comment (A text verbatim)
+A/FMsl0.v:40	0x41c2c	0x41cac	0x41cac	code	code	agree	ok __interceptor_strlen+0x0	derive_y = alreloc
+A/FMsl0.v:51	0x0940006f	0x0940006f		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMsl0.v:51	0x41b98	0x41c18	0x41c18	code	code	agree	ok __wrap_strlen+0x0	derive_y = alreloc
+A/FMsl0.v:52	0x41c2c	0x41cac	0x41cac	code	code	agree	ok __interceptor_strlen+0x0	derive_y = alreloc
+A/FMsl0.v:53	0x41ebc	0x41f3c	0x41f3c	code	code	agree	ok __interceptor_strlen+0x290	derive_y = alreloc
+A/FMsl0.v:54	0x41ec0	0x41f40	0x41f40	code	code	agree	ok __interceptor_strnlen+0x0	derive_y = alreloc
+A/FMstrlen.v:38	0x4218c	0x4220c	0x4220c	code	comment	agree		comment (A text verbatim)
+A/FMstrlen.v:38	0x4221c	0x4229c	0x4229c	code	comment	agree		comment (A text verbatim)
+A/FMstrlen.v:38	0x94c64	0x950dc	0x94c64	code	comment	DISAGREE		comment (A text verbatim)
+A/FMstrlen.v:39	0x4226c	0x422ec	0x422ec	code	comment	agree		comment (A text verbatim)
+A/FMstrlen.v:39	0x422d4	0x42354	0x42354	code	comment	agree		comment (A text verbatim)
+A/FMstrlen.v:39	0x9e0b0	0x9e530	0x9e530	data	comment	agree		comment (A text verbatim)
+A/FMstrlen.v:40	0x41b98	0x41c18	0x41c18	code	code	agree	ok __wrap_strlen+0x0	derive_y = alreloc
+A/FMstrlen.v:41	0x95afc	0x95f74	0x95f74	code	code	agree	ok strlen+0x0	derive_y = alreloc
+A/FMstrlen.v:42	0x41c7c	0x41cfc	0x41cfc	code	code	agree	ok __interceptor_strlen+0x50	derive_y = alreloc
+A/FMstrlen.v:43	0x41ce4	0x41d64	0x41d64	code	code	agree	ok __interceptor_strlen+0xb8	derive_y = alreloc
+A/FMstrlen.v:46	0x95afc	0x95f74	0x95f74	code	code	agree	ok strlen+0x0	derive_y = alreloc
+A/FMstrlen.v:46	0x9e070	0x9e4f0	0x9e4f0	data	code	agree	ok _ZN14__interception11real_strlenE+0x0	derive_y = alreloc
+A/FMstrlen.v:92	0x4226c	0x422ec	0x422ec	code	comment	agree		comment (A text verbatim)
+A/FMstrlen.v:92	0x422d4		0x42354	-	comment	alreloc only		comment (A text verbatim)
+A/FMstrlen_chk1.v:3	0x1368e8		0x136d68	-	comment	alreloc only		comment (A text verbatim)
+A/FMstrlen_chk1.v:3	0x1369e3		0x136e63	-	comment	alreloc only		comment (A text verbatim)
+A/FMstrlen_chk1.v:3	0x9c360		0x9c7e0	-	comment	alreloc only		comment (A text verbatim)
+A/FMstrlen_chk1.v:36	0x4226c	0x422ec	0x422ec	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:37	0x422d4	0x42354	0x42354	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:37	0x9e0b0	0x9e530	0x9e530	data	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:39	0x9c3a0	0x9c820	0x9c3a0	got	comment	DISAGREE		comment (A text verbatim)
+A/FMstrlen_chk1.v:41	0x4239c	0x4241c	0x4241c	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:41	0x543d4	0x54454	0x543d4	code	comment	DISAGREE		comment (A text verbatim)
+A/FMstrlen_chk1.v:42	0x423ac	0x4242c	0x4242c	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:46	0x41c7c	0x41cfc	0x41cfc	code	code	agree	ok __interceptor_strlen+0x50	derive_y = alreloc
+A/FMstrlen_chk1.v:47	0x41ce4	0x41d64	0x41d64	code	code	agree	ok __interceptor_strlen+0xb8	derive_y = alreloc
+A/FMstrlen_chk1.v:48	0x543d4	0x54454	0x543d4	code	comment	DISAGREE		comment (A text verbatim)
+A/FMstrlen_chk1.v:49	0x54544	0x545c4	0x545c4	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:76	0x10007fff8000		0x10007fff8000	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:78	0x10007fff8000		0x10007fff8000	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:80	0x136ae8	0x136f68	0x136f68	bss	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:80	0x136be3	0x137063	0x136be3	bss	comment	DISAGREE		comment (A text verbatim)
+A/FMstrlen_chk1.v:80	0x9c3a0	0x9c820	0x9c820	got	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:81	0x1368e8	0x136d68	0x136d68	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0x0	derive_y = alreloc
+A/FMstrlen_chk1.v:81	0x1369e3	0x136e63	0x136e63	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0xfb	derive_y = alreloc
+A/FMstrlen_chk1.v:81	0x9c360	0x9c7e0	0x9c7e0	got	code	agree	CHECK no symbol at A 0x9c360	derive_y = alreloc
+A/FMstrlen_chk1.v:92	0x42298	0x42318	0x42318	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:92	0x422c4	0x42344	0x42344	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:94	0x423ac	0x4242c	0x4242c	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:98	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:99	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:99	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:100	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:100	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:110	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:111	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:111	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:112	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:112	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:122	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:123	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:123	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:124	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:124	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:134	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:135	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:135	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:136	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:136	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:146	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:147	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:147	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:148	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:148	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:158	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:159	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:159	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:160	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:160	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:170	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:171	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:171	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:172	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:172	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:182	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:183	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:183	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:184	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:184	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:194	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:195	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:195	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:196	0x41cd8	0x41d58	0x41d58	code	code	agree	ok __interceptor_strlen+0xac	derive_y = alreloc
+A/FMstrlen_chk1.v:196	0x41cdc	0x41d5c	0x41d5c	code	code	agree	ok __interceptor_strlen+0xb0	derive_y = alreloc
+A/FMstrlen_chk1.v:203	0x423a0	0x42420	0x42420	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:204	0x423f0	0x42470	0x42470	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:204	0x424a8	0x42528	0x42528	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:214	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:217	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk1.v:218	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk1.v:222	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:225	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk1.v:226	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk1.v:236	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:239	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk1.v:240	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk1.v:244	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk1.v:247	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk1.v:248	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk1.v:250	0x4239c	0x4241c	0x4241c	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:251	0x423ac	0x4242c	0x4242c	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:260	0x422c4	0x42344	0x42344	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk1.v:260	0x422c8	0x42348	0x42348	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_chk2.v:3	0x54548		0x545c8	-	comment	alreloc only		comment (A text verbatim)
+A/FMstrlen_chk2.v:3	0x549fc		0x54a7c	-	comment	alreloc only		comment (A text verbatim)
+A/FMstrlen_chk2.v:3	345416		345544	-	comment	alreloc only		comment (A text verbatim)
+A/FMstrlen_chk2.v:3	346620		346748	-	comment	alreloc only		comment (A text verbatim)
+A/FMstrlen_chk2.v:791	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:792	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:794	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:795	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:799	505731		505731	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:853	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:854	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:861	505731		505731	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:915	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:916	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:923	505731		505731	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:977	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:978	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:985	505731		505731	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1039	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1040	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1047	505731		505731	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1101	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1102	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1109	505731		505731	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1163	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1164	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1171	505731		505731	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1225	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1226	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1233	505731		505731	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1287	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1288	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1295	505731		505731	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/FMstrlen_chk2.v:1372	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1373	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1379	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1382	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1423	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1424	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1430	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1433	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1508	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1509	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1515	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1518	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1559	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1560	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1566	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_chk2.v:1569	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/FMstrlen_musl.v:22	0x94c64	0x950dc	0x94c64	code	comment	DISAGREE		comment (A text verbatim)
+A/FMstrlen_musl.v:22	0x94cf4	0x9516c	0x9516c	code	comment	agree		comment (A text verbatim)
+A/FMstrlen_musl.v:33	0x00757593	0x00757593		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:35	0x00757593	0x00757593		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:37	0x00050613	0x00050613	0x00050613	insn-word	code	agree	CHECK _ZL16ioctl_table_fillv+0x7c03 -> B 0x50693	derive_y = alreloc
+A/FMstrlen_musl.v:39	0x00050613	0x00050613	0x00050613	insn-word	code	agree	CHECK _ZL16ioctl_table_fillv+0x7c03 -> B 0x50693	derive_y = alreloc
+A/FMstrlen_musl.v:41	0x02058a63	0x02058a63		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:43	0x02058a63	0x02058a63		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:45	0x00054583	0x00054583	0x00054583	insn-word	code	agree	CHECK __asan_poison_memory_region+0x4b -> B 0x54603	derive_y = alreloc
+A/FMstrlen_musl.v:47	0x00054583	0x00054583	0x00054583	insn-word	code	agree	CHECK __asan_poison_memory_region+0x4b -> B 0x54603	derive_y = alreloc
+A/FMstrlen_musl.v:49	0x06058c63	0x06058c63		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:51	0x06058c63	0x06058c63		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:53	0x00150613	0x00150613	0x00150613	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x19993 -> B 0x150a93	derive_y = alreloc
+A/FMstrlen_musl.v:55	0x00150613	0x00150613	0x00150613	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x19993 -> B 0x150a93	derive_y = alreloc
+A/FMstrlen_musl.v:57	0x00050593	0x00050593	0x00050593	insn-word	code	agree	CHECK _ZL16ioctl_table_fillv+0x7b83 -> B 0x50613	derive_y = alreloc
+A/FMstrlen_musl.v:59	0x00050593	0x00050593	0x00050593	insn-word	code	agree	CHECK _ZL16ioctl_table_fillv+0x7b83 -> B 0x50613	derive_y = alreloc
+A/FMstrlen_musl.v:61	0x00158693	0x00158693	0x00158693	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x21a13 -> B 0x158b13	derive_y = alreloc
+A/FMstrlen_musl.v:63	0x00158693	0x00158693	0x00158693	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x21a13 -> B 0x158b13	derive_y = alreloc
+A/FMstrlen_musl.v:65	0x0076f693	0x0076f693		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:67	0x0076f693	0x0076f693		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:69	0x00068c63	0x00068c63	0x00068c63	insn-word	code	agree	CHECK _ZN11__sanitizer9IntersectENS_8ArrayRefINS_5RangeEEES2_RNS_24InternalMmapVectorNoCtorIS1_Lb0EEE+0x28f -> B 0x68ce3	derive_y = alreloc
+A/FMstrlen_musl.v:71	0x00068c63	0x00068c63	0x00068c63	insn-word	code	agree	CHECK _ZN11__sanitizer9IntersectENS_8ArrayRefINS_5RangeEEES2_RNS_24InternalMmapVectorNoCtorIS1_Lb0EEE+0x28f -> B 0x68ce3	derive_y = alreloc
+A/FMstrlen_musl.v:73	0x00064683	0x00064683	0x00064683	insn-word	code	agree	CHECK _ZN11__sanitizer20internal_sigprocmaskEiPNS_20__sanitizer_sigset_tES1_+0x7 -> B 0x64703	derive_y = alreloc
+A/FMstrlen_musl.v:75	0x00064683	0x00064683	0x00064683	insn-word	code	agree	CHECK _ZN11__sanitizer20internal_sigprocmaskEiPNS_20__sanitizer_sigset_tES1_+0x7 -> B 0x64703	derive_y = alreloc
+A/FMstrlen_musl.v:77	0x00160613	0x00160613	0x00160613	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x29993 -> B 0x160a93	derive_y = alreloc
+A/FMstrlen_musl.v:79	0x00160613	0x00160613	0x00160613	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x29993 -> B 0x160a93	derive_y = alreloc
+A/FMstrlen_musl.v:81	0x00158593	0x00158593	0x00158593	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x21913 -> B 0x158a13	derive_y = alreloc
+A/FMstrlen_musl.v:83	0x00158593	0x00158593	0x00158593	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x21913 -> B 0x158a13	derive_y = alreloc
+A/FMstrlen_musl.v:85	0xfe0694e3	0xfe0694e3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:87	0xfe0694e3	0xfe0694e3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:89	0x0480006f	0x0480006f		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:91	0x0480006f	0x0480006f		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:93	0xff760593	0xff760593		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:95	0xff760593	0xff760593		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:97	0xff860613	0xff860613		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:99	0xff860613	0xff860613		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:101	0x00863783	0x00863783		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:103	0x00863783	0x00863783		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:105	0x00860613	0x00860613		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:107	0x00860613	0x00860613		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:109	0x40f68833	0x40f68833		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:111	0x40f68833	0x40f68833		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:113	0x00f867b3	0x00f867b3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:115	0x00f867b3	0x00f867b3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:117	0x00e7f7b3	0x00e7f7b3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:119	0x00e7f7b3	0x00e7f7b3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:121	0x00858593	0x00858593		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:123	0x00858593	0x00858593		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:125	0xfee784e3	0xfee784e3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:127	0xfee784e3	0xfee784e3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:129	0x00064683	0x00064683	0x00064683	insn-word	code	agree	CHECK _ZN11__sanitizer20internal_sigprocmaskEiPNS_20__sanitizer_sigset_tES1_+0x7 -> B 0x64703	derive_y = alreloc
+A/FMstrlen_musl.v:131	0x00064683	0x00064683	0x00064683	insn-word	code	agree	CHECK _ZN11__sanitizer20internal_sigprocmaskEiPNS_20__sanitizer_sigset_tES1_+0x7 -> B 0x64703	derive_y = alreloc
+A/FMstrlen_musl.v:133	0x00160613	0x00160613	0x00160613	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x29993 -> B 0x160a93	derive_y = alreloc
+A/FMstrlen_musl.v:135	0x00160613	0x00160613	0x00160613	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x29993 -> B 0x160a93	derive_y = alreloc
+A/FMstrlen_musl.v:137	0x00158593	0x00158593	0x00158593	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x21913 -> B 0x158a13	derive_y = alreloc
+A/FMstrlen_musl.v:139	0x00158593	0x00158593	0x00158593	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x21913 -> B 0x158a13	derive_y = alreloc
+A/FMstrlen_musl.v:141	0xfe069ae3	0xfe069ae3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:143	0xfe069ae3	0xfe069ae3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:145	0x40a58533	0x40a58533		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:147	0x40a58533	0x40a58533		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:149	0x00008067	0x00008067		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:151	0x00008067	0x00008067		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:153	0x40a50533	0x40a50533		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:155	0x40a50533	0x40a50533		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:157	0x00008067	0x00008067		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/FMstrlen_musl.v:159	0x00008067	0x00008067		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/RtSM4.v:4	0x3d244		0x3d2c4	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/RtSM4.v:4	0x409000		0x409000	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/RtSM4.v:5	0x3fdb8		0x3fdb8	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/RtSM4.v:6	0x3ccac		0x3cd2c	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/RtSM4.v:6	0x5fa000		0x5fa000	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/RtSM4.v:80	17594333495296		17594333495296	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/RtSM4.v:80	6266880	6266880	6266880	image-bound	code	agree	kept (not an image symbol address)	derive_y = alreloc
+A/Rt/RtSM4.v:83	6266880	6266880	6266880	image-bound	code	agree	kept (not an image symbol address)	derive_y = alreloc
+A/Rt/RtSM4.v:117	0x5d8488	0x5d8908	0x5d8908	bss	code	agree	ok builtin_tls+0x800	derive_y = alreloc
+A/Rt/RtSM4.v:118	0x5d8488	0x5d8908	0x5d8908	bss	code	agree	ok builtin_tls+0x800	derive_y = alreloc
+A/Rt/RtSM4.v:119	0x5d8564	0x5d89e4	0x5d89e4	bss	code	agree	ok builtin_tls+0x8dc	derive_y = alreloc
+A/Rt/RtSM4.v:120	0x5d8564	0x5d89e4	0x5d89e4	bss	code	agree	ok builtin_tls+0x8dc	derive_y = alreloc
+A/Rt/RtSM4.v:185	0x5d8488	0x5d8908	0x5d8908	bss	code	agree	ok builtin_tls+0x800	derive_y = alreloc
+A/Rt/RtSM4.v:186	0x5d8564	0x5d89e4	0x5d89e4	bss	code	agree	ok builtin_tls+0x8dc	derive_y = alreloc
+A/Rt/RtSM4.v:240	4231168		4231168	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/RtSM4.v:243	6266880	6266880	6266880	image-bound	code	agree	kept (not an image symbol address)	derive_y = alreloc
+A/Rt/RtSM4.v:245	4231168		4231168	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/RtSM4.v:245	66112		66112	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/RtSM4.v:253	6266880	6266880	6266880	image-bound	code	agree	kept (not an image symbol address)	derive_y = alreloc
+A/Rt/RtSM4.v:253	783360	783360	783360	image-bound	code	agree	CHECK _ZN11__sanitizerL26internal_alloc_placeholderE+0x19440 -> B 0xbf880	derive_y = alreloc
+A/Rt/RtSM4.v:254	17594333495296		17594333495296	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/RtSM4.v:255	6266880	6266880	6266880	image-bound	code	agree	kept (not an image symbol address)	derive_y = alreloc
+A/Rt/RtSM4.v:255	783360	783360	783360	image-bound	code	agree	CHECK _ZN11__sanitizerL26internal_alloc_placeholderE+0x19440 -> B 0xbf880	derive_y = alreloc
+A/Rt/RtSM4.v:278	1441792		1441792	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/RtSM4.v:280	1441792		1442944	-	code	alreloc only		HAND kept 1441792 = (kFakeStackSize - kFakeFramesOff) / 8, a model constant computed by `change` (alreloc moved it to 1442944: WRONG)
+A/Rt/RtSM4.v:520	0x3ccac	0x3cd2c	0x3cd2c	code	code	agree	ok __asan_stack_malloc_4+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:4	0x3d244		0x3d2c4	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/RtSM4T.v:4	0x409000		0x409000	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/RtSM4T.v:5	0x3fdb8		0x3fdb8	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/RtSM4T.v:6	0x3ccac		0x3cd2c	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/RtSM4T.v:29	0x3ccac	0x3cd2c	0x3cd2c	code	code	agree	ok __asan_stack_malloc_4+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:30	0x3cd40	0x3cdc0	0x3cdc0	code	code	agree	ok __asan_stack_malloc_4+0x94	derive_y = alreloc
+A/Rt/RtSM4T.v:31	0x3cdb8	0x3ce38	0x3ce38	code	code	agree	ok __asan_stack_malloc_4+0x10c	derive_y = alreloc
+A/Rt/RtSM4T.v:32	0x3cde8	0x3ce68	0x3ce68	code	code	agree	ok __asan_stack_malloc_4+0x13c	derive_y = alreloc
+A/Rt/RtSM4T.v:33	0x3ce04	0x3ce84	0x3ce84	code	code	agree	ok __asan_stack_malloc_4+0x158	derive_y = alreloc
+A/Rt/RtSM4T.v:38	0x409000	0x409000	0x409480	constant	code	DISAGREE	CHECK _ZN11__sanitizerL8theDepotE+0x282368 -> B 0x409480	HAND kept 0x409000: FS_FROFF, the class-4 fake-stack frames offset, a model constant (alreloc moved it to 0x409480 by the symbol rule: WRONG); the same immediate is in both images' __asan_stack_malloc_4 (all 115 words equal but 3 pc-relative ones)
+A/Rt/RtSM4T.v:40	0x5d7d50	0x5d81d0	0x5d81d0	bss	code	agree	ok builtin_tls+0xc8	derive_y = alreloc
+A/Rt/RtSM4T.v:41	0x5f90f8	0x5f9578	0x5f9578	bss	code	agree	ok __pthread_tsd_main+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:43	0x3ccac	0x3cd2c	0x3cd2c	code	code	agree	ok __asan_stack_malloc_4+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:43	0x46a38	0x46ab8	0x46ab8	code	code	agree	ok __interceptor___tls_get_addr+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:43	0x55068	0x550e8	0x550e8	code	code	agree	ok _ZN6__asan10AsanTSDGetEv+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:43	0x5c51c	0x5c59c	0x5c59c	code	code	agree	ok _ZN6__asan16GetCurrentThreadEv+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:43	0x621dc	0x6225c	0x6225c	code	code	agree	ok _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE+0x358	derive_y = alreloc
+A/Rt/RtSM4T.v:43	0x96100	0x96578	0x96578	code	code	agree	ok __tls_get_addr+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:43	0x971b4	0x9762c	0x9762c	code	code	agree	ok tss_get+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:44	0x3ce78	0x3cef8	0x3cef8	code	code	agree	CHECK symbol _ZN6__asanL11MemToShadowEm in B: [(243312, 316, 'STT_FUNC'), (249592, 316, 'STT_FUNC'), (339508, 316, 'STT_FUNC'), (345212, 316, 'STT_FUNC'), (381800, 316, 'STT_FUNC')]	derive_y = alreloc
+A/Rt/RtSM4T.v:44	0x53f00	0x53f80	0x53f80	code	code	agree	ok _ZN6__asan12PoisonShadowEmmh+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:44	0x69c30	0x69cb0	0x69cb0	code	code	agree	ok _ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:73	0x1368e8	0x136d68	0x136d68	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:73	0x96100	0x96578	0x96578	code	code	agree	ok __tls_get_addr+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:73	0x9c360	0x9c7e0	0x9c7e0	got	code	agree	CHECK no symbol at A 0x9c360	derive_y = alreloc
+A/Rt/RtSM4T.v:73	0x9d050	0x9d4d0	0x9d4d0	got	code	agree	CHECK no symbol at A 0x9d050	derive_y = alreloc
+A/Rt/RtSM4T.v:73	0x9e110	0x9e590	0x9e590	data	code	agree	ok _ZN14__interception19real___tls_get_addrE+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:74	0x134858	0x134cd8	0x134cd8	bss	code	agree	ok _ZN11__sanitizer17current_verbosityE+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:74	0x136971	0x136df1	0x136df1	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0x89	derive_y = alreloc
+A/Rt/RtSM4T.v:74	0x9c3c0	0x9c840	0x9c840	got	code	agree	CHECK no symbol at A 0x9c3c0	derive_y = alreloc
+A/Rt/RtSM4T.v:74	0x9d060	0x9d4e0	0x9d4e0	got	code	agree	CHECK no symbol at A 0x9d060	derive_y = alreloc
+A/Rt/RtSM4T.v:75	0x5d7d70	0x5d81f0	0x5d81f0	bss	code	agree	ok builtin_tls+0xe8	derive_y = alreloc
+A/Rt/RtSM4T.v:75	0x5d7d78	0x5d81f8	0x5d81f8	bss	code	agree	ok builtin_tls+0xf0	derive_y = alreloc
+A/Rt/RtSM4T.v:75	0x5d8550	0x5d89d0	0x5d89d0	bss	code	agree	ok builtin_tls+0x8c8	derive_y = alreloc
+A/Rt/RtSM4T.v:75	0xa4620	0xa4aa0	0xa4aa0	bss	code	agree	ok _ZN6__asanL14tsd_key_initedE+0x0	derive_y = alreloc
+A/Rt/RtSM4T.v:83	0x5d8488	0x5d8908	0x5d8908	bss	code	agree	ok builtin_tls+0x800	derive_y = alreloc
+A/Rt/RtSM4T.v:83	0x5d8564	0x5d89e4	0x5d89e4	bss	code	agree	ok builtin_tls+0x8dc	derive_y = alreloc
+A/Rt/RtSM4T.v:205	0x00e678b3	0x00e678b3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/RtSM4T.v:206	0x00e678b3	0x00e678b3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/RtSM4T.v:207	0x011687b3	0x011687b3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/RtSM4T.v:208	0x011687b3	0x011687b3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/RtSM4T.v:209	0x0007c283	0x0007c283	0x0007c283	insn-word	code	agree	CHECK _ZN6__lsanL22DoRecoverableLeakCheckEv+0x127 -> B 0x7c303	derive_y = alreloc
+A/Rt/RtSM4T.v:210	0x0007c283	0x0007c283	0x0007c283	insn-word	code	agree	CHECK _ZN6__lsanL22DoRecoverableLeakCheckEv+0x127 -> B 0x7c303	derive_y = alreloc
+A/Rt/RtSM4T.v:211	0x06028663	0x06028663		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/RtSM4T.v:212	0x06028663	0x06028663		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/RtSM4T.v:213	0xfff5051b	0xfff5051b		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/RtSM4T.v:214	0xfff5051b	0xfff5051b		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/RtSM4T.v:215	0x00160613	0x00160613	0x00160613	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x29993 -> B 0x160a93	derive_y = alreloc
+A/Rt/RtSM4T.v:216	0x00160613	0x00160613	0x00160613	insn-word	code	agree	CHECK _ZN11__sanitizerL9useCountsE+0x29993 -> B 0x160a93	derive_y = alreloc
+A/Rt/RtSM4T.v:217	0xfe0514e3	0xfe0514e3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/RtSM4T.v:218	0xfe0514e3	0xfe0514e3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/RtSM4T.v:276	249272	249400	249400	code	code	agree	ok __asan_stack_malloc_4+0x10c	derive_y = alreloc
+A/Rt/RtSM4T.v:357	4231168		4232320	-	code	alreloc only		HAND kept 4231168 = FS_FROFF in decimal, a model constant (alreloc moved it to 4232320: WRONG)
+A/Rt/RtSM4T.v:366	4231168		4231168	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/RtSM4T.v:375	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/RtSM4T.v:444	1048576		1048576	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/SetShadow.v:4	0x546bc		0x546bc	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/SetShadow.v:4	0x547c4		0x547c4	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/SetShadow.v:5	0x54060		0x54060	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/SetShadow.v:5	0x92588		0x92588	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/SetShadow.v:5	0x98ed8		0x99350	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/SetShadow.v:5	0x9ad28		0x9ad28	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/SetShadow.v:6	0x54cd4		0x54d54	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/SetShadow.v:6	0x958b0		0x95d28	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/SetShadow.v:6	0x9c390		0x9c810	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/SetShadow.v:6	0x9e1d8		0x9e658	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/SetShadow.v:30	0x54cd4	0x54d54	0x54d54	code	code	agree	ok __asan_set_shadow_f5+0x0	derive_y = alreloc
+A/Rt/SetShadow.v:36	0x958b0	0x95d28	0x95d28	code	code	agree	ok memset+0x0	derive_y = alreloc
+A/Rt/SetShadow.v:36	0x9c390	0x9c810	0x9c810	got	code	agree	CHECK no symbol at A 0x9c390	derive_y = alreloc
+A/Rt/SetShadow.v:36	0x9e1d8	0x9e658	0x9e658	data	code	agree	ok _ZN14__interception11real_memsetE+0x0	derive_y = alreloc
+A/Rt/Strcmp.v:11	0x42748	0x427c8	0x42748	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/Strcmp.v:12	0x42194	0x42214	0x42194	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/Strcmp.v:12	0x42748	0x427c8	0x427c8	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:15	0x42194	0x42214	0x42214	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:15	0x42748	0x427c8	0x427c8	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:16	0x59868	0x598e8	0x598e8	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:17	0x427a8	0x42828	0x42828	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:18	0x427a8	0x42828	0x42828	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:18	0x427c0		0x42840	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/Strcmp.v:18	0x427c4	0x42844	0x42844	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:20	0x427c4	0x42844	0x42844	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:20	0x42830	0x428b0	0x428b0	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:21	0x42830	0x428b0	0x428b0	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:21	0x42880	0x42900	0x42900	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:22	0x42880	0x42900	0x42900	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:23	0x42744	0x427c4	0x42744	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/Strcmp.v:32	0x42138	0x421b8	0x42138	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/Strcmp.v:32	0x42194	0x42214	0x42194	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/Strcmp.v:33	0x426ec	0x4276c	0x426ec	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/Strcmp.v:33	0x42748	0x427c8	0x42748	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/Strcmp.v:34	0x426f0	0x42770	0x42770	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:34	0x4274c	0x427cc	0x427cc	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:35	0x426f4	0x42774	0x42774	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:35	0x42750	0x427d0	0x427d0	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:36	0x42728	0x427a8	0x427a8	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:36	0x42784	0x42804	0x42804	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:37	0x0a010113	0x0a010113		insn-word	comment	derive_y only		comment (A text verbatim)
+A/Rt/Strcmp.v:37	0x42848	0x428c8	0x428c8	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:37	0x428a4	0x42924	0x42924	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:38	0x42880	0x42900	0x42900	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:38	0x428dc	0x4295c	0x4295c	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:39	0x00008067	0x00008067		insn-word	comment	derive_y only		comment (A text verbatim)
+A/Rt/Strcmp.v:39	0x426e8	0x42768	0x426e8	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/Strcmp.v:39	0x42744	0x427c4	0x42744	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/Strcmp.v:40	0x42840	0x428c0	0x428c0	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:40	0x4289c	0x4291c	0x4291c	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:41	0x0005a517	0x0005a517	0x0005a517	insn-word	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:41	0x42768	0x427e8	0x427e8	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:41	0x427c4	0x42844	0x42844	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:42	0x0f853c03	0x0f853c03		insn-word	comment	derive_y only		comment (A text verbatim)
+A/Rt/Strcmp.v:42	0x4276c	0x427ec	0x427ec	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:42	0x427c8	0x42848	0x42848	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:43	0x136668	0x136ae8	0x136ae8	bss	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:43	0x136ae8	0x136f68	0x136f68	bss	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:43	0x9c3a0	0x9c820	0x9c820	got	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:43	0x9c860	0x9cce0	0x9cce0	got	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:50	0xa5c98	0xa6118	0xa6118	bss	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:51	05	5		constant	comment	derive_y only		comment (A text verbatim)
+A/Rt/Strcmp.v:90	0x41ba0	0x41c20	0x41c20	code	code	agree	ok __wrap_strcmp+0x0	derive_y = alreloc
+A/Rt/Strcmp.v:90	0x42748	0x427c8	0x427c8	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:91	0x42158	0x421d8	0x421d8	code	code	agree	ok __interceptor_strcmp+0x0	derive_y = alreloc
+A/Rt/Strcmp.v:95	0x42290	0x42310	0x42310	code	code	agree	ok __interceptor_strcmp+0x138	derive_y = alreloc
+A/Rt/Strcmp.v:128	0x42880	0x42900	0x42900	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:128	0x428e0	0x42960	0x42960	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:138	0x42880	0x42900	0x42900	code	comment	agree		comment (A text verbatim)
+A/Rt/Strcmp.v:138	0x42888		0x42908	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/Strcmp.v:545	0x42194	0x42214	0x42214	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:8	0x42748	0x427c8	0x42748	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:8	0x427c4	0x42844	0x42844	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:8	0x42830	0x428b0	0x428b0	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:10	0x427c4	0x42844	0x42844	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:10	0x427e4		0x42864	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:11	0x427e8	0x42868	0x42868	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:12	0x427f0	0x42870	0x42870	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:12	0x429c4	0x42a44	0x42a44	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:12	0x42a84	0x42b04	0x42b04	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:13	0x42820	0x428a0	0x428a0	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:13	0x42824	0x428a4	0x428a4	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:13	0x42830	0x428b0	0x428b0	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:14	0x4282c	0x428ac	0x428ac	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:14	0x42830	0x428b0	0x428b0	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:14	0x42a50	0x42ad0	0x42ad0	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:14	0x42a80		0x42b00	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:16	05	5		constant	comment	derive_y only		comment (A text verbatim)
+A/Rt/StrcmpChkX.v:54	0x421d4	0x42254	0x42254	code	code	agree	ok __interceptor_strcmp+0x7c	derive_y = alreloc
+A/Rt/StrcmpChkX.v:55	0x42240	0x422c0	0x422c0	code	code	agree	ok __interceptor_strcmp+0xe8	derive_y = alreloc
+A/Rt/StrcmpChkX.v:82	0x10007fff8000		0x10007fff8000	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:84	0x10007fff8000		0x10007fff8000	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:96	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:97	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:97	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:98	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:98	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:108	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:109	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:109	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:110	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:110	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:120	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:121	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:121	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:122	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:122	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:132	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:133	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:133	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:134	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:134	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:144	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:145	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:145	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:146	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:146	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:156	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:157	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:157	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:158	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:158	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:168	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:169	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:169	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:170	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:170	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:180	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:181	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:181	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:182	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:182	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:192	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:193	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:193	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:194	0x42234	0x422b4	0x422b4	code	code	agree	ok __interceptor_strcmp+0xdc	derive_y = alreloc
+A/Rt/StrcmpChkX.v:194	0x42238	0x422b8	0x422b8	code	code	agree	ok __interceptor_strcmp+0xe0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:210	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:213	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:214	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:218	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:221	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:222	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:232	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:235	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:236	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:240	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:243	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:244	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:250	1272040	1273192	1273192	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0x0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:278	1272040	1273192	1273192	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0x0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:355	1272040	1273192	1273192	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0x0	derive_y = alreloc
+A/Rt/StrcmpChkX.v:953	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:954	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:959	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:960	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:964	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1074	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1075	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1085	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1195	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1196	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1206	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1316	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1317	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1327	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1437	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1438	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1448	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1558	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1559	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1569	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1679	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1680	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1690	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1800	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1801	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1811	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1921	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1922	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:1932	472835		472835	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkX.v:2093	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2094	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2100	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2103	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2175	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2176	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2182	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2185	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2315	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2316	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2322	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2325	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2397	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2398	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2404	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkX.v:2407	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:8	0x42748	0x427c8	0x42748	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:8	0x42830	0x428b0	0x428b0	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:8	0x42880	0x42900	0x42900	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:11	0x136ae8	0x136f68	0x136f68	bss	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:11	0x42830	0x428b0	0x428b0	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:12	0x42838	0x428b8	0x428b8	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:12	0x42840	0x428c0	0x428c0	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:12	0x42a48	0x42ac8	0x42ac8	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:13	0x42880	0x42900	0x42900	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:13	0x42b64	0x42be4	0x42be4	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:14	0x42870	0x428f0	0x428f0	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:14	0x42874	0x428f4	0x428f4	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:14	0x4287c	0x428fc	0x428fc	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:15	0x42880	0x42900	0x42900	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:15	0x42b30	0x42bb0	0x42bb0	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:15	0x42b60		0x42be0	-	comment	alreloc only		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:17	05	5		constant	comment	derive_y only		comment (A text verbatim)
+A/Rt/StrcmpChkY.v:55	0x42240	0x422c0	0x422c0	code	code	agree	ok __interceptor_strcmp+0xe8	derive_y = alreloc
+A/Rt/StrcmpChkY.v:56	0x42290	0x42310	0x42310	code	code	agree	ok __interceptor_strcmp+0x138	derive_y = alreloc
+A/Rt/StrcmpChkY.v:83	0x10007fff8000		0x10007fff8000	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:85	0x10007fff8000		0x10007fff8000	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:86	1272040	1273192	1273192	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0x0	derive_y = alreloc
+A/Rt/StrcmpChkY.v:97	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:98	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:98	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:99	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:99	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:109	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:110	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:110	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:111	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:111	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:121	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:122	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:122	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:123	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:123	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:133	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:134	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:134	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:135	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:135	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:145	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:146	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:146	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:147	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:147	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:157	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:158	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:158	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:159	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:159	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:169	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:170	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:170	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:171	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:171	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:181	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:182	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:182	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:183	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:183	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:193	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:194	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:194	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:195	0x42284	0x42304	0x42304	code	code	agree	ok __interceptor_strcmp+0x12c	derive_y = alreloc
+A/Rt/StrcmpChkY.v:195	0x42288	0x42308	0x42308	code	code	agree	ok __interceptor_strcmp+0x130	derive_y = alreloc
+A/Rt/StrcmpChkY.v:211	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:214	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:215	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:219	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:222	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:223	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:233	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:236	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:237	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:241	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:244	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:245	0x549fc	0x54a7c	0x54a7c	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:251	1272040	1273192	1273192	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0x0	derive_y = alreloc
+A/Rt/StrcmpChkY.v:268	1272040	1273192	1273192	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0x0	derive_y = alreloc
+A/Rt/StrcmpChkY.v:281	1272040	1273192	1273192	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0x0	derive_y = alreloc
+A/Rt/StrcmpChkY.v:358	1272040	1273192	1273192	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0x0	derive_y = alreloc
+A/Rt/StrcmpChkY.v:956	407043		407043	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:957	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:962	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:963	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:967	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1077	407043		407043	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1078	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1088	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1198	407043		407043	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1199	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1209	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1319	407043		407043	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1320	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1330	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1440	407043		407043	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1441	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1451	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1561	407043		407043	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1562	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1572	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1682	407043		407043	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1683	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1693	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1803	407043		407043	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1804	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1814	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1924	407043		407043	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1925	2147450880		2147450880	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:1935	439939		439939	-	code	alreloc only		kept (alreloc reports it unchanged; derive_y lists no kept constant)
+A/Rt/StrcmpChkY.v:2096	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2097	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2103	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2106	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2178	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2179	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2185	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2188	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2318	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2319	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2325	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2328	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2400	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2401	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2407	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpChkY.v:2410	346620	346748	346748	code	code	agree	ok __asan_region_is_poisoned+0x174	derive_y = alreloc
+A/Rt/StrcmpHole.v:2	0x41ba0	0x41c20	0x41c20	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpHole.v:4	0x84a50	0x84e48	0x84a50	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/StrcmpHole.v:4	0x84a6c	0x84e64	0x84a6c	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/StrcmpHole.v:4	0x84a80	0x84e78	0x84a80	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:9	01490533	1491685		bss	comment	derive_y only		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:9	0x427a8	0x42828	0x42828	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:10	0x427ac	0x4282c	0x4282c	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:11	01448533	1449685		bss	comment	derive_y only		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:11	0x427b0	0x42830	0x42830	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:12	0x427b4	0x42834	0x42834	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:13	0x427b8	0x42838	0x42838	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:14	0x427bc	0x4283c	0x4283c	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:14	0x427c4	0x42844	0x42844	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:15	0x427a8	0x42828	0x42828	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:15	0x427c0	0x42840	0x42840	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:16	0x427a8	0x42828	0x42828	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:18	0x427c4	0x42844	0x42844	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:20	05	5		constant	comment	derive_y only		comment (A text verbatim)
+A/Rt/StrcmpLoop.v:48	0x421b8	0x42238	0x42238	code	code	agree	ok __interceptor_strcmp+0x60	derive_y = alreloc
+A/Rt/StrcmpLoop.v:49	0x421d4	0x42254	0x42254	code	code	agree	ok __interceptor_strcmp+0x7c	derive_y = alreloc
+A/Rt/StrcmpLoop.v:63	0x421b8	0x42238	0x42238	code	code	agree	ok __interceptor_strcmp+0x60	derive_y = alreloc
+A/Rt/StrcmpLoop.v:64	0x421bc	0x4223c	0x4223c	code	code	agree	ok __interceptor_strcmp+0x64	derive_y = alreloc
+A/Rt/StrcmpLoop.v:67	0x01490533	0x01490533		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/StrcmpLoop.v:69	0x01490533	0x01490533		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/StrcmpLoop.v:69	0x421b8	0x42238	0x42238	code	code	agree	ok __interceptor_strcmp+0x60	derive_y = alreloc
+A/Rt/StrcmpLoop.v:77	0x421bc	0x4223c	0x4223c	code	code	agree	ok __interceptor_strcmp+0x64	derive_y = alreloc
+A/Rt/StrcmpLoop.v:78	0x421c0	0x42240	0x42240	code	code	agree	ok __interceptor_strcmp+0x68	derive_y = alreloc
+A/Rt/StrcmpLoop.v:81	0x00054c83	0x00054c83	0x00054c83	insn-word	code	agree	CHECK __asan_set_shadow_07+0xf -> B 0x54d03	derive_y = alreloc
+A/Rt/StrcmpLoop.v:84	0x00054c83	0x00054c83	0x00054c83	insn-word	code	agree	CHECK __asan_set_shadow_07+0xf -> B 0x54d03	derive_y = alreloc
+A/Rt/StrcmpLoop.v:84	0x421bc	0x4223c	0x4223c	code	code	agree	ok __interceptor_strcmp+0x64	derive_y = alreloc
+A/Rt/StrcmpLoop.v:91	0x421c0	0x42240	0x42240	code	code	agree	ok __interceptor_strcmp+0x68	derive_y = alreloc
+A/Rt/StrcmpLoop.v:92	0x421c4	0x42244	0x42244	code	code	agree	ok __interceptor_strcmp+0x6c	derive_y = alreloc
+A/Rt/StrcmpLoop.v:95	0x01448533	0x01448533		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/StrcmpLoop.v:97	0x01448533	0x01448533		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/StrcmpLoop.v:97	0x421c0	0x42240	0x42240	code	code	agree	ok __interceptor_strcmp+0x68	derive_y = alreloc
+A/Rt/StrcmpLoop.v:105	0x421c4	0x42244	0x42244	code	code	agree	ok __interceptor_strcmp+0x6c	derive_y = alreloc
+A/Rt/StrcmpLoop.v:106	0x421c8	0x42248	0x42248	code	code	agree	ok __interceptor_strcmp+0x70	derive_y = alreloc
+A/Rt/StrcmpLoop.v:109	0x00054d03	0x00054d03	0x00054d03	insn-word	code	agree	CHECK __asan_set_shadow_f8+0x17 -> B 0x54d83	derive_y = alreloc
+A/Rt/StrcmpLoop.v:112	0x00054d03	0x00054d03	0x00054d03	insn-word	code	agree	CHECK __asan_set_shadow_f8+0x17 -> B 0x54d83	derive_y = alreloc
+A/Rt/StrcmpLoop.v:112	0x421c4	0x42244	0x42244	code	code	agree	ok __interceptor_strcmp+0x6c	derive_y = alreloc
+A/Rt/StrcmpLoop.v:118	0x421c8	0x42248	0x42248	code	code	agree	ok __interceptor_strcmp+0x70	derive_y = alreloc
+A/Rt/StrcmpLoop.v:119	0x421cc	0x4224c	0x4224c	code	code	agree	ok __interceptor_strcmp+0x74	derive_y = alreloc
+A/Rt/StrcmpLoop.v:122	0x001a0a13	0x001a0a13	0x001a0a13	insn-word	code	agree	CHECK _ZN11__sanitizerL8theDepotE+0x19d7b -> B 0x1a0e93	derive_y = alreloc
+A/Rt/StrcmpLoop.v:124	0x001a0a13	0x001a0a13	0x001a0a13	insn-word	code	agree	CHECK _ZN11__sanitizerL8theDepotE+0x19d7b -> B 0x1a0e93	derive_y = alreloc
+A/Rt/StrcmpLoop.v:124	0x421c8	0x42248	0x42248	code	code	agree	ok __interceptor_strcmp+0x70	derive_y = alreloc
+A/Rt/StrcmpLoop.v:131	0x421cc	0x4224c	0x4224c	code	code	agree	ok __interceptor_strcmp+0x74	derive_y = alreloc
+A/Rt/StrcmpLoop.v:134	0x000c8463	0x000c8463	0x000c8463	insn-word	code	agree	CHECK _ZN11__sanitizerL26internal_alloc_placeholderE+0x224a3 -> B 0xc88e3	derive_y = alreloc
+A/Rt/StrcmpLoop.v:136	0x000c8463	0x000c8463	0x000c8463	insn-word	code	agree	CHECK _ZN11__sanitizerL26internal_alloc_placeholderE+0x224a3 -> B 0xc88e3	derive_y = alreloc
+A/Rt/StrcmpLoop.v:136	0x421cc	0x4224c	0x4224c	code	code	agree	ok __interceptor_strcmp+0x74	derive_y = alreloc
+A/Rt/StrcmpLoop.v:142	0x421cc	0x4224c	0x4224c	code	code	agree	ok __interceptor_strcmp+0x74	derive_y = alreloc
+A/Rt/StrcmpLoop.v:142	0x421d0	0x42250	0x42250	code	code	agree	ok __interceptor_strcmp+0x78	derive_y = alreloc
+A/Rt/StrcmpLoop.v:145	0x000c8463	0x000c8463	0x000c8463	insn-word	code	agree	CHECK _ZN11__sanitizerL26internal_alloc_placeholderE+0x224a3 -> B 0xc88e3	derive_y = alreloc
+A/Rt/StrcmpLoop.v:147	0x000c8463	0x000c8463	0x000c8463	insn-word	code	agree	CHECK _ZN11__sanitizerL26internal_alloc_placeholderE+0x224a3 -> B 0xc88e3	derive_y = alreloc
+A/Rt/StrcmpLoop.v:147	0x421cc	0x4224c	0x4224c	code	code	agree	ok __interceptor_strcmp+0x74	derive_y = alreloc
+A/Rt/StrcmpLoop.v:153	0x421d0	0x42250	0x42250	code	code	agree	ok __interceptor_strcmp+0x78	derive_y = alreloc
+A/Rt/StrcmpLoop.v:156	0xffac84e3	0xffac84e3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/StrcmpLoop.v:158	0x421d0	0x42250	0x42250	code	code	agree	ok __interceptor_strcmp+0x78	derive_y = alreloc
+A/Rt/StrcmpLoop.v:165	0x421d0	0x42250	0x42250	code	code	agree	ok __interceptor_strcmp+0x78	derive_y = alreloc
+A/Rt/StrcmpLoop.v:168	0xffac84e3	0xffac84e3		insn-word	code	derive_y only	kept (not an image symbol address)	derive_y (kept constant / instruction word; alreloc reports no numeral)
+A/Rt/StrcmpLoop.v:170	0x421d0	0x42250	0x42250	code	code	agree	ok __interceptor_strcmp+0x78	derive_y = alreloc
+A/Rt/StrcmpLoop.v:196	0x421cc	0x4224c	0x4224c	code	code	agree	ok __interceptor_strcmp+0x74	derive_y = alreloc
+A/Rt/StrcmpTbl.v:11	0x42194	0x42214	0x42194	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:11	0x42744	0x427c4	0x427c4	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:12	0x42744	0x427c4	0x42744	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:12	0x42748	0x427c8	0x42748	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:15	0x42130	0x421b0	0x421b0	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:15	0x42138	0x421b8	0x421b8	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:16	0x42194	0x42214	0x42214	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:19	0x543d4	0x54454	0x543d4	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:19	0x59868	0x598e8	0x598e8	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:21	05	5		constant	comment	derive_y only		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:22	0x1368e8	0x136d68	0x136d68	bss	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:22	0x1369d8	0x136e58	0x136e58	bss	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:22	0x1369e0	0x136e60	0x136e60	bss	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:22	0x41ba0	0x41c20	0x41c20	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:22	0x42688	0x42708	0x42708	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:22	0x42c78	0x42cf8	0x42c78	code	comment	DISAGREE		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:22	0x9c360	0x9c7e0	0x9c7e0	got	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:54	0x41ba0	0x41c20	0x41c20	code	code	agree	ok __wrap_strcmp+0x0	derive_y = alreloc
+A/Rt/StrcmpTbl.v:54	0x42154	0x421d4	0x421d4	code	code	agree	ok __sanitizer_weak_hook_strcmp+0x0	derive_y = alreloc
+A/Rt/StrcmpTbl.v:63	0x42748	0x427c8	0x427c8	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:66	0x41ba0	0x41c20	0x41c20	code	code	agree	ok __wrap_strcmp+0x0	derive_y = alreloc
+A/Rt/StrcmpTbl.v:66	0x42158	0x421d8	0x421d8	code	code	agree	ok __interceptor_strcmp+0x0	derive_y = alreloc
+A/Rt/StrcmpTbl.v:67	0x42154	0x421d4	0x421d4	code	code	agree	ok __sanitizer_weak_hook_strcmp+0x0	derive_y = alreloc
+A/Rt/StrcmpTbl.v:67	0x42684	0x42704	0x42704	code	code	agree	ok __interceptor_strcmp+0x52c	derive_y = alreloc
+A/Rt/StrcmpTbl.v:67	0x42688	0x42708	0x42708	code	code	agree	ok __sanitizer_weak_hook_strncmp+0x0	derive_y = alreloc
+A/Rt/StrcmpTbl.v:72	0x136ae8	0x136f68	0x136f68	bss	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:72	0x9c3a0	0x9c820	0x9c820	got	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:73	0x136ae8	0x136f68	0x136f68	bss	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:73	0x427c4	0x42844	0x42844	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:73	0x427c8	0x42848	0x42848	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:73	0x9c3a0	0x9c820	0x9c820	got	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:74	0x136be2	0x137062	0x137062	bss	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:74	0x427cc	0x4284c	0x4284c	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:75	0x136be0	0x137060	0x137060	bss	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:75	0x427d0	0x42850	0x42850	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:76	0x136bdd	0x13705d	0x13705d	bss	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:76	0x427d4	0x42854	0x42854	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:77	0x136bd8	0x137058	0x137058	bss	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:77	0x42830	0x428b0	0x428b0	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:78	0x427e4	0x42864	0x42864	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:78	0x42834	0x428b4	0x428b4	code	comment	agree		comment (A text verbatim)
+A/Rt/StrcmpTbl.v:81	0x1368e8	0x136d68	0x136d68	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0x0	derive_y = alreloc
+A/Rt/StrcmpTbl.v:81	0x1369d8	0x136e58	0x136e58	bss	code	agree	ok _ZN11__sanitizer21common_flags_dont_useE+0xf0	derive_y = alreloc
+A/Rt/StrcmpTbl.v:81	0x9c360	0x9c7e0	0x9c7e0	got	code	agree	CHECK no symbol at A 0x9c360	derive_y = alreloc
+A/Rt/Strlen.v:2	0x4218c	0x4220c	0x4220c	code	comment	agree		comment (A text verbatim)
+A/Rt/Strlen.v:3	0x418f0	0x41970	0x41970	code	comment	agree		comment (A text verbatim)
+A/Rt/Strlen.v:4	0x4218c	0x4220c	0x4220c	code	comment	agree		comment (A text verbatim)
+A/Rt/Strlen.v:5	0x10350	0x10350	0x10350	data	comment	agree		comment (A text verbatim)
+A/Rt/Strlen.v:5	0x10368	0x10370	0x10368	data	comment	DISAGREE		comment (A text verbatim)
+A/Rt/Strlen.v:8	05	5		constant	comment	derive_y only		comment (A text verbatim)
+A/Rt/WrapRoM.v:2	0x10350	0x10350	0x10350	data	comment	agree		comment (A text verbatim)
+A/Rt/WrapRoM.v:2	0x10370	0x10378	0x10370	data	comment	DISAGREE		comment (A text verbatim)
+A/Rt/WrapRoM.v:6	05	5		constant	comment	derive_y only		comment (A text verbatim)

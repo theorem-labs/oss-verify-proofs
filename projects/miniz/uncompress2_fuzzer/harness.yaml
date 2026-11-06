@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: miniz
 harness: uncompress2_fuzzer
-rocq: OssFuzzTheorems.miniz.uncompress2_fuzzer
+rocq: OSSVerify.miniz.uncompress2_fuzzer
 origin: upstream
 summary: uncompress2() of the raw input into a static 256 KiB buffer; status ignored.
 entry: LLVMFuzzerTestOneInput

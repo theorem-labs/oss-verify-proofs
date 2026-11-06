@@ -1,0 +1,17 @@
+Planted control of b2_mod_cells_kept's window end (lib/B/YD3j.v at c513c8be7f4c; GATES.md section 11).
+Each probe is a copy of that YD3j.v with its three code copies of 0x133000 (lines 436, 442, 445) replaced by the
+planted bound, compiled as Fx.YD3jP<bound> with `rocq compile -Q base/theories OssFuzzTheorems.Core -Q base/stmts
+OssFuzzTheorems.reac_repacer.fuzz_wire -Q proofs/reac-repacer/fuzz_wire/lib
+OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib -R /fx Fx` against the workspace built at a6a56a9b493 (cb a2bb66b099ce,
+vo check 0 failed), in the checker image sha256:cc9ae43a9f4b. The lemma's last cell read ends at
+common_flags_dont_use + 0x105 = 0x13242d, so the proof holds iff the bound >= 0x13242d.
+
+bound 0x13242c (one below the last cell's end): MUST fail; output:
+File "/fx/YD3jP13242c.v", line 448, characters 105-108:
+Error: No applicable tactic.
+
+rc=1
+(line 448, characters 105-108 is the `lia` of `apply G; [lia | cbn; lia | exact C4]`: the cell C4, common_flags + 0x104.)
+
+bound 0x13242d (the last cell's end): MUST pass; output:
+rc=0

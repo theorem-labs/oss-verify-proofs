@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: flipdetect_fuzzer
-rocq: OssFuzzTheorems.leptonica.flipdetect_fuzzer
+rocq: OSSVerify.leptonica.flipdetect_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixMirrorDetect, pixOrientCorrect and pixOrientDetect; confidences discarded.
 entry: LLVMFuzzerTestOneInput

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: fast_float
 harness: from_chars
-rocq: OssFuzzTheorems.fast_float.from_chars
+rocq: OSSVerify.fast_float.from_chars
 origin: upstream
 summary: fast_float::from_chars on three FDP strings (up to 128 chars) into double and float with a fuzzed
   chars_format and into int; the parsed values and from_chars_result are discarded.

@@ -1,0 +1,32 @@
+--- A/AD1q.v
++++ A/AD1q.v
+@@ -19,6 +19,7 @@
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import AB1v AF0m ACeg AD1v AD1w AD1x AD1i.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YC5d.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import ACfn AD1p.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.A Require Import TransportDriver.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YM05.
+ Import ListNotations.
+ Unset Lia Cache. Unset Nia Cache.
+@@ -37,7 +38,11 @@
+ Variables (MT : ameter_ops) (XM_LIB XN_LIB : Z -> Z) (RLO RHI : Z).
+ Hypothesis MT_FREE : forall S m, mo_ok MT S m.
+ Hypothesis RO_IN : forall a, RLO <= a < RHI -> in_ro_tfa a.
+-Hypothesis LIBX : tfib_lib_contract_x_all B MT XM_LIB XN_LIB RLO RHI.
++(* The program-global ranges G the call may write (the slot's, the harness globals), inside the hull of A/AD2f.v:
++   the slot proves its contract at G and A/TransportDriver.v lifts it to the hull the driver states its call at. *)
++Variable G : list (Z * Z).
++Hypothesis G_HULL : g_in_hull G.
++Hypothesis LIBX : tfib_lib_contract_x_all G B MT XM_LIB XN_LIB RLO RHI.
+ Variable xst : nat -> (word -> bool) -> (word -> option byte) -> Prop.
+ Hypothesis XFR : xst_frame_tfa xst.
+ Hypothesis PF1 : printf_first_tfa B xst.
+@@ -65,7 +70,7 @@
+ FULL a = wrap_mem TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+ srealizes TSEGS (cfg_of TSEGS R (pc ch) FULL model) (CLOSEDX inp).
+ Lemma DRV_MAINX : drv_mainX_stmt.
+-Proof. exact (tfib_drv_main B HB AMALLOC AFREE AICPY ARDCHK MT XM_LIB XN_LIB RLO RHI MT_FREE RO_IN (LIBX _) xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS). Qed.
++Proof. exact (tfib_drv_main B HB AMALLOC AFREE AICPY ARDCHK MT XM_LIB XN_LIB RLO RHI MT_FREE RO_IN (tfib_lib_contract_x_all_hull G B MT XM_LIB XN_LIB RLO RHI G_HULL LIBX _) xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS). Qed.
+ Theorem tfib_srealizesX : forall (sp : word) (rdraw : EntryDraw) (brk mb : word) (inp : ProcInput),
+ valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
+ entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->

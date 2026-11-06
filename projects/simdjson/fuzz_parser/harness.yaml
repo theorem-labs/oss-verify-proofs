@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: simdjson
 harness: fuzz_parser
-rocq: OssFuzzTheorems.simdjson.fuzz_parser
+rocq: OSSVerify.simdjson.fuzz_parser
 origin: upstream
 summary: dom::parser::parse(Data, Size); the error code is discarded.
 entry: LLVMFuzzerTestOneInput

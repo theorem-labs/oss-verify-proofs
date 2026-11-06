@@ -1,0 +1,12 @@
+# written by scrub_input.py: every removed span is shown as <redacted>; nothing else differs
+--- original (sha256 0d19cf8f15812964ac5eeb87a2917a705286cb9075997f31b9032a89c669d160)
++++ map.cgif2decode.asan.json (sha256 508bfe51d302a10ee44147b322be9de7eb85cab7571d23f6351fbf44ec8c6a16)
+@@ -2,1 +2,1 @@
+- "tool": "<redacted>",
++ "tool": "MAP_TOOL",
+@@ -5,1 +5,1 @@
+-  "path": "<redacted>",
++  "path": "CGIF_ASAN_IMAGE",
+@@ -155,1 +155,1 @@
+-  "path": "<redacted>",
++  "path": "DECODE_ASAN_IMAGE",

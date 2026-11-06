@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: harfbuzz
 harness: hb-subset-fuzzer
-rocq: OssFuzzTheorems.harfbuzz.hb_subset_fuzzer
+rocq: OSSVerify.harfbuzz.hb_subset_fuzzer
 origin: upstream
 summary: Loads the fuzzed font and runs hb_subset_or_fail with a fixed codepoint set, then (legacy mode)
   with codepoints/flags/pinned axis locations read from the input tail, or (extended "HBSUBFZ2" mode)

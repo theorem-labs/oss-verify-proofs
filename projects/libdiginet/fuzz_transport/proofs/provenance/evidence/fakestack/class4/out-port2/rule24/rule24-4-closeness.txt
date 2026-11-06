@@ -1,0 +1,5 @@
+class 4 image A (own table: walked words differing by a pc-relative offset; whole functions: differing targets, words differing by a pc-relative offset | the same over the 10 functions every candidate walks)
+  1                 fuzz_grant-A         12 ranges: walked  62; whole: 1 targets, 416 | common: walked  46; whole: 1, 400; __asan_stack_malloc_4 0x3d244 -> 0x3db38
+  FAIL (not ranked) fuzz_identity-A      10 ranges: walked  47; whole: 1 targets, 403 | common: walked  47; whole: 1, 403; __asan_stack_malloc_4 0x3d2a0 -> 0x3db38
+  FAIL (not ranked) fuzz_command-A       13 ranges: walked  87; whole: 1 targets, 504 | common: walked  43; whole: 1, 437; __asan_stack_malloc_4 0x3fdb8 -> 0x3db38
+  functions every candidate walks: _ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE _ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm _ZN6__asan10AsanTSDGetEv _ZN6__asan16GetCurrentThreadEv _ZN6__asanL11MemToShadowEm __asan_stack_malloc_0 __asan_stack_malloc_4 __interceptor___tls_get_addr __pthread_getspecific __tls_get_addr

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: miniz
 harness: compress_fuzzer
-rocq: OssFuzzTheorems.miniz.compress_fuzzer
+rocq: OSSVerify.miniz.compress_fuzzer
 origin: upstream
 summary: 'check_decompress: prepends a synthetic 2-byte zlib header to the raw input and uncompress()es
   it; result ignored.'

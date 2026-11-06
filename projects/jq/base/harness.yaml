@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jq
 harness: base
-rocq: OssFuzzTheorems.jq.base
+rocq: OSSVerify.jq.base
 origin: upstream
 summary: Otherwise compile a fuzzed pattern with fuzzed encoding/options and search two strings (the pattern
   bytes and the remaining input); match results only printed under STANDALONE.

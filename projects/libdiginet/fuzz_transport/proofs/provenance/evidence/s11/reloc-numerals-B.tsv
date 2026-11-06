@@ -1,0 +1,224 @@
+# file	line	source value	symbol+offset	target value	check
+diginet_mac_is_digidesign_c.v	57	0x81ec0	diginet_mac_is_digidesign+0x0	0x8b068	same symbol+offset, symbol size 0xc0 on both sides; instruction word equal (0xff010113) (bycmp_diginet_mac_is_digidesign_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0)
+diginet_mac_is_digidesign_F.v	70	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+diginet_mac_is_digidesign_F.v	70	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_mac_is_digidesign_F.v	71	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_mac_is_digidesign_F.v	72	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+diginet_mac_is_digidesign_F.v	72	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_mac_is_digidesign_F.v	73	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+diginet_mac_is_digidesign_F.v	73	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+diginet_mac_is_digidesign_F.v	74	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+diginet_mac_is_digidesign_F.v	75	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_mac_is_digidesign_F.v	76	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_mac_is_digidesign_F.v	76	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_mac_is_digidesign_F.v	77	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_frame_is_keepalive_c.v	56	0x81f80	diginet_frame_is_keepalive+0x0	0x8b128	same symbol+offset, symbol size 0xd0 on both sides; instruction word equal (0xff010113) (bycmp_diginet_frame_is_keepalive_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 5/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_is_keepalive_F.v	119	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+diginet_frame_is_keepalive_F.v	119	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_frame_is_keepalive_F.v	121	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_frame_parse_seg_hdr1.v	276	0x821a0	diginet_frame_parse+0x150	0x8b348	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0x000095b7) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_seg_hdr1.v	287	0x821c0	diginet_frame_parse+0x170	0x8b368	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0xffd00593) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_seg_hdr1.v	303	0x821e8	diginet_frame_parse+0x198	0x8b390	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0x01190593) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_seg_hdr1.v	313	0x82200	diginet_frame_parse+0x1b0	0x8b3a8	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0x01240a13) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_seg_hdr1.v	323	0x82218	diginet_frame_parse+0x1c8	0x8b3c0	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0x00851513) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_seg_hdr2.v	79	0x82248	diginet_frame_parse+0x1f8	0x8b3f0	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0xff700613) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_seg_hdr3.v	282	0x82298	diginet_frame_parse+0x248	0x8b440	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0x01b90593) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_seg_hdr3.v	290	0x822b0	diginet_frame_parse+0x260	0x8b458	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0x01c40513) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_seg_hdr3.v	308	0x822f0	diginet_frame_parse+0x2a0	0x8b498	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0x01e40593) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_seg_hdr3.v	326	0x82328	diginet_frame_parse+0x2d8	0x8b4d0	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0x01f40593) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_seg_head.v	150	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+diginet_frame_parse_seg_head.v	150	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_frame_parse_seg_head.v	151	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_frame_parse_segs.v	60	0x82050	diginet_frame_parse+0x0	0x8b1f8	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0xfb010113) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_segs.v	60	0x50e8c	__asan_memcpy+0x0	0x523ec	same symbol+offset, symbol size 0x49c on both sides; instruction word equal (0x81010113) (no bycmp record: __asan_memcpy is not a relocated function)
+diginet_frame_parse_segs.v	60	0x8258c	rd32+0x0	0x8b734	same symbol+offset, symbol size 0xe4 on both sides; instruction word equal (0xff010113) (bycmp_rd32_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 5/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_segs.v	60	0x81e30	diginet_sum16+0x0	0x8afd8	same symbol+offset, symbol size 0x90 on both sides; instruction word equal (0xff010113) (bycmp_diginet_sum16_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 2/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_segs.v	61	0x82174	diginet_frame_parse+0x124	0x8b31c	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0xff900513) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_segs.v	61	0x8218c	diginet_frame_parse+0x13c	0x8b334	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0x00c40513) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_segs.v	61	0x82234	diginet_frame_parse+0x1e4	0x8b3dc	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0x01440593) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_segs.v	61	0x8225c	diginet_frame_parse+0x20c	0x8b404	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0x01840593) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_parse_segs.v	61	0x823a8	diginet_frame_parse+0x358	0x8b550	same symbol+offset, symbol size 0x53c on both sides; instruction word equal (0x03840593) (bycmp_diginet_frame_parse_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 27/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	401	0x82928	diginet_frame_build+0x2b8	0x8bad0	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x01640513) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	402	0x82914	diginet_frame_build+0x2a4	0x8babc	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x00898593) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	419	0x82940	diginet_frame_build+0x2d0	0x8bae8	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x01865593) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	420	0x82928	diginet_frame_build+0x2b8	0x8bad0	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x01640513) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	439	0x82964	diginet_frame_build+0x2f4	0x8bb0c	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x01065693) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	441	0x82940	diginet_frame_build+0x2d0	0x8bae8	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x01865593) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	462	0x82988	diginet_frame_build+0x318	0x8bb30	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x00865693) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	464	0x82964	diginet_frame_build+0x2f4	0x8bb0c	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x01065693) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	485	0x829ac	diginet_frame_build+0x33c	0x8bb54	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0xff300593) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	487	0x82988	diginet_frame_build+0x318	0x8bb30	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x00865693) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	509	0x829cc	diginet_frame_build+0x35c	0x8bb74	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x01a40513) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	511	0x829ac	diginet_frame_build+0x33c	0x8bb54	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0xff300593) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	531	0x829e4	diginet_frame_build+0x374	0x8bb8c	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x0085d613) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	532	0x829cc	diginet_frame_build+0x35c	0x8bb74	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x01a40513) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	551	0x82a08	diginet_frame_build+0x398	0x8bbb0	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0xff100613) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	553	0x829e4	diginet_frame_build+0x374	0x8bb8c	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x0085d613) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	575	0x82a28	diginet_frame_build+0x3b8	0x8bbd0	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x01c40593) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	577	0x82a08	diginet_frame_build+0x398	0x8bbb0	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0xff100613) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	597	0x82a40	diginet_frame_build+0x3d0	0x8bbe8	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0xff000613) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	598	0x82a28	diginet_frame_build+0x3b8	0x8bbd0	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x01c40593) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	618	0x82a60	diginet_frame_build+0x3f0	0x8bc08	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x01d40593) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	620	0x82a40	diginet_frame_build+0x3d0	0x8bbe8	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0xff000613) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	640	0x82a78	diginet_frame_build+0x408	0x8bc20	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x00a58023) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	641	0x82a60	diginet_frame_build+0x3f0	0x8bc08	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x01d40593) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	659	0x82a7c	diginet_frame_build+0x40c	0x8bc24	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x00048e63) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	661	0x82a78	diginet_frame_build+0x408	0x8bc20	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x00a58023) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	674	0x82a7c	diginet_frame_build+0x40c	0x8bc24	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x00048e63) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_frame_build_seg_h2b.v	677	0x82914	diginet_frame_build+0x2a4	0x8babc	same symbol+offset, symbol size 0x5d4 on both sides; instruction word equal (0x00898593) (bycmp_diginet_frame_build_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 29/0/0 target-differ 0 C-string acceptances 0)
+diginet_announce_parse_cgW.v	176	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+diginet_announce_parse_cgW.v	176	14	listing object 14 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 14, target object 95)
+diginet_announce_parse_cgW.v	209	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+diginet_announce_parse_cgW.v	209	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+diginet_announce_parse_cgW.v	210	14	listing object 14 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 14, target object 95)
+diginet_announce_parse_cgW.v	210	14	listing object 14 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 14, target object 95)
+diginet_announce_parse_cgW.v	213	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+diginet_announce_parse_cgW.v	214	14	listing object 14 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 14, target object 95)
+diginet_announce_parse_cgW.v	222	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+diginet_announce_parse_cgW.v	222	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+diginet_announce_parse_cgW.v	224	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+diginet_announce_parse_cgW.v	224	14	listing object 14 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 14, target object 95)
+diginet_announce_parse_cgW.v	224	14	listing object 14 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 14, target object 95)
+diginet_announce_parse_cgW.v	227	14	listing object 14 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 14, target object 95)
+diginet_announce_parse_cgW.v	227	14	listing object 14 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 14, target object 95)
+diginet_announce_parse_cgW.v	229	14	listing object 14 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 14, target object 95)
+diginet_announce_parse_cgW.v	236	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+diginet_announce_parse_cgW.v	236	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+diginet_announce_parse_cgW.v	237	14	listing object 14 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 14, target object 95)
+diginet_announce_parse_cgW.v	237	14	listing object 14 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 14, target object 95)
+diginet_cursor_init_c.v	53	0x82270	diginet_cursor_init+0x0	0x8c554	same symbol+offset, symbol size 0xb8 on both sides; instruction word equal (0xff010113) (bycmp_diginet_cursor_init_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 6/0/0 target-differ 0 C-string acceptances 0)
+diginet_cursor_init_F.v	158	634128	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa2d78 / 0xac678), read from both images
+diginet_cursor_init_F.v	158	667000	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_cursor_init_F.v	159	634128	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa2d78 / 0xac678), read from both images
+diginet_cursor_init_F.v	159	634128	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa2d78 / 0xac678), read from both images
+diginet_cursor_init_F.v	160	634128	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa2d78 / 0xac678), read from both images
+diginet_cursor_init_F.v	161	667000	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_cursor_init_F.v	162	667000	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_cursor_init_F.v	162	667000	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_cursor_init_F.v	163	667000	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_msg_next_seg_chan.v	278	0x82798	diginet_msg_next+0x470	0x8ca7c	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0x00068513) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_seg_chan.v	297	0x826b0	diginet_msg_next+0x388	0x8c994	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0x0002c583) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_seg_chan.v	335	0x826dc	diginet_msg_next+0x3b4	0x8c9c0	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0x0035d713) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_seg_chan.v	454	0x82640	diginet_msg_next+0x318	0x8c924	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0x0e0e7913) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_seg_entry.v	281	634128	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa2d78 / 0xac678), read from both images
+diginet_msg_next_seg_entry.v	281	667000	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_msg_next_seg_entry.v	282	634128	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa2d78 / 0xac678), read from both images
+diginet_msg_next_seg_entry.v	282	634128	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa2d78 / 0xac678), read from both images
+diginet_msg_next_seg_entry.v	283	634128	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa2d78 / 0xac678), read from both images
+diginet_msg_next_seg_entry.v	284	667000	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_msg_next_seg_entry.v	285	667000	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_msg_next_seg_entry.v	285	667000	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_msg_next_seg_entry.v	286	667000	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_msg_next_seg_entry.v	351	0x823e4	diginet_msg_next+0xbc	0x8c6c8	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0x0075ff93) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_seg_sys.v	285	0x82798	diginet_msg_next+0x470	0x8ca7c	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0x00068513) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_seg_sys.v	301	0x82514	diginet_msg_next+0x1ec	0x8c7f8	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0x01860613) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_seg_sys.v	342	0x82534	diginet_msg_next+0x20c	0x8c818	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0x01860613) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_seg_sys.v	445	0x82480	diginet_msg_next+0x158	0x8c764	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0x00fe86b3) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_seg_sys.v	499	0x82470	diginet_msg_next+0x148	0x8c754	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0xfffece13) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_segs.v	43	0x82328	diginet_msg_next+0x0	0x8c60c	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0xfc010113) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_segs.v	44	0x8246c	diginet_msg_next+0x144	0x8c750	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0x074e1063) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_segs.v	45	0x82470	diginet_msg_next+0x148	0x8c754	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0xfffece13) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_segs.v	46	0x82640	diginet_msg_next+0x318	0x8c924	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0x0e0e7913) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+diginet_msg_next_segs.v	47	0x82798	diginet_msg_next+0x470	0x8ca7c	same symbol+offset, symbol size 0x610 on both sides; instruction word equal (0x00068513) (bycmp_diginet_msg_next_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 38/0/0 target-differ 0 C-string acceptances 0)
+DgnBcHead.v	82	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	82	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	84	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	125	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+DgnBcHead.v	125	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	126	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	126	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	158	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+DgnBcHead.v	158	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+DgnBcHead.v	158	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	158	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	159	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	159	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	159	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	159	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	180	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+DgnBcHead.v	181	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	182	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	183	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	188	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+DgnBcHead.v	188	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+DgnBcHead.v	190	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+DgnBcHead.v	190	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	190	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	193	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	193	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	195	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	199	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	199	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	201	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	201	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	201	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	204	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	204	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	206	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	211	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+DgnBcHead.v	211	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+DgnBcHead.v	211	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	211	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	212	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	212	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	212	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	212	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	230	19	listing object count	97	the object bound of the _ew_obj lemma = the listing object count
+DgnBcHead.v	250	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+DgnBcHead.v	250	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	251	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	251	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	268	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+DgnBcHead.v	268	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+DgnBcHead.v	268	1	listing object 1 = GOT[__asan_shadow_memory_dynamic_address]	1	listing object index keyed by symbol (source object 1, target object 1)
+DgnBcHead.v	270	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	270	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	270	17	listing object 17 = __asan_shadow_memory_dynamic_address+0x0	95	listing object index keyed by symbol (source object 17, target object 95)
+DgnBcHead.v	272	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	272	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	272	0	listing object 0 = GOT[__asan_option_detect_stack_use_after_return]	0	listing object index keyed by symbol (source object 0, target object 0)
+DgnBcHead.v	274	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	274	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	274	18	listing object 18 = __asan_option_detect_stack_use_after_return+0x0	96	listing object index keyed by symbol (source object 18, target object 96)
+DgnBcHead.v	485	11812	AF_diginet_body_check+0x74	44752	listing position re-based: source AF_diginet_body_check = 0x2db0, target AF_diginet_body_check = 0xae5c
+DgnBcHead.v	528	11812	AF_diginet_body_check+0x74	44752	listing position re-based: source AF_diginet_body_check = 0x2db0, target AF_diginet_body_check = 0xae5c
+DgnBcHead.v	734	12044	AF_diginet_body_check+0x15c	44984	listing position re-based: source AF_diginet_body_check = 0x2db0, target AF_diginet_body_check = 0xae5c
+DgnBcLoopCall.v	263	535272	diginet_body_check+0x178	574068	same symbol+offset, symbol size 0x458 on both sides; instruction word equal (0x01a50663) (bycmp_diginet_body_check_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 12/0/0 target-differ 0 C-string acceptances 1)
+diginet_sum16_c.v	62	0x81e30	diginet_sum16+0x0	0x8afd8	same symbol+offset, symbol size 0x90 on both sides; instruction word equal (0xff010113) (bycmp_diginet_sum16_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 2/0/0 target-differ 0 C-string acceptances 0)
+diginet_sum16_F.v	89	0x81ea8	diginet_sum16+0x78	0x8b050	same symbol+offset, symbol size 0x90 on both sides; instruction word equal (0x03069513) (bycmp_diginet_sum16_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 2/0/0 target-differ 0 C-string acceptances 0)
+diginet_sum16_F.v	93	0x81e58	diginet_sum16+0x28	0x8b000	same symbol+offset, symbol size 0x90 on both sides; instruction word equal (0x06a66263) (bycmp_diginet_sum16_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 2/0/0 target-differ 0 C-string acceptances 0)
+diginet_sum16_F.v	209	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+diginet_sum16_F.v	209	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_sum16_F.v	210	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_sum16_F.v	211	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+diginet_sum16_F.v	211	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_sum16_F.v	212	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+diginet_sum16_F.v	212	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+diginet_sum16_F.v	213	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+diginet_sum16_F.v	214	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_sum16_F.v	215	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_sum16_F.v	215	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+diginet_sum16_F.v	216	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+rd32_c.v	62	0x8258c	rd32+0x0	0x8b734	same symbol+offset, symbol size 0xe4 on both sides; instruction word equal (0xff010113) (bycmp_rd32_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 5/0/0 target-differ 0 C-string acceptances 0)
+rd32_F.v	152	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+rd32_F.v	152	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+rd32_F.v	153	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+rd32_F.v	154	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+rd32_F.v	154	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+rd32_F.v	155	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+rd32_F.v	155	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+rd32_F.v	156	633064	GOT[__asan_shadow_memory_dynamic_address]	670960	the .got slot that holds __asan_shadow_memory_dynamic_address (0xa28b8 / 0xac678), read from both images
+rd32_F.v	157	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+rd32_F.v	158	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+rd32_F.v	158	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+rd32_F.v	159	665784	__asan_shadow_memory_dynamic_address+0x0	706168	same symbol+offset, symbol size 0x8 on both sides
+copy_strz_c.v	86	0x82db4	copy_strz+0x0	0x8bf5c	same symbol+offset, symbol size 0xf4 on both sides; instruction word equal (0xff010113) (bycmp_copy_strz_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0)
+copy_strz_F.v	242	0x82e08	copy_strz+0x54	0x8bfb0	same symbol+offset, symbol size 0xf4 on both sides; instruction word equal (0x0002c383) (bycmp_copy_strz_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0)
+copy_strz_F.v	246	0x82df8	copy_strz+0x44	0x8bfa0	same symbol+offset, symbol size 0xf4 on both sides; instruction word equal (0x00365393) (bycmp_copy_strz_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0)
+copy_strz_F.v	277	0x82e24	copy_strz+0x70	0x8bfcc	same symbol+offset, symbol size 0xf4 on both sides; instruction word equal (0x00178793) (bycmp_copy_strz_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0)
+copy_strz_F.v	281	0x82e14	copy_strz+0x60	0x8bfbc	same symbol+offset, symbol size 0xf4 on both sides; instruction word equal (0x0036de13) (bycmp_copy_strz_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0)
+copy_strz_F.v	312	0x82e80	copy_strz+0xcc	0x8c028	same symbol+offset, symbol size 0xf4 on both sides; instruction word equal (0x00050023) (bycmp_copy_strz_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0)
+copy_strz_F.v	316	0x82e70	copy_strz+0xbc	0x8c018	same symbol+offset, symbol size 0xf4 on both sides; instruction word equal (0x00355593) (bycmp_copy_strz_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0)
+copy_strz_F.v	452	0x82e68	copy_strz+0xb4	0x8c010	same symbol+offset, symbol size 0xf4 on both sides; instruction word equal (0x02786463) (bycmp_copy_strz_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0)
+copy_strz_F.v	496	0x82de4	copy_strz+0x30	0x8bf8c	same symbol+offset, symbol size 0xf4 on both sides; instruction word equal (0x0ab66663) (bycmp_copy_strz_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0)
+copy_strz_F.v	562	0x82db4	copy_strz+0x0	0x8bf5c	same symbol+offset, symbol size 0xf4 on both sides; instruction word equal (0xff010113) (bycmp_copy_strz_B.txt: EQUAL-mod-pcrel pcrel/real/unmeasured 4/0/0 target-differ 0 C-string acceptances 0)

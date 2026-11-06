@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: libdiginet/fuzz_codec/plain_halts_may_fail
+fingerprint: 87e2d1a190f378be5bf84ff5a5c907843bdf288f5e19c092d77a8d75f9ad3973

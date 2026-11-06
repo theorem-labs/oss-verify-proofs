@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: avahi
 harness: fuzz-consume-key
-rocq: OssFuzzTheorems.avahi.fuzz_consume_key
+rocq: OSSVerify.avahi.fuzz_consume_key
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, an invariant: the first key parsed from the raw
   packet bytes (avahi_dns_packet_consume_key) must satisfy avahi_key_is_valid.'

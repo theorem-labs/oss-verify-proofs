@@ -1,0 +1,4 @@
+# The two lib/ files measure_yh03.py measured: <path> <kind> <sha256> <role>. The path is relative to the unit
+# folder proofs/libdiginet/fuzz_transport; the sha256 is the file as measured.
+lib/Reusable/YH03.v measured c89a6b6c71176a35c513e73c599a0becd6e7e6e35f403ecbd3c252fa579712bf plain cells, 43 OK
+lib/U/Reusable/YH03.v measured 00f77ac2e9495e98d2623a2669787a143014dc33c6921d687b60e990b4b4ac62 ubsan cells, 43 OK

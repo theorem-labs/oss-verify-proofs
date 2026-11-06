@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: knot-dns
 harness: fuzz_zscanner
-rocq: OssFuzzTheorems.knot_dns.fuzz_zscanner
+rocq: OSSVerify.knot_dns.fuzz_zscanner
 origin: upstream
 summary: zs_init + zs_set_input_string + zs_parse_all over the zone-file text; no callback is installed
   and the parse result is ignored.

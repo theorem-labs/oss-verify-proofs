@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wolfssh
 harness: fuzz_server
-rocq: OssFuzzTheorems.wolfssh.fuzz_server
+rocq: OSSVerify.wolfssh.fuzz_server
 origin: upstream
 summary: Server-side wolfSSH_accept over a recv callback that serves the input (sends discarded, user
   auth always succeeds); the accept result is explicitly ignored ("we only care about memory-safety issues").

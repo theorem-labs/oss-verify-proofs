@@ -1,0 +1,15 @@
+___interceptor_memchr	closure 785 functions (register-indirect call sites inside: 98)	EQUAL 172	EQUAL-mod-pcrel(all targets equal) 602	other 11
+   _ZN6__asan12ErrorGenericC1Ejmmmmbm @0x3a5f4: UNMEASURED [] 
+   _ZN6__asan9Decorator10ShadowByteEh @0x53dc8: UNMEASURED [] 
+   _ZN6__asan16ErrorDescription5PrintEv @0x57248: UNMEASURED [] 
+   _ZN11__sanitizer19GetHandleSignalModeEi @0x64208: EQUAL-mod-pcrel target-differ [('0x24', '(.data.rel.ro)', '(.data.rel.ro)', b'\x8c\x0c\x13', b'L/\x13')] 
+   _ZNK11__sanitizer13SignalContext8DescribeEv @0x65330: EQUAL-mod-pcrel target-differ [('0x1c', '(.rodata)', '(.rodata)', b'\xca\xca\xff\xffk\xa2\xff\xffGS\xff\xffc\x8b\xff\xff\x8c\xf8\xff\xffQS\xff\xff', b'\xb5\xca\xff\xff\\\xa2\xff\xff%S\xff\xffT\x8b\xff\xff\x8c\xf8\xff\xff/S\xff\xff')] 
+   _ZN9libunwind10CFI_ParserINS_17LocalAddressSpaceEE20parseFDEInstructionsERS1_RKNS2_8FDE_InfoERKNS2_8CIE_InfoEmiPNS2_10PrologInfoE @0x824cc: UNMEASURED [] 
+   _ZN9libunwind17LocalAddressSpace11getEncodedPERmmhm @0x83e24: UNMEASURED [] 
+   _ZN9libunwind14EHHeaderParserINS_17LocalAddressSpaceEE17getTableEntrySizeEh @0x85724: UNMEASURED [] 
+   sysconf @0x85ffc: UNMEASURED [] 
+   __synccall @0x92dbc: EQUAL-mod-pcrel target-differ [('0x54', '(.data.rel.ro)', '(.data.rel.ro)', b'$0\t', b'\xd4Q\t')] 
+   __strftime_fmt_1 @0x94e2c: UNMEASURED [] 
+== control: the planted copy against the donor
+___interceptor_memchr	closure 785 functions (register-indirect call sites inside: 98)	EQUAL 784	EQUAL-mod-pcrel(all targets equal) 0	other 1
+   ___interceptor_memchr @0x43208: DIFFERENT [] 

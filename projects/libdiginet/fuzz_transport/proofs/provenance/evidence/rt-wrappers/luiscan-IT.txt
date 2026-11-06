@@ -1,0 +1,10 @@
+ROW	image	function	addr	size	luis	insec	inload	memfed	memfed_out	luiconst	unmeasured	exposure
+# image ../img/ident.twin.asan sha256 5b0cbe573036
+ROW	ident.twin.asan	___interceptor_strcmp	0x42748	1328	7	0	0	0	0	0	0	0
+ROW	ident.twin.asan	_ZN6__asan18TryAsanInitFromRtlEv	0x59868	160	2	0	1	0	0	0	0	0
+TOTAL	ident.twin.asan	functions 9	with-lui 2	with-exposure 0	luis 9	insec 0	inload 1	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+# image ../img/trans.twin.asan sha256 86efc3a80314
+ROW	trans.twin.asan	___interceptor_strcmp	0x432a0	1328	7	0	0	0	0	0	0	0
+ROW	trans.twin.asan	_ZN6__asan18TryAsanInitFromRtlEv	0x5a3c0	160	2	0	1	0	0	0	0	0
+TOTAL	trans.twin.asan	functions 9	with-lui 2	with-exposure 0	luis 9	insec 0	inload 1	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	all	functions 18	with-lui 4	with-exposure 0	luis 18	insec 0	inload 2	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0

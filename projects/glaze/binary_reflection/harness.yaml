@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: glaze
 harness: binary_reflection
-rocq: OssFuzzTheorems.glaze.binary_reflection
+rocq: OSSVerify.glaze.binary_reflection
 origin: upstream
 summary: nothing is checked beyond crashes, sanitizers and uncaught exceptions.
 entry: LLVMFuzzerTestOneInput

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libavc
 harness: mvc_dec_fuzzer
-rocq: OssFuzzTheorems.libavc.mvc_dec_fuzzer
+rocq: OSSVerify.libavc.mvc_dec_fuzzer
 origin: upstream
 summary: 'MVC (multiview H.264) decoder: arch/color/cores from input bytes, decodeHeader, allocFrame,
   then up to kMaxNumDecodeCalls decodes, stopping at the first non-IV_SUCCESS; outputs never checked.'

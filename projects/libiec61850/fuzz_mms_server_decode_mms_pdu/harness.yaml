@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libiec61850
 harness: fuzz_mms_server_decode_mms_pdu
-rocq: OssFuzzTheorems.libiec61850.fuzz_mms_server_decode_mms_pdu
+rocq: OSSVerify.libiec61850.fuzz_mms_server_decode_mms_pdu
 origin: upstream
 summary: Builds a small IED model, starts an IedServer on TCP port 10002, connects a client over localhost
   and sends the input as a raw MMS PDU; nothing is checked.

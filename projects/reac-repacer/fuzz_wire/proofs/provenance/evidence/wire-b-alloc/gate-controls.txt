@@ -1,0 +1,11 @@
+The two negative controls of this run, each on a copy of the outputs in a scratch directory: the gate
+named must read FAIL, or gates.py refuses and no verdict file is written.
+
+control: one roots.tsv row set to DIFFERENT -> kit FAIL, lui PASS, base PASS, plants PASS
+  FAILING:
+  roots.tsv: ___interceptor_malloc reads DIFFERENT with target-differ 0
+  GATE wire-b-alloc-kit VERDICT: FAIL head 75cd74cdfee5b2ed1165fe5fbe48ef157f89a474 inputs cmpkit 86da41d3ef68: strictcmp3.py b553126fa224 (roots.tsv); settle.py 4eeeae293912, luitrace.py 06d2b1005932 and mkaccept.py 984322748de5 (ACCEPTANCES.tsv, jtcheck 226254f48c97: jtcheck.py 94c2f3081b0c); handtable.py 95e3bc23db39 (handtable.out)
+control: one plant verdict set to EQUAL -> kit PASS, lui PASS, base PASS, plants FAIL
+  FAILING:
+  plants.out: PLANT-A-VERDICT reads EQUAL
+  GATE wire-b-alloc-plants VERDICT: FAIL head 75cd74cdfee5b2ed1165fe5fbe48ef157f89a474 inputs plants.py 237bb0a60df5 (plants.out); settle.py 4eeeae293912 (ctl-settle-*.tsv); handtable.py 95e3bc23db39 (ctl-handtable-*.out)

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: radvd
 harness: fuzz_config
-rocq: OssFuzzTheorems.radvd.fuzz_config
+rocq: OSSVerify.radvd.fuzz_config
 origin: oss-fuzz
 summary: Writes the input to a mkstemp file and runs readin_config() (the radvd.conf flex/bison parser);
   the returned interface list is only freed.

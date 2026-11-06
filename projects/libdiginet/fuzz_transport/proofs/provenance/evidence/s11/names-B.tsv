@@ -1,0 +1,4 @@
+# what image B's relocated walks name that base 41cf46de4c30 does not define yet: kind	source name	target name	the piece that brings it (the source file that defines it)	walks
+module	B.T06_FrameB_env	B.T06_FrameB_env	core B, TCB (B/T06_FrameB_env.v)	diginet_frame_build
+name	t06be_api_env	t06be_api_env	core B, TCB (B/T06_FrameB_env.v)	diginet_frame_build
+name	t06be_model_laws	t06be_model_laws	core B, TCB (B/T06_FrameB_env.v)	diginet_frame_build

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: x509
-rocq: OssFuzzTheorems.openssl.x509
+rocq: OSSVerify.openssl.x509
 origin: upstream
 summary: Two certs, a CRL and an OCSP response are parsed from consecutive input bytes; X509_print, X509_verify_cert
   with CRL checking and an accept-all callback, OCSP_basic_verify and OCSP_resp_find_status; all results

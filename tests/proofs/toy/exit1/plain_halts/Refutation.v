@@ -1,4 +1,4 @@
-(** Refutation of OssFuzzTheorems.Tests.toy.exit1.Statements.plain_halts.
+(** Refutation of OSSVerify.Tests.toy.exit1.Statements.plain_halts.
 
     Outline.  Take one valid input (one empty argument, nothing else) and one
     valid entry (the stack at the bottom of its window, the break just above
@@ -15,9 +15,9 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import
   ExecutableSpecs Examples SpuriousCfg BudgetPremise.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import MustExit HaltsAllowed Classifier.
-From OssFuzzTheorems.Core Require Import Shapes.
-From OssFuzzTheorems.Tests.toy.exit1 Require Statements Images.
-From OssFuzzTheorems.Tests.proofs.lib Require Exit0Run.
+From OSSVerify.Core Require Import Shapes.
+From OSSVerify.Tests.toy.exit1 Require Statements Images.
+From OSSVerify.Tests.proofs.lib Require Exit0Run.
 Import ListNotations.
 
 Definition input : ProcInput :=

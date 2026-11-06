@@ -16,7 +16,7 @@
     wrong argument count, a missing or unreadable FILE, a FILE shorter than its
     header, or one of 64 MiB or more, it exits with status 2 without calling the
     harness.  Every statement quantifies over all of these cases and over every
-    other process input (see Vocabulary in OssFuzzTheorems.Core.Shapes).
+    other process input (see Vocabulary in OSSVerify.Core.Shapes).
 
     WHAT THE HARNESS CHECKS.  style_parse on the NUL-terminated input (<=512
     bytes) into a zeroed style/grid_cell; the return code and result are
@@ -28,8 +28,8 @@
     harness README, not here: this file changes only when a statement does. *)
 
 From Stdlib Require Import QArith.
-From OssFuzzTheorems.Core Require Import Shapes.
-From OssFuzzTheorems.tmux.style_fuzzer Require Images.
+From OSSVerify.Core Require Import Shapes.
+From OSSVerify.tmux.style_fuzzer Require Images.
 
 (** ** Halting *)
 
@@ -98,8 +98,9 @@ Definition asan_ubsan_agrees : Prop :=
 
 (** ** Proving a statement
 
-    A proof is a directory proofs/tmux/style-fuzzer/<statement>/ whose Proof.v
-    ends, for example, in
+    A proof is a directory named after the statement, in this fuzz target's
+    proofs folder (docs/proving.md says where it is), whose Proof.v ends, for
+    example, in
       Theorem plain_halts_holds : Statements.plain_halts.
 
     See docs/proving.md. *)

@@ -1,0 +1,22 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From stdpp Require Import gmap.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Spec Require Import STree Malloc MallocCtrl.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Malloc Require Import ProgDeps.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Malloc Require Import MallocRep MallocTree.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Malloc Require Export MallocBlocks.
+From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Common Require Import RunDraw.
+Import ListNotations.
+Open Scope Z_scope.
+Section CANSEC1. Context {rc : runConstT}.
+Definition HINV_from (resv : list (Z * Z)) (st : mstate) (pbrk : Z) (LB : list block) : Prop :=
+brk_link st pbrk /\ AREACH_from resv st LB.
+End CANSEC1.
+Section CANSEC2. Context {rc : runConstT}.
+#[using="Type"] Lemma HINV_from_init : forall resv pbrk, HINV_from resv (minit 0 resv ATOP) pbrk [].
+Proof. intros. split; [exact I | apply areach_init]. Qed.
+#[using="Type"] Lemma brk_link_ps_iff : forall st s, brk_link_ps st s <-> brk_link st (ps_brk s).
+Proof. intros st s. unfold brk_link_ps, brk_link. destruct (c_brk (ctx st)); tauto. Qed.
+End CANSEC2.

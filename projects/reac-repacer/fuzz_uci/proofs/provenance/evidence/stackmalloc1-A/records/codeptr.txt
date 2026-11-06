@@ -1,0 +1,34 @@
+# base: the files on fuzz_uci.asan, stale against fuzz_grant.asan (each file's donor text)
+codeptr: self-test: 27 known answers (the stale decision 7, the slot 3, the type rule 12 with 2 sentence-final decimals, the names reader 3, --not-address 2)
+AF0r.v       14 code (8 function starts, 0 return pcs, 5 other instruction starts),   19 data, 9 at or above the image top 0x5f3870, 3 FINDINGS: 0x100000, 0x109000, 0x160613 [stale against fuzz_grant.asan, donor file <work><file>: 3 STALE (0x100000, 0x109000, 0x160613), 0 donor-file literals with the same meaning in both images]
+AF0s.v        0 code (0 function starts, 0 return pcs, 0 other instruction starts),    5 data, 6 at or above the image top 0x5f3870, 2 FINDINGS: 0x109000, 0x160000 [stale against fuzz_grant.asan, donor file <work><file>: 2 STALE (0x109000, 0x160000), 0 donor-file literals with the same meaning in both images]
+YF0v.v        0 code (0 function starts, 0 return pcs, 0 other instruction starts),    0 data, 2 at or above the image top 0x5f3870, 0 FINDINGS [stale against fuzz_grant.asan, donor file <work><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+rc=1
+# declared: the same with the --not-address declarations of codeptr-notaddr-sm1.tsv
+codeptr: self-test: 27 known answers (the stale decision 7, the slot 3, the type rule 12 with 2 sentence-final decimals, the names reader 3, --not-address 2)
+AF0r.v     3 number(s) DECLARED NOT addresses (--not-address): 0x100000 (1048576): 1 << kStackSizeLog = 1048576, the fake-stack class size unit (AF0r.v frame_addr_cid: `change (Z.shiftl 1 kStackSizeLog) with 1048576`); 0x109000 (1085440): FS_FROFF = kFakeFramesOff + (1 << kStackSizeLog) = 0x9000 + 0x100000, the model's fake-frame offset of class 1 (frame_addr_cid, Qed); 0x160613 (1443347): the instruction word 0x00160613 (addi a2, a2, 1) at FS_LOOP + 0x14, fetched by F_L14 (ftac, Qed against the image) and decoded by D_L14
+AF0r.v       14 code (8 function starts, 0 return pcs, 5 other instruction starts),   16 data, 9 at or above the image top 0x5f3870, 0 FINDINGS [stale against fuzz_grant.asan, donor file <work><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+AF0s.v     2 number(s) DECLARED NOT addresses (--not-address): 0x109000 (1085440): FS_FROFF = kFakeFramesOff + (1 << kStackSizeLog) = 0x9000 + 0x100000, the model's fake-frame offset of class 1 (frame_addr_cid, Qed); 0x160000 (1441792): (kFakeStackSize - kFakeFramesOff) / 8 = (11571200 - 36864) / 8 = 1441792, the length of the fake frames' shadow (AF0s.v PRS)
+AF0s.v        0 code (0 function starts, 0 return pcs, 0 other instruction starts),    3 data, 6 at or above the image top 0x5f3870, 0 FINDINGS [stale against fuzz_grant.asan, donor file <work><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+YF0v.v        0 code (0 function starts, 0 return pcs, 0 other instruction starts),    0 data, 2 at or above the image top 0x5f3870, 0 FINDINGS [stale against fuzz_grant.asan, donor file <work><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+rc=0
+# donor: control: the donor text on its own image (the tool's baseline)
+codeptr: self-test: 27 known answers (the stale decision 7, the slot 3, the type rule 12 with 2 sentence-final decimals, the names reader 3, --not-address 2)
+AF0r.v       17 code (11 function starts, 0 return pcs, 5 other instruction starts),   19 data, 9 at or above the image top 0x5f93b0, 0 FINDINGS
+AF0s.v        0 code (0 function starts, 0 return pcs, 0 other instruction starts),    5 data, 6 at or above the image top 0x5f93b0, 0 FINDINGS
+YF0v.v        0 code (0 function starts, 0 return pcs, 0 other instruction starts),    0 data, 2 at or above the image top 0x5f93b0, 0 FINDINGS
+rc=0
+# plant: control: AF0r.v FS_ENTRY planted as the donor's 0x3cf18
+codeptr: self-test: 27 known answers (the stale decision 7, the slot 3, the type rule 12 with 2 sentence-final decimals, the names reader 3, --not-address 2)
+AF0r.v       15 code (8 function starts, 1 return pcs, 5 other instruction starts),   19 data, 9 at or above the image top 0x5f3870, 4 FINDINGS: 0x3cf18, 0x100000, 0x109000, 0x160613 [stale against fuzz_grant.asan, donor file <work><file>: 4 STALE (0x3cf18, 0x100000, 0x109000, 0x160613), 0 donor-file literals with the same meaning in both images]
+AF0s.v        0 code (0 function starts, 0 return pcs, 0 other instruction starts),    5 data, 6 at or above the image top 0x5f3870, 2 FINDINGS: 0x109000, 0x160000 [stale against fuzz_grant.asan, donor file <work><file>: 2 STALE (0x109000, 0x160000), 0 donor-file literals with the same meaning in both images]
+YF0v.v        0 code (0 function starts, 0 return pcs, 0 other instruction starts),    0 data, 2 at or above the image top 0x5f3870, 0 FINDINGS [stale against fuzz_grant.asan, donor file <work><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+rc=1
+# plant-declared: control: the same plant under the declarations
+codeptr: self-test: 27 known answers (the stale decision 7, the slot 3, the type rule 12 with 2 sentence-final decimals, the names reader 3, --not-address 2)
+AF0r.v     3 number(s) DECLARED NOT addresses (--not-address): 0x100000 (1048576): 1 << kStackSizeLog = 1048576, the fake-stack class size unit (AF0r.v frame_addr_cid: `change (Z.shiftl 1 kStackSizeLog) with 1048576`); 0x109000 (1085440): FS_FROFF = kFakeFramesOff + (1 << kStackSizeLog) = 0x9000 + 0x100000, the model's fake-frame offset of class 1 (frame_addr_cid, Qed); 0x160613 (1443347): the instruction word 0x00160613 (addi a2, a2, 1) at FS_LOOP + 0x14, fetched by F_L14 (ftac, Qed against the image) and decoded by D_L14
+AF0r.v       15 code (8 function starts, 1 return pcs, 5 other instruction starts),   16 data, 9 at or above the image top 0x5f3870, 1 FINDINGS: 0x3cf18 [stale against fuzz_grant.asan, donor file <work><file>: 1 STALE (0x3cf18), 0 donor-file literals with the same meaning in both images]
+AF0s.v     2 number(s) DECLARED NOT addresses (--not-address): 0x109000 (1085440): FS_FROFF = kFakeFramesOff + (1 << kStackSizeLog) = 0x9000 + 0x100000, the model's fake-frame offset of class 1 (frame_addr_cid, Qed); 0x160000 (1441792): (kFakeStackSize - kFakeFramesOff) / 8 = (11571200 - 36864) / 8 = 1441792, the length of the fake frames' shadow (AF0s.v PRS)
+AF0s.v        0 code (0 function starts, 0 return pcs, 0 other instruction starts),    3 data, 6 at or above the image top 0x5f3870, 0 FINDINGS [stale against fuzz_grant.asan, donor file <work><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+YF0v.v        0 code (0 function starts, 0 return pcs, 0 other instruction starts),    0 data, 2 at or above the image top 0x5f3870, 0 FINDINGS [stale against fuzz_grant.asan, donor file <work><file>: 0 STALE (-), 0 donor-file literals with the same meaning in both images]
+rc=1

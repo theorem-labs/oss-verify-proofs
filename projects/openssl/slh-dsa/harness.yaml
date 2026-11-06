@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: slh-dsa
-rocq: OssFuzzTheorems.openssl.slh_dsa
+rocq: OSSVerify.openssl.slh_dsa
 origin: upstream
 summary: 'Checks 2 properties (listed below); the first, a self-validation: Sign-then-verify with an in-harness
   SLH-DSA key over the input message, with context-string / message-encoding / deterministic params chosen

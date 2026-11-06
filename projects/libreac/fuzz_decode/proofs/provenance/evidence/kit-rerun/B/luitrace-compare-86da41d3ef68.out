@@ -1,0 +1,7 @@
+# the lui trace of the B record against the A record's own trace
+# cmpkit 86da41d3ef68 (tools/cmpkit/86da41d3ef68 at the tools commit 98e50c029045): 9f61b4cee422 ambiscan.py, 1480ca2faea0 bytecmp-1480ca2faea0.py, a98d2b3e8857 closure_strict3.py, 4d70e90bc1fa drvcmp.py, 8b0ea3862423 jtcheck.py, 9ae61e4a0e01 luiscan.py, 926a9a88afcd paircl.py, e6883477399d repin_check.py, 65688e94214a strictcmp3.py
+# python 3.12.3, pyelftools 0.33, capstone 5.0.7; provenance/evidence/kit-rerun/cmpkit-86da41d3ef68/run.sh cf1234f61476, diffcheck.py 8264f205f593, window.py a2b1e03e11ea; twin proofs: kit-rerun/cmpkit-86da41d3ef68/twins.log
+## the ROW lines of B/luitrace-pair-TE-86da41d3ef68.out less TryMemCpy, against the ROW lines of kit-rerun/A/kit-rerun-4bbd3a74be89/luitrace.py's record out/luitrace-pair-86da41d3ef68.out
+IDENTICAL
+## B/luitrace-pair-SE-86da41d3ef68.out against B/luitrace-pair-TE-86da41d3ef68.out, lines not starting with '#' or '$ ' (they name the images)
+IDENTICAL

@@ -1,0 +1,9 @@
+# twin proofs: each pin against its unstripped twin (drvcmp.py twins)
+# cmpkit 86da41d3ef68 (tools/cmpkit/86da41d3ef68 at the tools commit 98e50c029045): 9f61b4cee422 ambiscan.py, 1480ca2faea0 bytecmp-1480ca2faea0.py, a98d2b3e8857 closure_strict3.py, 4d70e90bc1fa drvcmp.py, 8b0ea3862423 jtcheck.py, 9ae61e4a0e01 luiscan.py, 926a9a88afcd paircl.py, e6883477399d repin_check.py, 65688e94214a strictcmp3.py
+# python 3.12.3, pyelftools 0.33, capstone 5.0.7; provenance/evidence/kit-rerun/cmpkit-86da41d3ef68/run.sh cf1234f61476, diffcheck.py 8264f205f593, window.py a2b1e03e11ea; twin proofs: kit-rerun/cmpkit-86da41d3ef68/twins.log
+## drvcmp.py twins
+$ python3 kit/drvcmp.py twins img/bin/cgif_file_fuzzer.asan-ubsan img/unstripped/cgif_file_fuzzer.asan-ubsan img/bin/cgif_file_fuzzer.asan-ubsan img/unstripped/cgif_file_fuzzer.asan-ubsan.symtwin img/bin/fuzz_decode.asan img/unstripped/fuzz_decode.asan img/bin/fuzz_decode.asan-ubsan img/unstripped/fuzz_decode.asan-ubsan
+cgif_file_fuzzer.asan-ubsan 1c29845fe605 | cgif_file_fuzzer.asan-ubsan ce511d541cda | PT_LOAD layout equal: True | differing loadable bytes: 25, outside ELF header [0x10000,0x10040) and .note.gnu.build-id [0x102a8,0x102cc): []
+cgif_file_fuzzer.asan-ubsan 1c29845fe605 | cgif_file_fuzzer.asan-ubsan.symtwin 3f110c1db582 | PT_LOAD layout equal: True | differing loadable bytes: 4, outside ELF header [0x10000,0x10040) and .note.gnu.build-id [0x102a8,0x102cc): []
+fuzz_decode.asan 5973b76807d8 | fuzz_decode.asan 4cb0a852e826 | PT_LOAD layout equal: True | differing loadable bytes: 25, outside ELF header [0x10000,0x10040) and .note.gnu.build-id [0x102a8,0x102cc): []
+fuzz_decode.asan-ubsan 5d05689fd5b1 | fuzz_decode.asan-ubsan 6744989bb2e6 | PT_LOAD layout equal: True | differing loadable bytes: 25, outside ELF header [0x10000,0x10040) and .note.gnu.build-id [0x102a8,0x102cc): []

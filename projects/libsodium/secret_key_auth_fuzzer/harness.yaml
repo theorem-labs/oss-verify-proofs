@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libsodium
 harness: secret_key_auth_fuzzer
-rocq: OssFuzzTheorems.libsodium.secret_key_auth_fuzzer
+rocq: OSSVerify.libsodium.secret_key_auth_fuzzer
 origin: oss-fuzz
 summary: 'Checks one property, a self-validation: crypto_auth (HMAC-SHA512-256) of the whole input under
   a deterministic-RNG key must pass crypto_auth_verify with the same key.'

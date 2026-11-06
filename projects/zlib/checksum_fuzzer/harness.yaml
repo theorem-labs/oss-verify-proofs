@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: zlib
 harness: checksum_fuzzer
-rocq: OssFuzzTheorems.zlib.checksum_fuzzer
+rocq: OSSVerify.zlib.checksum_fuzzer
 origin: oss-fuzz
 summary: 'Checks 6 properties (listed below); the first, an algebraic law: CRC-32 combine law, per chunk
   (chunk size = data[0], min 1): crc32_combine_op(crc_so_far, crc32(0,chunk), crc32_combine_gen(chunk_len))

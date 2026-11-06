@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: meshoptimizer
 harness: clusterfuzz
-rocq: OssFuzzTheorems.meshoptimizer.clusterfuzz
+rocq: OSSVerify.meshoptimizer.clusterfuzz
 origin: upstream
 summary: Builds 100 pseudo-random vertices from srand(buffer[0]) and up to 333 triangles from the input
   bytes, then runs meshopt_buildMeshlets, buildMeshletsScan, buildMeshletsFlex (4 configs), buildMeshletsSpatial

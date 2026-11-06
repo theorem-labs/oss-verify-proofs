@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: hothd
 harness: hothd_payload_fuzzer
-rocq: OssFuzzTheorems.hothd.hothd_payload_fuzzer
+rocq: OSSVerify.hothd.hothd_payload_fuzzer
 origin: oss-fuzz
 summary: FuzzedDataProvider picks up to 20 PayloadUpdateImpl actions (initiate/erase/read/verify/getStatus/activate/send/confirm)
   over a mocked Sys (file = fuzzer bytes) and a HostCommand mock that always returns EC_RES_SUCCESS; results

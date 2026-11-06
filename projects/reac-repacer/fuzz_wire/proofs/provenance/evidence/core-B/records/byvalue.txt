@@ -1,0 +1,25 @@
+# record run
+relocated files: 372 (lib/B 372, other 0); 8092 numerals in [0x10000, 0x5fa1f0)
+target top 0x5f5070 (page-up 0x5f6000, rw_lo 0x9a000); donor top 0x5fa1f0 (page-up 0x5fb000, rw_lo 0x9f000)
+fetch/word pairs verified against the target image: 329, mismatches 0
+tfib_A_/tfib_E_ rows: {'tgt': 1072, 'interior': 8} donor rows: []
+tfib interior rows: [(76, 'Definition tfib_A_FakeStack_SetShadow : Z := 0x3c828.'), (76, 'Definition tfib_E_FakeStack_SetShadow : Z := 0x3c964.'), (162, 'Definition tfib_A_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x51dec.'), (162, 'Definition tfib_E_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x51f28.'), (176, 'Definition tfib_A_MemToShadow_checked : Z := 0x53434.'), (176, 'Definition tfib_E_MemToShadow_checked : Z := 0x53570.'), (249, 'Definition tfib_A_MemToShadow_checked_instance_3 : Z := 0x5c320.'), (249, 'Definition tfib_E_MemToShadow_checked_instance_3 : Z := 0x5c45c.')]
+classes: {'TARGET': 3085, 'DONOR-STALE': 3, 'OTHER': 4506, 'SHARED': 498}
+reasons: {('TARGET', 'target symbol/section/segment value'): 2449, ('DONOR-STALE', 'address-role field, unmoved from the donor file, no target value'): 3, ('OTHER', 'no address role (constant / count / label / instruction word)'): 4345, ('TARGET', 'fetch/word pair verified against the target image'): 561, ('OTHER', 'decoded field of a verified instruction word'): 116, ('OTHER', 'comment numeral'): 31, ('OTHER', 'comment numeral, names the donor value by design'): 14, ('TARGET', 'target symbol/section/segment value; coincides with a donor value but the relocation moved it here'): 75, ('SHARED', 'same value in both images'): 498}
+review rows: {'donor-value-not-target': 26, 'donor-interior-unmoved': 508, 'fetch-line-not-verified': 147}
+DONOR-STALE	lib/B/YB16.v:260	0x11806	Definition tfib_sealed_src : Z := 0x11806.
+DONOR-STALE	lib/B/YB1w.v:573	0x11806	Definition tfib_D_str_sealed : Z := 0x11806.
+DONOR-STALE	lib/B/YB1w.v:614	0x11806	Definition tfib_at_x_sealed : Z := 0x11806.
+# control: YB1w.v tfib_at_x_memset put back to fuzz_grant B memset 0x96c94
+relocated files: 372 (lib/B 372, other 0); 8092 numerals in [0x10000, 0x5fa1f0)
+target top 0x5f5070 (page-up 0x5f6000, rw_lo 0x9a000); donor top 0x5fa1f0 (page-up 0x5fb000, rw_lo 0x9f000)
+fetch/word pairs verified against the target image: 329, mismatches 0
+tfib_A_/tfib_E_ rows: {'tgt': 1072, 'interior': 8} donor rows: []
+tfib interior rows: [(76, 'Definition tfib_A_FakeStack_SetShadow : Z := 0x3c828.'), (76, 'Definition tfib_E_FakeStack_SetShadow : Z := 0x3c964.'), (162, 'Definition tfib_A_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x51dec.'), (162, 'Definition tfib_E_MemToShadow_CHECK_AddrIsInMem_instance : Z := 0x51f28.'), (176, 'Definition tfib_A_MemToShadow_checked : Z := 0x53434.'), (176, 'Definition tfib_E_MemToShadow_checked : Z := 0x53570.'), (249, 'Definition tfib_A_MemToShadow_checked_instance_3 : Z := 0x5c320.'), (249, 'Definition tfib_E_MemToShadow_checked_instance_3 : Z := 0x5c45c.')]
+classes: {'TARGET': 3084, 'DONOR-STALE': 4, 'OTHER': 4506, 'SHARED': 498}
+reasons: {('TARGET', 'target symbol/section/segment value'): 2448, ('DONOR-STALE', 'address-role field, unmoved from the donor file, no target value'): 3, ('OTHER', 'no address role (constant / count / label / instruction word)'): 4345, ('TARGET', 'fetch/word pair verified against the target image'): 561, ('OTHER', 'decoded field of a verified instruction word'): 116, ('OTHER', 'comment numeral'): 31, ('OTHER', 'comment numeral, names the donor value by design'): 14, ('TARGET', 'target symbol/section/segment value; coincides with a donor value but the relocation moved it here'): 75, ('SHARED', 'same value in both images'): 498, ('DONOR-STALE', 'donor image value, unmoved from the donor file'): 1}
+review rows: {'donor-value-not-target': 26, 'donor-interior-unmoved': 508, 'fetch-line-not-verified': 147}
+DONOR-STALE	lib/B/YB16.v:260	0x11806	Definition tfib_sealed_src : Z := 0x11806.
+DONOR-STALE	lib/B/YB1w.v:573	0x11806	Definition tfib_D_str_sealed : Z := 0x11806.
+DONOR-STALE	lib/B/YB1w.v:610	0x96c94	Definition tfib_at_x_memset : Z := 0x96c94.
+DONOR-STALE	lib/B/YB1w.v:614	0x11806	Definition tfib_at_x_sealed : Z := 0x11806.

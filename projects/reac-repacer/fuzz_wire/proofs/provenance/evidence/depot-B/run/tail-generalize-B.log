@@ -1,0 +1,4 @@
+tail_generalize: B/YFjm.v:638: `clear - X4; unfold TFIB_IMG_LO, TFIB_IMG_END in *; lia) end.` -> `clear - X4; unfold TFIB_IMG_LO, TFIB_IMG_END in *; destruct X4 as [X|X]; [lia | right; exact X]) end.`
+tail_generalize: B/YFis.v:591: `clear - X4; unfold TFIB_IMG_LO, TFIB_IMG_END in *; lia) end.` -> `clear - X4; unfold TFIB_IMG_LO, TFIB_IMG_END in *; destruct X4 as [X|X]; [lia | right; exact X]) end.`
+tail_generalize: B/YFj6.v:580: `clear - X4; unfold TFIB_IMG_LO, TFIB_IMG_END in *; lia) end.` -> `clear - X4; unfold TFIB_IMG_LO, TFIB_IMG_END in *; destruct X4 as [X|X]; [lia | right; exact X]) end.`
+tail_generalize: 3 sites

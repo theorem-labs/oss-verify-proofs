@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: reac-pw/fuzz_headamp/asan_halts
+fingerprint: b894570df23ca3dd9cdc710967d041368716d362d6105d87b74724ab6081f8b2

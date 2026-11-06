@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: rtpproxy
 harness: fuzzer
-rocq: OssFuzzTheorems.rtpproxy.fuzzer
+rocq: OSSVerify.rtpproxy.fuzzer
 origin: upstream
 summary: XXH64(data,size,0) and XXH32(data,size,0) stored to volatiles and discarded.
 entry: LLVMFuzzerTestOneInput

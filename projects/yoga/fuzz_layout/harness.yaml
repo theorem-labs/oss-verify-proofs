@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: yoga
 harness: fuzz_layout
-rocq: OssFuzzTheorems.yoga.fuzz_layout
+rocq: OSSVerify.yoga.fuzz_layout
 origin: upstream
 summary: Builds a random node tree (depth <= 20, <= 20 children per node, random flex direction, width,
   height, gap), runs YGNodeCalculateLayout once and frees it; the computed layout is never read or checked.

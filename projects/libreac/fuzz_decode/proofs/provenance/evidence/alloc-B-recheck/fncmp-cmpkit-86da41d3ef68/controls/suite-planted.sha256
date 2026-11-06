@@ -1,0 +1,106 @@
+78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd  bin/fuzz_ctrl/fuzz_ctrl.asan
+ee07e2c38d942e2b8934937ada9746fb6e66942335ac0a2693c398a3f0c65338  bin/fuzz_ctrl/fuzz_ctrl.asan-ubsan
+087262424418385e4cbd64556cf112511a3be66a11e842d842c8757ee74f06ed  planted/A1-X.elf
+3ec22d8421e2ddea57bdf161a48f4821c3718a5ae0c808d9332451b70ec1f13d  planted/A1-Y.elf
+087262424418385e4cbd64556cf112511a3be66a11e842d842c8757ee74f06ed  planted/A1-base.elf
+04d25aa887daa0b7069c711c00934d1474e458821e0f49e692bbcf6674fc7211  planted/A2-Y.elf
+ef2460b4e8bf18881dafd034529aa2fbc4569fb7dbe348c9cb511b016c42a40f  planted/A2b-X.elf
+b87d6e771260a81c375e2ea6856ae16c8a2db7141b6d7ff30d7d8ea974802ff8  planted/A2b-Y.elf
+d2edff7a4410192cc7f6c552e0f953b6b068ce1cde3378513fe19970d3800d1a  planted/A3-Y.elf
+6319ef1d3577b691a3fdc6d5d73dd31cd5a0240581923f99351d85517b4efc35  planted/A5-X.elf
+2afe2fd501a1e221969cd96da47bec2f889d8213f0cd9092cacf78901e560fe5  planted/A5-Y.elf
+ca62ed7a67fadb5ee345c6f6264f059c6153384f7bf418872808fa741fcce7b8  planted/AMB-X.elf
+be4b1d2eba487e420dfa1d0125733b3ce87efa8d325b0d71d687d289cb166f6b  planted/C1-Y.elf
+afcf99e1e1fa451db48896453c24c5e7ae964a06bf15286e1cfe2938f1f626ae  planted/E1-X.elf
+9d251e860f2f0837c6a8ef58a817111928f2fbd381b071426eb6bc3d7033be83  planted/E1-Y.elf
+45d5efaccce7baf3902f02b89e4fbd5ffd59ec03fde36d8815a6571d64ffba64  planted/E2-X.elf
+4d47bb70e3753be10e1da30b71fb66eee1e8aff6e8f798b5963cdadb94c72651  planted/E2-Y.elf
+e50f3b4d22bc039d234f51feb8a641936a96640258b53c7f6d911851ed3cc414  planted/E3-X.elf
+80ac7adb9083bf25a019e942f77d9d3f5dc762adbb5f823b4431a49e309febff  planted/E3-Y.elf
+fe7d661b13c6c150671f4e5f45d01b78d46c90b131b484560ebcf087515722eb  planted/E4-X.elf
+7e267ebea7d07138aac8e8762aa16c1e6516bb26fe250a7e07e4596eadef8ea1  planted/E4-Y.elf
+ca62ed7a67fadb5ee345c6f6264f059c6153384f7bf418872808fa741fcce7b8  planted/K1-Y.elf
+63d1eb02bc2e1ccd53a4011cb52214c4132d3e80f80f4c4e05662c6607393add  planted/L1-X.elf
+63dc4aa9c96f8afa87e388ec4c85529eda00b0d6d611e544bcaf0e697aa595e1  planted/L1-Y.elf
+fc1d874d38e0bbfeed08592522bf2b918ec4e1ebdc9a06d3c2b8be075640734d  planted/L4-X.elf
+140e8bc2091936ad7add150b0e6add57c843d7598a0d071c6c15e58dc75033dd  planted/L4-Y.elf
+b997d7ab4970e5f7188385f23d7a05cb662e619abefb6c644b57a6bfefefa116  planted/L5-X.elf
+41fe6410ff20b6695380ecaf12ee55add8cd0da1de998da15326e1b6d8600ad5  planted/L5-Y.elf
+bf76b4b68956c4b12adeb47e6bdd3befcb6adeba56c4f22fa6533093f10cb1c3  planted/N1-X.elf
+f94c4138816ce8eeb4c47e790beceb7a9c84000f6b26b27507866dd06317a763  planted/N1-Y.elf
+0846564297f04ea18bea5f1e25e30758ba3fb2aaf750f41347953ac5eff456bd  planted/N4-X.elf
+9da90fe22c86762b072b80b8505c970ad0b811f6eb3afd2f419d06d2b87bdc50  planted/N4-Y.elf
+105c18c3dedcf59f8d3bb44645e73bdc2945ef1b868e4803c3f78ed6d62d7b46  planted/N4b-X.elf
+f553dc6636604b9f51271e3c787e9e97595ea2b427df356f83899ac03a0ac83f  planted/N4b-Y.elf
+c3c792e8fada5fd15d1235e9300c03f2d189f22ddc4c76abbda51dd73dbe9791  planted/P1-Y.elf
+97893db156ed8a977b4d00c8bf131317e836059edf3380158a04463fc8bb31d4  planted/P10-Y.elf
+f9297193997a97d4d36890e934917dc2d405cc243795d7be965d39b3740ccc65  planted/P11-Y.elf
+f39d9872c6c9b88d7c139dc6b521fbabd25711cf99013976b6198c8561dd1e19  planted/P13-Y.elf
+386858713230a0b489d3c97ddf5f82451c266d030fdef1f651d9ddd412359358  planted/P13b-X.elf
+621cec8652b7eae6749f203e553cbe675cc16e5e8059b445a2d01e895f669b4c  planted/P13b-Y.elf
+5cd82887a8437e476ed2c6e312999e91bf9acdf609bc4d00a30a798b94f52d95  planted/P14-X.elf
+63f0a48dd92cc290941f9b94dc3eacb41b3c640a8fbe7c9e8972e30422e63cc1  planted/P14-Y.elf
+0720b2c924107abf8a9fd512a2e7a8ca58ef8e2e4d0bb904fe218206e463493a  planted/P1b-Y.elf
+0a59d0e1db28c65fb900b80a5b653848da31cd6d8bb6cdaa03250aacb81c3988  planted/P2-Y.elf
+8d16c15e99feffb70966484f97ce9407bafe6050a79f8eb1562df9dc137acb68  planted/P2b-Y.elf
+396403c9efdad2c0ce7478b24dca674724899a0bc3afe6655fb79a8172251524  planted/P2c-Y.elf
+553f23766a564fb1e9e06caaebb1183e06635e34f3588d707fc5318c0de389cc  planted/P3-X.elf
+1a9b36d25becf7e26e98571a2ebe808b23c02fbd2a9f45e15ba775fbbf8d159f  planted/P3-Y.elf
+42cf31fcc4d5c8b5e86f1540afc89926ad99eb4dae6aad18dca6813214c7e3ec  planted/P4-X.elf
+f9d804150d0a0a20f7181f326dd5d95abdea5735772166e2513a6b74f5b4ef37  planted/P4-Y.elf
+903920819eb27dcaabae0d560ce1218a8d66c8bd9aff304d1d178df9f15cb081  planted/P5-Y.elf
+68dbee279e511709a2344c3beabf3ceac8d58f641ef0ec4f7626706454ad95e2  planted/P6-Y.elf
+72e183daaa0a030852ef31dec8196344106c0ddecded7ad2fb725a221691fe09  planted/P7-Y.elf
+b19cccbc10b57909d42a8296d726e6b75b214611390e9fb481d57633e3ccac36  planted/P8-Y.elf
+5fc8e831da3136da5c2829bae92955273e5f4c08c67fe94fe1f038a6d986d8cf  planted/P9-Y.elf
+5e682b48b0fe95234f4a198fa907e644960eab46f3eb3f75b3b497d5fde8ec13  planted/Q1-Y.elf
+99935435a10f33b1682ae9691dad17114eed58b7c084499d35005f4b768bc8cb  planted/T3-Y.elf
+d4257a3032e2b27617db3c1d46543befc4e4e028565ce7a9b04bfbff7f5599f8  planted/V1-Y.elf
+7e1f3ff1d228f1d95719c0639b3edfe0154fe282d816a5b8396d9c0ad8f008cd  planted/V2-Y.elf
+04ef57cccba30736e8e7bbacaa27832e18b470f7e6235ca6a1cd77cbf4531fb2  src1/fuzz_lock/fuzz_lock.plain
+56822e263d767986a76ec862cbfbee7571b0e64df2413ad18d7201205a7563fb  src1/fuzz_uci/fuzz_uci.asan
+bf96847dbf1b9ab1e827610a8f10d6fff77e1406f7b1819547fd3763c6250522  src1/fuzz_uci/fuzz_uci.plain
+d2f662a229626fd402f1018631498190e800834bad837fa4027204b79088b128  src1/fuzz_wire/fuzz_wire.asan
+4cb0a852e8262acb5ed0fa075a6bee7b1a25192189b168e777c760a4bfd65ae2  src2/fuzz_decode/fuzz_decode.asan
+c90d4fa54d43160baf62e5aa387211a798dddbad13d2619d85acbf37aee0c175  src3/fuzz_preset/fuzz_preset.asan-ubsan
+3b5e1a099b535acf2c4e81d857fed63daaf3cf5e758d7fe50834a6bd419c3c58  src4/fuzz_preset/fuzz_preset.asan-ubsan
+# C1: uci.asan main+0x50 jal __wrap_malloc -> jal __wrap_free | X src1/fuzz_uci/fuzz_uci.asan | Y planted/C1-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn main off 0x50 root main
+# P1: uci.asan pthread_atfork+0x38/+0x3c lock{pthread_atfork.c} -> lock{__tz.c} 0x5f37f8 | X src1/fuzz_uci/fuzz_uci.asan | Y planted/P1-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn pthread_atfork off 0x3c root pthread_atfork
+# P1b: uci.asan __asan_poison_memory_region+0x58 jal MemToShadow 0x52b24 -> the copy at 0x3aafc | X src1/fuzz_uci/fuzz_uci.asan | Y planted/P1b-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn __asan_poison_memory_region off 0x58 root __asan_poison_memory_region
+# P2: fuzz_uci.plain target_run+0x13c/+0x140 named object -> unnamed 0x103bf ((.rodata)) | X src1/fuzz_uci/fuzz_uci.plain | Y planted/P2-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_uci/fuzz_uci.plain | fn target_run off 0x140 root target_run
+# P2b: fuzz_uci.plain __libc_free+0x54/+0x5c named object -> unnamed 0x103bf ((.rodata)) | X src1/fuzz_uci/fuzz_uci.plain | Y planted/P2b-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_uci/fuzz_uci.plain | fn __libc_free off 0x5c root __libc_free
+# P2c: fuzz_uci.asan __assert_fail+0x18/+0x20 named object -> unnamed 0x20a4a ((.rodata)) | X src1/fuzz_uci/fuzz_uci.asan | Y planted/P2c-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn __assert_fail off 0x20 root __assert_fail
+# P3: uci.asan _ZN11__sanitizer10Symbolizer14LateInitializeEv+0x18 jal -> X 0x9298c / Y 0x85d00 whose first 32 bytes are 0x9298c's | X planted/P3-X.elf | Y planted/P3-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn _ZN11__sanitizer10Symbolizer14LateInitializeEv off 0x18 root _ZN11__sanitizer10Symbolizer14LateInitializeEv
+# P4: uci.asan _ZN11__sanitizer10Symbolizer14LateInitializeEv+0x18 jal -> X dlsym+4 / Y _start+0x18 (both 6f 00 40 00) | X planted/P4-X.elf | Y planted/P4-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn _ZN11__sanitizer10Symbolizer14LateInitializeEv off 0x18 root _ZN11__sanitizer10Symbolizer14LateInitializeEv
+# P5: uci.asan 0x103a4..a7 -> 11 22 33 44 (Allocator::ReInitialize+0x308 8-byte ld of 0x103a0) | X src1/fuzz_uci/fuzz_uci.asan | Y planted/P5-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn _ZN6__asan9Allocator12ReInitializeERKNS_16AllocatorOptionsE off 0x308 root _ZN6__asan9Allocator12ReInitializeERKNS_16AllocatorOptionsE
+# P6: uci.asan 0x1881d+100 -> X (InitializeFlags+0x318, a 144-byte string) | X src1/fuzz_uci/fuzz_uci.asan | Y planted/P6-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn _ZN6__asan15InitializeFlagsEv off 0x318 root _ZN6__asan15InitializeFlagsEv
+# P7: uci.plain 0x10444+20 15 -> 16 (__libc_malloc_impl+0xec, 32-byte a_ctz_32 table) | X src1/fuzz_uci/fuzz_uci.plain | Y planted/P7-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_uci/fuzz_uci.plain | fn __libc_malloc_impl off 0xec root __libc_malloc_impl
+# P8: uci.asan relative jump table 0x204e0 entry 1 := entry 2 (AddressDescription::Print+0x14) | X src1/fuzz_uci/fuzz_uci.asan | Y planted/P8-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn _ZNK6__asan18AddressDescription5PrintEPKc off 0x14 root _ZNK6__asan18AddressDescription5PrintEPKc
+# P9: lock.plain pop_arg table 0x105c8 entry 9 := entry 0, vs uci.plain pop_arg | X src1/fuzz_uci/fuzz_uci.plain | Y planted/P9-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_lock/fuzz_lock.plain | fn pop_arg off 0x14 root pop_arg
+# P10: uci.plain printf_core+0x5a0 auipc ffffa597 -> +1 page (a jump-table case; its consumer +0x5a8 stays equal) | X src1/fuzz_uci/fuzz_uci.plain | Y planted/P10-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_uci/fuzz_uci.plain | fn printf_core off 0x5a0 0x5a8 root printf_core
+# P11: uci.asan .got 0x97060 0x1 -> 0x100000001 (SealedHangOnAllocationFailure+0xc) | X src1/fuzz_uci/fuzz_uci.asan | Y planted/P11-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn _ZN11__sanitizer29SealedHangOnAllocationFailureEv off 0xc root _ZN11__sanitizer29SealedHangOnAllocationFailureEv
+# P13: uci.asan _ZN11__sanitizer29SealedHangOnAllocationFailureEv+0xc .got 0x97060 1 -> 2 in Y, and Y's absolute symbols __asan_wrap_list_present/__sanitizer_sealed_init/__sanitizer_silent_reports = 1 -> 2 (.symtab) | X src1/fuzz_uci/fuzz_uci.asan | Y planted/P13-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn _ZN11__sanitizer29SealedHangOnAllocationFailureEv off 0xc root _ZN11__sanitizer29SealedHangOnAllocationFailureEv
+# P13b: uci.asan _ZN11__sanitizer29SealedHangOnAllocationFailureEv+0xc .got 0x97060 holds 9 in X (dtls+0x1) and 0x11 in Y, where Y's .symtab moves dtls 8 -> 0x10 and disable_counter 16 -> 0x18 | X planted/P13b-X.elf | Y planted/P13b-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn _ZN11__sanitizer29SealedHangOnAllocationFailureEv off 0xc root _ZN11__sanitizer29SealedHangOnAllocationFailureEv
+# P14: uci.asan _ZN6__asan9Allocator12ReInitializeERKNS_16AllocatorOptionsE+0x2f8/+0x308 ld -> X 0x97d14 (4 file bytes of .got + 4 zero-fill bytes) / Y 0x20c88 (unnamed .rodata, 8 zero bytes) | X planted/P14-X.elf | Y planted/P14-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn _ZN6__asan9Allocator12ReInitializeERKNS_16AllocatorOptionsE off 0x308 root _ZN6__asan9Allocator12ReInitializeERKNS_16AllocatorOptionsE
+# K1: uci.asan MemToShadow{asan_poisoning.cpp} 0x52b24+0x54 add -> sub (a REAL difference in one of 5 same-named copies); root __asan_poison_memory_region | X src1/fuzz_uci/fuzz_uci.asan | Y planted/K1-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn __asan_poison_memory_region off None root __asan_poison_memory_region
+# A1: uci.plain, PT_LOAD[0] p_filesz cut to 0x3a0 on both sides; Y 0x10383 n -> N ("/dev/Null"); __init_libc+0x194 addi 0x1037e: its 64-byte window crosses p_filesz | X planted/A1-X.elf | Y planted/A1-Y.elf | baseline X planted/A1-base.elf Y planted/A1-base.elf | fn __init_libc off 0x194 root __init_libc
+# A2: uci.asan GD tls_index .got 0x97d00 {1, 0xfffffffffffff800}: Y offset word -> 0xfffffffffffff808 (fake_stack_tls -> dtls); _ZN6__asan15SetTLSFakeStackEPNS_9FakeStackE addi | X src1/fuzz_uci/fuzz_uci.asan | Y planted/A2-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn _ZN6__asan15SetTLSFakeStackEPNS_9FakeStackE off 0x14 root _ZN6__asan15SetTLSFakeStackEPNS_9FakeStackE
+# A2b: uci.asan _ZN11__sanitizer29SealedHangOnAllocationFailureEv+0xc ld of .got 0x97060: X holds 8, Y holds 0xc (both inside STT_TLS dtls [8,16)) | X planted/A2b-X.elf | Y planted/A2b-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn _ZN11__sanitizer29SealedHangOnAllocationFailureEv off 0xc root _ZN11__sanitizer29SealedHangOnAllocationFailureEv
+# A3: uci.asan unnamed .data.rel.ro table 0x96be0 (8-byte pointers into common_flags_dont_use): entries 0 and 1 swapped (GetHandleSignalMode+0x24) | X src1/fuzz_uci/fuzz_uci.asan | Y planted/A3-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn _ZN11__sanitizer19GetHandleSignalModeEi off 0x24 root _ZN11__sanitizer19GetHandleSignalModeEi
+# T3: fuzz_ctrl asan vs asan-ubsan __nl_langinfo_l (2 natural differing targets): Y +0x114 j __lctrans -> j __mo_lookup (the third differing target is the real one) | X bin/fuzz_ctrl/fuzz_ctrl.asan | Y planted/T3-Y.elf | baseline X bin/fuzz_ctrl/fuzz_ctrl.asan Y bin/fuzz_ctrl/fuzz_ctrl.asan-ubsan | fn __nl_langinfo_l off 0x114 root __nl_langinfo_l
+# AMB: uci.asan, X MemToShadow{asan_poisoning.cpp} 0x52b24+0x54 add -> sub; tools that take a name get the bare, 5-copy name | X planted/AMB-X.elf | Y src1/fuzz_uci/fuzz_uci.asan | baseline X src1/fuzz_uci/fuzz_uci.asan Y src1/fuzz_uci/fuzz_uci.asan | fn _ZN6__asanL11MemToShadowEm off None root _ZN6__asanL11MemToShadowEm
+# A5: <agent>'s weakplant: reac_frame_clean_len+0 `lui t0,0x5f3; ld t1,0x750(t0)` in both (fuzz_wire.asan X, fuzz_decode.asan Y); 0x5f3750 names different objects | X planted/A5-X.elf | Y planted/A5-Y.elf | baseline X src1/fuzz_wire/fuzz_wire.asan Y src2/fuzz_decode/fuzz_decode.asan | fn reac_frame_clean_len off 0x0 0x4 root reac_frame_clean_len
+# L1: lui t0,hi; ld t1,lo(t0) -> 0x10398 (MARGIN_MAX+0 | RATES+8) | X planted/L1-X.elf | Y planted/L1-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_lock/fuzz_lock.plain | fn __libc_calloc off 0x0 0x4 root __libc_calloc
+# L4: lui t0,hi(main); jalr ra,lo(t0): an absolute call | X planted/L4-X.elf | Y planted/L4-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_lock/fuzz_lock.plain | fn __libc_calloc off 0x0 0x4 root __libc_calloc
+# L5: call-argument lui: lui a0,hi; addi a0,a0,lo; jal ra,+0x1c (0x10398 leaves the function as a0) | X planted/L5-X.elf | Y planted/L5-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_lock/fuzz_lock.plain | fn __libc_calloc off 0x0 0x4 0x8 root __libc_calloc
+# N1: NEGATIVE mask lui: lui t0,0xfffff; and a0,a0,t0 (value in no section) | X planted/N1-X.elf | Y planted/N1-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_lock/fuzz_lock.plain | fn __libc_calloc off None root __libc_calloc
+# N4: NEGATIVE mask lui IN a section: lui t0,0x11; and a0,a0,t0 (0x11000 in .rodata, only `and`) | X planted/N4-X.elf | Y planted/N4-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_lock/fuzz_lock.plain | fn __libc_calloc off None root __libc_calloc
+# N4b: the same value 0x11000 used as an address: lui t0,0x11; ld t1,0(t0) | X planted/N4b-X.elf | Y planted/N4b-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_lock/fuzz_lock.plain | fn __libc_calloc off 0x0 0x4 root __libc_calloc
+# E1: ESC string \x1b[1mBold\0, bytes differ after the NUL (accepted under rule B, listed) (LLVMFuzzerTestOneInput+0x68 -> 0x103a0) | X planted/E1-X.elf | Y planted/E1-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_uci/fuzz_uci.plain | fn LLVMFuzzerTestOneInput off 0x68 root LLVMFuzzerTestOneInput
+# E2: ESC, NUL, then different data (the hole the ruling accepts, listed) (LLVMFuzzerTestOneInput+0x68 -> 0x103a0) | X planted/E2-X.elf | Y planted/E2-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_uci/fuzz_uci.plain | fn LLVMFuzzerTestOneInput off 0x68 root LLVMFuzzerTestOneInput
+# E3: EMPTY string, data differs after (out of rule B) (LLVMFuzzerTestOneInput+0x68 -> 0x103a0) | X planted/E3-X.elf | Y planted/E3-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_uci/fuzz_uci.plain | fn LLVMFuzzerTestOneInput off 0x68 root LLVMFuzzerTestOneInput
+# E4: ESC string, the STRING differs (Bold -> BOLD) (LLVMFuzzerTestOneInput+0x68 -> 0x103a0) | X planted/E4-X.elf | Y planted/E4-Y.elf | baseline X src1/fuzz_uci/fuzz_uci.plain Y src1/fuzz_uci/fuzz_uci.plain | fn LLVMFuzzerTestOneInput off 0x68 root LLVMFuzzerTestOneInput
+# Q0: NEGATIVE natural pair pj_write old B : #102 B (.str.3{preset_file.c} vs .str.3, same bytes): NAME-ONLY | X src4/fuzz_preset/fuzz_preset.asan-ubsan | Y src3/fuzz_preset/fuzz_preset.asan-ubsan | baseline X src4/fuzz_preset/fuzz_preset.asan-ubsan Y src4/fuzz_preset/fuzz_preset.asan-ubsan | fn pj_write off 0x48 root pj_write
+# Q1: pj_write: #102 B .str.3 byte 0 0x0a -> 0x0b (same label, different bytes) | X src4/fuzz_preset/fuzz_preset.asan-ubsan | Y planted/Q1-Y.elf | baseline X src4/fuzz_preset/fuzz_preset.asan-ubsan Y src3/fuzz_preset/fuzz_preset.asan-ubsan | fn pj_write off 0x48 root pj_write
+# V1: <agent> P1: put_utf8+0x1c0 jal __asan_report_store1 -> __asan_report_store2 (#102 B) | X src4/fuzz_preset/fuzz_preset.asan-ubsan | Y planted/V1-Y.elf | baseline X src4/fuzz_preset/fuzz_preset.asan-ubsan Y src3/fuzz_preset/fuzz_preset.asan-ubsan | fn put_utf8 off 0x1c0 root put_utf8
+# V2: <agent> P2: put_utf8+0xc .got load offset + 8 (#102 B) | X src4/fuzz_preset/fuzz_preset.asan-ubsan | Y planted/V2-Y.elf | baseline X src4/fuzz_preset/fuzz_preset.asan-ubsan Y src3/fuzz_preset/fuzz_preset.asan-ubsan | fn put_utf8 off 0xc root put_utf8

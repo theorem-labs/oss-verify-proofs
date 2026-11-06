@@ -1,0 +1,4 @@
+cb: layout old (the unit's proofs are proofs/libdiginet/fuzz_transport; <CLONE_BRANCH> at f179db1ca460)
+cb: <WT> on <CLONE_BRANCH> at f179db1ca46 (134M)
+cb: projects in the checkout: libdiginet
+cb: another project's files are NOT in this clone: read them with `git -C <WT> show REF:path` or `git -C <WT> grep PATTERN REF`, or re-clone with --donor PROJECT, never by widening the sparse set

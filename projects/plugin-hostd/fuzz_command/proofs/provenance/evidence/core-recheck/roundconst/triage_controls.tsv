@@ -1,0 +1,81 @@
+control	rule	case	result	count
+perturbation	ABSTRACT_GOAL	counterpart	same rule accepts	4
+perturbation	ABSTRACT_GOAL	v+4	same rule accepts	4
+perturbation	ARITH_EQ	counterpart	same rule accepts	4
+perturbation	ARITH_EQ	counterpart	same rule refuses	2
+perturbation	ARITH_EQ	counterpart	same rule refuses (another rule accepts)	278
+perturbation	ARITH_EQ	v+4	same rule refuses	2
+perturbation	ARITH_EQ	v+4	same rule refuses (another rule accepts)	282
+perturbation	BUILD_TABLE_RANGE	counterpart	same rule refuses	5
+perturbation	BUILD_TABLE_RANGE	v+4	same rule refuses	5
+perturbation	BYTE_ARITH	counterpart	same rule refuses	12
+perturbation	BYTE_ARITH	counterpart	same rule refuses (another rule accepts)	2544
+perturbation	BYTE_ARITH	v+4	same rule refuses	3
+perturbation	BYTE_ARITH	v+4	same rule refuses (another rule accepts)	2553
+perturbation	CELL_STARTUP	counterpart	same rule refuses	6
+perturbation	CELL_STARTUP	v+4	same rule refuses	6
+perturbation	CHUNK_IN_SEGMENT	counterpart	same rule refuses	3
+perturbation	CHUNK_IN_SEGMENT	v+4	same rule accepts	3
+perturbation	CODE_SITE_CONST	counterpart	same rule refuses	2
+perturbation	CODE_SITE_CONST	v+4	same rule refuses	2
+perturbation	COUNT_MEASURED	counterpart	same rule refuses	5
+perturbation	COUNT_MEASURED	v+4	same rule refuses	5
+perturbation	EXPONENT	counterpart	same rule accepts	33
+perturbation	EXPONENT	v+4	same rule accepts	33
+perturbation	FETCH_WORD_AT	counterpart	same rule refuses	150
+perturbation	FETCH_WORD_AT	v+4	same rule refuses	150
+perturbation	FUNC_OFFSET	counterpart	same rule accepts	18
+perturbation	FUNC_OFFSET	counterpart	same rule refuses	17
+perturbation	FUNC_OFFSET	v+4	same rule accepts	34
+perturbation	FUNC_OFFSET	v+4	same rule refuses	1
+perturbation	INDEX	counterpart	same rule accepts	600
+perturbation	INDEX	counterpart	same rule refuses	1
+perturbation	INDEX	counterpart	same rule refuses (another rule accepts)	90
+perturbation	INDEX	v+4	same rule accepts	691
+perturbation	KERNEL_CHECKED	counterpart	same rule accepts	19
+perturbation	KERNEL_CHECKED	counterpart	same rule refuses (another rule accepts)	2
+perturbation	KERNEL_CHECKED	v+4	same rule accepts	16
+perturbation	KERNEL_CHECKED	v+4	same rule refuses (another rule accepts)	5
+perturbation	LAYOUT_MEASURED	counterpart	same rule refuses	6
+perturbation	LAYOUT_MEASURED	counterpart	same rule refuses (another rule accepts)	2
+perturbation	LAYOUT_MEASURED	v+4	same rule refuses	6
+perturbation	LAYOUT_MEASURED	v+4	same rule refuses (another rule accepts)	2
+perturbation	NOT_FLAGGED_QTY	counterpart	same rule accepts	1494
+perturbation	NOT_FLAGGED_QTY	counterpart	same rule refuses	2
+perturbation	NOT_FLAGGED_QTY	counterpart	same rule refuses (another rule accepts)	2
+perturbation	NOT_FLAGGED_QTY	v+4	same rule accepts	1498
+perturbation	PAGE_SIZE	counterpart	same rule refuses	110
+perturbation	PAGE_SIZE	counterpart	same rule refuses (another rule accepts)	2820
+perturbation	PAGE_SIZE	v+4	same rule refuses	106
+perturbation	PAGE_SIZE	v+4	same rule refuses (another rule accepts)	2824
+perturbation	RANGE_HINT	counterpart	same rule accepts	4
+perturbation	RANGE_HINT	v+4	same rule accepts	4
+perturbation	RT_CONST	counterpart	same rule accepts	146
+perturbation	RT_CONST	counterpart	same rule refuses	72
+perturbation	RT_CONST	counterpart	same rule refuses (another rule accepts)	55
+perturbation	RT_CONST	v+4	same rule accepts	146
+perturbation	RT_CONST	v+4	same rule refuses	72
+perturbation	RT_CONST	v+4	same rule refuses (another rule accepts)	55
+perturbation	RT_OFFSET	counterpart	same rule accepts	946
+perturbation	RT_OFFSET	counterpart	same rule refuses	35
+perturbation	RT_OFFSET	counterpart	same rule refuses (another rule accepts)	73
+perturbation	RT_OFFSET	v+4	same rule accepts	947
+perturbation	RT_OFFSET	v+4	same rule refuses	35
+perturbation	RT_OFFSET	v+4	same rule refuses (another rule accepts)	72
+perturbation	SYMLIT	counterpart	same rule accepts	233
+perturbation	SYMLIT	counterpart	same rule refuses	30
+perturbation	SYMLIT	counterpart	same rule refuses (another rule accepts)	2
+perturbation	SYMLIT	v+4	same rule accepts	233
+perturbation	SYMLIT	v+4	same rule refuses	30
+perturbation	SYMLIT	v+4	same rule refuses (another rule accepts)	2
+perturbation	VAR_INDEX	counterpart	same rule accepts	215
+perturbation	VAR_INDEX	v+4	same rule accepts	215
+known_geometry	KERNEL_CHECKED	value := donor	accepted	44
+known_geometry	UNSETTLED	value := donor	refused	256
+plant	KERNEL_CHECKED:accepted	A/AB13.v:119 := 0x20000		1
+plant	KERNEL_CHECKED:accepted	A/AB1h.v:49 := 0x6d000		1
+plant	UNSETTLED:refused	A/AB01.v:188 := 0xd6	file is a collected-state file: COLLECTED_STATE would accept it by provenance	1
+plant	UNSETTLED:refused	A/AD1k.v:260 := 0x43		1
+plant	UNSETTLED:refused	A/AB01.v:107 := 0x58	file is a collected-state file: COLLECTED_STATE would accept it by provenance	1
+plant	KERNEL_CHECKED:accepted	B/YB13.v:120 := 0x20000		1
+plant	UNSETTLED:refused	B/YB01.v:225 := 0x7e	file is a collected-state file: COLLECTED_STATE would accept it by provenance	1

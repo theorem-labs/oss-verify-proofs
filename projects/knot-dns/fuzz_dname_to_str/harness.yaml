@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: knot-dns
 harness: fuzz_dname_to_str
-rocq: OssFuzzTheorems.knot_dns.fuzz_dname_to_str
+rocq: OSSVerify.knot_dns.fuzz_dname_to_str
 origin: upstream
 summary: Inputs that fail knot_dname_wire_check are skipped; valid wire dnames are converted with knot_dname_to_str
   and the text is discarded (no to_str -> from_str round trip).

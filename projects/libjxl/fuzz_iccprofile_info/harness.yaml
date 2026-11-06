@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libjxl
 harness: fuzz_iccprofile_info
-rocq: OssFuzzTheorems.libjxl.fuzz_iccprofile_info
+rocq: OSSVerify.libjxl.fuzz_iccprofile_info
 origin: upstream
 summary: skcms_Parse then reads the first and last entry of every tag, TRC table, A2B curve and CLUT grid
   into a volatile sink; nothing compared.

@@ -1,0 +1,14 @@
+# A = img/fuzz_command.asan.debug sha256 68db792d5fa7
+# B = img/fuzz_command.asan-ubsan.debug sha256 658cefbe806b
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes/NAME-ONLY acceptances	C-string acceptances (also one CSTR row each)	differing targets printed (in target-differ, this row)	words-only
+reply	B:A	0x8d9c4	0x8df14	72	72	EQUAL-mod-pcrel	3	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+verb_is	B:A	0x8da0c	0x8df5c	120	120	EQUAL-mod-pcrel	6	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+rec_clear	B:A	0x899e4	0x894d4	104	104	EQUAL-mod-pcrel	4	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+rec_code_declared	B:A	0x89658	0x89170	124	124	EQUAL-mod-pcrel	4	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+rec_shape_of	B:A	0x896d4	0x891ec	276	276	EQUAL-mod-pcrel	11	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL-mod-pcrel
+is_instance_verb	B:A	0x8e340	0x8e7e4	244	244	DIFFERENT	10	3	0	(0, 0, 0)	0			printed 0 of 0 targets	DIFFERENT
+number	B:A	0x8df2c	0x8e430	592	572	SIZE
+answer	B:A	0x8aa10	0x8a4c0	836	792	SIZE
+check_refusal	B:A	0x88204	0x87f08	212	208	SIZE
+send_message	B:A	0x86bf8	0x86b10	620	616	SIZE

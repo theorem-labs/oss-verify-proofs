@@ -1,0 +1,10 @@
+# self-test: 163 known answers OK
+123	str	UNCHECKED	no slug to match	0x102cd	0x102cd	kept as written (value not 0, no slug: whether the image holds its string is not known); no .v under --proofs reads it
+124	str_2	UNCHECKED	no slug to match	0x102ce	0x102ce	kept as written (value not 0, no slug: whether the image holds its string is not known); no .v under --proofs reads it
+# section bounds: lib/Reusable/YH03.v: 18 of 18 section cells equal the image's section headers
+# build: lib/Reusable/YH03.v: plain (the pinned binary's sha256 556b61e63c44 is builds.plain of projects/libreac/fuzz_decode/harness.yaml); corroboration: 'AddressSanitizer' x0 in the image, x0 in the pinned binary (non-ASan: agrees); report only, decides nothing: 0 unimp words (0xc0001073) at 4-byte-aligned .text addresses
+# unit identity: lib/Reusable/YH03.v: the image's 4 PT_LOADs equal the plain pin 556b61e63c44 (PINNED_DIR/fuzz_decode.plain; ELF section-header fields and build-id masked)
+# unit identity: lib/Reusable/YH03.v (--elf PINNED_DIR/fuzz_decode.plain): the image's 4 PT_LOADs equal the plain pin 556b61e63c44 (PINNED_DIR/fuzz_decode.plain; ELF section-header fields and build-id masked)
+# not checked by any rule: lib/Reusable/YH03.v: src0_debruijn_len, src0_vmlock
+# UNCHECKED string cells (no slug), value not 0: 2, kept as written: str (no reader); str_2 (no reader)
+# lib/Reusable/YH03.v: {'KEEP-SIZE0': 2, 'KEEP': 155, 'KEEP-SPAN': 3, 'NOSYM': 44, 'KEEP-BY-LOAD': 1, 'KEEP-GOT0': 1, 'UNCHECKED': 2}

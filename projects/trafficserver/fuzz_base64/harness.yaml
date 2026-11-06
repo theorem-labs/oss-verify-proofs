@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: trafficserver
 harness: fuzz_base64
-rocq: OssFuzzTheorems.trafficserver.fuzz_base64
+rocq: OSSVerify.trafficserver.fuzz_base64
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

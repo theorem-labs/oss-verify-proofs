@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssh
 harness: sig_fuzz
-rocq: OssFuzzTheorems.openssh.sig_fuzz
+rocq: OSSVerify.openssh.sig_fuzz
 origin: upstream
 summary: sshkey_verify() of the input as a signature over a fixed message under freshly generated RSA-2048
   / ECDSA-256/384/521 / Ed25519 keys; the verify result is discarded (a forged signature that verifies

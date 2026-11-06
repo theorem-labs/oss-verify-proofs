@@ -1,0 +1,9 @@
+file	donor_range	words	function	offset	paired_by	target_range	donor_fn	target_fn	fn_bytes	verdict	pcrel	real	unmeasured	targets_differ	whole_fn (pcrel, real, unmeasured) differ	note
+A/Rt/StackMalloc1Tbl.v	0x3d72c	100	__asan_stack_malloc_1	+0x0	name	0x3d80c	0x3d72c	0x3d80c	400	DIFFERENT	8	1	0	0	DIFFERENT (8, 1, 0) 0	
+A/Rt/StackMalloc1Tbl.v	0x472d8	31	__interceptor___tls_get_addr	+0x0	name	0x47660	0x472d8	0x47660	124	EQUAL-mod-pcrel	2	0	0	0	EQUAL-mod-pcrel (2, 0, 0) 0	
+A/Rt/StackMalloc1Tbl.v	0x98800	9	__tls_get_addr	+0x0	name	0x9de04	0x98800	0x9de04	36	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+A/Rt/StackMalloc1Tbl.v	0x5c838	8	_ZN6__asan16GetCurrentThreadEv	+0x0	name	0x5cbc0	0x5c838	0x5cbc0	32	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+A/Rt/StackMalloc1Tbl.v	0x55384	6	_ZN6__asan10AsanTSDGetEv	+0x0	name	0x5570c	0x55384	0x5570c	64	EQUAL-mod-pcrel	3	0	0	0	EQUAL-mod-pcrel (6, 0, 0) 0	
+A/Rt/StackMalloc1Tbl.v	0x998b4	7	__pthread_getspecific	+0x0	name	0x9eeb8	0x998b4	0x9eeb8	28	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+A/Rt/StackMalloc1Tbl.v	0x69f4c	140	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	+0x0	name	0x6a2d4	0x69f4c	0x6a2d4	848	EQUAL-mod-pcrel	16	0	0	0	EQUAL-mod-pcrel (27, 0, 0) 0	
+A/Rt/StackMalloc1Tbl.v	0x3dc3c	28	_ZN6__asanL11MemToShadowEm	+0x0	call	0x3dfc4	0x3dc3c	0x3dfc4	316	EQUAL-mod-pcrel	9	0	0	1	EQUAL-mod-pcrel (12, 0, 0) 0	range: 0x6c unmeasured

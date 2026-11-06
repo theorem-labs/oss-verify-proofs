@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: httrack
 harness: fuzz-filters
-rocq: OssFuzzTheorems.httrack.fuzz_filters
+rocq: OSSVerify.httrack.fuzz_filters
 origin: upstream
 summary: Wildcard matcher strjoker/strjokerfind/fa_strjoker on (pattern, subject) split at first NUL;
   results discarded (no differential between strjoker and fa_strjoker).

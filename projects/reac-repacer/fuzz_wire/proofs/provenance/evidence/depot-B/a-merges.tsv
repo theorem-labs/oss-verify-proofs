@@ -1,0 +1,5 @@
+file	hunk	old	new	count
+AD1g.v	6	(YImgTop.IMG_TOP / 4096)	1525	5
+AD1g.v	33	(YImgTop.IMG_LO, YImgTop.IMG_TOP - YImgTop.IMG_LO)	(0x10000, 0x5e5000)	1
+AFex.v	38	& _). zd (SX 0 4 _ _ eq_refl SE4	& _). unfold kFreeArrayOffset in MU. zd (SX 0 4 _ _ eq_refl SE4	1
+AFex.v	39	& _). zd (SX 0 5 _ _ eq_refl SE5	& _). unfold kFreeArrayOffset in MU. zd (SX 0 5 _ _ eq_refl SE5	1

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: imagemagick
 harness: encoder_sgi_fuzzer
-rocq: OssFuzzTheorems.imagemagick.encoder_sgi_fuzzer
+rocq: OSSVerify.imagemagick.encoder_sgi_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

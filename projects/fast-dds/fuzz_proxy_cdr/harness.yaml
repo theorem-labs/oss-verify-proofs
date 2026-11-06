@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: fast-dds
 harness: fuzz_proxy_cdr
-rocq: OssFuzzTheorems.fast_dds.fuzz_proxy_cdr
+rocq: OSSVerify.fast_dds.fuzz_proxy_cdr
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

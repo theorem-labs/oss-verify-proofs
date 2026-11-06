@@ -1,0 +1,36 @@
+cmd.A pin c0661b96b5bd twin 68db792d5fa7
+  .comment ['Alpine clang version 20.1.8', 'Linker: LLD 20.1.8']
+  __asan_default_options returns b'allocator_may_return_null=1'
+  __ubsan_default_options returns b''
+  __lsan_default_options returns b''
+  __asan_default_suppressions returns b''
+  PT_TLS (filesz, memsz, align) [(0, 20, 8)]
+  asan_globals descriptors 180
+  sizes _ZN6__asanL8instanceE=0xe30, builtin_tls=0x200d0, __pthread_tsd_main=0x400, __libc=0x68, _ZN11__sanitizer21common_flags_dont_useE=0x120, _ZN6__asan28asan_flags_dont_use_directlyE=0x78, _ZN11__sanitizerL10stackStoreE=0x10010, _ZN11__sanitizerL8theDepotE=0x440010, read_stage=0x10000, _ZN11__sanitizerL26internal_alloc_placeholderE=0x81040
+cgif.A pin 7093581aab04 twin 488e39500746
+  .comment ['Alpine clang version 20.1.8', 'Linker: LLD 20.1.8']
+  __asan_default_options returns b'allocator_may_return_null=1'
+  __ubsan_default_options returns b''
+  __lsan_default_options returns b''
+  __asan_default_suppressions returns b''
+  PT_TLS (filesz, memsz, align) [(0, 20, 8)]
+  asan_globals descriptors 3
+  sizes _ZN6__asanL8instanceE=0xe30, builtin_tls=0x200d0, __pthread_tsd_main=0x400, __libc=0x68, _ZN11__sanitizer21common_flags_dont_useE=0x120, _ZN6__asan28asan_flags_dont_use_directlyE=0x78, _ZN11__sanitizerL10stackStoreE=0x10010, _ZN11__sanitizerL8theDepotE=0x440010, read_stage=0x10000, _ZN11__sanitizerL26internal_alloc_placeholderE=0x81040
+cmd.B pin bbe55d24d096 twin 658cefbe806b
+  .comment ['Alpine clang version 20.1.8', 'Linker: LLD 20.1.8']
+  __asan_default_options returns b'allocator_may_return_null=1'
+  __ubsan_default_options returns b''
+  __lsan_default_options returns b''
+  __asan_default_suppressions returns b''
+  PT_TLS (filesz, memsz, align) [(0, 20, 8)]
+  asan_globals descriptors 180
+  sizes _ZN6__asanL8instanceE=0xe30, builtin_tls=0x200d0, __pthread_tsd_main=0x400, __libc=0x68, _ZN11__sanitizer21common_flags_dont_useE=0x120, _ZN6__asan28asan_flags_dont_use_directlyE=0x78, _ZN11__sanitizerL10stackStoreE=0x10010, _ZN11__sanitizerL8theDepotE=0x440010, read_stage=0x10000, _ZN11__sanitizerL26internal_alloc_placeholderE=0x81040
+cgif.B pin 1c29845fe605 twin ce511d541cda
+  .comment ['Alpine clang version 20.1.8', 'Linker: LLD 20.1.8']
+  __asan_default_options returns b'allocator_may_return_null=1'
+  __ubsan_default_options returns b''
+  __lsan_default_options returns b''
+  __asan_default_suppressions returns b''
+  PT_TLS (filesz, memsz, align) [(0, 20, 8)]
+  asan_globals descriptors 3
+  sizes _ZN6__asanL8instanceE=0xe30, builtin_tls=0x200d0, __pthread_tsd_main=0x400, __libc=0x68, _ZN11__sanitizer21common_flags_dont_useE=0x120, _ZN6__asan28asan_flags_dont_use_directlyE=0x78, _ZN11__sanitizerL10stackStoreE=0x10010, _ZN11__sanitizerL8theDepotE=0x440010, read_stage=0x10000, _ZN11__sanitizerL26internal_alloc_placeholderE=0x81040

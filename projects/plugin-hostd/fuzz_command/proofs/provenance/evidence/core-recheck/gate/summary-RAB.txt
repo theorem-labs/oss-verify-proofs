@@ -1,0 +1,56 @@
+INPUTS USED by port_addr_check.py --git $HUB --src a3c671fb9bb:proofs/plugin-hostd/fuzz_command/lib/A --dst a3c671fb9bb:proofs/plugin-hostd/fuzz_command/lib/B --src-image B=$IMG/cmd.A.pin:$IMG/cmd.A.twin --dst-image B=$IMG/cmd.B.pin:$IMG/cmd.B.twin --donors-from $BIN --cache cache --paired-only --summary --fail-on-flags --out full.tsv --include A*.v --dst-include Y*.v --map A=Y
+  image src B  $IMG/cmd.A.pin  sha256 c0661b96b5bd  634904 bytes  symbols: symtab of cmd.A.twin 68db792d5fa7
+  image dst B  $IMG/cmd.B.pin  sha256 bbe55d24d096  633720 bytes  symbols: symtab of cmd.B.twin 658cefbe806b
+  ref src  a3c671fb9bb:proofs/plugin-hostd/fuzz_command/lib/A  -> a3c671fb9bb455507907553d8d2013ed0fccc7f8  (git $HUB)
+  ref dst  a3c671fb9bb:proofs/plugin-hostd/fuzz_command/lib/B  -> a3c671fb9bb455507907553d8d2013ed0fccc7f8  (git $HUB)
+  count symbols of src B: 2256
+  count symbols of dst B: 2257
+  count src files read: 1316
+  count src files after --include: 391
+  count dst files read: 1278
+  count dst files after --dst-include: 390
+  count files paired: 389
+  count numerals: 208131
+  count files recognised or declared generated (GENERATED-SKIPPED): 0
+  count constructors whose declared field roles were read from the ported tree: 32
+  count constructors whose declared field roles were read from the source tree: 32
+  count stale-donor candidates dropped instead of judged: 0
+  count UNMEASURED (no donor twin) in .: 1
+  count file pairs whose build came from rule (i'): 574
+  count file pairs whose build came from rule (i): 120
+  count file pairs whose build came from rule (ii): 84
+  count named-symbol cells UNMEASURED (the run reads the file against another build): 0
+  control fill_pass known answer (selftest_fill, run before anything is read): RAN  pass
+  control donor-vs-donor: NOT RUN  a separate run of this tool with one image on both sides; see the tool's documentation file
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-FILE-UNMEASURED  count 1  reported as its own row, never silently
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-PORTED  count 4  reported as its own row, never silently
+  DECLARED ABSENT / DEFAULT USED  a judged pair: UNPAIRED-SOURCE  count 2  reported as its own row, never silently
+  note file pairing: normalised RELATIVE PATH after --map / --rename, then the identity of the first hex in the file name; never the basename alone. There is no donor-text carry filter, so no candidate is dropped for being absent from a same-named donor file (the tool author's note)
+# files paired 389; numerals 208131; "kernel" = of those, inside a fail-loud vm_compute / fetch_word fact
+GENERATOR-FILL	2	kernel 2	REPORTED
+IDENT-NAME	3223	kernel 1711
+IMAGE-EXTENT-SAME	112	kernel 18
+INSN-SAME	1296	kernel 812
+LABEL-KEPT	19
+NON-ADDRESS-SAME	180156	kernel 99711
+ROUND-CONSTANT-SAME	160	kernel 39
+SAME-CONTENT	124	kernel 123
+SAME-GEOMETRY	5938	kernel 301
+SAME-SYMBOL	12610	kernel 6928
+UNMEASURED-NAME	7	REPORTED
+UNPAIRED-FILE-UNMEASURED	1	REPORTED
+DIFFERENT-SYMBOL	132	kernel 66	FLAG
+GEOMETRY-CHANGED	1	FLAG
+KIND-CHANGED	142	kernel 49	FLAG
+NON-ADDRESS-CHANGED	297	kernel 57	FLAG
+SAME-VALUE-DIFFERENT-OBJECT	10	kernel 4	FLAG
+STALE-DERIVED-QUOTIENT	3	kernel 3	FLAG
+STALE-DONOR-CODE-POINTER	31	FLAG
+STALE-DONOR-DATA-POINTER	28	kernel 24	FLAG
+UNPAIRED-PORTED	4	FLAG
+UNPAIRED-SOURCE	2	FLAG
+UNRESOLVED	3833	kernel 3553	FLAG
+FLAG-CLASSES 575d398c6022	27 classes count as findings (--list-flag-classes prints them)
+UNMEASURED named-symbol 0 / 1075 cells	UNMEASURED-NAME 7 rows	UNPAIRED-FILE-UNMEASURED 1 rows
+# image B $IMG/cmd.A.pin c0661b96b5bd symbols: symtab
+# image B $IMG/cmd.B.pin bbe55d24d096 symbols: symtab

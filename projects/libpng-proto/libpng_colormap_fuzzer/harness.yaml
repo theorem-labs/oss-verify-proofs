@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libpng-proto
 harness: libpng_colormap_fuzzer
-rocq: OssFuzzTheorems.libpng_proto.libpng_colormap_fuzzer
+rocq: OSSVerify.libpng_proto.libpng_colormap_fuzzer
 origin: upstream
 summary: 'png_image simplified API: begin_read_from_memory then finish_read into 6 output formats including
   RGB/RGBA colormap; results and buffers discarded.'

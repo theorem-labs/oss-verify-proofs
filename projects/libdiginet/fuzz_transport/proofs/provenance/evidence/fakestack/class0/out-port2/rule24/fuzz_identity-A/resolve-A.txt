@@ -1,0 +1,7 @@
+[libreac/fuzz_identity] A/Rt/StackMalloc0.v:4 0x3cf80 0x3cf80
+[libreac/fuzz_identity] A/Rt/StackMalloc0Tbl.v:4 0x3cf80 0x3cf80
+[libreac/fuzz_identity] A/Rt/StackMalloc0Tbl.v:68 0x9c3a0 0xa4080
+[libreac/fuzz_identity] A/Rt/StackMalloc0Tbl.v:68 0x9d090 0xa4d70
+[libreac/fuzz_identity] A/Rt/StackMalloc0Tbl.v:69 0x9c400 0xa40e0
+[libreac/fuzz_identity] A/Rt/StackMalloc0Tbl.v:69 0x9d0a0 0xa4d80
+[libreac/fuzz_identity] A/Rt/StackMallocTbl.v:28 0x3d46c 0x3dfc4

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libucl
 harness: ucl_add_string_fuzzer
-rocq: OssFuzzTheorems.libucl.ucl_add_string_fuzzer
+rocq: OSSVerify.libucl.ucl_add_string_fuzzer
 origin: upstream
 summary: ucl_parser_add_string on the (non-NUL-terminated) input with its length; returns early (leaking
   the parser, hence detect_leaks=0 in the .options) on a parse error; the parsed object is never inspected.

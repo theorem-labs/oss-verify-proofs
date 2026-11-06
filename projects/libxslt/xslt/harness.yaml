@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libxslt
 harness: xslt
-rocq: OssFuzzTheorems.libxslt.xslt
+rocq: OSSVerify.libxslt.xslt
 origin: upstream
 summary: Parses fuzzed stylesheet + source document, xsltParseStylesheetUser then xsltApplyStylesheetUser
   with op/depth limits and allocation limits, serializes the result with xsltSaveResultToString; output

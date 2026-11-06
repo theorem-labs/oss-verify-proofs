@@ -1,0 +1,43 @@
+# The inputs S11's tables and records were read from: <id> <kind> <sha256 or git blob> <role>. An id names no file of
+# this directory: input:<file> is an image or tool of the run (by its sha256), input:<sha>:<path> a file of that
+# commit (by its git blob id). The rows are s11/MANIFEST's input rows of b6537275cade, byte for byte.
+input:fuzz_frame.asan-pin elf 34f028d3dec4b4236a88b3039fc878008179fb6d0b01d952f6669b418f394e70 the pinned image
+input:fuzz_frame.asan-unstripped elf 67d7e481d74edac58be0e018835f577491192d461b4a35bd4109dc4ab0494fd5 its unstripped twin (the .symtab the numerals and bycmp read); PT_LOAD bytes equal the pin outside the ELF header section-header fields and the build-id descriptor (s11_reloc.py twin_check; cmpkit drvcmp.py twins agrees)
+input:fuzz_frame.asan-ubsan-pin elf 2574b26fc98e110739c61430d72921be4995c34c1a38f8b1ed258898809ae264 the pinned image
+input:fuzz_frame.asan-ubsan-unstripped elf ee3ea72a063b5cbb4537ebffeeb8b997226ecba44ac2e727839e55926b352371 its unstripped twin (the .symtab the numerals and bycmp read); PT_LOAD bytes equal the pin outside the ELF header section-header fields and the build-id descriptor (s11_reloc.py twin_check; cmpkit drvcmp.py twins agrees)
+input:fuzz_decode.asan-pin elf 47bd808e8cb9d29fe1fbac5254b0cfe93d458f2dcc1dd19817566c94943a13e5 the pinned image
+input:fuzz_decode.asan-unstripped elf a7133a6c74e53c5a326c0a451e06329cc6a94185b4e83d1a1f4c86b8c45bd187 its unstripped twin (the .symtab the numerals and bycmp read); PT_LOAD bytes equal the pin outside the ELF header section-header fields and the build-id descriptor (s11_reloc.py twin_check; cmpkit drvcmp.py twins agrees)
+input:fuzz_decode.asan-ubsan-pin elf 1c8e7ec206824fd70cb4247dcdc2f122b5d8dba1571da738ab1f3eac35f5a30a the pinned image
+input:fuzz_decode.asan-ubsan-unstripped elf 50d7282d5a4b7c7e67ba8be8d3cf46866073ee6ec207bb5dd664fca33dd691ba its unstripped twin (the .symtab the numerals and bycmp read); PT_LOAD bytes equal the pin outside the ELF header section-header fields and the build-id descriptor (s11_reloc.py twin_check; cmpkit drvcmp.py twins agrees)
+input:fuzz_transport.asan-pin elf e89be137db17b720e0310addc2dcc601998945478a9102e6a9850b0566106350 the pinned image
+input:fuzz_transport.asan-unstripped elf 86efc3a80314981197619c115e313dbde50e8b86a6c5fefad4e5cc420250c792 its unstripped twin (the .symtab the numerals and bycmp read); PT_LOAD bytes equal the pin outside the ELF header section-header fields and the build-id descriptor (s11_reloc.py twin_check; cmpkit drvcmp.py twins agrees)
+input:fuzz_transport.asan-ubsan-pin elf 41113a03c82fde8282db830ab5f4fbe376e392a38d22670b8cb8c9f02969ece4 the pinned image
+input:fuzz_transport.asan-ubsan-unstripped elf e217cb0a84f1e1810805155304b281a259ef83a85f50efcf0c65b40697bfa4dc its unstripped twin (the .symtab the numerals and bycmp read); PT_LOAD bytes equal the pin outside the ELF header section-header fields and the build-id descriptor (s11_reloc.py twin_check; cmpkit drvcmp.py twins agrees)
+input:cmpkit-86da41d3ef68/SHA256SUMS kit 86da41d3ef68abf071a843e599786e5eb0a6ed77c4a6b6eb645e7498bffbee60 the comparison kit of record (registry tools/cmpkit/86da41d3ef68/; sha256sum -c 9 x OK)
+input:cmpkit-86da41d3ef68/strictcmp3.py script 65688e94214a74664ffa83a21c283412a64b81f8a7eaa40f970a91f4eb1319b7 the one compare (cmp)
+input:cmpkit-86da41d3ef68/drvcmp.py script 4d70e90bc1fa4d70fe1ea53e0208593ee5e87ff53c3b80c8b767ffdff4eaa3a6 the twin proof (drvcmp.py twins), all six pairs: 25 differing loadable bytes, all in the ELF header and the build-id note
+input:arel_reloc.py script 24f154f3dec8541cfd77af66999f580034084d74f987e3c20dc1f982582ce398 libdiginet/fuzz_decode's relocation of record (libdiginet/fuzz_decode's relocation branch, provenance/evidence/arel/), the tool this one generalizes
+input:kreloc.py script ae2c13b7c631efb9c1283e907db4ca3e420e7b8675d86c5bf6f33bb6057b0f4c the image-A kit's relocation (decode A kit -> transport A kit); its renames are this tool's KRELOC_NAMES / KRELOC_MODS
+input:02fe409d4ae:proofs/libdiginet/fuzz_frame/lib/A/Prog/DgnFrameSyms.v listing 0d1f05946eb05bfd4a2de756c088fb8dc719d8d1 the listing file the name and position maps read (git blob)
+input:02fe409d4ae:proofs/libdiginet/fuzz_frame/lib/A/Prog/DgnFrameAddr.v listing 2eef776bb8fdab3f26c68bb62f40816f4ff14772 the listing file the name and position maps read (git blob)
+input:02fe409d4ae:proofs/libdiginet/fuzz_frame/lib/A/Prog/DgnFrameList.v listing 11763dd35eead3877a3ae370641a52cfd4231ec3 the listing file the name and position maps read (git blob)
+input:02fe409d4ae:proofs/libdiginet/fuzz_frame/lib/B/Prog/FrameBSyms.v listing 1689cef766129e2a76f0706db694144e3e09fedf the listing file the name and position maps read (git blob)
+input:02fe409d4ae:proofs/libdiginet/fuzz_frame/lib/B/Prog/FrameBAddr.v listing 19c8ea7a9810623a03a56024293bb4ac34da3620 the listing file the name and position maps read (git blob)
+input:02fe409d4ae:proofs/libdiginet/fuzz_frame/lib/B/Prog/FrameBList.v listing da2fb693d3d2dc2bb14e0c89d74641dcf540e879 the listing file the name and position maps read (git blob)
+input:7b6185922a1:proofs/libdiginet/fuzz_decode/lib/A/Prog/DgnDecodeSyms.v listing b138450a66c4c9f787c3fad34f43b66cea7b7dc9 the listing file the name and position maps read (git blob)
+input:7b6185922a1:proofs/libdiginet/fuzz_decode/lib/A/Prog/DgnDecodeAddr.v listing 30b4e98d3f22a47dbd354a160ac02eafa09be621 the listing file the name and position maps read (git blob)
+input:7b6185922a1:proofs/libdiginet/fuzz_decode/lib/A/Prog/DgnDecodeList.v listing 1e97e101f87d0a1f46ebbcaee221be80f0cba1b9 the listing file the name and position maps read (git blob)
+input:7b6185922a1:proofs/libdiginet/fuzz_decode/lib/B/Prog/DgnDecodeBSyms.v listing f0eb6146cc3843d501caeab84f2422bdcb552d7b the listing file the name and position maps read (git blob)
+input:7b6185922a1:proofs/libdiginet/fuzz_decode/lib/B/Prog/DgnDecodeBAddr.v listing d3f56f97cca275f18362a174f3e5a5e30ec85321 the listing file the name and position maps read (git blob)
+input:7b6185922a1:proofs/libdiginet/fuzz_decode/lib/B/Prog/DgnDecodeBList.v listing 1daef96a86a3966c061b6fbb714ef39e09306eaa the listing file the name and position maps read (git blob)
+input:c8ebc3afb25:proofs/libdiginet/fuzz_transport/lib/A/Prog/DgnTransportSyms.v listing dddcd6d32872db636971f1eb7047687516f3f298 the listing file the name and position maps read (git blob)
+input:c8ebc3afb25:proofs/libdiginet/fuzz_transport/lib/A/Prog/DgnTransportAddr.v listing 86526b3df6d38af42090fa1981ec5e413d2145b7 the listing file the name and position maps read (git blob)
+input:c8ebc3afb25:proofs/libdiginet/fuzz_transport/lib/A/Prog/DgnTransportList.v listing 2fdc24c4554d5e3d5731a1ad8a3dfdb6f25c9226 the listing file the name and position maps read (git blob)
+input:c8ebc3afb25:proofs/libdiginet/fuzz_transport/lib/B/Prog/DgnTransportBSyms.v listing 3f4eb4b67f035ba37ecac7e293577568cb973ca0 the listing file the name and position maps read (git blob)
+input:c8ebc3afb25:proofs/libdiginet/fuzz_transport/lib/B/Prog/DgnTransportBAddr.v listing ed26759c191889f84f84bbe572fc959b8252eeb0 the listing file the name and position maps read (git blob)
+input:c8ebc3afb25:proofs/libdiginet/fuzz_transport/lib/B/Prog/DgnTransportBList.v listing 6666d91b766b501faf38184a1fbdc1c83fd9c2ce the listing file the name and position maps read (git blob)
+input:66fa526ea390:proofs/libdiginet/fuzz_transport/lib/A/Prog/DgnTransportCg.v kit 8eea8bd7f455b879424bdc89b55f645d34d7f56c the base file the trans_src_ok / G-lift mapping of DRYRUN.md cites (git blob)
+input:66fa526ea390:proofs/libdiginet/fuzz_transport/lib/A/Prog/TransportGCg.v kit f756776df8e74bd37eda6a3e3632e68276cc1a03 the base file the trans_src_ok / G-lift mapping of DRYRUN.md cites (git blob)
+input:66fa526ea390:proofs/libdiginet/fuzz_transport/lib/A/TransportG.v kit 2b75d5f426b33c8f480495a437f20f2fdf336a81 the base file the trans_src_ok / G-lift mapping of DRYRUN.md cites (git blob)
+input:66fa526ea390:proofs/libdiginet/fuzz_transport/lib/A/W_journalG.v kit 83dff93d42abb2a946b664196f982e0815b32046 the base file the trans_src_ok / G-lift mapping of DRYRUN.md cites (git blob)
+input:66fa526ea390:proofs/libdiginet/fuzz_transport/lib/A/Prog/TransportGRwA.v kit db2383c0ad2cf5b0836b7c361f8cf23921ac908c the base file the trans_src_ok / G-lift mapping of DRYRUN.md cites (git blob)

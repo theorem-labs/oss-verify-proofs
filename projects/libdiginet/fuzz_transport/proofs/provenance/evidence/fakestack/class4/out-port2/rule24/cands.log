@@ -1,0 +1,4 @@
+A libreac/fuzz_grant (e10f488c53fc): PASS; ranges 12 of 12; pc-relative words 62 walked / 416 whole; 9 resolve moves; layout move: same
+A libreac/fuzz_identity (e10f488c53fc): FAIL(1); ranges 10 of 11; pc-relative words 47 walked / 403 whole; 5 resolve moves; layout move: same
+A plugin-hostd/fuzz_command (e10f488c53fc): FAIL(2); ranges 13 of 15; pc-relative words 87 walked / 504 whole; 9 resolve moves; layout move: same
+rc=0

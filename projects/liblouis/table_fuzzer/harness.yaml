@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: liblouis
 harness: table_fuzzer
-rocq: OssFuzzTheorems.liblouis.table_fuzzer
+rocq: OSSVerify.liblouis.table_fuzzer
 origin: upstream
 summary: Writes the input to /tmp/libfuzzer.uti and compiles "include /tmp/libfuzzer.uti" into empty.ctb
   with lou_compileString; result ignored.

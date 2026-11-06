@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: skcms
 harness: iccprofile_transform
-rocq: OssFuzzTheorems.skcms.iccprofile_transform
+rocq: OSSVerify.skcms.iccprofile_transform
 origin: upstream
 summary: skcms_Transform RGBA_8888 in both directions between the parsed profile and sRGB for every src/dst
   alpha format, before and after skcms_MakeUsableAsDestination; the returned bool and the destination

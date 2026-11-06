@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: haproxy
 harness: fuzz_http
-rocq: OssFuzzTheorems.haproxy.fuzz_http
+rocq: OSSVerify.haproxy.fuzz_http
 origin: oss-fuzz
 summary: 'First byte (mod 7) selects one group of src/http.c helpers: URI scheme/authority/path parsing,
   Content-Length parsing (twice, to hit duplicate detection), cookie extraction, header/start-line/status

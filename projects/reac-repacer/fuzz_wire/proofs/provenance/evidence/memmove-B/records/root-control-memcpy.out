@@ -1,0 +1,224 @@
+# fncmp.py f8b778b1103a: fuzz_wire.asan-ubsan af4534831a45 __asan_memmove 0x510b0 vs its __asan_memcpy 0x50c14, 880 B
+DIFF +0x24: addi s0, sp, 0x7f0  |  sd s7, 0x7a8(sp)
+DIFF +0x28: addi sp, sp, -0x70  |  addi s0, sp, 0x7f0
+DIFF +0x2c: auipc a3, PCREL  |  addi sp, sp, -0x70
+DIFF +0x30: ld a3, PCLO(a3)  |  auipc a3, PCREL
+DIFF +0x34: lbu a3, 0(a3)  |  ld a3, PCLO(a3)
+DIFF +0x38: beqz a3, @+0xe0  |  lbu a3, 0(a3)
+DIFF +0x3c: not a3, a1  |  beqz a3, @+0x12c
+DIFF +0x44: addi s4, s4, -0x58  |  addi s4, s4, -0x60
+DIFF +0x48: bltu a3, a2, @+0x110  |  add s5, a1, a2
+DIFF +0x4c: addi s3, a2, -0x41  |  add s3, a0, a2
+DIFF +0x50: addi a3, zero, -0x41  |  beq a0, a1, @+0x5c
+DIFF +0x54: bgeu a3, s3, @+0x198  |  bgeu a1, s3, @+0x5c
+DIFF +0x58: auipc a3, PCREL  |  bltu a0, s5, @+0x20c
+DIFF +0x5c: ld a3, PCLO(a3)  |  not a3, a1
+DIFF +0x60: add a5, a1, a2  |  bltu a3, a2, @+0x2c8
+DIFF +0x64: ld a4, 0(a3)  |  addi s6, a2, -0x41
+DIFF +0x68: srli a3, a1, 3  |  addi a3, zero, -0x41
+DIFF +0x6c: addi a5, a5, -1  |  bgeu a3, s6, @+0x350
+DIFF +0x70: srli a6, a5, 3  |  auipc a3, PCREL
+DIFF +0x74: add a3, a4, a3  |  ld a3, PCLO(a3)
+DIFF +0x78: add a4, a4, a6  |  ld a4, 0(a3)
+DIFF +0x7c: andi a6, a3, -8  |  addi s5, s5, -1
+DIFF +0x80: andi a7, a4, -8  |  srli a3, a1, 3
+DIFF +0x84: ld a6, 0(a6)  |  srli a5, s5, 3
+DIFF +0x88: ld a7, 0(a7)  |  add a3, a4, a3
+DIFF +0x8c: or a6, a7, a6  |  add a4, a4, a5
+DIFF +0x90: bnez a6, @+0x22c  |  andi a5, a3, -8
+DIFF +0x94: not a3, a0  |  andi a6, a4, -8
+DIFF +0x98: bltu a3, a2, @+0x1a0  |  ld a5, 0(a5)
+DIFF +0x9c: addi a3, zero, -0x41  |  ld a6, 0(a6)
+DIFF +0xa0: bgeu a3, s3, @+0x224  |  or a5, a6, a5
+DIFF +0xa4: auipc a3, PCREL  |  bnez a5, @+0x358
+DIFF +0xa8: ld a3, PCLO(a3)  |  not a3, a0
+DIFF +0xac: add a5, a0, a2  |  bltu a3, a2, @+0x180
+DIFF +0xb0: ld a4, 0(a3)  |  addi a3, zero, -0x41
+DIFF +0xb4: srli a3, a0, 3  |  bgeu a3, s6, @+0x204
+DIFF +0xb8: addi a5, a5, -1  |  auipc a3, PCREL
+DIFF +0xbc: srli a6, a5, 3  |  ld a3, PCLO(a3)
+DIFF +0xc0: add a3, a4, a3  |  ld a4, 0(a3)
+DIFF +0xc4: add a4, a4, a6  |  addi s3, s3, -1
+DIFF +0xc8: andi a6, a3, -8  |  srli a3, a0, 3
+DIFF +0xcc: andi a7, a4, -8  |  srli a5, s3, 3
+DIFF +0xd0: ld a6, 0(a6)  |  add a3, a4, a3
+DIFF +0xd4: ld a7, 0(a7)  |  add a4, a4, a5
+DIFF +0xd8: or a6, a7, a6  |  andi a5, a3, -8
+DIFF +0xdc: bnez a6, @+0x2d0  |  andi a6, a4, -8
+DIFF +0xe0: jal EXT  |  ld a5, 0(a5)
+DIFF +0xe4: addi sp, sp, 0x70  |  ld a6, 0(a6)
+DIFF +0xe8: ld ra, 0x7e8(sp)  |  or a5, a6, a5
+DIFF +0xec: ld s0, 0x7e0(sp)  |  bnez a5, EXT
+DIFF +0xf0: ld s1, 0x7d8(sp)  |  auipc a3, PCREL
+DIFF +0xf4: ld s2, 0x7d0(sp)  |  ld a3, PCLO(a3)
+DIFF +0xf8: ld s3, 0x7c8(sp)  |  jalr a3
+DIFF +0xfc: ld s4, 0x7c0(sp)  |  addi sp, sp, 0x70
+DIFF +0x100: ld s5, 0x7b8(sp)  |  ld ra, 0x7e8(sp)
+DIFF +0x104: ld s6, 0x7b0(sp)  |  ld s0, 0x7e0(sp)
+DIFF +0x108: addi sp, sp, 0x7f0  |  ld s1, 0x7d8(sp)
+DIFF +0x10c: ret   |  ld s2, 0x7d0(sp)
+DIFF +0x110: addi a3, s0, -0x800  |  ld s3, 0x7c8(sp)
+DIFF +0x114: addi a3, a3, -0x48  |  ld s4, 0x7c0(sp)
+DIFF +0x118: addi a4, s0, -0x800  |  ld s5, 0x7b8(sp)
+DIFF +0x11c: addi a4, a4, -0x58  |  ld s6, 0x7b0(sp)
+DIFF +0x120: addi s5, a4, 0x7ff  |  ld s7, 0x7a8(sp)
+DIFF +0x124: sd zero, 9(s5)  |  addi sp, sp, 0x7f0
+DIFF +0x128: sd a3, 0(s4)  |  ret 
+DIFF +0x12c: sd zero, 8(s4)  |  mv s2, a2
+DIFF +0x130: mv s1, a2  |  mv s3, a1
+DIFF +0x134: mv s2, a1  |  mv s1, a0
+DIFF +0x138: mv s3, a0  |  jal EXT
+DIFF +0x13c: jal EXT  |  mv a1, s3
+DIFF +0x140: mv a1, a0  |  mv a2, s2
+DIFF +0x144: auipc a0, PCREL  |  mv a3, a0
+DIFF +0x148: ld a0, PCLO(a0)  |  mv a0, s1
+DIFF +0x14c: lbu a4, 0x21(a0)  |  bnez a3, @+0xf0
+DIFF +0x150: sd s0, 9(s5)  |  addi sp, sp, 0x70
+DIFF +0x154: addi a0, s0, -0x800  |  ld ra, 0x7e8(sp)
+DIFF +0x158: addi a0, a0, -0x58  |  ld s0, 0x7e0(sp)
+DIFF +0x15c: addi a5, zero, 0xff  |  ld s1, 0x7d8(sp)
+DIFF +0x160: mv a2, s0  |  ld s2, 0x7d0(sp)
+DIFF +0x164: mv a3, zero  |  ld s3, 0x7c8(sp)
+DIFF +0x168: jal EXT  |  ld s4, 0x7c0(sp)
+DIFF +0x16c: addi a2, s0, -0x800  |  ld s5, 0x7b8(sp)
+DIFF +0x170: addi a2, a2, -0x58  |  ld s6, 0x7b0(sp)
+DIFF +0x174: mv a0, s2  |  ld s7, 0x7a8(sp)
+DIFF +0x178: mv a1, s1  |  addi sp, sp, 0x7f0
+DIFF +0x17c: jal EXT  |  j EXT
+DIFF +0x180: mv a0, s3  |  addi a3, s0, -0x800
+DIFF +0x184: mv a1, s2  |  addi a3, a3, -0x50
+DIFF +0x188: mv a2, s1  |  addi a4, s0, -0x800
+DIFF +0x18c: addi s3, s1, -0x41  |  addi a4, a4, -0x60
+DIFF +0x190: addi a3, zero, -0x41  |  addi s7, a4, 0x7ff
+DIFF +0x194: bltu a3, s3, @+0x58  |  sd zero, 9(s7)
+DIFF +0x198: bnez a2, @+0x260  |  sd a3, 0(s4)
+DIFF +0x19c: j @+0x94  |  sd zero, 8(s4)
+DIFF +0x1a0: addi a3, s0, -0x800  |  mv s1, a2
+DIFF +0x1a4: addi a3, a3, -0x48  |  mv s5, a1
+DIFF +0x1a8: addi a4, s0, -0x800  |  mv s2, a0
+DIFF +0x1ac: addi a4, a4, -0x58  |  jal EXT
+DIFF +0x1b0: addi s6, a4, 0x7ff  |  mv a1, a0
+DIFF +0x1b4: sd zero, 9(s6)  |  auipc a0, PCREL
+DIFF +0x1b8: sd a3, 0(s4)  |  ld a0, PCLO(a0)
+DIFF +0x1bc: sd zero, 8(s4)  |  lbu a4, 0x21(a0)
+DIFF +0x1c0: mv s1, a2  |  sd s0, 9(s7)
+DIFF +0x1c4: mv s5, a1  |  addi a0, s0, -0x800
+DIFF +0x1c8: mv s2, a0  |  addi a0, a0, -0x60
+DIFF +0x1cc: jal EXT  |  addi a5, zero, 0xff
+DIFF +0x1d0: mv a1, a0  |  mv a2, s0
+DIFF +0x1d4: auipc a0, PCREL  |  mv a3, zero
+DIFF +0x1d8: ld a0, PCLO(a0)  |  jal EXT
+DIFF +0x1dc: lbu a4, 0x21(a0)  |  addi a2, s0, -0x800
+DIFF +0x1e0: sd s0, 9(s6)  |  addi a2, a2, -0x60
+DIFF +0x1e4: addi a0, s0, -0x800  |  mv a0, s2
+DIFF +0x1e8: addi a0, a0, -0x58  |  mv a1, s1
+DIFF +0x1ec: addi a5, zero, 0xff  |  jal EXT
+DIFF +0x1f0: mv a2, s0  |  mv a0, s2
+DIFF +0x1f4: mv a3, zero  |  mv a1, s5
+DIFF +0x1f8: jal EXT  |  mv a2, s1
+DIFF +0x1fc: addi a2, s0, -0x800  |  addi a3, zero, -0x41
+DIFF +0x200: addi a2, a2, -0x58  |  bltu a3, s6, @+0xb8
+DIFF +0x204: mv a0, s2  |  bnez a2, EXT
+DIFF +0x208: mv a1, s1  |  j @+0xf0
+DIFF +0x20c: jal EXT  |  mv s1, a0
+DIFF +0x210: mv a0, s2  |  mv s2, a1
+DIFF +0x214: mv a1, s5  |  mv s6, a2
+DIFF +0x218: mv a2, s1  |  addi a0, s0, -0x800
+DIFF +0x21c: addi a3, zero, -0x41  |  addi a0, a0, -0x50
+DIFF +0x220: bltu a3, s3, @+0xa4  |  addi a1, s0, -0x800
+DIFF +0x224: bnez a2, @+0x304  |  addi a1, a1, -0x60
+DIFF +0x228: j @+0xe0  |  addi s7, a1, 0x7ff
+DIFF +0x22c: lb a6, 0(a4)  |  sd zero, 9(s7)
+DIFF +0x230: andi a5, a5, 7  |  sd a0, 0(s4)
+DIFF +0x234: snez a7, a6  |  sd zero, 8(s4)
+DIFF +0x238: slt a5, a5, a6  |  jal EXT
+DIFF +0x23c: xori a5, a5, 1  |  mv a1, a0
+DIFF +0x240: and a5, a7, a5  |  auipc a0, PCREL
+DIFF +0x244: bgeu a3, a4, @+0x258  |  ld a0, PCLO(a0)
+DIFF +0x248: lbu a6, 0(a3)  |  lbu a4, 0x21(a0)
+DIFF +0x24c: addi a3, a3, 1  |  sd s0, 9(s7)
+DIFF +0x250: or a5, a6, a5  |  addi a0, s0, -0x800
+DIFF +0x254: bne a3, a4, @+0x248  |  addi a0, a0, -0x60
+DIFF +0x258: andi a3, a5, 0xff  |  addi a5, zero, 0xff
+DIFF +0x25c: beqz a3, @+0x94  |  mv a2, s0
+DIFF +0x260: mv s5, a0  |  mv a3, zero
+DIFF +0x264: mv a0, a1  |  jal EXT
+DIFF +0x268: mv s6, a1  |  auipc a0, PCREL
+DIFF +0x26c: mv a1, a2  |  addi a0, a0, PCLO
+DIFF +0x270: mv s1, a2  |  jal EXT
+DIFF +0x274: jal EXT  |  bnez a0, @+0x2b4
+DIFF +0x278: mv a1, s6  |  jal EXT
+DIFF +0x27c: mv a2, s1  |  beqz a0, @+0x290
+DIFF +0x280: mv s2, a0  |  addi a0, s0, -0x800
+DIFF +0x284: mv a0, s5  |  addi a0, a0, -0x60
+DIFF +0x288: beqz s2, @+0x94  |  jal EXT
+DIFF +0x28c: jal EXT  |  bnez a0, @+0x2b4
+DIFF +0x290: auipc a1, PCREL  |  auipc a0, PCREL
+DIFF +0x294: ld a1, PCLO(a1)  |  addi a0, a0, PCLO
+DIFF +0x298: sd a1, 0(s4)  |  addi a5, s0, -0x800
+DIFF +0x29c: addi a2, s0, -0x800  |  addi a5, a5, -0x60
+DIFF +0x2a0: addi a2, a2, -0x58  |  mv a1, s1
+DIFF +0x2a4: mv a1, s0  |  mv a2, s6
+DIFF +0x2ac: mv a4, zero  |  mv a4, s6
+DIFF +0x2b0: mv a5, s1  |  jal EXT
+DIFF +0x2b4: mv a6, zero  |  mv a2, s6
+DIFF +0x2b8: mv a7, zero  |  mv a1, s2
+DIFF +0x2bc: jal EXT  |  mv a0, s1
+DIFF +0x2c0: mv a0, s5  |  not a3, s2
+DIFF +0x2c4: mv a1, s6  |  bgeu a3, s6, @+0x64
+DIFF +0x2c8: mv a2, s1  |  addi a3, s0, -0x800
+DIFF +0x2cc: j @+0x94  |  addi a3, a3, -0x50
+DIFF +0x2d0: lb a6, 0(a4)  |  addi a4, s0, -0x800
+DIFF +0x2d4: andi a5, a5, 7  |  addi a4, a4, -0x60
+DIFF +0x2d8: snez a7, a6  |  addi s7, a4, 0x7ff
+DIFF +0x2dc: slt a5, a5, a6  |  sd zero, 9(s7)
+DIFF +0x2e0: xori a5, a5, 1  |  sd a3, 0(s4)
+DIFF +0x2e4: and a5, a7, a5  |  sd zero, 8(s4)
+DIFF +0x2e8: bgeu a3, a4, @+0x2fc  |  mv s1, a2
+DIFF +0x2ec: lbu a6, 0(a3)  |  mv s2, a1
+DIFF +0x2f0: addi a3, a3, 1  |  mv s6, a0
+DIFF +0x2f4: or a5, a6, a5  |  jal EXT
+DIFF +0x2f8: bne a3, a4, @+0x2ec  |  mv a1, a0
+DIFF +0x2fc: andi a3, a5, 0xff  |  auipc a0, PCREL
+DIFF +0x300: beqz a3, @+0xe0  |  ld a0, PCLO(a0)
+DIFF +0x304: mv s1, a0  |  lbu a4, 0x21(a0)
+DIFF +0x308: mv s5, a1  |  sd s0, 9(s7)
+DIFF +0x30c: mv a1, a2  |  addi a0, s0, -0x800
+DIFF +0x310: mv s2, a2  |  addi a0, a0, -0x60
+DIFF +0x314: jal EXT  |  addi a5, zero, 0xff
+DIFF +0x318: mv a1, s5  |  mv a2, s0
+DIFF +0x31c: mv a2, s2  |  mv a3, zero
+DIFF +0x320: mv s3, a0  |  jal EXT
+DIFF +0x324: mv a0, s1  |  addi a2, s0, -0x800
+DIFF +0x328: beqz s3, @+0xe0  |  addi a2, a2, -0x60
+DIFF +0x32c: jal EXT  |  mv a0, s2
+DIFF +0x330: auipc a1, PCREL  |  mv a1, s1
+DIFF +0x334: ld a1, PCLO(a1)  |  jal EXT
+DIFF +0x338: sd a1, 0(s4)  |  mv a0, s6
+DIFF +0x33c: addi a2, s0, -0x800  |  mv a1, s2
+DIFF +0x340: addi a2, a2, -0x58  |  mv a2, s1
+DIFF +0x344: addi a4, zero, 1  |  addi s6, s1, -0x41
+DIFF +0x348: mv a1, s0  |  addi a3, zero, -0x41
+DIFF +0x34c: mv a3, s3  |  bltu a3, s6, @+0x70
+DIFF +0x350: mv a5, s2  |  bnez a2, EXT
+DIFF +0x354: mv a6, zero  |  j @+0xa8
+DIFF +0x358: mv a7, zero  |  lb a5, 0(a4)
+DIFF +0x35c: jal EXT  |  andi a6, s5, 7
+DIFF +0x360: mv a0, s1  |  snez a7, a5
+DIFF +0x364: mv a1, s5  |  slt a5, a6, a5
+DIFF +0x368: mv a2, s2  |  xori a5, a5, 1
+DIFF +0x36c: j @+0xe0  |  and a5, a7, a5
+instructions 220/220  real-diffs 209  external pairs 11  conflicts 8
+  pair 0x538c0 -> [None]
+  pair 0x568a4 -> [None, '0x63054']
+  pair 0x56dfc -> [None]
+  pair 0x59aec -> [None]
+  pair 0x63078 -> [None]
+  pair 0x7259c -> [None]
+  pair 0x98868 -> [None, '0x59aec']
+  pair 0x98878 -> [None]
+  pair 0x993e0 -> [None]
+  pair 0x1000103d8 -> ['0x568a4', '0x100014a5c']
+  pair None -> ['0x993e0', '0x5ab00', '0x50fa0', '0x57e44', '0x568a4', '0x51044', '0x98868', '0x5ae08', '0x59aec', '0x5aa98', '0x9a6d8', '0x51010', '0x565d0', '0x98878', '0x7259c', '0x100014a5c']
+VERDICT DIFFERENT
+rc=0

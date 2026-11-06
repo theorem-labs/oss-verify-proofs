@@ -1,0 +1,58 @@
+diff --git B/YD2f.v B/YD2f.v
+index e07153e36b2..82389de0360 100644
+--- B/YD2f.v
++++ B/YD2f.v
+@@ -2,6 +2,7 @@
+ (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+ (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+ (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2f.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_decode's ASan build. *)
++(* Modified by Theorem Labs, 2026-10: the harness globals' hull [G_HARNESS_B_LO, G_HARNESS_B_HI) (lib/B/TransportGB.v) is clipped out of IMG_L, IMG_LC and L_pieces, outermost, after STDOUT and SOBUF, because the program call writes G_HARNESS_B; region_avoids_G / region_avoids_G_sound (pcap's Reusable/YD1y.v:220-230, here because this unit's YD1y.v is a generated start-up file) and the vm_compute lemma L_mem_avoids_G (end of file) state the side condition YD1r.v needs. libreac/fuzz_pcap's G form (Reusable/YD2f.v:183-188, 214, 321-325 at origin/ossv/recipes 198234fa4d3, DRV_G_LO / DRV_G_HI there). *)
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
+ From Stdlib Require Import ZArith NArith List Lia Bool.
+ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+@@ -11,6 +12,7 @@ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Impor
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK04. From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Import YB1v YF0m YD2j YD2i YD1t YD20 YD1y YD24 YD2h.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YO05.
+ From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Export YCeg YCfl.
++From OssFuzzTheorems.Proofs.libdiginet.fuzz_transport.lib.B Require Import TransportGB.
+ Import ListNotations.
+ Unset Lia Cache. Unset Nia Cache.
+ Open Scope Z_scope.
+@@ -154,8 +156,8 @@ Definition IMG_B : smem := firstn (length IMG_REGIONS) (skipn 3 (ss_mem sB1)).
+ Definition clip_out (lo hi : Z) (r : YP09.region) : list YP09.region :=
+ if ((hi <=? r_lo r) || (r_hi r <=? lo))%bool then [r] else
+ (if (r_lo r <? lo)%bool then [clip_region (r_lo r) lo r] else []) ++ (if (hi <? r_hi r)%bool then [clip_region hi (r_hi r) r] else []).
+-Definition IMG_L : smem := Eval vm_compute in flat_map (fun r => flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r)) IMG_B.
+-Definition IMG_LC : smem := Eval vm_compute in flat_map (fun r => flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r)) IMG_E.
++Definition IMG_L : smem := Eval vm_compute in flat_map (fun r => flat_map (clip_out G_HARNESS_B_LO G_HARNESS_B_HI) (flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r))) IMG_B.
++Definition IMG_LC : smem := Eval vm_compute in flat_map (fun r => flat_map (clip_out G_HARNESS_B_LO G_HARNESS_B_HI) (flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r))) IMG_E.
+ Definition L_regs : list sv :=
+ [SLit 0; SLit RA_LLVMF; SOff 0 (-208); SLit TFIB_GP; SLit TFIB_TP; SOff 167 0; SOff 168 0; SOff 169 0;
+ SOff 162 0; SOff 163 0; SOff 163 0; SOff 162 0; SOff 170 0; SOff 171 0; SOff 172 0; SOff 173 0;
+@@ -183,7 +185,7 @@ Proof. split; [| intros k]; vm_compute; reflexivity. Qed.
+ (* The five [] are the tail after the image (RT_REGIONS and the input blocks RBh, R161), not image regions. *)
+ Definition L_pieces : list smem :=
+ [ [WIN208; TRF] ] ++ map (fun r => [r]) (firstn 2 (skipn 1 (ss_mem S_Pm)))
+-++ map (fun r => flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r)) IMG_E ++ [ []; []; []; []; [] ].
++++ map (fun r => flat_map (clip_out G_HARNESS_B_LO G_HARNESS_B_HI) (flat_map (clip_out SOBUF_LO SOBUF_HI) (clip_out STDOUT_LO STDOUT_HI r))) IMG_E ++ [ []; []; []; []; [] ].
+ Lemma L_pieces_eq : concat L_pieces = L_mem /\ length L_pieces = length (ss_mem sPE0) /\ forall k, length L_pieces = length (ss_mem (sPE1 k)).
+ Proof. repeat split; intros; vm_compute; reflexivity. Qed.
+ Definition L_piecesC : list smem := Eval vm_compute in L_pieces.
+@@ -298,3 +300,17 @@ Definition so_win_ok (r : YP09.region) : bool :=
+ Lemma CM_so_ok : forallb so_win_ok CM_mem = true /\ forallb so_win_ok (WIN (-128) :: rs_FB) = true /\ forallb so_win_ok L_mem = true.
+ Proof. vm_compute. repeat split; reflexivity. Qed.
+ Lemma IMG_L_wf : regions_wf IMG_L = true. Proof. reflexivity. Qed.
++(* An image region the driver keeps across the program call also avoids the harness globals' hull
++   [G_HARNESS_B_LO, G_HARNESS_B_HI) (lib/B/TransportGB.v): the call may write G_HARNESS_B. *)
++Definition region_avoids_G (r : YP09.region) : bool :=
++match r_base r with None => ext_avoids (r_lo r) (r_hi r) (G_HARNESS_B_LO, G_HARNESS_B_HI - G_HARNESS_B_LO) | Some _ => true end.
++Lemma region_avoids_G_sound : forall r a, region_avoids_G r = true -> r_base r = None -> r_lo r <= a < r_hi r ->
++~ (G_HARNESS_B_LO <= a < G_HARNESS_B_HI).
++Proof.
++intros r a H Hb Ha. unfold region_avoids_G in H. rewrite Hb in H. unfold ext_avoids in H. cbn [fst snd] in H.
++apply orb_prop in H as [H|H]; apply Z.leb_le in H; lia.
++Qed.
++(* Every image region of the loop state avoids the harness globals' hull. `tl` drops the stack window WIN208, whose
++   base is Some 0 and which region_avoids_G passes anyway; stated over tl L_mem because that is the list YD1r walks. *)
++Lemma L_mem_avoids_G : forallb region_avoids_G (tl L_mem) = true.
++Proof. vm_compute. reflexivity. Qed.

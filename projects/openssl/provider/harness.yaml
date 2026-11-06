@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: provider
-rocq: OssFuzzTheorems.openssl.provider
+rocq: OSSVerify.openssl.provider
 origin: upstream
 summary: Picks a digest/cipher/KDF/MAC/RAND algorithm from all providers by input index, fills its settable
   params from the input, runs a fixed operation; sig/asym/KEM/keyexch/keymgmt ops are stubs returning

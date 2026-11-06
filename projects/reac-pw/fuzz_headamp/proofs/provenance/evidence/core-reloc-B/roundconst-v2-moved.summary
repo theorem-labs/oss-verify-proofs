@@ -1,0 +1,5 @@
+# rows-cand2.full.tsv.gz: selected 37 moved SAME-GEOMETRY rows from a donor quantity (floor 0x100 on spans only)
+#   MISMATCH	SAME-GEOMETRY	12
+#   SAME	SAME-GEOMETRY	25
+#   class	MISMATCH	span	7
+#   class	MISMATCH	span/2	5

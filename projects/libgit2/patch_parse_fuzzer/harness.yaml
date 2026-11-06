@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libgit2
 harness: patch_parse_fuzzer
-rocq: OssFuzzTheorems.libgit2.patch_parse_fuzzer
+rocq: OSSVerify.libgit2.patch_parse_fuzzer
 origin: upstream
 summary: git_patch_from_buffer on data[1:] with prefix_len = data[0]; the patch is freed without inspection.
 entry: LLVMFuzzerTestOneInput

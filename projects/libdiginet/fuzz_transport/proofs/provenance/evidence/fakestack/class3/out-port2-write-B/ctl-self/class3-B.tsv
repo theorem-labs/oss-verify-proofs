@@ -1,0 +1,10 @@
+file	donor_range	words	function	offset	paired_by	target_range	donor_fn	target_fn	fn_bytes	verdict	pcrel	real	unmeasured	targets_differ	whole_fn (pcrel, real, unmeasured) differ	note
+B/Rt/RtSM3T	0x3fc58	107	__asan_stack_malloc_3	+0x0	name	0x3fc58	0x3fc58	0x3fc58	428	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/RtSM3T	0x67b4c	2	_ZN11__sanitizer19RegisterCommonFlagsEPNS_10FlagParserEPNS_11CommonFlagsE	+0x358	name	0x67b4c	0x677f4	0x677f4	4772	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/RtSM3T	0x4b08c	31	__interceptor___tls_get_addr	+0x0	name	0x4b08c	0x4b08c	0x4b08c	124	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/RtSM3T	0x9f714	9	__tls_get_addr	+0x0	name	0x9f714	0x9f714	0x9f714	36	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/RtSM3T	0x61e8c	8	_ZN6__asan16GetCurrentThreadEv	+0x0	name	0x61e8c	0x61e8c	0x61e8c	32	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/RtSM3T	0x5a9d8	6	_ZN6__asan10AsanTSDGetEv	+0x0	name	0x5a9d8	0x5a9d8	0x5a9d8	64	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/RtSM3T	0xa07c8	7	__pthread_getspecific	+0x0	name	0xa07c8	0xa07c8	0xa07c8	28	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/RtSM3T	0x6f5a0	140	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	+0x0	name	0x6f5a0	0x6f5a0	0x6f5a0	848	EQUAL	0	0	0	0	EQUAL (0, 0, 0) 0	
+B/Rt/RtSM3T	0x4045c	28	_ZN6__asanL11MemToShadowEm	+0x0	call	0x4045c	0x4045c	0x4045c	316	EQUAL	0	0	0	1	EQUAL (0, 0, 0) 0	range: 0x6c unmeasured

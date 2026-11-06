@@ -1,0 +1,67 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.AS Require Import ShapeAlg AsanAcct.
+From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.Lib Require Import Tac Arr Bytes ImageA RzCPS SysStep FP StoreFast.
+From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.Sj Require Import SjNumber.
+From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.P Require Import Rnd Sj_num_kit Sj_num_walk.
+From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.A Require Import Layout Shadow RT_iface D_defs D_kit D_clx Sj_akit Sj_acps Sj_hkit Sj_rtf
+  Sj_num_akit Sj_num_amem Sj_num_lm_kit.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Open Scope bv_scope.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+Local Ltac transport_after_call segs m m' MU WM ::= transport_after_call_fast segs m m' MU WM.
+Local Ltac solve_load ::= first [ solve_load_base | asan_load_hook | asan_zr_hook | num_load_hook | solve_load_image ].
+Local Ltac solve_store ::= first [ num_solve_store0 | num_store_hook ].
+
+Section RUNS.
+  Variables (f : Z) (m0 : mem).
+  Notation S := (f / 8 + 2147450880)%Z.
+  Hypothesis FS0 : (0 <= S /\ S + 255 < 2^63)%Z.
+  Variable Q : machine_state -> Prop.
+
+  Lemma fc_run1 : forall ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc j (mm : mem),
+    rw_cells asegs mm (f / 8 + 2147450884)%Z [CB 63 j] ->
+    mem_inv asegs mm -> munch [(f / 8 + 2147450884, f / 8 + 2147450947)%Z] m0 mm -> wmono asegs m0 mm ->
+    (forall (mm' : mem), rw_cells asegs mm' (f / 8 + 2147450884)%Z [CB 63 (repeat (Z_to_bv 8 0) 63)] ->
+       mem_inv asegs mm' -> munch [(f / 8 + 2147450884, f / 8 + 2147450947)%Z] m0 mm' -> wmono asegs m0 mm' ->
+       evt asegs Q (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 (-1)) a1 a2 a3 a4 a5 a6 a7 s2 s3 (Z_to_bv 64 S) s5 (Z_to_bv 64 4294967295) s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                    F (Z_to_bv 64 0xde854) fc None mm' (seg_rom asegs))) ->
+    evt asegs Q (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 (-1)) a1 a2 a3 a4 a5 a6 a7 s2 s3 (Z_to_bv 64 S) s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                    F (Z_to_bv 64 0xde754) fc None mm (seg_rom asegs)).
+  Proof using FS0.
+    intros until mm. intros SH MI MU WM HK.
+    apply (rw_cells_split_CB asegs _ _ [] 63 j [] (repeat 1%nat 63)) in SH; [| reflexivity]. cbn [app] in SH. rewrite app_nil_r in SH.
+    cbn [mk_CB_cells repeat] in SH.
+    repeat match goal with H : rw_cells _ _ _ ?l |- _ => match l with context [CB ?n ?t] => lazymatch t with firstn _ _ => idtac end; let j := fresh "j" in set (j := t) in H; clearbody j end end.
+    awalk ltac:(fun pc => lazymatch pc with 0xde854%Z => idtac end).
+    pose proof (rw_cells_merge_all _ _ _ SH) as SH'.
+    eapply evt_eq; [| eapply HK; [exact SH' | exact MI | exact MU | exact WM]]. num_st_eq.
+  Qed.
+
+  Lemma fc_run2 : forall ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc j (mm : mem),
+    rw_cells asegs mm (f / 8 + 2147450884)%Z [CB 63 j] ->
+    mem_inv asegs mm -> munch [(f / 8 + 2147450884, f / 8 + 2147450947)%Z] m0 mm -> wmono asegs m0 mm ->
+    (forall j' (mm' : mem), rw_cells asegs mm' (f / 8 + 2147450884)%Z [CB 63 j'] ->
+       mem_inv asegs mm' -> munch [(f / 8 + 2147450884, f / 8 + 2147450947)%Z] m0 mm' -> wmono asegs m0 mm' ->
+       evt asegs Q (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 (-8)) a1 a2 a3 a4 a5 a6 a7 s2 s3 (Z_to_bv 64 S) s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                    F (Z_to_bv 64 0xde9b4) fc None mm' (seg_rom asegs))) ->
+    evt asegs Q (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 (-8)) a1 a2 a3 a4 a5 a6 a7 s2 s3 (Z_to_bv 64 S) s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+                    F (Z_to_bv 64 0xde8b8) fc None mm (seg_rom asegs)).
+  Proof using FS0.
+    intros until mm. intros SH MI MU WM HK.
+    apply (rw_cells_split_CB asegs _ _ [] 63 j [] (repeat 1%nat 63)) in SH; [| reflexivity]. cbn [app] in SH. rewrite app_nil_r in SH.
+    cbn [mk_CB_cells repeat] in SH.
+    repeat match goal with H : rw_cells _ _ _ ?l |- _ => match l with context [CB ?n ?t] => lazymatch t with firstn _ _ => idtac end; let j := fresh "j" in set (j := t) in H; clearbody j end end.
+    awalk ltac:(fun pc => lazymatch pc with 0xde9b4%Z => idtac end).
+    destruct (rw_cells_forget asegs _ _ _ SH) as [j' SH']. cbn [cells_size csize Nat.add] in SH'.
+    eapply HK; [exact SH' | exact MI | exact MU | exact WM].
+  Qed.
+End RUNS.

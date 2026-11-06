@@ -1,0 +1,22 @@
+--- lib/Reusable/YH03.v (yh03regen b05e25845c37)
++++ lib/Reusable/YH03.v (yh03regen 4e9a57e74cac, committed)
+@@ -187,7 +187,7 @@
+ Definition src0_D_errmsgstr : Z := 0x10820.
+ Definition src0_D_global_pointer : Z := 0x10800.
+ Definition src0_D_errmsgidx : Z := 0x10fc8.
+-Definition src0_D_fe_getround : Z := 0x1aaa0.
++Definition src0_D_fe_getround : Z := 0x110d0.
+ Definition src0_D_EH_FRAME_LIST : Z := 0x111e0.
+ Definition src0_D_init_array_start : Z := 0x1d240.
+ Definition src0_D_fini_array_start : Z := 0x1d248.
+--- lib/U/Reusable/YH03.v (yh03regen b05e25845c37)
++++ lib/U/Reusable/YH03.v (yh03regen 4e9a57e74cac, committed)
+@@ -187,7 +187,7 @@
+ Definition src0_D_errmsgstr : Z := 0x10828.
+ Definition src0_D_global_pointer : Z := 0x10800.
+ Definition src0_D_errmsgidx : Z := 0x10fd0.
+-Definition src0_D_fe_getround : Z := 0x1aea0.
++Definition src0_D_fe_getround : Z := 0x110d8.
+ Definition src0_D_EH_FRAME_LIST : Z := 0x111f8.
+ Definition src0_D_init_array_start : Z := 0x1d640.
+ Definition src0_D_fini_array_start : Z := 0x1d648.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: simdjson
 harness: fuzz_atpointer
-rocq: OssFuzzTheorems.simdjson.fuzz_atpointer
+rocq: OSSVerify.simdjson.fuzz_atpointer
 origin: upstream
 summary: dom::parser::parse of the first split string, then root.at_pointer(second string) and leaf.get_string();
   every result is only used to return 0.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: lzo
 harness: lzo_compress_target
-rocq: OssFuzzTheorems.lzo.lzo_compress_target
+rocq: OSSVerify.lzo.lzo_compress_target
 origin: oss-fuzz
 summary: 'Checks 2 properties (listed below); the first, a round trip: For compressible input (compressed_len
   < size), lzo1x_decompress into size+1 bytes must return LZO_E_OK and produce exactly size bytes. ONLY

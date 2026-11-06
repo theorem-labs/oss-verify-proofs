@@ -1,0 +1,5 @@
+[reac-pw/fuzz_pin] AU/YF0r.v:47 0x3cbe8 0x3e000
+[reac-pw/fuzz_pin] AU/YF0r.v:76 0x99160 0xa3ce0
+[reac-pw/fuzz_pin] AU/YF0r.v:76 0x99e50 0xa49d0
+[reac-pw/fuzz_pin] AU/YF0r.v:77 0x991c0 0xa3d40
+[reac-pw/fuzz_pin] AU/YF0r.v:77 0x99e60 0xa49e0

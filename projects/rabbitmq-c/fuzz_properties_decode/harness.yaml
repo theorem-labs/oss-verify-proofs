@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: rabbitmq-c
 harness: fuzz_properties_decode
-rocq: OssFuzzTheorems.rabbitmq_c.fuzz_properties_decode
+rocq: OSSVerify.rabbitmq_c.fuzz_properties_decode
 origin: upstream
 summary: First 2 bytes are the class id; amqp_decode_properties() on the rest; status ignored.
 entry: LLVMFuzzerTestOneInput

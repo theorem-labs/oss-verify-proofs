@@ -1,12 +1,12 @@
 # How the binaries are built
 
 This page describes the binaries of this release: the ones that the statements
-under `projects/` and the proofs under `proofs/` are about.
+and the proofs under `projects/` are about.
 
 ## Where a binary comes from
 
 Each proof has a build record:
-`proofs/<project>/<harness>/provenance/PROVENANCE.md`, written from
+`projects/<project>/<harness>/proofs/provenance/PROVENANCE.md`, written from
 `PROVENANCE.yaml` beside it. It gives:
 
 - the upstream repository and commit of the library;
@@ -24,6 +24,9 @@ Each proof has a build record:
   `PROVENANCE.yaml`); when they came from a package, `proofs.written_here`
   names the statements whose proofs were written in this repository, so the
   record credits the package with no proof that it does not have;
+- which proof files of this repository a proof file was made from, where one
+  was (`proofs.sources`, one entry per group of files; a file of another fuzz
+  target is named by that fuzz target's proofs folder);
 - the build system, the compiler, the builder image digest and the static
   AddressSanitizer commit;
 - the file name, size and SHA-256 of each of the four builds;
@@ -75,6 +78,19 @@ Two more sets of flags are added:
 
 Each proof's build record quotes the flags as the recipe writes them, with the
 file and line of each, and the pin of its library.
+
+A project first built by the OSS Verify port after its frame-pointer toolchain
+images were added is built in one of them: the port's toolchain image with the
+environment variable `OFT_FRAME_POINTERS=1`, and no other change. Its builds
+also compile with `-fno-omit-frame-pointer` (C and C++) and
+`-Cforce-frame-pointers=yes` (Rust, the standard library included), so that
+AddressSanitizer's fast unwinder records each allocation's stack as a call
+chain. The C library, compiler-rt and the sysroot libraries that a link takes
+from the image are the same bytes as in the image without frame pointers. Its
+`project.yaml` names that image in `build.builder`, and release.yaml lists it in
+`images.builder`. A project that already has a `build.builder` keeps it when it
+is built again, so its published binaries, statements and proofs do not change.
+The port's `docs/build-contract.md` ("Frame pointers") tells the details.
 
 ## Which code is instrumented
 

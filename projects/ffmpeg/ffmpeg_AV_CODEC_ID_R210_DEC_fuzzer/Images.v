@@ -4,11 +4,11 @@
     [elf-snapshot] tool of linux-process-semantics, from the ELF file that
     harness.yaml pins by SHA-256.  It is not stored in this repository.  The
     [_wf] lemmas check by computation that each image is well formed
-    ([OssFuzzTheorems.Core.Images]), so that no statement about it holds only
-    because the image has no valid entry. *)
+    ([OSSVerify.Core.Images]), so that no statement about it holds only because
+    the image has no valid entry. *)
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType.
-From OssFuzzTheorems.Core Require Import Images.
-From OssFuzzTheorems.ffmpeg.ffmpeg_AV_CODEC_ID_R210_DEC_fuzzer.images Require Plain Ubsan Asan AsanUbsan.
+From OSSVerify.Core Require Import Images.
+From OSSVerify.ffmpeg.ffmpeg_AV_CODEC_ID_R210_DEC_fuzzer.images Require Plain Ubsan Asan AsanUbsan.
 
 Definition plain : Image := mkImage Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs.
 Definition ubsan : Image := mkImage Ubsan.M.loaded_segments Ubsan.M.init_pc Ubsan.M.phdrs.

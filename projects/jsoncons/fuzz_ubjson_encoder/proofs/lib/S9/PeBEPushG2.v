@@ -1,0 +1,513 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* [comment removed for export] *)
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
+
+From Stdlib Require Import ZArith List Lia Bool FunctionalExtensionality.
+From stdpp.bitvector Require Import definitions.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.jsoncons.fuzz_ubjson_encoder.images Require Import AsanUbsan.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9 Require Import PropExec CatExec CatSim SeqExec StreamSim StoreOk Hoare ShapeAlg SpinAlg AsanAcct HeapIface HeapIfaceA IcptIfaceAB0 L5Defs L5Core L5CoreKit L5Kn L5KnA L5LazyA L5DefsAB0 L5CoreAB0S9 L5StepARB0S9.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Import PmLayout PmLayoutA.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9 Require Import PmModel PmModelFacts PmStatics PmStaticsA HeapIfaceAEx PmSpecsA PmSpecsAX PeSpecsAb PeSpecsBXJ PnStatics.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Import PeCLayoutB.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9 Require Import PeCModelA PeCSpecsA PeCSpecsAb PmModelFactsA PmStep PeStepAB0 PeStepB2 PmCertKitG PeBIss1 PeBEmbKitJ PeBSrcKit.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Import PeCLayout.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9 Require Import PeCSink PeCModel PeCEPushSpecsA PeBEPushP1 PeBEPushP5 PeBEPushU.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Import Eb0_code_b429c_b42a0.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9 Require Import PeBEPushF PeBEPushGStmts PeBEPushG1.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.Spec Require Import UbjRef.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9.asan Require Import L5CoreBB0S9.
+Import ListNotations.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Require OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.L5FastLia.
+Ltac nodisj := repeat match goal with H : _ \/ _ |- _ => clear H end.
+Ltac dlia := first [ solve [ L5FastLia.prune_arith; nodisj; L5FastLia.lia_ne ]
+                   | solve [ L5FastLia.prune_arith; match goal with H : _ \/ _ |- _ => L5SAR.clear_disj_but H; destruct H; L5FastLia.lia_ne end ]
+                   | solve [ L5FastLia.prune_arith; nodisj; L5FastLia.lia_st ]
+                   | solve [ L5FastLia.prune_arith; match goal with H : _ \/ _ |- _ => L5SAR.clear_disj_but H; destruct H; L5FastLia.lia_st end ] ].
+Local Ltac lia := dlia.
+Module PEBEPG2.
+Ltac inl := apply L5K.In_of_mem; vm_compute; reflexivity.
+Ltac amod := match goal with H : ?x mod ?m = 0 |- ?x mod ?m = 0 => exact H end.
+Ltac sassum := match goal with |- ?G => match goal with H : ?T |- _ => constr_eq T G; exact H end end.
+Ltac ftac := lazymatch goal with |- PEBEPP1.aligned _ _ => unfold PEBEPP1.aligned; first [amod | lia] | |- PEBEPP5.aligned _ _ => unfold PEBEPP5.aligned; first [amod | lia] end.
+Abbreviation reg i := (Z_to_bv 5 (Z.of_nat i)).
+Abbreviation RSEGS := AsanUbsan.M.loaded_segments.
+Abbreviation AD := PeCLayoutB.CADDR_B.
+Abbreviation EE := PeCLayoutB.EADDR_B.
+Abbreviation st fx R pc M := (@mkst fx R (Z_to_bv 64 pc) M (seg_rom RSEGS)).
+
+Lemma eitem_agree (segs : list Segment) (M M' : word -> option byte) a e :
+  (forall x, a <= x < a + 24 -> M' (Z_to_bv 64 x) = M (Z_to_bv 64 x)) -> 0 <= a -> a + 24 <= 2 ^ 64 -> PEC.eitem_at segs M a e -> PEC.eitem_at segs M' a e.
+Proof.
+  intros AG Ha Ha' (K0 & K8 & K16). split; [|split].
+  - apply (PMF.u32_at_agree segs M M'); [intros i Hi; apply AG; Lia.lia| Lia.lia| Lia.lia| exact K0].
+  - apply (L5C.u64_at_agree segs M M'); [intros i Hi; apply AG; Lia.lia| Lia.lia| Lia.lia| exact K8].
+  - apply (L5C.u64_at_agree segs M M'); [intros i Hi; apply AG; Lia.lia| Lia.lia| Lia.lia| exact K16].
+Qed.
+
+Section Stage.
+Context {SCFG_P : ScfgP}.
+Variables (L : asan_layout) (ar : asan_run) (C : asan_statics_cells) (HI : asan_iface).
+Hypothesis LY : PMB.layout L C.
+Hypothesis HIok : HAJ.asan_iface_okR L ar C SCFG HI.
+Hypothesis EXT : HAJ.asan_ext_ok L ar SCFG HI PMB.EXT.
+Let LYa := PMB.ly_as0 L C LY.
+
+Theorem grow2 : PMSPA.opdel_spec RSEGS AD L ar HI -> forall (fx6 : FPState) R M model K LBX FF LK Aw cr ov fb b k stk d sp r pk kd B R6 M6 model6 Aw6,
+    ri_inv HI (PEC.enc_own (PEC.ENC b k stk d) ++ LBX) FF LK cr Aw M (vml_of model) -> K [] -> PMSPA.entryA AD L ar R M sp r 0 ->
+    PMSPA.aobjA FF ov 56 -> ov mod 8 = 0 -> PECA.enc_atA RSEGS EE L ar M ov fb (PEC.ENC b k stk d) -> Z.of_nat (length stk) = PEC.ecap k -> 0 < k <= 11 -> 0 <= pk < 2 ^ 47 ->
+    PEBEPGS.gmid L ar HI R M model LBX FF LK Aw cr ov b k stk sp pk kd B R6 M6 model6 Aw6 ->
+    (forall (fx' : FPState) R' M' model' LK' Aw', regs_preserved R R' -> PECA.enc_atA RSEGS EE L ar M' ov fb (PEC.ENC B (k + 1) (stk ++ [EI kd 0 0]) d) ->
+        PMSTA.base_okA RSEGS AD M' -> L5CA.ahpres L ar LBX FF sp (PMSPA.pm_scr 0) [(ov + 24, 24)] M M' ->
+        model_rt model model' -> incl LK' LK -> incl Aw Aw' -> L5CA.amodel_ok Aw' model' ->
+        ri_inv HI (PEC.enc_own (PEC.ENC B (k + 1) (stk ++ [EI kd 0 0]) d) ++ LBX) FF LK' (adebit L cr (PEC.ESZ * PEC.ecap (k + 1))) Aw' M' (vml_of model') ->
+        getr R' (reg 10) = Z_to_bv 64 (B + PEC.ESZ * Z.of_nat (length stk) + PEC.ESZ) ->
+        srealizes RSEGS SCFG (@PMSPA.cfg RSEGS fx' R' r M' model') K) ->
+    srealizes RSEGS SCFG (@PMSPA.cfg RSEGS fx6 R6 0xb0ddc M6 model6) K.
+Proof.
+  intros DEL fx6 R M model K LBX FF LK Aw cr ov fb b k stk d sp r pk kd B R6 M6 model6 Aw6 HH K0 ENT AOV O8 EA LEN K11 RPK MID KONT.
+  destruct ENT as (Rra & RAok & Rsp & Rgp & Rtp & ASTK0 & STKSH0). pose proof RAok as (Hr1 & Hr2).
+  rewrite L5K.rl1 in Rra. rewrite L5K.rl2 in Rsp. rewrite L5K.rl3 in Rgp. rewrite L5K.rl4 in Rtp.
+  change (PMSPA.pm_scr 0) with 12288 in KONT.
+  pose proof EA as (EV0 & EV8 & EV16 & EV24 & EV32 & EV40 & EV48 & EDEF & EACC & EK & ELEN & EDEP & EKB & EBLK & EITEMS).
+  cbn [PEC.en_b PEC.en_k PEC.en_stk PEC.en_depth] in EV24, EV32, EV40, EV48, EK, ELEN, EDEP, EKB, EBLK, EITEMS.
+  clear EV24 EV32 EV40 ELEN EKB EBLK EITEMS.
+  unfold PEBEPGS.gmid, PEBEPGS.SZ in MID.
+  destruct MID as (J2 & J8 & J9 & J18 & J19 & J20 & J21 & J22 & J23 & J24 & JCS & W8 & W16 & W24 & W32 & W40 & W48
+                   & W104 & W112 & W120 & W128 & W136 & W144 & W152 & W160 & W168 & W176 & W88 & W80 & W72 & W64 & W56 & WVB & WVE & WVC & ACCV6 & Q0 & Q4 & Q16 & Q5 & Q1 & bB & VBf & QR & BDEF6 & QSH6 & BST6 & SLOT6
+                   & HH6 & AM6 & MRT6 & IA6 & ASTK & STKSH & BASE6 & CHAIN6 & DK6).
+  pose proof ASTK as (A16 & SLO & SHI & SPT & SDEF & SUP). pose proof AM6 as (Mh6 & MI6).
+  assert (KC : k = 1 \/ k = 2 \/ k = 3 \/ k = 4 \/ k = 5 \/ k = 6 \/ k = 7 \/ k = 8 \/ k = 9 \/ k = 10 \/ k = 11) by (clear - K11; Lia.lia).
+  pose proof (PEBEPG1.ecap_rng11 k K11) as HC. pose proof (PEBEPG1.ecap_succ k ltac:(clear - K11; Lia.lia)) as ES.
+  rewrite ES in KONT. change PEC.ESZ with 24 in KONT.
+  remember (PEC.ecap k) as cap eqn:Ecap.
+  remember (24 * cap) as SZ eqn:ESZ.
+  assert (HSZ : 24 <= SZ <= 24576) by (clear - HC ESZ; Lia.lia). assert (SZ8 : SZ mod 8 = 0) by (clear - ESZ; Lia.lia).
+  assert (LENz : 24 * Z.of_nat (length stk) = SZ) by (clear - LEN ESZ; Lia.lia).
+  set (LB := PEC.enc_own (PEC.ENC b k stk d) ++ LBX) in *.
+  assert (ELB : LB = (b, SZ) :: LBX).
+  { subst LB. unfold PEC.enc_own, PEC.ESZ. cbn [PEC.en_k PEC.en_b]. replace (k =? 0) with false by (symmetry; apply Z.eqb_neq; clear - K11; Lia.lia). rewrite <- Ecap, <- ESZ. reflexivity. }
+  set (LB2 := (B, 2 * SZ) :: LB) in *. set (cr2 := adebit L cr (2 * SZ)) in *.
+  assert (BIN : In (b, SZ) LB) by (rewrite ELB; left; reflexivity).
+  assert (BIN2 : In (B, 2 * SZ) LB2) by (left; reflexivity). assert (BIN2b : In (b, SZ) LB2) by (right; exact BIN).
+  pose proof (HAJ.aior_wf _ _ _ _ _ HIok _ _ _ _ _ _ _ HH) as (WB & WF & FSAPP & FSCEIL & _ & _ & _ & CB1 & CB2 & STOP & _).
+  destruct (PMBEK.blk_facts L ar C HI LY HIok _ FF LK cr Aw M _ b SZ HH BIN) as (Bq0 & Bq1 & Bq2 & Bq3 & B16 & Bq5 & Bq6 & _ & Bq8).
+  pose proof (PMKB.aobj_of_aobjA FF ov 56 AOV O8) as AOB.
+  assert (HH6' : ri_inv HI LB2 FF LK cr2 Aw6 M6 (vml_of model6)) by (unfold LB2; rewrite ELB; exact HH6). clear HH6. rename HH6' into HH6.
+  pose proof (L5SAR.aobj_facts L ar C HI LYa HIok LB2 FF LK cr2 Aw6 M6 model6 ov 56 sp 12288 HH6 AOB ltac:(lia) ltac:(reflexivity)) as (OR & OBIG & ODEF & OVIS & OVSH & OCL & OCLSH).
+  unfold app_mem, BIGSHADOW_LO, BIGSHADOW_HI in Q5.
+  pose proof (L5SAR.vis_pack L ar C HI LYa HIok LB2 FF LK cr2 Aw6 M6 model6 HH6) as (HOFF6 & VIS6 & VIMG6 & VFS6 & VBLK6 & VBSH6 & VFSSH6 & VSTSH6).
+  set (H6 := ahid Aw6 model6) in *. set (MV6 := mrestrict H6 M6) in *.
+  pose proof (HAJ.aior_statics _ _ _ _ _ HIok _ _ _ _ _ _ _ HH6) as ST6. rewrite (L5A.aly_segs L C LYa) in ST6.
+  pose proof (L5A.statics_facts L C M6 LYa ST6) as (GOT6 & CSB6 & CUAR6 & _).
+  pose proof BASE6 as (IC6 & _). cbn [pa_rw_lo PeCLayoutB.CADDR_B] in IC6.
+  assert (X0 : L5.img_clear MV6 65536 1306624) by (apply L5A.img_clear_mrestrict; exact IC6).
+  assert (X1 : L5.u64_at RSEGS MV6 1335544 2147450880) by (apply (proj2 (L5A.u64_at_vis H6 M6 1335544 2147450880 (VIMG6 1335544 8 ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia))); exact CSB6).
+  assert (X2 : L5.u32_at RSEGS MV6 1335552 1) by (apply (proj2 (L5A.u32_at_vis H6 M6 1335552 1 (VIMG6 1335552 4 ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia))); exact CUAR6).
+  assert (X3 : L5.writable RSEGS MV6 (sp - 4096) 4096).
+  { apply (proj2 (L5A.writable_vis H6 M6 (sp - 4096) 4096 (VIS6 (sp - 4096) 4096 ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia))).
+    apply (L5SAR.astk_writable ar M6 sp 12288); [exact ASTK| lia| lia| lia]. }
+  assert (X4 : L5KA.zeros_at MV6 (sp / 8 + 2147450368) 512).
+  { intros i Hi. unfold MV6. rewrite (AsanAcct.mrestrict_visible H6 M6). apply (PEBEPF.stack_zeros12 M6 sp STKSH A16). exact Hi.
+    assert (AV : L5A.avis H6 (sp / 8 + 2147450368 + i) 1).
+    { apply (VSTSH6 (sp / 8 + 2147450368 + i) 1). intros j Hj. unfold in_shadow_of, S, SB. clear - SLO SHI A16 Hi Hj.
+      Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). Lia.lia. }
+    Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+    pose proof (AV 0 ltac:(lia)) as X. rewrite Z.add_0_r in X. exact X. }
+  assert (X5 : L5KA.zeros_at MV6 (ov / 8 + 2147450880) 7).
+  { exact (PMKB.obj_shadow_vis L ar C HI LYa HIok LB2 FF LK cr2 Aw6 M6 model6 ov 56 HH6 AOV O8 ltac:(lia) ltac:(reflexivity) ACCV6). }
+  assert (X6 : L5.writable RSEGS MV6 (ov + 24) 24).
+  { apply (proj2 (L5A.writable_vis H6 M6 (ov + 24) 24 ltac:(eapply L5A.avis_sub; [exact OVIS| lia| lia]) ltac:(lia) ltac:(lia))). apply (L5C.writable_of_defined RSEGS). apply (L5.defined_sub M6 ov 56); [exact ODEF| lia| lia]. lia. lia. }
+  assert (VV : forall a v0, ov + 24 <= a -> a + 8 <= ov + 48 -> L5.u64_at RSEGS M6 a v0 -> L5.u64_at RSEGS MV6 a v0).
+  { intros a v0 H1 H2 X. apply (proj2 (L5A.u64_at_vis H6 M6 a v0 ltac:(eapply L5A.avis_sub; [exact OVIS| lia| lia]) ltac:(lia) ltac:(lia))). exact X. }
+  assert (VS : forall a v0, sp - 4096 <= a -> a + 8 <= sp -> L5.u64_at RSEGS M6 a v0 -> L5.u64_at RSEGS MV6 a v0).
+  { intros a v0 H1 H2 X. apply (proj2 (L5A.u64_at_vis H6 M6 a v0 (VIS6 a 8 ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia))). exact X. }
+  apply VV in WVB; [| lia| lia]. apply VV in WVE; [| lia| lia]. apply VV in WVC; [| lia| lia].
+  apply VS in W8; [| lia| lia].
+  apply VS in W16; [| lia| lia].
+  apply VS in W24; [| lia| lia].
+  apply VS in W32; [| lia| lia].
+  apply VS in W40; [| lia| lia].
+  apply VS in W48; [| lia| lia].
+  apply VS in W56; [| lia| lia].
+  apply VS in W64; [| lia| lia].
+  apply VS in W72; [| lia| lia].
+  apply VS in W80; [| lia| lia].
+  apply VS in W88; [| lia| lia].
+  apply VS in W104; [| lia| lia].
+  apply VS in W112; [| lia| lia].
+  apply VS in W120; [| lia| lia].
+  apply VS in W128; [| lia| lia].
+  apply VS in W136; [| lia| lia].
+  apply VS in W144; [| lia| lia].
+  apply VS in W152; [| lia| lia].
+  apply VS in W160; [| lia| lia].
+  apply VS in W168; [| lia| lia].
+  apply VS in W176; [| lia| lia].
+  replace (B + SZ + 24) with (B + (SZ + 24)) in W72 by lia. pose (NC := 2 * cap).
+  pose proof (PMBIS1.bvu (getr R (reg 1))) as UR1. pose proof (PMBIS1.bvu (getr R (reg 8))) as UR8. pose proof (PMBIS1.bvu (getr R (reg 9))) as UR9.
+  pose proof (PMBIS1.bvu (getr R (reg 18))) as UR18. pose proof (PMBIS1.bvu (getr R (reg 19))) as UR19. pose proof (PMBIS1.bvu (getr R (reg 20))) as UR20.
+  pose proof (PMBIS1.bvu (getr R (reg 21))) as UR21. pose proof (PMBIS1.bvu (getr R (reg 22))) as UR22.
+  pose proof (PMBIS1.bvu (getr R (reg 23))) as UR23. pose proof (PMBIS1.bvu (getr R (reg 24))) as UR24.
+
+  pose proof (PEBEPU.bpkI_uni fx6 R6 MV6 (fun j => match j with 2%nat => sp | 33%nat => ov | 34%nat => pk | 36%nat => b | 37%nat => SZ | 38%nat => kd | 40%nat => B | 41%nat => B + SZ + 24 | 42%nat => NC | 21%nat => bv_unsigned (getr R (reg 21)) | 22%nat => bv_unsigned (getr R (reg 22)) | 23%nat => bv_unsigned (getr R (reg 23)) | 24%nat => bv_unsigned (getr R (reg 24)) | 43%nat => bv_unsigned (getr R (reg 1)) | 44%nat => bv_unsigned (getr R (reg 8)) | 45%nat => bv_unsigned (getr R (reg 9)) | 46%nat => bv_unsigned (getr R (reg 18)) | 47%nat => bv_unsigned (getr R (reg 19)) | 48%nat => bv_unsigned (getr R (reg 20)) | _ => 0 end) k SZ NC cap K11 Ecap ESZ eq_refl) as P. cbn beta iota in P.
+  L5SAR.feed P ltac:(first [ftac | sassum | lia | assumption]).
+  destruct P as (fx7 & R7 & M7v & MG7 & _ & FZ7 & MS7 & KS7 & iR1 & iR2 & iR8 & iR10 & iR11 & iR12 & iR13 & iR14 & iR15 & iR16 & iR17 & iR18 & iR19 & iR20 & iR21 & iR22 & iR23 & iR24
+                 & I112 & I104 & I88 & I64 & I40v & I72 & I32v & I80 & I24v & I8 & I16 & I24 & I32 & I40 & I48 & I56).
+  clear KC X0 X1 X2 X3 X4 X5 X6 VV VS WVB WVE WVC W8 W16 W24 W32 W40 W48 W56 W64 W72 W80 W88 W104 W112 W120 W128 W136 W144 W152 W160 W168 W176.
+  set (W7 := fun a => (sp - 208 <= a < sp - 208 + 208) \/ (ov + 24 <= a < ov + 24 + 24)).
+  unfold PMSPA.cfg.
+  apply (L5SAR.apiece L ar C HI LYa HIok LB2 FF LK cr2 Aw6 M6 model6 fx6 fx7 R6 0xb0ddc R7 0x7cc28 M7v W7 K HH6 AM6 MS7 MG7).
+  { intros a Ha N. apply FZ7; [exact Ha| intros X; apply N; left; exact X| intros X; apply N; right; exact X]. }
+  { intros a Ha [Wa|Wa].
+    - split; [|lia]. unfold aclientw, aclient_g. right; left. split; [lia| intros X; lia].
+    - split; [apply (L5SAR.obj_client L ar LB2 FF 0 0 ov 56 a AOB); lia| lia]. }
+  intros M7 model7 HH7 AM7 MRT7 HID7 VIS7 MGM7 FR7 VV7.
+  pose proof AM7 as (Mh7 & MI7).
+  assert (ASTK7 : L5CA.astk ar M7 sp 12288) by (apply (L5SAR.astk_grows ar M6 M7 sp 12288 ASTK MGM7)).
+  assert (QSH7 : shadow_zero M7 B (2 * SZ / 8)).
+  { intros j Hj. pose proof (PEBEPF.shadow_low B (2 * SZ) j ltac:(lia) ltac:(lia) Hj) as SL. unfold byte_at.
+    rewrite FR7; [apply QSH6; exact Hj| lia| unfold W7; intros [XW|XW]; [lia| destruct OBIG as [YW|YW]; lia]]. }
+  assert (EK7 : L5SAR.ek L ar LB2 FF sp 12288 [(ov + 24, 24)] M6 M7).
+  { apply (PEBEPF.ek_of_keep L ar HI LB2 FF LK cr2 Aw6 M6 _ sp _ M6 M7 HH6). intros a Ha Hc Ho. apply FR7; [exact Ha|].
+    intros [X|X]; [| apply (Ho (ov + 24, 24)); [left; reflexivity| unfold L5.in_rng; cbn [fst snd]; lia]].
+    destruct (L5SAR.aclient_cases L ar C HI LYa HIok LB2 FF LK cr2 Aw6 M6 _ sp 12288 a HH6 SPT Hc) as [Z1|Z1]; lia. }
+  assert (BASE7 : PMSTA.base_okA RSEGS AD M7).
+  { apply (PMBSK.base_keep L ar C LY LB2 FF sp 12288 [(ov + 24, 24)] M6 M7 EK7); [| exact BASE6].
+    intros a Ha. unfold L5.outside. intros rg [<-|[]]. unfold L5.in_rng. cbn [fst snd]. lia. }
+
+  assert (E8 : SZ / 8 = 3 * cap) by (rewrite ESZ; apply PEBEPF.d24).
+  assert (E16 : 2 * SZ / 8 = 6 * cap) by (replace (2 * SZ) with (24 * (2 * cap)) by lia; rewrite PEBEPF.d24; lia).
+  assert (E11 : (SZ + 24) / 8 = 3 * cap + 3) by (rewrite ESZ; apply PEBEPF.d24b).
+  pose proof (HAJ.aex_annotate _ _ _ _ _ EXT) as ANN. unfold HAJ.annotate_spec in ANN.
+  cbn [PMB.EXT HAJ.ec_ann_pc HAJ.ec_ann_scr paa_annotate PMB.AAD PeLayoutA.AADDR_B] in ANN. rewrite (L5A.aly_segs L C LYa) in ANN.
+  apply (ANN fx7 R7 M7 model7 LB2 FF LK cr2 Aw6 K B (2 * SZ) (2 * SZ) (SZ + 24)); clear ANN.
+  { exact HH7. }
+  { exact Mh7. }
+  { exact MI7. }
+  { rewrite L5K.rl10. exact iR10. }
+  { rewrite L5K.rl11. exact iR11. }
+  { rewrite L5K.rl12. exact iR12. }
+  { rewrite L5K.rl13. exact iR13. }
+  { exact BIN2. }
+  { exact Q16. }
+  { lia. }
+  { lia. }
+  { split; [exact QSH7| split; [intros Hm8; exfalso; apply Hm8; clear - SZ8; Lia.lia| intros j Hj; exfalso; clear - Hj HSZ SZ8; Lia.lia]]. }
+  { rewrite L5K.rl4, (KS7 4%nat) by inl. rewrite JCS by (right; left; reflexivity). exact Rtp. }
+  { rewrite L5K.rl1, iR1. vm_compute. reflexivity. }
+  { rewrite L5K.rl2, iR2, L5.unsigned_lit by lia.
+    apply (L5SAR.astack_ok_of_astk L ar C LYa M7 M7 sp 12288 112 2304 ASTK7 (fun x X => X)); [lia| lia| lia|].
+    replace (sp - 112) with (sp + (-7) * 16) by lia. rewrite Z.mod_add by lia. exact A16. }
+  { exact K0. }
+  intros fx8 R8 M8 model8 Aw8 RP8 ANN8 KEEP8 DSH8 SCR8 MRT8 INC8 MI8 HH8.
+  rewrite L5K.rl2, iR2, L5.unsigned_lit in KEEP8, SCR8 by lia. rewrite L5K.rl1, iR1.
+  assert (AM8 : L5CA.amodel_ok Aw8 model8) by (split; [rewrite (L5LZ.model_rt_halted model7 model8 MRT8); exact Mh7| exact MI8]).
+  assert (CS8 : forall k0, In k0 L5SAR.cs_all -> getr R8 (reg k0) = getr R7 (reg k0)) by (intros k0 Hk; apply (L5SAR.cs_of_preserved R7 R8 k0 RP8 Hk)).
+  assert (ASTK8 : L5CA.astk ar M8 sp 12288).
+  { apply (L5SAR.astk_after_eq L ar C HI HIok LB2 FF LK cr2 Aw6 M7 M7 M8 _ sp 12288 (sp - 112) 2304 HH7 ASTK7 (fun x X => X)).
+    - intros a Ha Hs Hns. apply KEEP8; [exact Ha| apply L5SAR.stack_client; [exact Hs| exact Hns]|].
+      intros X. pose proof (PMBEK.in_shadow_range B (2 * SZ) a ltac:(lia) ltac:(lia) X). lia.
+    - exact SCR8.
+    - lia. - lia. - lia. }
+  assert (T87 : forall a, 0 <= a < 2 ^ 64 -> aclient L ar LB2 FF 0 0 a -> ~ (sp - 2416 <= a < sp - 112) -> ~ in_shadow_of B (2 * SZ) a -> M8 (Z_to_bv 64 a) = M7 (Z_to_bv 64 a)).
+  { intros a Ha Hc N1 N2. apply KEEP8; [exact Ha| apply (L5SAR.aclient_narrow L ar LB2 FF 0 0); [exact Hc| lia]| exact N2]. }
+  assert (EK8 : L5SAR.ek L ar LB2 FF sp 12288 [(S B, 6 * cap)] M7 M8).
+  { apply (PEBEPF.ek_of_keep L ar HI LB2 FF LK cr2 Aw6 M7 _ sp _ M7 M8 HH7). intros a Ha Hc Ho.
+    assert (NS : ~ in_shadow_of B (2 * SZ) a).
+    { intros X. apply (Ho (S B, 6 * cap)); [left; reflexivity|]. unfold L5.in_rng. cbn [fst snd]. unfold in_shadow_of, S in X. unfold S. clear - X Q16 HC ESZ.
+      Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). Lia.lia. }
+    Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+    apply KEEP8; [exact Ha| apply (L5SAR.aclient_mono L ar LB2 FF sp 12288 (sp - 112) 2304 a Hc); intros x Hx; lia| exact NS]. }
+  assert (BASE8 : PMSTA.base_okA RSEGS AD M8).
+  { apply (PMBSK.base_keep L ar C LY LB2 FF sp 12288 [(S B, 6 * cap)] M7 M8 EK8); [| exact BASE7].
+    intros a Ha. unfold L5.outside. intros rg [<-|[]]. unfold L5.in_rng. cbn [fst snd]. pose proof (PEBEPF.S_range B ltac:(lia)) as SR. lia. }
+
+  pose proof (L5SAR.vis_pack L ar C HI LYa HIok LB2 FF LK cr2 Aw8 M8 model8 HH8) as (HOFF8 & VIS8 & VIMG8 & VFS8 & VBLK8 & VBSH8 & VFSSH8 & VSTSH8).
+  set (H8 := ahid Aw8 model8) in *. set (MV8 := mrestrict H8 M8) in *.
+  pose proof (L5SAR.aobj_facts L ar C HI LYa HIok LB2 FF LK cr2 Aw8 M8 model8 ov 56 sp 12288 HH8 AOB ltac:(lia) ltac:(reflexivity)) as (_ & _ & ODEF8 & OVIS8 & _).
+  pose proof (HAJ.aior_statics _ _ _ _ _ HIok _ _ _ _ _ _ _ HH8) as ST8. rewrite (L5A.aly_segs L C LYa) in ST8.
+  pose proof (L5A.statics_facts L C M8 LYa ST8) as (GOT8 & CSB8 & CUAR8 & _).
+  pose proof BASE8 as (IC8 & _). cbn [pa_rw_lo PeCLayoutB.CADDR_B] in IC8.
+  assert (Y0 : L5.img_clear MV8 65536 1306624) by (apply L5A.img_clear_mrestrict; exact IC8).
+  assert (Y1 : L5.u64_at RSEGS MV8 1335544 2147450880) by (apply (proj2 (L5A.u64_at_vis H8 M8 1335544 2147450880 (VIMG8 1335544 8 ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia))); exact CSB8).
+  assert (Y2 : L5.u32_at RSEGS MV8 1335552 1) by (apply (proj2 (L5A.u32_at_vis H8 M8 1335552 1 (VIMG8 1335552 4 ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia))); exact CUAR8).
+  assert (Y3 : L5.writable RSEGS MV8 (sp - 4096) 4096).
+  { apply (proj2 (L5A.writable_vis H8 M8 (sp - 4096) 4096 (VIS8 (sp - 4096) 4096 ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia))).
+    apply (L5SAR.astk_writable ar M8 sp 12288); [exact ASTK8| lia| lia| lia]. }
+  assert (STKSH8 : shadow_zero M8 (sp - 12288) 1536).
+  { intros j Hj. pose proof (PEBEPF.S_add8 (sp - 12288) j) as E. pose proof (PEBEPF.S_range (sp - 12288 + 8 * j) ltac:(lia)) as SRj.
+    unfold byte_at. rewrite E. rewrite T87; [| lia| apply (PMBEK.stack_sh_client L ar FF); lia| lia| apply (PMBEK.sh_apart B (2 * SZ)); lia].
+    rewrite FR7; [rewrite <- E; apply STKSH; exact Hj| lia| unfold W7; intros [XW|XW]; [lia| destruct OBIG as [YW|YW]; lia]]. }
+  assert (Y4 : L5KA.zeros_at MV8 (sp / 8 + 2147450368) 512).
+  { intros i Hi. unfold MV8. rewrite (AsanAcct.mrestrict_visible H8 M8). apply (PEBEPF.stack_zeros12 M8 sp STKSH8 A16). exact Hi.
+    assert (AV : L5A.avis H8 (sp / 8 + 2147450368 + i) 1).
+    { apply (VSTSH8 (sp / 8 + 2147450368 + i) 1). intros j Hj. unfold in_shadow_of, S, SB. clear - SLO SHI A16 Hi Hj.
+      Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). Lia.lia. }
+    Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+    pose proof (AV 0 ltac:(lia)) as X. rewrite Z.add_0_r in X. exact X. }
+  assert (ACCV8 : PMSPA.accA M8 ov 56).
+  { apply (PMFA.accA_agree M6 M8 ov 56); [| exact ACCV6]. intros x Hx. pose proof (PEBEPF.S_range x ltac:(lia)) as SRx.
+    rewrite T87; [| lia| exact (PMBEK.frame_sh_client L ar FF ov 56 x LB2 0 0 AOV Hx)| lia| apply (PMBEK.sh_apart B (2 * SZ) x); lia].
+    apply FR7; [lia| unfold W7; intros [XW|XW]; [lia| destruct OBIG as [YW|YW]; lia]]. }
+  assert (Y5 : L5KA.zeros_at MV8 (ov / 8 + 2147450880) 7).
+  { exact (PMKB.obj_shadow_vis L ar C HI LYa HIok LB2 FF LK cr2 Aw8 M8 model8 ov 56 HH8 AOV O8 ltac:(lia) ltac:(reflexivity) ACCV8). }
+  assert (Y6 : L5.writable RSEGS MV8 (ov + 24) 24).
+  { apply (proj2 (L5A.writable_vis H8 M8 (ov + 24) 24 ltac:(eapply L5A.avis_sub; [exact OVIS8| lia| lia]) ltac:(lia) ltac:(lia))). apply (L5C.writable_of_defined RSEGS). apply (L5.defined_sub M8 ov 56); [exact ODEF8| lia| lia]. lia. lia. }
+  assert (TV8 : forall a, ov <= a < ov + 56 -> M8 (Z_to_bv 64 a) = M7 (Z_to_bv 64 a)).
+  { intros a Ha. apply T87; [lia| apply (L5SAR.obj_client L ar LB2 FF 0 0 ov 56 a AOB); lia| lia|].
+    intros X. pose proof (PMBEK.in_shadow_range B (2 * SZ) a ltac:(lia) ltac:(lia) X). destruct OBIG as [YW|YW]; lia. }
+  assert (TS8 : forall a v0, sp - 112 <= a -> a + 8 <= sp -> L5.u64_at RSEGS M7v a v0 -> L5.u64_at RSEGS MV8 a v0).
+  { intros a v0 Ha Ha' X. apply (proj2 (L5A.u64_at_vis H8 M8 a v0 (VIS8 a 8 ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia))).
+    apply (L5C.u64_at_agree RSEGS M7); [intros i Hi; apply T87; [lia| apply L5SAR.stack_client; lia| lia| intros XS; pose proof (PMBEK.in_shadow_range B (2 * SZ) i ltac:(lia) ltac:(lia) XS); lia]| lia| lia|].
+    apply (PMBIS1.vis_u64 _ _ _ _ _ VIS7); [apply VIS6; lia| lia| lia| exact X]. }
+  assert (TV8' : forall a v0, ov + 24 <= a -> a + 8 <= ov + 48 -> L5.u64_at RSEGS M7v a v0 -> L5.u64_at RSEGS MV8 a v0).
+  { intros a v0 Ha Ha' X. apply (proj2 (L5A.u64_at_vis H8 M8 a v0 ltac:(eapply L5A.avis_sub; [exact OVIS8| lia| lia]) ltac:(lia) ltac:(lia))).
+    apply (L5C.u64_at_agree RSEGS M7); [intros i Hi; apply TV8; lia| lia| lia|].
+    apply (PMBIS1.vis_u64 _ _ _ _ _ VIS7); [eapply L5A.avis_sub; [exact OVIS| lia| lia]| lia| lia| exact X]. }
+  pose proof (TS8 (sp - 8) _ ltac:(lia) ltac:(lia) I8) as V8x.
+  pose proof (TS8 (sp - 16) _ ltac:(lia) ltac:(lia) I16) as V16x.
+  pose proof (TS8 (sp - 24) _ ltac:(lia) ltac:(lia) I24) as V24x.
+  pose proof (TS8 (sp - 32) _ ltac:(lia) ltac:(lia) I32) as V32x.
+  pose proof (TS8 (sp - 40) _ ltac:(lia) ltac:(lia) I40) as V40x.
+  pose proof (TS8 (sp - 48) _ ltac:(lia) ltac:(lia) I48) as V48x.
+  pose proof (TS8 (sp - 56) _ ltac:(lia) ltac:(lia) I56) as V56x.
+  pose proof (TS8 (sp - 64) _ ltac:(lia) ltac:(lia) I64) as V64x.
+  pose proof (TS8 (sp - 72) _ ltac:(lia) ltac:(lia) I72) as V72x.
+  pose proof (TS8 (sp - 80) _ ltac:(lia) ltac:(lia) I80) as V80x.
+  pose proof (TS8 (sp - 88) _ ltac:(lia) ltac:(lia) I88) as V88x.
+  pose proof (TS8 (sp - 104) _ ltac:(lia) ltac:(lia) I104) as V104x.
+  pose proof (TS8 (sp - 112) _ ltac:(lia) ltac:(lia) I112) as V112x.
+  pose proof (TV8' (ov + 24) _ ltac:(lia) ltac:(lia) I24v) as VV24.
+  replace (B + (SZ + 24)) with (B + SZ + 24) in I32v by lia. pose proof (TV8' (ov + 32) _ ltac:(lia) ltac:(lia) I32v) as VV32.
+  replace (B + 2 * SZ) with (B + 24 * NC) in I40v by lia. pose proof (TV8' (ov + 40) _ ltac:(lia) ltac:(lia) I40v) as VV40.
+  assert (L2 : getr R8 (reg 2) = Z_to_bv 64 (sp - 112)) by (rewrite CS8 by inl; exact iR2).
+  assert (L8 : getr R8 (reg 8) = Z_to_bv 64 (ov + 32)) by (rewrite CS8 by inl; exact iR8).
+  assert (L9 : getr R8 (reg 9) = Z_to_bv 64 (ov + 24)) by (rewrite CS8 by inl; rewrite (KS7 9%nat) by inl; exact J9).
+  assert (L18 : getr R8 (reg 18) = Z_to_bv 64 pk) by (rewrite CS8 by inl; exact iR18).
+  assert (L19 : getr R8 (reg 19) = Z_to_bv 64 ((ov + 32) / 8 + 2147450880)) by (rewrite CS8 by inl; exact iR19).
+  assert (L20 : getr R8 (reg 20) = Z_to_bv 64 2147450880) by (rewrite CS8 by inl; exact iR20).
+  assert (HNC : 2 <= NC <= 2048) by (subst NC; clear - HC; Lia.lia).
+  pose proof (PEBEPP1.bpkJ_conc fx8 R8 MV8 (fun j => match j with 2%nat => sp | 33%nat => ov | 34%nat => pk | 36%nat => b | 37%nat => SZ | 38%nat => kd | 40%nat => B | 41%nat => B + SZ + 24 | 42%nat => NC | 21%nat => bv_unsigned (getr R (reg 21)) | 22%nat => bv_unsigned (getr R (reg 22)) | 23%nat => bv_unsigned (getr R (reg 23)) | 24%nat => bv_unsigned (getr R (reg 24)) | 43%nat => bv_unsigned (getr R (reg 1)) | 44%nat => bv_unsigned (getr R (reg 8)) | 45%nat => bv_unsigned (getr R (reg 9)) | 46%nat => bv_unsigned (getr R (reg 18)) | 47%nat => bv_unsigned (getr R (reg 19)) | 48%nat => bv_unsigned (getr R (reg 20)) | _ => 0 end)) as P.
+  cbn beta iota in P.
+  L5SAR.feed P ltac:(first [ftac | sassum | lia | assumption]).
+  destruct P as (fx9 & R9 & M9v & MG9 & _ & FZ9 & MS9 & KS9 & jR1 & jR2 & jR8 & jR10 & jR11 & jR12 & jR13 & jR14 & jR15 & jR16 & jR17
+                 & J8c & J16c & J24c & J32c & J40c & J48c & J88c & J80c & J72c & J64c & J56c).
+  clear Y0 Y1 Y2 Y3 Y4 Y5 Y6 TS8 TV8' VV24 VV32 VV40 V8x V16x V24x V32x V40x V48x V56x V64x V72x V80x V88x V104x V112x.
+  set (W9 := fun a => sp - 208 <= a < sp - 208 + 208).
+  apply (L5SAR.apiece L ar C HI LYa HIok LB2 FF LK cr2 Aw8 M8 model8 fx8 fx9 R8 0xb11dc R9 0xd9208 M9v W9 K HH8 AM8 MS9 MG9).
+  { intros a Ha N. apply FZ9; [exact Ha| exact N]. }
+  { intros a Ha Wa. unfold W9 in Wa. split; [|lia]. unfold aclientw, aclient_g. right; left. split; [lia| intros X; lia]. }
+  intros M9 model9 HH9 AM9 MRT9 HID9 VIS9 MGM9 FR9 VV9.
+  assert (ASTK9 : L5CA.astk ar M9 sp 12288) by (apply (L5SAR.astk_grows ar M8 M9 sp 12288 ASTK8 MGM9)).
+  assert (EK9 : L5SAR.ek L ar LB2 FF sp 12288 [] M8 M9).
+  { apply (PEBEPF.ek_of_keep L ar HI LB2 FF LK cr2 Aw8 M8 _ sp [] M8 M9 HH8). intros a Ha Hc _.
+    destruct (L5SAR.aclient_cases L ar C HI LYa HIok LB2 FF LK cr2 Aw8 M8 _ sp 12288 a HH8 SPT Hc) as [Z1|Z1]; (apply FR9; [exact Ha| unfold W9; lia]). }
+  assert (BASE9 : PMSTA.base_okA RSEGS AD M9).
+  { apply (PMBSK.base_keep L ar C LY LB2 FF sp 12288 [] M8 M9 EK9); [| exact BASE8]. intros a Ha. unfold L5.outside. intros rg []. }
+
+  unfold PMSPA.opdel_spec, PMSPA.opdel_spec_at in DEL. cbn [pa_opdel PeCLayoutB.CADDR_B] in DEL.
+  apply (DEL fx9 R9 M9 model9 K LB2 FF LK Aw8 cr2 b SZ (sp - 96) 737996 HH9 AM9 K0).
+  { exact BIN2b. }
+  { rewrite L5K.rl10. exact jR10. }
+  { rewrite L5K.rl1. exact jR1. }
+  { split; [lia| reflexivity]. }
+  { rewrite L5K.rl2. exact jR2. }
+  { rewrite L5K.rl4, (KS9 4%nat) by inl. rewrite CS8 by inl. rewrite (KS7 4%nat) by inl. rewrite JCS by (right; left; reflexivity). exact Rtp. }
+  { unfold PMSPA.OPDEL_SCR, PMSPA.MALLOC_SCR. apply (L5SAR.astk_sub ar M9 M9 sp 12288 96 4096 ASTK9 (fun x X => X)); [lia| lia| lia|].
+    replace (sp - 96) with (sp + (-6) * 16) by lia. rewrite Z.mod_add by lia. exact A16. }
+  intros fx10 R10 M10 model10 Aw10 RP10 HP10 MRT10 IA10 AM10 HH10.
+  unfold PMSPA.OPDEL_SCR, PMSPA.MALLOC_SCR in HP10.
+  assert (ELB2 : lb_remove b LB2 = (B, 2 * SZ) :: LBX).
+  { unfold LB2. rewrite ELB. cbn [lb_remove fst app]. rewrite (proj2 (Z.eqb_neq B b)) by lia. rewrite Z.eqb_refl. reflexivity. }
+  rewrite ELB2 in HP10, HH10.
+  assert (CS10 : forall k0, In k0 L5SAR.cs_all -> getr R10 (reg k0) = getr R9 (reg k0)) by (intros k0 Hk; apply (L5SAR.cs_of_preserved R9 R10 k0 RP10 Hk)).
+  assert (KEEP10 : forall a, 0 <= a < 2 ^ 64 -> aclient L ar ((B, 2 * SZ) :: LBX) FF (sp - 96) 4096 a -> M10 (Z_to_bv 64 a) = M9 (Z_to_bv 64 a)).
+  { intros a Ha Hc. apply (proj1 HP10). split; [exact Ha|]. split; [exact Hc| intros rg []]. }
+  assert (ASTK10 : L5CA.astk ar M10 sp 12288).
+  { apply (PMKB.astk_after_ahpres L ar ((B, 2 * SZ) :: LBX) FF M9 M10 sp 12288 (sp - 96) 4096 [] ASTK9 HP10); lia. }
+  assert (CLs : forall a LBz, aclient L ar LBX FF 0 0 a -> In (B, 2 * SZ) LBz -> incl LBX LBz -> aclient L ar LBz FF 0 0 a).
+  { intros a LBz Hc _ Hi. destruct Hc as [(q & Hq & Xq)|Hc]; [left; exists q; split; [apply Hi; exact Hq| exact Xq]|].
+    destruct Hc as [Hc|[Hc|[Hc|[Hc|[Hc|(q & Hq & Xq)]]]]]; [right; left; exact Hc| right; right; left; exact Hc| right; right; right; left; exact Hc
+                                                   | right; right; right; right; left; exact Hc| right; right; right; right; right; left; exact Hc|].
+    do 6 right. exists q. split; [apply Hi; exact Hq| exact Xq]. }
+  assert (T9_10 : forall a, 0 <= a < 2 ^ 64 -> aclient L ar ((B, 2 * SZ) :: LBX) FF 0 0 a -> ~ (sp - 4192 <= a < sp - 96) -> M10 (Z_to_bv 64 a) = M9 (Z_to_bv 64 a)).
+  { intros a Ha Hc N. apply KEEP10; [exact Ha| apply (L5SAR.aclient_narrow L ar _ FF 0 0); [exact Hc| lia]]. }
+  assert (EK10 : L5SAR.ek L ar ((B, 2 * SZ) :: LBX) FF sp 12288 [] M9 M10).
+  { apply (PEBEPF.ek_of_keep L ar HI _ FF LK cr2 Aw10 M10 _ sp [] M9 M10 HH10). intros a Ha Hc _.
+    apply KEEP10; [exact Ha| apply (L5SAR.aclient_mono L ar _ FF sp 12288 (sp - 96) 4096 a Hc); intros x Hx; lia]. }
+  assert (BASE10 : PMSTA.base_okA RSEGS AD M10).
+  { apply (PMBSK.base_keep L ar C LY _ FF sp 12288 [] M9 M10 EK10); [| exact BASE9]. intros a Ha. unfold L5.outside. intros rg []. }
+
+  pose proof (L5SAR.vis_pack L ar C HI LYa HIok _ FF LK cr2 Aw10 M10 model10 HH10) as (HOFF10 & VIS10 & VIMG10 & VFS10 & VBLK10 & VBSH10 & VFSSH10 & VSTSH10).
+  set (H10 := ahid Aw10 model10) in *. set (MV10 := mrestrict H10 M10) in *.
+  pose proof (L5SAR.aobj_facts L ar C HI LYa HIok _ FF LK cr2 Aw10 M10 model10 ov 56 sp 12288 HH10 AOB ltac:(lia) ltac:(reflexivity)) as (_ & _ & ODEF10 & OVIS10 & _).
+  pose proof (HAJ.aior_statics _ _ _ _ _ HIok _ _ _ _ _ _ _ HH10) as ST10. rewrite (L5A.aly_segs L C LYa) in ST10.
+  pose proof (L5A.statics_facts L C M10 LYa ST10) as (GOT10 & CSB10 & CUAR10 & _).
+  pose proof BASE10 as (IC10 & _). cbn [pa_rw_lo PeCLayoutB.CADDR_B] in IC10.
+  assert (Z0' : L5.img_clear MV10 65536 1306624) by (apply L5A.img_clear_mrestrict; exact IC10).
+  assert (Z1' : L5.u64_at RSEGS MV10 1335544 2147450880) by (apply (proj2 (L5A.u64_at_vis H10 M10 1335544 2147450880 (VIMG10 1335544 8 ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia))); exact CSB10).
+  assert (Z2' : L5.u32_at RSEGS MV10 1335552 1) by (apply (proj2 (L5A.u32_at_vis H10 M10 1335552 1 (VIMG10 1335552 4 ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia))); exact CUAR10).
+  assert (Z3' : L5.writable RSEGS MV10 (sp - 4096) 4096).
+  { apply (proj2 (L5A.writable_vis H10 M10 (sp - 4096) 4096 (VIS10 (sp - 4096) 4096 ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia))).
+    apply (L5SAR.astk_writable ar M10 sp 12288); [exact ASTK10| lia| lia| lia]. }
+  assert (STKSH10 : shadow_zero M10 (sp - 12288) 1536).
+  { intros j Hj. pose proof (PEBEPF.S_add8 (sp - 12288) j) as E. pose proof (PEBEPF.S_range (sp - 12288 + 8 * j) ltac:(lia)) as SRj.
+    unfold byte_at. rewrite E. rewrite T9_10; [| lia| apply (PMBEK.stack_sh_client L ar FF); lia| lia]. rewrite FR9; [| lia| unfold W9; lia]. rewrite <- E. apply STKSH8. exact Hj. }
+  assert (ACC10 : PMSPA.accA M10 ov 56).
+  { apply (PMFA.accA_agree M8 M10 ov 56); [| exact ACCV8]. intros x Hx. pose proof (PEBEPF.S_range x ltac:(lia)) as SRx.
+    rewrite T9_10; [| lia| exact (PMBEK.frame_sh_client L ar FF ov 56 x _ 0 0 AOV Hx)| lia]. apply FR9; [lia| unfold W9; lia]. }
+  assert (Z5' : L5KA.zeros_at MV10 (ov / 8 + 2147450880) 7).
+  { exact (PMKB.obj_shadow_vis L ar C HI LYa HIok _ FF LK cr2 Aw10 M10 model10 ov 56 HH10 AOV O8 ltac:(lia) ltac:(reflexivity) ACC10). }
+  assert (Z4' : L5KA.zeros_at MV10 (sp / 8 + 2147450368) 512).
+  { intros i Hi. unfold MV10. rewrite (AsanAcct.mrestrict_visible H10 M10). apply (PEBEPF.stack_zeros12 M10 sp STKSH10 A16). exact Hi.
+    assert (AV : L5A.avis H10 (sp / 8 + 2147450368 + i) 1).
+    { apply (VSTSH10 (sp / 8 + 2147450368 + i) 1). intros j Hj. unfold in_shadow_of, S, SB. clear - SLO SHI A16 Hi Hj.
+      Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). Lia.lia. }
+    Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+    pose proof (AV 0 ltac:(lia)) as X. rewrite Z.add_0_r in X. exact X. }
+  assert (Z6' : L5.writable RSEGS MV10 (ov + 24) 24).
+  { apply (proj2 (L5A.writable_vis H10 M10 (ov + 24) 24 ltac:(eapply L5A.avis_sub; [exact OVIS10| lia| lia]) ltac:(lia) ltac:(lia))). apply (L5C.writable_of_defined RSEGS). apply (L5.defined_sub M10 ov 56); [exact ODEF10| lia| lia]. lia. lia. }
+  assert (TV10 : forall a, ov <= a < ov + 56 -> M10 (Z_to_bv 64 a) = M7 (Z_to_bv 64 a)).
+  { intros a Ha. rewrite T9_10; [| lia| apply (L5SAR.obj_client L ar _ FF 0 0 ov 56 a AOB); lia| lia]. rewrite FR9; [| lia| unfold W9; lia]. apply TV8. lia. }
+  assert (TS10 : forall a v0, sp - 96 <= a -> a + 8 <= sp -> L5.u64_at RSEGS M9v a v0 -> L5.u64_at RSEGS MV10 a v0).
+  { intros a v0 Ha Ha' X. apply (proj2 (L5A.u64_at_vis H10 M10 a v0 (VIS10 a 8 ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia))).
+    apply (L5C.u64_at_agree RSEGS M9); [intros i Hi; apply T9_10; [lia| apply L5SAR.stack_client; lia| lia]| lia| lia|].
+    apply (PMBIS1.vis_u64 _ _ _ _ _ VIS9); [apply VIS8; lia| lia| lia| exact X]. }
+  pose proof (TS10 (sp - 8) _ ltac:(lia) ltac:(lia) J8c) as K8x.
+  pose proof (TS10 (sp - 16) _ ltac:(lia) ltac:(lia) J16c) as K16x.
+  pose proof (TS10 (sp - 24) _ ltac:(lia) ltac:(lia) J24c) as K24x.
+  pose proof (TS10 (sp - 32) _ ltac:(lia) ltac:(lia) J32c) as K32x.
+  pose proof (TS10 (sp - 40) _ ltac:(lia) ltac:(lia) J40c) as K40x.
+  pose proof (TS10 (sp - 48) _ ltac:(lia) ltac:(lia) J48c) as K48x.
+  assert (N2 : getr R10 (reg 2) = Z_to_bv 64 (sp - 96)) by (rewrite CS10 by inl; exact jR2).
+  assert (N8 : getr R10 (reg 8) = Z_to_bv 64 (B + SZ + 24)) by (rewrite CS10 by inl; exact jR8).
+  assert (N9 : getr R10 (reg 9) = Z_to_bv 64 (ov + 24)) by (rewrite CS10 by inl; rewrite (KS9 9%nat) by inl; exact L9).
+  assert (N18 : getr R10 (reg 18) = Z_to_bv 64 pk) by (rewrite CS10 by inl; rewrite (KS9 18%nat) by inl; exact L18).
+  assert (N19 : getr R10 (reg 19) = Z_to_bv 64 ((ov + 32) / 8 + 2147450880)) by (rewrite CS10 by inl; rewrite (KS9 19%nat) by inl; exact L19).
+  assert (N20 : getr R10 (reg 20) = Z_to_bv 64 2147450880) by (rewrite CS10 by inl; rewrite (KS9 20%nat) by inl; exact L20).
+  pose proof (PEBEPP1.bpkK_conc fx10 R10 MV10 (fun j => match j with 2%nat => sp | 33%nat => ov | 34%nat => pk | 36%nat => b | 37%nat => SZ | 38%nat => kd | 40%nat => B | 41%nat => B + SZ + 24 | 42%nat => NC | 21%nat => bv_unsigned (getr R (reg 21)) | 22%nat => bv_unsigned (getr R (reg 22)) | 23%nat => bv_unsigned (getr R (reg 23)) | 24%nat => bv_unsigned (getr R (reg 24)) | 43%nat => bv_unsigned (getr R (reg 1)) | 44%nat => bv_unsigned (getr R (reg 8)) | 45%nat => bv_unsigned (getr R (reg 9)) | 46%nat => bv_unsigned (getr R (reg 18)) | 47%nat => bv_unsigned (getr R (reg 19)) | 48%nat => bv_unsigned (getr R (reg 20)) | _ => 0 end)) as P.
+  cbn beta iota in P.
+  L5SAR.feed P ltac:(first [ftac | sassum | lia | assumption]).
+  destruct P as (fx11 & R11 & M11v & MG11 & _ & FZ11 & MS11 & KS11 & kR1 & kR2 & kR8 & kR9 & kR10 & kR18 & kR19 & kR20).
+  assert (R11ra : getr R11 (reg 1) = Z_to_bv 64 r) by (rewrite kR1, Z_to_bv_bv_unsigned; exact Rra).
+  pose proof (PMK.ret_to RSEGS fx11 R11 M11v 0xb42ec W_b429c r F_b429c eq_refl D_b429c R11ra ltac:(lia) Hr2) as MS12.
+  set (W11 := fun a => sp - 16 <= a < sp - 16 + 16).
+  apply (L5SAR.apiece L ar C HI LYa HIok _ FF LK cr2 Aw10 M10 model10 fx10 fx11 R10 0xb42cc R11 r M11v W11 K HH10 AM10 ltac:(eapply msteps_trans; [exact MS11| exact MS12]) MG11).
+  { intros a Ha N. apply FZ11; [exact Ha| exact N]. }
+  { intros a Ha Wa. unfold W11 in Wa. split; [|lia]. unfold aclientw, aclient_g. right; left. split; [lia| intros X; lia]. }
+  intros M11 model11 HH11 AM11 MRT11 HID11 VIS11 MGM11 FR11 VV11.
+
+  assert (TB11 : forall a, B <= a < B + 2 * SZ -> M11 (Z_to_bv 64 a) = M6 (Z_to_bv 64 a)).
+  { intros a Ha. assert (CB : forall LBz, In (B, 2 * SZ) LBz -> aclient L ar LBz FF 0 0 a) by (intros LBz Hin; unfold aclient, aclient_g; left; exists (B, 2 * SZ); split; [exact Hin| cbn [fst snd]; lia]).
+    rewrite FR11; [| lia| unfold W11; destruct Q5 as (_ & [YW|YW] & _); lia]. rewrite T9_10; [| lia| apply CB; left; reflexivity| lia]. rewrite FR9; [| lia| unfold W9; lia].
+    rewrite T87; [| lia| apply CB; exact BIN2| lia|]. 2:{ intros X. pose proof (PMBEK.in_shadow_range B (2 * SZ) a ltac:(lia) ltac:(lia) X). destruct Q5 as (_ & [YW|YW] & _); lia. }
+    apply FR7; [lia| unfold W7; lia]. }
+  assert (SH11 : forall j, 0 <= j < 2 * SZ / 8 -> M11 (Z_to_bv 64 (S B + j)) = M8 (Z_to_bv 64 (S B + j))).
+  { intros j Hj. pose proof (PEBEPF.shadow_low B (2 * SZ) j ltac:(lia) ltac:(lia) Hj) as SL.
+    rewrite FR11; [| lia| unfold W11; lia]. rewrite T9_10; [| lia| | lia]. 2:{ unfold aclient, aclient_g. do 6 right. exists (B, 2 * SZ). split; [left; reflexivity| cbn [fst snd]; apply PMBEK.sh_in; lia]. }
+    apply FR9; [lia| unfold W9; lia]. }
+  assert (TV11 : forall a, ov <= a < ov + 56 -> M11 (Z_to_bv 64 a) = M7 (Z_to_bv 64 a)).
+  { intros a Ha. destruct OR as (OR1 & OR2 & OR3 & OR4 & OR5). rewrite FR11; [| lia| unfold W11; lia]. apply TV10. lia. }
+  assert (TVM : forall a, ov <= a < ov + 56 -> ~ (ov + 24 <= a < ov + 48) -> M11 (Z_to_bv 64 a) = M (Z_to_bv 64 a)).
+  { intros a Ha Na. rewrite TV11; [| exact Ha]. rewrite FR7; [| lia| unfold W7; lia].
+    apply CHAIN6; [lia| apply (L5SAR.obj_client L ar LBX FF 0 0 ov 56 a AOB); lia| lia| exact Na]. }
+  destruct OR as (OR1 & OR2 & OR3 & OR4 & OR5).
+  apply (KONT fx11 R11 M11 model11 LK Aw10).
+  - apply L5SAR.preserved_by_index. intros k0 Hk.
+    assert (CH : forall k', In k' [3; 4; 25; 26; 27]%nat -> getr R11 (reg k') = getr R (reg k')).
+    { intros k' Hk'. assert (Y : In k' PEBEPP1.KS_bpkK /\ In k' L5SAR.cs_all /\ In k' PEBEPP1.KS_bpkJ /\ In k' PEBEPP5.KS_bpkI1)
+        by (destruct Hk' as [<-|[<-|[<-|[<-|[<-|[]]]]]]; (split; [inl| split; [inl| split; inl]])).
+      destruct Y as (Yk1 & Yk2 & Yk3 & Yk4). rewrite (KS11 k' Yk1), (CS10 k' Yk2), (KS9 k' Yk3), (CS8 k' Yk2), (KS7 k' Yk4). apply JCS. exact Hk'. }
+    unfold L5SAR.cs_all in Hk. destruct Hk as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|Hk]]]]]]]]]]]].
+    + rewrite kR2. exact (eq_sym Rsp).
+    + apply CH; left; reflexivity.
+    + apply CH; right; left; reflexivity.
+    + rewrite kR8, Z_to_bv_bv_unsigned; reflexivity.
+    + rewrite kR9, Z_to_bv_bv_unsigned; reflexivity.
+    + rewrite kR18, Z_to_bv_bv_unsigned; reflexivity.
+    + rewrite kR19, Z_to_bv_bv_unsigned; reflexivity.
+    + rewrite kR20, Z_to_bv_bv_unsigned; reflexivity.
+    + rewrite (KS11 21%nat) by inl. rewrite CS10 by inl. rewrite (KS9 21%nat) by inl. rewrite CS8 by inl. rewrite iR21, Z_to_bv_bv_unsigned; reflexivity.
+    + rewrite (KS11 22%nat) by inl. rewrite CS10 by inl. rewrite (KS9 22%nat) by inl. rewrite CS8 by inl. rewrite iR22, Z_to_bv_bv_unsigned; reflexivity.
+    + rewrite (KS11 23%nat) by inl. rewrite CS10 by inl. rewrite (KS9 23%nat) by inl. rewrite CS8 by inl. rewrite iR23, Z_to_bv_bv_unsigned; reflexivity.
+    + rewrite (KS11 24%nat) by inl. rewrite CS10 by inl. rewrite (KS9 24%nat) by inl. rewrite CS8 by inl. rewrite iR24, Z_to_bv_bv_unsigned; reflexivity.
+    + apply CH; right; right; exact Hk.
+  -
+    unfold PECA.enc_atA. cbn [PEC.en_b PEC.en_k PEC.en_stk PEC.en_depth]. change PEC.ESZ with 24. rewrite ES. try rewrite <- Ecap.
+    rewrite length_app. cbn [length]. rewrite Nat2Z.inj_add. change (Z.of_nat 1) with 1.
+    split. { apply (L5C.u64_at_agree RSEGS M M11); [intros i Hi; apply TVM; lia| lia| lia| exact EV0]. }
+    split. { apply (L5C.u64_at_agree RSEGS M M11); [intros i Hi; apply TVM; lia| lia| lia| exact EV8]. }
+    split. { apply (PMF.u32_at_agree RSEGS M M11); [intros i Hi; apply TVM; lia| lia| lia| exact EV16]. }
+    split. { apply (L5C.u64_at_agree RSEGS M7 M11); [intros i Hi; apply TV11; lia| lia| lia|].
+             apply (PMBIS1.vis_u64 _ _ _ _ _ VIS7); [eapply L5A.avis_sub; [exact OVIS| lia| lia]| lia| lia| exact I24v]. }
+    split. { replace (B + 24 * (Z.of_nat (length stk) + 1)) with (B + SZ + 24) by lia. apply (L5C.u64_at_agree RSEGS M7 M11); [intros i Hi; apply TV11; lia| lia| lia|].
+             apply (PMBIS1.vis_u64 _ _ _ _ _ VIS7); [eapply L5A.avis_sub; [exact OVIS| lia| lia]| lia| lia| exact I32v]. }
+    split. { apply (L5C.u64_at_agree RSEGS M7 M11); [intros i Hi; apply TV11; lia| lia| lia|].
+             replace (B + 24 * (2 * cap)) with (B + 24 * NC) by lia.
+             apply (PMBIS1.vis_u64 _ _ _ _ _ VIS7); [eapply L5A.avis_sub; [exact OVIS| lia| lia]| lia| lia| exact I40v]. }
+    split. { apply (PMF.u32_at_agree RSEGS M M11); [intros i Hi; apply TVM; lia| lia| lia| exact EV48]. }
+    split; [apply (L5.defined_grows M10 M11 _ _ MGM11); exact ODEF10|].
+    split. { apply (PMFA.accA_agree M10 M11 ov 56); [| exact ACC10]. intros x Hx. pose proof (PEBEPF.S_range x ltac:(lia)) as SRx. apply FR11; [lia| unfold W11; lia]. }
+    split; [clear - K11; Lia.lia|]. split; [clear - LENz HSZ ESZ HC; Lia.lia|]. split; [exact EDEP|]. split; [intros X; exfalso; clear - X K11; Lia.lia|].
+    destruct ANN8 as (ZA8 & PA8).
+    split.
+    { intros _. split; [clear - Q16; Lia.lia|].
+      split. { replace (24 * (2 * cap)) with (2 * SZ) by lia. intros i Hi. rewrite TB11 by lia. apply BDEF6. exact Hi. }
+      split. { replace (24 * (2 * cap)) with (2 * SZ) by lia. exact QR. }
+      split. { unfold PMSPA.accA. apply (PMFA.accA_agree M8 M11 B (24 * (Z.of_nat (length stk) + 1))).
+               - intros x Hx. assert (Sx : exists j, S x = S B + j /\ 0 <= j < 2 * SZ / 8).
+                 { exists (S x - S B). split; [lia|]. unfold S, SB. clear - Hx LENz HSZ Q16 Q0 E16 HC. Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). Lia.lia. }
+                 destruct Sx as (j & Ej & Hj). rewrite Ej. apply SH11. exact Hj.
+               - unfold PMSPA.accA. apply (L5CB.aacc_of_zero M8 B ((SZ + 24) / 8) B _ ZA8); [lia| lia| lia|].
+                 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+                 rewrite E11. clear - LENz HC ESZ; Lia.lia. }
+      replace (24 * (Z.of_nat (length stk) + 1)) with (SZ + 24) by lia. replace (24 * (2 * cap)) with (2 * SZ) by lia.
+      apply (PMBEK.ann_agree M8 M11 B (SZ + 24) (2 * SZ)); [intros j Hj; apply SH11; exact Hj| lia| lia| split; [exact ZA8| exact PA8]| clear - SZ8; Lia.lia]. }
+    intros i Hi. destruct (Nat.lt_ge_cases i (length stk)) as [Hl|Hl].
+    + rewrite app_nth1 by exact Hl. apply (eitem_agree RSEGS M6 M11); [| lia| lia| apply BST6; exact Hl].
+      intros x Hx. apply TB11. assert (Z.of_nat i + 1 <= Z.of_nat (length stk)) by (clear - Hl; Lia.lia). lia.
+    + assert (Ei : i = length stk) by (clear - Hi Hl; Lia.lia). subst i. rewrite app_nth2 by (clear; Lia.lia). rewrite Nat.sub_diag. cbn [nth].
+      replace (B + 24 * Z.of_nat (length stk)) with (B + SZ) by lia.
+      apply (eitem_agree RSEGS M6 M11); [intros x Hx; apply TB11; lia| lia| lia| exact SLOT6].
+  - assert (EK11 : L5SAR.ek L ar ((B, 2 * SZ) :: LBX) FF sp 12288 [] M10 M11).
+    { apply (PEBEPF.ek_of_keep L ar HI _ FF LK cr2 Aw10 M10 _ sp [] M10 M11 HH10). intros a Ha Hc _.
+      destruct (L5SAR.aclient_cases L ar C HI LYa HIok _ FF LK cr2 Aw10 M10 _ sp 12288 a HH10 SPT Hc) as [Z1|Z1]; (apply FR11; [exact Ha| unfold W11; lia]). }
+    apply (PMBSK.base_keep L ar C LY _ FF sp 12288 [] M10 M11 EK11); [| exact BASE10].
+    intros a Ha. unfold L5.outside. intros rg [].
+  - apply (L5SAR.ahpres_of L ar LBX FF sp 12288 _ M M11).
+    + intros a (Ha & Hc & Ho).
+      assert (NV : ~ (ov + 24 <= a < ov + 48)) by (intros X; apply (Ho (ov + 24, 24)); [left; reflexivity| unfold L5.in_rng; cbn [fst snd]; lia]).
+      assert (Hc0 : aclient L ar LBX FF 0 0 a) by exact (L5SAR.aclient_00 L ar LBX FF sp 12288 a Hc).
+      assert (HcB : aclient L ar LB FF 0 0 a) by (rewrite ELB; apply (L5SAR.aclient_consb L ar LBX FF (b, SZ) 0 0 a Hc0)).
+      assert (NW : ~ (sp - 12288 <= a < sp)).
+      { destruct (L5SAR.aclient_cases L ar C HI LYa HIok LB FF LK cr Aw M _ sp 12288 a HH SPT ltac:(rewrite ELB; apply (L5SAR.aclient_consb L ar LBX FF (b, SZ) sp 12288 a Hc))) as [Z1|Z1]; lia. }
+      assert (NS : ~ in_shadow_of B (2 * SZ) a) by (exact (PMBEK.own_sh_notclient L ar C HI LY HIok B (2 * SZ) LB FF LK cr2 Aw6 M6 _ HH6 ltac:(lia) a 0 0 HcB)).
+      rewrite FR11; [| exact Ha| unfold W11; lia]. rewrite T9_10; [| exact Ha| apply (CLs a _ Hc0); [left; reflexivity| intros x Hx; right; exact Hx]| lia].
+      rewrite FR9; [| exact Ha| unfold W9; lia]. rewrite T87; [| exact Ha| apply (L5SAR.aclient_consb L ar LB FF (B, 2 * SZ) 0 0 a HcB)| lia| exact NS].
+      rewrite FR7; [| exact Ha| unfold W7; lia]. apply CHAIN6; [exact Ha| exact Hc0| exact NW| exact NV].
+    + pose proof ASTK10 as (_ & _ & _ & _ & SD10 & _). apply (L5.defined_grows M10 M11 _ _ MGM11). exact SD10.
+    + intros a Ha Hc HM.
+      assert (Hc0 : aclient L ar LBX FF 0 0 a) by exact (L5SAR.aclient_00 L ar LBX FF sp 12288 a Hc).
+      assert (HcB : aclient L ar LB FF 0 0 a) by (rewrite ELB; apply (L5SAR.aclient_consb L ar LBX FF (b, SZ) 0 0 a Hc0)).
+      assert (NW : ~ (sp - 12288 <= a < sp)).
+      { destruct (L5SAR.aclient_cases L ar C HI LYa HIok LB FF LK cr Aw M _ sp 12288 a HH SPT ltac:(rewrite ELB; apply (L5SAR.aclient_consb L ar LBX FF (b, SZ) sp 12288 a Hc))) as [Z1|Z1]; lia. }
+      assert (NS : ~ in_shadow_of B (2 * SZ) a) by (exact (PMBEK.own_sh_notclient L ar C HI LY HIok B (2 * SZ) LB FF LK cr2 Aw6 M6 _ HH6 ltac:(lia) a 0 0 HcB)).
+      apply MGM11. rewrite T9_10; [| exact Ha| apply (CLs a _ Hc0); [left; reflexivity| intros x Hx; right; exact Hx]| lia].
+      apply MGM9. rewrite T87; [| exact Ha| apply (L5SAR.aclient_consb L ar LB FF (B, 2 * SZ) 0 0 a HcB)| lia| exact NS].
+      apply MGM7. exact (DK6 a Ha Hc0 HM).
+  - apply (L5LZ.model_rt_trans model model10 model11); [|exact MRT11]. apply (L5LZ.model_rt_trans model model9 model10); [|exact MRT10].
+    apply (L5LZ.model_rt_trans model model8 model9); [|exact MRT9]. apply (L5LZ.model_rt_trans model model7 model8); [|exact MRT8].
+    apply (L5LZ.model_rt_trans model model6 model7); [exact MRT6| exact MRT7].
+  - intros x Hx. exact Hx.
+  - intros x Hx. apply IA10. apply INC8. apply IA6. exact Hx.
+  - exact AM11.
+  - unfold PEC.enc_own. cbn [PEC.en_k PEC.en_b app]. replace (k + 1 =? 0) with false by (symmetry; apply Z.eqb_neq; clear - K11; Lia.lia).
+    change PEC.ESZ with 24. rewrite ES. try rewrite <- Ecap. replace (24 * (2 * cap)) with (2 * SZ) by lia. cbn [app]. exact HH11.
+  - rewrite kR10. f_equal. change PEC.ESZ with 24. clear - LENz; Lia.lia.
+Qed.
+End Stage.
+End PEBEPG2.

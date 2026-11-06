@@ -78,7 +78,7 @@ through the library code they share. Its source is not in this release yet.
 | status | meaning |
 |---|---|
 | open | nobody has proved or refuted it |
-| proved | a proof under `proofs/` that CI checked against this revision of the statement |
+| proved | a proof in a harness's `proofs/` folder that CI checked against this revision of the statement |
 | refuted | a Rocq proof of the statement's negation, checked the same way |
 | counterexample | a failing run of the real binary, re-run by CI under the pinned runner, next to a control input that exits with a status the statement allows |
 | false (witnessed) | a recorded run of the published binary, in an environment the statement allows, that ends in a way the statement forbids; the page describes the run (the input file, which memory request was refused, how the build ended, and what ran it); not yet re-run by CI |
@@ -88,7 +88,8 @@ through the library code they share. Its source is not in this release yet.
 | withdrawn | kept in the index; its identifier is never reused |
 
 `proved`, `refuted` and `counterexample` are never written by hand: `oft
-generate` derives them from `proofs/` and `counterexamples/`.
+generate` derives them from each harness's `proofs/` and `counterexamples/`
+folders.
 
 A counterexample can also refute agreement statements. Take a counterexample in
 which a build dies by a signal (an abort, a crash or a trap) with nothing

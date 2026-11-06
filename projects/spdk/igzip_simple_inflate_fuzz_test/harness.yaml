@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spdk
 harness: igzip_simple_inflate_fuzz_test
-rocq: OssFuzzTheorems.spdk.igzip_simple_inflate_fuzz_test
+rocq: OSSVerify.spdk.igzip_simple_inflate_fuzz_test
 origin: upstream
 summary: isal_inflate_stateless over the input into a 2*size output buffer; return code and output ignored.
 entry: LLVMFuzzerTestOneInput

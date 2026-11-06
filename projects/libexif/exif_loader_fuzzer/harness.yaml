@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libexif
 harness: exif_loader_fuzzer
-rocq: OssFuzzTheorems.libexif.exif_loader_fuzzer
+rocq: OSSVerify.libexif.exif_loader_fuzzer
 origin: oss-fuzz
 summary: exif_loader_write of the whole input, exif_loader_get_data, every entry value and every MakerNote
   name/title/description/value; results unused.

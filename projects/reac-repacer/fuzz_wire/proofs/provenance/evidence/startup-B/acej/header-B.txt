@@ -1,0 +1,5 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs: generated for reac-repacer/fuzz_wire's ASan+UBSan build (image B) in the form of proofs/cgif/cgif_file_fuzzer/lib/YCej.v (commit 25e3d17bdb50) by gen_traces.py (sha256 a78026af1ae206cc68df7256ad677ca595768d16ceedd89936dd82bd9ee7c80d; not in the published tree) and acej.py (sha256 5db4ca1babf0c593537907c71d0593f120ec40857d9e947709bf197687fdcf9e, the fuzz_decode emitter; not in the published tree); module paths changed (cgif lib/X -> lib/Reusable/X, fuzz_grant B's layout at commit 4f87de75d67). *)
+(* Read from: fuzz_wire.asan-ubsan (reac-repacer/fuzz_wire asan-ubsan) sha256 af4534831a4528320c7dc74ca3f64bb96e8232ed2e313f01126d10879f3417d6; unstripped twin sha256 51eb4bef24252e4df6e11baa89f653d20d74e38ae684f61bc94f4fb339ac97c3 *)

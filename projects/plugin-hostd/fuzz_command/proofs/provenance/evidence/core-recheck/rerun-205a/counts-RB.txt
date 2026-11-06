@@ -1,0 +1,20 @@
+old RB-0d24: 212121 rows (+ column line, + 29 header lines); sha256 of the rows without the # header block 3eaa28b5e816
+new RB-205a: 212121 rows (+ column line, + 31 header lines); sha256 of the rows without the # header block f6ac70c9c563
+matched by numeral identity: 212121; old rows unmatched: 0; new rows unmatched: 0
+flagged rows: old 25169, new 25117
+same verdict: 211772
+changed verdict: 349
+  new flag (non-finding -> finding class): 4
+  flag cleared (finding class -> non-finding): 56
+  flag class changed (finding -> other finding class): 1
+  non-finding class changed: 288
+
+transitions (old verdict -> new verdict: rows)
+  SAME-SYMBOL -> NON-ADDRESS-SAME: 281  [non-finding class changed]
+  DIFFERENT-SYMBOL -> SAME-SYMBOL: 48  [flag cleared (finding class -> non-finding)]
+  STALE-DONOR-CODE-POINTER -> NON-ADDRESS-SAME: 7  [flag cleared (finding class -> non-finding)]
+  UNMEASURED-NAME -> SAME-SYMBOL: 6  [non-finding class changed]
+  SAME-GEOMETRY -> NON-ADDRESS-CHANGED: 4  [new flag (non-finding -> finding class)]
+  DIFFERENT-SYMBOL -> NON-ADDRESS-CHANGED: 1  [flag class changed (finding -> other finding class)]
+  ROUND-CONSTANT-SAME -> NON-ADDRESS-SAME: 1  [non-finding class changed]
+  SAME-VALUE-DIFFERENT-OBJECT -> NON-ADDRESS-SAME: 1  [flag cleared (finding class -> non-finding)]

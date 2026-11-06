@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: open62541
 harness: fuzz_parse_string
-rocq: OssFuzzTheorems.open62541.fuzz_parse_string
+rocq: OSSVerify.open62541.fuzz_parse_string
 origin: upstream
 summary: Byte 0 selects one of eight string parsers (NodeId, DateTime, Guid, ExpandedNodeId, QualifiedName,
   RelativePath, SimpleAttributeOperand, ReadValueId); RelativePath is parsed and printed but the printed

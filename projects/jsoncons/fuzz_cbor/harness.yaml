@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jsoncons
 harness: fuzz_cbor
-rocq: OssFuzzTheorems.jsoncons.fuzz_cbor
+rocq: OSSVerify.jsoncons.fuzz_cbor
 origin: upstream
 summary: decode_cbor<json> from an istringstream; value discarded; ser_error and json_runtime_error<std::runtime_error>
   swallowed.

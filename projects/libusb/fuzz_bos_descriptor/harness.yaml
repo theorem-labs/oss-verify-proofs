@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libusb
 harness: fuzz_bos_descriptor
-rocq: OssFuzzTheorems.libusb.fuzz_bos_descriptor
+rocq: OSSVerify.libusb.fuzz_bos_descriptor
 origin: upstream
 summary: Wraps up to 252 fuzz bytes in a BOS device-capability header and calls the USB 2.0 extension,
   SuperSpeed capability and Container ID parsers on it; results freed, never checked.

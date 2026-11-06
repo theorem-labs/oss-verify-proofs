@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: reac-pw/fuzz_pin/ubsan_halts
+fingerprint: 16d9ae3beae578934d87a431a61d8678e79955f6b23bc53984234a98d743ec3b

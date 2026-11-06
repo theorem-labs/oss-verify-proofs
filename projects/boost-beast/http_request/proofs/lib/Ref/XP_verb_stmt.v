@@ -1,0 +1,248 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.boost_beast.http_request.lib Require Import HeapCeil.
+From OSSVerify.Proofs.boost_beast.http_request.lib.Lib Require Import Tac Image ZBridge SysStep SFModel CellsX Arr TacX.
+From OSSVerify.Proofs.boost_beast.http_request.lib.Ref Require Import RSegs RMalloc_iface_stmt HeapSR_iface XRep XPRep.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Open Scope bv_scope.
+Open Scope Z_scope.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+Fixpoint lzeqb (a b : list Z) : bool :=
+  match a, b with
+  | [], [] => true
+  | x :: a', y :: b' => (x =? y) && lzeqb a' b'
+  | _, _ => false
+  end.
+
+Lemma lzeqb_eq : forall a b, lzeqb a b = true <-> a = b.
+Proof.
+  induction a as [|x a IH]; intros [|y b]; cbn; split; intros H; try discriminate; try reflexivity.
+  - apply andb_prop in H. destruct H as [H1 H2]. apply Z.eqb_eq in H1. apply IH in H2. subst. reflexivity.
+  - injection H as -> ->. rewrite Z.eqb_refl. cbn. apply IH. reflexivity.
+Qed.
+Lemma lzeqb_neq : forall a b, lzeqb a b = false <-> a <> b.
+Proof.
+  intros a b. destruct (lzeqb a b) eqn:E; split; intros H; try discriminate.
+  - apply lzeqb_eq in E. contradiction.
+  - intros C. apply lzeqb_eq in C. rewrite C in E. discriminate.
+  - reflexivity.
+Qed.
+Lemma lzeqb_length : forall a b, length a <> length b -> lzeqb a b = false.
+Proof. intros a b H. apply lzeqb_neq. intros ->. apply H. reflexivity. Qed.
+
+(* [comment removed for export] *)
+Definition L_EARCH : list Z := [69; 65; 82; 67; 72].              Definition A_EARCH : Z := 0x138ae.
+Definition L_IND : list Z := [73; 78; 68].                        Definition A_IND : Z := 0x138aa.
+Definition L_ECKOUT : list Z := [69; 67; 75; 79; 85; 84].         Definition A_ECKOUT : Z := 0x12d8f.
+Definition L_ELETE : list Z := [69; 76; 69; 84; 69].              Definition A_ELETE : Z := 0x12d96.
+Definition L_EAD : list Z := [69; 65; 68].                        Definition A_EAD : Z := 0x14944.
+Definition L_NNECT : list Z := [78; 78; 69; 67; 84].              Definition A_NNECT : Z := 0x10cbd.
+Definition L_PTIONS : list Z := [80; 84; 73; 79; 78; 83].         Definition A_PTIONS : Z := 0x11e45.
+Definition L_OTIFY : list Z := [79; 84; 73; 70; 89].              Definition A_OTIFY : Z := 0x128cb.
+Definition L_INK : list Z := [73; 78; 75].                        Definition A_INK : Z := 0x11016.
+Definition L_UBSCRIBE : list Z := [85; 66; 83; 67; 82; 73; 66; 69]. Definition A_UBSCRIBE : Z := 0x1101a.
+Definition L_OCK : list Z := [79; 67; 75].                        Definition A_OCK : Z := 0x11cce.
+Definition L_TCH : list Z := [84; 67; 72].                        Definition A_TCH : Z := 0x11471.
+Definition L_RGE : list Z := [82; 71; 69].                        Definition A_RGE : Z := 0x12f69.
+Definition L_ALENDAR : list Z := [65; 76; 69; 78; 68; 65; 82].    Definition A_ALENDAR : Z := 0x12f6d.
+Definition L_ACTIVITY : list Z := [65; 67; 84; 73; 86; 73; 84; 89]. Definition A_ACTIVITY : Z := 0x14b9e.
+Definition L_OPPATCH : list Z := [79; 80; 80; 65; 84; 67; 72].    Definition A_OPPATCH : Z := 0x1456b.
+Definition L_SUBSCRIBE : list Z := [83; 85; 66; 83; 67; 82; 73; 66; 69]. Definition A_SUBSCRIBE : Z := 0x1482f.
+Definition L_SEARCH : list Z := [83; 69; 65; 82; 67; 72].         Definition A_SEARCH : Z := 0x103cb.
+Definition L_OPFIND : list Z := [79; 80; 70; 73; 78; 68].         Definition A_OPFIND : Z := 0x12655.
+(* [comment removed for export] *)
+Definition L_CL : list Z := [67; 76].      Definition L_ET : list Z := [69; 84].      Definition L_ST : list Z := [83; 84].
+Definition L_PY : list Z := [80; 89].      Definition L_VE : list Z := [86; 69].      Definition L_OL : list Z := [79; 76].
+Definition L_T : list Z := [84].
+Definition L_RACE : list Z := [82; 65; 67; 69].   Definition L_BIND : list Z := [66; 73; 78; 68].
+Definition L_PORT : list Z := [80; 79; 82; 84].   Definition L_LINK : list Z := [76; 73; 78; 75].
+Definition L_LOCK : list Z := [76; 79; 67; 75].
+
+(* [comment removed for export] *)
+Definition verb_of (l : list Z) : Z :=
+  match l with
+  | [] => 0
+  | c :: r =>
+    if c =? 65 then (if lzeqb r L_CL then 20 else 0)
+    else if c =? 66 then (if lzeqb r L_IND then 17 else 0)
+    else if c =? 67 then
+      match r with
+      | [] => 0
+      | c2 :: r2 =>
+        if c2 =? 72 then (if lzeqb r2 L_ECKOUT then 23 else 0)
+        else if c2 =? 79 then (if lzeqb r2 L_NNECT then 6 else if lzeqb r2 L_PY then 9 else 0)
+        else 0
+      end
+    else if c =? 68 then (if lzeqb r L_ELETE then 1 else 0)
+    else if c =? 71 then (if lzeqb r L_ET then 2 else 0)
+    else if c =? 72 then (if lzeqb r L_EAD then 3 else 0)
+    else if c =? 76 then (if lzeqb r L_INK then 32 else if lzeqb r L_OCK then 10 else 0)
+    else if c =? 77 then
+      match r with
+      | [] => 0
+      | c2 :: r2 =>
+        if c2 =? 45 then (if lzeqb r2 L_SEARCH then 25 else 0)
+        else if c2 =? 69 then (if lzeqb r2 L_RGE then 24 else 0)
+        else if c2 =? 75 then
+          (if lzeqb r2 L_ACTIVITY then 22 else
+           match r2 with
+           | [] => 0
+           | c3 :: r3 => if c3 =? 67 then (if lzeqb r3 L_ALENDAR then 31 else if lzeqb r3 L_OL then 11 else 0) else 0
+           end)
+        else if c2 =? 79 then (if lzeqb r2 L_VE then 12 else 0)
+        else 0
+      end
+    else if c =? 78 then (if lzeqb r L_OTIFY then 26 else 0)
+    else if c =? 79 then (if lzeqb r L_PTIONS then 7 else 0)
+    else if c =? 80 then
+      match r with
+      | [] => 0
+      | c2 :: r2 =>
+        if c2 =? 65 then (if lzeqb r2 L_TCH then 29 else 0)
+        else if c2 =? 79 then (if lzeqb r2 L_ST then 4 else 0)
+        else if c2 =? 82 then (if lzeqb r2 L_OPFIND then 13 else if lzeqb r2 L_OPPATCH then 14 else 0)
+        else if c2 =? 85 then (if lzeqb r2 L_RGE then 30 else if lzeqb r2 L_T then 5 else 0)
+        else 0
+      end
+    else if c =? 82 then
+      match r with
+      | [] => 0
+      | c2 :: r2 => if c2 =? 69 then (if lzeqb r2 L_BIND then 18 else if lzeqb r2 L_PORT then 21 else 0) else 0
+      end
+    else if c =? 83 then (if lzeqb r L_EARCH then 15 else if lzeqb r L_UBSCRIBE then 27 else 0)
+    else if c =? 84 then (if lzeqb r L_RACE then 8 else 0)
+    else if c =? 85 then
+      match r with
+      | [] => 0
+      | c2 :: r2 => if c2 =? 78 then
+                      (if lzeqb r2 L_BIND then 19 else if lzeqb r2 L_LINK then 33
+                       else if lzeqb r2 L_LOCK then 16 else if lzeqb r2 L_SUBSCRIBE then 28 else 0)
+                    else 0
+      end
+    else 0
+  end.
+
+Ltac range_ifs := repeat (lazymatch goal with |- 0 <= (if ?b then _ else _) <= 33 => destruct b | _ => fail end); try lia.
+Lemma verb_of_range : forall l, 0 <= verb_of l <= 33.
+Proof.
+  intros [|c r]; cbn [verb_of]; [lia|].
+  repeat (lazymatch goal with
+          | |- 0 <= (if ?b then _ else _) <= 33 => destruct b
+          | |- 0 <= match ?r with _ => _ end <= 33 => destruct r
+          | _ => fail end); lia.
+Qed.
+
+(* [comment removed for export] *)
+Definition VERB_NAMES : list (list Z * Z) :=
+  [([68;69;76;69;84;69], 1); ([71;69;84], 2); ([72;69;65;68], 3); ([80;79;83;84], 4); ([80;85;84], 5);
+   ([67;79;78;78;69;67;84], 6); ([79;80;84;73;79;78;83], 7); ([84;82;65;67;69], 8); ([67;79;80;89], 9);
+   ([76;79;67;75], 10); ([77;75;67;79;76], 11); ([77;79;86;69], 12); ([80;82;79;80;70;73;78;68], 13);
+   ([80;82;79;80;80;65;84;67;72], 14); ([83;69;65;82;67;72], 15); ([85;78;76;79;67;75], 16); ([66;73;78;68], 17);
+   ([82;69;66;73;78;68], 18); ([85;78;66;73;78;68], 19); ([65;67;76], 20); ([82;69;80;79;82;84], 21);
+   ([77;75;65;67;84;73;86;73;84;89], 22); ([67;72;69;67;75;79;85;84], 23); ([77;69;82;71;69], 24);
+   ([77;45;83;69;65;82;67;72], 25); ([78;79;84;73;70;89], 26); ([83;85;66;83;67;82;73;66;69], 27);
+   ([85;78;83;85;66;83;67;82;73;66;69], 28); ([80;65;84;67;72], 29); ([80;85;82;71;69], 30);
+   ([77;75;67;65;76;69;78;68;65;82], 31); ([76;73;78;75], 32); ([85;78;76;73;78;75], 33)].
+Lemma verb_of_names : forallb (fun p => verb_of (fst p) =? snd p) VERB_NAMES = true.
+Proof. vm_compute. reflexivity. Qed.
+
+(* [comment removed for export] *)
+Lemma verb_of_A : forall r, verb_of (65 :: r) = (if lzeqb r L_CL then 20 else 0). Proof. reflexivity. Qed.
+Lemma verb_of_B : forall r, verb_of (66 :: r) = (if lzeqb r L_IND then 17 else 0). Proof. reflexivity. Qed.
+Lemma verb_of_C : forall r, verb_of (67 :: r) =
+  match r with [] => 0 | c2 :: r2 =>
+    if c2 =? 72 then (if lzeqb r2 L_ECKOUT then 23 else 0)
+    else if c2 =? 79 then (if lzeqb r2 L_NNECT then 6 else if lzeqb r2 L_PY then 9 else 0) else 0 end.
+Proof. reflexivity. Qed.
+Lemma verb_of_D : forall r, verb_of (68 :: r) = (if lzeqb r L_ELETE then 1 else 0). Proof. reflexivity. Qed.
+Lemma verb_of_G : forall r, verb_of (71 :: r) = (if lzeqb r L_ET then 2 else 0). Proof. reflexivity. Qed.
+Lemma verb_of_H : forall r, verb_of (72 :: r) = (if lzeqb r L_EAD then 3 else 0). Proof. reflexivity. Qed.
+Lemma verb_of_L : forall r, verb_of (76 :: r) = (if lzeqb r L_INK then 32 else if lzeqb r L_OCK then 10 else 0).
+Proof. reflexivity. Qed.
+Lemma verb_of_M : forall r, verb_of (77 :: r) =
+  match r with [] => 0 | c2 :: r2 =>
+    if c2 =? 45 then (if lzeqb r2 L_SEARCH then 25 else 0)
+    else if c2 =? 69 then (if lzeqb r2 L_RGE then 24 else 0)
+    else if c2 =? 75 then
+      (if lzeqb r2 L_ACTIVITY then 22 else
+       match r2 with [] => 0
+       | c3 :: r3 => if c3 =? 67 then (if lzeqb r3 L_ALENDAR then 31 else if lzeqb r3 L_OL then 11 else 0) else 0 end)
+    else if c2 =? 79 then (if lzeqb r2 L_VE then 12 else 0) else 0 end.
+Proof. reflexivity. Qed.
+Lemma verb_of_N : forall r, verb_of (78 :: r) = (if lzeqb r L_OTIFY then 26 else 0). Proof. reflexivity. Qed.
+Lemma verb_of_O : forall r, verb_of (79 :: r) = (if lzeqb r L_PTIONS then 7 else 0). Proof. reflexivity. Qed.
+Lemma verb_of_P : forall r, verb_of (80 :: r) =
+  match r with [] => 0 | c2 :: r2 =>
+    if c2 =? 65 then (if lzeqb r2 L_TCH then 29 else 0)
+    else if c2 =? 79 then (if lzeqb r2 L_ST then 4 else 0)
+    else if c2 =? 82 then (if lzeqb r2 L_OPFIND then 13 else if lzeqb r2 L_OPPATCH then 14 else 0)
+    else if c2 =? 85 then (if lzeqb r2 L_RGE then 30 else if lzeqb r2 L_T then 5 else 0) else 0 end.
+Proof. reflexivity. Qed.
+Lemma verb_of_R : forall r, verb_of (82 :: r) =
+  match r with [] => 0 | c2 :: r2 =>
+    if c2 =? 69 then (if lzeqb r2 L_BIND then 18 else if lzeqb r2 L_PORT then 21 else 0) else 0 end.
+Proof. reflexivity. Qed.
+Lemma verb_of_S : forall r, verb_of (83 :: r) = (if lzeqb r L_EARCH then 15 else if lzeqb r L_UBSCRIBE then 27 else 0).
+Proof. reflexivity. Qed.
+Lemma verb_of_T : forall r, verb_of (84 :: r) = (if lzeqb r L_RACE then 8 else 0). Proof. reflexivity. Qed.
+Lemma verb_of_U : forall r, verb_of (85 :: r) =
+  match r with [] => 0 | c2 :: r2 =>
+    if c2 =? 78 then (if lzeqb r2 L_BIND then 19 else if lzeqb r2 L_LINK then 33
+                      else if lzeqb r2 L_LOCK then 16 else if lzeqb r2 L_SUBSCRIBE then 28 else 0) else 0 end.
+Proof. reflexivity. Qed.
+(* [comment removed for export] *)
+Lemma verb_of_other : forall c r, (c < 65 \/ 85 < c \/ In c [69; 70; 73; 74; 75; 81]) -> verb_of (c :: r) = 0.
+Proof.
+  intros c r H. cbn [verb_of].
+  repeat (lazymatch goal with
+          | |- (if c =? ?k then _ else _) = 0 =>
+              let E := fresh "E" in destruct (Z.eqb_spec c k) as [E|E]; [exfalso; subst c; cbn in H; lia|]
+          | _ => fail end).
+  reflexivity.
+Qed.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+Section HCW.
+  Context {HCEIL : HeapCeil}.
+
+Definition STRING_TO_VERB_STACK : Z := 48.   (* [comment removed for export] *)
+
+Definition verb_post_v (v : Z) (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+    (P : Z) (bs : list byte) (lo : Z) (m : mem) : machine_state -> Prop :=
+  fun ms' => exists t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 m',
+    ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (wz v) a1 a2 a3 a4 a5 a6 a7
+                  s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+             F (ret_pc ra) fc None m' (seg_rom rsegs)
+    /\ munch [(lo, bv_unsigned sp)]%Z m m' /\ wmono rsegs m m' /\ mem_inv rsegs m'
+    /\ stk rsegs m' lo (bv_unsigned sp)
+    /\ bytes_at rsegs m' P bs.
+
+Definition string_to_verb_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+    (P : Z) (bs : list byte) (lo : Z) (m : mem) : machine_state -> Prop :=
+  verb_post_v (verb_of (zbytes bs)) ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc P bs lo m.
+
+Definition string_to_verb_stmt : Prop :=
+  forall (P : Z) (bs : list byte) (lo : Z)
+    ra sp gp tp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+    (F : bvmap 5 word) fc (m : mem),
+  bytes_at rsegs m P bs -> P + Z.of_nat (length bs) < 2^64 ->
+  stk rsegs m lo (bv_unsigned sp) -> lo + STRING_TO_VERB_STACK <= bv_unsigned sp -> 0xb4000 <= lo ->
+  (bv_unsigned sp <= P \/ P + Z.of_nat (length bs) <= lo) ->
+  mem_inv rsegs m ->
+  evt rsegs (string_to_verb_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc P bs lo m)
+    (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (wz P) (wz (Z.of_nat (length bs))) a2 a3 a4 a5 a6 a7
+              s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+        F (Z_to_bv 64 P_STRING_TO_VERB) fc None m (seg_rom rsegs)).
+
+End HCW.

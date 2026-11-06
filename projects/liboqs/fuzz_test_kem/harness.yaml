@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: liboqs
 harness: fuzz_test_kem
-rocq: OssFuzzTheorems.liboqs.fuzz_test_kem
+rocq: OSSVerify.liboqs.fuzz_test_kem
 origin: upstream
 summary: 'Checks one property, a round trip: KEM correctness: for the fuzz-selected algorithm (all OQS_KEM_algs)
   and a fuzz-seeded RNG, keypair -> encaps -> decaps and the decapsulated shared secret must equal the

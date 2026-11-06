@@ -1,0 +1,4 @@
+stack_malloc symbols: __asan_stack_malloc_1 0x3c1b8
+call 0x7f8ec in check_clamp (0x7f888, 884 bytes) -> __asan_stack_malloc_1; last a0 write: 0x7f8e8 addi a0, zero, 0x60
+jal scanned: 6594
+rc=0

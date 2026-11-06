@@ -1,0 +1,6 @@
+# reac-pw's two dependencies, headers only, at the versions reac-pw is packaged against: libreac
+# 1.10.0 (its include/, which also holds libreac-transport's headers) and SPA of PipeWire 1.6.10
+# (spa/include, header-only). The fuzz targets link neither library.
+# kind	path	arguments: see lay-out-sources
+git	libreac	https://github.com/FreeREAC/libreac	d58dea4a18e0463b916cf260ca2eafa19b728da6
+git	pipewire	https://gitlab.freedesktop.org/pipewire/pipewire.git	f9d6cbc99c354b9b0ad1d37245dc3ab0fb9f9171

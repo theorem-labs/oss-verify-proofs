@@ -16,7 +16,7 @@ import tempfile
 import time
 import unittest
 
-from oft.tests.helpers import REPO
+from oft.tests.helpers import NO_HOME, REPO, child_environment
 
 CI = os.path.join(REPO, "tools", "oft", "ci")
 SERVED = os.path.join(CI, "facts-review-served")
@@ -27,23 +27,18 @@ REVIEW = "The facts hold.\n"
 TOOL = "claude"   # the review agent's command, as facts-review-run calls it
 HOST = "api.anthropic.com"
 HEAD = f"asked {ASKED}\nendpoint {HOST}\n"   # the record's first lines, when the tool sends its requests to the API
-# The variables that send the tool's requests elsewhere: no test inherits one from the environment it runs in.
-ELSEWHERE = ("ANTHROPIC_BASE_URL", "ANTHROPIC_UNIX_SOCKET", "CLAUDE_CODE_API_BASE_URL",
-             "_CLAUDE_CODE_ASSUME_FIRST_PARTY_BASE_URL", "CLAUDE_CONFIG_DIR", "NODE_TLS_REJECT_UNAUTHORIZED",
-             "NODE_EXTRA_CA_CERTS", "SSL_CERT_FILE", "SSL_CERT_DIR", "HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY",
-             "ANTHROPIC_PROFILE", "ANTHROPIC_CONFIG_DIR", "XDG_CONFIG_HOME", "CLAUDE_CODE_EXTRA_BODY",
-             "ANTHROPIC_BETAS", "CLAUDE_CODE_MANAGED_SETTINGS_PATH", "CLAUDE_CODE_REMOTE_SETTINGS_PATH",
-             "CLAUDE_CODE_DISABLE_ADMIN_ENV_UNION", "CLAUDE_CODE_MOCK_REMOTE_SETTINGS", "ANTHROPIC_CUSTOM_HEADERS",
-             "CLAUDE_CODE_CUSTOM_OAUTH_URL")
 # A stand-in agent: prints the events of the JSON list in $HOME/events.json, each on a line of its own as it comes; an
 # item {"sleep": seconds} waits, {"exit": status} ends there, {"raw": text} prints the text as it is, and {"child":
 # seconds} starts a process of its own that sleeps that long, as a tool the agent runs would. It writes its arguments
-# to $HOME/argv.json, and its own process id and its child's to $HOME/pids.
+# to $HOME/argv.json, the names of its environment's variables to $HOME/environ.json, and its own process id and its
+# child's to $HOME/pids.
 FAKE_AGENT = r"""#!/usr/bin/env python3
 import json, os, subprocess, sys, time
 home = os.environ.get("HOME", "")
 with open(os.path.join(home, "argv.json"), "w") as f:
     json.dump(sys.argv[1:], f)
+with open(os.path.join(home, "environ.json"), "w") as f:
+    json.dump(sorted(os.environ), f)
 with open(os.path.join(home, "events.json")) as f:
     events = json.load(f)
 pids = [os.getpid()]
@@ -90,18 +85,10 @@ def result(text=REVIEW, providers=("firstParty",), is_error=False, turns=2):
             "modelUsage": usage}
 
 
-def check(record):
-    r = subprocess.run([sys.executable, SERVED, "check"], input=record, capture_output=True, text=True)
+def check(record, **variables):
+    r = subprocess.run([sys.executable, SERVED, "check"], input=record, capture_output=True, text=True,
+                       env=child_environment(NO_HOME, **variables))
     return r.returncode, r.stdout.strip()
-
-
-def environment(**variables):
-    """The environment a test runs a script in: this one's, without the variables that send the tool's requests
-    elsewhere, and with `variables`."""
-    env = {k: v for k, v in os.environ.items()
-           if k.upper() not in ELSEWHERE and not k.startswith(("ANTHROPIC_", "CLAUDE_CODE_", "_CLAUDE_CODE_"))}
-    env.update(variables)
-    return env
 
 
 class StandIn(unittest.TestCase):
@@ -136,7 +123,7 @@ class Run(StandIn):
 
     def run_agent(self, events, asked=ASKED, **variables):
         agent = self.agent("agent", events)
-        env = environment(HOME=self.dir, **variables)
+        env = child_environment(self.dir, **variables)
         started = time.monotonic()
         r = subprocess.run([sys.executable, SERVED, "run", self.review, asked, "--", agent], env=env, cwd=self.dir,
                            capture_output=True, text=True, timeout=120)
@@ -460,7 +447,8 @@ class Run(StandIn):
         for asked, status in ((ASKED, 0), ("openai/model-a-1", 2), ("anthropic/", 2), ("anthropic/none", 2),
                               ("anthropic/a b", 2)):
             with self.subTest(asked=asked):
-                r = subprocess.run([sys.executable, SERVED, "asked", asked], capture_output=True, text=True)
+                r = subprocess.run([sys.executable, SERVED, "asked", asked], capture_output=True, text=True,
+                                   env=child_environment(self.dir))
                 self.assertEqual(r.returncode, status, r.stderr)
 
     def test_a_server_fallback_to_another_model_within_a_response_stops_the_agent(self):
@@ -494,6 +482,27 @@ class Run(StandIn):
                 self.assertIn(f"settings set {key}, which can send its requests elsewhere than api.anthropic.com or "
                               "let another model answer", err)
                 self.assertFalse(os.path.exists(os.path.join(self.dir, "argv.json")), "the agent ran")
+
+    def test_the_managed_settings_are_those_of_the_folder_the_test_owns(self):
+        """REVIEW_MANAGED_SETTINGS names the folder of managed settings run reads in place of the machine's:
+        helpers.child_environment sets it to a folder under <home>, so that no test reads the machine's. The agent is
+        not given it."""
+        managed = os.path.join(self.dir, "etc-claude-code")
+        os.makedirs(os.path.join(managed, "managed-settings.d"))
+        path = os.path.join(managed, "managed-settings.d", "10-proxy.json")
+        with open(path, "w") as f:
+            json.dump({"env": {"ANTHROPIC_BASE_URL": "https://proxy.example"}}, f)
+        code, err, _ = self.run_agent([init()] + turn(1) + [result()])
+        self.assertEqual(code, 4, err)
+        self.assertIn("settings set https:proxy.example, which", err)
+        self.assertFalse(os.path.exists(os.path.join(self.dir, "argv.json")), "the agent ran")
+        os.remove(path)
+        code, err, _ = self.run_agent([init()] + turn(1) + [result()])
+        self.assertEqual(code, 0, err)
+        with open(os.path.join(self.dir, "environ.json")) as f:
+            names = json.load(f)
+        self.assertIn("HOME", names)
+        self.assertNotIn("REVIEW_MANAGED_SETTINGS", names)
 
     def test_a_usage_entry_that_is_not_an_object_is_not_attributable(self):
         side = result()
@@ -603,13 +612,53 @@ class Run(StandIn):
         os.remove(os.path.join(self.dir, ".claude", "settings.json"))
         # The credentials and knobs that are allowed.
         allowed = {"ANTHROPIC_API_KEY": "k", "ANTHROPIC_AUTH_TOKEN": "t", "CLAUDE_CODE_OAUTH_TOKEN": "o",
-                   "ANTHROPIC_IDENTITY_TOKEN_FILE": "/tmp/jwt", "ANTHROPIC_FEDERATION_RULE_ID": "fdrl_x",
-                   "ANTHROPIC_ORGANIZATION_ID": "o", "ANTHROPIC_SERVICE_ACCOUNT_ID": "svac_x",
-                   "ANTHROPIC_WORKSPACE_ID": "wrkspc_x", "ANTHROPIC_SCOPE": "workspace:inference",
                    "CLAUDE_CODE_ENABLE_TELEMETRY": "1", "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "1000",
                    "ANTHROPIC_BASE_URL": "https://api.anthropic.com"}
         code, err, _ = self.run_agent([init()] + turn(1) + [result()], **allowed)
         self.assertEqual(code, 0, err)
+        # Anthropic's workload identity federation is no credential of the review any more: CI signs in to the model
+        # gateway instead (Dispatch issue INFRA-481).
+        code, err, _ = self.run_agent([init()] + turn(1) + [result()], ANTHROPIC_FEDERATION_RULE_ID="fdrl_x")
+        self.assertEqual(code, 4, err)
+
+    def test_the_model_gateway_is_its_one_base_url(self):
+        """ossv-gateway, the OSS Verify model gateway, is reached at REVIEW_GATEWAY_URL and no other URL: plain http,
+        another port, another host, or Anthropic's own API do not start the agent, and neither does a missing or
+        malformed REVIEW_GATEWAY_URL."""
+        gateway, url = "ossv-gateway/model-a-1", "https://gateway.example"
+        ok = dict(REVIEW_GATEWAY_URL=url, ANTHROPIC_AUTH_TOKEN="t", ANTHROPIC_BASE_URL=url)
+        code, err, _ = self.run_agent([init()] + turn(1) + [result()], asked=gateway, **ok)
+        self.assertEqual(code, 0, err)
+        self.assertIn("endpoint gateway.example\n", self.read("served"))
+        self.assertEqual(check(self.read("served"), REVIEW_GATEWAY_URL=url)[0], 0, self.read("served"))
+        # check needs the same URL: without it, the record is not attributable; with another, another endpoint.
+        self.assertEqual(check(self.read("served"), REVIEW_GATEWAY_URL="")[0], 3)
+        self.assertEqual(check(self.read("served"), REVIEW_GATEWAY_URL="https://elsewhere.example")[0], 1)
+        # The gateway's bare helper model id is allowed, with that value alone.
+        code, err, _ = self.run_agent([init()] + turn(1) + [result()], asked=gateway,
+                                      ANTHROPIC_DEFAULT_HAIKU_MODEL="claude-haiku-4-5", **ok)
+        self.assertEqual(code, 0, err)
+        code, err, _ = self.run_agent([init()] + turn(1) + [result()], asked=gateway,
+                                      ANTHROPIC_DEFAULT_HAIKU_MODEL="claude-opus-5-5", **ok)
+        self.assertEqual(code, 4, err)
+        self.assertIn("ANTHROPIC_DEFAULT_HAIKU_MODEL", err)
+        for base in ("http://gateway.example", "https://gateway.example:4000", "https://api.anthropic.com",
+                     "https://other.example", None):
+            with self.subTest(base=base):
+                if os.path.exists(os.path.join(self.dir, "argv.json")):
+                    os.remove(os.path.join(self.dir, "argv.json"))
+                variables = {} if base is None else {"ANTHROPIC_BASE_URL": base}
+                code, err, _ = self.run_agent([init()] + turn(1) + [result()], asked=gateway,
+                                              REVIEW_GATEWAY_URL=url, **variables)
+                self.assertEqual(code, 4, err)
+                self.assertFalse(os.path.exists(os.path.join(self.dir, "argv.json")), "the agent ran")
+        for value in ("", "http://gateway.example", "https://gateway.example:4000", "https://gateway.example/v1",
+                      "https:/" + "/u" + "@gateway.example"):
+            with self.subTest(gateway_url=value):
+                r = subprocess.run([sys.executable, SERVED, "asked", gateway], capture_output=True, text=True,
+                                   env=child_environment(self.dir, REVIEW_GATEWAY_URL=value))
+                self.assertEqual(r.returncode, 2, r.stderr)
+                self.assertIn("REVIEW_GATEWAY_URL is not https://<host>", r.stderr)
 
     def test_a_global_config_that_moves_the_profile_starts_no_agent(self):
         """HOME or XDG_CONFIG_HOME in a global config's env moves the folder of the Anthropic profile the tool reads,
@@ -654,7 +703,7 @@ class Run(StandIn):
         """The step's timeout or a cancelled run stops facts-review-served with SIGTERM: the agent goes with it."""
         agent = self.agent("agent", [init(), {"child": 600}] + turn(1) + [{"sleep": 600}])
         served = subprocess.Popen([sys.executable, SERVED, "run", self.review, ASKED, "--", agent],
-                                  env=environment(HOME=self.dir), cwd=self.dir, stderr=subprocess.DEVNULL)
+                                  env=child_environment(self.dir), cwd=self.dir, stderr=subprocess.DEVNULL)
         self.addCleanup(served.kill)
         for _ in range(100):
             if os.path.exists(os.path.join(self.review, "review.jsonl")) and "msg_0001" in self.read("review.jsonl"):
@@ -693,7 +742,9 @@ class Managed(unittest.TestCase):
         self.served.under_wsl = lambda: False
         home = os.path.join(self.dir, "home")
         os.mkdir(home)
-        self.environ = environment(HOME=home)
+        # This class points the module's own MANAGED at its folders, so the variable that would replace them is unset.
+        self.environ = child_environment(home)
+        del self.environ["REVIEW_MANAGED_SETTINGS"]
         cwd = os.getcwd()
         os.chdir(self.dir)
         self.addCleanup(os.chdir, cwd)
@@ -779,6 +830,18 @@ class Managed(unittest.TestCase):
         self.reg(0, "    Settings    REG_SZ    " + json.dumps({"env": ["x"]}))
         self.assertEqual(self.endpoint(), "unreadable-registry")
 
+    def test_the_folder_the_variable_names_is_the_one_folder_read(self):
+        """With REVIEW_MANAGED_SETTINGS, its folder is read in place of the platform's, and under WSL in place of
+        Windows' folder and registry keys too: a test's own folder is all that a test reads."""
+        self.environ["REVIEW_MANAGED_SETTINGS"] = os.path.join(self.dir, "here")
+        self.served.under_wsl = lambda: True
+        self.write("linux", "managed-settings.json")
+        self.write("wsl", "managed-settings.json")
+        self.reg(0, "    Settings    REG_SZ    " + json.dumps(self.PROXY))
+        self.assertEqual(self.endpoint(), HOST)
+        self.write("here", "managed-settings.json")
+        self.assertEqual(self.endpoint(), "https:proxy.example")
+
 
 class Check(unittest.TestCase):
     def test_a_record_with_no_asked_line_is_not_attributable(self):
@@ -790,7 +853,7 @@ class Check(unittest.TestCase):
 
     def test_a_line_of_no_turns_is_not_attributable(self):
         """run never writes a count of 0, so only a hand-written or damaged record holds one: no turn is no evidence,
-        whatever the other lines say (FailOpenTests, at c25b831bc7)."""
+        whatever the other lines say (FailOpenTests)."""
         for record in (f"{HEAD}firstParty/model-a-1 0\n",
                        f"{HEAD}usage firstParty/model-a-1\nfirstParty/model-a-1 0\n",
                        f"{HEAD}firstParty/model-a-1 3\nfirstParty/model-a-1 0\n",
@@ -850,9 +913,8 @@ class RunScript(StandIn):
         self.agent(TOOL, events)
         with open(os.path.join(self.review, "changed.txt"), "w") as f:
             f.write("M\tprojects/zlib/project.yaml\n")
-        env = environment(PATH=self.bin + os.pathsep + os.environ["PATH"], HOME=self.dir, PR="7",
-                          REVIEW_MODEL="model-a-1", **variables)
-        env.pop("REVIEW_PROVIDER", None)
+        env = child_environment(self.dir, PATH=self.bin + os.pathsep + os.environ["PATH"], PR="7",
+                                REVIEW_MODEL="model-a-1", **variables)
         r = subprocess.run(["bash", RUN, ".review"], cwd=self.dir, env=env, capture_output=True, text=True,
                            timeout=120)
         return r.returncode, r.stdout + r.stderr
@@ -896,8 +958,7 @@ class Comment(StandIn):
         path = os.path.join(self.dir, "review.md")
         with open(path, "w") as f:
             f.write(review)
-        env = {k: v for k, v in environment().items() if k != "SERVED"}
-        env.update(HEAD_SHA="a" * 40, BASE_REF="main")
+        env = child_environment(self.dir, HEAD_SHA="a" * 40, BASE_REF="main")
         if record is not None:
             env["SERVED"] = record
         r = subprocess.run(["bash", COMMENT, path, why], env=env, capture_output=True, text=True)
@@ -972,8 +1033,8 @@ class Comment(StandIn):
             with self.subTest(review=review):
                 with open(path, "w") as f:
                     f.write(review)
-                env = dict(environment(), HEAD_SHA="a" * 40, BASE_REF="main",
-                           SERVED=f"{HEAD}usage firstParty/model-a-1\nfirstParty/model-a-1 2\n")
+                env = child_environment(self.dir, HEAD_SHA="a" * 40, BASE_REF="main",
+                                        SERVED=f"{HEAD}usage firstParty/model-a-1\nfirstParty/model-a-1 2\n")
                 r = subprocess.run(["bash", os.path.join(alone, "facts-review-comment"), path, why], env=env,
                                    capture_output=True, text=True)
                 self.assertEqual(r.returncode, 0, r.stderr)

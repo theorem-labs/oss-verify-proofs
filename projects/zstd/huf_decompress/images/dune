@@ -6,22 +6,22 @@
  (deps (:elf %{project_root}/projects/zstd/bin/huf_decompress/huf_decompress.plain))
  (action
   (run elf-snapshot %{elf} Plain.v --prefix Plain --module-name M
-       --namespace OssFuzzTheorems.zstd.huf_decompress.images)))
+       --namespace OSSVerify.zstd.huf_decompress.images)))
 (rule
  (targets Ubsan.v Ubsan_seg_000.hex Ubsan_seg_001.hex Ubsan_seg_002.hex Ubsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/zstd/bin/huf_decompress/huf_decompress.ubsan))
  (action
   (run elf-snapshot %{elf} Ubsan.v --prefix Ubsan --module-name M
-       --namespace OssFuzzTheorems.zstd.huf_decompress.images)))
+       --namespace OSSVerify.zstd.huf_decompress.images)))
 (rule
  (targets Asan.v Asan_seg_000.hex Asan_seg_001.hex Asan_seg_002.hex Asan_seg_003.hex)
  (deps (:elf %{project_root}/projects/zstd/bin/huf_decompress/huf_decompress.asan))
  (action
   (run elf-snapshot %{elf} Asan.v --prefix Asan --module-name M
-       --namespace OssFuzzTheorems.zstd.huf_decompress.images)))
+       --namespace OSSVerify.zstd.huf_decompress.images)))
 (rule
  (targets AsanUbsan.v AsanUbsan_seg_000.hex AsanUbsan_seg_001.hex AsanUbsan_seg_002.hex AsanUbsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/zstd/bin/huf_decompress/huf_decompress.asan-ubsan))
  (action
   (run elf-snapshot %{elf} AsanUbsan.v --prefix AsanUbsan --module-name M
-       --namespace OssFuzzTheorems.zstd.huf_decompress.images)))
+       --namespace OSSVerify.zstd.huf_decompress.images)))

@@ -1,0 +1,377 @@
+--- B/YD1d.v
++++ B/YD1d.v
+@@ -29,9 +29,8 @@
+ intros sg Hsg. pose proof (proj1 (forallb_forall _ _) tfib_img_segs_b sg Hsg) as X. cbn beta in X.
+ apply andb_prop in X as [X1 X2]. apply Z.leb_le in X1. apply Z.leb_le in X2. exact (conj X1 X2).
+ Qed.
+-(* fuzz_decode: (epg 551, ELit 4096) is YD1g's eODR page, in a_vis of all 50 hand-off states; cgif_file_fuzzer's lib/YD1d.v AVIS13 does not have it. *)
+ Definition AVIS13 : list (expr * expr) :=
+-[ (epg 551, ELit 4096); (epg 518, ELit 4096); (epg 501, ELit 8388608); (epg 500, ELit 1048576); (epg 424, ELit 11571200); (epg 357, ELit 4096);
++[ (epg 518, ELit 4096); (epg 501, ELit 8388608); (epg 500, ELit 1048576); (epg 424, ELit 11571200); (epg 357, ELit 4096);
+ (epg 292, ELit 4096); (epg 275, ELit 65536); (epg 274, ELit 4096); RINFO_P; (epg 254, ELit 3727360); (epg 109, ELit 65536); IMG_P; STK_P ].
+ Definition avis_chk (ch : acs) : bool :=
+ forallb (fun p => existsb (pair_eqb p) AVIS13 || existsb (sub_of_map p) (musl_maps ch))%bool (a_vis ch).
+@@ -290,9 +289,9 @@
+ destruct (musl_map_sound ch m (proj1 (Forall_forall _ _) MOK m Hm)) as (v & n & o & Hb & Hl & Hn & Hr & Ho).
+ apply In_nth_error in Hm as (j & Hj).
+ assert (Hjl : (j < length (musl_maps ch))%nat) by (apply (proj1 (nth_error_Some _ _)); rewrite Hj; discriminate).
+-assert (HA : nth_error (ALLMAPS ch) (4 + j) = Some m).
+-{ unfold ALLMAPS. rewrite nth_error_app2 by (cbn; lia). change (length TFIB_HEAD3) with 4%nat.
+-rewrite nth_error_app1 by lia. replace (4 + j - 4)%nat with j by lia. exact Hj. }
++assert (HA : nth_error (ALLMAPS ch) (3 + j) = Some m).
++{ unfold ALLMAPS. rewrite nth_error_app2 by (cbn; lia). change (length TFIB_HEAD3) with 3%nat.
++rewrite nth_error_app1 by lia. replace (3 + j - 3)%nat with j by lia. exact Hj. }
+ pose proof (vm_nth _ _ HA) as Hvm.
+ unfold extra. apply in_map. apply List.filter_In. split; [exact (nth_error_In _ _ Hvm)|].
+ destruct (known E (dmm E m)) eqn:Hk; [|reflexivity]. exfalso.
+@@ -302,8 +301,8 @@
+ assert (LENK : forall d z, wzp d = z -> bv_unsigned (snd d) = snd z) by (intros d z <-; reflexivity).
+ rewrite KNOWN_eq in HkK.
+ assert (POS : forall i d, nth_error TFIB_TAIL12 i = Some (match i with 4%nat => mk eT 4096 KRW | _ => mk eD 4096 KRW end) -> (i = 4 \/ i = 1)%nat ->
+-dmm E m = d -> nth_error vm (4 + length (musl_maps ch) + i) = Some d -> False).
+-{ intros i d _ _ Ed Hi. pose proof (seps_pair _ Hseps (4 + j) (4 + length (musl_maps ch) + i) _ _ ltac:(lia) Hvm Hi) as D.
++dmm E m = d -> nth_error vm (3 + length (musl_maps ch) + i) = Some d -> False).
++{ intros i d _ _ Ed Hi. pose proof (seps_pair _ Hseps (3 + j) (3 + length (musl_maps ch) + i) _ _ ltac:(lia) Hvm Hi) as D.
+ rewrite Ed in D. unfold iv_disjoint in D. pose proof (vm_bound d (nth_error_In _ _ Hi)) as (P0 & _). lia. }
+ destruct HkK as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]];
+ try (pose proof (LENK _ _ VP); pose proof (LENK _ _ VQ); pose proof (LENK _ _ VF); pose proof (LENK _ _ VNB); pose proof (LENK _ _ VSB);
+--- B/YD1e.v
++++ B/YD1e.v
+@@ -71,7 +71,6 @@
+ #[local] Definition uT := ltac:(get @YD1g.uT).   #[local] Definition uC := ltac:(get @YD1g.uC).   #[local] Definition uD := ltac:(get @YD1g.uD).
+ #[local] Definition uF := ltac:(get @YD1g.uF).   #[local] Definition uNB := ltac:(get @YD1g.uNB). #[local] Definition uSB := ltac:(get @YD1g.uSB).
+ #[local] Definition uGV := ltac:(get @YD1g.uGV). #[local] Definition u292 := ltac:(get @YD1g.u292). #[local] Definition u254 := ltac:(get @YD1g.u254).
+-#[local] Definition uODR := ltac:(get @YD1g.uODR). #[local] Definition dODR_val := ltac:(get @YD1g.dODR_val).
+ #[local] Definition u109 := ltac:(get @YD1g.u109). #[local] Definition uSp := ltac:(get @YD1g.uSp). #[local] Definition uP := ltac:(get @YD1g.uP).
+ #[local] Definition ceil_le_TOP := ltac:(get @YD1g.ceil_le_TOP). #[local] Definition usp_range := ltac:(get @YD1g.usp_range).
+ #[local] Definition band_facts := ltac:(get @YD1d.band_facts).
+@@ -90,8 +89,8 @@
+ - pose proof (seps_pair _ Hseps j i _ _ ltac:(lia) Vj Vi) as D. rewrite <- Heq in D. unfold iv_disjoint in D. lia.
+ Qed.
+ Lemma unknown_at : forall i m, nth_error (ALLMAPS ch) i = Some m ->
+-(i <> 2)%nat -> (i <> 3)%nat ->
+-(forall t, (t = 0 \/ t = 1 \/ t = 3 \/ t = 4 \/ t = 5 \/ t = 6 \/ t = 9 \/ t = 10 \/ t = 11)%nat -> i <> (4 + length (musl_maps ch) + t)%nat) ->
++(i <> 1)%nat -> (i <> 2)%nat ->
++(forall t, (t = 0 \/ t = 1 \/ t = 3 \/ t = 4 \/ t = 5 \/ t = 6 \/ t = 9 \/ t = 10 \/ t = 11)%nat -> i <> (3 + length (musl_maps ch) + t)%nat) ->
+ known E (dmm E m) = false.
+ Proof.
+ intros i m Hi N1 N2 NT. destruct (known E (dmm E m)) eqn:Hk; [|reflexivity]. exfalso.
+@@ -107,8 +106,8 @@
+ - exact (TL 5%nat _ _ _ eq_refl ltac:(lia) Hkeq).
+ - exact (TL 4%nat _ _ _ eq_refl ltac:(lia) Hkeq).
+ - exact (TL 0%nat _ _ _ eq_refl ltac:(lia) Hkeq).
+-- exact (HDx 3%nat _ _ _ eq_refl N2 Hkeq).
+-- exact (HDx 2%nat _ _ _ eq_refl N1 Hkeq).
++- exact (HDx 2%nat _ _ _ eq_refl N2 Hkeq).
++- exact (HDx 1%nat _ _ _ eq_refl N1 Hkeq).
+ - exact (TL 11%nat _ _ _ eq_refl ltac:(lia) Hkeq).
+ - exact (TL 9%nat _ _ _ eq_refl ltac:(lia) Hkeq).
+ - exact (TL 10%nat _ _ _ eq_refl ltac:(lia) Hkeq).
+@@ -119,30 +118,25 @@
+ Proof.
+ intros i m Hi Hk. unfold extra. apply in_map. apply List.filter_In. split; [exact (nth_error_In _ _ (vm_nth _ _ Hi))|]. rewrite Hk. reflexivity.
+ Qed.
+-Lemma ODR_extra : In (wzp (dODR E)) (extra E model).
+-Proof.
+-change (dODR E) with (dmm E (mk eODR 4096 KRW)). apply (extra_of 0%nat); [reflexivity|].
++Lemma GV_extra : In (wzp (dGV E)) (extra E model).
++Proof.
++change (dGV E) with (dmm E (mk eGV 4096 KRW)). apply (extra_of 0%nat); [reflexivity|].
+ apply (unknown_at 0%nat); [reflexivity | lia | lia | intros t _; lia].
+ Qed.
+-Lemma GV_extra : In (wzp (dGV E)) (extra E model).
+-Proof.
+-change (dGV E) with (dmm E (mk eGV 4096 KRW)). apply (extra_of 1%nat); [reflexivity|].
+-apply (unknown_at 1%nat); [reflexivity | lia | lia | intros t _; lia].
+-Qed.
+ Lemma e292_extra : In (wzp (d292 E)) (extra E model).
+ Proof.
+-change (d292 E) with (dmm E (mk e292 4096 KRW)). apply (extra_of (4 + length (musl_maps ch) + 2)%nat); [exact (nth_ALLMAPS_tail 2 _ eq_refl)|].
+-apply (unknown_at (4 + length (musl_maps ch) + 2)%nat); [exact (nth_ALLMAPS_tail 2 _ eq_refl) | lia | lia | intros t Ht; lia].
++change (d292 E) with (dmm E (mk e292 4096 KRW)). apply (extra_of (3 + length (musl_maps ch) + 2)%nat); [exact (nth_ALLMAPS_tail 2 _ eq_refl)|].
++apply (unknown_at (3 + length (musl_maps ch) + 2)%nat); [exact (nth_ALLMAPS_tail 2 _ eq_refl) | lia | lia | intros t Ht; lia].
+ Qed.
+ Lemma e254_extra : In (wzp (d254 E)) (extra E model).
+ Proof.
+-change (d254 E) with (dmm E (mk e254 3727360 KRW)). apply (extra_of (4 + length (musl_maps ch) + 7)%nat); [exact (nth_ALLMAPS_tail 7 _ eq_refl)|].
+-apply (unknown_at (4 + length (musl_maps ch) + 7)%nat); [exact (nth_ALLMAPS_tail 7 _ eq_refl) | lia | lia | intros t Ht; lia].
++change (d254 E) with (dmm E (mk e254 3727360 KRW)). apply (extra_of (3 + length (musl_maps ch) + 7)%nat); [exact (nth_ALLMAPS_tail 7 _ eq_refl)|].
++apply (unknown_at (3 + length (musl_maps ch) + 7)%nat); [exact (nth_ALLMAPS_tail 7 _ eq_refl) | lia | lia | intros t Ht; lia].
+ Qed.
+ Lemma e109_extra : In (wzp (d109 E)) (extra E model).
+ Proof.
+-change (d109 E) with (dmm E (mk e109 65536 KRW)). apply (extra_of (4 + length (musl_maps ch) + 8)%nat); [exact (nth_ALLMAPS_tail 8 _ eq_refl)|].
+-apply (unknown_at (4 + length (musl_maps ch) + 8)%nat); [exact (nth_ALLMAPS_tail 8 _ eq_refl) | lia | lia | intros t Ht; lia].
++change (d109 E) with (dmm E (mk e109 65536 KRW)). apply (extra_of (3 + length (musl_maps ch) + 8)%nat); [exact (nth_ALLMAPS_tail 8 _ eq_refl)|].
++apply (unknown_at (3 + length (musl_maps ch) + 8)%nat); [exact (nth_ALLMAPS_tail 8 _ eq_refl) | lia | lia | intros t Ht; lia].
+ Qed.
+ Lemma shz_granule : forall g lo len, g mod 8 = 0 -> lo mod 8 = 0 -> 0 <= lo -> 0 <= g ->
+ SHADOW_OFF + lo / 8 <= shadow_addr g < SHADOW_OFF + (lo + len) / 8 -> lo <= g < lo + len.
+@@ -207,7 +201,6 @@
+ pose proof uT as [HT HTr]. pose proof uC as [HCc HCr]. pose proof uD as [HD HDr]. pose proof uF as [HFv HFr].
+ pose proof uNB as [HNB HNBr]. pose proof uSB as [HSBv HSBr]. pose proof uGV as [HGV HGVr]. pose proof u292 as [H292 H292r].
+ pose proof u254 as [H254 H254r]. pose proof u109 as [H109 H109r]. pose proof uSp as (S1 & S2 & S3 & S4). pose proof uP as [_ HPr].
+-pose proof uODR as [HODR HODRr]. pose proof dODR_val as VODR.
+ unfold in_allow in AL. apply orb_prop in AL as [AV|ASH].
+ -
+ unfold in_vis in AV. apply existsb_exists in AV as (p & Hp & Hb). apply andb_prop in Hb as [B1 B2]. apply Z.leb_le in B1. apply Z.ltb_lt in B2.
+@@ -225,8 +218,7 @@
+ In z (static_extents ly0 ++ vis0_zones ly0) -> fst z = u (epg n) -> len <= snd z -> False).
+ { intros n len [zl zn] Hpe Hu Hlen Hin Hz1 Hz2. cbn [fst snd] in Hz1, Hz2. subst zl.
+ apply (ZONE p (u (epg n)) zn B12 Hin (AL8 n Hu) ltac:(pose proof (uE_bound E (epg n)); lia)); rewrite Hpe; cbn [fst snd]; [lia|]. rewrite uE_litv by lia. lia. }
+-destruct H13 as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]]].
+-*   eapply (PG 551%nat 4096 (wzp (dODR E)) eq_refl HODR ltac:(lia) (EXTRA _ ODR_extra)); rewrite VODR; cbn [fst snd]; [reflexivity | lia].
++destruct H13 as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]].
+ *   eapply (PG 518%nat 4096 (wzp (dGV E)) eq_refl HGV ltac:(lia) (EXTRA _ GV_extra)); rewrite VGV; cbn [fst snd]; [reflexivity | lia].
+ *   eapply (PG 501%nat 8388608 (wzp (dSB E)) eq_refl HSBv ltac:(lia)); [apply STATIC; cbn; tauto | rewrite VSB; reflexivity | rewrite VSB; cbn [snd]; lia].
+ *   eapply (PG 500%nat 1048576 (wzp (dNB E)) eq_refl HNB ltac:(lia)); [apply STATIC; cbn; tauto | rewrite VNB; reflexivity | rewrite VNB; cbn [snd]; lia].
+@@ -254,10 +246,10 @@
+ pose proof hole_facts as (_ & _ & MOK & _).
+ destruct (musl_map_sound ch m (proj1 (Forall_forall _ _) MOK m Hm)) as (v & n & o & Hbase & Hlen & Hn & Hr & Ho).
+ apply In_nth_error in Hm as (j & Hj).
+-assert (HA : nth_error (ALLMAPS ch) (4 + j) = Some m).
++assert (HA : nth_error (ALLMAPS ch) (3 + j) = Some m).
+ { assert (Hjl : (j < length (musl_maps ch))%nat) by (apply (proj1 (nth_error_Some _ _)); rewrite Hj; discriminate).
+-unfold ALLMAPS. rewrite nth_error_app2 by (cbn; lia). change (length TFIB_HEAD3) with 4%nat.
+-rewrite nth_error_app1 by lia. replace (4 + j - 4)%nat with j by lia. exact Hj. }
++unfold ALLMAPS. rewrite nth_error_app2 by (cbn; lia). change (length TFIB_HEAD3) with 3%nat.
++rewrite nth_error_app1 by lia. replace (3 + j - 3)%nat with j by lia. exact Hj. }
+ pose proof (vm_bound (dmm E m) (nth_error_In _ _ (vm_nth _ _ HA))) as (P0 & P1 & P2 & P3 & P4).
+ assert (LEN : bv_unsigned (snd (dmm E m)) = L) by (unfold dmm, amap_den; cbn [snd]; rewrite HL; cbn [edenot]; apply u64_lit; lia).
+ assert (BASE : bv_unsigned (fst (dmm E m)) = u (am_base m)) by reflexivity.
+--- B/YD1f.v
++++ B/YD1f.v
+@@ -93,7 +93,6 @@
+ #[local] Definition tfib_ahz := ltac:(get @YD1e.tfib_ahz).
+ #[local] Definition band_allow := ltac:(get @YD1e.band_allow).
+ #[local] Definition GV_extra := ltac:(get @YD1e.GV_extra).     #[local] Definition e292_extra := ltac:(get @YD1e.e292_extra).
+-#[local] Definition ODR_extra := ltac:(get @YD1e.ODR_extra).   #[local] Definition dODR_val := ltac:(get @YD1g.dODR_val).
+ #[local] Definition e254_extra := ltac:(get @YD1e.e254_extra). #[local] Definition e109_extra := ltac:(get @YD1e.e109_extra).
+ Lemma band_rom_none : forall z, in_band_rw z -> seg_rom TSEGS (Z_to_bv 64 z) = None.
+ Proof.
+@@ -184,9 +183,7 @@
+ assert (PG : forall n len (z : Z * Z), p = (epg n, ELit len) -> 0 <= len < 2 ^ 64 -> In z (VZ E model) -> fst z = u (epg n) -> len <= snd z -> False).
+ { intros n len [zl zn] Hpe Hlen Hz Hz1 Hz2. cbn [fst snd] in Hz1, Hz2. subst zl.
+ apply (VISZ p (u (epg n), zn) B12 Hz); rewrite Hpe; cbn [fst snd]; [lia|]. rewrite (uE_litv E len) by lia. lia. }
+-destruct H13 as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]]].
+-*   exfalso.
+-eapply (PG 551%nat 4096 (wzp (dODR E)) eq_refl ltac:(lia)); [unfold VZ; apply in_app_iff; right; exact ODR_extra | rewrite dODR_val; reflexivity | rewrite dODR_val; cbn [snd]; lia].
++destruct H13 as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]].
+ *   exfalso.
+ eapply (PG 518%nat 4096 (wzp (dGV E)) eq_refl ltac:(lia)); [unfold VZ; apply in_app_iff; right; exact GV_extra | rewrite VGV; reflexivity | rewrite VGV; cbn [snd]; lia].
+ *
+@@ -220,10 +217,10 @@
+ destruct (sub_of_map_sound p m Hsub) as (Hbm & L & HL & HLL & Hpp).
+ pose proof (musl_extra m Hm) as HX.
+ apply In_nth_error in Hm as (j & Hj).
+-assert (HA : nth_error (ALLMAPS ch) (4 + j) = Some m).
++assert (HA : nth_error (ALLMAPS ch) (3 + j) = Some m).
+ { assert (Hjl : (j < length (musl_maps ch))%nat) by (apply (proj1 (nth_error_Some _ _)); rewrite Hj; discriminate).
+-unfold ALLMAPS. rewrite nth_error_app2 by (cbn; lia). change (length TFIB_HEAD3) with 4%nat.
+-rewrite nth_error_app1 by lia. replace (4 + j - 4)%nat with j by lia. exact Hj. }
++unfold ALLMAPS. rewrite nth_error_app2 by (cbn; lia). change (length TFIB_HEAD3) with 3%nat.
++rewrite nth_error_app1 by lia. replace (3 + j - 3)%nat with j by lia. exact Hj. }
+ pose proof (vm_bound (dmm E m) (nth_error_In _ _ (vm_nth _ _ HA))) as (P0 & P1 & P2 & P3 & P4).
+ assert (LEN : bv_unsigned (snd (dmm E m)) = L) by (unfold dmm, amap_den; cbn [snd]; rewrite HL; cbn [edenot]; apply u64_lit; lia).
+ assert (BASE : bv_unsigned (fst (dmm E m)) = u (am_base m)) by reflexivity.
+--- B/YD1g.v
++++ B/YD1g.v
+@@ -29,19 +29,15 @@
+ Definition eF : expr := epg 424.    Definition eNB : expr := epg 500.   Definition eSB : expr := epg 501.
+ Definition eGV : expr := epg 518.   Definition eD : expr := epg 357.    Definition e292 : expr := epg 292.
+ Definition e254 : expr := epg 254.  Definition e109 : expr := epg 109.
+-(* fuzz_decode only: the ODR-registration page (one anonymous 4 KiB mmap, ecall 0x63d8c), page variable 551 in all 50 hand-off states. *)
+-Definition eODR : expr := epg 551.
+ Definition eTop : expr := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 4096) (EVar 391)).
+ Definition eSp0 : expr := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 16) (EVar 6)).
+ Definition mk (b : expr) (len : Z) (k : mkind) : amap := {| am_base := b; am_len := ELit len; am_kind := k |}.
+-(* Common a_maps prefix of all 50 hand-off states (YB01, measure_ad1g.py); cgif_file_fuzzer's (its lib/YD1g.v and lib/YB01.v) is [eGV; eSB; eNB], without eODR. *)
+-Definition TFIB_HEAD3 : list amap := [ mk eODR 4096 KRW; mk eGV 4096 KRW; mk eSB 8388608 KRWLAZY; mk eNB 1048576 KRW ].
++Definition TFIB_HEAD3 : list amap := [ mk eGV 4096 KRW; mk eSB 8388608 KRWLAZY; mk eNB 1048576 KRW ].
+ Definition TFIB_TAIL12 : list amap :=
+ [ mk eF 11571200 KRW; mk eD 4096 KRW; mk e292 4096 KRW; mk eC 65536 KRW; mk eT 4096 KRW; mk eQ 8388608 KNONELAZY;
+ mk eP 137439023104 KRW; mk e254 3727360 KRW; mk e109 65536 KRW;
+ mk (ELit 2201439137792) 15392894357504 KRWLAZY; mk (ELit 2415882240) 2199023255552 KNONELAZY; mk (ELit 2147446784) 268435456 KRWLAZY ].
+-(* 4 = length TFIB_HEAD3, 16 = length TFIB_HEAD3 + length TFIB_TAIL12 (cgif: 3 and 15); the middle has 0, 1 or 2 maps (5, 25, 20 states). *)
+-Definition musl_maps (ch : acs) : list amap := firstn (length (a_maps ch) - 16) (skipn 4 (a_maps ch)).
++Definition musl_maps (ch : acs) : list amap := firstn (length (a_maps ch) - 15) (skipn 3 (a_maps ch)).
+ Definition kn_range_within (ch : acs) (e : expr) (lo hi : Z) : bool :=
+ existsb (fun K => match K with KRange e' lo' hi' => expr_eqb e e' && (lo <=? lo') && (hi' <=? hi) | _ => false end)%bool (kn ch).
+ Definition eoff (b : expr) (o : Z) : expr := if o =? 0 then b else EAlu ALU_ADD b (ELit o).
+@@ -94,9 +90,7 @@
+ KRange (EVar 254) 1558 34359735410; KRange (EVar 109) 1558 34359736304;
+ KRange (EVar 0) 4294901760 4294967295; KRange (EVar 6) 0 2047;
+ KRange eSp0 140735340871680 140737488355136;
+-KRange (EVar 358) 1 34359736319;
+-(* fuzz_decode only: the range of eODR's page variable, present in all 50 hand-off states. *)
+-KRange (EVar 551) 1 34359736319 ].
++KRange (EVar 358) 1 34359736319 ].
+ Definition eTopT : expr :=
+ EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit 16) (EVar 6)) (EMd M_MUL (ELit (-4096)) (EVar 391))) (ELit 3935).
+ Definition TFIB_GHOST : list (expr * expr) := [(epg 358, ELit 4096)].
+@@ -156,8 +150,7 @@
+ && kn_range_within ch (EVar 391) 0 8 && top_class ch
+ && (list_eqb pair_eqb (a_ghost ch) TFIB_GHOST || (list_eqb pair_eqb (a_ghost ch) (TFIB_GHOST ++ [BRK_GHOST]) && kn_mem BRK_BAND_DISJ ch))
+ && (match a_fd ch with FdStd => true | _ => false end)
+-(* a_eager bound: fuzz_decode's maximum over the 50 hand-off states, 16519168 = cgif's maximum 16515072 + the eODR page. *)
+-&& (a_abytes ch <=? 2461292544) && (a_eager ch <=? 16519168) && (23112583966720 <=? a_ylo ch)
++&& (a_abytes ch <=? 2461292544) && (a_eager ch <=? 16515072) && (23112583966720 <=? a_ylo ch)
+ && forallb (avis_ok ch) (a_vis ch) && existsb (pair_eqb STK_P) (a_vis ch)
+ && kn_mem (KDisj (SA (ELit 2147446784) 0) (ELit 17592186048512) (SA (epg 358) 0) (ELit 4096)) ch.
+ Lemma tfib_holes_chk : forallb hole_chk HS_tfib_list = true.
+@@ -320,7 +313,7 @@
+ /\ (length (musl_maps ch) <= 2)%nat /\ Forall (fun m => musl_map_ok ch m = true) (musl_maps ch)
+ /\ forallb (fun K => kn_mem K ch) TFIB_RANGES = true /\ (kn_range_within ch (EVar 391) 0 8 = true /\ top_class ch = true)
+ /\ (a_ghost ch = TFIB_GHOST \/ (a_ghost ch = TFIB_GHOST ++ [BRK_GHOST] /\ kn_mem BRK_BAND_DISJ ch = true)) /\ a_fd ch = FdStd
+-/\ a_abytes ch <= 2461292544 /\ a_eager ch <= 16519168 /\ 23112583966720 <= a_ylo ch
++/\ a_abytes ch <= 2461292544 /\ a_eager ch <= 16515072 /\ 23112583966720 <= a_ylo ch
+ /\ forallb (avis_ok ch) (a_vis ch) = true /\ In STK_P (a_vis ch)
+ /\ kn_mem (KDisj (SA (ELit 2147446784) 0) (ELit 17592186048512) (SA (epg 358) 0) (ELit 4096)) ch = true.
+ Proof.
+@@ -390,7 +383,6 @@
+ Lemma uNB : u eNB = 4096 * V 500 /\ 4096 * 1558 <= u eNB <= 4096 * 34359736064.       Proof. unfold eNB. upg 500%nat. tauto. Qed.
+ Lemma uSB : u eSB = 4096 * V 501 /\ 4096 * 1558 <= u eSB <= 4096 * 34359734272.       Proof. unfold eSB. upg 501%nat. tauto. Qed.
+ Lemma uGV : u eGV = 4096 * V 518 /\ 4096 * 1 <= u eGV <= 4096 * 34359736319.          Proof. unfold eGV. upg 518%nat. tauto. Qed.
+-Lemma uODR : u eODR = 4096 * V 551 /\ 4096 * 1 <= u eODR <= 4096 * 34359736319.       Proof. unfold eODR. upg 551%nat. tauto. Qed.
+ Lemma u292 : u e292 = 4096 * V 292 /\ 4096 * 1 <= u e292 <= 4096 * 34359736319.       Proof. unfold e292. upg 292%nat. tauto. Qed.
+ Lemma u254 : u e254 = 4096 * V 254 /\ 4096 * 1558 <= u e254 <= 4096 * 34359735410.    Proof. unfold e254. upg 254%nat. tauto. Qed.
+ Lemma u109 : u e109 = 4096 * V 109 /\ 4096 * 1558 <= u e109 <= 4096 * 34359736304.    Proof. unfold e109. upg 109%nat. tauto. Qed.
+@@ -492,15 +484,15 @@
+ Definition dHigh := dm (ELit 2201439137792) 15392894357504 KRWLAZY.
+ Lemma band_vals : wzp dLow = (2147446784, 268435456) /\ wzp dGap = (2415882240, 2199023255552) /\ wzp dHigh = (2201439137792, 15392894357504).
+ Proof. unfold wzp, dLow, dGap, dHigh. rewrite !u_fst_dm, !u_snd_dm by lia. rewrite !uE_litv by lia. repeat split; reflexivity. Qed.
+-Lemma nth_ALLMAPS_tail : forall i m, nth_error TFIB_TAIL12 i = Some m -> nth_error ALLMAPS (4 + length (musl_maps ch) + i) = Some m.
+-Proof.
+-intros i m H. unfold ALLMAPS. rewrite nth_error_app2 by (cbn; lia). change (length TFIB_HEAD3) with 4%nat.
+-rewrite nth_error_app2 by lia. replace (4 + length (musl_maps ch) + i - 4 - length (musl_maps ch))%nat with i by lia. exact H.
++Lemma nth_ALLMAPS_tail : forall i m, nth_error TFIB_TAIL12 i = Some m -> nth_error ALLMAPS (3 + length (musl_maps ch) + i) = Some m.
++Proof.
++intros i m H. unfold ALLMAPS. rewrite nth_error_app2 by (cbn; lia). change (length TFIB_HEAD3) with 3%nat.
++rewrite nth_error_app2 by lia. replace (3 + length (musl_maps ch) + i - 3 - length (musl_maps ch))%nat with i by lia. exact H.
+ Qed.
+ Lemma vm_nth : forall i m, nth_error ALLMAPS i = Some m -> nth_error vm i = Some (dmm m).
+ Proof. intros i m H. rewrite vm_eq, nth_error_map, H. reflexivity. Qed.
+ Lemma vm_split : forall i m, nth_error ALLMAPS i = Some m ->
+-(i <> 4 + length (musl_maps ch) + 9)%nat -> (i <> 4 + length (musl_maps ch) + 10)%nat -> (i <> 4 + length (musl_maps ch) + 11)%nat ->
++(i <> 3 + length (musl_maps ch) + 9)%nat -> (i <> 3 + length (musl_maps ch) + 10)%nat -> (i <> 3 + length (musl_maps ch) + 11)%nat ->
+ bv_unsigned (fst (dmm m)) + bv_unsigned (snd (dmm m)) <= 2147446784 \/ kHighMemBeg <= bv_unsigned (fst (dmm m)).
+ Proof.
+ intros i m Hi N1 N2 N3. pose proof band_vals as (VL & VG & VH). unfold wzp in VL, VG, VH.
+@@ -514,17 +506,17 @@
+ change (dmm (mk (ELit 2147446784) 268435456 KRWLAZY)) with dLow in HL.
+ pose proof (proj1 (vm_bound (dmm m) (nth_error_In _ _ Hm))) as P0.
+ assert (DH : iv_disjoint (dmm m) dHigh).
+-{ destruct (Nat.lt_ge_cases i (4 + length (musl_maps ch) + 9)).
++{ destruct (Nat.lt_ge_cases i (3 + length (musl_maps ch) + 9)).
+ - exact (seps_pair _ Hseps _ _ _ _ H Hm HH).
+-- apply iv_disjoint_sym. exact (seps_pair _ Hseps (4 + length (musl_maps ch) + 9)%nat i _ _ ltac:(lia) HH Hm). }
++- apply iv_disjoint_sym. exact (seps_pair _ Hseps (3 + length (musl_maps ch) + 9)%nat i _ _ ltac:(lia) HH Hm). }
+ assert (DG : iv_disjoint (dmm m) dGap).
+-{ destruct (Nat.lt_ge_cases i (4 + length (musl_maps ch) + 10)).
++{ destruct (Nat.lt_ge_cases i (3 + length (musl_maps ch) + 10)).
+ - exact (seps_pair _ Hseps _ _ _ _ H Hm HG).
+-- apply iv_disjoint_sym. exact (seps_pair _ Hseps (4 + length (musl_maps ch) + 10)%nat i _ _ ltac:(lia) HG Hm). }
++- apply iv_disjoint_sym. exact (seps_pair _ Hseps (3 + length (musl_maps ch) + 10)%nat i _ _ ltac:(lia) HG Hm). }
+ assert (DL : iv_disjoint (dmm m) dLow).
+-{ destruct (Nat.lt_ge_cases i (4 + length (musl_maps ch) + 11)).
++{ destruct (Nat.lt_ge_cases i (3 + length (musl_maps ch) + 11)).
+ - exact (seps_pair _ Hseps _ _ _ _ H Hm HL).
+-- apply iv_disjoint_sym. exact (seps_pair _ Hseps (4 + length (musl_maps ch) + 11)%nat i _ _ ltac:(lia) HL Hm). }
++- apply iv_disjoint_sym. exact (seps_pair _ Hseps (3 + length (musl_maps ch) + 11)%nat i _ _ ltac:(lia) HL Hm). }
+ unfold iv_disjoint in DH, DG, DL. rewrite L1, L2 in DL. rewrite G1, G2 in DG. rewrite Y1, Y2 in DH. unfold kHighMemBeg. lia.
+ Qed.
+ Lemma eSp0_e_sp0 : eSp0 = e_sp0.
+@@ -573,7 +565,7 @@
+ Lemma rinfo_val : u (fst RINFO_P) = u eSp1 + 137439019008 /\ u (snd RINFO_P) = 4096 /\ u eSp1 + 137439023104 <= ASAN_CEIL /\ u eP - 65535 <= u eSp1 <= u eP /\ kHighMemBeg <= u eP.
+ Proof.
+ pose proof uP as [_ HPr]. pose proof uSp1 as E1. pose proof (Z.mod_pos_bound (u eP) 65536 ltac:(lia)) as Hm. pose proof ceil_le_TOP as CT. unfold YA02.TOP in CT.
+-pose proof (map_facts (4 + length (musl_maps ch) + 6) (mk eP 137439023104 KRW) (nth_ALLMAPS_tail 6 _ eq_refl) I) as (X & _).
++pose proof (map_facts (3 + length (musl_maps ch) + 6) (mk eP 137439023104 KRW) (nth_ALLMAPS_tail 6 _ eq_refl) I) as (X & _).
+ unfold dmm, amap_den in X. cbn [fst snd am_base am_len mk] in X. fold (u eP) in X. fold (u (ELit 137439023104)) in X. rewrite (uE_litv E 137439023104) in X by lia.
+ unfold RINFO_P. cbn [fst snd]. rewrite uE_add by (rewrite uE_litv; lia). rewrite !uE_litv by lia. unfold kHighMemBeg. lia.
+ Qed.
+@@ -611,7 +603,7 @@
+ pose proof uP as [_ HPr]. pose proof uSp1 as E1. pose proof uSp as (Es & _ & Hs1 & Hs2). pose proof uS0 as U0. pose proof usp_range as [UR _].
+ pose proof (Z.mod_pos_bound (u eP) 65536 ltac:(lia)) as Hm.
+ assert (HPend : u eP + 137439023104 <= ASAN_CEIL).
+-{ pose proof (map_facts (4 + length (musl_maps ch) + 6) (mk eP 137439023104 KRW) (nth_ALLMAPS_tail 6 _ eq_refl) I) as (X & _).
++{ pose proof (map_facts (3 + length (musl_maps ch) + 6) (mk eP 137439023104 KRW) (nth_ALLMAPS_tail 6 _ eq_refl) I) as (X & _).
+ unfold dmm, amap_den in X. cbn [fst snd am_base am_len mk] in X. fold (u eP) in X. change (edenot E (ELit 137439023104)) with (edenot E (ELit 137439023104)) in X.
+ pose proof (uE_litv E 137439023104 ltac:(lia)) as L. unfold uE in L. rewrite L in X. exact X. }
+ assert (NV : forall p, In p (a_vis ch) -> ~ (u (fst p) <= z < u (fst p) + u (snd p)) /\ ~ (sh_lo TFIB E p <= z < sh_hi TFIB E p)).
+@@ -733,8 +725,7 @@
+ Definition dF := dm eF 11571200 KRW.           Definition dNB := dm eNB 1048576 KRW.       Definition dSB := dm eSB 8388608 KRWLAZY.
+ Definition dGV := dm eGV 4096 KRW.   Definition dD := dm eD 4096 KRW.   Definition d292 := dm e292 4096 KRW.
+ Definition dC := dm eC 65536 KRW.    Definition d254 := dm e254 3727360 KRW. Definition d109 := dm e109 65536 KRW.
+-Definition dODR := dm eODR 4096 KRW.
+-Definition HEAD3 : list (word * word) := [dODR; dGV; dSB; dNB].
++Definition HEAD3 : list (word * word) := [dGV; dSB; dNB].
+ Definition TAIL12 : list (word * word) := [dF; dD; d292; dC; dT; dQ; dP; d254; d109; dHigh; dGap; dLow].
+ Definition MUSL : list (word * word) := map dmm (musl_maps ch).
+ Lemma vm_shape : exists fog, (length fog <= 2)%nat /\ Forall (fun iv => bv_unsigned (snd iv) <= 8192) fog /\ vm = HEAD3 ++ fog ++ TAIL12.
+@@ -780,8 +771,6 @@
+ unfold wzp, dP, dQ, dT, dF, dNB, dSB, dLow, dHigh, dGap, dGV, dD, d292, dC, d254, d109.
+ rewrite !u_fst_dm. rewrite !u_snd_dm by lia. rewrite !uE_litv by lia. repeat split; reflexivity.
+ Qed.
+-Lemma dODR_val : wzp dODR = (u eODR, 4096).
+-Proof. unfold wzp, dODR. rewrite u_fst_dm, u_snd_dm by lia. reflexivity. Qed.
+ Lemma vm_In' : forall d, In d (HEAD3 ++ TAIL12) -> In d vm.
+ Proof.
+ intros d Hd. destruct vm_shape as (fog & _ & _ & ->). apply in_app_iff in Hd as [Hd|Hd]; apply in_app_iff; [left; exact Hd|].
+@@ -801,7 +790,7 @@
+ Lemma sep_SB_NB : iv_disjoint dSB dNB.
+ Proof.
+ destruct vm_shape as (fog & _ & _ & Hvm). pose proof Hseps as S0. rewrite Hvm in S0.
+-apply seps_app_inv in S0 as (S0 & _ & _). exact (seps_pair _ S0 2 3 dSB dNB ltac:(lia) eq_refl eq_refl).
++apply seps_app_inv in S0 as (S0 & _ & _). exact (seps_pair _ S0 1 2 dSB dNB ltac:(lia) eq_refl eq_refl).
+ Qed.
+ Lemma statics_eq : static_extents ly0 = map wzp [dP; dQ; dT; dF; dNB; dSB] ++ [(u eC, 256); wzp dD; (ASAN_CEIL, 2 ^ 47 - ASAN_CEIL); TFIB_IMG].
+ Proof.
+@@ -877,8 +866,8 @@
+ Proof.
+ unfold extra. rewrite length_map. destruct vm_shape as (fog & Hlen & _ & ->).
+ rewrite !filter_app, !length_app.
+-assert (H1 : (length (List.filter (fun iv => negb (known iv)) HEAD3) <= 2)%nat).
+-{ unfold HEAD3. cbn [List.filter]. kn_tac dSB. kn_tac dNB. cbn [negb]. destruct (known dODR), (known dGV); cbn; lia. }
++assert (H1 : (length (List.filter (fun iv => negb (known iv)) HEAD3) <= 1)%nat).
++{ unfold HEAD3. cbn [List.filter]. kn_tac dSB. kn_tac dNB. cbn [negb]. destruct (known dGV); cbn; lia. }
+ assert (H2 : (length (List.filter (fun iv => negb (known iv)) fog) <= 2)%nat).
+ { pose proof (filter_length_le (fun iv => negb (known iv)) fog). lia. }
+ assert (H3 : (length (List.filter (fun iv => negb (known iv)) TAIL12) <= 3)%nat).
+@@ -895,11 +884,10 @@
+ Proof.
+ intros iv Hiv Hk. pose proof hole_facts as (_ & _ & MOK & _).
+ assert (NE : forall d, In d KNOWN -> iv <> d) by (intros d Hd; exact (known_false_neq iv d Hk Hd)).
+-pose proof uGV as [_ RGV]. pose proof uODR as [_ RODR]. pose proof u292 as [_ R292]. pose proof u254 as [_ R254]. pose proof u109 as [_ R109].
++pose proof uGV as [_ RGV]. pose proof u292 as [_ R292]. pose proof u254 as [_ R254]. pose proof u109 as [_ R109].
+ rewrite vm_eq in Hiv. unfold ALLMAPS in Hiv. rewrite !map_app in Hiv.
+ apply in_app_iff in Hiv as [Hh|Hiv]; [|apply in_app_iff in Hiv as [Hf|Ht]].
+-- cbn [map TFIB_HEAD3] in Hh. destruct Hh as [<-|[<-|[<-|[<-|[]]]]].
+-+ change (dmm (mk eODR 4096 KRW)) with dODR. unfold dODR. rewrite u_snd_dm, u_fst_dm by lia. lia.
++- cbn [map TFIB_HEAD3] in Hh. destruct Hh as [<-|[<-|[<-|[]]]].
+ + change (dmm (mk eGV 4096 KRW)) with dGV. unfold dGV. rewrite u_snd_dm, u_fst_dm by lia. lia.
+ + exfalso. apply (NE dSB); [rewrite KNOWN_eq; cbn; tauto | reflexivity].
+ + exfalso. apply (NE dNB); [rewrite KNOWN_eq; cbn; tauto | reflexivity].
+@@ -1021,11 +1009,11 @@
+ Qed.
+ Lemma tail_band : forall i m, nth_error TFIB_TAIL12 i = Some m -> (i < 9)%nat ->
+ bv_unsigned (fst (dmm m)) + bv_unsigned (snd (dmm m)) <= 2147446784 \/ kHighMemBeg <= bv_unsigned (fst (dmm m)).
+-Proof. intros i m Hi H9. apply (vm_split (4 + length (musl_maps ch) + i) m (nth_ALLMAPS_tail i m Hi)); lia. Qed.
++Proof. intros i m Hi H9. apply (vm_split (3 + length (musl_maps ch) + i) m (nth_ALLMAPS_tail i m Hi)); lia. Qed.
+ Lemma head_band : forall i m, nth_error TFIB_HEAD3 i = Some m ->
+ bv_unsigned (fst (dmm m)) + bv_unsigned (snd (dmm m)) <= 2147446784 \/ kHighMemBeg <= bv_unsigned (fst (dmm m)).
+ Proof.
+-intros i m Hi. assert (i < 4)%nat by (destruct (Nat.lt_ge_cases i 4) as [?|G]; [assumption|]; rewrite (proj2 (nth_error_None _ _)) in Hi; [discriminate Hi | cbn; lia]).
++intros i m Hi. assert (i < 3)%nat by (destruct (Nat.lt_ge_cases i 3) as [?|G]; [assumption|]; rewrite (proj2 (nth_error_None _ _)) in Hi; [discriminate Hi | cbn; lia]).
+ apply (vm_split i m); [| lia | lia | lia]. unfold ALLMAPS. rewrite nth_error_app1 by (cbn; lia). exact Hi.
+ Qed.
+ Lemma tfib_layout_ok : layout_ok ly0.
+@@ -1043,7 +1031,7 @@
+ pose proof (vm_bound dC ltac:(vin)) as BC. pose proof (vm_bound dD ltac:(vin)) as BD.
+ pose proof (tail_band 6 _ eq_refl ltac:(lia)) as AP. pose proof (tail_band 5 _ eq_refl ltac:(lia)) as AQ. pose proof (tail_band 4 _ eq_refl ltac:(lia)) as AT.
+ pose proof (tail_band 0 _ eq_refl ltac:(lia)) as AF. pose proof (tail_band 3 _ eq_refl ltac:(lia)) as AC. pose proof (tail_band 1 _ eq_refl ltac:(lia)) as AD.
+-pose proof (head_band 3 _ eq_refl) as ANB. pose proof (head_band 2 _ eq_refl) as ASB.
++pose proof (head_band 2 _ eq_refl) as ANB. pose proof (head_band 1 _ eq_refl) as ASB.
+ change (dmm (mk eP 137439023104 KRW)) with dP in AP. change (dmm (mk eQ 8388608 KNONELAZY)) with dQ in AQ. change (dmm (mk eT 4096 KRW)) with dT in AT.
+ change (dmm (mk eF 11571200 KRW)) with dF in AF. change (dmm (mk eC 65536 KRW)) with dC in AC. change (dmm (mk eD 4096 KRW)) with dD in AD.
+ change (dmm (mk eNB 1048576 KRW)) with dNB in ANB. change (dmm (mk eSB 8388608 KRWLAZY)) with dSB in ASB.

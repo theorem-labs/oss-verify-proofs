@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: selinux
 harness: secilc-fuzzer
-rocq: OssFuzzTheorems.selinux.secilc_fuzzer
+rocq: OSSVerify.selinux.secilc_fuzzer
 origin: upstream
 summary: CIL text -> cil_compile -> cil_build_policydb -> optimize -> write to /dev/null; every failure
   is a goto exit.

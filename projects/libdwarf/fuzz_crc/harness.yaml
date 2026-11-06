@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_crc
-rocq: OssFuzzTheorems.libdwarf.fuzz_crc
+rocq: OSSVerify.libdwarf.fuzz_crc
 origin: upstream
 summary: Reads the temp file back in 1000-byte chunks and folds dwarf_basic_crc32 over them; the CRC is
   never compared with anything.

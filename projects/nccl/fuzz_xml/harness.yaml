@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nccl
 harness: fuzz_xml
-rocq: OssFuzzTheorems.nccl.fuzz_xml
+rocq: OSSVerify.nccl.fuzz_xml
 origin: oss-fuzz
 summary: writes the input to /tmp/libfuzzer.<pid> and parses it with ncclTopoGetXmlFromFile into a calloc'd
   ncclXml; the return code and the parsed tree are ignored.

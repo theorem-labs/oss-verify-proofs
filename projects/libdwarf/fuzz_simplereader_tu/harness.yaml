@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libdwarf
 harness: fuzz_simplereader_tu
-rocq: OssFuzzTheorems.libdwarf.fuzz_simplereader_tu
+rocq: OSSVerify.libdwarf.fuzz_simplereader_tu
 origin: upstream
 summary: 'Never calls dwarf_init*: dbg stays 0, so dwarf_die_from_hash_signature, dwarf_get_debugfission_for_key
   and dwarf_formaddr all take the NULL-handle error path. The input is written to a file and otherwise

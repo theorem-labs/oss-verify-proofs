@@ -1,0 +1,6 @@
+donor: pinned sha256 c0661b96b5bd, twin sha256 68db792d5fa7, allocated sections equal (build-id note excepted): True
+target: pinned sha256 829764b54463, twin sha256 9dc57b2c7a71, allocated sections equal (build-id note excepted): True
+ref 781f46bc05cd image A: 13 ranges paired and compared; 11 resolve lines: 5 move a value (0x40410 -> 0x3dfc4, 0xa63e0 -> 0xa4080, 0xa6440 -> 0xa40e0, 0xa70f0 -> 0xa4d70, 0xa7100 -> 0xa4d80), 0 name the image of a header range, the rest keep the value
+ABSENT in the target (kept by a resolve line, removed from fs_ranges after the write): RtSM1T 0x3fc0c (107 words, __asan_stack_malloc_3)
+ABSENT in the target (kept by a resolve line, removed from fs_ranges after the write): RtSM1T 0x40244 (95 words, __asan_stack_malloc_7)
+FAIL: RtSM1T range 0x3fa7c (__asan_stack_malloc_1): range DIFFERENT (6, 1, 0) 0 differ; function DIFFERENT (6, 1, 0) 0 differ

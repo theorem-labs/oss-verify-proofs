@@ -1,0 +1,28 @@
+--- B/YFgg.v
++++ B/YFgg.v
+@@ -321,11 +321,6 @@
+ ~ (T + t_qc <= a < T + t_qc + 32) -> ~ WIN0 a).
+ { intros a N0 N1 N2 N3 [X|X]; [exact (N0 X)|]. unfold YFgj.WINF in X. clear - X N1 N2 N3. zlia. }
+ srr_run_sh tfibtbl_rtG_ok HS. meq0_acc SK0.
+-(* 0x32dd0 beq a4,a1 (&cache_ = A_QUAR + 160 against the thread's cache T + t_qc): on this image A_QUAR + 160 = T + t_qc mod 4096, so the executor keeps both sides; the equal one puts the thread object at 0x9e000, inside the image, against zone3 of LYB. *)
+-srr_branch_sh tfibtbl_rtG_ok HS.
+-{ exfalso. clear - Hc DR LB R32. zbranch Hc. apply Z.eqb_eq in Hc. destruct LB as (ZT & _). clear - Hc ZT. zlia. }
+-clear Hc. unfold YP06.add_cond in HS; cbn [ss_pc ss_regs ss_mem ss_resv ss_facts f_atoms f_conds f_alias] in HS.
+-srr_run_sh tfibtbl_rtG_ok HS. meq0_acc SK0.
+ srr_branch_sh tfibtbl_rtG_ok HS.
+ 2:{ exfalso. clear - Hc DR R34 HGE. zbranch Hc. apply Z.eqb_neq in Hc. apply Hc. unfold YFgj.GSZv. rewrite HGE. reflexivity. }
+ assert (HGE0 : GSZv = 0) by (unfold YFgj.GSZv; rewrite HGE; reflexivity).
+--- B/YFgh.v
++++ B/YFgh.v
+@@ -321,11 +321,6 @@
+ ~ (T + t_qc <= a < T + t_qc + 32) -> ~ WIN0 a).
+ { intros a N0 N1 N2 N3 [X|X]; [exact (N0 X)|]. unfold YFgj.WINF in X. clear - X N1 N2 N3. zlia. }
+ srr_run_sh tfibtbl_rtG_ok HS. meq0_acc SK0.
+-(* 0x32dd0 beq a4,a1 (&cache_ = A_QUAR + 160 against the thread's cache T + t_qc): on this image A_QUAR + 160 = T + t_qc mod 4096, so the executor keeps both sides; the equal one puts the thread object at 0x9e000, inside the image, against zone3 of LYB. *)
+-srr_branch_sh tfibtbl_rtG_ok HS.
+-{ exfalso. clear - Hc DR LB R32. zbranch Hc. apply Z.eqb_eq in Hc. destruct LB as (ZT & _). clear - Hc ZT. zlia. }
+-clear Hc. unfold YP06.add_cond in HS; cbn [ss_pc ss_regs ss_mem ss_resv ss_facts f_atoms f_conds f_alias] in HS.
+-srr_run_sh tfibtbl_rtG_ok HS. meq0_acc SK0.
+ srr_branch_sh tfibtbl_rtG_ok HS.
+ { exfalso. clear - Hc DR R34 HGN. zbranch Hc. apply Z.eqb_eq in Hc. apply HGN.
+ unfold YFgj.GSZv in Hc. destruct (qc_list gq); cbn [length] in Hc; [reflexivity | zlia]. }

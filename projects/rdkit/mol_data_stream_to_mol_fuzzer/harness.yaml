@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: rdkit
 harness: mol_data_stream_to_mol_fuzzer
-rocq: OssFuzzTheorems.rdkit.mol_data_stream_to_mol_fuzzer
+rocq: OSSVerify.rdkit.mol_data_stream_to_mol_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

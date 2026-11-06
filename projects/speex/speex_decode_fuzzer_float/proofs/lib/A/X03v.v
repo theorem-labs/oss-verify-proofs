@@ -1,0 +1,262 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require Import X1di X1cs X1dh.
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require Import X1dg.
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.PA Require Import X1e9 X1e5.
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.A Require Import X0bp X0j9 X0j2 X0hi X0j3 X03z X04v X02a X02b X00b
+X04g X0hd X03w.
+
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B Require X12c X19l X183 X19m X0ux X0vt X0t9 X0ta X0ra X0ve X17y X0uu.
+Module B_TWIN.
+
+Import OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X12c OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X19l OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X183 OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X19m OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X0ux OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X0vt OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X0t9 OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X0ta OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X0ra OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X0ve OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X17y OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.B.X0uu.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+
+Import ListNotations.
+Open Scope Z_scope.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+
+Definition amemmove_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+(d : Z) (src : list byte) (lo : Z) (m : mem) : machine_state -> Prop :=
+fun ms' => exists (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (m' : mem),
+ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 d) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (ret_pc ra) fc None m' (seg_rom bsegs)
+/\ munch [(d, d + Z.of_nat (length src)); (bv_unsigned sp - AMEMMOVE_DEPTH, bv_unsigned sp)] m m'
+/\ wmono bsegs m m' /\ mem_inv bsegs m' /\ stk bsegs m' lo (bv_unsigned sp)
+/\ rw_cells bsegs m' d [CB (length src) src].
+
+Section WithRIP.
+Hypothesis RIP : rip_stmt.
+
+Theorem amemmove_spec : forall ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+(F : bvmap 5 word) fc (m : mem) (d s : Z) (src junk : list byte) (lo : Z),
+a0 = Z_to_bv 64 d -> a1 = Z_to_bv 64 s -> a2 = Z_to_bv 64 (Z.of_nat (length src)) ->
+stk bsegs m lo (bv_unsigned sp) -> lo <= bv_unsigned sp - AMEMMOVE_DEPTH -> kHighShadowEnd + 8 <= lo -> bv_unsigned sp < 2^63 ->
+0 <= d -> 0 <= s -> d + Z.of_nat (length src) <= 2^47 -> s + Z.of_nat (length src) <= 2^47 ->
+(Z.of_nat (length src) = 0 \/ s + Z.of_nat (length src) <= lo \/ bv_unsigned sp <= s) ->
+(Z.of_nat (length src) = 0 \/ d + Z.of_nat (length src) <= lo \/ bv_unsigned sp <= d) ->
+bytes_at bsegs m s src -> rw_cells bsegs m d [CB (length src) junk] ->
+chk_ok m s (Z.of_nat (length src)) -> chk_ok m d (Z.of_nat (length src)) -> m2s_cells m -> icells m -> mem_inv bsegs m ->
+evt bsegs (amemmove_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc d src lo m)
+(MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x66adc) fc None m (seg_rom bsegs)).
+Proof using RIP.
+intros until lo. intros -> -> -> ST LO LOLO SPH D0 S0 DH SH SEPS SEPD SRC DST CS CD M2S IC MI.
+unfold kHighShadowEnd in *.
+set (n := Z.of_nat (length src)) in *.
+set (usp := bv_unsigned sp) in *.
+assert (ESP : sp = Z_to_bv 64 usp) by (symmetry; apply Z_to_bv_bv_unsigned). rewrite ESP.
+pose proof (munch_refl [(d, d + n); (usp - 2224, usp)] m) as MU. pose proof (wmono_refl bsegs m) as WM.
+pose proof (munch_refl [(usp - 2224, usp)] m) as MUf.
+pose proof IC as (G2 & G1 & RM & SHC & RI).
+assert (SRC0 : keep (bytes_at bsegs m s src)) by exact SRC. clear SRC.
+assert (DST0 : keep (rw_cells bsegs m d [CB (length src) junk])) by exact DST. clear DST.
+assert (N0 : 0 <= n) by lia.
+assert (RS : n = 0 \/ s + n <= 0x7fff8000 \/ 0x10007fff8007 <= s).
+{ destruct (Z.eq_dec n 0) as [E|NE]; [left; exact E| right]. destruct CS as (_ & _ & RO). destruct (RO ltac:(lia)) as (RIM & _).
+unfold region_in_mem, kLowMemEnd, kHighShadowEnd, kHighMemEnd in RIM. lia. }
+assert (RD : n = 0 \/ d + n <= 0x7fff8000 \/ 0x10007fff8007 <= d).
+{ destruct (Z.eq_dec n 0) as [E|NE]; [left; exact E| right]. destruct CD as (_ & _ & RO). destruct (RO ltac:(lia)) as (RIM & _).
+unfold region_in_mem, kLowMemEnd, kHighShadowEnd, kHighMemEnd in RIM. lia. }
+
+assert (OFF : forall p, chk_ok m p n -> 0 <= p -> p + n <= 2^47 ->
+forall m', munch [(d, d + n); (usp - 2224, usp)] m m' -> chk_ok m' p n).
+{ intros p CP P0 P1 m' MU'. apply (chk_ok_agree m m' p n CP P0 P1). apply (agree_of_munch _ _ _ _ MU'). intros x Hx.
+cbn [outside]. split; [lia| split; [lia| exact I]]. }
+call (amemmove_prologue usp d s n); [exact ST| lia| unfold kHighShadowEnd; lia| lia| lia| lia| lia| lia| lia
+| exact IC| exact MI|].
+rename PC into FRs. rename PC0 into FR. rename POST into ST1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+pose proof (OFF s CS S0 SH mm MU) as CS1; pose proof (OFF d CD D0 DH mm MU) as CD1 end.
+assert (IC1 : icells x) by (split; [exact G2| split; [exact G1| split; [exact RM| split; [exact SHC| exact RI]]]]).
+assert (M2S1 : m2s_cells x).
+{ destruct M2S as (M1 & M2 & M3). split; [| split].
+- apply (rw_cells_agree bsegs m x _ _ M1); [| exact WM]. apply (agree_of_munch _ _ _ _ MUf). intros y Hy. cbn in Hy |- *. lia.
+- apply (rw_cells_agree bsegs m x _ _ M2); [| exact WM]. apply (agree_of_munch _ _ _ _ MUf). intros y Hy. cbn in Hy |- *. lia.
+- apply (rw_cells_agree bsegs m x _ _ M3); [| exact WM]. apply (agree_of_munch _ _ _ _ MUf). intros y Hy. cbn in Hy |- *. lia. }
+call (amemmove_src RIP usp d s n); [exact ST1| lia| unfold kHighShadowEnd; lia| lia| lia| lia| lia| lia| lia
+| exact CS1| exact M2S1| exact IC1| assumption|].
+lazymatch goal with H : stk bsegs _ lo (usp + -2144) |- _ => rename H into ST2 end.
+clear CS1 CD1 IC1 M2S1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+pose proof (OFF d CD D0 DH mm MU) as CD2;
+assert (IC2 : icells mm) by (split; [exact G2| split; [exact G1| split; [exact RM| split; [exact SHC| exact RI]]]]);
+assert (M2S2 : m2s_cells mm) by (destruct M2S as (M1 & M2 & M3); split; [| split];
+[ apply (rw_cells_agree bsegs m mm _ _ M1); [| exact WM]; apply (agree_of_munch _ _ _ _ MUf); intros y Hy; cbn in Hy |- *; lia
+| apply (rw_cells_agree bsegs m mm _ _ M2); [| exact WM]; apply (agree_of_munch _ _ _ _ MUf); intros y Hy; cbn in Hy |- *; lia
+| apply (rw_cells_agree bsegs m mm _ _ M3); [| exact WM]; apply (agree_of_munch _ _ _ _ MUf); intros y Hy; cbn in Hy |- *; lia ])
+end.
+call (amemmove_dst RIP usp d s n); [exact ST2| lia| unfold kHighShadowEnd; lia| lia| lia| lia| lia| lia| lia
+| exact CD2| exact M2S2| exact IC2| assumption|].
+lazymatch goal with H : stk bsegs _ lo (usp + -2144) |- _ => rename H into ST3 end.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+assert (SRC : bytes_at bsegs mm s src)
+by (unfold keep in SRC0; apply (bytes_at_agree bsegs m mm _ _ SRC0); apply (agree_of_munch _ _ _ _ MUf); intros y Hy;
+cbn [outside]; fold n in Hy; (split; [lia| exact I]));
+assert (DST : rw_cells bsegs mm d [CB (length src) junk])
+by (unfold keep in DST0; apply (rw_cells_agree bsegs m mm _ _ DST0); [| exact WM]; apply (agree_of_munch _ _ _ _ MUf); intros y Hy;
+cbn [outside]; cbn [cells_size csize] in Hy; rewrite Nat.add_0_r in Hy; fold n in Hy; (split; [lia| exact I]))
+end.
+clear CD2 IC2 M2S2 MUf SRC0 DST0.
+
+lstep.
+destruct (Z.eq_dec n 0) as [NZ0|NNZ].
+-
+eapply evt_cut.
+{ eapply (imemmove_spec d s src junk); [reflexivity | reflexivity | reflexivity | lia | lia | fold n; lia | fold n; lia
+| exact SRC | exact DST | assumption]. }
+intros ms' PO. destruct_exs PO. destruct PO as [E [MUc [WMc [MIc PO]]]]. subst ms'.
+fold n in MUc. rewrite NZ0, Z.add_0_r in MUc.
+lazymatch type of MUc with munch _ ?m1 ?m2 =>
+assert (MUe : munch [] m1 m2) by (eapply munch_weaken; [| exact MUc]; unfold sub_fp; cbn [outside]; intros; lia);
+clear MUc; transport_after_call bsegs m1 m2 MUe WMc; clear MUe WMc end.
+replace (ret_pc (Z_to_bv 64 0x66bc0)) with (Z_to_bv 64 0x66bc0) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+do 10 lstep.
+release_frame FR ST3 (usp + -64). release_frame FRs ST3 usp.
+lstep.
+unfold amemmove_post. sys_finish.
++ rewrite (unsigned_lit usp) by lia.
+eapply munch_weaken; [| exact MU]. unfold sub_fp; cbn [outside]; intros; lia.
++ rewrite (unsigned_lit usp) by lia. assumption.
+- call (imemmove_spec d s src junk); [reflexivity | reflexivity | reflexivity | lia | lia | fold n; lia | fold n; lia
+| exact SRC | exact DST | assumption|].
+do 10 lstep.
+release_frame FR ST3 (usp + -64). release_frame FRs ST3 usp.
+lstep.
+unfold amemmove_post. sys_finish.
++ rewrite (unsigned_lit usp) by lia.
+eapply munch_weaken; [| exact MU]. unfold sub_fp; cbn [outside]; intros; lia.
++ rewrite (unsigned_lit usp) by lia. assumption.
+Qed.
+End WithRIP.
+End B_TWIN.
+
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
+
+Import ListNotations.
+Open Scope Z_scope.
+Local Ltac transport_chunks segs m a bs ::= transport_chunks_fast segs m a bs.
+Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs m a bs.
+Local Ltac mem_after_store ::= mem_after_store_fast.
+
+Definition amemmove_post (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
+(d : Z) (src : list byte) (lo : Z) (m : mem) : machine_state -> Prop :=
+fun ms' => exists (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (m' : mem),
+ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 d) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (ret_pc ra) fc None m' (seg_rom asegs)
+/\ munch [(d, d + Z.of_nat (length src)); (bv_unsigned sp - AMEMMOVE_DEPTH, bv_unsigned sp)] m m'
+/\ wmono asegs m m' /\ mem_inv asegs m' /\ stk asegs m' lo (bv_unsigned sp)
+/\ rw_cells asegs m' d [CB (length src) src].
+
+Section WithRIP.
+Hypothesis RIP : rip_stmt.
+
+Theorem amemmove_spec : forall ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
+(F : bvmap 5 word) fc (m : mem) (d s : Z) (src junk : list byte) (lo : Z),
+a0 = Z_to_bv 64 d -> a1 = Z_to_bv 64 s -> a2 = Z_to_bv 64 (Z.of_nat (length src)) ->
+stk asegs m lo (bv_unsigned sp) -> lo <= bv_unsigned sp - AMEMMOVE_DEPTH -> kHighShadowEnd + 8 <= lo -> bv_unsigned sp < 2^63 ->
+0 <= d -> 0 <= s -> d + Z.of_nat (length src) <= 2^47 -> s + Z.of_nat (length src) <= 2^47 ->
+(Z.of_nat (length src) = 0 \/ s + Z.of_nat (length src) <= lo \/ bv_unsigned sp <= s) ->
+(Z.of_nat (length src) = 0 \/ d + Z.of_nat (length src) <= lo \/ bv_unsigned sp <= d) ->
+bytes_at asegs m s src -> rw_cells asegs m d [CB (length src) junk] ->
+chk_ok m s (Z.of_nat (length src)) -> chk_ok m d (Z.of_nat (length src)) -> m2s_cells m -> icells m -> mem_inv asegs m ->
+evt asegs (amemmove_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc d src lo m)
+(MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+F (Z_to_bv 64 0x669f0) fc None m (seg_rom asegs)).
+Proof using RIP.
+intros until lo. intros -> -> -> ST LO LOLO SPH D0 S0 DH SH SEPS SEPD SRC DST CS CD M2S IC MI.
+unfold kHighShadowEnd in *.
+set (n := Z.of_nat (length src)) in *.
+set (usp := bv_unsigned sp) in *.
+assert (ESP : sp = Z_to_bv 64 usp) by (symmetry; apply Z_to_bv_bv_unsigned). rewrite ESP.
+pose proof (munch_refl [(d, d + n); (usp - 2224, usp)] m) as MU. pose proof (wmono_refl asegs m) as WM.
+pose proof (munch_refl [(usp - 2224, usp)] m) as MUf.
+pose proof IC as (G2 & G1 & RM & SHC & RI).
+assert (SRC0 : keep (bytes_at asegs m s src)) by exact SRC. clear SRC.
+assert (DST0 : keep (rw_cells asegs m d [CB (length src) junk])) by exact DST. clear DST.
+assert (N0 : 0 <= n) by lia.
+assert (RS : n = 0 \/ s + n <= 0x7fff8000 \/ 0x10007fff8007 <= s).
+{ destruct (Z.eq_dec n 0) as [E|NE]; [left; exact E| right]. destruct CS as (_ & _ & RO). destruct (RO ltac:(lia)) as (RIM & _).
+unfold region_in_mem, kLowMemEnd, kHighShadowEnd, kHighMemEnd in RIM. lia. }
+assert (RD : n = 0 \/ d + n <= 0x7fff8000 \/ 0x10007fff8007 <= d).
+{ destruct (Z.eq_dec n 0) as [E|NE]; [left; exact E| right]. destruct CD as (_ & _ & RO). destruct (RO ltac:(lia)) as (RIM & _).
+unfold region_in_mem, kLowMemEnd, kHighShadowEnd, kHighMemEnd in RIM. lia. }
+
+assert (OFF : forall p, chk_ok m p n -> 0 <= p -> p + n <= 2^47 ->
+forall m', munch [(d, d + n); (usp - 2224, usp)] m m' -> chk_ok m' p n).
+{ intros p CP P0 P1 m' MU'. apply (chk_ok_agree m m' p n CP P0 P1). apply (agree_of_munch _ _ _ _ MU'). intros x Hx.
+cbn [outside]. split; [lia| split; [lia| exact I]]. }
+call (amemmove_prologue usp d s n); [exact ST| lia| unfold kHighShadowEnd; lia| lia| lia| lia| lia| lia| lia
+| exact IC| exact MI|].
+rename PC into FRs. rename PC0 into FR. rename POST into ST1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+pose proof (OFF s CS S0 SH mm MU) as CS1; pose proof (OFF d CD D0 DH mm MU) as CD1 end.
+assert (IC1 : icells x) by (split; [exact G2| split; [exact G1| split; [exact RM| split; [exact SHC| exact RI]]]]).
+assert (M2S1 : m2s_cells x).
+{ destruct M2S as (M1 & M2 & M3). split; [| split].
+- apply (rw_cells_agree asegs m x _ _ M1); [| exact WM]. apply (agree_of_munch _ _ _ _ MUf). intros y Hy. cbn in Hy |- *. lia.
+- apply (rw_cells_agree asegs m x _ _ M2); [| exact WM]. apply (agree_of_munch _ _ _ _ MUf). intros y Hy. cbn in Hy |- *. lia.
+- apply (rw_cells_agree asegs m x _ _ M3); [| exact WM]. apply (agree_of_munch _ _ _ _ MUf). intros y Hy. cbn in Hy |- *. lia. }
+call (amemmove_src RIP usp d s n); [exact ST1| lia| unfold kHighShadowEnd; lia| lia| lia| lia| lia| lia| lia
+| exact CS1| exact M2S1| exact IC1| assumption|].
+lazymatch goal with H : stk asegs _ lo (usp + -2144) |- _ => rename H into ST2 end.
+clear CS1 CD1 IC1 M2S1.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+pose proof (OFF d CD D0 DH mm MU) as CD2;
+assert (IC2 : icells mm) by (split; [exact G2| split; [exact G1| split; [exact RM| split; [exact SHC| exact RI]]]]);
+assert (M2S2 : m2s_cells mm) by (destruct M2S as (M1 & M2 & M3); split; [| split];
+[ apply (rw_cells_agree asegs m mm _ _ M1); [| exact WM]; apply (agree_of_munch _ _ _ _ MUf); intros y Hy; cbn in Hy |- *; lia
+| apply (rw_cells_agree asegs m mm _ _ M2); [| exact WM]; apply (agree_of_munch _ _ _ _ MUf); intros y Hy; cbn in Hy |- *; lia
+| apply (rw_cells_agree asegs m mm _ _ M3); [| exact WM]; apply (agree_of_munch _ _ _ _ MUf); intros y Hy; cbn in Hy |- *; lia ])
+end.
+call (amemmove_dst RIP usp d s n); [exact ST2| lia| unfold kHighShadowEnd; lia| lia| lia| lia| lia| lia| lia
+| exact CD2| exact M2S2| exact IC2| assumption|].
+lazymatch goal with H : stk asegs _ lo (usp + -2144) |- _ => rename H into ST3 end.
+lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+assert (SRC : bytes_at asegs mm s src)
+by (unfold keep in SRC0; apply (bytes_at_agree asegs m mm _ _ SRC0); apply (agree_of_munch _ _ _ _ MUf); intros y Hy;
+cbn [outside]; fold n in Hy; (split; [lia| exact I]));
+assert (DST : rw_cells asegs mm d [CB (length src) junk])
+by (unfold keep in DST0; apply (rw_cells_agree asegs m mm _ _ DST0); [| exact WM]; apply (agree_of_munch _ _ _ _ MUf); intros y Hy;
+cbn [outside]; cbn [cells_size csize] in Hy; rewrite Nat.add_0_r in Hy; fold n in Hy; (split; [lia| exact I]))
+end.
+clear CD2 IC2 M2S2 MUf SRC0 DST0.
+
+lstep.
+destruct (Z.eq_dec n 0) as [NZ0|NNZ].
+-
+eapply evt_cut.
+{ eapply (imemmove_spec d s src junk); [reflexivity | reflexivity | reflexivity | lia | lia | fold n; lia | fold n; lia
+| exact SRC | exact DST | assumption]. }
+intros ms' PO. destruct_exs PO. destruct PO as [E [MUc [WMc [MIc PO]]]]. subst ms'.
+fold n in MUc. rewrite NZ0, Z.add_0_r in MUc.
+lazymatch type of MUc with munch _ ?m1 ?m2 =>
+assert (MUe : munch [] m1 m2) by (eapply munch_weaken; [| exact MUc]; unfold sub_fp; cbn [outside]; intros; lia);
+clear MUc; transport_after_call asegs m1 m2 MUe WMc; clear MUe WMc end.
+replace (ret_pc (Z_to_bv 64 0x66ad4)) with (Z_to_bv 64 0x66ad4) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
+do 10 lstep.
+release_frame FR ST3 (usp + -64). release_frame FRs ST3 usp.
+lstep.
+unfold amemmove_post. sys_finish.
++ rewrite (unsigned_lit usp) by lia.
+eapply munch_weaken; [| exact MU]. unfold sub_fp; cbn [outside]; intros; lia.
++ rewrite (unsigned_lit usp) by lia. assumption.
+- call (imemmove_spec d s src junk); [reflexivity | reflexivity | reflexivity | lia | lia | fold n; lia | fold n; lia
+| exact SRC | exact DST | assumption|].
+do 10 lstep.
+release_frame FR ST3 (usp + -64). release_frame FRs ST3 usp.
+lstep.
+unfold amemmove_post. sys_finish.
++ rewrite (unsigned_lit usp) by lia.
+eapply munch_weaken; [| exact MU]. unfold sub_fp; cbn [outside]; intros; lia.
++ rewrite (unsigned_lit usp) by lia. assumption.
+Qed.
+End WithRIP.

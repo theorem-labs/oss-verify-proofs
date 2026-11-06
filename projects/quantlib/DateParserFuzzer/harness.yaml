@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: quantlib
 harness: DateParserFuzzer
-rocq: OssFuzzTheorems.quantlib.DateParserFuzzer
+rocq: OSSVerify.quantlib.DateParserFuzzer
 origin: upstream
 summary: DateParser::parseFormatted(s, "%Y-%m-%d") and DateParser::parseISO(s2) on two fuzzed strings
   (<=100 chars); results cast to void, std::exception caught. No format->parse round trip.

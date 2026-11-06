@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: simdjson
 harness: fuzz_dump_raw_tape
-rocq: OssFuzzTheorems.simdjson.fuzz_dump_raw_tape
+rocq: OSSVerify.simdjson.fuzz_dump_raw_tape
 origin: upstream
 summary: parse, then elem.dump_raw_tape(null ostream); the boolean result (false when the tape is malformed)
   is discarded.

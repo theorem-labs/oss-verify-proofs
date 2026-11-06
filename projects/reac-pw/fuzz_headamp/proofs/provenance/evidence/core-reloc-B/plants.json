@@ -1,0 +1,44 @@
+[
+ [
+  "YB1w.v",
+  462,
+  "0x8bda8",
+  "0x8b930",
+  "P1 image-A code address left (sysconf A start)"
+ ],
+ [
+  "YE22.v",
+  19,
+  "0x9d478",
+  "0x9d480",
+  "P2 .got slot slid to the next slot"
+ ],
+ [
+  "YFhn.v",
+  421,
+  "0x80050000",
+  "0x800502b8",
+  "P3 model constant moved (port_core class-5 error)"
+ ],
+ [
+  "YB13.v",
+  120,
+  "442368",
+  "438272",
+  "P4 image A seg1 size kept (geometry)"
+ ],
+ [
+  "YB1h.v",
+  78,
+  "8192",
+  "12288",
+  "P5 image A seg2 size kept (geometry)"
+ ],
+ [
+  "YFk1.v",
+  662,
+  "0x21ab4 4 0x6a508",
+  "0x21a74 4 0x6a0d0",
+  "P6 both-tools-wrong jump-table cell/value"
+ ]
+]

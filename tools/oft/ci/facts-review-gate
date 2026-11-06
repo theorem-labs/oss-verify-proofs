@@ -17,7 +17,7 @@ set -euo pipefail
 
 [[ $PR =~ ^[0-9]+$ ]] || { echo "facts-review-gate: PR is not a number" >&2; exit 2; }
 [[ $REPO =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || { echo "facts-review-gate: REPO is not owner/name" >&2; exit 2; }
-FACTS='^projects/[^/]+/(project\.yaml|[^/]+/harness\.yaml|[^/]+/source/.+|[^/]+/Distribution\.v)$'
+FACTS='^(projects/[^/]+/(project\.yaml|[^/]+/harness\.yaml|[^/]+/source/.+|[^/]+/Distribution\.v|patches/[^/]*\.patch)|patches/[^/]+/[^/]*\.patch)$'
 marker='<!-- facts-review -->'
 
 changed=$(gh api "repos/$REPO/pulls/$PR" --jq .changed_files)

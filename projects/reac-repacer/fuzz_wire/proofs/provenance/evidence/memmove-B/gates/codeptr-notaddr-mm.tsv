@@ -1,0 +1,7 @@
+# codeptr --not-address declarations of this row: VALUE<TAB>REASON. Each value is measured in both images by measure-mm.py
+# (records/measure.out); every occurrence is listed in records/codeptr-occurrences.tsv.
+0x168693	MemmoveIm.v:35 W_mm18 : bv 32, the instruction word addi a3, a3, 1 (D_mm18) at __sanitizer_internal_memmove+0x18 (fuzz_wire 0x63090, fuzz_pcap 0x63c20): an instruction word, not an address
+0x158593	MemmoveIm.v:37 W_mm1c : bv 32, the instruction word addi a1, a1, 1 (D_mm1c) at __sanitizer_internal_memmove+0x1c (fuzz_wire 0x63094, fuzz_pcap 0x63c24): an instruction word, not an address
+0x100613	MemmoveIm.v:49 W_mm34 : bv 32, the instruction word addi a2, zero, 1 (D_mm34) at __sanitizer_internal_memmove+0x34 (fuzz_wire 0x630ac, fuzz_pcap 0x63c3c): an instruction word, not an address
+0x168813	MemmoveIm.v:57 W_mm44 : bv 32, the instruction word addi a6, a3, 1 (D_mm44) at __sanitizer_internal_memmove+0x44 (fuzz_wire 0x630bc, fuzz_pcap 0x63c4c): an instruction word, not an address
+0x200000	MemmoveK.v:1040 entD_ro's bound fst (fst e) + snd (fst e) <= 0x200000 over every icpt_rodata row (largest row end: fuzz_wire 0xa14f8, fuzz_pcap 0xa24b8), proved by lia over the concrete rows: a loose bound, the same in the donor file, not an address

@@ -1,0 +1,6 @@
+# EXTRACT of the closure run on the ADD-planted images: its header and every line that names the planted
+# function _ZN6__asan9Allocator22FindHeapChunkByAddressEm (the rest of the run is the unplanted run of this record).
+__asan_memmove	closure 785 functions (register-indirect call sites inside: 97)	EQUAL 171	EQUAL-mod-pcrel(all targets equal) 513	other 101	members with value / full-bytes / NAME-ONLY / C-string acceptances 427
+   _ZN6__asan9Allocator22FindHeapChunkByAddressEm @0x30954: DIFFERENT-target (words-only EQUAL-mod-pcrel) [('0x10', '(None)', '__strftime_l/strftime_l+0x244', 'lui-in-section', ('0x98000 in None | 0x98000 in .text', 'names', None))]  (printed 1 of 1 targets)
+CSTR	_ZN6__asan9Allocator22FindHeapChunkByAddressEm	X:Y	0x144	0x14f7e	0x14fc0	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f616c6c6f6361746f722e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_allocator.cpp\x00'
+CSTR	_ZN6__asan9Allocator22FindHeapChunkByAddressEm	X:Y	0x148	0x1f775	0x1f7c3	71	28284173616e4368756e6b566965772872696768745f6368756e6b292e41646472497341744c65667428616464722c20312c2026725f6f666673657429292920213d2028302900	b'((AsanChunkView(right_chunk).AddrIsAtLeft(addr, 1, &r_offset))) != (0)\x00'

@@ -1,0 +1,19 @@
+file	line (B)	old (image A)	new (image B)	where	derive_y	alreloc	decision
+lib/AU/Rt/StrncmpDef.v	43	0x41ba4	0x41c24	code	agree	agree	__interceptor_trampoline_strncmp in the B .symtab (jal target at the B calls 0x8329c, 0x84d94)
+lib/AU/Rt/FMrt_pre.v	282	0x1369dd	0x136e5d	code	agree	agree	common_flags_dont_use + 0xf5 in B; b0 YF0m.v:571 z1 (ANum 0x136e5d) 0x0
+lib/AU/Rt/FMrt_pre.v	282	0x1369d8	0x136e58	code	agree	agree	common_flags_dont_use + 0xf0 in B; b0 YF0m.v:65 z8 (ANum 0x136e58) 0x101000100000000 (= image A value)
+lib/AU/Rt/FMrt_pre.v	284	0x1369d8	0x136e58	code	agree	agree	common_flags_dont_use + 0xf0 in B; b0 YF0m.v:65 z8 (ANum 0x136e58) 0x101000100000000 (= image A value)
+lib/AU/HPgWrapNcmp.v	65	0x41ba4	0x41c24	code	agree	agree	__interceptor_trampoline_strncmp in the B .symtab (jal target at the B calls 0x8329c, 0x84d94)
+lib/AU/HPgWrapNcmp.v	308	0x41ba4	0x41c24	code	agree	agree	__interceptor_trampoline_strncmp in the B .symtab (jal target at the B calls 0x8329c, 0x84d94)
+lib/AU/HPgWrapNcmp.v	321	0x41ba4	0x41c24	code	agree	agree	__interceptor_trampoline_strncmp in the B .symtab (jal target at the B calls 0x8329c, 0x84d94)
+lib/AU/HPgWrapNcmp.v	328	0x41ba4	0x41c24	code	agree	agree	__interceptor_trampoline_strncmp in the B .symtab (jal target at the B calls 0x8329c, 0x84d94)
+lib/AU/HPgWrapNcmpH.v	2	0x41ba4	0x41c24	comment (this file's own head)	agree	agree	__interceptor_trampoline_strncmp in the B .symtab (jal target at the B calls 0x8329c, 0x84d94)
+lib/AU/HPgWrapNcmpH.v	3	0x849c8	0x84d94	comment (this file's own head)	0x84dc0 (wrong)	kept A value (wrong)	HAND: derive_y 0x84dc0 (offset map, wrong), alreloc kept 0x849c8 (A): the B parse calls jal 0x41c24 at 0x84d94 (capstone; lib/AU/HPgHole.v B_CALL_STRNCMP)
+lib/AU/HPgWrapNcmpH.v	5	0x41ba4 / 0x4268c	0x41c24 / 0x4270c	comment (this file's own head)	agree	agree	trampoline / interceptor in the B .symtab
+lib/AU/HPgWrapNcmpH.v	418	0x41ba4	0x41c24	code	agree	agree	__interceptor_trampoline_strncmp in the B .symtab (jal target at the B calls 0x8329c, 0x84d94)
+lib/AU/HPgWrapNcmpH.v	440	0x41ba4	0x41c24	code	agree	agree	__interceptor_trampoline_strncmp in the B .symtab (jal target at the B calls 0x8329c, 0x84d94)
+all 12 files	-	(comment numerals)	-	comment (donor text)	moved 25	6 UNMAPPED, rest moved	R1: reverted to the A text (the comments are the donors', verbatim, naming the donor images): 25 rows (post_rt.log)
+lib/AU/Rt/FMbz_bridge.v	11	A/AE6x.v	A/AE6x.v	comment (donor text)	A/YE6x.v (token renamed)	-	HAND: restored to the donor text (it names cgif_file's file)
+lib/AU/Rt/FMbz_clean.v	-	2147450880 (x2)	same	code	kept	SIZES_KEEP	class-5, byte-identical
+lib/AU/Rt/FMbz_str.v	-	0x7fff8000	same	code	kept	SIZES_KEEP	class-5, byte-identical
+lib/AU/Rt/FMrt_pre.v	-	0x7fff7f800000, 0x101000100000000	same	code	kept	kept	class-5 / image-derived value recomputed from b0 YF0m.v:65: equal

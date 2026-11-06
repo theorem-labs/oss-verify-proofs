@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: spirv-cross
 harness: parser_fuzzer
-rocq: OssFuzzTheorems.spirv_cross.parser_fuzzer
+rocq: OSSVerify.spirv_cross.parser_fuzzer
 origin: oss-fuzz
 summary: Requires size >= 20 and a multiple of 4, overwrites words 0 and 1 with the SPIR-V magic and version
   1.6, and runs spirv_cross::Parser::parse(); every exception is swallowed by catch(...). The parsed IR

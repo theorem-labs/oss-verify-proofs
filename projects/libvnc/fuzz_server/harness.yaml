@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libvnc
 harness: fuzz_server
-rocq: OssFuzzTheorems.libvnc.fuzz_server
+rocq: OSSVerify.libvnc.fuzz_server
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

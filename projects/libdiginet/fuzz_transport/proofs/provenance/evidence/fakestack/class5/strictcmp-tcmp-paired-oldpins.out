@@ -1,0 +1,6 @@
+# strictcmp 77daee258b95 tcmp(I, i1, a1, i2, a2, nbytes) at address-paired ranges; images as in strictcmp-cmp-oldpins.out
+range	pair	addr1	addr2	bytes	result
+MemToShadow copy	CA:TA	0x40410	0x3dfbc	112	('EQUAL-mod-pcrel', (4, 0, 0), (0, 0, 0, 0), [])
+MemToShadow copy	CB:TB	0x4045c	0x3e000	112	('EQUAL-mod-pcrel', (4, 0, 0), (0, 0, 0, 0), [])
+RegisterCommonFlags	CA:TA	0x677a8	0x62520	4772	('EQUAL-mod-pcrel', (370, 0, 0), (178, 0, 1, 0), [])
+RegisterCommonFlags	CB:TB	0x677f4	0x62564	4772	('EQUAL-mod-pcrel', (370, 0, 0), (178, 0, 1, 0), [])

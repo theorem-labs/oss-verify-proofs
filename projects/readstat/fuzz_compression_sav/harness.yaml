@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: readstat
 harness: fuzz_compression_sav
-rocq: OssFuzzTheorems.readstat.fuzz_compression_sav
+rocq: OSSVerify.readstat.fuzz_compression_sav
 origin: upstream
 summary: sav_decompress_row() (SPSS bytecode row decompression) of the input into a 32 KiB buffer; the
   stream state is not inspected.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: pngquant
 harness: fuzzer
-rocq: OssFuzzTheorems.pngquant.fuzzer
+rocq: OSSVerify.pngquant.fuzzer
 origin: upstream
 summary: Writes the input to /tmp/libfuzzer.png and calls pngquant's read_image() (libpng decode into
   a liq_image); the return code is ignored, nothing is quantized or compared.

@@ -1,0 +1,226 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/cjson/cjson_read_fuzzer/lib/A/RTW_q_rec2.v, with its module paths and module names changed; 648 of its 746 lines of code are new or changed and 1953 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/Prog/check_round_trip_runs.v, with its module paths, module names, addresses and numbers changed; 583 of its 659 lines of code are new or changed and 670 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/U/Prog/CF/past_nul.v, with its module paths and module names changed; 715 of its 794 lines of code are new or changed and 580 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/U/Prog/CF/check_as_written.v, with its module paths and module names changed; 279 of its 322 lines of code are new or changed and 751 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/U/Prog/CF/fuzz_free.v, with its module paths, module names and addresses changed; 23 of its 210 lines of code are new or changed and 135 lines of the source are left out. *)
+From Stdlib Require Import ZArith List Bool Lia.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Lib Require PropExec MState Mem Exec Frame Tac Bytes Step ZBridge.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib Require Img0.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YO0f YO10.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib Require KindBGlue.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YK14 YK1a YL01.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib Require FrameAPI.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require Import YK11 YK0o YK0s YK15 YM06 YP09.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require Import YO0i YO0f YO0d YO05
+YO0p YO0j YO0m YO0l YO0n YO0k YO0o YO09.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require Import YM05 YL0i.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib Require Import Contract.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib Require Import KindBGlue.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Prog Require Import Ledger LedgerFacts fuzz_free_c.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib Require Import SlotAgree AgreeLift KindBGlueCf.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Prog Require Import AgCf fuzz_free_c_cf.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Prog Require Import fuzz_free.
+Import ListNotations.
+Local Open Scope Z_scope.
+
+(* The cut-free (agreement) twin of fuzz_free_holds (fuzz_free.v): the same proof in SRcf form, with the allocator
+   taken through free_contract_cf. *)
+Section FreeCf.
+Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Variable B : malloc_syms.
+Variable API : AllocAPI B.
+
+(* The cut-free twin of YM06.SR_step: one silent instruction step. *)
+Lemma SRcf_step : forall ms model ms' Q,
+  m_halted model = None -> m_vm_lazy model = [] -> ms_svc_pending ms = None ->
+  RiscvSemantics.step (ms_segs B) ms = MachineOk ms' ->
+  SRcf B (mkCfg ms' model) Q -> SRcf B (mkCfg ms model) Q.
+Proof.
+  intros ms model ms' Q Hh Hl Hs Hst H T HK. pose proof (H T HK) as Hc. apply crealizes_intro.
+  - exact (rz_step (ms_segs B) ms model ms' T Hh Hl Hs Hst (crealizes_realizes B _ T Hc)).
+  - exact (cut_free_instr B ms model ms' Hh Hl Hs Hst (crealizes_cut_free B _ T Hc)).
+  - exact (uniform_instr B ms model ms' Hh Hl Hs Hst (crealizes_uniform B _ T Hc)).
+Qed.
+
+Theorem fuzz_free_cf_holds :
+  ms_segs B = Img0.rsegs -> ms_free B = 0x14ba0 ->
+  (forall a, in_globals FrameAPI.frame_G a -> in_img B a /\ ~ static_owned B a /\
+     ~ (ms_ctx B <= a < ms_ctx B + CTX_SIZE) /\ ~ (errno_addr B <= a < errno_addr B + 4)) ->
+  YL01.AllocExtra B (aa_MR API) ->
+  (forall L A mem md a, aa_MR API L A mem md -> in_globals FrameAPI.frame_G a -> ~ owned B L A a) ->
+  (forall fx : YK11.FPState, @free_contract_cf fx rc B API) -> fuzz_free_contract_cf B API.
+Proof.
+  intros Hsegs Hfree HGi AX HGo HF L A regs mem md p k b Lam peak cnt fail Hpre Ha0 Hled Hinv Hpk Hres.
+  pose proof (ff_img_low B Hsegs) as HI.
+  assert (HG : globals_free B API [(G_FAIL, 8); (G_LIVE, 24)]) by exact (ff_globals_free B API Hsegs HGi AX HGo).
+  pose proof Hpre as (HM & HWF & HB & Hra & Hal & Hlo & Hhi & HW & Htp & Herr & Haux).
+  destruct (kb_md B API L A mem md HM) as [Hh Hlz].
+  pose proof alloc_ceiling_lt as Hc.
+  assert (Has : ALLOC_STACK = 8192) by reflexivity.
+  assert (Hstk : forall a, (spZ regs - ALLOC_STACK <= a < spZ regs) \/ (errno_addr B <= a < errno_addr B + 4) ->
+            writable_at (ms_segs B) mem a) by (intros a [Ha|Ha]; [exact (HW a Ha) | exact (Herr a Ha)]).
+  destruct (Z.eq_dec p 0) as [Hp0|Hp0].
+  - subst p. unfold FUZZ_FREE.
+    eapply SRcf_step; [exact Hh | exact Hlz | reflexivity | |].
+    { eapply step_branch_tk_gen with (w := (0x06050a63%bv : bv 32));
+        [rewrite Hsegs; YK1a.vm_refl_bv | reflexivity | exact ff_D0 |].
+      rewrite Ha0. vm_compute. reflexivity. }
+    eapply SRcf_step; [exact Hh | exact Hlz | reflexivity | |].
+    { eapply YK14.step_jalr_x0 with (w := (0x00008067%bv : bv 32));
+        [rewrite Hsegs; YK1a.vm_refl_bv | reflexivity | exact ff_D1 | reflexivity]. }
+    match goal with |- context [YK14.v_jalr ?t ?i] =>
+      replace (YK14.v_jalr t i) with (getr regs 1) by (symmetry; change i with 0; exact Hra) end.
+    apply SRcf_ret.
+    exists L, A, regs, mem, md.
+    split; [reflexivity|]. split; [exact Hinv|]. split; [intros i _; reflexivity|]. split; [tauto|].
+    split; [intros _ i _; reflexivity|].
+    split.
+    { apply kb_post; [apply kb_mid_refl; [exact HM | exact HWF | exact HB | exact Hstk] |].
+      intros r _. reflexivity. }
+    split; [lia|].
+    split; [intros a n i _ _ _; reflexivity|].
+    split; [intros q n Hq _; exact Hq|].
+    left. do 7 (split; [reflexivity|]). split; [exact Hled | exact Hres].
+  - destruct Hpk as [[Hp _]|Hin]; [contradiction|].
+    pose proof (ledger_block_range B API L A mem md Lam peak cnt fail p k HM Hled Hin) as (Hp1 & Hp2 & Hp3).
+    pose proof Hled as ((HWl & HWp & HWc & HWf) & HP & HC & HFl & HN & HBl).
+    rewrite Forall_forall in HBl. pose proof (HBl (p, k) Hin) as Hlb. cbn [fst snd] in Hlb.
+    pose proof Hlb as (Hk0 & Hblk & Hwk & _).
+    apply lblock_user in Hlb. destruct Hlb as (q & Hq & Eq).
+    destruct (in_split _ _ Hin) as (l1 & l2 & HLam).
+    pose proof (lsum_nonneg _ (ledger_sizes B _ _ _ _ _ _ _ Hled)) as HsL.
+    assert (Hsum : lsum Lam - k = lsum (l1 ++ l2)) by (rewrite HLam, !lsum_app; cbn [lsum]; lia).
+    assert (Hs12 : 0 <= lsum (l1 ++ l2)).
+    { apply lsum_nonneg. pose proof (ledger_sizes B _ _ _ _ _ _ _ Hled) as Hs. rewrite HLam in Hs.
+      rewrite Forall_forall in Hs |- *. intros x Hx. apply Hs. apply in_app_or in Hx. apply in_or_app.
+      destruct Hx as [Hx|Hx]; [left; exact Hx | right; right; exact Hx]. }
+    destruct (HG (G_LIVE + 7) (ff_glob (G_LIVE + 7) ltac:(left; unfold G_LIVE; lia))) as (_ & HGr & _).
+    assert (RB : forall j, (j < 8)%nat ->
+              ov_read_bytes Img0.rsegs mem (Mem.wa (p - 16 + Z.of_nat j)) 1 = Some [Z_to_bv 8 (le_byte k 8 j)]).
+    { intros j Hj. rewrite <- Hsegs. apply word_mem_byte1; [exact Hwk | lia | lia | exact Hj]. }
+    assert (RL : ov_read_bytes Img0.rsegs mem (Mem.wa 0x2f370) 8 = Some (Mem.le8 (Z_to_bv 64 (lsum Lam)))).
+    { rewrite <- Hsegs.
+      assert (Hbl : Mem.bytes_at (ms_segs B) mem G_LIVE (Mem.le8 (Z_to_bv 64 (lsum Lam))))
+        by (apply word_mem_le8; [exact HWl | lia | unfold G_LIVE; lia | unfold G_LIVE; lia]).
+      replace (Mem.wa 0x2f370) with (Mem.wa (G_LIVE + 0)) by reflexivity.
+      rewrite (Mem.bytes_at_read (ms_segs B) mem G_LIVE _ 0 8 Hbl) by (rewrite ?Mem.length_le8; lia).
+      reflexivity. }
+    assert (HWr : Mem.wr_at (ms_segs B) mem G_LIVE 8).
+    { apply (globals_wr_at B API [(G_FAIL, 8); (G_LIVE, 24)] mem G_LIVE (lsum Lam) HG); [|exact HWl].
+      intros j Hj. apply ff_glob. left. lia. }
+    assert (HS : store_ok Img0.rsegs mem (Mem.wa 0x2f370) 8 = true).
+    { rewrite <- Hsegs. exact (Mem.wr_at_store_ok (ms_segs B) mem G_LIVE 8 0 8 HWr ltac:(lia) ltac:(lia)). }
+    eapply kb_run_cf with (K := fun R pc' mem' =>
+        pc' = Z_to_bv 64 0x14ba0 /\ getr R 10 = Z_to_bv 64 (p - 16) /\ regs_preserved regs R /\
+        getr R 1 = getr regs 1 /\ getr R 2 = getr regs 2 /\ getr R 4 = getr regs 4 /\
+        Mem.bytes_at (ms_segs B) mem' G_LIVE (Mem.le8 (Z_to_bv 64 (lsum Lam - k))) /\
+        Frame.munch [(G_LIVE, G_LIVE + 8)] mem mem' /\ Frame.wmono (ms_segs B) mem mem');
+      [exact Hh | exact Hlz | |].
+    + rewrite Hsegs. unfold FUZZ_FREE.
+      eapply Exec.evt_mono;
+        [unfold rmk; apply (FreeRun.ff_run1 p k (lsum Lam)); [lia | lia | lia | exact Ha0 | exact RB | exact RL | exact HS] |].
+      intros ms' (a0' & a1' & a2' & a3' & a4' & a5' & a6' & m' & -> & Ha0' & HBL & Hmu & Hwm).
+      do 3 eexists. split; [reflexivity|]. cbv beta.
+      split; [reflexivity|]. split; [rewrite <- Ha0'; reflexivity|]. split; [kb_saved|].
+      split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
+      split; [exact HBL|]. split; [exact Hmu | exact Hwm].
+    + intros R pc' mem1 regs1 (-> & HR10 & HRp & HR1 & HR2 & HR4 & HBL & Hmu & Hwm) Hreg.
+      assert (Hsp1 : spZ regs1 = spZ regs) by (unfold spZ; rewrite Hreg, HR2; reflexivity).
+      assert (HAv : forall x, 0 <= x < alloc_ceiling ->
+                (owned B L A x \/ exists p n, In (p, n) (blocks L A) /\ p <= x < p + n) ->
+                Frame.outside [(G_LIVE, G_LIVE + 8)] x).
+      { apply (globals_avoid B API _ _ L A mem md HG HM). intros lo hi x [E|[]] Hx.
+        injection E as <- <-. apply ff_glob. left. lia. }
+      assert (HM1 : aa_MR API L A mem1 md) by exact (kb_MR_A B API L A mem mem1 md _ HM Hmu HAv).
+      assert (Hown : forall x, owned B L A x -> mbyte (ms_segs B) mem1 x = mbyte (ms_segs B) mem x).
+      { intros x Ho. pose proof (mr_owned_low _ _ (aa_laws API) _ _ _ _ _ HM Ho) as Hx.
+        apply (mbyte_munch (ms_segs B) [(G_LIVE, G_LIVE + 8)]); [exact Hmu | lia |].
+        apply HAv; [lia | left; exact Ho]. }
+      assert (Hro1 : ro_agree (ms_segs B) mem1).
+      { intros a Hra'. destruct (kb_outside_dec [(G_LIVE, G_LIVE + 8)] (bv_unsigned a)) as [Ho|Ho].
+        - unfold Mem.mrd. rewrite (Hmu a Ho). exact (Hinv a Hra').
+        - assert (Hr : G_LIVE <= bv_unsigned a < G_LIVE + 8).
+          { destruct (Z_lt_le_dec (bv_unsigned a) G_LIVE) as [H1|H1];
+              [exfalso; apply Ho; apply outside_one; lia|].
+            destruct (Z_lt_le_dec (bv_unsigned a) (G_LIVE + 8)) as [H2|H2];
+              [lia | exfalso; apply Ho; apply outside_one; lia]. }
+          destruct (HG (bv_unsigned a) (ff_glob (bv_unsigned a) ltac:(left; lia))) as (_ & _ & (seg & Hf & Hw) & _).
+          unfold Mem.ro_addr in Hra'. rewrite Hf, Hw in Hra'. discriminate. }
+      assert (Hpre1 : call_pre B (aa_MR API) L A regs1 mem1 md).
+      { apply call_pre_k_alloc.
+        eapply (kb_pre_A B API ALLOC_STACK 0 ALLOC_STACK);
+          [exact Hpre | lia | lia | lia | rewrite Hsp1; lia | rewrite Hsp1; exact Hal
+          | rewrite Hreg; exact HR4 | rewrite Hreg, HR1; exact Hra | exact Hmu | exact Hwm | | exact HAv].
+        intros x Hx Hx'. apply outside_one. right. lia. }
+      replace (Z_to_bv 64 0x14ba0) with (Z_to_bv 64 (ms_free B)) by (rewrite Hfree; reflexivity).
+      eapply SRcf_mono.
+      { apply (HF fx L A regs1 mem1 md q (k + 16) b Hpre1 Hro1 Hq); [| exact Hres].
+        rewrite Hreg, HR10, Eq. reflexivity. }
+      intros c' (L' & A' & regs2 & mem2 & md' & Hc' & Hpost & Hsplit & Hkept & Hro2 & Hgk & Hub & Hinit & Hlen & Hres2).
+      apply call_post_k_alloc in Hpost.
+      destruct (kb_mid_call B API _ _ _ _ _ _ _ _ _ _ _ _ Hpost) as [Hmid2 Hpres2].
+      assert (Hblkq : In (ptr_addr L q, k + 16) (blocks L A)) by (rewrite Eq; exact Hblk).
+      assert (Hkeep : keeps B L A mem mem2 (p - 16)).
+      { intros a n i Hin' Hne Hi.
+        rewrite (Hkept a n i Hin' ltac:(cbv beta; rewrite Eq; exact Hne) Hi).
+        exact (kb_blocks_munch B API L A mem mem1 md _ HM Hmu HAv a n i Hin' Hi). }
+      assert (Hg2 : forall x, in_globals [(G_FAIL, 8); (G_LIVE, 24)] x ->
+                mbyte (ms_segs B) mem2 x = mbyte (ms_segs B) mem1 x).
+      { intros x Hx. eapply (kb_post_globals B API _ ALLOC_STACK);
+          [exact HG | exact HM1 | exact Hpost | rewrite Hsp1; exact Hlo | exact Hx |].
+        intros HE. destruct (HG x Hx) as (_ & _ & _ & _ & Ho). destruct (Ho L A mem md HM) as [_ Hnb].
+        exact (Hnb _ _ Hblkq HE). }
+      assert (HWl2 : word_mem (ms_segs B) mem2 G_LIVE (lsum (l1 ++ l2))).
+      { apply (word_mem_frame (ms_segs B) mem1).
+        - rewrite <- Hsum. pose proof (bytes_at_le8_word _ _ _ _ HBL) as Hw.
+          rewrite MState.unsigned_lit in Hw by lia. exact Hw.
+        - intros j Hj. apply Hg2. apply ff_glob. left. lia. }
+      assert (Hled2 : ledger B L' A' mem2 (l1 ++ l2) peak cnt fail).
+      { destruct Hsplit as (b1 & b2 & Hb1 & Hb2). rewrite Eq in Hb1. rewrite HLam in Hled.
+        apply (ledger_free B L A mem L' A' mem2 l1 l2 p k peak cnt fail b1 b2 Hled Hb1 Hb2 Hkeep HWl2).
+        intros x Hx.
+        rewrite Hg2 by (apply ff_glob; unfold G_PEAK, G_COUNT, G_FAIL, G_LIVE in *; lia).
+        apply (mbyte_munch (ms_segs B) [(G_LIVE, G_LIVE + 8)]);
+          [exact Hmu | unfold G_PEAK, G_COUNT, G_FAIL, G_LIVE in *; lia |].
+        apply outside_one. unfold G_PEAK, G_COUNT, G_FAIL, G_LIVE in *; lia. }
+      exists L', A', regs2, mem2, md'.
+      split; [rewrite Hc', Hreg, HR1; reflexivity|].
+      split; [exact Hro2|].
+      split.
+      { intros i Hi. rewrite (Hgk i Hi). apply Hown. right. unfold static_owned.
+        right; right; right; right; left. lia. }
+      split; [exact Hinit|].
+      split.
+      { intros HA'. exfalso. rewrite (Hinit (ff_init_of_block A _ HWF Hq)) in HA'. discriminate. }
+      split.
+      { apply kb_post.
+        - eapply kb_mid_E.
+          + eapply (kb_mid_seqAX B API);
+              [ | exact Hmid2 | lia | lia | lia | lia | intros a Ha Hn; exfalso; apply Hn; lia ].
+            apply (kb_mid_A B API HI ALLOC_STACK (spZ regs) L A mem md mem1 [(G_LIVE, G_LIVE + 8)]
+                     (fun a => G_LIVE <= a < G_LIVE + 8));
+              [exact HM | exact HWF | exact HB | exact Hstk | exact Hmu | exact Hwm | | exact HAv].
+            intros x Hx Hns Hne. cbv beta in Hne. apply outside_one. lia.
+          + intros a [Ha|Ha]; cbv beta in Ha; unfold free_writes;
+              [left; exact Ha | right; split; [exact Hp0 | rewrite Eq in Ha; lia]].
+        - exact (kb_preserved_trans _ _ _ (kb_preserved_getr _ _ _ HRp Hreg) Hpres2). }
+      split; [exact Hlen|].
+      split; [exact Hkeep|].
+      split.
+      { intros q' k' Hin' Hne. apply Hub; [exact Hin'|]. intros ->. apply Hne. rewrite Eq. f_equal.
+        pose proof (YO10.user_block_ptrs_NoDup A HWF) as ND.
+        exact (ff_fst_unique _ q k' (k + 16) ND Hin' Hq). }
+      right. split; [exact Hp0|]. split.
+      { destruct Hsplit as (b1 & b2 & Hb1 & Hb2). exists b1, b2. rewrite <- Eq. split; assumption. }
+      split; [exists l1, l2; split; [exact HLam | exact Hled2] | exact Hres2].
+Qed.
+
+
+End FreeCf.

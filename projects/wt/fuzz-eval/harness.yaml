@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wt
 harness: fuzz-eval
-rocq: OssFuzzTheorems.wt.fuzz_eval
+rocq: OSSVerify.wt.fuzz_eval
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

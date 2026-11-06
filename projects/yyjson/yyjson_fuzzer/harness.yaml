@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: yyjson
 harness: yyjson_fuzzer
-rocq: OssFuzzTheorems.yyjson.yyjson_fuzzer
+rocq: OSSVerify.yyjson.yyjson_fuzzer
 origin: upstream
 summary: 'Under two read/write flag sets (default; JSON5 read + pretty/escape-unicode/escape-slashes/inf-nan
   write) parses the input, copies it to a mutable doc, writes BOTH the immutable and the mutable doc to

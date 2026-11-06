@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: leptonica
 harness: checkerboard_fuzzer
-rocq: OssFuzzTheorems.leptonica.checkerboard_fuzzer
+rocq: OSSVerify.leptonica.checkerboard_fuzzer
 origin: upstream
 summary: pixReadMemSpix, then pixFindCheckerboardCorners; outputs discarded.
 entry: LLVMFuzzerTestOneInput

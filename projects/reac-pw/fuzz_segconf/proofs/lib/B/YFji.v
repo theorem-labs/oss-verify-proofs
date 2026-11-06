@@ -1,0 +1,498 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFji.v, with its module paths changed, names TfibSyms -> CmdBSyms and its addresses moved to plugin-hostd/fuzz_command's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/AFji.v (donor image sha256 c0661b96b5bd), with its module paths changed, names CmdBSyms -> SegBSyms and its addresses moved to reac-pw/fuzz_segconf's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/AFji.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s YO0d.
+
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP0g YP01 YP0i YP0j.
+
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YN3v YI04.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YK04 YA0i.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YA0n YA0o YA0p YA0q.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YG00 YG0a YG01 YG04 YG06 YG07 YG03.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YG0f.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YG0n YG0d YG0s YG0q.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YB1v YB1q YF0l YF0m YF0x YFl0.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YO0a.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YB1w YE3d YB1q YFhy YFhz YFi0 YFi4 YFi9 YB1h YFjm YFid YFjv YFjw YFjx YFjh.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Rt Require Import RtDDefs.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YM05.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Ltac ceil := try (let H := fresh "CR" in let H2 := fresh "CR" in pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as H; pose proof H as H2; unfold YG0f.ASAN_CEIL in H2).
+Local Set Warnings "-abstract-large-number".
+Local Set Warnings "-notation-for-abbreviation".
+Open Scope Z_scope.
+Set Printing Depth 50. Set Printing Width 180.
+Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Ltac zlia := first [ lia | ceil; unfold zone3, zone3cases, off_img, in_app, app_addr, in_band_rw, TFIB_IMG_LO, TFIB_IMG_END, kLowShadowBeg, kLowShadowEnd, kHighShadowBeg, kHighShadowEnd, kHighMemBeg, kHighMemEnd, ASAN_CEIL, kThreadObjSize, kNodesBlockSize, kStoreBlockSize, kPrimResvSize, kSpaceSize, kPtrArrayResv, kMaxNumChunks in *; lia ].
+Ltac zcanon_simp :=
+repeat match goal with
+| |- context [zcanon ?x] =>
+lazymatch x with
+| context [zcanon _] => fail
+| context [Z.shiftl _ _] => fail | context [Z.shiftr _ _] => fail | context [Z.land _ _] => fail
+| context [Z.lor _ _] => fail | context [Z.lxor _ _] => fail
+| _ => rewrite (zcanon_id x) by (unfold M64; zlia)
+end
+end.
+Ltac is_zlit a := lazymatch a with Z0 => idtac | Zpos _ => idtac | Zneg _ => idtac end.
+Ltac land_lits :=
+repeat match goal with
+| |- context [Z.land ?a ?b] => is_zlit a; is_zlit b; let c := eval vm_compute in (Z.land a b) in change (Z.land a b) with c
+end.
+Ltac numconst := ceil; unfold zone3, kHighMemBeg, kHighMemEnd, ASAN_CEIL, kThreadObjSize, kSpaceSize, kPrimResvSize, kNodesBlockSize, kStoreBlockSize,
+t_cache, t_unwinding, t_stats, MALLOC_IN_STK, IFRAME, TFIB_IMG_END, TFIB_IMG_LO, kLowShadowBeg, UNW_STK, BST_SIZE, DEP_STK in *.
+Ltac pin_zev :=
+lazymatch goal with |- U _ _ = U _ (sr_get ?sr ?r) => let t := eval vm_compute in (sr_get sr r) in change (sr_get sr r) with t end;
+apply U_eq_by_zev; [reflexivity | reflexivity |]; cbn [zev zalu_raw zmd_raw]; unfold rho_of.
+Ltac memv HS i j :=
+lazymatch goal with |- val_mem _ _ ?a ?n ?v =>
+let nn := lazymatch n with 1%nat => constr:(1%N) | 2%nat => constr:(2%N) | 4%nat => constr:(4%N) | _ => constr:(8%N) end in
+lazymatch type of HS with st_ok _ ?E ?ss (restrict ?H ?ms) =>
+eapply (chunk_val_at H E ss ms i j _ _ nn _ v a HS);
+[ reflexivity | reflexivity | cbn [base_val YP09.r_base]
+| | lazymatch goal with |- _ <= _ < ?p => let q := eval vm_compute in p in change p with q end
+| cbn; lia ]
+end
+end.
+Ltac forget_regs HS k clob :=
+lazymatch type of HS with st_ok _ ?E ?ss (restrict ?H ?ms) =>
+let ss' := eval vm_compute in (ss_after_stretch ss (ss_mem ss) k clob (ss_pc ss)) in
+let HS2 := fresh "HSf" in
+pose proof (st_ok_forget2 k E ss ss' H ms clob HS eq_refl
+ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+eq_refl eq_refl ltac:(vm_compute; reflexivity)) as HS2; clear HS; rename HS2 into HS
+end.
+Section f.
+Variables (W : world tfibsegs) (ly : alayout).
+Variables (regs0 : bvmap 5 word) (mem0 : word -> option byte) (md0 : Model) (n : Z) (ch : list Z).
+Variables (idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 : Z).
+Variable mb : Z.
+Let sp0 : Z := bv_unsigned (getr regs0 2).
+Let pT : Z := bv_unsigned (getr regs0 11).
+Let T : Z := ly_T ly.
+Let SB : Z := ly_space ly.
+Let Qb : Z := ly_Q ly.
+Local Abbreviation R8v := (@YFjm.R8v n).
+Local Abbreviation N8D := (@YFjm.N8D n).
+Local Abbreviation NDv := (@YFjm.NDv n).
+Local Abbreviation MSv := (@YFjm.MSv n).
+Local Abbreviation SHBv := (@YFjm.SHBv).
+Local Abbreviation QSv := (@YFjm.QSv ly idx).
+Local Abbreviation Kv := (@YFjm.Kv mb).
+Local Abbreviation Uv := (@YFjm.Uv mb).
+Local Abbreviation ENDv := (@YFjm.ENDv n mb).
+Local Abbreviation TLv := (@YFjm.TLv n).
+Local Abbreviation UEv := (@YFjm.UEv n mb).
+Local Abbreviation RLv := (@YFjm.RLv n).
+Local Abbreviation SMv := (@YFjm.SMv mb).
+Local Abbreviation PBv := (@YFjm.PBv n mb).
+Local Abbreviation LGv := (@YFjm.LGv n).
+Local Abbreviation BSLv := (@YFjm.BSLv n).
+Local Abbreviation tr := (@YFjm.tr ch).
+Local Abbreviation XW := (@YFjm.XW ly n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation E0 := (@YFjm.E0 ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation Er := (@YFjm.Er ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation E1 := (@YFjm.E1 ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation E2 := (@YFjm.E2 ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation E4 := (@YFjm.E4 ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation E8 := (@YFjm.E8 ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation E10 := (@YFjm.E10 ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaT := (@YFjm.EaT ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaC := (@YFjm.EaC ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaSB := (@YFjm.EaSB ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaTOP := (@YFjm.EaTOP ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaR8 := (@YFjm.EaR8 ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaQ := (@YFjm.EaQ ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaRES := (@YFjm.EaRES ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaNCH := (@YFjm.EaNCH ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaMS := (@YFjm.EaMS ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaMAP := (@YFjm.EaMAP ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaEND := (@YFjm.EaEND ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaSHB := (@YFjm.EaSHB ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaTL := (@YFjm.EaTL ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaQS := (@YFjm.EaQS ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaBSL := (@YFjm.EaBSL ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaSM := (@YFjm.EaSM ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaUE := (@YFjm.EaUE ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaND := (@YFjm.EaND ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaRL := (@YFjm.EaRL ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaN8D := (@YFjm.EaN8D ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation EaPB := (@YFjm.EaPB ly regs0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Hypothesis LY : layout_ok ly.
+Hypothesis IMG : img_cover ly.
+Hypothesis Hn : getr regs0 10 = w64 n.
+Hypothesis Htp : getr regs0 4 = w64 TFIB_TP.
+Hypothesis Hra : YK0s.ret_ok (getr regs0 1).
+Hypothesis Hra4096 : 4096 <= bv_unsigned (getr regs0 1).
+Hypothesis Hsp : ly_stk_lo ly + MALLOC_IN_STK <= sp0 /\ sp0 - IFRAME <= pT /\ sp0 <= ly_stk_hi ly /\ sp0 mod 16 = 0.
+(* the caller's trace object at p = a1 (RtDDefs.v amalloc_inner_realizes) *)
+Hypothesis Hch : (1 <= length ch <= 30)%nat /\ pT mod 8 = 0 /\ pT + 16 + 8 * 30 <= ly_stk_hi ly /\ astrace_at tfibsegs W mem0 pT ch.
+Hypothesis Nrange : 64513 <= n < MALLOC_MAX.
+Hypothesis Hidx : 0 <= idx < kMaxNumChunks.
+Hypothesis Hres : idx <= res <= kMaxNumChunks /\ res mod kPtrArrayEntriesPerCommit = 0.
+Local Abbreviation mod0_of_mul := (@YFjm.mod0_of_mul).
+Local Abbreviation size_facts := (@YFjm.size_facts n Nrange).
+Local Abbreviation tr_length := (@YFjm.tr_length W ly regs0 mem0 ch Hch).
+Local Abbreviation trace_obj := (@YFjm.trace_obj W ly regs0 mem0 ch idx res Hch Hidx).
+Local Abbreviation high_facts := (@YFjm.high_facts _ W ly regs0 mem0 ch idx res LY IMG Hch Hidx Hres).
+Local Abbreviation stack_ivs := (@YFjm.stack_ivs _ W ly regs0 mem0 ch idx res LY Hsp Hch Hidx Hres).
+Local Abbreviation HCX := (@YFjm.HCX _ ly LY).
+Hypothesis Hpres0 : forall a, sp0 - MALLOC_IN_STK <= a < sp0 - IFRAME -> apresent (w_H W) mem0 a.
+Hypothesis Hmap : mb mod 4096 = 0 /\ mzone mb MSv.
+Hypothesis Hmap_apart :
+zdisjoint (mb, MSv) (T, kThreadObjSize) /\ zdisjoint (mb, MSv) (ly_C ly, kCtxMapSize) /\
+zdisjoint (mb, MSv) (ly_prim ly, kPrimResvSize) /\ zdisjoint (mb, MSv) (Qb, kPtrArrayResv) /\
+zdisjoint (mb, MSv) (ly_NB ly, kNodesBlockSize) /\ zdisjoint (mb, MSv) (ly_SB ly, kStoreBlockSize) /\
+zdisjoint (mb, MSv) (ly_stk_lo ly, ly_stk_hi ly - ly_stk_lo ly).
+Local Abbreviation map_facts := (@YFjm.map_facts _ W ly regs0 mem0 n ch idx res mb Hch Nrange Hidx Hres Hmap).
+Local Abbreviation map_zone := (@YFjm.map_zone _ W ly regs0 mem0 n ch idx res mb Hch Nrange Hidx Hmap).
+Local Abbreviation map_zoneN := (@YFjm.map_zoneN _ W ly regs0 mem0 n ch idx res mb Hch Nrange Hidx Hres Hmap).
+Local Abbreviation map_in_band := (@YFjm.map_in_band _ W ly regs0 mem0 n ch idx res mb Hch Nrange Hidx Hmap).
+Local Abbreviation map_off_img := (@YFjm.map_off_img _ n mb Hmap).
+Local Abbreviation WINT := (@YFjm.WINT ly).
+Local Abbreviation WINI := (@YFjm.WINI n).
+Local Abbreviation WINM := (@YFjm.WINM ly n idx mb).
+Local Abbreviation WIN := (@YFjm.WIN ly regs0 n idx mb).
+Local Abbreviation WINN := (@YFjm.WINN ly regs0).
+Local Abbreviation WINP := (@YFjm.WINP ly regs0 n).
+Local Abbreviation WINP_WIN := (@YFjm.WINP_WIN ly regs0 n idx mb).
+Local Abbreviation WIN1P := (@YFjm.WIN1P ly regs0 n).
+Local Abbreviation WIN1 := (@YFjm.WIN1 ly regs0 n idx mb).
+Local Abbreviation WIN1P_WINP := (@YFjm.WIN1P_WINP W ly regs0 mem0 n ch idx res mb Hch Hidx).
+Local Abbreviation WIN1_WIN := (@YFjm.WIN1_WIN W ly regs0 mem0 n ch idx res mb Hch Hidx).
+Local Abbreviation WIN1P_WIN1 := (@YFjm.WIN1P_WIN1 ly regs0 n idx mb).
+Local Abbreviation LGv_range := (@YFjm.LGv_range n Nrange).
+Local Abbreviation BSLv_range := (@YFjm.BSLv_range W ly regs0 mem0 n ch idx res mb Hch Nrange Hidx).
+Local Abbreviation WSKELP := (@YFjm.WSKELP).
+Local Abbreviation WSKEL1P := (@YFjm.WSKEL1P).
+Local Abbreviation WMAP := (@YFjm.WMAP).
+Local Abbreviation WSKEL := (@YFjm.WSKEL).
+Local Abbreviation WSKEL1 := (@YFjm.WSKEL1).
+Local Abbreviation win_sub := (@YFjm.win_sub).
+Local Abbreviation win_sub_sound := (@YFjm.win_sub_sound W ly regs0 mem0 ch idx res mb Hch Hidx Hres).
+Local Abbreviation in_win := (@YFjm.in_win).
+Local Abbreviation WSKELP_WINP := (@YFjm.WSKELP_WINP _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hch Nrange Hidx Hres).
+Local Abbreviation WSKEL1P_WIN1P := (@YFjm.WSKEL1P_WIN1P _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hch Nrange Hidx Hres).
+Local Abbreviation WMAP_WINM := (@YFjm.WMAP_WINM _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hch Nrange Hidx Hres Hmap).
+Local Abbreviation WSKEL_WIN := (@YFjm.WSKEL_WIN _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hch Nrange Hidx Hres Hmap).
+Local Abbreviation WSKEL1_WIN1 := (@YFjm.WSKEL1_WIN1 _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hch Nrange Hidx Hres Hmap).
+Local Abbreviation windows_in := (@YFjm.windows_in W ly regs0 mem0 ch idx res mb Hch Hidx Hres).
+Local Abbreviation windows_WINP := (@YFjm.windows_WINP _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hch Nrange Hidx Hres).
+Local Abbreviation windows_WIN1P := (@YFjm.windows_WIN1P _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hch Nrange Hidx Hres).
+Local Abbreviation windows_WIN := (@YFjm.windows_WIN _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hch Nrange Hidx Hres Hmap).
+Local Abbreviation windows_WIN1 := (@YFjm.windows_WIN1 _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hch Nrange Hidx Hres Hmap).
+Local Abbreviation frame_WIN1P := (@YFjm.frame_WIN1P _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hch Nrange Hidx Hres).
+Local Abbreviation frame_WIN1 := (@YFjm.frame_WIN1 _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hch Nrange Hidx Hres Hmap).
+Local Abbreviation WINP_not_high := (@YFjm.WINP_not_high _ W ly regs0 mem0 n ch idx res mb LY IMG Hsp Hch Nrange Hidx Hres).
+Local Abbreviation WIN_not_high := (@YFjm.WIN_not_high _ W ly regs0 mem0 n ch idx res mb LY IMG Hsp Hch Nrange Hidx Hres Hmap).
+Variables (mat0 : list word).
+Let H0 := w_H W.
+Variables (regsI : bvmap 5 word).
+(* the run starts with regsI: regs0 with sp = sp0 - IFRAME *)
+Hypotheses (RIo : forall r : bv 5, r <> 2%bv -> getr regsI r = getr regs0 r) (RI2 : getr regsI 2 = w64 (sp0 - IFRAME)).
+Let cfg0 : config := mkCfg (mkst regsI (w64 PC_asan_malloc) mem0 (seg_rom tfibsegs)) (with_vm_backing (m_vm_lazy md0) mat0 md0).
+Local Abbreviation all_disjoint_of_forall := (@YFjm.all_disjoint_of_forall).
+Local Abbreviation img_rw_writable := (@YFjm.img_rw_writable W ly regs0 mem0 ch idx res mb Hch Hidx).
+Local Abbreviation kept_of_frame := (@YFjm.kept_of_frame W ly regs0 mem0 ch idx res mb Hch Hidx).
+Local Abbreviation SKEL_TAIL := (@YFjm.SKEL_TAIL).
+Local Abbreviation blocks_facts := (@YFjm.blocks_facts _ ly LY IMG).
+Local Abbreviation off_T := (@YFjm.off_T _ W ly regs0 mem0 ch idx res LY IMG Hch Hidx Hres).
+Local Abbreviation off_C := (@YFjm.off_C _ W ly regs0 mem0 ch idx res LY IMG Hch Hidx Hres).
+Local Abbreviation off_Q := (@YFjm.off_Q _ W ly regs0 mem0 ch idx res LY IMG Hch Hidx Hres).
+Local Abbreviation off_NB := (@YFjm.off_NB _ ly LY IMG).
+Local Abbreviation off_SB := (@YFjm.off_SB _ ly LY IMG).
+Local Abbreviation off_shadow := (@YFjm.off_shadow W ly regs0 mem0 ch idx res mb Hch Hidx).
+Ltac off_by tac :=
+first [ apply off_img_high; tac | apply off_T; tac | apply off_C; tac | apply off_Q; tac | apply off_NB; tac | apply off_SB; tac
+| apply map_off_img; tac | apply off_shadow; tac
+| unfold off_img; unfold TFIB_IMG_LO; unfold zone3, TFIB_IMG_LO, kLowShadowBeg, TFIB_IMG_END; tac ].
+Local Abbreviation DZONE := (@YFjm.DZONE ly).
+Variable DPOST : Z -> (word -> option byte) -> Prop.
+Local Abbreviation DZONE_disj := (@YFjm.DZONE_disj _ W ly regs0 mem0 n ch idx res mb LY IMG Hsp Hch Nrange Hidx Hres Hmap Hmap_apart).
+Local Abbreviation RFACTS := (@YFjm.RFACTS ly regs0).
+Local Abbreviation zone_lit := (@YFjm.zone_lit _ ly regs0 LY IMG Hsp).
+Local Abbreviation zone_irw := (@YFjm.zone_irw _ ly regs0 LY IMG Hsp).
+Local Abbreviation zone_T := (@YFjm.zone_T _ W ly regs0 mem0 ch idx res LY IMG Hsp Hch Hidx Hres).
+Local Abbreviation zone_C := (@YFjm.zone_C _ W ly regs0 mem0 ch idx res LY IMG Hsp Hch Hidx Hres).
+Local Abbreviation tail_ext_ok := (@YFjm.tail_ext_ok _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hsp Hch Nrange Hidx Hres).
+Local Abbreviation RFACTS_map := (@YFjm.RFACTS_map _ W ly regs0 mem0 n ch idx res mb LY IMG Hch Nrange Hidx Hres Hmap Hmap_apart).
+Local Abbreviation at_ST := (@YFjm.at_ST _ W ly regs0 mem0 md0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation memset_stretch := (@YFjm.memset_stretch _ _ W ly regs0 mem0 n ch idx res mb Hsp Hch Nrange Hidx Hres Hmap Hmap_apart DPOST).
+Ltac clearM := try clear DPOST; try clear Hmap_apart; try clear Hmap.
+Local Abbreviation at_S := (@YFjm.at_S _ ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation at_N := (@YFjm.at_N _ ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation at_RETS := (@YFjm.at_RETS _ regs0 mem0).
+Local Abbreviation pstable := (@YFjm.pstable).
+Local Abbreviation stack_shaped := (@YFjm.stack_shaped).
+Local Abbreviation window_present := (@YFjm.window_present W ly regs0 mem0 ch idx res Hch Hidx).
+Local Abbreviation stack_present_of := (@YFjm.stack_present_of _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY Hsp Hch Hidx).
+Local Abbreviation mid_not_WIN1P := (@YFjm.mid_not_WIN1P _ W ly regs0 mem0 n ch idx res mb LY IMG Hsp Hch Nrange Hidx Hres).
+Local Abbreviation mid_not_WIN1 := (@YFjm.mid_not_WIN1 _ W ly regs0 mem0 n ch idx res mb LY IMG Hsp Hch Nrange Hidx Hres Hmap).
+Local Abbreviation wins_ok := (@YFjm.wins_ok).
+Local Abbreviation at_S_run_gen := (@YFjm.at_S_run_gen _ _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY Hsp Hch Hidx).
+Local Abbreviation at_S_run_ecall_gen := (@YFjm.at_S_run_ecall_gen _ _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY Hsp Hch Hidx).
+Local Abbreviation at_S_runP := (@YFjm.at_S_runP _ _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hsp Hch Nrange Hidx Hres).
+Local Abbreviation at_S_runM := (@YFjm.at_S_runM _ _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hsp Hch Nrange Hidx Hres Hmap).
+Local Abbreviation at_S_run_ecallP := (@YFjm.at_S_run_ecallP _ _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hsp Hch Nrange Hidx Hres).
+Local Abbreviation at_S_run_ecallM := (@YFjm.at_S_run_ecallM _ _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hsp Hch Nrange Hidx Hres Hmap).
+Local Abbreviation at_S_pin := (@YFjm.at_S_pin _ ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation at_S_arm := (@YFjm.at_S_arm _ ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation at_S_forget := (@YFjm.at_S_forget _ ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation at_S_noconds := (@YFjm.at_S_noconds _ ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation at_S_weaken := (@YFjm.at_S_weaken _ ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation at_S_facts := (@YFjm.at_S_facts _ ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation at_S_strengthen := (@YFjm.at_S_strengthen _ ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation at_S_eq := (@YFjm.at_S_eq _ ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation at_S_open := (@YFjm.at_S_open _ ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation CSAVEDS := (@YFjm.CSAVEDS).
+Local Abbreviation sv_denot_SOff0 := (@YFjm.sv_denot_SOff0).
+Local Abbreviation at_S_ret := (@YFjm.at_S_ret _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb Htp Hra Hsp Hch Nrange Hidx Hres).
+Local Abbreviation kept_of_frame2 := (@YFjm.kept_of_frame2 W ly regs0 mem0 ch idx res Hch Hidx).
+Local Abbreviation at_N_cont := (@YFjm.at_N_cont _ _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY Hsp Hch Hidx).
+Variables (B : asyms) (S : astate).
+Hypothesis TS : SegBSyms B.
+Hypothesis HTSD : ly_tsd ly = TFIB_TSD.
+Hypothesis HARm : ARm B ly S (aview tfibsegs (w_H W) mem0).
+Hypothesis Hgp : getr regs0 3 = w64 (as_gp B).
+Hypothesis Hidx_def : idx = Z.of_nat (length (st_sec_arr S)).
+Hypothesis Hres_def : res = st_sec_reserved S.
+Hypothesis Hj0 : val_mem tfibsegs (mrestrict (w_H W) mem0) (T + 2784) 8 j0.
+Hypothesis Hj1 : val_mem tfibsegs (mrestrict (w_H W) mem0) (T + 2800) 8 j1.
+Hypothesis Hj2 : val_mem tfibsegs (mrestrict (w_H W) mem0) (T + 2808) 8 j2.
+Hypothesis Hj3 : val_mem tfibsegs (mrestrict (w_H W) mem0) (T + 2816) 8 j3.
+Hypothesis Hj4 : val_mem tfibsegs (mrestrict (w_H W) mem0) (T + 2872) 8 j4.
+Hypothesis Hj5 : val_mem tfibsegs (mrestrict (w_H W) mem0) (T + 2880) 8 j5.
+Hypothesis Hj9 : val_mem tfibsegs (mrestrict (w_H W) mem0) (T + 2904) 8 j9.
+Hypothesis Hj6 : val_mem tfibsegs (mrestrict (w_H W) mem0) 0xa9418 8 j6.
+Hypothesis Hj7 : val_mem tfibsegs (mrestrict (w_H W) mem0) 0xa9420 8 j7.
+Hypothesis Hj8 : val_mem tfibsegs (mrestrict (w_H W) mem0) BSLv 8 j8.
+Hypothesis Hi1 : val_mem tfibsegs (mrestrict (w_H W) mem0) (TFIB_INST + o_sec_stats) 8 i1.
+Hypothesis Hi2 : val_mem tfibsegs (mrestrict (w_H W) mem0) (TFIB_INST + o_sec_stats + 16) 8 i2.
+Hypothesis Hi3 : val_mem tfibsegs (mrestrict (w_H W) mem0) (TFIB_INST + o_sec_stats + 24) 8 i3.
+Hypothesis HQT : qmeter S.
+Local Abbreviation vis_present := (@YFjv.vis_present _ W ly regs0 mem0 ch idx res Hch Hidx DPOST B S HARm).
+Local Abbreviation in_thread_junk := (@YFjv.in_thread_junk ly B S).
+Local Abbreviation in_sec_junk := (@YFjv.in_sec_junk ly B S).
+Local Abbreviation in_as_junk := (@YFjv.in_as_junk ly B S).
+Local Abbreviation junk_word := (@YFjv.junk_word _ W ly regs0 mem0 ch idx res LY IMG Hch Hidx Hres DPOST B S HARm).
+Local Abbreviation cell_sym := (@YFjv.cell_sym _ W ly mem0 B S TS HARm).
+Local Abbreviation cell_lit := (@YFjv.cell_lit _ W ly mem0 B S TS HARm).
+Local Abbreviation cell_state := (@YFjv.cell_state _ W ly mem0 B S HARm).
+Local Abbreviation In_acells_sec := (@YFjv.In_acells_sec ly B S).
+Local Abbreviation sec_vals := (@YFjv.sec_vals _ W ly mem0 idx res B S TS HARm Hidx_def Hres_def).
+Local Abbreviation unwinding_val := (@YFjv.unwinding_val _ W ly mem0 B S HARm).
+Local Abbreviation rw_writable := (@YFjv.rw_writable W ly regs0 mem0 ch idx res Hch Hidx DPOST S).
+Local Abbreviation val_mem_mod8 := (@YFjv.val_mem_mod8 W ly regs0 mem0 ch idx res Hch Hidx DPOST S).
+Local Abbreviation chunk_lit := (@YFjv.chunk_lit W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation chunk_lit_at := (@YFjv.chunk_lit_at W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb).
+Local Abbreviation chunk_atom := (@YFjv.chunk_atom W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb Hch Hidx DPOST S).
+Local Abbreviation SREG0_ok := (@YFjw.SREG0_ok _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hsp Hch Nrange Hidx Hres Hpres0 DPOST B S TS HTSD HARm Hidx_def Hres_def Hj0 Hj1 Hj2 Hj3 Hj4 Hj5 Hj9 Hj6 Hj7 Hj8 Hi1 Hi2 Hi3).
+Local Abbreviation PAIRS_ok := (@YFjx.PAIRS_ok _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hsp Hch Nrange Hidx Hres DPOST S).
+Local Abbreviation FACTS_ok := (@YFjx.FACTS_ok _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hn Hsp Hch Nrange Hidx Hres DPOST S).
+Local Abbreviation SEED_ok := (@YFjx.SEED_ok _ _ W ly regs0 mem0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hn Htp Hsp Hch Nrange Hidx Hres Hpres0 regsI RIo RI2 DPOST B S TS HTSD HARm Hidx_def Hres_def Hj0 Hj1 Hj2 Hj3 Hj4 Hj5 Hj9 Hj6 Hj7 Hj8 Hi1 Hi2 Hi3).
+Local Abbreviation PBUF := (@YFjh.PBUF W regs0 ch).
+Local Abbreviation PBUF_stableP := (@YFjh.PBUF_stableP _ W ly regs0 mem0 n ch idx res mb LY IMG Hsp Hch Nrange Hidx Hres).
+Local Abbreviation PBUF_stableM := (@YFjh.PBUF_stableM _ W ly regs0 mem0 n ch idx res mb LY IMG Hsp Hch Nrange Hidx Hres Hmap).
+Local Abbreviation seg0 := (@YFjh.seg0 _ _ W ly regs0 mem0 md0 n ch idx res j0 j1 j2 j3 j4 j5 j6 j7 j8 j9 i1 i2 i3 mb LY IMG Hn Htp Hsp Hch Nrange Hidx Hres Hpres0 mat0 regsI RIo RI2 DPOST B S TS HTSD HARm Hidx_def Hres_def Hj0 Hj1 Hj2 Hj3 Hj4 Hj5 Hj9 Hj6 Hj7 Hj8 Hi1 Hi2 Hi3).
+Local Ltac addr_tac :=
+cbn [base_val YP09.r_base YP09.r_wlo YP09.r_whi];
+rewrite ?EaT, ?EaC, ?EaTOP, ?EaSB, ?EaQ, ?EaMAP, ?EaQS, ?EaBSL, ?EaSM, ?EaPB, ?E2; ceil; unfold zone3, TFIB_IMG_LO, kLowShadowBeg, w64, ly_bot, kStackSpan, t_unwinding, t_cache, t_stats, TFIB_IMG_END, UNW_STK, BST_SIZE, MALLOC_IN_STK, IFRAME, kHighMemBeg, kHighMemEnd, ASAN_CEIL in *;
+rewrite ?unsigned_lit_small by zlia; zlia.
+Local Ltac denot_tac :=
+cbn [sv_denot]; rewrite ?EaT, ?EaC, ?EaTOP, ?EaSB, ?EaQ, ?EaMAP, ?E2; unfold w64, ly_bot, kStackSpan in *;
+first [ rewrite Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity
+| rewrite Zbv_add_unsigned; f_equal; zlia
+| rewrite unsigned_lit_small by zlia; f_equal; zlia
+| reflexivity ].
+Local Ltac clearP := try clear Hmap_apart; try clear Hmap.
+Local Ltac s_station HR ss' :=
+lazymatch type of HR with at_S ?Wx ?md ?X ?P ?ss ?W' ?c' =>
+let H2 := fresh "HR" in
+pose proof (at_S_eq Wx md X P ss ss' W' c' HR ltac:(vm_compute; reflexivity)) as H2; clear HR; rename H2 into HR end.
+Local Ltac s_runP HR tbl tblok stop ss' HX HP :=
+lazymatch type of HR with at_S ?Wx ?md ?X ?P ?ss ?W' ?c' =>
+let st := eval vm_compute in (snd (sym_run_toN_sh tfibsegs tbl FUEL stop ss)) in
+eapply SRr_bind;
+[ eapply (at_S_runP Wx tbl tblok stop md X P ss ss' st W' c' HR);
+[ vm_compute; reflexivity | exact I | exact HX | vm_compute; reflexivity | exact HP | vm_compute; reflexivity ]
+| clear HR; let W2 := fresh "W" in let c2 := fresh "c" in intros W2 c2 _ HR ] end.
+Local Ltac s_runM HR tbl tblok stop ss' HX HP :=
+lazymatch type of HR with at_S ?Wx ?md ?X ?P ?ss ?W' ?c' =>
+let st := eval vm_compute in (snd (sym_run_toN_sh tfibsegs tbl FUEL stop ss)) in
+eapply SRr_bind;
+[ eapply (at_S_runM Wx tbl tblok stop md X P ss ss' st W' c' HR);
+[ vm_compute; reflexivity | exact I | exact HX | vm_compute; reflexivity | exact HP | vm_compute; reflexivity ]
+| clear HR; let W2 := fresh "W" in let c2 := fresh "c" in intros W2 c2 _ HR ] end.
+Local Ltac s_ecallP HR tbl tblok ss' HX HP :=
+lazymatch type of HR with at_S ?Wx ?md ?X ?P ?ss ?W' ?c' =>
+eapply (at_S_run_ecallP Wx tbl tblok 0x7ffffff0 md X P ss ss' W' c' HR);
+[ vm_compute; reflexivity | reflexivity | exact HX | vm_compute; reflexivity | exact HP | vm_compute; reflexivity ] end.
+Local Ltac s_ecallM HR tbl tblok ss' HX HP :=
+lazymatch type of HR with at_S ?Wx ?md ?X ?P ?ss ?W' ?c' =>
+eapply (at_S_run_ecallM Wx tbl tblok 0x7ffffff0 md X P ss ss' W' c' HR);
+[ vm_compute; reflexivity | reflexivity | exact HX | vm_compute; reflexivity | exact HP | vm_compute; reflexivity ] end.
+Local Ltac unfold_atoms := unfold aT, aC, aSB, aTOP, aLEN, aJ0, aR8, aQ, aRES, aNCH, aMS, aMAP, aEND, aSHB, aTL, aQS, aBSL, aJ4, aJ5, aJ6, aJ7, aJ8, aJ9, aI1, aI2, aI3, aSM, aUE, aND, aRL, aN8DS, aPBS.
+Local Ltac pin_zevS := apply U_eq_by_zev; [reflexivity | reflexivity |]; cbn [zev zalu_raw zmd_raw]; unfold rho_of; try unfold_atoms.
+Local Ltac s_pin HR r e :=
+lazymatch type of HR with at_S ?Wx ?md ?X ?P ?ss ?W' ?c' =>
+let t := eval vm_compute in (sr_get (ss_regs ss) r) in
+let HU := fresh "HU" in
+assert (HU : U E0 e = U E0 t);
+[ | let H2 := fresh "HR" in
+pose proof (at_S_pin Wx md X P ss W' c' r e HR ltac:(intros XX; discriminate XX) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) HU) as H2;
+clear HU HR; rename H2 into HR ] end.
+Local Ltac s_arm HR cnd tk a b :=
+lazymatch type of HR with at_S ?Wx ?md ?X ?P ?ss ?W' ?c' =>
+let HB := fresh "HB" in
+assert (HB : branch_taken cnd (sv_denot E0 a) (sv_denot E0 b) = tk);
+[ | let H2 := fresh "HR" in
+pose proof (at_S_arm Wx md X P ss W' c' cnd tk a b HR ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) HB) as H2;
+clear HB HR; rename H2 into HR ] end.
+Local Ltac s_forget HR k clob :=
+lazymatch type of HR with at_S ?Wx ?md ?X ?P ?ss ?W' ?c' =>
+let H2 := fresh "HR" in
+pose proof (at_S_forget Wx md X P ss W' c' k clob HR ltac:(unfold sHAV; cbv; zlia) eq_refl
+ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)) as H2;
+clear HR; rename H2 into HR end.
+Local Ltac s_noconds HR :=
+lazymatch type of HR with at_S ?Wx ?md ?X ?P ?ss ?W' ?c' =>
+let H2 := fresh "HR" in pose proof (at_S_noconds Wx md X P ss W' c' HR) as H2; clear HR; rename H2 into HR end.
+Local Ltac arm_zevS := rewrite ?branch_geu_U, ?branch_ltu_U, ?branch_eq_U, ?branch_ne_U;
+rewrite !U_zev by (vm_compute; reflexivity); cbn [zev zalu_raw zmd_raw]; unfold rho_of; try unfold_atoms.
+Local Ltac U_zevS := rewrite U_zev by reflexivity; cbn [zev zalu_raw zmd_raw]; unfold rho_of; try unfold_atoms.
+Local Ltac s_armR HR cnd tk r1 r2 :=
+lazymatch type of HR with at_S ?Wx ?md ?X ?P ?ss ?W' ?c' =>
+let a := eval vm_compute in (sr_get (ss_regs ss) r1) in
+let b := eval vm_compute in (sr_get (ss_regs ss) r2) in
+s_arm HR cnd tk a b end.
+Local Ltac ladder_arith Z :=
+let MF := fresh "MF" in let SF := fresh "SF" in let NRx := fresh "NRx" in
+pose proof map_facts as MF; pose proof size_facts as SF; pose proof Nrange as NRx;
+arm_zevS; rewrite ?EaSHB, ?EaMAP, ?EaEND, ?EaTL, ?EaUE, ?EaRL, ?EaN8D, ?EaND, ?EaMS; unfold w64;
+clear - Z MF SF NRx;
+destruct MF as (M1x & M2x & M3x & K4x & U5x & E6x & UE7x & E8x & UE9x & MTx & MUx & SM1x & SM2x & SM3x & PBx & SMAx);
+destruct SF as (Z1x & Z2x & Z3x & Z4x & Z5x & Z6x & Z7x & Z8x & Z9x & Z10x & Z11x & Z12x & Z13x & Z14x);
+unfold YFjm.SHBv, YFjm.Kv, YFjm.Uv, YFjm.SMv, YFjm.PBv, MALLOC_MAX,
+kLowShadowBeg, kHighShadowEnd, TFIB_IMG_END in *;
+rewrite !unsigned_lit_small by zlia; zcanon_simp;
+first [ rewrite (proj2 (Z.ltb_ge _ _)) by zlia | rewrite (proj2 (Z.ltb_lt _ _)) by zlia ]; reflexivity.
+Local Ltac s_join HR k clob SJ := s_forget HR k clob; s_noconds HR; s_station HR SJ; apply SRr_ret; exact HR.
+Local Ltac s_ladder RUN HR tbl tblok STOP Sl Slo Sh Sh2 Sh3 Shi SJ k clob HX HP :=
+lazymatch type of HR with at_S ?Wx ?md ?X ?P ?ss ?W' ?c' =>
+let HQ := fresh "HQ" in
+assert (HQ : SRr tfibsegs W' c' (at_S Wx md X P SJ));
+[ let MZ := fresh "MZ" in pose proof map_zoneN as MZ; destruct MZ as [ZLO|ZHI];
+[ s_armR HR BC_GEU true (14%bv : bv 5) (10%bv : bv 5); [ladder_arith ZLO|];
+RUN HR tbl tblok 0x57fdc Sl HX HP;
+s_armR HR BC_GEU true (14%bv : bv 5) (11%bv : bv 5); [ladder_arith ZLO|];
+RUN HR tbl tblok STOP Slo HX HP;
+s_join HR k clob SJ
+| s_armR HR BC_GEU false (14%bv : bv 5) (10%bv : bv 5); [ladder_arith ZHI|];
+RUN HR tbl tblok 0x57e34 Sh HX HP;
+s_armR HR BC_LTU true (7%bv : bv 5) (10%bv : bv 5); [ladder_arith ZHI|];
+RUN HR tbl tblok 0x57fdc Sh2 HX HP;
+s_armR HR BC_GEU false (14%bv : bv 5) (11%bv : bv 5); [ladder_arith ZHI|];
+RUN HR tbl tblok 0x5801c Sh3 HX HP;
+s_armR HR BC_GEU false (5%bv : bv 5) (11%bv : bv 5); [ladder_arith ZHI|];
+RUN HR tbl tblok STOP Shi HX HP;
+s_join HR k clob SJ ]
+| clear HR; eapply SRr_bind; [exact HQ | clear HQ; let W2 := fresh "WL" in let c2 := fresh "cL" in intros W2 c2 _ HR ] ]
+end.
+Local Ltac s_ladderW RUN HR tbl tblok STOP Sl Slo Sh Sh2 Sh3a Sh3 Shi SJ k clob HX HP :=
+lazymatch type of HR with at_S ?Wx ?md ?X ?P ?ss ?W' ?c' =>
+let HQ := fresh "HQ" in
+assert (HQ : SRr tfibsegs W' c' (at_S Wx md X P SJ));
+[ let MZ := fresh "MZ" in pose proof map_zoneN as MZ; destruct MZ as [ZLO|ZHI];
+[ s_armR HR BC_GEU true (14%bv : bv 5) (10%bv : bv 5); [ladder_arith ZLO|];
+RUN HR tbl tblok 0x57fdc Sl HX HP;
+s_armR HR BC_GEU true (14%bv : bv 5) (11%bv : bv 5); [ladder_arith ZLO|];
+RUN HR tbl tblok STOP Slo HX HP;
+s_join HR k clob SJ
+| s_armR HR BC_GEU false (14%bv : bv 5) (10%bv : bv 5); [ladder_arith ZHI|];
+RUN HR tbl tblok 0x57e34 Sh HX HP;
+s_armR HR BC_LTU true (7%bv : bv 5) (10%bv : bv 5); [ladder_arith ZHI|];
+RUN HR tbl tblok 0x57fdc Sh2 HX HP;
+s_armR HR BC_GEU false (14%bv : bv 5) (11%bv : bv 5); [ladder_arith ZHI|];
+RUN HR tbl tblok 0x58018 Sh3a HX HP;
+s_armR HR BC_LTU false (6%bv : bv 5) (11%bv : bv 5); [ladder_arith ZHI|];
+RUN HR tbl tblok 0x5801c Sh3 HX HP;
+s_armR HR BC_GEU false (5%bv : bv 5) (11%bv : bv 5); [ladder_arith ZHI|];
+RUN HR tbl tblok STOP Shi HX HP;
+s_join HR k clob SJ ]
+| clear HR; eapply SRr_bind; [exact HQ | clear HQ; let W2 := fresh "WL" in let c2 := fresh "cL" in intros W2 c2 _ HR ] ]
+end.
+Local Ltac s_ladderM RUN HR tbl tblok STOP Slo Sh Sh2 Shi SJ k clob HX HP :=
+lazymatch type of HR with at_S ?Wx ?md ?X ?P ?ss ?W' ?c' =>
+let HQ := fresh "HQ" in
+assert (HQ : SRr tfibsegs W' c' (at_S Wx md X P SJ));
+[ let MZ := fresh "MZ" in pose proof map_zoneN as MZ; destruct MZ as [ZLO|ZHI];
+[ s_armR HR BC_GEU true (12%bv : bv 5) (22%bv : bv 5); [ladder_arith ZLO|];
+RUN HR tbl tblok STOP Slo HX HP;
+s_join HR k clob SJ
+| s_armR HR BC_GEU false (12%bv : bv 5) (22%bv : bv 5); [ladder_arith ZHI|];
+RUN HR tbl tblok 0x336c4 Sh HX HP;
+s_armR HR BC_LTU false (17%bv : bv 5) (22%bv : bv 5); [ladder_arith ZHI|];
+RUN HR tbl tblok 0x336c8 Sh2 HX HP;
+s_armR HR BC_GEU false (16%bv : bv 5) (22%bv : bv 5); [ladder_arith ZHI|];
+RUN HR tbl tblok STOP Shi HX HP;
+s_join HR k clob SJ ]
+| clear HR; eapply SRr_bind; [exact HQ | clear HQ; let W2 := fresh "WL" in let c2 := fresh "cL" in intros W2 c2 _ HR ] ]
+end.
+Lemma seg1 : forall W' c', at_S W md0 WINP PBUF S_1 W' c' -> SRr tfibsegs W' c' (at_N W md0 WINP PBUF S_N).
+Proof.
+clearP. intros W1 c1 HR. pose proof PBUF_stableP as HP. pose proof WIN1P_WINP as HX.
+pose proof size_facts as (Z1 & Z2 & Z3 & Z4 & Z5 & Z6 & Z7 & Z8 & Z9 & Z10 & Z11 & Z12 & Z13 & Z14). pose proof Nrange as NR. unfold MALLOC_MAX in Z1, Z8, NR.
+assert (ZR8 : zev (rho_of E0) (SAlu ALU_AND (SOff 10 7) (SLit 18446744073709551608)) = R8v).
+{ clear - Hn Z1 Z2 Z3 NR.
+cbn [zev zalu_raw]. unfold rho_of. rewrite E10, Hn. unfold w64. rewrite unsigned_lit_small by zlia.
+rewrite (zcanon_id (n + 7)) by (unfold M64; zlia). rewrite (zcanon_id 18446744073709551608) by (unfold M64; zlia).
+change 18446744073709551608 with (2 ^ 64 - 8). rewrite land_m8_64 by zlia. unfold R8v.
+pose proof (Z.div_mod (n + 7) 8 ltac:(zlia)). pose proof (Z.mod_pos_bound (n + 7) 8 ltac:(zlia)). rewrite zcanon_id; unfold M64; zlia. }
+s_runP HR tfibtbl_rtA tfibtbl_rtA_ok 0x3337c S_B0 HX HP.
+s_pin HR (10%bv : bv 5) (SOff aR8 0).
+{ clear - ZR8 Z1. pin_zevS.
+change (zcanon (bv_unsigned (ew E0 38) + 0) = zcanon (zcanon (Z.land (zcanon (bv_unsigned (ew E0 10) + 7)) (zcanon 18446744073709551608)) + zcanon 0)) .
+change (zcanon (Z.land (zcanon (bv_unsigned (ew E0 10) + 7)) (zcanon 18446744073709551608))) with (zev (rho_of E0) (SAlu ALU_AND (SOff 10 7) (SLit 18446744073709551608))).
+rewrite ZR8, EaR8. unfold w64. rewrite unsigned_lit_small by zlia. zcanon_simp. change (zcanon 0) with 0. zcanon_simp. zlia. }
+s_pin HR (11%bv : bv 5) (SLit 0).
+{ clear - ZR8 Z1 Z2. pin_zevS.
+change (zcanon 0 = zcanon (Z.land (zcanon (zev (rho_of E0) (SAlu ALU_AND (SOff 10 7) (SLit 18446744073709551608)) + zcanon 0)) (zcanon 7))).
+rewrite ZR8. change (zcanon 0) with 0. change (zcanon 7) with 7. rewrite Z.add_0_r. zcanon_simp. rewrite land_7_mod by zlia. rewrite Z2. reflexivity. }
+s_station HR S_B.
+s_runP HR tfibtbl_rtA tfibtbl_rtA_ok 0x333b8 S_C0 HX HP.
+s_pin HR (19%bv : bv 5) (SOff aND 0).
+{ clear - Z1 Z7. pin_zevS. rewrite EaND, EaR8. unfold w64. rewrite !unsigned_lit_small by zlia. zcanon_simp. zlia. }
+s_station HR S_C.
+s_runP HR tfibtbl_rtA tfibtbl_rtA_ok 0x37740 S_D0 HX HP.
+s_arm HR BC_GEU true (SAlu ALU_XOR (SOff aND 0) (SLit (-1))) (SLit 8).
+{ clear - Z1 Z7. arm_zevS. rewrite EaND. unfold w64. rewrite unsigned_lit_small by zlia. zcanon_simp.
+change (zcanon (-1)) with (2 ^ 64 - 1). rewrite lxor_ones64 by zlia. change (zcanon 8) with 8. rewrite zcanon_id by (unfold M64; zlia).
+rewrite (proj2 (Z.ltb_ge _ _)); [reflexivity | zlia]. }
+s_station HR S_D.
+s_runP HR tfibtbl_rtA tfibtbl_rtA_ok 0x37a6c S_E0 HX HP.
+s_pin HR (18%bv : bv 5) (SOff aMS 0).
+{ clear - Z1 Z7 Z8. pin_zevS. rewrite EaMS, EaND. unfold w64. rewrite !unsigned_lit_small by zlia.
+rewrite (zcanon_id (NDv + 4095)) by (unfold M64; zlia). change (zcanon 18446744073709547520) with (2 ^ 64 - 2 ^ 12).
+rewrite land_neg_pow2_u64 by zlia. change (zcanon 4096) with 4096. change (zcanon 0) with 0.
+pose proof (Z.div_mod (NDv + 4095) 4096 ltac:(zlia)) as DM. pose proof (Z.mod_pos_bound (NDv + 4095) 4096 ltac:(zlia)) as MB.
+change (2 ^ 12) with 4096. unfold MSv in *. zcanon_simp. zlia. }
+s_arm HR BC_GEU true (SOff aMS 0) (SOff aND 0).
+{ clear - Z1 Z7 Z8 Z10. arm_zevS. rewrite EaMS, EaND. unfold w64. rewrite !unsigned_lit_small by zlia. zcanon_simp.
+rewrite (proj2 (Z.ltb_ge _ _)); [reflexivity | zlia]. }
+s_station HR S_E.
+s_runP HR tfibtbl_rtA tfibtbl_rtA_ok 0x7ffffff0 S_G HX HP.
+s_ecallP HR tfibtbl_rtC tfibtbl_rtC_ok S_N HX HP.
+Qed.
+End f.
+End d.

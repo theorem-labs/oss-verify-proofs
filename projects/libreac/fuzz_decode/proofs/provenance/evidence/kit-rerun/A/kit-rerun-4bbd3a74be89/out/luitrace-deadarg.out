@@ -1,0 +1,35 @@
+# DEADARG: is the register read before it is written, on any path through the callee (recursively)?
+# dead = never read: the argument is dead at the call (settlement class (e), AGENT TIME).
+DEADARG	image	callee	reg	result
+DEADARG	cgif_file_fuzzer.asan-ubsan	_ZN6__lsan20DisabledInThisThreadEv	a0	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	_ZN6__lsan20DisabledInThisThreadEv	a2	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	_ZN6__lsan20DisabledInThisThreadEv	a3	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	_ZN6__lsan20DisabledInThisThreadEv	a4	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	_ZN6__lsan20DisabledInThisThreadEv	a5	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	_ZN6__lsan20DisabledInThisThreadEv	a6	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	_ZN6__asanL10RZSize2LogEj	a1	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	_ZN6__asan21GetCurrentThreadStatsEv	a0	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	_ZN6__asan21GetCurrentThreadStatsEv	a3	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer22AllocatorMayReturnNullEv	a0	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	_ZN6__asan15CanPoisonMemoryEv	a0	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer11CheckFailedEPKciS1_yy	a5	unknown
+DEADARG	cgif_file_fuzzer.asan-ubsan	memset	a4	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	memset	a5	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	memset	a6	dead
+DEADARG	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEEE6RefillEPNS7_8PerClassEPS6_m	a5	dead
+DEADARG	fuzz_decode.asan	_ZN6__lsan20DisabledInThisThreadEv	a0	dead
+DEADARG	fuzz_decode.asan	_ZN6__lsan20DisabledInThisThreadEv	a2	dead
+DEADARG	fuzz_decode.asan	_ZN6__lsan20DisabledInThisThreadEv	a3	dead
+DEADARG	fuzz_decode.asan	_ZN6__lsan20DisabledInThisThreadEv	a4	dead
+DEADARG	fuzz_decode.asan	_ZN6__lsan20DisabledInThisThreadEv	a5	dead
+DEADARG	fuzz_decode.asan	_ZN6__lsan20DisabledInThisThreadEv	a6	dead
+DEADARG	fuzz_decode.asan	_ZN6__asanL10RZSize2LogEj	a1	dead
+DEADARG	fuzz_decode.asan	_ZN6__asan21GetCurrentThreadStatsEv	a0	dead
+DEADARG	fuzz_decode.asan	_ZN6__asan21GetCurrentThreadStatsEv	a3	dead
+DEADARG	fuzz_decode.asan	_ZN11__sanitizer22AllocatorMayReturnNullEv	a0	dead
+DEADARG	fuzz_decode.asan	_ZN6__asan15CanPoisonMemoryEv	a0	dead
+DEADARG	fuzz_decode.asan	_ZN11__sanitizer11CheckFailedEPKciS1_yy	a5	unknown
+DEADARG	fuzz_decode.asan	memset	a4	dead
+DEADARG	fuzz_decode.asan	memset	a5	dead
+DEADARG	fuzz_decode.asan	memset	a6	dead
+DEADARG	fuzz_decode.asan	_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEEEE6RefillEPNS7_8PerClassEPS6_m	a5	dead

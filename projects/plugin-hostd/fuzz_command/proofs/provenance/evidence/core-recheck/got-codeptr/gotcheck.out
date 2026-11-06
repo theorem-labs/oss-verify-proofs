@@ -1,0 +1,28 @@
+gotcheck: 1612 files (A 529, B 1083), image by {'directory': 1051, 'no image Require: the gate key of lib/Reusable (RU, key B)': 561}; 858 numerals inside .got (A [0xa6390,0xa7108), B [0xa5ef0,0xa6c68))
+  image A FLAG      1
+  image A NOT-ADDRESS 3
+  image A OK        411
+  image A UNCHECKED 2
+  image B FLAG      1
+  image B NOT-ADDRESS 1
+  image B OK        439
+  check donor      - 328, DONOR-NOT-GOT 2, NO-DONOR-VALUE 8, SAME 520
+  check name_check - 824, ALIAS 14, MATCH 20
+  check stated     - 328, OK 530
+  check twin       - 130, SAME 728
+  check comment    - 736, CODE-SAME-FILE 14, DISASM 11, NAME 6, TWIN-LINE 16, WORD 75
+perturbation control: 850 OK rows; a perturbed row stays accepted only if every rule that accepted the row accepts it
+  +4       0 still accepted
+  +8       4 still accepted: lib/A/Rt/RtSF7.v:34; lib/B/Rt/RtSF5.v:5; lib/B/Rt/RtSF7.v:5; lib/B/Rt/RtSF7.v:35
+  -8       1 still accepted: lib/B/Rt/RtSF5.v:5
+  :=donor  0 still accepted
+  per rule (rows the rule accepted / of those, still accepted by that rule after the perturbation):
+    comment-CODE-SAME-FILE +4 14/0  +8 14/0  -8 14/0
+    comment-DISASM     +4 11/0  +8 11/0  -8 11/0
+    comment-NAME       +4 6/0  +8 6/0  -8 6/0
+    comment-TWIN-LINE  +4 16/0  +8 16/2  -8 16/0
+    comment-WORD       +4 75/0  +8 75/2  -8 75/1
+    donor              +4 520/0  +8 520/0  -8 520/0  :=donor 520/0
+    name               +4 34/0  +8 34/0  -8 34/2  :=donor 30/0
+    stated             +4 530/0  +8 530/0  -8 530/0  :=donor 330/0
+    twin               +4 726/0  +8 726/0  -8 726/0  :=donor 520/0

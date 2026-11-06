@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: muparser
 harness: set_eval_fuzzer
-rocq: OssFuzzTheorems.muparser.set_eval_fuzzer
+rocq: OSSVerify.muparser.set_eval_fuzzer
 origin: oss-fuzz
 summary: mu::Parser SetExpr(input) then Eval(); result discarded; mu::ParserError swallowed (any other
   exception escapes and aborts).

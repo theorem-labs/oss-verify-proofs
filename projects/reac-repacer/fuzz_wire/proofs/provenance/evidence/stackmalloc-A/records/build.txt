@@ -1,0 +1,38 @@
+# The builds of this relocation. cb-d02a58a345b9 (sha256 d02a58a345b9 = tools/cb/LATEST at 8882a4e7ac49),
+# called by its full path; each from a fresh `cb clone reac-repacer/fuzz_wire <clone> <commit>` with an empty
+# `git status --porcelain`, by `cb build --fresh <clone>`. Lines quoted from cb's output; the vo-check line leaves out
+# the path of the checker image's library directory.
+
+## 9031801b53fd (the relocated files, before the SZ step fix): rc 1
+start 20261031T171414Z
+cb: layout L2 (the unit's proofs are projects/reac-repacer/fuzz_wire/proofs; base 480601cd9f8e, facts c3777b3715d0, clone HEAD 9031801b53fd)
+cb: rc=1 wall=2078 log=build-20261031T171605Z.log (2173 targets compiled, 0 restored from the cache, 2 failed, 53004 warnings)
+  failed: projects/reac-repacer/fuzz_wire/proofs/lib/A/Rt/AF0s.vo
+  failed: projects/reac-repacer/fuzz_wire/proofs/lib/A/Rt/StackMalloc0.vo
+File "./projects/reac-repacer/fuzz_wire/proofs/lib/A/Rt/AF0s.v", line 66, characters 103-106:
+Error: No applicable tactic.
+File "./projects/reac-repacer/fuzz_wire/proofs/lib/A/Rt/StackMalloc0.v", line 66, characters 103-106:
+Error: No applicable tactic.
+
+## 8a2b472e9c3e (the SZ step fix, takes.tsv): rc 0
+start 20261031T174840Z
+cb: layout L2 (the unit's proofs are projects/reac-repacer/fuzz_wire/proofs; base 480601cd9f8e, facts c3777b3715d0, clone HEAD 8a2b472e9c3e)
+cb: rc=0 wall=211 log=build-20261031T174903Z.log (6 targets compiled, 2169 restored from the cache, 0 failed, 126 warnings)
+cb: target projects/reac-repacer/fuzz_wire/proofs/lib/A/AFj1.vo compiled
+cb: target projects/reac-repacer/fuzz_wire/proofs/lib/A/AFjf.vo compiled
+cb: target projects/reac-repacer/fuzz_wire/proofs/lib/A/Rt/AF0s.vo compiled
+cb: target projects/reac-repacer/fuzz_wire/proofs/lib/A/Rt/StackMalloc0.vo compiled
+cb: target projects/reac-repacer/fuzz_wire/proofs/lib/B/YFj1.vo compiled
+cb: target projects/reac-repacer/fuzz_wire/proofs/lib/B/YFjf.vo compiled
+cb: vo check: 2183 .vo read, 63844 Require digests compared with this build's .vo, 17775 with the checker image's .vo (50 of its libraries read in the checker image), 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable), 1.0 s
+
+## ad1201b86063 (the donor header lines restored, comment-only): rc 0
+start 20261031T182043Z
+cb: layout L2 (the unit's proofs are projects/reac-repacer/fuzz_wire/proofs; base 480601cd9f8e, facts c3777b3715d0, clone HEAD ad1201b86063)
+cb: rc=0 wall=1927 log=build-20261031T182111Z.log (1453 targets compiled, 722 restored from the cache, 0 failed, 37229 warnings)
+cb: target projects/reac-repacer/fuzz_wire/proofs/lib/A/Rt/AF0r.vo compiled
+cb: target projects/reac-repacer/fuzz_wire/proofs/lib/A/Rt/AF0s.vo compiled
+cb: target projects/reac-repacer/fuzz_wire/proofs/lib/A/Rt/StackMalloc0.vo compiled
+cb: target projects/reac-repacer/fuzz_wire/proofs/lib/A/Rt/StackMalloc0Tbl.vo compiled
+cb: target projects/reac-repacer/fuzz_wire/proofs/lib/Reusable/YF0v.vo compiled
+cb: vo check: 2183 .vo read, 63844 Require digests compared with this build's .vo, 17775 with the checker image's .vo (50 of its libraries read in the checker image), 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable), 1.0 s

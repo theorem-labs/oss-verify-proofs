@@ -1,0 +1,41 @@
+pin   fuzz_link.asan sha256 059dae63e07ca2d80ae9227fa125d40586a02172c96d2b6884f8617ab912061d
+twin  fuzz_link.asan (unstripped) sha256 66cd0f159895f119b29a44eb3760cfda78506402a019729057dba69562af9d9f
+  load 0x10000 R: 25 differing bytes, 0 outside the ELF header / build-id note
+  load 0x3126c X: 0 differing bytes, 0 outside the ELF header / build-id note
+  load 0xa1340 W: 0 differing bytes, 0 outside the ELF header / build-id note
+  load 0xa36c8 W: 0 differing bytes, 0 outside the ELF header / build-id note
+pin and twin load the same bytes (code identical; only ELF header / build-id differ): True (4 segments)
+AF0l.v pc_stack_malloc arms: [(0, '0x3d914'), (1, '0x3da88'), (3, '0x3dc18'), (4, '0x3ddc4')] else 0
+class  malloc entry  called from (link's code)                                   shadow   AF0l.v   expected  verdict
+    0  0x3d914       reac_code_emit@0x89c54                                      whole     0x3d914   0x3d914  OK
+         1 zero words after MemToShadow@0x3da40
+    1  0x3da88       model_read@0x864ac, nl_error@0x86ec4, reac_link_alias_read@0x886f4  whole     0x3da88   0x3da88  OK
+         2 zero words after MemToShadow@0x3dbcc
+    2  -             -                                                           -             0x0       0x0  OK
+    3  0x3dc18       reac_link_alias_write@0x88fb8, reac_served_mark@0x89614, reac_served_unmark_all@0x89f40  whole     0x3dc18   0x3dc18  OK
+         8 zero words after MemToShadow@0x3dd60
+    4  0x3ddc4       LLVMFuzzerTestOneInput@0x82844, model_write@0x88174         whole     0x3ddc4   0x3ddc4  OK
+         16 zero words after MemToShadow@0x3df0c
+    5  -             -                                                           -             0x0       0x0  OK
+    6  -             -                                                           -             0x0       0x0  OK
+    7  -             -                                                           -             0x0       0x0  OK
+    8  0x3df90       kernel@0x83da0                                              asked         0x0       0x0  OK
+         mv x9, a0 @0x3dfac; mv a1, x9 @0x3e0c4; PoisonShadow @0x3e0cc
+    9  0x3e15c       nl_talk@0x889f8                                             asked         0x0       0x0  OK
+         mv x9, a0 @0x3e178; mv a1, x9 @0x3e28c; PoisonShadow @0x3e294
+   10  -             -                                                           -             0x0       0x0  OK
+class  free entry    called from (link's code)
+    0  -             -
+    1  -             -
+    2  -             -
+    3  -             -
+    4  -             -
+    5  -             -
+    6  -             -
+    7  -             -
+    8  0x3e10c       kernel@0x85e90
+    9  0x3e2d4       nl_talk@0x88e88
+   10  -             -
+classes that reach __asan_stack_free_N: [8, 9] -> OK (8 and 9 only)
+RESULT PASS
+rc=0

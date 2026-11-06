@@ -1,0 +1,62 @@
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfFm.v (a working branch 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
+(* fm.asan's snprintf over the shared contract (FMsnprintfShared.v sh_asnprintf_realizesU), composed from the four walks:
+   __wrap_snprintf / __interceptor_snprintf (FMsnprintfSnp.v snp_ok) -> __interceptor_vsnprintf (FMsnprintfSvsni.v
+   svsni_ok) -> musl vsnprintf (FMsnprintfSvsn.v svsn_ok) -> __interceptor_vfprintf (FMsnprintfSvfi.v svfi_ok) ->
+   musl vfprintf (the seam, a hypothesis in the GXA-route form sh_avfprintf_icpt_realizesUx), with ASan's
+   printf_common and the FILE memset as hypotheses. Generic in the format family FF and in the windows: the seam's Kv,
+   printf_common's Kp, and the top's K >= fm_glue_img + Kv; the stack-protector cells are fm's (musl vsnprintf reads
+   its GOT slot by a PC-relative load). New file. *)
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith List Lia.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YK11 YK0s YK0i YK15 YK0j YK18 YP09.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YK04 YA0i YA0n.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0v YG0n YG0d.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.A Require Import AB1v AE34 AF0l AF0m AF0x AE20 AE2y.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Rt Require Import SnUpoison.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.A Require Import FMH_Base FMsnprintfImg FMsnprintfK.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.Rt Require Import PfFacts SnShared SnSx.
+From OSSVerify.Proofs.libreac.fuzz_disco.lib.A Require FMsnprintfSnp FMsnprintfSvsni FMsnprintfSvsn FMsnprintfSvfi.
+Import ListNotations.
+Local Open Scope Z_scope.
+
+(* ---- fm.asan's glue depth: the top's sp down to musl vfprintf's entry sp ---- *)
+(* MEASURED from fm.asan (the frame offsets of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGI.v (a working branch 3e35620c52e), a Theorem Labs lane's pinned chain): __interceptor_snprintf's frame 0x60,
+   __interceptor_vsnprintf's 0x870, musl vsnprintf's 0x130, __interceptor_vfprintf's 0x30 *)
+Definition fm_glue_img : Z := 0xa30.
+Lemma fm_glue_img_parts : fm_glue_img = 0x60 + 0x870 + 0x130 + 0x30.
+Proof. reflexivity. Qed.
+(* GXA's released musl vfprintf window: VF_DEPTH = VFA_DEPTH 368 + PC_DEPTH 5184 (fuzz_reply
+   lib/CJ/RL/GXA/G_printf_core_common.v:141, G_vfprintf_snf.v:54, origin/ossv/recipes 568db058c1d) *)
+Definition GXA_VF_DEPTH : Z := 5552.
+(* on the GXA route the top's window is at least 8160 (= 2256 to musl vsnprintf + VSN_DEPTH 5904); 2 * ESTACK fits *)
+Lemma fm_K_min_gxa : fm_glue_img + GXA_VF_DEPTH = 8160.
+Proof. reflexivity. Qed.
+
+Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Theorem fm_snprintf_shared : forall B, AR_laws tfibsegs B -> TfibSyms B ->
+  forall FF img_lo img_hi cr Kp Kv K,
+  ff_stable64 FF -> ff_mono FF -> ESTACK <= Kv -> Kp <= Kv -> fm_glue_img + Kv <= K ->
+  sh_apcommon_realizesUz tfibsegs B FF Kp cr A_PCOM ->
+  aintrin_realizesU B OSet W_MEMSET ->
+  sh_avfprintf_icpt_realizesUx tfibsegs B FF Kv FM_GOT_canary FM_canary img_lo img_hi cr A_SNW A_VFP ->
+  sh_asnprintf_realizesU tfibsegs B FF K FM_GOT_canary FM_canary img_lo img_hi cr PC_snprintf.
+Proof.
+intros B LAWS TB FF img_lo img_hi cr Kp Kv K STAB MONO HE HKp HK APC AMS AVFP.
+set (gc := FM_GOT_canary) in *. set (gv := FM_canary) in *.
+unfold fm_glue_img in HK.
+assert (VFI : sh_avfprintf_icpt_realizesUx tfibsegs B FF (0x30 + Kv) gc gv img_lo img_hi cr A_SNW A_VFPI).
+{ apply (FMsnprintfSvfi.svfi_ok B LAWS TB FF gc gv img_lo img_hi cr Kp Kv (0x30 + Kv));
+    first [assumption | lia]. }
+assert (VSN : sh_avsnprintf_realizesUa tfibsegs B FF (0x160 + Kv) gc gv img_lo img_hi cr A_VSN).
+{ apply (FMsnprintfSvsn.svsn_ok B LAWS FF STAB MONO (0x160 + Kv) (0x30 + Kv) gc gv img_lo img_hi cr);
+    first [assumption | reflexivity | lia]. }
+assert (VSNI : sh_avsnprintf_icpt_realizesUa tfibsegs B FF (0x9d0 + Kv) gc gv img_lo img_hi cr A_VSNI).
+{ apply (FMsnprintfSvsni.svsni_ok B LAWS TB FF STAB MONO gc gv img_lo img_hi cr (0x9d0 + Kv) (0x160 + Kv) Kp);
+    first [assumption | lia]. }
+apply (FMsnprintfSnp.snp_ok B LAWS TB FF gc gv img_lo img_hi cr (0x9d0 + Kv) K);
+  first [assumption | lia].
+Qed.
+End c.

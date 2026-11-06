@@ -1,0 +1,2 @@
+___interceptor_malloc	X 0x5195c Y 0x530b0 size 348	lo12 pairs 1 (in differing words 1)	jal 13 (differing 1)	target differs 1	target unmeasured 0	unpaired 0	C-string acceptances 0	[]
+   DIFF +0x130 jal names: _ZN6__asan11asan_mallocEmPN11__sanitizer18BufferedStackTraceE+0x0 | __sanitizer_get_allocated_begin+0x0

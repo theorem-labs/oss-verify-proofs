@@ -1,0 +1,6 @@
+# files copied from the run's stage-out (none existed in LIB), with the number of leading licence lines removed: 5
+B/Rt/StackMalloc0.v	6
+B/Rt/StackMalloc0Tbl.v	6
+B/Rt/YF0r.v	6
+B/Rt/YF0s.v	6
+Reusable/YF0v.v	5

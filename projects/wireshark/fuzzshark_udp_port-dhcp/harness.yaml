@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: wireshark
 harness: fuzzshark_udp_port-dhcp
-rocq: OssFuzzTheorems.wireshark.fuzzshark_udp_port_dhcp
+rocq: OSSVerify.wireshark.fuzzshark_udp_port_dhcp
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

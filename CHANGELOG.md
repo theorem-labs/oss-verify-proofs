@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026.11.1 (2026-11-05)
+
+- 20,421 statements: 526 proved (336 in 2026.11.0), 7 known false, 3 suspected false (an argument from reading the source, not yet a run or a proof; [docs/status.md](docs/status.md)), 229 blocked by the model, 19,656 open.
+- 190 new proofs on 30 fuzz targets in 7 projects: 113 halts and 77 agreement statements.
+- Seven projects are new, with 257 statements on 35 fuzz targets. libreac (9 fuzz targets), omx-clap-core (3) and plugin-hostd (2) are proved in full, 100 statements. reac-pw has 47 of its 51 statements proved, libdiginet 22 of 30 and reac-repacer 20 of 28. omx-dsp's 48 statements have no proof yet.
+- The halts statements of five fuzz targets allow exit status 78 as well as 0 and 2: brpc `fuzz_http_parser`, lldpd `fuzz_lldp`, pupnp `FuzzIxml`, spice-usbredir `usbredirfilterfuzz` and wavpack `fuzzer`. Each of these fuzz targets returns a value other than 0 or -1 to turn away an input it does not take: 1, or for pupnp also an IXML error code. libFuzzer treats such a return as a rejected input, and the driver then exits with status 78. A harness names these places as `rejects` in `harness.yaml`. In pupnp `FuzzIxml`, a failure of its return-only check at `FuzzIxml.c:23-27` also exits 78, and this release allows that too. No other statement's fingerprint changed ([docs/statements.md](docs/statements.md#halting-build_halts-build_halts_may_fail)). The 20 statements, each at its new revision:
+  - `brpc/fuzz_http_parser/{plain,ubsan,asan,asan_ubsan}_halts@r2`
+  - `lldpd/fuzz_lldp/{plain,ubsan,asan,asan_ubsan}_halts@r2`
+  - `pupnp/FuzzIxml/{plain,ubsan,asan,asan_ubsan}_halts@r2`
+  - `spice-usbredir/usbredirfilterfuzz/{plain,ubsan,asan,asan_ubsan}_halts@r2`
+  - `wavpack/fuzzer/{plain,ubsan,asan,asan_ubsan}_halts@r2`
+- Rares Buhai contributed the proof of `zlib/checksum_fuzzer/plain_halts_may_fail` on the public repository ([theorem-labs/oss-verify-proofs#7](https://github.com/theorem-labs/oss-verify-proofs/pull/7)).
+- The static AddressSanitizer now lives in [asan-static](https://github.com/theorem-labs/asan-static). Its former name, static-asan, redirects there. The build records of this release still name static-asan. The toolchain is the same commit `b05061352064`, which that repository tags `static-asan-2026.10.0`.
+- The Rocq namespace is now `OSSVerify`. It was `OssFuzzTheorems`. The opam packages are now `rocq-oss-verify-*`. They were `rocq-oss-fuzz-theorems-*`. A proof written for an earlier release needs one change: each module path that starts `OssFuzzTheorems.` must start `OSSVerify.`, in its `From ... Require` lines. `./oft generate` writes the new names into the dune files. No statement changes its meaning, its fingerprint or its revision, so every published pin still holds.
+- The pinned checker image is rebuilt, at `ghcr.io/theorem-labs/oss-fuzz-theorems-checker@sha256:063f93261f11ba449f1c3825884fadc65cf1fc836d4a3ee534633211abbdc3eb`. It holds the step in `toolchain/checker.Dockerfile` that no longer trusts five root certificates.
+- `./oft fetch` can now read a binary from a release that has no public download URL, such as a draft release or a release of another repository. Set `OFT_RELEASES_REPO=<owner>/<repo>`, and put a token in `GH_TOKEN` or `GITHUB_TOKEN`. `fetch` then reads each asset from that repository's release of the same tag through the GitHub API, with the same size and SHA-256 checks. `fetch` does not send the token to the storage host that the API redirects to. Without the variable, `fetch` uses the public release URL as before, and an HTTP 404 there now says what to set.
+- `./oft check` now asks for a 2 GiB stack for the `rocq`, `rocqchk` and `dune` processes it starts, instead of the largest stack the hard limit allows. Under a lower hard limit it takes that limit and runs; it no longer refuses to start. A container runtime can give a process less stack than the limit says, so the check measures the stack that a process it starts really gets. A step that runs out of stack now fails as `stack exhausted at <N> MiB` and names its log.
+- Proof files made from Anthropic's proofs carry Anthropic's licence lines (`Apache-2.0 OR MIT`), and `oft lint` checks them.
+- `docs/versioning.md` no longer says that tags are never deleted. A release can be withdrawn, which deletes its GitHub release and its tag, as 2026.10.2 was.
+- The proofs have 83 lines with a wall-clock time limit, each with a comment that gives the reason, and `oft lint` refuses a limit without one. 2026.11.0 had 59, and the new projects bring 24. On a slow machine, a remaining limit can make a proof fail.
+
+### Known issue
+
+- Each proved agreement statement, and each proved halts statement except the eight `*_halts_may_fail` statements, assumes that the run stays in its memory budget. The premise is `~ run_scfg_budget_refused` or its equivalent, in [theories/Shapes.v](theories/Shapes.v). No theorem shows yet that this is true for a released build. This also applies to 2026.10.0, 2026.10.1 and 2026.11.0.
+
 ## 2026.11.0 (2026-11-01), a patch release
 
 - 277 proof-library files in 37 units are rewritten. In 1 of them the rewritten text came out byte-identical to the released text; the rest change. Where a released file carries a copyright or attribution notice, the rewritten file keeps it unchanged.

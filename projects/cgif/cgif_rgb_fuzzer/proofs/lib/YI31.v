@@ -1,0 +1,615 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
+YK11 YK0i YK0j YK14 YK1b YK1a YK15 YN06 YK0s.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
+YQ0j YQ0c YQ0b YQ03 YQ0i YQ0h YQ09 YQ04 YQ05 YQ0e YQ02.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YO3v YO38 YK0w.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YP0j YP0g YP0r YP0c.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YH04 YH07 YH06 YO3m
+YI00 YI02 YI01 YI03 YI04 YI5a YI1e YI2m YI26 YI2r
+YI2s.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YN05.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Open Scope bv_scope.
+Open Scope Z_scope.
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
+Ltac inl := cbv; repeat (first [ left; reflexivity | right ]).
+Section b. Context {fx : YK11.FPState} {rc : YN05.RunCeil}.
+Definition ss_L (pc : Z) : sstate := mkSS pc sr_atoms [] None (mkFacts [] [] []).
+Definition ss_Lc (pc : Z) : sstate :=
+mkSS pc sr_atoms [YQ0b.mkRegion (Some 9%nat) 0 40 0 0 (obj_chunks_gen LAY_RawFrameConfig 32 lits_RFC)] None
+(mkFacts [(9%nat, mkAF (CEIL_MIN + 8704) (2^63 - 40) 3)] [] []).
+Definition ss_L1 : sstate := Eval vm_compute in ss_Lc PC_L1.
+Definition ss_L1r : sstate := Eval vm_compute in ss_Lc (PC_L1 + 0x24).
+Definition ss_L2 : sstate := Eval vm_compute in ss_Lc PC_L2.
+Definition ss_L2r : sstate := Eval vm_compute in ss_Lc (PC_L2 + 0x24).
+Definition ss_L3 : sstate := Eval vm_compute in ss_Lc PC_L3.
+Definition ss_L3r : sstate := Eval vm_compute in ss_Lc (PC_L3 + 0x24).
+Definition ss_L4 : sstate := Eval vm_compute in ss_Lc PC_L4.
+Definition ss_L4r : sstate := Eval vm_compute in ss_Lc (PC_L4 + 0x24).
+Definition LKEPT : list reg := [2; 3; 4; 8; 9; 18; 19; 21; 22; 23; 25; 26; 27]%bv.
+Lemma U_zext32_sh : forall E a x,
+U E a = x -> 0 <= x < 2 ^ 32 -> U E (SAlu ALU_SRL (SAlu ALU_SLL a (SLit 32)) (SLit 32)) = x.
+Proof.
+intros E a x Hx Rx. rewrite U_SAlu. cbn [zalu_raw]. rewrite U_SAlu. cbn [zalu_raw]. rewrite Hx, !U_SLit.
+change (Z.land (zcanon 32) 63) with 32. rewrite Z.shiftl_mul_pow2 by lia.
+rewrite (zcanon_id (x * 2 ^ 32)) by (unfold M64; change (2 ^ 32) with 4294967296 in *; lia).
+rewrite Z.shiftr_div_pow2 by lia. rewrite Z.div_mul by lia. apply zcanon_id. unfold M64. lia.
+Qed.
+Lemma U_zext16_atom : forall E n v, ew E n = Z_to_bv 64 v -> 0 <= v < 65536 -> U E (SExt false 16 (SOff n 0)) = v.
+Proof.
+intros E n v H Hv. rewrite U_zext, (U_atom E n v H) by lia. change (2 ^ Z.of_N 16) with 65536. apply Z.mod_small. lia.
+Qed.
+Section S.
+Variable API : AllocAPI src2_msyms.
+Let MR : MR_t := aa_MR API.
+Let LAWS : MR_laws src2_msyms MR := aa_laws API.
+Hypothesis IMG : img_laws src2_msyms MR.
+Definition loop_post (pcx : Z) STK sp0 FP L A mem md Lc Ac mdc (regs : bvmap 5 word) (memc : word -> option byte)
+(pint w h i step R : Z) (c' : config) : Prop :=
+exists regs' mem' (m : Z),
+c' = mkCfg (mkst regs' (Z_to_bv 64 pcx) mem' (seg_rom src2segs)) mdc /\
+journal src2_msyms MR STK sp0 FP L A mem md Lc Ac mem' mdc /\
+1 <= m /\ i + step * (m - 1) < h /\ h <= i + step * m /\
+getr regs' 20 = Z_to_bv 64 (pint + w * (R + m)) /\ getr regs' 24 = Z_to_bv 64 (i + step * m) /\
+getr regs' 10 = Z_to_bv 64 w /\ getr regs' 11 = Z_to_bv 64 h /\
+(forall r, In r LKEPT -> getr regs' r = getr regs r) /\
+(forall x : word, bv_unsigned x < pint \/ pint + w * h <= bv_unsigned x -> mem' x = memc x) /\
+mem_grows memc mem'.
+Definition loop_stmt (pch pcx step : Z) : Prop :=
+forall (n : nat) (i R : Z) (regs : bvmap 5 word) memc STK sp0 FP L A mem md Lc Ac mdc (pint npint img Nimg w h cfp : Z) (cv : list Z),
+h - i <= step * Z.of_nat n -> 0 <= i < h -> 0 <= R ->
+(forall j, 0 <= j -> i + step * j < h -> R + j + 1 <= h) ->
+1 <= w <= 65535 -> 1 <= h <= 65535 -> w * h <= npint -> w * h <= Nimg ->
+journal src2_msyms MR STK sp0 FP L A mem md Lc Ac memc mdc ->
+In (pint, npint) (blocks Lc Ac) ->
+(forall blc i, In (pint, npint) blc -> 0 <= i < npint -> wr_byte STK sp0 FP (blocks L A) blc (pint + i)) ->
+In (img, Nimg) (blocks Lc Ac) ->
+(pint + npint <= img \/ img + Nimg <= pint) ->
+obj_at src2segs memc cfp LAY_RawFrameConfig cv -> nth_error cv 1 = Some img -> nth_error cv 3 = Some w -> nth_error cv 4 = Some h ->
+alloc_ceiling + 8704 <= cfp -> cfp + 40 <= 2 ^ 63 -> cfp mod 8 = 0 -> getr regs 9 = Z_to_bv 64 cfp ->
+getr regs 20 = Z_to_bv 64 (pint + w * R) -> getr regs 24 = Z_to_bv 64 i -> getr regs 10 = Z_to_bv 64 w ->
+SR src2segs (mkCfg (mkst regs (Z_to_bv 64 pch) memc (seg_rom src2segs)) mdc)
+(loop_post pcx STK sp0 FP L A mem md Lc Ac mdc regs memc pint w h i step R).
+Lemma il_loop1 : loop_stmt PC_L1 PC_L1X 8.
+Proof.
+unfold loop_stmt.
+induction n as [|n IH]; intros i R regs memc STK sp0 FP L A mem md Lc Ac mdc pint npint img Nimg w h cfp cv
+Hn Hi HR Hrows Hw Hh Hnp HNi HJ Hpin Hpnot Himg Hsep HOC Hcv1 Hcv3 Hcv4 Hcfp0 Hcfp1 Hcfp8 G9 G20 G24 G10; [lia|].
+pose proof (proj1 alloc_ceiling_val) as Hac.
+pose proof (journal_heap _ _ _ _ _ _ _ _ _ _ _ _ _ HJ) as HH.
+destruct (heap_blocks_range src2_msyms MR LAWS Lc Ac memc mdc pint npint HH Hpin ltac:(nia)) as (Hp0 & Hp1 & _).
+destruct (heap_blocks_range src2_msyms MR LAWS Lc Ac memc mdc img Nimg HH Himg ltac:(nia)) as (Hi0 & Hi1 & _).
+pose proof (Hrows 0 ltac:(lia) ltac:(lia)) as HR1.
+assert (HwR : 0 <= w * R /\ w * (R + 1) <= w * h) by nia.
+assert (Hwi : 0 <= w * i /\ w * (i + 1) <= w * h) by nia.
+assert (Hiw : 0 <= i * w < 2 ^ 32) by nia.
+assert (Hfar : pint + w * R + w <= cfp) by (clear - Hp1 HwR Hnp Hcfp0; lia).
+remember (Ereg regs (map (Z_to_bv 64) cv ++ [])) as E eqn:HE0.
+assert (HE : forall k (rr : reg), Z.of_nat k = bv_unsigned rr -> ew E k = getr regs rr) by (intros; subst E; apply ew_Ereg_nat; assumption).
+assert (HE9 : ew E 9 = Z_to_bv 64 cfp) by (rewrite (HE 9%nat 9%bv eq_refl); exact G9).
+assert (HE33 : ew E 33 = Z_to_bv 64 img) by (subst E; apply (Ereg_vals regs cv [] 1 img Hcv1)).
+assert (HE20 : ew E 20 = Z_to_bv 64 (pint + w * R)) by (rewrite (HE 20%nat 20%bv eq_refl); exact G20).
+assert (HE24 : ew E 24 = Z_to_bv 64 i) by (rewrite (HE 24%nat 24%bv eq_refl); exact G24).
+assert (HE10 : ew E 10 = Z_to_bv 64 w) by (rewrite (HE 10%nat 10%bv eq_refl); exact G10).
+assert (HS : st_ok src2segs E ss_L1 (mkst regs (Z_to_bv 64 PC_L1) memc (seg_rom src2segs))).
+{ subst E. change ss_L1 with (ss_Lc PC_L1). unfold ss_Lc. apply entry_st_ok.
+- reflexivity.
+- constructor; [|constructor].
+eapply (region_ok_obj_gen src2segs _ memc 9 cfp); [rewrite HE9; apply unsigned_lit_small; lia | lia | lia | exact HOC | reflexivity | | | intros k Hk; lia].
++ intros j v Hj. apply Ereg_vals. exact Hj.
++ intros j z Hj. do 11 (destruct j as [|j]; [discriminate Hj|]). destruct j; discriminate Hj.
+- cbn. repeat split.
+- cbn [atoms_ok]. unfold afact_ok, AC. cbn [af_lo af_hi af_al2]. rewrite HE9, unsigned_lit_small by lia.
+change (2 ^ 3) with 8. repeat split; lia. }
+change memc with (ms_mem (mkst regs (Z_to_bv 64 PC_L1) memc (seg_rom src2segs))) in HJ.
+jrun_to LAWS src2tbl_ok HS HJ src2_A_memcpy; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+jreg HS (10%bv:reg) as M10. rewrite HE20 in M10.
+reg_U HS (11%bv:reg) ltac:(eapply U_add_small; [apply (U_atom _ _ _ HE33); lia | apply U_zext32_sh; [apply U_mul_small; [apply (U_atom _ _ _ HE24); lia | apply (U_atom _ _ _ HE10); lia | lia | lia | nia] | exact Hiw] | lia | lia | lia]) M11.
+reg_U HS (12%bv:reg) ltac:(apply U_zext32_sh; [apply (U_atom _ _ _ HE10); lia | lia]) M12.
+jreg HS (1%bv:reg) as M1.
+pose proof (regs_kept_of_st_ok _ _ _ _ regs _ (LKEPT ++ [20; 24]%bv) HS ltac:(rewrite HE0; apply env_agree_refl) ltac:(vm_compute; reflexivity)) as HK.
+assert (MEQ0 : forall x : word, ms_mem ms x = memc x).
+{ intros x. lazymatch goal with HF : frame_of _ _ _ _ |- _ => exact (frame_of_ro' _ _ _ _ HF ltac:(vm_compute; reflexivity) x) end. }
+eapply SR_bind.
+{ eapply (jmemcpy _ _ LAWS IMG _ src2_memcpy) with (d := pint + w * R) (src := img + w * i) (n := w);
+[ exact HS | reflexivity | reflexivity | exact HJ | exact M10 | rewrite M11; f_equal; lia | exact M12 | exact M1
+| cbn [sv_denot]; apply ret_ok_even; vm_compute; reflexivity | lia | lia | lia | lia | lia | | | clear - Hsep HwR Hwi Hnp HNi; lia | ].
+- intros k Hk. cbn [ms_mem]. eapply present_grows; [eassumption|].
+replace (pint + w * R + k) with (pint + (w * R + k)) by lia.
+apply (proj1 (heap_blocks _ _ LAWS Lc Ac memc mdc pint npint (w * R + k) HH Hpin ltac:(nia))).
+- intros k Hk. cbn [ms_mem]. eapply present_grows; [eassumption|].
+replace (img + w * i + k) with (img + (w * i + k)) by lia.
+apply (proj1 (heap_blocks _ _ LAWS Lc Ac memc mdc img Nimg (w * i + k) HH Himg ltac:(nia))).
+- intros a Ha. replace a with (pint + (a - pint)) by lia. apply (Hpnot (blocks Lc Ac)); [exact Hpin | nia]. }
+cbv beta. intros c' (regs3 & mem3 & -> & HJ3 & Hd10 & Hfr3 & Hout3 & Hgr3 & _).
+cbn [ms_regs ms_mem] in Hfr3, Hout3, Hgr3, HJ3.
+assert (F : forall r : reg, In r (LKEPT ++ [20; 24]%bv) -> getr regs3 r = getr regs r).
+{ intros r Hr. rewrite (Hfr3 r). { apply HK. exact Hr. }
+cbv [LKEPT app In] in Hr. repeat (destruct Hr as [<- | Hr]; [vm_compute; reflexivity|]). destruct Hr. }
+assert (HOC3 : obj_at src2segs mem3 cfp LAY_RawFrameConfig cv).
+{ eapply (obj_at_transport_range _ _ _ _ _ _ 40); [exact HOC | reflexivity |].
+intros k Hk. apply mbyte_eq_of1'. rewrite (Hout3 (Z_to_bv 64 (cfp + k))) by (rewrite unsigned_lit_small by lia; lia). apply MEQ0. }
+remember (Ereg regs3 (map (Z_to_bv 64) cv ++ [])) as E3 eqn:HE3.
+assert (HE' : forall k (rr : reg), Z.of_nat k = bv_unsigned rr -> ew E3 k = getr regs3 rr) by (intros; subst E3; apply ew_Ereg_nat; assumption).
+assert (X9 : ew E3 9 = Z_to_bv 64 cfp) by (rewrite (HE' 9%nat 9%bv eq_refl), F by inl; exact G9).
+assert (X35 : ew E3 35 = Z_to_bv 64 w) by (subst E3; apply (Ereg_vals regs3 cv [] 3 w Hcv3)).
+assert (X36 : ew E3 36 = Z_to_bv 64 h) by (subst E3; apply (Ereg_vals regs3 cv [] 4 h Hcv4)).
+assert (X20 : ew E3 20 = Z_to_bv 64 (pint + w * R)) by (rewrite (HE' 20%nat 20%bv eq_refl), F by inl; exact G20).
+assert (X24 : ew E3 24 = Z_to_bv 64 i) by (rewrite (HE' 24%nat 24%bv eq_refl), F by inl; exact G24).
+assert (HS3 : st_ok src2segs E3 ss_L1r (mkst regs3 (Z_to_bv 64 (PC_L1 + 0x24)) mem3 (seg_rom src2segs))).
+{ subst E3. change ss_L1r with (ss_Lc (PC_L1 + 0x24)). unfold ss_Lc. apply entry_st_ok.
+- reflexivity.
+- constructor; [|constructor].
+eapply (region_ok_obj_gen src2segs _ mem3 9 cfp); [rewrite X9; apply unsigned_lit_small; lia | lia | lia | exact HOC3 | reflexivity | | | intros k Hk; lia].
++ intros j v Hj. apply Ereg_vals. exact Hj.
++ intros j z Hj. do 11 (destruct j as [|j]; [discriminate Hj|]). destruct j; discriminate Hj.
+- cbn. repeat split.
+- cbn [atoms_ok]. unfold afact_ok, AC. cbn [af_lo af_hi af_al2]. rewrite X9, unsigned_lit_small by lia.
+change (2 ^ 3) with 8. repeat split; lia. }
+change mem3 with (ms_mem (mkst regs3 (Z_to_bv 64 (PC_L1 + 0x24)) mem3 (seg_rom src2segs))) in HJ3.
+clear HS. rename HS3 into HS.
+jrun LAWS src2tbl_ok HS HJ3; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+assert (Us8 : U E3 (SAluw ALU_ADD (SOff 24 0) (SLit 8)) = i + 8).
+{ apply U_addw_small; [apply (U_atom _ _ _ X24); lia | apply U_lit; lia | lia | lia | lia]. }
+assert (Ua0 : U E3 (SExt false 16 (SOff 35 0)) = w) by (apply U_zext16_atom; [exact X35 | lia]).
+assert (Ua1 : U E3 (SExt false 16 (SOff 36 0)) = h) by (apply U_zext16_atom; [exact X36 | lia]).
+jbranch src2tbl HS.
+-
+rewrite branch_ltu_U, Us8, Ua1 in Hc.
+assert (Hlt : i + 8 < h) by (destruct (Z.ltb_spec (i + 8) h); [lia | discriminate]). clear Hc.
+jrun_to LAWS src2tbl_ok HS HJ3 PC_L1; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+pose proof (regs_kept_of_st_ok _ _ _ _ regs3 _ LKEPT HS ltac:(rewrite HE3; apply env_agree_refl) ltac:(vm_compute; reflexivity)) as HK2.
+reg_U HS (20%bv:reg) ltac:(eapply U_add_small; [first [apply (U_atom _ _ _ X20) | exact Ua0]; lia | first [exact Ua0 | apply (U_atom _ _ _ X20)]; lia | lia | lia | lia]) N20.
+reg_U HS (24%bv:reg) ltac:(exact Us8) N24.
+reg_U HS (10%bv:reg) ltac:(exact Ua0) N10.
+lazymatch type of HS with st_ok _ _ _ ?msf => rename msf into msF end.
+assert (MEQ1 : forall x : word, ms_mem msF x = mem3 x) by (intros x; mem_chain ltac:(fun H => idtac)).
+rewrite (st_ok_mkst _ _ _ _ HS eq_refl). cbn [ss_pc].
+eapply SR_mono.
+{ eapply (IH (i + 8) (R + 1) _ _ STK sp0 FP L A mem md Lc Ac mdc pint npint img Nimg w h cfp cv);
+[lia | lia | lia | | lia | lia | exact Hnp | exact HNi | exact HJ3 | exact Hpin | exact Hpnot | exact Himg | exact Hsep
+| | exact Hcv1 | exact Hcv3 | exact Hcv4 | exact Hcfp0 | exact Hcfp1 | exact Hcfp8 | rewrite HK2, F by inl; exact G9
+| rewrite N20; f_equal; lia | rewrite N24; reflexivity | exact N10 ].
+- intros j Hj Hij. pose proof (Hrows (j + 1) ltac:(lia) ltac:(lia)). lia.
+- eapply (obj_at_transport_range _ _ _ _ _ _ 40); [exact HOC3 | reflexivity |].
+intros k Hk. apply mbyte_eq_of1'. apply MEQ1. }
+cbv beta. intros c' (regs' & mem' & m & -> & HJ' & Hm1 & Hm2 & Hm3 & P20 & P24 & P10 & P11 & HKf & Hout' & Hgr').
+exists regs', mem', (m + 1). split; [reflexivity|]. split; [exact HJ'|].
+split; [lia|]. split; [lia|]. split; [lia|].
+split; [rewrite P20; f_equal; lia|]. split; [rewrite P24; f_equal; lia|].
+split; [exact P10|]. split; [exact P11|].
+split. { intros r Hr. rewrite (HKf r Hr), (HK2 r Hr). apply F. cbv [LKEPT app In] in Hr |- *. clear - Hr. tauto. }
+split.
++ intros x Hx. rewrite (Hout' x Hx), MEQ1, (Hout3 x ltac:(nia)). apply MEQ0.
++ intros x Hx. apply Hgr'. rewrite MEQ1. apply Hgr3. rewrite MEQ0. exact Hx.
+-
+rewrite branch_ltu_U, Us8, Ua1 in Hc.
+assert (Hge : h <= i + 8) by (destruct (Z.ltb_spec (i + 8) h); [discriminate | lia]). clear Hc.
+jrun_to LAWS src2tbl_ok HS HJ3 PC_L1X; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+pose proof (regs_kept_of_st_ok _ _ _ _ regs3 _ LKEPT HS ltac:(rewrite HE3; apply env_agree_refl) ltac:(vm_compute; reflexivity)) as HK2.
+reg_U HS (20%bv:reg) ltac:(eapply U_add_small; [first [apply (U_atom _ _ _ X20) | exact Ua0]; lia | first [exact Ua0 | apply (U_atom _ _ _ X20)]; lia | lia | lia | lia]) N20.
+reg_U HS (24%bv:reg) ltac:(exact Us8) N24.
+reg_U HS (10%bv:reg) ltac:(exact Ua0) N10.
+reg_U HS (11%bv:reg) ltac:(exact Ua1) N11.
+lazymatch type of HS with st_ok _ _ _ ?msf => rename msf into msF end.
+assert (MEQ1 : forall x : word, ms_mem msF x = mem3 x) by (intros x; mem_chain ltac:(fun H => idtac)).
+rewrite (st_ok_mkst _ _ _ _ HS eq_refl). cbn [ss_pc]. apply SR_ret.
+exists (ms_regs msF), (ms_mem msF), 1. split; [reflexivity|]. split; [exact HJ3|].
+split; [lia|]. split; [lia|]. split; [lia|].
+split; [rewrite N20; f_equal; lia|]. split; [rewrite N24; f_equal; lia|].
+split; [exact N10|]. split; [exact N11|].
+split. { intros r Hr. rewrite (HK2 r Hr). apply F. cbv [LKEPT app In] in Hr |- *. clear - Hr. tauto. }
+split.
++ intros x Hx. cbn [ms_mem]. rewrite MEQ1, (Hout3 x ltac:(nia)). apply MEQ0.
++ cbn [ms_mem]. intros x Hx. rewrite MEQ1. apply Hgr3. rewrite MEQ0. exact Hx.
+Qed.
+Lemma il_loop2 : loop_stmt PC_L2 PC_L2X 8.
+Proof.
+unfold loop_stmt.
+induction n as [|n IH]; intros i R regs memc STK sp0 FP L A mem md Lc Ac mdc pint npint img Nimg w h cfp cv
+Hn Hi HR Hrows Hw Hh Hnp HNi HJ Hpin Hpnot Himg Hsep HOC Hcv1 Hcv3 Hcv4 Hcfp0 Hcfp1 Hcfp8 G9 G20 G24 G10; [lia|].
+pose proof (proj1 alloc_ceiling_val) as Hac.
+pose proof (journal_heap _ _ _ _ _ _ _ _ _ _ _ _ _ HJ) as HH.
+destruct (heap_blocks_range src2_msyms MR LAWS Lc Ac memc mdc pint npint HH Hpin ltac:(nia)) as (Hp0 & Hp1 & _).
+destruct (heap_blocks_range src2_msyms MR LAWS Lc Ac memc mdc img Nimg HH Himg ltac:(nia)) as (Hi0 & Hi1 & _).
+pose proof (Hrows 0 ltac:(lia) ltac:(lia)) as HR1.
+assert (HwR : 0 <= w * R /\ w * (R + 1) <= w * h) by nia.
+assert (Hwi : 0 <= w * i /\ w * (i + 1) <= w * h) by nia.
+assert (Hiw : 0 <= i * w < 2 ^ 32) by nia.
+assert (Hfar : pint + w * R + w <= cfp) by (clear - Hp1 HwR Hnp Hcfp0; lia).
+remember (Ereg regs (map (Z_to_bv 64) cv ++ [])) as E eqn:HE0.
+assert (HE : forall k (rr : reg), Z.of_nat k = bv_unsigned rr -> ew E k = getr regs rr) by (intros; subst E; apply ew_Ereg_nat; assumption).
+assert (HE9 : ew E 9 = Z_to_bv 64 cfp) by (rewrite (HE 9%nat 9%bv eq_refl); exact G9).
+assert (HE33 : ew E 33 = Z_to_bv 64 img) by (subst E; apply (Ereg_vals regs cv [] 1 img Hcv1)).
+assert (HE20 : ew E 20 = Z_to_bv 64 (pint + w * R)) by (rewrite (HE 20%nat 20%bv eq_refl); exact G20).
+assert (HE24 : ew E 24 = Z_to_bv 64 i) by (rewrite (HE 24%nat 24%bv eq_refl); exact G24).
+assert (HE10 : ew E 10 = Z_to_bv 64 w) by (rewrite (HE 10%nat 10%bv eq_refl); exact G10).
+assert (HS : st_ok src2segs E ss_L2 (mkst regs (Z_to_bv 64 PC_L2) memc (seg_rom src2segs))).
+{ subst E. change ss_L2 with (ss_Lc PC_L2). unfold ss_Lc. apply entry_st_ok.
+- reflexivity.
+- constructor; [|constructor].
+eapply (region_ok_obj_gen src2segs _ memc 9 cfp); [rewrite HE9; apply unsigned_lit_small; lia | lia | lia | exact HOC | reflexivity | | | intros k Hk; lia].
++ intros j v Hj. apply Ereg_vals. exact Hj.
++ intros j z Hj. do 11 (destruct j as [|j]; [discriminate Hj|]). destruct j; discriminate Hj.
+- cbn. repeat split.
+- cbn [atoms_ok]. unfold afact_ok, AC. cbn [af_lo af_hi af_al2]. rewrite HE9, unsigned_lit_small by lia.
+change (2 ^ 3) with 8. repeat split; lia. }
+change memc with (ms_mem (mkst regs (Z_to_bv 64 PC_L2) memc (seg_rom src2segs))) in HJ.
+jrun_to LAWS src2tbl_ok HS HJ src2_A_memcpy; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+jreg HS (10%bv:reg) as M10. rewrite HE20 in M10.
+reg_U HS (11%bv:reg) ltac:(eapply U_add_small; [apply (U_atom _ _ _ HE33); lia | apply U_zext32_sh; [apply U_mul_small; [apply (U_atom _ _ _ HE24); lia | apply (U_atom _ _ _ HE10); lia | lia | lia | nia] | exact Hiw] | lia | lia | lia]) M11.
+reg_U HS (12%bv:reg) ltac:(apply U_zext32_sh; [apply (U_atom _ _ _ HE10); lia | lia]) M12.
+jreg HS (1%bv:reg) as M1.
+pose proof (regs_kept_of_st_ok _ _ _ _ regs _ (LKEPT ++ [20; 24]%bv) HS ltac:(rewrite HE0; apply env_agree_refl) ltac:(vm_compute; reflexivity)) as HK.
+assert (MEQ0 : forall x : word, ms_mem ms x = memc x).
+{ intros x. lazymatch goal with HF : frame_of _ _ _ _ |- _ => exact (frame_of_ro' _ _ _ _ HF ltac:(vm_compute; reflexivity) x) end. }
+eapply SR_bind.
+{ eapply (jmemcpy _ _ LAWS IMG _ src2_memcpy) with (d := pint + w * R) (src := img + w * i) (n := w);
+[ exact HS | reflexivity | reflexivity | exact HJ | exact M10 | rewrite M11; f_equal; lia | exact M12 | exact M1
+| cbn [sv_denot]; apply ret_ok_even; vm_compute; reflexivity | lia | lia | lia | lia | lia | | | clear - Hsep HwR Hwi Hnp HNi; lia | ].
+- intros k Hk. cbn [ms_mem]. eapply present_grows; [eassumption|].
+replace (pint + w * R + k) with (pint + (w * R + k)) by lia.
+apply (proj1 (heap_blocks _ _ LAWS Lc Ac memc mdc pint npint (w * R + k) HH Hpin ltac:(nia))).
+- intros k Hk. cbn [ms_mem]. eapply present_grows; [eassumption|].
+replace (img + w * i + k) with (img + (w * i + k)) by lia.
+apply (proj1 (heap_blocks _ _ LAWS Lc Ac memc mdc img Nimg (w * i + k) HH Himg ltac:(nia))).
+- intros a Ha. replace a with (pint + (a - pint)) by lia. apply (Hpnot (blocks Lc Ac)); [exact Hpin | nia]. }
+cbv beta. intros c' (regs3 & mem3 & -> & HJ3 & Hd10 & Hfr3 & Hout3 & Hgr3 & _).
+cbn [ms_regs ms_mem] in Hfr3, Hout3, Hgr3, HJ3.
+assert (F : forall r : reg, In r (LKEPT ++ [20; 24]%bv) -> getr regs3 r = getr regs r).
+{ intros r Hr. rewrite (Hfr3 r). { apply HK. exact Hr. }
+cbv [LKEPT app In] in Hr. repeat (destruct Hr as [<- | Hr]; [vm_compute; reflexivity|]). destruct Hr. }
+assert (HOC3 : obj_at src2segs mem3 cfp LAY_RawFrameConfig cv).
+{ eapply (obj_at_transport_range _ _ _ _ _ _ 40); [exact HOC | reflexivity |].
+intros k Hk. apply mbyte_eq_of1'. rewrite (Hout3 (Z_to_bv 64 (cfp + k))) by (rewrite unsigned_lit_small by lia; lia). apply MEQ0. }
+remember (Ereg regs3 (map (Z_to_bv 64) cv ++ [])) as E3 eqn:HE3.
+assert (HE' : forall k (rr : reg), Z.of_nat k = bv_unsigned rr -> ew E3 k = getr regs3 rr) by (intros; subst E3; apply ew_Ereg_nat; assumption).
+assert (X9 : ew E3 9 = Z_to_bv 64 cfp) by (rewrite (HE' 9%nat 9%bv eq_refl), F by inl; exact G9).
+assert (X35 : ew E3 35 = Z_to_bv 64 w) by (subst E3; apply (Ereg_vals regs3 cv [] 3 w Hcv3)).
+assert (X36 : ew E3 36 = Z_to_bv 64 h) by (subst E3; apply (Ereg_vals regs3 cv [] 4 h Hcv4)).
+assert (X20 : ew E3 20 = Z_to_bv 64 (pint + w * R)) by (rewrite (HE' 20%nat 20%bv eq_refl), F by inl; exact G20).
+assert (X24 : ew E3 24 = Z_to_bv 64 i) by (rewrite (HE' 24%nat 24%bv eq_refl), F by inl; exact G24).
+assert (HS3 : st_ok src2segs E3 ss_L2r (mkst regs3 (Z_to_bv 64 (PC_L2 + 0x24)) mem3 (seg_rom src2segs))).
+{ subst E3. change ss_L2r with (ss_Lc (PC_L2 + 0x24)). unfold ss_Lc. apply entry_st_ok.
+- reflexivity.
+- constructor; [|constructor].
+eapply (region_ok_obj_gen src2segs _ mem3 9 cfp); [rewrite X9; apply unsigned_lit_small; lia | lia | lia | exact HOC3 | reflexivity | | | intros k Hk; lia].
++ intros j v Hj. apply Ereg_vals. exact Hj.
++ intros j z Hj. do 11 (destruct j as [|j]; [discriminate Hj|]). destruct j; discriminate Hj.
+- cbn. repeat split.
+- cbn [atoms_ok]. unfold afact_ok, AC. cbn [af_lo af_hi af_al2]. rewrite X9, unsigned_lit_small by lia.
+change (2 ^ 3) with 8. repeat split; lia. }
+change mem3 with (ms_mem (mkst regs3 (Z_to_bv 64 (PC_L2 + 0x24)) mem3 (seg_rom src2segs))) in HJ3.
+clear HS. rename HS3 into HS.
+jrun LAWS src2tbl_ok HS HJ3; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+assert (Us8 : U E3 (SAluw ALU_ADD (SOff 24 0) (SLit 8)) = i + 8).
+{ apply U_addw_small; [apply (U_atom _ _ _ X24); lia | apply U_lit; lia | lia | lia | lia]. }
+assert (Ua0 : U E3 (SExt false 16 (SOff 35 0)) = w) by (apply U_zext16_atom; [exact X35 | lia]).
+assert (Ua1 : U E3 (SExt false 16 (SOff 36 0)) = h) by (apply U_zext16_atom; [exact X36 | lia]).
+jbranch src2tbl HS.
+-
+rewrite branch_ltu_U, Us8, Ua1 in Hc.
+assert (Hlt : i + 8 < h) by (destruct (Z.ltb_spec (i + 8) h); [lia | discriminate]). clear Hc.
+jrun_to LAWS src2tbl_ok HS HJ3 PC_L2; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+pose proof (regs_kept_of_st_ok _ _ _ _ regs3 _ LKEPT HS ltac:(rewrite HE3; apply env_agree_refl) ltac:(vm_compute; reflexivity)) as HK2.
+reg_U HS (20%bv:reg) ltac:(eapply U_add_small; [first [apply (U_atom _ _ _ X20) | exact Ua0]; lia | first [exact Ua0 | apply (U_atom _ _ _ X20)]; lia | lia | lia | lia]) N20.
+reg_U HS (24%bv:reg) ltac:(exact Us8) N24.
+reg_U HS (10%bv:reg) ltac:(exact Ua0) N10.
+lazymatch type of HS with st_ok _ _ _ ?msf => rename msf into msF end.
+assert (MEQ1 : forall x : word, ms_mem msF x = mem3 x) by (intros x; mem_chain ltac:(fun H => idtac)).
+rewrite (st_ok_mkst _ _ _ _ HS eq_refl). cbn [ss_pc].
+eapply SR_mono.
+{ eapply (IH (i + 8) (R + 1) _ _ STK sp0 FP L A mem md Lc Ac mdc pint npint img Nimg w h cfp cv);
+[lia | lia | lia | | lia | lia | exact Hnp | exact HNi | exact HJ3 | exact Hpin | exact Hpnot | exact Himg | exact Hsep
+| | exact Hcv1 | exact Hcv3 | exact Hcv4 | exact Hcfp0 | exact Hcfp1 | exact Hcfp8 | rewrite HK2, F by inl; exact G9
+| rewrite N20; f_equal; lia | rewrite N24; reflexivity | exact N10 ].
+- intros j Hj Hij. pose proof (Hrows (j + 1) ltac:(lia) ltac:(lia)). lia.
+- eapply (obj_at_transport_range _ _ _ _ _ _ 40); [exact HOC3 | reflexivity |].
+intros k Hk. apply mbyte_eq_of1'. apply MEQ1. }
+cbv beta. intros c' (regs' & mem' & m & -> & HJ' & Hm1 & Hm2 & Hm3 & P20 & P24 & P10 & P11 & HKf & Hout' & Hgr').
+exists regs', mem', (m + 1). split; [reflexivity|]. split; [exact HJ'|].
+split; [lia|]. split; [lia|]. split; [lia|].
+split; [rewrite P20; f_equal; lia|]. split; [rewrite P24; f_equal; lia|].
+split; [exact P10|]. split; [exact P11|].
+split. { intros r Hr. rewrite (HKf r Hr), (HK2 r Hr). apply F. cbv [LKEPT app In] in Hr |- *. clear - Hr. tauto. }
+split.
++ intros x Hx. rewrite (Hout' x Hx), MEQ1, (Hout3 x ltac:(nia)). apply MEQ0.
++ intros x Hx. apply Hgr'. rewrite MEQ1. apply Hgr3. rewrite MEQ0. exact Hx.
+-
+rewrite branch_ltu_U, Us8, Ua1 in Hc.
+assert (Hge : h <= i + 8) by (destruct (Z.ltb_spec (i + 8) h); [discriminate | lia]). clear Hc.
+jrun_to LAWS src2tbl_ok HS HJ3 PC_L2X; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+pose proof (regs_kept_of_st_ok _ _ _ _ regs3 _ LKEPT HS ltac:(rewrite HE3; apply env_agree_refl) ltac:(vm_compute; reflexivity)) as HK2.
+reg_U HS (20%bv:reg) ltac:(eapply U_add_small; [first [apply (U_atom _ _ _ X20) | exact Ua0]; lia | first [exact Ua0 | apply (U_atom _ _ _ X20)]; lia | lia | lia | lia]) N20.
+reg_U HS (24%bv:reg) ltac:(exact Us8) N24.
+reg_U HS (10%bv:reg) ltac:(exact Ua0) N10.
+reg_U HS (11%bv:reg) ltac:(exact Ua1) N11.
+lazymatch type of HS with st_ok _ _ _ ?msf => rename msf into msF end.
+assert (MEQ1 : forall x : word, ms_mem msF x = mem3 x) by (intros x; mem_chain ltac:(fun H => idtac)).
+rewrite (st_ok_mkst _ _ _ _ HS eq_refl). cbn [ss_pc]. apply SR_ret.
+exists (ms_regs msF), (ms_mem msF), 1. split; [reflexivity|]. split; [exact HJ3|].
+split; [lia|]. split; [lia|]. split; [lia|].
+split; [rewrite N20; f_equal; lia|]. split; [rewrite N24; f_equal; lia|].
+split; [exact N10|]. split; [exact N11|].
+split. { intros r Hr. rewrite (HK2 r Hr). apply F. cbv [LKEPT app In] in Hr |- *. clear - Hr. tauto. }
+split.
++ intros x Hx. cbn [ms_mem]. rewrite MEQ1, (Hout3 x ltac:(nia)). apply MEQ0.
++ cbn [ms_mem]. intros x Hx. rewrite MEQ1. apply Hgr3. rewrite MEQ0. exact Hx.
+Qed.
+Lemma il_loop3 : loop_stmt PC_L3 PC_L4P 4.
+Proof.
+unfold loop_stmt.
+induction n as [|n IH]; intros i R regs memc STK sp0 FP L A mem md Lc Ac mdc pint npint img Nimg w h cfp cv
+Hn Hi HR Hrows Hw Hh Hnp HNi HJ Hpin Hpnot Himg Hsep HOC Hcv1 Hcv3 Hcv4 Hcfp0 Hcfp1 Hcfp8 G9 G20 G24 G10; [lia|].
+pose proof (proj1 alloc_ceiling_val) as Hac.
+pose proof (journal_heap _ _ _ _ _ _ _ _ _ _ _ _ _ HJ) as HH.
+destruct (heap_blocks_range src2_msyms MR LAWS Lc Ac memc mdc pint npint HH Hpin ltac:(nia)) as (Hp0 & Hp1 & _).
+destruct (heap_blocks_range src2_msyms MR LAWS Lc Ac memc mdc img Nimg HH Himg ltac:(nia)) as (Hi0 & Hi1 & _).
+pose proof (Hrows 0 ltac:(lia) ltac:(lia)) as HR1.
+assert (HwR : 0 <= w * R /\ w * (R + 1) <= w * h) by nia.
+assert (Hwi : 0 <= w * i /\ w * (i + 1) <= w * h) by nia.
+assert (Hiw : 0 <= i * w < 2 ^ 32) by nia.
+assert (Hfar : pint + w * R + w <= cfp) by (clear - Hp1 HwR Hnp Hcfp0; lia).
+remember (Ereg regs (map (Z_to_bv 64) cv ++ [])) as E eqn:HE0.
+assert (HE : forall k (rr : reg), Z.of_nat k = bv_unsigned rr -> ew E k = getr regs rr) by (intros; subst E; apply ew_Ereg_nat; assumption).
+assert (HE9 : ew E 9 = Z_to_bv 64 cfp) by (rewrite (HE 9%nat 9%bv eq_refl); exact G9).
+assert (HE33 : ew E 33 = Z_to_bv 64 img) by (subst E; apply (Ereg_vals regs cv [] 1 img Hcv1)).
+assert (HE20 : ew E 20 = Z_to_bv 64 (pint + w * R)) by (rewrite (HE 20%nat 20%bv eq_refl); exact G20).
+assert (HE24 : ew E 24 = Z_to_bv 64 i) by (rewrite (HE 24%nat 24%bv eq_refl); exact G24).
+assert (HE10 : ew E 10 = Z_to_bv 64 w) by (rewrite (HE 10%nat 10%bv eq_refl); exact G10).
+assert (HS : st_ok src2segs E ss_L3 (mkst regs (Z_to_bv 64 PC_L3) memc (seg_rom src2segs))).
+{ subst E. change ss_L3 with (ss_Lc PC_L3). unfold ss_Lc. apply entry_st_ok.
+- reflexivity.
+- constructor; [|constructor].
+eapply (region_ok_obj_gen src2segs _ memc 9 cfp); [rewrite HE9; apply unsigned_lit_small; lia | lia | lia | exact HOC | reflexivity | | | intros k Hk; lia].
++ intros j v Hj. apply Ereg_vals. exact Hj.
++ intros j z Hj. do 11 (destruct j as [|j]; [discriminate Hj|]). destruct j; discriminate Hj.
+- cbn. repeat split.
+- cbn [atoms_ok]. unfold afact_ok, AC. cbn [af_lo af_hi af_al2]. rewrite HE9, unsigned_lit_small by lia.
+change (2 ^ 3) with 8. repeat split; lia. }
+change memc with (ms_mem (mkst regs (Z_to_bv 64 PC_L3) memc (seg_rom src2segs))) in HJ.
+jrun_to LAWS src2tbl_ok HS HJ src2_A_memcpy; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+jreg HS (10%bv:reg) as M10. rewrite HE20 in M10.
+reg_U HS (11%bv:reg) ltac:(eapply U_add_small; [apply (U_atom _ _ _ HE33); lia | apply U_zext32_sh; [apply U_mul_small; [apply (U_atom _ _ _ HE24); lia | apply (U_atom _ _ _ HE10); lia | lia | lia | nia] | exact Hiw] | lia | lia | lia]) M11.
+reg_U HS (12%bv:reg) ltac:(apply U_zext32_sh; [apply (U_atom _ _ _ HE10); lia | lia]) M12.
+jreg HS (1%bv:reg) as M1.
+pose proof (regs_kept_of_st_ok _ _ _ _ regs _ (LKEPT ++ [20; 24]%bv) HS ltac:(rewrite HE0; apply env_agree_refl) ltac:(vm_compute; reflexivity)) as HK.
+assert (MEQ0 : forall x : word, ms_mem ms x = memc x).
+{ intros x. lazymatch goal with HF : frame_of _ _ _ _ |- _ => exact (frame_of_ro' _ _ _ _ HF ltac:(vm_compute; reflexivity) x) end. }
+eapply SR_bind.
+{ eapply (jmemcpy _ _ LAWS IMG _ src2_memcpy) with (d := pint + w * R) (src := img + w * i) (n := w);
+[ exact HS | reflexivity | reflexivity | exact HJ | exact M10 | rewrite M11; f_equal; lia | exact M12 | exact M1
+| cbn [sv_denot]; apply ret_ok_even; vm_compute; reflexivity | lia | lia | lia | lia | lia | | | clear - Hsep HwR Hwi Hnp HNi; lia | ].
+- intros k Hk. cbn [ms_mem]. eapply present_grows; [eassumption|].
+replace (pint + w * R + k) with (pint + (w * R + k)) by lia.
+apply (proj1 (heap_blocks _ _ LAWS Lc Ac memc mdc pint npint (w * R + k) HH Hpin ltac:(nia))).
+- intros k Hk. cbn [ms_mem]. eapply present_grows; [eassumption|].
+replace (img + w * i + k) with (img + (w * i + k)) by lia.
+apply (proj1 (heap_blocks _ _ LAWS Lc Ac memc mdc img Nimg (w * i + k) HH Himg ltac:(nia))).
+- intros a Ha. replace a with (pint + (a - pint)) by lia. apply (Hpnot (blocks Lc Ac)); [exact Hpin | nia]. }
+cbv beta. intros c' (regs3 & mem3 & -> & HJ3 & Hd10 & Hfr3 & Hout3 & Hgr3 & _).
+cbn [ms_regs ms_mem] in Hfr3, Hout3, Hgr3, HJ3.
+assert (F : forall r : reg, In r (LKEPT ++ [20; 24]%bv) -> getr regs3 r = getr regs r).
+{ intros r Hr. rewrite (Hfr3 r). { apply HK. exact Hr. }
+cbv [LKEPT app In] in Hr. repeat (destruct Hr as [<- | Hr]; [vm_compute; reflexivity|]). destruct Hr. }
+assert (HOC3 : obj_at src2segs mem3 cfp LAY_RawFrameConfig cv).
+{ eapply (obj_at_transport_range _ _ _ _ _ _ 40); [exact HOC | reflexivity |].
+intros k Hk. apply mbyte_eq_of1'. rewrite (Hout3 (Z_to_bv 64 (cfp + k))) by (rewrite unsigned_lit_small by lia; lia). apply MEQ0. }
+remember (Ereg regs3 (map (Z_to_bv 64) cv ++ [])) as E3 eqn:HE3.
+assert (HE' : forall k (rr : reg), Z.of_nat k = bv_unsigned rr -> ew E3 k = getr regs3 rr) by (intros; subst E3; apply ew_Ereg_nat; assumption).
+assert (X9 : ew E3 9 = Z_to_bv 64 cfp) by (rewrite (HE' 9%nat 9%bv eq_refl), F by inl; exact G9).
+assert (X35 : ew E3 35 = Z_to_bv 64 w) by (subst E3; apply (Ereg_vals regs3 cv [] 3 w Hcv3)).
+assert (X36 : ew E3 36 = Z_to_bv 64 h) by (subst E3; apply (Ereg_vals regs3 cv [] 4 h Hcv4)).
+assert (X20 : ew E3 20 = Z_to_bv 64 (pint + w * R)) by (rewrite (HE' 20%nat 20%bv eq_refl), F by inl; exact G20).
+assert (X24 : ew E3 24 = Z_to_bv 64 i) by (rewrite (HE' 24%nat 24%bv eq_refl), F by inl; exact G24).
+assert (HS3 : st_ok src2segs E3 ss_L3r (mkst regs3 (Z_to_bv 64 (PC_L3 + 0x24)) mem3 (seg_rom src2segs))).
+{ subst E3. change ss_L3r with (ss_Lc (PC_L3 + 0x24)). unfold ss_Lc. apply entry_st_ok.
+- reflexivity.
+- constructor; [|constructor].
+eapply (region_ok_obj_gen src2segs _ mem3 9 cfp); [rewrite X9; apply unsigned_lit_small; lia | lia | lia | exact HOC3 | reflexivity | | | intros k Hk; lia].
++ intros j v Hj. apply Ereg_vals. exact Hj.
++ intros j z Hj. do 11 (destruct j as [|j]; [discriminate Hj|]). destruct j; discriminate Hj.
+- cbn. repeat split.
+- cbn [atoms_ok]. unfold afact_ok, AC. cbn [af_lo af_hi af_al2]. rewrite X9, unsigned_lit_small by lia.
+change (2 ^ 3) with 8. repeat split; lia. }
+change mem3 with (ms_mem (mkst regs3 (Z_to_bv 64 (PC_L3 + 0x24)) mem3 (seg_rom src2segs))) in HJ3.
+clear HS. rename HS3 into HS.
+jrun LAWS src2tbl_ok HS HJ3; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+assert (Us8 : U E3 (SAluw ALU_ADD (SOff 24 0) (SLit 4)) = i + 4).
+{ apply U_addw_small; [apply (U_atom _ _ _ X24); lia | apply U_lit; lia | lia | lia | lia]. }
+assert (Ua0 : U E3 (SExt false 16 (SOff 35 0)) = w) by (apply U_zext16_atom; [exact X35 | lia]).
+assert (Ua1 : U E3 (SExt false 16 (SOff 36 0)) = h) by (apply U_zext16_atom; [exact X36 | lia]).
+jbranch src2tbl HS.
+-
+rewrite branch_ltu_U, Us8, Ua1 in Hc.
+assert (Hlt : i + 4 < h) by (destruct (Z.ltb_spec (i + 4) h); [lia | discriminate]). clear Hc.
+jrun_to LAWS src2tbl_ok HS HJ3 PC_L3; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+pose proof (regs_kept_of_st_ok _ _ _ _ regs3 _ LKEPT HS ltac:(rewrite HE3; apply env_agree_refl) ltac:(vm_compute; reflexivity)) as HK2.
+reg_U HS (20%bv:reg) ltac:(eapply U_add_small; [first [apply (U_atom _ _ _ X20) | exact Ua0]; lia | first [exact Ua0 | apply (U_atom _ _ _ X20)]; lia | lia | lia | lia]) N20.
+reg_U HS (24%bv:reg) ltac:(exact Us8) N24.
+reg_U HS (10%bv:reg) ltac:(exact Ua0) N10.
+lazymatch type of HS with st_ok _ _ _ ?msf => rename msf into msF end.
+assert (MEQ1 : forall x : word, ms_mem msF x = mem3 x) by (intros x; mem_chain ltac:(fun H => idtac)).
+rewrite (st_ok_mkst _ _ _ _ HS eq_refl). cbn [ss_pc].
+eapply SR_mono.
+{ eapply (IH (i + 4) (R + 1) _ _ STK sp0 FP L A mem md Lc Ac mdc pint npint img Nimg w h cfp cv);
+[lia | lia | lia | | lia | lia | exact Hnp | exact HNi | exact HJ3 | exact Hpin | exact Hpnot | exact Himg | exact Hsep
+| | exact Hcv1 | exact Hcv3 | exact Hcv4 | exact Hcfp0 | exact Hcfp1 | exact Hcfp8 | rewrite HK2, F by inl; exact G9
+| rewrite N20; f_equal; lia | rewrite N24; reflexivity | exact N10 ].
+- intros j Hj Hij. pose proof (Hrows (j + 1) ltac:(lia) ltac:(lia)). lia.
+- eapply (obj_at_transport_range _ _ _ _ _ _ 40); [exact HOC3 | reflexivity |].
+intros k Hk. apply mbyte_eq_of1'. apply MEQ1. }
+cbv beta. intros c' (regs' & mem' & m & -> & HJ' & Hm1 & Hm2 & Hm3 & P20 & P24 & P10 & P11 & HKf & Hout' & Hgr').
+exists regs', mem', (m + 1). split; [reflexivity|]. split; [exact HJ'|].
+split; [lia|]. split; [lia|]. split; [lia|].
+split; [rewrite P20; f_equal; lia|]. split; [rewrite P24; f_equal; lia|].
+split; [exact P10|]. split; [exact P11|].
+split. { intros r Hr. rewrite (HKf r Hr), (HK2 r Hr). apply F. cbv [LKEPT app In] in Hr |- *. clear - Hr. tauto. }
+split.
++ intros x Hx. rewrite (Hout' x Hx), MEQ1, (Hout3 x ltac:(nia)). apply MEQ0.
++ intros x Hx. apply Hgr'. rewrite MEQ1. apply Hgr3. rewrite MEQ0. exact Hx.
+-
+rewrite branch_ltu_U, Us8, Ua1 in Hc.
+assert (Hge : h <= i + 4) by (destruct (Z.ltb_spec (i + 4) h); [discriminate | lia]). clear Hc.
+jrun_to LAWS src2tbl_ok HS HJ3 PC_L4P; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+pose proof (regs_kept_of_st_ok _ _ _ _ regs3 _ LKEPT HS ltac:(rewrite HE3; apply env_agree_refl) ltac:(vm_compute; reflexivity)) as HK2.
+reg_U HS (20%bv:reg) ltac:(eapply U_add_small; [first [apply (U_atom _ _ _ X20) | exact Ua0]; lia | first [exact Ua0 | apply (U_atom _ _ _ X20)]; lia | lia | lia | lia]) N20.
+reg_U HS (24%bv:reg) ltac:(exact Us8) N24.
+reg_U HS (10%bv:reg) ltac:(exact Ua0) N10.
+reg_U HS (11%bv:reg) ltac:(exact Ua1) N11.
+lazymatch type of HS with st_ok _ _ _ ?msf => rename msf into msF end.
+assert (MEQ1 : forall x : word, ms_mem msF x = mem3 x) by (intros x; mem_chain ltac:(fun H => idtac)).
+rewrite (st_ok_mkst _ _ _ _ HS eq_refl). cbn [ss_pc]. apply SR_ret.
+exists (ms_regs msF), (ms_mem msF), 1. split; [reflexivity|]. split; [exact HJ3|].
+split; [lia|]. split; [lia|]. split; [lia|].
+split; [rewrite N20; f_equal; lia|]. split; [rewrite N24; f_equal; lia|].
+split; [exact N10|]. split; [exact N11|].
+split. { intros r Hr. rewrite (HK2 r Hr). apply F. cbv [LKEPT app In] in Hr |- *. clear - Hr. tauto. }
+split.
++ intros x Hx. cbn [ms_mem]. rewrite MEQ1, (Hout3 x ltac:(nia)). apply MEQ0.
++ cbn [ms_mem]. intros x Hx. rewrite MEQ1. apply Hgr3. rewrite MEQ0. exact Hx.
+Qed.
+Lemma il_loop4 : loop_stmt PC_L4 PC_L4X 2.
+Proof.
+unfold loop_stmt.
+induction n as [|n IH]; intros i R regs memc STK sp0 FP L A mem md Lc Ac mdc pint npint img Nimg w h cfp cv
+Hn Hi HR Hrows Hw Hh Hnp HNi HJ Hpin Hpnot Himg Hsep HOC Hcv1 Hcv3 Hcv4 Hcfp0 Hcfp1 Hcfp8 G9 G20 G24 G10; [lia|].
+pose proof (proj1 alloc_ceiling_val) as Hac.
+pose proof (journal_heap _ _ _ _ _ _ _ _ _ _ _ _ _ HJ) as HH.
+destruct (heap_blocks_range src2_msyms MR LAWS Lc Ac memc mdc pint npint HH Hpin ltac:(nia)) as (Hp0 & Hp1 & _).
+destruct (heap_blocks_range src2_msyms MR LAWS Lc Ac memc mdc img Nimg HH Himg ltac:(nia)) as (Hi0 & Hi1 & _).
+pose proof (Hrows 0 ltac:(lia) ltac:(lia)) as HR1.
+assert (HwR : 0 <= w * R /\ w * (R + 1) <= w * h) by nia.
+assert (Hwi : 0 <= w * i /\ w * (i + 1) <= w * h) by nia.
+assert (Hiw : 0 <= i * w < 2 ^ 32) by nia.
+assert (Hfar : pint + w * R + w <= cfp) by (clear - Hp1 HwR Hnp Hcfp0; lia).
+remember (Ereg regs (map (Z_to_bv 64) cv ++ [])) as E eqn:HE0.
+assert (HE : forall k (rr : reg), Z.of_nat k = bv_unsigned rr -> ew E k = getr regs rr) by (intros; subst E; apply ew_Ereg_nat; assumption).
+assert (HE9 : ew E 9 = Z_to_bv 64 cfp) by (rewrite (HE 9%nat 9%bv eq_refl); exact G9).
+assert (HE33 : ew E 33 = Z_to_bv 64 img) by (subst E; apply (Ereg_vals regs cv [] 1 img Hcv1)).
+assert (HE20 : ew E 20 = Z_to_bv 64 (pint + w * R)) by (rewrite (HE 20%nat 20%bv eq_refl); exact G20).
+assert (HE24 : ew E 24 = Z_to_bv 64 i) by (rewrite (HE 24%nat 24%bv eq_refl); exact G24).
+assert (HE10 : ew E 10 = Z_to_bv 64 w) by (rewrite (HE 10%nat 10%bv eq_refl); exact G10).
+assert (HS : st_ok src2segs E ss_L4 (mkst regs (Z_to_bv 64 PC_L4) memc (seg_rom src2segs))).
+{ subst E. change ss_L4 with (ss_Lc PC_L4). unfold ss_Lc. apply entry_st_ok.
+- reflexivity.
+- constructor; [|constructor].
+eapply (region_ok_obj_gen src2segs _ memc 9 cfp); [rewrite HE9; apply unsigned_lit_small; lia | lia | lia | exact HOC | reflexivity | | | intros k Hk; lia].
++ intros j v Hj. apply Ereg_vals. exact Hj.
++ intros j z Hj. do 11 (destruct j as [|j]; [discriminate Hj|]). destruct j; discriminate Hj.
+- cbn. repeat split.
+- cbn [atoms_ok]. unfold afact_ok, AC. cbn [af_lo af_hi af_al2]. rewrite HE9, unsigned_lit_small by lia.
+change (2 ^ 3) with 8. repeat split; lia. }
+change memc with (ms_mem (mkst regs (Z_to_bv 64 PC_L4) memc (seg_rom src2segs))) in HJ.
+jrun_to LAWS src2tbl_ok HS HJ src2_A_memcpy; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+jreg HS (10%bv:reg) as M10. rewrite HE20 in M10.
+reg_U HS (11%bv:reg) ltac:(eapply U_add_small; [apply (U_atom _ _ _ HE33); lia | apply U_zext32_sh; [apply U_mul_small; [apply (U_atom _ _ _ HE24); lia | apply (U_atom _ _ _ HE10); lia | lia | lia | nia] | exact Hiw] | lia | lia | lia]) M11.
+reg_U HS (12%bv:reg) ltac:(apply U_zext32_sh; [apply (U_atom _ _ _ HE10); lia | lia]) M12.
+jreg HS (1%bv:reg) as M1.
+pose proof (regs_kept_of_st_ok _ _ _ _ regs _ (LKEPT ++ [20; 24]%bv) HS ltac:(rewrite HE0; apply env_agree_refl) ltac:(vm_compute; reflexivity)) as HK.
+assert (MEQ0 : forall x : word, ms_mem ms x = memc x).
+{ intros x. lazymatch goal with HF : frame_of _ _ _ _ |- _ => exact (frame_of_ro' _ _ _ _ HF ltac:(vm_compute; reflexivity) x) end. }
+eapply SR_bind.
+{ eapply (jmemcpy _ _ LAWS IMG _ src2_memcpy) with (d := pint + w * R) (src := img + w * i) (n := w);
+[ exact HS | reflexivity | reflexivity | exact HJ | exact M10 | rewrite M11; f_equal; lia | exact M12 | exact M1
+| cbn [sv_denot]; apply ret_ok_even; vm_compute; reflexivity | lia | lia | lia | lia | lia | | | clear - Hsep HwR Hwi Hnp HNi; lia | ].
+- intros k Hk. cbn [ms_mem]. eapply present_grows; [eassumption|].
+replace (pint + w * R + k) with (pint + (w * R + k)) by lia.
+apply (proj1 (heap_blocks _ _ LAWS Lc Ac memc mdc pint npint (w * R + k) HH Hpin ltac:(nia))).
+- intros k Hk. cbn [ms_mem]. eapply present_grows; [eassumption|].
+replace (img + w * i + k) with (img + (w * i + k)) by lia.
+apply (proj1 (heap_blocks _ _ LAWS Lc Ac memc mdc img Nimg (w * i + k) HH Himg ltac:(nia))).
+- intros a Ha. replace a with (pint + (a - pint)) by lia. apply (Hpnot (blocks Lc Ac)); [exact Hpin | nia]. }
+cbv beta. intros c' (regs3 & mem3 & -> & HJ3 & Hd10 & Hfr3 & Hout3 & Hgr3 & _).
+cbn [ms_regs ms_mem] in Hfr3, Hout3, Hgr3, HJ3.
+assert (F : forall r : reg, In r (LKEPT ++ [20; 24]%bv) -> getr regs3 r = getr regs r).
+{ intros r Hr. rewrite (Hfr3 r). { apply HK. exact Hr. }
+cbv [LKEPT app In] in Hr. repeat (destruct Hr as [<- | Hr]; [vm_compute; reflexivity|]). destruct Hr. }
+assert (HOC3 : obj_at src2segs mem3 cfp LAY_RawFrameConfig cv).
+{ eapply (obj_at_transport_range _ _ _ _ _ _ 40); [exact HOC | reflexivity |].
+intros k Hk. apply mbyte_eq_of1'. rewrite (Hout3 (Z_to_bv 64 (cfp + k))) by (rewrite unsigned_lit_small by lia; lia). apply MEQ0. }
+remember (Ereg regs3 (map (Z_to_bv 64) cv ++ [])) as E3 eqn:HE3.
+assert (HE' : forall k (rr : reg), Z.of_nat k = bv_unsigned rr -> ew E3 k = getr regs3 rr) by (intros; subst E3; apply ew_Ereg_nat; assumption).
+assert (X9 : ew E3 9 = Z_to_bv 64 cfp) by (rewrite (HE' 9%nat 9%bv eq_refl), F by inl; exact G9).
+assert (X35 : ew E3 35 = Z_to_bv 64 w) by (subst E3; apply (Ereg_vals regs3 cv [] 3 w Hcv3)).
+assert (X36 : ew E3 36 = Z_to_bv 64 h) by (subst E3; apply (Ereg_vals regs3 cv [] 4 h Hcv4)).
+assert (X20 : ew E3 20 = Z_to_bv 64 (pint + w * R)) by (rewrite (HE' 20%nat 20%bv eq_refl), F by inl; exact G20).
+assert (X24 : ew E3 24 = Z_to_bv 64 i) by (rewrite (HE' 24%nat 24%bv eq_refl), F by inl; exact G24).
+assert (HS3 : st_ok src2segs E3 ss_L4r (mkst regs3 (Z_to_bv 64 (PC_L4 + 0x24)) mem3 (seg_rom src2segs))).
+{ subst E3. change ss_L4r with (ss_Lc (PC_L4 + 0x24)). unfold ss_Lc. apply entry_st_ok.
+- reflexivity.
+- constructor; [|constructor].
+eapply (region_ok_obj_gen src2segs _ mem3 9 cfp); [rewrite X9; apply unsigned_lit_small; lia | lia | lia | exact HOC3 | reflexivity | | | intros k Hk; lia].
++ intros j v Hj. apply Ereg_vals. exact Hj.
++ intros j z Hj. do 11 (destruct j as [|j]; [discriminate Hj|]). destruct j; discriminate Hj.
+- cbn. repeat split.
+- cbn [atoms_ok]. unfold afact_ok, AC. cbn [af_lo af_hi af_al2]. rewrite X9, unsigned_lit_small by lia.
+change (2 ^ 3) with 8. repeat split; lia. }
+change mem3 with (ms_mem (mkst regs3 (Z_to_bv 64 (PC_L4 + 0x24)) mem3 (seg_rom src2segs))) in HJ3.
+clear HS. rename HS3 into HS.
+jrun LAWS src2tbl_ok HS HJ3; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+assert (Us8 : U E3 (SAluw ALU_ADD (SOff 24 0) (SLit 2)) = i + 2).
+{ apply U_addw_small; [apply (U_atom _ _ _ X24); lia | apply U_lit; lia | lia | lia | lia]. }
+assert (Ua0 : U E3 (SExt false 16 (SOff 35 0)) = w) by (apply U_zext16_atom; [exact X35 | lia]).
+assert (Ua1 : U E3 (SExt false 16 (SOff 36 0)) = h) by (apply U_zext16_atom; [exact X36 | lia]).
+jbranch src2tbl HS.
+-
+rewrite branch_ltu_U, Us8, Ua1 in Hc.
+assert (Hlt : i + 2 < h) by (destruct (Z.ltb_spec (i + 2) h); [lia | discriminate]). clear Hc.
+jrun_to LAWS src2tbl_ok HS HJ3 PC_L4; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+pose proof (regs_kept_of_st_ok _ _ _ _ regs3 _ LKEPT HS ltac:(rewrite HE3; apply env_agree_refl) ltac:(vm_compute; reflexivity)) as HK2.
+reg_U HS (20%bv:reg) ltac:(eapply U_add_small; [first [apply (U_atom _ _ _ X20) | exact Ua0]; lia | first [exact Ua0 | apply (U_atom _ _ _ X20)]; lia | lia | lia | lia]) N20.
+reg_U HS (24%bv:reg) ltac:(exact Us8) N24.
+reg_U HS (10%bv:reg) ltac:(exact Ua0) N10.
+lazymatch type of HS with st_ok _ _ _ ?msf => rename msf into msF end.
+assert (MEQ1 : forall x : word, ms_mem msF x = mem3 x) by (intros x; mem_chain ltac:(fun H => idtac)).
+rewrite (st_ok_mkst _ _ _ _ HS eq_refl). cbn [ss_pc].
+eapply SR_mono.
+{ eapply (IH (i + 2) (R + 1) _ _ STK sp0 FP L A mem md Lc Ac mdc pint npint img Nimg w h cfp cv);
+[lia | lia | lia | | lia | lia | exact Hnp | exact HNi | exact HJ3 | exact Hpin | exact Hpnot | exact Himg | exact Hsep
+| | exact Hcv1 | exact Hcv3 | exact Hcv4 | exact Hcfp0 | exact Hcfp1 | exact Hcfp8 | rewrite HK2, F by inl; exact G9
+| rewrite N20; f_equal; lia | rewrite N24; reflexivity | exact N10 ].
+- intros j Hj Hij. pose proof (Hrows (j + 1) ltac:(lia) ltac:(lia)). lia.
+- eapply (obj_at_transport_range _ _ _ _ _ _ 40); [exact HOC3 | reflexivity |].
+intros k Hk. apply mbyte_eq_of1'. apply MEQ1. }
+cbv beta. intros c' (regs' & mem' & m & -> & HJ' & Hm1 & Hm2 & Hm3 & P20 & P24 & P10 & P11 & HKf & Hout' & Hgr').
+exists regs', mem', (m + 1). split; [reflexivity|]. split; [exact HJ'|].
+split; [lia|]. split; [lia|]. split; [lia|].
+split; [rewrite P20; f_equal; lia|]. split; [rewrite P24; f_equal; lia|].
+split; [exact P10|]. split; [exact P11|].
+split. { intros r Hr. rewrite (HKf r Hr), (HK2 r Hr). apply F. cbv [LKEPT app In] in Hr |- *. clear - Hr. tauto. }
+split.
++ intros x Hx. rewrite (Hout' x Hx), MEQ1, (Hout3 x ltac:(nia)). apply MEQ0.
++ intros x Hx. apply Hgr'. rewrite MEQ1. apply Hgr3. rewrite MEQ0. exact Hx.
+-
+rewrite branch_ltu_U, Us8, Ua1 in Hc.
+assert (Hge : h <= i + 2) by (destruct (Z.ltb_spec (i + 2) h); [discriminate | lia]). clear Hc.
+jrun_to LAWS src2tbl_ok HS HJ3 PC_L4X; [apply wr_ok_cons_ro; [cbn; lia | apply wr_ok_nil]|].
+pose proof (regs_kept_of_st_ok _ _ _ _ regs3 _ LKEPT HS ltac:(rewrite HE3; apply env_agree_refl) ltac:(vm_compute; reflexivity)) as HK2.
+reg_U HS (20%bv:reg) ltac:(eapply U_add_small; [first [apply (U_atom _ _ _ X20) | exact Ua0]; lia | first [exact Ua0 | apply (U_atom _ _ _ X20)]; lia | lia | lia | lia]) N20.
+reg_U HS (24%bv:reg) ltac:(exact Us8) N24.
+reg_U HS (10%bv:reg) ltac:(exact Ua0) N10.
+reg_U HS (11%bv:reg) ltac:(exact Ua1) N11.
+lazymatch type of HS with st_ok _ _ _ ?msf => rename msf into msF end.
+assert (MEQ1 : forall x : word, ms_mem msF x = mem3 x) by (intros x; mem_chain ltac:(fun H => idtac)).
+rewrite (st_ok_mkst _ _ _ _ HS eq_refl). cbn [ss_pc]. apply SR_ret.
+exists (ms_regs msF), (ms_mem msF), 1. split; [reflexivity|]. split; [exact HJ3|].
+split; [lia|]. split; [lia|]. split; [lia|].
+split; [rewrite N20; f_equal; lia|]. split; [rewrite N24; f_equal; lia|].
+split; [exact N10|]. split; [exact N11|].
+split. { intros r Hr. rewrite (HK2 r Hr). apply F. cbv [LKEPT app In] in Hr |- *. clear - Hr. tauto. }
+split.
++ intros x Hx. cbn [ms_mem]. rewrite MEQ1, (Hout3 x ltac:(nia)). apply MEQ0.
++ cbn [ms_mem]. intros x Hx. rewrite MEQ1. apply Hgr3. rewrite MEQ0. exact Hx.
+Qed.
+End S.
+End b.
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

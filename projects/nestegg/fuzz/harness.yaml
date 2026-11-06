@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: nestegg
 harness: fuzz
-rocq: OssFuzzTheorems.nestegg.fuzz
+rocq: OSSVerify.nestegg.fuzz
 origin: upstream
 summary: 'Checks one property, an API contract: nestegg_read_packet contract: when it returns <= 0 (end
   of stream or error) it must not hand back a packet (pkt stays NULL).'

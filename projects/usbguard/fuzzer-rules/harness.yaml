@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: usbguard
 harness: fuzzer-rules
-rocq: OssFuzzTheorems.usbguard.fuzzer_rules
+rocq: OSSVerify.usbguard.fuzzer_rules
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

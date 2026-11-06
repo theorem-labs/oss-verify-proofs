@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: brotli
 harness: decode_fuzzer
-rocq: OssFuzzTheorems.brotli.decode_fuzzer
+rocq: OSSVerify.brotli.decode_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

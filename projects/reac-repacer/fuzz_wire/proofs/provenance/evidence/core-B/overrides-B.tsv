@@ -1,0 +1,93 @@
+# --override rows for reac-repacer/fuzz_wire image B (asan-ubsan), DONOR = fuzz_grant released lib/B (recipes 4f87de75d67,
+# normalised by mkdon.sh), port_core 7a74e72920e6. file<TAB>donor-line<TAB>old<TAB>new[<TAB>OCCURRENCE].
+# Every value is measured on the pinned images (fuzz_wire.asan-ubsan af4534831a45, twin 51eb4bef2425; control = the same rule
+# on fuzz_grant.asan-ubsan fde52226dc48 / twin 5a5ee7c02b4e gives the donor's own value): measure-B.py, measure-B.out.
+# __stdout_FILE.buf (FILE+88, pointer read from the image): grant 0x5f9020 = 6262816 (control), wire 0x5f3ea0 = 6241952
+B/YD1j.v	112	6262816	6241952
+B/YD1j.v	120	6262816	6241952	1,2
+B/YD1j.v	133	6262816	6241952
+B/YD1o.v	198	0x5f9020	0x5f3ea0
+B/YD1o.v	250	0x5f9020	0x5f3ea0
+B/YD1o.v	286	0x5f9020	0x5f3ea0
+B/YE3m.v	34	0x5f9020	0x5f3ea0
+B/YE3m.v	559	6262816	6241952
+B/YE3m.v	1069	6262816	6241952
+# BUFEND := STDOUT_BUFA + STDOUT_BSZ (1024): grant 6263840 (control), wire 6242976
+B/YE3m.v	1071	6263840	6242976
+# __stderr_FILE.buf (FILE+88): grant 0x5f9018 (control), wire 0x5f3e98
+B/YD2f.v	146	0x5f9018	0x5f3e98
+B/YE2p.v	31	0x5f9018	0x5f3e98
+# __stdin_FILE.buf (FILE+88): grant 0x5f9428 (control), wire 0x5f42a8
+B/YD2f.v	146	0x5f9428	0x5f42a8
+# driver format shadow windows SH = [floor8(shadow(FMT)), floor8(shadow(FMT + len)) + 8), len = the file's hull_zero length;
+# FMT = the file's relocated string (same bytes in both images); control: the rule gives grant's windows
+# 'cli: cannot open %s\n' (21) wire 0x1d5f9
+B/YE2t.v	63	0x7fffbad8	0x7fffbab8
+B/YE2t.v	63	0x7fffbae0	0x7fffbac8
+# 'cli: read error on %s\n' (23) wire 0x1d60e
+B/YE2u.v	63	0x7fffbad8	0x7fffbac0
+B/YE2u.v	63	0x7fffbae8	0x7fffbac8
+# 'cli: input >= %u bytes, refused\n' (33) wire 0x19632
+B/YE2v.v	63	0x7fffb2d0	0x7fffb2c0
+B/YE2v.v	63	0x7fffb2e0	0x7fffb2d0
+# 'usage: %s INPUT\n' (17) wire 0x157da
+B/YE2w.v	63	0x7fffab00	0x7fffaaf8
+B/YE2w.v	63	0x7fffab10	0x7fffab00
+# '%d\n' (4) wire 0x1476b
+B/YE35.v	63	0x7fffa8f0	0x7fffa8e8
+B/YE35.v	63	0x7fffa8f8	0x7fffa8f0
+# fuzz_wire.asan-ubsan links no __asan_memset (no symbol in the twin; fuzz_wire.asan has it): absent entry = 0, as this
+# unit family's other cores state an absent entry; no code at 0 (image starts 0x10000). The bcmp trampoline IS linked
+# (0x4155c), so its entry is relocated by rule.
+B/YF0l.v	14	0x52024	0
+# YD1g static_img_chk: image start 0x10000 = first PT_LOAD of fuzz_wire.asan-ubsan
+B/YD1g.v	1276	0x10000	0x10000	1,2
+# exit walk YE3h x2_ranges, first range = asan.module_dtor (the .fini_array's first entry; 48 bytes, the same 12
+# instructions in both images): grant 0x82524 (control), wire 0x81928
+B/YE3h.v	1725	0x82524	0x81928
+# zero-shadow range (TFIB_BSS, IMG_TOP - TFIB_BSS) = the LAST range of the unit's lib/B/YF0m.v Tfib_zero_shadow (the lemma
+# bss_zero_shadow states that range's membership in the table): grant (0xa22c0, 0x5fb000 - 0xa22c0) = 664256 / 6270976,
+# 15 ranges (control = the donor text); fuzz_wire B has ONE range, (0x10000, 0x5f6000 - 0x10000) = 65536 / 6250496: it
+# registers no ASan global, so its whole image shadow is zero (measure-B.py reads both tables).
+B/YD1o.v	82	0xa22c0	0x10000	1,2
+B/YD1o.v	82	0x5fb000	0x5f6000
+B/YD1o.v	85	0xa22c0	0x10000	1,2
+B/YD1o.v	85	0x5fb000	0x5f6000
+B/YD1o.v	92	0xa22c0	0x10000	1,2
+B/YD1o.v	92	0x5fb000	0x5f6000
+B/YD1o.v	99	0xa22c0	0x10000	1,2
+B/YD1o.v	100	0xa22c0	0x10000
+B/YD1o.v	101	664256	65536	1,2
+B/YD1o.v	101	6270976	6250496
+B/YD25.v	531	0xa22c0	0x10000	1,2
+B/YD25.v	531	0x5fb000	0x5f6000
+B/YD25.v	534	0xa22c0	0x10000	1,2
+B/YD25.v	534	0x5fb000	0x5f6000
+B/YD25.v	541	0xa22c0	0x10000	1,2
+B/YD25.v	541	0x5fb000	0x5f6000
+B/YD25.v	548	0xa22c0	0x10000	1,2
+# .bss + 0x20 = __do_init.__object + 16: grant 0xa22e0 (control), wire 0x9d160
+B/YD1o.v	88	0xa22e0	0x9d160
+B/YD1o.v	94	0xa22e0	0x9d160
+B/YD1o.v	96	0xa22e0	0x9d160
+# quotients: 0x9d160 / 8 = 80428; 65536 / 8 = 8192; (6250496 - 65536) / 8 = 773120 (grant 83036, 83032, 700840)
+B/YD1o.v	96	83036	80428
+B/YD1o.v	101	83032	8192
+B/YD1o.v	101	700840	773120
+# index of the .got canary cell z8 (ANum A_GOT_CANARY) V_GOT_CANARY in the unit's lib/B/YF0m.v Tfib_const_abs: 193 of 215
+# (z8 (ANum 0x99500) 0x5f37d0, the __stack_chk_guard value); control: the same rule gives 273 of 361 in fuzz_grant's
+# released lib/B/YF0m.v (the donor's value) and 273 of 288 in this unit's lib/A/AF0m.v (image A's AE22.v).
+B/YE22.v	35	273	193
+# CZONE shadow upper bound 0x80050000 (the donor's, kept): it must be >= the end of the unit's own highest constant shadow
+# cell; fuzz_wire B's lib/B/YF0m.v Tfib_const_shadow has 0 cells (no ASan global; measure-B.py), so every bound holds and
+# the donor's page-aligned bound stays (the same row as this unit's image-A core keeps; fuzz_grant B's own highest cell
+# 0x8000c457 is below it: control).
+B/YFhn.v	420	0x80050000	0x80050000
+B/YFix.v	284	0x80050000	0x80050000
+B/YFix.v	288	0x80050000	0x80050000
+B/YFjb.v	283	0x80050000	0x80050000
+B/YFjb.v	287	0x80050000	0x80050000
+B/YFju.v	574	0x80050000	0x80050000
+B/YFju.v	584	0x80050000	0x80050000
+B/YFkm.v	1296	0x80050000	0x80050000
+B/YFkz.v	899	0x80050000	0x80050000

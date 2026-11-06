@@ -1,0 +1,23 @@
+# kit cmpkit-4bbd3a74be89 strictcmp2 sha256 16982e3ef42b bytecmp sha256 1480ca2faea0
+# C DONOR_TWIN ce511d541cda
+# A DECODE_A_TWIN 4cb0a852e826
+numerals 417
+old classes {'same': 390, 'pcrel': 27}
+kit classes {'same': 390, 'pcrel': 27}
+changed 0 []
+what the decode image does at each numeral (the instruction that consumes it): {'branch': 196, 'jalr': 15, 'jal': 22, 'ld': 13, 'fence': 14, 'op': 17, 'addi': 70, 'op-imm': 37, 'lbu': 4, 'sb': 4, 'auipc': 5, 'lw': 8, 'lwu': 4, 'ecall/ebreak/csr': 8}
+
+SINGLED-OUT WORDS (ecall / AMO / LR / SC) of the old record
+lr     _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1+0x328: donor 1406272f decode 1406272f -> same
+sc     _ZN6__asan9Allocator8AllocateEmmPN11__sanitizer1+0x33c: donor 18f627af decode 18f627af -> same
+amo    _ZN11__sanitizer17CombinedAllocatorINS_20SizeCla+0x1d8: donor 00c5b02f decode 00c5b02f -> same
+ecall  _ZN11__sanitizer13internal_mmapEPvmiiiy+0x4: donor 00000073 decode 00000073 -> same
+
+ALL words of the 7 functions, by kit class
+_ZN6__asan9Allocator8AllocateEmmPN11__sanitizer18BufferedSta {'same': 529, 'pcrel': 81} target-differ {220: 'data-differs'}
+_ZN11__sanitizer17CombinedAllocatorINS_20SizeClassAllocator6 {'same': 166, 'pcrel': 16} target-differ 0
+_ZN11__sanitizer30SizeClassAllocator64LocalCacheINS_20SizeCl {'same': 64} target-differ 0
+_ZN6__asan12PoisonShadowEmmh                                 {'same': 258, 'pcrel': 61} target-differ 0
+_ZN11__sanitizer13internal_mmapEPvmiiiy                      {'same': 3} target-differ 0
+_ZN11__sanitizer13StackDepotPutENS_10StackTraceE             {'same': 6, 'pcrel': 2} target-differ 0
+memset                                                       {'same': 62} target-differ 0

@@ -6,22 +6,22 @@
  (deps (:elf %{project_root}/projects/libfido2/bin/fuzz_cred/fuzz_cred.plain))
  (action
   (run elf-snapshot %{elf} Plain.v --prefix Plain --module-name M
-       --namespace OssFuzzTheorems.libfido2.fuzz_cred.images)))
+       --namespace OSSVerify.libfido2.fuzz_cred.images)))
 (rule
  (targets Ubsan.v Ubsan_seg_000.hex Ubsan_seg_001.hex Ubsan_seg_002.hex Ubsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/libfido2/bin/fuzz_cred/fuzz_cred.ubsan))
  (action
   (run elf-snapshot %{elf} Ubsan.v --prefix Ubsan --module-name M
-       --namespace OssFuzzTheorems.libfido2.fuzz_cred.images)))
+       --namespace OSSVerify.libfido2.fuzz_cred.images)))
 (rule
  (targets Asan.v Asan_seg_000.hex Asan_seg_001.hex Asan_seg_002.hex Asan_seg_003.hex)
  (deps (:elf %{project_root}/projects/libfido2/bin/fuzz_cred/fuzz_cred.asan))
  (action
   (run elf-snapshot %{elf} Asan.v --prefix Asan --module-name M
-       --namespace OssFuzzTheorems.libfido2.fuzz_cred.images)))
+       --namespace OSSVerify.libfido2.fuzz_cred.images)))
 (rule
  (targets AsanUbsan.v AsanUbsan_seg_000.hex AsanUbsan_seg_001.hex AsanUbsan_seg_002.hex AsanUbsan_seg_003.hex)
  (deps (:elf %{project_root}/projects/libfido2/bin/fuzz_cred/fuzz_cred.asan-ubsan))
  (action
   (run elf-snapshot %{elf} AsanUbsan.v --prefix AsanUbsan --module-name M
-       --namespace OssFuzzTheorems.libfido2.fuzz_cred.images)))
+       --namespace OSSVerify.libfido2.fuzz_cred.images)))

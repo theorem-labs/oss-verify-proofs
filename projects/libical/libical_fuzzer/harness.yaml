@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libical
 harness: libical_fuzzer
-rocq: OssFuzzTheorems.libical.libical_fuzzer
+rocq: OSSVerify.libical.libical_fuzzer
 origin: oss-fuzz
 summary: icalparser_parse_string on the NUL-terminated input; component freed unchecked.
 entry: LLVMFuzzerTestOneInput

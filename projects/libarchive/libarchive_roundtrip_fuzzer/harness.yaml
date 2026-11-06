@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libarchive
 harness: libarchive_roundtrip_fuzzer
-rocq: OssFuzzTheorems.libarchive.libarchive_roundtrip_fuzzer
+rocq: OSSVerify.libarchive.libarchive_roundtrip_fuzzer
 origin: upstream
 summary: 'Despite the name and its header comment (''tests write/read consistency''), NO round-trip property
   is checked: writes <= 5 regular-file entries (fuzz pathname <= 32 chars, uid/gid, <= 256 data bytes)

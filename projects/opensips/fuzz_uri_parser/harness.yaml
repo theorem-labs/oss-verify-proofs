@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: opensips
 harness: fuzz_uri_parser
-rocq: OssFuzzTheorems.opensips.fuzz_uri_parser
+rocq: OSSVerify.opensips.fuzz_uri_parser
 origin: upstream
 summary: parse_uri on a NUL-terminated copy of the input into a stack sip_uri; return code and parsed
   fields ignored.

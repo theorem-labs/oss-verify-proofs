@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: cppcheck
 harness: oss-fuzz-client
-rocq: OssFuzzTheorems.cppcheck.oss_fuzz_client
+rocq: OSSVerify.cppcheck.oss_fuzz_client
 origin: upstream
 summary: generateCode2 (oss-fuzz/type2.cpp) turns the bytes into C++ source, CppCheck::checkBuffer analyses
   it with all checks enabled; diagnostics go to a DummyErrorLogger and are dropped.

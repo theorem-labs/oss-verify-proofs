@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: mosquitto
 harness: libcommon_fuzz_utf8
-rocq: OssFuzzTheorems.mosquitto.libcommon_fuzz_utf8
+rocq: OSSVerify.mosquitto.libcommon_fuzz_utf8
 origin: upstream
 summary: mosquitto_validate_utf8(data, size); the verdict is discarded (no comparison against an independent
   UTF-8 validator).

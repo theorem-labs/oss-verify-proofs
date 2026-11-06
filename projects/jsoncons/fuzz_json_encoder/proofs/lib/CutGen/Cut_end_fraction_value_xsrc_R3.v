@@ -1,0 +1,31 @@
+(* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+From Corelib Require Import PrimString.
+(* [comment removed for export] *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.jsoncons.fuzz_json_encoder.images Require Import Plain.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import PropExec AxSymExec3 AxSymExec3B AxSymExec3Sound AsanPlanCore LibSym SegRun SegPlan SegPlanAuto Pm6PlanKit.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCert CutOps CutHeap CutAuto CutLib Pm6CutKit.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutHeap2 CutAutoX.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.PmParse Require Import ParseSums ParseSums2 ParseSomeKn.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.PmSmall Require Import SmallKn.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.PmSmall Require Import SmallSums2.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.PmSmall Require Import SmallKnX.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.PmSmall Require Import VisitSumsX.
+Import ListNotations. Import AX2. Import AX2B.
+Open Scope Z_scope.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Set Printing Width 1000000. Set Printing Depth 1000000.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutCert Require Import CutCodec.
+From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.CutGen Require Import Cut_end_fraction_value_xsrc_T Cut_end_fraction_value_xsrc_R0 Cut_end_fraction_value_xsrc_R1 Cut_end_fraction_value_xsrc_R2.
+Definition dict_Cut_end_fraction_value_xsrc_R3 : CCD.pt := CCD.mk_table 2969%positive "((2 0(1 2)(0 -64))((1 12)0)(0#2 4(1 87))(5(1 87)0 31)(5(0 98)1 4611686018427387904)(5(0 99)1 4611686018427387904)(4 0(0 -1)(1 60))(2 0#7(0 1))(5#8 1 1)(5(1 60)0 0)(2 1(1 60)(0 0))(2 4#11(0 1))(5#12 1 1)((1 2)-64)(0#14 8(1 54))(5(1 60)0 34)(5(0 100)1 4611686018427387904)(4 0(0 2)(1 35))(2 0#18(0 1))(6 0 0 1#19)(2 9#20(0 1))(5#21 1 1)((1 2)-40)(0#23 8(1 19))((1 2)-32)(0#25 8(1 18))((1 2)-24)(0#27 8(1 9))((1 2)-16)(0#29 8(1 8))((1 2)-8)(0#31 8(1 1))(5(1 35)132 67108864)(4 0(0 -1)(1 36))(2 0#18#34)(2 0#35(0 -1))(5#36 0 140737488355328)(4#18 8)(5(1 37)4096 140737488355328)(4(1 37)16)(5(1 38)4096 140737488355328)(5(1 39)1 1027)(5(1 40)66 1056)(4 0(0 -1)(1 39))(2 0#44(1 40))(5#45 0 1056)(5(1 36)0 67108863)(5(1 41)0 1025)(5(0 17)0 255)(5(1 43)0 255)(5(1 44)0 255)(5(0 1)0 1)(5(1 46)0 1)((1 2)-10688)(0 10688)((1 37)0)(7#54#55#56#18)((1 38)0)(7#54#55#58(1 40))((1 10)0)(7#60(0 272)#56#18)(7#60(0 272)#58(1 40))(7#2(0 16)#56#18)(7#2(0 16)#58(1 40))((1 11)0)(7#65(0 8)#56#18)(7#65(0 8)#58(1 40))(7#56#18#58(1 40))((0 0)65536)(0 962560)(7#56#18#69#70)(7#58(1 40)#69#70)(6#60(0 272))(5(1 10)1099511627776 140737488355328)(4(1 10)8)(6#2(0 16))(5(1 12)1099511627776 140737488355328)(0 788704)(0#65 8#78)(5(1 11)1099511627776 140737488355328)(0 10624)(9#54#81)((1 2)-56)(9#83(0 16))(6#54#55)(5(1 2)1099511627776 140737488355328)(4(1 2)16)(3 65536 813152)(7#54#55#60(0 272))(7#54#55#2(0 16))(7#54#55#65(0 8))(7#60(0 272)#2(0 16))(7#60(0 272)#65(0 8))(7#2(0 16)#65(0 8))(5(1 52)1099511627776 140737488355328)(4(1 52)8)(7#65(0 408)#56#18)(7#65(0 408)#58(1 40))((1 52)0)(7#99(0 24)#56#18)(7#99(0 24)#58(1 40))(7#54#55#65(0 408))(7#54#55#99(0 24))(7#60(0 272)#65(0 408))(7#2(0 16)#65(0 408))(7#60(0 272)#99(0 24))(7#2(0 16)#99(0 24))(7#65(0 408)#99(0 24))(#3#4#5#6#9#10#13#15#16#17#22#24#26#28#30#32#33#37#38#39#40#41#42#43#46#47#48#49#50#51#52#53#57#59#61#62#63#64#66#67#68#71#72#73#74#75#76#77#79#80#82#84#85#86#87#88#89#90#91#92#93#94#95#96#97#98#100#101#102#103#104#105#106#107#108)((1 2)-10688#55)(#110)(4 0(0 2)(1 89))((1 88)#112)((1 90)(1 91))(284436 284708 273320 291832 274112 242548 247440 763484 764892)(0#115)(0#116(1 0))(1(1 1))(2(1 2))(3(1 3))(4(1 4))(5(1 93))(6(1 94))(7(1 95))(8(1 8))(9(1 9))(10(1 96))(11(1 97))(12(1 98))(13(1 99))(14(1 100))(15(1 101))(16(1 102))(17(1 103))(18(1 18))(19(1 19))(20(1 20))(21(1 21))(22(1 22))(23(1 23))(24(1 24))(25(1 25))(26(1 26))(27(1 27))(28(1 104))(29(1 105))(30(1 106))(31(1 107))(#118#119#120#121#122#123#124#125#126#127#128#129#130#131#132#133#134#135#136#137#138#139#140#141#142#143#144#145#146#147#148)(1 284708)((1 2)-48)(0#151 8(1 36))(0#83 8(1 37))(2 0#7(0 35))(5#154 1 1)(5(1 60)34 34)(2 1(1 60)(0 34))(2 4#157(0 1))(5#158 1 1)(2 0(1 60)(0 -1))(5#160 0 33)(5#12 0 0)(#3#4#5#6#152#153#155#156#159#161#162#15#16#17#22#24#26#28#30#32#33#37#38#39#40#41#42#43#46#47#48#49#50#51#52#53#57#59#61#62#63#64#66#67#68#71#72#73#74#75#76#77#79#80#82#85#86#87#88#89#90#91#92#93#94#95#96#97#98#100#101#102#103#104#105#106#107#108))"%pstring.
+(* [comment removed for export] *)
+Definition t5 : CC.cutpoint := CCD.dec_cp_t dict_Cut_end_fraction_value_xsrc_R3 236%positive "(284684((1 0)(1 92)#1(1 3)(1 4)(1 93)(1 94)(1 95)(1 10)(1 12)(1 96)(1 97)(1 98)(1 99)(1 100)(1 101)(1 102)(1 103)(1 11)(2 0(1 10)(0 225))(1 20)(1 21)(1 22)(1 23)(1 24)(1 25)(1 26)(1 27)(1 104)(1 105)(1 106)(1 107))#109 108#111()(0 97))"%pstring.
+Definition BL5 : CA.blocks := Eval vm_compute in CCD.dec_bl_t dict_Cut_end_fraction_value_xsrc_R3 11%positive "(#113#114)"%pstring.
+Definition hints5 : list (nat * CC.subst) := hints2.
+Definition o5 : CA.pout := CCD.dec_pout_t dict_Cut_end_fraction_value_xsrc_R3 37%positive "(#117(((284708#149()#109)#150))()())"%pstring.
+(* [comment removed for export] *)
+Definition t6 : CC.cutpoint := CCD.dec_cp_t dict_Cut_end_fraction_value_xsrc_R3 224%positive "(284684((1 0)(1 92)#1(1 3)(1 4)(1 93)(1 94)(1 95)(1 10)(1 12)(1 96)(1 97)(1 98)(1 99)(1 100)(1 101)(1 102)(1 103)(1 11)(1 37)(1 20)(1 21)(1 22)(1 23)(1 24)(1 25)(1 26)(1 27)(1 104)(1 105)(1 106)(1 107))#163 108#111()(0 97))"%pstring.
+Definition BL6 : CA.blocks := Eval vm_compute in CCD.dec_bl_t dict_Cut_end_fraction_value_xsrc_R3 11%positive "(#113#114)"%pstring.
+Definition hints6 : list (nat * CC.subst) := hints3.
+Definition o6 : CA.pout := CCD.dec_pout_t dict_Cut_end_fraction_value_xsrc_R3 37%positive "(#117(((284708#149()#163)#150))()())"%pstring.

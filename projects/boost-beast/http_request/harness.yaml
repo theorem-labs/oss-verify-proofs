@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: boost-beast
 harness: http_request
-rocq: OssFuzzTheorems.boost_beast.http_request
+rocq: OSSVerify.boost_beast.http_request
 origin: upstream
 summary: http::read of a request_parser<dynamic_body> from a test::stream holding the input. The error
   code is ignored.

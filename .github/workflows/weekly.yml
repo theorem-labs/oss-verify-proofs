@@ -1,21 +1,30 @@
-# weekly.yml: everything, with nothing cached.
+# weekly.yml: everything, with nothing cached, every Monday, for a release and on request.
 #
-#   plan         every harness (or the ones named); while the repository is not
-#                public, a scheduled run checks a rotating third of them
+#   plan         every harness (or the ones named)
 #   sweep        each harness: fetch, build every image afresh, every proof
 #                and its assumptions against the allowlist, every counterexample
 #   assets       every release asset the facts pin, downloaded and hashed again
 #   determinism  two kinds of machine snapshot the same ELF files; the outputs
 #                are compared byte for byte, so no reference digest is needed
-#   warm         (on request, on main) fills the dune cache pr.yml reads
-#   weekly       the run's one verdict: every job above passed, warm when it
-#                was asked for and skipped when not.  It always runs, since a
-#                skipped job reports success.
+#   weekly       the run's one verdict: every job above passed.  It always
+#                runs, since a skipped job reports success.
 #
-# release.yml calls this workflow with `release`, so that a new release is
-# checked against the assets it actually published.  The trusted runs never
-# read the cache: the kernel does not check a compiled file again when a proof
-# loads it, and nothing in a cached image says which ELF it came from.
+# release.yml calls this workflow with `release` and `units`: the fuzz targets of
+# the projects that release attached a file to, checked against the assets it
+# actually published (empty: every one).  No job reads or writes a
+# cache: check-units.sh checks each unit in a container of its own, with
+# dune's cache off.
+#
+# The schedule runs every unit, every Monday at 03:17 UTC.  A publication
+# checks only the parts whose content keys it changes, so this run is what
+# checks again every proof that no publication touched.  It also finds what no
+# commit causes: a release asset deleted or replaced after its release (the
+# assets job hashes each again) and a runner that builds other ELF bytes (the
+# determinism job).  It publishes nothing.  The schedule runs in the public
+# repository only (1430054678 is its id, as `gh api repos/{owner}/{repo} --jq .id`
+# gives it): this file ships from the internal repository, where one full sweep
+# measured about 137 hours of 16-core runners, so there it has no schedule
+# (the stream lead, 2026-10-28).  A run by hand or a release's call runs in both.
 name: weekly
 on:
   schedule:
@@ -25,16 +34,16 @@ on:
       units:
         description: "PROJECT/HARNESS ... to check (empty: all)"
         default: ""
-      warm:
-        description: "fill the dune cache for pr.yml (main only)"
-        type: boolean
-        default: false
   workflow_call:
     inputs:
       release:
         description: "the release tag whose published assets are checked"
         type: string
         required: true
+      units:
+        description: "PROJECT/HARNESS ... to check (empty: all)"
+        type: string
+        default: ""
 permissions:
   contents: read
   packages: read   # to pull the pinned checker and runner images from ghcr.io
@@ -45,7 +54,10 @@ env:
   PYTHONDONTWRITEBYTECODE: "1"
 
 jobs:
+  # every job that needs no other job carries this condition: a scheduled run outside the public repository plans
+  # nothing, and the jobs after plan skip with it
   plan:
+    if: github.event_name != 'schedule' || github.repository_id == '1430054678'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     outputs:
@@ -65,57 +77,37 @@ jobs:
         id: plan
         env:
           UNITS: ${{ inputs.units }}
-          ROTATE: ${{ github.event_name == 'schedule' && github.event.repository.visibility != 'public' }}
         run: |
           set -euo pipefail
-          # with no base and no recorded pass, every part of every harness is planned.  The jobs: the tools pack the
-          # units by their measured minutes (tools/oft/plan.py, pack); tools that predate the packing take --max-jobs,
-          # and deal units round-robin, so they get 256, the matrix limit: a job for each unit.
-          PYTHONPATH=tools python -m oft plan --help > "$RUNNER_TEMP/plan-help.txt"
-          jobs=()
-          if grep -q -- --max-jobs "$RUNNER_TEMP/plan-help.txt"; then jobs=(--max-jobs 256); fi
-          PYTHONPATH=tools python -m oft plan "${jobs[@]}" > "$RUNNER_TEMP/all.json"
-          # every harness: those in the plan's jobs and those it takes from their checks on the build service
-          every='[.units[], (.offloaded // [] | .[].unit)] | unique | .[]'
+          # with no base and no recorded pass, every part of every harness is planned
+          PYTHONPATH=tools python -m oft plan --max-jobs 1 > "$RUNNER_TEMP/all.json"
           if [ -n "${UNITS:-}" ]; then
             read -r -a named <<< "$UNITS"
             printf '%s\n' "${named[@]}" > "$RUNNER_TEMP/units.txt"
-          elif [ "$ROTATE" = true ]; then
-            week=$(( 10#$(date -u +%V) % 3 ))
-            jq -r "$every" "$RUNNER_TEMP/all.json" | awk -v w="$week" 'NR % 3 == w' > "$RUNNER_TEMP/units.txt"
           else
-            jq -r "$every" "$RUNNER_TEMP/all.json" > "$RUNNER_TEMP/units.txt"
+            jq -r '.units[]' "$RUNNER_TEMP/all.json" > "$RUNNER_TEMP/units.txt"
           fi
           [ -s "$RUNNER_TEMP/units.txt" ] || { echo "::error::no harness to check: nothing examined"; exit 1; }
-          PYTHONPATH=tools python -m oft plan --units "$RUNNER_TEMP/units.txt" "${jobs[@]}" > "$RUNNER_TEMP/plan.json"
-          # the determinism job's sample: one harness, the first by name of the planned harnesses with published builds
-          # (a harness whose every build is withheld has a finding to re-run, and no binary to snapshot), whatever the
-          # order of the plan's jobs, which are listed longest first.  As two small values, since the plan's jobs grow
-          # with the tree and an environment value may not exceed 131,072 bytes.  Tools that predate the plan's
-          # top-level check_units list them in the jobs only.
-          sample='[(.check_units // [.jobs[].check_units | split(" ")[]]) | .[] | select(. != "")] | sort | .[0] // ""'
+          PYTHONPATH=tools python -m oft plan --units "$RUNNER_TEMP/units.txt" --max-jobs 32 > "$RUNNER_TEMP/plan.json"
+          # the determinism job's sample: the first job with published builds (a harness whose every build is
+          # withheld has a finding to re-run, and no binary to snapshot), as two small values, since the plan's jobs
+          # grow with the tree and an environment value may not exceed 131,072 bytes
+          sample='[.jobs[] | select(.check_units != "")][0]'
           {
             echo "plan=$(jq -c .jobs "$RUNNER_TEMP/plan.json")"
             echo "units=$(jq '.units | length' "$RUNNER_TEMP/plan.json")"
-            echo "sample=$(jq -r "$sample" "$RUNNER_TEMP/plan.json")"
-            echo "sample_projects=$(jq -r "$sample | split(\"/\")[0] // \"\"" "$RUNNER_TEMP/plan.json")"
+            echo "sample=$(jq -r "$sample.check_units // \"\"" "$RUNNER_TEMP/plan.json")"
+            echo "sample_projects=$(jq -r "$sample.projects // \"\"" "$RUNNER_TEMP/plan.json")"
           } >> "$GITHUB_OUTPUT"
-          # .units names the harnesses in sweep jobs; one too long for a job even alone is checked on the build service,
-          # and the plan takes its citation at each part's key or fails (tools/oft/plan.py, offloaded)
-          { echo "harnesses in sweep jobs: $(jq '.units | length' "$RUNNER_TEMP/plan.json") of $(jq -r "$every" "$RUNNER_TEMP/all.json" | wc -l)"
-            echo "### checked on the build service (builds-ossv), by citation: $(jq '.offloaded // [] | length' "$RUNNER_TEMP/plan.json") part(s)"
-            jq -r '.offloaded // [] | .[] | "- \(.unit) \(.part) at key \(.key): build-service job \(.job), result.json SHA-256 \(.result_sha256), \(.date)"' \
-              "$RUNNER_TEMP/plan.json"
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo "harnesses: $(jq '.units | length' "$RUNNER_TEMP/plan.json") of $(jq '.units | length' "$RUNNER_TEMP/all.json")" >> "$GITHUB_STEP_SUMMARY"
 
   sweep:
     needs: plan
     name: sweep ${{ matrix.job.index }}
-    # the runner and the time limit the job's plan entry names, unless the repository variables say otherwise (pr.yml's
-    # check job)
-    runs-on: ${{ vars.PROOF_RUNNER || matrix.job.runner || 'ubuntu-24.04-16core' }}
-    timeout-minutes: >-
-      ${{ vars.PROOF_TIMEOUT_MINUTES && fromJSON(vars.PROOF_TIMEOUT_MINUTES) || matrix.job.timeout_minutes || 340 }}
+    # a proof check peaks at 14.5-19.4 GiB on 16 cores: the 16-core/64 GB GitHub-hosted larger runner
+    # (pr.yml's check job)
+    runs-on: ubuntu-24.04-16core
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       max-parallel: 32
@@ -149,13 +141,14 @@ jobs:
           PROJECTS: ${{ matrix.job.projects }}
           CX_UNITS: ${{ matrix.job.counterexamples }}
           FINDINGS: ${{ matrix.job.findings }}
+          CPUS: ${{ matrix.job.cpus }}
           ASSETS: ${{ runner.temp }}/assets
           PYDEPS: ${{ runner.temp }}/pydeps
-          CACHE: ${{ runner.temp }}/empty-cache
           GH_TOKEN: ${{ github.token }}
         run: bash "$RUNNER_TEMP/tools/oft/ci/check-units.sh"
 
   assets:
+    if: github.event_name != 'schedule' || github.repository_id == '1430054678'
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
@@ -254,91 +247,31 @@ jobs:
           diff -r snap/snapshot-ubuntu-24.04 snap/snapshot-ubuntu-24.04-arm
           echo "identical: $n files"
 
-  warm:
-    if: github.event_name == 'workflow_dispatch' && inputs.warm && github.ref == 'refs/heads/main'
-    needs: plan
-    name: warm ${{ matrix.job.index }}
-    runs-on: ${{ vars.PROOF_RUNNER || matrix.job.runner || 'ubuntu-24.04-16core' }}
-    timeout-minutes: >-
-      ${{ vars.PROOF_TIMEOUT_MINUTES && fromJSON(vars.PROOF_TIMEOUT_MINUTES) || matrix.job.timeout_minutes || 340 }}
-    strategy:
-      fail-fast: false
-      max-parallel: 20
-      matrix:
-        job: ${{ fromJSON(needs.plan.outputs.plan) }}
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-        with:
-          path: work
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
-        with:
-          python-version: "3.12"
-      - name: the tools' dependencies (PyYAML, idna), hash-pinned
-        run: |
-          set -euo pipefail
-          python -m pip install --quiet --require-hashes -r work/tools/oft/requirements.txt
-          python -m pip install --quiet --require-hashes --target "$RUNNER_TEMP/pydeps" -r work/tools/oft/requirements.txt
-          cp -r -- work/tools "$RUNNER_TEMP/tools"
-      - name: sign in to ghcr.io, where the pinned images are (needed while their packages are private)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: echo "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
-      # a shard of harnesses that withhold every build has nothing to build, so nothing to warm
-      - name: build and check, filling the cache
-        if: matrix.job.check_units != ''
-        env:
-          WORK: ${{ github.workspace }}/work
-          TOOLS: ${{ runner.temp }}/tools
-          UNITS: ${{ matrix.job.check_units }}
-          PROOF_UNITS: ${{ toJSON(matrix.job.proof_units) }}
-          PROJECTS: ${{ matrix.job.projects }}
-          CX_UNITS: ""
-          FINDINGS: ""
-          ASSETS: ${{ runner.temp }}/assets
-          PYDEPS: ${{ runner.temp }}/pydeps
-          CACHE: ${{ runner.temp }}/dune-cache
-          GH_TOKEN: ${{ github.token }}
-        run: bash "$RUNNER_TEMP/tools/oft/ci/check-units.sh"
-      - name: cache key
-        if: matrix.job.check_units != ''
-        id: keys
-        env:
-          UNITS: ${{ matrix.job.units }}
-        run: |
-          set -euo pipefail
-          read -r -a units <<< "$UNITS"
-          bash "$RUNNER_TEMP/tools/oft/ci/cache-key.sh" work/release.yaml "${units[@]}" >> "$GITHUB_OUTPUT"
-      - if: matrix.job.check_units != ''
-        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.3
-        with:
-          path: ${{ runner.temp }}/dune-cache
-          key: ${{ steps.keys.outputs.key }}
-
   weekly:
-    needs: [plan, sweep, assets, determinism, determinism-compare, warm]
+    needs: [plan, sweep, assets, determinism, determinism-compare]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
     steps:
-      - name: every job passed, and warm ran only when it was asked for
+      - name: every job passed
         env:
-          # warm's own condition
-          WARM_ASKED: ${{ github.event_name == 'workflow_dispatch' && inputs.warm && github.ref == 'refs/heads/main' }}
+          # plan's own condition: false for a scheduled run outside the public repository, which checks nothing
+          HERE: ${{ github.event_name != 'schedule' || github.repository_id == '1430054678' }}
           PLAN: ${{ needs.plan.result }}
           SWEEP: ${{ needs.sweep.result }}
           ASSETS: ${{ needs.assets.result }}
           DETERMINISM: ${{ needs.determinism.result }}
           COMPARE: ${{ needs.determinism-compare.result }}
-          WARM: ${{ needs.warm.result }}
         run: |
           set -euo pipefail
-          got="plan $PLAN, sweep $SWEEP, assets $ASSETS, determinism $DETERMINISM, determinism-compare $COMPARE, warm $WARM"
+          got="plan $PLAN, sweep $SWEEP, assets $ASSETS, determinism $DETERMINISM, determinism-compare $COMPARE"
+          if [ "$HERE" != true ]; then
+            [ "$PLAN/$SWEEP/$ASSETS/$DETERMINISM/$COMPARE" = skipped/skipped/skipped/skipped/skipped ] ||
+              { echo "::error::a scheduled run outside the public repository ran a job: $got"; exit 1; }
+            echo "a scheduled run outside the public repository: nothing checked"
+            exit 0
+          fi
           [ "$PLAN/$SWEEP/$ASSETS/$DETERMINISM/$COMPARE" = success/success/success/success/success ] ||
             { echo "::error::a job did not pass: $got"; exit 1; }
-          if [ "$WARM_ASKED" = true ]; then
-            [ "$WARM" = success ] || { echo "::error::the cache was to be warmed, and was not: $got"; exit 1; }
-          else
-            [ "$WARM" = skipped ] || { echo "::error::the cache was not to be warmed, yet: $got"; exit 1; }
-          fi
           echo "every job passed: $got"

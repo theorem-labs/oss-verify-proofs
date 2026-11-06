@@ -1,0 +1,35 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AB1q.v, with its module paths changed and its addresses moved to libreac/fuzz_boxreg's ASan build. *)
+From OSSVerify.Proofs.libreac.fuzz_boxreg.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
+From OSSVerify.Proofs.libreac.fuzz_boxreg.lib.Reusable Require Import YP02.
+From OSSVerify.Proofs.libreac.fuzz_boxreg.lib.B Require Import AB1v.
+Unset Lia Cache. Unset Nia Cache.
+Open Scope Z_scope.
+Definition tfibtbl_rtA_build : ctable := build_table tfibsegs 0x942b0 7%nat (build_table tfibsegs 0x931fc 9%nat (build_table tfibsegs 0x88a84 3%nat (build_table tfibsegs 0x7f4cc 6%nat (build_table tfibsegs 0x72fb4 70%nat (build_table tfibsegs 0x72950 90%nat (build_table tfibsegs 0x6bd64 8%nat (build_table tfibsegs 0x600dc 93%nat (build_table tfibsegs 0x5de88 18%nat (build_table tfibsegs 0x5bacc 44%nat (build_table tfibsegs 0x5b908 8%nat (build_table tfibsegs 0x5aad4 14%nat (build_table tfibsegs 0x59e90 88%nat (build_table tfibsegs 0x59108 40%nat (build_table tfibsegs 0x581f8 6%nat (build_table tfibsegs 0x54454 16%nat (build_table tfibsegs 0x532d8 324%nat (build_table tfibsegs 0x52448 205%nat (build_table tfibsegs 0x463a8 31%nat (build_table tfibsegs 0x35690 1016%nat (build_table tfibsegs 0x33eac 96%nat (build_table tfibsegs 0x311a0 633%nat TEmpty))))))))))))))))))))).
+Definition tfibtbl_rtA : ctable := Eval vm_compute in tfibtbl_rtA_build.
+Lemma tfibtbl_rtA_eq : tfibtbl_rtA = tfibtbl_rtA_build.
+Proof. vm_cast_no_check (@eq_refl ctable tfibtbl_rtA). Qed.
+Lemma tfibtbl_rtA_ok : table_ok tfibsegs tfibtbl_rtA.
+Proof. rewrite tfibtbl_rtA_eq. unfold tfibtbl_rtA_build. do 21 (apply build_table_ok; [cbv; discriminate|]). apply build_table_ok0. cbv. discriminate. Qed.
+Definition tfibtbl_rtB_build : ctable := build_table tfibsegs 0x726ac 145%nat (build_table tfibsegs 0x71fcc 169%nat (build_table tfibsegs 0x71ce4 23%nat (build_table tfibsegs 0x704dc 45%nat (build_table tfibsegs 0x6f9d0 150%nat (build_table tfibsegs 0x63408 9%nat TEmpty))))).
+Definition tfibtbl_rtB : ctable := Eval vm_compute in tfibtbl_rtB_build.
+Lemma tfibtbl_rtB_eq : tfibtbl_rtB = tfibtbl_rtB_build.
+Proof. vm_cast_no_check (@eq_refl ctable tfibtbl_rtB). Qed.
+Lemma tfibtbl_rtB_ok : table_ok tfibsegs tfibtbl_rtB.
+Proof. rewrite tfibtbl_rtB_eq. unfold tfibtbl_rtB_build. do 5 (apply build_table_ok; [cbv; discriminate|]). apply build_table_ok0. cbv. discriminate. Qed.
+Definition tfibtbl_rtC_build : ctable := build_table tfibsegs 0x6dbd4 87%nat (build_table tfibsegs 0x6d944 100%nat (build_table tfibsegs 0x6b994 75%nat (build_table tfibsegs 0x66030 131%nat (build_table tfibsegs 0x65990 111%nat (build_table tfibsegs 0x65460 128%nat (build_table tfibsegs 0x65344 4%nat (build_table tfibsegs 0x64bb0 2%nat (build_table tfibsegs 0x63c64 27%nat (build_table tfibsegs 0x5fb68 26%nat (build_table tfibsegs 0x5f4d0 93%nat TEmpty)))))))))).
+Definition tfibtbl_rtC : ctable := Eval vm_compute in tfibtbl_rtC_build.
+Lemma tfibtbl_rtC_eq : tfibtbl_rtC = tfibtbl_rtC_build.
+Proof. vm_cast_no_check (@eq_refl ctable tfibtbl_rtC). Qed.
+Lemma tfibtbl_rtC_ok : table_ok tfibsegs tfibtbl_rtC.
+Proof. rewrite tfibtbl_rtC_eq. unfold tfibtbl_rtC_build. do 10 (apply build_table_ok; [cbv; discriminate|]). apply build_table_ok0. cbv. discriminate. Qed.
+Definition tfibtbl_rtD_build : ctable := build_table tfibsegs 0x6d128 8%nat (build_table tfibsegs 0x88148 139%nat (build_table tfibsegs 0x6623c 756%nat (build_table tfibsegs 0x63484 24%nat (build_table tfibsegs 0x6dbd4 87%nat (build_table tfibsegs 0x6d944 100%nat (build_table tfibsegs 0x6b994 75%nat (build_table tfibsegs 0x66030 131%nat (build_table tfibsegs 0x65990 111%nat (build_table tfibsegs 0x65460 128%nat (build_table tfibsegs 0x65344 4%nat (build_table tfibsegs 0x64bb0 2%nat (build_table tfibsegs 0x63c64 27%nat (build_table tfibsegs 0x5fb68 26%nat (build_table tfibsegs 0x5f4d0 93%nat (tfibtbl_rtA))))))))))))))).
+Definition tfibtbl_rtD : ctable := Eval vm_compute in tfibtbl_rtD_build.
+Lemma tfibtbl_rtD_eq : tfibtbl_rtD = tfibtbl_rtD_build.
+Proof. vm_cast_no_check (@eq_refl ctable tfibtbl_rtD). Qed.
+Lemma tfibtbl_rtD_ok : table_ok tfibsegs tfibtbl_rtD.
+Proof. rewrite tfibtbl_rtD_eq. unfold tfibtbl_rtD_build. do 15 (apply build_table_ok; [cbv; discriminate|]). exact tfibtbl_rtA_ok. Qed.

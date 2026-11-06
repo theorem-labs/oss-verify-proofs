@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: jq
 harness: deluxe
-rocq: OssFuzzTheorems.jq.deluxe
+rocq: OSSVerify.jq.deluxe
 origin: upstream
 summary: onig_new_deluxe with fuzzed pattern/target encodings, then onig_search; results and errors only
   printed to stdout.

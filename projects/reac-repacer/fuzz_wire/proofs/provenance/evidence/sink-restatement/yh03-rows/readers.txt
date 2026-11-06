@@ -1,0 +1,121 @@
+# readers of the ruled YH03 sink rows, outside the two YH03.v
+# command: git grep -n -w -e <name> <ref> -- proofs/reac-repacer/fuzz_wire/lib ":!proofs/reac-repacer/fuzz_wire/lib/Reusable/YH03.v" ":!proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YH03.v"
+# BEFORE: ref 77bc9603b25b (the series head before this commit). AFTER: the work tree of this commit.
+## BEFORE
+src0_D_str_wb	6 line(s) in 2 file(s)	lib/Reusable/YI5c.v lib/U/Reusable/YI5c.v
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:23:sk_mode_addr := src0_D_str_wb;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:23:sk_mode_addr := src0_D_str_wb;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+src0_D_str_tmp_out_gif	6 line(s) in 2 file(s)	lib/Reusable/YI5c.v lib/U/Reusable/YI5c.v
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:22:sk_path_addr := src0_D_str_tmp_out_gif;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:22:sk_path_addr := src0_D_str_tmp_out_gif;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+src0_D_str_3	6 line(s) in 2 file(s)	lib/Reusable/YI5c.v lib/U/Reusable/YI5c.v
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:24:sk_trailer_addr := src0_D_str_3;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:24:sk_trailer_addr := src0_D_str_3;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+src0_D_str_rwa	6 line(s) in 2 file(s)	lib/Reusable/YI5c.v lib/U/Reusable/YI5c.v
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:25:sk_rwa_addr := src0_D_str_rwa;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:25:sk_rwa_addr := src0_D_str_rwa;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+src0_D_ofl_lock	6 line(s) in 2 file(s)	lib/Reusable/YI5c.v lib/U/Reusable/YI5c.v
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:16:sk_ofl_lock := src0_D_ofl_lock;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:32:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_path_addr sk_mode_addr sk_trailer_addr sk_rwa_addr sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:49:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_path_addr sk_mode_addr sk_trailer_addr sk_rwa_addr sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:16:sk_ofl_lock := src0_D_ofl_lock;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:32:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_path_addr sk_mode_addr sk_trailer_addr sk_rwa_addr sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:49:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_path_addr sk_mode_addr sk_trailer_addr sk_rwa_addr sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+src0_D_const_HIGHS_0x8080808080808080	34 line(s) in 6 file(s)	lib/Reusable/YI5c.v lib/Reusable/YL0v.v lib/Reusable/YN3i.v lib/U/Reusable/YI5c.v lib/U/Reusable/YL0v.v lib/U/Reusable/YN3i.v
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:26:sk_highs_addr := src0_D_const_HIGHS_0x8080808080808080;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YL0v.v:336:Definition ROM_LO : Z := src0_D_const_HIGHS_0x8080808080808080.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YL0v.v:381:forall a, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:31:let v1 := eval cbv in src0_D_const_HIGHS_0x8080808080808080 in
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:34:assert (H1 : src0_D_const_HIGHS_0x8080808080808080 = v1) by reflexivity;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:266:bv_unsigned (v_addi (Z_to_bv 64 src0_memchr_aui2) (bv_signed (Z_to_bv 12 src0_memchr_i064))) = src0_D_const_HIGHS_0x8080808080808080.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:795:Hypothesis Hrom : forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:804:Lemma rd_HIGHS : exists bs, rdn src0segs mem (Z_to_bv 64 src0_D_const_HIGHS_0x8080808080808080) 8 = Some bs /\ bytes_le_to_Z bs = HZ.HIGHS.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:807:rewrite (rdn_ext1 src0segs 8 mem (fun _ : word => @None byte) (Z_to_bv 64 src0_D_const_HIGHS_0x8080808080808080)).
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:893:| gr; match goal with |- rdn _ _ ?a _ = _ => replace a with (Z_to_bv 64 src0_D_const_HIGHS_0x8080808080808080) by bveq end; exact Hbs2
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:1111:Hypothesis Hrom : forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:1117:Hypothesis Hdisj2 : (src0_D_const_ONES_0x0101010101010100 + 8) <= bv_unsigned sp - 24 \/ bv_unsigned sp <= src0_D_const_HIGHS_0x8080808080808080.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:1271:(forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:1298:(forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:1304:((src0_D_const_ONES_0x0101010101010100 + 8) <= bv_unsigned sp - 24 \/ bv_unsigned sp <= src0_D_const_HIGHS_0x8080808080808080) ->
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:26:sk_highs_addr := src0_D_const_HIGHS_0x8080808080808080;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:33:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:50:src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YL0v.v:336:Definition ROM_LO : Z := src0_D_const_HIGHS_0x8080808080808080.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YL0v.v:381:forall a, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:31:let v1 := eval cbv in src0_D_const_HIGHS_0x8080808080808080 in
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:34:assert (H1 : src0_D_const_HIGHS_0x8080808080808080 = v1) by reflexivity;
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:266:bv_unsigned (v_addi (Z_to_bv 64 src0_memchr_aui2) (bv_signed (Z_to_bv 12 src0_memchr_i064))) = src0_D_const_HIGHS_0x8080808080808080.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:795:Hypothesis Hrom : forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:804:Lemma rd_HIGHS : exists bs, rdn src0segs mem (Z_to_bv 64 src0_D_const_HIGHS_0x8080808080808080) 8 = Some bs /\ bytes_le_to_Z bs = HZ.HIGHS.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:807:rewrite (rdn_ext1 src0segs 8 mem (fun _ : word => @None byte) (Z_to_bv 64 src0_D_const_HIGHS_0x8080808080808080)).
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:893:| gr; match goal with |- rdn _ _ ?a _ = _ => replace a with (Z_to_bv 64 src0_D_const_HIGHS_0x8080808080808080) by bveq end; exact Hbs2
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:1111:Hypothesis Hrom : forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:1117:Hypothesis Hdisj2 : (src0_D_const_ONES_0x0101010101010100 + 8) <= bv_unsigned sp - 24 \/ bv_unsigned sp <= src0_D_const_HIGHS_0x8080808080808080.
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:1271:(forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:1298:(forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	77bc9603b25b:proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:1304:((src0_D_const_ONES_0x0101010101010100 + 8) <= bv_unsigned sp - 24 \/ bv_unsigned sp <= src0_D_const_HIGHS_0x8080808080808080) ->
+## AFTER
+src0_D_str_wb	0 line(s) in 0 file(s)
+src0_D_str_tmp_out_gif	0 line(s) in 0 file(s)
+src0_D_str_3	0 line(s) in 0 file(s)
+src0_D_str_rwa	0 line(s) in 0 file(s)
+src0_D_ofl_lock	6 line(s) in 2 file(s)	lib/Reusable/YI5c.v lib/U/Reusable/YI5c.v
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:18:sk_ofl_lock := src0_D_ofl_lock;
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:27:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_file sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:44:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_file sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:18:sk_ofl_lock := src0_D_ofl_lock;
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:27:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_file sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:44:cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_file sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+src0_D_const_HIGHS_0x8080808080808080	34 line(s) in 6 file(s)	lib/Reusable/YI5c.v lib/Reusable/YL0v.v lib/Reusable/YN3i.v lib/U/Reusable/YI5c.v lib/U/Reusable/YL0v.v lib/U/Reusable/YN3i.v
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:21:sk_highs_addr := src0_D_const_HIGHS_0x8080808080808080;
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:28:src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YI5c.v:45:src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YL0v.v:336:Definition ROM_LO : Z := src0_D_const_HIGHS_0x8080808080808080.
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YL0v.v:381:forall a, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:31:let v1 := eval cbv in src0_D_const_HIGHS_0x8080808080808080 in
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:34:assert (H1 : src0_D_const_HIGHS_0x8080808080808080 = v1) by reflexivity;
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:266:bv_unsigned (v_addi (Z_to_bv 64 src0_memchr_aui2) (bv_signed (Z_to_bv 12 src0_memchr_i064))) = src0_D_const_HIGHS_0x8080808080808080.
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:795:Hypothesis Hrom : forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:804:Lemma rd_HIGHS : exists bs, rdn src0segs mem (Z_to_bv 64 src0_D_const_HIGHS_0x8080808080808080) 8 = Some bs /\ bytes_le_to_Z bs = HZ.HIGHS.
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:807:rewrite (rdn_ext1 src0segs 8 mem (fun _ : word => @None byte) (Z_to_bv 64 src0_D_const_HIGHS_0x8080808080808080)).
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:893:| gr; match goal with |- rdn _ _ ?a _ = _ => replace a with (Z_to_bv 64 src0_D_const_HIGHS_0x8080808080808080) by bveq end; exact Hbs2
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:1111:Hypothesis Hrom : forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:1117:Hypothesis Hdisj2 : (src0_D_const_ONES_0x0101010101010100 + 8) <= bv_unsigned sp - 24 \/ bv_unsigned sp <= src0_D_const_HIGHS_0x8080808080808080.
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:1271:(forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:1298:(forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	proofs/reac-repacer/fuzz_wire/lib/Reusable/YN3i.v:1304:((src0_D_const_ONES_0x0101010101010100 + 8) <= bv_unsigned sp - 24 \/ bv_unsigned sp <= src0_D_const_HIGHS_0x8080808080808080) ->
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:21:sk_highs_addr := src0_D_const_HIGHS_0x8080808080808080;
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:28:src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YI5c.v:45:src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha.
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YL0v.v:336:Definition ROM_LO : Z := src0_D_const_HIGHS_0x8080808080808080.
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YL0v.v:381:forall a, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:31:let v1 := eval cbv in src0_D_const_HIGHS_0x8080808080808080 in
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:34:assert (H1 : src0_D_const_HIGHS_0x8080808080808080 = v1) by reflexivity;
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:266:bv_unsigned (v_addi (Z_to_bv 64 src0_memchr_aui2) (bv_signed (Z_to_bv 12 src0_memchr_i064))) = src0_D_const_HIGHS_0x8080808080808080.
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:795:Hypothesis Hrom : forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:804:Lemma rd_HIGHS : exists bs, rdn src0segs mem (Z_to_bv 64 src0_D_const_HIGHS_0x8080808080808080) 8 = Some bs /\ bytes_le_to_Z bs = HZ.HIGHS.
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:807:rewrite (rdn_ext1 src0segs 8 mem (fun _ : word => @None byte) (Z_to_bv 64 src0_D_const_HIGHS_0x8080808080808080)).
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:893:| gr; match goal with |- rdn _ _ ?a _ = _ => replace a with (Z_to_bv 64 src0_D_const_HIGHS_0x8080808080808080) by bveq end; exact Hbs2
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:1111:Hypothesis Hrom : forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:1117:Hypothesis Hdisj2 : (src0_D_const_ONES_0x0101010101010100 + 8) <= bv_unsigned sp - 24 \/ bv_unsigned sp <= src0_D_const_HIGHS_0x8080808080808080.
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:1271:(forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:1298:(forall a : Z, src0_D_const_HIGHS_0x8080808080808080 <= a < (src0_D_const_ONES_0x0101010101010100 + 8) ->
+	proofs/reac-repacer/fuzz_wire/lib/U/Reusable/YN3i.v:1304:((src0_D_const_ONES_0x0101010101010100 + 8) <= bv_unsigned sp - 24 \/ bv_unsigned sp <= src0_D_const_HIGHS_0x8080808080808080) ->

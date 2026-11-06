@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: magic-enum
 harness: magic_enum_fuzzer
-rocq: OssFuzzTheorems.magic_enum.magic_enum_fuzzer
+rocq: OSSVerify.magic_enum.magic_enum_fuzzer
 origin: oss-fuzz
 summary: 'Declares a local scoped enum with seven fixed enumerators and calls magic_enum reflection on
   it: enum_cast from a fuzzed int and three fuzzed strings, enum_contains on two fuzzed ints, enum_values/entries/names/count,

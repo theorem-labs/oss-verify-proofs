@@ -1,0 +1,52 @@
+# The consumer's hypothesis closed by exact, on a scratch merge (never pushed) of the consumer's commit 9ee6811b6c95
+# (lib/A/UciClose.v:143 H_RT_STACK_MALLOC1, bindings segs := ucisegs0, B := AD2l.UciB) with this branch at 8d60aff2fa87:
+# the merge had no conflict; the scratch file lib/A/ZSm1Fit.v below states the hypothesis's type verbatim under
+# UciClose.v's two bindings and closes it by exact of stack_malloc1_contract. Built by `CB_COMPILE=<it> cb build`.
+## the scratch file
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool String.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import YK11 YK0s YK15 YK18 YA02.
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import
+YK04 YA0i YA0n YG0f YG00 YG01 YG0n YG0d YG05 YG0q.
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.A Require Import AB1v AF0m AD2l.
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib Require Import ZTraceSpec.
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.A Require Import UciTFIB.
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import YM05.
+From OssFuzzTheorems.Proofs.reac_repacer.fuzz_uci.lib.A.Rt Require AF0s.
+#[local] Existing Instance YK11.fx0.
+Open Scope Z_scope.
+(* UciClose.v's bindings, verbatim *)
+Local Abbreviation segs := ucisegs0.
+Local Abbreviation B := AD2l.UciB.
+(* UciClose.v:143 H_RT_STACK_MALLOC1's type, verbatim *)
+Lemma H_RT_STACK_MALLOC1_fits : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
+  @astack_malloc_realizes fx rc segs B 1.
+Proof.
+  intros rc fx.
+  exact (@AF0s.stack_malloc1_contract fx rc B (AR_laws_ok tfibsegs B) AD2l.UciB_syms).
+Qed.
+Print Assumptions H_RT_STACK_MALLOC1_fits.
+## its compile output (the build log's lines after it)
+Axioms:
+PrimInt63.sub : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.string : Set
+PrimInt63.ltb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.lsr : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lsl : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.lor : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimString.length : PrimString.string → PrimInt63.int
+PrimInt63.leb : PrimInt63.int → PrimInt63.int → bool
+PrimInt63.land : PrimInt63.int → PrimInt63.int → PrimInt63.int
+PrimInt63.int : Set
+PrimString.get : PrimString.string → PrimInt63.int → PrimString.char63
+FunctionalExtensionality.functional_extensionality_dep :
+  ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x),
+    (∀ x : A, f x = g x) → f = g
+PrimInt63.eqb : PrimInt63.int → PrimInt63.int → bool
+PrimArray.array : Type → Type
+proofs/reac-repacer/fuzz_uci/lib/A/ZSm1Fit.vo (real: 3.60, user: 3.24, sys: 0.36, mem: 732084 ko)
+cb: target proofs/reac-repacer/fuzz_uci/lib/A/ZSm1Fit.vo compiled
+cb: dune: 1 targets: 1 compiled, 0 restored from the cache, 0 missing; 0 failed compiles; 32 more compiled (dependencies outside the targets)
+rc=0 wall=108

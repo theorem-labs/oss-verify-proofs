@@ -1,0 +1,195 @@
+(* This file states or restates instruction words of the task's compiled program (third-party object code: the upstream library at its pinned commit, the C library, the sanitizer runtime and the task authors' wrapper) for use in the proofs - see NOTICE. No Anthropic licence header is applied to this file. *)
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
+
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.spirv_tools.spvtools_binary_parser_fuzzer.images Require Import Asan.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import PropExec CatSim FPSteps.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.LibHash Require Import HLib HRep HRepFacts HFpu.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import HMState HMem HCells HExec HLFrame HStep HSysStep TacX CellsX.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import ASegs LibIface LbA_Bridge LbA_Conv.
+#[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
+Import ListNotations.
+Open Scope Z_scope.
+
+Local Ltac vm_refl :=
+  lazymatch goal with
+  | |- ?G => apply (@bool_decide_eq_true_1 G _); vm_cast_no_check (@eq_refl bool true)
+  end.
+
+Definition W_f9d38 : bv 32 := 0x0009a787.
+Lemma F_f9d38 : fetch_word asegs (Z_to_bv 64 0xf9d48) = Some W_f9d38. Proof. vm_refl. Qed.
+Lemma D_f9d38 : decode_any W_f9d38 = Some (FLoad FMT_S 15 19 0, 4%Z). Proof. vm_refl. Qed.
+Definition W_f9d40 : bv 32 := 0xd035f753.
+Lemma F_f9d40 : fetch_word asegs (Z_to_bv 64 0xf9d50) = Some W_f9d40. Proof. vm_refl. Qed.
+Lemma D_f9d40 : decode_any W_f9d40 = Some (Fcvt FC_S FC_LU 14 11 7, 4%Z). Proof. vm_refl. Qed.
+Definition W_f9d44 : bv 32 := 0xd03c76d3.
+Lemma F_f9d44 : fetch_word asegs (Z_to_bv 64 0xf9d54) = Some W_f9d44. Proof. vm_refl. Qed.
+Lemma D_f9d44 : decode_any W_f9d44 = Some (Fcvt FC_S FC_LU 13 24 7, 4%Z). Proof. vm_refl. Qed.
+Definition W_f9d48 : bv 32 := 0x10d7f6d3.
+Lemma F_f9d48 : fetch_word asegs (Z_to_bv 64 0xf9d58) = Some W_f9d48. Proof. vm_refl. Qed.
+Lemma D_f9d48 : decode_any W_f9d48 = Some (Fari F_MUL FMT_S 13 15 13 7, 4%Z). Proof. vm_refl. Qed.
+Definition W_f9d4c : bv 32 := 0xa0e695d3.
+Lemma F_f9d4c : fetch_word asegs (Z_to_bv 64 0xf9d5c) = Some W_f9d4c. Proof. vm_refl. Qed.
+Lemma D_f9d4c : decode_any W_f9d4c = Some (Fcmp F_LT FMT_S 11 13 14, 4%Z). Proof. vm_refl. Qed.
+
+Lemma of_int_zero : forall md, fp_of_int F32 md false 64 0 = (0, no_flags).
+Proof. intros md. destruct md; vm_compute; reflexivity. Qed.
+Lemma mul_one_zero : forall md, fp_mul F32 md one32 0 = (0, no_flags).
+Proof. intros md. destruct md; vm_compute; reflexivity. Qed.
+Lemma lt_zero_one : fp_lt F32 0 (ieee 1) = (true, no_flags).
+Proof. vm_compute. reflexivity. Qed.
+
+Lemma lf_fp : forall (x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x12 x13 x14 x15 x16 x17 x18 x20 x21 x22 x23 x25 x26 x27 x28 x29 x30 x31 : word)
+    (F : bvmap 5 word) (fc : bv 32) (m : mem) (rom : word -> option byte) (obj sz bc : Z),
+  0 <= sz -> sz + 1 < 2 ^ 24 -> 0 <= bc < 2 ^ 24 -> (bc = 0 -> sz = 0) ->
+  0 <= obj -> obj + 40 <= 2 ^ 47 ->
+  PropExec.rdn asegs m (Z_to_bv 64 (obj + 32)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0x3f800000)) ->
+  frm_zero fc ->
+  evt asegs (fun x => exists F' fc', x = MS (mkR x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 (Z_to_bv 64 (if bc <? sz + 1 then 1 else 0)) x12 x13 x14 x15 x16 x17
+                                             x18 (Z_to_bv 64 (obj + 32)) x20 x21 x22 x23 (Z_to_bv 64 bc) x25 x26 x27 x28 x29 x30 x31)
+                                          F' (Z_to_bv 64 0xf9d60) fc' None m rom
+               /\ frm_zero fc' /\ fholds (PropExec.mkFP F' fc') 15 one32 /\ fholds (PropExec.mkFP F' fc') 14 (ieee (sz + 1)))
+           (MS (mkR x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 (Z_to_bv 64 sz) x12 x13 x14 x15 x16 x17
+                    x18 (Z_to_bv 64 (obj + 32)) x20 x21 x22 x23 (Z_to_bv 64 bc) x25 x26 x27 x28 x29 x30 x31)
+               F (Z_to_bv 64 0xf9d48) fc None m rom).
+Proof.
+  intros x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x12 x13 x14 x15 x16 x17 x18 x20 x21 x22 x23 x25 x26 x27 x28 x29 x30 x31 F fc m rom obj sz bc
+    Hsz Hsz1 Hbc Hbc0 Ho0 Ho1 RD FZ.
+  set (R := mkR x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 (Z_to_bv 64 sz) x12 x13 x14 x15 x16 x17
+                    x18 (Z_to_bv 64 (obj + 32)) x20 x21 x22 x23 (Z_to_bv 64 bc) x25 x26 x27 x28 x29 x30 x31).
+
+  eapply evt_step.
+  { split; [reflexivity|].
+    eapply (fp_step_flw (PropExec.mkFP F fc) asegs R (Z_to_bv 64 0xf9d48) m rom W_f9d38 15%bv 19%bv 0%bv (Z_to_bv 64 (obj + 32)) _
+              F_f9d38 eq_refl D_f9d38); [change (PropExec.getr R 19) with (Z_to_bv 64 (obj + 32)); change (bv_signed 0%bv) with 0;
+                                          rewrite v_addi_Z by lia; f_equal; lia | exact RD]. }
+  cbn [PropExec.fp_regs PropExec.fp_csr]. rewrite flw_nan_box by lia. rewrite mkst_MS. rewrite v_addi_Z by lia.
+  change (Z_to_bv 64 (0xf9d48 + 4)) with (Z_to_bv 64 0xf9d4c). subst R.
+
+  step.
+  lazymatch goal with |- evt _ _ (MS ?T ?FF _ _ _ _ _) => set (R1 := T); set (F1 := FF) end.
+  assert (A1 : PropExec.getr R1 11 = Z_to_bv 64 (sz + 1)) by reflexivity.
+  assert (A24 : PropExec.getr R1 24 = Z_to_bv 64 bc) by reflexivity.
+
+  destruct (hp_step_fcvt_s_lu (PropExec.mkFP F1 fc) asegs R1 (Z_to_bv 64 0xf9d50) m rom W_f9d40 14%bv 11%bv 7%bv
+              F_f9d40 eq_refl D_f9d40 FZ ltac:(right; reflexivity)) as [md1 S1].
+  cbv zeta in S1. rewrite A1, u64_of_Z, of_int_val in S1 by lia. cbn [fst snd] in S1.
+  eapply evt_step; [split; [reflexivity | exact S1] |].
+  rewrite mkst_MS, v_addi_Z by lia. change (Z_to_bv 64 (1023312 + 4)) with (Z_to_bv 64 0xf9d54). cbn [PropExec.fp_regs PropExec.fp_csr].
+  set (F2 := bvmap_set 14 _ F1). set (fc2 := accrue_csr fc no_flags).
+  assert (FZ2 : frm_zero fc2) by (apply frm_zero_accrue_csr; exact FZ).
+
+  destruct (hp_step_fcvt_s_lu (PropExec.mkFP F2 fc2) asegs R1 (Z_to_bv 64 0xf9d54) m rom W_f9d44 13%bv 24%bv 7%bv
+              F_f9d44 eq_refl D_f9d44 FZ2 ltac:(right; reflexivity)) as [md2 S2].
+  cbv zeta in S2. rewrite A24, u64_of_Z in S2 by lia.
+  pose proof (ieee_range (sz + 1) ltac:(lia)) as IE1.
+  assert (H15 : fholds (PropExec.mkFP F2 fc2) 15 one32)
+    by (apply fholds_set_other; [intros X; discriminate X | unfold fholds; cbn [PropExec.fp_regs]; subst F1; unfold reg_get; rewrite bvmap_get_set_same; reflexivity]).
+  assert (H14 : fholds (PropExec.mkFP F2 fc2) 14 (ieee (sz + 1))) by (apply fholds_set_same; lia).
+  destruct (Z.eq_dec bc 0) as [Hb0 | Hb1].
+  -
+    pose proof (Hbc0 Hb0) as Hsz0. subst bc. subst sz.
+    rewrite of_int_zero in S2. cbn [fst snd] in S2.
+    eapply evt_step; [split; [reflexivity | exact S2] |].
+    rewrite mkst_MS, v_addi_Z by lia. change (Z_to_bv 64 (0xf9d54 + 4)) with (Z_to_bv 64 0xf9d58). cbn [PropExec.fp_regs PropExec.fp_csr].
+    set (F3 := bvmap_set 13 _ F2). set (fc3 := accrue_csr fc2 no_flags).
+    assert (FZ3 : frm_zero fc3) by (apply frm_zero_accrue_csr; exact FZ2).
+    assert (G15 : fholds (PropExec.mkFP F3 fc3) 15 one32) by (apply fholds_set_other; [intros X; discriminate X | exact H15]).
+    assert (G14 : fholds (PropExec.mkFP F3 fc3) 14 (ieee (0 + 1))) by (apply fholds_set_other; [intros X; discriminate X | exact H14]).
+    assert (G13 : fholds (PropExec.mkFP F3 fc3) 13 0) by (apply fholds_set_same; lia).
+
+    destruct (hp_step_fari_s (PropExec.mkFP F3 fc3) asegs R1 (Z_to_bv 64 0xf9d58) m rom W_f9d48 F_MUL 13%bv 15%bv 13%bv 7%bv one32 0
+                F_f9d48 eq_refl D_f9d48 FZ3 ltac:(right; reflexivity) G15 G13 ltac:(unfold one32; lia) ltac:(lia)) as [md3 S3].
+    cbv zeta in S3. cbn [fari_op] in S3. rewrite mul_one_zero in S3. cbn [fst snd] in S3.
+    eapply evt_step; [split; [reflexivity | exact S3] |].
+    rewrite mkst_MS, v_addi_Z by lia. change (Z_to_bv 64 (0xf9d58 + 4)) with (Z_to_bv 64 0xf9d5c). cbn [PropExec.fp_regs PropExec.fp_csr].
+    set (F4 := bvmap_set 13 _ F3). set (fc4 := accrue_csr fc3 no_flags).
+    assert (FZ4 : frm_zero fc4) by (apply frm_zero_accrue_csr; exact FZ3).
+    assert (K15 : fholds (PropExec.mkFP F4 fc4) 15 one32) by (apply fholds_set_other; [intros X; discriminate X | exact G15]).
+    assert (K14 : fholds (PropExec.mkFP F4 fc4) 14 (ieee (0 + 1))) by (apply fholds_set_other; [intros X; discriminate X | exact G14]).
+    assert (K13 : fholds (PropExec.mkFP F4 fc4) 13 0) by (apply fholds_set_same; lia).
+
+    pose proof (hp_step_fcmp_s (PropExec.mkFP F4 fc4) asegs R1 (Z_to_bv 64 0xf9d5c) m rom W_f9d4c F_LT 11%bv 13%bv 14%bv 0 (ieee (0 + 1))
+                F_f9d4c eq_refl D_f9d4c K13 K14 ltac:(lia) ltac:(change (0 + 1) with 1 in *; lia)) as S4.
+    cbv zeta in S4. cbn [fcmp_op] in S4. change (0 + 1) with 1 in S4. rewrite lt_zero_one in S4. cbn [fst snd] in S4.
+    eapply evt_step; [split; [reflexivity | exact S4] |].
+    rewrite mkst_MS, v_addi_Z by lia. change (Z_to_bv 64 (0xf9d5c + 4)) with (Z_to_bv 64 0xf9d60). cbn [PropExec.fp_regs PropExec.fp_csr].
+    apply evt_done. exists F4, (accrue_csr fc4 no_flags). split; [reflexivity|].
+    split; [apply frm_zero_accrue_csr; exact FZ4|]. split; [exact K15 | exact K14].
+  -
+    rewrite of_int_val in S2 by lia. cbn [fst snd] in S2.
+    pose proof (ieee_range bc ltac:(lia)) as IE2.
+    eapply evt_step; [split; [reflexivity | exact S2] |].
+    rewrite mkst_MS, v_addi_Z by lia. change (Z_to_bv 64 (0xf9d54 + 4)) with (Z_to_bv 64 0xf9d58). cbn [PropExec.fp_regs PropExec.fp_csr].
+    set (F3 := bvmap_set 13 _ F2). set (fc3 := accrue_csr fc2 no_flags).
+    assert (FZ3 : frm_zero fc3) by (apply frm_zero_accrue_csr; exact FZ2).
+    assert (G15 : fholds (PropExec.mkFP F3 fc3) 15 one32) by (apply fholds_set_other; [intros X; discriminate X | exact H15]).
+    assert (G14 : fholds (PropExec.mkFP F3 fc3) 14 (ieee (sz + 1))) by (apply fholds_set_other; [intros X; discriminate X | exact H14]).
+    assert (G13 : fholds (PropExec.mkFP F3 fc3) 13 (ieee bc)) by (apply fholds_set_same; lia).
+
+    destruct (hp_step_fari_s (PropExec.mkFP F3 fc3) asegs R1 (Z_to_bv 64 0xf9d58) m rom W_f9d48 F_MUL 13%bv 15%bv 13%bv 7%bv one32 (ieee bc)
+                F_f9d48 eq_refl D_f9d48 FZ3 ltac:(right; reflexivity) G15 G13 ltac:(unfold one32; lia) ltac:(lia)) as [md3 S3].
+    cbv zeta in S3. cbn [fari_op] in S3. rewrite mul_one_val in S3 by lia. cbn [fst snd] in S3.
+    eapply evt_step; [split; [reflexivity | exact S3] |].
+    rewrite mkst_MS, v_addi_Z by lia. change (Z_to_bv 64 (0xf9d58 + 4)) with (Z_to_bv 64 0xf9d5c). cbn [PropExec.fp_regs PropExec.fp_csr].
+    set (F4 := bvmap_set 13 _ F3). set (fc4 := accrue_csr fc3 no_flags).
+    assert (FZ4 : frm_zero fc4) by (apply frm_zero_accrue_csr; exact FZ3).
+    assert (K15 : fholds (PropExec.mkFP F4 fc4) 15 one32) by (apply fholds_set_other; [intros X; discriminate X | exact G15]).
+    assert (K14 : fholds (PropExec.mkFP F4 fc4) 14 (ieee (sz + 1))) by (apply fholds_set_other; [intros X; discriminate X | exact G14]).
+    assert (K13 : fholds (PropExec.mkFP F4 fc4) 13 (ieee bc)) by (apply fholds_set_same; lia).
+
+    pose proof (hp_step_fcmp_s (PropExec.mkFP F4 fc4) asegs R1 (Z_to_bv 64 0xf9d5c) m rom W_f9d4c F_LT 11%bv 13%bv 14%bv (ieee bc) (ieee (sz + 1))
+                F_f9d4c eq_refl D_f9d4c K13 K14 ltac:(lia) ltac:(lia)) as S4.
+    cbv zeta in S4. cbn [fcmp_op] in S4. rewrite lt_val in S4 by lia. cbn [fst snd] in S4.
+    eapply evt_step; [split; [reflexivity | exact S4] |].
+    rewrite mkst_MS, v_addi_Z by lia. change (Z_to_bv 64 (0xf9d5c + 4)) with (Z_to_bv 64 0xf9d60). cbn [PropExec.fp_regs PropExec.fp_csr].
+    apply evt_done. exists F4, (accrue_csr fc4 no_flags). split; [reflexivity|].
+    split; [apply frm_zero_accrue_csr; exact FZ4|]. split; [exact K15 | exact K14].
+Qed.
+
+Definition W_fdiv : bv 32 := 0x18f777d3.
+Definition W_fcvlu : bv 32 := 0xc037b653.
+Lemma F_f9d74 : fetch_word asegs (Z_to_bv 64 0xf9d84) = Some W_fdiv. Proof. vm_refl. Qed.
+Lemma F_f9d78 : fetch_word asegs (Z_to_bv 64 0xf9d88) = Some W_fcvlu. Proof. vm_refl. Qed.
+Lemma F_f9e5c : fetch_word asegs (Z_to_bv 64 0xf9e6c) = Some W_fdiv. Proof. vm_refl. Qed.
+Lemma F_f9e60 : fetch_word asegs (Z_to_bv 64 0xf9e70) = Some W_fcvlu. Proof. vm_refl. Qed.
+Lemma D_fdiv : decode_any W_fdiv = Some (Fari F_DIV FMT_S 15 14 15 7, 4%Z). Proof. vm_refl. Qed.
+Lemma D_fcvlu : decode_any W_fcvlu = Some (Fcvt (if false then FC_L else FC_LU) FC_S 12 15 3, 4%Z). Proof. vm_refl. Qed.
+
+Lemma gr_fp : forall (pc : Z) (x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 : word)
+    (F : bvmap 5 word) (fc : bv 32) (m : mem) (rom : word -> option byte) (sz : Z),
+  fetch_word asegs (Z_to_bv 64 pc) = Some W_fdiv -> fetch_word asegs (Z_to_bv 64 (pc + 4)) = Some W_fcvlu ->
+  0 <= pc -> pc + 8 < 2 ^ 64 ->
+  0 <= sz -> sz + 1 < 2 ^ 24 -> frm_zero fc ->
+  fholds (PropExec.mkFP F fc) 15 one32 -> fholds (PropExec.mkFP F fc) 14 (ieee (sz + 1)) ->
+  evt asegs (fun x => exists F' fc', x = MS (mkR x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 (Z_to_bv 64 (sz + 1)) x13 x14 x15 x16 x17
+                                             x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31)
+                                          F' (Z_to_bv 64 (pc + 8)) fc' None m rom /\ frm_zero fc')
+           (MS (mkR x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17
+                    x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31)
+               F (Z_to_bv 64 pc) fc None m rom).
+Proof.
+  intros pc x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31
+    F fc m rom sz FD FC P0 P1 Hsz Hsz1 FZ H15 H14.
+  set (R := mkR x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31).
+  pose proof (ieee_range (sz + 1) ltac:(lia)) as IE1.
+
+  destruct (hp_step_fari_s (PropExec.mkFP F fc) asegs R (Z_to_bv 64 pc) m rom W_fdiv F_DIV 15%bv 14%bv 15%bv 7%bv (ieee (sz + 1)) one32
+              FD eq_refl D_fdiv FZ ltac:(right; reflexivity) H14 H15 ltac:(lia) ltac:(unfold one32; lia)) as [md1 S1].
+  cbv zeta in S1. cbn [fari_op] in S1. rewrite div_one_val in S1 by lia. cbn [fst snd] in S1.
+  eapply evt_step; [split; [reflexivity | exact S1] |].
+  rewrite mkst_MS, v_addi_Z by lia. cbn [PropExec.fp_regs PropExec.fp_csr].
+  set (F1 := bvmap_set 15 _ F). set (fc1 := accrue_csr fc no_flags).
+  assert (FZ1 : frm_zero fc1) by (apply frm_zero_accrue_csr; exact FZ).
+  assert (G15 : fholds (PropExec.mkFP F1 fc1) 15 (ieee (sz + 1))) by (apply fholds_set_same; lia).
+
+  destruct (hp_step_fcvt_l_s (PropExec.mkFP F1 fc1) asegs R (Z_to_bv 64 (pc + 4)) m rom W_fcvlu false 12%bv 15%bv 3%bv (ieee (sz + 1))
+              FC eq_refl D_fcvlu FZ1 ltac:(left; vm_compute; intros X; discriminate X) G15 ltac:(lia)) as (md2 & Hmd2 & S2).
+  cbv zeta in S2. rewrite to_lu_val in S2 by lia. cbn [fst snd] in S2.
+  eapply evt_step; [split; [reflexivity | exact S2] |].
+  rewrite mkst_MS, v_addi_Z by lia. cbn [PropExec.fp_regs PropExec.fp_csr].
+  apply evt_done. exists F1, (accrue_csr fc1 no_flags). split; [|apply frm_zero_accrue_csr; exact FZ1].
+  replace (pc + 4 + 4) with (pc + 8) by lia. reflexivity.
+Qed.

@@ -1,0 +1,35 @@
+# alreloc per-numeral report: libreac/fuzz_ctrl lib/A/Rt/StackMalloc0Tbl.v at e10f488c53fc -> libdiginet/fuzz_transport asan lib/A/Rt/StackMalloc0Tbl.v: dry run
+# source image <LIBREAC_V190>/x/unstripped/fuzz_ctrl/fuzz_ctrl.asan; unit image <WORK>/target/unstripped/fuzz_transport/fuzz_transport.asan
+file:line	old	new	rule	old in source image	new in unit image
+A/Rt/StackMalloc0Tbl.v:4	0x3cda4	0x3cda4	resolve (identity)	_ZN6__asan9FakeStack17AddrIsInFakeStackEmPmS1_+0xb8	_ZN6__asan12ErrorGeneric5PrintEv+0xc8c
+A/Rt/StackMalloc0Tbl.v:5	0x3d5b8	0x3d5b8	resolve (identity)	__asan_stack_malloc_0	_ZN6__asan9FakeStack16ForEachFakeFrameEPFvmmPvES1_+0x78
+A/Rt/StackMalloc0Tbl.v:5	0x3cda4	0x3cda4	resolve (identity)	_ZN6__asan9FakeStack17AddrIsInFakeStackEmPmS1_+0xb8	_ZN6__asan12ErrorGeneric5PrintEv+0xc8c
+A/Rt/StackMalloc0Tbl.v:28	0x3d5b8	0x3d698	FUNC entry	__asan_stack_malloc_0	__asan_stack_malloc_0
+A/Rt/StackMalloc0Tbl.v:29	0x3d63c	0x3d71c	same-code function	__asan_stack_malloc_0+0x84	__asan_stack_malloc_0+0x84
+A/Rt/StackMalloc0Tbl.v:30	0x3d6b4	0x3d794	same-code function	__asan_stack_malloc_0+0xfc	__asan_stack_malloc_0+0xfc
+A/Rt/StackMalloc0Tbl.v:31	0x3d6d8	0x3d7b8	same-code function	__asan_stack_malloc_0+0x120	__asan_stack_malloc_0+0x120
+A/Rt/StackMalloc0Tbl.v:32	0x3d6f4	0x3d7d4	same-code function	__asan_stack_malloc_0+0x13c	__asan_stack_malloc_0+0x13c
+A/Rt/StackMalloc0Tbl.v:60	0x3d5b8	0x3d698	FUNC entry	__asan_stack_malloc_0	__asan_stack_malloc_0
+A/Rt/StackMalloc0Tbl.v:60	0x472d8	0x47660	FUNC entry	__interceptor___tls_get_addr	__interceptor___tls_get_addr
+A/Rt/StackMalloc0Tbl.v:60	0x98800	0x9de04	FUNC entry	__tls_get_addr	__tls_get_addr
+A/Rt/StackMalloc0Tbl.v:60	0x5c838	0x5cbc0	FUNC entry	_ZN6__asan16GetCurrentThreadEv	_ZN6__asan16GetCurrentThreadEv
+A/Rt/StackMalloc0Tbl.v:60	0x55384	0x5570c	FUNC entry	_ZN6__asan10AsanTSDGetEv	_ZN6__asan10AsanTSDGetEv
+A/Rt/StackMalloc0Tbl.v:60	0x998b4	0x9eeb8	FUNC entry	tss_get	tss_get
+A/Rt/StackMalloc0Tbl.v:60	0x69f4c	0x6a2d4	FUNC entry	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm	_ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm
+A/Rt/StackMalloc0Tbl.v:60	0x3dc3c	0x3dfc4	resolve	_ZN6__asanL11MemToShadowEm	_ZN6__asanL11MemToShadowEm
+A/Rt/StackMalloc0Tbl.v:89	0xa07b0	0xa4d70	resolve	.got+0xd40	.got+0xd40
+A/Rt/StackMalloc0Tbl.v:89	0xa1870	0xa5e30	OBJECT start	_ZN14__interception19real___tls_get_addrE	_ZN14__interception19real___tls_get_addrE
+A/Rt/StackMalloc0Tbl.v:89	0x9fac0	0xa4080	resolve	.got+0x50	.got+0x50
+A/Rt/StackMalloc0Tbl.v:90	0x9fac0	0xa4080	resolve	.got+0x50	.got+0x50
+A/Rt/StackMalloc0Tbl.v:90	0x9fb20	0xa40e0	resolve	.got+0xb0	.got+0xb0
+A/Rt/StackMalloc0Tbl.v:90	0x9fb20	0xa40e0	resolve	.got+0xb0	.got+0xb0
+A/Rt/StackMalloc0Tbl.v:91	0xa07c0	0xa4d80	resolve	.got+0xd50	.got+0xd50
+A/Rt/StackMalloc0Tbl.v:91	0xa80e0	0xac260	OBJECT start	_ZN6__asanL14tsd_key_initedE	_ZN6__asanL14tsd_key_initedE
+A/Rt/StackMalloc0Tbl.v:226	0x0007c883	0x0007c883	not an address (instruction word (the word of a fetch_word fact)) (identity)	_ZN6__lsan10LeakReport15AddLeakedChunksERKN11__sanitizer18InternalMmapVectorINS_11LeakedChunkEEE+0x1ef	_ZN6__lsanL22DoRecoverableLeakCheckEv+0x83
+A/Rt/StackMalloc0Tbl.v:227	0x0007c883	0x0007c883	not an address (instruction word (a decode_any argument)) (identity)	_ZN6__lsan10LeakReport15AddLeakedChunksERKN11__sanitizer18InternalMmapVectorINS_11LeakedChunkEEE+0x1ef	_ZN6__lsanL22DoRecoverableLeakCheckEv+0x83
+A/Rt/StackMalloc0Tbl.v:232	0x00160613	0x00160613	not an address (instruction word (the word of a fetch_word fact)) (identity)	_ZN11__sanitizerL9useCountsE+0x25ed3	_ZN11__sanitizerL9useCountsE+0x21d53
+A/Rt/StackMalloc0Tbl.v:233	0x00160613	0x00160613	not an address (instruction word (a decode_any argument)) (identity)	_ZN11__sanitizerL9useCountsE+0x25ed3	_ZN11__sanitizerL9useCountsE+0x21d53
+A/Rt/StackMalloc0Tbl.v:293	251572	251796	same-code function	__asan_stack_malloc_0+0xfc	__asan_stack_malloc_0+0xfc
+A/Rt/StackMalloc0Tbl.v:392	2147450880	2147450880	SIZES_KEEP	-	-
+A/Rt/StackMalloc0Tbl.v:462	1048576	1048576	SIZES_KEEP	_ZN11__sanitizerL26internal_alloc_placeholderE+0x56580	_ZN11__sanitizerL26internal_alloc_placeholderE+0x52400
+A/Rt/StackMalloc0Tbl.v:548	17594333495296	17594333495296	SIZES_KEEP	-	-

@@ -1,0 +1,32 @@
+== PA-base: 3d2eee813cce -> 0d24592683b6 on the same inputs
+old PA-base-3d2e: 4981 rows (+ column line, + 24 header lines); sha256 of the rows without the # header block 2e4284e959a4
+new PA-base-0d24: 4981 rows (+ column line, + 24 header lines); sha256 of the rows without the # header block 3fa30f18fd6e
+matched by numeral identity: 4981; old rows unmatched: 0; new rows unmatched: 0
+flagged rows: old 5, new 6
+same verdict: 4980
+changed verdict: 1
+  changed: AE6k.v:1387  ROUND-CONSTANT-SAME -> SAME-VALUE-DIFFERENT-OBJECT  value 0x200000  tool note: value unchanged (a copied literal?); the value denotes __sanitizer::theDepot+0x78128 in the donor but __sanitizer::theDepot+0x6d068 in the target; same symbol __sanitizer::theDepot, offset 0x78128 vs 0x6d068; expected 0x20b0c0
+== PA-plant: 3d2eee813cce -> 0d24592683b6 on the same inputs
+old PA-plant-3d2e: 4981 rows (+ column line, + 25 header lines); sha256 of the rows without the # header block 5b466cbb6d4e
+new PA-plant-0d24: 4981 rows (+ column line, + 25 header lines); sha256 of the rows without the # header block 300217d64754
+matched by numeral identity: 4981; old rows unmatched: 0; new rows unmatched: 0
+flagged rows: old 8, new 9
+same verdict: 4980
+changed verdict: 1
+  changed: ACeg.v:21  SAME-SYMBOL-ROUNDED -> SLID-TO-NEIGHBOUR  value 0xa6450  tool note: the port value is the adjacent .got slot; expected 0xa6448
+== PB-base: 3d2eee813cce -> 0d24592683b6 on the same inputs
+old PB-base-3d2e: 4994 rows (+ column line, + 24 header lines); sha256 of the rows without the # header block 8bffac264746
+new PB-base-0d24: 4994 rows (+ column line, + 24 header lines); sha256 of the rows without the # header block 4b5de3d05022
+matched by numeral identity: 4994; old rows unmatched: 0; new rows unmatched: 0
+flagged rows: old 5, new 6
+same verdict: 4993
+changed verdict: 1
+  changed: YE30.v:1394  ROUND-CONSTANT-SAME -> SAME-VALUE-DIFFERENT-OBJECT  value 0x200000  tool note: value unchanged (a copied literal?); the value denotes __sanitizer::theDepot+0x77ea8 in the donor but __sanitizer::theDepot+0x6d4e8 in the target; same symbol __sanitizer::theDepot, offset 0x77ea8 vs 0x6d4e8; expected 0x20a9c0
+== PB-plant: 3d2eee813cce -> 0d24592683b6 on the same inputs
+old PB-plant-3d2e: 4994 rows (+ column line, + 25 header lines); sha256 of the rows without the # header block 35d8ffbc40a1
+new PB-plant-0d24: 4994 rows (+ column line, + 25 header lines); sha256 of the rows without the # header block d8d989781ce9
+matched by numeral identity: 4994; old rows unmatched: 0; new rows unmatched: 0
+flagged rows: old 8, new 9
+same verdict: 4993
+changed verdict: 1
+  changed: YCeg.v:22  SAME-SYMBOL-ROUNDED -> SLID-TO-NEIGHBOUR  value 0xa5fb0  tool note: the port value is the adjacent .got slot; expected 0xa5fa8

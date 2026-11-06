@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: php
 harness: php-fuzz-unserializehash
-rocq: OssFuzzTheorems.php.php_fuzz_unserializehash
+rocq: OSSVerify.php.php_fuzz_unserializehash
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

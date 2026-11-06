@@ -1,0 +1,19 @@
+class 0 image A (own table: walked words differing by a pc-relative offset; whole functions: differing targets, words differing by a pc-relative offset | the same over the 8 functions every candidate walks)
+  1                 fuzz_ctrl-A           8 ranges: walked  38; whole: 0 targets,  55 | common: walked  38; whole: 0,  55; __asan_stack_malloc_0 0x3d5b8 -> 0x3d698
+  2                 fuzz_disco-A          9 ranges: walked  38; whole: 1 targets, 281 | common: walked  38; whole: 0,  52; __asan_stack_malloc_0 0x3d474 -> 0x3d698
+  3                 fuzz_pin-A            9 ranges: walked  41; whole: 1 targets, 386 | common: walked  41; whole: 0,  64; __asan_stack_malloc_0 0x3c8e4 -> 0x3d698
+  4                 fuzz_decode-A         9 ranges: walked  44; whole: 1 targets, 439 | common: walked  44; whole: 0,  69; __asan_stack_malloc_0 0x3c6b0 -> 0x3d698
+  5                 fuzz_pcap-A          10 ranges: walked  49; whole: 1 targets, 388 | common: walked  41; whole: 0,  64; __asan_stack_malloc_0 0x3c538 -> 0x3d698
+  6                 fuzz_grant-A         12 ranges: walked  62; whole: 1 targets, 416 | common: walked  38; whole: 0,  59; __asan_stack_malloc_0 0x3cda4 -> 0x3d698
+  FAIL (not ranked) fuzz_identity-A      10 ranges: walked  47; whole: 1 targets, 403 | common: walked  38; whole: 0,  59; __asan_stack_malloc_0 0x3cf80 -> 0x3d698
+  FAIL (not ranked) fuzz_command-A       13 ranges: walked  87; whole: 1 targets, 504 | common: walked  36; whole: 0,  60; __asan_stack_malloc_0 0x3f908 -> 0x3d698
+  functions every candidate walks: _ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm _ZN6__asan10AsanTSDGetEv _ZN6__asan16GetCurrentThreadEv _ZN6__asanL11MemToShadowEm __asan_stack_malloc_0 __interceptor___tls_get_addr __pthread_getspecific __tls_get_addr
+class 0 image B (own table: walked words differing by a pc-relative offset; whole functions: differing targets, words differing by a pc-relative offset | the same over the 8 functions every candidate walks)
+  1                 fuzz_ctrl-B           8 ranges: walked  40; whole: 0 targets,  54 | common: walked  40; whole: 0,  54; __asan_stack_malloc_0 0x3d6f4 -> 0x3d6f4
+  2                 fuzz_pin-B            9 ranges: walked  43; whole: 1 targets, 390 | common: walked  43; whole: 0,  66; __asan_stack_malloc_0 0x3c8e4 -> 0x3d6f4
+  3                 fuzz_decode-B         9 ranges: walked  44; whole: 1 targets, 439 | common: walked  44; whole: 0,  69; __asan_stack_malloc_0 0x3c6fc -> 0x3d6f4
+  4                 fuzz_pcap-B          10 ranges: walked  51; whole: 1 targets, 387 | common: walked  43; whole: 0,  66; __asan_stack_malloc_0 0x3c588 -> 0x3d6f4
+  FAIL (not ranked) fuzz_identity-B      10 ranges: walked  49; whole: 1 targets, 403 | common: walked  40; whole: 0,  61; __asan_stack_malloc_0 0x3cfe8 -> 0x3d6f4
+  FAIL (not ranked) fuzz_grant-B         11 ranges: walked  56; whole: 1 targets, 364 | common: walked  40; whole: 0,  59; __asan_stack_malloc_0 0x3cf4c -> 0x3d6f4
+  FAIL (not ranked) fuzz_command-B       13 ranges: walked  84; whole: 1 targets, 501 | common: walked  34; whole: 0,  58; __asan_stack_malloc_0 0x3f954 -> 0x3d6f4
+  functions every candidate walks: _ZN11__sanitizer20DTLS_on_tls_get_addrEPvS0_mm _ZN6__asan10AsanTSDGetEv _ZN6__asan16GetCurrentThreadEv _ZN6__asanL11MemToShadowEm __asan_stack_malloc_0 __interceptor___tls_get_addr __pthread_getspecific __tls_get_addr

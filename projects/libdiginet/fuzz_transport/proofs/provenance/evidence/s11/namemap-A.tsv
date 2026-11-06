@@ -1,0 +1,100 @@
+# every rename of image A: source unit	source name	target name	rule	uses
+frame	DF___asan_memcpy	TS___asan_memcpy	listing constructor	7
+frame	DF___asan_memset	TS___asan_memset	listing constructor	4
+frame	DF_diginet_body_check	TS_diginet_body_check	listing constructor	3
+frame	DF_diginet_frame_build	TS_diginet_frame_build	listing constructor	6
+frame	DF_diginet_frame_parse	TS_diginet_frame_parse	listing constructor	3
+frame	DgnFrameAddr	DgnTransportAddr	kit module (frame -> decode -> transport)	14
+frame	DgnFrameCJ	DgnTransportCJ	kit module (frame -> decode -> transport)	3
+frame	DgnFrameCg	DgnTransportCg	kit module (frame -> decode -> transport)	6
+frame	DgnFrameImg	DgnTransportImg	kit module (frame -> decode -> transport)	2
+frame	DgnFrameSyms	DgnTransportSyms	kit module (frame -> decode -> transport)	14
+frame	FRAME_F_SIZE	FRAME_F_SIZE	kit name kept (the base defines it under the same name)	18
+frame	FrameFevt	TransportFevt	kit module (frame -> decode -> transport)	2
+frame	dgnframe_segs_low	transport_segs_low	kit listing-prefix name	1
+frame	dgnframe_sigma	transport_sigma	listing name	23
+frame	frame_addressable_of	decode_addressable_of	kit name (frame -> decode, kept as decode names it)	4
+frame	frame_asan_cell_ranges	decode_asan_cell_ranges	kit name (frame -> decode, kept as decode names it)	2
+frame	frame_byte_eq	decode_byte_eq	kit name (frame -> decode, kept as decode names it)	1
+frame	frame_bytes_garr8	decode_bytes_garr8	kit name (frame -> decode, kept as decode names it)	1
+frame	frame_cell_visible	decode_cell_visible	kit name (frame -> decode, kept as decode names it)	2
+frame	frame_cells	transport_cells	kit name (frame -> decode -> kreloc)	5
+frame	frame_cells_asan	decode_cells_asan	kit name (frame -> decode, kept as decode names it)	1
+frame	frame_cg_post	decode_cg_post	kit name (frame -> decode, kept as decode names it)	4
+frame	frame_diginet_announce_parse_cg	transport_diginet_announce_parse_cg	own name	3
+frame	frame_diginet_announce_parse_cg_of_F	transport_diginet_announce_parse_cg_of_F	own name	1
+frame	frame_diginet_announce_parse_cg_of_F_stmt	transport_diginet_announce_parse_cg_of_F_stmt	own name	2
+frame	frame_diginet_body_check_cg	transport_diginet_body_check_cg	own name	2
+frame	frame_diginet_frame_build_cg	transport_diginet_frame_build_cg	own name	3
+frame	frame_diginet_frame_build_cg_holds	transport_diginet_frame_build_cg_holds	own name	1
+frame	frame_diginet_frame_build_cg_holds_stmt	transport_diginet_frame_build_cg_holds_stmt	own name	3
+frame	frame_diginet_frame_is_keepalive_cg	transport_diginet_frame_is_keepalive_cg	own name	2
+frame	frame_diginet_frame_is_keepalive_cg_of_F	transport_diginet_frame_is_keepalive_cg_of_F	own name	1
+frame	frame_diginet_frame_is_keepalive_cg_of_F_stmt	transport_diginet_frame_is_keepalive_cg_of_F_stmt	own name	2
+frame	frame_diginet_frame_parse_cg	transport_diginet_frame_parse_cg	own name	3
+frame	frame_diginet_frame_parse_cg_holds	transport_diginet_frame_parse_cg_holds	own name	1
+frame	frame_diginet_frame_parse_cg_holds_stmt	transport_diginet_frame_parse_cg_holds_stmt	own name	2
+frame	frame_diginet_mac_is_digidesign_cg	transport_diginet_mac_is_digidesign_cg	own name	2
+frame	frame_diginet_mac_is_digidesign_cg_of_F	transport_diginet_mac_is_digidesign_cg_of_F	own name	1
+frame	frame_diginet_mac_is_digidesign_cg_of_F_stmt	transport_diginet_mac_is_digidesign_cg_of_F_stmt	own name	2
+frame	frame_eqv_mkst	decode_eqv_mkst	kit name (frame -> decode, kept as decode names it)	15
+frame	frame_f_bytes	frame_f_bytes	kit name kept (the base defines it under the same name)	4
+frame	frame_f_cells	frame_f_cells	kit name kept (the base defines it under the same name)	2
+frame	frame_fb_hdr_bytes	transport_fb_hdr_bytes	own name	4
+frame	frame_fb_hdr_cells	transport_fb_hdr_cells	own name	2
+frame	frame_fb_post	transport_fb_post	own name	4
+frame	frame_fp_post	transport_fp_post	own name	4
+frame	frame_fp_wr	transport_fp_wr	own name	5
+frame	frame_garr8_bytes	decode_garr8_bytes	kit name (frame -> decode, kept as decode names it)	1
+frame	frame_getr_xeqv	decode_getr_xeqv	kit name (frame -> decode, kept as decode names it)	1
+frame	frame_in_block	decode_in_block	kit name (frame -> decode, kept as decode names it)	19
+frame	frame_in_fake	decode_in_fake	kit name (frame -> decode, kept as decode names it)	4
+frame	frame_mbyte_vis	decode_mbyte_vis	kit name (frame -> decode, kept as decode names it)	1
+frame	frame_off_win	decode_off_win	kit name (frame -> decode, kept as decode names it)	4
+frame	frame_rd_ok	decode_rd_ok	kit name (frame -> decode, kept as decode names it)	4
+frame	frame_rng_vis	decode_rng_vis	kit name (frame -> decode, kept as decode names it)	11
+frame	frame_run	decode_run	kit name (frame -> decode, kept as decode names it)	15
+frame	frame_rw_cells_eq	decode_rw_cells_eq	kit name (frame -> decode, kept as decode names it)	2
+frame	frame_rw_of_garr8	decode_rw_of_garr8	kit name (frame -> decode, kept as decode names it)	1
+frame	frame_seg_covers	decode_seg_covers	kit name (frame -> decode, kept as decode names it)	6
+frame	frame_segs_low	decode_segs_low	kit name (frame -> decode, kept as decode names it)	6
+frame	frame_stk_present	decode_stk_present	kit name (frame -> decode, kept as decode names it)	2
+frame	frame_twr_ok	decode_twr_ok	kit name (frame -> decode, kept as decode names it)	4
+decode	DD___asan_memset	TS___asan_memset	listing constructor	4
+decode	DD___asan_stack_malloc_2	TS___asan_stack_malloc_2	listing constructor	2
+decode	DD_diginet_body_check	TS_diginet_body_check	listing constructor	2
+decode	DD_diginet_cursor_init	TS_diginet_cursor_init	listing constructor	2
+decode	DD_diginet_msg_next	TS_diginet_msg_next	listing constructor	7
+decode	DecodeFevt	TransportFevt	kit module (kreloc)	4
+decode	DgnDecodeAddr	DgnTransportAddr	kit module (kreloc)	11
+decode	DgnDecodeCJ	DgnTransportCJ	kit module (kreloc)	8
+decode	DgnDecodeCg	DgnTransportCg	kit module (kreloc)	11
+decode	DgnDecodeImg	DgnTransportImg	kit module (kreloc)	8
+decode	DgnDecodeList	DgnTransportList	kit module (kreloc)	8
+decode	DgnDecodePa	DgnTransportPa	kit module (kreloc)	8
+decode	DgnDecodePaLib	DgnTransportPaLib	kit module (kreloc)	8
+decode	DgnDecodeSyms	DgnTransportSyms	kit module (kreloc)	11
+decode	PI_dgndec	PI_transport	kit listing-prefix name	66
+decode	PL_dgndec	PL_transport	kit listing-prefix name	4
+decode	ddsym	tsym	listing type	3
+decode	decode_bc_post	transport_bc_post	own name	6
+decode	decode_cells	transport_cells	kit name (kreloc)	6
+decode	decode_diginet_body_check_cg	transport_diginet_body_check_cg	own name	3
+decode	decode_diginet_body_check_cg_holds	transport_diginet_body_check_cg_holds	own name	1
+decode	decode_diginet_body_check_cg_holds_stmt	transport_diginet_body_check_cg_holds_stmt	own name	4
+decode	decode_diginet_cursor_init_cg	transport_diginet_cursor_init_cg	own name	5
+decode	decode_diginet_cursor_init_cg_of_F	transport_diginet_cursor_init_cg_of_F	own name	1
+decode	decode_diginet_cursor_init_cg_of_F_stmt	transport_diginet_cursor_init_cg_of_F_stmt	own name	2
+decode	decode_diginet_msg_next_cg	transport_diginet_msg_next_cg	own name	7
+decode	decode_diginet_msg_next_cg_holds	transport_diginet_msg_next_cg_holds	own name	1
+decode	decode_diginet_msg_next_cg_holds_stmt	transport_diginet_msg_next_cg_holds_stmt	own name	2
+decode	decode_leaf_wr_at	transport_leaf_wr_at	kit name (kreloc)	2
+decode	decode_mn_cur_bytes	transport_mn_cur_bytes	own name	12
+decode	decode_mn_msg_bytes	transport_mn_msg_bytes	own name	5
+decode	decode_mn_post	transport_mn_post	own name	5
+decode	decode_mn_wr	transport_mn_wr	own name	9
+decode	dgndec_listing	transport_listing	listing name	36
+decode	dgndec_segs_low	transport_segs_low	kit listing-prefix name	6
+decode	dgndec_sigma	transport_sigma	listing name	17
+decode	dgndec_tpi	transport_tpi	kit listing-prefix name	6
+decode	dgndec_tw	transport_tw	kit listing-prefix name	3

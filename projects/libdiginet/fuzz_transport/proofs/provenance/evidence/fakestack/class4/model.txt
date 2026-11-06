@@ -1,0 +1,7 @@
+# numerals of fuzz_grant's lib/A/Rt/StackMalloc4{,Tbl}.v and AF0r.v that are model constants: kept (smcmp.py --model)
+0x409000 StackMalloc4Tbl.v:37 FS_FROFF of class 4, the fake-frame area offset (alreloc a5c53bb2bed4's symbol rule moves it to theDepot + 0x2825e8 of the target: AMBIGUOUS-MODEL-CONSTANT)
+4231168 0x409000 in decimal (StackMalloc4Tbl.v:351, :360; StackMalloc4.v:239, :244; alreloc reports :351 UNMAPPED)
+66112 StackMalloc4.v:244: 4231168 / 64 (model arithmetic; UNMAPPED)
+1441792 StackMalloc4.v:277, :279: (kFakeStackSize - kFakeFramesOff) / 8 (model constant; :279 UNMAPPED)
+0x109000 AF0r.v:36 FS_FROFF of class 1 (the symbol rule moves it to internal_alloc_placeholder + 0x632c0 of the target: AMBIGUOUS-MODEL-CONSTANT)
+1085440 0x109000 in decimal (AF0r.v:355, :364; :355 UNMAPPED)

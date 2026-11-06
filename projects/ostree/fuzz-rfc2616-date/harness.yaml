@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ostree
 harness: fuzz-rfc2616-date
-rocq: OssFuzzTheorems.ostree.fuzz_rfc2616_date
+rocq: OSSVerify.ostree.fuzz_rfc2616_date
 origin: oss-fuzz
 summary: Parses the input with _ostree_parse_rfc2616_date_time and calls the GDateTime year/month/day/hour/minute/second
   getters, discarding the values; nothing is compared (no format->parse roundtrip, no range check).

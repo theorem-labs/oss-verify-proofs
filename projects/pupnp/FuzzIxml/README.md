@@ -13,14 +13,20 @@ writes the input (10..5120 bytes) to /tmp/libfuzzer.<pid>, ixmlLoadDocumentEx pa
 ## What the harness checks
 - if a document parsed, ixmlPrintDocument must return a non-empty string, else CheckXML returns 1 (and LLVMFuzzerTestOneInput returns it); trivially true because ixmlPrintDocument always emits the <?xml version="1.0"?> prolog (ixml/src/ixml.c:404), so only an allocation failure could make it NULL ([lines 23-27](source/FuzzIxml.c#L23-L27)): returns only; not confirmed in the binary.
 
+The harness turns some inputs away by returning a value other than 0 or -1, which the driver reports as status 78, so its halts statements allow 78 as well:
+- An input shorter than 10 bytes or longer than 5120 is returned 1 without being parsed ([lines 41-43](source/FuzzIxml.c#L41-L43)).
+- An input ixmlLoadDocumentEx does not parse is returned its nonzero IXML error code ([lines 18-21](source/FuzzIxml.c#L18-L21)).
+
+The status does not say which line returned, so a failure of a check above that reports it by returning (FuzzIxml.c:23-27) also exits with status 78, and these statements allow it.
+
 ## Statements ([Statements.v](Statements.v), [Characterise.v](Characterise.v), [Distribution.v](Distribution.v))
 
 | statement | in one line | status |
 |---|---|---|
-| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
-| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
-| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
-| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
+| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0, 2 or 78 | open |
+| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0, 2 or 78 | open |
+| `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0, 2 or 78 | open |
+| `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0, 2 or 78 | open |
 | `plain_halts_may_fail` | with no memory premise, and even if any request is refused at any time: the plain build exits with any status | open |
 | `ubsan_halts_may_fail` | with no memory premise, and even if any request is refused at any time: the UBSan build exits with any status | open |
 | `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires | open |

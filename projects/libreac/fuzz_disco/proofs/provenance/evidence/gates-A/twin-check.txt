@@ -1,0 +1,44 @@
+== fuzz_disco.asan
+pin  sha256 5e39150dd8104df969eb360f9cc29c4f92fe12326afd23783a679e4fb4809f46
+twin sha256 b8aac6eee6a62fef29b9e9a7df6154c2cda9a8f0252cbae45ad85bcc91135b6e
+PT_LOAD 1 vaddr 0x10000 filesz 0x1feac memsz 0x1feac flags 4 DIFFERENT
+PT_LOAD 2 vaddr 0x30eac filesz 0x6dffc memsz 0x6dffc flags 5 byte-equal
+PT_LOAD 3 vaddr 0x9fea8 filesz 0x1360 memsz 0x2158 flags 6 byte-equal
+PT_LOAD 4 vaddr 0xa2208 filesz 0x37f8 memsz 0x55b728 flags 6 byte-equal
+image top (max vaddr+memsz) 0x5fd930
+twin symtab has _start: yes
+PT_LOAD 2..4 twin = pin: yes
+rc=0
+== fuzz_disco.asan-ubsan
+pin  sha256 cee6f04ad3d4928e242405689ae058bb9e8b6533000c90bde984a2f0d5ff5146
+twin sha256 ead714913acd1e81835e08e021456cebcb35c09af2f87f4e7e2b6891f1b92489
+PT_LOAD 1 vaddr 0x10000 filesz 0x1ff24 memsz 0x1ff24 flags 4 DIFFERENT
+PT_LOAD 2 vaddr 0x30f24 filesz 0x6e324 memsz 0x6e324 flags 5 byte-equal
+PT_LOAD 3 vaddr 0xa0248 filesz 0x1360 memsz 0x1db8 flags 6 byte-equal
+PT_LOAD 4 vaddr 0xa25a8 filesz 0x37f8 memsz 0x55b748 flags 6 byte-equal
+image top (max vaddr+memsz) 0x5fdcf0
+twin symtab has _start: yes
+PT_LOAD 2..4 twin = pin: yes
+rc=0
+== fuzz_disco.plain
+pin  sha256 04988e3ab31341965e44f0ca1bb0e5ed18fe6892e2c753df7a87bec197576f7c
+twin sha256 115e0dcb29bc5963917708dd1d76a7b38df31bb665938ae75fd6f583c9d3d9b7
+PT_LOAD 1 vaddr 0x10000 filesz 0x1c90 memsz 0x1c90 flags 4 DIFFERENT
+PT_LOAD 2 vaddr 0x12c90 filesz 0xc184 memsz 0xc184 flags 5 byte-equal
+PT_LOAD 3 vaddr 0x1fe18 filesz 0xe8 memsz 0x1e8 flags 6 byte-equal
+PT_LOAD 4 vaddr 0x20f00 filesz 0x20c memsz 0x30e38 flags 6 byte-equal
+image top (max vaddr+memsz) 0x51d38
+twin symtab has _start: yes
+PT_LOAD 2..4 twin = pin: yes
+rc=0
+== fuzz_disco.ubsan
+pin  sha256 56121de6ba4cff85e0fa262e9783f384e35fb8642d057f7a3a4290bcc245b22e
+twin sha256 e2a41feb2f469916be4d94d237ae7215c4b1166e54f6ebf8365eb77422dbb410
+PT_LOAD 1 vaddr 0x10000 filesz 0x1d40 memsz 0x1d40 flags 4 DIFFERENT
+PT_LOAD 2 vaddr 0x12d40 filesz 0xc890 memsz 0xc890 flags 5 byte-equal
+PT_LOAD 3 vaddr 0x205d0 filesz 0xe8 memsz 0xa30 flags 6 byte-equal
+PT_LOAD 4 vaddr 0x216b8 filesz 0x20c memsz 0x30e40 flags 6 byte-equal
+image top (max vaddr+memsz) 0x524f8
+twin symtab has _start: yes
+PT_LOAD 2..4 twin = pin: yes
+rc=0

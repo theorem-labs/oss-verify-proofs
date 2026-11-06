@@ -1,0 +1,269 @@
+schema: oss-fuzz-theorems/harness/1
+project: libdiginet
+harness: fuzz_codec
+rocq: OSSVerify.libdiginet.fuzz_codec
+origin: upstream
+summary: Reads the input as up to 256 operations, each calling one of the library's control encoders (fader, button, touch,
+  V-Pot, jog, ring, meter, LEDs, scribble strip, counter, sysex) or text and display helpers with arguments taken from the
+  input, for no desk, a Control|24 or a ProControl. Each result is compared with the bytes and ranges the protocol documentation
+  and the library's header give, worked out by the harness itself. Inputs of 64 MiB or more are ignored.
+entry: LLVMFuzzerTestOneInput
+source:
+  files:
+  - source/fuzz_codec.c
+  - source/fuzz.h
+  - source/spec.h
+  from:
+    repository: https://github.com/FreeMixer/libdiginet
+    commit: 835f336ccb7abac683681c5791a5715041c71e32
+    path: fuzz/fuzz_codec.c
+  modified: false
+  licence: GPL-3.0-or-later
+library:
+  repository: https://github.com/FreeMixer/libdiginet
+  commit: 835f336ccb7abac683681c5791a5715041c71e32
+  version: 0.1.1
+  licence: GPL-3.0-or-later
+modifications:
+- 'Linked against libdiginet at commit 835f336c: the frame, command cursor, controls and decoder sources and the session state
+  machine, built into one static library. The packet socket and descriptor io are not built; the library''s own libFuzzer
+  build uses the same sources.'
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on
+  its input.
+- A small driver reads the input file, calls the fuzz target one to four times and prints each return value.
+builds:
+  plain:
+    file: fuzz_codec.plain
+    bytes: 56336
+    sha256: 742003c552f92fe3c5c43c1fe8e485b75f2f454bfb1784c0d4f25058c976622d
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  ubsan:
+    file: fuzz_codec.ubsan
+    bytes: 57496
+    sha256: 66f0cba3fa118ae7bc394f5ebcfc2d9e7fef45c76150cfccdcf7fe84cad9fce4
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+  asan:
+    file: fuzz_codec.asan
+    bytes: 590808
+    sha256: 7d470194ffdbde8b30a9810840f8e81d620ba1c555d510c475daeff37548a422
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+  asan-ubsan:
+    file: fuzz_codec.asan-ubsan
+    bytes: 593144
+    sha256: 73109e32e77beff294d41ae6f16d607479ad1884485781b322645e6f8afa99c3
+    segments:
+    - 1
+    - 1
+    - 1
+    - 1
+    uninstrumented:
+    - name: clang_rt.crtbegin.o
+      kind: compiler-rt
+      sha256: 0ba7749fe1a9cfc61b7b4dbb8616ce4cffad430bdd04ec029cd291d030925e72
+    - name: libclang_rt.asan.a
+      kind: sanitizer-runtime
+      sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+    - name: libclang_rt.builtins.a
+      kind: compiler-rt
+      sha256: 7e376dbc917599242272aa6e70e66b249ed063d78bd707e88e607e6ed375fa29
+    - name: crt1.o
+      kind: libc
+      sha256: 111e0dda16a02983fee66cc70e332b41860dccad42d8fb0990776814ef70930a
+    - name: libc.a
+      kind: libc
+      sha256: f19509197da87e158d2111bde83f0943296a4ee5506b024004f1d68c63c496e9
+    - name: libunwind.a
+      kind: cxx-runtime
+      sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
+licence: NOASSERTION
+checks:
+- kind: reference-oracle
+  strength: partial
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_codec.c:256-281
+  what: Each desk personality is the one the protocol documentation describes and is found by its announce name; three
+    other names ("CNTRL|2", "MAINUNITS" and the empty name) give no desk.
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_codec.c:283-291
+  what: The sysex encoder never succeeds for the system-family function 0x70.
+- kind: api-contract
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_codec.c:293-314
+  what: Each encoder succeeds exactly for the arguments its header comment allows, otherwise fails with the documented code
+    and leaves the output command untouched.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_codec.c:316-344
+  what: Each successful encoder writes the message the protocol documentation gives for the control, byte for byte, with a
+    key naming its address, and marks only scribble and counter writes as display writes.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_codec.c:431-452
+  what: The scribble text helper writes the documented characters and reports how many input bytes it used.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_codec.c:454-466
+  what: The seven-segment helper lights, for each character, the segments a seven-segment display shows for it.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_codec.c:468-490
+  what: The counter text helper places digits and dots as the header documents.
+- kind: reference-oracle
+  strength: full
+  stops_with: abort
+  live: unknown
+  where: source/fuzz_codec.c:492-519
+  what: The meter mask and segment count and the ring dot and fill helpers light exactly what they name.
+failure_handlers: none
+statements:
+  plain_halts:
+    kind: halts
+    builds:
+    - plain
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  plain_halts_may_fail:
+    kind: halts
+    builds:
+    - plain
+    reading: may-fail
+    exits: any
+    status: open
+    binds_checks: false
+  ubsan_halts:
+    kind: halts
+    builds:
+    - ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  ubsan_halts_may_fail:
+    kind: halts
+    builds:
+    - ubsan
+    reading: may-fail
+    exits: any
+    status: open
+    binds_checks: false
+  asan_halts:
+    kind: halts
+    builds:
+    - asan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_ubsan_halts:
+    kind: halts
+    builds:
+    - asan-ubsan
+    reading: budget
+    exits:
+    - 0
+    - 2
+    status: open
+    binds_checks: false
+  asan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open
+  ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - ubsan
+    reading: alloc-forced-only
+    budgets: standard
+    status: open
+  asan_ubsan_agrees:
+    kind: agreement
+    builds:
+    - plain
+    - asan-ubsan
+    reading: alloc-forced-only
+    budgets: asan
+    status: open

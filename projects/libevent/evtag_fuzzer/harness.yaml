@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libevent
 harness: evtag_fuzzer
-rocq: OssFuzzTheorems.libevent.evtag_fuzzer
+rocq: OSSVerify.libevent.evtag_fuzzer
 origin: oss-fuzz
 summary: evtag_peek/peek_length/payload_length and, by op bits, every evtag_unmarshal_* variant on the
   raw input; then four marshal->unmarshal pairs (raw tag, string, int, int64) plus marshal_buffer->unmarshal.

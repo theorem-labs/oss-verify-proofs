@@ -1,0 +1,9 @@
+ROW	image	function	addr	size	luis	insec	inload	memfed	memfed_out	luiconst	unmeasured	exposure
+# image img/cgif_file_fuzzer.asan-ubsan.debug sha256 ce511d541cda
+ROW	cgif_file_fuzzer.asan-ubsan.debug	__asan_memcpy	0x5160c	1180	0	0	0	0	0	0	0	0
+ROW	cgif_file_fuzzer.asan-ubsan.debug	__asan_region_is_poisoned	0x54188	836	0	0	0	0	0	0	0	0
+ROW	cgif_file_fuzzer.asan-ubsan.debug	memcpy	0x97508	1028	0	0	0	0	0	0	0	0
+ROW	cgif_file_fuzzer.asan-ubsan.debug	__asan_memset	0x51aa8	576	0	0	0	0	0	0	0	0
+ROW	cgif_file_fuzzer.asan-ubsan.debug	memset	0x9790c	248	1	0	0	0	0	0	0	0
+TOTAL	cgif_file_fuzzer.asan-ubsan.debug	functions 5	with-lui 1	with-exposure 0	luis 1	insec 0	inload 0	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0
+TOTAL	all	functions 5	with-lui 1	with-exposure 0	luis 1	insec 0	inload 0	memfed 0	memfed_out 0	luiconst 0	unmeasured 0	exposure 0

@@ -1,0 +1,220 @@
+# TryMemCpy, the one lui function of the B record that the A record does not compare: every word, both images
+# cmpkit 86da41d3ef68 (tools/cmpkit/86da41d3ef68 at the tools commit 98e50c029045): 9f61b4cee422 ambiscan.py, 1480ca2faea0 bytecmp-1480ca2faea0.py, a98d2b3e8857 closure_strict3.py, 4d70e90bc1fa drvcmp.py, 8b0ea3862423 jtcheck.py, 9ae61e4a0e01 luiscan.py, 926a9a88afcd paircl.py, e6883477399d repin_check.py, 65688e94214a strictcmp3.py
+# python 3.12.3, pyelftools 0.33, capstone 5.0.7; provenance/evidence/kit-rerun/cmpkit-86da41d3ef68/run.sh cf1234f61476, diffcheck.py 8264f205f593, window.py a2b1e03e11ea; twin proofs: kit-rerun/cmpkit-86da41d3ef68/twins.log
+## window.py
+$ python3 window.py kit _ZN11__sanitizer9TryMemCpyEPvPKvm img/unstripped/cgif_file_fuzzer.asan-ubsan img/unstripped/fuzz_decode.asan-ubsan
+### img/unstripped/cgif_file_fuzzer.asan-ubsan sha256 ce511d541cda: _ZN11__sanitizer9TryMemCpyEPvPKvm at 0x6dcc8, 400 bytes
+  +0x000  130101fb  addi sp, sp, -0x50
+  +0x004  23341104  sd ra, 0x48(sp)
+  +0x008  23308104  sd s0, 0x40(sp)
+  +0x00c  233c9102  sd s1, 0x38(sp)
+  +0x010  23382103  sd s2, 0x30(sp)
+  +0x014  23343103  sd s3, 0x28(sp)
+  +0x018  23304103  sd s4, 0x20(sp)
+  +0x01c  233c5101  sd s5, 0x18(sp)
+  +0x020  23386101  sd s6, 0x10(sp)
+  +0x024  630c060e  beqz a2, 0xf8
+  +0x028  13040600  mv s0, a2
+  +0x02c  93840500  mv s1, a1
+  +0x030  13090500  mv s2, a0
+  +0x034  37b5aaaa  lui a0, 0xaaaab
+  +0x038  930aa5aa  addi s5, a0, -0x556
+  +0x03c  23245101  sw s5, 8(sp)
+  +0x040  23265101  sw s5, 0xc(sp)
+  +0x044  13058100  addi a0, sp, 8
+  +0x048  efe0526d  jal 0x2eed4
+  +0x04c  63140510  bnez a0, 0x108
+  +0x050  03258100  lw a0, 8(sp)
+  +0x054  eff05ff0  jal -0xfc
+  +0x058  0325c100  lw a0, 0xc(sp)
+  +0x05c  eff0dfef  jal -0x104
+  +0x060  130b4000  addi s6, zero, 4
+  +0x064  6f008000  j 8
+  +0x068  6302040e  beqz s0, 0xe4
+  +0x06c  0325c100  lw a0, 0xc(sp)
+  +0x070  23225101  sw s5, 4(sp)
+  +0x074  93850400  mv a1, s1
+  +0x078  13060400  mv a2, s0
+  +0x07c  ef600fd1  jal -0x9af0
+  +0x080  93090500  mv s3, a0
+  +0x084  93054100  addi a1, sp, 4
+  +0x088  ef608fc2  jal -0x9bd8
+  +0x08c  63080500  beqz a0, 0x10
+  +0x090  03274100  lw a4, 4(sp)
+  +0x094  63146707  bne a4, s6, 0x68
+  +0x098  6ff01ffd  j -0x30
+  +0x09c  b3843401  add s1, s1, s3
+  +0x0a0  33043441  sub s0, s0, s3
+  +0x0a4  639a0900  bnez s3, 0x14
+  +0x0a8  6ff01ffc  j -0x40
+  +0x0ac  33094901  add s2, s2, s4
+  +0x0b0  b3894941  sub s3, s3, s4
+  +0x0b4  e38a09fa  beqz s3, -0x4c
+  +0x0b8  03258100  lw a0, 8(sp)
+  +0x0bc  93050900  mv a1, s2
+  +0x0c0  13860900  mv a2, s3
+  +0x0c4  ef600fc9  jal -0x9b70
+  +0x0c8  130a0500  mv s4, a0
+  +0x0cc  93054100  addi a1, sp, 4
+  +0x0d0  ef600fbe  jal -0x9c20
+  +0x0d4  e30c05fc  beqz a0, -0x28
+  +0x0d8  03274100  lw a4, 4(sp)
+  +0x0dc  e30c67fd  beq a4, s6, -0x28
+  +0x0e0  1785faff  auipc a0, 0xfffa8
+  +0x0e4  1746faff  auipc a2, 0xfffa4
+  +0x0e8  9305a016  addi a1, zero, 0x16a
+  +0x0ec  13054574  addi a0, a0, 0x744
+  +0x0f0  13062658  addi a2, a2, 0x582
+  +0x0f4  93064000  addi a3, zero, 4
+  +0x0f8  efd01f8e  jal -0x2720
+  +0x0fc  1305e000  addi a0, zero, 0xe
+  +0x100  631aa706  bne a4, a0, 0x74
+  +0x104  13040000  mv s0, zero
+  +0x108  03258100  lw a0, 8(sp)
+  +0x10c  ef608fc1  jal -0x9be8
+  +0x110  0325c100  lw a0, 0xc(sp)
+  +0x114  ef600fc1  jal -0x9bf0
+  +0x118  6f008000  j 8
+  +0x11c  13041000  addi s0, zero, 1
+  +0x120  13050400  mv a0, s0
+  +0x124  83308104  ld ra, 0x48(sp)
+  +0x128  03340104  ld s0, 0x40(sp)
+  +0x12c  83348103  ld s1, 0x38(sp)
+  +0x130  03390103  ld s2, 0x30(sp)
+  +0x134  83398102  ld s3, 0x28(sp)
+  +0x138  033a0102  ld s4, 0x20(sp)
+  +0x13c  833a8101  ld s5, 0x18(sp)
+  +0x140  033b0101  ld s6, 0x10(sp)
+  +0x144  13010105  addi sp, sp, 0x50
+  +0x148  67800000  ret 
+  +0x14c  13041000  addi s0, zero, 1
+  +0x150  6ff09ffb  j -0x48
+  +0x154  13070500  mv a4, a0
+  +0x158  1785faff  auipc a0, 0xfffa8
+  +0x15c  97b5faff  auipc a1, 0xfffab
+  +0x160  1305c56c  addi a0, a0, 0x6cc
+  +0x164  1386d5e8  addi a2, a1, -0x173
+  +0x168  9305e014  addi a1, zero, 0x14e
+  +0x16c  93060000  mv a3, zero
+  +0x170  efd09f86  jal -0x2798
+  +0x174  1785faff  auipc a0, 0xfffa8
+  +0x178  1766faff  auipc a2, 0xfffa6
+  +0x17c  93051016  addi a1, zero, 0x161
+  +0x180  1305056b  addi a0, a0, 0x6b0
+  +0x184  1306e678  addi a2, a2, 0x78e
+  +0x188  9306e000  addi a3, zero, 0xe
+  +0x18c  efd0df84  jal -0x27b4
+### img/unstripped/fuzz_decode.asan-ubsan sha256 6744989bb2e6: _ZN11__sanitizer9TryMemCpyEPvPKvm at 0x6d8b8, 400 bytes
+  +0x000  130101fb  addi sp, sp, -0x50
+  +0x004  23341104  sd ra, 0x48(sp)
+  +0x008  23308104  sd s0, 0x40(sp)
+  +0x00c  233c9102  sd s1, 0x38(sp)
+  +0x010  23382103  sd s2, 0x30(sp)
+  +0x014  23343103  sd s3, 0x28(sp)
+  +0x018  23304103  sd s4, 0x20(sp)
+  +0x01c  233c5101  sd s5, 0x18(sp)
+  +0x020  23386101  sd s6, 0x10(sp)
+  +0x024  630c060e  beqz a2, 0xf8
+  +0x028  13040600  mv s0, a2
+  +0x02c  93840500  mv s1, a1
+  +0x030  13090500  mv s2, a0
+  +0x034  37b5aaaa  lui a0, 0xaaaab
+  +0x038  930aa5aa  addi s5, a0, -0x556
+  +0x03c  23245101  sw s5, 8(sp)
+  +0x040  23265101  sw s5, 0xc(sp)
+  +0x044  13058100  addi a0, sp, 8
+  +0x048  efa0423f  jal 0x2a3f4
+  +0x04c  63140510  bnez a0, 0x108
+  +0x050  03258100  lw a0, 8(sp)
+  +0x054  eff05ff0  jal -0xfc
+  +0x058  0325c100  lw a0, 0xc(sp)
+  +0x05c  eff0dfef  jal -0x104
+  +0x060  130b4000  addi s6, zero, 4
+  +0x064  6f008000  j 8
+  +0x068  6302040e  beqz s0, 0xe4
+  +0x06c  0325c100  lw a0, 0xc(sp)
+  +0x070  23225101  sw s5, 4(sp)
+  +0x074  93850400  mv a1, s1
+  +0x078  13060400  mv a2, s0
+  +0x07c  ef600fd1  jal -0x9af0
+  +0x080  93090500  mv s3, a0
+  +0x084  93054100  addi a1, sp, 4
+  +0x088  ef608fc2  jal -0x9bd8
+  +0x08c  63080500  beqz a0, 0x10
+  +0x090  03274100  lw a4, 4(sp)
+  +0x094  63146707  bne a4, s6, 0x68
+  +0x098  6ff01ffd  j -0x30
+  +0x09c  b3843401  add s1, s1, s3
+  +0x0a0  33043441  sub s0, s0, s3
+  +0x0a4  639a0900  bnez s3, 0x14
+  +0x0a8  6ff01ffc  j -0x40
+  +0x0ac  33094901  add s2, s2, s4
+  +0x0b0  b3894941  sub s3, s3, s4
+  +0x0b4  e38a09fa  beqz s3, -0x4c
+  +0x0b8  03258100  lw a0, 8(sp)
+  +0x0bc  93050900  mv a1, s2
+  +0x0c0  13860900  mv a2, s3
+  +0x0c4  ef600fc9  jal -0x9b70
+  +0x0c8  130a0500  mv s4, a0
+  +0x0cc  93054100  addi a1, sp, 4
+  +0x0d0  ef600fbe  jal -0x9c20
+  +0x0d4  e30c05fc  beqz a0, -0x28
+  +0x0d8  03274100  lw a4, 4(sp)
+  +0x0dc  e30c67fd  beq a4, s6, -0x28
+  +0x0e0  1795faff  auipc a0, 0xfffa9
+  +0x0e4  1756faff  auipc a2, 0xfffa5
+  +0x0e8  9305a016  addi a1, zero, 0x16a
+  +0x0ec  1305f5b6  addi a0, a0, -0x491
+  +0x0f0  13061694  addi a2, a2, -0x6bf
+  +0x0f4  93064000  addi a3, zero, 4
+  +0x0f8  efd01f8e  jal -0x2720
+  +0x0fc  1305e000  addi a0, zero, 0xe
+  +0x100  631aa706  bne a4, a0, 0x74
+  +0x104  13040000  mv s0, zero
+  +0x108  03258100  lw a0, 8(sp)
+  +0x10c  ef608fc1  jal -0x9be8
+  +0x110  0325c100  lw a0, 0xc(sp)
+  +0x114  ef600fc1  jal -0x9bf0
+  +0x118  6f008000  j 8
+  +0x11c  13041000  addi s0, zero, 1
+  +0x120  13050400  mv a0, s0
+  +0x124  83308104  ld ra, 0x48(sp)
+  +0x128  03340104  ld s0, 0x40(sp)
+  +0x12c  83348103  ld s1, 0x38(sp)
+  +0x130  03390103  ld s2, 0x30(sp)
+  +0x134  83398102  ld s3, 0x28(sp)
+  +0x138  033a0102  ld s4, 0x20(sp)
+  +0x13c  833a8101  ld s5, 0x18(sp)
+  +0x140  033b0101  ld s6, 0x10(sp)
+  +0x144  13010105  addi sp, sp, 0x50
+  +0x148  67800000  ret 
+  +0x14c  13041000  addi s0, zero, 1
+  +0x150  6ff09ffb  j -0x48
+  +0x154  13070500  mv a4, a0
+  +0x158  1795faff  auipc a0, 0xfffa9
+  +0x15c  97b5faff  auipc a1, 0xfffab
+  +0x160  130575af  addi a0, a0, -0x509
+  +0x164  13868529  addi a2, a1, 0x298
+  +0x168  9305e014  addi a1, zero, 0x14e
+  +0x16c  93060000  mv a3, zero
+  +0x170  efd09f86  jal -0x2798
+  +0x174  1795faff  auipc a0, 0xfffa9
+  +0x178  1776faff  auipc a2, 0xfffa7
+  +0x17c  93051016  addi a1, zero, 0x161
+  +0x180  1305b5ad  addi a0, a0, -0x525
+  +0x184  1306b6ba  addi a2, a2, -0x455
+  +0x188  9306e000  addi a3, zero, 0xe
+  +0x18c  efd0df84  jal -0x27b4
+### word compare over 100 offsets: 88 same, 12 differ
+  +0x048 differ efe0526d / efa0423f
+  +0x0e0 differ 1785faff / 1795faff
+  +0x0e4 differ 1746faff / 1756faff
+  +0x0ec differ 13054574 / 1305f5b6
+  +0x0f0 differ 13062658 / 13061694
+  +0x158 differ 1785faff / 1795faff
+  +0x160 differ 1305c56c / 130575af
+  +0x164 differ 1386d5e8 / 13868529
+  +0x174 differ 1785faff / 1795faff
+  +0x178 differ 1766faff / 1776faff
+  +0x180 differ 1305056b / 1305b5ad
+  +0x184 differ 1306e678 / 1306b6ba

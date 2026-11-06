@@ -1,0 +1,88 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-10: stated at asan_malloc's entry on the premises of lib/A/Rt/RtDDefs.v amalloc_inner_realizes (ipre, lib/A/Rt/RtDMallocI.v). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFij.v, with its module paths changed, names TfibSyms -> CmdBSyms and its addresses moved to plugin-hostd/fuzz_command's ASan build; Htr is tr_admit (as_universe B) S tr instead of In tr (as_universe B). *)
+(* Relocated from proofs/plugin-hostd/fuzz_command/lib/A/AFij.v at 501c0d516c69 by port_core e0e94a04094b onto reac-pw/fuzz_segconf (asan). *)
+(* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/AFij.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s YO0d.
+
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP0g YP01 YP0i YP0j.
+
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YN3v YI04.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YK04 YA0i.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YA0n YA0o YA0p YA0q.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YG00 YG0a YG01 YG04 YG03.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YG0f.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YG0v.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YG0n YG0d YG0s YG0q.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YB1v YB1q YF0l YF0m YF0x YFl0.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YO0a.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YB1w YE3d YFi3 YFik YFil YFim YFin.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YA00.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Rt Require Import RtDDefs RtDMallocI.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YM05.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Open Scope Z_scope.
+Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Section b.
+Variable B : asyms.
+Hypothesis TS : SegBSyms B.
+Hypothesis D1 : tfib_depot_spec B.
+Variables (ly : alayout) (S : astate) (W : world tfibsegs) (regsI : bvmap 5 word) (mem0 : word -> option byte) (md0 : Model).
+Variables (n p : Z) (ch : list Z).
+(* the premises of lib/A/Rt/RtDDefs.v amalloc_inner_realizes at asan_malloc's entry *)
+Hypothesis PRE : ipre B ly S W regsI mem0 md0 n p ch.
+Hypothesis Nrange : 0 <= n <= 64512.
+Hypothesis Htr : tr_admit (as_universe B) S ch.
+Hypothesis Hlive : blocks_bytes S + n <= LIVE_MAX.
+Lemma prim_fp : from_primary n = true.
+Proof.
+clear - Nrange. unfold from_primary, needed_primary, rounded_size, round_up, rz_size, rz_log, kMaxSize. apply Z.leb_le.
+pose proof (Z.div_mod (Z.max n 8 + 8 - 1) 8 ltac:(lia)) as D. pose proof (Z.mod_pos_bound (Z.max n 8 + 8 - 1) 8 ltac:(lia)) as M.
+destruct (Z.leb_spec n 48); [change (Z.shiftl 16 0) with 16; lia|].
+destruct (Z.leb_spec n 96); [change (Z.shiftl 16 1) with 32; lia|].
+destruct (Z.leb_spec n 448); [change (Z.shiftl 16 2) with 64; lia|].
+destruct (Z.leb_spec n 3968); [change (Z.shiftl 16 3) with 128; lia|].
+destruct (Z.leb_spec n 16128); [change (Z.shiftl 16 4) with 256; lia|].
+destruct (Z.leb_spec n 32256); [change (Z.shiftl 16 5) with 512; lia|].
+destruct (Z.leb_spec n 64512); [change (Z.shiftl 16 6) with 1024; lia|]. lia.
+Qed.
+Section c.
+Variables (l : list Z) (off : Z).
+Hypothesis Hinited : st_cache_inited S = true.
+Hypothesis Hcache : pc_chunks (cache S (chunk_class n)) = l ++ [off].
+Theorem malloc_hit :
+amreal tfibsegs (malloc n ch S) W (cfg_at tfibsegs PC_asan_malloc regsI mem0 md0) (malloc_leaf_w tfibsegs B MALLOC_ASAN_STK ly S W regsI mem0 md0 n).
+Proof.
+destruct (Z_lt_le_dec 48 n) as [Hbig|Hsmall].
+- exact (malloc_hitg B TS D1 ly S W regsI mem0 md0 n p ch PRE ltac:(lia) Htr Hlive l off Hinited Hcache).
+- exact (malloc_hitk B TS D1 ly S W regsI mem0 md0 n p ch PRE ltac:(lia) Htr Hlive l off Hinited Hcache).
+Qed.
+End c.
+Theorem malloc_miss : pc_chunks (cache S (chunk_class n)) = [] ->
+amreal tfibsegs (malloc n ch S) W (cfg_at tfibsegs PC_asan_malloc regsI mem0 md0) (malloc_leaf_w tfibsegs B MALLOC_ASAN_STK ly S W regsI mem0 md0 n).
+Proof.
+intros Hmiss. destruct (Z_lt_le_dec 48 n) as [Hbig|Hsmall].
+- exact (malloc_missg B TS D1 ly S W regsI mem0 md0 n p ch PRE ltac:(lia) Htr Hlive Hmiss).
+- exact (malloc_missk B TS D1 ly S W regsI mem0 md0 n p ch PRE ltac:(lia) Htr Hlive Hmiss).
+Qed.
+Theorem malloc_prim :
+amreal tfibsegs (malloc n ch S) W (cfg_at tfibsegs PC_asan_malloc regsI mem0 md0) (malloc_leaf_w tfibsegs B MALLOC_ASAN_STK ly S W regsI mem0 md0 n).
+Proof.
+destruct (pc_chunks (cache S (chunk_class n))) as [|x t] eqn:El; [exact (malloc_miss El)|].
+assert (LX : exists l off, x :: t = l ++ [off]) by (exists (List.removelast (x :: t)), (List.last (x :: t) 0); apply List.app_removelast_last; discriminate).
+destruct LX as (l & off & LX). rewrite LX in El.
+pose proof (proj1 (proj1 PRE)) as HARm. pose proof (primary_geometry n ltac:(lia) prim_fp) as (Hcl & _).
+pose proof (wr_cache _ _ _ _ _ _ (wf_classes _ _ _ _ _ (am_wf _ _ _ _ HARm) (chunk_class n) ltac:(lia))) as WC.
+destruct (st_cache_inited S) eqn:CI; [exact (malloc_hit l off CI El)|].
+exfalso. rewrite WC in El. cbn in El. destruct l; discriminate El.
+Qed.
+End b.
+End a.

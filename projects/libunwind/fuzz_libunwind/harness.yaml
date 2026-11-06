@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libunwind
 harness: fuzz_libunwind
-rocq: OssFuzzTheorems.libunwind.fuzz_libunwind
+rocq: OSSVerify.libunwind.fuzz_libunwind
 origin: oss-fuzz
 summary: Input bytes (12..512) steer a mutual recursion (recurse1-4 via dispatch) that, at fuzz-chosen
   depths, unwinds the live stack with unw_getcontext/unw_init_local/unw_step and calls unw_get_proc_name,

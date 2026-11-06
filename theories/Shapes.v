@@ -1,4 +1,4 @@
-(** * OssFuzzTheorems.Core.Shapes: what every statement in this collection says
+(** * OSSVerify.Core.Shapes: what every statement in this collection says
 
     Every statement in oss-fuzz-theorems is one of the definitions below,
     applied to the memory images of specific binaries.  Each is written out
@@ -46,7 +46,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase MemImageType StackLayout State Run.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import
   Equivalence MustExit HaltsAllowed FinInput Classifier Measure.
-From OssFuzzTheorems.Core Require Import Images.
+From OSSVerify.Core Require Import Images.
 Import ListNotations.
 
 (** ** Parameters *)

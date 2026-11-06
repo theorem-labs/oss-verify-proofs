@@ -1,0 +1,70 @@
+diff --git a/proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v b/proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v
+index de15d65edd3d..23042cfdda16 100644
+--- a/proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v
++++ b/proofs/libreac/fuzz_boxreg/lib/Reusable/YH03.v
+@@ -27,15 +26,0 @@ Definition src0_A_LLVMFuzzerTestOneInput : Z := 0x12c6c.  Definition src0_E_LLVM
+-Definition src0_A_read_frameconfig : Z := 0x130b0.  Definition src0_E_read_frameconfig : Z := 0x13318.
+-Definition src0_A_cgif_newgif : Z := 0x13318.  Definition src0_E_cgif_newgif : Z := 0x134d0.
+-Definition src0_A_cgif_writecb : Z := 0x134d0.  Definition src0_E_cgif_writecb : Z := 0x13544.
+-Definition src0_A_freeCGIF : Z := 0x13544.  Definition src0_E_freeCGIF : Z := 0x1357c.
+-Definition src0_A_cgif_addframe : Z := 0x1357c.  Definition src0_E_cgif_addframe : Z := 0x138e8.
+-Definition src0_A_cmpPixel : Z := 0x138e8.  Definition src0_E_cmpPixel : Z := 0x1399c.
+-Definition src0_A_flushFrame : Z := 0x1399c.  Definition src0_E_flushFrame : Z := 0x14298.
+-Definition src0_A_freeFrame : Z := 0x14298.  Definition src0_E_freeFrame : Z := 0x142e0.
+-Definition src0_A_cgif_close : Z := 0x142e0.  Definition src0_E_cgif_close : Z := 0x143a8.
+-Definition src0_A_cgif_raw_newgif : Z := 0x143a8.  Definition src0_E_cgif_raw_newgif : Z := 0x1465c.
+-Definition src0_A_cgif_raw_addframe : Z := 0x1465c.  Definition src0_E_cgif_raw_addframe : Z := 0x14ad8.
+-Definition src0_A_LZW_GenerateStream : Z := 0x14ad8.  Definition src0_E_LZW_GenerateStream : Z := 0x15078.
+-Definition src0_A_cgif_raw_close : Z := 0x15078.  Definition src0_E_cgif_raw_close : Z := 0x150d8.
+-Definition src0_A_create_byte_list : Z := 0x150d8.  Definition src0_E_create_byte_list : Z := 0x15254.
+-Definition src0_A_create_byte_list_block : Z := 0x15254.  Definition src0_E_create_byte_list_block : Z := 0x13bdc.
+@@ -77,2 +61,0 @@ Definition src0_A_munmap : Z := 0x1612c.  Definition src0_E_munmap : Z := 0x1617
+-Definition src0_A_unlist_locked_file : Z := 0x16184.  Definition src0_E_unlist_locked_file : Z := 0x16188.
+-Definition src0_A_fclose : Z := 0x16188.  Definition src0_E_fclose : Z := 0x16248.
+@@ -82,3 +64,0 @@ Definition src0_A_unlockfile : Z := 0x164b4.  Definition src0_E_unlockfile : Z :
+-Definition src0_A_fopen : Z := 0x16520.  Definition src0_E_fopen : Z := 0x165fc.
+-Definition src0_A_fmodeflags : Z := 0x165fc.  Definition src0_E_fmodeflags : Z := 0x166b0.
+-Definition src0_A_fdopen : Z := 0x166b0.  Definition src0_E_fdopen : Z := 0x16888.
+@@ -95 +74,0 @@ Definition src0_A_ofl_unlock : Z := 0x16990.  Definition src0_E_ofl_unlock : Z :
+-Definition src0_A_ofl_add : Z := 0x17050.  Definition src0_E_ofl_add : Z := 0x16bc4.
+@@ -128,3 +106,0 @@ Definition src0_A_memset : Z := 0x1bcd0.  Definition src0_E_memset : Z := 0x1bdc
+-Definition src0_A_strchr : Z := 0x1d6b4.  Definition src0_E_strchr : Z := 0x1d6f0.
+-Definition src0_A_strchrnul : Z := 0x1d6f0.  Definition src0_E_strchrnul : Z := 0x1d7d0.
+-Definition src0_A_strlen : Z := 0x1d7d0.  Definition src0_E_strlen : Z := 0x1be28.
+@@ -142 +117,0 @@ Definition src0_A_read : Z := 0x1c208.  Definition src0_E_read : Z := 0x1c23c.
+-Definition src0_A_unlink : Z := 0x1dd40.  Definition src0_E_unlink : Z := 0x1dd70.
+diff --git a/proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v b/proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v
+index 4df7fe40650d..a94ffeb24817 100644
+--- a/proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v
++++ b/proofs/libreac/fuzz_boxreg/lib/U/Reusable/YH03.v
+@@ -27,15 +26,0 @@ Definition src0_A_LLVMFuzzerTestOneInput : Z := 0x12cc4.  Definition src0_E_LLVM
+-Definition src0_A_read_frameconfig : Z := 0x130b0.  Definition src0_E_read_frameconfig : Z := 0x13318.
+-Definition src0_A_cgif_newgif : Z := 0x13318.  Definition src0_E_cgif_newgif : Z := 0x134d0.
+-Definition src0_A_cgif_writecb : Z := 0x134d0.  Definition src0_E_cgif_writecb : Z := 0x13544.
+-Definition src0_A_freeCGIF : Z := 0x13544.  Definition src0_E_freeCGIF : Z := 0x1357c.
+-Definition src0_A_cgif_addframe : Z := 0x1357c.  Definition src0_E_cgif_addframe : Z := 0x138e8.
+-Definition src0_A_cmpPixel : Z := 0x138e8.  Definition src0_E_cmpPixel : Z := 0x1399c.
+-Definition src0_A_flushFrame : Z := 0x1399c.  Definition src0_E_flushFrame : Z := 0x14298.
+-Definition src0_A_freeFrame : Z := 0x14298.  Definition src0_E_freeFrame : Z := 0x142e0.
+-Definition src0_A_cgif_close : Z := 0x142e0.  Definition src0_E_cgif_close : Z := 0x143a8.
+-Definition src0_A_cgif_raw_newgif : Z := 0x143a8.  Definition src0_E_cgif_raw_newgif : Z := 0x1465c.
+-Definition src0_A_cgif_raw_addframe : Z := 0x1465c.  Definition src0_E_cgif_raw_addframe : Z := 0x14ad8.
+-Definition src0_A_LZW_GenerateStream : Z := 0x14ad8.  Definition src0_E_LZW_GenerateStream : Z := 0x15078.
+-Definition src0_A_cgif_raw_close : Z := 0x15078.  Definition src0_E_cgif_raw_close : Z := 0x150d8.
+-Definition src0_A_create_byte_list : Z := 0x150d8.  Definition src0_E_create_byte_list : Z := 0x15254.
+-Definition src0_A_create_byte_list_block : Z := 0x15254.  Definition src0_E_create_byte_list_block : Z := 0x13fdc.
+@@ -77,2 +61,0 @@ Definition src0_A_munmap : Z := 0x1652c.  Definition src0_E_munmap : Z := 0x1657
+-Definition src0_A_unlist_locked_file : Z := 0x16584.  Definition src0_E_unlist_locked_file : Z := 0x16588.
+-Definition src0_A_fclose : Z := 0x16588.  Definition src0_E_fclose : Z := 0x16648.
+@@ -82,3 +64,0 @@ Definition src0_A_unlockfile : Z := 0x168b4.  Definition src0_E_unlockfile : Z :
+-Definition src0_A_fopen : Z := 0x16920.  Definition src0_E_fopen : Z := 0x169fc.
+-Definition src0_A_fmodeflags : Z := 0x169fc.  Definition src0_E_fmodeflags : Z := 0x16ab0.
+-Definition src0_A_fdopen : Z := 0x16ab0.  Definition src0_E_fdopen : Z := 0x16c88.
+@@ -95 +74,0 @@ Definition src0_A_ofl_unlock : Z := 0x16d90.  Definition src0_E_ofl_unlock : Z :
+-Definition src0_A_ofl_add : Z := 0x17450.  Definition src0_E_ofl_add : Z := 0x16fc4.
+@@ -128,3 +106,0 @@ Definition src0_A_memset : Z := 0x1c0d0.  Definition src0_E_memset : Z := 0x1c1c
+-Definition src0_A_strchr : Z := 0x1d6b4.  Definition src0_E_strchr : Z := 0x1d6f0.
+-Definition src0_A_strchrnul : Z := 0x1d6f0.  Definition src0_E_strchrnul : Z := 0x1d7d0.
+-Definition src0_A_strlen : Z := 0x1d7d0.  Definition src0_E_strlen : Z := 0x1c228.
+@@ -142 +117,0 @@ Definition src0_A_read : Z := 0x1c608.  Definition src0_E_read : Z := 0x1c63c.
+-Definition src0_A_unlink : Z := 0x1dd40.  Definition src0_E_unlink : Z := 0x1dd70.

@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: openssl
 harness: x509v3
-rocq: OssFuzzTheorems.openssl.x509v3
+rocq: OSSVerify.openssl.x509v3
 origin: upstream
 summary: NCONF_load_bio of the input (<= 8 KiB) and X509V3_EXT_add_nconf of section "default" into two
   fresh certs; results ignored.

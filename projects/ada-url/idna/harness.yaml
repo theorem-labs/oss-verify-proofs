@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: ada-url
 harness: idna
-rocq: OssFuzzTheorems.ada_url.idna
+rocq: OSSVerify.ada_url.idna
 origin: upstream
 summary: to_unicode(to_ascii(x)), UTF-8<->UTF-32 transcoding round trip, label validation, mapping and
   normalisation are computed but never compared (the source comment says equality is deliberately not

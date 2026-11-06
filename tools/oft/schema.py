@@ -45,8 +45,11 @@ SCALARS = {
     # recipe (a GitHub release holds at most 1,000 files)
     "release-tag": r"v[0-9]{4}\.[0-9]{1,2}\.[0-9]+(-rc\.[0-9]+)?(-src)?",
     # A project asset may instead live on its internal findings-<project>
-    # release while a finding holds that project back.
-    "asset-release-tag": r"v[0-9]{4}\.[0-9]{1,2}\.[0-9]+(-rc\.[0-9]+)?(-src)?|findings-[a-z0-9][a-z0-9_-]*",
+    # release while a finding holds that project back, or on an enrollment
+    # commit's own drafts, enroll-<project>-<12 hex of the port commit> and
+    # the same with -src (tools/enroll/drafts.py; rules.py: its own).
+    "asset-release-tag": r"v[0-9]{4}\.[0-9]{1,2}\.[0-9]+(-rc\.[0-9]+)?(-src)?|findings-[a-z0-9][a-z0-9_-]*"
+                         r"|enroll-[a-z0-9][a-z0-9_-]*-[0-9a-f]{12}(-src)?",
     "oss-verify-repository": "|".join(re.escape(r) for r in (OSS_VERIFY_REPOSITORY, INTERNAL_PORT_REPOSITORY)),
     "build-name": "|".join(re.escape(b) for b in BUILDS),
     "archive-name": r"[A-Za-z0-9._+-]+\.a",

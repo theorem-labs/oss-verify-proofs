@@ -12,8 +12,8 @@
     All three are true: both programs exit with status 0 from every entry, on
     every input, whatever the environment does, and write nothing. *)
 
-From OssFuzzTheorems.Core Require Import Shapes.
-From OssFuzzTheorems.Tests.toy.exit0 Require Images.
+From OSSVerify.Core Require Import Shapes.
+From OSSVerify.Tests.toy.exit0 Require Images.
 
 (** On every input on which [plain] is never refused memory for exceeding
     16 GiB, and when the environment refuses nothing it is not forced to,

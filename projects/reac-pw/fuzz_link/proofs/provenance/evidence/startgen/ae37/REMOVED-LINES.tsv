@@ -1,0 +1,37 @@
+file	line	text
+lib/A/AE37.v	4	(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE37.v (origin/ossv/recipes
+lib/A/AE37.v	5	   c8557374ad2e, 246 lines), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to
+lib/A/AE37.v	6	   libreac/fuzz_pcap's ASan build by tool-snap/port_core.py (de2176d86061; work (internal path), symbol gate
+lib/A/AE37.v	7	   39e67a7eb166 PASS).  This is the return realizer of the second atexit handler of the exit walk, X2_PC.
+lib/A/AE37.v	8	   STATEMENT PC (re-derived from the unstripped twin x/unstripped/fuzz_pcap/fuzz_pcap.asan .symtab, not from the
+lib/A/AE37.v	9	   donor's text): X2_PC = 0x8864c = asan.module_dtor+0 (size 48); it is stated in lib/A/AE23.v:33, and this file only
+lib/A/AE37.v	10	   uses it.  The walk leaves no other pc of its own: it runs tbl_x213 (lib/A/AE3m.v) from X2_PC and stops at
+lib/A/AE37.v	11	   SR_jalr (SOff 1 0), the return to the caller's ra.
+lib/A/AE37.v	12	   TAKEN FROM (never hand-written from the donor's text):
+lib/A/AE37.v	13	   - the four asan_globals descriptors of x2_rodata's (0xa62a0, 256) region: lib/A/AF0m.v:187-218 (M-DESC rows,
+lib/A/AE37.v	14	     pca-2's generator); the section is 0xa62a0..0x9e200 by lib/A/AB1w.v's tfib_asan_globals_lo/hi.  cgif has THREE
+lib/A/AE37.v	15	     descriptors (donor AE37.v:34-39, 0xab3f0, 192 bytes); fuzz_pcap has FOUR (g0 .str "<fuzz-input>" 0x20d00+0xd,
+lib/A/AE37.v	16	     g1 .str "rb" 0x20d40+3, g2 g_file_len .bss 0x5d3f40+8, g3 g_file .bss 0x5d3f60+8), so the region is 256 bytes
+lib/A/AE37.v	17	     and carries one descriptor block more; the per-descriptor offsets read are the donor's (0, 8, 16, 32, 40, 48,
+lib/A/AE37.v	18	     56 -- the name pointer at 24 is not read).
+lib/A/AE37.v	19	   - the (globals_lo, globals_hi) pair the dtor loads: AF0m.v:113-114 z8 0xa2648 = 0xa62a0, z8 0xa2650 = 0x9e200
+lib/A/AE37.v	20	     (donor AE37.v:32 is 0xa77a8, which fuzz_pcap does not map; MEASURED: 0xa2648 is the only 16 bytes in
+lib/A/AE37.v	21	     [0xa1000, 0xa7b80) holding that pair).
+lib/A/AE37.v	22	   - every shadow byte of x2_shw / x2_shw_const: AF0m.v:300-345 (Tfib_const_shadow) and AF0m.v:348
+lib/A/AE37.v	23	     (Tfib_zero_shadow).  The windows are the four globals' shadow plus the descriptor array's:
+lib/A/AE37.v	24	     0x7fffc1a0..a4, 0x7fffc1a8..ac, 0x800b27e8..ec, 0x800b27ec..f0 and 0x8000bc20..0x8000bc40 (0x20 granules, the
+lib/A/AE37.v	25	     donor's array is 0xc0 long = 0x18), exactly lib/A/AE23.v:35-42's XW2.  Three of their first bytes
+lib/A/AE37.v	26	     (0x7fffc1a0, 0x800b27e8, 0x800b27ec) are ZERO shadow, not constant cells, so they come from Tfib_zero_shadow
+lib/A/AE37.v	27	     rows 0, 3 and 4 -- the donor has one such byte, fuzz_pcap has three (its g2/g3 are 8-byte .bss globals with no
+lib/A/AE37.v	28	     partial granule).
+lib/A/AE37.v	29	   - cellr 0x9e200 (___asan_globals_registered = 1) AF0m.v:115, cellr 0xa7cf0 (__asan mu_for_globals = 0)
+lib/A/AE37.v	30	     AF0m.v:220, which lib/A/AD1j.v:80 passes in as MU0. *)
+lib/A/AE37.v	178	(* The donor has ONE zero-shadow byte in its windows (AE37.v:148-157, the first granule of .str "<fuzz-input>");
+lib/A/AE37.v	179	   fuzz_pcap has THREE: the data granule of each of g0, g2 and g3.  Each comes from the Tfib_zero_shadow row
+lib/A/AE37.v	180	   (AF0m.v:348) that covers it: row 0 (0x10000, 0x20d08 - 0x10000) at index 8608, row 3
+lib/A/AE37.v	181	   (0x9e200, 0x5d3f48 - 0x9e200) at index 682920, row 4 (0x5d3f60, 0x5d3f68 - 0x5d3f60) at index 0. *)
+lib/A/AE23.v	38	(* the shadow __asan_unregister_globals writes, from fuzz_pcap's four descriptors at 0xa62a0:
+lib/A/AE23.v	39	   g0 0x20d00+0xd rz to 0x20d20 -> 0x7fffc1a0..0x7fffc1a4; g1 0x20d40+3 rz to 0x20d60 -> 0x7fffc1a8..0x7fffc1ac;
+lib/A/AE23.v	40	   g2 0x5d3f40+8 rz to 0x5d3f60 -> 0x800b27e8..0x800b27ec; g3 (g_file) 0x5d3f60+8 rz to 0x631300 ->
+lib/A/AE23.v	41	   0x800b27ec..0x800b27f0; and the descriptor array itself 0xa62a0..0x9e200 -> 0x8000bc20..0x8000bc40 (0x20
+lib/A/AE23.v	42	   shadow bytes; cgif's array is 0xc0 long = 0x18 shadow bytes). *)

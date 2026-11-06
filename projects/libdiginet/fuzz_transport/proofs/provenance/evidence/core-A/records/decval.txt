@@ -1,0 +1,126 @@
+# start-up layer: 21 not-relocated files, 19 of them in LIB, 0 staged
+# stage 1 (decval.py)
+relocated files: 492 (A 370, Reusable 122); 8655 numerals in [0x10000, 0x616001) (in D9's donor range [0x10000, 0x5f93b0): 8449)
+target top 0x6153d0 (page-up 0x616000, rw_lo 0xa5000); donor top 0x5f93b0 (page-up 0x5fa000, rw_lo 0x9e000)
+fetch/word pairs verified against the target image: 329, mismatches 0
+tfib_A_/tfib_E_ rows: {'tgt': 1166, 'interior': 8} donor rows: []
+classes: {'TARGET': 3258, 'OTHER': 4812, 'SHARED': 584, 'DONOR-STALE': 1}
+DONOR-STALE	Reusable/YG0f.v:34	0x100000	Definition kNodesBlockSize : Z := 0x100000.
+rc=0
+# stage 2 (decval_extra.py)
+identical .rodata prefix of the two images: [0x102e0, 0x10350)
+fetch rows: {'verified': 476}
+word rows: {'word: fetch pair verified': 85, 'word: its list istrncpy_words found once in the target .text, at 0x64b68': 9, 'word: unpaired run W_c9* (87 words) found once in the target .text, at 0x5224c': 38, 'word: its list imemcpy_words found once in the target .text, at 0x646c0': 4, 'word: its list imemset_words found once in the target .text, at 0x6473c': 3, 'word: its list memisz_words found once in the target .text, at 0x64c6c': 11, 'word: unpaired run PW* (8 words) found once in the target .text, at 0x374bc': 6}
+moved rows (value changed from the donor's): 6703
+  OTHER    NO TWIN    12
+  OTHER    bytes      235
+  OTHER    derived    30
+  OTHER    jumptable  6
+  OTHER    memory     4
+  OTHER    string     56
+  OTHER    symbol     3504
+  TARGET   NO TWIN    12
+  TARGET   symbol     2844
+NO-TWIN	A/AB1w.v:11	0x22c0c -> 0x22b4c	Definition tfib_rodata_lo : Z := 0x102e0.  Definition tfib_rodata_hi : Z := 0x22b4c.
+NO-TWIN	A/AD1o.v:81	0xa1460 -> 0x5f31e0	zero_shadow (aview tfibsegs (w_H W) mem) SHADOW_OFF 0x5f31e0 (0x616000 - 0x5f31e0).
+NO-TWIN	A/AD1o.v:81	0xa1460 -> 0x5f31e0	zero_shadow (aview tfibsegs (w_H W) mem) SHADOW_OFF 0x5f31e0 (0x616000 - 0x5f31e0).
+NO-TWIN	A/AD1o.v:84	0xa1460 -> 0x5f31e0	exact (al_zshadow _ _ LAWS ly S W mem md (0x5f31e0, 0x616000 - 0x5f31e0) HAR
+NO-TWIN	A/AD1o.v:84	0xa1460 -> 0x5f31e0	exact (al_zshadow _ _ LAWS ly S W mem md (0x5f31e0, 0x616000 - 0x5f31e0) HAR
+NO-TWIN	A/AD1o.v:87	0xa14a0 -> 0x5f3200	Lemma bss_shadow_facts : forall ly S W mem md p n, AR tfibsegs B ly S W mem md -> 0x5f3200 <= p -> p + n <= 0x
+NO-TWIN	A/AD1o.v:91	0xa1460 -> 0x5f31e0	- intros x Hx. apply (zero_shadow_range _ SHADOW_OFF 0x5f31e0 (0x616000 - 0x5f31e0) eq_refl eq_refl HZ x). lia
+NO-TWIN	A/AD1o.v:91	0xa1460 -> 0x5f31e0	- intros x Hx. apply (zero_shadow_range _ SHADOW_OFF 0x5f31e0 (0x616000 - 0x5f31e0) eq_refl eq_refl HZ x). lia
+NO-TWIN	A/AD1o.v:93	0xa14a0 -> 0x5f3200	assert (L1 : 0x5f3200 / 8 <= p / 8) by (apply Z.div_le_mono; lia).
+NO-TWIN	A/AD1o.v:95	0xa14a0 -> 0x5f3200	change (0x5f3200 / 8) with 779840 in L1. change ((0x616000 - 1) / 8) with 797695 in L2.
+NO-TWIN	A/AD1o.v:95	82580 -> 779840	change (0x5f3200 / 8) with 779840 in L1. change ((0x616000 - 1) / 8) with 797695 in L2.
+NO-TWIN	A/AD1o.v:98	0xa1460 -> 0x5f31e0	replace s with (shadow_of_addr SHADOW_OFF 0x5f31e0 + (s - shadow_of_addr SHADOW_OFF 0x5f31e0)) by lia.
+NO-TWIN	A/AD1o.v:98	0xa1460 -> 0x5f31e0	replace s with (shadow_of_addr SHADOW_OFF 0x5f31e0 + (s - shadow_of_addr SHADOW_OFF 0x5f31e0)) by lia.
+NO-TWIN	A/AD1o.v:99	0xa1460 -> 0x5f31e0	rewrite (HZ (s - shadow_of_addr SHADOW_OFF 0x5f31e0)); [discriminate|].
+NO-TWIN	A/AD1o.v:100	660576 -> 6238688	unfold shadow_of_addr, SHADOW_OFF in *. change (6238688 / 8) with 779836. change ((6381568 - 6238688) / 8) wit
+NO-TWIN	A/AD1o.v:100	82572 -> 779836	unfold shadow_of_addr, SHADOW_OFF in *. change (6238688 / 8) with 779836. change ((6381568 - 6238688) / 8) wit
+NO-TWIN	A/AD1o.v:100	660576 -> 6238688	unfold shadow_of_addr, SHADOW_OFF in *. change (6238688 / 8) with 779836. change ((6381568 - 6238688) / 8) wit
+NO-TWIN	A/AD25.v:529	0x5fa000 -> 0x5df0b8	zero_shadow (aview tfibsegs (w_H W) mem) SHADOW_OFF 0xa9340 (0x5df0b8 - 0xa9340).
+NO-TWIN	A/AD25.v:532	0x5fa000 -> 0x5df0b8	apply (al_zshadow _ _ ARL ly S W mem md (0xa9340, 0x5df0b8 - 0xa9340) HAR).
+NO-TWIN	A/AD25.v:539	0x5fa000 -> 0x5df0b8	apply (zero_shadow_range _ SHADOW_OFF 0xa9340 (0x5df0b8 - 0xa9340) eq_refl eq_refl (rs_zero_shadow ly S W mem 
+NO-TWIN	A/AE39.v:32	0x10350 -> 0x10358	Lemma mc_bounds : MC_LO = 0x10358 /\ MC_HI = 0x10378.
+NO-TWIN	A/AE3a.v:17	0x10350 -> 0x10358	Definition tfib_D_const_HIGHS_0x8080808080808080 : Z := 0x10358.
+NO-TWIN	A/AFem.v:129	127070 -> 127008	Lemma TOT_range : 2 <= TOT <= 127008.
+NO-TWIN	A/AFem.v:207	127070 -> 127008	1 <= nD <= 4097 /\ 2 <= TOT <= 127008 /\ 0 <= HSH < 2 ^ 64 /\ 0 <= bkt < 1048576 /\ 0 <= HDv <= nD /\ 0 <= STD
+  DONOR-STALE constant / size / mask / bound / arithmetic (no address role)                                        1
+  OTHER       Linux mmap flag sum (MAP_FIXED_NOREPLACE|MAP_NORESERVE|MAP_ANONYMOUS|MAP_PRIVATE and neighbours)     33
+  OTHER       SHARED by bytes: address in the byte-identical .rodata prefix                                        8
+  OTHER       SHARED: same value in both images (a Coq bullet line decval reads as a comment)                      7
+  OTHER       constant / size / mask / bound / arithmetic (no address role)                                        373
+  OTHER       inside a multi-line comment (a line that does not start with the comment opener)                     2
+  OTHER       instruction word or field (decode lemma / Z_to_bv word / table lookup of a word)                     3
+  OTHER       instruction-word literal handed to icpt_ld8                                                          234
+  OTHER       model label of the kernel's allocator model (mcheck / fail / spin / ISpin pc; Reusable/YG00.v holds the same) 42
+tfib table: {('A', 'target symbol start'): 587, ('E', 'target symbol end or next start'): 587}
+sweep fuzz_grant builtin_tls                                         0x5d7a08  6126088    0  
+sweep fuzz_grant tp                                                  0x5d7ad0  6126288    0  
+sweep fuzz_grant builtin_tls as decode's DECIMAL-VALUES.md quotes it 0x5d7a48  6126152    0  
+sweep fuzz_grant tp as decode's DECIMAL-VALUES.md quotes it          0x5d7b10  6126352    0  
+sweep fuzz_grant image top                                           0x5fa000  6266880    2  A/AD1g.v:4 A/AFjy.v:4
+sweep fuzz_grant rw_lo                                               0x9e000   647168     0  
+sweep fuzz_grant entry                                               0x307dc   198620     0  
+sweep fuzz_grant last PT_LOAD end                                    0x5f93b0  6263728    0  
+sweep fuzz_grant rw_len                                              0x55c000  5619712    0  
+sweep fuzz_grant .got start                                          0x9c810   641040     0  
+sweep cgif builtin_tls                                               0x5d8ec8  6131400    0  
+sweep cgif tp                                                        0x5d8f90  6131600    0  
+sweep cgif image top                                                 0x5fb000  6270976    0  
+sweep cgif rw_lo                                                     0x9f000   651264     0  
+sweep cgif entry                                                     0x3030c   197388     0  
+sweep fuzz_decode builtin_tls (D9 record)                            0x5d5908  6117640    0  
+sweep fuzz_decode tp (D9 record)                                     0x5d59d0  6117840    0  
+sweep fuzz_decode image top (D9 record)                              0x5f8000  6258688    0  
+sweep fuzz_decode rw_lo (D9 record)                                  0x9c000   638976     0  
+sweep fuzz_decode entry (D9 record)                                  0x2ffc8   196552     0  
+sweep fuzz_decode last PT_LOAD end (D9 record)                       0x5f72b0  6255280    0  
+sweep gp shifted as a data address (decode TAGSCAN)                  0x10818   67608      0  
+sweep __global_pointer$ (both)                                       0x10800   67584      8  A/AB1w.v:23 A/AD23.v:306 A/AD23.v:308 A/AD23.v:309 A/AD2f.v:161 A/AD2f.v:237
+sweep fuzz_transport builtin_tls                                     0x5f3a28  6240808    0  
+sweep fuzz_transport tp                                              0x5f3af0  6241008   17  A/AD1j.v:114 A/AD23.v:306 A/AD23.v:308 A/AD23.v:309 A/AD2f.v:161 A/AD2f.v:237
+sweep fuzz_transport image top                                       0x616000  6381568   97  A/AB1w.v:595 A/ACeg.v:80 A/ACeg.v:116 A/ACeg.v:128 A/AD1e.v:162 A/AD1f.v:102
+sweep fuzz_transport rw_lo                                           0xa5000   675840     2  A/AB1w.v:599 A/AFia.v:133
+sweep fuzz_transport entry                                           0x310d0   200912     4  A/AB1w.v:12 A/AB1w.v:23 A/AB1w.v:24 A/AB1w.v:598
+sweep fuzz_transport last PT_LOAD end                                0x6153d0  6378448    1  A/AB1w.v:20
+sweep fuzz_transport rw_len                                          0x571000  5705728    2  A/AB1w.v:600 A/AFia.v:133
+sweep fuzz_transport .got start                                      0xa4030   671792     2  A/AB1w.v:16 A/AB1w.v:17
+rc=0
+# by hand (decval_hand.py: the target ELF read)
+.got rows: 167 {'GOT-SAME': 167}; 20 distinct cells:
+.got cell values stated by the text (mkChunk A (CVal 8 (SLit V)) / lit8 A V): {'stated value = cell bytes': 37}
+constant rows: 686 {'UNCHANGED': 686}; per value (count, the run's definitions of it, where it lies in the target):
+DONOR-STALE	Reusable/YG0f.v:34	0x100000	target 00000000000000000000000000000000 b'' [.bss] _ZN11__sanitizerL26internal_alloc_placeholderE+0x52400; donor 00000000000000000000000000000000 b'' [.bss] _ZN11__sanitizerL26internal_alloc_placeholderE+0x5a2c0; stage 2: constant / size / mask / bound / arithmetic (no address role)
+NO-TWIN	A/AB1w.v:11	0x22c0c -> 0x22b4c	no 8-byte match
+NO-TWIN	A/AD1o.v:81	0xa1460 -> 0x5f31e0	no 8-byte match
+NO-TWIN	A/AD1o.v:81	0xa1460 -> 0x5f31e0	no 8-byte match
+NO-TWIN	A/AD1o.v:84	0xa1460 -> 0x5f31e0	no 8-byte match
+NO-TWIN	A/AD1o.v:84	0xa1460 -> 0x5f31e0	no 8-byte match
+NO-TWIN	A/AD1o.v:87	0xa14a0 -> 0x5f3200	no 8-byte match
+NO-TWIN	A/AD1o.v:91	0xa1460 -> 0x5f31e0	no 8-byte match
+NO-TWIN	A/AD1o.v:91	0xa1460 -> 0x5f31e0	no 8-byte match
+NO-TWIN	A/AD1o.v:93	0xa14a0 -> 0x5f3200	no 8-byte match
+NO-TWIN	A/AD1o.v:95	0xa14a0 -> 0x5f3200	no 8-byte match
+NO-TWIN	A/AD1o.v:95	82580 -> 779840	no 8-byte match
+NO-TWIN	A/AD1o.v:98	0xa1460 -> 0x5f31e0	no 8-byte match
+NO-TWIN	A/AD1o.v:98	0xa1460 -> 0x5f31e0	no 8-byte match
+NO-TWIN	A/AD1o.v:99	0xa1460 -> 0x5f31e0	no 8-byte match
+NO-TWIN	A/AD1o.v:100	660576 -> 6238688	no 8-byte match
+NO-TWIN	A/AD1o.v:100	82572 -> 779836	no 8-byte match
+NO-TWIN	A/AD1o.v:100	660576 -> 6238688	no 8-byte match
+NO-TWIN	A/AD25.v:529	0x5fa000 -> 0x5df0b8	no 8-byte match; the 8 bytes at the address: donor 0x5fa000 outside its image's loaded bytes; the 8 bytes before the address (an end): donor 0x5f9ff8 outside its image's loaded bytes
+NO-TWIN	A/AD25.v:532	0x5fa000 -> 0x5df0b8	no 8-byte match; the 8 bytes at the address: donor 0x5fa000 outside its image's loaded bytes; the 8 bytes before the address (an end): donor 0x5f9ff8 outside its image's loaded bytes
+NO-TWIN	A/AD25.v:539	0x5fa000 -> 0x5df0b8	no 8-byte match; the 8 bytes at the address: donor 0x5fa000 outside its image's loaded bytes; the 8 bytes before the address (an end): donor 0x5f9ff8 outside its image's loaded bytes
+SAME-8	A/AE39.v:32	0x10350 -> 0x10358	the 8 bytes at the address: donor 0x10350 and target 0x10358 both hold 8080808080808080, found once in the target .rodata
+SAME-8	A/AE3a.v:17	0x10350 -> 0x10358	the 8 bytes at the address: donor 0x10350 and target 0x10358 both hold 8080808080808080, found once in the target .rodata
+NO-TWIN	A/AFem.v:129	127070 -> 127008	no 8-byte match
+NO-TWIN	A/AFem.v:207	127070 -> 127008	no 8-byte match
+stage-2 NO TWIN rows: 24 {'NO-TWIN': 22, 'SAME-8': 2}
+comment numerals that are donor image values and not target values: 10 {'NOTICE': 10}
+rc=0
+result: stage 1 DONOR-STALE 1; decided by bytes or as an unchanged constant 1; DONOR-STALE after the look by hand 0
+result: stage 2 NO TWIN 24; decided by the 8 bytes at the address 2; open 22: A/AB1w.v:11 A/AD1o.v:81 A/AD1o.v:81 A/AD1o.v:84 A/AD1o.v:84 A/AD1o.v:87 A/AD1o.v:91 A/AD1o.v:91 A/AD1o.v:93 A/AD1o.v:95 A/AD1o.v:95 A/AD1o.v:98 A/AD1o.v:98 A/AD1o.v:99 A/AD1o.v:100 A/AD1o.v:100 A/AD1o.v:100 A/AD25.v:529 A/AD25.v:532 A/AD25.v:539 A/AFem.v:129 A/AFem.v:207
+result: .got rows wrong 0; constant rows changed 0; comment donor values outside the notice block 0
+# control
+plant: A/AB1w.v tfib_at_x_memset -> 0x95e30 (the donor's); stage-1 DONOR-STALE 1 -> 2; changed rows 1 (A/AB1w.v	606	0x95e30	613936	DONOR-STALE	donor image value, unmoved from the donor file): PASS

@@ -1,0 +1,3 @@
+refutes: toy/ebreak/asan_agrees_in_standard
+approach: on one valid input and valid entries the plain run is never refused memory and errors at its first instruction
+uses: [lps-checks]

@@ -1,0 +1,5 @@
+___interceptor_malloc	closure 784 functions (register-indirect call sites inside: 97)	EQUAL 172	EQUAL-mod-pcrel(all targets equal) 608	other 4
+   ___interceptor_malloc @0x5195c: EQUAL-mod-pcrel target-differ [('0x130', '_ZN6__asan11asan_mallocEmPN11__sanitizer18BufferedStackTraceE+0x0', '__sanitizer_get_allocated_begin+0x0', b'', b'')] 
+   _ZN11__sanitizer19GetHandleSignalModeEi @0x64208: EQUAL-mod-pcrel target-differ [('0x24', '(.data.rel.ro)', '(.data.rel.ro)', b'\x8c\x0c\x13', b'\x0cu\x13')] 
+   _ZNK11__sanitizer13SignalContext8DescribeEv @0x65330: EQUAL-mod-pcrel target-differ [('0x1c', '(.rodata)', '(.rodata)', b'\xca\xca\xff\xffk\xa2\xff\xffGS\xff\xffc\x8b\xff\xff\x8c\xf8\xff\xffQS\xff\xff', b'\xa7\xc9\xff\xff\x10\xa1\xff\xff\x92Q\xff\xff\xcf\x89\xff\xffG\xf8\xff\xff\x9cQ\xff\xff')] 
+   __synccall @0x92dbc: EQUAL-mod-pcrel target-differ [('0x54', '(.data.rel.ro)', '(.data.rel.ro)', b'$0\t', b'\\\x94\t')] 

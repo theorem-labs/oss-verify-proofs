@@ -1,0 +1,116 @@
+(* Modified by Theorem Labs, 2026-10: moved from image A (fuzz_preset.asan d83eb25d), origin/cold/c-libc-str-p102-l3v1 3244f5c71f6, to the #102 pin A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b): no numeral changed (every numeral is a GXA key or a function size, and the keys are image-free); the image values come from lib/CJ/RL/I/IImgA.v at #102. *)
+(* Modified by Theorem Labs, 2026-10: copied onto omx-clap-core/fuzz_preset.asan (image A, d83eb25d) from origin/cold/port-fm-rtprintf-param 3e35620c52e proofs/omx-clap-core/fuzz_manifest/lib/A/RT_gxa_inst.v: module paths only (lib/A/RT_gxa_inst -> lib/A/PSnpL3/RT_gxa_inst; lib/A/RT_IImgA's A_img / A_img_vsn -> lib/CJ/RL/I/IImgA's N_img_asan / N_img_vsn). Every numeral is a GXA KEY or a function size (equal in both images), so none moves: the instance maps the keys, and each lemma checks that mapping against the pinned image. *)
+(* GXA's two top theorems, instantiated on the pinned fuzz_manifest.asan.
+
+   lib/CJ/RL/GXA holds the format-general ASan printf core, proved and Qed over an abstract image
+   record: printf_core_a_proof (G_printf_core.v:1028), vfprintf_snf_a_closed and
+   vfprintf_snf_a_guarded_closed (G_vfprintf_snf_closed.v:109, :118) and vsnprintf_x_proof
+   (G_vsnprintf.v).  Every image fact they take is discharged for this harness in RT_IImgA_ok.v at
+   RT_IImgA.v's instance N_img (and N_img_vsn for musl vsnprintf, whose call to vfprintf lands on
+   the link-time wrapper, not on musl vfprintf's body).  This file joins the two: it carries the
+   image facts in and leaves exactly three hypotheses open, the ASan interceptor call contracts
+   that the wrapper walks supply:
+
+     memcpy_stack_contract copy_ready    (CopyCall.v:30)     at __wrap_memcpy   0x51a64
+     memset_stack_contract set_ready     (SetCall.v:29)      at __wrap_memset   0x51a60
+     strnlen_stack_contract strn_ready   (StrnlenCall.v:30)  at __wrap_strnlen  0x412cc
+
+   pop_arg, pop_arg_x and __extenddftf2 are NOT hypotheses: this build calls them directly and
+   RT_IImgA_ok.v closes their contracts (fr_pop_arg_contract, fr_pop_arg_x_contract).
+
+   The image facts are carried by instance resolution, and the call contracts by name.  Do not
+   close these with `unshelve eapply ...; all: first [<long exact list>]`: measured on port-reply's
+   b4, that backtracks over the guarded theorem's evars and ran 45 minutes without finishing. *)
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.Lib Require Import SFModel Arr ITree Nodes PropExec MState Mem Exec Frame Cells Step.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.Reloc Require Import RStep.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.Spec Require Import Prelim Monad FmtFp StrFun.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.G Require Import G_memset G_memcpy G_fwritex G_pad G_fmt_fp_lib G_pop_arg GRoTab.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.GX Require Import Printf_model Printf_zfacts G_pop_arg_x.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.GXA Require Import AsanFacts SetCall StrnlenCall CopyCall VfprintfCall.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.GXA Require Import G_sn_write G_printf_snfsink G_vfprintf_snf G_vfprintf_snf_closed.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.GXA Require G_vsnprintf.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.I Require Import IImgA.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.PSnpL3 Require Import RT_IImgA_ok.
+Import ListNotations.
+Open Scope Z_scope.
+
+#[local] Existing Instance N_img_asan.
+
+(* the image facts of the closure, as instances, so the theorems below carry them without a search
+   over a list of `exact`s *)
+#[local] Existing Instances
+  fr_CODE_vfprintf fr_RB_vfprintf fr_RN_printf_core fr_RN_lockfile fr_RN_towrite fr_RN_unlockfile
+  fr_RN_stack_chk_fail fr_CODE_towrite fr_RB_towrite
+  fr_CODE_sn_write fr_RS_snw fr_RB_snw fr_RN_snw_memcpy
+  fr_CODE_fwritex fr_RB_fwritex fr_RN_fwritex_memcpy
+  fr_CODE_printf_core fr_RB_printf_core fr_RO_10884
+  fr_RN_B_fwritex fr_RN_B_pop_arg fr_RN_B_fmt_fp fr_RN_B_errno_location fr_RN_B_strerror
+  fr_RN_B_strnlen fr_RN_B_wctomb fr_RN_B_pad fr_RN_B_memset fr_RN_B_stack_chk_fail
+  fr_RS_K_109cc fr_RS_K_10884 fr_RS_K_1029e fr_RS_K_103b3 fr_RS_K_10964 fr_RS_K_10b9c
+  fr_RO_states0 fr_RO_pfx fr_RQ_pfx_lo fr_RQ_pfx_got fr_RO_xdigits fr_RO_states
+  fr_RS_got_ssp fr_RS_34288 fr_RS_35000 fr_RL0_0 fr_RL0_1 fr_RL1_0
+  fr_CODE_pop_arg fr_RB_pop_arg fr_RO_10984 fr_RN_B_extenddftf2 fr_RS_K_10984
+  fr_CODE_extenddftf2 fr_RB_extenddftf2.
+
+(* ---- musl vfprintf on the snprintf sink, at fuzz_manifest.asan ---- *)
+
+Definition fm_vfprintf_snf_a_closed
+  (copy_ready : (word -> option byte) -> Z -> Z -> Z -> Z -> Prop)
+  (set_ready : (word -> option byte) -> Z -> Z -> Z -> Prop)
+  (strn_ready : (word -> option byte) -> Z -> Z -> Z -> list byte -> Prop)
+  (INV : (word -> option byte) -> Prop)
+  (SPEC_memcpy : @memcpy_stack_contract N_img_asan copy_ready)
+  (SPEC_memset : @memset_stack_contract N_img_asan set_ready)
+  (SPEC_strnlen : @strnlen_stack_contract N_img_asan strn_ready) :=
+  vfprintf_snf_a_closed copy_ready SPEC_memcpy set_ready strn_ready INV
+    (IMG := N_img_asan) (SPEC_memset := SPEC_memset) (SPEC_strnlen := SPEC_strnlen)
+    (SPEC_pop_arg := fr_pop_arg_contract) (SPEC_pop_arg_x := fr_pop_arg_x_contract).
+
+Definition fm_vfprintf_snf_a_guarded_closed
+  (copy_ready : (word -> option byte) -> Z -> Z -> Z -> Z -> Prop)
+  (set_ready : (word -> option byte) -> Z -> Z -> Z -> Prop)
+  (strn_ready : (word -> option byte) -> Z -> Z -> Z -> list byte -> Prop)
+  (INV : (word -> option byte) -> Prop)
+  (SPEC_memcpy : @memcpy_stack_contract N_img_asan copy_ready)
+  (SPEC_memset : @memset_stack_contract N_img_asan set_ready)
+  (SPEC_strnlen : @strnlen_stack_contract N_img_asan strn_ready) :=
+  vfprintf_snf_a_guarded_closed copy_ready SPEC_memcpy set_ready strn_ready INV
+    (IMG := N_img_asan) (SPEC_memset := SPEC_memset) (SPEC_strnlen := SPEC_strnlen)
+    (SPEC_pop_arg := fr_pop_arg_contract) (SPEC_pop_arg_x := fr_pop_arg_x_contract).
+
+(* the printf core alone, format-general, at this image: GXA's printf_core_a_all, which is
+   printf_core_a_stmt for every sink the caller gives *)
+Definition fm_printf_core_a_all
+  (set_ready : (word -> option byte) -> Z -> Z -> Z -> Prop)
+  (strn_ready : (word -> option byte) -> Z -> Z -> Z -> list byte -> Prop)
+  (SPEC_memset : @memset_stack_contract N_img_asan set_ready)
+  (SPEC_strnlen : @strnlen_stack_contract N_img_asan strn_ready)
+  : @printf_core_a_all N_img_asan set_ready strn_ready :=
+  snf_printf_core_ok set_ready strn_ready
+    (IMG := N_img_asan) (SPEC_memset := SPEC_memset) (SPEC_strnlen := SPEC_strnlen)
+    (SPEC_pop_arg := fr_pop_arg_contract) (SPEC_pop_arg_x := fr_pop_arg_x_contract).
+
+(* the string-buffer write callback, which is what carries truncation: its post writes
+   firstn cn (pend ++ src) into the destination and moves the cookie by Z.min cn (|pend| + |src|) *)
+Definition fm_sn_write_ok
+  (copy_ready : (word -> option byte) -> Z -> Z -> Z -> Z -> Prop)
+  (SPEC_memcpy : @memcpy_stack_contract N_img_asan copy_ready)
+  : @G_sn_write.sn_write_contract N_img_asan copy_ready :=
+  snf_sn_write_ok (IMG := N_img_asan) copy_ready SPEC_memcpy.
+
+(* ---- musl vsnprintf, at the second instance ---- *)
+(* The implicit image facts are written positionally here: N_img_vsn is not the ambient instance,
+   and its rows are the ones RT_IImgA_ok.v states at that record. *)
+Definition fm_vsnprintf_x_proof
+  (set_ready : (word -> option byte) -> Z -> Z -> Z -> Prop)
+  (vf_ready : vf_guard)
+  (SPEC_memset : @memset_stack_contract N_img_vsn set_ready)
+  (VF : @vfprintf_guarded_stmt N_img_vsn vf_ready) :=
+  @G_vsnprintf.vsnprintf_x_proof N_img_vsn
+    fr_CODE_vsnprintf fr_RB_vsnprintf fr_RN_vsn_memset fr_RN_vsn_vfprintf
+    fr_RS_vsn_got_ssp fr_RS_vsn_snw fr_RS_vsn_34288 fr_RS_vsn_35000
+    fr_RL0_0_vsn fr_RL0_1_vsn fr_RQ_vsn_22e18
+    set_ready vf_ready SPEC_memset VF.

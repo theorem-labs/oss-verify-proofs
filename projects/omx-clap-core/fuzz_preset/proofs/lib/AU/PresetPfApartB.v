@@ -1,0 +1,82 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyPfApartB.v (commit 4d286b2e618d, file sha256 4d6bdb037a0c) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Theorem Labs, 2026-10-30 (a prior worker, for lane W of a Theorem Labs lane's cf layer at plugin-hostd/fuzz_reply): the unit row
+   PF_APART at reply's image B (fuzz_reply.asan-ubsan), the twin of lib/A/ReplyPfApartA.v, the premise HPFA of the cf layer's Deallocate tops
+   (lane F2a, lib/B/YGcfInstFreePost.v PF_APART B at B := TfibB).
+   rule 24: no function proved (kind: per-unit image fact about the layout of reply's image A; no function walk).
+
+   PF_APART B := forall a, pf_byte a -> ~ dg_izone a /\ (forall ly, LGUARD ly -> ~ dg_dzone ly a), where pf_byte is
+   Printf's two writable image cells (CfImg_B's cf_toolname_cell / cf_pfcb_cell, 8 bytes each) and LGUARD ly :=
+   ly_img_ok B ly /\ im_img_cover ly /\ asyms_ok B (YGcfInstFreePost.v:71, :125).  [pf_apart_preset_B] states that text
+   unfolded at reply's DImg_cgif (DGif0cgif: dg_izone := DGgi.IZONE, dg_dzone := DGgi.DZONE) and AImg_cgif
+   (im_img_cover := YF0x.img_cover), so the layer's PF_APART TfibB is it by conversion.  The twin of cgif's
+   YGcfInstFreeImgcgif.PF_APART_of_rows_cgif (d3b943ec6dd3), on the same route, from the
+   reply rows of three other lanes:
+   - not in IZONE: a prior worker's row PresetRelroGeoB.pf_ial_apart_preset_B (YG0ncf.pf_ial_apart_t at TfibSyms);
+   - not in DZONE's first disjunct [dzone_static_lo, dzone_static_hi) (= TFIB_STORE .. YD20.RS_LO, stackStore ..
+     read_stage; PresetRelroGeoB.dzone_static_text_B): a prior worker's row PresetRelroGeoB.pf_dzone_static_preset_B;
+   - not in the node / store blocks (ly_NB, ly_SB): a prior worker's row PresetImg_pfrowsB.pf_cells_static_preset_B puts
+     each cell in a static-owned extent of TfibB, LGUARD's ly_img_ok puts that extent inside ly_img ly, and layout_ok's
+     lo_disj keeps ly_img apart from both blocks (static_extents ly: owned_extents' NB at index 4, SB at 5, ly_img at 9;
+     Reusable/YG0f.v:295-300).  This is cgif's route; no image numeral is typed here. *)
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s YO0d.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP0g YP01 YP0i YP0j.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YN3v YI04.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG0a YG01 YG04 YG02 YG06 YG07 YG03 YG0f YG0v YG0n YG0d YG0s YG0q.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05 YGcfNames.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import ImgBase.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YB1v YF0m YF0x. From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import CfImgB. From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YD2l.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import AGif2cgif. From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import ImgBaseDG. From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import DGif0cgif.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require DGgi PresetRelroGeoB PresetImg_pfrowsB.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require CfIalApartPreset.
+Import ListNotations.
+Local Open Scope Z_scope.
+
+(* reply's image constants (Printf's cells) are this file's CfImg instance *)
+#[local] Existing Instance CfImg_B.
+
+Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+
+Local Lemma pairwise_nth_pf {X} (R : X -> X -> Prop) : forall (l : list X) i j x y,
+  pairwise R l -> nth_error l i = Some x -> nth_error l j = Some y -> (i < j)%nat -> R x y.
+Proof.
+induction l as [|h t IH]; intros [|i] [|j] x y P Hi Hj Hij; cbn in *; try discriminate; try lia.
+- injection Hi as <-. destruct P as [F _]. apply nth_error_In in Hj. exact (proj1 (Forall_forall _ _) F _ Hj).
+- destruct P as [_ P]. eapply IH; eauto. lia.
+Qed.
+
+(* PF_APART TfibB (YGcfInstFreePost.v:126), unfolded at DImg_cgif / AImg_cgif. *)
+Lemma pf_apart_preset_B : forall a,
+  (cf_toolname_cell <= a < cf_toolname_cell + 8 \/ cf_pfcb_cell <= a < cf_pfcb_cell + 8) ->
+  ~ dg_izone a /\
+  (forall ly, (layout_ok ly /\ ly_tsd ly = as_tsd TfibB /\
+                 Forall (fun r => zr_sub r (ly_img ly)) (as_owned_static TfibB ++ as_zero_shadow TfibB)) /\
+              im_img_cover ly /\ asyms_ok TfibB ->
+              ~ dg_dzone ly a).
+Proof.
+intros a Ha. split.
+- cbn [dg_izone DImg_cgif]. unfold DGgi.IZONE.
+  destruct (CfIalApartPreset.pf_ial_apart_B TfibB TfibB_syms a Ha) as [I1 I2].
+  rewrite (ts_ial_lo _ TfibB_syms), (ts_ial_hi _ TfibB_syms) in I1. rewrite (ts_ial_flag _ TfibB_syms) in I2.
+  intros [Hz|Hz]; [exact (I1 Hz) | exact (I2 Hz)].
+- intros ly ((LO & _ & SI) & _ & _) Hd.
+  cbn [dg_dzone DImg_cgif] in Hd.
+  change (DGgi.DZONE ly a) with ((PresetRelroGeoB.dzone_static_lo <= a < PresetRelroGeoB.dzone_static_hi) \/
+    (ly_NB ly <= a < ly_NB ly + kNodesBlockSize) \/ (ly_SB ly <= a < ly_SB ly + kStoreBlockSize)) in Hd.
+  destruct Hd as [Hs|Hd]; [exact (PresetRelroGeoB.pf_dzone_static_preset_B a Ha Hs)|].
+  destruct (PresetImg_pfrowsB.pf_cells_static_preset_B TfibB TfibB_syms a Ha) as [OS _].
+  apply Exists_exists in OS as (r & Hr & Hin).
+  pose proof (proj1 (Forall_forall _ _) SI r ltac:(apply in_or_app; left; exact Hr)) as [Z1 Z2].
+  pose proof (pairwise_nth_pf zdisjoint _ 4 9 _ _ (lo_disj _ LO) eq_refl eq_refl ltac:(lia)) as DN.
+  pose proof (pairwise_nth_pf zdisjoint _ 5 9 _ _ (lo_disj _ LO) eq_refl eq_refl ltac:(lia)) as DS.
+  unfold zdisjoint, in_zr in *. cbn [fst snd] in DN, DS. lia.
+Qed.
+
+End a.

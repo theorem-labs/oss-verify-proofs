@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libfdk-aac
 harness: aac_dec_fuzzer
-rocq: OssFuzzTheorems.libfdk_aac.aac_dec_fuzzer
+rocq: OSSVerify.libfdk_aac.aac_dec_fuzzer
 origin: upstream
 summary: Optional 'AAC_STRT'<len><config>'AAC_ENDS' header goes to aacDecoder_ConfigRaw, then the rest
   is fed through aacDecoder_Fill/DecodeFrame, skipping a byte on each Fill error; decoded PCM is never

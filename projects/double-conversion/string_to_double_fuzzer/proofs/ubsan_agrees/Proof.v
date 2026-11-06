@@ -1,0 +1,5 @@
+From OSSVerify.double_conversion.string_to_double_fuzzer Require Statements.
+From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Theorems.
+
+Theorem ubsan_agrees_holds : OSSVerify.double_conversion.string_to_double_fuzzer.Statements.ubsan_agrees.
+Proof. exact OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib.Theorems.strong_universal_error_free_string_to_double_fuzzer_ubsan. Qed.

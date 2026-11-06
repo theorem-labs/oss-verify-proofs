@@ -1,0 +1,113 @@
+# CLOSING THE OPEN USES -- fifth round. Modes of luitrace.py; the frame-escape CFG walk is in
+# out/luitrace-frameesc.out.
+
+## (1) REAL(memset), the `jalr a3` of Allocator::Allocate +0x6dc (asan_allocator.cpp:647)
+$ python3 luitrace.py ptrscan $C $A _ZN14__interception11real_memsetE   (base+imm write test; READ lines elided)
+# cgif_file_fuzzer.asan-ubsan: _ZN14__interception11real_memsetE @0xa0098, initial value 0x9790c -> memset+0x0
+TOTAL	cgif_file_fuzzer.asan-ubsan	_ZN14__interception11real_memsetE	reads 39	writes 0
+# fuzz_decode.asan: _ZN14__interception11real_memsetE @0x9abc0, initial value 0x92474 -> memset+0x0
+TOTAL	fuzz_decode.asan	_ZN14__interception11real_memsetE	reads 40	writes 0
+
+$ python3 luitrace.py frameesc $A $C __asan_register_globals -0x10d0   (full output: out/luitrace-frameesc.out)
+FRAME	fuzz_decode.asan	__asan_register_globals	s0 = frame origin +0; slot s0-4304
+ACCESS	+0x3ec	sd a1, -0xd0(a2)	s0-4304	SLOT
+ACCESS	+0x868	ld a4, -0xd0(a4)	s0-4304	SLOT
+CALLARG	+0x90	a0	s0-2160	_ZN6__asan20GetMallocContextSizeEv+0x0
+CALLARG	+0x90	a1	s0-2176	_ZN6__asan20GetMallocContextSizeEv+0x0
+CALLARG	+0x90	a2	s0-4096	_ZN6__asan20GetMallocContextSizeEv+0x0
+CALLARG	+0x128	a0	s0-2176	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x128	a2	s0+0	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x2e0	a1	s0-2200	__sanitizer_internal_memcpy+0x0
+CALLARG	+0x2e0	a1	s0-2200	__sanitizer_internal_memcpy+0x0
+CALLARG	+0x354	a2	s0+0	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x430	a1	s0-4096	_ZN6__asan10AsanInitedEv+0x0
+CALLARG	+0x430	a2	s0-4096	_ZN6__asan10AsanInitedEv+0x0
+ESCAPE	+0x88	sd a0, 0x14(s11)	s0-2160
+ESCAPE	+0xac	sd s0, 9(s5)	s0+0
+ESCAPE	+0x338	sd s0, 9(s2)	s0+0
+TOTAL	fuzz_decode.asan	accesses 78 (slot 2)	pointers to callees 10	lowest s0-4096	slot s0-4304	slot below every pointer: yes
+FRAME	cgif_file_fuzzer.asan-ubsan	__asan_register_globals	s0 = frame origin +0; slot s0-4304
+ACCESS	+0x3ec	sd a1, -0xd0(a2)	s0-4304	SLOT
+ACCESS	+0x868	ld a4, -0xd0(a4)	s0-4304	SLOT
+CALLARG	+0x90	a0	s0-2160	_ZN6__asan20GetMallocContextSizeEv+0x0
+CALLARG	+0x90	a1	s0-2176	_ZN6__asan20GetMallocContextSizeEv+0x0
+CALLARG	+0x90	a2	s0-4096	_ZN6__asan20GetMallocContextSizeEv+0x0
+CALLARG	+0x128	a0	s0-2176	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x128	a2	s0+0	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x2e0	a1	s0-2200	__sanitizer_internal_memcpy+0x0
+CALLARG	+0x2e0	a1	s0-2200	__sanitizer_internal_memcpy+0x0
+CALLARG	+0x354	a2	s0+0	_ZN11__sanitizer18BufferedStackTrace10UnwindImplEmmPvbj+0x0
+CALLARG	+0x430	a1	s0-4096	_ZN6__asan10AsanInitedEv+0x0
+CALLARG	+0x430	a2	s0-4096	_ZN6__asan10AsanInitedEv+0x0
+ESCAPE	+0x88	sd a0, 0x14(s11)	s0-2160
+ESCAPE	+0xac	sd s0, 9(s5)	s0+0
+ESCAPE	+0x338	sd s0, 9(s2)	s0+0
+TOTAL	cgif_file_fuzzer.asan-ubsan	accesses 78 (slot 2)	pointers to callees 10	lowest s0-4096	slot s0-4304	slot below every pointer: yes
+
+## (2)(3) exhaustive stop walks for a5 (tail jumps followed; ecall / jalr / jr fail-closed)
+READSITE	fuzz_decode.asan	_ZN11__sanitizer6GetTidEv	+0x4	ECALL a7=178 (fail-closed)
+READSITE	fuzz_decode.asan	getrlimit	+0x44	ECALL a7=261 (fail-closed)
+READSITE	fuzz_decode.asan	sysconf	+0xf4	INDIRECT jr a1 (fail-closed)
+READSITE	fuzz_decode.asan	_ZN11__sanitizer6ReportEPKcz	+0xc	READ sd a5, 0x38(sp)
+READSITE	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer6GetTidEv	+0x4	ECALL a7=178 (fail-closed)
+READSITE	cgif_file_fuzzer.asan-ubsan	getrlimit	+0x44	ECALL a7=261 (fail-closed)
+READSITE	cgif_file_fuzzer.asan-ubsan	sysconf	+0xf4	INDIRECT jr a1 (fail-closed)
+READSITE	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer6ReportEPKcz	+0xc	READ sd a5, 0x38(sp)
+
+## (3) the `jr a1` at sysconf+0xf4: a 13-entry rel4 switch table, and a5 from every distinct target
+SWTAB	fuzz_decode.asan	sysconf	table 0x21318	entries 13
+SWTAB	fuzz_decode.asan	entry 0	+420252	0x87cb4	sysconf+0xa4
+SWTAB	fuzz_decode.asan	entry 1	+420620	0x87e24	sysconf+0x214
+SWTAB	fuzz_decode.asan	entry 2	+420600	0x87e10	sysconf+0x200
+SWTAB	fuzz_decode.asan	entry 3	+420608	0x87e18	sysconf+0x208
+SWTAB	fuzz_decode.asan	entry 4	+420336	0x87d08	sysconf+0xf8
+SWTAB	fuzz_decode.asan	entry 5	+420444	0x87d74	sysconf+0x164
+SWTAB	fuzz_decode.asan	entry 6	+420444	0x87d74	sysconf+0x164
+SWTAB	fuzz_decode.asan	entry 7	+420400	0x87d48	sysconf+0x138
+SWTAB	fuzz_decode.asan	entry 8	+420400	0x87d48	sysconf+0x138
+SWTAB	fuzz_decode.asan	entry 9	+420628	0x87e2c	sysconf+0x21c
+SWTAB	fuzz_decode.asan	entry 10	+420336	0x87d08	sysconf+0xf8
+SWTAB	fuzz_decode.asan	entry 11	+420348	0x87d14	sysconf+0x104
+SWTAB	fuzz_decode.asan	entry 12	+420348	0x87d14	sysconf+0x104
+SWTAB	cgif_file_fuzzer.asan-ubsan	sysconf	table 0x213fc	entries 13
+SWTAB	cgif_file_fuzzer.asan-ubsan	entry 0	+440536	0x8ccd4	sysconf+0xa4
+SWTAB	cgif_file_fuzzer.asan-ubsan	entry 1	+440904	0x8ce44	sysconf+0x214
+SWTAB	cgif_file_fuzzer.asan-ubsan	entry 2	+440884	0x8ce30	sysconf+0x200
+SWTAB	cgif_file_fuzzer.asan-ubsan	entry 3	+440892	0x8ce38	sysconf+0x208
+SWTAB	cgif_file_fuzzer.asan-ubsan	entry 4	+440620	0x8cd28	sysconf+0xf8
+SWTAB	cgif_file_fuzzer.asan-ubsan	entry 5	+440728	0x8cd94	sysconf+0x164
+SWTAB	cgif_file_fuzzer.asan-ubsan	entry 6	+440728	0x8cd94	sysconf+0x164
+SWTAB	cgif_file_fuzzer.asan-ubsan	entry 7	+440684	0x8cd68	sysconf+0x138
+SWTAB	cgif_file_fuzzer.asan-ubsan	entry 8	+440684	0x8cd68	sysconf+0x138
+SWTAB	cgif_file_fuzzer.asan-ubsan	entry 9	+440912	0x8ce4c	sysconf+0x21c
+SWTAB	cgif_file_fuzzer.asan-ubsan	entry 10	+440620	0x8cd28	sysconf+0xf8
+SWTAB	cgif_file_fuzzer.asan-ubsan	entry 11	+440632	0x8cd34	sysconf+0x104
+SWTAB	cgif_file_fuzzer.asan-ubsan	entry 12	+440632	0x8cd34	sysconf+0x104
+READSITE	fuzz_decode.asan	__lsysinfo	+0xc	ECALL a7=179 (fail-closed)
+READSITE	fuzz_decode.asan	_ZN11__sanitizer6GetTidEv	+0x4	ECALL a7=178 (fail-closed)
+READSITE	fuzz_decode.asan	__interceptor_memset	+0x9c	INDIRECT jalr a3 (fail-closed)
+READSITE	cgif_file_fuzzer.asan-ubsan	__lsysinfo	+0xc	ECALL a7=179 (fail-closed)
+READSITE	cgif_file_fuzzer.asan-ubsan	_ZN11__sanitizer6GetTidEv	+0x4	ECALL a7=178 (fail-closed)
+READSITE	cgif_file_fuzzer.asan-ubsan	__interceptor_memset	+0x9c	INDIRECT jalr a3 (fail-closed)
+
+## (2) reaching definitions of the two returned values
+REACHDEF	cgif_file_fuzzer.asan-ubsan	+0x770	a0	+0x734 mv a0, s4
+REACHDEF	cgif_file_fuzzer.asan-ubsan	+0x734	s4	+0x23c mv s4, zero
+REACHDEF	cgif_file_fuzzer.asan-ubsan	+0x734	s4	+0x2a8 add s4, s2, s4
+REACHDEF	cgif_file_fuzzer.asan-ubsan	+0x734	s4	+0x2bc and s4, s4, s8
+REACHDEF	cgif_file_fuzzer.asan-ubsan	+0x734	s4	+0x388 add s4, s2, s4
+REACHDEF	cgif_file_fuzzer.asan-ubsan	+0x734	s4	+0x850 mv s4, zero
+REACHDEF	cgif_file_fuzzer.asan-ubsan	+0x220	a0	+0x1ec add a0, a4, a0
+REACHDEF	cgif_file_fuzzer.asan-ubsan	+0x220	a0	+0x44 mv a0, zero
+REACHDEF	cgif_file_fuzzer.asan-ubsan	+0x220	a0	the call at +0x2ac
+REACHDEF	cgif_file_fuzzer.asan-ubsan	+0x220	a0	the call at +0xa4
+REACHDEF	fuzz_decode.asan	+0x770	a0	+0x734 mv a0, s4
+REACHDEF	fuzz_decode.asan	+0x734	s4	+0x23c mv s4, zero
+REACHDEF	fuzz_decode.asan	+0x734	s4	+0x2a8 add s4, s2, s4
+REACHDEF	fuzz_decode.asan	+0x734	s4	+0x2bc and s4, s4, s8
+REACHDEF	fuzz_decode.asan	+0x734	s4	+0x388 add s4, s2, s4
+REACHDEF	fuzz_decode.asan	+0x734	s4	+0x850 mv s4, zero
+REACHDEF	fuzz_decode.asan	+0x220	a0	+0x1ec add a0, a4, a0
+REACHDEF	fuzz_decode.asan	+0x220	a0	+0x44 mv a0, zero
+REACHDEF	fuzz_decode.asan	+0x220	a0	the call at +0x2ac
+REACHDEF	fuzz_decode.asan	+0x220	a0	the call at +0xa4

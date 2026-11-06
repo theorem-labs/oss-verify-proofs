@@ -1,0 +1,115 @@
+# run-all.sh WORK LIB OUT/values (2026-10-31T10:50:41Z)
+# stage-out tree: 00c62e8a18a3 (492 files); stage tree: ed4d18586a03
+# scripts: decval.py cf8670c113f1; decval_extra.py 58a00e492ae6; decval_hand.py 6b25010288f8; decval-A.sh 4859ddab2d36; secbounds.py f19bd4f10264; cellvals.py fc0786a01b56; atable-A.sh 4915492e587d; gotwords.py 83bacd1a68d3; gotwords-A.sh cfeb2fa4f298; compcheck.py 3810692c1d5a; compcheck-A.sh f1ae984fbfd9; symoff.py 8b94ee3e636e; symoff-A.sh dd9ebce5f033; rclane.py 0774cf0d35e9; roundconst-A.sh 6f5ba2975268; run-all.sh c7e5b4471bb5; compcheck-decided.tsv eb7c648644ea
+## 1 by-value
+relocated files: 492 (A 370, Reusable 122); 8655 numerals in [0x10000, 0x616001) (in D9's donor range [0x10000, 0x5f93b0): 8449)
+classes: {'TARGET': 3258, 'OTHER': 4812, 'SHARED': 584, 'DONOR-STALE': 1}
+result: stage 1 DONOR-STALE 1; decided by bytes or as an unchanged constant 1; DONOR-STALE after the look by hand 0
+result: stage 2 NO TWIN 24; decided by the 8 bytes at the address 2; open 22: A/AB1w.v:11 A/AD1o.v:81 A/AD1o.v:81 A/AD1o.v:84 A/AD1o.v:84 A/AD1o.v:87 A/AD1o.v:91 A/AD1o.v:91 A/AD1o.v:93 A/AD1o.v:95 A/AD1o.v:95 A/AD1o.v:98 A/AD1o.v:98 A/AD1o.v:99 A/AD1o.v:100 A/AD1o.v:100 A/AD1o.v:100 A/AD25.v:529 A/AD25.v:532 A/AD25.v:539 A/AFem.v:129 A/AFem.v:207
+result: .got rows wrong 0; constant rows changed 0; comment donor values outside the notice block 0
+plant: A/AB1w.v tfib_at_x_memset -> 0x95e30 (the donor's); stage-1 DONOR-STALE 1 -> 2; changed rows 1 (A/AB1w.v	606	0x95e30	613936	DONOR-STALE	donor image value, unmoved from the donor file): PASS
+## 1b section-bound cells
+result: section-bound cells 22: OK 22, KNOWN 0, DIFF 0
+control: tfib_data_hi -> 0xa1120 (the donor's .data end): DIFF rows 0 -> 1 (tfib_data_hi 0xa1120): PASS
+## 1c stated memory values
+result: file-backed statements 145: SAME 145, DIFF 0; .bss statements (runtime values, no image bytes) 165
+control: A/AD20.v:49 chunk 0xa5dc8 8: stated 0xa2914 -> 0xa2915: DIFF 0 -> 1: PASS
+## 2 atable
+donor: fuzz_grant fields vs its released A/AB12.v record: 0 of 28 differ; vs its released A/AB1w.v tfib_at_* rows: 0 differ: PASS
+ab1w: fuzz_transport fields from stage-out/A/AB1w.v vs from the twin: equal (28 fields): PASS
+rows: stage-out/A/AB1w.v tfib_at_* (26 rows) vs the twin fields: 0 differ; stops_more: the 12 listed = the image's first 12 self-loops, atable appends [0x6efc0] (not in the core row): PASS
+1ce9: the twin run with atable.py 1ce98fbad397 vs e88affcf0526: equal (28 fields): PASS
+plant-row: tfib_at_x_memset -> 0x95e30 (the donor's): 1 row(s) differ (x_memset 0x9d614/0x95e30): PASS
+plant-tab: tfib_A_ / tfib_E_musl_memset -> the donor's: fields differ from the twin run in x_memset (x_memset 0x95e30): PASS
+rc=0
+## 3 .got words
+E. whole .got: 427 words, 0 hold a different symbol + offset (or value) at the same offset
+A. core numerals in the target .got: 167 {'GOT-SAME': 167}; 20 distinct cells
+B. .got cell values the text states (lit8 / mkChunk CVal 8 / val_mem 8): 60 {"stated value = the cell's 8 bytes": 60}
+C. check.tsv rows: got-value SAME 182, got-word SAME 165
+D. OK-GOT0: target GOT[0] = .got start 0xa4030, its word 0x0 (OK-GOT0 wants 0x0: OK); donor GOT[0] = 0x9c810, word 0x0 (wants 0x0: OK); core numerals naming GOT[0] (= 0xa4030): 2 (A/AB1w.v:16 A/AB1w.v:17), each GOT-SAME: True
+result: .got words wrong: 0 (A 0, B 0, C 0, D 0, E 0)
+control: 3 planted line(s), each caught: True; findings outside the planted lines: 0: PASS
+## 4 compensating checks
+(a1) kept lengths beside moved partners: 264 pairs checked; {'SPAN-SAME': 264}
+(a1b) code ranges (start, word count): 122 checked; {'RANGE-SAME': 122}
+(a2) kept numerals that are a differing donor quantity: {'DECIDED-NOT-IMAGE-DERIVED': 449, 'DECIDED-SAME-IN-BOTH': 5}
+(a3) port_core's derived counts recomputed: {'GEO-SAME': 114, 'KNOWN': 1, 'DECIDED-PATCH-REWROTE': 5, 'NOT-A-NUMERAL': 1, 'DERIVED-SAME': 3}
+(b) GOT[0]: target .got start 0xa4030, word 0x0; donor's 0x9c810, word 0x0 (neither image has .dynamic: OK-GOT0 wants 0); numerals naming the donor's GOT[0] 2, written as the target's .got start 2; numerals equal to the target's .got start 2
+(c1) numerals at or above 0x7fff0000: {'CONST-SAME': 3405, 'SHADOW-SAME (kept)': 9, 'SHADOW-SAME': 14, 'DECIDED-UNIT-BOUND': 9}
+(c1w) format-string shadow windows (FMT, SH_LO, SH_HI): {'WINDOW-SAME': 5}
+(c2) right operands of / mod Z.modulo Z.div Z.land Z.shiftr Z.shiftl ^ (and of *): {'OP-SAME': 12477, 'MUL-SAME': 2375, 'MUL-MOVED-AS-QUANTITY': 7}
+(c3) check.tsv arithmetic-constant rows: {'CONST-SAME': 1239}
+(c4) Reusable/YG0f.v numerals: {'CONST-SAME': 180, 'NOTE': 1}
+(d) function-table rows dropped (donor tfib_A_ names absent from stage-out): 22; no-twin.tsv source names: 23; {'PRESENT-AS-TARGET-ROW': 1, 'ABSENT': 22}
+result: FINDING rows 0; open CANDIDATE rows 0; open AMBIGUOUS rows 0; rows decided by hand (--decided) 468
+control: 8 plant(s), each caught: True; new open rows elsewhere: 0: PASS
+## 5 symbol + offset
+  SYMBOL                                                         914
+  BYTES                                                          288
+  GOT-CELL                                                       167
+  GEOMETRY                                                       86
+  CODEREF                                                        26
+  OTHER-SYM                                                      21
+  UNALIGNED (no donor token), written value in a data area       2
+  KNOWN                                                          1
+  GEOMETRY quantities: img_span x36, load0.pagesize x4, load1.hi x1, load2.hi x2, load2.lo x2, load3.hi x1, load3.lo x4, load3.pagesize x2, sec:.bss.lo x1, sec:.data.hi x4, sec:.data.rel.ro.lo x6, sec:.fini_array.hi x2, sec:.fini_array.lo x3, sec:.got.hi x5, sec:.rodata.lo x1, sec:.tbss.hi x1, sec:.tbss.lo x2, sec:asan_globals.hi x9
+FINDING	KNOWN	A/AB1w.v:11	0x22c0c -> 0x22b4c	donor unnamed .rodata 0x22c0c	target unnamed .eh_frame_hdr 0x22b4c	no symbol, and no content / anchor / code-reference match; KNOWN to the owner: the final run writes 0x22b4c (.rodata's end; an override row added after work2); port_core's rule bound-released-elsewhere kept the donor's -0x40
+FINDING	OTHER-SYM	A/AD1o.v:81	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:81	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:84	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:84	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:87	0xa14a0 -> 0x5f3200	donor __do_init.__object+0x10	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x20	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:91	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:91	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:93	0xa14a0 -> 0x5f3200	donor __do_init.__object+0x10	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x20	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:95	0xa14a0 -> 0x5f3200	donor __do_init.__object+0x10	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x20	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:95	82580 -> 779840	donor -	target _ZN11__sanitizerL26internal_alloc_placeholderE+0x10a40	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:98	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:98	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:99	0xa1460 -> 0x5f31e0	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:100	660576 -> 6238688	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:100	82572 -> 779836	donor -	target _ZN11__sanitizerL26internal_alloc_placeholderE+0x10a3c	a different symbol or offset
+FINDING	OTHER-SYM	A/AD1o.v:100	660576 -> 6238688	donor __stop_asan_globals	target _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE+0x0	a different symbol or offset
+FINDING	OTHER-SYM	A/AD25.v:529	0x5fa000 -> 0x5df0b8	donor -	target g_cfg+0x38	a different symbol or offset
+FINDING	OTHER-SYM	A/AD25.v:532	0x5fa000 -> 0x5df0b8	donor -	target g_cfg+0x38	a different symbol or offset
+FINDING	OTHER-SYM	A/AD25.v:539	0x5fa000 -> 0x5df0b8	donor -	target g_cfg+0x38	a different symbol or offset
+FINDING	UNALIGNED	A/AD2f.v:149	- -> 0x5df080	donor -	target g_cfg+0x0	no aligned donor token
+FINDING	UNALIGNED	A/AD2f.v:149	- -> 0x5f3060	donor -	target OW+0x0	no aligned donor token
+FINDING	OTHER-SYM	A/AFem.v:129	127070 -> 127008	donor unnamed .rodata 0x1f05e	target unnamed .rodata 0x1f020	no symbol, and no content / anchor / code-reference match
+FINDING	OTHER-SYM	A/AFem.v:207	127070 -> 127008	donor unnamed .rodata 0x1f05e	target unnamed .rodata 0x1f020	no symbol, and no content / anchor / code-reference match
+result: rows that land in .got / .got.plt or on a symbol other than the donor's twin: 24 (1 of them known to the owner and handled, 23 new)
+control: the planted copy adds 2 finding(s) [(('A/AD2l.v:36', '0xa8fa8'), 'OTHER-SYM'), (('A/AFeq.v:149', '0xa4070'), 'GOT')], want [(('A/AD2l.v:36', '0xa8fa8'), 'OTHER-SYM'), (('A/AFeq.v:149', '0xa4070'), 'GOT')]: PASS
+## 6 roundconst-gate v2
+# r1
+#   MISMATCH	NON-ADDRESS-SAME	371
+#   MIXED	NON-ADDRESS-SAME	217
+#   SAME	NON-ADDRESS-SAME	126258
+#   SAME	SAME-GEOMETRY	1592
+# r1-moved
+#   SAME	SAME-GEOMETRY	47
+# r2
+#   MISMATCH	LANE-KEPT	361
+#   MIXED	LANE-KEPT	783
+#   SAME	LANE-KEPT	120452
+# low
+#   SAME	LANE-KEPT	35
+# probe
+#   MISMATCH	LANE-KEPT	8
+#   SAME	LANE-KEPT	83
+# plant
+#   MISMATCH	LANE-KEPT	363
+#   MIXED	LANE-KEPT	783
+#   SAME	LANE-KEPT	120452
+rclane: plants: A/AB1w.v:600:0 0x571000 -> 0x55c000 (kept donor value); SYNTH:83:0: a synthetic row, the kept donor value 83 (no core position: every moved row below 0x100 is SAME when kept)
+control: planted PR1 (tfib_at_rw_len 0x55c000) and PR2 (SYNTH:83:0): 2 new non-SAME rows, MISMATCH, MISMATCH: PASS
+non-SAME rows (read by hand, records/roundconst-read.txt): 1732
+## step return codes
+== 1 rc=0
+== 1b rc=0
+== 1c rc=0
+== 2 rc=0
+== 3 rc=0
+== 4 rc=0
+== 5 rc=0
+== 6 rc=0

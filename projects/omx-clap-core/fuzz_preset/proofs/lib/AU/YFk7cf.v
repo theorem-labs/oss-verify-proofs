@@ -1,0 +1,54 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YFk7cf.v (commit 4d286b2e618d, file sha256 236936700e84) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFk7cf.v (commit f01d79f3fb5, cf refill round 3; file sha256 8ef54d6fece6) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Theorem Labs, 2026-10-30 (ReallocPrimary.CfW, lane W, cf refill re-base, B3 half; base on d50ec3c8a93a): YFk7cf, the cf twin of YFk7.v (this tree's copy, = c5 8d6c9f45705b).
+   A hand port of YFk7.v at commit 8d6c9f45705b (its mechanical part scripted outside the tree): imports YFkpcf / YFhmcf / YFhncf and the B3 cf twins; RI+68 is the junk
+   atom rJEX = 55 of YFkpcf with value jex (0 <= jex < 2 ^ 8), so the B3 atoms are 56..69; the text is otherwise YFk7.v verbatim.
+   EVENT-FREE: no st_nev, EV_A, EV_MAX, EV_BIG, mtr_ok, aregime, refill_reg, qloosem or non-cf abudget.
+   rule 24: no function proved (kind: re-base of the proved refill walk onto the cf instance). *)
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
+From LinuxProcessSemantics.LinuxProcessSem Require Import
+BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK18 YK0s YO0d.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04 YP0g YP01 YP0i YP0j YP0n.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YN3v YI04.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0q.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YB1v YF0x YFhz. From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import YFk8cf.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Open Scope Z_scope.
+Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Lemma st_ok_ecall_full_shape : forall (H : word -> bool) E ss ms,
+st_ok_ecall tfibsegs E ss (restrict H ms) -> ss_resv ss = None ->
+ms = pend_at (ms_regs ms) (Z_to_bv 64 (ss_pc ss)) (ms_mem ms) (seg_rom tfibsegs).
+Proof.
+intros H E ss ms HS Hrv. destruct HS as (Hfr & Hpc & Hpend & Hresv & Hfcsr & Hrom & Hregs & _).
+destruct ms as [regs fregs pcv pend resv fcsr mem rom]; cbn in *.
+rewrite Hrv in Hresv. cbn in Hresv. unfold pend_at. cbn.
+rewrite Hpend. specialize (Hregs 17%bv). cbn in Hregs. rewrite <- Hregs. subst. reflexivity.
+Qed.
+Lemma st_node_cont : forall (H : word -> bool) (E : env) ss ms (e : sv) (v pc' : Z) (mem' : word -> option byte),
+st_ok_ecall tfibsegs E ss (restrict H ms) -> ss_resv ss = None ->
+sv_denot E e = Z_to_bv 64 v -> no_cdata (ss_mem ss) = true ->
+Forall (region_kept tfibsegs E (mrestrict H (ms_mem ms)) (mrestrict H mem')) (ss_mem ss) ->
+st_ok tfibsegs E (setpc (pin ss 10%bv e) pc')
+(restrict H (mkst (regupd (ms_regs ms) 10%bv (Z_to_bv 64 v)) (Z_to_bv 64 pc') mem' (seg_rom tfibsegs))).
+Proof.
+intros H E ss ms e v pc' mem' HS Hrv He Hnc Hk.
+destruct HS as (Hfr & Hpc & Hpend & Hresv & Hfcsr & Hrom & Hregs & Hmem & HG).
+unfold st_ok, setpc, pin. cbn [ss_pc ss_regs ss_mem ss_resv ss_facts].
+rewrite restrict_mkst_fx. cbn [ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_rom ms_regs ms_mem mkst].
+split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [rewrite Hrv; reflexivity|].
+split; [reflexivity|]. split; [reflexivity|]. split; [|split; [|exact HG]].
+- pose proof (regs_ok_set E (ss_regs ss) (ms_regs (restrict H ms)) 10%bv (Z_to_bv 64 v) e Hregs He) as R. cbn in R.
+destruct ms; cbn in *. exact R.
+- apply (mem_ok_kept tfibsegs E (mrestrict H (ms_mem ms))); [| exact Hnc | exact Hk].
+destruct ms; cbn in *. exact Hmem.
+Qed.
+End a.

@@ -1,0 +1,34 @@
+# reac-pw/fuzz_link fuzz_link.asan (sha256 059dae63e07ca2d80ae9227fa125d40586a02172c96d2b6884f8617ab912061d), decoded with capstone 5 (RV64GC);
+# names from the unstripped twin (sha256 66cd0f159895f119b29a44eb3760cfda78506402a019729057dba69562af9d9f). The cited instructions of A/ACejUniv.v.
+## __interceptor_trampoline_malloc 0x540cc (one jump to ___interceptor_malloc 0x542a4)
+0x540cc	1d80006f	j	0x1d8
+## ___interceptor_malloc 0x542a4: frame record, then the call of StackTrace::GetCurrentPc 0x74b70 whose return 0x5436c is the trace start
+0x542a4	81010113	addi	sp, sp, -0x7f0
+0x542a8	7e113423	sd	ra, 0x7e8(sp)
+0x542ac	7e813023	sd	s0, 0x7e0(sp)
+0x542b0	7c913c23	sd	s1, 0x7d8(sp)
+0x542b4	7d213823	sd	s2, 0x7d0(sp)
+0x542b8	7d313423	sd	s3, 0x7c8(sp)
+0x542bc	7d413023	sd	s4, 0x7c0(sp)
+0x542c0	7b513c23	sd	s5, 0x7b8(sp)
+0x542c4	7f010413	addi	s0, sp, 0x7f0
+## ___interceptor_malloc, the GetCurrentPc call on the long branch
+0x54364	09c0006f	j	0x9c
+0x54368	009200ef	jal	0x20808
+0x5436c	0004d597	auipc	a1, 0x4d
+## text_of 0x87dc0: s0 := a1 (the caller's result slot)
+0x87e04	00058413	mv	s0, a1
+## text_of: the malloc call; its return address 0x87ff0 is the second trace element
+0x87fec	8e0cc0ef	jal	-0x33f20
+## LLVMFuzzerTestOneInput: the three calls of text_of, a1 = s1 + 0x130 / 0x128
+0x82e1c	11848513	addi	a0, s1, 0x118
+0x82e20	13048593	addi	a1, s1, 0x130
+0x82e24	79d040ef	jal	0x4f9c
+0x82e28	00050913	mv	s2, a0
+0x82e2c	11848513	addi	a0, s1, 0x118
+0x82e30	12848593	addi	a1, s1, 0x128
+0x82e34	78d040ef	jal	0x4f8c
+## LLVMFuzzerTestOneInput: third call
+0x837d0	11848513	addi	a0, s1, 0x118
+0x837d4	13048593	addi	a1, s1, 0x130
+0x837d8	5e8040ef	jal	0x45e8

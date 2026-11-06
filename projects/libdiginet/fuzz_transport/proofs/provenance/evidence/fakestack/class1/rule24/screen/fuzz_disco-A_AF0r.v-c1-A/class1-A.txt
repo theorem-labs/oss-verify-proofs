@@ -1,0 +1,4 @@
+donor: pinned sha256 5e39150dd810, twin sha256 ec656cf105cb, allocated sections equal (build-id note excepted): True
+target: pinned sha256 e89be137db17, twin sha256 86efc3a80314, allocated sections equal (build-id note excepted): True
+libreac/fuzz_disco at 9b0ac6f0e678, class 1, image A: 10 ranges paired and compared (bodies __asan_stack_malloc_1, __asan_stack_malloc_2); 5 resolve lines: 5 move a value (0x3dca4 -> 0x3dfc4, 0xa0500 -> 0xa4080, 0xa0560 -> 0xa40e0, 0xa11f0 -> 0xa4d70, 0xa1200 -> 0xa4d80), 0 name the image of a header range, the rest keep the value
+PASS

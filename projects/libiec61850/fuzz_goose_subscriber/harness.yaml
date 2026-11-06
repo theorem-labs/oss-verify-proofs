@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: libiec61850
 harness: fuzz_goose_subscriber
-rocq: OssFuzzTheorems.libiec61850.fuzz_goose_subscriber
+rocq: OSSVerify.libiec61850.fuzz_goose_subscriber
 origin: upstream
 summary: A threadless GooseReceiver with one subscriber (fixed MAC/AppId, empty listener) handles the
   input as a GOOSE Ethernet frame.

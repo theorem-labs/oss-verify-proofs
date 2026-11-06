@@ -1,0 +1,57 @@
+# The fuzz_transport.c citations the integration wrote with pre-re-pin line numbers, which source-citations.tsv
+# does not cover: that table read the files the re-pin base brought, and these lines are the integration's own prose
+# (the TSim files Sim*, the new files InitOk.v, LoopOk.v, TopOk.v, Wake*.v, and the slot / build_and_receive headers).
+# Map (source-citations.tsv line 5): old 1-917 stay; old 918-999 +9; old 1000-1007 become new 1009-1010; old >= 1008 +3.
+# old source: projects/libdiginet/fuzz_transport/source/fuzz_transport.c before the re-pin,
+#   sha256 044738ce0df1780d88ca48c2d17992c68bc339a8e3655b01779a289ffcfb6a06 (1215 lines), at 2ec5aadc14ee.
+# patched source: the same path in this tree, sha256 ae837185e62539c8a8fb9deb8f3aa2fbde60b2fe2f7f81110cd06e281761b6e7
+#   (1218 lines).
+# check: each new endpoint was read from the patched source; the column new_source_line is what it names.
+file	line	old	new	new_source_line	what the comment names
+lib/Prog/T/LLVMFuzzerTestOneInput_c.v	1	:1121-1215	:1124-1218	int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) | }	the whole function
+lib/U/Prog/T/LLVMFuzzerTestOneInput_c.v	1	:1121-1215	:1124-1218	int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) | }	the whole function
+lib/Prog/T/build_and_receive_c.v	1	:1024-1030	:1027-1033	static void build_and_receive(const uint8_t *dst, ... | receive(frame, n, 0, 0);	the whole function
+lib/U/Prog/T/build_and_receive_c.v	1	:1024-1030	:1027-1033	static void build_and_receive(const uint8_t *dst, ... | receive(frame, n, 0, 0);	the whole function
+lib/Spec/DgnLink.v	386	:1049-1063	:1052-1066	static void op_announce(struct fuzz_in *in) | build_and_receive(SPEC_BCAST, DESK, ...)	op_announce
+lib/Spec/DgnLink.v	390	:1028	:1031	size_t n = spec_build_frame(frame, dst, src, send, ack, retry, cmd, 1, body, len);	build_and_receive's spec_build_frame call
+lib/Spec/DgnLink.v	930	:1028	:1031	size_t n = spec_build_frame(frame, dst, src, send, ack, retry, cmd, 1, body, len);	the zero_sum = 1 argument
+lib/TSim/InitOk.v	2	:1121-1163	:1124-1166	int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) | abort();	the prologue
+lib/TSim/InitOk.v	2	:1165	:1168	for (int ops = 0; ops < OPS_MAX && in.n; ops++) {	the head of the loop
+lib/TSim/InitOk.v	3	:1130-1145	:1133-1148	uint8_t flags = fuzz_u8(&in); | g_cfg.max_body = SPEC_CMD_MAX + ...	the config read from the input
+lib/TSim/InitOk.v	4	:1147-1155	:1150-1158	g_raw = flags >> 3 & 1; | g_rx = NULL;	the scalars and the harness model M
+lib/TSim/InitOk.v	5	:1162	:1165	if (diginet_session_init(&g_s, &g_cfg, &io, notice, NULL) != SPEC_OK)	the init check whose abort is unreachable
+lib/TSim/InitOk.v	130	:1127-1128	:1130-1131	if (size >= FUZZ_INPUT_MAX) | return 0;	the input-size test
+lib/TSim/InitOk.v	138	:1130	:1133	uint8_t flags = fuzz_u8(&in);	the first read
+lib/TSim/InitOk.v	138	:1137-1145	:1140-1148	g_cfg.max_retries = fuzz_u8(&in) % 8; | g_cfg.max_body = ...	the other nine reads
+lib/TSim/InitOk.v	153	:1165	:1168	for (int ops = 0; ops < OPS_MAX && in.n; ops++) {	the loop
+lib/TSim/LoopOk.v	1	:1165-1213	:1168-1216	for (int ops = 0; ops < OPS_MAX && in.n; ops++) { | }	the loop
+lib/TSim/LoopOk.v	66	:1166-1212	:1169-1215	size_t n; | }	one operation
+lib/TSim/LoopOk.v	103	:1165	:1168	for (int ops = 0; ops < OPS_MAX && in.n; ops++) {	the loop
+lib/TSim/RxAck.v	13	:933-938	:942-947	if (GOT.n < TRANS_MAX) { | GOT.n++;	notice's N_STATE log write
+lib/TSim/RxAck.v	67	:938	:947	GOT.n++;	GOT.n++
+lib/TSim/RxAck.v	67	:943	:952	GOT.acked++;	GOT.acked++
+lib/TSim/RxAck.v	251	:933-938	:942-947	if (GOT.n < TRANS_MAX) { | GOT.n++;	notice's N_STATE log write
+lib/TSim/RxAck.v	299	:933-938	:942-947	if (GOT.n < TRANS_MAX) { | GOT.n++;	notice's N_STATE log write
+lib/TSim/RxAnn0.v	8	:933-937	:942-946	if (GOT.n < TRANS_MAX) { | }	notice's N_STATE log write
+lib/TSim/RxAnn0.v	77	:933-937	:942-946	if (GOT.n < TRANS_MAX) { | }	notice's N_STATE log write
+lib/TSim/RxAnn0.v	292	:933-937	:942-946	if (GOT.n < TRANS_MAX) { | }	notice's N_STATE log write
+lib/TSim/RxAnn0.v	438	:933-937	:942-946	if (GOT.n < TRANS_MAX) { | }	notice's N_STATE log write
+lib/TSim/RxE3.v	29	:933-934	:942-943	if (GOT.n < TRANS_MAX) { | GOT.t[GOT.n].state = n->state;	the log's bound and first write
+lib/TSim/RxE3.v	29	:938	:947	GOT.n++;	GOT.n++
+lib/TSim/RxE3.v	181	:933-938	:942-947	if (GOT.n < TRANS_MAX) { | GOT.n++;	notice's N_STATE log write
+lib/TSim/TopOk.v	2	:1121-1215	:1124-1218	int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) | }	the whole function
+lib/TSim/TopOk.v	16	:1165	:1168	for (int ops = 0; ops < OPS_MAX && in.n; ops++) {	the loop
+lib/TSim/WakeBase.v	2	:1190-1202	:1193-1205	case 5: { | settle(0);	operations 5 and 6
+lib/TSim/WakeBase.v	4	:971-982	:980-991	static void settle(int ticked) | }	settle
+lib/TSim/WakeBase.v	19	:1190-1202	:1193-1205	case 5: { | settle(0);	operations 5 and 6
+lib/TSim/WakeOk.v	2	:1190-1205	:1193-1208	case 5: { | break;	operations 5, 6 and 7
+lib/TSim/WakeOk.v	234	:928-940	:937-949	static void notice(void *ctx, const struct diginet_notice *n) | check_state_online();	notice up to the ONLINE check
+lib/TSim/WakeOk.v	422	:1203-1205	:1206-1208	case 7: | break;	operation 7
+lib/TSim/WakeOp5T.v	32	:932-938	:941-947	case N_STATE: | GOT.n++;	notice's N_STATE case
+lib/TSim/WakeOps.v	25	:1190-1196	:1193-1199	case 5: { | }	operation 5
+lib/TSim/WakeOps.v	49	:1197-1202	:1200-1205	case 6: | settle(0);	operation 6
+# Checked and left alone, because the integration already wrote them against the patched source: the TOps.v and
+# TCb.v model hunks (receive_m :995-1025, io_recv_m :918-928, notice_m :937-973, settle_m :980-991, the prologue
+# :1124-1168, the op cases :1171-1214), Agree.v, GI.v, RxBase.v, RxCore.v, RxData.v, RxOk.v, RxOp.v, RxOpLib.v,
+# SendOk.v, SimLib.v (op 7 :1206-1208), Submit*.v (op_submit :1068-1122, case 4 :1190-1192), Op3Ok.v (:1181-1189),
+# Links.v (:1027-1066), QueueFacts.v (:1097-1101) and the slot contracts' other citations.

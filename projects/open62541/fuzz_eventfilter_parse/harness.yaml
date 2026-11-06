@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: open62541
 harness: fuzz_eventfilter_parse
-rocq: OssFuzzTheorems.open62541.fuzz_eventfilter_parse
+rocq: OSSVerify.open62541.fuzz_eventfilter_parse
 origin: upstream
 summary: UA_EventFilter_parse (the textual event filter query language) on the input; filter cleared,
   nothing checked.

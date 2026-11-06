@@ -1,0 +1,39 @@
+# C = img/cgif_file_fuzzer.asan.debug sha256 488e39500746
+# CB = img/cgif_file_fuzzer.asan-ubsan.debug sha256 ce511d541cda
+# A = img/fuzz_command.asan.debug sha256 68db792d5fa7
+# B = img/fuzz_command.asan-ubsan.debug sha256 658cefbe806b
+# C-string rule ON (default)
+fn	pair	addr1	addr2	size1	size2	verdict	pcrel	real	unmeasured	targets(full-bytes-eq,got-value-or-tls-index-eq,cstr-eq)	target-differ	value/full-bytes/NAME-ONLY acceptances	C-string acceptances (also one CSTR row each)	differing targets printed (in target-differ, this row)	words-only
+__asan_memcpy	C:A	0x515dc	0x57630	1180	1180	EQUAL-mod-pcrel	22	0	0	(2, 0, 2)	0	full+0x3c0[0x103d8|0x103d8]=8 full+0x460[0x103d8|0x103d8]=8	0x26c@0x14adb|0x14b64=b'memcpy\x00' 0x294@0x14adb|0x14b64=b'memcpy\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	__asan_memcpy	C:A	0x26c	0x14adb	0x14b64	7	6d656d63707900	b'memcpy\x00'
+CSTR	__asan_memcpy	C:A	0x294	0x14adb	0x14b64	7	6d656d63707900	b'memcpy\x00'
+__asan_memcpy	C:B	0x515dc	0x5767c	1180	1180	EQUAL-mod-pcrel	22	0	0	(2, 0, 2)	0	full+0x3c0[0x103d8|0x103d8]=8 full+0x460[0x103d8|0x103d8]=8	0x26c@0x14adb|0x14b6c=b'memcpy\x00' 0x294@0x14adb|0x14b6c=b'memcpy\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	__asan_memcpy	C:B	0x26c	0x14adb	0x14b6c	7	6d656d63707900	b'memcpy\x00'
+CSTR	__asan_memcpy	C:B	0x294	0x14adb	0x14b6c	7	6d656d63707900	b'memcpy\x00'
+__asan_memcpy	CB:B	0x5160c	0x5767c	1180	1180	EQUAL-mod-pcrel	22	0	0	(2, 0, 2)	0	full+0x3c0[0x103d8|0x103d8]=8 full+0x460[0x103d8|0x103d8]=8	0x26c@0x14adb|0x14b6c=b'memcpy\x00' 0x294@0x14adb|0x14b6c=b'memcpy\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	__asan_memcpy	CB:B	0x26c	0x14adb	0x14b6c	7	6d656d63707900	b'memcpy\x00'
+CSTR	__asan_memcpy	CB:B	0x294	0x14adb	0x14b6c	7	6d656d63707900	b'memcpy\x00'
+__asan_region_is_poisoned	C:A	0x54158	0x5a1ac	836	836	EQUAL-mod-pcrel	26	0	0	(0, 0, 4)	0		0x30c@0x1f36c|0x1f5ad=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x310@0x202e9|0x20536=b'((beg)) < ((end))\x00' 0x32c@0x1f36c|0x1f5ad=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x330@0x153dc|0x1546d=b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	__asan_region_is_poisoned	C:A	0x30c	0x1f36c	0x1f5ad	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	C:A	0x310	0x202e9	0x20536	18	28286265672929203c202828656e64292900	b'((beg)) < ((end))\x00'
+CSTR	__asan_region_is_poisoned	C:A	0x32c	0x1f36c	0x1f5ad	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	C:A	0x330	0x153dc	0x1546d	78	28283020262620226d656d5f69735f7a65726f2072657475726e65642066616c73652c2062757420706f69736f6e6564206279746520776173206e6f7420666f756e6422292920213d2028302900	b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'
+__asan_region_is_poisoned	C:B	0x54158	0x5a1f8	836	836	EQUAL-mod-pcrel	26	0	0	(0, 0, 4)	0		0x30c@0x1f36c|0x1f5f3=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x310@0x202e9|0x2057c=b'((beg)) < ((end))\x00' 0x32c@0x1f36c|0x1f5f3=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x330@0x153dc|0x15475=b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	__asan_region_is_poisoned	C:B	0x30c	0x1f36c	0x1f5f3	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	C:B	0x310	0x202e9	0x2057c	18	28286265672929203c202828656e64292900	b'((beg)) < ((end))\x00'
+CSTR	__asan_region_is_poisoned	C:B	0x32c	0x1f36c	0x1f5f3	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	C:B	0x330	0x153dc	0x15475	78	28283020262620226d656d5f69735f7a65726f2072657475726e65642066616c73652c2062757420706f69736f6e6564206279746520776173206e6f7420666f756e6422292920213d2028302900	b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'
+__asan_region_is_poisoned	CB:B	0x54188	0x5a1f8	836	836	EQUAL-mod-pcrel	26	0	0	(0, 0, 4)	0		0x30c@0x1f32e|0x1f5f3=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x310@0x202ab|0x2057c=b'((beg)) < ((end))\x00' 0x32c@0x1f32e|0x1f5f3=b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00' 0x330@0x153dc|0x15475=b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'	printed 0 of 0 targets	EQUAL-mod-pcrel
+CSTR	__asan_region_is_poisoned	CB:B	0x30c	0x1f32e	0x1f5f3	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	CB:B	0x310	0x202ab	0x2057c	18	28286265672929203c202828656e64292900	b'((beg)) < ((end))\x00'
+CSTR	__asan_region_is_poisoned	CB:B	0x32c	0x1f32e	0x1f5f3	54	2f6c6c766d2d70726f6a6563742f636f6d70696c65722d72742f6c69622f6173616e2f6173616e5f706f69736f6e696e672e63707000	b'/llvm-project/compiler-rt/lib/asan/asan_poisoning.cpp\x00'
+CSTR	__asan_region_is_poisoned	CB:B	0x330	0x153dc	0x15475	78	28283020262620226d656d5f69735f7a65726f2072657475726e65642066616c73652c2062757420706f69736f6e6564206279746520776173206e6f7420666f756e6422292920213d2028302900	b'((0 && "mem_is_zero returned false, but poisoned byte was not found")) != (0)\x00'
+memcpy	C:A	0x97294	0x9eb3c	1028	1028	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+memcpy	C:B	0x97294	0x9e698	1028	1028	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+memcpy	CB:B	0x97508	0x9e698	1028	1028	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+__asan_memset	C:A	0x51a78	0x57acc	576	576	EQUAL-mod-pcrel	10	0	0	(1, 0, 0)	0	full+0x204[0x103d8|0x103d8]=8		printed 0 of 0 targets	EQUAL-mod-pcrel
+__asan_memset	C:B	0x51a78	0x57b18	576	576	EQUAL-mod-pcrel	10	0	0	(1, 0, 0)	0	full+0x204[0x103d8|0x103d8]=8		printed 0 of 0 targets	EQUAL-mod-pcrel
+__asan_memset	CB:B	0x51aa8	0x57b18	576	576	EQUAL-mod-pcrel	10	0	0	(1, 0, 0)	0	full+0x204[0x103d8|0x103d8]=8		printed 0 of 0 targets	EQUAL-mod-pcrel
+memset	C:A	0x97698	0x9ef40	248	248	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+memset	C:B	0x97698	0x9ea9c	248	248	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL
+memset	CB:B	0x9790c	0x9ea9c	248	248	EQUAL	0	0	0	(0, 0, 0)	0			printed 0 of 0 targets	EQUAL

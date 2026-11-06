@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: icu
 harness: unicodeset_fuzzer
-rocq: OssFuzzTheorems.icu.unicodeset_fuzzer
+rocq: OSSVerify.icu.unicodeset_fuzzer
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

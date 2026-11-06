@@ -1,0 +1,2 @@
+__intscan	X 0x8f7d0 Y 0x95c04 size 1496	lo12 pairs 7 (in differing words 7)	target differs 1	unpaired differing words 0	['table rel4-str 10 entries (bound check)', 'table+0x0']
+   DIFF +0x4c8 table rel4-str 10 entries (bound check)

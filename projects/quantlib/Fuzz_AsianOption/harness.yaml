@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: quantlib
 harness: Fuzz_AsianOption
-rocq: OssFuzzTheorems.quantlib.Fuzz_AsianOption
+rocq: OSSVerify.quantlib.Fuzz_AsianOption
 origin: upstream
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

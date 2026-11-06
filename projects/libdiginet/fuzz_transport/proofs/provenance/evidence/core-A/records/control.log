@@ -1,0 +1,18 @@
+alreloc_plant.py: got-offset A/AB1w.v:572 tok 0 0xa4080 -> 0xa4088 (the next .got cell (the two tables align by offset here, so the offset cell is the content cell))
+alreloc_plant.py: model-const Reusable/YA01.v:716 tok 1 0x20112D -> 0x208fed (a model constant moved as an address (alreloc rule symbol))
+alreloc_plant.py: address A/AB1w.v:580 tok 0 0xa5dc8 -> 0xa5dd0 (symbol + offset off by 8)
+alreloc_plant.py: donor-value A/AE3m.v:35 tok 0 0x614200 -> 0x5f81e0 (a relocated address written back to the donor's value)
+alreloc_plant.py: decimal-address A/AD1f.v:209 tok 4 6316032 -> 6316036 (a decimal address off by 4)
+alreloc_plant.py: rodata-const A/AE2k.v:37 tok 0 0x103b0 -> 0x103a0 (a moved .rodata constant written back at the donor's address (other bytes there in the target))
+alreloc_plant.py: region-split A/AD2f.v:202 tok 2 4 -> 3 (an IMG_B_eq count written back as the donor's)
+alreloc_plant.py: czone A/AFhn.v:420 tok 5 0x800b9c00 -> 0x80050000 (the CZONE bound written back as the donor's)
+CAUGHT got-offset A/AB1w.v:572 tok 0: 0xa4080 -> 0xa4088: port_core WRONG: right value 0xa4080
+CAUGHT model-const Reusable/YA01.v:716 tok 1: 0x20112D -> 0x208fed: port_core WRONG: right value 0x20112D (a constant, unchanged)
+CAUGHT address A/AB1w.v:580 tok 0: 0xa5dc8 -> 0xa5dd0: port_core WRONG: right value 0xa5dc8
+CAUGHT donor-value A/AE3m.v:35 tok 0: 0x614200 -> 0x5f81e0: port_core WRONG: right value 0x614200
+CAUGHT decimal-address A/AD1f.v:209 tok 4: 6316032 -> 6316036: port_core WRONG: right value 6316032
+CAUGHT rodata-const A/AE2k.v:37 tok 0: 0x103b0 -> 0x103a0: port_core WRONG: right value 0x103b0
+CAUGHT region-split A/AD2f.v:202 tok 2: 4 -> 3: port_core WRONG: right value 4
+CAUGHT czone A/AFhn.v:420 tok 5: 0x800b9c00 -> 0x80050000: port_core WRONG: the bound must be >= 0x800b663c and <= 0x800b9c00
+controls: 8 planted, 8 caught, 0 other rows changed; decide status 1 (1 = WRONG rows reported)
+control rc=0 245s

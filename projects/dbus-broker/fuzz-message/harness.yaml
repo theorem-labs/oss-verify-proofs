@@ -1,7 +1,7 @@
 schema: oss-fuzz-theorems/harness/1
 project: dbus-broker
 harness: fuzz-message
-rocq: OssFuzzTheorems.dbus_broker.fuzz_message
+rocq: OSSVerify.dbus_broker.fuzz_message
 origin: oss-fuzz
 summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
 entry: LLVMFuzzerTestOneInput

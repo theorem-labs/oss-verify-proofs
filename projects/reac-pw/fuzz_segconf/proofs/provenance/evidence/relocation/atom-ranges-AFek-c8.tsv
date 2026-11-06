@@ -1,0 +1,15 @@
+# AFek.v DF_fixed atom ranges (lib/A/AFek.v:32-36) against this unit's own stated ranges on commit 8's tree (AFem.v with TOT_range at 634912, kit files); both ends and the alignment per atom, with the bound lemma's file:line. AFem.v proves atoms_ok E0 DF_fixed (its AFo chain, :390-407), so each fact is a goal there and the build checks it.
+# atom	lo	hi	al2 (2^al2)	stated range of the quantity	bound lemma file:line	verdict
+2 (sp)	kHighMemBeg + DEP_STK = 0x10007fff8200	kHighMemEnd = 0x800000000000	4 (16)	0x10007fff8000 + 512 <= sp <= kHighMemEnd, sp mod 16 = 0	lo/hi/al: AFem.v:189 zone_facts (with DEP_STK := 512 AFl0.v:60; kHighMemBeg / kHighMemEnd lib/Reusable/YG0f.v:13-14)	OK
+10 (buf)	kHighMemBeg = 0x10007fff8000	kHighMemEnd - 240	3 (8)	kHighMemBeg <= buf, buf + 240 <= kHighMemEnd, buf mod 8 = 0	lo/hi/al: AFem.v:189 zone_facts	OK
+11 (length tr)	1	30	0	1 <= length tr, length tr <= 30	lo: the entry-phase premise (AFem.v, phase lemma); hi: AFem.v:111 tr_len	OK
+aNB 32	4096	CEIL_MAX - kNodesBlockSize	12 (4096)	4096 <= NB, NB + kNodesBlockSize <= CEIL_MAX, NB mod 4096 = 0	lo/hi/al: AFem.v:135 blocks_facts (CEIL_MAX lib/CJ/Lib/Ceil.v; kNodesBlockSize YG0f.v:33)	OK
+aSB 33	4096	CEIL_MAX - kStoreBlockSize	12 (4096)	4096 <= SB, SB + kStoreBlockSize <= CEIL_MAX, SB mod 4096 = 0	lo/hi/al: AFem.v:135 blocks_facts (kStoreBlockSize YG0f.v:34)	OK
+aTOT 34	2	634974	0	2 <= TOT <= 634912	lo/hi: AFem.v:117 TOT_range (goal, now 634912; DEPOT_CAP 20480 at lib/Reusable/YG01.v:151); the atom denotes TOT (EaTOT AFem.v:214); discharged at AFem.v:397	OK (lo exact; hi 634974 >= 634912: true but weaker, the donor's byte-equal value)
+aN 35	1	20481	0	1 <= nD <= 20481	lo/hi: AFem.v:113 nD_range (nD = 1 + length d, length d <= DEPOT_CAP: YG01.v:176)	OK (both ends exact)
+aHASH 36	0	2^64 - 1 (u64f)	0	0 <= HSH < 2^64	lo/hi: AFem.v:123 HSH_range	OK
+aS2 37	TFIB_DEPOT = 0x18ded8	TFIB_DEPOT + 4 * 2^20 - 4	2 (4)	S2 := TFIB_DEPOT + 4 * bkt (AFem.v:89), 0 <= bkt < 2^20, TFIB_DEPOT mod 4 = 0	lo/hi: AFem.v:125 bkt_range with AFem.v:89; al: TFIB_DEPOT (AF0m.v:17, 0x18ded8 mod 4 = 0)	OK
+aHD 38	0	20481	0	0 <= HDv <= nD <= 20481	lo/hi: AFem.v:127 HDv_range, AFem.v:113 nD_range	OK
+aSTD 39	0	2^32 - 1	0	0 <= STD < 2^32	lo/hi: AFem.v:129 STD_range	OK
+aNDN 40	4096	CEIL_MAX	4 (16)	NDN := NB + 16 * (nD + 1) (AFem.v:92) <= CEIL_MAX - 0x100000 + 327712	lo/hi/al: AFem.v:92 with AFem.v:135 blocks_facts and AFem.v:113	OK
+aSLOT 41	4096	CEIL_MAX	3 (8)	SLOT := SB + 8 * TOT (AFem.v:93) <= CEIL_MAX - 0x800000 + 8 * 634912	lo/hi/al: AFem.v:93 with AFem.v:135 blocks_facts and AFem.v:117	OK

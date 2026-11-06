@@ -1,0 +1,51 @@
+file	line	verdict	kind	src	dst	src_res	dst_res	note
+YCej.v	16	DIFFERENT-SYMBOL	hex	0x52a9c	0x536f8	___interceptor_free+0x138[code]	___interceptor_malloc+0xc8	the source symbol is elsewhere in the target; expected 0x53598
+YCej.v	16	DIFFERENT-SYMBOL	hex	0x800ec	0x80b70	main+0xcc[code]	main+0x54	same symbol main, offset 0xcc vs 0x54; expected 0x80be8
+YCej.v	17	DIFFERENT-SYMBOL	hex	0x52a9c	0x536f8	___interceptor_free+0x138[code]	___interceptor_malloc+0xc8	the source symbol is elsewhere in the target; expected 0x53598
+YCej.v	17	DIFFERENT-SYMBOL	hex	0x8021c	0x80bc4	main+0x1fc[code]	main+0xa8	same symbol main, offset 0x1fc vs 0xa8; expected 0x80d18
+YCej.v	18	DIFFERENT-SYMBOL	hex	0x52bfc	0x53598	___interceptor_malloc+0xc8[code]	___interceptor_free+0x138	the source symbol is elsewhere in the target; expected 0x536f8
+YCej.v	18	DIFFERENT-SYMBOL	hex	0x80074	0x80be8	main+0x54[code]	main+0xcc	same symbol main, offset 0x54 vs 0xcc; expected 0x80b70
+YCej.v	19	DIFFERENT-SYMBOL	hex	0x52bfc	0x53598	___interceptor_malloc+0xc8[code]	___interceptor_free+0x138	the source symbol is elsewhere in the target; expected 0x536f8
+YCej.v	19	DIFFERENT-SYMBOL	hex	0x800c8	0x80d18	main+0xa8[code]	main+0x1fc	same symbol main, offset 0xa8 vs 0x1fc; expected 0x80bc4
+YCej.v	27	DIFFERENT-SYMBOL	hex	0x52a9c	0x536f8	___interceptor_free+0x138[code]	___interceptor_malloc+0xc8	the source symbol is elsewhere in the target; expected 0x53598
+YCej.v	27	DIFFERENT-SYMBOL	hex	0x803e8	0x80e50	target_run+0xf8[code]	target_run+0x64	same symbol target_run, offset 0xf8 vs 0x64; expected 0x80ee4
+YCej.v	28	DIFFERENT-SYMBOL	hex	0x52bfc	0x53598	___interceptor_malloc+0xc8[code]	___interceptor_free+0x138	the source symbol is elsewhere in the target; expected 0x536f8
+YCej.v	28	DIFFERENT-SYMBOL	hex	0x80354	0x80ee4	target_run+0x64[code]	target_run+0xf8	same symbol target_run, offset 0x64 vs 0xf8; expected 0x80e50
+YCej.v	34	DIFFERENT-SYMBOL	hex	0x52a9c	0x536f8	___interceptor_free+0x138[code]	___interceptor_malloc+0xc8	the source symbol is elsewhere in the target; expected 0x53598
+YCej.v	37	DIFFERENT-SYMBOL	hex	0x52a9c	0x536f8	___interceptor_free+0x138[code]	___interceptor_malloc+0xc8	the source symbol is elsewhere in the target; expected 0x53598
+YCej.v	38	DIFFERENT-SYMBOL	hex	0x52a9c	0x536f8	___interceptor_free+0x138[code]	___interceptor_malloc+0xc8	the source symbol is elsewhere in the target; expected 0x53598
+YCej.v	39	DIFFERENT-SYMBOL	hex	0x52a9c	0x536f8	___interceptor_free+0x138[code]	___interceptor_malloc+0xc8	the source symbol is elsewhere in the target; expected 0x53598
+YCej.v	44	DIFFERENT-SYMBOL	hex	0x52bfc	0x53598	___interceptor_malloc+0xc8[code]	___interceptor_free+0x138	the source symbol is elsewhere in the target; expected 0x536f8
+YCej.v	45	DIFFERENT-SYMBOL	hex	0x52bfc	0x53598	___interceptor_malloc+0xc8[code]	___interceptor_free+0x138	the source symbol is elsewhere in the target; expected 0x536f8
+YD1f.v	122	DIFFERENT-SYMBOL	hex	0xbd600	0xbdc00	__sanitizer::internal_alloc_placeholder+0x16180[data]	__sanitizer::internal_alloc_placeholder+0x13580	same symbol __sanitizer::internal_alloc_placeholder, offset 0x16180 vs 0x13580; expected 0xc0800
+YD1f.v	128	DIFFERENT-SYMBOL	hex	0xbd600	0xbdc00	__sanitizer::internal_alloc_placeholder+0x16180[data]	__sanitizer::internal_alloc_placeholder+0x13580	same symbol __sanitizer::internal_alloc_placeholder, offset 0x16180 vs 0x13580; expected 0xc0800
+YD1k.v	218	DIFFERENT-SYMBOL	hex	0x20dc0	0x20f80	str:"/tmp/out.gif"	.str+0x0; str:"%02x:%02x:%02x:%02x:%02x:%02x"	
+YD1k.v	219	DIFFERENT-SYMBOL	hex	0x20dc0	0x20f80	str:"/tmp/out.gif"	.str+0x0; str:"%02x:%02x:%02x:%02x:%02x:%02x"	
+YD1k.v	250	DIFFERENT-SYMBOL	dec	0x10310	0x10310	XREF(__secs_to_tm+0x5c)	XREF(reac_rate_snap+0x8)	value unchanged (a copied literal?); expected 0x10320
+YD1k.v	251	DIFFERENT-SYMBOL	dec	0x10330	0x10330	XREF(fmt_fp+0xd50)	XREF(__sanitizer::internal_atoll+0x70, __sanitizer::internal_simple_strtoll::_+0	value unchanged (a copied literal?); expected 0x10348
+YD1k.v	253	DIFFERENT-SYMBOL	dec	0x103c0	0x103c0	XREF(frexpl+0x48)	XREF(scalbn+0x44)	value unchanged (a copied literal?); expected 0x103e0
+YD1k.v	268	DIFFERENT-SYMBOL	dec	0x10330	0x10330	XREF(fmt_fp+0xd50)	XREF(__sanitizer::internal_atoll+0x70, __sanitizer::internal_simple_strtoll::_+0	value unchanged (a copied literal?); expected 0x10348
+YD2i.v	57	KIND-CHANGED	dec	0x10800	0x10800	decimal literal; in range: str:"CDROMREADTOCENTRY"+3	__global_pointer$+0x0; str:"In either case this is likely an ODR vio"+47	
+YD2j.v	16	DIFFERENT-SYMBOL	dec	0x10310	0x10310	XREF(__secs_to_tm+0x5c)	XREF(reac_rate_snap+0x8)	value unchanged (a copied literal?); expected 0x10320
+YD2j.v	17	DIFFERENT-SYMBOL	dec	0x10310	0x10310	XREF(__secs_to_tm+0x5c)	XREF(reac_rate_snap+0x8)	value unchanged (a copied literal?); expected 0x10320
+YD2j.v	19	DIFFERENT-SYMBOL	dec	0x10330	0x10330	XREF(fmt_fp+0xd50)	XREF(__sanitizer::internal_atoll+0x70, __sanitizer::internal_simple_strtoll::_+0	value unchanged (a copied literal?); expected 0x10348
+YD2j.v	20	DIFFERENT-SYMBOL	dec	0x10330	0x10330	XREF(fmt_fp+0xd50)	XREF(__sanitizer::internal_atoll+0x70, __sanitizer::internal_simple_strtoll::_+0	value unchanged (a copied literal?); expected 0x10348
+YD2j.v	25	DIFFERENT-SYMBOL	dec	0x103c0	0x103c0	XREF(frexpl+0x48)	XREF(scalbn+0x44)	value unchanged (a copied literal?); expected 0x103e0
+YD2j.v	26	DIFFERENT-SYMBOL	dec	0x103c0	0x103c0	XREF(frexpl+0x48)	XREF(scalbn+0x44)	value unchanged (a copied literal?); expected 0x103e0
+YD2j.v	79	KIND-CHANGED	dec	0xa2bc9	0xa2bc9	end of __do_init.__initialized	decimal literal; in range: __sanitizer::report_file+0x461	value unchanged (a copied literal?); 
+YD2j.v	87	KIND-CHANGED	dec	0x5d88d5	0x5d88d5	end of oft_in_callback	decimal literal; in range: read_stage+0xce05	value unchanged (a copied literal?); 
+YD2j.v	112	KIND-CHANGED	dec	0x9cc70	0x9cc70	BND(load1.memhi,load1.filehi,tls.lo,.text.hi)	decimal literal; in range: __vdsosym+0xcc	value unchanged (a copied literal?); 
+YD2j.v	119	KIND-CHANGED	dec	0x5f9268	0x5f9268	slot+0x0[data]; end of lock	decimal literal; in range: builtin_tls+0x1cf20	value unchanged (a copied literal?); 
+YD2j.v	120	KIND-CHANGED	dec	0x5f926c	0x5f926c	end of slot	decimal literal; in range: builtin_tls+0x1cf24	value unchanged (a copied literal?); 
+YD2j.v	121	KIND-CHANGED	dec	0x5f9270	0x5f9270	head+0x0[data]	decimal literal; in range: builtin_tls+0x1cf28	value unchanged (a copied literal?); 
+YD2j.v	121	KIND-CHANGED	dec	0x5f9278	0x5f9278	builtin+0x0[data]; end of head	decimal literal; in range: builtin_tls+0x1cf30	value unchanged (a copied literal?); 
+YD2j.v	122	KIND-CHANGED	dec	0x5f9278	0x5f9278	builtin+0x0[data]; end of head	decimal literal; in range: builtin_tls+0x1cf30	value unchanged (a copied literal?); 
+YD2j.v	125	STALE-DONOR-CODE-POINTER	dec	0x6fa80	0x6fa80	__sanitizer_cov_dump+0x0[code]; end of __sanitizer::InitializeCoverage	__sanitizer::TracerThread+0x0; end of __sanitizer::StopTheWorld::SuspendedThread	value unchanged (a copied literal?); donor function start __sanitizer_cov_dump; the port value is __sanitizer::TracerThr
+YD2j.v	140	KIND-CHANGED	dec	0x5fa168	0x5fa168	funcs+0x0[data]	decimal literal; in range: builtin_tls+0x1de20	value unchanged (a copied literal?); 
+YD2j.v	143	KIND-CHANGED	dec	0x5fa170	0x5fa170	tl_lock_count+0x0[data]; end of funcs	decimal literal; in range: builtin_tls+0x1de28	value unchanged (a copied literal?); 
+YD2j.v	144	KIND-CHANGED	dec	0x5fa170	0x5fa170	tl_lock_count+0x0[data]; end of funcs	decimal literal; in range: builtin_tls+0x1de28	value unchanged (a copied literal?); 
+YD2j.v	145	STALE-DONOR-CODE-POINTER	dec	0x549e8	0x549e8	__asan::PlatformTSDDtor+0x0[code]; end of __asan::AsanTSDSet	decimal literal; in range: __asan_poison_memory_region+0xb4	value unchanged (a copied literal?); donor function start __asan::PlatformTSDDtor; the port value is __asan_poison_memor
+YD2j.v	148	KIND-CHANGED	dec	0x5fa57c	0x5fa57c	end of next_key	decimal literal; in range: builtin_tls+0x1e234	value unchanged (a copied literal?); 
+YE22.v	13	DIFFERENT-SYMBOL	hex	0x9eea8	0x9eea8	GOT[__stack_chk_guard+0x0]; XREF(__dl_seterr+0x1c, __dl_vseterr+0x24, __fdopen+0	__strftime_l+0x138	value unchanged (a copied literal?); expected 0xa1538
+YE2k.v	28	DIFFERENT-SYMBOL	hex	0x200e6	0x200e6	XREF(__fdopen+0x38, fdopen+0x38, fopen+0x24); str:"rwa"	str:"/llvm-project/compiler-rt/lib/sanitizer_"+42	value unchanged (a copied literal?); 
+YE37.v	163	DIFFERENT-SYMBOL	hex	0x8000c55c	0x8000c55c	shadow(BND(.data.hi,asan_globals.lo); end of old_tz_size)	shadow(__sanitizer::report_file+0x378)	value unchanged (a copied literal?); 

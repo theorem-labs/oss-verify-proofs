@@ -1,0 +1,59 @@
+two.unstripped:	file format elf64-littleriscv
+
+.debug_line contents:
+debug_line[0x00000000]
+Line table prologue:
+    total_length: 0x000000f2
+          format: DWARF32
+         version: 5
+    address_size: 8
+ seg_select_size: 0
+ prologue_length: 0x00000037
+ min_inst_length: 1
+max_ops_per_inst: 1
+ default_is_stmt: 1
+       line_base: -5
+      line_range: 14
+     opcode_base: 13
+standard_opcode_lengths[DW_LNS_copy] = 0
+standard_opcode_lengths[DW_LNS_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_advance_line] = 1
+standard_opcode_lengths[DW_LNS_set_file] = 1
+standard_opcode_lengths[DW_LNS_set_column] = 1
+standard_opcode_lengths[DW_LNS_negate_stmt] = 0
+standard_opcode_lengths[DW_LNS_set_basic_block] = 0
+standard_opcode_lengths[DW_LNS_const_add_pc] = 0
+standard_opcode_lengths[DW_LNS_fixed_advance_pc] = 1
+standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
+standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
+standard_opcode_lengths[DW_LNS_set_isa] = 1
+include_directories[  0] = "/src"
+file_names[  0]:
+           name: "two.c"
+      dir_index: 0
+   md5_checksum: 93e0f8a787e4b6055f838049ac829b39
+
+Address            Line   Column File   ISA Discriminator OpIndex Flags
+------------------ ------ ------ ------ --- ------------- ------- -------------
+0x00000000000112a8     12      0      0   0             0       0  is_stmt
+0x00000000000112bc     14      5      0   0             0       0  is_stmt prologue_end
+0x00000000000112c0      0      5      0   0             0       0 
+0x00000000000112cc     15     15      0   0             0       0  is_stmt
+0x00000000000112d4     18     15      0   0             0       0  is_stmt
+0x00000000000112d8      0     15      0   0             0       0 
+0x00000000000112dc     16     18      0   0             0       0  is_stmt
+0x00000000000112e4     16     15      0   0             0       0 
+0x00000000000112e8     14     29      0   0             0       0  is_stmt
+0x00000000000112ec     14      5      0   0             0       0 
+0x00000000000112f4      0      5      0   0             0       0 
+0x00000000000112f8     20      5      0   0             0       0  is_stmt
+0x00000000000112fc     20      5      0   0             0       0  epilogue_begin
+0x0000000000011314     20      5      0   0             0       0  end_sequence
+0x0000000000011314     25     12      0   0             0       0  is_stmt prologue_end
+0x0000000000011320     25     20      0   0             0       0 
+0x0000000000011324     25     25      0   0             0       0 
+0x0000000000011330     25      5      0   0             0       0 
+0x0000000000011334      0      5      0   0             0       0 
+0x0000000000011338     25      5      0   0             0       0 
+0x000000000001133c     25      5      0   0             0       0  end_sequence
+
