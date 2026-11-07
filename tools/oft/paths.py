@@ -107,6 +107,11 @@ TABLE = [
     # the review of each pull request and new issue of the public repository by Claude (review.yml runs there alone),
     # and its rules in docs/review.md
     ("hand", ".github/workflows/review.yml"),
+    # the pin coherence of the public repository: a moved binary pin must move the statements about that binary,
+    # which is decidable from the tree because tools/oft/facts.py puts `build <name> <sha256>` into each statement's
+    # fingerprint.  The workflow's own header carries the rule in one sentence, and what it cannot decide
+    ("hand", ".github/workflows/pin-coherence.yml"),
+    ("hand", ".github/guards/pin_coherence.py"),
     # what an agent reads first, and the instructions it follows to add a proof
     ("hand", "AGENTS.md"),
     ("hand", ".claude/skills/adding-a-proof/SKILL.md"),
