@@ -45,7 +45,16 @@ import re
 import subprocess
 import sys
 
+# A statement FILE: `Statements.v` that is not inside a proof or counterexample tree. A
+# cross-model audit put a changed proof body in `projects/p/h/proofs/Statements.v` and this
+# check fired on it, which is the one thing it must never do.
 STATEMENTS_V = re.compile(r"(?:^|/)Statements\.v$")
+NOT_A_STATEMENT_FILE = re.compile(r"(?:^|/)(proofs|counterexamples)/")
+# A proof script inside a watched file. A `Statements.v` of this repository holds none -- its
+# own header says "this file changes only when a statement does" -- but if one ever does, the
+# proof in it is still a proof body and still needs no human.
+PROOF_OPEN = re.compile(r"^\s*(Proof|Next Obligation)\b")
+PROOF_CLOSE = re.compile(r"^\s*(Qed|Defined|Admitted|Abort)\s*\.")
 INDEX = "index/statements.tsv"
 # The columns of a statements row that say what is ASSERTED. `detail`, `revision`, `fingerprint`
 # and `proof` are bookkeeping: they record how a claim was checked, not what the claim is.
@@ -104,7 +113,18 @@ def meaningful(text):
     """A file's lines with blank ones dropped, for comparing text. Whitespace at the end of a line
     is dropped too; nothing else is normalised. A comment IS part of a statement -- it is what says
     what the theorem means -- so comments are compared like any other line."""
-    return [ln.rstrip() for ln in (text or "").split("\n") if ln.strip()]
+    out, in_proof = [], False
+    for line in (text or "").split("\n"):
+        if not line.strip():
+            continue
+        if in_proof:
+            in_proof = PROOF_CLOSE.match(line) is None
+            continue
+        if PROOF_OPEN.match(line):
+            in_proof = PROOF_CLOSE.search(line) is None
+            continue
+        out.append(line.rstrip())
+    return out
 
 
 def watched_changes(base, head, read=blob, changed=None):
@@ -127,7 +147,7 @@ def watched_changes(base, head, read=blob, changed=None):
 
     texts = []
     for path in sorted(changed):
-        if not STATEMENTS_V.search(path):
+        if not STATEMENTS_V.search(path) or NOT_A_STATEMENT_FILE.search(path):
             continue
         before, after = meaningful(read(base, path)), meaningful(read(head, path))
         if before == after:
@@ -180,7 +200,7 @@ FIXTURES = (
     ("a status flipped from open to proved",
      {INDEX: HEADER + "\n" + ROW % ("open", "aa")},
      {INDEX: HEADER + "\n" + ROW % ("proved", "aa")}, True),
-    ("a reading weakened from budget to may-fail",
+    ("a reading changed from may-fail to budget",
      {INDEX: HEADER + "\n" + ROW % ("open", "aa")},
      {INDEX: HEADER + "\n" + ROW.replace("may-fail", "budget") % ("open", "aa")}, True),
     ("a statement row removed",
@@ -196,6 +216,12 @@ FIXTURES = (
     # above.
     ("a proof body changed", {"projects/p/h/proofs/lib/A/Pf.v": "Proof. lia. Qed.\n"},
      {"projects/p/h/proofs/lib/A/Pf.v": "Proof. now lia. Qed.\n"}, False),
+    ("a Statements.v inside a proofs/ tree changed, which is a proof file",
+     {"projects/p/h/proofs/Statements.v": "Proof. lia. Qed.\n"},
+     {"projects/p/h/proofs/Statements.v": "Proof. now lia. Qed.\n"}, False),
+    ("a proof block inside a watched Statements.v changed",
+     {"projects/p/h/Statements.v": "Theorem t : True.\nProof. exact I. Qed.\n"},
+     {"projects/p/h/Statements.v": "Theorem t : True.\nProof. now exact I. Qed.\n"}, False),
     ("a proof file named Statements_proof.v changed",
      {"projects/p/h/proofs/Statements_proof.v": "Proof. lia. Qed.\n"},
      {"projects/p/h/proofs/Statements_proof.v": "Proof. now lia. Qed.\n"}, False),
