@@ -12,6 +12,14 @@ Require OSSVerify.Proofs.openssl.hashtable.lib.H0Chk.H0LeafTail.
 Require OSSVerify.Proofs.openssl.hashtable.lib.HAI.HARefusedClosed.
 Require OSSVerify.Proofs.openssl.hashtable.lib.Rows.HTHfTopA.
 Require OSSVerify.Proofs.openssl.hashtable.lib.Rows.RowsHtAsanClosed.
+Require OSSVerify.Proofs.openssl.hashtable.lib.Rows.HtHaltsLib.
+Require OSSVerify.Proofs.openssl.hashtable.lib.Rows.HTHfTopU.
+Require OSSVerify.Proofs.openssl.hashtable.lib.Rows.RowsHtUbsan.
+Require OSSVerify.Proofs.openssl.hashtable.lib.HUChk.HULeafTail.
+Require OSSVerify.Proofs.openssl.hashtable.lib.KitTop.SpecGen.
+Require OSSVerify.Proofs.openssl.hashtable.lib.HBI.HBRefusedClosed.
+Require OSSVerify.Proofs.openssl.hashtable.lib.Rows.HTHfTopB.
+Require OSSVerify.Proofs.openssl.hashtable.lib.Rows.RowsHtBothClosed.
 Import ListNotations.
 
 Definition accept_segment : Segment := {|
@@ -99,3 +107,65 @@ Proof. exact (disagrees_at_most_0 _ _ _ _ _ asan_base). Qed.
 
 Theorem asan_decidable : OSSVerify.openssl.hashtable.Statements.asan_agreement_decidable.
 Proof. exact (agreement_decidable_of_base _ _ _ asan_base). Qed.
+
+(* The UBSan side: the plain build's shapes at any budget of H0Lim.LIM or more (HTHfTopA.full_p16, at the
+   shipped 16 GiB) and the UBSan build's at any budget of HULim.LIM or more (RowsHtUbsan.hu_full_of_leaves, at
+   the shipped 512 GiB) meet in one trace set, so the pair agrees at the pinned budgets with no budget premise. *)
+Lemma ubsan_base :
+  strong_universal_error_free_T_scfg Env.alloc_forced_only
+    OSSVerify.openssl.hashtable.Images.plain
+    OSSVerify.openssl.hashtable.Images.ubsan.
+Proof.
+  exact (OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg.ShapeCfg.shape_cfg_universal_pinned
+           OSSVerify.Proofs.openssl.hashtable.lib.KitCfg.ConeCfg.CFG
+           OSSVerify.openssl.hashtable.Images.plain OSSVerify.openssl.hashtable.Images.ubsan
+           (fun en_s en_t inp Hs Ht Hv =>
+              ex_intro _
+                (OSSVerify.Proofs.openssl.hashtable.lib.KitTop.SpecGen.spec_g
+                   OSSVerify.Proofs.openssl.hashtable.lib.T.hashtable.HTSpec.t_target_ht (in_argv inp) (in_fs inp))
+                (conj
+                   (OSSVerify.Proofs.openssl.hashtable.lib.Rows.HtHaltsLib.full_stmt_init_cfg _ _ _ _ en_s inp
+                      (OSSVerify.Proofs.openssl.hashtable.lib.Rows.HTHfTopA.full_p16
+                         OSSVerify.Proofs.openssl.hashtable.lib.T.hashtable.HTSpec.t_target_ht
+                         OSSVerify.Proofs.openssl.hashtable.lib.H0Chk.H0LeafTail.h0_leaf_tail)
+                      Hs Hv)
+                   (OSSVerify.Proofs.openssl.hashtable.lib.Rows.HtHaltsLib.full_stmt_init_cfg _ _ _ _ en_t inp
+                      (OSSVerify.Proofs.openssl.hashtable.lib.Rows.RowsHtUbsan.hu_full_of_leaves
+                         OSSVerify.Proofs.openssl.hashtable.lib.HUChk.HULeafTail.h0_leaf_tail
+                         target_alloc_limit OSSVerify.Proofs.openssl.hashtable.lib.Rows.HTHfTopU.u_lim_shp)
+                      Ht Hv))))).
+Qed.
+
+(* The ASan+UBSan side: as asan_base, with that build's leaves (HBI, Rows.RowsHtBothClosed, Rows.HTHfTopB). *)
+Lemma asan_ubsan_base :
+  strong_universal_error_free_T_scfg Env.alloc_forced_only
+    OSSVerify.openssl.hashtable.Images.plain
+    OSSVerify.openssl.hashtable.Images.asan_ubsan.
+Proof.
+  exact (OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg.ShapeCfg.shape_cfg_universal_pinned
+           OSSVerify.Proofs.openssl.hashtable.lib.KitCfg.ConeCfg.CFG
+           OSSVerify.openssl.hashtable.Images.plain OSSVerify.openssl.hashtable.Images.asan_ubsan
+           (fun en_s en_t inp Hs Ht Hv =>
+              OSSVerify.Proofs.openssl.hashtable.lib.Rows.HTHfTopB.hf_shapes_at
+                OSSVerify.Proofs.openssl.hashtable.lib.T.hashtable.HTSpec.t_target_ht
+                OSSVerify.Proofs.openssl.hashtable.lib.H0Chk.H0LeafTail.h0_leaf_tail
+                (OSSVerify.Proofs.openssl.hashtable.lib.HBI.HBRefusedClosed.ha_full_r
+                   OSSVerify.Proofs.openssl.hashtable.lib.Rows.RowsHtBothClosed.L0
+                   OSSVerify.Proofs.openssl.hashtable.lib.Rows.RowsHtBothClosed.LK)
+                _ _
+                OSSVerify.Proofs.openssl.hashtable.lib.Rows.HTHfTopB.p_lim_src
+                OSSVerify.Proofs.openssl.hashtable.lib.Rows.HTHfTopB.x_lim_tgt
+                inp Hv en_s en_t Hs Ht)).
+Qed.
+
+Theorem ubsan_bound_0 : OSSVerify.openssl.hashtable.Statements.ubsan_disagrees_at_most 0.
+Proof. exact (disagrees_at_most_0 _ _ _ _ _ ubsan_base). Qed.
+
+Theorem ubsan_decidable : OSSVerify.openssl.hashtable.Statements.ubsan_agreement_decidable.
+Proof. exact (agreement_decidable_of_base _ _ _ ubsan_base). Qed.
+
+Theorem asan_ubsan_bound_0 : OSSVerify.openssl.hashtable.Statements.asan_ubsan_disagrees_at_most 0.
+Proof. exact (disagrees_at_most_0 _ _ _ _ _ asan_ubsan_base). Qed.
+
+Theorem asan_ubsan_decidable : OSSVerify.openssl.hashtable.Statements.asan_ubsan_agreement_decidable.
+Proof. exact (agreement_decidable_of_base _ _ _ asan_ubsan_base). Qed.
