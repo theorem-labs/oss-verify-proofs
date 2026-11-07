@@ -174,3 +174,5 @@ Skip them when you read.
   compiled program` transcribes instructions.
 - Statements that name code addresses (`0x…`) are usually step lemmas of a
   machine walk: argument, but mechanical.
+
+<!-- control: docs/ is unowned, so this needs no code owner -->
