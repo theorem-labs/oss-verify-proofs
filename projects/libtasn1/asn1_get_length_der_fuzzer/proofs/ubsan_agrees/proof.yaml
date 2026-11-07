@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: libtasn1/asn1_get_length_der_fuzzer/ubsan_agrees
+fingerprint: e8673bfbd590adbf285d835e8bd0bee6a4ff0e902a2e6a6072da3ba34060b920
