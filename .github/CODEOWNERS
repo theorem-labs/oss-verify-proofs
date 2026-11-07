@@ -10,28 +10,51 @@
 # of main requires a code owner's approval and no other approval, so a change that touches none of the paths below
 # needs nobody, and a change that touches one of them needs one of those two.
 #
+# tools/oft/paths.py already sorts every path in this repository into hand, facts, gen and contrib, and the lines
+# below follow it rather than a second opinion: every `facts` row is owned, every `contrib` row is not.
+#
 # WHAT WE ASSERT.  Owned.
 #
-#   Statements.v          The theorems themselves, one file per fuzz target.  Nothing else here is the claim.
+#   Statements.v          The theorems as we publish them.
 #   /theories/            Driver.v, Images.v, Premises.v, Shapes.v: the definitions every Statements.v is written
 #                         against.  A change here changes what every statement means without touching a statement.
-#   harness.yaml          harness.yaml pins by SHA-256 the ELF file each statement is about; project.yaml names the
-#   project.yaml          library and the commit it was built from; release.yaml pins the semantics, the Rocq version
-#   /release.yaml         and the checker and runner images.  A swapped binary makes a true statement false without
-#                         touching the statement, so the file that chooses the binary is owned exactly as the
-#                         statement is.
-#   /projects/*/*/source/ The harness source we publish as the thing that was built.
+#   harness.yaml          harness.yaml pins by SHA-256 the ELF file each statement is about, and it is also what
+#   project.yaml          Statements.v is rendered from; project.yaml names the library and the commit it was built
+#   /release.yaml         from; release.yaml pins the semantics, the Rocq version and the checker and runner images.
+#                         A swapped binary makes a true statement false without touching the statement, so the file
+#                         that chooses the binary is owned exactly as the statement is.
+#   Distribution.v        Not generated, whatever its header looks like: paths.py calls its body a fact, and
+#                         generate.py keeps the body it finds and re-renders only the header.  Every
+#                         `disagrees_at_most` statement is measured against Distribution.w and Distribution.M, so
+#                         editing this file changes what a bound statement claims while Statements.v stands still.
+#   symbols/              A build's symbol table, read from the unstripped twin of the pinned binary.  Symbols.v and
+#                         the function names a statement talks about come from it.  Four files today, the four
+#                         builds of libreac/fuzz_pcap.
+#   source/               The harness source we publish as the thing that was built.
 #   /index/               The published tables: statements.tsv, proofs.tsv, binaries.tsv, harnesses.tsv, projects.tsv
-#                         and their two rendered pages.  `oft generate` writes them and the lint job holds them equal
-#                         to their rendering, so they cannot drift on their own; they are owned because the row that
-#                         says open or proved is the claim a reader reads.  This costs a prover nothing: the six proof
-#                         pull requests open when this file was written (#19 to #24) change 412, 282 and similar
-#                         numbers of files between them and not one file under index/, because the tables are
-#                         rendered again when a release is cut.
+#                         and their two rendered pages.  `oft generate` writes them and CI holds them equal to their
+#                         rendering, so they cannot drift on their own; they are owned because the row that says open
+#                         or proved is the claim a reader reads.  This costs a prover nothing: the six proof pull
+#                         requests open when this file was written (#19 to #24) change 412, 282 and similar numbers
+#                         of files between them and not one file under index/, because the shared tables are
+#                         rendered again after a merge and when a release is cut.
+#   /NOTICE               What we tell the world we owe to whom.
+#   findings/,            What we say is wrong with somebody else's library, and the patch text we would send them.
+#   patches/,             Sami, 2026-11-07: "we need to have an extremely high bar for sending bug reports and
+#   unpatched.yaml        patches upstream ... so that every bug report we send improves our reputation"
+#                         (dispatch://OSSV-286/comment/fe1d6fb9).  unpatched.yaml is also the switch that releases a
+#                         held project's content into this public repository.
+#                         Those five patterns match no file of the published tree today; the only paths under them
+#                         are fixtures below tools/oft/tests/, which /tools/ owns anyway.  They are here so that the
+#                         first real one arrives through a person, instead of our finding the gap afterwards.  The
+#                         .patch files that DO exist, under proofs/provenance/recipe/patches/, are a build record
+#                         and stay unowned: these patterns are anchored so they cannot reach them.
 #
 # WHAT DECIDES WHETHER CHECKING HAPPENS.  Owned.
 #
-#   /.github/             The workflows, the actions they call and actionlint's configuration.
+#   /.github/             The workflows, the actions they call and actionlint's configuration.  No carve-out: that
+#                         includes .github/held/, whose files pin the detectors that keep held content off this
+#                         public repository.
 #   /tools/, /oft,        The tools those workflows run: `oft lint`, `oft generate --check`, `oft check`.  ./theorem
 #   /theorem              is a one-line shell script that executes ./oft.
 #   /toolchain/           allowed-axioms.txt, which decides which axioms a proof may use, and the checker and runner
@@ -40,8 +63,8 @@
 #                         (tests/check.sh, tests/negative/, tests/mutate.py).  A change here can leave every other
 #                         check passing over nothing.
 #   /.claude/, AGENTS*.md What an agent loads in a job that holds a token.  CLAUDE*.md and /.mcp.json match no file
-#   CLAUDE*.md,           in this repository today; they are listed so that adding one later does not open a hole
-#   /.mcp.json            that nobody notices.
+#   CLAUDE*.md,           in this repository today; they are listed for the same reason as findings/ above.
+#   /.mcp.json
 #   /.gitattributes       A path marked -diff is not shown in review.
 #   /.github/CODEOWNERS   This file, which says who owns the rest.
 #
@@ -53,23 +76,32 @@
 #   (dispatch://OSSV-286/comment/c7500b0c-e76c-4cb0-bf86-9dea75718d29).
 #
 #   The same holds for everything else a machine can check line by line, and for the same reason -- a path name is a
-#   worse reader than the check that reads the content:
-#     README.md at every level, Images.v, Distribution.v, the dune files and dune-project are written by
-#       `oft generate` from the owned facts, and the lint job's `oft generate --check` fails if they differ;
+#   worse reader than the check that reads the content.  These are the `gen` and `contrib` rows of paths.py:
+#     README.md at every level, Images.v, Symbols.v, Characterise.v, the dune files and dune-project are written by
+#       `oft generate` from the owned facts, and `oft generate --check` fails if they differ;
 #     projects/<project>/<target>/counterexamples/ is replayed against the pinned binary;
-#     projects/<project>/<target>/proofs/provenance/ is regenerated by made_from.py --check;
-#     Characterise.v states in its own first lines that "These are not claims": it poses a problem whose answer is
-#       a program plus a proof, and the proof is checked by the kernel like any other.
+#     projects/<project>/<target>/proofs/provenance/ is a build record, regenerated by made_from.py --check.  Note
+#       that provenance/port/projects/<project>/ carries an archived copy of a project.yaml: the project.yaml line
+#       below is anchored to /projects/*/project.yaml so that those 29 copies stay unowned, which is why it is not
+#       written as a bare file name.
 #   docs/ is prose about the claims and is not the claim; theories/ and Statements.v are.
 #
 # The last pattern that matches a file decides its owner, so these lines stay the last ones in this file.
 /release.yaml @sjawhar @JasonGross
-Statements.v @sjawhar @JasonGross
-harness.yaml @sjawhar @JasonGross
-project.yaml @sjawhar @JasonGross
+/NOTICE @sjawhar @JasonGross
 /theories/ @sjawhar @JasonGross
-/projects/*/*/source/ @sjawhar @JasonGross
 /index/ @sjawhar @JasonGross
+/projects/*/project.yaml @sjawhar @JasonGross
+/projects/*/unpatched.yaml @sjawhar @JasonGross
+/projects/*/patches/ @sjawhar @JasonGross
+/projects/*/*/harness.yaml @sjawhar @JasonGross
+/projects/*/*/Statements.v @sjawhar @JasonGross
+/projects/*/*/Distribution.v @sjawhar @JasonGross
+/projects/*/*/source/ @sjawhar @JasonGross
+/projects/*/*/symbols/ @sjawhar @JasonGross
+/projects/*/*/findings/ @sjawhar @JasonGross
+/patches/ @sjawhar @JasonGross
+/findings/ @sjawhar @JasonGross
 /.github/ @sjawhar @JasonGross
 /tools/ @sjawhar @JasonGross
 /oft @sjawhar @JasonGross
