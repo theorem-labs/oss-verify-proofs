@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: ffmpeg/ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer/plain_halts
+fingerprint: 723b3e0442519ddf9833f6927a334628fbf9c2cb693d554298954ca6409a4a9b
