@@ -554,3 +554,5 @@ order whatever order the processes end in, and exits 1 naming every test that
 failed:
 
     cd tools && python3 -B -m oft.tests.parallel [--jobs N]
+
+<!-- control: does the tests job pass on a branch off main that touches tools/? -->
