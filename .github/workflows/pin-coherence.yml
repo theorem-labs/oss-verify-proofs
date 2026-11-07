@@ -63,7 +63,13 @@ jobs:
         # The base's copy on purpose: a change must not supply the rule that judges it.
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
-          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          # The TRUSTED commit for every event, named rather than left to a default. On a merge
+          # group `github.sha` is the GROUP's commit, which CONTAINS the candidate change, so
+          # leaving it there checked out the candidate's own copy of this guard and ran it; a
+          # cross-model audit demonstrated exactly that on the sibling check.
+          ref: >-
+            ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha
+            || github.sha }}
           fetch-depth: 0
           filter: blob:none
           sparse-checkout: .github/guards
