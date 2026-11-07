@@ -27,9 +27,10 @@
 #                         generate.py keeps the body it finds and re-renders only the header.  Every
 #                         `disagrees_at_most` statement is measured against Distribution.w and Distribution.M, so
 #                         editing this file changes what a bound statement claims while Statements.v stands still.
-#   symbols/              A build's symbol table, read from the unstripped twin of the pinned binary.  Symbols.v and
-#                         the function names a statement talks about come from it.  Four files today, the four
-#                         builds of libreac/fuzz_pcap.
+#   symbols/              A build's symbol table, read by `oft symbols` from the unstripped twin of the binary
+#                         harness.yaml pins: the authoritative statement of what is at which address in that
+#                         binary.  Symbols.v is generated from it and lint reads it; today's top-level statements
+#                         do not.  Four files, the four builds of libreac/fuzz_pcap.
 #   source/               The harness source we publish as the thing that was built.
 #   /index/               The published tables: statements.tsv, proofs.tsv, binaries.tsv, harnesses.tsv, projects.tsv
 #                         and their two rendered pages.  `oft generate` writes them; they are owned because the row
@@ -37,15 +38,16 @@
 #                         not by luck: paths.py calls them SHARED, pr.yml checks the rendering with
 #                         `generate --check --skip-shared` so a pull request is never held to them, and lint
 #                         refuses outright a pull request that carries one ("no pull request changes it").  They
-#                         are rendered again after a merge and when a release is cut.  Measured: the six proof pull
-#                         requests open when this file was written (#19 to #24) change 779 files between them, 412
-#                         in #19 alone, and not one under index/.
+#                         are rendered again at a release cut (release_tree.py runs the full generate).  Measured:
+#                         the six proof pull requests open when this file was written (#19 to #24) change 779
+#                         files between them, 412 in #19 alone, and not one under index/.
 #   /NOTICE               What we tell the world we owe to whom.
 #   findings/,            What we say is wrong with somebody else's library, and the patch text we would send them.
 #   patches/,             Sami, 2026-11-07: "we need to have an extremely high bar for sending bug reports and
 #   unpatched.yaml        patches upstream ... so that every bug report we send improves our reputation"
-#                         (dispatch://OSSV-286/comment/fe1d6fb9).  unpatched.yaml is also the switch that releases a
-#                         held project's content into this public repository.
+#                         (dispatch://OSSV-286/comment/fe1d6fb9).  unpatched.yaml pins the binaries a finding runs
+#                         against, and matching those pins is one of the conditions under which a held project's
+#                         content is released into this public repository (facts.py).
 #                         Those five patterns match no file of the published tree today; the only paths under them
 #                         are fixtures below tools/oft/tests/, which /tools/ owns anyway.  They are here so that the
 #                         first real one arrives through a person, instead of our finding the gap afterwards.  The
@@ -76,7 +78,7 @@
 #
 # WHAT THE MACHINE OWNS, AND NOBODY SIGNS.  Deliberately absent from the list below.
 #
-#   Proof bodies have no owner: the 526 Proof.v files of the published tree, the 240,748 files of the proof
+#   Proof bodies have no owner: the 526 Proof.v files of the published tree, the 240,748 .v files of the proof
 #   libraries beside them, their proof.yaml and their dune files.  The Rocq kernel is their reviewer: a proof checks
 #   against the statement or it does not, and a human reading adds nothing to that verdict.  Sami ruled this on
 #   2026-11-07: "It is correct that the proof body needs no Human Reviewer"
