@@ -46,7 +46,7 @@ npm	secret	-	\bnpm_[A-Za-z0-9]{36}\b	npm_{36:alnum}
 pypi	secret	-	\bpypi-[A-Za-z0-9_-]{50,}	pypi-{50:token}
 sentry	secret	-	\bsntrys_[A-Za-z0-9_=+/-]{20,}	sntrys_{20:sentry}
 jwt	secret	-	\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}	eyJ{10:token}.eyJ{10:token}.{10:token}
-private-key-id	secret	-	"private_key_id"[ \t\n\v\f\r]*:[ \t\n\v\f\r]*"[0-9a-f]{20,}"	"private_key_id": "{20:hex}"
+private-key-id	secret	-	"private_key_id"[ \t]*:[ \t]*"[0-9a-f]{20,}"	"private_key_id": "{20:hex}"
 cloud-signature	secret	-	X-(Goog|Amz)-Signature=[0-9a-f]{32,}	X-Goog-Signature={32:hex}
 query-signature	secret	-	[?&](sig|Signature)=[A-Za-z0-9%+/=_-]{20,}	?sig={20:sig}
 account-key	secret	-	\bAccountKey=[A-Za-z0-9+/]{40,}	AccountKey={40:b64}

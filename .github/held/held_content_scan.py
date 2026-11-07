@@ -278,15 +278,88 @@ def lines_of(blob):
     return blob.split(b"\n"), False
 
 
+RAW = re.compile(rb"^:(\d{6}) (\d{6}) ([0-9a-f]+) ([0-9a-f]+) ([A-Z])\d*$")
+ZERO = re.compile(rb"^0+$")
+
+
+class Blobs:
+    """One `git cat-file --batch` for the whole run, read by OBJECT ID.
+
+    By id, never by `<rev>:<path>`: a pathname has to be decoded to go into a command line, and a
+    path holding a byte that is not UTF-8 came back as a different path, whose lookup failed --
+    and a failed lookup read as `the file is not there`, which reads as clean.  Here a read that
+    fails STOPS the check (exit 2), which also covers the case this repository actually has: the
+    job checks out with `filter=blob:none`, so a blob arrives by a lazy fetch that can fail."""
+
+    def __init__(self):
+        self.proc = subprocess.Popen(["git", "cat-file", "--batch"],
+                                     stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+    def read(self, oid):
+        if oid is None:
+            return b""
+        self.proc.stdin.write(oid + b"\n")
+        self.proc.stdin.flush()
+        header = self.proc.stdout.readline()
+        if not header:
+            die("git cat-file --batch stopped while reading %s" % oid.decode("ascii", "replace"))
+        parts = header.split()
+        if len(parts) != 3 or parts[1] != b"blob":
+            die("git cat-file --batch could not give blob %s: %r"
+                % (oid.decode("ascii", "replace"), header.strip()))
+        want, out = int(parts[2]), bytearray()
+        while len(out) < want:
+            chunk = self.proc.stdout.read(want - len(out))
+            if not chunk:
+                die("git cat-file --batch gave %d of %d bytes of %s"
+                    % (len(out), want, oid.decode("ascii", "replace")))
+            out += chunk
+        self.proc.stdout.read(1)
+        return bytes(out)
+
+    def close(self):
+        try:
+            self.proc.stdin.close()
+            self.proc.stdout.close()
+        finally:
+            self.proc.wait()
+
+
+def changed_blobs(base, head):
+    """[(path bytes, old oid or None, new oid or None)] for BASE..HEAD, from `git diff --raw -z`.
+
+    A raw record gives the BLOB IDS, so nothing downstream turns a pathname back into a lookup,
+    and `-z` gives each path as its own NUL-terminated field, so a tab or a line break in a name
+    is part of the name rather than a field separator.  The reader this replaces parsed `git
+    diff`'s patch text, where a content line beginning `++ ` is indistinguishable from a `+++ `
+    file header: an audit built a change that hid a credential behind exactly that, and another
+    that hid a binary file behind a tab in its name.  Neither is expressible here.  A record this
+    does not understand stops the check."""
+    fields = git("diff", "--raw", "-z", "--no-renames", "--abbrev=64", base, head).split(b"\0")
+    out, i = [], 0
+    while i + 1 < len(fields):
+        info, path = fields[i], fields[i + 1]
+        i += 2
+        if not info:
+            continue
+        found = RAW.match(info)
+        if found is None:
+            die("git diff --raw gave a record this check does not understand: %r" % info[:200])
+        old, new = found.group(3), found.group(4)
+        out.append((path, None if ZERO.match(old) else old, None if ZERO.match(new) else new))
+    return out
+
+
 def records_for_commits(base, head):
     """(label, line number, bytes) for everything BASE..HEAD introduces.
 
     Three sources, each of which has published held content before: the commit messages, the
     PATHNAMES (a file named after a thing we hold back names it whether or not it is opened), and,
-    per path, the lines of the new blob that are NOT already lines of the old blob at that same
-    path.  The subtraction is the ported check's: re-stating a line this repository already
-    publishes at that path publishes nothing new, and without it every rename and every generated
-    table would be refused on content that is already out."""
+    per path, the lines of the new blob that are NOT already lines of the OLD BLOB OF THAT SAME
+    PATH.  That subtraction is the ported check's -- re-stating a line this repository already
+    publishes at that path publishes nothing new, and without it every regenerated table would be
+    refused on content that is already out -- and it is done here, against the old blob of the
+    same path, so no line can be excused by a line of some other file."""
     records, total = [], 0
 
     messages = git("log", "--no-show-signature", "--format=%H%x00%B%x00", "%s..%s" % (base, head))
@@ -299,87 +372,26 @@ def records_for_commits(base, head):
             records.append(("commit %s (message)" % commit, number, line))
             total += len(line)
 
-    # One `git diff` for every text path, rather than two `cat-file` calls per path: on this
-    # repository the per-path form took 24 s on a 706-line change, almost all of it process
-    # start-up and lazy blob fetches of files whose lines did not move.
-    binary = set()
-    stat = git("diff", "--numstat", "-z", "--no-renames", "--diff-filter=ACMT", base, head)
-    fields = stat.split(b"\0")
-    i = 0
-    while i < len(fields) and fields[i]:
-        row = fields[i].split(b"\t")
-        if len(row) == 3:
-            added, removed, path = row
-            records.append(("path %s" % path.decode("utf-8", "replace"), 0, path))
+    blobs = Blobs()
+    try:
+        for path, old, new in changed_blobs(base, head):
+            shown_path = path.decode("utf-8", "replace")
+            records.append(("path %s" % shown_path, 0, path))
             total += len(path)
-            if added == b"-" and removed == b"-":
-                binary.add(path.decode("utf-8", "replace"))
-        i += 1
-
-    diff = git("diff", "--unified=0", "--no-renames", "--no-color", "--no-ext-diff",
-               "--diff-filter=ACMT", "--no-prefix", base, head)
-    path, number = None, 0
-    for line in diff.split(b"\n"):
-        if line.startswith(b"+++ "):
-            path = line[4:].decode("utf-8", "replace")
-            if path == "/dev/null":
-                path = None
-            number = 0
-        elif line.startswith(b"@@"):
-            head_marks = line.split(b"+", 1)
-            number = 0
-            if len(head_marks) == 2:
-                start = head_marks[1].split(b" ", 1)[0].split(b",")[0]
-                number = int(start) - 1 if start.isdigit() else 0
-        elif path and line.startswith(b"+"):
-            number += 1
-            records.append((path, number, line[1:]))
-            total += len(line)
+            if new is None:
+                continue                        # deleted: it publishes nothing new
+            already = set(lines_of(blobs.read(old))[0])
+            for number, line in enumerate(lines_of(blobs.read(new))[0], 1):
+                if line in already:
+                    continue
+                records.append((shown_path, number, line))
+                total += len(line)
             if total > MAX_BYTES:
                 die("this change introduces more than %d bytes of text; nothing was judged"
                     % MAX_BYTES)
-
-    # A blob git calls binary gets no `+` lines from diff, so it is read whole and its printable
-    # ASCII runs are scanned: a key or a held name pasted into a binary file is still one.
-    for shown in sorted(binary):
-        blob = git("cat-file", "blob", "%s:%s" % (head, shown)) if _exists(head, shown) else b""
-        old = git("cat-file", "blob", "%s:%s" % (base, shown)) if _exists(base, shown) else b""
-        already = set(printable_runs(old))
-        for number, run in enumerate(printable_runs(blob), 1):
-            if run in already:
-                continue
-            records.append(("%s (binary)" % shown, number, run))
-            total += len(run)
-        if total > MAX_BYTES:
-            die("this change introduces more than %d bytes of text; nothing was judged" % MAX_BYTES)
+    finally:
+        blobs.close()
     return records
-
-
-def not_already_published(base, hits):
-    """Drop a hit whose exact line is already a line of the same path at BASE.
-
-    `git diff` shows a line that MOVED as added, and a generated table that is sorted again shows
-    thousands of them.  Re-stating a line this repository already publishes at that path publishes
-    nothing new, so the ported check's subtraction is applied here -- once, to the few paths that
-    matched, rather than to every path of the change."""
-    kept, cache = [], {}
-    for label, number, detector, token, line in hits:
-        if label.startswith("commit ") or label.startswith("path ") or label.endswith(" (binary)"):
-            kept.append((label, number, detector, token))
-            continue
-        if label not in cache:
-            blob = git("cat-file", "blob", "%s:%s" % (base, label)) if _exists(base, label) else b""
-            cache[label] = set(blob.split(b"\n"))
-        if line in cache[label]:
-            continue
-        kept.append((label, number, detector, token))
-    return kept
-
-
-def _exists(rev, path):
-    done = subprocess.run(("git", "cat-file", "-e", "%s:%s" % (rev, path)),
-                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return done.returncode == 0
 
 
 def records_for_files(paths):
@@ -413,13 +425,18 @@ def shown(detector, token):
 
 
 def scan(records, detectors):
-    """One hit per (record, detector) pair: (label, line number, detector, matched bytes, line)."""
+    """One hit per (record, detector) pair: (label, line number, detector, matched bytes).
+
+    A record is ONE LINE, so a detector only ever matches within a line: nothing here joins two.
+    Every pattern in both tables is written to fit in one, and the canaries are single lines for
+    the same reason -- a pattern that could straddle a line break would be a detector the
+    self-test cannot vouch for."""
     hits = []
     for label, number, line in records:
         for detector in detectors:
             found = detector.rx.search(line)
             if found:
-                hits.append((label, number, detector, found.group(0), line))
+                hits.append((label, number, detector, found.group(0)))
     return hits
 
 
@@ -434,25 +451,27 @@ def main(argv):
              len([ln for ln in read_text(os.path.join(HERE, "must-pass-lines.txt")).split("\n")
                   if ln and not ln.startswith("#")])))
 
-    if not argv or argv[0] == "--self-test":
+    if argv and argv[0] == "--self-test":
+        if len(argv) != 1:
+            die("--self-test takes no other argument; it scans nothing")
         print("HELD CONTENT: nothing was scanned (--self-test).")
         return 0
+    if not argv:
+        die("no mode given. Use --commits BASE HEAD, --files FILE..., or --self-test")
     if argv[0] == "--commits":
         if len(argv) != 3:
             die("--commits takes exactly BASE and HEAD")
         records = records_for_commits(argv[1], argv[2])
         what = "%s..%s" % (argv[1][:12], argv[2][:12])
     elif argv[0] == "--files":
+        if len(argv) < 2:
+            die("--files takes at least one file")
         records = records_for_files(argv[1:])
         what = "%d file(s)" % (len(argv) - 1)
     else:
         die("unknown mode %r" % argv[0])
 
     hits = scan(records, detectors)
-    if argv[0] == "--commits":
-        hits = not_already_published(argv[1], hits)
-    else:
-        hits = [(label, number, detector, token) for label, number, detector, token, _l in hits]
     if not hits:
         print("HELD CONTENT: clean: %d line(s) and pathname(s) of %s matched no detector."
               % (len(records), what))
@@ -479,3 +498,14 @@ if __name__ == "__main__":
         sys.stderr.write("The check could not finish, so nothing is passed (exit %d). %s\n"
                          % (stop.status, SELF))
         sys.exit(stop.status)
+    except Exception as exc:                                              # noqa: BLE001
+        # Exit 2 means "could not finish", and it has to mean that for EVERY way of not
+        # finishing. Without this, a missing `git` binary left Python's own exit 1 behind, which
+        # is the status a content refusal would use in a sibling check -- a reader cannot tell
+        # "it refused" from "it fell over" on a status alone.
+        import traceback
+        traceback.print_exc()
+        sys.stderr.write("::error::HELD CONTENT: the check hit an error it does not handle (%s: "
+                         "%s). Nothing was passed (exit 2). %s\n"
+                         % (type(exc).__name__, exc, SELF))
+        sys.exit(2)
