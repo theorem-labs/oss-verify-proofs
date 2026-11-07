@@ -74,6 +74,12 @@ defaults:
 
 jobs:
   held-content:
+    # This file lives in BOTH repositories and runs in one. The public tree is rebuilt from the
+    # internal tree at each release cut (`oft release-tree`, publish.yml), so a workflow that
+    # existed only on public main would be DELETED by the next cut -- and a required check whose
+    # workflow is gone blocks every pull request forever. So it lands internally too, and this
+    # condition keeps it inert there, as pr.yml's own `github.repository ==` steps do.
+    if: github.repository == 'theorem-labs/oss-verify-proofs'
     # A static name: this is what the ruleset of main requires, so it must not change with the
     # event or the matrix.
     name: held-content
