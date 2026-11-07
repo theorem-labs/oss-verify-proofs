@@ -31,3 +31,5 @@ password-protected archives are not published here; every asset is a plain tar.z
 The access key of a release asset store is not in this repository; see docs/ for how a reader fetches one.
 Authorization: Bearer not-a-secret-placeholder
 export EXAMPLE_API_KEY=not-a-secret-example
+  licence: NOASSERTION
+  file: curl-bin.tar.zst
