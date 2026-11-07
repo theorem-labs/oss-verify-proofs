@@ -276,3 +276,4 @@ jobs:
             { echo "::error::a job did not pass: $got"; exit 1; }
           echo "every job passed: $got"
 # control: does the tests job pass on a branch off main that routes it?
+# sync, so GitHub re-evaluates the code owners now that CODEOWNERS is on main
