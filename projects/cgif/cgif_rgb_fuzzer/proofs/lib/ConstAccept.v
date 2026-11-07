@@ -7,6 +7,7 @@ Require OSSVerify.cgif.cgif_rgb_fuzzer.Images.
 Require OSSVerify.cgif.cgif_rgb_fuzzer.Statements.
 Require OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib.YZ00.
 Require OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib.YZ01.
+Require OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib.UZZ0.
 Import ListNotations.
 
 Definition accept_segment : Segment := {|
@@ -105,3 +106,21 @@ Proof. exact (agreement_decidable_of_base _ _ _ asan_base). Qed.
 Theorem asan_ubsan_decidable :
   OSSVerify.cgif.cgif_rgb_fuzzer.Statements.asan_ubsan_agreement_decidable.
 Proof. exact (agreement_decidable_of_base _ _ _ asan_ubsan_base). Qed.
+
+Lemma ubsan_equiv : strong_universal_error_free_T OSSVerify.cgif.cgif_rgb_fuzzer.Images.plain OSSVerify.cgif.cgif_rgb_fuzzer.Images.ubsan.
+Proof.
+  intros en_s en_t inp Hs Ht Hv.
+  exact (OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib.UZZ0.cgif_rgb_fuzzer_ubsan_equiv_lim source_alloc_limit target_alloc_limit
+           ltac:(apply Z.leb_le; vm_compute; reflexivity) ltac:(apply Z.leb_le; vm_compute; reflexivity)
+           en_s en_t inp Hs Ht Hv).
+Qed.
+
+Lemma ubsan_base :
+  strong_universal_error_free_T_scfg Env.may_fail OSSVerify.cgif.cgif_rgb_fuzzer.Images.plain OSSVerify.cgif.cgif_rgb_fuzzer.Images.ubsan.
+Proof. exact (proj2 (strong_universal_error_free_T_scfg_may_fail OSSVerify.cgif.cgif_rgb_fuzzer.Images.plain OSSVerify.cgif.cgif_rgb_fuzzer.Images.ubsan) ubsan_equiv). Qed.
+
+Theorem ubsan_bound_0 : OSSVerify.cgif.cgif_rgb_fuzzer.Statements.ubsan_disagrees_at_most 0.
+Proof. exact (disagrees_at_most_0 _ _ _ _ _ ubsan_base). Qed.
+
+Theorem ubsan_decidable : OSSVerify.cgif.cgif_rgb_fuzzer.Statements.ubsan_agreement_decidable.
+Proof. exact (agreement_decidable_of_base _ _ _ ubsan_base). Qed.
