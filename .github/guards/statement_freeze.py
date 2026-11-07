@@ -96,6 +96,16 @@ def rows_of(text, where):
     if not lines:
         die("%s is empty" % where)
     header = lines[0].split("\t")
+    # A repeated column name, or a repeated id, makes the table ambiguous, and `dict(zip(...))`
+    # and `out[id] = row` would resolve the ambiguity SILENTLY, in favour of the last one. An
+    # audit used both: a second `status` column with `proved` in the first and `open` in the
+    # second, and a changed row followed by an unchanged duplicate of its id. Each hid a real
+    # change and this check said nothing. Neither is a table anyone writes by accident, so both
+    # stop the check rather than being resolved one way or the other.
+    if len(set(header)) != len(header):
+        repeated = sorted({c for c in header if header.count(c) > 1})
+        die("%s repeats the column name(s) %s, so a row has no one value for them"
+            % (where, ", ".join(repeated)))
     for column in ("id",) + ASSERTED:
         if column not in header:
             die("%s has no `%s` column; its header is %r" % (where, column, header))
@@ -105,6 +115,8 @@ def rows_of(text, where):
         if len(cells) != len(header):
             die("%s line %d has %d columns, not %d" % (where, number, len(cells), len(header)))
         row = dict(zip(header, cells))
+        if row["id"] in out:
+            die("%s line %d repeats the statement id %s" % (where, number, row["id"]))
         out[row["id"]] = row
     return out
 
@@ -139,6 +151,13 @@ def watched_changes(base, head, read=blob, changed=None):
         new = rows_of(read(head, INDEX), "%s at this head" % INDEX)
         for ident in sorted(set(old) - set(new)):
             statements.append("%s: REMOVED (it was %s)" % (ident, old[ident]["status"]))
+        # A row with no counterpart at the base is a claim this repository did not make before.
+        # Nothing of it was "changed", so an earlier version of this check said nothing about it
+        # -- which meant a whole new statement, in any state, arrived unnamed.
+        for ident in sorted(set(new) - set(old)):
+            statements.append("%s: NEW (%s, %s, reading %s, status %s)"
+                              % (ident, new[ident]["kind"], new[ident]["builds"],
+                                 new[ident]["reading"], new[ident]["status"]))
         for ident in sorted(set(old) & set(new)):
             for column in ASSERTED:
                 before, after = old[ident][column], new[ident][column]
@@ -174,20 +193,33 @@ def owners_of(codeowners):
     return out
 
 
-def approved_by(approvals, head, owners):
-    """The owners with a live APPROVED review of exactly this head.
+# The review states that replace an owner's previous verdict. COMMENTED and PENDING do not:
+# a comment on an approved pull request withdraws nothing. Anything else this check has not seen
+# is treated as replacing the verdict, so an unknown state can only ever LOSE an approval.
+DECIDING = ("APPROVED", "CHANGES_REQUESTED", "DISMISSED")
 
-    `commit_id` must be the head: the ruleset dismisses an approval on a push
-    (`dismiss_stale_reviews_on_push`), and an approval of an earlier head is an approval of
+
+def approved_by(approvals, head, owners):
+    """The owners whose EFFECTIVE review of exactly this head is APPROVED.
+
+    Effective, not "any review ever": an audit submitted APPROVED and then CHANGES_REQUESTED from
+    the same owner and this check still said "approved at this head". A gate that honours a
+    withdrawn approval is a gate that can be walked through. GitHub returns reviews oldest first,
+    so the last deciding one per login wins.
+
+    `commit_id` must be the head as well: the ruleset dismisses an approval on a push
+    (`dismiss_stale_reviews_on_push`), and an approval of an earlier head was an approval of
     different statements."""
-    found = set()
+    verdict = {}
     for review in approvals or []:
-        if review.get("state") != "APPROVED" or review.get("commit_id") != head:
-            continue
         login = ((review.get("user") or {}).get("login") or "").lower()
-        if login in owners:
-            found.add(login)
-    return sorted(found)
+        if login not in owners or review.get("commit_id") != head:
+            continue
+        state = review.get("state")
+        if state in ("COMMENTED", "PENDING"):
+            continue
+        verdict[login] = state
+    return sorted(login for login, state in verdict.items() if state == "APPROVED")
 
 
 # ------------------------------------------------------------------------------------------------
@@ -231,6 +263,8 @@ FIXTURES = (
     ("a Statements.v gained blank lines and trailing spaces only",
      {"projects/p/h/Statements.v": "Theorem t : 1 = 1.\n"},
      {"projects/p/h/Statements.v": "\nTheorem t : 1 = 1.   \n\n"}, False),
+    ("a statement row was added, which is a claim this repository did not make before",
+     {INDEX: HEADER}, {INDEX: HEADER + "\n" + ROW % ("proved", "aa")}, True),
     ("a file outside the watched set changed",
      {"README.md": "a\n"}, {"README.md": "b\n"}, False),
 )
@@ -292,8 +326,9 @@ def main(argv):
     for line in statements:
         print("  statement row   %s" % line)
     print("::endgroup::")
-    print("STATEMENT FREEZE: %d statement row(s) and %d statement file(s) changed."
-          % (len(statements), len(texts)))
+    rows = len({line.split(":", 1)[0] for line in statements})
+    print("STATEMENT FREEZE: %d statement(s) and %d statement file(s) changed, in %d named line(s)."
+          % (rows, len(texts), len(statements) + len(texts)))
 
     if args.report_only:
         print("STATEMENT FREEZE: reporting only; the approval was given on the pull request.")
