@@ -32,12 +32,14 @@
 #                         builds of libreac/fuzz_pcap.
 #   source/               The harness source we publish as the thing that was built.
 #   /index/               The published tables: statements.tsv, proofs.tsv, binaries.tsv, harnesses.tsv, projects.tsv
-#                         and their two rendered pages.  `oft generate` writes them and CI holds them equal to their
-#                         rendering, so they cannot drift on their own; they are owned because the row that says open
-#                         or proved is the claim a reader reads.  This costs a prover nothing: the six proof pull
-#                         requests open when this file was written (#19 to #24) change 412, 282 and similar numbers
-#                         of files between them and not one file under index/, because the shared tables are
-#                         rendered again after a merge and when a release is cut.
+#                         and their two rendered pages.  `oft generate` writes them; they are owned because the row
+#                         that says open or proved is the claim a reader reads.  This costs a prover nothing, and
+#                         not by luck: paths.py calls them SHARED, pr.yml checks the rendering with
+#                         `generate --check --skip-shared` so a pull request is never held to them, and lint
+#                         refuses outright a pull request that carries one ("no pull request changes it").  They
+#                         are rendered again after a merge and when a release is cut.  Measured: the six proof pull
+#                         requests open when this file was written (#19 to #24) change 779 files between them, 412
+#                         in #19 alone, and not one under index/.
 #   /NOTICE               What we tell the world we owe to whom.
 #   findings/,            What we say is wrong with somebody else's library, and the patch text we would send them.
 #   patches/,             Sami, 2026-11-07: "we need to have an extremely high bar for sending bug reports and
@@ -65,25 +67,34 @@
 #   /.claude/, AGENTS*.md What an agent loads in a job that holds a token.  CLAUDE*.md and /.mcp.json match no file
 #   CLAUDE*.md,           in this repository today; they are listed for the same reason as findings/ above.
 #   /.mcp.json
+#   made_from.py          A unit's provenance record is checked by a generator that sits beside it, and pr.yml finds
+#                         every made_from.py under a changed unit's proofs/provenance/ and RUNS it.  That makes it
+#                         tooling the workflows execute, not a record.  No file of that name exists today; this
+#                         line is here so the first one cannot arrive unowned.
 #   /.gitattributes       A path marked -diff is not shown in review.
 #   /.github/CODEOWNERS   This file, which says who owns the rest.
 #
 # WHAT THE MACHINE OWNS, AND NOBODY SIGNS.  Deliberately absent from the list below.
 #
-#   Proof bodies -- everything under projects/<project>/<target>/proofs/ -- have no owner.  The Rocq kernel is their
-#   reviewer: a proof checks against the statement or it does not, and a human reading adds nothing to that verdict.
-#   Sami ruled this on 2026-11-07: "It is correct that the proof body needs no Human Reviewer"
-#   (dispatch://OSSV-286/comment/c7500b0c-e76c-4cb0-bf86-9dea75718d29).
+#   Proof bodies have no owner: the 526 Proof.v files of the published tree, the 240,748 files of the proof
+#   libraries beside them, their proof.yaml and their dune files.  The Rocq kernel is their reviewer: a proof checks
+#   against the statement or it does not, and a human reading adds nothing to that verdict.  Sami ruled this on
+#   2026-11-07: "It is correct that the proof body needs no Human Reviewer"
+#   (dispatch://OSSV-286/comment/c7500b0c-e76c-4cb0-bf86-9dea75718d29).  The one thing under proofs/ that IS owned
+#   is made_from.py, above, because CI runs it.
 #
 #   The same holds for everything else a machine can check line by line, and for the same reason -- a path name is a
 #   worse reader than the check that reads the content.  These are the `gen` and `contrib` rows of paths.py:
-#     README.md at every level, Images.v, Symbols.v, Characterise.v, the dune files and dune-project are written by
-#       `oft generate` from the owned facts, and `oft generate --check` fails if they differ;
+#     the generated pages and files -- the root README.md, each project's and each target's, Images.v, Symbols.v,
+#       Characterise.v, the dune files and dune-project -- are written by `oft generate` from the owned facts, and
+#       `oft generate --check` fails if they differ.  (A hand-written README.md, such as tools/oft/README.md or
+#       tests/README.md, is owned through the directory it is in, not through its name.)
 #     projects/<project>/<target>/counterexamples/ is replayed against the pinned binary;
-#     projects/<project>/<target>/proofs/provenance/ is a build record, regenerated by made_from.py --check.  Note
-#       that provenance/port/projects/<project>/ carries an archived copy of a project.yaml: the project.yaml line
-#       below is anchored to /projects/*/project.yaml so that those 29 copies stay unowned, which is why it is not
-#       written as a bare file name.
+#     projects/<project>/<target>/proofs/provenance/ is the build record of the binaries a unit's proofs are about.
+#       Where a unit carries its own generator, pr.yml holds the record to it, and deleting the generator fails the
+#       check rather than turning it off.  Note that provenance/port/projects/<project>/ carries an archived copy of
+#       a project.yaml: the project.yaml line below is anchored to /projects/*/project.yaml so that those 29 copies
+#       stay unowned, which is why it is not written as a bare file name.
 #   docs/ is prose about the claims and is not the claim; theories/ and Statements.v are.
 #
 # The last pattern that matches a file decides its owner, so these lines stay the last ones in this file.
@@ -112,5 +123,6 @@
 AGENTS*.md @sjawhar @JasonGross
 CLAUDE*.md @sjawhar @JasonGross
 /.mcp.json @sjawhar @JasonGross
+made_from.py @sjawhar @JasonGross
 /.gitattributes @sjawhar @JasonGross
 /.github/CODEOWNERS @sjawhar @JasonGross
