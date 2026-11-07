@@ -107,6 +107,14 @@ TABLE = [
     # the review of each pull request and new issue of the public repository by Claude (review.yml runs there alone),
     # and its rules in docs/review.md
     ("hand", ".github/workflows/review.yml"),
+    # the held-content check of the public repository: the workflow, the scanner it runs, the detector table that may
+    # be public, the negative controls, and the pin of the private table that lives in an Actions secret.  The
+    # workflow's own header says what it reads and why its patterns are split in two
+    ("hand", ".github/workflows/held-content.yml"),
+    ("hand", ".github/held/held_content_scan.py"),
+    ("hand", ".github/held/detectors.tsv"),
+    ("hand", ".github/held/must-pass-lines.txt"),
+    ("hand", ".github/held/private-detectors.sha256"),
     # what an agent reads first, and the instructions it follows to add a proof
     ("hand", "AGENTS.md"),
     ("hand", ".claude/skills/adding-a-proof/SKILL.md"),

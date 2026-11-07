@@ -1,0 +1,59 @@
+# The detectors this PUBLIC repository carries in the open. One row per detector, tab separated:
+#
+#   name <TAB> category <TAB> flags <TAB> pattern <TAB> canary template
+#
+# `flags` is `-` or `i` (case-insensitive). `pattern` is a Python regular expression, matched over
+# BYTES with re.MULTILINE. `canary template` is the fresh negative-of-a-negative: text whose `{n:a}`
+# placeholders are replaced with n bytes drawn from /dev/urandom over the named alphabet `a`
+# (.github/held/held_content_scan.py, ALPHABETS). Every scan draws one canary per row and refuses to
+# report anything unless each row matched ITS OWN canary. A detector that no longer fires is a
+# detector that cannot find what it is for, and a clean result from it means nothing.
+#
+# These rows are a port of the credential half of the leak check that guards every push and every
+# `gh` write from Theorem's own machines, at the tag `leak-check-v13` of the internal tool that
+# holds it (its `LEAK_SECRET` and `LEAK_SECRET_VALUE` tables, with the canary each alternative
+# gets in its `draw_canaries`). They are here
+# in the clear because a credential's published FORMAT is public knowledge -- every scanner ships
+# the same list -- and because a detector a contributor can read is one they can satisfy before
+# they push.
+#
+# The other half of that check reads for content this repository holds back. Those patterns name
+# what they look for, so they are not in a public file: they are loaded from the Actions secret
+# HELD_CONTENT_RULES, in exactly this format, and pinned by row count and sha256 in
+# .github/held/private-detectors.sha256. A missing, short or altered private table fails the job;
+# it never silently shrinks the scan.
+#
+# A format match is refused even in a test fixture: this check cannot tell a throwaway key from a
+# live one. Write a fixture credential so it does not match (see must-pass-lines.txt), or do not
+# write one.
+private-key	secret	-	-----BEGIN ([A-Z0-9]+ )*PRIVATE KEY( BLOCK)?-----	-----BEGIN {8:aws} PRIVATE KEY-----
+github-token	secret	-	\bgh[pousr]_[A-Za-z0-9]{36,}	token ghp_{36:alnum}
+github-pat	secret	-	\bgithub_pat_[A-Za-z0-9_]{22,}	github_pat_{22:pat}
+gitlab	secret	-	\bglpat-[A-Za-z0-9_-]{20,}	glpat-{20:token}
+anthropic-key	secret	-	\bsk-ant-[a-z]+[0-9]*-[A-Za-z0-9_-]{20,}	key sk-ant-api03-{20:token}
+openai-scoped	secret	-	\bsk-(proj|svcacct|admin)-[A-Za-z0-9_-]{20,}	sk-proj-{20:token}
+openai-key	secret	-	\bsk-[A-Za-z0-9]{32,}	sk-{32:alnum}
+aws-key	secret	-	\b(AKIA|ASIA)[0-9A-Z]{16}\b	aws AKIA{16:aws}
+google-api	secret	-	\bAIza[0-9A-Za-z_-]{35}	AIza{35:token}
+google-oauth	secret	-	\bGOCSPX-[A-Za-z0-9_-]{20,}	GOCSPX-{20:token}
+google-access	secret	-	\bya29\.[0-9A-Za-z_-]{20,}	ya29.{20:token}
+slack-token	secret	-	\bxox[abposr]-[0-9A-Za-z-]{10,}	xoxb-{10:slackdash}
+slack-hook	secret	-	hooks\.slack\.com/(services|workflows|triggers)/[A-Za-z0-9/_-]{20,}	hooks.slack.com/services/{20:slash}
+stripe	secret	-	\b[rs]k_live_[0-9A-Za-z]{20,}	sk_live_{20:alnum}
+tailscale	secret	-	\btskey-[a-z]+-[A-Za-z0-9-]{16,}	tskey-auth-{16:slackdash}
+huggingface	secret	-	\bhf_[A-Za-z0-9]{30,}	hf_{30:alnum}
+npm	secret	-	\bnpm_[A-Za-z0-9]{36}\b	npm_{36:alnum}
+pypi	secret	-	\bpypi-[A-Za-z0-9_-]{50,}	pypi-{50:token}
+sentry	secret	-	\bsntrys_[A-Za-z0-9_=+/-]{20,}	sntrys_{20:sentry}
+jwt	secret	-	\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}	eyJ{10:token}.eyJ{10:token}.{10:token}
+private-key-id	secret	-	"private_key_id"[ \t\n\v\f\r]*:[ \t\n\v\f\r]*"[0-9a-f]{20,}"	"private_key_id": "{20:hex}"
+cloud-signature	secret	-	X-(Goog|Amz)-Signature=[0-9a-f]{32,}	X-Goog-Signature={32:hex}
+query-signature	secret	-	[?&](sig|Signature)=[A-Za-z0-9%+/=_-]{20,}	?sig={20:sig}
+account-key	secret	-	\bAccountKey=[A-Za-z0-9+/]{40,}	AccountKey={40:b64}
+shared-access-key	secret	-	\bSharedAccessKey=[A-Za-z0-9+/=]{20,}	SharedAccessKey={20:b64p}
+basic-auth	secret	-	(?i:\bauthorization:\s*(?:basic|token)\s+)(?!\S*not[-_]a[-_]secret)[A-Za-z0-9._~+/=-]{16,}	Authorization: Basic {16:basic}
+bearer	secret	-	(?i:\bbearer\s+)(?!\S*not[-_]a[-_]secret)[A-Za-z0-9._~+/-]{20,}=*	Authorization: Bearer {20:bearer}
+url-password	secret	-	(?i:\b[a-z][a-z0-9+.-]*://)[^/\s:@]+:(?!(?i:pass(?:word|wd)?|secret|token|x+)@)(?![^@\s]*not[-_]a[-_]secret)[^/\s@$<>{}*\[\]]{3,}@[^\s/]+	postgres://{8:nsurl1}:{3:nsurl2}@{8:nsurl3}
+quoted-password	secret	-	(?i:\b[a-z0-9_.-]{0,40}(?:password|passwd|passphrase|api[_-]?key|secret[_-]?key|access[_-]?key|auth[_-]?token|access[_-]?token|refresh[_-]?token|client[_-]?secret))["']?\s*[:=]\s*["'](?![A-Z][A-Z0-9_]*["'])(?![^"']*not[-_]a[-_]secret)[^\s"'$<>{}*]{8,}["']	password = "p{7:nsq}"
+connection-password	secret	-	(?i:\b(?:password|pwd)=)(?![^;\s]*not[-_]a[-_]secret)[^;\s"'$<>{}*]{6,};	pwd={6:nssemi};
+environment-password	secret	-	\b(?:[A-Z0-9]+_)*(?:PASSWORD|PASSWD|PASSPHRASE|SECRET_KEY|API_KEY|APIKEY|ACCESS_KEY|CLIENT_SECRET|[A-Z0-9]+_TOKEN)=(?!\S*not[-_]a[-_]secret)[^\s"'$<>{}*`]{12,}	export DB_PASSWORD=p{11:nse}
