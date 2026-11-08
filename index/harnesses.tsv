@@ -249,7 +249,7 @@ ffmpeg	ffmpeg_AV_CODEC_ID_ADPCM_SBPRO_4_fuzzer	upstream	plain,ubsan,asan,asan-ub
 ffmpeg	ffmpeg_AV_CODEC_ID_ADPCM_SWF_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_ADPCM_THP_LE_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_ADPCM_THP_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
-ffmpeg	ffmpeg_AV_CODEC_ID_ADPCM_VIMA_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
+ffmpeg	ffmpeg_AV_CODEC_ID_ADPCM_VIMA_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	0	0	7	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_ADPCM_XA_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_ADPCM_XMD_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_ADPCM_YAMAHA_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
@@ -298,7 +298,7 @@ ffmpeg	ffmpeg_AV_CODEC_ID_BINK_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0
 ffmpeg	ffmpeg_AV_CODEC_ID_BINTEXT_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_BITPACKED_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_BMP_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
-ffmpeg	ffmpeg_AV_CODEC_ID_BMV_AUDIO_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
+ffmpeg	ffmpeg_AV_CODEC_ID_BMV_AUDIO_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	0	0	7	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_BMV_VIDEO_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_BONK_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_BRENDER_PIX_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
@@ -406,7 +406,7 @@ ffmpeg	ffmpeg_AV_CODEC_ID_IDCIN_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	
 ffmpeg	ffmpeg_AV_CODEC_ID_IDF_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_IFF_ILBM_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_ILBC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
-ffmpeg	ffmpeg_AV_CODEC_ID_IMC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
+ffmpeg	ffmpeg_AV_CODEC_ID_IMC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	0	0	7	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_IMM4_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_IMM5_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_IMM6_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
@@ -481,8 +481,8 @@ ffmpeg	ffmpeg_AV_CODEC_ID_R210_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7
 ffmpeg	ffmpeg_AV_CODEC_ID_RALF_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_RASC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_RAWVIDEO_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
-ffmpeg	ffmpeg_AV_CODEC_ID_RA_144_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
-ffmpeg	ffmpeg_AV_CODEC_ID_RA_288_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
+ffmpeg	ffmpeg_AV_CODEC_ID_RA_144_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	0	0	7	0	0	0	-
+ffmpeg	ffmpeg_AV_CODEC_ID_RA_288_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	0	0	7	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_REALTEXT_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_RKA_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_RL2_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
@@ -500,7 +500,7 @@ ffmpeg	ffmpeg_AV_CODEC_ID_RW2_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	
 ffmpeg	ffmpeg_AV_CODEC_ID_S302M_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_SAMI_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_SANM_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
-ffmpeg	ffmpeg_AV_CODEC_ID_SBC_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
+ffmpeg	ffmpeg_AV_CODEC_ID_SBC_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	0	0	7	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_SCPR_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_SCREENPRESSO_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_SDX2_DPCM_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
@@ -510,8 +510,8 @@ ffmpeg	ffmpeg_AV_CODEC_ID_SGI_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	
 ffmpeg	ffmpeg_AV_CODEC_ID_SHEERVIDEO_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_SHORTEN_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_SIMBIOSIS_IMX_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
-ffmpeg	ffmpeg_AV_CODEC_ID_SIPR_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
-ffmpeg	ffmpeg_AV_CODEC_ID_SIREN_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
+ffmpeg	ffmpeg_AV_CODEC_ID_SIPR_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	0	0	7	0	0	0	-
+ffmpeg	ffmpeg_AV_CODEC_ID_SIREN_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	0	0	7	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_SMACKAUD_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_SMACKER_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-
 ffmpeg	ffmpeg_AV_CODEC_ID_SMC_DEC_fuzzer	upstream	plain,ubsan,asan,asan-ubsan	7	7	0	0	0	0	0	-

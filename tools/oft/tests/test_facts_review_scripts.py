@@ -849,24 +849,30 @@ class WorkflowTest(unittest.TestCase):
 @unittest.skipUnless(os.path.exists(CODEOWNERS) and os.path.exists(REVIEW_MD),
                      "no .github/CODEOWNERS or review.md: the internal repository alone has them")
 class CodeOwnersTest(unittest.TestCase):
-    def test_review_md_and_codeowners_are_the_owned_paths_and_the_last_lines(self):
+    def test_theories_the_axioms_review_md_and_codeowners_are_the_owned_paths(self):
         """review.md says what the facts review checks, and CODEOWNERS who may change it: only a human may change
         either, so they are owned by the two people who own the reviewer's rules, whose approval main's branch rule
         requires (no team has a grant on this repository). Their lines are the last two, since GitHub takes the last
-        line that matches. The release's approvals, allowed axioms and theories keep the same two owners, and so do the
-        publishing workflows and the publishing tools (tools/publish/) where the checkout has them: the job that holds
-        the publishing App's key runs them from main. No other path has an owner."""
+        line that matches. /theories/ and /toolchain/allowed-axioms.txt keep the same two owners: the OSSV-129
+        replay found an agent reviewer catches a change to what a statement claims at most 1 time in 5, and never
+        under the final rules, and the stream owner's answer on that issue reads "I don't think we should be
+        widening allowed axioms without approval"; no later line matches a path of either. No other path has an
+        owner, approvals.yaml and the publishing paths included: a code owner is a user or a team, never an App, so
+        naming the two people there left an agent no way to approve a release but the stream owner's admin token,
+        which reaches him as an approval card, while R12 of OSSV-122's spec lets an agent approve a
+        release in his name (CODEOWNERS' header)."""
         patterns = [line.split("#", 1)[0].split() for line in read(CODEOWNERS).splitlines()]
         patterns = [" ".join(p) for p in patterns if p]
         owned = [p for p in patterns if len(p.split()) > 1]
         admins = owned[-1].split(None, 1)[1]
         self.assertEqual(len(admins.split()), 2, "two owners")
-        release = [f"/approvals.yaml {admins}", f"/toolchain/allowed-axioms.txt {admins}", f"/theories/ {admins}"]
-        if os.path.isdir(os.path.join(REPO, "tools", "publish")):
-            release += [f"/.github/workflows/publish*.yml {admins}", f"/tools/publish/ {admins}"]
+        kept = [f"/theories/ {admins}", f"/toolchain/allowed-axioms.txt {admins}"]
         last = [f"/review.md {admins}", f"/.github/CODEOWNERS {admins}"]
-        self.assertEqual(owned, release + last)
+        self.assertEqual(owned, kept + last)
         self.assertEqual(patterns[-2:], last)
+        # no later line matches a path of either, so GitHub's last match for one is the line above
+        for path in ("theories/X.v", "toolchain/allowed-axioms.txt"):
+            self.assertEqual(owners_of(read(CODEOWNERS), path), admins.split())
 
     def test_the_review_criteria_are_listed_with_the_facts(self):
         """The docs review.md reads as main's are its criteria, so CODEOWNERS lists them as files that need

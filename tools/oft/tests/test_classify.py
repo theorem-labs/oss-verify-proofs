@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import os
+import struct
 import subprocess
 import sys
 import tempfile
@@ -20,10 +21,12 @@ BEFORE = os.path.join(LIBREAC, "fuzz_pcap-1.8.0.plain.tsv")
 AFTER = os.path.join(LIBREAC, "fuzz_pcap-1.9.0.plain.tsv")
 
 
-def sym(name, address, exact, masked, size=16):
-    """A stand-in function's Sym: exact and masked are labels of its bytes and of its masked bytes."""
+def sym(name, address, exact, masked, size=16, targets="-"):
+    """A stand-in function's Sym: exact and masked are labels of its bytes and of its masked bytes, and targets is
+    one of what its masked immediates point at (a label too, but for `-` and `?`)."""
     return symbols.Sym(name, "func", address, size, hashlib.sha256(exact.encode()).hexdigest(),
-                       hashlib.sha256(masked.encode()).hexdigest(), "-")
+                       hashlib.sha256(masked.encode()).hexdigest(),
+                       targets if targets in ("-", "?") else hashlib.sha256(targets.encode()).hexdigest(), "-")
 
 
 def classes(rows):
@@ -116,7 +119,7 @@ class Classify(unittest.TestCase):
 
         def one(name, address):
             return symbols.Sym(name, "func", address, 4, hashlib.sha256(nop).hexdigest(),
-                               hashlib.sha256(symbols.mask(nop, address)).hexdigest(), "-")
+                               hashlib.sha256(symbols.mask(nop, address)).hexdigest(), "-", "-")
 
         base = [one("g", 0x100), one("h", 0x100), one("h", 0x200)]
         head = [one("h", 0x300), one("g", 0x400), one("h", 0x400)]
@@ -128,23 +131,23 @@ class Classify(unittest.TestCase):
         """A symbol fact's data objects are no functions: no row names one, whether it is in both builds, moved,
         changed or in one build only."""
         f = sym("f", 0x100, "f", "F")
-        stays, moves = (symbols.Sym(n, "object", 0x2000, 4, "-", "-", "-") for n in ("stays", "moves"))
-        moved = symbols.Sym("moves", "object", 0x3000, 4, "1f" * 32, "-", "-")
-        added = symbols.Sym("added", "object", 0x4000, 8, "-", "-", "-")
+        stays, moves = (symbols.Sym(n, "object", 0x2000, 4, "-", "-", "-", "-") for n in ("stays", "moves"))
+        moved = symbols.Sym("moves", "object", 0x3000, 4, "1f" * 32, "-", "-", "-")
+        added = symbols.Sym("added", "object", 0x4000, 8, "-", "-", "-", "-")
         self.assertEqual(classify.classify([f, stays, moves], [stays, f, moved, added]),
                          [classify.Row("identical", ("f",), f, f)])
 
     def test_a_function_of_no_size_is_not_classified(self):
         """A function of size 0 (musl's _start) has no bytes to compare: no row names it, moved or not."""
         f = sym("f", 0x100, "f", "F")
-        start, moved = (symbols.Sym("_start", "func", a, 0, "-", "-", "-") for a in (0x80, 0x90))
+        start, moved = (symbols.Sym("_start", "func", a, 0, "-", "-", "-", "-") for a in (0x80, 0x90))
         self.assertEqual(classify.classify([start, f], [moved, f]), [classify.Row("identical", ("f",), f, f)])
 
     def test_sections_are_not_classified(self):
         """A symbol fact's sections name places, not functions: no row names one, moved or changed."""
         f = sym("f", 0x100, "f", "F")
-        got, moved = (symbols.Sym(".got", "section", a, 16, s, "-", "-") for a, s in ((0x1000, "1f" * 32),
-                                                                                      (0x1100, "2e" * 32)))
+        got, moved = (symbols.Sym(".got", "section", a, 16, s, "-", "-", "-") for a, s in ((0x1000, "1f" * 32),
+                                                                                           (0x1100, "2e" * 32)))
         self.assertEqual(classify.classify([f, got], [f, moved]), [classify.Row("identical", ("f",), f, f)])
 
     def test_the_libreac_v19_change(self):
@@ -166,6 +169,252 @@ class Classify(unittest.TestCase):
         nxt = next(r for r in rows if r.names == ("pcap_source_next",))
         self.assertEqual((nxt.base.address, nxt.base.size, nxt.head.address, nxt.head.size),
                          (0x132e0, 788, 0x132a0, 732))
+
+    def test_a_fact_of_the_revision_before_the_targets_is_changed_against_one_with_them(self):
+        """main's symbol facts are of `oss-fuzz-theorems/symbols/1`, which has no targets column, and these
+        tools land before the facts that have it: a function of such a fact reads `?`, which is equal to
+        nothing, so it is changed against a fact of the new revision, never moved and never identical.  Here the
+        head is the base's own fact of revision 1, written again as revision 2 with its real targets."""
+        with open(BEFORE, encoding="utf-8") as f:
+            text = f.read()
+        old = "\n".join(["# oss-fuzz-theorems/symbols/1 " + line.split(" ", 2)[2] if i == 0 else
+                         "\t".join(f[:6] + f[7:]) for i, line in enumerate(text[:-1].split("\n"))
+                         for f in [line.split("\t")]]) + "\n"
+        _sha, before = symbols.parse(old)
+        _sha, after = symbols.load(BEFORE)
+        self.assertEqual({s.targets for s in before if s.kind == "func" and s.size}, {"?"})
+        self.assertEqual([s._replace(targets="-") for s in before], [s._replace(targets="-") for s in after])
+        self.assertEqual(set(classes(classify.classify(before, after)).values()), {"changed"})
+        self.assertEqual(set(classes(classify.classify(after, before)).values()), {"changed"})
+
+
+def jal(disp):
+    """jal ra, disp."""
+    return (((disp >> 20) & 1) << 31 | ((disp >> 1) & 0x3FF) << 21 | ((disp >> 11) & 1) << 20
+            | ((disp >> 12) & 0xFF) << 12 | 1 << 7 | 0x6F)
+
+
+def jal_x0(disp):
+    """jal x0, disp: a jump that links no register."""
+    return jal(disp) & ~(0x1F << 7)
+
+
+def auipc_ld(at, to):
+    """auipc a0, %pcrel_hi(to); ld a0, %pcrel_lo(to)(a0), the two instructions at the address at."""
+    delta = to - at
+    high = (delta + 0x800) >> 12
+    low = delta - (high << 12)
+    return ((high & 0xFFFFF) << 12 | 10 << 7 | 0x17,
+            (low & 0xFFF) << 20 | 10 << 15 | 3 << 12 | 10 << 7 | 0x03)
+
+
+RET = 0x00008067
+
+
+def built(functions, objects=(), slots=(), empty=()):
+    """[Sym] of a build whose functions are (name, address, the words of its code), whose data objects are
+    (name, address, size), whose .got slots are (address, the value the slot holds) and whose functions of size 0
+    are (name, address), in a .text of 0x2000 bytes at 0x10000, a .data of 0x2000 bytes at 0x20000 and a .got of
+    0x100 bytes at 0x23000: the rows symbols.read would write, with each function's targets resolved against
+    them all."""
+    rows, points = [], {}
+    for name, address, ws in functions:
+        code = struct.pack("<%dI" % len(ws), *ws)
+        masked, found = symbols.mask_targets(code, address)
+        points[len(rows)] = found
+        rows.append(symbols.Sym(name, "func", address, len(code), hashlib.sha256(code).hexdigest(),
+                                hashlib.sha256(masked).hexdigest(), "-", "-"))
+    rows += [symbols.Sym(n, "object", a, s, "1f" * 32, "-", "-", "-") for n, a, s in objects]
+    rows += [symbols.Sym(n, "func", a, 0, "-", "-", "-", "-") for n, a in empty]
+    rows += [symbols.Sym(n, "section", a, s, "2e" * 32, "-", "-", "-")
+             for n, a, s in ((".text", 0x10000, 0x2000), (".data", 0x20000, 0x2000), (".got", 0x23000, 0x100))]
+    held = dict(slots)
+    find = symbols.locator(rows, lambda address: held.get(address))
+    for i, found in points.items():
+        rows[i] = rows[i]._replace(targets=symbols.target_id(found, find))
+    return rows
+
+
+class Targets(unittest.TestCase):
+    """A function that calls another function or reads another global is changed, never moved and never identical:
+    mask() zeroes the call's displacement and the halves of a data address, so its masked bytes say nothing about
+    them, and the targets of the symbol fact hold what they point at, by symbol and offset."""
+
+    def cls(self, base, head, name="f"):
+        return classes(classify.classify(base, head))[(name,)]
+
+    def test_a_call_of_another_function_at_one_address_is_changed(self):
+        """f calls g in the base and h in the head, from the same address: the jal's displacement is all that
+        differs, and mask() zeroes it, so only the targets tell the two apart."""
+        base = built([("f", 0x10000, (jal(0x100), RET)), ("g", 0x10100, (RET,)), ("h", 0x10200, (RET,))])
+        head = built([("f", 0x10000, (jal(0x200), RET)), ("g", 0x10100, (RET,)), ("h", 0x10200, (RET,))])
+        self.assertEqual(base[0].masked, head[0].masked)
+        self.assertNotEqual(base[0].targets, head[0].targets)
+        self.assertEqual(self.cls(base, head), "changed")
+
+    def test_a_call_of_another_function_that_moved_too_is_changed(self):
+        """f moved and now calls h, not g: its masked bytes are those of the move, so its targets alone keep it out
+        of moved."""
+        base = built([("f", 0x10000, (jal(0x100), RET)), ("g", 0x10100, (RET,)), ("h", 0x10200, (RET,))])
+        head = built([("f", 0x10040, (jal(0x1c0), RET)), ("g", 0x10100, (RET,)), ("h", 0x10200, (RET,))])
+        self.assertEqual(base[0].masked, head[0].masked)
+        self.assertEqual(self.cls(base, head), "changed")
+
+    def test_a_read_of_another_global_is_changed(self):
+        """f reads g1 in the base and g2 in the head: mask() zeroes the auipc's high half and the load's low half,
+        so the two mask equal."""
+        objects = (("g1", 0x20000, 8), ("g2", 0x20100, 8))
+        base = built([("f", 0x10000, auipc_ld(0x10000, 0x20000) + (RET,))], objects)
+        head = built([("f", 0x10000, auipc_ld(0x10000, 0x20100) + (RET,))], objects)
+        self.assertEqual(base[0].masked, head[0].masked)
+        self.assertNotEqual(base[0].targets, head[0].targets)
+        self.assertEqual(self.cls(base, head), "changed")
+
+    def test_the_same_bytes_whose_callee_is_another_function_are_changed(self):
+        """f has the same bytes at the same address in both builds, but the function at the address it calls is g
+        in the base and h in the head: it would read as identical, and the proof of f would be left alone."""
+        base = built([("f", 0x10000, (jal(0x100), RET)), ("g", 0x10100, (RET,))])
+        head = built([("f", 0x10000, (jal(0x100), RET)), ("h", 0x10100, (RET,))])
+        self.assertEqual(base[0].exact, head[0].exact)
+        self.assertEqual(self.cls(base, head), "changed")
+
+    def test_a_function_whose_targets_moved_with_it_is_moved(self):
+        """f and the g it calls both moved by 0x40: the call lands on the same symbol at the same offset, so f only
+        moved, and no proof of it needs work."""
+        base = built([("f", 0x10000, (jal(0x100), RET)), ("g", 0x10100, (RET,))])
+        head = built([("f", 0x10040, (jal(0x100), RET)), ("g", 0x10140, (RET,))])
+        self.assertEqual((base[0].masked, base[0].targets), (head[0].masked, head[0].targets))
+        self.assertEqual(self.cls(base, head), "moved")
+
+    def test_a_caller_of_a_function_that_moved_stays_where_it_is(self):
+        """caller did not move, and the f it calls did: its jal's displacement, which mask() zeroes, is all that
+        differs, and the call lands on f at offset 0 in both builds.  Nothing in caller changed, so it is moved,
+        the class of a function whose address immediates alone differ, and not changed."""
+        base = built([("f", 0x10000, (RET,)), ("caller", 0x10200, (jal(-0x200), RET))])
+        head = built([("f", 0x10040, (RET,)), ("caller", 0x10200, (jal(-0x1c0), RET))])
+        self.assertNotEqual(base[1].exact, head[1].exact)
+        self.assertEqual((base[1].masked, base[1].targets), (head[1].masked, head[1].targets))
+        self.assertEqual(self.cls(base, head, "caller"), "moved")
+
+    def test_a_target_that_lands_nowhere_is_changed(self):
+        """A target outside every symbol and every section of its build is `?`, which is equal to nothing: f is
+        changed, though its bytes, its masked bytes and its address are the same."""
+        rows = built([("f", 0x10000, (jal(0x100), RET)), ("g", 0x10100, (RET,))])
+        lost = [rows[0]._replace(targets="?")] + rows[1:]
+        self.assertEqual(self.cls(lost, lost), "changed")
+
+    def test_a_got_slot_that_holds_another_symbol_is_changed(self):
+        """f reads the same .got slot in both builds, and the linker gave that slot to g2 instead of g1: the slot
+        has no symbol, so its place says nothing, and the targets carry what it holds."""
+        objects = (("g1", 0x20000, 8), ("g2", 0x20100, 8))
+        code = [("f", 0x10000, auipc_ld(0x10000, 0x23040) + (RET,))]
+        base = built(code, objects, ((0x23040, 0x20000),))
+        head = built(code, objects, ((0x23040, 0x20100),))
+        self.assertEqual(base[0].exact, head[0].exact)
+        self.assertNotEqual(base[0].targets, head[0].targets)
+        self.assertEqual(self.cls(base, head), "changed")
+
+    def test_an_auipc_with_no_masked_low_half_is_changed(self):
+        """The mask zeroes every auipc, but it zeroed no low half here (nothing completes this one), so the fact
+        cannot say which address the pair forms: the targets are `?` and f is changed, not identical."""
+        auipc, _ld = auipc_ld(0x10000, 0x20800)
+        rows = built([("f", 0x10000, (auipc, RET))])
+        self.assertEqual(rows[0].targets, "?")
+        self.assertEqual(self.cls(rows, rows), "changed")
+
+    def test_a_gp_relative_read_is_changed(self):
+        """gp holds an address this function never forms, so the fact cannot say where a gp-relative read lands:
+        its targets are `?`."""
+        ld_gp = (0x10 & 0xFFF) << 20 | 3 << 15 | 3 << 12 | 10 << 7 | 0x03
+        rows = built([("f", 0x10000, (ld_gp, RET))])
+        self.assertEqual(rows[0].targets, "?")
+        self.assertEqual(self.cls(rows, rows), "changed")
+
+    def test_a_slot_that_holds_another_number_is_changed(self):
+        """The slot of a thread-local variable holds its offset from the thread pointer, which lands in no symbol
+        and in no section: the targets carry the number, so another variable's offset reads as changed."""
+        code = [("f", 0x10000, auipc_ld(0x10000, 0x23040) + (RET,))]
+        base, head = built(code, (), ((0x23040, 0x8),)), built(code, (), ((0x23040, 0x10),))
+        self.assertEqual(base[0].exact, head[0].exact)
+        self.assertEqual(self.cls(base, head), "changed")
+
+    def test_a_general_dynamic_slot_pair_carries_its_second_word(self):
+        """A general-dynamic TLS pair holds the module in its first word and the variable's offset in its second,
+        both numbers: a 16-aligned slot of two numbers carries both, so a change of the second is changed."""
+        code = [("f", 0x10000, auipc_ld(0x10000, 0x23040) + (RET,))]
+        base = built(code, (), ((0x23040, 1), (0x23048, 0x8)))
+        head = built(code, (), ((0x23040, 1), (0x23048, 0x10)))
+        self.assertEqual(base[0].exact, head[0].exact)
+        self.assertEqual(self.cls(base, head), "changed")
+
+    def test_a_call_of_another_function_of_size_0_is_changed(self):
+        """An assembly function with no `.size` (musl's __clone) holds no address range, so a call of it would
+        land in .text alone: it is matched at its own address, and a call of another one there is changed."""
+        code = [("f", 0x10000, (jal(0x100), RET))]
+        base, head = built(code, (), (), (("g", 0x10100),)), built(code, (), (), (("h", 0x10100),))
+        self.assertEqual(base[0].exact, head[0].exact)
+        self.assertEqual(self.cls(base, head), "changed")
+
+    def test_a_call_of_another_function_of_the_same_name_is_changed(self):
+        """Two static functions share the name `pad`, of 8 and of 16 bytes: the size is in the target, so a call
+        that lands on the other one is changed, not moved."""
+        base = built([("f", 0x10000, (jal(0x100), RET)), ("pad", 0x10100, (RET, RET)),
+                      ("pad", 0x10200, (RET, RET, RET, RET))])
+        head = built([("f", 0x10000, (jal(0x200), RET)), ("pad", 0x10100, (RET, RET)),
+                      ("pad", 0x10200, (RET, RET, RET, RET))])
+        self.assertEqual(base[0].masked, head[0].masked)
+        self.assertEqual(self.cls(base, head, "f"), "changed")
+
+    def test_a_call_of_a_function_of_the_same_name_and_size_is_changed(self):
+        """Two static functions share the name `pad` AND their size, so the name and the size tell them apart
+        no better than the name: neither names a place, and the call lands in .text at its own offset."""
+        base = built([("f", 0x10000, (jal(0x100), RET)), ("pad", 0x10100, (RET, RET)),
+                      ("pad", 0x10200, (RET, RET))])
+        head = built([("f", 0x10000, (jal(0x200), RET)), ("pad", 0x10100, (RET, RET)),
+                      ("pad", 0x10200, (RET, RET))])
+        self.assertEqual(base[0].masked, head[0].masked)
+        self.assertEqual(self.cls(base, head, "f"), "changed")
+
+    def test_a_read_of_an_object_of_the_same_name_and_size_is_changed(self):
+        """The same of data: musl has two `buf` and the sanitizers five `lock`, several of them of one size.
+        f reads one in the base and the other in the head, from the same address."""
+        objects = (("lock", 0x20000, 4), ("lock", 0x20100, 4))
+        base = built([("f", 0x10000, auipc_ld(0x10000, 0x20000) + (RET,))], objects)
+        head = built([("f", 0x10000, auipc_ld(0x10000, 0x20100) + (RET,))], objects)
+        self.assertEqual(base[0].masked, head[0].masked)
+        self.assertEqual(self.cls(base, head), "changed")
+
+    def test_a_target_outside_every_row_makes_the_locator_give_nothing(self):
+        """The `?` of a target that lands nowhere comes from the locator, not from a row written by hand: a jal
+        that leaves .text lands in no row of the build."""
+        rows = built([("f", 0x10800, (jal(0x7f800), RET))])
+        self.assertEqual(rows[0].targets, "?")
+        self.assertEqual(self.cls(rows, rows), "changed")
+
+    def test_a_low_half_of_two_high_halves_keeps_which_is_which(self):
+        """One load completes an auipc of g1 on one path and an auipc of g2 on the other.  Swapping the two in
+        the head leaves the set of places equal, so the targets hold each place by the high half that forms it:
+        with the places alone the two builds would read as moved."""
+        objects = (("g1", 0x20040, 8), ("g2", 0x21040, 8))
+        nop = 0x00000013
+
+        def body(first, second):
+            """beq a0,a0,+12 (to the far jal); auipc a0,hi(first); j +0x1000 (to the load); j +0xff8 (to the
+            second auipc); 1021 nops; auipc a0,hi(second); ld a0,lo(a0); ret.  The two auipc are 0x1000 bytes
+            apart and so are the two globals, so all four pairs have the same 12-bit low half: one load
+            completes either auipc, and the mask zeroes the two high halves and that low half, whichever way
+            the two globals are paired with the two auipc."""
+            one, low_one = auipc_ld(0x10004, first)
+            two, low_two = auipc_ld(0x11004, second)
+            assert symbols.i_imm(low_one) == symbols.i_imm(low_two), (low_one, low_two)
+            beq = 10 << 20 | 10 << 15 | 6 << 8 | 0x63      # beq a0,a0,+12
+            return (beq, one, jal_x0(0x1000), jal_x0(0xff8)) + (nop,) * 1021 + (two, low_two, RET)
+
+        base = built([("f", 0x10000, body(0x20040, 0x21040))], objects)
+        head = built([("f", 0x10000, body(0x21040, 0x20040))], objects)
+        self.assertEqual(base[0].masked, head[0].masked)
+        self.assertNotEqual(base[0].targets, "?")
+        self.assertEqual(self.cls(base, head), "changed")
 
 
 class ClassifyCommand(unittest.TestCase):

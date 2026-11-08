@@ -20,6 +20,7 @@ Every path of either layout is built here, so that no other module spells one ou
 proofs, counterexamples and findings in one layout at a time: the loader (facts.load) refuses a unit that is in both.
 """
 import os
+import subprocess
 
 OLD = "old"
 NEW = "new"
@@ -211,6 +212,100 @@ def of_tree(root):
             if fns:
                 return OLD
     return NEW
+
+
+# -------------------------------------------------------------------------- a workspace that holds some libraries
+#
+# A Legion issue pod writes the proof library of the fuzz targets its issue names and no other
+# (.legion/hooks/checkout, INFRA-1385 R8).  A tool that reads the working tree across units would then
+# read an empty place where a library is and answer as if the library held nothing, so each such tool
+# refuses instead and names the two commands that add it (INFRA-1385 R12): a check must never pass on a
+# tree it did not read.
+
+
+def _git(root, *args):
+    """`git -C root args`, or None where git cannot answer: it failed, or there is no git here.  A check
+    image carries no git at all (toolchain/runner.Dockerfile), and a missing program raises rather than
+    failing, so this is what keeps a tool that asks these questions running everywhere."""
+    try:
+        done = subprocess.run(["git", "-C", root, *args], capture_output=True, text=True)
+    except OSError:
+        return None
+    return done.stdout if done.returncode == 0 else None
+
+
+def sparse(root):
+    """Whether root's working copy holds a part of its commit: git's sparse checkout is on.
+
+    git's own patterns are the question, not jj's: Legion requires that the two agree before it records
+    a checkout (INFRA-1385 R3), and a refusal needs the commit's directories, which only git gives
+    (_tracked_dirs).  False where git cannot answer, so a directory that is no git repository, which is
+    what a unit's view is (`oft check --facts-from`), is never refused."""
+    out = _git(root, "config", "--bool", "--get", "core.sparseCheckout")
+    return out is not None and out.strip() == "true"
+
+
+def _tracked_dirs(root):
+    """Every directory of root's HEAD commit, from git, or None when git cannot answer."""
+    out = _git(root, "ls-tree", "-r", "-d", "--name-only", "HEAD")
+    return None if out is None else set(out.splitlines())
+
+
+def _left_out(root, lib):
+    """Whether the working copy leaves lib out because it is sparse: git's index marks at least one file under it
+    skip-worktree (`git ls-files -t` writes `S`).  A library the change itself removed -- `git rm`, an `rm -rf`, a
+    move to the other layout -- keeps its entries, which git tags `H`, so this is False for it and the tool reads
+    the tree as the change left it.  False where git cannot answer."""
+    out = _git(root, "ls-files", "-t", "--", lib + "/")
+    if out is None:
+        return False
+    return any(line.startswith("S ") for line in out.splitlines())
+
+
+def unwritten_libraries(root, units):
+    """[(unit, its proof library)] for each unit of units whose proof library the commit holds, the working copy
+    does not, and git's index marks skip-worktree (_left_out): the libraries a sparse workspace left unwritten.
+    [] in a full working copy, [] when git cannot say what the commit holds, and [] for a library the change
+    itself removed, which is the tree as its author means it."""
+    if not sparse(root):
+        return []
+    tracked = _tracked_dirs(root)
+    if tracked is None:
+        return []
+    missing = []
+    for unit in units:
+        try:
+            project, harness = split_unit(unit)
+        except ValueError:
+            continue
+        for lay in LAYOUTS:
+            lib = proof_lib_dir(project, harness, lay)
+            if lib in tracked and not os.path.isdir(os.path.join(root, lib)) and _left_out(root, lib):
+                missing.append((unit, lib))
+    return missing
+
+
+def cone(root):
+    """Whether root's sparse checkout is git's cone mode, which takes a directory path and refuses a pattern
+    (`/<dir>/` exits 128 there).  A pod's is not: the hook writes patterns (INFRA-1385 R8)."""
+    out = _git(root, "config", "--bool", "--get", "core.sparseCheckoutCone")
+    return out is not None and out.strip() == "true"
+
+
+def unwritten_libraries_message(what, missing, root=None):
+    """What a tool prints when it refuses: what it would have read, and the two commands that add each
+    library (jj's and git's own, as Legion adds none of its own).  git's command is the one this workspace
+    takes: a directory in cone mode, a pattern otherwise (cone)."""
+    lines = ["FAIL %s reads the working tree of %d fuzz target(s) whose proof library this sparse workspace "
+             "does not hold, so it would answer on files it did not read:" % (what, len(missing))]
+    for unit, lib in missing:
+        lines.append("  %s: %s" % (unit, lib))
+    lines.append("Add each library, then run this again:")
+    in_cone = root is not None and cone(root)
+    for _unit, lib in missing:
+        lines.append("  jj sparse set --add %s" % lib)
+        lines.append("  git sparse-checkout add %s" % (lib if in_cone else "/%s/" % lib))
+    return "\n".join(lines)
 
 
 # -------------------------------------------------------------------------------------------- regular expressions

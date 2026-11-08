@@ -5,8 +5,8 @@ import io
 import os
 import unittest
 
-from oft import facts, layout, port
-from oft.tests.helpers import Public, Tree, add_build_record
+from oft import facts, layout, lint, port
+from oft.tests.helpers import Public, Tree, add_build_record, port_built
 from oft.tests.test_oss_verify import PORT, PORT_ASSET, add_standin
 
 UNIT = "zlib/checksum_fuzzer"
@@ -343,6 +343,128 @@ class PortRecords(unittest.TestCase):
         found = [str(f) for f in self.t.lint(release=True) if f.rule == "records"]
         self.assertIn("records projects/standin/project.yaml: a port-built project's binary archive goes with its "
                       "port archive, and assets.port is missing", found)
+
+
+class Enrolled(unittest.TestCase):
+    """`enrolled` says what the maintainers' own project.yaml says (lint.check_enrolled).  It is the enrollment's to
+    write, from the copy of the port that each build record keeps, and nothing else may set it: the field weakens a
+    hold, so a hand-written one would publish statements a release must not carry.  The rule runs on every lint, not
+    only on a release: `facts.hold` reads the field long before a cut.
+
+    zlib has two included fuzz targets, so its records can be made to disagree.  `found` keeps the findings about
+    this field alone: port-building the fixture leaves others on the same file (its record still pins the archives
+    of a recipe build), and they are no part of this rule."""
+    UNITS = ("zlib/api-driver", "zlib/checksum_fuzzer")
+    WHERE = "projects/zlib/project.yaml"
+    CONTACT = "a-maintainer" + "@" + "example.invalid"
+
+    def setUp(self):
+        self.t = Tree()
+        self.addCleanup(self.t.close)
+        port_built(self.t, "zlib")
+        self.records = {}
+        for unit in self.UNITS:
+            rel = self.records[unit] = add_build_record(self.t, unit)
+            r = self.t.yaml(rel)
+            r.pop("recipe", None)
+            r["port"] = {"repository": "theorem-labs/oss-verify", "commit": "d" * 40, "path": "projects/zlib",
+                         "asset": {"file": "zlib-port.tar.zst", "bytes": 1000, "sha256": "9" * 64}}
+            self.t.put_yaml(rel, r)
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+
+    def copy(self, unit):
+        """The maintainers' project.yaml in that fuzz target's build record."""
+        return os.path.join(os.path.dirname(self.records[unit]), "port", "projects", "zlib", "project.yaml")
+
+    def copied(self, contact, unit="zlib/checksum_fuzzer"):
+        """Write that copy, naming contact as primary_contact (None: the file names none)."""
+        y = {"repo": "https://github.com/madler/zlib#" + "5" * 40, "language": "c"}
+        if contact is not None:
+            y["primary_contact"] = contact
+        self.t.put_yaml(self.copy(unit), y)
+
+    def enrolled(self, value):
+        y = {k: v for k, v in self.t.yaml(self.WHERE).items() if k != "enrolled"}
+        self.t.put_yaml(self.WHERE, y if value is None else dict(y, enrolled=value))
+
+    def found(self):
+        return [f.msg for f in self.t.lint()
+                if f.rule == "schema" and f.where == self.WHERE
+                and ("enrolled" in f.msg or "primary_contact" in f.msg)]
+
+    def test_a_record_that_keeps_no_copy_says_nothing(self):
+        """Without the maintainers' own file nothing here knows whether they take part, so the field stands."""
+        self.assertEqual(self.found(), [])
+        self.enrolled(True)
+        self.assertEqual(self.found(), [])
+
+    def test_a_maintainers_contact_requires_the_field(self):
+        for unit in self.UNITS:
+            self.copied(self.CONTACT, unit)
+        self.assertEqual(self.found(), ["%s names a person as primary_contact, so add `enrolled: true` after status"
+                                        % self.copy(self.UNITS[0])])
+        self.enrolled(True)
+        self.assertEqual(self.found(), [])
+
+    def test_a_seeded_contact_refuses_the_field(self):
+        """`n/a` in any case, an empty contact and no contact at all are one answer: nobody enrolled this project."""
+        for contact in ("n/a", "N/A", " n/a ", "", None):
+            with self.subTest(contact=contact):
+                for unit in self.UNITS:
+                    self.copied(contact, unit)
+                self.enrolled(None)
+                self.assertEqual(self.found(), [])
+                self.enrolled(True)
+                self.assertEqual(self.found(), ["%s names no primary_contact, so remove `enrolled`, which no seeded "
+                                                "project has" % self.copy(self.UNITS[0])])
+
+    def test_false_is_never_written(self):
+        """Absence is the negative; a second spelling of it would let the two disagree."""
+        for unit in self.UNITS:
+            self.copied("n/a", unit)
+        self.enrolled(False)
+        self.assertEqual(self.found(), [("enrolled is False: the only value is true, and a project whose "
+                                         "maintainers do not take part has no such field")])
+
+    def test_a_record_of_another_port_commit_says_nothing(self):
+        """Such a record holds the maintainers' file at its own commit, not at the one build.oss_verify names."""
+        for unit in self.UNITS:
+            self.copied(self.CONTACT, unit)
+            rel = self.records[unit]
+            r = self.t.yaml(rel)
+            r["port"]["commit"] = "e" * 40
+            self.t.put_yaml(rel, r)
+        self.assertEqual(self.found(), [])
+
+    def test_the_records_of_one_port_commit_must_agree(self):
+        self.copied(self.CONTACT, self.UNITS[0])
+        self.copied("n/a", self.UNITS[1])
+        self.assertEqual(self.found(), ["the build records disagree on the maintainers' primary_contact: %s names "
+                                        "one, and %s names none or n/a"
+                                        % (self.copy(self.UNITS[0]), self.copy(self.UNITS[1]))])
+
+    def test_the_rule_is_the_one_the_enrollment_writes_by(self):
+        """tools/enroll/facts.py's enrolled_fields is the writer, and the two spell one rule.  This test cannot
+        call it: `oft release-tree` ships tools/ and these tests but removes tools/enroll/, so an import of it
+        would break every shipped run.  So each case here is one of that function's, read from its source.
+
+        The last three are YAML's null, which both sides call nobody by the same list (`""`, `n/a`, `null`).
+        Lower-case `null` is None to both loaders; `NULL` and `Null` are not, and are the reason that list has
+        `null` in it.  yamlio, which `oft lint` reads the copy with, leaves those two as text, where the
+        enrollment's PyYAML makes all three None (tools/enroll/tests/test_facts.py has the writer's cases)."""
+        for contact, party in ((self.CONTACT, True), ("n/a", False), ("N/A", False), ("", False), (None, False),
+                               (" someone" + "@" + "example.invalid ", True), ("null", False), ("NULL", False),
+                               ("Null", False)):
+            self.assertIs(lint.takes_part(contact), party, contact)
+
+    def test_a_contact_the_two_loaders_read_differently_is_nobody(self):
+        """`primary_contact: NULL` is text to yamlio and None to the enrollment's PyYAML; the field stays off."""
+        for unit in self.UNITS:
+            self.t.write(self.copy(unit), "repo: https://github.com/madler/zlib#%s\nprimary_contact: NULL\n" % ("5" * 40))
+        self.assertEqual(self.found(), [])
+        self.enrolled(True)
+        self.assertEqual(self.found(), ["%s names no primary_contact, so remove `enrolled`, which no seeded "
+                                        "project has" % self.copy(self.UNITS[0])])
 
 
 if __name__ == "__main__":

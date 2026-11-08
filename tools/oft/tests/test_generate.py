@@ -1116,7 +1116,8 @@ def put_symbol_fact(t, build, rows):
     address, size), stand-in hashes (masked bytes - but for a function) and no source lines."""
     pin = t.yaml("projects/zlib/checksum_fuzzer/harness.yaml")["builds"][build]["sha256"]
     symbols.write(t.path(layout.symbol_fact("zlib", "checksum_fuzzer", build)),
-                  [symbols.Sym(n, k, a, s, "1f" * 32, "2e" * 32 if k == "func" else "-", "-") for n, k, a, s in rows],
+                  [symbols.Sym(n, k, a, s, "1f" * 32, "2e" * 32 if k == "func" else "-", "-", "-")
+                   for n, k, a, s in rows],
                   pin)
 
 
@@ -1238,7 +1239,7 @@ class SymbolsModule(unittest.TestCase):
                 self.assertIn(clash, errors[0])
                 self.assertIn("nothing rendered", t.last_output)
                 self.assertRaisesRegex(ValueError, re.escape(clash), names.symbol_idents,
-                                       [symbols.Sym(n, k, a, s, "-", "-", "-") for n, k, a, s in rows])
+                                       [symbols.Sym(n, k, a, s, "-", "-", "-", "-") for n, k, a, s in rows])
 
     def test_oft_checks_rules_leave_the_symbol_facts_alone(self):
         """The rule is not in rules.check, which `oft check` runs: symbols.py is not the checker

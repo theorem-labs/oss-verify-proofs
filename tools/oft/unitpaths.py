@@ -5,7 +5,9 @@ of the tree, so a check reads no file of another unit, and no change that the ke
     every part      the statement folder projects/<p>/<h>/, but its README.md and the proofs, counterexamples and
                     findings the per-project layout puts in it (drop); projects/<p>/project.yaml and every
                     projects/<p>/*/harness.yaml
-    build           the unit's proofs folder, theories/, toolchain/allowed-axioms.txt; of dune-project, the forms
+    build           the unit's proofs folder, but the prose and the licence evidence of its build record
+                    (PROOFS_DROP), theories/,
+                    toolchain/allowed-axioms.txt; of dune-project, the forms
                     that a build of p's harnesses reads (dune_project_forms)
     counterexamples the unit's counterexamples folder
     findings        the unit's findings folder, its project's unpatched.yaml
@@ -16,6 +18,15 @@ per-project layout's proofs and counterexamples folders each hold the dune file 
 that keeps the statement theory out of them: the folder's own component leaves it out (paths.is_gen: lint holds it to
 its rendering), the unit's build key holds it as a file of its build path (keys._dune_path), and the view holds it,
 since a build reads it.
+
+What a unit's proofs folder holds that neither its build key nor its view does is two parts of its build record, in
+either layout (PROOFS_DROP): its prose, provenance/PROVENANCE.md, and its licence evidence,
+provenance/evidence/licence/.  The OSS Verify lead ruled on 2026-11-05 that a change to either does not invalidate a
+unit's check of record: no rule a check runs and no build opens them (the rules read the record itself,
+provenance/PROVENANCE.yaml, which stays keyed, and provenance/recipe/ and provenance/port/; generate.py renders only
+a link to the .md; facts.PROOF_HARNESS_DIRS keeps provenance/ out of the unit's proof directories altogether).
+Before this, pull request 1846, which changed one unit's licence evidence and four lines of its record's prose,
+moved that unit's build key and cost it a 3.9-hour check of record again.
 
 A view holds two more groups of files.  The first is the binaries that `oft fetch` put in place: projects/<p>/bin/<h>/
 for build and counterexamples, and projects/<p>/unpatched-bin/<h>/ for findings (layout.unpatched_bin_dir).  No key
@@ -61,14 +72,52 @@ def own(unit, part, unit_layout=layout.NEW):
     return out
 
 
+# What the proofs folder's component leaves out, in either layout: two parts of the build record that no check reads,
+# its prose (PROVENANCE.md) and its licence evidence with the tooling that makes it (made-from.tsv, made_from.py, its
+# tests, left-bare.tsv).  The record itself, PROVENANCE.yaml, which the rules read, stays keyed, and so does
+# everything else under provenance/: recipe/, port/, LICENSES/ and every other kind of evidence.  A name with no "/"
+# is an entry of the component's own folder; one with a "/" is a path under it (keys.Attributes.entries reads the
+# folders it leads through again, so what is beside a dropped path is still keyed).
+PROOFS_DROP = ("provenance/PROVENANCE.md", "provenance/evidence/licence")
+
+
 def drop(name, unit_layout):
-    """The names that component name of own(..., unit_layout) leaves out of what the key holds of it: the statement
-    folder's HARNESS_DROP, and the barrier dune file of a per-project proofs or counterexamples folder."""
+    """The paths that component name of own(..., unit_layout) leaves out of what the key holds of it: the statement
+    folder's HARNESS_DROP, the proofs folder's PROOFS_DROP in either layout, and the barrier dune file of a
+    per-project proofs or counterexamples folder."""
     if name == "harness":
         return HARNESS_DROP
-    if name in ("proofs", "counterexamples") and unit_layout == layout.NEW:
-        return ("dune",)
+    barrier = ("dune",) if unit_layout == layout.NEW else ()
+    if name == "proofs":
+        return PROOFS_DROP + barrier
+    if name == "counterexamples":
+        return barrier
     return ()
+
+
+def view_drop(name):
+    """The paths that component name leaves out of the view CI checks the part in: the proofs folder's PROOFS_DROP,
+    which no check reads.  Not the barrier dune file of a per-project proofs or counterexamples folder, which the
+    component leaves out and the view holds, since a build reads it; the statement folder's HARNESS_DROP is left out
+    by view() itself, which mounts that folder's entries one by one."""
+    return PROOFS_DROP if name == "proofs" else ()
+
+
+def under(root, rel, drop):
+    """[path] of what the view holds of rel, a path under root, when drop names paths inside it that the view leaves
+    out: rel itself when it has none of them, so a folder with nothing left out is mounted whole; else its entries,
+    the first segment of each drop path it has left out, and that segment's own folder read again by this rule for
+    what lies beside the dropped path."""
+    base = os.path.join(root, rel)
+    here = [d for d in drop if os.path.lexists(os.path.join(base, d))]
+    if not here or not os.path.isdir(base):
+        return [rel]
+    out = []
+    for e in sorted(os.listdir(base)):
+        if e in here:
+            continue
+        out += under(root, "%s/%s" % (rel, e), tuple(d[len(e) + 1:] for d in here if d.startswith(e + "/")))
+    return out
 
 
 def project_files(p, subdirs):
@@ -155,7 +204,8 @@ def view(root, unit, part):
     """The paths, relative to root, of the view of unit's part that exist under root, sorted, dune-project left out:
     own(unit, part) in the layout the unit has under root (each path a change brings in the layout root has it in, as
     keys.py takes it at the change; ValueError for one in both layouts), the statement folder as its entries but
-    HARNESS_DROP, as the key holds it; project_files; and binaries(unit, part); less any path under another of them."""
+    HARNESS_DROP, as the key holds it, and the proofs folder without what view_drop leaves out of it (under);
+    project_files; and binaries(unit, part); less any path under another of them."""
     p, _h = unit.split("/", 1)
     project = os.path.join(root, "projects", p)
     subdirs = sorted(d for d in os.listdir(project) if os.path.isdir(os.path.join(project, d))) \
@@ -173,7 +223,7 @@ def view(root, unit, part):
             wanted += ["%s/%s" % (rel, e) for e in (sorted(os.listdir(d)) if os.path.isdir(d) else [])
                        if e not in HARNESS_DROP]
         else:
-            wanted.append(rel)
+            wanted += under(root, rel, view_drop(name))
     rels = {rel for rel in wanted + project_files(p, subdirs) + [binaries(unit, part)]
             if os.path.lexists(os.path.join(root, rel))}
     real = os.path.realpath(root)

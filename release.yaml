@@ -1,6 +1,6 @@
 schema: oss-fuzz-theorems/release/1
-release: 2026.11.1
-date: '2026-11-05'
+release: 2026.11.2
+date: '2026-11-08'
 namespace: OSSVerify
 opam_stem: oss-verify
 oss_fuzz:

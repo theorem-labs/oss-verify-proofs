@@ -37,10 +37,11 @@ over the statements, and once per harness over the wrappers of all its proofs.
 Off by default: without its bytecode machine (see _rocqchk) it re-checks every
 vm_compute certificate by reduction, which takes hours for one proof.
 
-Each part fails when it examined nothing it was asked to examine: a unit
-with no statement Statements.v defines fails statements, and a unit with no
-proof fails when --parts names proofs.  Without --parts, a unit is checked
-on each of statements, proofs and counterexamples that it has.
+Each part refuses a unit when it examined nothing it was asked to examine: a unit
+with no statement Statements.v defines refuses statements, and a unit with no
+proof is refused when --parts names proofs. A run requesting statements or proofs
+that covers no compiling work is VOID (7), not a proof verdict. Without --parts,
+a unit is checked on each of statements, proofs and counterexamples that it has.
 
 Every check first loads the facts of the whole tree and checks its rules.
 --facts-to DIR and --facts-from DIR split that from the rest, so that each unit
@@ -58,8 +59,8 @@ can be checked in a view that holds only its own files:
   --facts-from DIR  check each unit with its facts from DIR (facts.load_unit),
                     as a plain check would, without loading the tree or
                     checking its rules, so --root may be a view of the unit.  A
-                    unit fails when its file is missing, malformed, of another
-                    format version or of another unit, when the file's
+                    run is VOID and stops when a unit's file is missing, malformed,
+                    of another format version or of another unit, when the file's
                     namespace does not give harness.yaml's rocq, or when, for
                     a part the run checks, a unit file its facts came from is
                     missing under --root or differs, or the unit's directories
@@ -79,6 +80,7 @@ CI runs `python3 -m oft.check`, which loads the checker and none of the other
 commands' modules (keys.py says which files the checker is).
 """
 import argparse
+import collections
 import hashlib
 import os
 import re
@@ -94,6 +96,21 @@ import time
 import yaml
 
 from . import facts, fetch, layout, names, render, rules, schema, yamlio
+
+# VOID is not a verdict. Elsewhere 0, 1, 2, 124, 134, 137, 139, 141, 143 and 255 are in use;
+# 3 and 4 are the n6 pod's own "nothing was checked" codes, which it writes today.  The n6 pod and
+# the farm runner, under dev/stream/bin/, do not read 7 yet; #2108 teaches them to.
+VOID = 7
+
+
+def void(out, reason):
+    """The one VOID line: the word leads it, so a reader who sees nothing else sees it, and it carries the
+    reason and the exit code.  The stream's kit job script prints a line of the same shape and exits 7
+    for a round it voids itself, so a lane greps `^VOID: ` and reads exit 7 whichever of the two spoke."""
+    print("VOID: %s; NOT A VERDICT (exit %d): any FAIL, ERROR or step count above describes the harness this "
+          "run was given, not its proofs." % (" ".join(str(reason).split()), VOID), file=out)
+    return VOID
+
 
 # Print Assumptions writes into a file of its own (Redirect "assumptions" makes assumptions.out in the compile's
 # working directory, and truncates it), and the audit reads that file and nothing else, so what a proof makes Rocq
@@ -180,6 +197,56 @@ class CheckError(RuntimeError):
     pass
 
 
+class Compilation:
+    """Compiling work covered by one check: dune targets (cache hits included) and rocq compile invocations.
+
+    `run` keeps one of these and reads it for the void rules.  Every function below that compiles takes it as
+    a KEYWORD argument defaulting to None, so each keeps the signature it had before this
+    counter existed: the two gate-job scripts, under tools/publish/ and dev/stream/bin/, call
+    check_statements,
+    compile_lib and check_proof positionally and from outside this module, and a positional parameter here
+    ended them in TypeError (the CI/CD lead, 2026-11-06 17:25Z).  A caller that passes none compiles exactly
+    as before and its work is counted into a throwaway (`counter`): the void rules are `oft check`'s own, and
+    a caller that drives these functions itself reaches none of them."""
+
+    def __init__(self):
+        self.files = 0
+        self.jobs = None
+
+    def run(self, cmd, cwd, log, count=1):
+        self.files += count
+        try:
+            return _run(cmd, cwd, log)
+        except OSError:
+            self.files -= count  # the compiler did not start
+            raise
+
+    def dune(self, root, targets, log):
+        # The job count is _jobs(), which main gave both build paths in #2121: OFT_JOBS, else the cgroup's
+        # CPU quota, at most the CPUs this process may run on.  Not the affinity alone, which this branch
+        # used before the rebase: in a pod with a CPU limit and no cpuset the affinity is the node's 32-64
+        # CPUs, and -j that many ran the pod out of memory.  What this class adds is that the count is
+        # RECORDED, so a round that compiled under no job count can be told from one that compiled under
+        # this job's own width.
+        # Never -j 0.  _jobs floors at 1 only on its cgroup-quota branch: with no quota it answers the size
+        # of the affinity set, which is 0 on a runner that reports none, and dune then got `-j 0` (CI run
+        # 42285943632, the sixth non-author review of #2109).  The floor belongs here, where the count is
+        # used, rather than in _jobs, which is main's.  So this tool always passes an explicit positive -j
+        # and has no "no job count" case to void; that case is real one layer out, in the n6 pod, which can
+        # run a job for which no width was ever determined and then sets dune no job count at all (#2108).
+        # What this class adds is that the count is RECORDED, so a reader can tell a round that compiled
+        # under this job's own width from one that did not.
+        if self.jobs is None:
+            self.jobs = max(1, _jobs())
+        return self.run(["dune", "build", "--root", root, "--display", "short", "-j", str(self.jobs)] + targets,
+                        root, log, len(targets))
+
+
+def counter(compilation):
+    """COMPILATION, or a throwaway for a caller outside `run` that passed none (Compilation)."""
+    return compilation if compilation is not None else Compilation()
+
+
 def _run(cmd, cwd, log, timeout=None, env=None):
     """Run cmd, appending its output to log; its return code."""
     with open(log, "a", encoding="utf-8") as f:
@@ -187,6 +254,218 @@ def _run(cmd, cwd, log, timeout=None, env=None):
         f.flush()
         r = subprocess.run(cmd, cwd=cwd, stdout=f, stderr=subprocess.STDOUT, timeout=timeout, env=env)
     return r.returncode
+
+
+# A build that fails says why in its log, which can run to hundreds of thousands of lines, and the log is in the check's
+# work directory, which a build service's pod deletes when it ends.  So the CheckError of a failed build quotes the
+# log's errors (log_errors).  An Error: block is dune's or Rocq's `File "...", line N...` header and the lines up to the
+# next such header or the end of the log, when one of them starts with `Error:`.  An `Error:` line with no header open
+# before it (dune's `Error: Don't know how to build ...`), or one that would not be quoted whole in the open block,
+# opens a block of its own, with as many of the ERROR_CONTEXT lines before it as fit, as the gate's pod script reads a log
+# with `grep -C 5`.  At most ERROR_BLOCKS blocks are quoted, the first ones, in at most ERROR_BYTES bytes and ERROR_LINES
+# lines, every byte of a quoted line counted, its prefix too; a later block only when what is left holds it whole up to
+# its Error: line.  One note per quoted block that says how many of its lines were left out comes on top.  So an
+# Error: line is cut only when it alone is longer than the bound.  Each quoted line starts with QUOTE, as proofs_apart
+# echoes a process's output, also where a log line holds a character that str.splitlines ends a line at (a carriage
+# return, U+2028): no line of the log can stand as a line of the check's own output, a summary or a proof's claim.
+ERROR_BLOCKS = 5
+ERROR_BYTES = 8000
+ERROR_LINES = 200
+ERROR_CONTEXT = 5
+# what a log with no Error: line shows instead: its last lines
+ERROR_TAIL_LINES = 40
+FILE_HEADER = re.compile(r'File "[^"]*", lines? \d+')
+QUOTE = "  | "
+CUT = " [cut]"
+
+
+def _log_lines(f):
+    """(line, whether it was cut) for each line of the binary file f, without its line end, decoded: a line longer than
+    ERROR_BYTES bytes is cut to them and the rest of it read in pieces of that size and dropped, so no line is held
+    whole, also in a log with no line end at all."""
+    while True:
+        raw = f.readline(ERROR_BYTES + 1)
+        if not raw:
+            return
+        cut = len(raw) > ERROR_BYTES and not raw.endswith(b"\n")
+        if cut:
+            rest = raw
+            while rest and not rest.endswith(b"\n"):
+                rest = f.readline(ERROR_BYTES + 1)
+            raw = raw[:ERROR_BYTES]
+        yield raw.rstrip(b"\r\n").decode("utf-8", "replace"), cut
+
+
+def _quoted(line, cut):
+    """The quoted lines of one log line: QUOTE and each piece str.splitlines gives, the last marked CUT when the log line
+    was cut."""
+    pieces = line.splitlines() or [""]
+    if cut:
+        pieces[-1] += CUT
+    return [QUOTE + p for p in pieces]
+
+
+class _Quote:
+    """Quoted lines, kept to ERROR_BYTES bytes (each line's own, its line end included) and ERROR_LINES lines, and the
+    notes among them, which are not counted."""
+
+    def __init__(self):
+        self.lines, self.size, self.count = [], 0, 0
+
+    def full(self):
+        return self.size >= ERROR_BYTES or self.count >= ERROR_LINES
+
+    def add(self, text, front=False):
+        """Add text, cut (never inside a character, and marked CUT) to the room that is left; whether it was added
+        whole.  Nothing is added when there is no room for more than the prefix."""
+        if self.full():
+            return False
+        b, room = (text + "\n").encode("utf-8"), ERROR_BYTES - self.size
+        got = text
+        if len(b) > room:
+            keep = room - len((CUT + "\n").encode("utf-8"))
+            if keep <= len(QUOTE):
+                self.size = ERROR_BYTES
+                return False
+            got = b[:keep].decode("utf-8", "ignore") + CUT
+        if front:
+            self.lines.insert(0, got)
+        else:
+            self.lines.append(got)
+        self.size += len((got + "\n").encode("utf-8"))
+        self.count += 1
+        return got == text
+
+    def note(self, text):
+        self.lines.append(text)
+
+
+def _size(line, cut):
+    """(bytes, lines) that _Quote takes for the quoted lines of one log line, their line ends included."""
+    pieces = _quoted(line, cut)
+    return sum(len((p + "\n").encode("utf-8")) for p in pieces), len(pieces)
+
+
+class _Block:
+    """A block of the log as log_errors reads it: its lines from its start for as long as each fits whole in
+    ERROR_BYTES and ERROR_LINES, counted as _Quote counts them; how many lines it has in all; and whether one of them
+    starts with Error:."""
+
+    def __init__(self):
+        self.lines, self.size, self.count, self.all, self.error, self.closed = [], 0, 0, 0, False, False
+
+    def fits(self, line, cut):
+        if self.closed:
+            return False
+        n, k = _size(line, cut)
+        return self.size + n <= ERROR_BYTES and self.count + k <= ERROR_LINES
+
+    def add(self, line, cut, force=False):
+        """Keep the line if it fits whole, else close the block: no later line is kept.  With force (the block's
+        first Error: line) keep it anyway, for _Quote to cut, since only a line longer than the whole bound fails to
+        fit a block that it opened (log_errors)."""
+        self.all += 1
+        if self.fits(line, cut) or force:
+            n, k = _size(line, cut)
+            self.lines.append((line, cut))
+            self.size, self.count = self.size + n, self.count + k
+        else:
+            self.closed = True
+
+
+def log_errors(log):
+    """The text a CheckError for a build that failed adds after its first line: the first Error: blocks of log, as many
+    as ERROR_BLOCKS, ERROR_BYTES and ERROR_LINES allow, how many it leaves out and where the whole log is; for a log
+    with no Error: line at all, its last lines, at most ERROR_TAIL_LINES of them in the same bounds.  It reads the log
+    in pieces of at most ERROR_BYTES + 1 bytes and keeps only what it can quote, so a log of any size, or with lines of
+    any length, takes little memory."""
+    found, kept, block = 0, [], None
+    before = collections.deque(maxlen=ERROR_CONTEXT)
+    tail = collections.deque(maxlen=ERROR_TAIL_LINES)
+
+    def close():
+        nonlocal found
+        if block is not None and block.error:
+            found += 1
+            if len(kept) < ERROR_BLOCKS:
+                kept.append(block)
+
+    try:
+        with open(log, "rb") as f:
+            for line, cut in _log_lines(f):
+                header, error = FILE_HEADER.match(line), line.startswith("Error:")
+                # an Error: line that would not be quoted whole in the open block opens a block of its own
+                if header or error and (block is None or not block.fits(line, cut)):
+                    close()
+                    block = _Block()
+                    if not header:
+                        # the lines before it, as many as fit with it
+                        size, count = _size(line, cut)
+                        context = []
+                        for c in reversed(before):
+                            n, k = _size(*c)
+                            if size + n > ERROR_BYTES or count + k > ERROR_LINES:
+                                break
+                            context.insert(0, c)
+                            size, count = size + n, count + k
+                        for c in context:
+                            block.add(*c)
+                before.append((line, cut))
+                tail.append((line, cut))
+                if block is None:
+                    continue
+                block.add(line, cut, force=error and not block.error)
+                block.error = block.error or error
+            close()
+    except OSError as e:
+        return "\nthe log %s cannot be read: %s" % (log, e)
+    if found:
+        q, quoted = _Quote(), 0
+        for b in kept:
+            lines, count = b.lines, b.all
+            # a later block is quoted only when what is left holds it whole up to its Error: line
+            first = next((i for i, (l, _) in enumerate(lines) if l.startswith("Error:")), len(lines) - 1)
+            need_bytes = need_lines = 0
+            for c in lines[:first + 1]:
+                n, k = _size(*c)
+                need_bytes, need_lines = need_bytes + n, need_lines + k
+            if q.full() or quoted and (q.size + need_bytes > ERROR_BYTES or q.count + need_lines > ERROR_LINES):
+                break
+            shown = 0   # lines quoted, the last one maybe cut
+            for line, cut in lines:
+                n = q.count
+                whole = all(q.add(p) for p in _quoted(line, cut))
+                shown += q.count > n
+                if not whole:
+                    break
+            quoted += shown > 0
+            if shown and count > shown:
+                q.note("%s[%d more line(s) of this block left out]" % (QUOTE, count - shown))
+        return "\nthe log holds %d Error: block(s): %d quoted here%s; the whole log is %s\n%s" % (
+            found, quoted, ", %d left out" % (found - quoted) if found > quoted else "", log, "\n".join(q.lines))
+    if not tail:
+        return "\nthe log holds no Error: line and is empty: %s" % log
+    q, shown = _Quote(), 0
+    for line, cut in reversed(tail):
+        pieces = _quoted(line, cut)
+        need = sum(len((p + "\n").encode("utf-8")) for p in pieces)
+        if q.size + need > ERROR_BYTES or q.count + len(pieces) > ERROR_LINES:
+            if not shown:   # the last line alone is too long: its end, cut
+                q.add(pieces[-1], front=True)
+                shown = 1
+            break
+        for p in reversed(pieces):
+            q.add(p, front=True)
+        shown += 1
+    return "\nthe log holds no Error: line; its last %d line(s) are quoted here; the whole log is %s\n%s" % (
+        shown, log, "\n".join(q.lines))
+
+
+def _again(e):
+    """What each proof after the first prints for one failure that fails them all (a proof library that does not
+    compile): its first line, and where the log it quotes is, so that the quoted log is printed once."""
+    head, _, rest = str(e).partition("\n")
+    return head + (" (its log is quoted above, at the first proof that failed on it)" if rest else "")
 
 
 def allowed_axioms(root, path):
@@ -242,7 +521,8 @@ def _rocqchk(root, qargs, modules, allowed, log):
     return len(axioms)
 
 
-def check_statements(root, h, allowed, work, out, rocqchk=False):
+def check_statements(root, h, allowed, work, out, rocqchk=False, compilation=None):
+    compilation = counter(compilation)
     if not h.builds():
         raise CheckError("every build is withheld: nothing to check")
     listed = sorted(st.name for st in h.statements.values() if st.rendered())
@@ -257,10 +537,10 @@ def check_statements(root, h, allowed, work, out, rocqchk=False):
                if os.path.isfile(os.path.join(root, h.dir, f))]
     log = os.path.join(work, "dune.log")
     # --display short: the log names each rule dune ran; one it took from its cache is not named.
-    if _run(["dune", "build", "--root", root, "--display", "short"] + targets, root, log) != 0:
-        raise CheckError("dune build failed (see %s)" % log)
+    if compilation.dune(root, targets, log) != 0:
+        raise CheckError("dune build failed (see %s)%s" % (log, log_errors(log)))
     build = os.path.join(root, "_build", "default")
-    check_defined(root, h, listed, build, work, allowed)
+    check_defined(root, h, listed, build, work, allowed, compilation=compilation)
     if not rocqchk:
         print("%s: statements compiled, each of the %d listed defined" % (h.dir, len(listed)), file=out)
         return
@@ -271,20 +551,21 @@ def check_statements(root, h, allowed, work, out, rocqchk=False):
           % (h.dir, len(listed), n), file=out)
 
 
-def check_defined(root, h, listed, build, work, allowed):
+def check_defined(root, h, listed, build, work, allowed, compilation=None):
     """Have the kernel type every statement in listed, from h's compiled Statements (a _build/default tree), and print
     what they assume.  A Statements.v that compiles but lacks one, or defines none at all, is not a check of that
     statement, and neither is one that states it as an axiom (Axiom, Parameter, or a Definition closed by Admitted)
     or defines it from an assumption outside the allowlist."""
+    compilation = counter(compilation)
     d = tempfile.mkdtemp(prefix="defined-", dir=work)
     stmt_mod = h.data["rocq"] + ".Statements"
     with open(os.path.join(d, "Defined.v"), "w", encoding="utf-8") as f:
         f.write(DEFINED.format(stmt_mod=stmt_mod, terms=", ".join("@%s.%s" % (stmt_mod, s) for s in listed)))
     log = os.path.join(d, "defined.log")
-    if _run(["rocq", "compile", "-w", "-all"] + _loadpath(build, h)
-            + ["-Q", d, "OftDefined", os.path.join(d, "Defined.v")], d, log) != 0:
-        raise CheckError("%s/Statements.v does not define every statement harness.yaml lists (%s; see %s)"
-                         % (h.dir, ", ".join(listed), log))
+    if compilation.run(["rocq", "compile", "-w", "-all"] + _loadpath(build, h)
+                       + ["-Q", d, "OftDefined", os.path.join(d, "Defined.v")], d, log) != 0:
+        raise CheckError("%s/Statements.v does not define every statement harness.yaml lists (%s; see %s)%s"
+                         % (h.dir, ", ".join(listed), log, log_errors(log)))
     axioms = read_assumptions(d, log)
     stated = sorted(s for s in listed if "%s.%s" % (stmt_mod, s) in axioms)
     if stated:
@@ -296,15 +577,56 @@ def check_defined(root, h, listed, build, work, allowed):
                          % (h.dir, ", ".join(outside), log))
 
 
-def compile_lib(root, h, work, libs, out):
+# Where _jobs reads the CPU quota; a test points it at a fake tree.
+CGROUP_ROOT = "/sys/fs/cgroup"
+
+
+def _cpu_quota(root):
+    """The CPUs the quota of this process's cgroup allows, rounded up: cgroup v2's cpu.max (`<quota> <period>`,
+    quota `max` when there is none), else cgroup v1's cpu.cfs_quota_us and cpu.cfs_period_us (quota -1 when there is
+    none).  None with no quota, or when neither is readable and well formed."""
+    def ceil_div(quota, period):
+        return -(-quota // period) if quota > 0 and period > 0 else None
+    try:
+        with open(os.path.join(root, "cpu.max")) as f:
+            quota, period = f.read().split()
+        return None if quota == "max" else ceil_div(int(quota), int(period))
+    except (OSError, ValueError):
+        pass
+    for v1 in (os.path.join(root, "cpu"), os.path.join(root, "cpu,cpuacct")):
+        try:
+            with open(os.path.join(v1, "cpu.cfs_quota_us")) as f:
+                quota = int(f.read())
+            with open(os.path.join(v1, "cpu.cfs_period_us")) as f:
+                period = int(f.read())
+        except (OSError, ValueError):
+            continue
+        return None if quota == -1 else ceil_div(quota, period)
+    return None
+
+
+def _jobs():
+    """How many jobs dune runs at once: OFT_JOBS when it is a positive integer, else the cgroup's CPU quota, at most
+    the CPUs this process may run on.  In a pod with a CPU limit and no cpuset (the build service), the affinity is
+    the node's 32-64 CPUs, and -j that many compiles 20 files at once and runs the pod out of memory."""
+    cpus = len(os.sched_getaffinity(0))
+    env = os.environ.get("OFT_JOBS", "").strip()
+    if env.isdigit() and int(env) > 0:
+        return min(int(env), cpus)
+    quota = _cpu_quota(CGROUP_ROOT)
+    return cpus if quota is None else max(1, min(quota, cpus))
+
+
+def compile_lib(root, h, work, libs, out, compilation=None):
     """The -Q mapping of h's proof library, lib/ in its proofs folder (Tree.proof_libs), as
     <namespace>.Proofs.<p>.<h>.lib (every .v at any depth), or [] when h has none.  Built once per check run by
     dune, from the rocq.theory stanza of oft generate's lib/dune, against the statements in root's _build; `libs` holds
     the mapping, or the error, per harness.  dune takes a file from its cache (DUNE_CACHE) only when the file's sources,
     its dependencies and the Rocq binary all hash the same as when the cached copy was compiled."""
+    compilation = counter(compilation)
     if h.dir in libs:
         if isinstance(libs[h.dir], CheckError):
-            raise libs[h.dir]
+            raise CheckError(_again(libs[h.dir]))
         return libs[h.dir]
     rel = h.tree.proof_libs.get("%s/%s" % (h.project.name, h.name))
     if rel is None:
@@ -313,8 +635,7 @@ def compile_lib(root, h, work, libs, out):
     try:
         targets = _lib_targets(root, h, rel, out)
         log = os.path.join(work, "%s.%s.lib.dune.log" % (names.ident(h.project.name), names.ident(h.name)))
-        rc = _run(["dune", "build", "--root", root, "--display", "short", "-j", str(len(os.sched_getaffinity(0)))]
-                  + targets, root, log)
+        rc = compilation.dune(root, targets, log)
         if rc != 0:
             raise _failed_run(rel, log, rc, work)
     except CheckError as e:
@@ -390,14 +711,15 @@ def _holds_exactly(path, text):
         return f.read() == text.encode("utf-8")
 
 
-def check_proof(root, st, pd, allowed, work, out, libs, rocqchk=False):
+def check_proof(root, st, pd, allowed, work, out, libs, rocqchk=False, compilation=None):
     """Compile one proof directory afresh, against the statements in root's _build and its harness's proof library, then
     the wrapper, and audit the wrapper's assumptions.  With rocqchk, return what rocqchk_proofs needs."""
+    compilation = counter(compilation)
     h = st.harness
     p, hn, s = st.id.split("/")
     proof_mod = names.rocq_proof(h.tree.namespace, p, hn, s)
     main = "Refutation" if pd.refutes else "Proof"
-    libq = compile_lib(root, h, work, libs, out)
+    libq = compile_lib(root, h, work, libs, out, compilation=compilation)
     d = tempfile.mkdtemp(prefix="proof-", dir=work)
     src = os.path.join(root, pd.path)
     for f in os.listdir(src):
@@ -406,8 +728,20 @@ def check_proof(root, st, pd, allowed, work, out, libs, rocqchk=False):
     base = os.path.join(root, "_build", "default")
     q = _loadpath(base, h) + libq + ["-Q", d, proof_mod]
     log = os.path.join(d, "compile.log")
-    deps = subprocess.run(["rocq", "dep", "-sort"] + libq + ["-Q", d, proof_mod] + sorted(
-        os.path.join(d, f) for f in os.listdir(d) if f.endswith(".v")), capture_output=True, text=True)
+    # `rocq dep` reads the proof's own .v files, so it is work ATTEMPTED on them: a proof it cannot parse --
+    # a missing final `.` -- is a FAILED proof, not a round that did nothing. Counted, because for a
+    # `--parts proofs --statements S` job of a unit with no proof library, which is how the farm checks a
+    # unit too long for one job, it is the FIRST thing that touches a .v file: uncounted, such a round
+    # reported COMPILED 0 and voided a broken proof, and the farm reruns a void unit for ever (the sixth
+    # non-author review of #2109).  Taken back when `rocq` never started, as Compilation.run does: a tool
+    # that is not there attempted nothing.
+    compilation.files += 1
+    try:
+        deps = subprocess.run(["rocq", "dep", "-sort"] + libq + ["-Q", d, proof_mod] + sorted(
+            os.path.join(d, f) for f in os.listdir(d) if f.endswith(".v")), capture_output=True, text=True)
+    except OSError:
+        compilation.files -= 1
+        raise
     if deps.returncode != 0:
         raise CheckError("%s: rocq dep failed: %s" % (pd.path, deps.stderr.strip()))
     # rocq dep -sort lists the whole closure in order, the library's files included: those are compiled already.
@@ -415,7 +749,7 @@ def check_proof(root, st, pd, allowed, work, out, libs, rocqchk=False):
     if not own:
         raise CheckError("%s: rocq dep listed none of its .v files" % pd.path)
     for f in own:
-        rc = _run(["rocq", "compile"] + q + [f], d, log)
+        rc = compilation.run(["rocq", "compile"] + q + [f], d, log)
         if rc != 0:
             raise _failed_run(pd.path, log, rc, work)
     args = ""
@@ -431,9 +765,9 @@ def check_proof(root, st, pd, allowed, work, out, libs, rocqchk=False):
     wrap = "Wrap." + names.ident(s)
     wq = q + ["-Q", wdir, wrap]
     wlog = os.path.join(d, "wrapper.log")
-    if _run(["rocq", "compile", "-w", "-all"] + wq + [os.path.join(wdir, "Wrapper.v")], d, wlog) != 0:
-        raise CheckError("%s: the wrapper does not type-check: the proof is not of this statement (see %s)"
-                         % (pd.path, wlog))
+    if compilation.run(["rocq", "compile", "-w", "-all"] + wq + [os.path.join(wdir, "Wrapper.v")], d, wlog) != 0:
+        raise CheckError("%s: the wrapper does not type-check: the proof is not of this statement (see %s)%s"
+                         % (pd.path, wlog, log_errors(wlog)))
     axioms = read_assumptions(d, wlog)
     outside = sorted(axioms - allowed)
     if outside:
@@ -501,7 +835,7 @@ def proof_claim(st, text):
     return next((l for l in text.split("\n") if claim.fullmatch(l)), None)
 
 
-def proofs_apart(root, unit, h, sts, allowed, jobs, work, out, libs, facts_from=None):
+def proofs_apart(root, unit, h, sts, allowed, jobs, work, out, libs, compilation=None, facts_from=None):
     """Check the proofs of the statements sts of harness h, each in a process of its own (`python3 -m oft.check --root
     ROOT UNIT --parts proofs --statements S --lib DIR`), at most jobs at once, against the statements in root's _build
     and h's library, built here once (compile_lib) and handed to each process with --lib, so no process runs dune.
@@ -511,12 +845,13 @@ def proofs_apart(root, unit, h, sts, allowed, jobs, work, out, libs, facts_from=
     check_proof's own line for it (proof_claim); a process that a signal ends, that exits non-zero, that ends without
     that line, or that does not start fails it, and one that ran out of stack (stack_exhausted, on its output and its
     exit) fails it as `stack exhausted ...`.  Returns (passed, failed)."""
+    compilation = counter(compilation)
     root = os.path.abspath(root)
     try:
-        libq = compile_lib(root, h, work, libs, out)
+        libq = compile_lib(root, h, work, libs, out, compilation=compilation)
     except (CheckError, subprocess.TimeoutExpired, OSError) as e:
-        for st in sts:
-            print("FAIL %s: %s" % (st.proof.path, e), file=out)
+        for i, st in enumerate(sts):
+            print("FAIL %s: %s" % (st.proof.path, e if i == 0 else _again(e)), file=out)
         return 0, len(sts)
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     env = dict(os.environ, PYTHONPATH=os.pathsep.join(
@@ -549,6 +884,13 @@ def proofs_apart(root, unit, h, sts, allowed, jobs, work, out, libs, facts_from=
                 text = f.read()
             with open(log + ".stderr", encoding="utf-8", errors="replace") as f:
                 err = f.read()
+            # Children run the same checker; their summary counts the compiles they actually started, including a
+            # failed compile. Merely starting a proof process is not compiling anything.
+            # The child prints its counts on a line of its own, just BEFORE its `oft check: ` line (run's
+            # end).  A child builds no library -- it is given --lib -- so its dune job count is always `-`.
+            summaries = re.findall(r"(?m)^COMPILED (\d+) file\(s\) with dune -j -$", text)
+            if summaries:
+                compilation.files += int(summaries[-1])
             for line in text.splitlines():
                 print("  | " + line, file=out)
             for line in err.splitlines():
@@ -798,30 +1140,70 @@ def stack_exhausted_words(work):
     return "stack exhausted at %s" % text
 
 
+# What a step that ran out of stack leaves in its output, for stack_exhausted and stack_exhausted_in: Rocq reports
+# OCaml's Stack_overflow, a child oft's own line says so (for --proof-jobs, whose rocq writes into the child's
+# compile.log), and dune reports that a process it ran died of SIGSEGV (dune itself then exits 1, as compile_lib's
+# library build does).
+STACK_WORDS = ("Error: Stack overflow.", ": stack exhausted ", "(got signal SEGV)")
+# how much of a log stack_exhausted_in holds at once; a log of a failed build has no bound of its own (a library
+# build that fails after hours of output), and reading it whole took about 2 bytes of memory per byte of log
+STACK_CHUNK = 1 << 20
+
+
 def stack_exhausted(text, returncode):
-    """Whether a step ran out of stack: Rocq reported OCaml's Stack_overflow (`Error: Stack overflow.`), a child oft's
-    own line says so (`: stack exhausted `, for --proof-jobs, whose rocq writes into the child's compile.log), the
-    process died of SIGSEGV (or exited 139, as a shell reports it), or dune reports that a process it ran did (`(got
-    signal SEGV)`: dune itself then exits 1, as compile_lib's library build does)."""
-    return ("Error: Stack overflow." in text or ": stack exhausted " in text or "(got signal SEGV)" in text
+    """Whether a step ran out of stack: its output holds one of STACK_WORDS, or the process died of SIGSEGV (or
+    exited 139, as a shell reports it)."""
+    return (any(w in text for w in STACK_WORDS)
             or returncode in (-signal.SIGSEGV, 128 + signal.SIGSEGV))
+
+
+def stack_exhausted_in(log, returncode):
+    """stack_exhausted of the file at log, which is read in pieces of STACK_CHUNK bytes with the overlap a word needs,
+    so a log of any size takes little memory.  A log that cannot be read counts as holding none of the words: the
+    returncode still decides, and the message says `does not compile` rather than failing here."""
+    if returncode in (-signal.SIGSEGV, 128 + signal.SIGSEGV):
+        return True
+    words = [w.encode() for w in STACK_WORDS]
+    keep = max(len(w) for w in words) - 1
+    carry = b""
+    try:
+        with open(log, "rb") as f:
+            while True:
+                piece = f.read(STACK_CHUNK)
+                if not piece:
+                    return False
+                text = carry + piece
+                if any(w in text for w in words):
+                    return True
+                carry = text[-keep:]
+    except OSError:
+        return False
 
 
 def _failed_run(path, log, rc, work):
     """The CheckError of a compile of path that exited rc, its output in log: `<path>: stack exhausted ...` when
-    stack_exhausted holds (stack_exhausted_words), else `<path>: does not compile`."""
-    with open(log, encoding="utf-8", errors="replace") as f:
-        text = f.read()
-    why = stack_exhausted_words(work) if stack_exhausted(text, rc) else "does not compile"
-    return CheckError("%s: %s (see %s)" % (path, why, log))
+    stack_exhausted_in holds (stack_exhausted_words), else `<path>: does not compile`, and after the first line the
+    log's first Error: blocks (log_errors), so that a reader of the message sees what failed without the log.  Both
+    read the log in bounded pieces, so a log of any size takes little memory."""
+    why = stack_exhausted_words(work) if stack_exhausted_in(log, rc) else "does not compile"
+    return CheckError("%s: %s (see %s)%s" % (path, why, log, log_errors(log)))
 
 
 # The parts `oft check` runs when --parts is not given: each of them that the unit has.
 DEFAULT_PARTS = "statements,proofs,counterexamples"
 
 
+# The default --timeout: the seconds one counterexample or finding run of a binary under qemu gets.  It must hold the
+# slowest run measured, on the slowest runner it ran on, or a correct counterexample fails on a slow runner and
+# passes on a fast one.  ffmpeg/ffmpeg_AV_CODEC_ID_SIPR_fuzzer's .asan and .asan-ubsan runs measure about 535 s each
+# on an ubuntu-24.04-16core runner (public run 42228615142: its seven counterexamples took 1072.7 s, of which the
+# other five took 2.5 s), and the same two ran past 600 s on another runner of the same class (internal run
+# 42281582157).  3 x 535 s = 1605 s, rounded up to 1620 s (27 min).
+RUN_TIMEOUT_SECONDS = 1620
+
+
 def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
-        qemu="qemu-riscv64", timeout=600, rocqchk=False, record=False, facts_to=None, facts_from=None,
+        qemu="qemu-riscv64", timeout=RUN_TIMEOUT_SECONDS, rocqchk=False, record=False, facts_to=None, facts_from=None,
         statements=None, lib=None, proof_jobs=1, stack_from_parent=False, out=sys.stdout):
     """parts: the comma-separated parts to check, where naming proofs refuses a unit with no proof; None (no --parts)
     checks each part of DEFAULT_PARTS that the unit has, so an unproved unit is checked on its statements.
@@ -857,6 +1239,15 @@ def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
     if proof_jobs < 1:
         print("FAIL --proof-jobs must be at least 1", file=out)
         return 1
+    # A check reads each unit's files from the working tree: its proof library builds, and its statements and
+    # proofs are checked against what that build gives.  A sparse workspace that does not hold a unit's library
+    # would give an empty library, and the check would answer on a tree it did not read.  So the run refuses
+    # before it starts and names the commands that add each library (INFRA-1385 R12).  A view that --facts-from
+    # reads is no git repository, so it is never refused: it holds one unit's files by design.
+    missing = layout.unwritten_libraries(root, units)
+    if missing:
+        print(layout.unwritten_libraries_message("oft check", missing, root), file=out)
+        return 1
     if facts_from is None:
         tree = facts.load(root, record=record)
         rules.check(tree)
@@ -869,6 +1260,7 @@ def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
     work = tempfile.mkdtemp(prefix="oft-check-")
     bad = examined = 0
     libs = {}  # harness dir -> its proof library's -Q mapping, or the error compiling it
+    compilation = Compilation()
     try:
         allow = allowed_axioms(root, allowed) if want & {"statements", "proofs"} else set()
     except CheckError as e:
@@ -891,9 +1283,10 @@ def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
             try:
                 h = read_facts(root, facts_from, unit, want)
             except (OSError, yamlio.YamlError, facts.UnitFactsError) as e:
-                print("FAIL %s: %s" % (unit, e), file=out)
-                bad += 1
-                continue
+                memory.finish()
+                reason = str(e) if isinstance(e, facts.UnitFactsError) else "facts that do not read at %s: %s" % (
+                    facts_file(facts_from, unit), e)
+                return void(out, reason)
         steps = []    # (label, step, whether its success alone passes it)
         checked = []  # (label, what check_proof returned) of the proofs whose compile and audit passed
         if lib is not None:
@@ -911,12 +1304,14 @@ def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
         # in-process path, since it checks every wrapper of a harness in one run (rocqchk_proofs)
         apart = proved if proof_jobs > 1 and len(proved) > 1 and not rocqchk else []
         if "statements" in want:
-            steps.append(("statements", lambda h=h: check_statements(root, h, allow, work, out, rocqchk), True))
+            steps.append(("statements",
+                          lambda h=h: check_statements(root, h, allow, work, out, rocqchk,
+                                                       compilation=compilation), True))
         for st in h.statements.values():
             if st in proved and not apart:
                 steps.append((st.proof.path, lambda st=st: checked.append((st.proof.path, check_proof(
-                    root, st, st.proof, allow, work, out, libs,
-                    rocqchk))), not rocqchk))
+                    root, st, st.proof, allow, work, out, libs, rocqchk,
+                    compilation=compilation))), not rocqchk))
             if st.counterexample and "counterexamples" in want:
                 steps.append((st.counterexample.path, lambda st=st: check_counterexample(
                     root, st, st.counterexample, qemu, timeout, work, out), True))
@@ -942,7 +1337,8 @@ def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
                 print("FAIL %s: %s" % (label, e), file=out)
                 bad += 1
         if apart:
-            passed, failed = proofs_apart(root, unit, h, apart, allowed, proof_jobs, work, out, libs, facts_from)
+            passed, failed = proofs_apart(root, unit, h, apart, allowed, proof_jobs, work, out, libs, compilation,
+                                          facts_from)
             examined += passed
             bad += failed
         if rocqchk and checked:
@@ -956,7 +1352,30 @@ def run(root, units, parts=None, allowed="toolchain/allowed-axioms.txt",
                 bad += len(checked)
     if memory:
         memory.finish()
+    # Two lines, not one, and COMPILED comes FIRST.
+    #
+    # The `oft check: ` line stays byte for byte as it was: dev/stream's lane/tools/ship-farm.sh,
+    # lane/tools/merge-pr.sh and lane/tools/combine_rewrite.py match it WHOLE, and a farm pod runs the
+    # checked commit's own tools/, so a clause added inside it would have made ship-farm.sh exit 1 on a
+    # PASSING check.  And it stays LAST: the check-of-record tool's build-service rule takes the last
+    # non-blank line of job.log and requires it to be that line -- the pod prints nothing after a pass --
+    # so a COMPILED line printed after it would have left every passing check of record `unresolved`
+    # (the two non-author reviews of #2109, 2026-11-06).  The farm runner's RUN_SCRIPT and
+    # docs/check-of-record.md both say the log ends with it.
+    #
+    # What a reader needs for the void rules goes on the line BEFORE it, which starts with neither
+    # `oft check: ` nor `FAIL `, so nothing that scans for either picks it up.  It is printed only for a
+    # run that wanted statements or proofs, the one case the void rule reads: `--record` prints the runs it
+    # would commit as YAML up to the `oft check: ` line, and a COMPILED line in front of them made
+    # yamlio.load raise (CI run 42264478851, job tests; the third non-author review of #2109).  A
+    # counterexamples or findings run compiles nothing by design and has nothing to say here.
+    counted = bool(want & {"statements", "proofs"})
+    if counted:
+        print("COMPILED %d file(s) with dune -j %s"
+              % (compilation.files, compilation.jobs if compilation.jobs is not None else "-"), file=out)
     print("oft check: %d step(s) passed, %d failed; work files in %s" % (examined, bad, work), file=out)
+    if counted and compilation.files == 0:
+        return void(out, "COMPILED 0 file(s): no statements or proofs were compiled")
     return 1 if bad or not examined else 0
 
 
@@ -995,15 +1414,15 @@ def read_facts(root, d, unit, parts):
     (facts.load_unit).  Raises UnitFactsError, naming the file, for facts it cannot use, malformed ones among them."""
     path = facts_file(d, unit)
     if not os.path.isfile(path):
-        raise facts.UnitFactsError("no facts file %s (write it with --facts-to)" % path)
+        raise facts.UnitFactsError("no facts file at %s (write it with --facts-to)" % path)
     try:
         return facts.load_unit(root, yamlio.load_file(path), unit, parts)
     except yamlio.YamlError:
         raise
     except facts.UnitFactsError as e:
-        raise facts.UnitFactsError("%s: %s" % (path, e)) from None
+        raise facts.UnitFactsError("facts that do not read at %s: %s" % (path, e)) from None
     except (KeyError, TypeError, AttributeError, ValueError) as e:
-        raise facts.UnitFactsError("%s: not a facts file of version %d: %s %s"
+        raise facts.UnitFactsError("facts that do not read at %s: not a facts file of version %d: %s %s"
                                    % (path, facts.UNIT_FACTS_VERSION, type(e).__name__, e)) from None
 
 
@@ -1051,7 +1470,7 @@ class UnitMemory:
         self.thread.join()
         if self.peak is not None:
             print("%s: peak memory %.1f GiB (anon in this process's cgroup, sampled every 2 s) on %d CPUs"
-                  % (self.unit, self.peak / (1 << 30), len(os.sched_getaffinity(0))), file=sys.stderr)
+                  % (self.unit, self.peak / (1 << 30), _jobs()), file=sys.stderr)
 
 
 # ------------------------------------------------------------------ segments
@@ -1085,7 +1504,8 @@ def add_arguments(c):
                                    "counterexamples that the unit has)")
     c.add_argument("--allowed", default="toolchain/allowed-axioms.txt")
     c.add_argument("--qemu", default="qemu-riscv64")
-    c.add_argument("--timeout", type=int, default=600, help="seconds per counterexample or finding run")
+    c.add_argument("--timeout", type=int, default=RUN_TIMEOUT_SECONDS,
+                   help="seconds per counterexample or finding run (default: %(default)s)")
     c.add_argument("--rocqchk", action="store_true",
                    help="also re-check the compiled libraries with rocqchk (slow: hours for a large proof)")
     c.add_argument("--record", action="store_true",

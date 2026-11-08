@@ -18,8 +18,13 @@ KINDS = ("release", "maintainer", "contributor")
 # they are packed.  release-check.yml's same_tools keeps them in its comparison, so a push that changes the planner
 # is planned with its own planner rather than credited by a merge queue run that planned with its parent's.  The
 # list is here, not in keys.py, because keys.py is the checker: a change to it would re-key every unit.  This file
-# is in the list, so a change to the list loses the credit too.
+# is in the list, so a change to the list loses the credit too; same_tools also keeps this file by name, so a push
+# that drops it from the list (and changes it) cannot keep the credit either.
 PLANNER = ("tools/oft/__main__.py", "tools/oft/plan.py", "tools/oft/pack.py")
+# The enrollment scripts' place outside tools/ (OSSV-276: tools/enroll/ moves to dev/enroll/): enroll.yml and
+# enroll-build.yml run them and no check opens them.  Under tools/ keys.NOT_THE_CHECKER names them; outside it no
+# key holds them, so paths_a_check_reads names them here.
+ENROLLMENT_SCRIPTS = "dev/enroll/"
 
 
 def rows(root, wanted, change="HEAD", base=None, kind="release", tools=None, store=None, rocqchk=False):
@@ -167,6 +172,9 @@ def images_differ(head_release, base_release):
 # are here for the same reason: keys.NOT_THE_CHECKER leaves plan.py out of every key, so a change to them re-checks
 # no fuzz target.
 KEY_LINE = re.compile(r"(?P<unit>[^/\s]+/[^/\s]+) (?P<key>[0-9a-f]{64})")
+# The id of a checker, as keys.checker gives it and as a marker's `<!-- vm-evidence-checker id=<64 hex> -->` line
+# carries it (vm_evidence_checker).
+CHECKER_ID = re.compile(r"[0-9a-f]{64}")
 # Ruling 16 (OSS Verify, 2026-11-01): main's checker at 87c4b944683b, under which the VM checks of record ran, and
 # at dd31239f2de (keys.checker of each).
 ONLY_CHECKER = ("6d15b1f1a2bd82ec4dc93752b90672434f1e5658f5fbdac8184de52595a5334b",
@@ -272,21 +280,25 @@ def _generated_readme(path):
 
 
 def paths_a_check_reads(changed):
-    """Of the paths changed, those whose change can move a verdict the keys do not already hold.  Four kinds cannot:
+    """Of the paths changed, those whose change can move a verdict the keys do not already hold.  Five kinds cannot:
     a file of a unit's own proofs folder in either layout (layout.is_change and layout.canonical), which only that
     unit's build reads -- a check reads no file of another unit, so every proof library a unit's check may read is in
     that folder (tools/oft/unitpaths.py) -- and whose id that unit's build key holds, so vm_evidence_keys catches any
-    change to it; CHANGELOG.md, which no check opens; a file of tools/ that no check opens
-    (keys.not_the_checker); and a fuzz target's or a project's generated README.md, which no key holds and no check
-    opens (_generated_readme), and which a proof re-renders with its statement's new status.  Everything else
-    counts, a statement, theories/,
+    change to it, but for what unitpaths.PROOFS_DROP leaves out of that key (the build record's prose and its licence
+    evidence), which no rule a check runs and no build opens, so a change there can move no verdict either;
+    CHANGELOG.md, which no check opens; a file of tools/ that no check opens
+    (keys.not_the_checker); a file of dev/enroll/, the enrollment scripts (ENROLLMENT_SCRIPTS), which enroll.yml and
+    enroll-build.yml run and no check opens; and a fuzz target's or a project's generated README.md, which no key
+    holds and no check opens (_generated_readme), and which a proof re-renders with its statement's new status.
+    Everything else counts, a statement, theories/,
     toolchain/, .github/, release.yaml, dune-project, a counterexample, a finding and a projects/<p>/unpatched.yaml
     among them: a counterexamples or findings part is checked in CI, and no VM evidence line records its key.
 
     An empty path (a trailing newline of the changed list) is no path and counts for nothing."""
     out = []
     for path in changed:
-        if not path or path == "CHANGELOG.md" or keys.not_the_checker(path) or _generated_readme(path):
+        if not path or path == "CHANGELOG.md" or keys.not_the_checker(path) or path.startswith(ENROLLMENT_SCRIPTS) \
+                or _generated_readme(path):
             continue
         parts = layout.canonical(path).split("/") if layout.is_change(path) else []
         if len(parts) > 4 and parts[0] == "projects" and parts[3] == "proofs":
@@ -295,11 +307,47 @@ def paths_a_check_reads(changed):
     return out
 
 
-def vm_evidence_keys(planned, lines):
-    """(True, what was measured) when every part planned marks for checking is a unit's build whose key here is the
-    key an evidence line recorded for that unit, else (False, why).  planned is `oft plan`'s parts, lines the
-    `<unit> <key>` lines of the group's evidence comments.
+def vm_evidence_checker(checker, lines):
+    """Why the group's evidence markers do not stand for runs under the checker `checker`, or "" when each marker
+    names exactly it.  `checker` is keys.checker of the merge tree this group checks, read with the base's tools;
+    `lines` are `<pull request> <id>...` lines, one per pull request of the group, carrying the ids that pull
+    request's marker gave on its `<!-- vm-evidence-checker id=<64 hex> -->` lines, in the marker's own order.
 
+    A key says nothing about the tools that computed it.  On 2026-11-06 a lane posted markers whose keys were
+    computed with main's tools while its farm runs had executed the pull request heads' older tools, from before
+    #2109 moved keys.checker (main's was 7e50363e1a34, the runs' were 924ec654, ec73f922 and 746226f8): the keys
+    matched although no run had used main's checker.  So a marker names the checker its run actually used, and a
+    marker with no such line, with more than one, or with another id leaves the group its checks (the OSS Verify
+    lead, 2026-11-06 18:10Z).  Reading no pull request at all refuses too, so that a group whose markers were
+    never read cannot pass here."""
+    if not CHECKER_ID.fullmatch(checker or ""):
+        return "the checker of the tree this group checks is no checker id: %r" % checker
+    seen = 0
+    for line in lines:
+        fields = line.split()
+        if not fields or not fields[0].isdigit() or not all(CHECKER_ID.fullmatch(f) for f in fields[1:]):
+            return "a checker line is not one pull request and the ids its marker named: %r" % line.strip()
+        pull, ids = fields[0], fields[1:]
+        if len(ids) != 1:
+            return ("pull request %s's evidence comment names %d checker ids%s, and the tree this group checks "
+                    "has checker %s" % (pull, len(ids), (": " + " ".join(ids)) if ids else "", checker))
+        if ids[0] != checker:
+            return ("pull request %s's evidence comment names checker %s and the tree this group checks has "
+                    "checker %s" % (pull, ids[0], checker))
+        seen += 1
+    if not seen:
+        return "no pull request of this group was read for the checker its marker names"
+    return ""
+
+
+def vm_evidence_keys(planned, lines, checker, checker_lines):
+    """(True, what was measured) when every part planned marks for checking is a unit's build whose key here is the
+    key an evidence line recorded for that unit, and every marker names the checker the group's tree holds, else
+    (False, why).  planned is `oft plan`'s parts, lines the `<unit> <key>` lines of the group's evidence comments,
+    checker keys.checker of the merge tree this group checks and checker_lines the `<pull request> <id>...` lines
+    vm_evidence_checker reads.
+
+    The checker is asked first, since a key alone does not say which tools computed it (vm_evidence_checker).
     A part's content key holds everything its check reads (keys.py), so equal keys say that nothing moved between
     the tree the check of record ran on and this one.  An evidence line records a unit's build key alone, so a
     planned counterexamples or findings part leaves the group its checks; so does a unit with no line, and two
@@ -308,6 +356,9 @@ def vm_evidence_keys(planned, lines):
     which it leaves here: the plan step fails for the group's last entry, whose pull request recorded that key, so
     the queue takes that entry out instead of checking a tree its owner never measured
     (.github/workflows/pr.yml, the plan job's elsewhere step)."""
+    refused = vm_evidence_checker(checker, checker_lines)
+    if refused:
+        return False, refused
     recorded = {}
     for line in lines:
         m = KEY_LINE.fullmatch(line.strip())

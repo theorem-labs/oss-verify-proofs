@@ -33,6 +33,7 @@ rows that fit.
 This module is not the checker (keys.NOT_THE_CHECKER): no check reads a symbol fact or a contract key."""
 import collections
 import json
+import re
 
 from . import classify, contracts, keys, layout, names, symbols
 
@@ -175,14 +176,32 @@ def report(root, unit, base, head):
     return Report(unit, base, head, rows, judged, counts)
 
 
+# the characters that start a link, an image, HTML or code in Markdown text, or end a table's cell: a name of the head's
+# facts may hold any of them, and in a check's text each stays the character it is
+_MARKUP = re.compile(r"([\\`\[\]<>|])")
+# a control character would end the table's row or the line, or reach a terminal: each is shown as U+FFFD
+_CONTROL = re.compile(r"[\x00-\x1f\x7f]")
+
+
 def _cell(text):
-    """text in a cell of a Markdown table."""
-    return text.replace("|", "\\|")
+    """text in a cell of a Markdown table, as text: each control character as U+FFFD, each character of _MARKUP
+    escaped."""
+    return _MARKUP.sub(r"\\\1", _CONTROL.sub("\ufffd", text))
+
+
+def _code(text):
+    """text as code in a cell of a Markdown table, each control character as U+FFFD.  A backtick cannot be escaped in
+    code, so the code's fence is one backtick longer than the longest run of them in text, with a space inside it when
+    text starts or ends with one (CommonMark); `|` is escaped, as a table needs even in code."""
+    text = _CONTROL.sub("\ufffd", text)
+    fence = "`" * (max((len(run) for run in re.findall("`+", text)), default=0) + 1)
+    pad = " " if text.startswith("`") or text.endswith("`") else ""
+    return "%s%s%s%s%s" % (fence, pad, text.replace("|", "\\|"), pad, fence)
 
 
 def _lines(lines):
     """A function's source lines, each file's span as code."""
-    return "-" if lines == "-" else ", ".join("`%s`" % span for span in lines.split(","))
+    return "-" if lines == "-" else ", ".join(_code(span) for span in lines.split(","))
 
 
 def markdown(r):
@@ -212,8 +231,8 @@ def markdown_parts(r):
     work = [(b, row) for b, row in r.rows if row.cls in CHANGED_CLASSES]
     if work:
         above += ["| build | class | function | source lines |", "|---|---|---|---|"]
-        rows = ["| %s | %s | %s | %s |" % (b, row.cls, ", ".join("`%s`" % _cell(n) for n in row.names),
-                                           _cell(_lines((row.head or row.base).lines))) for b, row in work]
+        rows = ["| %s | %s | %s | %s |" % (b, row.cls, ", ".join(_code(n) for n in row.names),
+                                           _lines((row.head or row.base).lines)) for b, row in work]
     else:
         above.append("No function changed, was added or was removed.")
     functions = (above, rows)
@@ -222,8 +241,8 @@ def markdown_parts(r):
         if lib:
             above += ["Paths are in `%s`." % lib.rstrip("/"), ""]
         above += ["| contract | state | why |", "|---|---|---|"]
-        rows = [(c["state"], "| `%s` | %s | %s |" % (
-            _cell(c["file"][len(lib):] if lib and c["file"].startswith(lib) else c["file"]), c["state"],
+        rows = [(c["state"], "| %s | %s | %s |" % (
+            _code(c["file"][len(lib):] if lib and c["file"].startswith(lib) else c["file"]), c["state"],
             _cell(c["why"]))) for c in sorted(r.contracts, key=lambda c: (STATES.index(c["state"]), c["file"]))]
     else:
         above.append("No contract file.")
@@ -244,9 +263,9 @@ def as_json(r):
 
 
 def with_symbol_facts(root, units, base, head):
-    """[(unit, whether it has a symbol fact at the commit base or at head)] of each of units, in their order: pr.yml's
-    prove job reports only on a unit that has one.  ValueError for a name that is not <project>/<harness>; keys.NoKey
-    for a commit git cannot give."""
+    """[(unit, whether it has a symbol fact at the commit base or at head)] of each of units, in their order:
+    prove.yml's job reports only on a unit that has one.  ValueError for a name that is not <project>/<harness>;
+    keys.NoKey for a commit git cannot give."""
     for unit in units:
         layout.split_unit(unit)
     base, head = _commit(root, base), _commit(root, head)

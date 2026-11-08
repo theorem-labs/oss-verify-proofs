@@ -89,11 +89,6 @@
 #   farm_tests    the test files of dev/stream/bin/ that stream_tools leaves out: the farm runner's (one process takes
 #                 over 900 s) and the N6 driver's, each split by test over its own legs of a matrix, for each file
 #                 whose paths plan says the change touches (or all, when it touches this job), and only then
-#   prove         a pull request's report, when the base's tools have tools/oft/ci/prove-pr: for each unit the plan
-#                 names that has a symbol fact, `theorem prove` (its command, its report and its check run's page in
-#                 the log) and the check `theorem/prove: <unit>` on the pull request's head, posted with this run's
-#                 token (checks: write).  It waits for plan alone, and blocks nothing: no job waits for it and no rule
-#                 requires its check.  A pull request from a fork gets a read-only token, so this job is skipped there
 #   required      fails if anything failed, or if the plan named harnesses and none was checked, or named the
 #                 controls, the stream tools' check or the farm runner's tests and they did not pass, or, on a
 #                 pull request no merge queue checks again (into a base other than main, and into main on
@@ -209,7 +204,7 @@
 # run that checks nothing cannot honestly give (the paragraph above).  So a label put on or taken off counts from the
 # pull request's next run, whose hold step reads it: re-run all jobs of the head's newest run, or push.
 #
-# The same evidence answers for a merge queue group, which is never held, when three things are measured, not
+# The same evidence answers for a merge queue group, which is never held, when four things are measured, not
 # assumed (the plan job's elsewhere step).  First, every path of the group's diff from its base is one whose change
 # the parts' keys already hold or that no check opens (plan.paths_a_check_reads says which, and is the authority);
 # a statement, theories/, toolchain/, .github/, release.yaml, dune-project, a counterexample, a finding and a
@@ -219,16 +214,22 @@
 # base's tools, is the build key the pull request's comment recorded for that unit at its check of record
 # (`<!-- vm-evidence-key unit=<project>/<harness> key=<64 hex> -->`); a key holds everything that part's check
 # reads, its proofs folder included, so equal keys say that nothing it reads moved between the two trees -- that,
-# not the paths, is what makes the skip safe.  Then the check jobs would compile the same proofs against the same
+# not the paths, is what makes the skip safe.  Fourth, every marker names the checker its check of record ran
+# under, on its own `<!-- vm-evidence-checker id=<64 hex> -->` line, and that id is keys.checker of the tree this
+# run checks: a key says nothing about the tools that computed it, and on 2026-11-06 a lane posted markers whose
+# keys were computed with main's tools while its farm runs had executed the pull request heads' older tools, from
+# before #2109 moved keys.checker, so the keys matched although no run had used main's checker (the OSS Verify
+# lead, 2026-11-06 18:10Z).  Then the check jobs would compile the same proofs against the same
 # statements with the same checker, for the same answer: no check job and no fetch-drafts leg runs, and required
 # passes with 'checks not run here: ...', naming a comment per pull request (the OSS Verify lead, 2026-11-01: a
 # re-check of unchanged proofs is forbidden).  Anything else -- another path, a pull request without the marker or
-# with an edit by someone else, a planned counterexamples or findings part, a unit with no key line, a read that
+# with an edit by someone else, a planned counterexamples or findings part, a unit with no key line, a marker with
+# no checker line or with another checker's id, a read that
 # fails -- leaves the group its checks.  A unit whose key moved is the one answer that leaves the group nothing:
 # when the pull request that recorded it is the entry this group's branch names, the plan job fails, so the queue
 # takes that entry out for its owner to measure it again, rather than hold every entry behind it for a check of a
 # tree nobody measured; an earlier entry's moved key leaves this group its checks, since a failing group takes out
-# the entry its branch names and no other.  A pull request that is no draft is judged by the same three, as a group
+# the entry its branch names and no other.  A pull request that is no draft is judged by the same four, as a group
 # whose one entry it is: its own comments for the head its merge commit merges, and the plan's keys over that merge
 # commit; a key that moved there leaves it its checks (no queue entry to take out), and a draft is left as it was.
 # required reads one pair for both changes whose checks are of record elsewhere, this one and the pinned tree's
@@ -885,8 +886,8 @@ jobs:
       #     own comments, for the head its merge commit merges, and its keys are the plan's over that merge commit:
       #     #1478 was proved on the farm and re-checked here for two hours otherwise.
       #
-      # For a group, four conditions, each of which must hold, and any read that fails leaves it false (a pull
-      # request's run: the same four, with the pull request itself as the group's one entry, and a key that differs
+      # For a group, five conditions, each of which must hold, and any read that fails leaves it false (a pull
+      # request's run: the same five, with the pull request itself as the group's one entry, and a key that differs
       # leaves it its checks rather than failing, since no queue entry is there to take out):
       #   * a merge queue group, or a pull request that is no draft, routed by its paths (so changed.txt is the
       #     change's diff from its base: github.event.merge_group.base_sha, or the merge commit's first parent);
@@ -919,6 +920,14 @@ jobs:
       #     takes out the entry its branch names and no other (GitHub, "Managing a merge queue"), so the step
       #     fails for that entry's own stale key alone; an earlier entry's leaves this group its checks and is
       #     taken out by the group its own branch names.
+      #   * every marker names the checker its check of record ran under, on its own
+      #     `<!-- vm-evidence-checker id=<64 hex> -->` line, and that id is keys.checker of the tree this run
+      #     checks, read here with the base's tools from the checkout the plan keyed (plan.vm_evidence_checker).
+      #     A key says nothing about the tools that computed it: on 2026-11-06 a lane posted markers whose keys
+      #     were computed with main's tools while its farm runs had executed the pull request heads' older tools,
+      #     from before #2109 moved keys.checker, and the keys matched although no run had used main's checker.
+      #     A marker with no checker line, with more than one, or with another id leaves the group its checks
+      #     (the OSS Verify lead, 2026-11-06 18:10Z).
       - name: the parts a check of record outside this run checked
         id: elsewhere
         env:
@@ -1007,6 +1016,7 @@ jobs:
           # one `<pull request> <unit> <key>` line per evidence key line: the pull request names whose entry a key
           # that differs belongs to, and the two last fields alone are what plan.vm_evidence_keys reads
           : > "$RUNNER_TEMP/vm-key-prs.txt"
+          : > "$RUNNER_TEMP/vm-checkers.txt"
           for VM_PR in $prs; do
             if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
               VM_HEAD="$PR_HEAD"
@@ -1021,7 +1031,12 @@ jobs:
             # and changed since by nobody but the App either (GitHub keeps every editor in userContentEdits, which only
             # GraphQL gives).  `said` becomes that comment's "(mode): <its url>", its node id, and one
             # `key <unit> <key>` line for each `<!-- vm-evidence-key unit=<project>/<harness> key=<64 hex> -->` line
-            # after the marker in it, the unit's build key at the tree its check of record ran on.  Of the comments
+            # after the marker in it, the unit's build key at the tree its check of record ran on, and one
+            # `checker <id>` line for each `<!-- vm-evidence-checker id=<64 hex> -->` line after the marker, the
+            # keys.checker of the tree that check of record ran on: a key says nothing about the tools that
+            # computed it, so the marker names them, and a marker with no such line, with more than one, or with
+            # another id than this tree's is refused where the keys are read (plan.vm_evidence_checker).
+            # Of the comments
             # that carry the marker the newest answers, since a later run of merge-pr.sh posts a later comment:
             # --slurp hands the whole list to one jq program, so `last` is the newest of every page, not of each;
             # the CLI refuses --slurp with its own --jq, so the pages go through jq here, with HEAD_SHA exported.
@@ -1037,9 +1052,12 @@ jobs:
                         | select($lines[0] == "<!-- vm-evidence head=\(env.HEAD_SHA) mode=\(.) -->")) as $mode
                 | {mode: $mode, url: .html_url, node: .node_id,
                    keys: [$lines[1:][]
-                          | capture("^<!-- vm-evidence-key unit=(?<unit>[^ ]+) key=(?<key>[0-9a-f]{64}) -->$")]}
+                          | capture("^<!-- vm-evidence-key unit=(?<unit>[^ ]+) key=(?<key>[0-9a-f]{64}) -->$")],
+                   checker: [$lines[1:][]
+                             | capture("^<!-- vm-evidence-checker id=(?<id>[0-9a-f]{64}) -->$").id]}
               ] | last // empty
-              | "(\(.mode)): \(.url)", "node \(.node)", (.keys[] | "key \(.unit) \(.key)")')" || said=
+              | "(\(.mode)): \(.url)", "node \(.node)", (.keys[] | "key \(.unit) \(.key)"),
+                (.checker[] | "checker \(.)")')" || said=
             if [ -n "$said" ]; then
               # The comment's author and every editor of it are the App: GraphQL names an App `Bot` and gives its
               # login without the `[bot]` REST appends, so the author must be a Bot whose login and `[bot]` is
@@ -1069,6 +1087,13 @@ jobs:
             [ -n "$said" ] || \
               no "pull request $VM_PR has no VM evidence comment for its head $VM_HEAD (or its comments cannot be read)"
             { grep '^key ' <<< "$said" || [ $? -eq 1 ]; } | sed "s/^key /$VM_PR /" >> "$RUNNER_TEMP/vm-key-prs.txt"
+            # one `<pull request> <id>...` line per pull request, with the checker ids its marker named, however
+            # many that is: none and more than one are refusals of their own (plan.vm_evidence_checker).  The read
+            # is its own command, not a substitution inside printf, whose status would hide a read that failed
+            # part way and leave one id of two.
+            checker_ids=$({ grep '^checker ' <<< "$said" || [ $? -eq 1 ]; } | sed 's/^checker //' | tr '\n' ' ') \
+              || no "pull request $VM_PR's evidence comment cannot be read for the checker ids it names"
+            printf '%s\n' "$VM_PR $checker_ids" >> "$RUNNER_TEMP/vm-checkers.txt"
             evidence="${evidence:+$evidence, }#$VM_PR $VM_HEAD $(head -n 1 <<< "$said")"
           done
           cut -d' ' -f2,3 "$RUNNER_TEMP/vm-key-prs.txt" > "$RUNNER_TEMP/vm-keys.txt"
@@ -1125,10 +1150,18 @@ jobs:
             no "$stale_said, and pull request $stale_pr is not this group's last entry $last, the one a failure"\
               "here would take out"
           fi
+          # The checker of the tree this group checks, by the base's tools and from the checkout the plan keyed:
+          # the id every marker must name, so that a key computed with other tools than the run used cannot stand
+          # for that run (the OSS Verify lead, 2026-11-06 18:10Z).
+          group_checker=$(PYTHONPATH=base/tools python -c 'from oft import keys
+          print(keys.checker("head", "HEAD"))') || no "the checker of this tree cannot be read"
+          echo "the checker of the tree this run checks: $group_checker"
           verdict=$(PYTHONPATH=base/tools python -c 'import json, sys; from oft import plan
           ok, why = plan.vm_evidence_keys(json.load(open(sys.argv[1])).get("parts", []),
-                                          open(sys.argv[2]).read().splitlines())
-          print(("ok " if ok else "no ") + why)' "$RUNNER_TEMP/plan.json" "$RUNNER_TEMP/vm-keys.txt") \
+                                          open(sys.argv[2]).read().splitlines(), sys.argv[3],
+                                          open(sys.argv[4]).read().splitlines())
+          print(("ok " if ok else "no ") + why)' "$RUNNER_TEMP/plan.json" "$RUNNER_TEMP/vm-keys.txt" \
+            "$group_checker" "$RUNNER_TEMP/vm-checkers.txt") \
             || no "the planned parts' keys cannot be read"
           case "$verdict" in
             ok\ *) echo "${verdict#ok }" ;;
@@ -2140,11 +2173,16 @@ jobs:
       # turn the check off.  A unit deleted whole has neither, and passes with one line.
       #
       # What the failure says, and what it must not say: a record that differs from its generator is a question for
-      # the unit's owner, not a file to regenerate.  curl/fuzz_bufq's own exit 1 (lib/AgreeZlib.v and lib/U/
-      # AgreeZlib.v) is a true failure that stays red until the Release lane settles where that source came from
-      # (OSSV-162), and `made_from.py --apply` today would write a wrong origin and could move a licence grant onto
-      # files whose content came from somewhere else.  So the error names the rows and says not to clear it with
-      # --apply; it never tells anyone to rerun the generator and commit what it writes.
+      # the unit's owner, not a file to regenerate.  A generator reads what two files hold in common, which is
+      # evidence of a copy and not proof of one, so a lane that has established a file's content is its own declares
+      # the file, with its reason, where the generator reads it (curl/fuzz_bufq: provenance/evidence/licence/
+      # left-bare.tsv, one path and one reason to a row); the generator then gives that file a row the check
+      # compares like any other.  So an exit 1 means one of three things, and all three are what this step is for:
+      # rows a change to the tree has moved and the record has not been brought up to date for, a file whose licence
+      # lines went missing and that nothing declares, or a row changed by hand.  None should be cleared by
+      # `made_from.py --apply`, which would write Anthropic's lines onto a file whose content came from somewhere else.  The error
+      # names the rows, names the three causes, says not to clear it with --apply, and names the declaration a lane
+      # writes when the file is its own; it never tells anyone to rerun the generator and commit what it writes.
       - name: each made-from record this change touches equals its generator's (the head's made_from.py --check)
         env:
           BASE: ${{ steps.base.outputs.base }}
@@ -2228,7 +2266,7 @@ jobs:
               fi
               case "$src" in
                 0) echo "$rel --check: the record matches its generator" ;;
-                1) echo "::error::$rel --check exited 1: the record differs from what its generator gives (the rows + and - above). Do not run made_from.py --apply to clear this; the unit's owner decides the record (see the unit's provenance docs)"; rc=1 ;;
+                1) echo "::error::$rel --check exited 1: the record differs from what its generator gives (the rows + and - above). Either the tree changed and the record was not brought up to date, or a file's licence lines are missing and nothing declares the file, or a row was changed by hand. Do not run made_from.py --apply to clear this; a file a lane has established is its own is declared, with its reason, where the generator reads it, and the unit's owner decides the record (see the unit's provenance docs)"; rc=1 ;;
                 2) echo "::warning::$rel --check exited 2, so the check could not decide; nothing is failed:%0A$(escape "$out")" ;;
                 124) echo "::error::$rel --check did not finish within 900 s and was stopped, so nothing is passed; a generator that needs longer belongs in a job of its own"; rc=1 ;;
                 *) echo "::error::$rel --check exited $src: the check did not finish, so nothing is passed"; rc=1 ;;
@@ -2650,6 +2688,11 @@ jobs:
             done
             echo "work=$GITHUB_WORKSPACE/base" >> "$GITHUB_OUTPUT"
           fi
+          # The job's token, which actions/checkout persisted in head/.git/config as an http extraheader.  The fetch
+          # and the worktree above are the last of this job to need it; base/ is a worktree of head/.git, so the two
+          # trees the steps below read hold no credential while the check runs this change's code.  The lint job of
+          # this workflow does the same.
+          git -C head config --unset-all http.https://github.com/.extraheader 2> /dev/null || true
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
@@ -2702,9 +2745,14 @@ jobs:
           # oft check keeps each build's dune and rocq logs in its temporary folder (oft-check-*), and a failed build's
           # message names only that log ("does not compile (see PATH)"), which went with the container.  So the check runs
           # through a docker of this step's: a `docker run` that mounts a writable /work (a unit's view) gets
-          # CHECK_LOGS/tmp, mounted at /oft-check-logs, as its temporary folder, and when that container exits, every file
-          # there but the logs (*.log) is removed; any other call goes to docker as it is.  check-units.sh is not changed
-          # for this: it is the checker (keys.NOT_THE_CHECKER), whose ids are in every unit's key.
+          # CHECK_LOGS/tmp, mounted at /oft-check-logs, as its temporary folder, and when that container exits, every
+          # file there but the logs (*.log) is removed, and every symbolic link with them: the build writes that folder
+          # itself, and this job's artifact step uploads check-logs/**/*.log with actions/upload-artifact, which follows
+          # a link (search.ts: `followSymbolicLinks: true`, and its filter is `fs.stat`, not `lstat`), so a `*.log` link
+          # a failing build leaves would carry the bytes of any file of this runner -- ~/.docker/config.json, which the
+          # ghcr.io login step above writes with this job's token, among them -- to everyone who can read the pull
+          # request's artifacts.  Any other call goes to docker as it is.  check-units.sh is not changed for this: it is
+          # the checker (keys.NOT_THE_CHECKER), whose ids are in every unit's key.
           : "${CHECK_LOGS:?}"
           rm -rf -- "$CHECK_LOGS" "$CHECK_LOGS.bin"
           mkdir -p -- "$CHECK_LOGS/tmp" "$CHECK_LOGS.bin"
@@ -2720,7 +2768,7 @@ jobs:
                 shift
                 rc=0
                 "$CHECK_LOGS_DOCKER" run -v "$CHECK_LOGS/tmp:/oft-check-logs" -e TMPDIR=/oft-check-logs "$@" || rc=$?
-                find "$CHECK_LOGS/tmp" -type f ! -name '*.log' -delete
+                find "$CHECK_LOGS/tmp" \( -type l -o -type f ! -name '*.log' \) -delete
                 find "$CHECK_LOGS/tmp" -mindepth 1 -type d -empty -delete
                 exit "$rc"
               fi
@@ -2741,11 +2789,44 @@ jobs:
             # filled the 8,000 bytes 32,000 lines before its one error.  So in a log that holds an `Error` line, the
             # first 40 of those lines are printed, each with the 6 lines above it (its `File` line among them) and the 5
             # below; a log with none gets the check-pod tool's `File` and `Error` lines.
+            # The path is taken only from a `^FAIL ` line, which oft check itself writes (tools/oft/check.py), never
+            # from free text: a proof controls part of its own error message, so an unanchored read would let it name
+            # any file of this runner to be printed here.  A path that is not under /oft-check-logs/, or that holds a
+            # `..` segment, is refused in one line and not read (OSSV-366).  A build writes its own logs: /oft-check-logs
+            # is the TMPDIR of the container the check runs in, so a `*.log` the build leaves there can be a symbolic
+            # link to any file of this runner, which `[ -f ]` would follow.  So a path is read only when it resolves to
+            # itself: a regular file, under this run's own log folder, reached through no link.
+            # the log paths the failures name
             logs=()
-            while IFS= read -r rel; do
-              [ -f "$CHECK_LOGS/tmp/$rel" ] && logs+=("$CHECK_LOGS/tmp/$rel")
-            done < <(grep -oE '\(see /oft-check-logs/[^)]+\)' "$CHECK_LOGS/check-units.log" \
-                       | sed -E 's|^\(see /oft-check-logs/||; s|\)$||' | awk '!seen[$0]++' || true)
+            refused=()
+            linked=()
+            root="$(realpath -e -- "$CHECK_LOGS/tmp")"
+            while IFS= read -r p; do
+              case "$p" in
+                /oft-check-logs/*) rel=${p#/oft-check-logs/} ;;
+                *) refused+=("$p"); continue ;;
+              esac
+              case "/$rel" in
+                */../*|*/..) refused+=("$p"); continue ;;
+              esac
+              held="$CHECK_LOGS/tmp/$rel"
+              # a path this run left nothing at is passed over in silence, as a build whose log is not here
+              [ -e "$held" ] || [ -L "$held" ] || continue
+              if [ "$(realpath -e -- "$held" 2> /dev/null || true)" != "$root/$rel" ] || [ ! -f "$held" ]; then
+                linked+=("$p")
+                continue
+              fi
+              logs+=("$held")
+            done < <(grep -E '^FAIL ' -- "$CHECK_LOGS/check-units.log" \
+                       | grep -oE '\(see [^)]+\)' \
+                       | sed -E 's|^\(see ||; s|\)$||' | awk '!seen[$0]++' || true)
+            for p in ${refused[@]+"${refused[@]}"}; do
+              echo "== refused the log path a failure names, it is not a file of this run's log folder: $p"
+            done
+            for p in ${linked[@]+"${linked[@]}"}; do
+              echo "== refused the log path a failure names, it does not resolve to a regular file of this run's own log folder: $p"
+            done
+            # end of the log paths the failures name
             if [ "${#logs[@]}" -eq 0 ]; then
               mapfile -t logs < <(grep -rlE --include='*.log' '^Error' -- "$CHECK_LOGS/tmp" | sort || true)
             fi
@@ -2763,6 +2844,28 @@ jobs:
             [ "$size" -le 8000 ] || printf '\n== cut at 8000 of %d bytes\n' "$size"
           fi
           exit "$rc"
+      # The build writes its own logs into /oft-check-logs (CHECK_LOGS/tmp, its TMPDIR), and the upload below follows
+      # a symbolic link, so a `*.log` link it leaves would be uploaded with the bytes of what it points at.  The
+      # docker wrapper above drops every link as each container exits, but three paths get past it.  A directory the
+      # build chmods against the runner (the containers run as the runner's uid): the wrapper's `find` cannot unlink
+      # inside it, and the wrapper's status is the container's, so nothing is said.  A cancelled job: the check step
+      # is killed inside the container, so the wrapper never returns and its cleanup never runs, while the upload
+      # still runs on `cancelled()`.  And `docker run` is only a client: a build that ignores the signals the
+      # runner's cancellation forwards keeps running under the daemon, holding the mount, and plants its link again
+      # after any sweep and before the upload globs.  So the writers go first.  `docker kill` is SIGKILL from the
+      # daemon, which a build cannot trap, and `--rm` then takes the container away; killing every container is right
+      # here, because this job has no `container:` and no `services:`, its runner is a GitHub-hosted larger runner of
+      # its own (the job's `runs-on` comment), and the only containers on it are check-units.sh's, which run in the
+      # foreground and are already gone on every path but cancellation.  Then the folder is made the runner's to walk
+      # again and every link left in it goes; a real log is a file and stays.  A job that failed before the check
+      # step has no folder to sweep and ends at once, rather than failing a second step on `find`'s missing path.
+      - name: the build's symbolic links, out of the logs this job uploads
+        if: failure() || cancelled()
+        run: |
+          [ -d "$RUNNER_TEMP/check-logs" ] || exit 0
+          docker ps -q | xargs -r docker kill > /dev/null 2>&1 || true
+          chmod -R u+rwX -- "$RUNNER_TEMP/check-logs" || true
+          find "$RUNNER_TEMP/check-logs" -type l -delete
       # also when the job is cancelled, as GitHub cancels one that reaches timeout-minutes: the check step is then
       # stopped inside a container, whose other temporary files are still there, so only the logs are taken
       - name: oft check's logs, when the check failed or was stopped
@@ -2834,8 +2937,10 @@ jobs:
       group: stream-tools-${{ github.event.pull_request.number || format('{0}-{1}', github.ref, github.sha) }}
       cancel-in-progress: true
     runs-on: ubuntu-24.04
-    # 45, not 30: the bin/ and lane/ tests step below adds about ten minutes (Dispatch issue OSSV-276).
-    timeout-minutes: 45
+    # 75, not 45: the bin/ and lane/ tests step adds about ten minutes (Dispatch issue OSSV-276), and on 2026-11-08 a
+    # merge group's run of this job (#2210, run 42429602984) hit 45 minutes and was cancelled while the same job ran in
+    # 25-34 minutes in the other groups of the night, so 45 left no room for a slower runner.
+    timeout-minutes: 75
     permissions:
       # The lazy blob fetches of the blobless checkout below, against a private repository.  The baselines the
       # checker reads -- each revision of the import's record (dev/stream/manifest.d/, and MANIFEST.tsv before it)
@@ -2848,7 +2953,7 @@ jobs:
       # helper and then the terminal, and the job sits there: three local runs of the check over an
       # unauthenticated promisor clone were killed at 900 s, 500 s and 420 s where the same run takes 210 s
       # (the round 3 review of pull request 496, F3-1).  A job that fails names the blob it could not read; a job
-      # that hangs names nothing and spends the 30 minutes above.
+      # that hangs names nothing and spends the job's whole timeout above.
       GIT_TERMINAL_PROMPT: "0"
       # The two trees the lane/tools tests read in the proofs clone below (NS_TEST_REPO), named by commit and not by
       # branch, so that a run reads the same bytes whatever the branches do (Dispatch issue OSSV-276).  Both are in
@@ -2965,9 +3070,32 @@ jobs:
             --output-file "$RUNNER_TEMP/stream-tools-requirements.txt"
           python -m pip install --quiet --require-hashes --only-binary=:all: \
             -r "$RUNNER_TEMP/stream-tools-requirements.txt"
-          # ubuntu-24.04 carries shellcheck; install it where a runner image does not, rather than check less
-          command -v shellcheck > /dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck; }
-          ruff --version && shellcheck --version && uv --version && python -m pytest --version
+          # shellcheck is pinned the same way and for the same reason, by version and by the hash of the file
+          # that is unpacked, except that it is not a Python package and so cannot come out of the lock: the
+          # official release tarball, checked against its sha256 and put on PATH.  What stood here was
+          # `apt-get install -y -qq shellcheck`, so the version was whatever the runner image carried -- 0.9.0
+          # on ubuntu-24.04, while every box runs 0.11.0 (mise), and the two do not number the same code the
+          # same way.  Measured over the 239 shell files this check holds, at the commit this pin was written
+          # against: 0.9.0 and 0.10.0 each report 1,547 findings, of which 786 are SC2317 and none SC2329;
+          # 0.11.0 reports 760, of which 4 are SC2317 and 71 SC2329, and SC2015 falls from 153 to 77.  No
+          # other code moves, and 0.11.0 raises no class 0.9.0 does not.  So a `# shellcheck disable=SC2317`
+          # that works in CI today is read by a box as a disable of nothing, a `disable=SC2329` is the other
+          # way about (the stream's gate-suite script), and the day the runner image moves every one of them
+          # changes meaning at once with no commit here -- 1 finding by hand against 90 in CI on pull request
+          # 1918.  The pin is the boxes' version, so one answer is given in both places.  Raise it by editing
+          # both lines below; the hash is `sha256sum` of the tarball the release page names.
+          shellcheck_version=0.11.0
+          shellcheck_sha256=8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198
+          curl --silent --show-error --fail --location --retry 3 --output "$RUNNER_TEMP/shellcheck.tar.xz" \
+            "https://github.com/koalaman/shellcheck/releases/download/v$shellcheck_version/shellcheck-v$shellcheck_version.linux.x86_64.tar.xz"
+          echo "$shellcheck_sha256  $RUNNER_TEMP/shellcheck.tar.xz" | sha256sum --check --strict --quiet
+          mkdir -p "$RUNNER_TEMP/tools-bin"
+          tar --extract --xz --file "$RUNNER_TEMP/shellcheck.tar.xz" --directory "$RUNNER_TEMP/tools-bin" \
+            --strip-components=1 "shellcheck-v$shellcheck_version/shellcheck"
+          # $GITHUB_PATH is read by the steps after this one, not by this one, so the version line below names
+          # the file itself: a PATH that did not take would otherwise be read here as the runner's shellcheck.
+          echo "$RUNNER_TEMP/tools-bin" >> "$GITHUB_PATH"
+          ruff --version && "$RUNNER_TEMP/tools-bin/shellcheck" --version && uv --version && python -m pytest --version
       # The paths under dev/stream/ this change touches, and the lines where the plan job's reach step knows them: a
       # `dev/stream/<path>` row, or a `dev/stream/<path>:<start>-<end>` row per hunk.  The checker reads an imported
       # file only where this change wrote it, so the hunks are what make a tool this pull request rewrites answer for
@@ -3080,8 +3208,11 @@ jobs:
         run: |
           set -euo pipefail
           # The subjects.  Two shapes name the package:
-          #   * `from ossv import` / `import ossv` -- the second deliberately loose, because `import ossv_statements`
-          #     is the flat form of exactly the same dependency and is the defect this step exists for;
+          #   * `from ossv import` / `from ossv.` / `import ossv` -- the third deliberately loose, because
+          #     `import ossv_statements` is the flat form of exactly the same dependency and is the defect this
+          #     step exists for.  `from ossv.` was added on 2026-11-06: the log-search tool of bin/
+          #     reaches the package as `from ossv.search_log import cli` and had never been a subject,
+          #     so it had never been run in the deployed layout.  The anchor below is what found it;
           #   * `"ossv-launch"` -- the five launchers of pyproject.toml's [project.scripts], which hold no import of
           #     their own and reach the package through bin/ossv-launch (its header says why).
           # bin/ossv-launch itself is no subject and is skipped by neither rule: it is a bootstrap, not a tool, and
@@ -3090,7 +3221,7 @@ jobs:
           : > "$subjects"
           for f in bin/*; do
             [ -f "$f" ] || continue
-            grep -q 'from ossv import\|import ossv\|"ossv-launch"' "$f" || continue
+            grep -q 'from ossv import\|from ossv\.\|import ossv\|"ossv-launch"' "$f" || continue
             printf '%s\n' "$f" >> "$subjects"
           done
           count=$(grep -c . "$subjects" || true)
@@ -3105,32 +3236,162 @@ jobs:
           #     five launchers PASSES it, reporting "all 5 entry point(s) import" while exercising one import path
           #     five times -- the shape of failure this step exists to prevent.  It is kept because it names which
           #     half of the subject rule broke, and it is not the floor.
-          #   * DEPLOYED_LAYOUT_SUBJECTS, below: what dev/stream/bin held when it was last measured.  This is the
-          #     floor.  A subject that leaves the set fails the step, naming the number and this line, as the
-          #     checker's own FLOORS table does for the tree it reads (src/ossv/tools_check.py).  Nothing moves it
-          #     by itself: tests/test_repo_checks.py holds it EQUAL to the subjects the tree holds, so adding one
-          #     and dropping one both end here, in a line a reader of the change sees.
-          DEPLOYED_LAYOUT_SUBJECTS=16   # measured 2026-11-04 on dev/stream/bin by this step's own rule (with the find tool, the proof search index's record tool, and the gate service's tools and tests)
+          #   * the expected set, computed below from the tree by a SECOND implementation of the same rule.
+          #     This is the floor, and it is no longer a number anybody keeps up to date.  The loop above walks
+          #     bin/ in bash; the check below walks it again in python and the two sets must be EQUAL, so a
+          #     subject the loop drops -- a `continue` that fires too early, a glob that misses a name, a quoting
+          #     slip -- fails the step naming the file, while a tool that starts or stops importing the package
+          #     needs no edit here at all.  It was a hand-kept number until 2026-11-06 (Dispatch OSSV-276): it
+          #     moved four times in one day across two streams, once per tool that began importing the package,
+          #     and every such pull request had to touch this workflow to say so.
           [ "$count" -gt 0 ] || { echo "::error::no file of dev/stream/bin names the ossv package: this check ran nothing"; exit 1; }
           python - "$subjects" <<'DEPLOYED_LAYOUT_FLOOR'
-          import sys, tomllib
+          import ast
+          import sys
+          import tomllib
           from pathlib import Path
-          subjects = set(Path(sys.argv[1]).read_text(encoding="utf-8").split())
-          scripts = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["scripts"]
-          absent = sorted(n for n in scripts if f"bin/{n}" not in subjects)
-          if absent:
-              print(f"::error::[project.scripts] declares {len(scripts)} entry point(s) and this check did not "
-                    f"collect {', '.join(absent)}: its subject rule no longer reaches the package's own launchers")
-              raise SystemExit(1)
-          print(f"all {len(scripts)} [project.scripts] launcher(s) are among the subjects")
+
+          PATTERNS = ("from ossv import", "from ossv.", "import ossv", '"ossv-launch"')
+
+
+          def candidates(where=Path("bin")):
+              """The files of WHERE the bash loop walks: `bin/*`, so no dotfile, and no directory.
+
+              The loop's glob skips a name beginning with a dot and `[ -f ]` skips anything that is
+              not a file, so this skips both. A DOTFILE THAT IMPORTED THE PACKAGE IS MISSED BY BOTH
+              HALVES and by the anchor, which never sees it either: this check cannot find one, and
+              naming that is better than a reader assuming otherwise. Nothing in bin/ is a dotfile
+              today.
+              """
+              for path in sorted(where.iterdir()):
+                  if path.name.startswith(".") or not path.is_file():
+                      continue
+                  yield path
+
+
+          def names_the_package(blob):
+              """This step's own rule, as the bash loop applies it: the four patterns, as bytes.
+
+              Bytes and not text: `grep` matches bytes, so a file this cannot decode must be judged
+              the same way it is rather than dropped from the set, which would turn a real
+              difference into a pass. Every file of bin/ decodes as UTF-8 today; this is about not
+              depending on that.
+              """
+              return any(p.encode() in blob for p in PATTERNS)
+
+
+          def is_the_package(name, where=Path("src")):
+              """True when NAME is this repository's ossv package, dotted or FLAT.
+
+              `ossv` and `ossv.x` are plain. `ossv_x` is the flat form of the same dependency and is
+              the defect this whole step exists for -- the log-search tool of bin/, line 13, uses it
+              today -- and the patterns above catch `import ossv_x` but not `from ossv_x import y`. The
+              old measured count went red on that; a review of 2026-11-06 changed one real tool to it
+              and this check stayed green with the tool never run.
+
+              A flat name counts only when the module it names is really there, as src/ossv/<m>.py or
+              src/ossv/<m>/. Six bin/test_ossv_vm_*.py import a sibling `ossv_vm_fake_gcs` that way,
+              which is not the package and must not turn the tree red.
+              """
+              if name == "ossv" or name.startswith("ossv."):
+                  return True
+              if not name.startswith("ossv_"):
+                  return False
+              flat = name[len("ossv_"):].split(".", 1)[0]
+              return (where / "ossv" / f"{flat}.py").is_file() or (where / "ossv" / flat).is_dir()
+
+
+          def imports_the_package(blob):
+              """True when BLOB is python that reaches `ossv`, read from its syntax rather than its text.
+
+              This is the independent anchor, and it is the point of this check. The two halves
+              above share one rule, so between them they can only catch the LOOP disagreeing with
+              it; neither can catch the RULE going stale. A review on 2026-11-06 showed how: change
+              a tool from `from ossv import x` to `from ossv.x import y` and it leaves the subject
+              set in silence, which is exactly the hand-kept count's one real job.
+
+              It reads `importlib.import_module("ossv.x")` and `__import__("ossv.x")` as imports,
+              because they are: bin/ossv-dashboard loads ossv.statements and ossv.dashboard_collect
+              that way on purpose, to defer the cost, and it is a subject today only because one
+              other line also imports statically. Remove that line and the file still needs the
+              package, which is the whole question this step asks.
+
+              It is tried on EVERY file, not only one whose first line names python. A second review
+              on 2026-11-06 found three shebangs that are python and do not say so --
+              `#!/usr/bin/env -S uv run --script`, a byte-order mark before the shebang, and a file
+              with no shebang at all -- and each left the subject set in silence. A file that is not
+              python does not parse, and falls back to the pattern rule alone.
+              """
+              try:
+                  tree = ast.parse(blob)
+              except (SyntaxError, ValueError):
+                  # Both, because which one a NUL byte raises has moved between versions: 3.12 and
+                  # 3.14 raise SyntaxError for it, and ValueError is what other builds raise. Either
+                  # way it is a source python could not run.
+                  return False
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Import):
+                      if any(is_the_package(a.name) for a in node.names):
+                          return True
+                  elif isinstance(node, ast.ImportFrom):
+                      if node.module and is_the_package(node.module):
+                          return True
+                  elif isinstance(node, ast.Call):
+                      named = getattr(node.func, "id", None) or getattr(node.func, "attr", None)
+                      if named in ("import_module", "__import__") and node.args:
+                          first = node.args[0]
+                          if isinstance(first, ast.Constant) and isinstance(first.value, str) and is_the_package(first.value):
+                              return True
+              return False
+
+
+          def expected(where=Path("bin")):
+              """Every file of WHERE that this step should collect, by both rules."""
+              found = set()
+              for path in candidates(where):
+                  try:
+                      blob = path.read_bytes()
+                  except OSError:
+                      # grep skips a file it cannot read, so this does too: a permission is not a
+                      # subject rule, and crashing here would fail a tree that is fine.
+                      continue
+                  if names_the_package(blob) or imports_the_package(blob):
+                      found.add(str(path))
+              return found
+
+
+          def main(argv):
+              # read_bytes().decode(), and split("\n") rather than split() or splitlines(): a file
+              # name may hold a space, which split() breaks into pieces, and a CR, a form feed or a
+              # vertical tab, which splitlines() breaks and the bash loop does not. read_text is not
+              # enough either -- it turns a CR into a newline before the split ever runs -- and
+              # read_text(newline="") needs 3.13 while CI runs 3.12. Each of these fails a tree that
+              # is fine.
+              subjects = {line for line in Path(argv[1]).read_bytes().decode("utf-8").split("\n") if line}
+              want = expected()
+              missing, extra = sorted(want - subjects), sorted(subjects - want)
+              if missing or extra:
+                  print(f"::error::the subjects this step collected are not the files of dev/stream/bin that "
+                        f"import the ossv package. Collected and should not have: {', '.join(extra) or 'none'}. "
+                        f"Did not collect and should have: {', '.join(missing) or 'none'}. A name in the second "
+                        f"list imports the package in a form this step's four patterns do not match, so add the "
+                        f"form to them; a name in the first is a bug in the loop. A check that reads less than "
+                        f"the tree holds reports less, so this is a failure and not a clean run.")
+                  return 1
+              scripts = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["scripts"]
+              absent = sorted(n for n in scripts if f"bin/{n}" not in subjects)
+              if absent:
+                  print(f"::error::[project.scripts] declares {len(scripts)} entry point(s) and this check did not "
+                        f"collect {', '.join(absent)}: its subject rule no longer reaches the package's own launchers")
+                  return 1
+              print(f"all {len(scripts)} [project.scripts] launcher(s) are among the subjects")
+              print(f"floor: {len(subjects)} subject(s), which is every file of bin/ that imports the package")
+              return 0
+
+
+          if __name__ == "__main__":
+              raise SystemExit(main(sys.argv))
           DEPLOYED_LAYOUT_FLOOR
-          [ "$count" -ge "$DEPLOYED_LAYOUT_SUBJECTS" ] || {
-            echo "::error::dev/stream/bin named the ossv package in $DEPLOYED_LAYOUT_SUBJECTS file(s) when this"\
-                 "floor was measured and names it in $count now. A check that reads less than it was measured"\
-                 "from reports less, so this is a failure and not a clean run. When bin/ changed on purpose,"\
-                 "measure it again and write the new number in DEPLOYED_LAYOUT_SUBJECTS, in this step."
-            exit 1; }
-          echo "floor: $count subject(s), and this step was measured from $DEPLOYED_LAYOUT_SUBJECTS"
           # PYTHONPATH=src is the deployed layout: the package importable as `ossv`, and nothing of bin/ on the path
           # beyond the directory python itself adds for the script it runs.  `< /dev/null` because the loop's own
           # stdin is the worklist: a subject that read stdin would eat the subjects after it and the step would
@@ -3337,88 +3598,6 @@ jobs:
           echo "::error::$said"
           echo "$said" >> "$GITHUB_STEP_SUMMARY"
           exit 1
-
-  prove:
-    # The head's own facts are planned as a release in this job, so a change to a symbol fact alone or to a project's
-    # own file alone reaches its units; never the long check, since the report reads only the two commits and their
-    # symbol facts.  The verdict plan remains its own step: this report-only plan cannot fail required or main-gate.
-    needs: plan
-    # !cancelled() and plan's own result, not the default success(): plan's ancestor queue_run is skipped on every
-    # pull request, and the default would skip this job with it (the tests job says the same)
-    if: >-
-      ${{ !cancelled() && needs.plan.result == 'success' && github.event_name == 'pull_request'
-      && github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-24.04
-    # 40, not 30: over 2026-10-28 to 11-04 the longest of 105 successful prove jobs took 29.5 minutes (run
-    # 41706023094), half a minute from a 30-minute limit; the next two took 18.7 and 18.1.
-    timeout-minutes: 40
-    permissions:
-      contents: read   # the checkout and the base's commit
-      checks: write    # the check run on the pull request's head
-    steps:
-      # the change's commit as git objects alone: no file of the change is read but by the base's tools, as data
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-        with:
-          path: head
-          filter: blob:none
-          sparse-checkout: .github
-      - name: the base branch's tools, which report on this change
-        id: tools
-        env:
-          BASE: ${{ needs.plan.outputs.base }}
-        run: |
-          set -euo pipefail
-          git -C head fetch --no-tags --depth=1 --filter=blob:none origin "$BASE"
-          git -C head worktree add --no-checkout --detach "$GITHUB_WORKSPACE/base" "$BASE"
-          git -C base sparse-checkout set --cone tools/oft
-          git -C base checkout --detach "$BASE"
-          if [ -x base/tools/oft/ci/prove-pr ]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "the base branch's tools have no tools/oft/ci/prove-pr: no report and no check"
-          fi
-      - if: steps.tools.outputs.run == 'true'
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
-        with:
-          python-version: "3.12"
-      - name: the tools' dependencies (PyYAML, idna), hash-pinned, from the base
-        if: steps.tools.outputs.run == 'true'
-        run: python -m pip install --quiet --require-hashes -r base/tools/oft/requirements.txt
-      - name: the units theorem prove reports on
-        id: units
-        if: steps.tools.outputs.run == 'true'
-        env:
-          BASE: ${{ needs.plan.outputs.base }}
-        run: |
-          set -euo pipefail
-          # The report plan reads the head's facts (release kind), with the base's tools.  It needs every fact but no
-          # proof library, as the plan job's ordinary change checkout does.
-          git -C head sparse-checkout set --no-cone '/*' '!/proofs/*/*/lib/' '!/projects/*/*/proofs/lib/'
-          PYTHONPATH="$GITHUB_WORKSPACE/base/tools" python -m oft --root "$GITHUB_WORKSPACE/head" \
-            plan --pr-kind release --base "$BASE" > "$RUNNER_TEMP/prove-plan.json"
-          echo "unit_list=$(jq -r '.units | join(" ")' "$RUNNER_TEMP/prove-plan.json")" >> "$GITHUB_OUTPUT"
-
-      - name: theorem prove, and the check on the pull request's head
-        if: steps.tools.outputs.run == 'true'
-        working-directory: base
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          BASE: ${{ needs.plan.outputs.base }}
-          # the merge commit the plan judged; the check goes on the pull request's head
-          HEAD: ${{ github.sha }}
-          SHA: ${{ github.event.pull_request.head.sha }}
-          UNITS: ${{ steps.units.outputs.unit_list }}
-        # The report is the head's data: no line of it may be a workflow command.
-        run: |
-          set -uo pipefail
-          resume="$(openssl rand -hex 16)"
-          echo "::stop-commands::$resume"
-          code=0
-          tools/oft/ci/prove-pr || code=$?
-          echo "::$resume::"
-          exit "$code"
 
   required:
     needs: [queue_run, plan, lint, tests, fetch-drafts, check, controls, stream_tools, rekey, farm_tests]
@@ -3665,7 +3844,12 @@ jobs:
                 # and changed since by nobody but the App either (GitHub keeps every editor in userContentEdits, which only
                 # GraphQL gives).  `said` becomes that comment's "(mode): <its url>", its node id, and one
                 # `key <unit> <key>` line for each `<!-- vm-evidence-key unit=<project>/<harness> key=<64 hex> -->` line
-                # after the marker in it, the unit's build key at the tree its check of record ran on.  Of the comments
+                # after the marker in it, the unit's build key at the tree its check of record ran on, and one
+                # `checker <id>` line for each `<!-- vm-evidence-checker id=<64 hex> -->` line after the marker, the
+                # keys.checker of the tree that check of record ran on: a key says nothing about the tools that
+                # computed it, so the marker names them, and a marker with no such line, with more than one, or with
+                # another id than this tree's is refused where the keys are read (plan.vm_evidence_checker).
+                # Of the comments
                 # that carry the marker the newest answers, since a later run of merge-pr.sh posts a later comment:
                 # --slurp hands the whole list to one jq program, so `last` is the newest of every page, not of each;
                 # the CLI refuses --slurp with its own --jq, so the pages go through jq here, with HEAD_SHA exported.
@@ -3681,9 +3865,12 @@ jobs:
                             | select($lines[0] == "<!-- vm-evidence head=\(env.HEAD_SHA) mode=\(.) -->")) as $mode
                     | {mode: $mode, url: .html_url, node: .node_id,
                        keys: [$lines[1:][]
-                              | capture("^<!-- vm-evidence-key unit=(?<unit>[^ ]+) key=(?<key>[0-9a-f]{64}) -->$")]}
+                              | capture("^<!-- vm-evidence-key unit=(?<unit>[^ ]+) key=(?<key>[0-9a-f]{64}) -->$")],
+                       checker: [$lines[1:][]
+                                 | capture("^<!-- vm-evidence-checker id=(?<id>[0-9a-f]{64}) -->$").id]}
                   ] | last // empty
-                  | "(\(.mode)): \(.url)", "node \(.node)", (.keys[] | "key \(.unit) \(.key)")')" || said=
+                  | "(\(.mode)): \(.url)", "node \(.node)", (.keys[] | "key \(.unit) \(.key)"),
+                    (.checker[] | "checker \(.)")')" || said=
                 if [ -n "$said" ]; then
                   # The comment's author and every editor of it are the App: GraphQL names an App `Bot` and gives its
                   # login without the `[bot]` REST appends, so the author must be a Bot whose login and `[bot]` is

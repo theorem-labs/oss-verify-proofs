@@ -59,9 +59,12 @@ write one.
       `Copyright 2026 Anthropic PBC` and
       `SPDX-License-Identifier: Apache-2.0 OR MIT`, a whole copy or a part, has
       those lines and the lines that file has under them, unchanged. A file
-      made from part of a file with the one-line comment, holding none of its
-      instruction words or data, has Anthropic's two lines, then that file's
-      `Modified by` lines.
+      that already has Anthropic's two lines keeps its own licence lines
+      instead and copies none of the other file's: it adds one `Modified by`
+      line under them that names the other file, the commit it was taken
+      from and the lines taken. A file made from part of a file with the
+      one-line comment, holding none of its instruction words or data, has
+      Anthropic's two lines, then that file's `Modified by` lines.
    3. Any other file, written new or with code only from files with no
       licence lines, is under the MIT licence and has no licence lines, or
       only the line `SPDX-License-Identifier: MIT`.
@@ -71,10 +74,10 @@ write one.
    reads each file on its own: no merge check compares one file's text with
    another's, so lint finds no copy and never says which case a file is of.
    Cases 1 to 3 are yours to apply: when a file holds code from a file with
-   Anthropic's two lines, give it that file's licence lines, as case 2 says,
-   and say in the pull request which file it came from. A fuzz target whose
-   licence lines a series of its own applies has a `licence-pending` entry,
-   below, which defers that fuzz target's licence refusals.
+   Anthropic's two lines, give it the licence lines case 2 names, and say in
+   the pull request which file it came from. A fuzz target whose licence
+   lines a series of its own applies has a `licence-pending` entry, below,
+   which defers that fuzz target's licence refusals.
 
    A fuzz target whose licence lines are applied in a series of their own has
    a `licence-pending` entry in `tools/oft/lint-exceptions.yaml`: its unit
@@ -93,13 +96,18 @@ write one.
 
    A file of case 1 or 2 that was changed has one more line under its licence
    lines, true of this file: who changed it, when, and what changed in it,
-   from its diff against the file it came from. A change of addresses, numbers
-   or module names is a change. The pull request adds no notices, attribution
-   or licence file, and changes nothing in `LICENSES/`, `NOTICE` or `LICENSE`.
+   from its diff against the file it came from. For code taken into a file
+   that already has Anthropic's two lines, this is the one line case 2 names.
+   A change of addresses, numbers or module names is a change. The pull
+   request adds no notices, attribution or licence file, and changes nothing
+   in `LICENSES/`, `NOTICE` or `LICENSE`.
    It says which files came from which files of the repository; the
    maintainer records that in the build record.
 8. **No unused files.** Each `.v` file that the pull request adds is required
-   by a proof, directly or through other files.
+   by a proof, directly or through other files. A file that witnesses the
+   premises of a released statement, and each file such a witness requires,
+   is exempt: by design no released `Proof.v` requires them, and the release
+   cut ships and builds `lib/` anyway.
 
 ## Steps
 
@@ -111,8 +119,9 @@ write one.
    a letter, a digit or `_` is written as `_` (knot-dns is `knot_dns`), and a
    name that starts with a digit gets `h_` in front (`64bit_fuzzer` is
    `h_64bit_fuzzer`).
-2. Remove each file that no proof requires (requirement 8), and give every
-   file its licence lines (requirement 7). An agent follows
+2. Remove each file that no proof requires and that requirement 8 does not
+   exempt, and give every file its licence lines (requirement 7). An agent
+   follows
    [the adding-a-proof skill](../.claude/skills/adding-a-proof/SKILL.md),
    which goes through the files one at a time.
 3. Run what CI runs. Commit, with what `oft generate --skip-shared` renders

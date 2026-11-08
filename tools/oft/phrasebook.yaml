@@ -93,10 +93,12 @@ harnesses:
 features:
   other-files: opens files other than its input
   directories: uses directories
+  file-removal: removes files or directories
   stat: calls stat on files
   open-flags: opens files with flags the model does not cover
   fd-flags: reads or sets descriptor flags
   descriptor-ranges: closes ranges of descriptors
+  descriptor-close: closes descriptors in ways the model does not cover
   nonblocking-io: uses non-blocking descriptors
   file-mapping: memory-maps a file
   memory-calls: makes memory-management calls the model does not cover

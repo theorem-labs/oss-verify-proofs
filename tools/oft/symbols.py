@@ -1,20 +1,27 @@
 """The symbol fact of a build (`oft symbols`): every function and data object of its unstripped twin, with the
-SHA-256 of its bytes (a function's also with its address immediates masked) and the source lines a function's code
-comes from, and every allocated section of the build, so that data no symbol names (a GOT slot) has a name too.
+SHA-256 of its bytes (a function's also with its address immediates masked, and of what those immediates point at)
+and the source lines a function's code comes from, and every allocated section of the build, so that data no symbol
+names (a GOT slot) has a name too.
 
 projects/<project>/<harness>/symbols/<build>.tsv is
 
-    # oss-fuzz-theorems/symbols/1 sha256=<the sha256 of the stripped binary, which harness.yaml pins for the build>
-    <name> TAB <kind> TAB <address, 0x...> TAB <size> TAB <exact> TAB <masked> TAB <lines>
+    # oss-fuzz-theorems/symbols/2 sha256=<the sha256 of the stripped binary, which harness.yaml pins for the build>
+    <name> TAB <kind> TAB <address, 0x...> TAB <size> TAB <exact> TAB <masked> TAB <targets> TAB <lines>
 
 with one row for each function (kind func) and each data object with a size (kind object) of the symbol table,
 aliases each under its own name, and one for each allocated section (kind section, its name with its leading `.`), by
 address and then name.  For a function, exact is the SHA-256 of its bytes, masked that of mask() of them, given the
 build's Image (the functions of the symbol table that NORETURN names, and the bytes the program cannot write, which
-hold its jump tables), and lines is `<file>:<first>-<last>` for each source file of its code, joined by `,`, or `-`
-when the line table has none; a function of size 0 (musl's _start) has no bytes, so all three are `-`.  For a data
-object and a section, exact is the SHA-256 of its bytes, or `-` for one with no file contents (.bss), and masked and
-lines are `-`.
+hold its jump tables), targets that of what the immediates mask() zeroed point at, each as the symbol or section it
+lands in and the offset in it (target_id: `-` for a function whose mask zeroed no immediate, `?` for one with an
+immediate that lands in no symbol and no section), and lines is `<file>:<first>-<last>` for each source file of its
+code, joined by `,`, or `-` when the line table has none; a function of size 0 (musl's _start) has no bytes, so all
+four are `-`.  For a data object and a section, exact is the SHA-256 of its bytes, or `-` for one with no file
+contents (.bss), and masked, targets and lines are `-`.
+
+masked alone says too little: it is equal for two functions that call different functions or read different globals,
+since the call's displacement and the address halves are the bytes it zeroes.  targets holds what those zeroed
+immediates mean, so that classify.py and contracts.py see such a change (classify.py).
 
 The addresses come from the unstripped twin's .symtab and the bytes from the stripped binary, so read() refuses a
 stripped file that is not the pinned binary, and a pair whose .text, data objects' bytes or allocated sections differ
@@ -35,24 +42,32 @@ import sys
 
 from . import elf, facts, layout, names, yamlio
 
-HEADER = "# oss-fuzz-theorems/symbols/1 sha256=%s"
+HEADER = "# oss-fuzz-theorems/symbols/2 sha256=%s"
 # the most bytes a symbol fact may hold: facts.MAX_BYTES, which facts.file_cap gives its path (no row of facts.CAPS
 # names it); test_symbols holds the two equal
 CAP = 5 << 20
-_HEADER = re.compile(r"# oss-fuzz-theorems/symbols/1 sha256=([0-9a-f]{64})")
+# the header of a fact this module reads: the revision it writes (HEADER, 2) and the one before it, whose rows have
+# no targets column, so that a tool of this revision reads a fact a commit before the column still has (_row)
+_HEADER = re.compile(r"# oss-fuzz-theorems/symbols/([12]) sha256=([0-9a-f]{64})")
 _SHA = re.compile(r"[0-9a-f]{64}")
 _LINES = re.compile(r"-|[^\s,]+:[0-9]+-[0-9]+(?:,[^\s,]+:[0-9]+-[0-9]+)*")
+# the sections the linker fills with pointers, one slot each, whose place says nothing about what a slot holds:
+# locator reads the word in such a slot as well.  Any other section holds what its own bytes are (a string, a
+# constant pool), and reading 8 of them as an address would make a function changed whenever a string it points
+# at changes, which masked and exact already leave equal.
+SLOT_SECTIONS = (".got", ".got.plt", ".plt.got", ".data.rel.ro")
 
 
 # the kinds of a symbol fact's rows: a function and a data object (elf.KINDS), and an allocated section
 KINDS = ("func", "object", "section")
 
 
-class Sym(collections.namedtuple("Sym", "name kind address size exact masked lines")):
+class Sym(collections.namedtuple("Sym", "name kind address size exact masked targets lines")):
     """One row of a symbol fact: a function's, a data object's or an allocated section's name, its kind (KINDS),
     address and size, the SHA-256 of its bytes (exact; `-` for an object or section with no file contents and a
-    function of size 0) and of mask() of them (masked; `-` but for a function with a size), and its source lines (`-`
-    but for a function with a size)."""
+    function of size 0) and of mask() of them (masked; `-` but for a function with a size), what the immediates
+    mask() zeroed point at (targets, a target_id: `-` but for a function with a size, and `-` or `?` for one of
+    those too), and its source lines (`-` but for a function with a size)."""
 
 
 # ------------------------------------------------------------------ masking
@@ -343,8 +358,13 @@ def build_image(binary, sections, noreturn, warn=None, functions=()):
 
 
 def mask(code, addr, image=NO_IMAGE):
-    """code, the bytes of one function at addr, with its address immediates zeroed, so that the same function at
-    another address masks equal:
+    """The masked bytes of mask_targets()."""
+    return mask_targets(code, addr, image)[0]
+
+
+def mask_targets(code, addr, image=NO_IMAGE):
+    """(the masked bytes of code, the bytes of one function at addr, its targets), where the masked bytes are code
+    with its address immediates zeroed, so that the same function at another address masks equal:
 
       * a jal's or a branch's displacement when its target is outside the function (one inside is the function's
         own control flow, which a move leaves as it is, and a changed loop changes);
@@ -386,16 +406,35 @@ def mask(code, addr, image=NO_IMAGE):
     leaves it.  The slot ends when its base register is written (a call writes the caller-saved ones) or a store or
     an atomic through that register overlaps it.  A lui's value may be a C number kept in a variable, so no slot
     holds a lui's.  Every instruction is 32 bits (rv64g has no compressed ones); bytes after the last whole word are
-    kept."""
+    kept.
+
+    The targets are what those zeroed immediates point at, ((index, target) for each instruction whose immediate is
+    zeroed, by index), so that a reader of the masked bytes alone, which a call of another function and a read of
+    another global leave equal, sees such a change (target_id).  A target is
+
+      * ("at", the addresses the immediate forms, by the index of the high half that forms each: one, but for a low
+        half that completes a different high half on each path to it; the index is -1 for a jal or a branch, which
+        forms its address by itself);
+      * ("none", why) for an immediate whose address this function cannot form: a gp-relative offset, since the
+        value of gp is outside the function, and the high half of an auipc whose low half the mask did not zero,
+        since the address is that high half plus a low half the analysis did not follow.  target_id reads it as a
+        target that lands nowhere, so the function is never read as moved or as identical.
+
+    The high half of an auipc or a lui whose low half the mask did zero gets no target of its own: the low half's
+    target is the address both form, and only one pair of a high and a 12-bit low half makes it."""
     n = len(code) // 4
     words = struct.unpack_from("<%dI" % n, code)
     out = list(words)
+    points = {}     # index -> target
+    pcs = set()     # the indices of the masked auipc instructions
     for i, w in enumerate(words):
         op = w & 0x7F
         if op in (OP_JAL, OP_BRANCH) and not 0 <= 4 * i + (jal_imm(w) if op == OP_JAL else b_imm(w)) < len(code):
             out[i] = w & (KEEP_U if op == OP_JAL else KEEP_B)
+            points[i] = ("at", ((-1, (addr + 4 * i + (jal_imm(w) if op == OP_JAL else b_imm(w))) & M64),))
         elif op == OP_AUIPC:
             out[i] = w & KEEP_U
+            pcs.add(i)
     succ, entered, body_calls = _edges(words, addr, image.noreturn)
     jumps = _jumps(words, body_calls)
     if jumps or any(w & 0x7F == OP_JALR and (w >> 7) & 0x1F for w in words):
@@ -425,6 +464,7 @@ def mask(code, addr, image=NO_IMAGE):
                 uses.append((i, held[i][rs1]))
             elif rs1 == GP:
                 out[i] = w & (KEEP_B if op in (OP_STORE, OP_STOREFP) else KEEP_I)
+                points[i] = ("none", "gp%+d, and the value of gp is outside the function" % _low(w))
     numbers = set()
     for i, highs in uses:
         for high in highs:
@@ -432,13 +472,19 @@ def mask(code, addr, image=NO_IMAGE):
                 value = (u_imm(words[high]) + _low(words[i])) & M64
                 if not any(start <= value < end for start, end in image.sections):
                     numbers.add(high)
+    done = set()    # the masked auipc instructions a masked low half completes
     for i, highs in uses:
         if not highs & numbers:
             out[i] = words[i] & (KEEP_B if words[i] & 0x7F in (OP_STORE, OP_STOREFP) else KEEP_I)
+            points[i] = ("at", tuple(sorted((high, (_high(words, high, addr) + _low(words[i])) & M64)
+                                            for high in highs)))
+            done |= highs
             for high in highs:
                 if words[high] & 0x7F == OP_LUI:
                     out[high] = words[high] & KEEP_U
-    return struct.pack("<%dI" % n, *out) + code[4 * n:]
+    for i in pcs - done:
+        points[i] = ("none", "an auipc whose low half the mask did not zero")
+    return struct.pack("<%dI" % n, *out) + code[4 * n:], tuple(sorted(points.items()))
 
 
 def _edges(words, addr, noreturn):
@@ -1109,6 +1155,121 @@ def source_lines(table, address, size):
     return ",".join("%s:%d-%d" % (name, first, last) for name, (first, last) in spans.items()) or "-"
 
 
+def locator(rows, word=None):
+    """A function from an address to where it lands, `<name>:<size>+0x<offset>`: the smallest function or data
+    object of rows ([Sym]) that holds it, else the function of size 0 that starts exactly there, else the section
+    that holds it, with its size and the address's offset in it; the names of every row of the same address and
+    size, sorted and joined by `,`, for a symbol with aliases; None for an address no row of rows holds.  The size
+    is in the answer because two rows may share a name (musl's two `buf`, the sanitizers' five `lock`), and the
+    name alone would read a call of one as a call of the other.  A function of size 0 (an assembly function with
+    no `.size`: musl's `__clone`, `__unmapself`) is matched only at its own address, where a call of it lands.
+
+    An address 8 bytes aligned that lands in a section of SLOT_SECTIONS and in no symbol is a slot of a table
+    the linker writes, whose place says nothing about what it holds: the linker gives out the
+    slots in the order it reads the relocations, so the slot of `stderr` becomes the slot of `stdout` with no
+    other change.  word, when given, reads the 8 bytes at an address and gives their little-endian value, or None
+    where the build has no bytes there (facts.read's elf.Elf.contents); the answer then carries what the slot
+    holds as well, `.got:3416+0x40=>stderr:8+0x0`: where it lands, else, for a slot that holds a number and no
+    address (a thread-pointer offset, a weak undefined symbol's 0), that number, and, for a 16-aligned slot of
+    two such words, both of them, since a general-dynamic TLS pair holds its variable in the second."""
+    def index(kinds, sized=True):
+        names = collections.defaultdict(set)
+        for r in rows:
+            if r.kind in kinds and bool(r.size) == sized:
+                names[r.address, r.size].add(r.name)
+        spans, reach, end = sorted(names), [], 0
+        for a, size in spans:
+            end = max(end, a + size)
+            reach.append(end)
+        return spans, [a for a, _size in spans], reach, names
+
+    symbol_table, section_table = index(("func", "object")), index(("section",))
+    sizeless = index(("func",), sized=False)[3]
+    # how many rows each name has, and how many spans each (names, size) names: a name more than one row has
+    # carries its size, and a (names, size) more than one span has tells those spans apart no better than the
+    # name alone, so it names no place at all (land gives None, and the caller falls back to the section)
+    shared, apart = collections.Counter(), collections.Counter()
+    for table in (symbol_table, section_table, (None, None, None, sizeless)):
+        for (_a, size), names in table[3].items():
+            shared.update(set(names))
+            apart[frozenset(names), size] += 1
+    empty = {a: ",".join(sorted(ns)) for (a, _size), ns in sizeless.items()
+             if apart[frozenset(ns), 0] == 1}
+
+    def land(table, value, sized=True):
+        """Where value lands in table, `<name>+0x<offset>`, and `<name>:<size>+0x<offset>` for a name more than
+        one row of rows has (musl's two `buf`, the sanitizers' five `lock`), which the name alone would read as
+        one; None when even the name and the size name more than one span, which would read a read of either as
+        a read of the other.  A section is never sized: its name is its own, and its size changes with anything
+        it holds, which would make every function that reads it changed."""
+        spans, starts, reach, names = table
+        best = None
+        i = bisect.bisect_right(starts, value) - 1
+        while i >= 0 and reach[i] > value:
+            a, size = spans[i]
+            if a <= value < a + size and (best is None or size < best[1]):
+                best = spans[i]
+            i -= 1
+        if best is None:
+            return None
+        if sized and apart[frozenset(names[best]), best[1]] > 1:
+            return None
+        name = ",".join(sorted(names[best]))
+        many = sized and any(shared[n] > 1 for n in names[best])
+        return "%s%s+0x%x" % (name, ":%d" % best[1] if many else "", value - best[0])
+
+    def held_by(value):
+        """What the slot at value holds, or None when the build has no bytes there."""
+        held = word(value)
+        if held is None:
+            return None
+        inside = land(symbol_table, held) or (empty.get(held) and "%s:0+0x0" % empty[held]) \
+            or land(section_table, held, sized=False)
+        if inside is not None:
+            return inside
+        after = word(value + 8) if not value % 16 else None
+        return "0x%x" % held if after is None else "0x%x,0x%x" % (held, after)
+
+    def find(value):
+        where = land(symbol_table, value)
+        if where is not None:
+            return where
+        if value in empty:
+            return "%s:0+0x0" % empty[value]
+        where = land(section_table, value, sized=False)
+        if where is None or word is None or value % 8 or where.split("+")[0] not in SLOT_SECTIONS:
+            return where
+        inside = held_by(value)
+        return where if inside is None else "%s=>%s" % (where, inside)
+
+    return find
+
+
+def target_id(points, find):
+    """The targets of a function's row, of the targets of mask_targets() and the locator() of its build: the
+    SHA-256 of one line for each, `<index> <where it lands>` (one place for each high half that forms the address,
+    by the index of that high half, joined by `|`), `-` when mask() zeroed no immediate, and `?` when one lands
+    where find() finds nothing or the function cannot form it at all (a ("none", why) target).  Two functions of
+    two builds whose masked bytes and whose targets are both equal call the same functions and read the same
+    places, each at the same offset in it; `?` is equal to nothing, not even to itself.
+
+    A place is a symbol, or a section and an offset in it for data no symbol names (a string literal, an entry of
+    a constant pool).  Equal targets say that the two read the same place, not that the bytes there are the same:
+    a changed string of the same length at the same offset of .rodata, which no contract names, is equal here.
+    That holds of masked and of exact as well, since neither reads the data of another section."""
+    if not points:
+        return "-"
+    lines = []
+    for i, (kind, value) in points:
+        if kind == "none":
+            return "?"
+        where = [(high, find(v)) for high, v in value]
+        if any(w is None for _high, w in where):
+            return "?"
+        lines.append("%d %s" % (i, "|".join("%d %s" % hw for hw in where)))
+    return _sha256("\n".join(lines).encode())
+
+
 # ------------------------------------------------------------------- facts
 
 def _sha256(data):
@@ -1129,7 +1290,7 @@ def read(unstripped, stripped, lines_text, sha256):
                          % (stripped, unstripped, len(bare.text), bare.text_addr, len(full.text), full.text_addr))
     table = line_table(lines_text)
     lo, hi = bare.text_addr, bare.text_addr + len(bare.text)
-    out = []
+    out, points = [], {}    # points: the index in out of each function row -> its mask_targets() targets
     functions = full.symbols()
     sections = bare.sections()
     image = build_image(bare, sections, noreturn_addresses(functions),
@@ -1141,16 +1302,17 @@ def read(unstripped, stripped, lines_text, sha256):
             if full.contents(address, size) != data:
                 raise ValueError("%s is not the stripped twin of %s: the bytes of the object %s at 0x%x differ"
                                  % (stripped, unstripped, name, address))
-            out.append(Sym(name, kind, address, size, "-" if data is None else _sha256(data), "-", "-"))
+            out.append(Sym(name, kind, address, size, "-" if data is None else _sha256(data), "-", "-", "-"))
             continue
         if not (lo <= address and address + size <= hi):
             raise ValueError("%s: function %s at 0x%x (%d bytes) is outside .text (0x%x to 0x%x)"
                              % (unstripped, name, address, size, lo, hi))
         if size == 0:
-            out.append(Sym(name, kind, address, 0, "-", "-", "-"))
+            out.append(Sym(name, kind, address, 0, "-", "-", "-", "-"))
             continue
         code = bare.text[address - lo:address - lo + size]
-        out.append(Sym(name, kind, address, size, _sha256(code), _sha256(mask(code, address, image)),
+        masked, points[len(out)] = mask_targets(code, address, image)
+        out.append(Sym(name, kind, address, size, _sha256(code), _sha256(masked), "-",
                        source_lines(table, address, size)))
     twin = full.sections()
     if [s._replace(bytes=None) for s in sections] != [s._replace(bytes=None) for s in twin]:
@@ -1159,16 +1321,35 @@ def read(unstripped, stripped, lines_text, sha256):
         if s.type != elf.SHT_NOTE and s.bytes != theirs.bytes:
             raise ValueError("%s is not the stripped twin of %s: the bytes of the section %s differ"
                              % (stripped, unstripped, s.name))
-        out.append(Sym(s.name, "section", s.address, s.size, "-" if s.bytes is None else _sha256(s.bytes), "-", "-"))
+        out.append(Sym(s.name, "section", s.address, s.size, "-" if s.bytes is None else _sha256(s.bytes),
+                       "-", "-", "-"))
+    # the targets of a function land in the rows of its own build, sections included, so they are resolved last
+    def word(address):
+        """The little-endian 8-byte value the build holds at address, or None where it holds none: .bss, or an
+        address whose 8 bytes do not fit one allocated section (elf.Elf.contents raises ValueError for that)."""
+        try:
+            data = bare.contents(address, 8)
+        except ValueError:
+            return None
+        return None if data is None else int.from_bytes(data, "little")
+
+    find = locator(out, word)
+    for i, found in points.items():
+        out[i] = out[i]._replace(targets=target_id(found, find))
     return sorted(out, key=lambda s: (s.address, s.name))
 
 
-def _row(text, where):
-    """The Sym of one row of a symbol fact."""
+def _row(text, where, revision=2):
+    """The Sym of one row of a symbol fact of that revision.  A row of revision 1 has no targets column: its
+    function rows get `?`, the targets that are equal to nothing, since a fact written before the column says
+    nothing about what the immediates its mask zeroed point at.  Only revision 2 is ever written (write)."""
     fields = text.split("\t")
-    if len(fields) != 7:
-        raise ValueError("%s: %d fields, not 7" % (where, len(fields)))
-    name, kind, address, size, exact, masked, lines = fields
+    want = 8 if revision == 2 else 7
+    if len(fields) != want:
+        raise ValueError("%s: %d fields, not %d" % (where, len(fields), want))
+    if revision == 1:
+        fields = fields[:6] + ["?" if fields[1] == "func" and fields[3] != "0" else "-"] + fields[6:]
+    name, kind, address, size, exact, masked, targets, lines = fields
     if not re.fullmatch(r"\S+", name):
         raise ValueError("%s: the name %r is empty or holds a space" % (where, name))
     if kind not in KINDS:
@@ -1182,20 +1363,22 @@ def _row(text, where):
             raise ValueError("%s: an object of size 0" % where)
         if exact != "-" and not _SHA.fullmatch(exact):
             raise ValueError("%s: the exact %r of the %s is neither a sha256 nor -" % (where, exact, kind))
-        if (masked, lines) != ("-", "-"):
-            raise ValueError("%s: the %s has no masked bytes and no lines, but %r and %r are not -"
-                             % (where, kind, masked, lines))
+        if (masked, targets, lines) != ("-", "-", "-"):
+            raise ValueError("%s: the %s has no masked bytes, no targets and no lines, but %r, %r and %r are not -"
+                             % (where, kind, masked, targets, lines))
     elif size == "0":
-        if (exact, masked, lines) != ("-", "-", "-"):
-            raise ValueError("%s: a function of size 0 has no bytes and no lines, but %r, %r and %r are not -"
-                             % (where, exact, masked, lines))
+        if (exact, masked, targets, lines) != ("-", "-", "-", "-"):
+            raise ValueError("%s: a function of size 0 has no bytes, no targets and no lines, but %r, %r, %r and %r "
+                             "are not -" % (where, exact, masked, targets, lines))
     else:
         for what, value in (("exact", exact), ("masked", masked)):
             if not _SHA.fullmatch(value):
                 raise ValueError("%s: %s %r is not a sha256" % (where, what, value))
+        if targets not in ("-", "?") and not _SHA.fullmatch(targets):
+            raise ValueError("%s: the targets %r are neither a sha256 nor - nor ?" % (where, targets))
         if not _LINES.fullmatch(lines):
             raise ValueError("%s: the lines %r are neither - nor <file>:<first>-<last>, joined by ," % (where, lines))
-    return Sym(name, kind, int(address, 16), int(size), exact, masked, lines)
+    return Sym(name, kind, int(address, 16), int(size), exact, masked, targets, lines)
 
 
 def write(path, syms, stripped_sha256):
@@ -1205,7 +1388,7 @@ def write(path, syms, stripped_sha256):
         raise ValueError("%r is not a sha256" % stripped_sha256)
     rows = [HEADER % stripped_sha256]
     for s in syms:
-        row = "\t".join((s.name, s.kind, "0x%x" % s.address, str(s.size), s.exact, s.masked, s.lines))
+        row = "\t".join((s.name, s.kind, "0x%x" % s.address, str(s.size), s.exact, s.masked, s.targets, s.lines))
         _row(row, "the row of %r" % s.name)
         rows.append(row)
     text = "\n".join(rows) + "\n"
@@ -1224,14 +1407,16 @@ def load(path):
 
 
 def parse(text):
-    """(stripped sha256, [Sym]) of the text of a symbol fact; ValueError, naming the line, for one it cannot read."""
+    """(stripped sha256, [Sym]) of the text of a symbol fact, of the revision of its header (HEADER, and the one
+    before it, whose rows have no targets: _row); ValueError, naming the line, for one it cannot read."""
     if not text.endswith("\n"):
         raise ValueError("it does not end with a newline")
     lines = text[:-1].split("\n")
     m = _HEADER.fullmatch(lines[0])
     if not m:
         raise ValueError("line 1: not %r" % (HEADER % "<sha256>"))
-    return m.group(1), [_row(line, "line %d" % no) for no, line in enumerate(lines[1:], 2)]
+    revision = int(m.group(1))
+    return m.group(2), [_row(line, "line %d" % no, revision) for no, line in enumerate(lines[1:], 2)]
 
 
 # ---------------------------------------------------------------- Symbols.v

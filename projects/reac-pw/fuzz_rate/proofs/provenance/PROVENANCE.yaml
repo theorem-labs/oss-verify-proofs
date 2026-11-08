@@ -107,8 +107,8 @@ proofs:
     and varnish/esi_parse_fuzzer in this repository, or came with their licence lines from the package below; those files and
     the Anthropic-licensed files of omx-clap-core/fuzz_state and jsoncons/fuzz_json_cursor came from final-anthropic-opensource-formal-verification-proofs-package-2026-10-21
     (sha256 4c6c152f61ce538e439b9d2adef439f4dbe1a2d446767d84ac7c3946d7c6687a)
-  licence: Apache-2.0 OR MIT for the 2490 Rocq files of this folder that carry that tag, each with Anthropic's copyright line;
-    MIT, the repository's licence (LICENSE), for the 4 tagged MIT; the other 573 carry no licence line
+  licence: Apache-2.0 OR MIT for the 2486 Rocq files of this folder that carry that tag, each with Anthropic's copyright line;
+    MIT, the repository's licence (LICENSE), for the 4 tagged MIT; the other 577 carry no licence line
   texts:
   - LICENSES/anthropic-proofs-LICENSE
   - LICENSES/anthropic-proofs-LICENSE-MIT
@@ -117,7 +117,7 @@ proofs:
   modified: 'each file carries the licence lines of its source, including its source''s lines saying how it was changed; the
     files that took their licence lines in this repository carry a line for each source saying how they were made from it. The
     licence lines of 892 of its files were written in this repository in 2026-11, by the licence change of the release series:
-    an SPDX tag, and Anthropic''s copyright line above the tag where the file carries Anthropic''s text. In 2026-11, 488 more
+    an SPDX tag, and Anthropic''s copyright line above the tag where the file carries Anthropic''s text. In 2026-11, 484 more
     of its files took the licence lines of the Anthropic-licensed file each was made from, in this fuzz target or another (docs/adding-a-proof.md,
     requirement 7), and one line `Modified by Theorem Labs, 2026-11` that names that file and says how the file was changed
     from it'

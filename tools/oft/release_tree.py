@@ -26,8 +26,9 @@ release.yaml carries the counts and oss_fuzz.projects of the cut, and an image_l
 entry no remaining build links goes.  It removes every finding entirely: findings/, and each
 projects/<p>/<h>/findings/ and projects/<p>/unpatched.yaml (an undisclosed bug's record,
 reproducer and patch never ship),
-and what only this repository has (INTERNAL, paths.py's list and SKILLS written out, whose comment says
-why each is there; a directory is removed whole, and never read for what is held back); it rewrites
+and what only this repository has (INTERNAL, the directories of lint.LINT_ONLY_INTERNAL,
+paths.py's list and SKILLS written out, whose comment says why each is there; a directory is
+removed whole, and never read for what is held back); it rewrites
 tools/oft/lint-exceptions.yaml without each entry whose path, in either layout's form, is at or
 under a path the cut removes (an entry left for it would be unused, and a lint finding in the
 release), and without every licence-pending entry, so a release carries none (the lines above its
@@ -45,7 +46,8 @@ the cut would remove through them), or a path the cut removes is one (an ignored
 a held project's bin/, among them); a fuzz target's proofs folder holds a file beside its statement
 directories (its generated dune file aside), a file under the old layout's proofs/ is in no fuzz target's
 proofs folder (proofs/lib/ among them, which no row admits), or a kept statement
-directory holds a file other than Proof.v, proof.yaml and its generated dune; git tracks a
+directory holds a file other than Proof.v, proof.yaml, its generated dune and the witness
+record beside them, <statement>.witness.json; git tracks a
 file at an ignored path; the facts as the release will have them have an error; a file the
 release keeps or writes, the rewritten lint-exceptions.yaml included, discloses what is held
 back (disclosure); or the generated files are not current, the shared ones apart (paths.SHARED:
@@ -64,10 +66,14 @@ import yaml
 
 from . import disclosure, facts, generate, layout, lint, paths, rules, yamlio
 
-# What only this repository has, which the cut removes: the INTERNAL of paths.py (TABLE's internal rows, then its
-# INTERNAL_FILES and INTERNAL_DIRS), then SKILLS (below), written out here as a literal tuple equal to them
-# (test_release_tree.test_every_internal_path_is_one_the_cut_removes).  It is written out, not imported, because the
-# release gate reads this file's INTERNAL from its syntax tree, as an assignment of a literal tuple of strings, and
+# What only this repository has, which the cut removes: each directory of lint.LINT_ONLY_INTERNAL (what only this
+# repository has that lint alone judges, since a row of paths.TABLE would re-key every unit), then the INTERNAL of
+# paths.py (TABLE's internal rows, then its INTERNAL_FILES and INTERNAL_DIRS), then SKILLS (below), written out here as
+# a literal tuple equal to them (test_release_tree.test_every_internal_path_is_one_the_cut_removes).  SKILLS stay last:
+# the publishing scan's reviewed exceptions match the tuple's text around their two lines, closing parenthesis
+# included.  It is written
+# out, not imported, because the release gate reads this file's INTERNAL from its syntax tree, as an assignment of a
+# literal tuple of strings, and
 # skips an import without a word (its R17 row: a published tree is a release-tree cut;
 # test_the_release_gate_reads_every_internal_path_from_release_tree_py replays its reading).  An entry that ends in / is
 # a directory, removed whole.  What each is: the list of the files that need judgement (CODEOWNERS), the automated
@@ -78,22 +84,27 @@ from . import disclosure, facts, generate, layout, lint, paths, rules, yamlio
 # and builder, which push to this repository's branch proof-index, and the trigger that ossv/candidates carries to start
 # that workflow; the render of the shared generated files after a merge (index.yml and regenerate-shared.sh), which
 # only an internal line has: each publication renders its cut whole; the publishing workflows and the tools/publish/
-# directory they run; the change ledgers (changes/: oft change-ledger), whose sessions, costs and journals are this
-# repository's own records; the reference book (docs/reference/: the worker briefs and the rules a proof's author
-# follows, docs/reference/README.md), which is written for the people and agents who prove, not for a reader of a
+# directory they run; the shared dune store's daily retention (store-retention.yml), which runs on this repository's
+# identity against a bucket only it reaches; the change ledgers (changes/: oft change-ledger), whose sessions, costs
+# and journals are this repository's own records; the reference book (docs/reference/: the worker briefs and the rules
+# a proof's author follows, docs/reference/README.md), which is written for the people and agents who prove, not for a
 # proof; and dev/stream/, the OSS Verify stream's operational tools (dev/stream/README.md), which run the stream rather
 # than check a proof and which name this company's machines, buckets and sessions.  That last cut is what lets
 # lint.internal_only read dev/stream/ as text no reader outside this company sees: the two lists are held to each other
-# by tools/oft/tests/test_lint.py; and the script of pr.yml's prove job (ci/prove-pr), which posts a check on this
-# repository's pull requests: the public repository's pr.yml finds no such script in its base's tools, and so posts
-# nothing.  The tests that run regenerate-shared.sh and prove-pr go with them (a released test finds every file it
-# needs: test_release_tree.ReleasedTests).  Last come the two skill directories of SKILLS: the porting skill
+# by tools/oft/tests/test_lint.py; and the workflow that posts each pull request's `theorem prove` check with the
+# oss-verify App (prove.yml) and its script (ci/prove-pr), whose App key agent-infra lets only this repository's
+# environment `prove` read.  The tests that run regenerate-shared.sh, prove-pr and prove.yml go with them (a released
+# test finds every file it needs: test_release_tree.ReleasedTests).  Last come the two skill directories of SKILLS: the porting skill
 # (.claude/skills/porting-released-proofs/), which tells a prover how to find the proof a new statement ports from
 # through this repository's unreleased branches, its search tools and an outside delivery, none of which a release
 # carries, and the clean-room skill (.claude/skills/clean-room-restatement/), the internal method of a clean-room
 # rewrite, which a reader of a proof never needs.  paths.py does not name them: it is part of the checker, whose ids
-# are in every key (keys.py), so lint admits their files alone (lint.LINT_ONLY_HAND)
+# are in every key (keys.py), so lint admits their files alone (lint.LINT_ONLY_HAND).  First of all, dev/enroll/
+# (lint.LINT_ONLY_INTERNAL): the enrollment scripts' place outside tools/, where they move from tools/enroll/
+# (OSSV-276); paths.TABLE's tools/enroll/** row, and so tools/enroll/ here, then match nothing until paths.py next
+# changes.
 INTERNAL = (
+    "dev/enroll/",
     "approvals.yaml",
     ".github/CODEOWNERS",
     ".github/workflows/facts-review.yml",
@@ -110,14 +121,17 @@ INTERNAL = (
     ".github/proof-index.py",
     ".github/workflows/proof-index-trigger.yml",
     ".github/workflows/index.yml",
+    ".github/workflows/prove.yml",
     ".github/workflows/publish-request.yml",
     ".github/workflows/publish.yml",
     ".github/workflows/publish-gate.yml",
     "tools/publish/",
+    ".github/workflows/store-retention.yml",
     "tools/oft/ci/regenerate-shared.sh",
     "tools/oft/tests/test_regenerate_shared.py",
     "tools/oft/ci/prove-pr",
     "tools/oft/tests/test_prove_pr.py",
+    "tools/oft/tests/test_prove_workflow.py",
     "changes/",
     "docs/reference/",
     "dev/stream/",
@@ -129,8 +143,20 @@ INTERNAL = (
 # reads only INTERNAL above, so these are written there too
 SKILLS = (".claude/skills/porting-released-proofs/", ".claude/skills/clean-room-restatement/")
 
-# the files a kept statement directory may hold: its proof, its record, and the generated dune (paths.py)
+# the files a kept statement directory may hold: its proof, its record, and the generated dune (paths.py), and the
+# witness record beside them, `<statement>.witness.json` (OSSV-360).  The record is kept, never removed:
+# it is worth something only inside the tree digest the audit computes, and a release that cut it would leave that
+# audit reading "no record" for a proof that has one.  It cannot be a name here, because its stem is the statement,
+# so it is matched by suffix -- the same `endswith` that paths.py's `*.witness.json` row is, so the two readers of
+# this one file never disagree about it.
 STATEMENT_FILES = ("Proof.v", "proof.yaml", "dune")
+WITNESS_SUFFIX = ".witness.json"
+
+
+def _statement_file(f):
+    """Whether f, a name in a kept statement directory, is a file a release carries there."""
+    return f in STATEMENT_FILES or f.endswith(WITNESS_SUFFIX)
+
 
 PARTIAL = "kept the lib/ of %s, while removing some of its statement directories: that lib/ may hold their proofs"
 
@@ -146,11 +172,12 @@ def _inside_a_cut(rel):
     the first release cut from a main carrying them would have failed (the review of pull request 669, B1).
     The entry itself is still gated: a link AT `dev/stream` is what rmtree would follow.
 
-    The directories of INTERNAL meet that test, and all are meant: `dev/stream/`, `tools/enroll/`,
+    The directories of INTERNAL meet that test, and all are meant: `dev/stream/`, `tools/enroll/`, `dev/enroll/`,
     `tools/publish/`, `changes/`, `docs/reference/` and the two skill directories of SKILLS.  None is read by
-    `facts.load`, `rules.check` or any later step of the cut -- `tools/enroll/` is the enrollment scripts that
-    enroll.yml runs, `tools/publish/` the publication's own tools, `changes/` the change ledgers,
-    `docs/reference/` the reference book and the skill directories agents' instructions, which this
+    `facts.load`, `rules.check` or any later step of the cut -- `tools/enroll/` and `dev/enroll/` are the
+    enrollment scripts that enroll.yml runs (they move from the first to the second, OSSV-276), `tools/publish/`
+    the publication's own tools, `changes/` the change ledgers, `docs/reference/` the reference book and the skill
+    directories agents' instructions, which this
     tool only deletes -- and each is removed by one `shutil.rmtree`.  The one INTERNAL entry this tool reads is
     `approvals.yaml`, through `facts.load`; the rest, `.github/CODEOWNERS` and `review.md` among them, are only
     listed and deleted.  The other entries are files, not directories, so no path is ever "inside" them and the
@@ -310,7 +337,8 @@ def _plan(tree, keep):
     partial lists each fuzz target whose lib/ is kept while some of its statement directories are removed.  stray lists
     every file where only a directory belongs: beside the statement directories (a generated file aside), and anywhere
     under the old layout's proofs/ outside a fuzz target's proofs folder (proofs/lib/ among it, which no row admits);
-    and anything in a kept statement directory other than the files of STATEMENT_FILES."""
+    and anything in a kept statement directory that is not a file of STATEMENT_FILES or a witness record
+    (_statement_file)."""
     kept, removed, partial, stray = [], [], [], []
     sids = {}   # fuzz target -> the ids of its proofs
     for sid in sorted(tree.proofs):
@@ -332,7 +360,7 @@ def _plan(tree, keep):
         for sid in approved:
             sd = tree.proofs[sid].path
             stray += [os.path.join(sd, f) for f in sorted(os.listdir(tree.path(sd)))
-                      if f not in STATEMENT_FILES or not os.path.isfile(tree.path(sd, f))]
+                      if not _statement_file(f) or not os.path.isfile(tree.path(sd, f))]
         kept += [tree.proofs[sid].path for sid in approved]
         cut = [tree.proofs[sid].path for sid in sids[unit] if sid not in approved]
         removed += cut

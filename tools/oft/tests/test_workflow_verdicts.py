@@ -1272,8 +1272,7 @@ class PlanToolsTest(unittest.TestCase):
         text = step(jobs["plan"], "plan")["run"]
         self.assertIn('echo "tools=${tools%%/*}" >> "$GITHUB_OUTPUT"', text)
         self.assertIn('echo "tools=base" >> "$GITHUB_OUTPUT"', text)      # no facts yet: nothing is planned
-        # the verdict's two plan invocations (before content keys and with them) take those tools.  The prove job's
-        # release-kind plan is separate, so a failure in it cannot fail this verdict step.
+        # every plan run takes those tools, and none names base/tools again
         self.assertNotIn("PYTHONPATH=base/tools python -m oft", text)
         self.assertEqual(text.count("PYTHONPATH=$tools python -m oft --root head plan"), 2)
 
@@ -1400,7 +1399,7 @@ class PlanToolsTest(unittest.TestCase):
             if os.path.exists(os.path.join(d, "runs")):
                 with open(os.path.join(d, "runs")) as f:
                     runs = f.read().splitlines()
-            return out, [r for r in runs if "--max-jobs" in r]
+            return out, runs
 
     def test_the_change_the_base_pins_and_whose_facts_the_base_s_tools_cannot_read(self):
         """The base pins this change's tools and theories by their digest, its own tools read no proof in this tree,
@@ -1436,9 +1435,11 @@ class PlanToolsTest(unittest.TestCase):
                 self.assertTrue(runs[0].startswith("base/tools "), runs[0])
                 self.assertIn("--base", runs[0])
 
-    def test_the_verdict_plan_keeps_its_kind_and_has_no_report_units(self):
-        """The prove job now runs its release-kind plan itself.  This verdict plan keeps the workflow's kind and only
-        writes the outputs the verdict consumes."""
+    def test_the_verdict_plan_runs_with_the_workflow_s_own_kind(self):
+        """The plan step plans with the workflow's own kind.  A maintainer's or a contributor's change is checked with
+        the base's statements, and oft plan keys those only when told the kind: its default, release, keys the
+        change's own statements, which no check job of such a change reads.  It runs once, with the tools it chose,
+        whatever the kind."""
         for kind in ("maintainer", "contributor", "release"):
             for pin, tools in (("absent", "base"), ("right", "head")):
                 with self.subTest(kind=kind, pin=pin):
@@ -1447,7 +1448,6 @@ class PlanToolsTest(unittest.TestCase):
                     self.assertEqual(len(runs), 1)
                     self.assertTrue(runs[0].startswith("%s/tools " % tools), runs[0])
                     self.assertIn("--pr-kind %s" % kind, runs[0])
-                    self.assertNotIn("unit_list", out)
 
     def test_the_base_s_tools_keep_the_plan_wherever_they_read_the_facts(self):
         """Even for the pinned change: the base's tools read the facts, so they plan it and key it, and the check
@@ -1789,27 +1789,36 @@ class QueueVmEvidenceTest(StandIn):
         os.chmod(shim, 0o755)
         self.runs = 0
         # head/, as the plan job checks out a pull request: the merge commit GitHub builds, its first parent the
-        # base branch and its second the pull request's head, which PR_HEAD is
+        # base branch and its second the pull request's head, which PR_HEAD is.  Its tools/ is what the step
+        # reads the checker id of this tree from (keys.checker), the id every marker must name.
         head = os.path.join(self.dir, "head")
         git = ["git", "-C", head, "-c", "user.name=t", "-c", "user.email=t@x", "-c", "commit.gpgsign=false"]
         subprocess.run(["git", "init", "-q", "-b", "main", head], check=True)
-        for args in (["commit", "-q", "--allow-empty", "-m", "base"], ["checkout", "-q", "-b", "pr"],
+        os.makedirs(os.path.join(head, "tools", "oft"))
+        with open(os.path.join(head, "tools", "oft", "check.py"), "w") as f:
+            f.write("# the checker of this tree\n")
+        for args in (["add", "tools/oft/check.py"], ["commit", "-q", "-m", "base"], ["checkout", "-q", "-b", "pr"],
                      ["commit", "-q", "--allow-empty", "-m", "the pull request"], ["checkout", "-q", "main"],
                      ["commit", "-q", "--allow-empty", "-m", "main moved"],
                      ["merge", "-q", "--no-ff", "-m", "merge", "pr"]):
             subprocess.run(git + args, check=True, capture_output=True)
         self.PR_HEAD, self.MERGE_BASE = (subprocess.run(git + ["rev-parse", "HEAD^2", "HEAD^1"], check=True,
                                                         capture_output=True, text=True).stdout.split())
+        self.CHECKER = keys.checker(head, "HEAD")
 
     def api_file(self, endpoint, body):
         with open(os.path.join(self.api, endpoint.replace("/", "_") + ".json"), "w") as f:
             json.dump(body, f)
 
-    def comment(self, head, mode="pvc", by="sjawhar-agent[bot]", kind="Bot", first=True, unit_keys=(), node="C_1"):
-        """merge-pr.sh's evidence comment: its marker as the first line, and a key line per unit after it."""
+    def comment(self, head, mode="pvc", by="sjawhar-agent[bot]", kind="Bot", first=True, unit_keys=(), node="C_1",
+                checkers=None):
+        """merge-pr.sh's evidence comment: its marker as the first line, a key line per unit after it, and the
+        checker line of the tree its check of record ran on (this tree's, unless `checkers` says otherwise)."""
         marker = "<!-- vm-evidence head=%s mode=%s -->" % (head, mode)
         body = marker + "\nthe VM run" if first else "a word\n" + marker
         body += "".join("\n<!-- vm-evidence-key unit=%s key=%s -->" % (u, k) for u, k in unit_keys)
+        body += "".join("\n<!-- vm-evidence-checker id=%s -->" % c
+                        for c in ((self.CHECKER,) if checkers is None else checkers))
         return {"user": {"login": by, "type": kind}, "body": body, "node_id": node,
                 "html_url": "https://github.com/%s/pull/1#issuecomment-1" % REPOSITORY}
 
@@ -1828,7 +1837,7 @@ class QueueVmEvidenceTest(StandIn):
     def group(self, paths=None, commits=(("a proof (#563)", 563), ("another proof (#565)", 565)), last=565,
               heads=None, comments=None, pages=None, total=None, event="merge_group", routed="true", ref=None,
               planned=None, recorded=None, parts=None, plan=True, edits=None, deferred="false", record="",
-              fails=False, pr="", pr_head="", hold="none"):
+              fails=False, pr="", pr_head="", hold="none", checkers=None):
         """The step, over a group of `commits` (each a first line and the pull request it names), with `paths` as the
         group's diff from its base.  `heads` gives a pull request's head sha (the default is its own), `comments` its
         comments (the default is merge-pr.sh's marker for that head, with a key line per unit of UNITS), `pages` a
@@ -1837,7 +1846,8 @@ class QueueVmEvidenceTest(StandIn):
         recorded None leaves that unit no key line), `parts` the plan's parts outright, `plan=False` leaves the plan
         file empty, and `edits` is GitHub's answer for the comment's editors (the default is none).  `deferred` and
         `record` are the plan step's own answers, for the deferred check this step answers first.  `pr`, `pr_head`
-        and `hold` are a pull request's run's number, head and hold.  `fails` says the step is expected to fail,
+        and `hold` are a pull request's run's number, head and hold; `checkers` gives a pull request's marker the
+        checker ids it names, in place of this tree's one.  `fails` says the step is expected to fail,
         which it does for a key that differs from the evidence's."""
         for name in os.listdir(self.api):   # only what this run answers, so one run leaves the next none of it
             os.remove(os.path.join(self.api, name))
@@ -1866,7 +1876,9 @@ class QueueVmEvidenceTest(StandIn):
         heads = {n: self.head_of(n) for _m, n in commits} if heads is None else heads
         for number, head in heads.items():
             self.api_file("repos/%s/pulls/%d" % (REPOSITORY, number), {"head": {"sha": head}})
-            said = self.comment(head, unit_keys=lines.get(number, ())) if comments is None else comments.get(number)
+            said = (self.comment(head, unit_keys=lines.get(number, ()),
+                                 checkers=(checkers or {}).get(number)) if comments is None
+                    else comments.get(number))
             if said is not None:
                 self.api_file("repos/%s/issues/%d/comments" % (REPOSITORY, number), [said])
                 if pages is not None and pages.get(number) is not None:
@@ -1912,6 +1924,37 @@ class QueueVmEvidenceTest(StandIn):
         with open(os.path.join(self.dir, "plan.json")) as f:
             self.assertEqual(f.read(), "")
 
+    def test_the_checker_the_markers_name_is_the_one_this_tree_holds(self):
+        """The id the markers are held against is keys.checker of head/, the checkout the plan keyed, read with
+        the base's tools: the step prints it, and a group whose markers name it passes."""
+        out = self.group()
+        self.assertEqual(out["checked_elsewhere"], "true")
+        self.assertIn("the checker of the tree this run checks: " + self.CHECKER, self.said)
+        self.assertEqual(self.CHECKER, keys.checker(os.path.join(self.dir, "head"), "HEAD"))
+
+    def test_a_marker_with_no_checker_line_or_another_checker_s_leaves_the_group_its_checks(self):
+        """A key says nothing about the tools that computed it: on 2026-11-06 a lane posted markers whose keys
+        were computed with main's tools while its farm runs had executed the pull request heads' older tools,
+        from before #2109 moved keys.checker, and every key matched.  The marker now names the checker its run
+        used, and the step refuses a marker with none, with more than one, or with another id, naming both ids
+        (the OSS Verify lead, 2026-11-06 18:10Z).  Every key here is the group's own, so the checker alone
+        answers."""
+        other = "d" * 64
+        for case, number, ids, says in (
+                ("no checker line", 563, (), "pull request 563's evidence comment names 0 checker ids"),
+                ("two checker lines", 563, (self.CHECKER, self.CHECKER),
+                 "pull request 563's evidence comment names 2 checker ids"),
+                ("another checker", 563, (other,),
+                 "pull request 563's evidence comment names checker %s and the tree this group checks has "
+                 "checker %s" % (other, self.CHECKER)),
+                ("another entry's marker", 565, (other,),
+                 "pull request 565's evidence comment names checker %s and the tree this group checks has "
+                 "checker %s" % (other, self.CHECKER))):
+            with self.subTest(case=case):
+                out = self.group(checkers={number: ids})
+                self.assertEqual(out["checked_elsewhere"], "false")
+                self.assertIn(says, self.said)
+
     def test_a_path_a_check_reads_leaves_the_group_its_checks(self):
         """plan.paths_a_check_reads says which (tools/oft/tests/test_keys.VmEvidence covers it path by path): a
         statement, the checker, the theories, the toolchain, the workflows, release.yaml, dune-project, and the
@@ -1930,7 +1973,7 @@ class QueueVmEvidenceTest(StandIn):
         """A file of tools/ that keys.not_the_checker names, by the base's own tools: a check opens none of them,
         so none of them is in a key (tools/oft/keys.py, checker)."""
         out = self.group(paths=["proofs/curl/fuzz_url/url/Proof.v", "tools/oft/tests/test_lint.py",
-                                "tools/oft/README.md", "tools/enroll/upload", "tools/publish/release.py"])
+                                "tools/oft/README.md", "dev/enroll/upload", "tools/publish/release.py"])
         self.assertEqual(out["checked_elsewhere"], "true")
 
     def test_a_units_generated_readme_is_no_reason_to_check(self):
@@ -4753,8 +4796,8 @@ class MadeFromStepTest(StandIn):
         self.assertNotIn("::warning::", out)
 
     def test_exit_1_fails_and_shows_the_rows(self):
-        """And says not to clear it with --apply: a record that differs from its generator is the unit owner's
-        question, not a file to regenerate (curl/fuzz_bufq's own exit 1 waits on OSSV-162)."""
+        """And says what the three causes are, and not to clear any of them with --apply: a record that differs from
+        its generator is the unit owner's question, not a file to regenerate."""
         self.write(self.unit("curl/fuzz_bufq", 1))
         self.commit("a stale record")
         rc, out, _calls = self.step()
@@ -4762,7 +4805,11 @@ class MadeFromStepTest(StandIn):
         self.assertIn("+ row added\n- row removed\n", out)
         self.assertIn("::error::projects/curl/fuzz_bufq/%s --check exited 1: the record differs from what its "
                       "generator gives" % self.EVIDENCE, out)
-        self.assertIn("Do not run made_from.py --apply to clear this; the unit's owner decides the record", out)
+        self.assertIn("Either the tree changed and the record was not brought up to date, or a file's licence lines "
+                      "are missing and nothing declares the file, or a row was changed by hand.", out)
+        self.assertIn("Do not run made_from.py --apply to clear this; a file a lane has established is its own is "
+                      "declared, with its reason, where the generator reads it, and the unit's owner decides the "
+                      "record", out)
         # nothing anywhere in the step tells a reader to regenerate the record and commit it
         self.assertNotIn("commit what it writes", step(load("pr.yml")["jobs"]["lint"], MADE_FROM_STEP)["run"])
 

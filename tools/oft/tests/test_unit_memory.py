@@ -31,7 +31,7 @@ class UnitMemoryTest(unittest.TestCase):
     def test_the_peak_is_printed_to_stderr_with_the_cpus(self):
         out = self.sampled("file 1\nanon %d\n" % (3 << 30))
         self.assertIn("zlib/checksum_fuzzer: peak memory 3.0 GiB", out)
-        self.assertIn("on %d CPUs" % len(os.sched_getaffinity(0)), out)
+        self.assertIn("on %d CPUs" % check._jobs(), out)
 
     def test_nothing_is_printed_without_a_readable_stat(self):
         self.assertEqual(self.sampled(None), "")

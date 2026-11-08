@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026.11.2 (2026-11-08)
+
+- 20,421 statements: 526 proved, 63 known false (56 shown by a counterexample, 7 witnessed false), 3 suspected false, 229 blocked by the model, 19,600 open.
+- 56 statements on eight FFmpeg decoder fuzz targets are false: seven statements each on `ADPCM_VIMA`, `BMV_AUDIO`, `IMC`, `RA_144_DEC`, `RA_288`, `SBC_DEC`, `SIPR` and `SIREN`. For each statement, the repository holds a counterexample: an input that `./oft check` runs to show the statement false. The 56 statements share 32 inputs. They came in [theorem-labs/oss-verify-proofs#18](https://github.com/theorem-labs/oss-verify-proofs/pull/18). 2026.11.1 had no counterexample.
+- No statement is newly proved. No statement's fingerprint or revision changes, so every published pin still holds.
+- `./oft check` now ends a run with `VOID` and exit status 7 in two cases: the run was asked to check statements or proofs but compiled no file, or, with `--facts-from`, a fuzz target's saved facts file is missing, unreadable or does not match the checkout. `VOID` is neither a pass nor a fail.
+- When a build fails, `./oft check` quotes the first `Error:` blocks of the build log, up to five, in its error message. If the log has no `Error:` line, it quotes the log's last lines.
+- `./oft check` now gives each run of a binary on a counterexample or finding input 1,620 seconds, up from 600. Two of FFmpeg `SIPR`'s counterexample runs take about 535 seconds each on one runner, and they ran past 600 seconds on another runner of the same type. 1,620 is three times 535, rounded up.
+- `./oft check` runs dune with as many jobs as its container's CPU quota allows, or `OFT_JOBS` if that is set, and never more than the CPUs it may use. Before, it used one job for each CPU it could run on.
+- In a sparse checkout, `./oft check` refuses to run when a fuzz target's proof library (`proofs/lib/`) is left out. It names each missing library and the command that adds it.
+- `./oft fetch` no longer refuses an archive that also holds binaries of fuzz targets this checkout has no build record for. It skips those files and says how many it skipped.
+- `docs/adding-a-proof.md`, requirement 8, now exempts a file that shows a released statement's premises can all hold, and each file it needs, because no released `Proof.v` requires them.
+- In the pull request checks, a failed check's log is printed only when it is a regular file inside that run's log folder. The checks delete symbolic links before they upload logs, so a link that a build leaves cannot upload another file.
+
+### Known issue
+
+- Each proved agreement statement, and each proved halts statement except the eight `*_halts_may_fail` statements, assumes that the run stays in its memory budget. The premise is `~ run_scfg_budget_refused` or its equivalent, in [theories/Shapes.v](theories/Shapes.v). A new theorem, in `projects/libreac/fuzz_knock/proofs/lib/BudgetWit/BudgetWitness.v`, shows that this premise holds for libreac `fuzz_knock` `plain_halts` on one input. That input does not give the program the arguments it expects, so the program prints its usage line and exits before it reaches the fuzz target. For every other proved statement it is not shown.
+
 ## 2026.11.1 (2026-11-05)
 
 - 20,421 statements: 526 proved (336 in 2026.11.0), 7 known false, 3 suspected false (an argument from reading the source, not yet a run or a proof; [docs/status.md](docs/status.md)), 229 blocked by the model, 19,656 open.

@@ -12,6 +12,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import tracemalloc
 import types
 import unittest
 from unittest import mock
@@ -108,6 +109,51 @@ class Words(unittest.TestCase):
         self.assertFalse(check.stack_exhausted(TYPE_ERROR, 1))
         self.assertFalse(check.stack_exhausted("", -signal.SIGKILL))
 
+    def test_the_words_are_found_in_a_large_log_without_reading_it_whole(self):
+        """_failed_run asks stack_exhausted_in, which reads the log in pieces: a build that fails after hours of
+        output leaves a log with no bound of its own, and reading it whole took about two bytes of memory for each
+        byte of log.  The word is at the end, so the whole file is read, and it is found across a piece boundary."""
+        size = 64 * MIB
+        with tempfile.TemporaryDirectory() as d:
+            log = os.path.join(d, "compile.log")
+            with open(log, "wb") as f:
+                f.write(b"a line of a build that says nothing\n" * (size // 36))
+                # the word itself straddles the boundary of the last piece: a reader without the overlap misses it
+                at = f.tell()
+                f.write(b"x" * (-(at + 14) % check.STACK_CHUNK) + b"dune: sh (got signal SEGV)\n")
+            self.assertGreater(os.path.getsize(log), 4 * check.STACK_CHUNK)
+            # through _failed_run, the caller: it must ask for the log in pieces, as stack_exhausted_in reads it
+            tracemalloc.start()
+            try:
+                said = str(check._failed_run("a/B.v", log, 1, d))
+                peak = tracemalloc.get_traced_memory()[1]
+            finally:
+                tracemalloc.stop()
+            self.assertTrue(check.stack_exhausted_in(log, 1))
+            self.assertRegex(said, r"^a/B\.v: stack exhausted ")
+            # the pieces and their overlap, not the log: well under the 128 MiB that reading it whole takes
+            self.assertLess(peak, 8 * MIB, peak)
+            # a log without the words, read the same way
+            plain = os.path.join(d, "plain.log")
+            with open(plain, "wb") as f:
+                f.write(b"a line of a build that says nothing\n" * (size // 36))
+            self.assertFalse(check.stack_exhausted_in(plain, 1))
+            # the returncode alone decides for a log that is not there
+            self.assertTrue(check.stack_exhausted_in(os.path.join(d, "none.log"), -signal.SIGSEGV))
+            self.assertFalse(check.stack_exhausted_in(os.path.join(d, "none.log"), 1))
+
+    def test_a_stack_exhausted_failure_quotes_the_log_too(self):
+        """_failed_run's two parts are one message: the stack-exhausted wording of stack_exhausted_words, and after
+        it the log's Error: blocks (log_errors)."""
+        with tempfile.TemporaryDirectory() as d:
+            log = os.path.join(d, "compile.log")
+            with open(log, "w") as f:
+                f.write('File "a/B.v", line 3, characters 0-5:\nError: Stack overflow.\n')
+            e = check._failed_run("a/B.v", log, 1, d)
+            first, rest = str(e).split("\n", 1)
+            self.assertRegex(first, r"^a/B\.v: stack exhausted .*\(see .*compile\.log\)$")
+            self.assertIn("  | Error: Stack overflow.", rest)
+
     def test_no_cc_gives_not_measured(self):
         # today: check has no measure_stack
         with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, {"PATH": d}):
@@ -176,6 +222,7 @@ class Stack(unittest.TestCase):
         st = next(x for x in facts.load(t.root).statements() if x.id == UNIT + "/plain_halts")
         work = tempfile.mkdtemp(dir=self.d.name)
         with self.assertRaises(check.CheckError) as e:
+            # the OLD call, as the two gate-job scripts make it: no counter
             check.check_proof(t.root, st, st.proof, set(), work, io.StringIO(), {})
         return str(e.exception)
 

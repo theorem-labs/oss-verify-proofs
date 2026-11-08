@@ -14,7 +14,8 @@ import unittest
 from unittest import mock
 
 from oft import check, facts, generate, keys, layout, names, pack, paths, plan, port, rules, unitpaths, yamlio
-from oft.tests.helpers import NEW_NAMESPACE, NEW_OPAM_STEM, REPO, add_findings, rename_namespace, tree
+from oft.tests.helpers import (NEW_NAMESPACE, NEW_OPAM_STEM, REPO, add_findings, build_record, rename_namespace,
+                               tree)
 from oft.tests.test_fetch_check import HAVE_ZSTD, make_release, withdraw_every_statement, withhold_checksum_fuzzer
 from oft.tests.test_layout import old_layout_tree
 
@@ -250,11 +251,12 @@ class Keys(unittest.TestCase):
         """Each raise of it changed what a key reads or how it is computed, so that no key of an earlier formula
         equals one of this one: 2 for the first step of the layout move (a component is the entries of a folder and
         the attributes of its files by their paths in it), 3 for the dune files of the build path (the lead's ruling
-        of 2026-10-30)."""
+        of 2026-10-30), 4 for the licence evidence a proofs component leaves out (the lead's ruling of
+        2026-11-05, unitpaths.PROOFS_DROP)."""
         with tree() as t:
             head = repo(t)
             got = keys.keys(t.root, keys.wanted(facts.load(t.root)), head, head, head)
-            self.assertEqual({c["version"] for _k, c in got.values()}, {"3"})
+            self.assertEqual({c["version"] for _k, c in got.values()}, {"4"})
 
     def test_a_component_reads_only_a_path_its_commit_s_listing_covers(self):
         """Attributes lists some paths of a commit once and serves every component from that listing: a path
@@ -707,6 +709,140 @@ class View(unittest.TestCase):
                 packages = re.findall(r"\(package\s+\(name\s+([^\s()]+)\)", f.read())
             self.assertEqual(sorted(packages), sorted(unitpaths.dune_packages("zlib", NEW_OPAM_STEM)))
             self.assertIn("rocq-oss-verify-zlib", packages)
+
+
+class ProofsDrop(unittest.TestCase):
+    """Two parts of a unit's build record are in no key and in no view, in either layout
+    (unitpaths.PROOFS_DROP): its prose, provenance/PROVENANCE.md, and its licence evidence,
+    provenance/evidence/licence/.  The OSS Verify lead ruled on 2026-11-05, widened the same day, that a change to
+    either -- which no rule a check runs and no build opens -- does not take a unit's check of record away.
+    Everything else under provenance/ is still keyed: the record itself, PROVENANCE.yaml, which the rules read, and
+    its recipe/, port/, LICENSES/ and the rest of its evidence/."""
+
+    LICENCE = {"made-from.tsv": "path\tdecision\nlib/Common.v\tmade from lib/Other.v\n",
+               "made_from.py": "# the script of record\n",
+               "test_made_from.py": "# its tests\n",
+               "left-bare.tsv": "path\treason\nlib/Common.v\tours\n"}
+    PROSE = "# Build record\n\nThe rule found 148 such files.\n"
+
+    def licence(self, t, folder, **rest):
+        """Write the licence evidence of the unit's proofs folder, LICENCE with rest laid over it, under folder."""
+        for name, text in dict(self.LICENCE, **rest).items():
+            t.write("%s/provenance/evidence/licence/%s" % (folder, name), text)
+
+    def proofs(self, t, folder="proofs/" + UNIT):
+        """The build record under folder, its YAML and its prose, so that the unit has a proofs folder of its own:
+        the folder's existence is keyed as it always was, and only what is under it can be dropped."""
+        t.write("%s/provenance/PROVENANCE.yaml" % folder, build_record())
+        t.write("%s/provenance/PROVENANCE.md" % folder, self.PROSE)
+
+    def case(self, t, folder, first):
+        """With the build record under folder and committed over the first commit: that writing the licence evidence
+        moved no key, that changing any one of its files, adding another or taking one away moves none either, and
+        that rewriting the record's prose moves none."""
+        before = all_keys(t, first)
+        self.licence(t, folder)
+        self.assertEqual(changed(before, all_keys(t, commit(t), tools=first)), [])
+        for name in sorted(self.LICENCE):
+            with self.subTest(file=name):
+                self.licence(t, folder, **{name: self.LICENCE[name] + "# another line\n"})
+                self.assertEqual(changed(before, all_keys(t, commit(t), tools=first)), [])
+        t.write("%s/provenance/evidence/licence/history.tsv" % folder, "\n")
+        self.assertEqual(changed(before, all_keys(t, commit(t), tools=first)), [])
+        os.remove(t.path("%s/provenance/evidence/licence/made_from.py" % folder))
+        self.assertEqual(changed(before, all_keys(t, commit(t), tools=first)), [])
+        t.write("%s/provenance/PROVENANCE.md" % folder, self.PROSE + "\nThe rule now finds 53 borderline files.\n")
+        self.assertEqual(changed(before, all_keys(t, commit(t), tools=first)), [])
+
+    def test_the_dropped_parts_of_the_record_of_the_old_layout_are_in_no_key(self):
+        with tree() as t:
+            self.proofs(t)
+            first = repo(t)
+            self.case(t, "proofs/" + UNIT, first)
+
+    def test_the_dropped_parts_of_the_record_of_the_per_project_layout_are_in_no_key(self):
+        with tree() as t:
+            self.proofs(t)
+            repo(t)
+            ported = port_layout(t)
+            self.case(t, "projects/%s/proofs" % UNIT, ported)
+
+    def test_the_record_s_prose_alone_changes_no_key_and_the_record_itself_still_does(self):
+        """#1846's case: a change to provenance/PROVENANCE.md alone, and nothing else, leaves every key as it was,
+        while a change to provenance/PROVENANCE.yaml, which the rules read, still moves the unit's build key."""
+        folder = "proofs/" + UNIT
+        with tree() as t:
+            self.proofs(t)
+            self.licence(t, folder)
+            first = repo(t)
+            before = all_keys(t, first)
+            t.write("%s/provenance/PROVENANCE.md" % folder, self.PROSE + "\nA line about the licence evidence.\n")
+            self.assertEqual(changed(before, all_keys(t, commit(t), tools=first)), [])
+            os.remove(t.path("%s/provenance/PROVENANCE.md" % folder))
+            self.assertEqual(changed(before, all_keys(t, commit(t), tools=first)), [])
+            record = "%s/provenance/PROVENANCE.yaml" % folder
+            # the record stays a record the facts can read: what moves its id is one more comment line
+            t.write(record, t.read(record) + "# a comment\n")
+            self.assertEqual(changed(before, all_keys(t, commit(t), tools=first)), [(UNIT, "build")])
+
+    def test_the_rest_of_the_provenance_still_changes_the_build_key(self):
+        """What the ruling leaves in the key: the build record the rules read (PROVENANCE.yaml), the build recipe
+        the rules reach (recipe/), the licence texts (LICENSES/) and every other kind of evidence (evidence/mutants/,
+        and a file of evidence/ that is not under its licence/)."""
+        folder = "proofs/" + UNIT
+        record = "%s/provenance/PROVENANCE.yaml" % folder
+        for rel in ("provenance/PROVENANCE.yaml", "provenance/recipe/build.sh", "provenance/LICENSES/MIT.txt",
+                    "provenance/evidence/mutants/1/notes.md", "provenance/evidence/licence-of-record.md"):
+            with self.subTest(file=rel), tree() as t:
+                self.proofs(t)
+                self.licence(t, folder)
+                at = "%s/%s" % (folder, rel)
+                if at != record:
+                    t.write(at, "before\n")
+                first = repo(t)
+                before = all_keys(t, first)
+                t.write(at, (t.read(at) + "# a comment\n") if at == record else "after\n")
+                self.assertEqual(changed(before, all_keys(t, commit(t), tools=first)), [(UNIT, "build")])
+
+    def test_the_proofs_component_leaves_both_parts_out_in_either_layout(self):
+        for lay in layout.LAYOUTS:
+            for rel in ("provenance/PROVENANCE.md", "provenance/evidence/licence"):
+                self.assertIn(rel, unitpaths.drop("proofs", lay))
+        self.assertEqual(unitpaths.drop("proofs", layout.NEW), unitpaths.PROOFS_DROP + ("dune",))
+        self.assertEqual(unitpaths.drop("proofs", layout.OLD), unitpaths.PROOFS_DROP)
+        self.assertNotIn("provenance/PROVENANCE.yaml", unitpaths.PROOFS_DROP)
+
+    def test_the_view_of_a_build_leaves_both_parts_out(self):
+        """The view check-units.sh mounts holds the proofs folder's entries down to each dropped path, and neither
+        dropped path itself; a proofs folder with neither is mounted whole, as before."""
+        for ported in (False, True):
+            with self.subTest(ported=ported), tree() as t:
+                # only the record's YAML at first: a proofs folder with neither dropped path is mounted whole
+                t.write("proofs/%s/provenance/PROVENANCE.yaml" % UNIT, build_record())
+                repo(t)
+                if ported:
+                    port_layout(t)
+                folder = "projects/%s/proofs" % UNIT if ported else "proofs/" + UNIT
+                self.assertIn(folder, unitpaths.view(t.root, UNIT, "build"))
+                t.write("%s/provenance/PROVENANCE.md" % folder, self.PROSE)
+                self.licence(t, folder)
+                t.write("%s/provenance/evidence/mutants/1/input.bin" % folder, "x")
+                got = unitpaths.view(t.root, UNIT, "build")
+                self.assertNotIn(folder, got)
+                self.assertEqual([r for r in got if r.startswith("%s/provenance/evidence/licence" % folder)], [])
+                self.assertNotIn("%s/provenance/PROVENANCE.md" % folder, got)
+                self.assertIn("%s/provenance/evidence/mutants" % folder, got)
+                self.assertIn("%s/provenance/PROVENANCE.yaml" % folder, got)
+                # the barrier dune of a per-project proofs folder is still mounted: a build reads it
+                self.assertEqual(ported, "%s/dune" % folder in got)
+                # every file of the folder but the two dropped paths is under some path of the view
+                for dp, _dn, fn in os.walk(t.path(folder)):
+                    for name in fn:
+                        rel = os.path.relpath(os.path.join(dp, name), t.root)
+                        under = any(rel == p or rel.startswith(p + "/") for p in got)
+                        dropped = ("/provenance/evidence/licence/" in "/" + rel
+                                   or rel.endswith("/provenance/PROVENANCE.md"))
+                        self.assertEqual(under, not dropped, rel)
 
 
 
@@ -2005,6 +2141,31 @@ class Plan(unittest.TestCase):
             self.assertEqual(got["units"], [CX_UNIT], output)
             self.assertNotIn("queue_runs=", output)
 
+    @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
+    def test_a_push_that_drops_plan_py_from_the_planner_and_changes_it_loses_the_queue_credit(self):
+        """same_tools reads plan.PLANNER from the commit's own plan.py, for both sides of its comparison.  A push that
+        takes plan.py out of the list and changes it in the same push would then digest both sides without it, and
+        keep the credit for a planner change; planned_tools keeps tools/oft/plan.py by name, so it is planned by key.
+        The `python` here runs the step with a PLANNER that lacks plan.py, as such a push's plan.py would."""
+        proof = "proofs/%s/plain_halts/Proof.v" % CX_UNIT
+        with tree() as t, tempfile.TemporaryDirectory() as d:
+            base = self.released(t)
+            t.write("tools/oft/plan.py", "# a planner, with a new rule, no longer in its own list\n")
+            t.write(proof, "(* another stand-in *)\n")
+            commit(t)
+            site = os.path.join(d, "site")
+            os.mkdir(site)
+            with open(os.path.join(site, "sitecustomize.py"), "w") as f:
+                f.write("try:\n    from oft import plan\nexcept ImportError:\n    pass\nelse:\n"
+                        "    plan.PLANNER = tuple(p for p in plan.PLANNER if p != 'tools/oft/plan.py')\n")
+            shim = ('#!/bin/sh\nPYTHONPATH=%s${PYTHONPATH:+:$PYTHONPATH} exec %s "$@"\n'
+                    % (shlex.quote(site), shlex.quote(sys.executable)))
+            got, output = self.release_check(t, d, python=shim, EVENT_BASE=base, QUEUE_CHECKED="true",
+                                             QUEUE_RUNS="11")
+            self.assertIsNotNone(got, output)
+            self.assertEqual(got["units"], [CX_UNIT], output)
+            self.assertNotIn("queue_runs=", output)
+
     def test_the_release_check_verdict_reads_no_answer_it_cannot_read(self):
         """release-check's one required check, run as GitHub runs it: it passes a plan that named parts only when the
         check passed, a plan of nothing only when no check ran, merge queue runs only with nothing planned, and a
@@ -2266,7 +2427,7 @@ class VmEvidence(unittest.TestCase):
     HARMLESS = ["projects/zlib/checksum_fuzzer/proofs/sum/Proof.v", "projects/zlib/checksum_fuzzer/proofs/lib/Lib.v",
                 "proofs/curl/fuzz_url/url/Proof.v", "CHANGELOG.md", "tools/oft/lint.py",
                 "tools/oft/tests/test_lint.py", "tools/oft/README.md", "tools/enroll/upload",
-                "tools/publish/release.py",
+                "tools/publish/release.py", "dev/enroll/upload",
                 # the generated pages a proof re-renders with its statement's new status: no key holds either
                 "projects/zlib/checksum_fuzzer/README.md", "projects/zlib/README.md"]
 
@@ -2306,10 +2467,20 @@ class VmEvidence(unittest.TestCase):
     def line(self, comp):
         return "%s %s" % (comp["unit"], self.key_of(comp))
 
+    # keys.checker of the tree a group checks, and the id its pull requests' markers name.  Every call that is
+    # not about the checker takes these, so that what each of those tests measures is the key rules alone.
+    CHECKER = "e" * 64
+
+    def keys_of(self, planned, lines, checker=None, checker_lines=None):
+        """plan.vm_evidence_keys over a group of one pull request, whose marker names the checker of the tree the
+        group checks unless the arguments change it."""
+        return plan.vm_evidence_keys(planned, lines, self.CHECKER if checker is None else checker,
+                                     ["1 " + self.CHECKER] if checker_lines is None else checker_lines)
+
     def test_every_planned_part_with_the_key_its_check_of_record_ran_on(self):
         a, b = self.comp("zlib/checksum_fuzzer"), self.comp("curl/fuzz_url")
-        ok, why = plan.vm_evidence_keys([self.part(a), self.part(b), self.part(self.comp("x/y"), check=False)],
-                                        [self.line(a), self.line(b)])
+        ok, why = self.keys_of([self.part(a), self.part(b), self.part(self.comp("x/y"), check=False)],
+                               [self.line(a), self.line(b)])
         self.assertEqual((ok, why), (True, "2 part(s), each with the key its check of record ran on"))
 
     def test_a_component_that_moved_is_a_key_that_differs(self):
@@ -2318,34 +2489,77 @@ class VmEvidence(unittest.TestCase):
         for moved in ({"proofs": "pf1"}, {"theories": "th1"}, {"harness": "h1"}, {"image": "i1"}):
             with self.subTest(**moved):
                 a = self.comp("zlib/checksum_fuzzer")
-                ok, why = plan.vm_evidence_keys([self.part(self.comp("zlib/checksum_fuzzer", **moved))],
-                                                [self.line(a)])
+                ok, why = self.keys_of([self.part(self.comp("zlib/checksum_fuzzer", **moved))], [self.line(a)])
                 self.assertFalse(ok)
                 self.assertIn("zlib/checksum_fuzzer: its key at this group head is", why)
 
     def test_a_unit_with_no_line_or_two_that_disagree(self):
         a = self.comp("zlib/checksum_fuzzer")
-        ok, why = plan.vm_evidence_keys([self.part(a)], [])
+        ok, why = self.keys_of([self.part(a)], [])
         self.assertEqual((ok, why), (False, "zlib/checksum_fuzzer has no key line in its pull request's evidence "
                                             "comment"))
         # two pull requests of one group touching one unit: each recorded its own key
-        ok, why = plan.vm_evidence_keys([self.part(a)],
-                                        [self.line(a), self.line(self.comp("zlib/checksum_fuzzer", proofs="pf1"))])
+        ok, why = self.keys_of([self.part(a)],
+                               [self.line(a), self.line(self.comp("zlib/checksum_fuzzer", proofs="pf1"))])
         self.assertFalse(ok)
         self.assertIn("two evidence lines of its own", why)
 
     def test_a_part_that_is_not_a_build_or_no_part_at_all(self):
         a = self.comp("zlib/checksum_fuzzer")
-        ok, why = plan.vm_evidence_keys([self.part(a), self.part(a, part="findings")], [self.line(a)])
+        ok, why = self.keys_of([self.part(a), self.part(a, part="findings")], [self.line(a)])
         self.assertEqual((ok, why), (False, "the plan marks findings to check, which no evidence line records"))
-        self.assertEqual(plan.vm_evidence_keys([], []), (False, "the plan marks no part to check"))
-        self.assertEqual(plan.vm_evidence_keys([self.part(a, check=False)], [self.line(a)]),
+        self.assertEqual(self.keys_of([], []), (False, "the plan marks no part to check"))
+        self.assertEqual(self.keys_of([self.part(a, check=False)], [self.line(a)]),
                          (False, "the plan marks no part to check"))
+
+    def test_the_checker_the_marker_names_is_the_one_the_tree_holds(self):
+        """A key says nothing about the tools that computed it: on 2026-11-06 a lane posted markers whose keys
+        were computed with main's tools while its farm runs had executed the pull request heads' older tools,
+        from before #2109 moved keys.checker, and the keys matched although no run had used main's checker.  So
+        the marker names the checker its run used, and the group compares it with its own tree's (the OSS Verify
+        lead, 2026-11-06 18:10Z)."""
+        a = self.comp("zlib/checksum_fuzzer")
+        planned, lines = [self.part(a)], [self.line(a)]
+        self.assertEqual(self.keys_of(planned, lines),
+                         (True, "1 part(s), each with the key its check of record ran on"))
+        # no checker line, two of them, and another checker's id: each leaves the group its checks
+        ok, why = self.keys_of(planned, lines, checker_lines=["1"])
+        self.assertEqual((ok, why), (False, "pull request 1's evidence comment names 0 checker ids, and the tree "
+                                            "this group checks has checker " + self.CHECKER))
+        ok, why = self.keys_of(planned, lines, checker_lines=["1 %s %s" % (self.CHECKER, self.CHECKER)])
+        self.assertEqual((ok, why), (False, "pull request 1's evidence comment names 2 checker ids: %s %s, and "
+                                            "the tree this group checks has checker %s"
+                                     % (self.CHECKER, self.CHECKER, self.CHECKER)))
+        ok, why = self.keys_of(planned, lines, checker_lines=["1 " + "d" * 64])
+        self.assertEqual((ok, why), (False, "pull request 1's evidence comment names checker %s and the tree this "
+                                            "group checks has checker %s" % ("d" * 64, self.CHECKER)))
+        # one pull request of the group names it and another does not: the group is refused for that one
+        ok, why = self.keys_of(planned, lines, checker_lines=["1 " + self.CHECKER, "2 " + "d" * 64])
+        self.assertEqual((ok, why), (False, "pull request 2's evidence comment names checker %s and the tree this "
+                                            "group checks has checker %s" % ("d" * 64, self.CHECKER)))
+
+    def test_a_checker_that_was_not_read_and_a_line_that_is_no_checker_line(self):
+        """Fail closed: a group whose markers were read for no checker at all, and a tree whose own checker id
+        could not be computed, are refused before any key is compared."""
+        a = self.comp("zlib/checksum_fuzzer")
+        planned, lines = [self.part(a)], [self.line(a)]
+        self.assertEqual(self.keys_of(planned, lines, checker_lines=[]),
+                         (False, "no pull request of this group was read for the checker its marker names"))
+        for checker in ("", "not a checker", "E" * 64, "e" * 63):
+            with self.subTest(checker=checker):
+                ok, why = self.keys_of(planned, lines, checker=checker)
+                self.assertFalse(ok)
+                self.assertIn("the checker of the tree this group checks is no checker id", why)
+        for line in ("", "the checker", "1 zz", "x " + self.CHECKER):
+            with self.subTest(line=line):
+                ok, why = self.keys_of(planned, lines, checker_lines=[line])
+                self.assertFalse(ok)
+                self.assertIn("a checker line is not one pull request and the ids its marker named", why)
 
     def test_a_line_that_is_not_one_unit_and_one_key(self):
         for line in ("zlib/checksum_fuzzer", "zlib/checksum_fuzzer " + "z" * 64, "a b c", "unit " + "a" * 63):
             with self.subTest(line=line):
-                ok, why = plan.vm_evidence_keys([self.part(self.comp("zlib/checksum_fuzzer"))], [line])
+                ok, why = self.keys_of([self.part(self.comp("zlib/checksum_fuzzer"))], [line])
                 self.assertFalse(ok)
                 self.assertIn("is not one unit and one key", why)
 
@@ -2354,7 +2568,7 @@ class VmEvidence(unittest.TestCase):
         under its checker at dd31239f2de differ in that component alone, and the group still skips."""
         old, new = plan.ONLY_CHECKER
         a = self.comp("zlib/checksum_fuzzer")
-        ok, why = plan.vm_evidence_keys([self.part(a)], [self.line(self.comp(a["unit"], checker=old))])
+        ok, why = self.keys_of([self.part(a)], [self.line(self.comp(a["unit"], checker=old))])
         self.assertTrue(ok, why)
         self.assertIn("1 by ruling 16's checker pair: zlib/checksum_fuzzer", why)
         for case, here, recorded in (("another recorded checker", a, self.comp(a["unit"], checker="c" * 64)),
@@ -2365,7 +2579,7 @@ class VmEvidence(unittest.TestCase):
                                      ("the pair the other way round", self.comp(a["unit"], checker=old),
                                       self.comp(a["unit"], checker=new))):
             with self.subTest(case=case):
-                self.assertFalse(plan.vm_evidence_keys([self.part(here)], [self.line(recorded)])[0])
+                self.assertFalse(self.keys_of([self.part(here)], [self.line(recorded)])[0])
 
     def train(self, unit="zlib/checksum_fuzzer", **moved):
         """A build part's components as the train's own tools write them for a unit the train does not touch: the
@@ -2382,7 +2596,7 @@ class VmEvidence(unittest.TestCase):
         a = self.train()
         before = keys.key_of(plan._before_the_train(a))   # noqa: SLF001
         self.assertNotEqual(before, self.key_of(a))
-        ok, why = plan.vm_evidence_keys([self.part(a)], ["%s %s" % (a["unit"], before)])
+        ok, why = self.keys_of([self.part(a)], ["%s %s" % (a["unit"], before)])
         self.assertTrue(ok, why)
         self.assertIn("1 by ruling 20's pre-train tree: zlib/checksum_fuzzer", why)
         # the same marker, and this group's tree is not the one it measured
@@ -2391,8 +2605,7 @@ class VmEvidence(unittest.TestCase):
                            ("the project's rows", {"project": "p1"}),
                            ("dune-project", {"dune-project": "dp1"})):
             with self.subTest(case=case):
-                ok, why = plan.vm_evidence_keys([self.part(self.train(**moved))],
-                                                ["%s %s" % (a["unit"], before)])
+                ok, why = self.keys_of([self.part(self.train(**moved))], ["%s %s" % (a["unit"], before)])
                 self.assertFalse(ok, why)
                 self.assertIn("its evidence comment recorded", why)
 
@@ -2409,7 +2622,7 @@ class VmEvidence(unittest.TestCase):
                 here = self.train(**moved)
                 self.assertIsNone(plan._before_the_train(here))   # noqa: SLF001
                 self.assertFalse(plan.ruling_20_allows(here, before))
-                self.assertFalse(plan.vm_evidence_keys([self.part(here)], ["%s %s" % (a["unit"], before)])[0])
+                self.assertFalse(self.keys_of([self.part(here)], ["%s %s" % (a["unit"], before)])[0])
 
     def test_ruling_20_holds_ruling_16_s_checker_pair_inside_it(self):
         """A check of record that ran before the train and under main's older checker: all the train's differences
@@ -2418,11 +2631,11 @@ class VmEvidence(unittest.TestCase):
         a = self.train()
         before = keys.key_of(dict(plan._before_the_train(a), checker=old))   # noqa: SLF001
         self.assertEqual(plan._before_the_train(a)["checker"], new)   # noqa: SLF001
-        ok, why = plan.vm_evidence_keys([self.part(a)], ["%s %s" % (a["unit"], before)])
+        ok, why = self.keys_of([self.part(a)], ["%s %s" % (a["unit"], before)])
         self.assertTrue(ok, why)
         self.assertIn("1 by ruling 20's pre-train tree: zlib/checksum_fuzzer", why)
-        self.assertFalse(plan.vm_evidence_keys([self.part(self.train(proofs="pf1"))],
-                                               ["%s %s" % (a["unit"], before)])[0])
+        self.assertFalse(self.keys_of([self.part(self.train(proofs="pf1"))],
+                                      ["%s %s" % (a["unit"], before)])[0])
 
     def test_the_two_ids_ruling_20_pins_are_the_tree_that_wrote_them(self):
         """The pins are the checker and theories ids of the commit that wrote them, not of this head: a later pull

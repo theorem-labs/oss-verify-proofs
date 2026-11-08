@@ -1425,6 +1425,15 @@ def run(root, check=False, out=sys.stdout, shared=None):
             print("error: " + e, file=out)
         print("oft generate: %d error(s) in the facts; nothing rendered" % len(tree.errors), file=out)
         return 1
+    # `oft generate` renders every generated file of every fuzz target, and reads the working tree to find the
+    # generated files the facts no longer produce (existing_generated).  In a sparse workspace that holds some
+    # proof libraries, the libraries it does not hold look empty: the render would write a library's dune file
+    # into a directory nothing else is in, and --check would call every generated file of those libraries
+    # missing.  So it refuses and names the commands that add them (INFRA-1385 R12).
+    missing = layout.unwritten_libraries(root, sorted("%s/%s" % (h.project.name, h.name) for h in tree.harnesses()))
+    if missing:
+        print(layout.unwritten_libraries_message("oft generate", missing, root), file=out)
+        return 1
     in_scope = (lambda rel: True) if shared is None else (lambda rel: paths.is_shared(rel) is shared)
     rendered = {rel: text for rel, text in render_all(tree).items() if in_scope(rel)}
     bad = 0

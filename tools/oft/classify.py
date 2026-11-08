@@ -12,11 +12,20 @@ names one.  The two builds' functions are matched through their names, in order:
 
 The names that match one pair of functions are one row, whose class is
 
-    identical   the same bytes at the same address
-    moved       the same masked bytes: only an address immediate, or the address, differs
-    changed     other masked bytes
+    identical   the same bytes at the same address, with the same targets
+    moved       the same masked bytes and the same targets: only an address immediate, the function's own address,
+                or the address of something it names, differs
+    changed     other masked bytes, other targets, or targets that landed where its build's fact has no symbol and
+                no section (`?`, which is equal to nothing, not even to itself)
     added       a name only the head has, or a head function of a duplicate name that no base function matched
     removed     a name only the base has, or a base function of a duplicate name that no head function matched
+
+The masked bytes alone say too little for identical and for moved: mask() zeroes a call's displacement and the
+halves of a data address, so a function that calls or reads another symbol masks equal (symbols.py).  The targets
+of the symbol fact hold what those immediates point at, by symbol and offset, which a move leaves as it is.  A real
+change must never read as moved or as identical, so the two together decide: equal masked bytes and equal targets
+are every instruction of the function, and every symbol and offset it names.  A function that stays where it is
+and calls a function that moved is moved too, not identical: its bytes differ, though nothing in it changed.
 
 So a name that leaves a function whose other names stay is a removed row of its own: a contract that names it has no
 function in the head.  Classification is a hint for who updates a proof; Rocq checks every proof.
@@ -36,9 +45,9 @@ class Row(collections.namedtuple("Row", "cls names base head")):
 
 
 def _class(base, head):
-    if base.exact == head.exact and base.address == head.address:
-        return "identical"
-    return "moved" if base.masked == head.masked else "changed"
+    if base.targets != head.targets or base.targets == "?" or base.masked != head.masked:
+        return "changed"
+    return "identical" if (base.exact, base.address) == (head.exact, head.address) else "moved"
 
 
 def _functions(syms):

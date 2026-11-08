@@ -151,14 +151,20 @@ def symbol_tables(loaded, commit):
 
 def _symbol_id(row, sized):
     """The id of what a contract names from Symbols.v (row, a symbols.Sym; None, `-`, for one the fact lacks): its
-    kind; the masked bytes of a function with a size (symbols.mask: the same function at another address has the
-    same), or the bytes of a data object or section with file contents; and its size, when it has no bytes or when a
-    reference names its size.  Never its address: a contract names it from Symbols.v, which follows a move."""
+    kind; the masked bytes of a function with a size and its targets (symbols.mask and symbols.target_id: the same
+    function at another address has the same, and a function that calls or reads another symbol has other targets,
+    though its masked bytes are the same), or the bytes of a data object or section with file contents; and its
+    size, when it has no bytes or when a reference names its size.  Never its address: a contract names it from
+    Symbols.v, which follows a move.
+
+    A function whose targets are `?` has no id that says what it points at, so no key names it: the contract that
+    does is unknown instead (_contract_components), and this id is never asked for one."""
     if row is None:
         return "-"
     parts = [row.kind]
     if row.kind == "func" and row.size:
         parts.append("masked " + row.masked)
+        parts.append("targets " + row.targets)
     elif row.kind != "func" and row.exact != "-":
         parts.append("exact " + row.exact)
     else:
@@ -248,8 +254,10 @@ def _contract_components(repo, unit, commit, read):
                     for d in required)
         # what keeps a contract from a key that looks complete, in file order (the contract, then the files it
         # requires) and line order: a module of Symbols.v used as a whole brings names into scope that no reference
-        # shows (Import Symbols.Plain, then s_x; Module S := Symbols, then S.Plain.s_x), and a reference to a build
-        # with no symbol fact, or to a name its fact gives Symbols.v no identifier for, reads no bytes
+        # shows (Import Symbols.Plain, then s_x; Module S := Symbols, then S.Plain.s_x), a reference to a build
+        # with no symbol fact, or to a name its fact gives Symbols.v no identifier for, reads no bytes, and a
+        # function whose targets are `?` has an immediate the fact cannot say what points at, so no key of it can
+        # say that a call or a read of it changed (symbols.target_id)
         imports_symbols = any(read[blob[f]][4] for f in files)
         references, found, problems = {}, {}, []
         for i, f in enumerate(files):
@@ -269,6 +277,10 @@ def _contract_components(repo, unit, commit, read):
                         "the symbol fact of %s has no row that Symbols.v names %s" % (build, path))))
                 else:
                     found[build, row.name] = (row, sized or found.get((build, row.name), (row, False))[1])
+                    if row.kind == "func" and row.size and row.targets == "?":
+                        problems.append((i, line, "%s:%d: %s is a function with an address immediate that the "
+                                         "symbol fact of %s cannot resolve, so no key says what it points at"
+                                         % (where, line, written, build)))
         comp.update(("%s:%s" % (b, n), _symbol_id(row, sized)) for (b, n), (row, sized) in found.items())
         why = min(problems)[2] if problems else None
         key = None if why else keys.digest("%s=%s" % kv for kv in comp.items())

@@ -215,15 +215,14 @@ class QueueCheckedPush(unittest.TestCase):
         self.jobs = pr_yml_jobs(self)
 
     @staticmethod
-    def github(event, base, head_repo="acme/proofs"):
-        """The github context main-gate's and prove's conditions read: a pull request names its base and its head's
-        repository; a merge queue group names its own base (github.base_ref is empty on it), and a push names none."""
-        return {"event_name": event, "repository": "acme/proofs", "base_ref": base if event == "pull_request" else "",
-                "event": {"pull_request": {"base": {"ref": base}, "head": {"repo": {"full_name": head_repo}}}}
-                if event == "pull_request"
+    def github(event, base):
+        """The github context main-gate's condition reads: a pull request names its base; a merge queue group names
+        its own (github.base_ref is empty on it), and a push names none."""
+        return {"event_name": event, "base_ref": base if event == "pull_request" else "",
+                "event": {"pull_request": {"base": {"ref": base}}} if event == "pull_request"
                 else {"merge_group": {"base_ref": "refs/heads/" + base}} if event == "merge_group" else {}}
 
-    def results(self, event, checked="", failed=(), base="main", outputs=None, head_repo="acme/proofs"):
+    def results(self, event, checked="", failed=(), base="main", outputs=None):
         """Each job's result in a run of this event, in the order of its needs, with GitHub's rules for a skipped
         ancestor (evaluate()); queue_run's output `checked`, the jobs in `failed` failing when they run, and `base` the
         pull request's or the merge queue's base.  A job that runs sets every output that starts a later job."""
@@ -256,12 +255,11 @@ class QueueCheckedPush(unittest.TestCase):
                             raise KeyError("needs.%s: not a need of %s" % (job, name))
                         return dict.__getitem__(self, job)
                 # every job but queue_run (seeded above from the event), main-gate (which reads the event's name and
-                # base), prove (which runs on a pull request from this repository alone) and rekey (on a pull request
-                # and a merge queue group alone) reads needs.* alone in its `if:`: an expression that read the event
-                # would fail evaluate()
+                # base) and rekey (on a pull request and a merge queue group alone) reads needs.* alone in its `if:`:
+                # an expression that read the event would fail evaluate()
                 runs = evaluate(self.jobs[name].get("if", "success()"), Needs({n: done[n] for n in ancestors}),
-                                github=self.github(event, base, head_repo)
-                                if name in ("main-gate", "prove", "rekey") else None)
+                                github=self.github(event, base)
+                                if name in ("main-gate", "rekey") else None)
                 done[name] = {"result": ("failure" if name in failed else "success") if runs else "skipped",
                               "outputs": {} if name in failed or not runs else
                               dict({"tests": "true", "units": "1", "controls": "true", "repository_lint": "true",
@@ -275,22 +273,14 @@ class QueueCheckedPush(unittest.TestCase):
 
     def test_every_other_run_runs_every_job(self):
         """A pull request or a merge queue group (queue_run skipped) and a push the queue did not check run every
-        job: the default rule would skip the jobs after plan and lint for a skipped ancestor.  prove runs on a pull
-        request alone, and rekey on a pull request and a merge queue group alone."""
+        job: the default rule would skip the jobs after plan and lint for a skipped ancestor.  rekey runs on a pull
+        request and a merge queue group alone."""
         for event, checked in (("pull_request", ""), ("merge_group", ""), ("push", "false"), ("push", "")):
             with self.subTest(event=event, checked=checked):
                 got = self.results(event, checked)
                 want = {n for n in self.jobs
-                        if (n != "queue_run" or event == "push") and (n != "prove" or event == "pull_request")
-                        and (n != "rekey" or event != "push")}
+                        if (n != "queue_run" or event == "push") and (n != "rekey" or event != "push")}
                 self.assertEqual({n for n, r in got.items() if r == "success"}, want, got)
-
-    def test_prove_runs_on_a_pull_request_from_this_repository_alone(self):
-        """A fork's pull request gets a read-only token, which cannot post the check: prove is skipped there, and
-        nothing else changes."""
-        got = self.results("pull_request", head_repo="someone/proofs")
-        self.assertEqual({n for n, r in got.items() if r == "skipped"}, {"queue_run", "prove"}, got)
-        self.assertEqual((got["required"], got["main-gate"]), ("success", "success"), got)
 
     def test_a_failed_plan_or_lint_starts_no_later_job_and_required_judges(self):
         for failed in ("plan", "lint"):
@@ -858,6 +848,23 @@ class Paths(unittest.TestCase):
             self.assertEqual([c for c, _, _ in paths.classify(rel)], [owner], rel)
         self.assertEqual(paths.classify("projects/zlib/Symbols.v/harness.yaml"), [])
 
+    def test_the_witness_record_beside_a_proof(self):
+        """OSSV-360: the land of a proof writes, beside its Proof.v, the record of which term discharged
+        the statement, so a reader checks a credited term against it by conversion.  The table owns it in both
+        layouts; without a row the first proof that carries one would be `matches no path pattern`, and the target
+        gate would refuse the commit that lands it."""
+        for rel in ("proofs/zlib/checksum_fuzzer/plain_halts/plain_halts.witness.json",
+                    "projects/zlib/checksum_fuzzer/proofs/plain_halts/plain_halts.witness.json"):
+            self.assertEqual([c for c, _, _ in paths.classify(rel)], ["contrib"], rel)
+        with tree() as t:
+            add_proof(t, "zlib/checksum_fuzzer/plain_halts")
+            t.write("proofs/zlib/checksum_fuzzer/plain_halts/plain_halts.witness.json",
+                    '{\n "schema": "oss-verify/witness-record/1",\n "node": "plain_halts",\n'
+                    ' "term": "OssFuzzTheorems.Proofs.zlib.checksum_fuzzer.lib.A.Sched.plain_halts.plain_halts_holds",\n'
+                    ' "require": [\n  [\n   "OssFuzzTheorems.Proofs.zlib.checksum_fuzzer.lib.A.Sched",\n'
+                    '   "plain_halts"\n  ]\n ]\n}\n')
+            self.assertNotIn("paths", rules_of(t.lint()))
+
     def test_a_name_git_quotes(self):
         # a path a source pattern admits, so that only the name is wrong
         for name in ('a"b.c', "a\\b.c", "a\tb.c"):
@@ -992,17 +999,21 @@ class Paths(unittest.TestCase):
                           [str(f) for f in t.lint()])
 
     def test_a_secret_in_an_internal_path_is_a_finding(self):
-        """The text rules read an internal path for a private key or an access token alone: a secret in tools/enroll/
-        or tools/publish/ is as bad as one in a shipped file, while tools/publish/'s host paths and addresses are not
-        read (test_the_internal_paths_have_an_owner_and_their_text_is_not_read)."""
+        """The text rules read an internal path for a private key or an access token alone: a secret in tools/enroll/,
+        dev/enroll/ (lint.LINT_ONLY_INTERNAL) or tools/publish/ is as bad as one in a shipped file, while the host paths
+        and addresses of tools/publish/ and dev/enroll/ are not read
+        (test_the_internal_paths_have_an_owner_and_their_text_is_not_read)."""
         token = "gh" + "p_" + "a" * 36
         key = "-----BEGIN " + "OPENSSH PRIVATE KEY-----"
         with tree() as t:
             t.write("tools/enroll/creds.txt", "x\n" + token + "\n")
+            t.write("dev/enroll/creds.txt", token + "\n")
+            t.write("dev/enroll/hosts.txt", "/" + "home/someone/x\n")
             t.write("tools/publish/key.txt", key + "\n")
             t.write("tools/publish/needles.txt", "/" + "home/someone/x\n")
             found = sorted((f.where, f.msg) for f in t.lint() if f.rule == "private-data")
-            self.assertEqual(found, [("tools/enroll/creds.txt:2", "an access token"),
+            self.assertEqual(found, [("dev/enroll/creds.txt:1", "an access token"),
+                                     ("tools/enroll/creds.txt:2", "an access token"),
                                      ("tools/publish/key.txt:1", "a private key")])
 
     def test_only_a_maintainer_changes_an_internal_path(self):
@@ -3003,7 +3014,7 @@ def put_contract_fact(t, rows=CONTRACT_FACT, build="plain"):
     address, size) and stand-in hashes."""
     pin = t.yaml("projects/zlib/checksum_fuzzer/harness.yaml")["builds"][build]["sha256"]
     symbols.write(t.path(layout.symbol_fact("zlib", "checksum_fuzzer", build)),
-                  [symbols.Sym(n, k, a, s, "1f" * 32 if s else "-", "2e" * 32 if k == "func" and s else "-", "-")
+                  [symbols.Sym(n, k, a, s, "1f" * 32 if s else "-", "2e" * 32 if k == "func" and s else "-", "-", "-")
                    for n, k, a, s in rows], pin)
 
 
@@ -4872,8 +4883,8 @@ class SharedFiles(unittest.TestCase):
 
 
 class LintOnlyHand(unittest.TestCase):
-    """paths: the moved skills' files are hand-written to lint alone (lint.LINT_ONLY_HAND), and paths.TABLE, part of
-    the checker, does not name them."""
+    """paths: the moved skills' files are hand-written to lint alone (lint.LINT_ONLY_HAND), dev/enroll/ is internal to
+    lint alone (lint.LINT_ONLY_INTERNAL), and paths.TABLE, part of the checker, names none of them."""
 
     MOVED = {".claude/skills/porting-released-proofs/": (
                  "SKILL.md", "references/asan-kit.md", "references/porting-pitfalls.md",
@@ -4902,6 +4913,32 @@ class LintOnlyHand(unittest.TestCase):
         self.assertEqual([c for c, _, _ in lint.classify_path("toolchain/requirements.txt")], ["hand"])
         self.assertEqual(paths.classify("toolchain/requirements.txt"), [])
         self.assertEqual(lint.classify_path("toolchain/other.txt"), paths.classify("toolchain/other.txt"))
+
+    def test_every_enrollment_script_is_internal_to_lint_and_unknown_to_the_checker(self):
+        """dev/enroll/, the enrollment scripts' place outside tools/ (lint.LINT_ONLY_INTERNAL): every file of it in
+        this tree, and ones a change could add, are internal, as tools/enroll/'s row of paths.TABLE makes them."""
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        found = [os.path.relpath(os.path.join(d, f), root).replace(os.sep, "/")
+                 for d, _, fs in os.walk(os.path.join(root, "dev", "enroll")) for f in fs]
+        for rel in found + ["dev/enroll/build", "dev/enroll/ci/new_step.py", "dev/enroll/tests/fixtures/deeper/x.yaml"]:
+            self.assertEqual([c for c, _, _ in lint.classify_path(rel)], ["internal"], rel)
+            self.assertTrue(lint.is_internal(rel), rel)
+            self.assertEqual(paths.classify(rel), [], rel)
+            self.assertFalse(paths.is_internal(rel), rel)
+        self.assertEqual([c for c, _, _ in lint.classify_path("tools/enroll/build")], ["internal"])
+        self.assertEqual(lint.classify_path("dev/other/x.py"), [])
+        self.assertFalse(lint.is_internal("dev/other/x.py"))
+
+    def test_an_enrollment_script_s_links_are_code_as_under_tools(self):
+        """links: an enrollment script's links are code, not content, under dev/enroll/ as under tools/enroll/
+        (lint.link_strict): a script names the hosts it fetches from, and none of them is a reader's link."""
+        self.assertEqual(lint.link_strict("dev/enroll/assets.py"), lint.link_strict("tools/enroll/assets.py"))
+        self.assertFalse(lint.link_strict("dev/enroll/ci/gate.py"))
+        self.assertTrue(lint.link_strict("dev/other/x.md"))
+        with tree() as t:
+            t.write("dev/enroll/assets.py", 'PROXY = "https://proxy.golang.org"\n')
+            found = [str(f) for f in t.lint() if f.rule == "links" and f.where.startswith("dev/enroll/")]
+            self.assertEqual(found, [])
 
 
 class OldNamespace(unittest.TestCase):

@@ -51,6 +51,9 @@ TABLE = [
     # the render of the shared generated files after each push to the line, which runs
     # tools/oft/ci/regenerate-shared.sh (INTERNAL_FILES, below)
     ("internal", ".github/workflows/index.yml"),
+    # `theorem prove` on each pull request, posted by the oss-verify App with tools/oft/ci/prove-pr (INTERNAL_FILES,
+    # below), whose App key agent-infra lets only this repository's environment `prove` read
+    ("internal", ".github/workflows/prove.yml"),
     # the publishing workflow: publish-request.yml asks for a publication, publish.yml makes it and publish-gate.yml
     # runs the release gate's checks on its cut; and the tools they run (tools/publish/), with the scanner's needles,
     # host paths and addresses on purpose
@@ -58,6 +61,9 @@ TABLE = [
     ("internal", ".github/workflows/publish.yml"),
     ("internal", ".github/workflows/publish-gate.yml"),
     ("internal", "tools/publish/**"),
+    # the shared dune store's daily retention: store-retention.yml runs dev/stream/bin/ossv-store retire on this
+    # repository's identity, against the store's bucket, which only this repository reaches
+    ("internal", ".github/workflows/store-retention.yml"),
     # hand
     ("hand", "LICENSE"),
     # the licence texts and notice of the proofs made from a bundle under Apache-2.0 OR MIT, verbatim (lint pins their
@@ -178,6 +184,12 @@ TABLE = [
     ("contrib", "projects/{project}/{harness}/proofs/{statement}/*.v"),
     ("contrib", "proofs/{project}/{harness}/{statement}/proof.yaml"),
     ("contrib", "projects/{project}/{harness}/proofs/{statement}/proof.yaml"),
+    # the witness record beside a proof (OSSV-360): which term the proving run used to discharge the
+    # statement, so a reader checks a credited term against it by Rocq conversion rather than taking a later
+    # manifest's word for it. Its stem is the statement, as the proof directory's name is; the pattern language
+    # gives a placeholder a whole segment, so the stem is checked by what writes the file and by what reads it.
+    ("contrib", "proofs/{project}/{harness}/{statement}/*.witness.json"),
+    ("contrib", "projects/{project}/{harness}/proofs/{statement}/*.witness.json"),
     ("contrib", "proofs/{project}/{harness}/{statement}/classifier/**"),
     ("contrib", "projects/{project}/{harness}/proofs/{statement}/classifier/**"),
     # a harness's proof library, shared by its proofs and compiled once (<namespace>.Proofs.<p>.<h>.lib)
@@ -222,14 +234,15 @@ SHARED = ("README.md", "index/STATUS.md", "index/PROOFS.md", "index/*.tsv", "ana
 # tools/enroll/ci/inputs.py reads it as a literal.
 # INTERNAL_FILES: the files the cut removes too that lie under a directory of another class, which TABLE cannot give a
 # row of their own (a path matches exactly one row): the script of the render of the shared generated files after a
-# merge, which only an internal line runs (index.yml); each publication renders its cut whole; the script of pr.yml's
-# prove job (ci/prove-pr), which posts a check on this repository's pull requests; and the tests of those two scripts.
+# merge, which only an internal line runs (index.yml); each publication renders its cut whole; the script of prove.yml's
+# job (ci/prove-pr), which posts a check on this repository's pull requests; and the tests of those scripts and of
+# prove.yml.
 # INTERNAL_DIRS: the directories the cut removes whole whose files keep rows of their own (hand), so lint reads them as
 # those rows say and not as internal paths (lint.run): the change ledgers (changes/), the reference book written for
 # the people and agents who prove (docs/reference/), and the OSS Verify stream's operational tools (dev/stream/, which
 # lint.internal_only reads as text no release carries).
 INTERNAL_FILES = ("tools/oft/ci/regenerate-shared.sh", "tools/oft/tests/test_regenerate_shared.py",
-                  "tools/oft/ci/prove-pr", "tools/oft/tests/test_prove_pr.py")
+                  "tools/oft/ci/prove-pr", "tools/oft/tests/test_prove_pr.py", "tools/oft/tests/test_prove_workflow.py")
 INTERNAL_DIRS = ("changes/", "docs/reference/", "dev/stream/")
 INTERNAL = (tuple(p[:-len("**")] if p.endswith("/**") else p for cls, p in TABLE if cls == "internal")
             + INTERNAL_FILES + INTERNAL_DIRS)

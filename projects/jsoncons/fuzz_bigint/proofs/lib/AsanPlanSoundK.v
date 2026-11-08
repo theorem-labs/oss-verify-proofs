@@ -4503,8 +4503,14 @@ Proof.
   assert (Hw' : w = Z_to_bv 32 SPIN_WORD).
   { apply bv_eq. rewrite Hw. reflexivity. }
   subst w.
+  (* The self-jump word fetched here is itself the witness that this image has
+     a spin site, so [srz_spin]'s premise is discharged from the same fetch
+     that justifies the spin, not assumed. *)
+  assert (Hsj : is_self_jump SEGS (cfg_ms (cfg R (pc cs) FULL model)) = true)
+    by (apply self_jump_word; [reflexivity | exact Hf]).
   apply srz_spin.
-  - apply is_self_jump_to_spin. apply self_jump_word; [reflexivity | exact Hf].
+  - unfold spin_site_present. exists (cfg_ms (cfg R (pc cs) FULL model)). exact Hsj.
+  - apply is_self_jump_to_spin. exact Hsj.
   - exact (co_halt _ _ _ _ _ HC).
 Qed.
 

@@ -37,7 +37,20 @@ Each figure comes from a record that was read, never from a typed number:
                         cost.total: omp's price of the call), and the usage of omp's own calls for the session
                         (model_usage entries, such as its task-completion probes)
     agent_hours         the sum of each assistant turn's time, from the transcript entry before it to its own
-                        timestamp; a turn over 10 minutes is left out
+                        timestamp, counting only the turns of 10 minutes or less: the cost of the work
+    waiting_hours       the same sum over the turns longer than 10 minutes, where the agent waited (a build, a farm
+                        run, a person).  Every turn counts in exactly one of the two, so agent_hours +
+                        waiting_hours is all turn time
+    tool_hours          the time the session's tool calls took: from each assistant turn that asked for tool calls
+                        to the last result of those calls, one interval per turn, so calls that ran together count
+                        once.  A turn's own time ends where its tool calls begin, so no second is in two columns.
+                        This is where a build or a farm run shows up: on libreac#35's proof step it is 37.61 hours
+                        against 14.07 of turn time.  None of the three is the span: wall_end - wall_start also
+                        holds the time in no turn and no tool call, and parallel sessions make it shorter than
+                        their sum
+    waiting_clock_hours in ledger.tsv only, and not a sum: the time with at least one of the row's sessions
+                        waiting on a tool, so a wait that two of them share counts once.  tool_hours is what
+                        the sessions spent; this is how long the step itself waited
     wall_start, wall_end the first and the last timestamp of the row's transcripts
     vcpu_hours          the VM samples given with --vm-samples (bin/ossv-sweep's notes/compute-ledger.tsv,
                         ossv-idle-shutdown's notes/idle-stop.tsv) of each session's host and of each VM it drove, inside
@@ -90,16 +103,17 @@ import subprocess
 
 from . import keys, layout, prove, render
 
-COLUMNS = ("step", "sessions", "wall_start", "wall_end", "agent_hours", "input_tokens", "output_tokens", "cache_read",
-           "cache_write", "cost_usd", "vcpu_hours", "check_seconds", "proof_lines_added", "proof_lines_removed",
-           "identical", "moved", "changed", "added", "removed", "contracts_changed", "contracts_needing_work",
-           "edits_address", "edits_layout", "edits_content")
+COLUMNS = ("step", "sessions", "wall_start", "wall_end", "agent_hours", "waiting_hours", "tool_hours",
+           "waiting_clock_hours", "input_tokens", "output_tokens", "cache_read", "cache_write", "cost_usd",
+           "vcpu_hours", "check_seconds", "proof_lines_added", "proof_lines_removed", "identical", "moved", "changed",
+           "added", "removed", "contracts_changed", "contracts_needing_work", "edits_address", "edits_layout",
+           "edits_content")
 SESSION_COLUMNS = ("step", "session", "host", "vms", "transcript", "from", "until")
 CHECK_COLUMNS = ("step", "log")
 NO_WORK_COLUMNS = ("step", "why")
 TOTALS_COLUMNS = ("step", "session", "host", "vms", "transcript", "from", "until", "requested", "served",
-                  "wall_start", "wall_end", "agent_hours", "input_tokens", "output_tokens", "cache_read",
-                  "cache_write", "cost_usd")
+                  "wall_start", "wall_end", "agent_hours", "waiting_hours", "tool_hours", "input_tokens",
+                  "output_tokens", "cache_read", "cache_write", "cost_usd")
 GAP_COLUMNS = ("step", "session", "column", "what")
 INPUT_COLUMNS = ("input", "value")
 CONTRACT_COLUMNS = ("contract", "predicted", "final", "edited")
@@ -110,14 +124,20 @@ JOURNAL_SECTIONS = ("What we did", "Where verification helped", "Where it strugg
 NOT_MEASURED = "not measured"
 NOT_APPLICABLE = "-"
 TOTAL = "total"
-# an assistant turn longer than this is left out of agent_hours: the agent was waiting, not working
+# an assistant turn longer than this counts as waiting_hours, not agent_hours: the agent was waiting, not working
 TURN_GAP = 600
 # two samples of a machine further apart than this mean it was stopped between them (bin/ossv-stream-numbers)
 SAMPLE_GAP = 2700
 # (ledger column, message.usage key)
 USAGE = (("input_tokens", "input"), ("output_tokens", "output"), ("cache_read", "cacheRead"),
          ("cache_write", "cacheWrite"))
-AGENT = tuple(c for c, _k in USAGE) + ("cost_usd", "agent_hours")
+# the columns a usage feeds
+TOKENS = tuple(c for c, _k in USAGE) + ("cost_usd",)
+# the two columns an assistant turn's time goes to: every turn counts in one of them
+TURN_TIME = ("agent_hours", "waiting_hours")
+# the columns that are hours, written with 2 decimals
+HOURS = TURN_TIME + ("tool_hours",)
+AGENT = TOKENS + HOURS
 GIT = ("proof_lines_added", "proof_lines_removed", "identical", "moved", "changed", "added", "removed",
        "contracts_changed", "contracts_needing_work", "edits_address", "edits_layout", "edits_content")
 
@@ -432,6 +452,34 @@ def _number(value):
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
+def _join(spans):
+    """The intervals of spans [(start, stop)], joined: sorted, with every overlap merged into one."""
+    out = []
+    for start, stop in sorted(spans):
+        if out and start <= out[-1][1]:
+            out[-1] = (out[-1][0], max(out[-1][1], stop))
+        else:
+            out.append((start, stop))
+    return out
+
+
+def _without(spans, taken):
+    """The joined intervals of spans with the joined intervals of taken removed."""
+    out = []
+    for start, stop in spans:
+        for a, b in taken:
+            if b <= start or a >= stop:
+                continue
+            if a > start:
+                out.append((start, a))
+            start = max(start, b)
+            if start >= stop:
+                break
+        if start < stop:
+            out.append((start, stop))
+    return out
+
+
 class Session:
     """The sums of one tagged transcript, of the entries its window holds.  seen holds the entry ids that the session's
     other fragments (and other tags of it in the change) already counted (a resume may copy the history before it): an
@@ -442,6 +490,10 @@ class Session:
         self.logical, self.seen, self.window = _logical(row["transcript"]), seen, _window(row)
         self.machines = [row["host"]] + [v for v in row["vms"].split(",") if v and v != NOT_APPLICABLE]
         self.sums = dict.fromkeys(AGENT, 0)
+        self.tool_spans = []   # (start, end) of each turn's tool calls, before they are joined
+        self.turn_spans = []   # (start, end) of each counted turn, to take out of the tool time
+        self.waits = []        # (start, end) of the time waiting on a tool with no turn running
+        self.turn_end = None   # the end of the latest turn counted, which no later turn starts before
         self.partial = collections.defaultdict(list)   # column: [why]
         self.served = collections.Counter()
         self.requested = None
@@ -452,9 +504,37 @@ class Session:
         if why not in self.partial[column]:
             self.partial[column].append(why)
 
+    def lost_each(self, columns, why):
+        for column in columns:
+            self.lost(column, why)
+
+    def tool_time(self, asked, done, untimed, named):
+        """Record the tool calls of the turn at asked, whose last result is at done.  They are joined at the end of
+        the read, never added up: omp writes a background call's result when it arrives, so its timestamp can be
+        older than entries written before it, and two of these intervals can hold the same second.  With no start
+        the time is not measured, never 0, and untimed says which of the two reasons it was: the turn that asked
+        had no timestamp, or no turn of this tag asked at all."""
+        if done is None:
+            return
+        if asked is None and untimed:
+            self.lost("tool_hours", "a turn in %s has no timestamp: the time of its tool calls has no start" % named)
+        elif asked is None:
+            self.lost("tool_hours", "a tool result in %s answers a turn this tag does not count: it is outside the "
+                                    "window, or copied from an earlier fragment" % named)
+        elif done >= asked:
+            self.tool_spans.append((asked, done))
+
+    def join_spans(self):
+        """tool_hours: the time with a tool call outstanding and no turn running.  The recorded intervals are joined,
+        so no second counts twice, and the seconds a turn already counted are taken out.  A turn starts no earlier
+        than the end of the turn counted before it, so no two turns hold one second either, and agent_hours +
+        waiting_hours + tool_hours is never more than the session's own life."""
+        self.waits = _without(_join(self.tool_spans), _join(self.turn_spans))
+        self.sums["tool_hours"] = sum((stop - start).total_seconds() for start, stop in self.waits) / 3600
+
     def add_usage(self, use, where):
         if not isinstance(use, dict):
-            for column in AGENT[:-1]:
+            for column in TOKENS:
                 self.lost(column, "%s has no usage" % where)
             return
         for column, key in USAGE:
@@ -471,11 +551,15 @@ class Session:
     def read(self, t):
         """Sum t's entries; what gaps.tsv says names the transcript as sessions.tsv records it (~ for the home).  A
         turn's time runs from the entry just before it: when that entry, or the turn, has no timestamp, the turn is
-        not measured.  An entry another fragment counted (its id in seen) counts in no sum, nor does one outside the
-        tag's window (a turn whose own timestamp the window holds counts whole), and the fragment's span (first, last:
-        its wall time and the span of its machines) is that of its own entries only.  With a window, a usage with no
-        timestamp is not measured: no window can be said to hold it."""
+        not measured.  A tool call's time runs from the assistant turn that asked for it to the last tool result
+        before the next turn, so the turns and the tool calls of a session never hold the same second twice.  An
+        entry another fragment counted (its id in seen) counts in no sum, nor does one outside the tag's window (a
+        turn whose own timestamp the window holds counts whole), and the fragment's span (first, last: its wall time
+        and the span of its machines) is that of its own entries only.  With a window, a usage with no timestamp is
+        not measured: no window can be said to hold it."""
         named, before = self.row["transcript"], None   # before: the timestamp of the entry just before, or None
+        asked = done = None   # the turn that asked for tool calls, and the last result of those calls
+        untimed = False       # whether that turn is one this tag counts but cannot time
         windowed = self.window != (None, None)
         for no, e in enumerate(t.entries, 1):
             kind = e.get("type")
@@ -489,26 +573,52 @@ class Session:
                 self.requested = e["resolvedModel"]
             msg = e.get("message") if kind == "message" else None
             turn = isinstance(msg, dict) and msg.get("role") == "assistant"
+            result = isinstance(msg, dict) and msg.get("role") == "toolResult"
             if windowed and ts is None and (turn or kind == "model_usage"):
                 for column in AGENT:
                     self.lost(column, "a usage in %s has no timestamp: no window can be said to hold it" % named)
+            if windowed and ts is None and result:
+                self.lost("tool_hours", "a tool result in %s has no timestamp: no window can be said to hold it"
+                          % named)
             if turn and not skip:
+                self.tool_time(asked, done, untimed, named)
+                asked, done, untimed = ts, None, ts is None
                 self.add_usage(msg.get("usage"), named)
                 self.served["%s/%s" % (msg.get("provider"), msg.get("model"))] += 1
                 if ts is None:
-                    self.lost("agent_hours", "an assistant turn in %s has no timestamp" % named)
+                    self.lost_each(TURN_TIME, "an assistant turn in %s has no timestamp" % named)
                 elif before is None:
-                    self.lost("agent_hours", "the entry before an assistant turn in %s has no timestamp" % named)
+                    self.lost_each(TURN_TIME, "the entry before an assistant turn in %s has no timestamp" % named)
                 elif ts < before:
-                    self.lost("agent_hours", "an assistant turn in %s is timed before the entry before it" % named)
-                elif (ts - before).total_seconds() <= TURN_GAP:
-                    self.sums["agent_hours"] += (ts - before).total_seconds() / 3600
+                    self.lost_each(TURN_TIME, "an assistant turn in %s is timed before the entry before it" % named)
+                elif self.turn_end is not None and ts < self.turn_end:
+                    # its own span is counted in no turn column, so it must not be read as tool time either
+                    self.lost_each(HOURS, "an assistant turn in %s is timed before the turn counted before it"
+                                   % named)
+                else:
+                    # a turn starts no earlier than the end of the last turn counted, so two turns never hold the
+                    # same second: omp writes a background call's result when it arrives, and the entry before a
+                    # turn can then be older than a turn already counted
+                    start = before if self.turn_end is None else max(before, self.turn_end)
+                    seconds = max(0.0, (ts - start).total_seconds())
+                    self.sums["agent_hours" if seconds <= TURN_GAP else "waiting_hours"] += seconds / 3600
+                    self.turn_spans.append((start, ts))
+                    self.turn_end = ts if self.turn_end is None else max(self.turn_end, ts)
             elif kind == "model_usage" and not skip:
                 self.add_usage(e.get("usage"), named)
+            if result and not skip:
+                if ts is None:
+                    self.lost("tool_hours", "a tool result in %s has no timestamp" % named)
+                elif asked is not None and ts < asked:
+                    self.lost("tool_hours", "a tool result in %s is timed before the turn that asked for it" % named)
+                else:
+                    done = ts
             if ts is not None and not skip:
                 self.first = ts if self.first is None else min(self.first, ts)
                 self.last = ts if self.last is None else max(self.last, ts)
             before = ts
+        self.tool_time(asked, done, untimed, named)
+        self.join_spans()
         if t.cut:
             for column in AGENT:
                 self.lost(column, "the transcript %s: %s" % (named, t.cut))
@@ -896,13 +1006,19 @@ def summarize(root, change, unit=None, base=None, head="HEAD", samples=(), delet
 
 
 def _agent_cells(sessions, idle=False):
-    """The agent columns of sessions, summed; with none, 0 when idle, else not measured."""
+    """The agent columns of sessions, summed; with none, 0 when idle, else not measured.  waiting_clock_hours is not
+    a sum: it is the time with at least one of these sessions waiting on a tool, so a wait that two sessions share
+    counts once.  It is the row's own clock, where tool_hours is what the sessions spent."""
     out = {}
     for column in AGENT:
         total = sum(s.sums[column] for s in sessions)
-        form = "%.2f" if column == "agent_hours" else "%.4f" if column == "cost_usd" else "%d"
+        form = "%.2f" if column in HOURS else "%.4f" if column == "cost_usd" else "%d"
         out[column] = _cell(total, form, any(s.partial.get(column) for s in sessions),
                             measured=bool(sessions) or idle)
+    clock = sum((stop - start).total_seconds()
+                for start, stop in _join([w for s in sessions for w in s.waits])) / 3600
+    out["waiting_clock_hours"] = _cell(clock, "%.2f", any(s.partial.get("tool_hours") for s in sessions),
+                                       measured=bool(sessions) or idle)
     return out
 
 

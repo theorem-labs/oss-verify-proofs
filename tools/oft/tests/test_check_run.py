@@ -39,7 +39,8 @@ def report(*states, functions=(), unit=UNIT):
                   "references": [], "functions": []} for i, s in enumerate(states)]
     rows = []
     for i, cls in enumerate(functions):
-        sym = symbols.Sym("f%d" % i, "func", 0x11270 + 16 * i, 8, "1e" * 32, "2d" * 32, "zlib/f.c:%d-%d" % (i, i + 1))
+        sym = symbols.Sym("f%d" % i, "func", 0x11270 + 16 * i, 8, "1e" * 32, "2d" * 32, "-",
+                          "zlib/f.c:%d-%d" % (i, i + 1))
         rows.append(("plain", classify.Row(cls, ("f%d" % i,), None if cls == "added" else sym,
                                            None if cls == "removed" else sym)))
     counts = dict.fromkeys(classify.CLASSES, 0)
@@ -50,9 +51,9 @@ def report(*states, functions=(), unit=UNIT):
 
 class StandIn(http.server.BaseHTTPRequestHandler):
     """GitHub's REST API as far as one POST: records each request, with its target as the client sent it (not
-    self.path, which http.server reduces from //repos/... to /repos/...), and answers with the server's reply; with the
-    server's mode "cut", a Content-Length 100 bytes over the body, so the answer ends short, and with "garbage", a line
-    that is no HTTP answer, holding SECRET."""
+    self.path, which http.server reduces from //repos/... to /repos/...), and answers with the server's reply for that
+    target (server.replies), else its one reply; with the server's mode "cut", a Content-Length 100 bytes over the
+    body, so the answer ends short, and with "garbage", a line that is no HTTP answer, holding SECRET."""
 
     def do_POST(self):
         body = self.rfile.read(int(self.headers["Content-Length"]))
@@ -61,7 +62,7 @@ class StandIn(http.server.BaseHTTPRequestHandler):
         if self.server.mode == "garbage":
             self.wfile.write(b"garbage " + SECRET.encode() + b"\r\n")
             return
-        status, headers, reply = self.server.reply
+        status, headers, reply = self.server.replies.get(self.requestline.split()[1], self.server.reply)
         data = json.dumps(reply).encode()
         length = len(data) + (100 if self.server.mode == "cut" else 0)
         self.send_response(status)
@@ -86,11 +87,15 @@ def created(repo, sha, check_id=4242):
 
 
 @contextlib.contextmanager
-def github(status=201, reply=None, headers=None, mode=None):
-    """A stand-in for GitHub's REST API on a free local port: (the server, with .requests, and its base URL)."""
+def github(status=201, reply=None, headers=None, mode=None, replies=None):
+    """A stand-in for GitHub's REST API on a free local port: (the server, with .requests, and its base URL).  replies
+    is {repository: (status, reply)} for the POSTs to that repository's /check-runs, each made check run's id 4242
+    plus its place in replies."""
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), StandIn)
     server.requests, server.mode = [], mode
     server.reply = (status, headers or {}, created("example/libreac", SHA) if reply is None else reply)
+    server.replies = {"/repos/%s/check-runs" % repo: (s, {}, created(repo, SHA, 4242 + i) if r is None else r)
+                      for i, (repo, (s, r)) in enumerate((replies or {}).items())}
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
@@ -155,6 +160,46 @@ class Payload(unittest.TestCase):
                 (report(functions=("changed",)), "0 contracts need work, 1 functions changed")):
             with self.subTest(title=title):
                 self.assertEqual(check_run.payload(r, SHA)["output"]["title"], title)
+
+    def test_a_pull_request_s_check_names_it_first_as_unmerged(self):
+        """On the code repository's commit, the check says whose change it is: the head of an unmerged pull request."""
+        url = "https://github.com/acme/proofs/pull/7"
+        for r, prefix in ((report("needs work"), ""), (report("data changed"), NEUTRAL)):
+            with self.subTest(prefix=prefix):
+                got = check_run.payload(r, SHA, url)["output"]["summary"]
+                self.assertEqual(got, "This report is of the head of an unmerged pull request, %s: a prediction for a "
+                                      "proposed change that no one has merged, not a result of the repository's main "
+                                      "branch.\n\n%s%s" % (url, prefix, prove.markdown(r)))
+
+    def test_oft_prove_takes_only_a_pull_request_s_url(self):
+        for url in ("https://github.com/acme/proofs/issues/7", "https://github.com/acme/proofs/pull/7\n",
+                    "http://github.com/acme/proofs/pull/7", "https://github.com/acme/proofs/pull/0",
+                    "https://example.com/acme/proofs/pull/7"):
+            with self.subTest(url=url), contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                cli.main(["prove", "--base", BASE, "--pull-request", url, UNIT])
+
+    def test_a_name_of_the_head_s_facts_stays_text(self):
+        """A backtick in a name would close its code and let the rest be a link, an image or HTML in the check: each
+        name is code whose fence is longer than any backtick run in it, and the why column escapes Markdown."""
+        r = report("needs work", functions=("changed",))
+        evil = "f`[x](https://evil.example)`|<img src=x>"
+        r = r._replace(rows=[("plain", r.rows[0][1]._replace(names=(evil, "``g")))],
+                       contracts=[dict(r.contracts[0], why="plain:%s changed" % evil)])
+        md = prove.markdown(r)
+        self.assertIn("| plain | changed | ``f`[x](https://evil.example)`\\|<img src=x>``, ``` ``g ``` |", md)
+        self.assertIn("| plain:f\\`\\[x\\](https://evil.example)\\`\\|\\<img src=x\\> changed |", md)
+
+    def test_a_control_character_of_the_head_s_facts_ends_no_row(self):
+        """A contract path with a newline and a Markdown image after it: one row, the image as code, the newline and
+        any other control character as U+FFFD."""
+        r = report("needs work")
+        c = r.contracts[0]
+        path = c["file"].replace("c0_c.v", "c0\n![x](https://evil.example/x.png)\x1b[31m.v")
+        r = r._replace(contracts=[dict(c, file=path, why="a\rb\x7fc")])
+        md = prove.markdown(r)
+        row = "| `Prog/c0\ufffd![x](https://evil.example/x.png)\ufffd[31m.v` | needs work | a\ufffdb\ufffdc |"
+        self.assertIn("\n" + row + "\n", md)
+        self.assertIsNone(re.search(r"[\x00-\x09\x0b-\x1f\x7f]", md))
 
 
 def sized(r, prefix, length):
@@ -261,8 +306,8 @@ class Summary(unittest.TestCase):
 
 
 class Post(unittest.TestCase):
-    """check_run.post: POST /repos/{repo}/check-runs with the token; the id of the check run GitHub made, and its page,
-    which the job log shows."""
+    """check_run.post: POST /repos/{repo}/check-runs with the token; the id of the check run GitHub made, and its page.
+    A PostError holds the HTTP status of GitHub's refusal, or None when there was no answer."""
 
     def test_post_sends_the_payload(self):
         """Called with keywords, as the interface names them; also with an API base URL that ends in a slash."""
@@ -280,6 +325,11 @@ class Post(unittest.TestCase):
                                  {"authorization": "Bearer ghs_stand-in", "accept": "application/vnd.github+json",
                                   "x-github-api-version": "2022-11-28", "content-type": "application/json"})
 
+    def test_an_answer_with_no_page_gives_none_for_it(self):
+        with github(201, {"id": 4242}) as (_server, api):
+            self.assertEqual(check_run.post("example/libreac", check_run.payload(report(), SHA),
+                                            check_run.Token("ghs_stand-in"), api=api), (4242, None))
+
     def test_a_refusal_names_github_s_message_and_the_permission_it_asks_for(self):
         """The agent App's token on example/libreac gets this answer (checks: read)."""
         payload = check_run.payload(report(), SHA)
@@ -290,11 +340,7 @@ class Post(unittest.TestCase):
                 check_run.post("example/libreac", payload, check_run.Token("ghs_stand-in"), api=api)
         self.assertEqual(str(e.exception), "POST /repos/example/libreac/check-runs: HTTP 403: Resource not accessible "
                                            "by integration (the token needs checks=write)")
-
-    def test_an_answer_with_no_page_gives_none_for_it(self):
-        with github(201, {"id": 4242}) as (_server, api):
-            self.assertEqual(check_run.post("example/libreac", check_run.payload(report(), SHA),
-                                            check_run.Token("ghs_stand-in"), api=api), (4242, None))
+        self.assertEqual(e.exception.status, 403)
 
     def test_an_unreachable_api_is_a_post_error(self):
         with github() as (_server, api):
@@ -303,6 +349,7 @@ class Post(unittest.TestCase):
             check_run.post("example/libreac", check_run.payload(report(), SHA), check_run.Token("ghs_stand-in"),
                            api=api)
         self.assertTrue(str(e.exception).startswith("POST /repos/example/libreac/check-runs: "), str(e.exception))
+        self.assertIsNone(e.exception.status)
 
     def test_a_malformed_token_is_refused_once_and_not_shown(self):
         """A token with a newline once made http.client raise ValueError with the whole Authorization value.  The one
@@ -362,9 +409,18 @@ class Post(unittest.TestCase):
                 self.assertNotIn(SECRET, str(e.exception))
 
 
+def posted(check_id, repo, sha, conclusion="success", title="0 contracts need work, 0 functions changed"):
+    """The line `oft prove` writes for a check run GitHub made, as the stand-in answers."""
+    return ('oft prove: posted check run %d "theorem/prove: zlib/checksum_fuzzer" on %s@%s: %s, %s: '
+            "https://github.com/%s/runs/%d\n" % (check_id, repo, sha, conclusion, title, repo, check_id))
+
+
 class PostCheck(unittest.TestCase):
     """`oft prove --post-check OWNER/REPO@SHA`: the report to stdout, and the check run on that commit, with the token
-    in GH_TOKEN, at GITHUB_API_URL (GitHub's own variable for its API; https://api.github.com when unset)."""
+    in GH_TOKEN, at GITHUB_API_URL (GitHub's own variable for its API; https://api.github.com when unset).  Each
+    --post-check and --post-check-optional is posted, the --post-check ones first, each in the order given; a refusal
+    stops no other post.  The exit status is 1 when a post failed, except a --post-check-optional one that GitHub
+    refused with 403 or 404 (the App is not installed there, or may not write checks): that is a warning."""
 
     def prove(self, t, *args, **env):
         return subprocess.run([sys.executable, "-B", "-m", "oft", "--root", t.root, "prove", UNIT, *args],
@@ -382,9 +438,8 @@ class PostCheck(unittest.TestCase):
                                   GH_TOKEN="ghs_stand-in", GITHUB_API_URL=api)
             r = prove.report(t.root, UNIT, base, head)
             self.assertEqual((done.returncode, done.stdout), (0, prove.markdown(r)), done.stderr)
-            self.assertEqual(done.stderr, 'oft prove: posted check run 4242 "theorem/prove: zlib/checksum_fuzzer" on '
-                                          "example/libreac@%s: action_required, 1 contracts need work, 1 functions "
-                                          "changed: https://github.com/example/libreac/runs/4242\n" % SHA)
+            self.assertEqual(done.stderr, posted(4242, "example/libreac", SHA, "action_required",
+                                                 "1 contracts need work, 1 functions changed"))
             self.assertEqual([(m, p, h["authorization"], b) for m, p, h, b in server.requests],
                              [("POST", "/repos/example/libreac/check-runs", "Bearer ghs_stand-in",
                                check_run.payload(r, SHA))])
@@ -402,14 +457,70 @@ class PostCheck(unittest.TestCase):
                                           "403: Resource not accessible by integration (the token needs "
                                           "checks=write)\n")
 
+    def test_each_post_check_is_posted(self):
+        with tree() as t:
+            head = contract_repo(t)
+            with github(replies={"acme/proofs": (201, None), "example/libreac": (201, None)}) as (server, api):
+                done = self.prove(t, "--base", head, "--head", head, "--post-check", "acme/proofs@" + HEAD,
+                                  "--post-check", "example/libreac@" + SHA, GH_TOKEN="ghs_stand-in", GITHUB_API_URL=api)
+            r = prove.report(t.root, UNIT, head, head)
+            self.assertEqual((done.returncode, done.stdout), (0, prove.markdown(r)), done.stderr)
+            self.assertEqual(done.stderr, posted(4242, "acme/proofs", HEAD) + posted(4243, "example/libreac", SHA))
+            self.assertEqual([(p, b) for _m, p, _h, b in server.requests],
+                             [("/repos/acme/proofs/check-runs", check_run.payload(r, HEAD)),
+                              ("/repos/example/libreac/check-runs", check_run.payload(r, SHA))])
+
+    def test_a_refused_post_stops_no_other_and_fails_the_run(self):
+        """Refused with 403 or 404 without --post-check-optional: a failure."""
+        for status, message in ((403, "Resource not accessible by integration"), (404, "Not Found")):
+            with self.subTest(status=status), tree() as t:
+                head = contract_repo(t)
+                with github(replies={"acme/proofs": (status, {"message": message}),
+                                     "example/libreac": (201, None)}) as (server, api):
+                    done = self.prove(t, "--base", head, "--head", head, "--post-check", "acme/proofs@" + HEAD,
+                                      "--post-check", "example/libreac@" + SHA, GH_TOKEN="ghs_stand-in",
+                                      GITHUB_API_URL=api)
+                self.assertEqual(done.returncode, 1)
+                self.assertEqual(done.stderr, "FAIL oft prove --post-check: POST /repos/acme/proofs/check-runs: HTTP "
+                                              "%d: %s\n" % (status, message) + posted(4243, "example/libreac", SHA))
+                self.assertEqual(len(server.requests), 2)
+
+    def test_an_optional_post_refused_with_403_or_404_is_a_warning(self):
+        """The App not installed on the code repository (404), or not allowed to write its checks (403)."""
+        for status, message in ((404, "Not Found"), (403, "Resource not accessible by integration")):
+            with self.subTest(status=status), tree() as t:
+                head = contract_repo(t)
+                with github(replies={"acme/proofs": (201, None),
+                                     "example/libreac": (status, {"message": message})}) as (server, api):
+                    done = self.prove(t, "--base", head, "--head", head, "--post-check-optional",
+                                      "example/libreac@" + SHA, "--post-check", "acme/proofs@" + HEAD,
+                                      GH_TOKEN="ghs_stand-in", GITHUB_API_URL=api)
+                self.assertEqual((done.returncode, done.stdout),
+                                 (0, prove.markdown(prove.report(t.root, UNIT, head, head))), done.stderr)
+                self.assertEqual(done.stderr, posted(4242, "acme/proofs", HEAD)
+                                 + "WARN oft prove --post-check-optional: POST /repos/example/libreac/check-runs: HTTP "
+                                   "%d: %s; no check run there\n" % (status, message))
+
+    def test_an_optional_post_that_fails_otherwise_fails_the_run(self):
+        for status, message in ((401, "Bad credentials"), (422, "Validation Failed"), (500, "Server Error")):
+            with self.subTest(status=status), tree() as t:
+                head = contract_repo(t)
+                with github(replies={"example/libreac": (status, {"message": message})}) as (_server, api):
+                    done = self.prove(t, "--base", head, "--head", head, "--post-check-optional",
+                                      "example/libreac@" + SHA, GH_TOKEN="ghs_stand-in", GITHUB_API_URL=api)
+                self.assertEqual((done.returncode, done.stderr),
+                                 (1, "FAIL oft prove --post-check-optional: POST /repos/example/libreac/check-runs: "
+                                     "HTTP %d: %s\n" % (status, message)))
+
     def test_post_check_without_a_token_fails_before_the_report(self):
         with tree() as t:
             head = contract_repo(t)
-            with github() as (server, api):
-                done = self.prove(t, "--base", head, "--head", head, "--post-check", "example/libreac@" + SHA,
-                                  GITHUB_API_URL=api)
-            self.assertEqual((done.returncode, done.stdout, done.stderr, server.requests),
-                             (1, "FAIL oft prove: --post-check needs a token in GH_TOKEN\n", "", []))
+            for flag in ("--post-check", "--post-check-optional"):
+                with self.subTest(flag=flag), github() as (server, api):
+                    done = self.prove(t, "--base", head, "--head", head, flag, "example/libreac@" + SHA,
+                                      GITHUB_API_URL=api)
+                self.assertEqual((done.returncode, done.stdout, done.stderr, server.requests),
+                                 (1, "FAIL oft prove: %s needs a token in GH_TOKEN\n" % flag, "", []))
 
     def test_a_malformed_gh_token_fails_before_the_report_and_is_not_shown(self):
         """Each malformed token an environment can hold (not an empty one, which is none, nor one with a NUL)."""
@@ -458,12 +569,13 @@ class PostCheck(unittest.TestCase):
     def test_post_check_is_owner_repo_at_a_full_commit_id(self):
         with tree() as t:
             head = contract_repo(t)
-            for bad in ("example/libreac", "example/libreac@" + SHA[:12], "example@" + SHA, "../libreac@" + SHA,
-                        "example/..@" + SHA, "example/libreac/x@" + SHA, "example/libreac@" + SHA.upper()):
-                with self.subTest(bad=bad):
-                    done = self.prove(t, "--base", head, "--head", head, "--post-check", bad, GH_TOKEN="ghs_stand-in")
-                    self.assertEqual((done.returncode, done.stdout), (2, ""))
-                    self.assertIn("--post-check: not OWNER/REPO@SHA", done.stderr)
+            for flag in ("--post-check", "--post-check-optional"):
+                for bad in ("example/libreac", "example/libreac@" + SHA[:12], "example@" + SHA, "../libreac@" + SHA,
+                            "example/..@" + SHA, "example/libreac/x@" + SHA, "example/libreac@" + SHA.upper()):
+                    with self.subTest(flag=flag, bad=bad):
+                        done = self.prove(t, "--base", head, "--head", head, flag, bad, GH_TOKEN="ghs_stand-in")
+                        self.assertEqual((done.returncode, done.stdout), (2, ""))
+                        self.assertIn("%s: not OWNER/REPO@SHA" % flag, done.stderr)
 
     def test_check_run_is_not_the_checker(self):
         """keys.NOT_THE_CHECKER names check_run.py, so a change to it re-checks no fuzz target; that holds only while
@@ -479,6 +591,45 @@ class PostCheck(unittest.TestCase):
         done = subprocess.run([sys.executable, "-c", "import sys, oft.prove; print('oft.check_run' in sys.modules)"],
                               capture_output=True, text=True, env=dict(os.environ, PYTHONPATH=TOOLS))
         self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "False\n", ""))
+
+
+class CodeLine(unittest.TestCase):
+    """check_run.code_target: the commit of the code repository a pull request's body names on a line of its own,
+    `Code: OWNER/REPO@SHA`, where the prove workflow also posts the check; and what is wrong with its Code: lines."""
+
+    def test_a_valid_line(self):
+        for body in ("Code: example/libreac@%s" % SHA,
+                     "The symbol facts of v1.9.0.\r\n\r\n  Code: example/libreac@%s  \r\nMore text.\r\n" % SHA,
+                     "First line\nCode: example/libreac@%s\n" % SHA):
+            with self.subTest(body=body):
+                self.assertEqual(check_run.code_target(body), (("example/libreac", SHA), []))
+
+    def test_no_line(self):
+        for body in (None, "", "No code repository.", "Codes: example/libreac@%s" % SHA,
+                     "The Code: example/libreac@%s line" % SHA, "code: example/libreac@%s" % SHA):
+            with self.subTest(body=body):
+                self.assertEqual(check_run.code_target(body), (None, []))
+
+    def test_a_malformed_line_is_named_by_its_number_and_not_shown(self):
+        """Its text is the pull request author's: the problem names the line, never quotes it."""
+        for value in ("example/libreac@" + SHA[:12], "example/libreac@" + SHA.upper(), "example/libreac " + SHA,
+                      "example/libreac@%s and more" % SHA, "", "example/..@" + SHA, "::warning::x@" + SHA):
+            with self.subTest(value=value):
+                self.assertEqual(check_run.code_target("Title\n\nCode: " + value),
+                                 (None, ["line 3 of the pull request's body starts with `Code:` but is not "
+                                         "`Code: OWNER/REPO@SHA` with the full 40-hex commit id"]))
+
+    def test_several_lines(self):
+        other = "f" * 40
+        line = "Code: example/libreac@%s\n" % SHA
+        self.assertEqual(check_run.code_target(line + "text\n" + line), (("example/libreac", SHA), []))
+        self.assertEqual(check_run.code_target(line + "Code: example/libreac@%s\n" % other),
+                         (None, ["the pull request's body names 2 code commits on `Code:` lines (example/libreac@%s, "
+                                 "example/libreac@%s): none is posted" % (SHA, other)]))
+        self.assertEqual(check_run.code_target(line + "Code: example/libreac\n"),
+                         (("example/libreac", SHA),
+                          ["line 2 of the pull request's body starts with `Code:` but is not `Code: OWNER/REPO@SHA` "
+                           "with the full 40-hex commit id"]))
 
 
 if __name__ == "__main__":

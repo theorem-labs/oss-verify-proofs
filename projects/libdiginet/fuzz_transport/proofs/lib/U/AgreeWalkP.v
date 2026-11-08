@@ -1,11 +1,3 @@
-(* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: the twin of lib/Reusable/YL0i.v (posts, contracts), lib/Reusable/YL05.v (lib_post_state) and lib/Reusable/YL06.v (call site) for a return value of the fuzz target of 0 or -1 *)
-(* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_lock/lib/Prog/FrameRetD1.v, with its module paths changed; 76 of its 245 lines of code are new or changed and 365 lines of the source are left out. *)
-(* Modified by Theorem Labs: the twin of lib/U/Reusable/YL0i_cfw.v (lib_contract_x_Rc), lib/U/Reusable/YL06_cfw.v (lib_site_x_R_cf) and lib/U/AgreeZlib.v (lib_contract_x_Rc_of_cg) (no licence line) for a return value of the fuzz target of 0 or -1 *)
-(* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_lock/lib/U/Prog/AgreeRetD1.v, with its module paths changed; 99 of its 132 lines of code are new or changed and 212 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/AgreeZlib.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
-(* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/U/AgreeZlib.v, with its module paths changed; 57 of its 71 lines of code are new or changed and 118 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/AgreeWalkP.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_transport; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

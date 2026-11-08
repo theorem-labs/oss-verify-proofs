@@ -77,9 +77,11 @@ Answer these questions in order. Give `file:line` for each finding.
    plugin, no command that reads or writes a file, no switch that turns a
    checker off, no `timeout` without a `timeout-ok` reason that holds, and no
    `@external` outside the allowlist.
-   Each `.v` file it adds is needed by a proof (requirement 8). No comment or
-   name holds an internal name or a path from the author's machine
-   (requirement 5). `proof.yaml` names no author and has no `check:` block.
+   Each `.v` file it adds is needed by a proof, unless it witnesses the
+   premises of a released statement or such a witness requires it
+   (requirement 8). No comment or name holds an internal name or a path from
+   the author's machine (requirement 5). `proof.yaml` names no author and has
+   no `check:` block.
 4. **Are the licence lines, the sources and any bug report right?** Each
    file has the licence lines of its case in requirement 7. The pull request
    says which files came from which files of the repository; the review

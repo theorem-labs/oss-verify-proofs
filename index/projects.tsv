@@ -266,7 +266,7 @@ fastify	javascript	language-pending	javascript	0	0	no	0	0	0	0	0	0	0	0	0
 fastjson	go	language-pending	go	0	0	no	0	0	0	0	0	0	0	0	0
 fastjson2	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
 feign	jvm	language-pending	jvm	0	0	no	0	0	0	0	0	0	0	0	0
-ffmpeg	c++	available	-	1130	420	no	1680	0	2940	2940	0	0	0	0	0
+ffmpeg	c++	available	-	1130	420	no	1680	0	2940	2884	0	56	0	0	0
 ffms2	c++	available	-	1	1	no	4	0	7	7	0	0	0	0	0
 fftw3	c++	held	held	0	0	no	0	0	0	0	0	0	0	0	0
 file	c++	available	-	3	1	no	4	0	7	7	0	0	0	0	0

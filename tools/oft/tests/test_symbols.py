@@ -64,7 +64,7 @@ class Symbols(unittest.TestCase):
     def test_a_function_of_no_size_is_kept_without_bytes(self):
         """_start is a function of size 0, as musl's is: its row has its address and size 0, and no bytes to hash and
         no lines, so exact, masked and lines are -.  Symbols.v still names its address, which fuzz_pcap's proofs use."""
-        self.assertEqual(fixture()["_start"], symbols.Sym("_start", "func", 0x1129c, 0, "-", "-", "-"))
+        self.assertEqual(fixture()["_start"], symbols.Sym("_start", "func", 0x1129c, 0, "-", "-", "-", "-"))
 
     def test_each_data_object_is_read(self):
         """seed (0x5eed, in .data) and counter (zero, in .bss) are the data objects: exact is the SHA-256 of an
@@ -75,8 +75,8 @@ class Symbols(unittest.TestCase):
         self.assertEqual(elf.Elf(STRIPPED).contents(0x1233c, 4), seed)
         self.assertIsNone(elf.Elf(STRIPPED).contents(0x12340, 4))
         self.assertEqual(syms["seed"],
-                         symbols.Sym("seed", "object", 0x1233c, 4, hashlib.sha256(seed).hexdigest(), "-", "-"))
-        self.assertEqual(syms["counter"], symbols.Sym("counter", "object", 0x12340, 4, "-", "-", "-"))
+                         symbols.Sym("seed", "object", 0x1233c, 4, hashlib.sha256(seed).hexdigest(), "-", "-", "-"))
+        self.assertEqual(syms["counter"], symbols.Sym("counter", "object", 0x12340, 4, "-", "-", "-", "-"))
         self.assertRaisesRegex(ValueError, "no allocated section", elf.Elf(STRIPPED).contents, 0x20000, 4)
 
     def test_each_allocated_section_is_read(self):
@@ -91,8 +91,8 @@ class Symbols(unittest.TestCase):
                           ".eh_frame": (0x10240, 0x5c), ".text": (0x1129c, 0xa0), ".data": (0x1233c, 4),
                           ".bss": (0x12340, 4)})
         self.assertEqual(sections[".data"],
-                         symbols.Sym(".data", "section", 0x1233c, 4, hashlib.sha256(seed).hexdigest(), "-", "-"))
-        self.assertEqual(sections[".bss"], symbols.Sym(".bss", "section", 0x12340, 4, "-", "-", "-"))
+                         symbols.Sym(".data", "section", 0x1233c, 4, hashlib.sha256(seed).hexdigest(), "-", "-", "-"))
+        self.assertEqual(sections[".bss"], symbols.Sym(".bss", "section", 0x12340, 4, "-", "-", "-", "-"))
         self.assertEqual(sections[".text"].exact, hashlib.sha256(bare.text).hexdigest())
         note = bare.data[0x200:0x224]
         self.assertNotEqual(elf.Elf(UNSTRIPPED).data[0x200:0x224], note)
@@ -167,20 +167,26 @@ class Symbols(unittest.TestCase):
             self.assertEqual(elf.Elf(path).contents(0x1233c, 4), (0x5eed).to_bytes(4, "little"))
 
     def test_a_row_of_another_shape_for_its_kind_is_refused(self):
-        """A function has two SHA-256s, or - for both and for its lines when its size is 0; an object has a size, its
-        bytes' SHA-256 or -, no masked bytes and no lines; a section has its bytes' SHA-256 or -, and no masked bytes
-        and no lines; and no row has another kind."""
+        """A function has two SHA-256s and targets, or - for all three and for its lines when its size is 0; an
+        object has a size, its bytes' SHA-256 or -, no masked bytes, no targets and no lines; a section has its
+        bytes' SHA-256 or -, and no masked bytes, no targets and no lines; and no row has another kind."""
         sha = "1f" * 32
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "plain.tsv")
-            for row in ("f\tfunc\t0x112a8\t108\t-\t%s\t-" % sha, "seed\tobject\t0x1233c\t4\t%s\t%s\t-" % (sha, sha),
-                        "seed\tobject\t0x1233c\t4\t%s\t-\ttwo.c:6-6" % sha, "seed\tdata\t0x1233c\t4\t-\t-\t-",
-                        "_start\tfunc\t0x1129c\t0\t%s\t%s\t-" % (sha, sha), "_start\tfunc\t0x1129c\t0\t-\t-\ttwo.c:1-1",
-                        "seed\tobject\t0x1233c\t0\t-\t-\t-", ".got\tsection\t0x1d8e0\t152\t%s\t%s\t-" % (sha, sha),
-                        ".got\tsection\t0x1d8e0\t152\t-\t-\ttwo.c:1-1"):
+            for row in ("f\tfunc\t0x112a8\t108\t-\t%s\t-\t-" % sha,
+                        "f\tfunc\t0x112a8\t108\t%s\t%s\tsome\t-" % (sha, sha),
+                        "seed\tobject\t0x1233c\t4\t%s\t%s\t-\t-" % (sha, sha),
+                        "seed\tobject\t0x1233c\t4\t%s\t-\t%s\t-" % (sha, sha),
+                        "seed\tobject\t0x1233c\t4\t%s\t-\t-\ttwo.c:6-6" % sha,
+                        "seed\tdata\t0x1233c\t4\t-\t-\t-\t-",
+                        "_start\tfunc\t0x1129c\t0\t%s\t%s\t-\t-" % (sha, sha),
+                        "_start\tfunc\t0x1129c\t0\t-\t-\t?\t-", "_start\tfunc\t0x1129c\t0\t-\t-\t-\ttwo.c:1-1",
+                        "seed\tobject\t0x1233c\t0\t-\t-\t-\t-",
+                        ".got\tsection\t0x1d8e0\t152\t%s\t%s\t-\t-" % (sha, sha),
+                        ".got\tsection\t0x1d8e0\t152\t-\t-\t-\ttwo.c:1-1"):
                 with self.subTest(row=row):
                     with open(path, "w", encoding="utf-8") as f:
-                        f.write("# oss-fuzz-theorems/symbols/1 sha256=%s\n%s\n" % (STRIPPED_SHA, row))
+                        f.write("# oss-fuzz-theorems/symbols/2 sha256=%s\n%s\n" % (STRIPPED_SHA, row))
                     self.assertRaisesRegex(ValueError, "^line 2: ", symbols.load, path)
 
     def test_masking_zeroes_address_immediates_only(self):
@@ -753,8 +759,24 @@ class Symbols(unittest.TestCase):
             path = os.path.join(d, "symbols", "plain.tsv")
             symbols.write(path, syms, STRIPPED_SHA)
             with open(path, encoding="utf-8") as f:
-                self.assertEqual(f.readline(), "# oss-fuzz-theorems/symbols/1 sha256=%s\n" % STRIPPED_SHA)
+                self.assertEqual(f.readline(), "# oss-fuzz-theorems/symbols/2 sha256=%s\n" % STRIPPED_SHA)
             self.assertEqual(symbols.load(path), (STRIPPED_SHA, syms))
+
+    def test_a_fact_of_the_revision_before_the_targets_reads_with_question_marks(self):
+        """A fact of `oss-fuzz-theorems/symbols/1` has no targets column: `oft prove` of a change that adds the
+        column reads the base's facts, which are of that revision.  Each of its functions with a size gets `?`,
+        the targets that are equal to nothing, so every one of them is changed against a fact that has them; the
+        rows with no masked bytes get `-` as they always had.  write() only ever writes the new revision."""
+        syms = symbols.read(UNSTRIPPED, STRIPPED, lines_text(), STRIPPED_SHA)
+        rows = ["# oss-fuzz-theorems/symbols/1 sha256=%s" % STRIPPED_SHA]
+        rows += ["\t".join((s.name, s.kind, "0x%x" % s.address, str(s.size), s.exact, s.masked, s.lines))
+                 for s in syms]
+        sha, old = symbols.parse("\n".join(rows) + "\n")
+        self.assertEqual(sha, STRIPPED_SHA)
+        self.assertEqual([s._replace(targets="-") for s in old], [s._replace(targets="-") for s in syms])
+        self.assertEqual({s.targets for s in old if s.kind == "func" and s.size}, {"?"})
+        self.assertEqual({s.targets for s in old if not (s.kind == "func" and s.size)}, {"-"})
+        self.assertTrue(any(s.targets not in ("-", "?") for s in syms))
 
     def test_a_file_that_is_no_64_bit_little_endian_elf_is_refused(self):
         with tempfile.TemporaryDirectory() as d:
@@ -1072,10 +1094,10 @@ class SymbolsModule(unittest.TestCase):
     """symbols.table, resolve, defines and reference: the one reading of what Symbols.v defines, which lint's
     contract-literals, contracts.py and prove.py share."""
 
-    ROWS = [symbols.Sym("crc32_z.llvm.42", "func", 0x11300, 8, "1a" * 32, "2b" * 32, "-"),
-            symbols.Sym("dummy", "func", 0x11310, 4, "3c" * 32, "4d" * 32, "-"),
-            symbols.Sym("dummy", "func", 0x11320, 4, "5e" * 32, "6f" * 32, "-"),
-            symbols.Sym(".got", "section", 0x14000, 16, "70" * 32, "-", "-")]
+    ROWS = [symbols.Sym("crc32_z.llvm.42", "func", 0x11300, 8, "1a" * 32, "2b" * 32, "-", "-"),
+            symbols.Sym("dummy", "func", 0x11310, 4, "3c" * 32, "4d" * 32, "-", "-"),
+            symbols.Sym("dummy", "func", 0x11320, 4, "5e" * 32, "6f" * 32, "-", "-"),
+            symbols.Sym(".got", "section", 0x14000, 16, "70" * 32, "-", "-", "-")]
 
     def test_each_path_symbols_v_gives_a_row_resolves_to_it(self):
         tab = symbols.table(self.ROWS)
@@ -1158,7 +1180,7 @@ class SymbolFacts(unittest.TestCase):
 
     def test_a_symbol_fact_that_does_not_parse_is_refused(self):
         with tree() as t:
-            t.write(FACT, "# oss-fuzz-theorems/symbols/1 sha256=%s\nf\t0x11270\t108\n" % PLAIN_PIN)
+            t.write(FACT, "# oss-fuzz-theorems/symbols/2 sha256=%s\nf\t0x11270\t108\n" % PLAIN_PIN)
             found = [str(f) for f in t.lint()]
             self.assertEqual(len(found), 1, found)
             self.assertTrue(found[0].startswith("schema %s: line 2: " % FACT), found)

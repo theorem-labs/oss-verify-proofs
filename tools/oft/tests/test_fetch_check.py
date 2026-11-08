@@ -65,6 +65,44 @@ def make_release(t, assets, members=None, tamper=None, padding=0):
     return files
 
 
+def regular(name):
+    return tarfile.TarInfo(name)
+
+
+def directory(name):
+    info = tarfile.TarInfo(name)
+    info.type = tarfile.DIRTYPE
+    return info
+
+
+def release_with(t, assets, extra):
+    """make_release's archive with `extra`, a list of (TarInfo, its bytes or None for a member that has none),
+    written after the pinned binaries and pinned in project.yaml.  For the members a dict of name to bytes cannot
+    express: a directory, a symbolic link."""
+    files = make_release(t, assets)
+    raw = io.BytesIO()
+    with tarfile.open(fileobj=raw, mode="w") as tf:
+        for name, data in files.items():
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            tf.addfile(info, io.BytesIO(data))
+        for info, data in extra:
+            if data is not None:
+                info.size = len(data)
+            tf.addfile(info, io.BytesIO(data) if data is not None else None)
+    tar = os.path.join(assets, "zlib-bin.tar")
+    with open(tar, "wb") as f:
+        f.write(raw.getvalue())
+    subprocess.run(["zstd", "-q", "-f", "--rm", tar], check=True)
+    arc = tar + ".zst"
+    p = t.yaml("projects/zlib/project.yaml")
+    p["assets"]["bin"]["bytes"] = os.path.getsize(arc)
+    p["assets"]["bin"]["sha256"] = facts.sha256_file(arc)
+    t.put_yaml("projects/zlib/project.yaml", p)
+    assert t.generate() == 0, t.last_output
+    return files
+
+
 def run(fn, *a, **kw):
     buf = io.StringIO()
     rc = fn(*a, out=buf, **kw)
@@ -262,6 +300,77 @@ class Fetch(unittest.TestCase):
             self.assertEqual(rc, 1)
             self.assertIn("unexpected member", out)
             self.assertFalse(os.path.exists(t.path("projects/zlib/escape")))
+
+    def test_a_harness_the_tree_has_no_home_for_is_skipped(self):
+        """The release archive is built from the whole project, so it carries the binaries of harnesses this tree
+        holds no build record of: minigzip_fuzzer, which projects/zlib/project.yaml lists and whose folder the tree
+        does not hold.  Its members are skipped, never written, and the pinned ones land unchanged."""
+        other = {"minigzip_fuzzer/minigzip_fuzzer.plain": b"\x7fELF another harness",
+                 "minigzip_fuzzer/minigzip_fuzzer.asan": b"\x7fELF another harness, asan"}
+        with tree() as t, tempfile.TemporaryDirectory() as a:
+            files = make_release(t, a, tamper=lambda f: dict(f, **other))
+            rc, out = run(fetch.fetch, t.root, ["zlib"], source=a)
+            self.assertEqual(rc, 0, out)
+            self.assertIn("8 binaries, each SHA-256 checked; 2 files of minigzip_fuzzer skipped, which this tree "
+                          "has no home for", out)
+            self.assertFalse(os.path.exists(t.path("projects/zlib/bin/minigzip_fuzzer")))
+            for name, data in files.items():
+                if name in other:
+                    continue
+                with open(t.path("projects/zlib/bin", name), "rb") as f:
+                    self.assertEqual(f.read(), data)
+            self.assertEqual(run(fetch.verify_sha, t.root, ["zlib"])[0], 0)
+
+    def test_a_directory_member_of_a_skipped_harness_is_skipped_and_counts_nothing(self):
+        with tree() as t, tempfile.TemporaryDirectory() as a:
+            release_with(t, a, [(directory("minigzip_fuzzer/"), None),
+                                (regular("minigzip_fuzzer/minigzip_fuzzer.plain"), b"\x7fELF another")])
+            rc, out = run(fetch.fetch, t.root, ["zlib"], source=a)
+            self.assertEqual(rc, 0, out)
+            self.assertIn("8 binaries, each SHA-256 checked; 1 file of minigzip_fuzzer skipped", out)
+            self.assertFalse(os.path.exists(t.path("projects/zlib/bin/minigzip_fuzzer")))
+
+    def test_a_harness_no_project_yaml_names_is_still_refused(self):
+        """The guard stands for a member the facts know nothing about: only the project's own harnesses are skipped."""
+        for bad in ("other_fuzzer/other_fuzzer.plain", "minigzip_fuzzer/deeper/x", "minigzip_fuzzer"):
+            with self.subTest(bad), tree() as t, tempfile.TemporaryDirectory() as a:
+                make_release(t, a, tamper=lambda f: dict(f, **{bad: b"x"}))
+                rc, out = run(fetch.fetch, t.root, ["zlib"], source=a)
+                self.assertEqual(rc, 1, out)
+                self.assertIn("unexpected member", out)
+                self.assertEqual(os.listdir(t.path("projects/zlib/bin")), [], "nothing is unpacked or left staged")
+
+    def test_an_unpinned_file_of_a_pinned_harness_is_still_refused(self):
+        with tree() as t, tempfile.TemporaryDirectory() as a:
+            make_release(t, a, tamper=lambda f: dict(f, **{"checksum_fuzzer/checksum_fuzzer.extra": b"x"}))
+            rc, out = run(fetch.fetch, t.root, ["zlib"], source=a)
+            self.assertEqual(rc, 1, out)
+            self.assertIn("unexpected member", out)
+            self.assertEqual(os.listdir(t.path("projects/zlib/bin")), [])
+
+    def test_a_member_of_a_skipped_harness_that_is_no_file_is_refused(self):
+        """A skipped harness's member is skipped by its name, not trusted by it: a symbolic link there is refused,
+        as it is anywhere else in the archive."""
+        link = tarfile.TarInfo("minigzip_fuzzer/minigzip_fuzzer.plain")
+        link.type, link.linkname = tarfile.SYMTYPE, "../../../etc/passwd"
+        with tree() as t, tempfile.TemporaryDirectory() as a:
+            release_with(t, a, [(link, None)])
+            rc, out = run(fetch.fetch, t.root, ["zlib"], source=a)
+            self.assertEqual(rc, 1, out)
+            self.assertIn("unexpected member", out)
+            self.assertEqual(os.listdir(t.path("projects/zlib/bin")), [])
+
+    def test_a_harness_whose_every_build_is_withheld_is_not_skipped(self):
+        """A withheld build ships no binary, so a member of a harness this tree records and withholds is one the
+        archive should not carry at all: it stays out of the skipped names, and _stage refuses it.  Only
+        minigzip_fuzzer, which the tree holds no harness.yaml of, is skipped."""
+        with tree() as t:
+            proj = facts.load(t.root).projects["zlib"]
+            self.assertEqual(fetch._other_harnesses(proj, fetch._expected(proj)), {"minigzip_fuzzer"})
+            for rec in proj.harnesses["api-driver"].data["builds"].values():
+                rec["withheld"] = "not-yet-published"
+            self.assertEqual(fetch._expected(proj).keys() & {"api-driver/api-driver.plain"}, set())
+            self.assertEqual(fetch._other_harnesses(proj, fetch._expected(proj)), {"minigzip_fuzzer"})
 
     def test_the_licence_files_of_the_copyleft_components(self):
         lic = {"LICENSES/zlib/LICENSE": b"zlib licence\n", "LICENSES/glib/COPYING": b"LGPL text\n"}
@@ -512,18 +621,21 @@ class Tools:
     """Stand-ins for dune, rocq, rocqchk and qemu-riscv64 on PATH."""
 
     def __init__(self, d, extra_axiom="", unsafe="<none>", wrapper_fails=False, dune_fails_on=None, wrapper_says="",
-                 compile_fails_on=None):
+                 compile_fails_on=None, dune_fail_output=None, dep_fails=None):
         self.bin = os.path.join(d, "stub-bin")
         self.log = os.path.join(d, "calls.log")
         os.makedirs(self.bin)
         # dune copies each source it builds into _build/default (the real one does too), so the library's .v files are
-        # on the proofs' -Q path, where `rocq dep -sort` below finds them.
+        # on the proofs' -Q path, where `rocq dep -sort` below finds them.  dune_fail_output: a file a build that fails
+        # (dune_fails_on) prints first, as the real dune prints the rules it ran and their errors.
         self.put("dune", 'echo "dune $*" >> "%s"\n%s'
                          'root=""; prev=""; for a in "$@"; do [ "$prev" = --root ] && root="$a"; prev="$a"; done\n'
                          'for a in "$@"; do case "$a" in proofs/*/lib/*.vo|projects/*/proofs/lib/*.vo)\n'
                          '  mkdir -p "$root/_build/default/$(dirname "$a")" && cp "$root/${a%%.vo}.v" "$root/_build/default/${a%%.vo}.v" ;;\n'
                          'esac; done\nexit 0\n'
-                 % (self.log, ('case "$*" in *%s*) exit 1 ;; esac\n' % dune_fails_on) if dune_fails_on else ""))
+                 % (self.log, ('case "$*" in *%s*) %sexit 1 ;; esac\n' % (
+                     dune_fails_on, 'cat "%s"; ' % dune_fail_output if dune_fail_output else ""))
+                     if dune_fails_on else ""))
         body = ROCQCHK_OK % (("    " + extra_axiom + "\n") if extra_axiom else "", unsafe)
         with open(os.path.join(d, "rocqchk.out"), "w") as f:
             f.write(body)
@@ -545,6 +657,9 @@ class Tools:
             f.write(DEFINED_STUB)
         self.put("rocq", 'echo "rocq $*" >> "%s"\nulimit -s >> "%s"\n'
                          'if [ "$1" = dep ] && [ "$2" = -sort ]; then\n'
+                         # dep_fails: `rocq dep` refuses a proof it cannot parse, as it does for a
+                         # missing final `.`; the round is a FAILED proof, not a round that did nothing
+                         '%s'
                          '  prev=""; for a in "$@"; do\n'
                          '    case "$a" in *.lib) find "$prev" -name "*.v" | sort ;; esac; prev="$a"; done\n'
                          '  for f in "$@"; do case "$f" in *.v) echo "$f" ;; esac; done; exit 0; fi\n'
@@ -552,7 +667,10 @@ class Tools:
                          'case "$*" in *Wrapper.v*) cat "%s" > assumptions.out; printf %%s "%s"; %s ;; esac\n'
                          '%s'
                          'exit 0\n'
-                 % (self.log, self.log, defined, os.path.join(d, "wrapper.out"), wrapper_says,
+                 % (self.log, self.log,
+                    ('  case "$*" in *%s*) echo "Syntax error" >&2; exit 1 ;; esac\n' % dep_fails)
+                    if dep_fails else "",
+                    defined, os.path.join(d, "wrapper.out"), wrapper_says,
                     "exit 1" if wrapper_fails else "exit 0",
                     ('case "$*" in *%s*) exit 1 ;; esac\n' % compile_fails_on) if compile_fails_on else ""))
         # aborts on the 13-byte counterexample input, exits 0 on the 8-byte control
@@ -596,6 +714,214 @@ class Check(unittest.TestCase):
         self.assertEqual(run(fetch.fetch, t.root, ["zlib"], source=assets)[0], 0)
         t.write("toolchain/allowed-axioms.txt", "Corelib.Init.Something.prim\n")
 
+    def assert_void(self, rc, out, cause):
+        self.assertEqual(rc, 7, out)
+        lines = [line for line in out.splitlines() if line.startswith("VOID: ")]
+        self.assertEqual(len(lines), 1, out)
+        self.assertIn(cause, lines[0])
+        self.assertIn("not its proofs", lines[0])
+        self.assertNotRegex(out, r"(?m)^(?:proofs|projects)/\S+: (proves|refutes) ")
+        self.assertNotRegex(out, r"(?m)^oft check: [1-9][0-9]* step\(s\) passed")
+
+    def test_missing_facts_are_void_and_stop_before_the_next_unit(self):
+        with tree() as t:
+            t.write("toolchain/allowed-axioms.txt", "x\n")
+            tl = self.tools()
+            rc, out = run(check.run, t.root, [self.ZLIB, self.JSON], facts_from=self._facts_dir())
+            self.assert_void(rc, out, "no facts file at " + check.facts_file(self._facts_dir(), self.ZLIB))
+            self.assertNotIn("FAIL ", out)
+            self.assertNotIn(self.JSON, out)
+            self.assertEqual(tl.calls(), "")
+
+    def test_wrong_facts_format_is_void(self):
+        with tree() as t:
+            t.write("toolchain/allowed-axioms.txt", "x\n")
+            d = self._facts_dir()
+            self.assertEqual(run(check.run, t.root, [self.ZLIB], facts_to=d)[0], 0)
+            path = check.facts_file(d, self.ZLIB)
+            data = yamlio.load_file(path)
+            data["version"] = 1
+            with open(path, "w") as f:
+                f.write(yamlio.dump(data))
+            rc, out = run(check.run, t.root, [self.ZLIB, self.JSON], facts_from=d)
+            self.assert_void(rc, out, "format version 1, not 2")
+            self.assertIn(path, out)
+            self.assertNotIn("FAIL ", out)
+            self.assertNotIn(self.JSON, out)
+
+    def test_unparseable_facts_are_void_on_one_line(self):
+        with tree() as t:
+            t.write("toolchain/allowed-axioms.txt", "x\n")
+            d = self._facts_dir()
+            self.assertEqual(run(check.run, t.root, [self.ZLIB], facts_to=d)[0], 0)
+            path = check.facts_file(d, self.ZLIB)
+            with open(path, "w") as f:
+                f.write("version: [\n")
+            rc, out = run(check.run, t.root, [self.ZLIB, self.JSON], facts_from=d)
+            self.assert_void(rc, out, "facts that do not read")
+            self.assertIn(path, out)
+            self.assertNotIn("FAIL ", out)
+            self.assertNotIn(self.JSON, out)
+            self.assertEqual(len(out.splitlines()), 2, out)  # stack measurement, then the one refusal line
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_nothing_compiled_for_statements_and_proofs_is_void(self):
+        with tree() as t:
+            self.ready(t)
+            tl = self.tools()
+            rc, out = run(check.run, t.root, [self.ZLIB], parts="statements,proofs")
+            self.assert_void(rc, out, "COMPILED 0")
+            self.assertIn("\nCOMPILED 0 file(s) with dune -j -\n", out)
+            self.assertEqual(tl.calls(), "")
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_every_dune_build_gets_a_positive_j_and_the_count_is_recorded(self):
+        """What the empty-affinity tests used to assert, now that main's _jobs (#2121) ends in
+        max(1, ...) and can never answer below 1: this tool always passes an explicit positive -j, so there
+        is no "no job count" case to void HERE. The case is real one layer out, in the n6 pod, which can run
+        a job for which no width was ever determined; it keeps that rule and reads its own record (#2108).
+        What this class adds is that the count is RECORDED, which is what a reader needs."""
+        with tree() as t, mock.patch.object(check.os, "sched_getaffinity", return_value=set()):
+            self.ready(t)
+            self._proof(t)
+            tl = self.tools()
+            rc, out = run(check.run, t.root, [self.ZLIB], parts="statements,proofs")
+            self.assertEqual(rc, 0, out)
+            self.assertNotIn("VOID:", out)
+            for line in [l for l in tl.calls().splitlines() if l.startswith("dune build")]:
+                j = line.split(" -j ")[1].split()[0]
+                self.assertGreaterEqual(int(j), 1, line)
+            self.assertRegex(out, r"(?m)^COMPILED \d+ file\(s\) with dune -j [1-9]\d*$")
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_compilation_counts_targets_cache_hits_and_proof_compiles(self):
+        with tree() as t, mock.patch.object(check.os, "sched_getaffinity", return_value={0, 1, 2, 3}):
+            self.ready(t)
+            self._two_proofs_and_a_library(t)
+            tl = self.tools()
+            rc, out = run(check.run, t.root, [self.ZLIB], parts="statements,proofs")
+            self.assertEqual(rc, 0, out)
+            self.assertNotIn("VOID:", out)
+            # Three statement targets, Defined.v, two library targets, two proofs and two wrappers.
+            # The dune stand-in emits no build-rule lines, as a wholly cached build may do.
+            self.assertIn("oft check: 3 step(s) passed, 0 failed; work files in ", out)
+            self.assertIn("\nCOMPILED 12 file(s) with dune -j 4\n", out)  # + one rocq dep per proof
+            builds = [line for line in tl.calls().splitlines() if line.startswith("dune build")]
+            self.assertEqual(len(builds), 2)
+            for line in builds:
+                self.assertIn(" -j 4 ", line)
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_a_real_proof_compile_failure_is_not_void(self):
+        with tree() as t:
+            self.ready(t)
+            self._proof(t)
+            tl = self.tools(compile_fails_on="/Proof.v")
+            rc, out = run(check.run, t.root, [self.ZLIB], parts="proofs")
+            self.assertEqual(rc, 1, out)
+            self.assertNotIn("VOID:", out)
+            self.assertIn("does not compile", out)
+            self.assertIn("\nCOMPILED 2 file(s) with dune -j -\n", out)  # the proof's rocq dep, then its compile
+            self.assertIn("rocq compile", tl.calls())
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_one_target_whose_cone_compiled_and_whose_target_failed_is_fail_never_void(self):
+        """The inverted verdict LPS found in rocq-kit's `built 0 of N => VOID` rule (TOOLS, 2026-11-06): a
+        round over ONE target with a real .v error compiles its cone, fails on the target, and builds 0 of 1.
+        That is a FAIL. What this tool counts is the compiling work it ATTEMPTED -- every .vo target given to
+        dune and every rocq compile started, failed ones included -- never the targets that succeeded, so a
+        cone that compiled makes the count non-zero and no void rule can reach the round."""
+        with tree() as t, mock.patch.object(check.os, "sched_getaffinity", return_value={0, 1, 2, 3}):
+            self.ready(t)
+            self._proof(t, body="Theorem plain_halts_holds : True. Proof. exact nonsense. Qed.\n")
+            tl = self.tools(compile_fails_on="/Proof.v")
+            rc, out = run(check.run, t.root, [self.ZLIB], parts="statements,proofs")
+            self.assertEqual(rc, 1, "a real .v error is a failure, not VOID: %s" % out)
+            self.assertNotIn("VOID:", out)
+            self.assertIn("does not compile", out)
+            # the cone was built: the statements and the proof library both went to dune
+            self.assertNotIn("\nCOMPILED 0 ", out)
+            self.assertIn(" -j 4 ", tl.calls())
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_the_oft_check_line_is_the_last_line_and_compiled_comes_before_it(self):
+        """The check-of-record tool's build-service rule takes the LAST non-blank line of job.log and
+        requires it to be the `oft check: ` summary; the pod prints nothing after a pass, so a COMPILED line
+        printed after it would leave every passing check of record `unresolved` (the second non-author
+        review of #2109, 2026-11-06).  The farm runner's RUN_SCRIPT and docs/check-of-record.md say the
+        same.  So the counts go on the line BEFORE it, and that order is the contract."""
+        with tree() as t, mock.patch.object(check.os, "sched_getaffinity", return_value={0, 1, 2, 3}):
+            self.ready(t)
+            self._proof(t)
+            self.tools()
+            rc, out = run(check.run, t.root, [self.ZLIB], parts="statements,proofs")
+            self.assertEqual(rc, 0, out)
+            lines = [l for l in out.splitlines() if l.strip()]
+            self.assertTrue(lines[-1].startswith("oft check: "), lines[-3:])
+            self.assertRegex(lines[-1], r"^oft check: \d+ step\(s\) passed, \d+ failed; work files in \S+$")
+            self.assertRegex(lines[-2], r"^COMPILED \d+ file\(s\) with dune -j \S+$")
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_the_compile_helpers_keep_the_signatures_their_outside_callers_use(self):
+        """The two gate-job scripts, under tools/publish/ and dev/stream/bin/, drive check_statements,
+        compile_lib and
+        check_proof themselves, positionally, from outside this module, and are not changed by this PR.  The
+        compilation counter is therefore a KEYWORD parameter with a default on each, and a call that passes
+        none compiles exactly as before, counting into a throwaway (the CI/CD lead, 2026-11-06 17:25Z)."""
+        import inspect
+        for fn, before in ((check.check_statements, ["root", "h", "allowed", "work", "out", "rocqchk"]),
+                           (check.compile_lib, ["root", "h", "work", "libs", "out"]),
+                           (check.check_proof,
+                            ["root", "st", "pd", "allowed", "work", "out", "libs", "rocqchk"])):
+            names = list(inspect.signature(fn).parameters)
+            self.assertEqual(names[:len(before)], before,
+                             "%s's old parameters must keep their places and their order" % fn.__name__)
+            self.assertEqual(names[len(before):], ["compilation"])
+            self.assertIsNone(inspect.signature(fn).parameters["compilation"].default)
+        with tree() as t:
+            self.ready(t)
+            self._proof(t)
+            self.tools()
+            h = facts.load(t.root).projects["zlib"].harnesses["checksum_fuzzer"]
+            work = tempfile.mkdtemp()
+            self.addCleanup(shutil.rmtree, work, True)
+            # the old call, with no counter at all: it runs and answers a -Q mapping, raising nothing
+            self.assertIsInstance(check.compile_lib(t.root, h, work, {}, io.StringIO()), list)
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_a_split_job_of_a_library_less_unit_fails_on_a_broken_proof(self):
+        """The route the sixth review of #2109 found. A unit too long for one job is checked one statement
+        per job, as `--parts proofs --statements S`, which is the farm's split. With no proof library there
+        is no dune build, so `rocq dep` is the FIRST thing that touches a .v file; uncounted, a proof it
+        cannot parse left the round at COMPILED 0 and VOID, and the farm reruns a void unit for ever, so
+        the broken proof would never be reported. `rocq dep` reads the proof's own files and is counted."""
+        with tree() as t:
+            self.ready(t)
+            self._proof(t)
+            # a proof `rocq dep` cannot parse: the case the review found, and the one that was voided
+            tl = self.tools(dep_fails="/Proof.v")
+            rc, out = run(check.run, t.root, [self.ZLIB], parts="proofs", statements=["plain_halts"])
+            self.assertEqual(rc, 1, "a proof rocq dep cannot parse is a FAILED proof: %s" % out)
+            self.assertNotIn("VOID:", out)
+            self.assertIn("rocq dep failed", out)
+            # the count is non-zero before any proof compiles, which is what keeps it a FAIL
+            self.assertNotIn("\nCOMPILED 0 ", out)
+            self.assertRegex(out, r"(?m)^COMPILED [1-9]\d* file\(s\) with dune -j -$")
+            self.assertIn("rocq dep", tl.calls())
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_parallel_proof_compiles_count_without_a_library(self):
+        with tree() as t:
+            self.ready(t)
+            self._proof(t)
+            self._proof(t, self.SECOND, s="plain_halts_may_fail")
+            self.tools()
+            rc, out = run(check.run, t.root, [self.ZLIB], parts="proofs", proof_jobs=2)
+            self.assertEqual(rc, 0, out)
+            self.assertNotIn("VOID:", out)
+            self.assertIn("oft check: 2 step(s) passed, 0 failed; work files in ", out)
+            self.assertIn("\nCOMPILED 6 file(s) with dune -j -\n", out)  # two children, each a rocq dep and two compiles
+
     @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
     def test_statements(self):
         with tree() as t:
@@ -631,7 +957,7 @@ class Check(unittest.TestCase):
             tl = self.tools()
             os.remove(t.path("projects/zlib/checksum_fuzzer/Statements.v"))
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="statements")
-            self.assertEqual(rc, 1, out)
+            self.assert_void(rc, out, "COMPILED 0")
             self.assertIn("FAIL statements: projects/zlib/checksum_fuzzer/Statements.v is missing", out)
             self.assertFalse(os.path.exists(tl.log) and "dune build" in tl.calls(), "nothing is built")
 
@@ -644,7 +970,7 @@ class Check(unittest.TestCase):
             tl = self.tools()
             withdraw_every_statement(t, "checksum_fuzzer")
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="statements")
-            self.assertEqual(rc, 1, out)
+            self.assert_void(rc, out, "COMPILED 0")
             self.assertIn("is withheld or withdrawn, so Statements.v defines none: nothing to check", out)
             self.assertFalse(os.path.exists(tl.log) and "dune build" in tl.calls(), "nothing is built")
 
@@ -655,7 +981,7 @@ class Check(unittest.TestCase):
             self.ready(t)
             self.tools()
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="statements,proofs")
-            self.assertEqual(rc, 1, out)
+            self.assert_void(rc, out, "COMPILED 0")
             self.assertIn("FAIL zlib/checksum_fuzzer: nothing to check for part proofs: the unit has no proof", out)
             self.assertIn("0 step(s) passed, 1 failed", out)
             # with a proof, the same parts pass
@@ -800,6 +1126,38 @@ class Check(unittest.TestCase):
             self.assertIn("python3 -m oft.check --root /work --facts-from /facts zlib/api-driver --parts statements\n",
                           calls)
             self.assertIn("1 step(s) passed, 0 failed", r.stdout)
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_check_units_checks_a_unit_in_a_view_without_the_dropped_parts_of_its_build_record(self):
+        """The two parts of a unit's build record that unitpaths.PROOFS_DROP names -- its prose
+        (provenance/PROVENANCE.md) and its licence evidence (provenance/evidence/licence/: the made-from record and
+        the script that writes it) -- are in no key, so check-units.sh mounts neither; the build check reads nothing
+        there and passes without them."""
+        with tree() as t:
+            self.ready(t)
+            tl = self.tools()
+            self._proof(t)
+            record = "proofs/zlib/checksum_fuzzer/provenance"
+            licence = record + "/evidence/licence"
+            t.write(licence + "/made-from.tsv", "path\tdecision\nlib/Common.v\tmade from lib/Other.v\n")
+            t.write(licence + "/made_from.py", "# the script of record\n")
+            t.write(licence + "/left-bare.tsv", "path\treason\nlib/Common.v\tours\n")
+            t.write(record + "/PROVENANCE.md", "# Build record\n\nThe rule found 148 such files.\n")
+            t.write(record + "/evidence/mutants/1/notes.md", "a mutant run\n")
+            r, calls = self._check_units(t, tl, UNITS="zlib/checksum_fuzzer",
+                                         PROOF_UNITS=json.dumps("zlib/checksum_fuzzer"))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("python3 -m oft.check --root /work --facts-from /facts zlib/checksum_fuzzer "
+                          "--parts statements,proofs\n", calls)
+            mounts = [m.split(":", 1)[0] for m in re.findall(r"-v (\S+)", next(
+                l for l in calls.splitlines() if "zlib/checksum_fuzzer --parts" in l))]
+            self.assertEqual([m for m in mounts if licence in m], [])
+            self.assertEqual([m for m in mounts if m.endswith(record + "/PROVENANCE.md")], [])
+            under = [m for m in mounts if "proofs/zlib/checksum_fuzzer" in m]
+            self.assertTrue(under)
+            # what is beside a dropped path is mounted, so the check still reads the rest of the proofs folder
+            for rel in ("provenance/evidence/mutants", "plain_halts"):
+                self.assertTrue(any(m.endswith("proofs/zlib/checksum_fuzzer/" + rel) for m in under), rel)
 
     @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
     def test_check_units_refuses_a_job_that_does_not_say_which_units_have_proofs(self):
@@ -983,7 +1341,7 @@ class Check(unittest.TestCase):
             t.write("toolchain/allowed-axioms.txt", "Corelib.Init.Something.prim\n")
             self.tools()
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="statements")
-            self.assertEqual(rc, 1)
+            self.assert_void(rc, out, "COMPILED 0")
             self.assertIn("run ./oft fetch zlib", out)
 
     def _proof(self, t, body="Theorem plain_halts_holds : True. Proof. exact I. Qed.\n", s="plain_halts"):
@@ -1169,7 +1527,7 @@ class Check(unittest.TestCase):
             self.assertIn("oft check: 1 step(s) passed, 0 failed", out)
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="proofs",
                           statements=["plain_halts", "plain_halts_may_fail"])
-            self.assertEqual(rc, 1, out)
+            self.assert_void(rc, out, "COMPILED 0")
             self.assertIn("FAIL zlib/checksum_fuzzer: --statements names plain_halts_may_fail, which has no proof "
                           "here", out)
             for kw in ({"parts": "statements,proofs"}, {"units": ["zlib/checksum_fuzzer", "zlib/api-driver"]}):
@@ -1197,7 +1555,7 @@ class Check(unittest.TestCase):
             t.write("proofs/zlib/checksum_fuzzer/lib/Sub/Deep.v", "Definition two := 3.\n")
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="proofs", statements=["plain_halts"],
                           lib=libdir)
-            self.assertEqual(rc, 1, out)
+            self.assert_void(rc, out, "COMPILED 0")
             self.assertIn("FAIL proofs/zlib/checksum_fuzzer/plain_halts: --lib names %s, whose .v files are not those "
                           "of proofs/zlib/checksum_fuzzer/lib" % libdir, out)
             # the same sources in another directory are not this checkout's build of the library
@@ -1206,7 +1564,7 @@ class Check(unittest.TestCase):
             shutil.copytree(libdir, other)
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="proofs", statements=["plain_halts"],
                           lib=other)
-            self.assertEqual(rc, 1, out)
+            self.assert_void(rc, out, "COMPILED 0")
             self.assertIn("--lib names %s, which is not this checkout's build of its proof library" % other, out)
 
     @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
@@ -1231,13 +1589,13 @@ class Check(unittest.TestCase):
             shutil.copytree(libdir, old)
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="proofs", statements=["plain_halts"],
                           lib=old)
-            self.assertEqual(rc, 1, out)
+            self.assert_void(rc, out, "COMPILED 0")
             self.assertIn("FAIL projects/zlib/checksum_fuzzer/proofs/plain_halts: --lib names %s, which is not this "
                           "checkout's build of its proof library (%s)" % (old, libdir), out)
             t.write(self.NEW_LIB + "/Sub/Deep.v", "Definition two := 3.\n")
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="proofs", statements=["plain_halts"],
                           lib=libdir)
-            self.assertEqual(rc, 1, out)
+            self.assert_void(rc, out, "COMPILED 0")
             self.assertIn("FAIL projects/zlib/checksum_fuzzer/proofs/plain_halts: --lib names %s, whose .v files are "
                           "not those of %s" % (libdir, self.NEW_LIB), out)
 
@@ -1256,7 +1614,7 @@ class Check(unittest.TestCase):
                 os.makedirs(lib)
                 rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="proofs", statements=["plain_halts"],
                               lib=lib)
-                self.assertEqual(rc, 1, out)
+                self.assert_void(rc, out, "COMPILED 0")
                 self.assertIn("FAIL %s/plain_halts: --lib names %s, but projects/zlib/checksum_fuzzer has no proof "
                               "library (%s/lib)" % (folder, lib, folder), out)
                 self.assertNotIn("rocq compile", tl.calls())
@@ -1278,7 +1636,7 @@ class Check(unittest.TestCase):
             t.write(rel, text, mode)
             tl = self.tools()
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="proofs")
-            self.assertEqual(rc, 1)
+            self.assert_void(rc, out, "COMPILED 0")
             self.assertNotIn("dune build", tl.calls())
             return out
 
@@ -1374,7 +1732,7 @@ class Check(unittest.TestCase):
             os.symlink(t.path("elsewhere"), t.path("proofs/zlib/checksum_fuzzer"))
             tl = self.tools()
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="proofs")
-            self.assertEqual(rc, 1)
+            self.assert_void(rc, out, "COMPILED 0")
             self.assertIn("proofs/zlib/checksum_fuzzer: a proof library holds no symbolic link", out)
             self.assertNotIn("dune build", tl.calls())
 
@@ -1388,7 +1746,7 @@ class Check(unittest.TestCase):
             os.symlink(t.path("elsewhere"), t.path("proofs/zlib/checksum_fuzzer/lib/x"))
             tl = self.tools()
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="proofs")
-            self.assertEqual(rc, 1)
+            self.assert_void(rc, out, "COMPILED 0")
             self.assertIn("proofs/zlib/checksum_fuzzer/lib/x: a proof library holds no symbolic link", out)
             self.assertNotIn("dune build", tl.calls())
 
@@ -1434,6 +1792,49 @@ class Check(unittest.TestCase):
             self.assertEqual(out.count("proofs/zlib/checksum_fuzzer/lib: does not compile"), 2, out)
             self.assertEqual(len([c for c in tl.calls().splitlines() if c.startswith("dune build") and "/lib/" in c]), 1)
             self.assertNotIn("Wrapper.v", tl.calls())
+
+    @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
+    def test_a_library_that_does_not_compile_quotes_the_error_from_deep_in_a_large_log(self):
+        """The Release lane's case of 2026-11-02: the one error of a 362,395-line dune log, at line 220,381, among the
+        rules dune ran and the warnings it printed.  The FAIL line quotes its block, the error first, and no other."""
+        with tree() as t:
+            self.ready(t)
+            self._two_proofs_and_a_library(t)
+            error = ['File "proofs/zlib/checksum_fuzzer/lib/Sub/Deep.v", line 7, characters 2-9:',
+                     "Error: The reference foo was not found in the current environment."]
+            body = []   # what dune prints; the log's first line is check's own `$ dune build ...`
+            for k in range(362395 - 1):
+                body.append(error[0] if k == 220379 else error[1] if k == 220380 else
+                            'File "proofs/zlib/checksum_fuzzer/lib/W%d.v", line 1, characters 0-4:' % k if k % 1000 == 0
+                            else "Warning: Notation overridden. [notation-overridden,parsing,default]" if k % 1000 == 1
+                            else "        rocq proofs/zlib/checksum_fuzzer/lib/A%d.vo" % k)
+            dune_out = os.path.join(self.d.name, "dune-out.txt")
+            with open(dune_out, "w") as f:
+                f.write("\n".join(body) + "\n")
+            self.tools(dune_fails_on="Deep.vo", dune_fail_output=dune_out)
+            rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="proofs")
+            self.assertEqual(rc, 1)
+            log = re.search(r"lib: does not compile \(see (\S+\.lib\.dune\.log)\)", out).group(1)
+            with open(log) as f:
+                lines = f.read().split("\n")[:-1]
+            self.assertEqual((len(lines), lines[220380:220382]), (362395, error), "line 220,381 of 362,395")
+            head = ("FAIL proofs/zlib/checksum_fuzzer/plain_halts: proofs/zlib/checksum_fuzzer/lib: does not compile (see "
+                    "%s)\nthe log holds 1 Error: block(s): 1 quoted here; the whole log is %s\n"
+                    "  | %s\n  | %s\n  |         rocq proofs/zlib/checksum_fuzzer/lib/A220381.vo\n"
+                    % (log, log, error[0], error[1]))
+            self.assertEqual(out.count(head), 1, out)
+            # the block is its header, its error and the 619 lines up to the next File header; what is not quoted is
+            # counted
+            message = out[out.index(head):].split("\nFAIL ")[0].split("\n")
+            quoted = [l for l in message[2:] if l.startswith("  | ") and not l.startswith("  | [")]
+            self.assertEqual(message[-1], "  | [%d more line(s) of this block left out]" % (621 - len(quoted)), out)
+            self.assertLessEqual(sum(len(l) + 1 for l in quoted), check.ERROR_BYTES)
+            self.assertNotIn("Warning: Notation overridden", out)
+            # the other proof gets the first line alone: the log is quoted once
+            self.assertIn("\nFAIL proofs/zlib/checksum_fuzzer/plain_halts_may_fail: proofs/zlib/checksum_fuzzer/lib: "
+                          "does not compile (see %s) (its log is quoted above, at the first proof that failed on it)\n"
+                          % log, out)
+            self.assertLess(len(out), 2 * check.ERROR_BYTES)
 
     @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
     def test_a_proof_goes_through_the_wrapper(self):
@@ -1610,7 +2011,7 @@ class Check(unittest.TestCase):
         with tree() as t:
             t.write("toolchain/allowed-axioms.txt", "x\n")
             rc, out = run(check.run, t.root, ["zlib/checksum_fuzzer"], parts="proofs")
-            self.assertEqual(rc, 1)
+            self.assert_void(rc, out, "COMPILED 0")
             self.assertIn("nothing to check", out)
 
     def test_a_counterexample_reproduces(self):
@@ -1620,6 +2021,10 @@ class Check(unittest.TestCase):
             rc, out = run(check.run, t.root, ["json/fuzzer-parse_bjdata"], parts="counterexamples")
             self.assertEqual(rc, 0, out)
             self.assertIn("reproduces (exit 134 SIGABRT); control exits 0", out)
+            self.assertNotIn("VOID:", out)
+            # a counterexamples run compiles nothing by design, so it says no COMPILED line at all
+            # and is not voided for it (the void rule reads a run that wanted statements or proofs)
+            self.assertNotIn("COMPILED", out)
 
     def test_qemu_runs_with_no_core_file(self):
         """With a core file limit above zero here, qemu must still start with
@@ -1790,12 +2195,8 @@ class Check(unittest.TestCase):
                     rc, out = run(check.run, t.root, [unit], parts=parts, facts_from=d)
                     for rel, text in saved.items():
                         t.write(rel, text)
-                    self.assertEqual(rc, 1, out)
-                    fails = [line for line in out.splitlines() if line.startswith("FAIL ")]
-                    self.assertEqual(len(fails), 1, out)
-                    self.assertTrue(fails[0].startswith("FAIL %s: " % unit), out)
-                    self.assertIn(said, fails[0])
-                    self.assertIn("oft check: 0 step(s) passed, 1 failed", out)
+                    self.assert_void(rc, out, said)
+                    self.assertNotIn("FAIL ", out)
                     self.assertFalse(os.path.exists(tl.log), "nothing is built")
                     self.assertFalse(os.path.exists(os.path.join(self.d.name, "qemu-core-limit.log")), "nothing runs")
 
@@ -1826,13 +2227,10 @@ class Check(unittest.TestCase):
                                        (self.ZLIB, "findings", finding)):
                 with self.subTest(parts=parts):
                     rc, out = run(check.run, t.root, [unit], parts=parts, facts_from=d)
-                    self.assertEqual(rc, 1, out)
-                    fails = [line for line in out.splitlines() if line.startswith("FAIL ")]
-                    self.assertEqual(len(fails), 1, out)
-                    self.assertTrue(fails[0].startswith("FAIL %s: " % unit), out)
-                    self.assertIn(added, fails[0])
+                    self.assert_void(rc, out, added)
+                    self.assertNotIn("FAIL ", out)
                     for other in {proof, counterexample, finding} - {added}:
-                        self.assertNotIn(other, fails[0], "a directory of a part the run does not check")
+                        self.assertNotIn(other, out, "a directory of a part the run does not check")
 
     @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
     def test_facts_from_compares_the_view_s_files_of_the_parts_it_checks(self):
@@ -1851,14 +2249,14 @@ class Check(unittest.TestCase):
             self.assertEqual(rc, 0, out)
             self.assertIn("oft check: 2 step(s) passed, 0 failed", out)
             rc, out = run(check.run, view, [self.ZLIB], parts="findings", facts_from=d)
-            self.assertEqual(rc, 1, out)
-            self.assertIn("FAIL %s: " % self.ZLIB, out)
+            self.assert_void(rc, out, "findings/zlib/")
+            self.assertNotIn("FAIL ", out)
             self.assertIn("findings/zlib/", out)
             with open(os.path.join(view, "projects/zlib/project.yaml"), "a") as f:
                 f.write("# changed in the view alone\n")
             rc, out = run(check.run, view, [self.ZLIB], parts="statements,proofs", facts_from=d)
-            self.assertEqual(rc, 1, out)
-            self.assertIn("FAIL %s: " % self.ZLIB, out)
+            self.assert_void(rc, out, "projects/zlib/project.yaml differs")
+            self.assertNotIn("FAIL ", out)
             self.assertIn("projects/zlib/project.yaml differs", out)
 
     @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
@@ -1883,9 +2281,9 @@ class Check(unittest.TestCase):
             self.assertEqual(rc, 0, out)
 
     @unittest.skipUnless(HAVE_ZSTD, "zstd is not installed")
-    def test_facts_from_fails_a_malformed_facts_file_and_checks_the_next_unit(self):
+    def test_facts_from_voids_malformed_facts_and_stops_before_the_next_unit(self):
         """Keys missing, data of the wrong type, a statement's data that is not its harness.yaml's, and a proof's
-        refutes that is not true or false: the unit fails, and json/fuzzer-parse_bjdata is still checked."""
+        refutes that is not true or false: no unit receives a verdict from unreadable facts."""
         with tree() as t:
             self._two_units(t)
             self.tools()
@@ -1906,13 +2304,9 @@ class Check(unittest.TestCase):
                     with open(path, "w") as f:
                         f.write(yamlio.dump(data))
                     rc, out = run(check.run, t.root, [self.ZLIB, self.JSON], facts_from=d)
-                    self.assertEqual(rc, 1, out)
-                    fails = [line for line in out.splitlines() if line.startswith("FAIL ")]
-                    self.assertEqual(len(fails), 2, out)
-                    self.assertTrue(fails[0].startswith("FAIL %s: %s: " % (self.ZLIB, path)), out)
-                    self.assertEqual(fails[1], "FAIL statements: the binaries are missing or do not match (run ./oft "
-                                               "fetch json)", out)
-                    self.assertIn("oft check: 2 step(s) passed, 2 failed", out)
+                    self.assert_void(rc, out, path)
+                    self.assertNotIn("FAIL ", out)
+                    self.assertNotIn(self.JSON, out)
 
     def test_facts_to_writes_nothing_for_a_tree_the_rules_refuse(self):
         with tree() as t:
@@ -1946,6 +2340,134 @@ class Check(unittest.TestCase):
                 rc, out = run(check.run, t.root, [self.ZLIB], facts_from=d)
             self.assertEqual(rc, 0, out)
             self.assertIn("oft check: 4 step(s) passed, 0 failed", out)
+
+
+class LogErrors(unittest.TestCase):
+    """check.log_errors: what the CheckError of a failed build quotes from its log."""
+
+    def errors(self, lines):
+        with tempfile.TemporaryDirectory() as d:
+            log = os.path.join(d, "x.lib.dune.log")
+            with open(log, "w", newline="") as f:
+                f.write("".join(l + "\n" for l in lines))
+            return check.log_errors(log).replace(log, "LOG")
+
+    @staticmethod
+    def block(n, extra=()):
+        return ['File "lib/F%d.v", line %d, characters 0-3:' % (n, n), "Error: error number %d" % n] + list(extra)
+
+    def test_a_log_with_no_error_line_quotes_its_last_40_lines(self):
+        got = self.errors(["line %d" % n for n in range(1, 101)])
+        self.assertEqual(got, "\nthe log holds no Error: line; its last 40 line(s) are quoted here; the whole log is "
+                              "LOG\n" + "\n".join("  | line %d" % n for n in range(61, 101)))
+        # a File header with only a warning under it is no Error: block either
+        got = self.errors(['File "lib/A.v", line 1, characters 0-4:', "Warning: notation overridden"])
+        self.assertIn("no Error: line; its last 2 line(s) are quoted here", got)
+        self.assertIn("  | Warning: notation overridden", got)
+
+    def test_an_empty_or_missing_log_still_says_so(self):
+        self.assertEqual(self.errors([]), "\nthe log holds no Error: line and is empty: LOG")
+        self.assertEqual(check.log_errors("/nonexistent/x.log"),
+                         "\nthe log /nonexistent/x.log cannot be read: [Errno 2] No such file or directory: "
+                         "'/nonexistent/x.log'")
+
+    def test_errors_past_the_block_cap_are_counted_and_left_out(self):
+        lines = ["$ dune build", "        rocq lib/A.vo"]
+        for n in range(1, 10):
+            lines += self.block(n, ["        rocq lib/G%d.vo" % n])
+        got = self.errors(lines)
+        quoted = "".join("\n  | " + l for n in range(1, 6) for l in self.block(n, ["        rocq lib/G%d.vo" % n]))
+        self.assertEqual(got, "\nthe log holds 9 Error: block(s): 5 quoted here, 4 left out; the whole log is LOG"
+                              + quoted)
+        self.assertNotIn("error number 6", got)
+
+    def test_errors_past_the_byte_cap_are_cut_and_counted(self):
+        long = ["x" * 99] * 70   # 7,000 bytes under each error
+        got = self.errors(self.block(1, long) + self.block(2, long) + self.block(3, long))
+        self.assertTrue(got.startswith("\nthe log holds 3 Error: block(s): 2 quoted here, 1 left out; the whole log "
+                                       "is LOG\n  | File \"lib/F1.v\""), got)
+        self.assertIn("  | Error: error number 2\n", got)
+        self.assertRegex(got, r"\n  \| \[\d+ more line\(s\) of this block left out\]$")
+        self.assertNotIn("error number 3", got)
+        quoted = [l[len("  | "):] for l in got.split("\n")[2:] if not l.startswith("  | [")]
+        self.assertLessEqual(sum(len(l.replace(" [cut]", "")) + 1 for l in quoted), check.ERROR_BYTES + 1)
+        # one line longer than the cap is cut to what is left of it
+        got = self.errors(['File "lib/A.v", line 1, characters 0-1:', "Error: " + "y" * 20000])
+        self.assertIn("1 Error: block(s): 1 quoted here; the whole log is LOG\n", got)
+        self.assertRegex(got, r"\n  \| Error: y{7000,8000} \[cut\]$")
+        self.assertLess(len(got), check.ERROR_BYTES + 200)
+
+    def test_an_error_with_no_file_header_before_it_opens_a_block_with_its_context(self):
+        """dune prints some errors with no location (`Error: Don't know how to build ...`).  Such a line among the
+        rules dune ran opens a block of its own, with the 5 lines before it, as the gate's pod script reads it with `grep -C 5`
+        (the CI/CD lead's two probe logs of #918)."""
+        rules = ["        rocq lib/A%d.vo" % n for n in range(1000)]
+        got = self.errors(rules + ["Error: Can't find file lib/X.v on loadpath"] + rules)
+        self.assertEqual(got.split("\n")[1:8], [
+            "the log holds 1 Error: block(s): 1 quoted here; the whole log is LOG"]
+            + ["  |         rocq lib/A%d.vo" % n for n in range(995, 1000)]
+            + ["  | Error: Can't find file lib/X.v on loadpath"])
+        # after a warning's block that its 100,000 rules filled long before
+        got = self.errors(['File "lib/W.v", line 1, characters 0-4:', "Warning: notation overridden"]
+                          + ["        rocq lib/A%d.vo" % n for n in range(100000)]
+                          + ["Error: Don't know how to build lib/X.vo"])
+        self.assertIn("the log holds 1 Error: block(s): 1 quoted here; the whole log is LOG\n", got)
+        self.assertIn("\n  |         rocq lib/A99999.vo\n  | Error: Don't know how to build lib/X.vo", got)
+        self.assertNotIn("Warning", got, "the warning's block holds no Error: line")
+
+    def test_an_error_late_in_a_block_is_quoted_whole(self):
+        """The CI/CD lead's sweeps of 5a85aa408c04: a warning's block, N lines, a headerless Error: line, 5 more lines.
+        With ASCII lines of about 80 bytes and with lines of 3-byte characters (as Rocq prints goals), the Error:
+        line is quoted whole for every N: one that would not fit whole in the open block opens its own."""
+        err = "Error: Don't know how to build lib/X.vo"
+        for filler, ns in (("x" * 76, range(80, 120)), ("\u22a2 \u2200 \u2192 \u220e " * 4, range(40, 120))):
+            for n in ns:
+                with self.subTest(filler=filler[:4], n=n):
+                    got = self.errors(['File "lib/W.v", line 1, characters 0-4:', "Warning: notation overridden"]
+                                      + ["%d %s" % (i, filler) for i in range(n)] + [err]
+                                      + ["after %d" % i for i in range(5)])
+                    self.assertIn("\n  | %s\n" % err, got + "\n")
+                    self.assertIn("the log holds 1 Error: block(s): 1 quoted here;", got)
+
+    def test_the_quoted_lines_are_bounded_in_bytes_and_lines_prefixes_included(self):
+        """The CI/CD lead's probes of #918: a header and an error, then 20,000 empty lines; and one line of 20,000
+        vertical tabs, which str.splitlines cuts into one piece each."""
+        for extra in ([""] * 20000, ["\x0b" * 20000]):
+            got = self.errors(['File "lib/A.v", line 1, characters 0-1:', "Error: x"] + extra)
+            quoted = [l for l in got.split("\n")[2:] if not l.startswith("  | [")]
+            self.assertLessEqual(len(quoted), check.ERROR_LINES)
+            self.assertLessEqual(sum(len((l + "\n").encode()) for l in quoted), check.ERROR_BYTES)
+            self.assertLessEqual(len(got.split("\n")) - 2 - len(quoted), 1, "at most one note")
+
+    def test_a_log_with_no_line_end_is_read_in_bounded_pieces(self):
+        """64 MiB with no newline: read whole, it took about 3 times its size in memory.  Here the peak grows by less
+        than 16 MiB (measured in a process of its own), and the message is its cut end."""
+        with tempfile.TemporaryDirectory() as d:
+            log = os.path.join(d, "x.log")
+            with open(log, "wb") as f:
+                f.writelines(b"a" * (1 << 20) for _ in range(64))
+            code = ("import resource, sys\nfrom oft import check\n"
+                    "before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss\n"
+                    "msg = check.log_errors(sys.argv[1])\n"
+                    "print(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - before)\nprint(msg)\n")
+            # from tools/, where `from oft import check` finds this checker
+            r = subprocess.run([sys.executable, "-c", code, log], capture_output=True, text=True,
+                               cwd=os.path.dirname(os.path.dirname(os.path.abspath(check.__file__))))
+            self.assertEqual(r.returncode, 0, r.stderr)
+            grown_kib, msg = r.stdout.split("\n", 1)
+            self.assertLess(int(grown_kib), 16 << 10, "KiB")
+            self.assertTrue(msg.startswith("\nthe log holds no Error: line; its last 1 line(s) are quoted here"), msg)
+            self.assertRegex(msg, r"\n  \| a{7000,8000} \[cut\]\n$")
+
+    def test_no_log_line_stands_as_a_line_of_the_check_s_output(self):
+        """A log line with a carriage return or U+2028 in it, which str.splitlines ends a line at, is quoted as two
+        lines, each with its "  | ": a reader of the check's output finds no summary or claim line of the log's."""
+        forged = "oft check: 9 step(s) passed, 0 failed"
+        got = self.errors(['File "lib/A.v", line 1, characters 0-1:', "Error: x\r" + forged, "y\u2028" + forged])
+        rest = got.splitlines()[2:]
+        self.assertEqual(rest, ['  | File "lib/A.v", line 1, characters 0-1:', "  | Error: x", "  | " + forged, "  | y",
+                                "  | " + forged])
+        self.assertEqual([l for l in got.splitlines() if l.startswith("oft check")], [])
 
 
 class ReachStep(unittest.TestCase):

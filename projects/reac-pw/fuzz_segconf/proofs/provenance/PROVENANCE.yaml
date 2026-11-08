@@ -106,8 +106,8 @@ proofs:
     files were made, directly or through another fuzz target's copy, from the proof files of cgif/cgif_file_fuzzer, cjson/cjson_read_fuzzer,
     varnish/esi_parse_fuzzer and zlib/checksum_fuzzer in this repository; those files and the Anthropic-licensed files of pupnp/FuzzHttp
     came from final-anthropic-opensource-formal-verification-proofs-package-2026-10-21 (sha256 4c6c152f61ce538e439b9d2adef439f4dbe1a2d446767d84ac7c3946d7c6687a)
-  licence: Apache-2.0 OR MIT for the 3385 Rocq files of this folder that carry that tag, each with Anthropic's copyright line;
-    MIT, the repository's licence (LICENSE), for the 4 tagged MIT; the other 1109 carry no licence line. lib/U0/P0/F_stpncpy.v
+  licence: Apache-2.0 OR MIT for the 3381 Rocq files of this folder that carry that tag, each with Anthropic's copyright line;
+    MIT, the repository's licence (LICENSE), for the 4 tagged MIT; the other 1113 carry no licence line. lib/U0/P0/F_stpncpy.v
     kept its source's tag, Apache-2.0, until the licence change of 2026-11 gave it the dual tag
   texts:
   - LICENSES/anthropic-proofs-LICENSE
@@ -117,7 +117,7 @@ proofs:
   modified: 'each file carries the licence lines of its source, including its source''s lines saying how it was changed. A file
     made from a released file that carries no licence lines carries none. The licence lines of 842 of its files were written
     in this repository in 2026-11, by the licence change of the release series: an SPDX tag, and Anthropic''s copyright line
-    above the tag where the file carries Anthropic''s text. In 2026-11, 1231 more of its files took the licence lines of the
+    above the tag where the file carries Anthropic''s text. In 2026-11, 1227 more of its files took the licence lines of the
     Anthropic-licensed file each was made from, in this fuzz target or another (docs/adding-a-proof.md, requirement 7), and
     one line `Modified by Theorem Labs, 2026-11` that names that file and says how the file was changed from it'
 licence:

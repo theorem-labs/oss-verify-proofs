@@ -150,10 +150,10 @@ proofs:
   - LICENSES/anthropic-proofs-LICENSE-MIT
   - LICENSES/anthropic-proofs-NOTICE
   texts_location: the repository's top directory
-  licence: Apache-2.0 OR MIT for the 2444 Rocq files of this folder that carry that tag, each with Anthropic's copyright line;
-    MIT, the repository's licence (LICENSE), for the 4 tagged MIT; the other 1237 carry no licence line
+  licence: Apache-2.0 OR MIT for the 2432 Rocq files of this folder that carry that tag, each with Anthropic's copyright line;
+    MIT, the repository's licence (LICENSE), for the 4 tagged MIT; the other 1249 carry no licence line
   modified: 'The licence lines of 436 of its files were written in this repository in 2026-11, by the licence change of the
     release series: an SPDX tag, and Anthropic''s copyright line above the tag where the file carries Anthropic''s text. In
-    2026-11, 727 more of its files took the licence lines of the Anthropic-licensed file each was made from, in this fuzz target
+    2026-11, 715 more of its files took the licence lines of the Anthropic-licensed file each was made from, in this fuzz target
     or another (docs/adding-a-proof.md, requirement 7), and one line `Modified by Theorem Labs, 2026-11` that names that file
     and says how the file was changed from it'

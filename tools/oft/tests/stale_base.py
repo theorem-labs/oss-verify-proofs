@@ -69,6 +69,9 @@ from .. import layout
 FEEDS_THE_CHECKS = (
     # the tools every job runs from the base: `oft plan`, `oft lint`, `oft check` and the ci scripts the check job runs
     (r"tools/", "the tools"),
+    # the enrollment scripts, whose tests the tools' tests job runs (test_enroll_tools) and whose check.sh the
+    # enrollment's facts job runs against this base: tools/enroll/ until they moved (OSSV-276)
+    (r"dev/enroll/", "the tools"),
     # the shared actions each job runs from the base, and this workflow, which a pull request runs as its merge
     # commit has it: a base change to it is in the merge that lands and in every run after this one
     (r"\.github/", "the workflows"),

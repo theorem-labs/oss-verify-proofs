@@ -122,9 +122,10 @@ class Sessions(unittest.TestCase):
             self.assertEqual(served, {"s-one": ("openai-codex/gpt-5.6-terra:xhigh", "anthropic/claude-opus-5-5 x2"),
                                       "s-two": ("openai-codex/gpt-5.6-terra:xhigh", "anthropic/claude-opus-5-5 x1")})
 
-    def test_agent_hours_leave_out_long_gaps(self):
+    def test_a_long_turn_counts_as_waiting_not_work(self):
         """An assistant turn's time runs from the entry before it to its own timestamp; a turn of exactly 10 minutes
-        counts, one of 10 minutes and 1 second is left out."""
+        is work (agent_hours), one of 10 minutes and 1 second is waiting (waiting_hours).  Every turn counts in one
+        of the two, so no turn's time is lost."""
         with scratch() as d:
             path = write_transcript(os.path.join(d, "A.jsonl"), "s-a", [
                 user(1), assistant(3, usage(1, 1, 0, 0, 0.01)), tool_result(4),
@@ -132,8 +133,172 @@ class Sessions(unittest.TestCase):
                 assistant(25, usage(1, 1, 0, 0, 0.01), seconds=1)])
             change_ledger.tag(d, "c", "implement", "s-a", "box", path)
             change_ledger.summarize(d, "c")
-            self.assertEqual({s: r["agent_hours"] for s, r in by_step(d, "c").items()},
-                             {"implement": "0.20", "total": "0.20"})
+            got = {s: (r["agent_hours"], r["waiting_hours"]) for s, r in by_step(d, "c").items()}
+            self.assertEqual(got, {"implement": ("0.20", "0.17"), "total": ("0.20", "0.17")})
+            totals = rows(d, "c", "session-totals.tsv")
+            self.assertEqual([(r["agent_hours"], r["waiting_hours"]) for r in totals], [("0.20", "0.17")])
+
+    def test_tool_hours_count_each_turn_s_calls_once(self):
+        """A tool call's time runs from the turn that asked for it to the last result of that turn's calls: results
+        that came back together count once, a turn's own time and its tool calls never hold the same second, and a
+        turn that asked for nothing adds no tool time."""
+        with scratch() as d:
+            path = write_transcript(os.path.join(d, "T.jsonl"), "s-t", [
+                user(1), assistant(2, usage(1, 1, 0, 0, 0.01)),            # turn: 1 minute
+                tool_result(8), tool_result(20),                           # two calls together: 18 minutes
+                assistant(23, usage(1, 1, 0, 0, 0.01)),                    # turn: 3 minutes
+                user(30), assistant(33, usage(1, 1, 0, 0, 0.01))])         # turn: 3 minutes, no call
+            change_ledger.tag(d, "c", "implement", "s-t", "box", path)
+            change_ledger.summarize(d, "c")
+            row = by_step(d, "c")["total"]
+            self.assertEqual((row["agent_hours"], row["waiting_hours"], row["tool_hours"]), ("0.12", "0.00", "0.30"))
+
+    def test_a_turn_and_its_tool_calls_never_hold_the_same_second(self):
+        """omp writes a background call's result when it arrives, so an entry written after it can be older, and a
+        turn's time can then run over a tool interval.  tool_hours is the time with a call outstanding and no turn
+        running, so agent_hours + waiting_hours + tool_hours stays inside the session's own life."""
+        with scratch() as d:
+            path = write_transcript(os.path.join(d, "B.jsonl"), "s-b", [
+                user(1), assistant(2, usage(1, 1, 0, 0, 0.01)),   # turn: 1 minute; it asks for the long call
+                tool_result(50),                                  # the call comes back at minute 50
+                user(10),                                         # written after it, timed before it
+                assistant(55, usage(1, 1, 0, 0, 0.01))])          # turn: 45 minutes, so it is waiting
+            change_ledger.tag(d, "c", "implement", "s-b", "box", path)
+            change_ledger.summarize(d, "c")
+            row = by_step(d, "c")["total"]
+            # the tool interval is minute 2 to 50; the turns hold 1-2 and 10-55, so only 2-10 is tool time
+            self.assertEqual((row["agent_hours"], row["waiting_hours"], row["tool_hours"]),
+                             ("0.02", "0.75", "0.13"))
+            start, end = (datetime.datetime.strptime(row[c], "%Y-%m-%dT%H:%M:%SZ")
+                          for c in ("wall_start", "wall_end"))
+            life = (end - start).total_seconds() / 3600
+            self.assertLessEqual(sum(float(row[c]) for c in ("agent_hours", "waiting_hours", "tool_hours")), life)
+
+    def test_a_wait_two_sessions_share_counts_once_in_the_row(self):
+        """tool_hours adds up what each session spent waiting, so two sessions of one step that wait at the same
+        time count that time twice.  waiting_clock_hours is the step's own clock: the time with at least one of its
+        sessions waiting, so a wait they share counts once."""
+        with scratch() as d:
+            for name, sid in (("P.jsonl", "s-p"), ("Q.jsonl", "s-q")):
+                path = write_transcript(os.path.join(d, name), sid, [
+                    user(1), assistant(2, usage(1, 1, 0, 0, 0.01)),   # each asks for a call at minute 2
+                    tool_result(32), assistant(33, usage(1, 1, 0, 0, 0.01))])
+                change_ledger.tag(d, "c", "implement", sid, "box", path)
+            change_ledger.summarize(d, "c")
+            row = by_step(d, "c")["implement"]
+            # each session waited 30 minutes, over the same half hour
+            self.assertEqual((row["sessions"], row["tool_hours"], row["waiting_clock_hours"]), ("2", "1.00", "0.50"))
+
+    def test_a_turn_with_no_usage_still_has_its_time_measured(self):
+        """A turn with no usage leaves the token columns and cost_usd unmeasured, and nothing else: its time comes
+        from the timestamps, so agent_hours and waiting_hours are read in full."""
+        no_usage = assistant(3, None)
+        with scratch() as d:
+            path = write_transcript(os.path.join(d, "N.jsonl"), "s-n", [
+                user(1), assistant(2, usage(1, 1, 0, 0, 0.01)), no_usage])
+            change_ledger.tag(d, "c", "implement", "s-n", "box", path)
+            change_ledger.summarize(d, "c")
+            row = by_step(d, "c")["total"]
+            self.assertEqual((row["agent_hours"], row["waiting_hours"]), ("0.03", "0.00"))
+            self.assertEqual(row["input_tokens"], "1 + not measured")
+            self.assertEqual([g["column"] for g in rows(d, "c", "gaps.tsv") if g["column"] in
+                              ("agent_hours", "waiting_hours")], [])
+
+    def test_the_tool_time_of_an_untimed_turn_is_not_measured(self):
+        """The tool calls of a turn with no timestamp have no start, so their time is not measured and gaps.tsv
+        says so.  It is never read as 0."""
+        untimed_turn = assistant(9, usage(1, 1, 0, 0, 0.01))
+        del untimed_turn["timestamp"]
+        with scratch() as d:
+            path = write_transcript(os.path.join(d, "V.jsonl"), "s-v", [
+                user(1), untimed_turn, tool_result(20), assistant(21, usage(1, 1, 0, 0, 0.01))])
+            change_ledger.tag(d, "c", "implement", "s-v", "box", path)
+            change_ledger.summarize(d, "c")
+            self.assertEqual(by_step(d, "c")["total"]["tool_hours"], "0.00 + not measured")
+            whats = [g["what"] for g in rows(d, "c", "gaps.tsv") if g["column"] == "tool_hours"]
+            self.assertEqual(len(whats), 1, whats)
+            self.assertIn("has no timestamp: the time of its tool calls has no start", whats[0])
+
+    def test_a_window_does_not_hide_an_untimed_tool_result(self):
+        """With a window, an entry with no timestamp is outside it, so the tool result below is never counted.  It
+        is reported the same way as without a window: not measured, with its reason."""
+        untimed = {"type": "message", "message": {"role": "toolResult"}}
+        entries = [user(1), assistant(2, usage(1, 1, 0, 0, 0.01)), untimed,
+                   assistant(9, usage(1, 1, 0, 0, 0.01)), tool_result(12)]
+        for window in ({}, {"since": at(0), "until": at(30)}):
+            with self.subTest(window=bool(window)), scratch() as d:
+                path = write_transcript(os.path.join(d, "W.jsonl"), "s-w", entries)
+                change_ledger.tag(d, "c", "implement", "s-w", "box", path, **window)
+                change_ledger.summarize(d, "c")
+                self.assertIn(change_ledger.NOT_MEASURED, by_step(d, "c")["total"]["tool_hours"])
+                whats = [g["what"] for g in rows(d, "c", "gaps.tsv") if g["column"] == "tool_hours"]
+                self.assertTrue(any("has no timestamp" in w for w in whats), whats)
+
+    def test_two_turns_never_hold_the_same_second(self):
+        """An entry before a turn can be older than a turn already counted, since omp writes a background call's
+        result when it arrives.  A turn therefore starts no earlier than the end of the last turn counted, so
+        agent_hours + waiting_hours + tool_hours stays inside the session's own life."""
+        with scratch() as d:
+            path = write_transcript(os.path.join(d, "O.jsonl"), "s-o", [
+                user(1), assistant(2, usage(1, 1, 0, 0, 0.01)),    # turn: minute 1 to 2
+                tool_result(50), assistant(52, usage(1, 1, 0, 0, 0.01)),   # turn: minute 50 to 52
+                user(10),                                          # written after, timed before
+                assistant(55, usage(1, 1, 0, 0, 0.01))])           # starts at 52, not at 10
+            change_ledger.tag(d, "c", "implement", "s-o", "box", path)
+            change_ledger.summarize(d, "c")
+            row = by_step(d, "c")["total"]
+            start, end = (datetime.datetime.strptime(row[c], "%Y-%m-%dT%H:%M:%SZ")
+                          for c in ("wall_start", "wall_end"))
+            hours = sum(float(row[c]) for c in ("agent_hours", "waiting_hours", "tool_hours"))
+            self.assertLessEqual(hours, (end - start).total_seconds() / 3600)
+
+    def test_a_call_no_tag_counts_says_why_it_is_not_measured(self):
+        """A tool call whose turn is outside the tag's window is counted by no tag: tool_hours says it was read in
+        part, and gaps.tsv says the turn is not this tag's, not that a timestamp is missing."""
+        with scratch() as d:
+            path = write_transcript(os.path.join(d, "S.jsonl"), "s-s", [
+                user(1), assistant(2, usage(1, 1, 0, 0, 0.01)),   # the call starts inside the first window
+                tool_result(10), assistant(12, usage(1, 1, 0, 0, 0.01))])
+            change_ledger.tag(d, "c", "implement", "s-s", "box", path, since=at(0), until=at(5))
+            change_ledger.tag(d, "c", "review", "s-s", "box", path, since=at(5), until=at(30))
+            change_ledger.summarize(d, "c")
+            self.assertIn(change_ledger.NOT_MEASURED, by_step(d, "c")["review"]["tool_hours"])
+            whats = [g["what"] for g in rows(d, "c", "gaps.tsv")
+                     if g["column"] == "tool_hours" and g["step"] == "review"]
+            self.assertEqual(len(whats), 1, whats)
+            self.assertIn("answers a turn this tag does not count", whats[0])
+            self.assertNotIn("no timestamp", whats[0])
+
+    def test_a_turn_timed_before_the_turn_counted_before_it_is_not_measured(self):
+        """A turn whose own timestamp is older than the turn counted before it cannot be timed: its seconds would
+        be seconds that turn already holds.  It is not measured, and gaps.tsv says so, rather than counting 0."""
+        with scratch() as d:
+            path = write_transcript(os.path.join(d, "R.jsonl"), "s-r", [
+                user(1), assistant(2, usage(1, 1, 0, 0, 0.01)),            # turn: minute 1 to 2
+                tool_result(8), assistant(10, usage(1, 1, 0, 0, 0.01)),    # turn: minute 8 to 10
+                tool_result(4), assistant(6, usage(1, 1, 0, 0, 0.01))])    # ends before minute 10
+            change_ledger.tag(d, "c", "implement", "s-r", "box", path)
+            change_ledger.summarize(d, "c")
+            row = by_step(d, "c")["total"]
+            self.assertEqual(row["agent_hours"], "0.05 + not measured")   # 1 minute and 2 minutes
+            for column in ("agent_hours", "waiting_hours", "tool_hours"):
+                whats = [g["what"] for g in rows(d, "c", "gaps.tsv") if g["column"] == column]
+                self.assertTrue(any("is timed before the turn counted before it" in w for w in whats),
+                                (column, whats))
+
+    def test_a_tool_result_with_no_usable_time_is_not_measured(self):
+        """A tool result with no timestamp, or one timed before the turn that asked for it, is not measured: it adds
+        nothing to tool_hours, which then says it was read in part, and gaps.tsv says why for each."""
+        untimed = {"type": "message", "message": {"role": "toolResult"}}
+        with scratch() as d:
+            path = write_transcript(os.path.join(d, "U.jsonl"), "s-u", [
+                user(1), assistant(2, usage(1, 1, 0, 0, 0.01)), untimed,
+                assistant(9, usage(1, 1, 0, 0, 0.01)), tool_result(4)])
+            change_ledger.tag(d, "c", "implement", "s-u", "box", path)
+            change_ledger.summarize(d, "c")
+            self.assertEqual(by_step(d, "c")["total"]["tool_hours"], "0.00 + not measured")
+            whats = [g["what"] for g in rows(d, "c", "gaps.tsv") if g["column"] == "tool_hours"]
+            self.assertEqual(len(whats), 2, whats)
 
     def test_a_turn_whose_timestamps_are_missing_is_not_measured(self):
         """A turn's time needs its own timestamp and that of the entry just before it: when either is missing, or the

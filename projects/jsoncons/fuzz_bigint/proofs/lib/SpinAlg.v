@@ -18,6 +18,13 @@ Variable segs : list Segment.
 Variable scfg : SpuriousCfg.
 
 (* [comment removed for export] *)
+(* A spin site is a reachable-in-principle self-jump word in the image's code.
+   [srz_spin] closes a configuration with the empty trace because the machine
+   is parked on such a word; without this premise the constructor would also
+   close configurations of images that contain no self-jump at all, which is
+   false.  [NoSpinSite.no_spin_b_sound] refutes it for an image by scanning the
+   image's own code bytes. *)
+Definition spin_site_present : Prop := exists ms, is_self_jump segs ms = true.
 
 Inductive srealizes : config -> TSet -> Prop :=
 | srz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
@@ -29,6 +36,7 @@ Inductive srealizes : config -> TSet -> Prop :=
     m_halted (cfg_model c) <> None ->
     srealizes c t_nil
 | srz_spin : forall c,
+    spin_site_present ->
     to_spin segs (cfg_ms c) (cfg_model c) ->
     m_halted (cfg_model c) = None ->
     srealizes c t_nil
@@ -47,8 +55,8 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma srz_spinning : forall c, spinning segs c -> srealizes c t_nil.
-Proof. intros c [Hspin Hh]. exact (srz_spin c Hspin Hh). Qed.
+Lemma srz_spinning : forall c, spin_site_present -> spinning segs c -> srealizes c t_nil.
+Proof. intros c Hsite [Hspin Hh]. exact (srz_spin c Hsite Hspin Hh). Qed.
 
 (* [comment removed for export] *)
 
@@ -56,7 +64,7 @@ Lemma srealizes_nonempty : forall c T, srealizes c T -> T [].
 Proof.
   intros c T H;
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c Hspin Hh | c T T' H IH Heq].
+                   | c Hsite Hspin Hh | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
   - reflexivity.
   - reflexivity.
@@ -68,7 +76,7 @@ Lemma srealizes_pclosed : forall c T, srealizes c T ->
 Proof.
   intros c T H;
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c Hspin Hh | c T T' H IH Heq];
+                   | c Hsite Hspin Hh | c T T' H IH Heq];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
     + left. eapply is_prefix_trans; eauto.
@@ -87,7 +95,7 @@ Lemma srealizes_star_only : forall c T, srealizes c T ->
 Proof.
   intros c T H;
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c Hspin Hh | c T T' H IH Heq];
+                   | c Hsite Hspin Hh | c T T' H IH Heq];
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
     + exists i0. left. apply is_prefix_nil.
@@ -109,7 +117,7 @@ Lemma srealizes_admits : forall c T, srealizes c T ->
 Proof.
   intros c T H;
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c Hspin Hh | c T T' H IH Heq];
+                   | c Hsite Hspin Hh | c T T' H IH Heq];
     intros tr HT.
   - destruct Hnode as [Hcomp _].
     destruct HT as [i [Hpre | (tr0 & -> & HT0)]].
@@ -141,7 +149,7 @@ Lemma srealizes_step : forall c T e c',
 Proof.
   intros c T e c' H; revert e c';
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c Hspin Hh | c T T' H IH Heq];
+                   | c Hsite Hspin Hh | c T T' H IH Heq];
     intros e c' Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
@@ -151,7 +159,7 @@ Proof.
                 (spinning_silent_loop segs) (conj Hspin Hh) (sstep_cfg_sub _ _ _ _ _ Hss))
       as (_ & c'' & Heq2 & Hsp').
     injection Heq2 as ->.
-    exists t_nil. exact (srz_spinning _ Hsp').
+    exists t_nil. exact (srz_spinning _ Hsite Hsp').
   - eapply IH; exact Hss.
 Qed.
 
@@ -160,7 +168,7 @@ Lemma srealizes_no_sserror : forall c T e,
 Proof.
   intros c T e H; revert e;
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c Hspin Hh | c T T' H IH Heq];
+                   | c Hsite Hspin Hh | c T T' H IH Heq];
     intros e Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.

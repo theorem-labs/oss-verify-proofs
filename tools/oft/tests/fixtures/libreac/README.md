@@ -15,9 +15,13 @@ of the two builds found each function's address and size in the code and named i
 `pcap-plain-functions.tsv`, has a row for each function, with the columns `class`, `name` (a function's aliases joined
 by `,`), `contract`, `addr_before`, `size_before`, `addr_after` and `size_after`.  [`make.py`](make.py) takes the rows
 of six functions from it, cuts each function's bytes out of each binary's `.text` with `elf.Elf`, and hashes them as
-`symbols.read` does, exact and through `symbols.mask` with the binary's Image (`symbols.build_image`); with no symbol
-table it knows no function that never returns.  It reads no line table, so the lines of every function are `-`,
-and no symbol table, so every row is a function (kind `func`) and the facts list no data object.
+`symbols.read` does, exact and through `symbols.mask_targets` with the binary's Image (`symbols.build_image`); with
+no symbol table it knows no function that never returns.  Each kept function's targets are resolved
+(`symbols.target_id`) against every function the table names and every section of the binary.  The table names no
+data object, so every data target of this fixture lands in a section, where a real fact resolves most of them to
+a named object: the fixture's targets are stricter than a real fact's about data that moved inside a section, and
+they carry the same reading of a call.  It reads no line table, so the lines of every function are `-`, and no
+symbol table, so every row is a function (kind `func`) and the facts list no data object.
 Run in `tools/`, with the 1.8.0 binary, the 1.9.0 binary and the table:
 
 ```sh

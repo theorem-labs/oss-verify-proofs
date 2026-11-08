@@ -23,7 +23,7 @@ def add_row(t, sym):
 
 def func(name, address, label, lines="-"):
     """A stand-in function of 8 bytes: label marks its exact and its masked bytes."""
-    return symbols.Sym(name, "func", address, 8, label * 32, label[::-1] * 32, lines)
+    return symbols.Sym(name, "func", address, 8, label * 32, label[::-1] * 32, "-", lines)
 
 
 def contract(r, path):
@@ -271,7 +271,7 @@ class Prove(unittest.TestCase):
             obj = "%s/Prog/obj_c.v" % LIB
             t.write(obj, "Definition O : Z := Symbols.Plain.s_g_new.\n")
             base = contract_repo(t)
-            add_row(t, symbols.Sym("g_new", "object", 0x15010, 8, "-", "-", "-"))
+            add_row(t, symbols.Sym("g_new", "object", 0x15010, 8, "-", "-", "-", "-"))
             r = self.report(t, base, commit(t))
             self.assertEqual(states(r), dict(unchanged(CRC, ENTRY, STATE, TABLE), **{obj: "unknown"}))
             self.assertEqual(contract(r, obj)["why"], "at the base: lib/Prog/obj_c.v:1: Symbols.Plain.s_g_new cannot "
@@ -374,7 +374,7 @@ class Prove(unittest.TestCase):
 
 
 class WithSymbolFacts(unittest.TestCase):
-    """prove.with_symbol_facts: whether each unit has a symbol fact at the base or at the head.  pr.yml's prove job
+    """prove.with_symbol_facts: whether each unit has a symbol fact at the base or at the head.  prove.yml's job
     reports and posts only on a unit that has one."""
 
     def test_a_symbol_fact_at_either_commit_counts(self):

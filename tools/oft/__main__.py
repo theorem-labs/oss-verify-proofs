@@ -82,12 +82,20 @@ def _gib(s):
 
 
 def _post_check(s):
-    """--post-check: OWNER/REPO@SHA, a GitHub repository and the full id of a commit of it, as (repository, id)."""
-    m = re.fullmatch(r"([A-Za-z0-9][A-Za-z0-9-]*)/([A-Za-z0-9._-]+)@([0-9a-f]{40})", s)
-    if not m or m.group(2) in (".", ".."):
+    """--post-check and --post-check-optional: OWNER/REPO@SHA, a GitHub repository and the full id of a commit of it,
+    as (repository, id)."""
+    got = check_run.target(s)
+    if got is None:
         raise argparse.ArgumentTypeError("not OWNER/REPO@SHA, a GitHub repository and the full commit id (40 "
                                          "lower-case hex digits) of its pull request's head: %r" % s)
-    return "%s/%s" % m.group(1, 2), m.group(3)
+    return got
+
+
+def _pull_request(s):
+    """--pull-request: the URL of a pull request on GitHub (check_run.PULL_REQUEST)."""
+    if check_run.PULL_REQUEST.fullmatch(s) is None:
+        raise argparse.ArgumentTypeError("not https://github.com/OWNER/REPO/pull/N: %r" % s)
+    return s
 
 
 def cmd_generate(a):
@@ -232,10 +240,13 @@ def cmd_classify(a):
 
 
 def cmd_prove(a):
+    posts = ([(repo, sha, False) for repo, sha in a.post_check]
+             + [(repo, sha, True) for repo, sha in a.post_check_optional])
     token = None
-    if a.post_check:
+    if posts:
         if not os.environ.get("GH_TOKEN"):
-            print("FAIL oft prove: --post-check needs a token in GH_TOKEN")
+            print("FAIL oft prove: %s needs a token in GH_TOKEN" % ("--post-check" if a.post_check
+                                                                    else "--post-check-optional"))
             return 1
         try:
             token = check_run.Token(os.environ["GH_TOKEN"])
@@ -246,11 +257,11 @@ def cmd_prove(a):
     r = prove.run(_root(a), a.unit, a.base, a.head, a.json, out=sys.stdout)
     if r is None:
         return 1
-    if not a.post_check:
+    if not posts:
         return 0
-    sys.stdout.flush()   # the report comes before the line about its check run, in a log that holds both
-    repo, sha = a.post_check
-    return check_run.run(r, repo, sha, token, os.environ.get("GITHUB_API_URL") or check_run.API, err=sys.stderr)
+    sys.stdout.flush()   # the report comes before the lines about its check runs, in a log that holds both
+    return check_run.run(r, posts, token, os.environ.get("GITHUB_API_URL") or check_run.API, err=sys.stderr,
+                         pull_request=a.pull_request)
 
 
 def cmd_change_ledger(a):
@@ -343,7 +354,9 @@ def main(argv=None):
                       help="print the work key of each contract file of one unit at --change, as JSON: which "
                            "contracts need an agent; never a basis for verdict reuse. It holds the contract, the "
                            "files of the proof library it requires, the proof environment, the masked bytes or size "
-                           "of what it names from Symbols.v, and no address; with --base, which inputs differ")
+                           "of what it names from Symbols.v and, for a function, the targets of the symbol fact "
+                           "(what the immediates its mask zeroed point at, so that a call or a read of another "
+                           "symbol changes the key), and no address; with --base, which inputs differ")
     pl.set_defaults(fn=cmd_plan)
 
     rt = sub.add_parser("release-tree", help="keep only the proofs approvals.yaml lists, in place, and render again")
@@ -452,12 +465,21 @@ def main(argv=None):
                     help="print the report as JSON: every function with its class, every contract with its state, "
                          "why, the work-key components that differ and the class and source lines of each function "
                          "it names")
-    pv.add_argument("--post-check", type=_post_check, metavar="OWNER/REPO@SHA",
+    pv.add_argument("--post-check", type=_post_check, metavar="OWNER/REPO@SHA", action="append", default=[],
                     help="also post the report as the check run 'theorem/prove: PROJECT/HARNESS' on commit SHA of the "
                          "GitHub repository OWNER/REPO, the head of its pull request: action_required when a contract "
                          "needs work, is a changed contract, is removed or is unknown, neutral when the others are all "
-                         "data changed, else success.  The token is GH_TOKEN, a GitHub App installation token with "
-                         "checks: write on OWNER/REPO; the API is GITHUB_API_URL (default %s)" % check_run.API)
+                         "data changed, else success.  May be given more than once: each is posted, and a refusal "
+                         "stops no other.  The token is GH_TOKEN, a GitHub App installation token with checks: write "
+                         "on OWNER/REPO; the API is GITHUB_API_URL (default %s)" % check_run.API)
+    pv.add_argument("--post-check-optional", type=_post_check, metavar="OWNER/REPO@SHA", action="append", default=[],
+                    help="as --post-check, after every --post-check, except that GitHub's refusal with 403 or 404 (the "
+                         "App is not installed on OWNER/REPO, or may not write its checks) is a warning, not a "
+                         "failure")
+    pv.add_argument("--pull-request", type=_pull_request, metavar="URL",
+                    help="the pull request whose head --head is, when the check goes on another commit (its code "
+                         "repository's): the summary says first that the report is of the head of that unmerged pull "
+                         "request")
     pv.set_defaults(fn=cmd_prove)
 
     cg = sub.add_parser("change-ledger", help="what one change cost, from the records that hold it: its agent "

@@ -8,7 +8,11 @@ that part's check reads, so a part whose key has a recorded pass is not checked 
                     the proofs, counterexamples and findings the per-project layout puts in it;
                     projects/<p>/project.yaml and every projects/<p>/*/harness.yaml (`oft fetch` unpacks a project's
                     archive only when every harness's builds are in it); the checker (NOT_THE_CHECKER says what is not)
-    build           the unit's proofs folder; theories/; toolchain/allowed-axioms.txt (the rest of toolchain/ builds
+    build           the unit's proofs folder, but two parts of its build record that no check reads: its prose
+                    (provenance/PROVENANCE.md) and its licence evidence with the tooling that makes it
+                    (provenance/evidence/licence/); unitpaths.PROOFS_DROP names both, and the record itself,
+                    provenance/PROVENANCE.yaml, which the rules read, stays keyed.  theories/;
+                    toolchain/allowed-axioms.txt (the rest of toolchain/ builds
                     the images, whose digests are keyed); every dune file of its build path, the generated barriers
                     among them (_dune_path); of dune-project, what the project's build reads (dune_project); the
                     checker image; whether rocqchk runs
@@ -79,8 +83,9 @@ PARTS = unitpaths.PARTS
 # Raised when what a key reads or how it is computed changes, so that no key computed the old way can equal one
 # computed the new way.  2: a path's id is its entries and its files' attributes by their paths inside it, not its
 # tree id.  3: a build key holds every dune file of the unit's build path, the generated barriers among them
-# (_dune_path).
-VERSION = "3"
+# (_dune_path).  4: the proofs component leaves out the build record's prose and its licence evidence
+# (unitpaths.PROOFS_DROP), and a component's drop may name a path under its root, not only an entry of it.
+VERSION = "4"
 # The files of tools/, by their paths inside tools/, that a check never opens.  Every other file of tools/ is the
 # checker, whose ids are in every key: `python3 -m oft.check` and `python3 -m oft.fetch`, as check-units.sh runs them,
 # open no file this matches (test_keys.Checker says so).  oft/generate.py, oft/paths.py,
@@ -97,7 +102,7 @@ VERSION = "3"
 # fact (`oft symbols`), oft/classify.py compares two (`oft classify`), oft/contracts.py keys each contract file for
 # work (`oft plan --contracts`), oft/prove.py reports a change's functions and contracts from them (`oft prove`),
 # oft/check_run.py posts that report as a pull request check (`oft prove --post-check`) and oft/ci/prove-pr runs both
-# in pr.yml's prove job: no check reads one; and oft/change_ledger.py sums what a change cost from its sessions'
+# in prove.yml's job: no check reads one; and oft/change_ledger.py sums what a change cost from its sessions'
 # transcripts and git (`oft change-ledger`).  oft/lps_impact.py is here because it is run by hand on a clone, and
 # starts a container that runs `python3 -m oft.check` in an image of its own, so no check loads it.  Two directories
 # are here whole: enroll/, the scripts that carry a merged theorem-labs/oss-verify enrollment into these facts
@@ -117,6 +122,12 @@ STORE_BRANCH = "check-results"
 
 class NoKey(Exception):
     """A key that cannot be computed: a commit or a file git cannot read, or a dune file no key can hold."""
+
+
+def dropped(rel, drop):
+    """Whether rel, a path inside a component's root, is one of the paths drop leaves out of that component, or lies
+    under one (unitpaths.drop gives them; a name with no "/" is an entry of the root itself)."""
+    return any(rel == d or rel.startswith(d + "/") for d in drop)
 
 
 def git(repo, *args, stdin=None):
@@ -226,15 +237,15 @@ class Attributes:
 
     def of(self, path, drop=()):
         """A digest of the lines "<file>:<attribute>=<value>" of path and of every file under it, each file named by
-        its path relative to path (path itself, a file, by its file name), the files under path/<d> for each d in
-        drop left out: a folder that moves keeps its digest."""
+        its path relative to path (path itself, a file, by its file name), the files that drop leaves out left out:
+        a folder that moves keeps its digest."""
         lo = bisect.bisect_left(self.files, path)
         hi = bisect.bisect_left(self.files, path + "/\uffff")
         out = []
         for p in self.files[lo:hi]:
             if p == path:
                 rel = p.rsplit("/", 1)[-1]
-            elif p.startswith(path + "/") and p[len(path) + 1:].split("/", 1)[0] not in drop:
+            elif p.startswith(path + "/") and not dropped(p[len(path) + 1:], drop):
                 rel = p[len(path) + 1:]
             else:
                 continue
@@ -243,14 +254,36 @@ class Attributes:
 
     def entries(self, root, drop=()):
         """sha256 over the sorted lines "<mode> <type> <object id>\\t<name>" of root's entries, as `git ls-tree -z
-        <commit>:<root>` gives them, less the names in drop (root a file: its own entry, under its file name); "-"
-        when root does not exist.  It plays the role root's tree id would, and writes nothing into the repository."""
+        <commit>:<root>` gives them, less what drop leaves out (root a file: its own entry, under its file name);
+        "-" when root does not exist.  It plays the role root's tree id would, and writes nothing into the
+        repository."""
         if root not in self.entry:
             return "-"
         if self.entry[root].split()[1] != "tree":
             return digest(["%s\t%s" % (self.entry[root], root.rsplit("/", 1)[-1])])
-        return digest("%s\t%s" % (self.entry[path], name) for name, path in self.children.get(root, ())
-                      if name not in drop)
+        return digest(self._entry_lines(root, drop))
+
+    def _entry_lines(self, root, drop):
+        """The lines of the folder root's entries that entries() digests, what drop leaves out left out; [] for a
+        folder that drop empties.  A drop name with no "/" is an entry of root, left out whole.  One with a "/" is a
+        path under root, and the folder it leads through is read again by this rule rather than by its object id, so
+        that what is under that folder and is not dropped is still in the digest and what is dropped is in no digest
+        at all; the folder's line carries that digest in place of its tree id (64 hex digits, never an object id's
+        40).  A folder that drop empties is left out whole, so adding the dropped path to a unit that had none does
+        not change the id either."""
+        out = []
+        for name, path in self.children.get(root, ()):
+            if name in drop:
+                continue
+            mode, kind, _oid = self.entry[path].split()
+            under = tuple(d[len(name) + 1:] for d in drop if d.startswith(name + "/"))
+            if not under or kind != "tree":
+                out.append("%s\t%s" % (self.entry[path], name))
+                continue
+            lines = self._entry_lines(path, under)
+            if lines:
+                out.append("%s %s %s\t%s" % (mode, kind, digest(lines), name))
+        return out
 
     def id(self, root, drop=()):
         """root's id: "<entries digest> <attributes digest>", drop left out of both; "-" when root does not exist.
@@ -262,12 +295,12 @@ class Attributes:
         entries = self.entries(root, drop)
         return entries if entries == "-" else "%s %s" % (entries, self.of(root, drop))
 
-    def either(self, unit, new, old, new_drop=()):
+    def either(self, unit, new, old, new_drop=(), old_drop=()):
         """(root, drop) of what a component of unit reads: its new-layout path new, with new_drop, when it exists,
-        else its old-layout path old; NoKey when both exist."""
+        else its old-layout path old, with old_drop; NoKey when both exist."""
         if new in self.entry and old in self.entry:
             raise NoKey("%s: in both layouts" % unit)
-        return (new, new_drop) if new in self.entry else (old, ())
+        return (new, new_drop) if new in self.entry else (old, old_drop)
 
 
 def _project(repo, commit, p, attrs):
@@ -329,7 +362,9 @@ def dune_path_files(project, harness):
     old layout the counterexamples and findings folders lie outside the statement folder, so no build reads a dune
     file of theirs; the key reads them there, as it reads a dune-workspace below the root, which is the safe
     direction.  A dune file deeper than those folders is not here, nor is another unit's: a proofs folder's own id
-    holds every file under it that is not its barrier, a counterexamples or findings folder's id holds the rest of
+    holds every file under it that is not its barrier and that unitpaths.PROOFS_DROP does not drop (the build
+    record's prose and its licence evidence, which hold no dune file a build reads), a counterexamples or findings
+    folder's id holds the rest of
     what is under it for its own part, and what a hand-written one of them may hold is bounded by refusal, not by
     a key (check_hand_dune).  Each unit reads only its own path.  The root dune-project is not here either:
     dune_project keys every byte of it a build reads, and its absence, and keying the file whole would re-check
@@ -426,7 +461,7 @@ def keys(repo, wanted, facts, change, tools, rocqchk=False):
     out = {}
     for unit, part in wanted:
         p, h = unit.split("/", 1)
-        # component: (commit, root, the names left out of it).  unitpaths.own gives each path in each layout: one that
+        # component: (commit, root, the paths left out of it).  unitpaths.own gives each path in each layout: one that
         # a change brings (layout.is_change) is read at change, in the layout it has there (Attributes.either: NoKey
         # for both), with what unitpaths.drop leaves out of it in that layout; every other path, the same in both
         # layouts, is read at facts.
@@ -437,7 +472,8 @@ def keys(repo, wanted, facts, change, tools, rocqchk=False):
         own = {}
         for name, rel in new.items():
             if layout.is_change(rel):
-                own[name] = (change,) + at.either(unit, rel, old[name], unitpaths.drop(name, layout.NEW))
+                own[name] = (change,) + at.either(unit, rel, old[name], unitpaths.drop(name, layout.NEW),
+                                                 unitpaths.drop(name, layout.OLD))
             else:
                 own[name] = (facts, rel, unitpaths.drop(name, layout.NEW))
         comp = {"version": VERSION, "unit": unit, "part": part, "checker": checker_id,

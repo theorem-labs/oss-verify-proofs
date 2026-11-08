@@ -39,8 +39,9 @@
                   repository is on a branch or tag there
 
 The per-file text rules (private-data, links, proofs) read an internal path
-(INTERNAL in paths.py: a row of the internal class, or one of INTERNAL_FILES),
-which no release carries, for a private key or an access token alone.
+(is_internal: INTERNAL in paths.py, a row of the internal class or one of
+INTERNAL_FILES, and LINT_ONLY_INTERNAL here), which no release carries, for a
+private key or an access token alone.
 private-data and links say what a release may publish, so in a directory a
 release never carries whose files keep their own rows (internal_only:
 dev/stream/, which `oft release-tree` cuts whole) they read only what a cut
@@ -364,10 +365,10 @@ def _repository_value(line, match):
             and re.match(r"(?:['\"])?\s*(?:[,}]|#|$)", after) is not None)
 
 
-# What the text rules read in an internal path (INTERNAL of paths.py): a private key or an access token, which is as
-# bad there as in a shipped file.  The rest of private-data, and links and proofs, judge the published text: no
-# release carries an internal path, and tools/publish/ holds the publishing scanner's needles, host paths and addresses
-# on purpose.
+# What the text rules read in an internal path (is_internal: INTERNAL of paths.py, and LINT_ONLY_INTERNAL): a private
+# key or an access token, which is as bad there as in a shipped file.  The rest of private-data, and links and proofs,
+# judge the published text: no release carries an internal path, and tools/publish/ holds the publishing scanner's
+# needles, host paths and addresses on purpose.
 SECRETS = (("a private key", PRIVATE_KEY), ("an access token", TOKEN))
 
 
@@ -605,9 +606,9 @@ def judge(u, known, strict=True, full=True, ref=None):
 
 
 def link_strict(rel):
-    """Rendered text, docs and facts: everything but the tools, the tests and
-    the workflows, whose links are code, not content."""
-    return not rel.startswith(("tools/", "tests/", ".github/"))
+    """Rendered text, docs and facts: everything but the tools (tools/, and dev/enroll/, the enrollment scripts'
+    place outside it), the tests and the workflows, whose links are code, not content."""
+    return not rel.startswith(("tools/", "dev/enroll/", "tests/", ".github/"))
 
 
 def _bases(where):
@@ -1311,14 +1312,32 @@ LINT_ONLY_HAND = (".claude/skills/porting-released-proofs/SKILL.md",
                   ".claude/skills/clean-room-restatement/SKILL.md",
                   ".claude/skills/clean-room-restatement/references/*.md",
                   "toolchain/requirements.txt")
+# What only this repository has, as paths.TABLE's internal rows are, that only lint judges, here for the same reason:
+# a row of paths.TABLE is part of the checker, and the INTERNAL of paths.py is made of those rows.  dev/enroll/, the
+# place of the scripts that carry a merged theorem-labs/oss-verify enrollment into these facts, which enroll.yml and
+# enroll-build.yml run and no check opens: outside tools/, so keys.checker, which lists tools/ alone, holds none of
+# them (OSSV-276; they leave tools/enroll/, whose paths.TABLE row is internal, in the commit after this one, since
+# pr.yml lints a change by its base's rules).  release_tree.INTERNAL is each directory of this list, then the INTERNAL
+# of paths.py, then release_tree.SKILLS (test_release_tree.test_every_internal_path_is_one_the_cut_removes),
+# so the cut removes dev/enroll/ whole, and is_internal reads it for secrets alone, as it reads tools/enroll/.
+# paths.TABLE's tools/enroll/** row then matches nothing; when paths.py next changes, a dev/enroll/** row there
+# replaces it and this list.
+LINT_ONLY_INTERNAL = ("dev/enroll/**",)
 
 
 def classify_path(rel):
-    """paths.classify, then LINT_ONLY_HAND for a path no paths.TABLE pattern matches."""
+    """paths.classify, then LINT_ONLY_HAND (hand) and LINT_ONLY_INTERNAL (internal) for a path no paths.TABLE pattern
+    matches."""
     m = paths.classify(rel)
     if m:
         return m
-    return [("hand", p, b) for p in LINT_ONLY_HAND if (b := paths.match(p, rel)) is not None]
+    return ([("hand", p, b) for p in LINT_ONLY_HAND if (b := paths.match(p, rel)) is not None]
+            + [("internal", p, b) for p in LINT_ONLY_INTERNAL if (b := paths.match(p, rel)) is not None])
+
+
+def is_internal(rel):
+    """paths.is_internal, or a path of LINT_ONLY_INTERNAL: what only this repository has, which no release carries."""
+    return paths.is_internal(rel) or any(paths.match(p, rel) is not None for p in LINT_ONLY_INTERNAL)
 
 
 def check_paths(tree, files, unread=()):
@@ -2032,6 +2051,74 @@ def check_records(tree):
     return out
 
 
+# `enrolled` as the enrollment writes it (tools/enroll/facts.py, enrolled_fields): a primary_contact that is a
+# person, and not the `n/a` of a seeded project or of a pipeline test's fixture.  No module of tools/oft imports
+# tools/enroll (keys.NOT_THE_CHECKER), so the rule is written out again here, word for word, and
+# test_records.Enrolled pins the pair of them, case by case.
+# `null` is in both because they read the same file with different loaders: yamlio takes only the lower-case
+# spelling as YAML's null and leaves `NULL` and `Null` as text, where PyYAML, which the enrollment uses, makes all
+# three None.  Without it the lint would ask for `enrolled: true` on a file the enrollment read as naming nobody.
+# A quoted "null" is no address either side.
+def takes_part(contact):
+    """Whether a maintainers' project.yaml names a primary_contact that is a person."""
+    return contact is not None and str(contact).strip().lower() not in ("", "n/a", "null")
+
+
+def check_enrolled(tree):
+    """schema: `enrolled` says what the maintainers' own project.yaml says, and nothing else sets it.
+
+    The field is not the enrollment list: that list is theorem-labs/oss-verify's `projects/`, and a project of it
+    is in this repository only once its facts are written.  Here the field says that the maintainers of a project
+    this repository holds take part, and it is written from one file: the copy of the OSS Verify port that each
+    build record keeps, `<record>/port/<path>/projects/<project>/project.yaml`, which is the maintainers' own file
+    at the commit `build.oss_verify` names.  `enrolled: true` goes in exactly when that file names a
+    primary_contact that is a person; a seeded project, whose contact is `n/a` or absent, gets no field, and
+    `enrolled: false` is never written: absence is the negative (docs/facts.md, tools/oft/schemas/project.yaml).
+
+    The field weakens a hold -- an open finding of an enrolled project holds back only the statements it names,
+    not the whole project (facts.hold) -- so a hand-written `true` would publish statements that a release must
+    not carry, and a lost one holds back a project that may ship.  Nothing re-read it after the enrollment wrote
+    it; this rule does, on every lint.
+
+    Only a record whose `port` is the project's own build.oss_verify is read: a record of another port commit says
+    nothing about the maintainers at this one.  A recipe-built project has no such copy, and no finding here."""
+    out = []
+    for name, proj in sorted(tree.projects.items()):
+        where = "projects/%s/project.yaml" % name
+        field = proj.data.get("enrolled")
+        if field is not None and field is not True:
+            out.append(Finding("schema", where, "enrolled is %.50r: the only value is true, and a project whose "
+                               "maintainers do not take part has no such field" % (field,)))
+        named = facts.port(proj)
+        if named is None:
+            continue
+        says = {}
+        for h in sorted(proj.harnesses):
+            record = record_path(tree, name, h)
+            r = _read_record(tree, record)
+            if r is None:
+                continue
+            port = _mapping(r.get("port"))
+            if {k: port.get(k) for k in ("repository", "commit", "path")} != named:
+                continue
+            copied = os.path.join(os.path.dirname(record), "port", named["path"], "project.yaml")
+            enrol = _read_record(tree, copied)
+            if enrol is None:
+                continue
+            says.setdefault(takes_part(enrol.get("primary_contact")), []).append(copied)
+        if len(says) > 1:
+            out.append(Finding("schema", where, "the build records disagree on the maintainers' primary_contact: "
+                               "%s names one, and %s names none or n/a"
+                               % (min(says[True]), min(says[False]))))
+        elif says and bool(field) is not next(iter(says)):
+            party, copy = next(iter(says.items()))
+            out.append(Finding("schema", where, "%s names %s primary_contact, so %s"
+                               % (min(copy), "a person as" if party else "no",
+                                  "add `enrolled: true` after status" if party
+                                  else "remove `enrolled`, which no seeded project has")))
+    return out
+
+
 def _text(tree, rel):
     """The text of the regular file at rel of at most its cap, or None."""
     try:
@@ -2600,7 +2687,7 @@ def run(root, changed=None, pr_kind=None, base=None, skeleton=False, release=Fal
     (running_tools), and says so on stderr; the rules over the whole tree
     still run.  root must then be the top of a git checkout and BASE a commit
     of it (ChangedOnlyError).  The per-file text rules read an internal path
-    (INTERNAL in paths.py), which no release carries, for secrets alone
+    (is_internal), which no release carries, for secrets alone
     (scan_internal_secrets).  jobs: how many processes run the text rules
     (default: default_jobs(), bounded by the CPUs
     and the memory available, for at least PARALLEL_FILES files to read);
@@ -2656,6 +2743,7 @@ def _run(root, changed, pr_kind, base, skeleton, release, changed_only, jobs, pu
     found += check_paths(tree, files, unread)
     found += check_symbols(tree, files)
     found += check_disclosure(tree)
+    found += check_enrolled(tree)
     found += check_free_text(tree)
     if release:
         found += check_placeholders(tree)
@@ -2676,7 +2764,7 @@ def _run(root, changed, pr_kind, base, skeleton, release, changed_only, jobs, pu
     # carries it, and tools/publish/ holds the publishing scanner's needles, host paths and addresses on purpose.  The
     # directories the cut removes whose files keep a row of their own (paths.INTERNAL_DIRS) are read as those rows
     # say: dev/stream/ by internal_only, docs/reference/ and changes/ by every rule.
-    internal = [rel for rel in files if paths.is_internal(rel) and not rel.startswith(paths.INTERNAL_DIRS)]
+    internal = [rel for rel in files if is_internal(rel) and not rel.startswith(paths.INTERNAL_DIRS)]
     secret_only = set(internal)
     scanned, scope = [rel for rel in files if rel not in secret_only], None
     if since is not None:

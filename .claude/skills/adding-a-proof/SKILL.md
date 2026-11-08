@@ -26,6 +26,9 @@ A proof enters the repository when its pull request meets every requirement in
 Each `.v` file that you add is required by a `Proof.v` or `Refutation.v`, directly or through other files. Follow the
 `Require` lines from each proof, and delete each file that you added and nothing requires. `From A Require B` also
 finds a file `A/x/B.v`, so `oft check` (step 4) is the test: it fails if you deleted a file that a proof needs.
+A file that witnesses the premises of a released statement, and each file such a witness requires, stays: no released
+`Proof.v` requires them, by design, and requirement 8 of
+[docs/adding-a-proof.md](../../../docs/adding-a-proof.md) exempts them.
 
 ## 3. Give every file its licence lines
 
@@ -51,17 +54,21 @@ Go through your `.v` files one at a time, and take the first case that fits:
    line is the one-line comment of its kind, copied from the file it came from or from a file of this repository of
    the same kind, then the `Modified by` lines of the file it came from.
 2. **It holds code from a file with Anthropic's lines** (a whole copy, or a part of one): those lines and the lines
-   that file has under them (a third line, its `Modified by` lines), unchanged. A file made from part of a file with
-   the one-line comment, holding none of its instruction words or data, gets Anthropic's two lines, then that file's
+   that file has under them (a third line, its `Modified by` lines), unchanged. A file that already has Anthropic's
+   lines keeps its own instead and copies none of the other file's; it gets one `Modified by` line (below) that also
+   names the other file, the commit it was taken from and the lines taken. A file made from part of a file with the
+   one-line comment, holding none of its instruction words or data, gets Anthropic's two lines, then that file's
    `Modified by` lines.
 3. **Any other file**: you wrote it, or it holds code only from files with no licence lines, such as a statement's
    `Proof.v`. It is under the MIT licence, and has no licence lines, or only `(* SPDX-License-Identifier: MIT *)`.
 
 In cases 1 and 2, if you changed anything, add one line under the licence lines, true of this file, from its diff
-against the file that it came from: `(* Modified by <name>, <year>-<month>: <what changed in this file>. *)`, for
-example `(* Modified by Alex Doe, 2026-10: hex addresses, numbers and module names for the binaries of
-zlib/checksum_fuzzer. *)`. The name is that of the person who signs the commits off. A change of addresses, numbers
-or module names is a change. A copy that you did not change gets no line.
+against the file that it came from: `(* Modified by Theorem Labs, <year>-<month>: <what changed in this file>. *)`,
+for example `(* Modified by Theorem Labs, 2026-10: hex addresses, numbers and module names for the binaries of
+zlib/checksum_fuzzer. *)`. A change Theorem Labs made is in the name `Theorem Labs`, never in the name of one of its
+people: the name scan refuses those names, and that is what the lines Theorem Labs wrote here say. An outside
+contributor's line is in their own name. A change of addresses, numbers or module names is a change. A copy that you
+did not change gets no line.
 
 Then, for the whole pull request:
 
@@ -81,9 +88,9 @@ Run step 3 of [docs/adding-a-proof.md](../../../docs/adding-a-proof.md) as it is
 |---|---|
 | A changed copy with no `Modified by` line, because only addresses or names changed | A line on each changed file |
 | One note pasted onto files that changed in different ways | A line on each file, true of that file |
-| A `Modified by` line in someone else's name, or a line that was there edited | Your own line, under the lines that are there |
-| A file made from part of a library file, with no licence lines | Anthropic's two lines, its `Modified by` lines, and yours |
+| A line of Theorem Labs' in the name of one of its people, or a line that was there edited | A new line of your own, `Theorem Labs` for a change of theirs, under the lines that are there |
+| A file made from part of a library file, with no licence lines | Anthropic's two lines, its `Modified by` lines, and your own |
 | Anthropic's two lines on a file that restates a program's instruction words | The one-line comment of its kind |
 | A notices file, or a statement that the repository's `LICENSE` covers the copied files | No such file; say in the pull request where the files came from |
 | A build record that you wrote | Leave `provenance/` to the maintainer |
-| Files that you added and no proof requires | Delete them |
+| Files that you added and no proof requires | Delete them, unless they witness a released statement's premises, or such a witness requires them |

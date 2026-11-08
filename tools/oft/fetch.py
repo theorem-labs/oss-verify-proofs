@@ -6,8 +6,15 @@ SHA-256, in its harness.yaml.  `fetch` checks both: the archive before it is
 unpacked, and each file before it is moved into projects/<p>/bin/<harness>/.
 The archive may also hold the licence files of the copyleft components compiled
 into the binaries, as LICENSES/<component>/<file>; they go to
-projects/<p>/bin/LICENSES/.  Any other member is refused, so an archive can
-never write anywhere else.  `fetch --findings` does the same for the unpatched
+projects/<p>/bin/LICENSES/.  A release archive is built from the whole project,
+so it also carries the binaries of the project's other harnesses when the tree
+has a home for only some of them (a tree that vendors a subset of a project,
+or a sparse checkout): a member of a harness that projects/<p>/project.yaml
+lists and this tree holds no build record of is skipped, never extracted, and
+counted in the line fetch prints (_other_harnesses).  Any other member is
+refused, so an archive can never write anywhere else.  A harness whose builds
+this tree records and withholds ships no binary, so its members are refused
+too.  `fetch --findings` does the same for the unpatched
 binaries a project's findings run on, which its unpatched.yaml pins
 (findings/<p>/unpatched.yaml or projects/<p>/unpatched.yaml, by layout.py),
 into projects/<p>/unpatched-bin/<harness>/ (and their licence files into
@@ -152,6 +159,19 @@ def _expected(proj):
     return {"%s/%s" % (h.name, rec["file"]): rec for h in proj.harnesses.values() for _b, rec in h.builds()}
 
 
+def _other_harnesses(proj, want):
+    """The names of the project's harnesses whose members the archive may carry and no pin names: every name its
+    project.yaml lists and every harness folder this tree holds, less the harnesses `want` pins a build of and the
+    harnesses this tree holds a build record of.  A harness whose every build is withheld ships no binary, so a
+    member of it is a member the archive should not carry at all, and _stage refuses it as before; the harnesses
+    this tree knows nothing of are the ones a partial tree leaves no home for, and _stage skips those members."""
+    if proj is None:
+        return set()
+    named = {e["name"] for e in proj.entries() if isinstance(e.get("name"), str)}
+    recorded = {h.name for h in proj.harnesses.values() if h.builds(published_only=False)}
+    return (named | set(proj.harnesses)) - recorded - {k.split("/")[0] for k in want}
+
+
 _LICENCE_PART = re.compile(r"[A-Za-z0-9][A-Za-z0-9._+-]*")
 
 
@@ -164,16 +184,17 @@ def _licence_member(name):
     return tuple(parts[1:])
 
 
-def _unpack(archive, want, bindir, pins):
+def _unpack(archive, want, bindir, pins, others):
     """Unpack the archive's binaries, each of which must be one of want ({member name: its pin}) with the bytes and
     SHA-256 it pins, into bindir/<harness>/, and its licence files into bindir/LICENSES/; pins names the file that
-    pins the binaries.  The members are staged in a .fetch-* directory of bindir, which is removed whether or not the
-    archive unpacks.  Returns the number of each."""
+    pins the binaries.  A member of one of the harnesses `others` names is skipped, never extracted.  The members
+    are staged in a .fetch-* directory of bindir, which is removed whether or not the archive unpacks.  Returns the
+    number of binaries, the number of licence files, and {skipped harness: how many of its files were skipped}."""
     if shutil.which("zstd") is None:
         raise FetchError("zstd is needed to unpack %s" % archive)
     stage = tempfile.mkdtemp(prefix=".fetch-", dir=bindir)
     try:
-        got, licences = _stage(archive, want, stage, pins)
+        got, licences, skipped = _stage(archive, want, stage, pins, others)
         missing = sorted(set(want) - set(got))
         if missing:
             raise FetchError("%s lacks %s" % (archive, ", ".join(missing)))
@@ -191,13 +212,14 @@ def _unpack(archive, want, bindir, pins):
             os.chmod(dest, 0o644)
     finally:
         shutil.rmtree(stage)
-    return len(got), len(licences)
+    return len(got), len(licences), skipped
 
 
-def _stage(archive, want, stage, pins):
-    """({binary member name: its staged file}, {(component, file): its staged file}): each member of the archive is
-    written into stage under its index in the archive, so no two share a file."""
-    got, licences = {}, {}
+def _stage(archive, want, stage, pins, others):
+    """({binary member name: its staged file}, {(component, file): its staged file}, {skipped harness: how many of
+    its files were skipped}): each member of the archive that is kept is written into stage under its index in the
+    archive, so no two share a file."""
+    got, licences, skipped = {}, {}, {}
     unreadable = None   # tarfile's error, reported unless zstd failed first
     dec = subprocess.Popen(["zstd", "-dc", "--", archive], stdout=subprocess.PIPE)
     try:
@@ -209,6 +231,13 @@ def _stage(archive, want, stage, pins):
                         continue
                     lic = _licence_member(name)
                     if lic is not None and m.isdir() and len(lic) < 2:
+                        continue
+                    parts = name.rstrip("/").split("/")
+                    if parts[0] in others and len(parts) <= 2 and (m.isfile() if len(parts) == 2 else m.isdir()):
+                        # a harness of this project that the tree pins no build of: its bytes are never read, and
+                        # nothing of it is written, so the archive still writes only where a pin names
+                        if len(parts) == 2:
+                            skipped[parts[0]] = skipped.get(parts[0], 0) + 1
                         continue
                     out = os.path.join(stage, str(i))
                     if lic is not None and m.isfile() and len(lic) == 2 and lic not in licences:
@@ -240,7 +269,7 @@ def _stage(archive, want, stage, pins):
         raise FetchError("zstd failed on %s" % archive)
     if unreadable is not None:
         raise FetchError("%s: not a readable tar archive: %s" % (archive, unreadable))
-    return got, licences
+    return got, licences, skipped
 
 
 def _where(source, asset):
@@ -254,19 +283,23 @@ def _where(source, asset):
 
 
 def _assets(tree, name, findings, every_kind):
-    """(asset, bindir, members, pins) of each archive `oft fetch` takes for a project: its published binaries, or
-    with every_kind every asset it attaches, or with findings the unpatched binaries its findings run on.  members:
-    {member name: its pin}; pins: the files that pin the archive and its members."""
+    """(asset, bindir, members, pins, others) of each archive `oft fetch` takes for a project: its published
+    binaries, or with every_kind every asset it attaches, or with findings the unpatched binaries its findings run
+    on.  members: {member name: its pin}; pins: the files that pin the archive and its members; others: the
+    project's harnesses that members pins no build of, whose members the archive carries too (_other_harnesses)."""
     if findings:
         u = tree.unpatched.get(name)
         if u is None:
             # the unpatched.yaml the loader found and could not read, or where the tree's layout keeps one
             raise FetchError("no %s" % tree.unpatched_paths.get(name, layout.unpatched_path(name, tree.layout)))
         members = {"%s/%s" % (h, rec["file"]): rec for h, builds in u["harnesses"].items() for rec in builds.values()}
-        return [(u["asset"], layout.unpatched_bin_dir(name), members, ("unpatched.yaml", "unpatched.yaml"))]
+        return [(u["asset"], layout.unpatched_bin_dir(name), members, ("unpatched.yaml", "unpatched.yaml"),
+                 _other_harnesses(tree.projects.get(name), members))]
     proj = _project(tree, name)
     assets = proj.data["assets"]
-    return [(assets[k], os.path.join(proj.dir, "bin"), _expected(proj), ("project.yaml", "harness.yaml"))
+    members = _expected(proj)
+    others = _other_harnesses(proj, members)
+    return [(assets[k], os.path.join(proj.dir, "bin"), members, ("project.yaml", "harness.yaml"), others)
             for k in (["bin", "src", "src_manifest", "port"] if every_kind else ["bin"]) if k in assets]
 
 
@@ -292,7 +325,7 @@ def fetch(root, projects, source=None, all_projects=False, only_check_assets=Fal
     recipes = {}  # (release, file) -> [(recipe, the file that pins it)] of each fetched project's binary archive
     for name in projects:
         try:
-            for asset, bindir, members, pins in _assets(tree, name, findings, only_check_assets or listing):
+            for asset, bindir, members, pins, others in _assets(tree, name, findings, only_check_assets or listing):
                 if release and asset["release"] != release:
                     continue
                 n_assets += 1
@@ -305,13 +338,16 @@ def fetch(root, projects, source=None, all_projects=False, only_check_assets=Fal
                 os.close(fd)
                 try:
                     _download(_where(source, asset), tmp, asset["bytes"], asset["sha256"], pins[0])
-                    n = None if only_check_assets else _unpack(tmp, members, bindir, pins[1])
+                    n = None if only_check_assets else _unpack(tmp, members, bindir, pins[1], others)
                 finally:
                     os.unlink(tmp)
                 if n is None:
                     what = "SHA-256 matches"
                 else:
-                    what = "%d binaries, each SHA-256 checked" % n[0] + ("; %d licence files" % n[1] if n[1] else "")
+                    skipped = sum(n[2].values())
+                    what = "%d binaries, each SHA-256 checked" % n[0] + ("; %d licence files" % n[1] if n[1] else "") \
+                        + ("; %d file%s of %s skipped, which this tree has no home for"
+                           % (skipped, "" if skipped == 1 else "s", ", ".join(sorted(n[2]))) if n[2] else "")
                 print("%s: %s (%s), %s" % (name, asset["file"], asset["sha256"][:12], what), file=out)
             # the recipe the binaries were built with, in its own release, which may hold no other asset of the project;
             # the unpatched binaries come with none

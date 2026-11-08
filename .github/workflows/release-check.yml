@@ -418,8 +418,10 @@ jobs:
           # this push's diff, since a change and its revert within one push leave the diff without tools/.
           # planned_tools: a digest of the mode, blob and path of each file of tools/ at a commit but the files
           # keys.NOT_THE_CHECKER names, which neither a check nor a plan opens (the lint and lint-exceptions.yaml, the
-          # tests, the README, ...), with the planner (plan.PLANNER) kept in.  Measured: a push that changed
-          # lint-exceptions.yaml with the licence lines of 28 harnesses (#679) lost the queue's credit under a
+          # tests, the README, ...), with the planner (plan.PLANNER) kept in, and tools/oft/plan.py kept in by name as
+          # well: PLANNER is read from the commit's own plan.py, so a push that drops plan.py from the list would digest
+          # both sides without it and keep the credit for a plan.py change in the same push.  Measured: a push that
+          # changed lint-exceptions.yaml with the licence lines of 28 harnesses (#679) lost the queue's credit under a
           # comparison of the whole tools/ tree, and re-checked every part of those harnesses for about 3,600
           # 16-core minutes (run 41545320386).
           planned_tools() {
@@ -427,7 +429,7 @@ jobs:
           from oft import keys, plan
           rows = sorted("%s %s %s" % (mode, oid, path)
                         for mode, _kind, oid, path in keys.ls_tree(".", "-r", sys.argv[1], "--", "tools/")
-                        if path in plan.PLANNER or not keys.not_the_checker(path))
+                        if path == "tools/oft/plan.py" or path in plan.PLANNER or not keys.not_the_checker(path))
           print(hashlib.sha256("".join(r + "\n" for r in rows).encode()).hexdigest())' "$1"
           }
           same_tools() {
@@ -579,6 +581,11 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           path: work
+      # The job's token, which actions/checkout persisted in work/.git/config as an http extraheader.  No step of this
+      # job fetches again, and the check below runs the code of the tree this checkout wrote, so the credential goes
+      # first.  pr.yml's check and lint jobs do the same.
+      - name: the job's token, out of the tree the check runs
+        run: git -C work config --unset-all http.https://github.com/.extraheader 2> /dev/null || true
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
@@ -651,9 +658,14 @@ jobs:
           # oft check keeps each build's dune and rocq logs in its temporary folder (oft-check-*), and a failed build's
           # message names only that log ("does not compile (see PATH)"), which went with the container.  So the check runs
           # through a docker of this step's: a `docker run` that mounts a writable /work (a unit's view) gets
-          # CHECK_LOGS/tmp, mounted at /oft-check-logs, as its temporary folder, and when that container exits, every file
-          # there but the logs (*.log) is removed; any other call goes to docker as it is.  check-units.sh is not changed
-          # for this: it is the checker (keys.NOT_THE_CHECKER), whose ids are in every unit's key.
+          # CHECK_LOGS/tmp, mounted at /oft-check-logs, as its temporary folder, and when that container exits, every
+          # file there but the logs (*.log) is removed, and every symbolic link with them: the build writes that folder
+          # itself, and this job's artifact step uploads check-logs/**/*.log with actions/upload-artifact, which follows
+          # a link (search.ts: `followSymbolicLinks: true`, and its filter is `fs.stat`, not `lstat`), so a `*.log` link
+          # a failing build leaves would carry the bytes of any file of this runner -- ~/.docker/config.json, which the
+          # ghcr.io login step above writes with this job's token, among them -- to everyone who can read the pull
+          # request's artifacts.  Any other call goes to docker as it is.  check-units.sh is not changed for this: it is
+          # the checker (keys.NOT_THE_CHECKER), whose ids are in every unit's key.
           : "${CHECK_LOGS:?}"
           rm -rf -- "$CHECK_LOGS" "$CHECK_LOGS.bin"
           mkdir -p -- "$CHECK_LOGS/tmp" "$CHECK_LOGS.bin"
@@ -669,7 +681,7 @@ jobs:
                 shift
                 rc=0
                 "$CHECK_LOGS_DOCKER" run -v "$CHECK_LOGS/tmp:/oft-check-logs" -e TMPDIR=/oft-check-logs "$@" || rc=$?
-                find "$CHECK_LOGS/tmp" -type f ! -name '*.log' -delete
+                find "$CHECK_LOGS/tmp" \( -type l -o -type f ! -name '*.log' \) -delete
                 find "$CHECK_LOGS/tmp" -mindepth 1 -type d -empty -delete
                 exit "$rc"
               fi
@@ -690,11 +702,44 @@ jobs:
             # filled the 8,000 bytes 32,000 lines before its one error.  So in a log that holds an `Error` line, the
             # first 40 of those lines are printed, each with the 6 lines above it (its `File` line among them) and the 5
             # below; a log with none gets the check-pod tool's `File` and `Error` lines.
+            # The path is taken only from a `^FAIL ` line, which oft check itself writes (tools/oft/check.py), never
+            # from free text: a proof controls part of its own error message, so an unanchored read would let it name
+            # any file of this runner to be printed here.  A path that is not under /oft-check-logs/, or that holds a
+            # `..` segment, is refused in one line and not read (OSSV-366).  A build writes its own logs: /oft-check-logs
+            # is the TMPDIR of the container the check runs in, so a `*.log` the build leaves there can be a symbolic
+            # link to any file of this runner, which `[ -f ]` would follow.  So a path is read only when it resolves to
+            # itself: a regular file, under this run's own log folder, reached through no link.
+            # the log paths the failures name
             logs=()
-            while IFS= read -r rel; do
-              [ -f "$CHECK_LOGS/tmp/$rel" ] && logs+=("$CHECK_LOGS/tmp/$rel")
-            done < <(grep -oE '\(see /oft-check-logs/[^)]+\)' "$CHECK_LOGS/check-units.log" \
-                       | sed -E 's|^\(see /oft-check-logs/||; s|\)$||' | awk '!seen[$0]++' || true)
+            refused=()
+            linked=()
+            root="$(realpath -e -- "$CHECK_LOGS/tmp")"
+            while IFS= read -r p; do
+              case "$p" in
+                /oft-check-logs/*) rel=${p#/oft-check-logs/} ;;
+                *) refused+=("$p"); continue ;;
+              esac
+              case "/$rel" in
+                */../*|*/..) refused+=("$p"); continue ;;
+              esac
+              held="$CHECK_LOGS/tmp/$rel"
+              # a path this run left nothing at is passed over in silence, as a build whose log is not here
+              [ -e "$held" ] || [ -L "$held" ] || continue
+              if [ "$(realpath -e -- "$held" 2> /dev/null || true)" != "$root/$rel" ] || [ ! -f "$held" ]; then
+                linked+=("$p")
+                continue
+              fi
+              logs+=("$held")
+            done < <(grep -E '^FAIL ' -- "$CHECK_LOGS/check-units.log" \
+                       | grep -oE '\(see [^)]+\)' \
+                       | sed -E 's|^\(see ||; s|\)$||' | awk '!seen[$0]++' || true)
+            for p in ${refused[@]+"${refused[@]}"}; do
+              echo "== refused the log path a failure names, it is not a file of this run's log folder: $p"
+            done
+            for p in ${linked[@]+"${linked[@]}"}; do
+              echo "== refused the log path a failure names, it does not resolve to a regular file of this run's own log folder: $p"
+            done
+            # end of the log paths the failures name
             if [ "${#logs[@]}" -eq 0 ]; then
               mapfile -t logs < <(grep -rlE --include='*.log' '^Error' -- "$CHECK_LOGS/tmp" | sort || true)
             fi
@@ -712,6 +757,28 @@ jobs:
             [ "$size" -le 8000 ] || printf '\n== cut at 8000 of %d bytes\n' "$size"
           fi
           exit "$rc"
+      # The build writes its own logs into /oft-check-logs (CHECK_LOGS/tmp, its TMPDIR), and the upload below follows
+      # a symbolic link, so a `*.log` link it leaves would be uploaded with the bytes of what it points at.  The
+      # docker wrapper above drops every link as each container exits, but three paths get past it.  A directory the
+      # build chmods against the runner (the containers run as the runner's uid): the wrapper's `find` cannot unlink
+      # inside it, and the wrapper's status is the container's, so nothing is said.  A cancelled job: the check step
+      # is killed inside the container, so the wrapper never returns and its cleanup never runs, while the upload
+      # still runs on `cancelled()`.  And `docker run` is only a client: a build that ignores the signals the
+      # runner's cancellation forwards keeps running under the daemon, holding the mount, and plants its link again
+      # after any sweep and before the upload globs.  So the writers go first.  `docker kill` is SIGKILL from the
+      # daemon, which a build cannot trap, and `--rm` then takes the container away; killing every container is right
+      # here, because this job has no `container:` and no `services:`, its runner is a GitHub-hosted larger runner of
+      # its own (the job's `runs-on` comment), and the only containers on it are check-units.sh's, which run in the
+      # foreground and are already gone on every path but cancellation.  Then the folder is made the runner's to walk
+      # again and every link left in it goes; a real log is a file and stays.  A job that failed before the check
+      # step has no folder to sweep and ends at once, rather than failing a second step on `find`'s missing path.
+      - name: the build's symbolic links, out of the logs this job uploads
+        if: failure() || cancelled()
+        run: |
+          [ -d "$RUNNER_TEMP/check-logs" ] || exit 0
+          docker ps -q | xargs -r docker kill > /dev/null 2>&1 || true
+          chmod -R u+rwX -- "$RUNNER_TEMP/check-logs" || true
+          find "$RUNNER_TEMP/check-logs" -type l -delete
       # also when the job is cancelled, as GitHub cancels one that reaches timeout-minutes: the check step is then
       # stopped inside a container, whose other temporary files are still there, so only the logs are taken
       - name: oft check's logs, when the check failed or was stopped

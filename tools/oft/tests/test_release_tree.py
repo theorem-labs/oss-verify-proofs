@@ -43,6 +43,15 @@ CONTRIBUTED = ("contributed by A. Contributor in https://github.com/theorem-labs
 RELEASED = "json/fuzzer-parse_bjdata"
 
 
+def cut_list():
+    """What release_tree.INTERNAL writes out: each directory of lint.LINT_ONLY_INTERNAL with its trailing / (as
+    paths.py writes a /** row there), then the INTERNAL of paths.py, then release_tree.SKILLS, in the order they are
+    defined (SKILLS last, where the publishing scan's reviewed exceptions read them)."""
+    assert all(p.endswith("/**") for p in lint.LINT_ONLY_INTERNAL), lint.LINT_ONLY_INTERNAL
+    return (tuple(p[:-len("**")] for p in lint.LINT_ONLY_INTERNAL) + vars(paths)["INTERNAL"]
+            + release_tree.SKILLS)
+
+
 def add_proof(t, sid):
     st = next(s for s in facts.load(t.root).statements() if s.id == sid)
     t.put_yaml("proofs/%s/proof.yaml" % sid, {
@@ -747,16 +756,24 @@ class ReleaseTree(unittest.TestCase):
         self.assertTrue(os.path.isdir(self.t.path("..", "elsewhere")))
 
     def test_every_internal_path_is_one_the_cut_removes(self):
-        # the cut's list is paths.py's, then the skill directories paths.py does not name, written out
+        # the cut's list is the directories lint alone holds internal (lint.LINT_ONLY_INTERNAL, since a row of paths.TABLE
+        # re-keys every unit), then paths.py's, then the skill directories paths.py does not name, written out
         # (test_the_release_gate_reads_every_internal_path_from_release_tree_py)
-        self.assertEqual(vars(release_tree)["INTERNAL"], vars(paths)["INTERNAL"] + release_tree.SKILLS)
+        self.assertEqual(vars(release_tree)["INTERNAL"], cut_list())
         self.assertEqual(release_tree.SKILLS, (".claude/skills/porting-released-proofs/",
                                                ".claude/skills/clean-room-restatement/"))
-        # each is a directory lint alone admits files under (lint.LINT_ONLY_HAND), and paths.py classifies nothing there
+        # each skill directory is one lint alone admits files under (lint.LINT_ONLY_HAND), and paths.py classifies
+        # nothing there
         for d in release_tree.SKILLS:
             self.assertTrue(any(p.startswith(d) for p in lint.LINT_ONLY_HAND), d)
             self.assertFalse(paths.is_internal(d + "SKILL.md"), d)
             self.assertEqual(paths.classify(d + "SKILL.md"), [], d)
+        for rel in ("dev/enroll/build", "dev/enroll/ci/gate.py", "dev/enroll/tests/fixtures/x.yaml"):
+            self.assertTrue(lint.is_internal(rel), rel)
+            self.assertFalse(paths.is_internal(rel), rel)
+            self.assertEqual([cls for cls, _, _ in lint.classify_path(rel)], ["internal"], rel)
+        for rel in ("dev/enrollment/x", "dev/other/x.py", ".github/workflows/pr.yml"):
+            self.assertFalse(lint.is_internal(rel), rel)
         self.assertEqual(set(vars(paths)["INTERNAL"]), {
             "approvals.yaml", ".github/CODEOWNERS", ".github/workflows/facts-review.yml",
             ".claude/skills/review-facts/SKILL.md", "review.md", ".github/workflows/enroll.yml",
@@ -764,13 +781,14 @@ class ReleaseTree(unittest.TestCase):
             ".github/workflows/hold-state.yml", ".github/workflows/enroll-retry.yml",
             ".github/workflows/approvals-watch.yml", "tools/enroll/", ".github/workflows/proof-index.yml",
             ".github/proof-index.py", ".github/workflows/proof-index-trigger.yml", ".github/workflows/index.yml",
-            ".github/workflows/publish-request.yml", ".github/workflows/publish.yml",
-            ".github/workflows/publish-gate.yml", "tools/publish/", "tools/oft/ci/regenerate-shared.sh",
-            "tools/oft/tests/test_regenerate_shared.py", "tools/oft/ci/prove-pr", "tools/oft/tests/test_prove_pr.py",
-            "changes/", "docs/reference/", "dev/stream/"})
+            ".github/workflows/prove.yml", ".github/workflows/publish-request.yml", ".github/workflows/publish.yml",
+            ".github/workflows/publish-gate.yml", "tools/publish/", ".github/workflows/store-retention.yml",
+            "tools/oft/ci/regenerate-shared.sh", "tools/oft/tests/test_regenerate_shared.py", "tools/oft/ci/prove-pr",
+            "tools/oft/tests/test_prove_pr.py", "tools/oft/tests/test_prove_workflow.py", "changes/", "docs/reference/",
+            "dev/stream/"})
         for rel in ("approvals.yaml", ".github/CODEOWNERS", "review.md", ".github/workflows/index.yml",
-                    ".github/workflows/publish-request.yml", "tools/publish/x", "tools/publish/a/b",
-                    "tools/enroll/ci/gate.py", "tools/publish"):
+                    ".github/workflows/publish-request.yml", ".github/workflows/store-retention.yml", "tools/publish/x",
+                    "tools/publish/a/b", "tools/enroll/ci/gate.py", "tools/publish"):
             self.assertTrue(paths.is_internal(rel), rel)
             # one row, of the internal class: the class and INTERNAL's rows are one list
             self.assertEqual([cls for cls, _, _ in paths.classify(rel)], ["internal"], rel)
@@ -791,8 +809,7 @@ class ReleaseTree(unittest.TestCase):
     def test_the_release_gate_reads_every_internal_path_from_release_tree_py(self):
         """The release gate's R17 row (a published tree is a release-tree cut) reads release_tree.py's INTERNAL from its
         syntax tree: an assignment of a literal tuple of strings, never an import, which it skips without a word. Its
-        loop, replayed here on this file, reads every path of paths.py's INTERNAL and of SKILLS and finds nothing it cannot
-        read."""
+        loop, replayed here on this file, reads every path the cut removes (cut_list) and finds nothing it cannot read."""
         with open(release_tree.__file__, encoding="utf-8") as f:
             body = ast.parse(f.read()).body
         names, unread = set(), []
@@ -809,7 +826,7 @@ class ReleaseTree(unittest.TestCase):
                 names |= set(value)
             else:
                 unread.append(node.lineno)
-        self.assertEqual((names, unread), (set(vars(paths)["INTERNAL"] + release_tree.SKILLS), []))
+        self.assertEqual((names, unread), (set(cut_list()), []))
         # and no import binds the name, which the gate would not read
         self.assertEqual([n.lineno for n in body if isinstance(n, ast.ImportFrom)
                           and any((a.asname or a.name) == "INTERNAL" for a in n.names)], [])
@@ -870,6 +887,51 @@ class ReleaseTree(unittest.TestCase):
             self.assertRefused("error: %s: a file a release cannot carry there" % rel)
             os.remove(self.t.path(rel))
 
+    def test_the_witness_record_beside_a_kept_proof_is_carried(self):
+        """OSSV-360: the record of which term discharged the statement goes with the proof it is of, in
+        both layouts.  STATEMENT_FILES is a second allowlist, independent of paths.py: without the suffix here the
+        first release after the first land would refuse the cut, and a release that dropped the record instead would
+        leave the audit reading "no record" for a proof that has one.  A record whose stem is not the statement's is
+        still a file the release carries, as paths.py's `*.witness.json` row admits it: the two readers of this one
+        file agree, and land.py is what holds the stem to the node."""
+        record = ('{\n "schema": "oss-verify/witness-record/1",\n "node": "plain_halts",\n'
+                  ' "term": "OSSVerify.Proofs.zlib.checksum_fuzzer.lib.A.Sched.plain_halts.plain_halts_holds",\n'
+                  ' "require": [\n  [\n   "OSSVerify.Proofs.zlib.checksum_fuzzer.lib.A.Sched",\n'
+                  '   "plain_halts"\n  ]\n ]\n}\n')
+        for ported in (False, True):
+            with self.subTest(layout="per-project" if ported else "old"):
+                self.setUp()
+                approve(self.t, APPROVED)
+                if ported:
+                    port_tree(self.t)
+                    rel = "projects/%s/proofs/plain_halts/plain_halts.witness.json" % APPROVED
+                else:
+                    rel = "proofs/%s/plain_halts/plain_halts.witness.json" % APPROVED
+                self.t.write(rel, record)
+                rc, out = release(self.t)
+                self.assertEqual(rc, 0, out)
+                self.assertEqual(self.t.read(rel), record)
+                self.assertEqual([str(f) for f in self.t.lint()], [])
+
+    def test_the_witness_record_of_a_cut_statement_goes_with_it(self):
+        """A record is kept where its proof is kept and goes where its proof goes.  Both statements here are of the
+        fuzz target the release keeps, so the cut reaches each statement directory separately and the test tells the
+        two apart: the record of the approved statement is carried, the record of the one the release does not
+        publish is removed with its directory and is named in the cut's own `removed` output."""
+        add_proof(self.t, APPROVED + "/asan_halts")
+        self.assertEqual(self.t.generate(), 0, self.t.last_output)
+        approve(self.t, entry(APPROVED, statements=["plain_halts"]))
+        kept = "proofs/%s/plain_halts/plain_halts.witness.json" % APPROVED
+        cut = "proofs/%s/asan_halts/asan_halts.witness.json" % APPROVED
+        self.t.write(kept, '{"node": "plain_halts"}\n')
+        self.t.write(cut, '{"node": "asan_halts"}\n')
+        rc, out = release(self.t)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(self.t.read(kept), '{"node": "plain_halts"}\n')
+        self.assertFalse(os.path.exists(self.t.path(cut)))
+        self.assertFalse(os.path.exists(self.t.path("proofs", APPROVED, "asan_halts")))
+        self.assertIn("removed proofs/%s/asan_halts" % APPROVED, out)
+
     def test_a_listed_statement_with_no_proof_is_reported(self):
         approve(self.t, entry(APPROVED, statements=["plain_halts", "asan_halts"]))
         rc, out = release(self.t)
@@ -915,10 +977,12 @@ class ReleaseTree(unittest.TestCase):
         self.assertFalse(os.path.lexists(self.t.path("changes")))
         self.assertIn("changes", out)
 
-    def test_the_prove_job_s_script_and_its_test_are_not_published(self):
-        """release_tree.INTERNAL names tools/oft/ci/prove-pr and its test: pr.yml's prove job posts this repository's
-        pull request checks with it, and the public repository's pr.yml, which finds no such script, posts none."""
-        internal = ("tools/oft/ci/prove-pr", "tools/oft/tests/test_prove_pr.py")
+    def test_the_prove_workflow_its_script_and_their_tests_are_not_published(self):
+        """release_tree.INTERNAL names prove.yml, tools/oft/ci/prove-pr and their tests: the workflow posts this
+        repository's pull request checks with the App whose key agent-infra lets this repository's environment `prove`
+        read; the public repository has neither."""
+        internal = (".github/workflows/prove.yml", "tools/oft/ci/prove-pr", "tools/oft/tests/test_prove_pr.py",
+                    "tools/oft/tests/test_prove_workflow.py")
         for rel in internal:
             self.t.write(rel, "# theorem prove on a pull request\n")
         approve(self.t, APPROVED)

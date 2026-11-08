@@ -443,7 +443,7 @@ class TheRule(unittest.TestCase):
         for path, what in (
                 ("tools/oft/check.py", "the tools"),
                 ("tools/oft/ci/check-units.sh", "the tools"),
-                ("tools/enroll/check.sh", "the tools"),
+                ("dev/enroll/check.sh", "the tools"),
                 (".github/workflows/pr.yml", "the workflows"),
                 (".github/actions/plan-drafts/action.yml", "the workflows"),
                 (".claude/skills/review-facts/SKILL.md", "the tools"),

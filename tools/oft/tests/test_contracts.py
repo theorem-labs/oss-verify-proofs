@@ -57,8 +57,8 @@ def contract_repo(t, namespace=NAMESPACE):
     for rel, text in contract_lib(namespace).items():
         t.write("%s/%s" % (LIB, rel), text)
     pin, rows = symbols.load(t.path(FACT))
-    rows += [symbols.Sym("g_file_len", "object", 0x15008, 8, "-", "-", "-"),
-             symbols.Sym("unused", "func", 0x11310, 8, "5f" * 32, "6e" * 32, "-")]
+    rows += [symbols.Sym("g_file_len", "object", 0x15008, 8, "-", "-", "-", "-"),
+             symbols.Sym("unused", "func", 0x11310, 8, "5f" * 32, "6e" * 32, "-", "-")]
     symbols.write(t.path(FACT), sorted(rows, key=lambda r: (r.address, r.name)), pin)
     return repo(t)
 
@@ -119,6 +119,19 @@ class ContractKeys(unittest.TestCase):
             put_row(t, "LLVMFuzzerTestOneInput", exact="1e" * 32, masked="2d" * 32)
             self.assertEqual(self.whys(t, commit(t), base),
                              dict(unchanged(CRC, STATE, TABLE), **{ENTRY: "changed: plain:LLVMFuzzerTestOneInput"}))
+
+    def test_a_function_whose_targets_are_unresolved_has_no_key(self):
+        """`?` targets say that the fact cannot tell what an address immediate of the function points at, so no key
+        of it says that a call or a read of it changed: the contract that names it is unknown, never unchanged."""
+        with tree() as t:
+            base = contract_repo(t)
+            put_row(t, "LLVMFuzzerTestOneInput", targets="?")
+            got = self.keys(t, commit(t), base)
+            self.assertIsNone(got[ENTRY]["key"])
+            self.assertEqual(got[ENTRY]["why"], "lib/Prog/entry_c.v:3: Symbols.Plain.s_LLVMFuzzerTestOneInput is a "
+                             "function with an address immediate that the symbol fact of plain cannot resolve, so "
+                             "no key says what it points at")
+            self.assertEqual({p: r["why"] for p, r in got.items() if p != ENTRY}, unchanged(CRC, STATE, TABLE))
 
     def test_an_identical_function_and_contract_keep_the_key(self):
         """A change to a function no contract names and to library files no contract requires keeps every key."""
@@ -305,7 +318,8 @@ class ContractKeys(unittest.TestCase):
                 base = contract_repo(t)
                 if shared:
                     pin, rows = symbols.load(t.path(FACT))
-                    rows += [symbols.Sym(shared, "func", a, 4, "7a" * 32, "7b" * 32, "-") for a in (0x11320, 0x11330)]
+                    rows += [symbols.Sym(shared, "func", a, 4, "7a" * 32, "7b" * 32, "-", "-")
+                             for a in (0x11320, 0x11330)]
                     symbols.write(t.path(FACT), sorted(rows, key=lambda r: (r.address, r.name)), pin)
                 t.write("%s/%s" % (LIB, rel), text)
                 got = self.keys(t, commit(t), base)
@@ -462,7 +476,8 @@ class ContractKeys(unittest.TestCase):
             t.write(obj, "Definition O : Z := Symbols.Plain.s_g_new.\n")
             base = contract_repo(t)
             pin, rows = symbols.load(t.path(FACT))
-            symbols.write(t.path(FACT), sorted(rows + [symbols.Sym("g_new", "object", 0x15010, 8, "-", "-", "-")],
+            symbols.write(t.path(FACT), sorted(rows + [symbols.Sym("g_new", "object", 0x15010, 8, "-", "-", "-",
+                                                                   "-")],
                                                key=lambda r: (r.address, r.name)), pin)
             row = self.keys(t, commit(t), base)[obj]
             self.assertEqual((row["state"], row["base"], row["base_unknown"], row["changed"], row["why"]),
