@@ -1,3 +1,6 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Trevor Hansen, 2026-11: ubsan_base is made from top_ubsan_shipped of U/TopUbsan and ubsan_assembled_shipped of U/FinalU, at source_alloc_limit; asan_ubsan_base applies top_both of B/TopBoth to both_boot and both_main of B/FinalBoth; the four ubsan and asan_ubsan theorems follow the asan theorems of this file. *)
 From Stdlib Require Import ZArith NArith List QArith String PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run OmniRun.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Examples Omni SpuriousCfg.
@@ -6,6 +9,12 @@ From OSSVerify.Core Require Import Images Shapes.
 Require OSSVerify.mbedtls.fuzz_pkcs7.Images.
 Require OSSVerify.mbedtls.fuzz_pkcs7.Statements.
 Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalAsan.
+Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.
+Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.U_top.
+Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.TopUbsan.
+Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.FinalU.
+Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.B.TopBoth.
+Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.B.FinalBoth.
 Import ListNotations.
 
 Definition accept_segment : Segment := {|
@@ -83,3 +92,32 @@ Proof. exact (disagrees_at_most_0 _ _ _ _ asan_base). Qed.
 
 Theorem asan_decidable : OSSVerify.mbedtls.fuzz_pkcs7.Statements.asan_agreement_decidable.
 Proof. exact (agreement_decidable_of_base _ _ asan_base). Qed.
+
+Lemma ubsan_base :
+  strong_universal_error_free_T OSSVerify.mbedtls.fuzz_pkcs7.Images.plain OSSVerify.mbedtls.fuzz_pkcs7.Images.ubsan.
+Proof.
+  intros en_s en_t inp Hs Ht Hv.
+  exact (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.TopUbsan.top_ubsan_lim
+           (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.U_top.U_realizes_spec_lim OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.FinalU.SIU OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.FinalU.SIU_fp OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.FinalU.PF_U)
+           OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.SIP OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.SIP_fp OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.PF_P
+           source_alloc_limit ltac:(apply Z.leb_le; vm_compute; reflexivity) en_s en_t inp Hs Ht Hv).
+Qed.
+
+Lemma asan_ubsan_base :
+  strong_universal_error_free_T OSSVerify.mbedtls.fuzz_pkcs7.Images.plain OSSVerify.mbedtls.fuzz_pkcs7.Images.asan_ubsan.
+Proof.
+  exact (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.B.TopBoth.top_both OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.SIP OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.SIP_fp OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.PF_P
+           (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.B.TopBoth.both_side_of_parts _ OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.B.FinalBoth.both_boot OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.B.FinalBoth.both_main)).
+Qed.
+
+Theorem ubsan_bound_0 : OSSVerify.mbedtls.fuzz_pkcs7.Statements.ubsan_disagrees_at_most 0.
+Proof. exact (disagrees_at_most_0 _ _ _ _ ubsan_base). Qed.
+
+Theorem ubsan_decidable : OSSVerify.mbedtls.fuzz_pkcs7.Statements.ubsan_agreement_decidable.
+Proof. exact (agreement_decidable_of_base _ _ ubsan_base). Qed.
+
+Theorem asan_ubsan_bound_0 : OSSVerify.mbedtls.fuzz_pkcs7.Statements.asan_ubsan_disagrees_at_most 0.
+Proof. exact (disagrees_at_most_0 _ _ _ _ asan_ubsan_base). Qed.
+
+Theorem asan_ubsan_decidable : OSSVerify.mbedtls.fuzz_pkcs7.Statements.asan_ubsan_agreement_decidable.
+Proof. exact (agreement_decidable_of_base _ _ asan_ubsan_base). Qed.

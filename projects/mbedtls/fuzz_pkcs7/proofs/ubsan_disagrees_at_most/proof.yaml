@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: mbedtls/fuzz_pkcs7/ubsan_disagrees_at_most
+bound: '0'
+fingerprint: 9d307737c9fb5e24522e347eca2ebc4583325917333ad21be1a05da0f06fa49a
