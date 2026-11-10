@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: libtasn1/asn1_get_length_der_fuzzer/ubsan_disagrees_at_most
+bound: '0'
+fingerprint: 32cffb4865f9ae9a2973ebc11c2fdca7775fb3786d65ecb589a0743c1afba59b

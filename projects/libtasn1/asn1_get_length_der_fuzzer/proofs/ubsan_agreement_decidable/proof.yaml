@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: libtasn1/asn1_get_length_der_fuzzer/ubsan_agreement_decidable
+fingerprint: 4666f0d05d6e7070e2fb95189e6896056e4b821a2d37c6851e295997771cbc03
