@@ -1,3 +1,6 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Trevor Hansen, 2026-11: ubsan_base is made from top_ubsan_shipped of U/TopUbsan and ubsan_assembled_shipped of U/FinalU, at source_alloc_limit; asan_ubsan_base applies top_both of B/TopBoth to both_boot and both_main of B/FinalBoth; the four ubsan and asan_ubsan theorems follow the asan theorems of this file. *)
 From Stdlib Require Import ZArith NArith List QArith String PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run OmniRun.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Examples Omni SpuriousCfg.
