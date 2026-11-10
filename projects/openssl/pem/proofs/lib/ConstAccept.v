@@ -1,3 +1,7 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Trevor Hansen, 2026-11: ubsan_base and asan_base apply PemTop.pinned_ubsan and PemTop.pinned_asan to the realizes theorems of Top/PunyFinal, as pinned_both of Top/PunyFinal does; the four ubsan and asan theorems follow the asan_ubsan theorems of this file. *)
 From Stdlib Require Import ZArith NArith List QArith String PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run OmniRun.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Examples Omni SpuriousCfg.
