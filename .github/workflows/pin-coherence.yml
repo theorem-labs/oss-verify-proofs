@@ -1,0 +1,111 @@
+# Copyright 2026 Theorem Labs, PBC
+# SPDX-License-Identifier: Apache-2.0
+name: pin-coherence
+# THE RULE, IN ONE SENTENCE. When a pull request changes the `sha256` of a build of a unit -- in
+# `projects/<p>/<h>/harness.yaml` under `builds:`, or in the `index/binaries.tsv` row for that
+# build -- every row of `index/statements.tsv` whose id starts `<p>/<h>/` and whose `builds`
+# column names that build must come out with a DIFFERENT `fingerprint`, and must be `open` unless
+# a proof of that unit changed in the same pull request; because a statement is about a binary,
+# and a different binary is a different claim.
+#
+# WHY THAT IS EXACT HERE AND NOT A HEURISTIC. `tools/oft/facts.py`'s `fingerprint()` puts the line
+# `build <name> <sha256>` into the hash, once per build the statement names, reading the sha256
+# from `harness.yaml`'s `builds`. So a moved build sha256 MUST move that statement's fingerprint.
+# A fingerprint that did not move is not "probably stale": it was carried over rather than
+# recomputed, and this job can say so from the tree alone, with no build.
+#
+# WHY IT EXISTS. A swapped binary makes a true statement false without touching one character of
+# the statement. A reviewer sees an unchanged statement file, an unchanged statement row, and a
+# hex digest moving inside a build record, and has no way to connect the three. The statement
+# freeze watches the statement; this watches the thing the statement is ABOUT.
+#
+# WHAT IT CANNOT DO, at the top because it is the honest half: it cannot tell whether a statement
+# is TRUE of the new binary. That needs a build and a check, and no read of the tree substitutes
+# for one. It decides the part that IS decidable from the tree -- that the statements about a
+# moved binary were revisited rather than carried over -- and says nothing about the rest.
+#
+# IT DOES NOT BLOCK A BYPASS ACTOR. A ruleset bypass is per ruleset, not per rule, so the Apps in
+# `bypass_actors` on `main-history` merge without this check passing. The job still runs on a
+# merge group and still names what moved.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  merge_group:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: pin-coherence-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  pin-coherence:
+    # This file lives in BOTH repositories and runs in one. The public tree is rebuilt from the
+    # internal tree at each release cut (`oft release-tree`, publish.yml), so a workflow that
+    # existed only on public main would be DELETED by the next cut -- and a required check whose
+    # workflow is gone blocks every pull request forever. So it lands internally too, and this
+    # condition keeps it inert there, as pr.yml's own `github.repository ==` steps do.
+    if: github.repository == 'theorem-labs/oss-verify-proofs'
+    # A static name: the ruleset of main requires it, so it must not change with the event.
+    name: pin-coherence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      # the base branch, and the lazy blob fetches of the blobless checkout below
+      contents: read
+    steps:
+      - name: the base's copy of the guard
+        # The base's copy on purpose: a change must not supply the rule that judges it.
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          # The TRUSTED commit for every event, named rather than left to a default. On a merge
+          # group `github.sha` is the GROUP's commit, which CONTAINS the candidate change, so
+          # leaving it there checked out the candidate's own copy of this guard and ran it; a
+          # cross-model audit demonstrated exactly that on the sibling check.
+          ref: >-
+            ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha
+            || github.sha }}
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: .github/guards
+          sparse-checkout-cone-mode: false
+      - name: the commits to read
+        id: range
+        env:
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          MG_BASE: ${{ github.event.merge_group.base_sha }}
+          MG_HEAD: ${{ github.event.merge_group.head_sha }}
+        run: |
+          set -euo pipefail
+          case "$EVENT" in
+            pull_request_target)
+              git fetch --no-tags --filter=blob:none origin \
+                "refs/pull/$PR/head:refs/pin-coherence/head" "$PR_BASE"
+              head=$(git rev-parse refs/pin-coherence/head)
+              # The merge base: a pin another pull request moved on the base is not this one's.
+              base=$(git merge-base "$PR_BASE" "$head")
+              ;;
+            merge_group)
+              git fetch --no-tags --filter=blob:none origin "$MG_BASE" "$MG_HEAD"
+              base=$MG_BASE; head=$MG_HEAD
+              ;;
+            *)
+              head=$(git rev-parse HEAD)
+              base=$(git merge-base origin/main "$head" 2>/dev/null || git rev-parse "$head^")
+              ;;
+          esac
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+          echo "Reading which binary pins $base..$head moves."
+      - name: a moved binary pin moves the statements about that binary
+        env:
+          BASE: ${{ steps.range.outputs.base }}
+          HEAD: ${{ steps.range.outputs.head }}
+        run: python3 .github/guards/pin_coherence.py --base "$BASE" --head "$HEAD"
