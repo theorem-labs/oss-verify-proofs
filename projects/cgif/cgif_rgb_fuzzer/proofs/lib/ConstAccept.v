@@ -1,3 +1,6 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Trevor Hansen, 2026-11: ubsan_equiv is made from cgif_rgb_fuzzer_ubsan_equiv_shipped and SRC_LIM_MIN_le_shipped_source/target of UZZ0, at source_alloc_limit and target_alloc_limit; ubsan_base, ubsan_bound_0 and ubsan_decidable follow the asan lemmas of this file. *)
 From Stdlib Require Import ZArith NArith List QArith String PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run OmniRun.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Examples Omni SpuriousCfg.
