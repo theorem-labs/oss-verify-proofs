@@ -1,3 +1,7 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Trevor Hansen, 2026-11: ubsan_base and asan_base apply PemTop.pinned_ubsan and PemTop.pinned_asan to the realizes theorems of Top/PunyFinal, as pinned_both of Top/PunyFinal does; the four ubsan and asan theorems follow the asan_ubsan theorems of this file. *)
 From Stdlib Require Import ZArith NArith List QArith String PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run OmniRun.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Examples Omni SpuriousCfg.
@@ -7,6 +11,7 @@ Require OSSVerify.openssl.pem.Images.
 Require OSSVerify.openssl.pem.Statements.
 Require OSSVerify.Proofs.openssl.pem.lib.Cls.Rows.
 Require OSSVerify.Proofs.openssl.pem.lib.Top.PunyFinal.
+Require OSSVerify.Proofs.openssl.pem.lib.Top.PemTop.
 Import ListNotations.
 
 Definition accept_segment : Segment := {|
@@ -77,3 +82,31 @@ Proof. exact (disagrees_at_most_0 _ _ _ _ _ asan_ubsan_base). Qed.
 Theorem asan_ubsan_decidable :
   OSSVerify.openssl.pem.Statements.asan_ubsan_agreement_decidable.
 Proof. exact (agreement_decidable_of_base _ _ _ asan_ubsan_base). Qed.
+
+Lemma ubsan_base :
+  strong_universal_error_free_T_scfg Env.alloc_forced_only
+    OSSVerify.openssl.pem.Images.plain
+    OSSVerify.openssl.pem.Images.ubsan.
+Proof. exact (OSSVerify.Proofs.openssl.pem.lib.Top.PemTop.pinned_ubsan OSSVerify.Proofs.openssl.pem.lib.Top.PunyFinal.p_realizes OSSVerify.Proofs.openssl.pem.lib.Top.PunyFinal.u_realizes). Qed.
+
+Lemma asan_base :
+  strong_universal_error_free_T_scfg Env.alloc_forced_only
+    OSSVerify.openssl.pem.Images.plain
+    OSSVerify.openssl.pem.Images.asan.
+Proof. exact (OSSVerify.Proofs.openssl.pem.lib.Top.PemTop.pinned_asan OSSVerify.Proofs.openssl.pem.lib.Top.PunyFinal.p_realizes OSSVerify.Proofs.openssl.pem.lib.Top.PunyFinal.a_realizes). Qed.
+
+Theorem ubsan_bound_0 :
+  OSSVerify.openssl.pem.Statements.ubsan_disagrees_at_most 0.
+Proof. exact (disagrees_at_most_0 _ _ _ _ _ ubsan_base). Qed.
+
+Theorem ubsan_decidable :
+  OSSVerify.openssl.pem.Statements.ubsan_agreement_decidable.
+Proof. exact (agreement_decidable_of_base _ _ _ ubsan_base). Qed.
+
+Theorem asan_bound_0 :
+  OSSVerify.openssl.pem.Statements.asan_disagrees_at_most 0.
+Proof. exact (disagrees_at_most_0 _ _ _ _ _ asan_base). Qed.
+
+Theorem asan_decidable :
+  OSSVerify.openssl.pem.Statements.asan_agreement_decidable.
+Proof. exact (agreement_decidable_of_base _ _ _ asan_base). Qed.

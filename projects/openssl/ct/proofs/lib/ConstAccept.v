@@ -9,6 +9,8 @@ Require OSSVerify.Proofs.openssl.ct.lib.Common.ClassifierRows.
 Require OSSVerify.Proofs.openssl.ct.lib.TopE.
 Require OSSVerify.Proofs.openssl.ct.lib.TopCtPlain.
 Require OSSVerify.Proofs.openssl.ct.lib.TopCtBoth.
+Require OSSVerify.Proofs.openssl.ct.lib.TopCtUbsan.
+Require OSSVerify.Proofs.openssl.ct.lib.TopCtAsan.
 Import ListNotations.
 
 Definition accept_segment : Segment := {|
@@ -81,3 +83,39 @@ Proof. exact (disagrees_at_most_0 _ _ _ _ _ asan_ubsan_base). Qed.
 Theorem asan_ubsan_decidable :
   OSSVerify.openssl.ct.Statements.asan_ubsan_agreement_decidable.
 Proof. exact (agreement_decidable_of_base _ _ _ asan_ubsan_base). Qed.
+
+Lemma ubsan_base :
+  strong_universal_error_free_T_scfg Env.alloc_forced_only
+    OSSVerify.openssl.ct.Images.plain
+    OSSVerify.openssl.ct.Images.ubsan.
+Proof.
+  exact (OSSVerify.Proofs.openssl.ct.lib.TopE.glue_scfg _ _ _ _
+           OSSVerify.Proofs.openssl.ct.lib.TopCtPlain.side_plain_ctP
+           OSSVerify.Proofs.openssl.ct.lib.TopCtUbsan.side_ubsan_ctP).
+Qed.
+
+Lemma asan_base :
+  strong_universal_error_free_T_scfg Env.alloc_forced_only
+    OSSVerify.openssl.ct.Images.plain
+    OSSVerify.openssl.ct.Images.asan.
+Proof.
+  exact (OSSVerify.Proofs.openssl.ct.lib.TopE.glue_scfg _ _ _ _
+           OSSVerify.Proofs.openssl.ct.lib.TopCtPlain.side_plain_ctP
+           OSSVerify.Proofs.openssl.ct.lib.TopCtAsan.side_asan_ct).
+Qed.
+
+Theorem ubsan_bound_0 :
+  OSSVerify.openssl.ct.Statements.ubsan_disagrees_at_most 0.
+Proof. exact (disagrees_at_most_0 _ _ _ _ _ ubsan_base). Qed.
+
+Theorem ubsan_decidable :
+  OSSVerify.openssl.ct.Statements.ubsan_agreement_decidable.
+Proof. exact (agreement_decidable_of_base _ _ _ ubsan_base). Qed.
+
+Theorem asan_bound_0 :
+  OSSVerify.openssl.ct.Statements.asan_disagrees_at_most 0.
+Proof. exact (disagrees_at_most_0 _ _ _ _ _ asan_base). Qed.
+
+Theorem asan_decidable :
+  OSSVerify.openssl.ct.Statements.asan_agreement_decidable.
+Proof. exact (agreement_decidable_of_base _ _ _ asan_base). Qed.
