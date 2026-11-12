@@ -113,6 +113,11 @@ TABLE = [
     # the review of each pull request and new issue of the public repository by Claude (review.yml runs there alone),
     # and its rules in docs/review.md
     ("hand", ".github/workflows/review.yml"),
+    # the statement freeze of the public repository: it names every change a pull request makes to a theorem
+    # statement or to an asserted column of index/statements.tsv, and asks for a code owner's approval of that head.
+    # Its own header says what it watches and, as plainly, what it adds over CODEOWNERS and what it does not
+    ("hand", ".github/workflows/statement-freeze.yml"),
+    ("hand", ".github/guards/statement_freeze.py"),
     # what an agent reads first, and the instructions it follows to add a proof
     ("hand", "AGENTS.md"),
     ("hand", ".claude/skills/adding-a-proof/SKILL.md"),

@@ -1,0 +1,148 @@
+# Copyright 2026 Theorem Labs, PBC
+# SPDX-License-Identifier: Apache-2.0
+name: statement-freeze
+# WHAT THIS IS FOR. This repository publishes every theorem OSS Verify claims, and the table that
+# says which of them are proved. A change to either is a change to what we assert. The owner of
+# this work put it plainly on 2026-11-07: he does not want top-level theorem statements changing.
+#
+# WHAT IT WATCHES
+#   **/Statements.v        the text of the theorem statements themselves
+#   index/statements.tsv   the kind, builds, reading, exits and status of a row
+#
+# WHAT IT NEVER WATCHES: any proof body, anywhere. "It is correct that the proof body needs no
+# Human Reviewer" -- the owner of this repository, 2026-11-07. The kernel is the reviewer for a
+# proof. If this check ever fires on a proof file that is a defect in it, not caution, and the
+# scanner's self-test holds it to that with fixtures that change a proof and must pass.
+#
+# WHAT THIS ADDS OVER CODEOWNERS, WITHOUT INFLATION. `.github/CODEOWNERS` already puts
+# `**/Statements.v` and `index/*.tsv` under @sjawhar and @JasonGross, and the ruleset already
+# requires a code owner's approval on them. THIS CHECK IS NOT A SECOND LOCK ON THAT DOOR, and a
+# check that duplicates a gate and calls itself a gate is worse than no check. What it adds is
+# that the change is NAMED. index/statements.tsv has 20,422 rows; its diff is unreadable, and an
+# approver cannot see from it that one row went from `open` to `proved`, or that a `reading` moved
+# from `budget` to `may-fail`. This prints one line per changed assertion -- statement id, column,
+# old value, new value -- into a log that is part of the merge record. So: visible and named in
+# the log, rather than only blocked.
+#
+# It also writes that record down where a CODEOWNERS gate leaves none. A ruleset bypass is per
+# ruleset, not per rule, so the Apps in `bypass_actors` merge without a code owner and without
+# this check blocking; the job still runs, and still says what moved. A check described as
+# blocking where it does not block the main actor would be the same false attestation one layer
+# down, so this file does not describe it that way.
+#
+# WHY pull_request_review IS A TRIGGER. The verdict depends on who has approved THIS head, and an
+# approval arrives after the push. Without this trigger the check would be red until the next
+# push, and a code owner's approval would not clear it.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  pull_request_review:
+    types: [submitted, dismissed]
+  merge_group:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: statement-freeze-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  statement-freeze:
+    # This file lives in BOTH repositories and runs in one. The public tree is rebuilt from the
+    # internal tree at each release cut (`oft release-tree`, publish.yml), so a workflow that
+    # existed only on public main would be DELETED by the next cut -- and a required check whose
+    # workflow is gone blocks every pull request forever. So it lands internally too, and this
+    # condition keeps it inert there, as pr.yml's own `github.repository ==` steps do.
+    if: github.repository == 'theorem-labs/oss-verify-proofs'
+    # A static name: the ruleset of main requires it, so it must not change with the event.
+    name: statement-freeze
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      # the base branch, the CODEOWNERS file, and the lazy blob fetches of the blobless checkout
+      contents: read
+      # the reviews of this pull request, to see whether a code owner approved THIS head
+      pull-requests: read
+    steps:
+      - name: the base's copy of the guard, and of CODEOWNERS
+        # The base's copy on purpose: a change must not supply the rule that judges it, nor the
+        # file that says who owns what.
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          # The TRUSTED commit for every event, named rather than left to a default. On a merge
+          # group `github.sha` is the GROUP's commit, which CONTAINS the candidate change, so
+          # leaving it there checked out the candidate's own copy of the guard and ran it; a
+          # cross-model audit demonstrated exactly that. `merge_group.base_sha` is the base the
+          # group was built on.
+          ref: >-
+            ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha
+            || github.sha }}
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: |
+            .github/guards
+            .github/CODEOWNERS
+          sparse-checkout-cone-mode: false
+      - name: the commits to read
+        id: range
+        env:
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          MG_BASE: ${{ github.event.merge_group.base_sha }}
+          MG_HEAD: ${{ github.event.merge_group.head_sha }}
+        run: |
+          set -euo pipefail
+          case "$EVENT" in
+            pull_request_target|pull_request_review)
+              # refs/pull/<n>/head is this repository's own mirror of the head, fork or not, so no
+              # remote of a contributor's is added and nothing of theirs is checked out.
+              git fetch --no-tags --filter=blob:none origin \
+                "refs/pull/$PR/head:refs/statement-freeze/head" "$PR_BASE"
+              head=$(git rev-parse refs/statement-freeze/head)
+              # The merge base, not the base tip: what the base moved by is already published, and
+              # another pull request's statement change is not this one's to answer for.
+              base=$(git merge-base "$PR_BASE" "$head")
+              ;;
+            merge_group)
+              git fetch --no-tags --filter=blob:none origin "$MG_BASE" "$MG_HEAD"
+              base=$MG_BASE; head=$MG_HEAD
+              ;;
+            *)
+              head=$(git rev-parse HEAD)
+              base=$(git merge-base origin/main "$head" 2>/dev/null || git rev-parse "$head^")
+              ;;
+          esac
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+          echo "Reading what $base..$head asserts differently."
+      - name: the reviews of this pull request
+        if: ${{ github.event_name == 'pull_request_target' || github.event_name == 'pull_request_review' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # Every page: an approval on page two is an approval. A read that fails stops the job
+          # rather than leaving an empty list, which would read as "nobody approved".
+          gh api --paginate --slurp "repos/$REPO/pulls/$PR/reviews?per_page=100" \
+            --jq 'add | map({state, commit_id, user: {login: .user.login}})' > "$RUNNER_TEMP/reviews.json"
+          echo "Read $(python3 -c 'import json,os,sys; print(len(json.load(open(os.environ["RUNNER_TEMP"]+"/reviews.json"))))') review(s)."
+      - name: a change to what this repository asserts is named, and needs a code owner
+        env:
+          BASE: ${{ steps.range.outputs.base }}
+          HEAD: ${{ steps.range.outputs.head }}
+          # A merge group's entry was approved on its pull request; there is no pull request here
+          # to read reviews of, so the job names what moved and does not ask again.
+          REPORT_ONLY: ${{ github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch' }}
+        run: |
+          set -euo pipefail
+          args=(--base "$BASE" --head "$HEAD" --owners .github/CODEOWNERS)
+          [ "$REPORT_ONLY" = true ] && args+=(--report-only) || args+=(--approvals "$RUNNER_TEMP/reviews.json")
+          python3 .github/guards/statement_freeze.py "${args[@]}"
