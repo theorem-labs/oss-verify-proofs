@@ -1,0 +1,14 @@
+schema: oss-fuzz-theorems/counterexample/1
+statement: ffmpeg/ffmpeg_AV_CODEC_ID_AAC_DEC_fuzzer/asan_halts
+input: input.bin
+observed:
+  build: asan
+  exit: 134
+  signal: SIGABRT
+message: "Assertion ret != (-(int)(('B') | (('U') << 8) | (('G') << 16) | ((unsigned)('!') << 24))) failed"
+control:
+  input: control.bin
+  exit: 0
+disclosure: public
+note: >-
+  The harness's av_assert0(ret != AVERROR_BUG) (tools/target_dec_fuzzer.c) aborts. The extradata is an AudioSpecificConfig for ER AAC LC at 44100 Hz, and the harness's options block leaves the sample rate at 0. The aac decoder sets AV_CODEC_CAP_CHANNEL_CONF, so it opens without a sample rate, and its error-resilient output path (libavcodec/aac/aacdec.c) copies the context's rate into the frame without taking it from the configuration; the frame has sample_rate 0, which frame_validate() (libavcodec/decode.c) turns into AVERROR_BUG. control.bin is the same input with the options block setting the sample rate to 44100 and the channel count to 2. The same payload fails a native x86-64 fuzz build of FFmpeg master at 72f8c3376b; the fix, FFmpeg pull request 25955, is now merged upstream.
