@@ -1,0 +1,9 @@
+# The Actions secret HELD_CONTENT_RULES, pinned: `<sha256-hex> <row count>`. The digest is of the
+# secret's text with CRLF turned into LF and exactly one final newline
+# (.github/held/held_content_scan.py, load_detectors). Both numbers are checked before anything is
+# scanned, and a mismatch is exit 2, never a pass: a secret that was edited outside a pull request
+# is a change to what this repository checks for, made where nobody reviews it.
+#
+# To change the private table: set the secret and change this line in the SAME pull request, which
+# a code owner approves because .github/ is theirs.
+6132d36b04af67bbf4e6bf62254127704ff82dc506fa9753c887adeb4bc2f1f4 10

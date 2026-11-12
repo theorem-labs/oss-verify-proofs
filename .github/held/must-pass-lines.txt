@@ -1,0 +1,33 @@
+# NEGATIVE CONTROLS. Every line below is text this repository ALREADY PUBLISHES, taken verbatim
+# from a tracked file, and every one of them MUST match no detector. They are checked on every run,
+# before anything else is scanned, and a match is exit 2 naming the detector and this line number.
+#
+# They are here because the cost of this check is not a leak it misses; it is a detector that
+# refuses honest work. Each line is one that a slightly broader pattern would have caught: a 64-hex
+# digest beside the word `sha256`, a URL with a colon in it, a `key:` with a value, an opam or dune
+# stanza, a Rocq `Require`. These lines never supply canary coverage: the canaries in the two
+# detector tables are the only evidence that a detector still fires.
+#
+# A line here is not an exemption. It is a fixture: nothing in a pull request is compared against
+# it, and the same text arriving in a change is scanned like any other text -- it simply does not
+# match, which is the point.
+  sha256: 042d5bb0014e3f2f3460f1d640e599ece0d8d844681aaf537b8b7db2361385c4
+  checker: ghcr.io/theorem-labs/oss-fuzz-theorems-checker@sha256:063f93261f11ba449f1c3825884fadc65cf1fc836d4a3ee534633211abbdc3eb
+  builder: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+curl/fuzz_bufq/asan_agrees	agreement	plain,asan	may-fail	-	open	-	1	d93aa075eb66a02ceacf6ea4554fee052f834a095980cb4f26d0b59cc6527dfe	-
+  repository: https://github.com/curl/curl-fuzzer
+  commit: 4768d8de6f3209bb5dd761cd24ff7ccbfbb6b5b8
+homepage: https://curl.haxx.se
+  repository: https://github.com/theorem-labs/rocq-linux-process-semantics
+- name: libclang_rt.asan.a
+    sha256: 078168dea88da7f13cccc6ca7305c6e2df0202f4f0364c7caa23a20a1faa5418
+  key: value pairs in a harness record are read by tools/oft, never by a shell
+From Stdlib Require Import List.
+Require Import OSSVerify.Common.
+  prefix_hex: '000000000000'
+opam_stem: oss-verify
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name
+password-protected archives are not published here; every asset is a plain tar.zst
+The access key of a release asset store is not in this repository; see docs/ for how a reader fetches one.
+Authorization: Bearer not-a-secret-placeholder
+export EXAMPLE_API_KEY=not-a-secret-example

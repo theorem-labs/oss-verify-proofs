@@ -1,0 +1,195 @@
+# Copyright 2026 Theorem Labs, PBC
+# SPDX-License-Identifier: Apache-2.0
+name: held-content
+# WHAT THIS IS FOR. This repository is public, and a pull request into it publishes whatever it
+# carries the moment it is opened: an open pull request already counts as going to a public
+# repository, as this project's owner put it on 2026-11-06. Three things have
+# reached a repository of ours that way and had to be taken out again by hand: a credential in a
+# fixture, an internal tracker key (#10, "Take an internal tracker key out of three files"), and
+# the names of fuzz targets held pending approval (theorem-labs/oss-verify#145, whose title, body
+# and branch were all rewritten). This check reads every line a pull request ADDS and refuses the
+# merge while any of them matches a detector.
+#
+# It is a port of the leak check that guards every push and every `gh` write from Theorem's own
+# machines, at the tag `leak-check-v13` of the internal tool that holds it. What is ported is its
+# table, its credential detectors, its fresh-canary self-test, its must-pass negative controls and
+# its four exits -- not its file: that file's own patterns name the things they look for, and
+# running the check over the check refuses it. So the patterns a public file may carry are in
+# .github/held/detectors.tsv, in the clear, and the rest arrive in the Actions secret
+# HELD_CONTENT_RULES, pinned by row count and sha256 in .github/held/private-detectors.sha256.
+#
+# THE SELF-TEST IS WHY YOU MAY BELIEVE A GREEN RUN. A scanner that finds nothing and a scanner that
+# cannot find anything print the same word. Every run of this job, before it reads one line of the
+# change, draws one fresh canary per detector from /dev/urandom and requires each detector to find
+# ITS OWN; and it requires every line of .github/held/must-pass-lines.txt -- text this repository
+# already publishes -- to match none of them. Either failure stops the job with exit 2, naming the
+# detector. The counts are the job's first line of output on every run, green or red.
+#
+# WHY pull_request_target, AND WHY THAT IS SAFE HERE. The private half of the detector table is a
+# secret, and a `pull_request` run of a fork's change gets no secret: it would scan with a third of
+# the detectors missing and say clean. pull_request_target runs the BASE branch's copy of this file
+# and of the scanner, with the secret, which also means a contributor cannot edit the check away in
+# the change the check is judging. The change itself is never checked out and never executed: the
+# job checks out the base, sparse, for .github/held/ alone, FETCHES the pull request's head into
+# the object store, and the scanner reads its blobs with `git cat-file`. Nothing from the change is
+# written into the work tree, and no step of this job runs anything the change supplies.
+#
+# WHAT A PUBLIC LOG MAY SAY. A refusal names the path, the line and the detector, and NOT the text
+# that matched. Copying held content into a public job log to complain about held content is the
+# same leak. Read the text with the scanner on your own machine
+# (HELD_CONTENT_SHOW_MATCHES=1 .github/held/held_content_scan.py --files <path>), or ask a
+# maintainer.
+#
+# HOW TO SEE IT FAIL. A check only ever seen passing is indistinguishable from a check that cannot
+# fail. Two ways, neither of which commits or pushes held content anywhere: run this workflow by
+# hand with `demonstrate_a_refusal`, or put the label `prove-it-can-fail` on any pull request. The
+# job then draws one fresh canary per detector inside the runner, commits them to the runner's own
+# clone, and scans that range through the SAME code path a pull request takes. It can only turn a
+# run RED: the demonstration step never reports a pass, so no one can use it to get a change past
+# this check.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  merge_group:
+  workflow_dispatch:
+    inputs:
+      demonstrate_a_refusal:
+        description: >-
+          Plant one fresh random canary per detector in a commit made inside the runner, scan it
+          through the same code path a pull request takes, and fail.
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  # One run per pull request or merge group; a push supersedes the run in progress, which is
+  # reading a head nobody will merge.
+  group: held-content-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  held-content:
+    # This file lives in BOTH repositories and runs in one. The public tree is rebuilt from the
+    # internal tree at each release cut (`oft release-tree`, publish.yml), so a workflow that
+    # existed only on public main would be DELETED by the next cut -- and a required check whose
+    # workflow is gone blocks every pull request forever. So it lands internally too, and this
+    # condition keeps it inert there, as pr.yml's own `github.repository ==` steps do.
+    if: github.repository == 'theorem-labs/oss-verify-proofs'
+    # A static name: this is what the ruleset of main requires, so it must not change with the
+    # event or the matrix.
+    name: held-content
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      # the base branch, and the lazy blob fetches of the blobless checkout below
+      contents: read
+    env:
+      # The private half of the detector table. Absent or altered, the scanner stops with exit 2
+      # rather than scanning with fewer detectors than it claims (held_content_scan.py,
+      # load_detectors). GitHub masks this value wherever it would appear in this log.
+      HELD_CONTENT_RULES: ${{ secrets.HELD_CONTENT_RULES }}
+      # Whether this run is the demonstration rather than the check: the dispatch input, or the
+      # `prove-it-can-fail` label on the pull request. One place, so the two steps below cannot
+      # disagree and both run or neither.
+      DEMONSTRATE: >-
+        ${{ (github.event_name == 'workflow_dispatch' && inputs.demonstrate_a_refusal)
+        || contains(github.event.pull_request.labels.*.name, 'prove-it-can-fail') }}
+    steps:
+      - name: the base's copy of the scanner, and nothing of the change
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          # The TRUSTED commit for every event, named rather than left to a default. On a merge
+          # group `github.sha` is the GROUP's commit, which CONTAINS the candidate change, so
+          # leaving it to `github.sha` checked out the candidate's own copy of this scanner and
+          # ran it with HELD_CONTENT_RULES in its environment -- a cross-model audit demonstrated
+          # exactly that. `merge_group.base_sha` is the base the group was built on.
+          ref: >-
+            ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha
+            || github.sha }}
+          # The whole commit graph with no blob: `git merge-base` needs the history, and the
+          # scanner fetches only the blobs of the paths the change touched. This repository is
+          # about 4 GB of release assets and proofs; a full clone is minutes, this is seconds.
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: .github/held
+          sparse-checkout-cone-mode: false
+      - name: the commits to read
+        id: range
+        env:
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          MG_BASE: ${{ github.event.merge_group.base_sha }}
+          MG_HEAD: ${{ github.event.merge_group.head_sha }}
+        run: |
+          set -euo pipefail
+          case "$EVENT" in
+            pull_request_target)
+              # refs/pull/<n>/head is this repository's own mirror of the head, fork or not, so no
+              # remote of the contributor's is added and no code of theirs is checked out.
+              git fetch --no-tags --filter=blob:none origin \
+                "refs/pull/$PR/head:refs/held-content/head" "$PR_BASE"
+              head=$(git rev-parse refs/held-content/head)
+              # The merge base, not the base tip: the base may have moved since the branch was cut,
+              # and everything it moved by is already published.
+              base=$(git merge-base "$PR_BASE" "$head")
+              ;;
+            merge_group)
+              git fetch --no-tags --filter=blob:none origin "$MG_BASE" "$MG_HEAD"
+              base=$MG_BASE; head=$MG_HEAD
+              ;;
+            *)
+              # A dispatch judges the ref it was started on against the commit it branched from.
+              head=$(git rev-parse HEAD)
+              base=$(git merge-base origin/main "$head" 2>/dev/null || git rev-parse "$head^")
+              ;;
+          esac
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+          echo "Reading what $base..$head introduces."
+      - name: plant one fresh canary per detector, and require a refusal
+        # Only on an explicit dispatch or the `prove-it-can-fail` label. The canaries are drawn
+        # from /dev/urandom inside this job, committed to the runner's own clone, and pushed
+        # nowhere. The step then runs the SAME scan the next step runs, over a real commit range,
+        # so what a reader sees fail is the code path a pull request takes and not a special one.
+        # It ends red whatever happens, so it can never let a change through.
+        if: ${{ env.DEMONSTRATE == 'true' }}
+        env:
+          BASE: ${{ steps.range.outputs.base }}
+        run: |
+          set -uo pipefail
+          git config user.email held-content@invalid
+          git config user.name 'held-content demonstration'
+          python3 - <<'PY' > /tmp/planted.txt
+          import importlib.util, sys
+          spec = importlib.util.spec_from_file_location("hcs", ".github/held/held_content_scan.py")
+          hcs = importlib.util.module_from_spec(spec); spec.loader.exec_module(hcs)
+          public, private = hcs.load_detectors()
+          source = open("/dev/urandom", "rb")
+          draw = lambda n, a: bytes(a[c % len(a)] for c in source.read(n))
+          out = sys.stdout.buffer
+          for d in public + private:
+              out.write(hcs.draw_canary(d.canary, draw) + b"\n")
+          PY
+          mkdir -p .github/held/demonstration
+          mv /tmp/planted.txt .github/held/demonstration/planted.txt
+          git add -f .github/held/demonstration/planted.txt
+          git commit -q -m 'held-content: a planted canary per detector, for this demonstration only'
+          head=$(git rev-parse HEAD)
+          python3 .github/held/held_content_scan.py --commits "$BASE" "$head"
+          status=$?
+          echo "The scan of the planted commit exited $status (3 is a refusal)."
+          [ "$status" = 3 ] || { echo "::error::the planted canaries were NOT refused"; exit 1; }
+          echo "::error::demonstration: the check refused the planted canaries, as it must. This run is red on purpose."
+          exit 1
+      - name: nothing this change adds is held content
+        if: ${{ env.DEMONSTRATE != 'true' }}
+        env:
+          BASE: ${{ steps.range.outputs.base }}
+          HEAD: ${{ steps.range.outputs.head }}
+        run: python3 .github/held/held_content_scan.py --commits "$BASE" "$HEAD"
