@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by gabelogan195, 2026-11: APF.check refuses PSpin (CErr 2) instead of returning COk SNil at a self-jump; no plan of this harness uses PSpin. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -214,7 +215,7 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
       if is_ecall_at segs cs then
         match node_exit cs with Some code => COk (SExit code) | None => CErr 3 p cs end
       else CErr 2 p cs
-  | PSpin => if node_spin segs cs then COk SNil else CErr 2 p cs
+  | PSpin => CErr 2 p cs
   | PFog i sz k => match node_fog cs i sz with Some cs' => check f cs' k | None => CErr 3 p cs end
   | PFogNew i sz k => match node_fognew cs i sz with Some cs' => check f cs' k | None => CErr 3 p cs end
   | PGhost b n k => match node_ghost LIMIT cs b n with Some cs' => check f cs' k | None => CErr 3 p cs end

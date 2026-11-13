@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by gabelogan195, 2026-11: the spinning leaf srz_cfg_spin removed from srealizes_cfg, with the lemma srz_cfg_spinning and the spinning case of each lemma that inducts on srealizes_cfg, so that a derivation of srealizes_cfg is a well-founded tree of steps ending in halted configurations. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -48,24 +49,16 @@ Inductive srealizes_cfg : config -> TSet -> Prop :=
 | srz_cfg_halt : forall c,
     m_halted (cfg_model c) <> None ->
     srealizes_cfg c t_nil
-| srz_cfg_spin : forall c,
-    to_spin segs (cfg_ms c) (cfg_model c) ->
-    m_halted (cfg_model c) = None ->
-    srealizes_cfg c t_nil
 | srz_cfg_conseq : forall c T T',
     srealizes_cfg c T -> t_eq T T' -> srealizes_cfg c T'.
-
-Lemma srz_cfg_spinning : forall c, spinning segs c -> srealizes_cfg c t_nil.
-Proof. intros c [Hspin Hh]. exact (srz_cfg_spin c Hspin Hh). Qed.
 
 (* [comment removed for export] *)
 
 Lemma srealizes_cfg_nonempty : forall c T, srealizes_cfg c T -> T [].
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq].
+    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
-  - reflexivity.
   - reflexivity.
   - apply Heq. exact IH.
 Qed.
@@ -74,14 +67,13 @@ Lemma srealizes_cfg_pclosed : forall c T, srealizes_cfg c T ->
   forall tr tr', T tr -> is_prefix tr' tr -> T tr'.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
     + left. eapply is_prefix_trans; eauto.
     + apply is_prefix_app_split in Hp as [Hp | (tr0' & -> & Hp)].
       * left. exact Hp.
       * right. exists tr0'. split; [reflexivity | eapply IH; eauto].
-  - unfold t_nil in *. subst tr. apply is_prefix_nil_r in Hp. exact Hp.
   - unfold t_nil in *. subst tr. apply is_prefix_nil_r in Hp. exact Hp.
   - apply Heq. eapply IH; [apply Heq; exact HT | exact Hp].
 Qed.
@@ -131,7 +123,7 @@ Lemma srealizes_cfg_star_only : forall c T, srealizes_cfg c T ->
   forall tr c', star_cfg segs CFG c tr c' -> T tr.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
     + exists i0. left. apply is_prefix_nil.
@@ -140,8 +132,6 @@ Proof.
       inversion Heq2; subst c2.
       exists i. right. exists tr2. split; [reflexivity | eapply IH; exact Hstar2].
   - rewrite (star_cfg_halted_nil c tr c' Hh Hstar). reflexivity.
-  - destruct c as [ms model]; cbn in Hspin, Hh.
-    rewrite (spin_star_cfg_nil ms model tr c' Hspin Hh Hstar). reflexivity.
   - apply Heq. eapply IH; exact Hstar.
 Qed.
 
@@ -149,7 +139,7 @@ Lemma srealizes_cfg_admits : forall c T, srealizes_cfg c T ->
   forall tr, T tr -> obs_trace_cfg segs CFG c tr.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
     intros tr HT.
   - destruct Hnode as [Hcomp _].
     destruct HT as [i [Hpre | (tr0 & -> & HT0)]].
@@ -157,7 +147,6 @@ Proof.
     + destruct (IH i tr0 HT0) as (tr'' & c'' & Hstar & Hp).
       exists (evs i ++ tr''), c''.
       split; [eapply star_cfg_step; [apply Hcomp | exact Hstar] | apply is_prefix_app_mono; exact Hp].
-  - unfold t_nil in HT; subst tr. apply obs_trace_cfg_nil.
   - unfold t_nil in HT; subst tr. apply obs_trace_cfg_nil.
   - apply IH. apply Heq. exact HT.
 Qed.
@@ -176,17 +165,12 @@ Lemma srealizes_cfg_step : forall c T e c',
   srealizes_cfg c T -> sstep_cfg segs CFG c e (SNext c') -> exists T', srealizes_cfg c' T'.
 Proof.
   intros c T e c' H; revert e c';
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
     intros e c' Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
     inversion Heq2; subst c'. exists (T i). apply Hcont.
   - exfalso. apply Hh. eapply sstep_cfg_halted_none; exact Hss.
-  - destruct (silent_loop_sstep segs (spinning segs) c e (SNext c')
-                (spinning_silent_loop segs) (conj Hspin Hh) (sstep_cfg_sub segs CFG _ _ _ Hss))
-      as (_ & c'' & Heq2 & Hsp').
-    injection Heq2 as ->.
-    exists t_nil. exact (srz_cfg_spinning _ Hsp').
   - eapply IH; exact Hss.
 Qed.
 
@@ -194,13 +178,11 @@ Lemma srealizes_cfg_no_sserror : forall c T e,
   srealizes_cfg c T -> ~ sstep_cfg segs CFG c e SError.
 Proof.
   intros c T e H; revert e;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
     intros e Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
   - apply Hh. eapply sstep_cfg_halted_none; exact Hss.
-  - destruct c as [ms model]; cbn in Hspin, Hh.
-    exact (spin_no_sstep_error segs ms model Hspin Hh e (sstep_cfg_sub segs CFG _ _ _ Hss)).
   - eapply IH; exact Hss.
 Qed.
 
