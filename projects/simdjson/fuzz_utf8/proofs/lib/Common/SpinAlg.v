@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by gabelogan195, 2026-11: the spinning leaf srz_spin takes a third premise, SpinScan.exec_has_spin segs = true, and srz_spinning, srz_mmap_spin, srz_spin_alloc_writes and section SpinBranchReal take it as a hypothesis, so that an image whose executable segments hold no jal x0, 0 has no spinning leaf. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -8,7 +9,7 @@ From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
-From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Common Require Import SimInv ExitSim CatSim MmapSim ShapeAlg DivergeSim LazyFrame SymTac.
+From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Common Require Import SimInv ExitSim CatSim MmapSim ShapeAlg DivergeSim LazyFrame SymTac SpinScan.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for export] *)
 Import ListNotations.
 Open Scope bv_scope.
@@ -30,6 +31,7 @@ Inductive srealizes : config -> TSet -> Prop :=
 | srz_spin : forall c,
     to_spin segs (cfg_ms c) (cfg_model c) ->
     m_halted (cfg_model c) = None ->
+    exec_has_spin segs = true ->
     srealizes c t_nil
 | srz_conseq : forall c T T',
     srealizes c T -> t_eq T T' -> srealizes c T'.
@@ -46,8 +48,8 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma srz_spinning : forall c, spinning segs c -> srealizes c t_nil.
-Proof. intros c [Hspin Hh]. exact (srz_spin c Hspin Hh). Qed.
+Lemma srz_spinning : forall c, exec_has_spin segs = true -> spinning segs c -> srealizes c t_nil.
+Proof. intros c Hsj [Hspin Hh]. exact (srz_spin c Hspin Hh Hsj). Qed.
 
 (* [comment removed for export] *)
 
@@ -55,7 +57,7 @@ Lemma srealizes_nonempty : forall c T, srealizes c T -> T [].
 Proof.
   intros c T H;
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c Hspin Hh | c T T' H IH Heq].
+                   | c Hspin Hh Hsj | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
   - reflexivity.
   - reflexivity.
@@ -67,7 +69,7 @@ Lemma srealizes_pclosed : forall c T, srealizes c T ->
 Proof.
   intros c T H;
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c Hspin Hh | c T T' H IH Heq];
+                   | c Hspin Hh Hsj | c T T' H IH Heq];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
     + left. eapply is_prefix_trans; eauto.
@@ -86,7 +88,7 @@ Lemma srealizes_star_only : forall c T, srealizes c T ->
 Proof.
   intros c T H;
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c Hspin Hh | c T T' H IH Heq];
+                   | c Hspin Hh Hsj | c T T' H IH Heq];
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
     + exists i0. left. apply is_prefix_nil.
@@ -108,7 +110,7 @@ Lemma srealizes_admits : forall c T, srealizes c T ->
 Proof.
   intros c T H;
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c Hspin Hh | c T T' H IH Heq];
+                   | c Hspin Hh Hsj | c T T' H IH Heq];
     intros tr HT.
   - destruct Hnode as [Hcomp _].
     destruct HT as [i [Hpre | (tr0 & -> & HT0)]].
@@ -140,7 +142,7 @@ Lemma srealizes_step : forall c T e c',
 Proof.
   intros c T e c' H; revert e c';
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c Hspin Hh | c T T' H IH Heq];
+                   | c Hspin Hh Hsj | c T T' H IH Heq];
     intros e c' Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
@@ -150,7 +152,7 @@ Proof.
                 (spinning_silent_loop segs) (conj Hspin Hh) (sstep_cfg_sub segs ACFG c e _ Hss))
       as (_ & c'' & Heq2 & Hsp').
     injection Heq2 as ->.
-    exists t_nil. exact (srz_spinning _ Hsp').
+    exists t_nil. exact (srz_spinning _ Hsj Hsp').
   - eapply IH; exact Hss.
 Qed.
 
@@ -159,7 +161,7 @@ Lemma srealizes_no_sserror : forall c T e,
 Proof.
   intros c T e H; revert e;
     induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c Hspin Hh | c T T' H IH Heq];
+                   | c Hspin Hh Hsj | c T T' H IH Heq];
     intros e Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
@@ -561,6 +563,7 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma srz_mmap_spin : forall ms model x8 B,
+  exec_has_spin segs = true ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 ->
@@ -575,7 +578,7 @@ Lemma srz_mmap_spin : forall ms model x8 B,
   (exists a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true) ->
   srealizes (mkCfg ms model) B.
 Proof.
-  intros ms model x8 B Hh Hlazy Hsvc Hno Hargs Hspin HB Hex.
+  intros ms model x8 B Hsj Hh Hlazy Hsvc Hno Hargs Hspin HB Hex.
   (* [comment removed for export] *)
   destruct (mmap_refusable ms model) eqn:Href.
   2:{ eapply srz_mmap_forced; eassumption. }
@@ -600,7 +603,7 @@ Proof.
              (inr (exist _ a0 Ha0))).
     - apply (node_mmap ms model x8); assumption.
     - intros [[e He] | [a Ha]]; cbn.
-      + apply srz_spin; cbn; [apply Hspin; exact He | exact Hh].
+      + apply srz_spin; cbn; [apply Hspin; exact He | exact Hh | exact Hsj].
       + apply HB; exact Ha. }
   (* [comment removed for export] *)
   intro tr. split.
@@ -676,6 +679,7 @@ Qed.
 
 (* [comment removed for export] *)
 Corollary srz_spin_alloc_writes : forall segs ms0 ms model x8 bs cs,
+  exec_has_spin segs = true ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fd1chan model ->
@@ -694,7 +698,7 @@ Corollary srz_spin_alloc_writes : forall segs ms0 ms model x8 bs cs,
   bufs_modeled bs ->
   srealizes segs (mkCfg ms0 model) (t_writes bs (t_exit cs (m_fs model))).
 Proof.
-  intros segs ms0 ms model x8 bs cs Hh Hlazy Hfd Hms Hsvc Hno Hargs
+  intros segs ms0 ms model x8 bs cs Hsj Hh Hlazy Hfd Hms Hsvc Hno Hargs
     Hrefuse Hgrant Hex Hbs.
   eapply srz_msteps; [exact Hh | exact Hlazy | exact Hms |].
   eapply srz_mmap_spin; try eassumption.
@@ -716,6 +720,7 @@ Variable segs : list Segment.
 Variables (ms : machine_state) (model : Model) (x8 : word).
 Variables (bs : list (list byte)) (cs : word).
 
+Hypothesis Hsj : exec_has_spin segs = true.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hlazy : m_vm_lazy model = [].
 Hypothesis Hfd : fd1chan model.
