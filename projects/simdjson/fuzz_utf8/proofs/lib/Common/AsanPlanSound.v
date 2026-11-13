@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by gabelogan195, 2026-11: node_spin_sound reads the SpinScan.exec_has_spin conjunct of node_spin and passes it to SpinAlg.srz_spin as its third premise. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -6023,6 +6024,7 @@ Lemma node_spin_sound : forall cs E R FULL model,
   srealizes SEGS (cfg R (pc cs) FULL model) t_nil.
 Proof.
   intros cs E R FULL model HC Hn. unfold node_spin in Hn.
+  apply andb_prop in Hn as [Hsj Hn].
   apply andb_prop in Hn as [Hn Hw]. apply andb_prop in Hn as [H0 H4].
   destruct (fetch_word SEGS (Z_to_bv 64 (pc cs))) as [w|] eqn:Hf; [|discriminate].
   apply Z.eqb_eq in Hw.
@@ -6032,6 +6034,7 @@ Proof.
   apply srz_spin.
   - apply is_self_jump_to_spin. apply self_jump_word; [reflexivity | exact Hf].
   - exact (co_halt _ _ _ _ _ HC).
+  - exact Hsj.
 Qed.
 
 (* [comment removed for export] *)
