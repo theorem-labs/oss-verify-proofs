@@ -57,8 +57,8 @@
 # WHAT DECIDES WHETHER CHECKING HAPPENS.  Owned.
 #
 #   /.github/             The workflows, the actions they call and actionlint's configuration.  No carve-out: that
-#                         includes .github/held/, whose files pin the detectors that keep held content off this
-#                         public repository.
+#                         includes .github/held/, for files that pin the detectors that keep held content off this
+#                         public repository.  It holds no file in this repository today.
 #   /tools/, /oft,        The tools those workflows run: `oft lint`, `oft generate --check`, `oft check`.  ./theorem
 #   /theorem              is a one-line shell script that executes ./oft.
 #   /toolchain/           allowed-axioms.txt, which decides which axioms a proof may use, and the checker and runner
