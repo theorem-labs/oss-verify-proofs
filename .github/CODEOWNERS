@@ -82,7 +82,7 @@
 #
 #   Proof bodies have no owner: the 526 Proof.v files of the published tree, the 240,748 .v files of the proof
 #   libraries beside them, their proof.yaml and their dune files.  The Rocq kernel is their reviewer: a proof checks
-#   against the statement or it does not, and a human reading adds nothing to that verdict.  Sami ruled this on
+#   against the statement or it does not, and a human reading adds nothing to that verdict.  Sami answered on
 #   2026-11-07: "It is correct that the proof body needs no Human Reviewer"
 #   (dispatch://OSSV-286/comment/c7500b0c-e76c-4cb0-bf86-9dea75718d29).  The one thing under proofs/ that IS owned
 #   is made_from.py, above, because CI runs it.

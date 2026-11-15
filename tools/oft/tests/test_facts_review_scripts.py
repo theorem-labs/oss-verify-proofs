@@ -855,7 +855,8 @@ class CodeOwnersTest(unittest.TestCase):
         requires (no team has a grant on this repository). Their lines are the last two, since GitHub takes the last
         line that matches. /theories/ and /toolchain/allowed-axioms.txt keep the same two owners: the OSSV-129
         replay found an agent reviewer catches a change to what a statement claims at most 1 time in 5, and never
-        under the final rules, and the stream owner's answer on that issue reads "I don't think we should be
+        under the final rules, and the stream owner's answer on that issue
+        (OSSV-129/comment/111bc5d4-f81f-48f6-a9a7-48d6e07a8c79) reads "I don't think we should be
         widening allowed axioms without approval"; no later line matches a path of either. No other path has an
         owner, approvals.yaml and the publishing paths included: a code owner is a user or a team, never an App, so
         naming the two people there left an agent no way to approve a release but the stream owner's admin token,

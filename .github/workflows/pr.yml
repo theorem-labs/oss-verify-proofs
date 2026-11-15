@@ -877,8 +877,7 @@ jobs:
       # (`checked_elsewhere` and its note, which check, fetch-drafts and required read).  Two changes have one:
       #
       #   * the tree the base pins with a deferred check (the plan step above): the pin names that tree and the
-      #     check of record, and the tree alone says it, whichever tools judge that tree (the stream owner's
-      #     decision for the W2 train);
+      #     check of record, and the tree alone says it, whichever tools judge that tree;
       #   * a merge queue group, or a pull request that is no draft, whose proofs were each already checked on a VM,
       #     at a tree whose content keys are this run's: its check jobs would compile the same proofs against the
       #     same statements with the same checker a second time, for the same answer (the OSS Verify lead,
@@ -949,8 +948,7 @@ jobs:
           no() { echo "the checks run here: $1"; echo "checked_elsewhere=false" >> "$GITHUB_OUTPUT"; exit 0; }
           if [ "$DEFERRED" = true ]; then
             # the tree the base pins with a deferred check: the pin names that tree, and what it defers is the check
-            # jobs, not the rules that judged it, so it holds whichever tools the plan step named (the stream
-            # owner's decision for the W2 train)
+            # jobs, not the rules that judged it, so it holds whichever tools the plan step named
             [ -n "$CHECK_OF_RECORD" ] || { echo "::error::a deferred check with no check of record"; exit 1; }
             { echo "checked_elsewhere=true"; echo "checked_elsewhere_note=the check of record: $CHECK_OF_RECORD"
             } >> "$GITHUB_OUTPUT"
