@@ -7,13 +7,7 @@
    theorem names by halts_skcms_iccprofile_info_plain and _ubsan.  The proof bodies are not copied: from_chars's single
    halts_allowed_lowered_of_realizes call is replaced here by HaltsBridge.halts_of_realizes_spec for the plain build and
    by must_exit_of_realizes_spec composed with Halts.Lim.LimTransfer.lim_transfer_scfg for the UBSan build. *)
-(* Modified by gabelogan195, 2026-11: made from projects/skcms/iccprofile_info/proofs/lib/Halts/HaltsTops.v at commit
-   f92feaf8b7e, lines 20-26 (the import block) and 40-51 (halts_skcms_iccprofile_info_ubsan), restated for the ASan and
-   ASan+UBSan images as halts_skcms_iccprofile_info_asan and _asan_ubsan, with lim_source_le_target used from HaltsTops
-   rather than copied; and from HaltsBridge.v at the same commit, lines 144-164 (must_exit_of_realizes_spec), restated as
-   must_exit_of_srealizes for a realization in Asan.SpinAlgCfg.srealizes_cfg, which the new lemma srealizes_info reads as
-   an Info.ShapeAlg.realizes; the realizations are Asan.InfoAsanTop.info_asan_tgt_C and Asan.InfoBothTop.info_both_tgt_C,
-   closed with the certificates Asan.InfoAsanClosed and Asan.InfoBothClosed close the agreement theorems with. *)
+(* Modified by gabelogan195, 2026-11: made from projects/skcms/iccprofile_info/proofs/lib/Halts/HaltsTops.v at commit f92feaf8b7e, lines 10-18 (the doc comment, restated for the ASan and ASan+UBSan builds), 20-26 (the import block) and 40-51 (halts_skcms_iccprofile_info_ubsan), restated for the ASan and ASan+UBSan images as halts_skcms_iccprofile_info_asan and _asan_ubsan, with lim_source_le_target used from HaltsTops rather than copied; and from HaltsBridge.v at the same commit, lines 144-164 (must_exit_of_realizes_spec), restated as must_exit_of_srealizes for a realization in Asan.SpinAlgCfg.srealizes_cfg, which the new lemma srealizes_info reads as an Info.ShapeAlg.realizes; the realizations are Asan.InfoAsanTop.info_asan_tgt_C and Asan.InfoBothTop.info_both_tgt_C, closed with the certificates Asan.InfoAsanClosed (line 11) and Asan.InfoBothClosed (line 12) close the agreement theorems with. *)
 (** The halting theorems of the ASan and ASan+UBSan builds, in the form [Statements.v] states them.
 
     Each build's realization is the one its agreement theorem is proved from: [srealizes_cfg] of [spec], at the
