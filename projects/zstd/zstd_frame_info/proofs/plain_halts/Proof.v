@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by gabelogan195, 2026-11: made in part from this harness's proofs/lib/HaltsAsanB.v at commit f92feaf8b7: three of its import lines (lines 5, 6 and 8) and its final step, haltsB_of_must_exit_acfg with forced_only_cfg_least (line 24, as in proofs/lib/HaltsAsanBClosed.v, line 13), restated for the plain build; the rest of the file is new. *)
+(* Modified by gabelogan195, 2026-11: made in part from this harness's proofs/lib/HaltsAsanB.v at commit f92feaf8b7: six of its import lines (lines 5, 6 and 8, and lines 7, 11 and 12 with their modules changed) and its final step, haltsB_of_must_exit_acfg with forced_only_cfg_least (line 24, as in proofs/lib/HaltsAsanBClosed.v, line 13, at the same commit), restated for the plain build; the rest of the file is new. *)
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.zstd.zstd_frame_info Require Statements.
