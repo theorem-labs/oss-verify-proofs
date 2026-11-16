@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by gabelogan195, 2026-11: made in part from this harness's proofs/lib/MsgpackEncAsanTop.v at commit f92feaf8b7, lines 94-100: the valid_entry_sv48 rewrite, the destruct of the valid input and the call of top_of_guarded with frm_safe_Ma0, used in the proofs of the plain and ASan halting theorems; the rest of the file is new. *)
+(* Modified by gabelogan195, 2026-11: made in part from this harness's proofs/lib/MsgpackEncAsanTop.v at commit f92feaf8b7, lines 94-100: the valid_entry_sv48 rewrite, the destruct of the valid input and the calls of top_of_guarded with frm_safe_Ms0 and with frm_safe_Ma0, used in the proofs of the plain and ASan halting theorems (frm_safe_Ms0 in the plain one, frm_safe_Ma0 in the ASan one); the rest of the file is new. *)
 (** The halting theorems of the plain and ASan builds, in the form [Statements.v] states them.
 
     The agreement theorem of the ASan pair is built from two realizations of one

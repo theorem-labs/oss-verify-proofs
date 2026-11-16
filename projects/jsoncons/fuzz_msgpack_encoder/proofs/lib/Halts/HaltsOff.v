@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by gabelogan195, 2026-11: made from this harness's proofs/lib/Mh_0055.v at commit f92feaf8b7, module HaltsKit (its import block, changed to require Mh_0055 and Mh_0055.HaltsKit and to leave out the BvWfKernel require at line 730 and the Zify setting at line 740 of Mh_0055.v; the theorem srealizes_must_exit_fo and the theorem srealizes_init_must_exit), restated for a realization whose budget-refused leaf is off (bm_on = false): the no-refusal hypothesis, the reach_fo bookkeeping it needed and the budget premise are dropped, and the budget-refused case is closed by bm_on = false instead. *)
+(* Modified by gabelogan195, 2026-11: made from this harness's proofs/lib/Mh_0055.v at commit f92feaf8b7, module HaltsKit (its import block, changed to require Mh_0055 and Mh_0055.HaltsKit and to leave out the BvWfKernel require at line 730 and the Zify setting at line 740 of Mh_0055.v; the theorem srealizes_must_exit_fo and the theorem srealizes_init_must_exit), restated as srealizes_must_exit_fo_off and srealizes_init_must_exit_off for a realization whose budget-refused leaf is off (bm_on = false): the no-refusal hypothesis, the reach_fo bookkeeping it needed and the budget premise are dropped, and the budget-refused case is closed by bm_on = false instead; its comments are left out and the doc comments are new. *)
 (** A realization made with its budget-refused leaf off must exit, whatever the budget.
 
     [HaltsKit.srealizes_init_must_exit] walks a [srealizes0] derivation to
