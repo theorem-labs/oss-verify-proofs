@@ -7,13 +7,7 @@
    theorem names by halts_skcms_iccprofile_info_plain and _ubsan.  The proof bodies are not copied: from_chars's single
    halts_allowed_lowered_of_realizes call is replaced here by HaltsBridge.halts_of_realizes_spec for the plain build and
    by must_exit_of_realizes_spec composed with Halts.Lim.LimTransfer.lim_transfer_scfg for the UBSan build. *)
-(* Modified by gabelogan195, 2026-11: made from projects/skcms/iccprofile_info/proofs/lib/Halts/HaltsTops.v at commit
-   f92feaf8b7, lines 20-23 (the Stdlib/LPS import block and the images import) and lines 32-34 and 40-42 (the two
-   theorem statements), with skcms's Plain and Ubsan images replaced by cjson/cjson_read_fuzzer's and the theorem names by
-   halts_cjson_read_fuzzer_plain and _ubsan.  lim_source_le_target and the proof bodies are not copied: both builds'
-   realizations are proved at every budget of at least 2 GiB (Glue.Top04's plain_realizes04_lim and
-   ubsan_realizes04_lim), so both theorems are HaltsBridge.must_exit_of_realizes_init at 16 GiB, with no budget
-   transfer, and the lemma here is drv_limit_le_lim_source. *)
+(* Modified by gabelogan195, 2026-11: made from projects/skcms/iccprofile_info/proofs/lib/Halts/HaltsTops.v at commit f92feaf8b7, lines 20-23 (the Stdlib/LPS import block and the images import), line 25 (the SpecHalts and HaltsBridge import) and lines 32-34 and 40-42 (the two theorem statements), with skcms's module paths and its Plain and Ubsan images replaced by cjson/cjson_read_fuzzer's and the theorem names by halts_cjson_read_fuzzer_plain and _ubsan.  lim_source_le_target and the proof bodies are not copied: both builds' realizations are proved at every budget of at least 2 GiB (Glue.Top04's plain_realizes04_lim and ubsan_realizes04_lim), so both theorems are HaltsBridge.must_exit_of_realizes_init at 16 GiB, with no budget transfer, and the lemma here is drv_limit_le_lim_source. *)
 (** The halting theorems of the plain and UBSan builds, in the form
     [Statements.v] states them.
 

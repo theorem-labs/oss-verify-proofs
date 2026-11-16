@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from projects/fast_float/from_chars/proofs/lib/SpecHalts.v at commit c395a1e0dfa (its EXS and NK predicates, their closure lemmas and the two theorems built from them, lines 15-140), restated for skcms/iccprofile_info's Info.Spec.spec and Info.ShapeAlg trace algebra; the case analysis follows this harness's spec, not from_chars's. *)
-(* Modified by gabelogan195, 2026-11: made from projects/skcms/iccprofile_info/proofs/lib/Halts/SpecHalts.v at commit f92feaf8b7 (the whole file), restated for cjson/cjson_read_fuzzer's ShapeSpec.spec and ShapeAlg trace algebra: the imports name this harness's modules, and the PropExec.fp0 instance is dropped, as this harness's spec takes none. *)
+(* Modified by gabelogan195, 2026-11: made from projects/skcms/iccprofile_info/proofs/lib/Halts/SpecHalts.v at commit f92feaf8b7 (the whole file), restated for cjson/cjson_read_fuzzer's ShapeSpec.spec and ShapeAlg trace algebra: the imports name this harness's modules, the doc comment names ShapeSpec.spec and drops the word plain, and the PropExec.fp0 instance is dropped, as this harness's spec takes none; the rest, the case analysis of exs_body, exs_spec, nk_body and nk_spec included, is skcms's unchanged. *)
 (** The two facts about the harness's trace set that a halting proof
     consumes: every exit status it admits is 0 or 2, and it never dies by a
     signal.  Both are read straight off [ShapeSpec.spec]. *)
