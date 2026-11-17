@@ -69,6 +69,9 @@
 #   /.claude/, AGENTS*.md What an agent loads in a job that holds a token.  CLAUDE*.md and /.mcp.json match no file
 #   CLAUDE*.md,           in this repository today; they are listed for the same reason as findings/ above.
 #   /.mcp.json
+#   /docs/review*.md      The review's rules, which review.yml gives to its model for pull requests into main and
+#                         for issues.  They decide what the review posts, and whether the review approves an
+#                         outside change for the import into the internal repository.
 #   made_from.py          A unit's provenance record is checked by a generator, and pr.yml RUNS it.  That makes it
 #   /dev/licence/         tooling the workflows execute, not a record.  The generator is moving from a unit's
 #                         proofs/provenance/ to /dev/licence/, with a test module public CI will run; both paths are
@@ -99,7 +102,8 @@
 #       check rather than turning it off.  Note that provenance/port/projects/<project>/ carries an archived copy of
 #       a project.yaml: the project.yaml line below is anchored to /projects/*/project.yaml so that those 29 copies
 #       stay unowned, which is why it is not written as a bare file name.
-#   docs/ is prose about the claims and is not the claim; theories/ and Statements.v are.
+#   docs/ is prose about the claims and is not the claim; theories/ and Statements.v are.  The exception is
+#   /docs/review*.md: the review's rules, owned above with what decides whether checking happens.
 #
 # The last pattern that matches a file decides its owner, so these lines stay the last ones in this file.
 /release.yaml @sjawhar @JasonGross
@@ -127,6 +131,7 @@
 AGENTS*.md @sjawhar @JasonGross
 CLAUDE*.md @sjawhar @JasonGross
 /.mcp.json @sjawhar @JasonGross
+/docs/review*.md @sjawhar @JasonGross
 made_from.py @sjawhar @JasonGross
 /dev/licence/ @sjawhar @JasonGross
 /.gitattributes @sjawhar @JasonGross
