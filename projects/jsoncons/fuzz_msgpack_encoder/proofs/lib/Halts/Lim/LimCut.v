@@ -1,6 +1,5 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by gabelogan195, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimCut.v at commit f92feaf8b7, whole, with its text unchanged; only its own module path changes, from OSSVerify.Proofs.openssl.bndiv.lib.Lib to OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Halts.Lim, by the file's place in this tree. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
