@@ -105,12 +105,12 @@
 #   docs/ is prose about the claims and is not the claim; theories/ and Statements.v are.  The exception is
 #   /docs/review*.md: the review's rules, owned above with what decides whether checking happens.
 #
-# Agent instruction and skills files at any depth, owned by the engineering team.  Above the lines below, so that
-# every path they own keeps its owner.
-**/AGENTS.md @theorem-labs/engineering
-**/CLAUDE.md @theorem-labs/engineering
-**/SKILL.md @theorem-labs/engineering
-skills/ @theorem-labs/engineering
+# Agent instruction and skills files at any depth, owned by the engineering and research teams.  Above the lines
+# below, so that every path they own keeps its owner.
+**/AGENTS.md @theorem-labs/engineering @theorem-labs/research
+**/CLAUDE.md @theorem-labs/engineering @theorem-labs/research
+**/SKILL.md @theorem-labs/engineering @theorem-labs/research
+skills/ @theorem-labs/engineering @theorem-labs/research
 #
 # The last pattern that matches a file decides its owner, so these lines stay the last ones in this file.
 /release.yaml @sjawhar @JasonGross
