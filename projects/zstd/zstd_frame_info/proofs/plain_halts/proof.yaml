@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: zstd/zstd_frame_info/plain_halts
+fingerprint: 6c8df0913cd3b4b30fded0740908cd056921126660206d35591a03a5574f22c4
