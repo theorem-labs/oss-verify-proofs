@@ -1442,9 +1442,12 @@ class Plan(unittest.TestCase):
         tmp = os.path.join(d, "runner-temp")
         os.mkdir(tmp)
         out = os.path.join(tmp, "output")
+        # GITHUB_REPOSITORY is a stand-in: the plan step plans no part for a push on theorem-labs/oss-verify-proofs
+        # (test_workflow_verdicts.PublicPushTest), and a CI run there has that name in its environment
         env = dict(GIT_ENV, PATH=os.path.join(d, "bin") + os.pathsep + os.environ["PATH"], RUNNER_TEMP=tmp,
                    GITHUB_OUTPUT=out, GITHUB_STEP_SUMMARY=os.path.join(tmp, "summary"), GITHUB_WORKSPACE=d,
-                   GITHUB_EVENT_NAME=event, EVENT_BASE=event_base, KIND="release", PYTHONDONTWRITEBYTECODE="1")
+                   GITHUB_EVENT_NAME=event, EVENT_BASE=event_base, KIND="release", PYTHONDONTWRITEBYTECODE="1",
+                   GITHUB_REPOSITORY="example/repository")
 
         def run(step, **more):
             with open(os.path.join(tmp, step + ".sh"), "w") as f:
