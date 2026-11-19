@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: openssl/hashtable/asan_ubsan_agreement_decidable
+fingerprint: 7e8c0a6df910c3a0a2b76a7df83d0ed681bde7db57c8cf9612abd89593725df5
