@@ -1372,10 +1372,12 @@ class PlanToolsTest(unittest.TestCase):
                         ' "jobs": []}\'\n'
                         % (units[0], probe[0], units[1], probe[1], sys.executable, os.path.join(d, "runs")))
             os.chmod(os.path.join(d, "bin", "python"), 0o755)
+            # GITHUB_REPOSITORY is the stand-in: on PUBLIC a push plans no part (PublicPushTest), and a CI run there
+            # has that name in its environment
             env = dict(os.environ, PATH=os.path.join(d, "bin") + os.pathsep + os.environ["PATH"], RUNNER_TEMP=d,
                        GITHUB_WORKSPACE=d, GITHUB_OUTPUT=os.path.join(d, "output"),
                        GITHUB_STEP_SUMMARY=os.path.join(d, "summary.md"), KIND=kind, BASE="b" * 40, ROUTED="true",
-                       GITHUB_EVENT_NAME=event)
+                       GITHUB_EVENT_NAME=event, GITHUB_REPOSITORY=REPOSITORY)
             done = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", text], cwd=d, env=env,
                                   capture_output=True, text=True)
             self.said = done.stdout + done.stderr
