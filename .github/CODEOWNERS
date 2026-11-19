@@ -135,8 +135,9 @@ skills/ @theorem-labs/engineering
 /toolchain/ @sjawhar @JasonGross
 /tests/ @sjawhar @JasonGross
 /.claude/ @sjawhar @JasonGross
-AGENTS*.md @sjawhar @JasonGross
-CLAUDE*.md @sjawhar @JasonGross
+/.claude/skills/ @theorem-labs/engineering @theorem-labs/research
+AGENTS*.md @theorem-labs/engineering @theorem-labs/research
+CLAUDE*.md @theorem-labs/engineering @theorem-labs/research
 /.mcp.json @sjawhar @JasonGross
 /docs/review*.md @sjawhar @JasonGross
 made_from.py @sjawhar @JasonGross
