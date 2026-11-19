@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by gabelogan195, 2026-11: the PSpin cases of check_vars_fo and check_sound_cfg are closed by discriminate, APF.check now refusing PSpin, and node_spin_cfg, which built a spinning leaf, is removed. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -463,7 +464,7 @@ Proof.
     destruct (Z.eqb (pc cs) h && entails_h A lo hi cs nx)%bool; [|discriminate]. injection Hc as <-. reflexivity.
   - destruct (HS h) as [ch|]; [|discriminate]. destruct (entails cs ch); [|discriminate]. injection Hc as <-. reflexivity.
   - destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_exit cs); [|discriminate]. injection Hc as <-. reflexivity.
-  - destruct (node_spin SEGS cs); [|discriminate]. injection Hc as <-. reflexivity.
+  - discriminate.
   - destruct (node_fog cs fi fsz) as [cs1|]; [|discriminate]. exact (IH _ fk cs1 s Hc).
   - destruct (node_fognew cs gi gsz) as [cs1|]; [|discriminate]. exact (IH _ gk cs1 s Hc).
   - destruct (node_ghost LIMIT cs gb gn) as [cs1|]; [|discriminate]. exact (IH _ gk2 cs1 s Hc).
@@ -580,22 +581,6 @@ Qed.
 
 
 
-
-Lemma node_spin_cfg : forall (FP : PropExec.FPState) cs E R FULL model,
-  cs_ok E cs R FULL model -> node_spin SEGS cs = true ->
-  srealizes_cfg SEGS (@cfg_fp FP SEGS R (pc cs) FULL model) t_nil.
-Proof.
-  intros FP cs E R FULL model HC Hn. unfold node_spin in Hn.
-  apply andb_prop in Hn as [Hn Hw]. apply andb_prop in Hn as [H0 H4].
-  destruct (fetch_word SEGS (Z_to_bv 64 (pc cs))) as [w|] eqn:Hf; [|discriminate].
-  apply Z.eqb_eq in Hw.
-  assert (Hw' : w = Z_to_bv 32 SPIN_WORD).
-  { apply bv_eq. rewrite Hw. reflexivity. }
-  subst w.
-  apply srz_cfg_spin.
-  - apply is_self_jump_to_spin. apply self_jump_word; [reflexivity | exact Hf].
-  - exact (co_halt _ _ _ _ _ HC).
-Qed.
 
 (* [comment removed for export] *)
 Definition LCOK_cfg (lc : option loopctx) (D : TSet) (E : env) (fs : Fs.Fs) : Prop :=
@@ -869,8 +854,7 @@ Proof.
     destruct (node_exit cs) as [code|] eqn:Hn; [|discriminate]. injection Hc as <-. cbn [sd].
     eapply (node_exit_cfg FP HFP); eassumption.
   - (* [comment removed for export] *)
-    destruct (node_spin SEGS cs) eqn:Hn; [|discriminate]. injection Hc as <-. cbn [sd].
-    exact (node_spin_cfg FP cs E R FULL model HC Hn).
+    discriminate.
   - (* [comment removed for export] *)
     destruct (node_fog cs fi fsz) as [cs1|] eqn:Hn; [|discriminate].
     destruct (fog_sound E cs R FULL model fi fsz cs1 HC Hn) as [HC1 Hpc]. rewrite <- Hpc. exact (SAME fk _ s Hc HC1).
