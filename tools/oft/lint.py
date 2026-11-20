@@ -1319,7 +1319,6 @@ LINT_ONLY_HAND = (".claude/skills/porting-released-proofs/SKILL.md",
                   ".claude/skills/porting-released-proofs/references/*.md",
                   ".claude/skills/clean-room-restatement/SKILL.md",
                   ".claude/skills/clean-room-restatement/references/*.md",
-                  "toolchain/requirements.txt",
                   ".github/review/rules.py",
                   ".github/review/trim.py",
                   ".github/review/skills/asd-ste100/LICENSE",
@@ -1333,7 +1332,8 @@ LINT_ONLY_HAND = (".claude/skills/porting-released-proofs/SKILL.md",
                   ".github/review/skills/write-to-maintainer/SKILL.md",
                   ".github/review/skills/write-to-maintainer/judge.md",
                   ".github/workflows/rescreen.yml",
-                  ".github/workflows/screen-start.yml")
+                  ".github/workflows/screen-start.yml",
+                  "toolchain/requirements.txt")
 # What only this repository has, as paths.TABLE's internal rows are, that only lint judges, here for the same reason:
 # a row of paths.TABLE is part of the checker, and the INTERNAL of paths.py is made of those rows.  dev/enroll/, the
 # place of the scripts that carry a merged theorem-labs/oss-verify enrollment into these facts, which enroll.yml and
