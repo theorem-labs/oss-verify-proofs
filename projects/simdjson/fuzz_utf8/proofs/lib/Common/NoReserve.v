@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by gabelogan195, 2026-11: srz_mmap_spin_noreserve and srz_mmap_spin_lazy take SpinScan.exec_has_spin segs = true as their first premise, which section AsanInitReal takes as a hypothesis, for the third premise of SpinAlg.srz_spin. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -10,7 +11,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Mm Require Import Mmap.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
-From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Common Require Import SimInv ExitSim PropExec CatSim MmapSim ShapeAlg DivergeSim LazyFrame SymTac SpinAlg.
+From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Common Require Import SimInv ExitSim PropExec CatSim MmapSim ShapeAlg DivergeSim LazyFrame SymTac SpinAlg SpinScan.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for export] *)
 Import ListNotations.
 Open Scope bv_scope.
@@ -666,6 +667,7 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma srz_mmap_spin_noreserve : forall ms model x8 B,
+  exec_has_spin segs = true ->
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
@@ -679,7 +681,7 @@ Lemma srz_mmap_spin_noreserve : forall ms model x8 B,
   (exists a, grant_ok_nr (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true) ->
   srealizes segs (mkCfg ms model) B.
 Proof.
-  intros ms model x8 B Hh Hsvc Hno Hargs Hspin HB Hex.
+  intros ms model x8 B Hsj Hh Hsvc Hno Hargs Hspin HB Hex.
   (* [comment removed for export] *)
   destruct (mmap_refusable ms model) eqn:Href.
   2:{ eapply srz_mmap_noreserve_forced; eassumption. }
@@ -704,7 +706,7 @@ Proof.
              (inr (exist _ a0 Ha0))).
     - apply (node_mmap_noreserve ms model x8); assumption.
     - intros [[e He] | [a Ha]]; cbn.
-      + apply srz_spin; cbn; [apply Hspin; exact He | exact Hh].
+      + apply srz_spin; cbn; [apply Hspin; exact He | exact Hh | exact Hsj].
       + apply HB; exact Ha. }
   intro tr. split.
   - intros [[[e He] | [a Ha]] Hi]; cbn in Hi.
@@ -996,6 +998,7 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma srz_mmap_spin_lazy : forall ms model x8 B,
+  exec_has_spin segs = true ->
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
@@ -1009,7 +1012,7 @@ Lemma srz_mmap_spin_lazy : forall ms model x8 B,
   (exists a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true) ->
   srealizes segs (mkCfg ms model) B.
 Proof.
-  intros ms model x8 B Hh Hsvc Hno Hargs Hspin HB Hex.
+  intros ms model x8 B Hsj Hh Hsvc Hno Hargs Hspin HB Hex.
   (* [comment removed for export] *)
   destruct (mmap_refusable ms model) eqn:Href.
   2:{ eapply srz_mmap_lazy_forced; eassumption. }
@@ -1034,7 +1037,7 @@ Proof.
              (inr (exist _ a0 Ha0))).
     - apply (node_mmap_lazy ms model x8); assumption.
     - intros [[e He] | [a Ha]]; cbn.
-      + apply srz_spin; cbn; [apply Hspin; exact He | exact Hh].
+      + apply srz_spin; cbn; [apply Hspin; exact He | exact Hh | exact Hsj].
       + apply HB; exact Ha. }
   intro tr. split.
   - intros [[[e He] | [a Ha]] Hi]; cbn in Hi.
@@ -1905,6 +1908,7 @@ Variable segs : list Segment.
 
 (* [comment removed for export] *)
 Variables (ms1 : machine_state) (model : Model) (x8a : word).
+Hypothesis Hsj : exec_has_spin segs = true.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hfd : fd1chan model.
 Hypothesis Hsvc1 : ms_svc_pending ms1 = Some x8a.
@@ -2023,13 +2027,13 @@ Theorem asan_init_srealizes :
     (t_write_ch (Z_to_bv 64 1) buf (t_exit cs (m_fs model))).
 Proof.
   eapply srz_mmap_spin_noreserve;
-    [ exact Hh | exact Hsvc1 | exact Hno1 | exact Hargs1 | exact Hrefuse1 |
+    [ exact Hsj | exact Hh | exact Hsvc1 | exact Hno1 | exact Hargs1 | exact Hrefuse1 |
     | exact Hex1 ].
   intros a1 Hg1.
   eapply srz_msteps_disjoint;
     [ exact Hh | exact (Hwalk1 a1 Hg1) | exact (Hout1 a1 Hg1) | ].
   eapply srz_mmap_spin_lazy;
-    [ exact Hh | exact (Hsvc2 a1 Hg1) | exact Hno2 | exact (Hargs2 a1 Hg1)
+    [ exact Hsj | exact Hh | exact (Hsvc2 a1 Hg1) | exact Hno2 | exact (Hargs2 a1 Hg1)
     | exact (Hrefuse2 a1 Hg1) | | exact (Hex2 a1 Hg1) ].
   intros a2 Hg2.
   eapply srz_msteps_disjoint;

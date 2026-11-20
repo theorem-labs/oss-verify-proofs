@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by gabelogan195, 2026-11: node_spin also requires SpinScan.exec_has_spin segs, the third premise of SpinAlg.srz_spin. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -10,7 +11,7 @@ From Stdlib Require Import ZArith NArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
-From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Common Require Import PropExec.
+From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Common Require Import PropExec SpinScan.
 From OSSVerify.Proofs.simdjson.fuzz_utf8.lib.Common Require Import AxSymExec3 AxSymExec3B. From OSSVerify.Proofs.simdjson.fuzz_utf8.lib Require Import AxSymExecF AxSymExecFB.   (* [comment removed for export] *)
 From OSSVerify.Proofs.simdjson.fuzz_utf8.lib Require Import AxSymExec3C.   (* [comment removed for export] *)
 From OSSVerify.Proofs.simdjson.fuzz_utf8.lib Require Import AxSymExec3E.   (* [comment removed for export] *)
@@ -3225,11 +3226,12 @@ Definition node_intro (cs : acs) (lo hi : Z) : option acs :=
 (* [comment removed for export] *)
 Definition SPIN_WORD : Z := 0x6f.
 Definition node_spin (cs : acs) : bool :=
+  (exec_has_spin segs &&
   (Z.leb 0 (pc cs) && Z.ltb (pc cs + 4) two64 &&
   match fetch_word segs (Z_to_bv 64 (pc cs)) with
   | Some w => Z.eqb (bv_unsigned w) SPIN_WORD
   | None => false
-  end)%bool.
+  end))%bool.
 
 (* [comment removed for export] *)
 

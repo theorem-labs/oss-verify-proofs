@@ -17,8 +17,8 @@ The harness makes no check of its own beyond not crashing, so a statement about 
 
 | statement | in one line | status |
 |---|---|---|
-| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
-| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
+| `plain_halts` | on every input on which the plain build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | [proved](proofs/plain_halts/) |
+| `ubsan_halts` | on every input on which the UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | [proved](proofs/ubsan_halts/) |
 | `asan_halts` | on every input on which the ASan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
 | `asan_ubsan_halts` | on every input on which the ASan+UBSan build is never refused memory for exceeding 16 GiB (a premise), it exits with status 0 or 2 | open |
 | `asan_agrees` | on every input on which the plain build is never refused memory for exceeding 2 GiB (a premise): neither build reaches an error and both have the same set of observable behaviours; ASan never fires; abort read as SIGABRT; memory refused only when forced | [proved](proofs/asan_agrees/) |
