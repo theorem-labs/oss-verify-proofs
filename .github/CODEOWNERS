@@ -11,7 +11,8 @@
 # needs nobody, and a change that touches one of them needs one of those two.
 #
 # tools/oft/paths.py already sorts every path in this repository into hand, facts, gen and contrib, and the lines
-# below follow it rather than a second opinion: every `facts` row is owned, every `contrib` row is not.
+# below follow it rather than a second opinion: every `facts` row is owned but CHANGELOG.md, the release notes that
+# only a release writes; every `contrib` row is not.
 #
 # WHAT WE ASSERT.  Owned.
 #

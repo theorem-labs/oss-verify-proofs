@@ -1307,10 +1307,32 @@ def _link_refusal(full, rel, indexed):
 # restate a text without copying it; the commit that adds their files also adds both to release_tree.INTERNAL, which
 # cuts them from a release.  And toolchain/requirements.txt, the PyYAML pin the checker image installs
 # (toolchain/checker.Dockerfile), which the release that moves tools/oft/ to oft/ and oftdev/ gives a paths.TABLE row.
+# And the files of the public repository's review that Dispatch issue OSSV-612 adds and that no paths.TABLE row
+# matches (a row of paths.TABLE matches its other new files, such as docs/review-answer.md).  Under .github/review/:
+# rules.py, the rules of the review that code applies, whatever the model wrote; trim.py, the fresh reader that trims
+# a text before it is posted; and the three skills that the review loads, each copy with its licence where it has one.
+# And two workflows: .github/workflows/rescreen.yml, the rescreen pass; and .github/workflows/screen-start.yml, which
+# OSSV-612 makes the one workflow of the public repository that starts on pull_request_target.  Here first, since
+# pr.yml lints a change by its base's rules.  Each is named by its exact path, so a new file in .github/review/ has no
+# class until a change names it; and a release carries them, since release_tree.INTERNAL does not name them.
 LINT_ONLY_HAND = (".claude/skills/porting-released-proofs/SKILL.md",
                   ".claude/skills/porting-released-proofs/references/*.md",
                   ".claude/skills/clean-room-restatement/SKILL.md",
                   ".claude/skills/clean-room-restatement/references/*.md",
+                  ".github/review/rules.py",
+                  ".github/review/trim.py",
+                  ".github/review/skills/asd-ste100/LICENSE",
+                  ".github/review/skills/asd-ste100/SKILL.md",
+                  ".github/review/skills/asd-ste100/examples/before-after.md",
+                  ".github/review/skills/asd-ste100/references/writing-rules.md",
+                  ".github/review/skills/ce-noslop/LICENSE",
+                  ".github/review/skills/ce-noslop/SKILL.md",
+                  ".github/review/skills/ce-noslop/references/patterns.md",
+                  ".github/review/skills/ce-noslop/references/terminology.md",
+                  ".github/review/skills/write-to-maintainer/SKILL.md",
+                  ".github/review/skills/write-to-maintainer/judge.md",
+                  ".github/workflows/rescreen.yml",
+                  ".github/workflows/screen-start.yml",
                   "toolchain/requirements.txt")
 # What only this repository has, as paths.TABLE's internal rows are, that only lint judges, here for the same reason:
 # a row of paths.TABLE is part of the checker, and the INTERNAL of paths.py is made of those rows.  dev/enroll/, the
