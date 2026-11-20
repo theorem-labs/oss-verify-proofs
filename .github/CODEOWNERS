@@ -42,6 +42,7 @@
 #                         the six proof pull requests open when this file was written (#19 to #24) change 779
 #                         files between them, 412 in #19 alone, and not one under index/.
 #   /NOTICE               What we tell the world we owe to whom.
+#   /docs/licensing.md    Under which licence each part of this repository is.
 #   findings/,            What we say is wrong with somebody else's library, and the patch text we would send them.
 #   patches/,             Sami, 2026-11-07: "we need to have an extremely high bar for sending bug reports and
 #   unpatched.yaml        patches upstream ... so that every bug report we send improves our reputation"
@@ -102,8 +103,9 @@
 #       check rather than turning it off.  Note that provenance/port/projects/<project>/ carries an archived copy of
 #       a project.yaml: the project.yaml line below is anchored to /projects/*/project.yaml so that those 29 copies
 #       stay unowned, which is why it is not written as a bare file name.
-#   docs/ is prose about the claims and is not the claim; theories/ and Statements.v are.  The exception is
-#   /docs/review*.md: the review's rules, owned above with what decides whether checking happens.
+#   docs/ is prose about the claims and is not the claim; theories/ and Statements.v are.  The exceptions are
+#   /docs/licensing.md, owned above with what we assert, and /docs/review*.md: the review's rules, owned above with
+#   what decides whether checking happens.
 #
 # Agent instruction and skills files at any depth, owned by the engineering team.  Above the lines below, so that
 # every path they own keeps its owner.
@@ -115,6 +117,7 @@ skills/ @theorem-labs/engineering
 # The last pattern that matches a file decides its owner, so these lines stay the last ones in this file.
 /release.yaml @sjawhar @JasonGross
 /NOTICE @sjawhar @JasonGross
+/docs/licensing.md @sjawhar @JasonGross
 /theories/ @sjawhar @JasonGross
 /index/ @sjawhar @JasonGross
 /projects/*/project.yaml @sjawhar @JasonGross
