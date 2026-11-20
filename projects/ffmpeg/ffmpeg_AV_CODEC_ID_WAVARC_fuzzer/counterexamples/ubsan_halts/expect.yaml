@@ -1,0 +1,14 @@
+schema: oss-fuzz-theorems/counterexample/1
+statement: ffmpeg/ffmpeg_AV_CODEC_ID_WAVARC_fuzzer/ubsan_halts
+input: input.bin
+observed:
+  build: ubsan
+  exit: 134
+  signal: SIGABRT
+message: "Assertion ret != (-(int)(('B') | (('U') << 8) | (('G') << 16) | ((unsigned)('!') << 24))) failed"
+control:
+  input: control.bin
+  exit: 0
+disclosure: public
+note: >-
+  The harness's av_assert0(ret != AVERROR_BUG) (tools/target_dec_fuzzer.c) aborts. The harness's options block sets the sample rate to 8000, which passes the check in avcodec_open2(), but wavarc_init() (libavcodec/wavarc.c) then overwrites it with the rate in the 52-byte extradata, which is 0, without a check. The decoder outputs a frame with sample_rate 0, which frame_validate() (libavcodec/decode.c) turns into AVERROR_BUG. control.bin is the same input with 8000 as the sample rate in the extradata too. The same payload fails a native x86-64 fuzz build of FFmpeg master; a fix is proposed in FFmpeg pull request 25954 on FFmpeg's Forgejo.

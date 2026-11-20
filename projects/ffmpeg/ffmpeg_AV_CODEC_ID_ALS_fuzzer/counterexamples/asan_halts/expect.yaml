@@ -1,0 +1,14 @@
+schema: oss-fuzz-theorems/counterexample/1
+statement: ffmpeg/ffmpeg_AV_CODEC_ID_ALS_fuzzer/asan_halts
+input: input.bin
+observed:
+  build: asan
+  exit: 134
+  signal: SIGABRT
+message: "Assertion ret != (-(int)(('B') | (('U') << 8) | (('G') << 16) | ((unsigned)('!') << 24))) failed"
+control:
+  input: control.bin
+  exit: 0
+disclosure: public
+note: >-
+  The harness's av_assert0(ret != AVERROR_BUG) (tools/target_dec_fuzzer.c) aborts. The extradata is an AudioSpecificConfig with object type 2 (not ALS) and the reserved sampling index 13, whose table rate is 0, followed by an ALSSpecificConfig. Only for the ALS object type does the shared parser (libavcodec/mpeg4audio.c) check the rate, so read_specific_config() (libavcodec/alsdec.c) copies 0 into the context; the als decoder sets AV_CODEC_CAP_CHANNEL_CONF, so it opens, and outputs a frame with sample_rate 0, which frame_validate() (libavcodec/decode.c) turns into AVERROR_BUG. control.bin is the same input with sampling index 4 (44100 Hz). The same payload fails a native x86-64 fuzz build of FFmpeg master; a fix is proposed in FFmpeg pull request 25954 on FFmpeg's Forgejo.
