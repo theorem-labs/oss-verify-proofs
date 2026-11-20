@@ -23,6 +23,7 @@
 #   /release.yaml         from; release.yaml pins the semantics, the Rocq version and the checker and runner images.
 #                         A swapped binary makes a true statement false without touching the statement, so the file
 #                         that chooses the binary is owned exactly as the statement is.
+#   /CHANGELOG.md         What each release changed, and how many of its statements are proved, false and open.
 #   Distribution.v        Not generated, whatever its header looks like: paths.py calls its body a fact, and
 #                         generate.py keeps the body it finds and re-renders only the header.  Every
 #                         `disagrees_at_most` statement is measured against Distribution.w and Distribution.M, so
@@ -116,6 +117,7 @@ skills/ @theorem-labs/engineering
 #
 # The last pattern that matches a file decides its owner, so these lines stay the last ones in this file.
 /release.yaml @sjawhar @JasonGross
+/CHANGELOG.md @sjawhar @JasonGross
 /NOTICE @sjawhar @JasonGross
 /docs/licensing.md @sjawhar @JasonGross
 /theories/ @sjawhar @JasonGross
